@@ -3,6 +3,11 @@ import { useParams } from 'react-router-dom';
 import { ExternalLink, Instagram } from 'lucide-react';
 import { getVendorProfileBySlug, submitVendorInquiry, type VendorProfile } from '../lib/vendorProfiles';
 
+function readSourceLink(profile: VendorProfile, key: 'pinterest_url' | 'tiktok_url' | 'facebook_url' | 'youtube_url'): string | null {
+  const value = profile.source_payload?.[key];
+  return typeof value === 'string' && value ? value : null;
+}
+
 export const VendorProfilePage: React.FC = () => {
   const { slug } = useParams();
   const [loading, setLoading] = useState(true);
@@ -49,6 +54,10 @@ export const VendorProfilePage: React.FC = () => {
   const featuredImage = galleryImages[0] ?? null;
   const secondaryImages = galleryImages.slice(1, 6);
   const initials = useMemo(() => profile?.vendor_name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') ?? 'VP', [profile?.vendor_name]);
+  const pinterestUrl = profile ? readSourceLink(profile, 'pinterest_url') : null;
+  const tiktokUrl = profile ? readSourceLink(profile, 'tiktok_url') : null;
+  const facebookUrl = profile ? readSourceLink(profile, 'facebook_url') : null;
+  const youtubeUrl = profile ? readSourceLink(profile, 'youtube_url') : null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,6 +146,30 @@ export const VendorProfilePage: React.FC = () => {
               {profile.instagram_url && (
                 <a href={profile.instagram_url} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-2xl border border-[#eadfce] px-4 py-3 hover:bg-[#fbf8f3]">
                   <span className="flex items-center gap-3"><Instagram className="h-4 w-4" /> Instagram</span>
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              )}
+              {pinterestUrl && (
+                <a href={pinterestUrl} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-2xl border border-[#eadfce] px-4 py-3 hover:bg-[#fbf8f3]">
+                  <span className="flex items-center gap-3"><ExternalLink className="h-4 w-4" /> Pinterest</span>
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              )}
+              {tiktokUrl && (
+                <a href={tiktokUrl} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-2xl border border-[#eadfce] px-4 py-3 hover:bg-[#fbf8f3]">
+                  <span className="flex items-center gap-3"><ExternalLink className="h-4 w-4" /> TikTok</span>
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              )}
+              {facebookUrl && (
+                <a href={facebookUrl} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-2xl border border-[#eadfce] px-4 py-3 hover:bg-[#fbf8f3]">
+                  <span className="flex items-center gap-3"><ExternalLink className="h-4 w-4" /> Facebook</span>
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              )}
+              {youtubeUrl && (
+                <a href={youtubeUrl} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-2xl border border-[#eadfce] px-4 py-3 hover:bg-[#fbf8f3]">
+                  <span className="flex items-center gap-3"><ExternalLink className="h-4 w-4" /> YouTube</span>
                   <ExternalLink className="h-4 w-4" />
                 </a>
               )}

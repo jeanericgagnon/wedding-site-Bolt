@@ -82,6 +82,16 @@ function extractInstagramUrlFromHtml(html: string): string | null {
   return normalizeUrl(extractFirstMatch(html, /href=["'](https?:\/\/(?:www\.)?instagram\.com\/[^"'#?]+(?:\/)?)["']/i));
 }
 
+function extractSocialUrlFromHtml(html: string, network: 'pinterest' | 'tiktok' | 'facebook' | 'youtube'): string | null {
+  const patterns: Record<typeof network, RegExp> = {
+    pinterest: /href=["'](https?:\/\/(?:www\.)?pinterest\.[^"'#?]+\/[^"'#?]+(?:\/)?)["']/i,
+    tiktok: /href=["'](https?:\/\/(?:www\.)?tiktok\.com\/[^"'#?]+(?:\/)?)["']/i,
+    facebook: /href=["'](https?:\/\/(?:www\.)?facebook\.com\/[^"'#?]+(?:\/)?)["']/i,
+    youtube: /href=["'](https?:\/\/(?:www\.)?(?:youtube\.com|youtu\.be)\/[^"'#?]+(?:\/)?)["']/i,
+  };
+  return normalizeUrl(extractFirstMatch(html, patterns[network]));
+}
+
 function extractMailtoEmail(html: string): string | null {
   const email = extractFirstMatch(html, /href=["']mailto:([^"'?]+)["']/i);
   return email?.toLowerCase() ?? null;
@@ -155,7 +165,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { vendorName, instagramUrl, websiteUrl } = await req.json();
+    const { vendorName, instagramUrl, websiteUrl, pinterestUrl, tiktokUrl, facebookUrl, youtubeUrl } = await req.json();
     if (!vendorName || typeof vendorName !== 'string') {
       return new Response(JSON.stringify({ error: 'vendorName is required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
@@ -165,6 +175,10 @@ Deno.serve(async (req) => {
 
     const normalizedWebsite = normalizeUrl(websiteUrl);
     const normalizedInstagram = normalizeUrl(instagramUrl);
+    const normalizedPinterest = normalizeUrl(pinterestUrl);
+    const normalizedTiktok = normalizeUrl(tiktokUrl);
+    const normalizedFacebook = normalizeUrl(facebookUrl);
+    const normalizedYoutube = normalizeUrl(youtubeUrl);
     const instagramHandle = extractInstagramHandle(normalizedInstagram);
     const websiteLabel = extractDomainLabel(normalizedWebsite);
     const sourceLabel = instagramHandle ? `@${instagramHandle}` : websiteLabel ? titleCase(websiteLabel) : 'public source';
@@ -173,6 +187,10 @@ Deno.serve(async (req) => {
     let websiteDescription: string | null = null;
     let websiteImage: string | null = null;
     let websiteInstagramUrl: string | null = null;
+    let websitePinterestUrl: string | null = null;
+    let websiteTiktokUrl: string | null = null;
+    let websiteFacebookUrl: string | null = null;
+    let websiteYoutubeUrl: string | null = null;
     let websiteContactEmail: string | null = null;
 
     if (normalizedWebsite) {
@@ -189,6 +207,10 @@ Deno.serve(async (req) => {
           websiteDescription = extractMeta(html, 'og:description') || extractMeta(html, 'description');
           websiteImage = extractMeta(html, 'og:image') || extractMeta(html, 'twitter:image');
           websiteInstagramUrl = extractInstagramUrlFromHtml(html);
+          websitePinterestUrl = extractSocialUrlFromHtml(html, 'pinterest');
+          websiteTiktokUrl = extractSocialUrlFromHtml(html, 'tiktok');
+          websiteFacebookUrl = extractSocialUrlFromHtml(html, 'facebook');
+          websiteYoutubeUrl = extractSocialUrlFromHtml(html, 'youtube');
           websiteContactEmail = extractMailtoEmail(html);
         }
       } catch {
@@ -197,6 +219,10 @@ Deno.serve(async (req) => {
     }
 
     const resolvedInstagram = normalizedInstagram ?? websiteInstagramUrl;
+    const resolvedPinterest = normalizedPinterest ?? websitePinterestUrl;
+    const resolvedTiktok = normalizedTiktok ?? websiteTiktokUrl;
+    const resolvedFacebook = normalizedFacebook ?? websiteFacebookUrl;
+    const resolvedYoutube = normalizedYoutube ?? websiteYoutubeUrl;
     const resolvedInstagramHandle = extractInstagramHandle(resolvedInstagram);
 
     const descriptor = websiteTitle && !websiteTitle.toLowerCase().includes(vendorName.toLowerCase())
@@ -244,11 +270,19 @@ Deno.serve(async (req) => {
       source_payload: {
         sourceLabel,
         instagramHandle: resolvedInstagramHandle,
+        pinterest_url: resolvedPinterest,
+        tiktok_url: resolvedTiktok,
+        facebook_url: resolvedFacebook,
+        youtube_url: resolvedYoutube,
         websiteLabel,
         websiteTitle,
         websiteDescription,
         websiteImage,
         websiteInstagramUrl,
+        websitePinterestUrl,
+        websiteTiktokUrl,
+        websiteFacebookUrl,
+        websiteYoutubeUrl,
         websiteContactEmail,
       },
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });

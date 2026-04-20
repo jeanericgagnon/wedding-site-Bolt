@@ -15,7 +15,7 @@ function normalizeImageLines(input: string): string[] {
 export const VendorProfileCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [form, setForm] = useState({ vendorName: '', instagramUrl: '', websiteUrl: '', contactEmail: '' });
+  const [form, setForm] = useState({ vendorName: '', instagramUrl: '', websiteUrl: '', pinterestUrl: '', tiktokUrl: '', facebookUrl: '', youtubeUrl: '', contactEmail: '' });
   const [loading, setLoading] = useState(false);
   const [draft, setDraft] = useState<VendorProfileDraft | null>(null);
   const [saving, setSaving] = useState(false);
@@ -77,6 +77,12 @@ export const VendorProfileCreatePage: React.FC = () => {
           <input value={form.vendorName} onChange={(e) => setForm((prev) => ({ ...prev, vendorName: e.target.value }))} placeholder="Vendor name" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 outline-none" required />
           <input value={form.instagramUrl} onChange={(e) => setForm((prev) => ({ ...prev, instagramUrl: e.target.value }))} placeholder="Instagram URL (optional)" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 outline-none" />
           <input value={form.websiteUrl} onChange={(e) => setForm((prev) => ({ ...prev, websiteUrl: e.target.value }))} placeholder="Website URL (optional)" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 outline-none" />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <input value={form.pinterestUrl} onChange={(e) => setForm((prev) => ({ ...prev, pinterestUrl: e.target.value }))} placeholder="Pinterest URL (optional)" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 outline-none" />
+            <input value={form.tiktokUrl} onChange={(e) => setForm((prev) => ({ ...prev, tiktokUrl: e.target.value }))} placeholder="TikTok URL (optional)" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 outline-none" />
+            <input value={form.facebookUrl} onChange={(e) => setForm((prev) => ({ ...prev, facebookUrl: e.target.value }))} placeholder="Facebook URL (optional)" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 outline-none" />
+            <input value={form.youtubeUrl} onChange={(e) => setForm((prev) => ({ ...prev, youtubeUrl: e.target.value }))} placeholder="YouTube URL (optional)" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 outline-none" />
+          </div>
           <input type="email" value={form.contactEmail} onChange={(e) => setForm((prev) => ({ ...prev, contactEmail: e.target.value }))} placeholder="Contact email for inquiry CTA (optional)" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 outline-none" />
           <button disabled={loading} className="rounded-2xl bg-[#2f261d] px-5 py-3 text-sm font-semibold text-white disabled:opacity-60">
             {loading ? 'Generating…' : 'Generate vendor profile'}
@@ -97,6 +103,12 @@ export const VendorProfileCreatePage: React.FC = () => {
             <input value={draft.slug} onChange={(e) => setDraft((prev) => prev ? { ...prev, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') } : prev)} placeholder="vendor-page-slug" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
             <input value={draft.instagram_url ?? ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, instagram_url: e.target.value || null } : prev)} placeholder="Instagram URL" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
             <input value={draft.website_url ?? ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, website_url: e.target.value || null } : prev)} placeholder="Website URL" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <input value={typeof draft.source_payload?.pinterest_url === 'string' ? draft.source_payload.pinterest_url : ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, source_payload: { ...prev.source_payload, pinterest_url: e.target.value || null } } : prev)} placeholder="Pinterest URL" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
+              <input value={typeof draft.source_payload?.tiktok_url === 'string' ? draft.source_payload.tiktok_url : ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, source_payload: { ...prev.source_payload, tiktok_url: e.target.value || null } } : prev)} placeholder="TikTok URL" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
+              <input value={typeof draft.source_payload?.facebook_url === 'string' ? draft.source_payload.facebook_url : ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, source_payload: { ...prev.source_payload, facebook_url: e.target.value || null } } : prev)} placeholder="Facebook URL" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
+              <input value={typeof draft.source_payload?.youtube_url === 'string' ? draft.source_payload.youtube_url : ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, source_payload: { ...prev.source_payload, youtube_url: e.target.value || null } } : prev)} placeholder="YouTube URL" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
+            </div>
             <input type="email" value={draft.contact_email ?? ''} onChange={(e) => setDraft((prev) => prev ? { ...prev, contact_email: e.target.value || null } : prev)} placeholder="Contact email for direct inquiry CTA" className="w-full rounded-2xl border border-[#eadfce] px-4 py-3 text-sm outline-none" />
             <div className="space-y-2">
               <p className="text-xs uppercase tracking-[0.22em] text-[#8b6f53]">Images (first line becomes hero)</p>
@@ -124,6 +136,10 @@ export const VendorProfileCreatePage: React.FC = () => {
             <div className="flex flex-wrap gap-3">
               {draft.instagram_url && <a href={draft.instagram_url} target="_blank" rel="noreferrer" className="text-sm text-[#6f5843] underline">Instagram</a>}
               {draft.website_url && <a href={draft.website_url} target="_blank" rel="noreferrer" className="text-sm text-[#6f5843] underline">Website</a>}
+              {typeof draft.source_payload?.pinterest_url === 'string' && draft.source_payload.pinterest_url && <a href={draft.source_payload.pinterest_url} target="_blank" rel="noreferrer" className="text-sm text-[#6f5843] underline">Pinterest</a>}
+              {typeof draft.source_payload?.tiktok_url === 'string' && draft.source_payload.tiktok_url && <a href={draft.source_payload.tiktok_url} target="_blank" rel="noreferrer" className="text-sm text-[#6f5843] underline">TikTok</a>}
+              {typeof draft.source_payload?.facebook_url === 'string' && draft.source_payload.facebook_url && <a href={draft.source_payload.facebook_url} target="_blank" rel="noreferrer" className="text-sm text-[#6f5843] underline">Facebook</a>}
+              {typeof draft.source_payload?.youtube_url === 'string' && draft.source_payload.youtube_url && <a href={draft.source_payload.youtube_url} target="_blank" rel="noreferrer" className="text-sm text-[#6f5843] underline">YouTube</a>}
             </div>
             <div className="flex flex-wrap gap-3">
               <button type="button" onClick={handlePublish} disabled={saving} className="rounded-2xl bg-[#2f261d] px-5 py-3 text-sm font-semibold text-white disabled:opacity-60">
