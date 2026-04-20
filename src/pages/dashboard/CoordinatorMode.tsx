@@ -31,6 +31,7 @@ import { resolveCoordinatorReturnToBoardState } from '../../lib/coordinatorRetur
 import { getCoordinatorNeutralFocusReason } from '../../lib/coordinatorNeutralFocusReason';
 import { resolveCoordinatorNeutralFocusTarget } from '../../lib/coordinatorNeutralFocusTarget';
 import { getCoordinatorActionHint } from '../../lib/coordinatorActionCopy';
+import { getCoordinatorActiveTargetLabel } from '../../lib/coordinatorActiveTargetLabel';
 import { normalizeCoordinatorTimelineWorkState } from '../../lib/coordinatorTimelineWorkState';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
@@ -696,7 +697,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   <p className="text-sm font-medium text-text-primary">Check-in queue</p>
                   <p className="text-[11px] text-text-tertiary">Search arrivals fast and keep the live line moving.</p>
                 </div>
-                <p className="text-[11px] text-text-tertiary">{checkInQueue.length} shown · {checkInWatchCount} need review{checkInReviewOnly ? ' · review mode' : ''}</p>
+                <p className="text-[11px] text-text-tertiary">{checkInQueue.length} shown · {checkInWatchCount} need review{checkInReviewOnly ? ' · review mode' : ''}{activeGuestId ? ` · ${getCoordinatorActiveTargetLabel('guest')}` : ''}</p>
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
                 <Input
@@ -754,7 +755,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
           <div className="rounded-2xl border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] p-4 space-y-4">
             <div>
-              <p className="text-sm font-medium text-text-primary mb-2">Run-of-show timeline{panelFocus === 'timeline' ? ' · focus' : ''}</p>
+              <p className="text-sm font-medium text-text-primary mb-2">Run-of-show timeline{panelFocus === 'timeline' ? ' · focus' : ''}{activeTimelineEventId ? ` · ${getCoordinatorActiveTargetLabel('timeline')}` : ''}</p>
               <div className="space-y-2">
                 {events.length === 0 ? (
                   <p className="text-xs text-text-tertiary">No itinerary events yet.</p>
@@ -941,9 +942,12 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     </div>
                   ) : <div />}
                 </div>
-                <div className="rounded-md border border-border/60 bg-surface-subtle/40 px-3 py-2 space-y-2">
+                <div className="rounded-md border border-primary/20 bg-primary/[0.03] px-3 py-2 space-y-2">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-[11px] font-medium text-text-primary">Ready to send</p>
+                    <div>
+                      <p className="text-[11px] font-medium text-text-primary">Ready to send</p>
+                      <p className="text-[10px] text-text-tertiary/80">{getCoordinatorActiveTargetLabel('alert')}</p>
+                    </div>
                     <span className="px-2 py-0.5 rounded-full border border-primary/20 bg-primary/5 text-[10px] font-medium text-primary">{alertLaneLabel}</span>
                   </div>
                   <p className="text-[11px] text-text-secondary">{alertSummary.intentLabel} · {alertSummary.audienceLabel} · {alertSummary.recipientLabel}</p>
@@ -980,7 +984,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
             <div className="border-t border-border/60 pt-3">
               <div className="mb-2 flex items-center justify-between gap-3">
-                <p className="text-sm font-medium text-text-primary">Guest questions{panelFocus === 'qna' ? ' · focus' : ''}</p>
+                <p className="text-sm font-medium text-text-primary">Guest questions{panelFocus === 'qna' ? ' · focus' : ''}{activeQnaId ? ` · ${getCoordinatorActiveTargetLabel('qna')}` : ''}</p>
                 <p className="text-[11px] text-text-tertiary">{qnaCounts.open} open · {qnaCounts.answered} answered</p>
               </div>
               <fieldset disabled={!canEditQna}>
