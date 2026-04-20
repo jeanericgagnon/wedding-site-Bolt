@@ -172,6 +172,13 @@ export interface RegistryItemDraft {
   fund_zelle_handle?: string;
   fund_custom_url?: string;
   fund_custom_label?: string;
+  canonical_url?: string;
+  description?: string;
+  availability?: string;
+  metadata_fetch_status?: FetchStatus | '';
+  metadata_confidence_score?: number | null;
+  metadata_source_method?: SourceMethod;
+  metadata_retailer?: string;
 }
 
 export const EMPTY_DRAFT: RegistryItemDraft = {
@@ -192,6 +199,13 @@ export const EMPTY_DRAFT: RegistryItemDraft = {
   fund_zelle_handle: '',
   fund_custom_url: '',
   fund_custom_label: '',
+  canonical_url: '',
+  description: '',
+  availability: '',
+  metadata_fetch_status: '',
+  metadata_confidence_score: null,
+  metadata_source_method: null,
+  metadata_retailer: '',
 };
 
 export type RegistryFilter = 'all' | 'available' | 'partial' | 'purchased';

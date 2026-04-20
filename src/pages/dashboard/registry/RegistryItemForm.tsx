@@ -32,6 +32,13 @@ function itemToDraft(item: RegistryItem): RegistryItemDraft {
     fund_zelle_handle: item.fund_zelle_handle ?? '',
     fund_custom_url: item.fund_custom_url ?? '',
     fund_custom_label: item.fund_custom_label ?? '',
+    canonical_url: item.canonical_url ?? '',
+    description: item.description ?? '',
+    availability: item.availability ?? '',
+    metadata_fetch_status: (item.metadata_fetch_status as RegistryItemDraft['metadata_fetch_status']) ?? '',
+    metadata_confidence_score: item.metadata_confidence_score ?? null,
+    metadata_source_method: (item.metadata_source_method as RegistryItemDraft['metadata_source_method']) ?? null,
+    metadata_retailer: item.metadata_retailer ?? '',
   };
 }
 
@@ -55,6 +62,13 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
       fund_zelle_handle: '',
       fund_custom_url: '',
       fund_custom_label: '',
+      canonical_url: '',
+      description: '',
+      availability: '',
+      metadata_fetch_status: '',
+      metadata_confidence_score: null,
+      metadata_source_method: null,
+      metadata_retailer: '',
     }
   );
 
@@ -183,6 +197,13 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
           item_url: targetUrl,
           image_url: preview.image_url ?? (urlChanged || missing.has('image') ? '' : prev.image_url),
           notes: nextNotes,
+          canonical_url: preview.canonical_url ?? prev.canonical_url ?? '',
+          description: preview.description ?? prev.description ?? '',
+          availability: preview.availability ?? prev.availability ?? '',
+          metadata_fetch_status: preview.fetch_status ?? '',
+          metadata_confidence_score: preview.confidence_score ?? null,
+          metadata_source_method: preview.source_method ?? null,
+          metadata_retailer: preview.retailer ?? prev.metadata_retailer ?? '',
         };
       });
     } catch (err: unknown) {
