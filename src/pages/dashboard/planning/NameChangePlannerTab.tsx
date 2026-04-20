@@ -61,6 +61,8 @@ interface ExecutionSectionSummary {
   title: string;
   description: string;
   cards: ExecutionCardConfig[];
+  progressPercent: number;
+  progressLabel: string;
   readyCount: number;
   blockedCount: number;
   attentionCount: number;
@@ -525,6 +527,8 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       const readyCount = section.cards.filter((card) => card.snapshot.ready).length;
       const blockedCount = section.cards.filter((card) => !card.snapshot.ready).length;
       const attentionCount = section.cards.reduce((sum, card) => sum + card.snapshot.checklist.filter((item) => item.status === 'attention').length, 0);
+      const progressPercent = Math.round((readyCount / section.cards.length) * 100);
+      const progressLabel = `${readyCount}/${section.cards.length} cards ready`;
       const highestRiskCardConfig = section.cards.reduce((current, card) => {
         const blockerCount = card.snapshot.blockers.length;
         const currentBlockerCount = current?.snapshot.blockers.length ?? -1;
@@ -575,6 +579,8 @@ export const NameChangePlannerTab: React.FC<Props> = ({
 
       return {
         ...section,
+        progressPercent,
+        progressLabel,
         readyCount,
         blockedCount,
         attentionCount,
@@ -824,6 +830,18 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 {section.postureLabel}
               </span>
               <span className="text-xs text-text-secondary">{section.postureDetail}</span>
+            </div>
+            <div className="mt-3 max-w-xl">
+              <div className="flex items-center justify-between gap-3 text-xs text-text-secondary">
+                <span>Section progress</span>
+                <span>{section.progressPercent}% · {section.progressLabel}</span>
+              </div>
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface-subtle">
+                <div
+                  className={`h-full rounded-full ${section.postureTone === 'danger' ? 'bg-danger' : section.postureTone === 'warning' ? 'bg-warning' : section.postureTone === 'primary' ? 'bg-primary' : 'bg-text-secondary'}`}
+                  style={{ width: `${section.progressPercent}%` }}
+                />
+              </div>
             </div>
           </div>
 
