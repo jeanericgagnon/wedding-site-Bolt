@@ -10,6 +10,7 @@ import type {
   NameChangeExecutionSequenceSnapshot,
   NameChangeExtractedFieldInput,
   NameChangeFormPayloadSnapshot,
+  NameChangePlan,
 } from './types';
 
 export interface NameChangeSsaExecutionSnapshot {
@@ -36,12 +37,13 @@ export function buildNameChangeSsaExecutionSnapshot(
   profile: NameChangeCaseInput,
   documents: NameChangeDocumentInput[],
   extractedFields: NameChangeExtractedFieldInput[],
+  plan: NameChangePlan | null = null,
 ): NameChangeSsaExecutionSnapshot {
   const requirements = evaluateNameChangeRequirements(profile, documents, extractedFields);
   const intake = buildNameChangeDocumentIntakeSnapshot(profile, documents, extractedFields);
   const autofill = buildNameChangeAutofillPrepSnapshot(profile, documents, extractedFields);
   const formPayload = buildNameChangeSs5FormSnapshot(profile, documents, extractedFields);
-  const sequence = buildNameChangeExecutionSequenceSnapshot('ssa', profile, documents, extractedFields);
+  const sequence = buildNameChangeExecutionSequenceSnapshot('ssa', profile, documents, extractedFields, plan);
 
   const legalProof = requirements.results.find((result) => result.key === 'legal-proof-document');
   const identityCoverage = requirements.results.find((result) => result.key === 'identity-document-coverage');

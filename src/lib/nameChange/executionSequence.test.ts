@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildNameChangeExecutionSequenceSnapshot } from './executionSequence';
+import { buildNameChangePlan } from './engine';
 import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput } from './types';
 
 function makeCase(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseInput {
@@ -63,6 +64,26 @@ describe('name change execution sequence snapshot', () => {
     expect(snapshot.lane).toBe('state');
     expect(snapshot.ready).toBe(false);
     expect(snapshot.dependencies.find((dependency) => dependency.key === 'county-context')).toMatchObject({ status: 'missing' });
-    expect(snapshot.dependencies.find((dependency) => dependency.key === 'federal-ssa-progress')).toMatchObject({ status: 'attention' });
+    expect(snapshot.dependencies.find((dependency) => dependency.key === 'federal-ssa-progress')).toMatchObject({ status: 'missing' });
+  });
+
+  it('marks DMV sequencing dependency satisfied when the SSA step is complete', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const plan = {
+      ...buildNameChangePlan({ profile: makeCase(), documents, extractedFields: [] }),
+      steps: buildNameChangePlan({ profile: makeCase(), documents, extractedFields: [] }).steps.map((step) =>
+        step.id === 'federal-ssa' ? { ...step, executionStatus: 'complete' as const } : step,
+      ),
+    };
+
+    const snapshot = buildNameChangeExecutionSequenceSnapshot('dmv', makeCase(), documents, [], plan);
+    expect(snapshot.dependencies.find((dependency) => dependency.key === 'federal-ssa-progress')).toMatchObject({ status: 'satisfied' });
   });
 });

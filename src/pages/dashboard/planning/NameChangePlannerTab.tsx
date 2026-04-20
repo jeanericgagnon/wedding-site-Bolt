@@ -97,8 +97,8 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   const requirementSnapshot = useMemo(() => evaluateNameChangeRequirements(draft, documents, extractedFields), [draft, documents, extractedFields]);
   const documentIntakeSnapshot = useMemo(() => buildNameChangeDocumentIntakeSnapshot(draft, documents, extractedFields), [draft, documents, extractedFields]);
   const autofillPrepSnapshot = useMemo(() => buildNameChangeAutofillPrepSnapshot(draft, documents, extractedFields), [draft, documents, extractedFields]);
-  const ssaExecutionSnapshot = useMemo(() => buildNameChangeSsaExecutionSnapshot(draft, documents, extractedFields), [draft, documents, extractedFields]);
-  const dmvExecutionSnapshot = useMemo(() => buildNameChangeDmvExecutionSnapshot(draft, documents, extractedFields), [draft, documents, extractedFields]);
+  const ssaExecutionSnapshot = useMemo(() => buildNameChangeSsaExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
+  const dmvExecutionSnapshot = useMemo(() => buildNameChangeDmvExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
   const reminderSummary = useMemo(() => summarizeNameChangeReminders(effectiveReminders), [effectiveReminders]);
   const reminderAttention = useMemo(() => deriveNameChangeReminderAttention(effectiveReminders, plan), [effectiveReminders, plan]);
   const reminderAttentionSummary = useMemo(() => summarizeNameChangeReminderAttention(reminderAttention, {

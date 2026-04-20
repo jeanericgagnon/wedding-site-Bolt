@@ -10,6 +10,7 @@ import type {
   NameChangeExecutionSequenceSnapshot,
   NameChangeExtractedFieldInput,
   NameChangeFormPayloadSnapshot,
+  NameChangePlan,
 } from './types';
 
 export interface NameChangeDmvExecutionSnapshot {
@@ -36,12 +37,13 @@ export function buildNameChangeDmvExecutionSnapshot(
   profile: NameChangeCaseInput,
   documents: NameChangeDocumentInput[],
   extractedFields: NameChangeExtractedFieldInput[],
+  plan: NameChangePlan | null = null,
 ): NameChangeDmvExecutionSnapshot {
   const requirements = evaluateNameChangeRequirements(profile, documents, extractedFields);
   const intake = buildNameChangeDocumentIntakeSnapshot(profile, documents, extractedFields);
   const autofill = buildNameChangeAutofillPrepSnapshot(profile, documents, extractedFields);
   const formPayload = buildNameChangeDmvFormSnapshot(profile, documents, extractedFields);
-  const sequence = buildNameChangeExecutionSequenceSnapshot('dmv', profile, documents, extractedFields);
+  const sequence = buildNameChangeExecutionSequenceSnapshot('dmv', profile, documents, extractedFields, plan);
 
   const legalProof = requirements.results.find((result) => result.key === 'legal-proof-document');
   const countyContext = requirements.results.find((result) => result.key === 'county-context');

@@ -6,6 +6,7 @@ import type {
   NameChangeExecutionDependency,
   NameChangeExecutionSequenceSnapshot,
   NameChangeExtractedFieldInput,
+  NameChangePlan,
 } from './types';
 
 function requirementStatusToDependencyStatus(status: 'satisfied' | 'missing' | 'attention'): NameChangeExecutionDependency['status'] {
@@ -17,6 +18,7 @@ export function buildNameChangeExecutionSequenceSnapshot(
   profile: NameChangeCaseInput,
   documents: NameChangeDocumentInput[],
   extractedFields: NameChangeExtractedFieldInput[],
+  plan: NameChangePlan | null = null,
 ): NameChangeExecutionSequenceSnapshot {
   const requirements = evaluateNameChangeRequirements(profile, documents, extractedFields);
   const intake = buildNameChangeDocumentIntakeSnapshot(profile, documents, extractedFields);
@@ -24,6 +26,8 @@ export function buildNameChangeExecutionSequenceSnapshot(
   const legalProof = requirements.results.find((result) => result.key === 'legal-proof-document');
   const identityCoverage = requirements.results.find((result) => result.key === 'identity-document-coverage');
   const countyContext = requirements.results.find((result) => result.key === 'county-context');
+
+  const ssaStep = plan?.steps.find((step) => step.id === 'federal-ssa');
 
   const dependencies: NameChangeExecutionDependency[] = target === 'ssa'
     ? [
@@ -70,10 +74,14 @@ export function buildNameChangeExecutionSequenceSnapshot(
         },
         {
           key: 'federal-ssa-progress',
-          label: 'SSA should move before DMV sequencing',
+          label: 'SSA execution completed before DMV prep',
           required: true,
-          status: profile.workflow_status === 'in_progress' || profile.workflow_status === 'complete' ? 'attention' : 'attention',
-          reason: 'DMV sequencing should follow the federal identity change path; this is a sequencing attention item until explicit SSA completion state is modeled in dependencies.',
+          status: ssaStep?.executionStatus === 'complete' ? 'satisfied' : ssaStep?.executionStatus === 'in_progress' ? 'attention' : 'missing',
+          reason: ssaStep?.executionStatus === 'complete'
+            ? 'SSA execution is marked complete, so DMV sequencing can proceed on the federal-first path.'
+            : ssaStep?.executionStatus === 'in_progress'
+              ? 'SSA execution is in progress, so DMV should stay queued behind the federal-first path.'
+              : 'SSA execution is not complete yet, so DMV sequencing is still blocked on the federal-first path.',
         },
       ];
 
