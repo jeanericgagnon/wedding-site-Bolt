@@ -141,6 +141,7 @@ export const VendorProfileCreatePage: React.FC = () => {
               {typeof draft.source_payload?.facebook_url === 'string' && draft.source_payload.facebook_url && <a href={draft.source_payload.facebook_url} target="_blank" rel="noreferrer" className="text-sm text-[#6f5843] underline">Facebook</a>}
               {typeof draft.source_payload?.youtube_url === 'string' && draft.source_payload.youtube_url && <a href={draft.source_payload.youtube_url} target="_blank" rel="noreferrer" className="text-sm text-[#6f5843] underline">YouTube</a>}
             </div>
+            <p className="text-xs text-[#8b6f53]">When website metadata is weak, the generator now uses recovered Instagram, Pinterest, and other social links as fallback image/source signals.</p>
             <div className="flex flex-wrap gap-3">
               <button type="button" onClick={handlePublish} disabled={saving} className="rounded-2xl bg-[#2f261d] px-5 py-3 text-sm font-semibold text-white disabled:opacity-60">
                 {saving ? 'Publishing…' : 'Publish vendor page'}

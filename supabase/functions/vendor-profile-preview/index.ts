@@ -102,6 +102,11 @@ function screenshotUrl(url: string | null): string | null {
   return `https://image.thum.io/get/width/1200/noanimate/${url}`;
 }
 
+function pinterestImageUrl(url: string | null): string | null {
+  if (!url) return null;
+  return `https://image.thum.io/get/width/1200/noanimate/${url}`;
+}
+
 function logoUrl(url: string | null): string | null {
   if (!url) return null;
   try {
@@ -121,6 +126,8 @@ function rankImage(url: string, primaryWebsiteImage: string | null, websiteShot:
   if (url === primaryWebsiteImage && !looksLikeLogo(url)) return 100;
   if (url === websiteShot) return 80;
   if (url === instagramShot) return 72;
+  if (/pinterest/i.test(url)) return 78;
+  if (/tiktok|youtube|facebook/i.test(url)) return 68;
   if (looksLikeLogo(url)) return 30;
   return 60;
 }
@@ -242,11 +249,19 @@ Deno.serve(async (req) => {
           : `${vendorName} is a wedding vendor profile generated from public source details so couples can quickly get the essentials in one clean place.`;
 
     const websiteShot = screenshotUrl(normalizedWebsite);
-    const instagramShot = screenshotUrl(normalizedInstagram);
+    const instagramShot = screenshotUrl(resolvedInstagram);
+    const pinterestShot = pinterestImageUrl(resolvedPinterest);
+    const tiktokShot = screenshotUrl(resolvedTiktok);
+    const facebookShot = screenshotUrl(resolvedFacebook);
+    const youtubeShot = screenshotUrl(resolvedYoutube);
     const rawImages = [
       websiteImage,
       websiteShot,
       instagramShot,
+      pinterestShot,
+      tiktokShot,
+      facebookShot,
+      youtubeShot,
       logoUrl(normalizedWebsite),
     ].filter((value, index, arr): value is string => !!value && arr.indexOf(value) === index);
 
