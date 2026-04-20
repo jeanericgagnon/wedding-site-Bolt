@@ -28,6 +28,7 @@ import { resolveCoordinatorTimelineAlertIntent } from '../../lib/coordinatorTime
 import { appendCoordinatorAlertLogItem, resolveCoordinatorScheduledFor, validateCoordinatorAlertForm } from '../../lib/coordinatorAlertFlow';
 import { resetCoordinatorAlertFormAfterSend } from '../../lib/coordinatorAlertReset';
 import { buildCoordinatorAlertSuggestions } from '../../lib/coordinatorAlertSuggestions';
+import { buildCoordinatorAlertSummary } from '../../lib/coordinatorAlertSummary';
 import { normalizeCoordinatorAlertIntentState, resolveCoordinatorPreferredAlertSuggestion } from '../../lib/coordinatorAlertIntent';
 import { getCoordinatorQnaCounts, updateCoordinatorQnaItem } from '../../lib/coordinatorQnaFlow';
 import { getFirstOpenCoordinatorQnaId, getNextCoordinatorQnaFocusId } from '../../lib/coordinatorQnaFocus';
@@ -294,6 +295,15 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const upNextEvent = useMemo(() => events.find((event) => event.id === upNextEventId) ?? null, [events, upNextEventId]);
   const alertSuggestions = useMemo(() => buildCoordinatorAlertSuggestions({ liveEvent, upNextEvent }), [liveEvent, upNextEvent]);
   const preferredAlertSuggestion = useMemo(() => resolveCoordinatorPreferredAlertSuggestion(alertSuggestions, lastAlertSuggestionKey), [alertSuggestions, lastAlertSuggestionKey]);
+  const alertSummary = useMemo(() => buildCoordinatorAlertSummary({
+    form: alertForm,
+    audienceOptions: [
+      { value: 'all', label: 'All guests' },
+      ...eventAudienceOptions.map((opt) => ({ value: opt.value, label: opt.label })),
+    ],
+    preferredSuggestion: preferredAlertSuggestion,
+    recipientCount: alertAudienceCount,
+  }), [alertForm, eventAudienceOptions, preferredAlertSuggestion, alertAudienceCount]);
 
   useEffect(() => {
     if (!preferredAlertSuggestion) return;
@@ -795,7 +805,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     </div>
                   ) : <div />}
                 </div>
-                <p className="text-[11px] text-text-tertiary">This will go to {alertAudienceCount} recipient{alertAudienceCount === 1 ? '' : 's'}{alertForm.scheduleType === 'later' && canScheduleAlerts ? ' at the scheduled time' : ''}.</p>
+                <div className="rounded-md border border-border/60 bg-surface-subtle/40 px-3 py-2 space-y-1">
+                  <p className="text-[11px] font-medium text-text-primary">Ready to send</p>
+                  <p className="text-[11px] text-text-secondary">{alertSummary.intentLabel} · {alertSummary.audienceLabel} · {alertSummary.recipientLabel}</p>
+                  <p className="text-[11px] text-text-tertiary">{alertSummary.deliveryLabel}</p>
+                </div>
                 {!canScheduleAlerts && canSendAlerts && <p className="text-[11px] text-text-tertiary">Coordinators can send updates now; scheduled sends stay with planners and the couple.</p>}
                 {alertValidationError && <p className="text-[11px] text-error">{alertValidationError}</p>}
                 <button
