@@ -419,6 +419,11 @@ export default function RSVP() {
     try {
       if (!guest) return;
 
+      if (deadlinePassed && !existingRsvp) {
+        setError('The RSVP deadline has passed. Please contact the couple directly if you still need to respond.');
+        return;
+      }
+
       if (!guest.invite_token) {
         setError('Your invitation is missing a secure token. Please use the RSVP link from your invitation email.');
         return;
