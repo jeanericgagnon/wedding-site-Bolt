@@ -35,6 +35,7 @@ import { getCoordinatorActiveTargetLabel } from '../../lib/coordinatorActiveTarg
 import { getCoordinatorCheckInBoardTargetId, getCoordinatorCheckInTargetState } from '../../lib/coordinatorCheckInTargetState';
 import { getCoordinatorTimelineBoardTargetId, getCoordinatorTimelineTargetState } from '../../lib/coordinatorTimelineTargetState';
 import { getCoordinatorQnaTargetState } from '../../lib/coordinatorQnaTargetState';
+import { buildCoordinatorCommandSummary } from '../../lib/coordinatorCommandSummary';
 import { buildCoordinatorAlertTargetCue } from '../../lib/coordinatorAlertTargetCue';
 import { applyCoordinatorAlertSuggestion } from '../../lib/coordinatorAlertSuggestionApply';
 import { getCoordinatorAlertSuggestionState } from '../../lib/coordinatorAlertSuggestionState';
@@ -384,6 +385,12 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const timelineTargetState = useMemo(() => getCoordinatorTimelineTargetState({ boardTargetId: timelineBoardTargetId, activeTimelineEventId }), [timelineBoardTargetId, activeTimelineEventId]);
   const qnaBoardTargetId = useMemo(() => getFirstOpenCoordinatorQnaId(qnaItems), [qnaItems]);
   const qnaTargetState = useMemo(() => getCoordinatorQnaTargetState({ boardTargetId: qnaBoardTargetId, activeQnaId }), [qnaBoardTargetId, activeQnaId]);
+  const commandSummaryItems = useMemo(() => buildCoordinatorCommandSummary({
+    checkInLabel: checkInTargetState.label,
+    timelineLabel: timelineTargetState.label,
+    qnaLabel: qnaTargetState.label,
+    alertLabel: `${alertTargetCue.aligned ? 'Board-aligned' : 'Customized'} ${alertLaneLabel.toLowerCase()}`,
+  }), [checkInTargetState.label, timelineTargetState.label, qnaTargetState.label, alertTargetCue.aligned, alertLaneLabel]);
 
   const liveIssues = useMemo(() => buildCoordinatorEscalations({
     guests,
@@ -694,6 +701,22 @@ export const DashboardCoordinatorMode: React.FC = () => {
           <p className="font-medium">{handoffCopy.title}</p>
           <p className="mt-1 text-primary/80">{handoffCopy.detail}</p>
           <p className="mt-2 text-primary/70">Final couple decisions still sit above this workspace when something needs approval.</p>
+        </div>
+
+        <div className="rounded-lg border border-border/35 bg-white px-3 py-2 shadow-[0_4px_14px_rgba(15,23,42,0.05)]">
+          <div className="flex items-center justify-between gap-3 mb-2">
+            <p className="text-xs font-medium text-text-primary">Live command summary</p>
+            <p className="text-[11px] text-text-tertiary">What the board thinks matters right now</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {commandSummaryItems.map((item) => (
+              <div key={item.label} className="rounded-full border border-border/50 bg-surface-subtle/40 px-2.5 py-1">
+                <span className="text-[10px] font-medium text-text-primary">{item.label}</span>
+                <span className="mx-1 text-[10px] text-text-tertiary">·</span>
+                <span className="text-[10px] text-text-secondary">{item.detail}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
         {coordinatorRole === 'planner' && (
