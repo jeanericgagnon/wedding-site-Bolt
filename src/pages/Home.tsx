@@ -535,7 +535,7 @@ export const Home: React.FC = () => {
                 },
                 {
                   q: 'Can I export my data?',
-                  a: 'Yes. Export your guest list, RSVPs, photos, and all data anytime in standard formats (CSV, JSON, ZIP).',
+                  a: 'Yes. DayOf supports export paths for core wedding data like guest information, RSVP records, and other practical planning data. Exact export shape depends on the part of the product, so we keep the promise tied to what couples actually need rather than pretending every surface has the same export contract.',
                 },
                 {
                   q: 'What happens after 2 years?',
