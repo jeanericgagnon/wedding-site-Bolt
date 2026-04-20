@@ -24,6 +24,7 @@ import { normalizeCoordinatorModeSessionState } from '../../lib/coordinatorModeS
 import { normalizeCoordinatorDraftState } from '../../lib/coordinatorDraftState';
 import { normalizeCoordinatorActiveWorkState } from '../../lib/coordinatorActiveWorkState';
 import { normalizeCoordinatorGuestWorkState } from '../../lib/coordinatorGuestWorkState';
+import { normalizeCoordinatorCommandState } from '../../lib/coordinatorCommandState';
 import { normalizeCoordinatorTimelineWorkState } from '../../lib/coordinatorTimelineWorkState';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
@@ -92,6 +93,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [activeTimelineEventId, setActiveTimelineEventId] = useState<string | null>(null);
   const [activeGuestId, setActiveGuestId] = useState<string | null>(null);
   const [lastAlertSuggestionKey, setLastAlertSuggestionKey] = useState<string | null>(null);
+  const [commandSource, setCommandSource] = useState<'primary-action' | 'escalation' | 'correction' | null>(null);
   const [checkInQuery, setCheckInQuery] = useState('');
   const [checkInFilter, setCheckInFilter] = useState<CoordinatorCheckInFilter>('arrivals');
   const [checkInReviewOnly, setCheckInReviewOnly] = useState(false);
@@ -462,6 +464,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
   const escalateDoorReview = (guest: GuestLiteForCoordinator) => {
     setQnaInput(buildCoordinatorDoorEscalationPrompt(guest));
+    setCommandSource('escalation');
     setPanelFocus('qna');
     setActiveQnaId(getFirstOpenCoordinatorQnaId(qnaItems));
     toast('Door issue moved into guest Q&A triage.', 'success');
@@ -472,21 +475,25 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const runPrimaryAction = () => {
     const target = resolveCoordinatorPrimaryActionTarget(primaryAction);
     if (target.panelFocus === 'check-in') {
+      setCommandSource('primary-action');
       setCheckInFilter('arrivals');
       setCheckInReviewOnly(target.reviewOnly);
       setPanelFocus('check-in');
       return;
     }
     if (target.panelFocus === 'qna') {
+      setCommandSource('primary-action');
       setActiveQnaId(getFirstOpenCoordinatorQnaId(qnaItems));
       setPanelFocus('qna');
       return;
     }
     if (target.panelFocus === 'timeline') {
       if (upNextEventId && canEditTimeline) {
+        setCommandSource('primary-action');
         runTimelineAction(upNextEventId, 'live');
       } else {
-        setPanelFocus('timeline');
+        setCommandSource('primary-action');
+    setPanelFocus('timeline');
       }
     }
   };
@@ -579,6 +586,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     const nextPanelFocus = resolveCoordinatorPanelFocus(item.key);
                     const timelineTarget = resolveCoordinatorEscalationTimelineTarget({ escalationKey: item.key, upNextEvent });
                     if (item.key === 'open-qna') setActiveQnaId(getFirstOpenCoordinatorQnaId(qnaItems));
+                    setCommandSource('escalation');
                     setCheckInFilter(focus.filter);
                     setCheckInReviewOnly(focus.reviewOnly);
                     setPanelFocus(nextPanelFocus);
