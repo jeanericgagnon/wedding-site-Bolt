@@ -22,7 +22,20 @@ import type {
   NameChangeExtractedFieldInput,
   NameChangePlan,
   NameChangeReminderInput,
+  NameChangeTargetExecutionSnapshot,
 } from '../../../lib/nameChange/types';
+
+interface ExecutionCardConfig {
+  key: string;
+  title: string;
+  description: string;
+  readyLabel: string;
+  notReadyLabel: string;
+  sequenceTitle: string;
+  payloadTitle: string;
+  payloadDescription: string;
+  snapshot: NameChangeTargetExecutionSnapshot;
+}
 
 interface Props {
   draft: NameChangeCaseInput;
@@ -78,6 +91,92 @@ function ensureDocument(documents: NameChangeDocumentInput[], kind: NameChangeDo
   ];
 }
 
+const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
+  title,
+  description,
+  readyLabel,
+  notReadyLabel,
+  sequenceTitle,
+  payloadTitle,
+  payloadDescription,
+  snapshot,
+}) => (
+  <Card>
+    <div className="flex items-center justify-between gap-3">
+      <div>
+        <h3 className="text-lg font-semibold text-text-primary">{title}</h3>
+        <p className="text-sm text-text-secondary">{description}</p>
+      </div>
+      <span className={`rounded-full px-2 py-1 text-xs ${snapshot.ready ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
+        {snapshot.ready ? readyLabel : notReadyLabel}
+      </span>
+    </div>
+
+    <div className="mt-4 grid gap-3 md:grid-cols-2">
+      {snapshot.checklist.map((item) => (
+        <div key={item.label} className="rounded-xl border border-border-subtle p-4">
+          <div className="flex items-start justify-between gap-3">
+            <p className="text-sm font-semibold text-text-primary">{item.label}</p>
+            <span className={`rounded-full px-2 py-1 text-xs ${item.status === 'ready' ? 'bg-success/10 text-success' : item.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
+              {item.status}
+            </span>
+          </div>
+          <p className="mt-3 text-sm text-text-secondary">{item.reason}</p>
+        </div>
+      ))}
+    </div>
+
+    <div className="mt-4 rounded-xl border border-border-subtle p-4">
+      <h4 className="text-sm font-semibold text-text-primary">{sequenceTitle}</h4>
+      <div className="mt-3 grid gap-3 md:grid-cols-2">
+        {snapshot.sequence.dependencies.map((dependency) => (
+          <div key={dependency.key} className="rounded-xl border border-border-subtle p-4">
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-sm font-semibold text-text-primary">{dependency.label}</p>
+              <span className={`rounded-full px-2 py-1 text-xs ${dependency.status === 'satisfied' ? 'bg-success/10 text-success' : dependency.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
+                {dependency.status}
+              </span>
+            </div>
+            <p className="mt-3 text-sm text-text-secondary">{dependency.reason}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <div className="mt-4 grid gap-3 md:grid-cols-2">
+      {snapshot.autofillFields.map((field) => (
+        <div key={field.targetField} className="rounded-xl border border-border-subtle p-4">
+          <p className="text-sm font-semibold text-text-primary">{field.label}</p>
+          <p className="mt-2 text-sm text-text-secondary">{field.value.value ?? 'Missing'}</p>
+          <p className="mt-2 text-xs text-text-secondary">{field.targetField} · {field.value.source} · {field.value.confidence}</p>
+        </div>
+      ))}
+    </div>
+
+    <div className="mt-4 rounded-xl border border-border-subtle p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h4 className="text-sm font-semibold text-text-primary">{payloadTitle}</h4>
+          <p className="text-xs text-text-secondary">{payloadDescription}</p>
+        </div>
+        <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+          {snapshot.formPayload.summary.ready} ready · {snapshot.formPayload.summary.missing} missing · {snapshot.formPayload.summary.extractedBacked} extracted-backed
+        </span>
+      </div>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        {snapshot.formPayload.fields.map((field) => (
+          <div key={field.fieldKey} className="rounded-xl border border-border-subtle p-4">
+            <p className="text-sm font-semibold text-text-primary">{field.label}</p>
+            <p className="mt-2 text-sm text-text-secondary">{field.value ?? 'Missing'}</p>
+            <p className="mt-2 text-xs text-text-secondary">{field.fieldKey} · {field.source} · {field.confidence}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </Card>
+);
+
 export const NameChangePlannerTab: React.FC<Props> = ({
   draft,
   documents,
@@ -119,6 +218,139 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     hasRecentStart: plan.summary.hasRecentStart,
     hasRecentCompletion: plan.summary.hasRecentCompletion,
   }), [reminderAttention, plan.summary.hasRecentCompletion, plan.summary.hasRecentStart]);
+  const executionCards = useMemo<ExecutionCardConfig[]>(() => {
+    const cards: ExecutionCardConfig[] = [
+      {
+        key: 'ssa',
+        title: 'Guided execution: SSA first',
+        description: 'First real guided execution slice. Uses canonical case truth, intake contract, requirements, and autofill prep to judge SS-5 readiness.',
+        readyLabel: 'ready for SS-5 prep',
+        notReadyLabel: 'not ready',
+        sequenceTitle: 'SSA sequencing dependencies',
+        payloadTitle: 'SS-5 form payload snapshot',
+        payloadDescription: 'Structured downstream form contract for the first real execution target.',
+        snapshot: ssaExecutionSnapshot,
+      },
+      {
+        key: 'dmv',
+        title: 'Guided execution: California DMV next',
+        description: 'Second guided execution slice. Reuses the same canonical/intake/autofill layers to judge DMV readiness after SSA.',
+        readyLabel: 'ready for DL-44 prep',
+        notReadyLabel: 'not ready',
+        sequenceTitle: 'DMV sequencing dependencies',
+        payloadTitle: 'DMV form payload snapshot',
+        payloadDescription: 'Structured downstream form contract for the California DMV execution target.',
+        snapshot: dmvExecutionSnapshot,
+      },
+    ];
+
+    if (draft.passport_needs_update) {
+      cards.push(
+        {
+          key: 'passport',
+          title: 'Guided execution: passport follow-through',
+          description: 'Third guided execution slice. Reuses the shared execution builder for passport packet prep once SSA is underway.',
+          readyLabel: `ready for ${passportExecutionSnapshot.recommendedFormCode} prep`,
+          notReadyLabel: 'not ready',
+          sequenceTitle: 'Passport sequencing dependencies',
+          payloadTitle: 'Passport form payload snapshot',
+          payloadDescription: 'Structured downstream form contract for the passport execution target.',
+          snapshot: passportExecutionSnapshot,
+        },
+      );
+    }
+
+    if (draft.employment_status === 'employed' || draft.employment_status === 'self_employed') {
+      cards.push(
+        {
+          key: 'employer',
+          title: 'Guided execution: employer / payroll follow-through',
+          description: 'Institutional execution slice for payroll / HR updates after SSA is complete and primary ID is moving.',
+          readyLabel: 'ready for HR packet prep',
+          notReadyLabel: 'not ready',
+          sequenceTitle: 'Employer sequencing dependencies',
+          payloadTitle: 'Employer packet snapshot',
+          payloadDescription: 'Structured downstream packet for payroll / HR updates.',
+          snapshot: employerExecutionSnapshot,
+        },
+        {
+          key: 'licenses',
+          title: 'Guided execution: professional licenses / certifications',
+          description: 'Employment-linked execution slice for professional licenses and certifications once primary ID is moving.',
+          readyLabel: 'ready for license packet prep',
+          notReadyLabel: 'not ready',
+          sequenceTitle: 'Professional-license sequencing dependencies',
+          payloadTitle: 'Professional-license packet snapshot',
+          payloadDescription: 'Structured downstream packet for professional license and certification updates.',
+          snapshot: licenseExecutionSnapshot,
+        },
+      );
+    }
+
+    cards.push(
+      {
+        key: 'banks',
+        title: 'Guided execution: banks / credit cards',
+        description: 'Institutional execution slice for bank and card account updates once primary photo ID is moving.',
+        readyLabel: 'ready for bank packet prep',
+        notReadyLabel: 'not ready',
+        sequenceTitle: 'Bank sequencing dependencies',
+        payloadTitle: 'Bank packet snapshot',
+        payloadDescription: 'Structured downstream packet for bank and credit-card account updates.',
+        snapshot: bankExecutionSnapshot,
+      },
+      {
+        key: 'insurance',
+        title: 'Guided execution: insurance follow-through',
+        description: 'Institutional execution slice for health, auto, renters, and life insurance once primary photo ID is moving.',
+        readyLabel: 'ready for insurance packet prep',
+        notReadyLabel: 'not ready',
+        sequenceTitle: 'Insurance sequencing dependencies',
+        payloadTitle: 'Insurance packet snapshot',
+        payloadDescription: 'Structured downstream packet for insurance policyholder updates.',
+        snapshot: insuranceExecutionSnapshot,
+      },
+      {
+        key: 'voter',
+        title: 'Guided execution: California voter registration',
+        description: 'California-specific post-DMV execution slice for voter registration follow-through.',
+        readyLabel: 'ready for voter update prep',
+        notReadyLabel: 'not ready',
+        sequenceTitle: 'Voter sequencing dependencies',
+        payloadTitle: 'Voter packet snapshot',
+        payloadDescription: 'Structured downstream packet for California voter registration updates.',
+        snapshot: voterExecutionSnapshot,
+      },
+    );
+
+    if (draft.passport_needs_update) {
+      cards.push({
+        key: 'tsa',
+        title: 'Guided execution: TSA / travel profiles',
+        description: 'Travel-facing execution slice for TSA PreCheck and loyalty/travel profile follow-through once passport work is underway.',
+        readyLabel: 'ready for travel profile prep',
+        notReadyLabel: 'not ready',
+        sequenceTitle: 'TSA / travel sequencing dependencies',
+        payloadTitle: 'TSA / travel packet snapshot',
+        payloadDescription: 'Structured downstream packet for TSA PreCheck and travel profile updates.',
+        snapshot: tsaExecutionSnapshot,
+      });
+    }
+
+    return cards;
+  }, [
+    bankExecutionSnapshot,
+    dmvExecutionSnapshot,
+    draft.employment_status,
+    draft.passport_needs_update,
+    employerExecutionSnapshot,
+    insuranceExecutionSnapshot,
+    licenseExecutionSnapshot,
+    passportExecutionSnapshot,
+    ssaExecutionSnapshot,
+    tsaExecutionSnapshot,
+    voterExecutionSnapshot,
+  ]);
 
   return (
     <div className="space-y-6">
@@ -344,680 +576,9 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         </div>
       </Card>
 
-      <Card>
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h3 className="text-lg font-semibold text-text-primary">Guided execution: SSA first</h3>
-            <p className="text-sm text-text-secondary">First real guided execution slice. Uses canonical case truth, intake contract, requirements, and autofill prep to judge SS-5 readiness.</p>
-          </div>
-          <span className={`rounded-full px-2 py-1 text-xs ${ssaExecutionSnapshot.ready ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
-            {ssaExecutionSnapshot.ready ? 'ready for SS-5 prep' : 'not ready'}
-          </span>
-        </div>
-
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {ssaExecutionSnapshot.checklist.map((item) => (
-            <div key={item.label} className="rounded-xl border border-border-subtle p-4">
-              <div className="flex items-start justify-between gap-3">
-                <p className="text-sm font-semibold text-text-primary">{item.label}</p>
-                <span className={`rounded-full px-2 py-1 text-xs ${item.status === 'ready' ? 'bg-success/10 text-success' : item.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
-                  {item.status}
-                </span>
-              </div>
-              <p className="mt-3 text-sm text-text-secondary">{item.reason}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4 rounded-xl border border-border-subtle p-4">
-          <h4 className="text-sm font-semibold text-text-primary">SSA sequencing dependencies</h4>
-          <div className="mt-3 grid gap-3 md:grid-cols-2">
-            {ssaExecutionSnapshot.sequence.dependencies.map((dependency) => (
-              <div key={dependency.key} className="rounded-xl border border-border-subtle p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <p className="text-sm font-semibold text-text-primary">{dependency.label}</p>
-                  <span className={`rounded-full px-2 py-1 text-xs ${dependency.status === 'satisfied' ? 'bg-success/10 text-success' : dependency.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
-                    {dependency.status}
-                  </span>
-                </div>
-                <p className="mt-3 text-sm text-text-secondary">{dependency.reason}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {ssaExecutionSnapshot.autofillFields.map((field) => (
-            <div key={field.targetField} className="rounded-xl border border-border-subtle p-4">
-              <p className="text-sm font-semibold text-text-primary">{field.label}</p>
-              <p className="mt-2 text-sm text-text-secondary">{field.value.value ?? 'Missing'}</p>
-              <p className="mt-2 text-xs text-text-secondary">{field.targetField} · {field.value.source} · {field.value.confidence}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4 rounded-xl border border-border-subtle p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h4 className="text-sm font-semibold text-text-primary">SS-5 form payload snapshot</h4>
-              <p className="text-xs text-text-secondary">Structured downstream form contract for the first real execution target.</p>
-            </div>
-            <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
-              {ssaExecutionSnapshot.formPayload.summary.ready} ready · {ssaExecutionSnapshot.formPayload.summary.missing} missing · {ssaExecutionSnapshot.formPayload.summary.extractedBacked} extracted-backed
-            </span>
-          </div>
-
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {ssaExecutionSnapshot.formPayload.fields.map((field) => (
-              <div key={field.fieldKey} className="rounded-xl border border-border-subtle p-4">
-                <p className="text-sm font-semibold text-text-primary">{field.label}</p>
-                <p className="mt-2 text-sm text-text-secondary">{field.value ?? 'Missing'}</p>
-                <p className="mt-2 text-xs text-text-secondary">{field.fieldKey} · {field.source} · {field.confidence}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </Card>
-
-      <Card>
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h3 className="text-lg font-semibold text-text-primary">Guided execution: California DMV next</h3>
-            <p className="text-sm text-text-secondary">Second guided execution slice. Reuses the same canonical/intake/autofill layers to judge DMV readiness after SSA.</p>
-          </div>
-          <span className={`rounded-full px-2 py-1 text-xs ${dmvExecutionSnapshot.ready ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
-            {dmvExecutionSnapshot.ready ? 'ready for DL-44 prep' : 'not ready'}
-          </span>
-        </div>
-
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {dmvExecutionSnapshot.checklist.map((item) => (
-            <div key={item.label} className="rounded-xl border border-border-subtle p-4">
-              <div className="flex items-start justify-between gap-3">
-                <p className="text-sm font-semibold text-text-primary">{item.label}</p>
-                <span className={`rounded-full px-2 py-1 text-xs ${item.status === 'ready' ? 'bg-success/10 text-success' : item.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
-                  {item.status}
-                </span>
-              </div>
-              <p className="mt-3 text-sm text-text-secondary">{item.reason}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4 rounded-xl border border-border-subtle p-4">
-          <h4 className="text-sm font-semibold text-text-primary">DMV sequencing dependencies</h4>
-          <div className="mt-3 grid gap-3 md:grid-cols-2">
-            {dmvExecutionSnapshot.sequence.dependencies.map((dependency) => (
-              <div key={dependency.key} className="rounded-xl border border-border-subtle p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <p className="text-sm font-semibold text-text-primary">{dependency.label}</p>
-                  <span className={`rounded-full px-2 py-1 text-xs ${dependency.status === 'satisfied' ? 'bg-success/10 text-success' : dependency.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
-                    {dependency.status}
-                  </span>
-                </div>
-                <p className="mt-3 text-sm text-text-secondary">{dependency.reason}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {dmvExecutionSnapshot.autofillFields.map((field) => (
-            <div key={field.targetField} className="rounded-xl border border-border-subtle p-4">
-              <p className="text-sm font-semibold text-text-primary">{field.label}</p>
-              <p className="mt-2 text-sm text-text-secondary">{field.value.value ?? 'Missing'}</p>
-              <p className="mt-2 text-xs text-text-secondary">{field.targetField} · {field.value.source} · {field.value.confidence}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4 rounded-xl border border-border-subtle p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h4 className="text-sm font-semibold text-text-primary">DMV form payload snapshot</h4>
-              <p className="text-xs text-text-secondary">Structured downstream form contract for the California DMV execution target.</p>
-            </div>
-            <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
-              {dmvExecutionSnapshot.formPayload.summary.ready} ready · {dmvExecutionSnapshot.formPayload.summary.missing} missing · {dmvExecutionSnapshot.formPayload.summary.extractedBacked} extracted-backed
-            </span>
-          </div>
-
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {dmvExecutionSnapshot.formPayload.fields.map((field) => (
-              <div key={field.fieldKey} className="rounded-xl border border-border-subtle p-4">
-                <p className="text-sm font-semibold text-text-primary">{field.label}</p>
-                <p className="mt-2 text-sm text-text-secondary">{field.value ?? 'Missing'}</p>
-                <p className="mt-2 text-xs text-text-secondary">{field.fieldKey} · {field.source} · {field.confidence}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </Card>
-
-      {draft.passport_needs_update && <Card>
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h3 className="text-lg font-semibold text-text-primary">Guided execution: passport follow-through</h3>
-            <p className="text-sm text-text-secondary">Third guided execution slice. Reuses the shared execution builder for passport packet prep once SSA is underway.</p>
-          </div>
-          <span className={`rounded-full px-2 py-1 text-xs ${passportExecutionSnapshot.ready ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
-            {passportExecutionSnapshot.ready ? `ready for ${passportExecutionSnapshot.recommendedFormCode} prep` : 'not ready'}
-          </span>
-        </div>
-
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {passportExecutionSnapshot.checklist.map((item) => (
-            <div key={item.label} className="rounded-xl border border-border-subtle p-4">
-              <div className="flex items-start justify-between gap-3">
-                <p className="text-sm font-semibold text-text-primary">{item.label}</p>
-                <span className={`rounded-full px-2 py-1 text-xs ${item.status === 'ready' ? 'bg-success/10 text-success' : item.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
-                  {item.status}
-                </span>
-              </div>
-              <p className="mt-3 text-sm text-text-secondary">{item.reason}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4 rounded-xl border border-border-subtle p-4">
-          <h4 className="text-sm font-semibold text-text-primary">Passport sequencing dependencies</h4>
-          <div className="mt-3 grid gap-3 md:grid-cols-2">
-            {passportExecutionSnapshot.sequence.dependencies.map((dependency) => (
-              <div key={dependency.key} className="rounded-xl border border-border-subtle p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <p className="text-sm font-semibold text-text-primary">{dependency.label}</p>
-                  <span className={`rounded-full px-2 py-1 text-xs ${dependency.status === 'satisfied' ? 'bg-success/10 text-success' : dependency.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
-                    {dependency.status}
-                  </span>
-                </div>
-                <p className="mt-3 text-sm text-text-secondary">{dependency.reason}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {passportExecutionSnapshot.autofillFields.map((field) => (
-            <div key={field.targetField} className="rounded-xl border border-border-subtle p-4">
-              <p className="text-sm font-semibold text-text-primary">{field.label}</p>
-              <p className="mt-2 text-sm text-text-secondary">{field.value.value ?? 'Missing'}</p>
-              <p className="mt-2 text-xs text-text-secondary">{field.targetField} · {field.value.source} · {field.value.confidence}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4 rounded-xl border border-border-subtle p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h4 className="text-sm font-semibold text-text-primary">Passport form payload snapshot</h4>
-              <p className="text-xs text-text-secondary">Structured downstream form contract for the passport execution target.</p>
-            </div>
-            <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
-              {passportExecutionSnapshot.formPayload.summary.ready} ready · {passportExecutionSnapshot.formPayload.summary.missing} missing · {passportExecutionSnapshot.formPayload.summary.extractedBacked} extracted-backed
-            </span>
-          </div>
-
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {passportExecutionSnapshot.formPayload.fields.map((field) => (
-              <div key={field.fieldKey} className="rounded-xl border border-border-subtle p-4">
-                <p className="text-sm font-semibold text-text-primary">{field.label}</p>
-                <p className="mt-2 text-sm text-text-secondary">{field.value ?? 'Missing'}</p>
-                <p className="mt-2 text-xs text-text-secondary">{field.fieldKey} · {field.source} · {field.confidence}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </Card>}
-
-      {(draft.employment_status === 'employed' || draft.employment_status === 'self_employed') && <Card>
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h3 className="text-lg font-semibold text-text-primary">Guided execution: employer / payroll follow-through</h3>
-            <p className="text-sm text-text-secondary">Institutional execution slice for payroll / HR updates after SSA is complete and primary ID is moving.</p>
-          </div>
-          <span className={`rounded-full px-2 py-1 text-xs ${employerExecutionSnapshot.ready ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
-            {employerExecutionSnapshot.ready ? 'ready for HR packet prep' : 'not ready'}
-          </span>
-        </div>
-
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {employerExecutionSnapshot.checklist.map((item) => (
-            <div key={item.label} className="rounded-xl border border-border-subtle p-4">
-              <div className="flex items-start justify-between gap-3">
-                <p className="text-sm font-semibold text-text-primary">{item.label}</p>
-                <span className={`rounded-full px-2 py-1 text-xs ${item.status === 'ready' ? 'bg-success/10 text-success' : item.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
-                  {item.status}
-                </span>
-              </div>
-              <p className="mt-3 text-sm text-text-secondary">{item.reason}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4 rounded-xl border border-border-subtle p-4">
-          <h4 className="text-sm font-semibold text-text-primary">Employer sequencing dependencies</h4>
-          <div className="mt-3 grid gap-3 md:grid-cols-2">
-            {employerExecutionSnapshot.sequence.dependencies.map((dependency) => (
-              <div key={dependency.key} className="rounded-xl border border-border-subtle p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <p className="text-sm font-semibold text-text-primary">{dependency.label}</p>
-                  <span className={`rounded-full px-2 py-1 text-xs ${dependency.status === 'satisfied' ? 'bg-success/10 text-success' : dependency.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
-                    {dependency.status}
-                  </span>
-                </div>
-                <p className="mt-3 text-sm text-text-secondary">{dependency.reason}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {employerExecutionSnapshot.autofillFields.map((field) => (
-            <div key={field.targetField} className="rounded-xl border border-border-subtle p-4">
-              <p className="text-sm font-semibold text-text-primary">{field.label}</p>
-              <p className="mt-2 text-sm text-text-secondary">{field.value.value ?? 'Missing'}</p>
-              <p className="mt-2 text-xs text-text-secondary">{field.targetField} · {field.value.source} · {field.value.confidence}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4 rounded-xl border border-border-subtle p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h4 className="text-sm font-semibold text-text-primary">Employer packet snapshot</h4>
-              <p className="text-xs text-text-secondary">Structured downstream packet for payroll / HR updates.</p>
-            </div>
-            <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
-              {employerExecutionSnapshot.formPayload.summary.ready} ready · {employerExecutionSnapshot.formPayload.summary.missing} missing · {employerExecutionSnapshot.formPayload.summary.extractedBacked} extracted-backed
-            </span>
-          </div>
-
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {employerExecutionSnapshot.formPayload.fields.map((field) => (
-              <div key={field.fieldKey} className="rounded-xl border border-border-subtle p-4">
-                <p className="text-sm font-semibold text-text-primary">{field.label}</p>
-                <p className="mt-2 text-sm text-text-secondary">{field.value ?? 'Missing'}</p>
-                <p className="mt-2 text-xs text-text-secondary">{field.fieldKey} · {field.source} · {field.confidence}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </Card>}
-
-      <Card>
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h3 className="text-lg font-semibold text-text-primary">Guided execution: banks / credit cards</h3>
-            <p className="text-sm text-text-secondary">Institutional execution slice for bank and card account updates once primary photo ID is moving.</p>
-          </div>
-          <span className={`rounded-full px-2 py-1 text-xs ${bankExecutionSnapshot.ready ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
-            {bankExecutionSnapshot.ready ? 'ready for bank packet prep' : 'not ready'}
-          </span>
-        </div>
-
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {bankExecutionSnapshot.checklist.map((item) => (
-            <div key={item.label} className="rounded-xl border border-border-subtle p-4">
-              <div className="flex items-start justify-between gap-3">
-                <p className="text-sm font-semibold text-text-primary">{item.label}</p>
-                <span className={`rounded-full px-2 py-1 text-xs ${item.status === 'ready' ? 'bg-success/10 text-success' : item.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
-                  {item.status}
-                </span>
-              </div>
-              <p className="mt-3 text-sm text-text-secondary">{item.reason}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4 rounded-xl border border-border-subtle p-4">
-          <h4 className="text-sm font-semibold text-text-primary">Bank sequencing dependencies</h4>
-          <div className="mt-3 grid gap-3 md:grid-cols-2">
-            {bankExecutionSnapshot.sequence.dependencies.map((dependency) => (
-              <div key={dependency.key} className="rounded-xl border border-border-subtle p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <p className="text-sm font-semibold text-text-primary">{dependency.label}</p>
-                  <span className={`rounded-full px-2 py-1 text-xs ${dependency.status === 'satisfied' ? 'bg-success/10 text-success' : dependency.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
-                    {dependency.status}
-                  </span>
-                </div>
-                <p className="mt-3 text-sm text-text-secondary">{dependency.reason}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {bankExecutionSnapshot.autofillFields.map((field) => (
-            <div key={field.targetField} className="rounded-xl border border-border-subtle p-4">
-              <p className="text-sm font-semibold text-text-primary">{field.label}</p>
-              <p className="mt-2 text-sm text-text-secondary">{field.value.value ?? 'Missing'}</p>
-              <p className="mt-2 text-xs text-text-secondary">{field.targetField} · {field.value.source} · {field.value.confidence}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4 rounded-xl border border-border-subtle p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h4 className="text-sm font-semibold text-text-primary">Bank packet snapshot</h4>
-              <p className="text-xs text-text-secondary">Structured downstream packet for bank and credit-card account updates.</p>
-            </div>
-            <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
-              {bankExecutionSnapshot.formPayload.summary.ready} ready · {bankExecutionSnapshot.formPayload.summary.missing} missing · {bankExecutionSnapshot.formPayload.summary.extractedBacked} extracted-backed
-            </span>
-          </div>
-
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {bankExecutionSnapshot.formPayload.fields.map((field) => (
-              <div key={field.fieldKey} className="rounded-xl border border-border-subtle p-4">
-                <p className="text-sm font-semibold text-text-primary">{field.label}</p>
-                <p className="mt-2 text-sm text-text-secondary">{field.value ?? 'Missing'}</p>
-                <p className="mt-2 text-xs text-text-secondary">{field.fieldKey} · {field.source} · {field.confidence}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </Card>
-
-      <Card>
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h3 className="text-lg font-semibold text-text-primary">Guided execution: insurance follow-through</h3>
-            <p className="text-sm text-text-secondary">Institutional execution slice for health, auto, renters, and life insurance once primary photo ID is moving.</p>
-          </div>
-          <span className={`rounded-full px-2 py-1 text-xs ${insuranceExecutionSnapshot.ready ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
-            {insuranceExecutionSnapshot.ready ? 'ready for insurance packet prep' : 'not ready'}
-          </span>
-        </div>
-
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {insuranceExecutionSnapshot.checklist.map((item) => (
-            <div key={item.label} className="rounded-xl border border-border-subtle p-4">
-              <div className="flex items-start justify-between gap-3">
-                <p className="text-sm font-semibold text-text-primary">{item.label}</p>
-                <span className={`rounded-full px-2 py-1 text-xs ${item.status === 'ready' ? 'bg-success/10 text-success' : item.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
-                  {item.status}
-                </span>
-              </div>
-              <p className="mt-3 text-sm text-text-secondary">{item.reason}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4 rounded-xl border border-border-subtle p-4">
-          <h4 className="text-sm font-semibold text-text-primary">Insurance sequencing dependencies</h4>
-          <div className="mt-3 grid gap-3 md:grid-cols-2">
-            {insuranceExecutionSnapshot.sequence.dependencies.map((dependency) => (
-              <div key={dependency.key} className="rounded-xl border border-border-subtle p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <p className="text-sm font-semibold text-text-primary">{dependency.label}</p>
-                  <span className={`rounded-full px-2 py-1 text-xs ${dependency.status === 'satisfied' ? 'bg-success/10 text-success' : dependency.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
-                    {dependency.status}
-                  </span>
-                </div>
-                <p className="mt-3 text-sm text-text-secondary">{dependency.reason}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {insuranceExecutionSnapshot.autofillFields.map((field) => (
-            <div key={field.targetField} className="rounded-xl border border-border-subtle p-4">
-              <p className="text-sm font-semibold text-text-primary">{field.label}</p>
-              <p className="mt-2 text-sm text-text-secondary">{field.value.value ?? 'Missing'}</p>
-              <p className="mt-2 text-xs text-text-secondary">{field.targetField} · {field.value.source} · {field.value.confidence}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4 rounded-xl border border-border-subtle p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h4 className="text-sm font-semibold text-text-primary">Insurance packet snapshot</h4>
-              <p className="text-xs text-text-secondary">Structured downstream packet for insurance policyholder updates.</p>
-            </div>
-            <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
-              {insuranceExecutionSnapshot.formPayload.summary.ready} ready · {insuranceExecutionSnapshot.formPayload.summary.missing} missing · {insuranceExecutionSnapshot.formPayload.summary.extractedBacked} extracted-backed
-            </span>
-          </div>
-
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {insuranceExecutionSnapshot.formPayload.fields.map((field) => (
-              <div key={field.fieldKey} className="rounded-xl border border-border-subtle p-4">
-                <p className="text-sm font-semibold text-text-primary">{field.label}</p>
-                <p className="mt-2 text-sm text-text-secondary">{field.value ?? 'Missing'}</p>
-                <p className="mt-2 text-xs text-text-secondary">{field.fieldKey} · {field.source} · {field.confidence}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </Card>
-
-      <Card>
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h3 className="text-lg font-semibold text-text-primary">Guided execution: California voter registration</h3>
-            <p className="text-sm text-text-secondary">California-specific post-DMV execution slice for voter registration follow-through.</p>
-          </div>
-          <span className={`rounded-full px-2 py-1 text-xs ${voterExecutionSnapshot.ready ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
-            {voterExecutionSnapshot.ready ? 'ready for voter update prep' : 'not ready'}
-          </span>
-        </div>
-
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {voterExecutionSnapshot.checklist.map((item) => (
-            <div key={item.label} className="rounded-xl border border-border-subtle p-4">
-              <div className="flex items-start justify-between gap-3">
-                <p className="text-sm font-semibold text-text-primary">{item.label}</p>
-                <span className={`rounded-full px-2 py-1 text-xs ${item.status === 'ready' ? 'bg-success/10 text-success' : item.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
-                  {item.status}
-                </span>
-              </div>
-              <p className="mt-3 text-sm text-text-secondary">{item.reason}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4 rounded-xl border border-border-subtle p-4">
-          <h4 className="text-sm font-semibold text-text-primary">Voter sequencing dependencies</h4>
-          <div className="mt-3 grid gap-3 md:grid-cols-2">
-            {voterExecutionSnapshot.sequence.dependencies.map((dependency) => (
-              <div key={dependency.key} className="rounded-xl border border-border-subtle p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <p className="text-sm font-semibold text-text-primary">{dependency.label}</p>
-                  <span className={`rounded-full px-2 py-1 text-xs ${dependency.status === 'satisfied' ? 'bg-success/10 text-success' : dependency.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
-                    {dependency.status}
-                  </span>
-                </div>
-                <p className="mt-3 text-sm text-text-secondary">{dependency.reason}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {voterExecutionSnapshot.autofillFields.map((field) => (
-            <div key={field.targetField} className="rounded-xl border border-border-subtle p-4">
-              <p className="text-sm font-semibold text-text-primary">{field.label}</p>
-              <p className="mt-2 text-sm text-text-secondary">{field.value.value ?? 'Missing'}</p>
-              <p className="mt-2 text-xs text-text-secondary">{field.targetField} · {field.value.source} · {field.value.confidence}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4 rounded-xl border border-border-subtle p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h4 className="text-sm font-semibold text-text-primary">Voter packet snapshot</h4>
-              <p className="text-xs text-text-secondary">Structured downstream packet for California voter registration updates.</p>
-            </div>
-            <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
-              {voterExecutionSnapshot.formPayload.summary.ready} ready · {voterExecutionSnapshot.formPayload.summary.missing} missing · {voterExecutionSnapshot.formPayload.summary.extractedBacked} extracted-backed
-            </span>
-          </div>
-
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {voterExecutionSnapshot.formPayload.fields.map((field) => (
-              <div key={field.fieldKey} className="rounded-xl border border-border-subtle p-4">
-                <p className="text-sm font-semibold text-text-primary">{field.label}</p>
-                <p className="mt-2 text-sm text-text-secondary">{field.value ?? 'Missing'}</p>
-                <p className="mt-2 text-xs text-text-secondary">{field.fieldKey} · {field.source} · {field.confidence}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </Card>
-
-      {draft.passport_needs_update && <Card>
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h3 className="text-lg font-semibold text-text-primary">Guided execution: TSA / travel profiles</h3>
-            <p className="text-sm text-text-secondary">Travel-facing execution slice for TSA PreCheck and loyalty/travel profile follow-through once passport work is underway.</p>
-          </div>
-          <span className={`rounded-full px-2 py-1 text-xs ${tsaExecutionSnapshot.ready ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
-            {tsaExecutionSnapshot.ready ? 'ready for travel profile prep' : 'not ready'}
-          </span>
-        </div>
-
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {tsaExecutionSnapshot.checklist.map((item) => (
-            <div key={item.label} className="rounded-xl border border-border-subtle p-4">
-              <div className="flex items-start justify-between gap-3">
-                <p className="text-sm font-semibold text-text-primary">{item.label}</p>
-                <span className={`rounded-full px-2 py-1 text-xs ${item.status === 'ready' ? 'bg-success/10 text-success' : item.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
-                  {item.status}
-                </span>
-              </div>
-              <p className="mt-3 text-sm text-text-secondary">{item.reason}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4 rounded-xl border border-border-subtle p-4">
-          <h4 className="text-sm font-semibold text-text-primary">TSA / travel sequencing dependencies</h4>
-          <div className="mt-3 grid gap-3 md:grid-cols-2">
-            {tsaExecutionSnapshot.sequence.dependencies.map((dependency) => (
-              <div key={dependency.key} className="rounded-xl border border-border-subtle p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <p className="text-sm font-semibold text-text-primary">{dependency.label}</p>
-                  <span className={`rounded-full px-2 py-1 text-xs ${dependency.status === 'satisfied' ? 'bg-success/10 text-success' : dependency.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
-                    {dependency.status}
-                  </span>
-                </div>
-                <p className="mt-3 text-sm text-text-secondary">{dependency.reason}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {tsaExecutionSnapshot.autofillFields.map((field) => (
-            <div key={field.targetField} className="rounded-xl border border-border-subtle p-4">
-              <p className="text-sm font-semibold text-text-primary">{field.label}</p>
-              <p className="mt-2 text-sm text-text-secondary">{field.value.value ?? 'Missing'}</p>
-              <p className="mt-2 text-xs text-text-secondary">{field.targetField} · {field.value.source} · {field.value.confidence}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4 rounded-xl border border-border-subtle p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h4 className="text-sm font-semibold text-text-primary">TSA / travel packet snapshot</h4>
-              <p className="text-xs text-text-secondary">Structured downstream packet for TSA PreCheck and travel profile updates.</p>
-            </div>
-            <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
-              {tsaExecutionSnapshot.formPayload.summary.ready} ready · {tsaExecutionSnapshot.formPayload.summary.missing} missing · {tsaExecutionSnapshot.formPayload.summary.extractedBacked} extracted-backed
-            </span>
-          </div>
-
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {tsaExecutionSnapshot.formPayload.fields.map((field) => (
-              <div key={field.fieldKey} className="rounded-xl border border-border-subtle p-4">
-                <p className="text-sm font-semibold text-text-primary">{field.label}</p>
-                <p className="mt-2 text-sm text-text-secondary">{field.value ?? 'Missing'}</p>
-                <p className="mt-2 text-xs text-text-secondary">{field.fieldKey} · {field.source} · {field.confidence}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </Card>}
-
-      {(draft.employment_status === 'employed' || draft.employment_status === 'self_employed') && <Card>
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h3 className="text-lg font-semibold text-text-primary">Guided execution: professional licenses / certifications</h3>
-            <p className="text-sm text-text-secondary">Employment-linked execution slice for professional licenses and certifications once primary ID is moving.</p>
-          </div>
-          <span className={`rounded-full px-2 py-1 text-xs ${licenseExecutionSnapshot.ready ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
-            {licenseExecutionSnapshot.ready ? 'ready for license packet prep' : 'not ready'}
-          </span>
-        </div>
-
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {licenseExecutionSnapshot.checklist.map((item) => (
-            <div key={item.label} className="rounded-xl border border-border-subtle p-4">
-              <div className="flex items-start justify-between gap-3">
-                <p className="text-sm font-semibold text-text-primary">{item.label}</p>
-                <span className={`rounded-full px-2 py-1 text-xs ${item.status === 'ready' ? 'bg-success/10 text-success' : item.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
-                  {item.status}
-                </span>
-              </div>
-              <p className="mt-3 text-sm text-text-secondary">{item.reason}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4 rounded-xl border border-border-subtle p-4">
-          <h4 className="text-sm font-semibold text-text-primary">Professional-license sequencing dependencies</h4>
-          <div className="mt-3 grid gap-3 md:grid-cols-2">
-            {licenseExecutionSnapshot.sequence.dependencies.map((dependency) => (
-              <div key={dependency.key} className="rounded-xl border border-border-subtle p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <p className="text-sm font-semibold text-text-primary">{dependency.label}</p>
-                  <span className={`rounded-full px-2 py-1 text-xs ${dependency.status === 'satisfied' ? 'bg-success/10 text-success' : dependency.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
-                    {dependency.status}
-                  </span>
-                </div>
-                <p className="mt-3 text-sm text-text-secondary">{dependency.reason}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          {licenseExecutionSnapshot.autofillFields.map((field) => (
-            <div key={field.targetField} className="rounded-xl border border-border-subtle p-4">
-              <p className="text-sm font-semibold text-text-primary">{field.label}</p>
-              <p className="mt-2 text-sm text-text-secondary">{field.value.value ?? 'Missing'}</p>
-              <p className="mt-2 text-xs text-text-secondary">{field.targetField} · {field.value.source} · {field.value.confidence}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4 rounded-xl border border-border-subtle p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h4 className="text-sm font-semibold text-text-primary">Professional-license packet snapshot</h4>
-              <p className="text-xs text-text-secondary">Structured downstream packet for professional license and certification updates.</p>
-            </div>
-            <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
-              {licenseExecutionSnapshot.formPayload.summary.ready} ready · {licenseExecutionSnapshot.formPayload.summary.missing} missing · {licenseExecutionSnapshot.formPayload.summary.extractedBacked} extracted-backed
-            </span>
-          </div>
-
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {licenseExecutionSnapshot.formPayload.fields.map((field) => (
-              <div key={field.fieldKey} className="rounded-xl border border-border-subtle p-4">
-                <p className="text-sm font-semibold text-text-primary">{field.label}</p>
-                <p className="mt-2 text-sm text-text-secondary">{field.value ?? 'Missing'}</p>
-                <p className="mt-2 text-xs text-text-secondary">{field.fieldKey} · {field.source} · {field.confidence}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </Card>}
+      {executionCards.map(({ key, ...card }) => (
+        <ExecutionSnapshotCard key={key} {...card} />
+      ))}
 
       <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
         <Card>
