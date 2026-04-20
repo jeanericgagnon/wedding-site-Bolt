@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, CheckCircle2, FileCheck2, FileStack, Lock, MapPinned, Sparkles } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
@@ -84,6 +84,8 @@ const EXECUTION_SECTION_STEP_IDS: Record<string, string[]> = {
   institutional: ['institutions-rollout'],
   cleanup: ['institutions-rollout'],
 };
+
+const NAME_CHANGE_SECTION_PREFS_STORAGE_KEY = 'dayoflove:name-change:collapsed-sections';
 
 interface Props {
   draft: NameChangeCaseInput;
@@ -262,7 +264,16 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   onSave,
 }) => {
   const [showAdmin, setShowAdmin] = useState(false);
-  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>(() => {
+    if (typeof window === 'undefined') return {};
+
+    try {
+      const raw = window.localStorage.getItem(NAME_CHANGE_SECTION_PREFS_STORAGE_KEY);
+      return raw ? JSON.parse(raw) as Record<string, boolean> : {};
+    } catch {
+      return {};
+    }
+  });
   const stepCounts = useMemo(() => ({
     ready: plan.steps.filter((step) => step.status === 'ready').length,
     blocked: plan.steps.filter((step) => step.status === 'blocked').length,
@@ -608,6 +619,16 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       [sectionKey]: !(current[sectionKey] ?? false),
     }));
   };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      window.localStorage.setItem(NAME_CHANGE_SECTION_PREFS_STORAGE_KEY, JSON.stringify(collapsedSections));
+    } catch {
+      // Ignore localStorage failures; planner still works without persistence.
+    }
+  }, [collapsedSections]);
 
   return (
     <div className="space-y-6">
