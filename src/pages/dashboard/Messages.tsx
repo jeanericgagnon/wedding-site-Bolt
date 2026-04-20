@@ -1912,6 +1912,7 @@ export const DashboardMessages: React.FC = () => {
       status: 'scheduled',
     };
 
+    let created = false;
     try {
       if (isDemoMode) {
         const demoMessage: Message = {
@@ -1930,15 +1931,23 @@ export const DashboardMessages: React.FC = () => {
           created_at: new Date().toISOString(),
         } as Message;
         setMessages((prev) => [demoMessage, ...prev]);
+        created = true;
       } else {
         const { error } = await supabase.from('messages').insert(payload);
         if (error) throw error;
+        created = true;
         await fetchMessages();
       }
 
       toast('Save-the-date campaign scheduled for tomorrow at 10:00.', 'success');
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'Could not create save-the-date campaign.', 'error');
+      const message = err instanceof Error ? err.message : 'Could not create save-the-date campaign.';
+      toast(
+        created
+          ? `Campaign was created, but the message list could not refresh: ${message}`
+          : message,
+        created ? 'info' : 'error',
+      );
     }
   };
 
