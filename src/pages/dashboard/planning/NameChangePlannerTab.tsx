@@ -7,6 +7,7 @@ import { buildNameChangeDocumentIntakeSnapshot } from '../../../lib/nameChange/d
 import { NAME_CHANGE_FORM_REGISTRY, NAME_CHANGE_INSTITUTION_LIBRARY } from '../../../lib/nameChange/registry';
 import { evaluateNameChangeRequirements } from '../../../lib/nameChange/requirements';
 import { bulkUpdateNameChangeReminderStatus, deriveNameChangeReminderAttention, summarizeNameChangeReminderAttention, summarizeNameChangeReminders, updateNameChangeReminderStatus } from '../../../lib/nameChange/reminders';
+import { buildNameChangeSsaExecutionSnapshot } from '../../../lib/nameChange/ssaFlow';
 import type {
   NameChangeCaseInput,
   NameChangeDocumentInput,
@@ -95,6 +96,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   const requirementSnapshot = useMemo(() => evaluateNameChangeRequirements(draft, documents, extractedFields), [draft, documents, extractedFields]);
   const documentIntakeSnapshot = useMemo(() => buildNameChangeDocumentIntakeSnapshot(draft, documents, extractedFields), [draft, documents, extractedFields]);
   const autofillPrepSnapshot = useMemo(() => buildNameChangeAutofillPrepSnapshot(draft, documents, extractedFields), [draft, documents, extractedFields]);
+  const ssaExecutionSnapshot = useMemo(() => buildNameChangeSsaExecutionSnapshot(draft, documents, extractedFields), [draft, documents, extractedFields]);
   const reminderSummary = useMemo(() => summarizeNameChangeReminders(effectiveReminders), [effectiveReminders]);
   const reminderAttention = useMemo(() => deriveNameChangeReminderAttention(effectiveReminders, plan), [effectiveReminders, plan]);
   const reminderAttentionSummary = useMemo(() => summarizeNameChangeReminderAttention(reminderAttention, {
@@ -321,6 +323,42 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               </div>
               <p className="mt-3 text-sm text-text-primary">{field.value.value ?? 'Missing'}</p>
               <p className="mt-2 text-xs text-text-secondary">Source: {field.value.source}{field.value.sourceDocumentKind ? ` · ${field.value.sourceDocumentKind}` : ''}{field.value.sourceFieldKey ? ` · ${field.value.sourceFieldKey}` : ''}</p>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-semibold text-text-primary">Guided execution: SSA first</h3>
+            <p className="text-sm text-text-secondary">First real guided execution slice. Uses canonical case truth, intake contract, requirements, and autofill prep to judge SS-5 readiness.</p>
+          </div>
+          <span className={`rounded-full px-2 py-1 text-xs ${ssaExecutionSnapshot.ready ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
+            {ssaExecutionSnapshot.ready ? 'ready for SS-5 prep' : 'not ready'}
+          </span>
+        </div>
+
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {ssaExecutionSnapshot.checklist.map((item) => (
+            <div key={item.label} className="rounded-xl border border-border-subtle p-4">
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-sm font-semibold text-text-primary">{item.label}</p>
+                <span className={`rounded-full px-2 py-1 text-xs ${item.status === 'ready' ? 'bg-success/10 text-success' : item.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
+                  {item.status}
+                </span>
+              </div>
+              <p className="mt-3 text-sm text-text-secondary">{item.reason}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {ssaExecutionSnapshot.autofillFields.map((field) => (
+            <div key={field.targetField} className="rounded-xl border border-border-subtle p-4">
+              <p className="text-sm font-semibold text-text-primary">{field.label}</p>
+              <p className="mt-2 text-sm text-text-secondary">{field.value.value ?? 'Missing'}</p>
+              <p className="mt-2 text-xs text-text-secondary">{field.targetField} · {field.value.source} · {field.value.confidence}</p>
             </div>
           ))}
         </div>
