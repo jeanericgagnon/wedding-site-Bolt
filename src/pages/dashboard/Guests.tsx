@@ -12,7 +12,7 @@ import { getRsvpExceptionStates } from '../../lib/rsvpExceptionState';
 import { hasRespondedRsvpStatus, isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 import { extractDietaryNote } from '../../lib/dietaryNotes';
 import { deriveInviteEvents } from '../../lib/rsvpEventFallback';
-import { deleteEventRsvpByInvitationId, deleteEventRsvpsByInvitationIds, getEventRsvpSnapshotsByInvitationIds, restoreEventRsvpSnapshots } from '../../lib/eventRsvpCleanup';
+import { deleteEventRsvpByInvitationId, deleteEventRsvpsByInvitationIds, getEventRsvpSnapshotsByInvitationIds, restoreEventRsvpSnapshots, type EventRsvpSnapshot } from '../../lib/eventRsvpCleanup';
 import { findCsvHeaderIndex, normalizeCsvHeader } from '../../lib/csvHeaderMatcher';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, Button, Badge, Input, Select, Textarea } from '../../components/ui';
@@ -1018,6 +1018,7 @@ export const DashboardGuests: React.FC = () => {
       invited_to_reception: editingGuest.invited_to_reception,
     };
     let previousInviteEventIds: string[] = [];
+    let previousEventRsvpSnapshots: EventRsvpSnapshot[] = [];
     let guestUpdated = false;
     let invitesCleared = false;
 
@@ -1075,6 +1076,7 @@ export const DashboardGuests: React.FC = () => {
       previousInviteEventIds = (existingInvitationRows ?? []).map((row) => row.event_id as string);
       const existingInvitationIds = (existingInvitationRows ?? []).map((row) => row.id as string);
       if (existingInvitationIds.length > 0) {
+        previousEventRsvpSnapshots = await getEventRsvpSnapshotsByInvitationIds(existingInvitationIds);
         await deleteEventRsvpsByInvitationIds(existingInvitationIds);
       }
 
@@ -1103,6 +1105,7 @@ export const DashboardGuests: React.FC = () => {
             await supabase.from('event_invitations').insert(
               rollbackEventIds.map((eventId) => ({ event_id: eventId, guest_id: editingGuest.id })),
             );
+            await restoreEventRsvpSnapshots(previousEventRsvpSnapshots);
           }
         }
         if (guestUpdated) {
