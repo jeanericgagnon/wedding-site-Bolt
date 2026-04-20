@@ -1395,7 +1395,7 @@ export const DashboardMessages: React.FC = () => {
       const recipientMeta = {
         audience: formData.audience,
         audience_label: selectedAudience?.label ?? null,
-        recipient_count: isDemoMode && isSendNow ? totalAudienceCount : recipientCount,
+        recipient_count: totalAudienceCount,
         campaignName: campaignName || null,
         campaignType: selectedTemplate.campaignType ?? null,
         templateKey: formData.templateKey,
