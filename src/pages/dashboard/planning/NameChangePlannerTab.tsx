@@ -66,6 +66,8 @@ interface ExecutionSectionSummary {
   attentionCount: number;
   highestRiskCardKey: string | null;
   highestRiskCard: string;
+  nextActionLabel: string;
+  nextActionDetail: string;
   staleReminderOverlap: number;
   reminderKeys: string[];
   staleReminderKeys: string[];
@@ -531,6 +533,14 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       }, null as ExecutionCardConfig | null);
       const highestRiskCardKey = highestRiskCardConfig?.key ?? null;
       const highestRiskCard = highestRiskCardConfig?.title ?? 'No major risk in this section';
+      const nextActionLabel = highestRiskCardConfig?.snapshot.ready
+        ? `Push ${highestRiskCardConfig.title.replace('Guided execution: ', '')} forward`
+        : `Clear ${highestRiskCardConfig?.title.replace('Guided execution: ', '') ?? 'the top blocker'}`;
+      const nextActionDetail = highestRiskCardConfig
+        ? (highestRiskCardConfig.snapshot.blockers[0]
+          ?? highestRiskCardConfig.snapshot.checklist.find((item) => item.status === 'attention')?.reason
+          ?? 'Review the highest-risk card and move the next dependent step.')
+        : 'No immediate action needed in this section.';
       const relatedStepIds = EXECUTION_SECTION_STEP_IDS[section.key] ?? [];
       const sectionReminderItems = reminderAttention.filter((item) => relatedStepIds.includes(item.dependsOnStepId));
       const staleReminderKeys = sectionReminderItems.filter((item) => item.isStale).map((item) => item.reminderKey);
@@ -544,6 +554,8 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         attentionCount,
         highestRiskCardKey,
         highestRiskCard,
+        nextActionLabel,
+        nextActionDetail,
         staleReminderOverlap,
         reminderKeys,
         staleReminderKeys,
@@ -840,6 +852,24 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               <p className="text-xs uppercase tracking-wide text-text-tertiary">Stale reminder overlap</p>
               <p className="mt-2 text-sm font-semibold text-text-primary">{section.staleReminderOverlap} stale overlaps</p>
               <p className="mt-2 text-xs text-text-secondary">How much stale reminder pressure seems to be pooling around this section.</p>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-primary">Section next action</p>
+                <p className="mt-2 text-sm font-semibold text-text-primary">{section.nextActionLabel}</p>
+                <p className="mt-2 text-xs text-text-secondary">{section.nextActionDetail}</p>
+              </div>
+              {section.highestRiskCardKey && (
+                <Button
+                  size="sm"
+                  onClick={() => document.getElementById(`execution-card-${section.highestRiskCardKey}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                >
+                  Open next action
+                </Button>
+              )}
             </div>
           </div>
 
