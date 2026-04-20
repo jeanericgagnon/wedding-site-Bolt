@@ -121,6 +121,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
         if (!resolvedSiteId) return;
         if (!mounted) return;
         setSiteId(resolvedSiteId);
+        setCoordinatorRole(activeSite?.role ?? 'owner');
 
         const [{ data: guestsData }, { data: eventsData }] = await Promise.all([
           supabase.from('guests').select('id, first_name, last_name, name, rsvp_status, checked_in_at').eq('wedding_site_id', resolvedSiteId),

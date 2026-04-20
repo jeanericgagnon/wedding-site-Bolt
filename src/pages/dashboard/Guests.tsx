@@ -346,12 +346,12 @@ export const DashboardGuests: React.FC = () => {
     }
 
     try {
-      const rawRole = readPlannerAccessRole('guests', 'global');
+      const rawRole = readPlannerAccessRole('guests', weddingSiteId ?? 'global');
       if (rawRole) setGuestsRole(rawRole);
     } catch {
       // noop
     }
-  }, []);
+  }, [weddingSiteId]);
 
   useEffect(() => {
     try {
@@ -379,11 +379,11 @@ export const DashboardGuests: React.FC = () => {
 
   useEffect(() => {
     try {
-      writePlannerAccessRole('guests', 'global', guestsRole);
+      writePlannerAccessRole('guests', weddingSiteId ?? 'global', guestsRole);
     } catch {
       // noop
     }
-  }, [guestsRole]);
+  }, [guestsRole, weddingSiteId]);
 
 
   useEffect(() => {
@@ -492,6 +492,7 @@ export const DashboardGuests: React.FC = () => {
     try {
       const activeSite = await resolveActiveSiteForUser(user.id);
       const activeSiteId = activeSite?.id ?? null;
+      setGuestsRole(activeSite?.role ?? 'owner');
       const { data, error } = activeSiteId ? await supabase
         .from('wedding_sites')
         .select('id, couple_name_1, couple_name_2, wedding_date, venue_name, venue_address, site_url, rsvp_custom_questions, rsvp_meal_config')

@@ -256,6 +256,7 @@ Useful if stable, but should not distort the wedding-core launch decision.
 ## Proof notes from current inspection
 - Collaborator invite claim already enforces invited-email match in both the Accept Collaborator Invite UI flow and the `claim_collaborator_invite` RPC. That older gap should no longer be treated as an active v1 blocker.
 - The collaborator proof gap is now narrower and more concrete: role behavior and permission boundaries still need executed QA, not speculative trust-copy cleanup.
+- Concrete finish gap found and fixed: major collaborator-facing ops surfaces were still defaulting to `owner` until a local role override existed. Planning, Guests, Messages, and Coordinator Mode now bootstrap from the active site role first, then allow a saved per-surface override.
 
 ## Finish-lane read right now
 - Public promise is much cleaner than before.

@@ -4,6 +4,7 @@ import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { useToast } from '../../components/ui/Toast';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
+import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { demoWeddingSite, demoPlanningTasks, demoBudgetItems, demoVendors, demoNameChangeCase, demoNameChangeDocuments, demoNameChangeExtractedFields } from '../../lib/demoData';
 import { PLANNER_ROLE_OPTIONS, canEditPlanningBudget, canEditPlanningTasks, canEditPlanningVendors, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
 import {
@@ -35,7 +36,7 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 
 export const DashboardPlanning: React.FC = () => {
-  const { isDemoMode } = useAuth();
+  const { user, isDemoMode } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [siteId, setSiteId] = useState<string | null>(null);
   const [weddingDate, setWeddingDate] = useState<string | null>(null);
@@ -57,7 +58,7 @@ export const DashboardPlanning: React.FC = () => {
 
   useEffect(() => {
     loadAll();
-  }, [isDemoMode]);
+  }, [isDemoMode, user]);
 
   useEffect(() => {
     if (!siteId) return;
@@ -94,6 +95,10 @@ export const DashboardPlanning: React.FC = () => {
       const id = await getWeddingSiteId();
       if (!id) return;
       setSiteId(id);
+      if (user) {
+        const activeSite = await resolveActiveSiteForUser(user.id);
+        if (activeSite?.id === id) setPlanningRole(activeSite.role);
+      }
       try {
         const rawRole = localStorage.getItem(`dayof.planning.role.${id}`) as PlannerAccessRole | null;
         if (rawRole === 'owner' || rawRole === 'planner' || rawRole === 'coordinator' || rawRole === 'viewer') setPlanningRole(rawRole);

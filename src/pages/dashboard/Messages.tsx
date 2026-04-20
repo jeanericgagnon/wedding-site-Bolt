@@ -973,10 +973,13 @@ export const DashboardMessages: React.FC = () => {
       return;
     }
 
+    const activeSite = await resolveActiveSiteForUser(user.id);
+    setMessagesRole(activeSite?.role ?? 'owner');
+
     const { data, error } = await supabase
       .from('wedding_sites')
       .select('id, couple_first_name, couple_second_name, couple_email, sms_credits_balance')
-      .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
+      .eq('id', activeSite?.id ?? '')
       .maybeSingle();
     if (error) {
       toast('Couldn’t load your messaging workspace right now. Please try again.', 'error');
