@@ -10,10 +10,59 @@ import type {
   NameChangeExecutionTargetKey,
   NameChangeExtractedFieldInput,
   NameChangePlan,
+  NameChangeRequirementResult,
 } from './types';
 
 function requirementStatusToDependencyStatus(status: 'satisfied' | 'missing' | 'attention'): NameChangeExecutionDependency['status'] {
   return status;
+}
+
+function buildRequirementDependency(
+  result: NameChangeRequirementResult | undefined,
+  key: string,
+  label: string,
+  required = true,
+  fallbackReason: string,
+): NameChangeExecutionDependency {
+  return {
+    key,
+    label,
+    required,
+    status: requirementStatusToDependencyStatus(result?.status ?? 'missing'),
+    reason: result?.reason ?? fallbackReason,
+  };
+}
+
+function buildDocumentSupportDependency(
+  intake: ReturnType<typeof buildNameChangeDocumentIntakeSnapshot>,
+  config: {
+    key: string;
+    label: string;
+    required?: boolean;
+    documentKinds: NameChangeDocumentInput['document_kind'][];
+    satisfiedReason: string;
+    missingReason: string;
+  },
+): NameChangeExecutionDependency {
+  const matched = intake.documents.some((document) => config.documentKinds.includes(document.kind) && document.intakeStatus !== 'not_started');
+  return {
+    key: config.key,
+    label: config.label,
+    required: config.required ?? false,
+    status: matched ? 'satisfied' : 'attention',
+    reason: matched ? config.satisfiedReason : config.missingReason,
+  };
+}
+
+function buildEmploymentContextDependency(profile: NameChangeCaseInput, label: string, satisfiedReason: string, missingReason: string): NameChangeExecutionDependency {
+  const activeEmployment = profile.employment_status === 'employed' || profile.employment_status === 'self_employed';
+  return {
+    key: 'employment-context',
+    label,
+    required: true,
+    status: activeEmployment ? 'satisfied' : 'missing',
+    reason: activeEmployment ? satisfiedReason : missingReason,
+  };
 }
 
 export function buildNameChangeExecutionSequenceSnapshot(
@@ -31,253 +80,122 @@ export function buildNameChangeExecutionSequenceSnapshot(
   const identityCoverage = requirements.results.find((result) => result.key === 'identity-document-coverage');
   const countyContext = requirements.results.find((result) => result.key === 'county-context');
   const passportTimingRisk = requirements.results.find((result) => result.key === 'passport-timing-risk');
+  const prerequisiteDependencies = evaluateNameChangeExecutionPrerequisites(target.prerequisiteRules, plan);
 
   const dependencies: NameChangeExecutionDependency[] = targetKey === 'ssa'
     ? [
-        {
-          key: 'legal-proof-document',
-          label: 'Legal proof document ready',
-          required: true,
-          status: requirementStatusToDependencyStatus(legalProof?.status ?? 'missing'),
-          reason: legalProof?.reason ?? 'Legal proof requirement not evaluated.',
-        },
-        {
-          key: 'identity-document-coverage',
-          label: 'Identity document coverage',
-          required: true,
-          status: requirementStatusToDependencyStatus(identityCoverage?.status ?? 'missing'),
-          reason: identityCoverage?.reason ?? 'Identity coverage requirement not evaluated.',
-        },
+        buildRequirementDependency(legalProof, 'legal-proof-document', 'Legal proof document ready', true, 'Legal proof requirement not evaluated.'),
+        buildRequirementDependency(identityCoverage, 'identity-document-coverage', 'Identity document coverage', true, 'Identity coverage requirement not evaluated.'),
       ]
     : targetKey === 'dmv'
       ? [
-        {
-          key: 'legal-proof-document',
-          label: 'Legal proof document ready',
-          required: true,
-          status: requirementStatusToDependencyStatus(legalProof?.status ?? 'missing'),
-          reason: legalProof?.reason ?? 'Legal proof requirement not evaluated.',
-        },
-        {
-          key: 'county-context',
-          label: 'County / jurisdiction context',
-          required: true,
-          status: requirementStatusToDependencyStatus(countyContext?.status ?? 'missing'),
-          reason: countyContext?.reason ?? 'County context requirement not evaluated.',
-        },
-        {
-          key: 'identity-document-coverage',
-          label: 'California-facing identity/address support',
-          required: false,
-          status: intake.documents.some((document) => ['current_drivers_license', 'proof_of_address'].includes(document.kind) && document.intakeStatus !== 'not_started')
-            ? 'satisfied'
-            : 'attention',
-          reason: intake.documents.some((document) => ['current_drivers_license', 'proof_of_address'].includes(document.kind) && document.intakeStatus !== 'not_started')
-            ? 'California-facing identity or address support exists in intake.'
-            : 'No California-facing identity or address support exists in intake yet.',
-        },
-        ...evaluateNameChangeExecutionPrerequisites(target.prerequisiteRules, plan),
-      ]
+          buildRequirementDependency(legalProof, 'legal-proof-document', 'Legal proof document ready', true, 'Legal proof requirement not evaluated.'),
+          buildRequirementDependency(countyContext, 'county-context', 'County / jurisdiction context', true, 'County context requirement not evaluated.'),
+          buildDocumentSupportDependency(intake, {
+            key: 'identity-document-coverage',
+            label: 'California-facing identity/address support',
+            documentKinds: ['current_drivers_license', 'proof_of_address'],
+            satisfiedReason: 'California-facing identity or address support exists in intake.',
+            missingReason: 'No California-facing identity or address support exists in intake yet.',
+          }),
+          ...prerequisiteDependencies,
+        ]
       : targetKey === 'passport'
-      ? [
-        {
-          key: 'legal-proof-document',
-          label: 'Legal proof document ready',
-          required: true,
-          status: requirementStatusToDependencyStatus(legalProof?.status ?? 'missing'),
-          reason: legalProof?.reason ?? 'Legal proof requirement not evaluated.',
-        },
-        {
-          key: 'identity-document-coverage',
-          label: 'Identity document coverage',
-          required: true,
-          status: requirementStatusToDependencyStatus(identityCoverage?.status ?? 'missing'),
-          reason: identityCoverage?.reason ?? 'Identity coverage requirement not evaluated.',
-        },
-        {
-          key: 'citizenship-eligibility',
-          label: 'Citizenship eligible for passport path',
-          required: true,
-          status: profile.is_us_citizen ? 'satisfied' : 'missing',
-          reason: profile.is_us_citizen
-            ? 'Citizenship context supports the modeled U.S. passport path.'
-            : 'Current modeled passport flow assumes U.S. citizenship eligibility.',
-        },
-        {
-          key: 'passport-timing-risk',
-          label: 'Passport timing risk reviewed',
-          required: false,
-          status: requirementStatusToDependencyStatus(passportTimingRisk?.status ?? 'attention'),
-          reason: passportTimingRisk?.reason ?? 'Passport timing risk has not been evaluated.',
-        },
-        ...evaluateNameChangeExecutionPrerequisites(target.prerequisiteRules, plan),
-      ]
-      : targetKey === 'employer'
-      ? [
-        {
-          key: 'legal-proof-document',
-          label: 'Legal proof document ready',
-          required: true,
-          status: requirementStatusToDependencyStatus(legalProof?.status ?? 'missing'),
-          reason: legalProof?.reason ?? 'Legal proof requirement not evaluated.',
-        },
-        {
-          key: 'identity-document-coverage',
-          label: 'Identity document coverage',
-          required: true,
-          status: requirementStatusToDependencyStatus(identityCoverage?.status ?? 'missing'),
-          reason: identityCoverage?.reason ?? 'Identity coverage requirement not evaluated.',
-        },
-        {
-          key: 'employment-context',
-          label: 'Employment context eligible for employer packet',
-          required: true,
-          status: profile.employment_status === 'employed' || profile.employment_status === 'self_employed' ? 'satisfied' : 'missing',
-          reason: profile.employment_status === 'employed' || profile.employment_status === 'self_employed'
-            ? 'Employment context is active enough to justify employer / payroll packet prep.'
-            : 'Employer / payroll packet only matters when employment context is active.',
-        },
-        ...evaluateNameChangeExecutionPrerequisites(target.prerequisiteRules, plan),
-      ]
-      : targetKey === 'banks'
-      ? [
-        {
-          key: 'legal-proof-document',
-          label: 'Legal proof document ready',
-          required: true,
-          status: requirementStatusToDependencyStatus(legalProof?.status ?? 'missing'),
-          reason: legalProof?.reason ?? 'Legal proof requirement not evaluated.',
-        },
-        {
-          key: 'identity-document-coverage',
-          label: 'Identity document coverage',
-          required: true,
-          status: requirementStatusToDependencyStatus(identityCoverage?.status ?? 'missing'),
-          reason: identityCoverage?.reason ?? 'Identity coverage requirement not evaluated.',
-        },
-        {
-          key: 'financial-identity-support',
-          label: 'Financial identity / address support exists',
-          required: false,
-          status: intake.documents.some((document) => ['current_drivers_license', 'current_passport', 'proof_of_address'].includes(document.kind) && document.intakeStatus !== 'not_started')
-            ? 'satisfied'
-            : 'attention',
-          reason: intake.documents.some((document) => ['current_drivers_license', 'current_passport', 'proof_of_address'].includes(document.kind) && document.intakeStatus !== 'not_started')
-            ? 'Financial identity/address support exists in intake.'
-            : 'No financial identity/address support exists in intake yet.',
-        },
-        ...evaluateNameChangeExecutionPrerequisites(target.prerequisiteRules, plan),
-      ]
-      : targetKey === 'insurance'
-      ? [
-        {
-          key: 'legal-proof-document',
-          label: 'Legal proof document ready',
-          required: true,
-          status: requirementStatusToDependencyStatus(legalProof?.status ?? 'missing'),
-          reason: legalProof?.reason ?? 'Legal proof requirement not evaluated.',
-        },
-        {
-          key: 'identity-document-coverage',
-          label: 'Identity document coverage',
-          required: true,
-          status: requirementStatusToDependencyStatus(identityCoverage?.status ?? 'missing'),
-          reason: identityCoverage?.reason ?? 'Identity coverage requirement not evaluated.',
-        },
-        {
-          key: 'insurance-identity-support',
-          label: 'Insurance identity / address support exists',
-          required: false,
-          status: intake.documents.some((document) => ['current_drivers_license', 'current_passport', 'proof_of_address'].includes(document.kind) && document.intakeStatus !== 'not_started')
-            ? 'satisfied'
-            : 'attention',
-          reason: intake.documents.some((document) => ['current_drivers_license', 'current_passport', 'proof_of_address'].includes(document.kind) && document.intakeStatus !== 'not_started')
-            ? 'Insurance identity/address support exists in intake.'
-            : 'No insurance identity/address support exists in intake yet.',
-        },
-        ...evaluateNameChangeExecutionPrerequisites(target.prerequisiteRules, plan),
-      ]
-      : targetKey === 'voter'
-      ? [
-        {
-          key: 'county-context',
-          label: 'County / jurisdiction context',
-          required: true,
-          status: requirementStatusToDependencyStatus(countyContext?.status ?? 'missing'),
-          reason: countyContext?.reason ?? 'County context requirement not evaluated.',
-        },
-        {
-          key: 'california-voter-support',
-          label: 'California voter-supporting identity/address support',
-          required: false,
-          status: intake.documents.some((document) => ['current_drivers_license', 'proof_of_address'].includes(document.kind) && document.intakeStatus !== 'not_started')
-            ? 'satisfied'
-            : 'attention',
-          reason: intake.documents.some((document) => ['current_drivers_license', 'proof_of_address'].includes(document.kind) && document.intakeStatus !== 'not_started')
-            ? 'California voter-supporting identity/address support exists in intake.'
-            : 'No California voter-supporting identity/address support exists in intake yet.',
-        },
-        ...evaluateNameChangeExecutionPrerequisites(target.prerequisiteRules, plan),
-      ]
-      : targetKey === 'tsa'
-      ? [
-        {
-          key: 'identity-document-coverage',
-          label: 'Identity document coverage',
-          required: true,
-          status: requirementStatusToDependencyStatus(identityCoverage?.status ?? 'missing'),
-          reason: identityCoverage?.reason ?? 'Identity coverage requirement not evaluated.',
-        },
-        {
-          key: 'passport-timing-risk',
-          label: 'Passport timing risk reviewed',
-          required: false,
-          status: requirementStatusToDependencyStatus(passportTimingRisk?.status ?? 'attention'),
-          reason: passportTimingRisk?.reason ?? 'Passport timing risk has not been evaluated.',
-        },
-        {
-          key: 'travel-profile-support',
-          label: 'Travel-profile support exists',
-          required: false,
-          status: intake.documents.some((document) => ['current_passport', 'current_drivers_license'].includes(document.kind) && document.intakeStatus !== 'not_started')
-            ? 'satisfied'
-            : 'attention',
-          reason: intake.documents.some((document) => ['current_passport', 'current_drivers_license'].includes(document.kind) && document.intakeStatus !== 'not_started')
-            ? 'Passport or Real ID support exists in intake for travel-profile updates.'
-            : 'No passport or Real ID support exists in intake yet for travel-profile updates.',
-        },
-        ...evaluateNameChangeExecutionPrerequisites(target.prerequisiteRules, plan),
-      ]
-      : [
-        {
-          key: 'identity-document-coverage',
-          label: 'Identity document coverage',
-          required: true,
-          status: requirementStatusToDependencyStatus(identityCoverage?.status ?? 'missing'),
-          reason: identityCoverage?.reason ?? 'Identity coverage requirement not evaluated.',
-        },
-        {
-          key: 'employment-context',
-          label: 'Employment context eligible for license updates',
-          required: true,
-          status: profile.employment_status === 'employed' || profile.employment_status === 'self_employed' ? 'satisfied' : 'missing',
-          reason: profile.employment_status === 'employed' || profile.employment_status === 'self_employed'
-            ? 'Employment context is active enough to justify professional license / certification updates.'
-            : 'Professional license updates only matter when employment context is active.',
-        },
-        {
-          key: 'license-identity-support',
-          label: 'Professional-license identity support exists',
-          required: false,
-          status: intake.documents.some((document) => ['current_drivers_license', 'current_passport'].includes(document.kind) && document.intakeStatus !== 'not_started')
-            ? 'satisfied'
-            : 'attention',
-          reason: intake.documents.some((document) => ['current_drivers_license', 'current_passport'].includes(document.kind) && document.intakeStatus !== 'not_started')
-            ? 'Current ID support exists in intake for professional license updates.'
-            : 'No current ID support exists in intake yet for professional license updates.',
-        },
-        ...evaluateNameChangeExecutionPrerequisites(target.prerequisiteRules, plan),
-      ];
+        ? [
+            buildRequirementDependency(legalProof, 'legal-proof-document', 'Legal proof document ready', true, 'Legal proof requirement not evaluated.'),
+            buildRequirementDependency(identityCoverage, 'identity-document-coverage', 'Identity document coverage', true, 'Identity coverage requirement not evaluated.'),
+            {
+              key: 'citizenship-eligibility',
+              label: 'Citizenship eligible for passport path',
+              required: true,
+              status: profile.is_us_citizen ? 'satisfied' : 'missing',
+              reason: profile.is_us_citizen
+                ? 'Citizenship context supports the modeled U.S. passport path.'
+                : 'Current modeled passport flow assumes U.S. citizenship eligibility.',
+            },
+            buildRequirementDependency(passportTimingRisk, 'passport-timing-risk', 'Passport timing risk reviewed', false, 'Passport timing risk has not been evaluated.'),
+            ...prerequisiteDependencies,
+          ]
+        : targetKey === 'employer'
+          ? [
+              buildRequirementDependency(legalProof, 'legal-proof-document', 'Legal proof document ready', true, 'Legal proof requirement not evaluated.'),
+              buildRequirementDependency(identityCoverage, 'identity-document-coverage', 'Identity document coverage', true, 'Identity coverage requirement not evaluated.'),
+              buildEmploymentContextDependency(
+                profile,
+                'Employment context eligible for employer packet',
+                'Employment context is active enough to justify employer / payroll packet prep.',
+                'Employer / payroll packet only matters when employment context is active.',
+              ),
+              ...prerequisiteDependencies,
+            ]
+          : targetKey === 'banks'
+            ? [
+                buildRequirementDependency(legalProof, 'legal-proof-document', 'Legal proof document ready', true, 'Legal proof requirement not evaluated.'),
+                buildRequirementDependency(identityCoverage, 'identity-document-coverage', 'Identity document coverage', true, 'Identity coverage requirement not evaluated.'),
+                buildDocumentSupportDependency(intake, {
+                  key: 'financial-identity-support',
+                  label: 'Financial identity / address support exists',
+                  documentKinds: ['current_drivers_license', 'current_passport', 'proof_of_address'],
+                  satisfiedReason: 'Financial identity/address support exists in intake.',
+                  missingReason: 'No financial identity/address support exists in intake yet.',
+                }),
+                ...prerequisiteDependencies,
+              ]
+            : targetKey === 'insurance'
+              ? [
+                  buildRequirementDependency(legalProof, 'legal-proof-document', 'Legal proof document ready', true, 'Legal proof requirement not evaluated.'),
+                  buildRequirementDependency(identityCoverage, 'identity-document-coverage', 'Identity document coverage', true, 'Identity coverage requirement not evaluated.'),
+                  buildDocumentSupportDependency(intake, {
+                    key: 'insurance-identity-support',
+                    label: 'Insurance identity / address support exists',
+                    documentKinds: ['current_drivers_license', 'current_passport', 'proof_of_address'],
+                    satisfiedReason: 'Insurance identity/address support exists in intake.',
+                    missingReason: 'No insurance identity/address support exists in intake yet.',
+                  }),
+                  ...prerequisiteDependencies,
+                ]
+              : targetKey === 'voter'
+                ? [
+                    buildRequirementDependency(countyContext, 'county-context', 'County / jurisdiction context', true, 'County context requirement not evaluated.'),
+                    buildDocumentSupportDependency(intake, {
+                      key: 'california-voter-support',
+                      label: 'California voter-supporting identity/address support',
+                      documentKinds: ['current_drivers_license', 'proof_of_address'],
+                      satisfiedReason: 'California voter-supporting identity/address support exists in intake.',
+                      missingReason: 'No California voter-supporting identity/address support exists in intake yet.',
+                    }),
+                    ...prerequisiteDependencies,
+                  ]
+                : targetKey === 'tsa'
+                  ? [
+                      buildRequirementDependency(identityCoverage, 'identity-document-coverage', 'Identity document coverage', true, 'Identity coverage requirement not evaluated.'),
+                      buildRequirementDependency(passportTimingRisk, 'passport-timing-risk', 'Passport timing risk reviewed', false, 'Passport timing risk has not been evaluated.'),
+                      buildDocumentSupportDependency(intake, {
+                        key: 'travel-profile-support',
+                        label: 'Travel-profile support exists',
+                        documentKinds: ['current_passport', 'current_drivers_license'],
+                        satisfiedReason: 'Passport or Real ID support exists in intake for travel-profile updates.',
+                        missingReason: 'No passport or Real ID support exists in intake yet for travel-profile updates.',
+                      }),
+                      ...prerequisiteDependencies,
+                    ]
+                  : [
+                      buildRequirementDependency(identityCoverage, 'identity-document-coverage', 'Identity document coverage', true, 'Identity coverage requirement not evaluated.'),
+                      buildEmploymentContextDependency(
+                        profile,
+                        'Employment context eligible for license updates',
+                        'Employment context is active enough to justify professional license / certification updates.',
+                        'Professional license updates only matter when employment context is active.',
+                      ),
+                      buildDocumentSupportDependency(intake, {
+                        key: 'license-identity-support',
+                        label: 'Professional-license identity support exists',
+                        documentKinds: ['current_drivers_license', 'current_passport'],
+                        satisfiedReason: 'Current ID support exists in intake for professional license updates.',
+                        missingReason: 'No current ID support exists in intake yet for professional license updates.',
+                      }),
+                      ...prerequisiteDependencies,
+                    ];
 
   const blockers = dependencies.filter((dependency) => dependency.required && dependency.status === 'missing').map((dependency) => dependency.reason);
 
