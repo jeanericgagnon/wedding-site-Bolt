@@ -25,6 +25,7 @@ import { normalizeCoordinatorDraftState } from '../../lib/coordinatorDraftState'
 import { normalizeCoordinatorActiveWorkState } from '../../lib/coordinatorActiveWorkState';
 import { normalizeCoordinatorGuestWorkState } from '../../lib/coordinatorGuestWorkState';
 import { normalizeCoordinatorCommandState } from '../../lib/coordinatorCommandState';
+import { getCoordinatorCommandModeLabel } from '../../lib/coordinatorCommandModeLabel';
 import { normalizeCoordinatorTimelineWorkState } from '../../lib/coordinatorTimelineWorkState';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
@@ -367,6 +368,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
     events,
     timelineState,
   }), [guests, qnaItems, events, timelineState]);
+  const commandModeLabel = useMemo(() => getCoordinatorCommandModeLabel(commandSource), [commandSource]);
   const correctionCues = useMemo(() => buildCoordinatorCorrectionCues({
     guests,
     events,
