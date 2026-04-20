@@ -68,6 +68,8 @@ export default function EventRSVP() {
   }, [token]);
 
   async function loadGuestAndEvents() {
+    setLoading(true);
+    setError('');
     setGuest(null);
     setInvitations([]);
     setSelectedEvent(null);
