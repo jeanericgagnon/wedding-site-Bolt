@@ -69,6 +69,8 @@ export const VendorProfilePage: React.FC = () => {
   const hasGallery = galleryImages.length > 0;
   const hasSingleImage = galleryImages.length === 1;
   const hasTwoImages = galleryImages.length === 2;
+  const hasDescriptor = Boolean(profile?.descriptor);
+  const hasDirectEmail = Boolean(profile?.contact_email);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,7 +102,7 @@ export const VendorProfilePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#f6f1ea] text-[#2f261d]">
-      <div className="max-w-5xl mx-auto px-4 py-4 sm:px-6 sm:py-8 space-y-8 sm:space-y-12">
+      <div className="max-w-5xl mx-auto px-4 py-4 sm:px-6 sm:py-8 space-y-8 sm:space-y-14">
         <section className="overflow-hidden rounded-[28px] bg-white shadow-[0_24px_80px_rgba(53,37,22,0.12)]">
           {profile.hero_image_url ? (
             <div className="aspect-[4/5] sm:aspect-[16/8] bg-[#e9dfd2]">
@@ -113,20 +115,25 @@ export const VendorProfilePage: React.FC = () => {
               </div>
             </div>
           )}
-          <div className="p-6 sm:p-10 space-y-3">
+          <div className="p-6 sm:p-10 space-y-4 sm:space-y-5">
             <p className="text-xs uppercase tracking-[0.35em] text-[#8b6f53]">Wedding vendor</p>
-            <h1 className="text-4xl sm:text-6xl font-semibold leading-tight">{profile.vendor_name}</h1>
-            {profile.descriptor && <p className="text-base sm:text-xl text-[#6f5843] max-w-2xl">{profile.descriptor}</p>}
+            <h1 className="text-4xl sm:text-6xl font-semibold leading-[1.02] max-w-3xl">{profile.vendor_name}</h1>
+            {hasDescriptor ? (
+              <p className="text-base sm:text-xl text-[#6f5843] max-w-2xl">{profile.descriptor}</p>
+            ) : (
+              <p className="text-sm sm:text-base text-[#8b6f53] max-w-2xl">Curated vendor profile with the essential visuals, links, and contact path in one place.</p>
+            )}
             <div className="flex flex-wrap gap-2 pt-2">
               {profile.instagram_url && <span className="rounded-full bg-[#f6f1ea] px-3 py-1 text-xs tracking-[0.18em] uppercase text-[#8b6f53]">Instagram</span>}
               {profile.website_url && <span className="rounded-full bg-[#f6f1ea] px-3 py-1 text-xs tracking-[0.18em] uppercase text-[#8b6f53]">Website</span>}
+              {hasDirectEmail && <span className="rounded-full bg-[#f6f1ea] px-3 py-1 text-xs tracking-[0.18em] uppercase text-[#8b6f53]">Direct email</span>}
               <span className="rounded-full bg-[#f6f1ea] px-3 py-1 text-xs tracking-[0.18em] uppercase text-[#8b6f53]">Inquire</span>
             </div>
           </div>
         </section>
 
         {hasGallery && (
-          <section className="space-y-4">
+          <section className="space-y-4 sm:space-y-5">
             <h2 className="text-sm uppercase tracking-[0.28em] text-[#8b6f53]">Images</h2>
             <div className={hasSingleImage ? 'grid' : hasTwoImages ? 'grid gap-3 sm:gap-4 sm:grid-cols-2' : 'grid gap-3 sm:gap-4 sm:grid-cols-[1.25fr_0.75fr]'}>
               {featuredImage && (
@@ -154,7 +161,7 @@ export const VendorProfilePage: React.FC = () => {
           </section>
         )}
 
-        <section className="grid gap-8 sm:grid-cols-[1.15fr_0.85fr]">
+        <section className="grid gap-8 sm:grid-cols-[1.15fr_0.85fr] sm:items-start">
           <div className="rounded-[28px] bg-white p-6 sm:p-8 shadow-[0_18px_40px_rgba(53,37,22,0.08)] space-y-4">
             <h2 className="text-sm uppercase tracking-[0.28em] text-[#8b6f53]">About</h2>
             <p className="text-base sm:text-lg leading-8 text-[#4b3a2c]">{profile.about || `${profile.vendor_name} is a wedding vendor with a focused public profile page for quick review.`}</p>
@@ -177,7 +184,7 @@ export const VendorProfilePage: React.FC = () => {
           </div>
         </section>
 
-        <section className="rounded-[28px] bg-[#2f261d] text-white p-6 sm:p-8 shadow-[0_24px_80px_rgba(31,21,12,0.24)] space-y-5">
+        <section className="rounded-[28px] bg-[#2f261d] text-white p-6 sm:p-8 shadow-[0_24px_80px_rgba(31,21,12,0.24)] space-y-5 sm:space-y-6">
           <div>
             <h2 className="text-sm uppercase tracking-[0.28em] text-[#d8c4ad]">Contact / Inquire</h2>
             <p className="mt-3 text-base sm:text-lg text-[#efe4d8] max-w-2xl">
@@ -185,6 +192,9 @@ export const VendorProfilePage: React.FC = () => {
                 ? `Reach ${profile.vendor_name} directly by email, or send a quick inquiry here and keep the conversation moving.`
                 : 'Send a quick inquiry and keep the conversation moving without hunting for details.'}
             </p>
+            {!hasDirectEmail && publicLinks.length === 0 && (
+              <p className="mt-3 text-sm text-[#d8c4ad]">This profile is intentionally light for now, but the inquiry form below still gives couples a clear next step.</p>
+            )}
           </div>
           {profile.contact_email && (
             <div className="rounded-[24px] bg-white/8 border border-white/10 p-4 sm:p-5 space-y-3">
