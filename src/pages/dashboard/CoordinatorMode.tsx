@@ -43,6 +43,7 @@ import { getCoordinatorCommandPriorityTargetReason } from '../../lib/coordinator
 import { getCoordinatorCommandPriorityCta } from '../../lib/coordinatorCommandPriorityCta';
 import { getCoordinatorCommandJumpLabel } from '../../lib/coordinatorCommandJumpLabel';
 import { shouldResetCoordinatorCommandJumpLabel } from '../../lib/coordinatorCommandJumpReset';
+import { shouldResetCoordinatorCommandJumpLabelForTargetChange } from '../../lib/coordinatorCommandJumpTargetReset';
 import { buildCoordinatorAlertTargetCue } from '../../lib/coordinatorAlertTargetCue';
 import { applyCoordinatorAlertSuggestion } from '../../lib/coordinatorAlertSuggestionApply';
 import { getCoordinatorAlertSuggestionState } from '../../lib/coordinatorAlertSuggestionState';
@@ -118,6 +119,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [neutralFocusReason, setNeutralFocusReason] = useState<string | null>(null);
   const [commandJumpLabel, setCommandJumpLabel] = useState<string | null>(null);
   const [commandJumpPanelFocus, setCommandJumpPanelFocus] = useState<CoordinatorPanelFocus | null>(null);
+  const [commandJumpTargetId, setCommandJumpTargetId] = useState<string | null>(null);
   const [checkInQuery, setCheckInQuery] = useState('');
   const [checkInFilter, setCheckInFilter] = useState<CoordinatorCheckInFilter>('arrivals');
   const [checkInReviewOnly, setCheckInReviewOnly] = useState(false);
@@ -574,14 +576,22 @@ export const DashboardCoordinatorMode: React.FC = () => {
     setCommandJumpPanelFocus(target.panelFocus);
     if (label === 'Check-in') {
       setCheckInFilter('arrivals');
+      setCommandJumpTargetId(checkInBoardTargetId);
       if (checkInBoardTargetId) setActiveGuestId(checkInBoardTargetId);
+      return;
     }
-    if (label === 'Timeline' && timelineBoardTargetId) {
-      setActiveTimelineEventId(timelineBoardTargetId);
+    if (label === 'Timeline') {
+      setCommandJumpTargetId(timelineBoardTargetId);
+      if (timelineBoardTargetId) setActiveTimelineEventId(timelineBoardTargetId);
+      return;
     }
     if (label === 'Q&A') {
-      setActiveQnaId(qnaBoardTargetId ?? getFirstOpenCoordinatorQnaId(qnaItems));
+      const nextQnaId = qnaBoardTargetId ?? getFirstOpenCoordinatorQnaId(qnaItems);
+      setCommandJumpTargetId(nextQnaId);
+      setActiveQnaId(nextQnaId);
+      return;
     }
+    setCommandJumpTargetId(null);
   };
 
 
@@ -593,8 +603,33 @@ export const DashboardCoordinatorMode: React.FC = () => {
     })) {
       setCommandJumpLabel(null);
       setCommandJumpPanelFocus(null);
+      setCommandJumpTargetId(null);
     }
   }, [commandJumpLabel, commandJumpPanelFocus, panelFocus]);
+
+
+  useEffect(() => {
+    const currentTargetId = panelFocus === 'check-in'
+      ? activeGuestId
+      : panelFocus === 'timeline'
+        ? activeTimelineEventId
+        : panelFocus === 'qna'
+          ? activeQnaId
+          : null;
+
+    if (shouldResetCoordinatorCommandJumpLabelForTargetChange({
+      jumpLabel: commandJumpLabel,
+      panelFocus,
+      expectedPanelFocus: commandJumpPanelFocus,
+      currentTargetId,
+      expectedTargetId: commandJumpTargetId,
+    })) {
+      setCommandJumpLabel(null);
+      setCommandJumpPanelFocus(null);
+      setCommandJumpTargetId(null);
+      setCommandJumpTargetId(null);
+    }
+  }, [commandJumpLabel, commandJumpPanelFocus, commandJumpTargetId, panelFocus, activeGuestId, activeTimelineEventId, activeQnaId]);
 
   const returnToBoard = () => {
     const next = resolveCoordinatorReturnToBoardState({
