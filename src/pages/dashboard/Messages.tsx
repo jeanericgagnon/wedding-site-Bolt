@@ -263,7 +263,7 @@ function readSavedComposerTemplates(): SavedComposerTemplate[] {
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
 
-    return normalizeSavedComposerTemplates(parsed as SavedComposerTemplate[]);
+    return normalizeSavedComposerTemplates(parsed.filter(isValidSavedComposerTemplate));
   } catch {
     return [];
   }
@@ -279,6 +279,18 @@ function normalizeSavedComposerTemplates(items: SavedComposerTemplate[]): SavedC
       updatedAt,
     } as SavedComposerTemplate;
   });
+}
+
+function isValidSavedComposerTemplate(item: unknown): item is SavedComposerTemplate {
+  if (!item || typeof item !== 'object') return false;
+  const candidate = item as Record<string, unknown>;
+  return typeof candidate.id === 'string'
+    && typeof candidate.name === 'string'
+    && typeof candidate.subject === 'string'
+    && typeof candidate.body === 'string'
+    && (candidate.channel === 'email' || candidate.channel === 'sms')
+    && typeof candidate.audience === 'string'
+    && typeof candidate.campaignName === 'string';
 }
 
 function writeSavedComposerTemplates(items: SavedComposerTemplate[]) {
@@ -947,7 +959,8 @@ export const DashboardMessages: React.FC = () => {
       const raw = localStorage.getItem(SAVED_COMPOSER_TEMPLATES_STORAGE_KEY);
       const parsed = raw ? JSON.parse(raw) : null;
       if (Array.isArray(parsed)) {
-        const normalized = normalizeSavedComposerTemplates(parsed as SavedComposerTemplate[]);
+        const validTemplates = parsed.filter(isValidSavedComposerTemplate);
+        const normalized = normalizeSavedComposerTemplates(validTemplates);
         if (JSON.stringify(parsed) !== JSON.stringify(normalized)) {
           writeSavedComposerTemplates(normalized);
         }
