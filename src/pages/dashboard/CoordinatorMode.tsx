@@ -48,6 +48,7 @@ import { getCoordinatorManualOverrideLabel } from '../../lib/coordinatorManualOv
 import { getCoordinatorManualOverrideActionLabel } from '../../lib/coordinatorManualOverrideAction';
 import { getCoordinatorManualOverrideTargetLabel } from '../../lib/coordinatorManualOverrideTargetLabel';
 import { getCoordinatorManualOverrideCurrentTargetLabel } from '../../lib/coordinatorManualOverrideCurrentTargetLabel';
+import { shouldResetCoordinatorManualOverride } from '../../lib/coordinatorManualOverrideReset';
 import { buildCoordinatorAlertTargetCue } from '../../lib/coordinatorAlertTargetCue';
 import { applyCoordinatorAlertSuggestion } from '../../lib/coordinatorAlertSuggestionApply';
 import { getCoordinatorAlertSuggestionState } from '../../lib/coordinatorAlertSuggestionState';
@@ -677,6 +678,34 @@ export const DashboardCoordinatorMode: React.FC = () => {
       setManualOverrideLabel(null);
     }
   };
+
+
+  useEffect(() => {
+    const currentTargetId = panelFocus === 'check-in'
+      ? activeGuestId
+      : panelFocus === 'timeline'
+        ? activeTimelineEventId
+        : panelFocus === 'qna'
+          ? activeQnaId
+          : null;
+
+    const boardTargetId = panelFocus === 'check-in'
+      ? checkInBoardTargetId
+      : panelFocus === 'timeline'
+        ? timelineBoardTargetId
+        : panelFocus === 'qna'
+          ? qnaBoardTargetId
+          : null;
+
+    if (shouldResetCoordinatorManualOverride({
+      manualOverrideLabel,
+      panelFocus,
+      boardTargetId,
+      currentTargetId,
+    })) {
+      setManualOverrideLabel(null);
+    }
+  }, [manualOverrideLabel, panelFocus, activeGuestId, activeTimelineEventId, activeQnaId, checkInBoardTargetId, timelineBoardTargetId, qnaBoardTargetId]);
 
   const returnToBoard = () => {
     const next = resolveCoordinatorReturnToBoardState({
