@@ -105,6 +105,17 @@ export const NAME_CHANGE_INSTITUTION_LIBRARY: NameChangeInstitutionEntry[] = [
     reminderDaysAfterPrimaryId: 8,
   },
   {
+    key: 'courtesy-social-sync',
+    label: 'Courtesy / social identity sync',
+    category: 'personal',
+    launchPriority: 90,
+    triggers: ['all'],
+    notes: 'Best for display names, loyalty profiles, and non-legal-facing account labels once the core admin trail is underway.',
+    suggestedTiming: 'After the major legal and institutional records are already in motion',
+    evidenceNeeded: ['Updated preferred display name', 'Account login or loyalty profile access'],
+    reminderDaysAfterPrimaryId: 14,
+  },
+  {
     key: 'voter-registration',
     label: 'California voter registration',
     category: 'government',

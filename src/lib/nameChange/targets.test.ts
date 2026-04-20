@@ -51,6 +51,13 @@ describe('name change execution targets', () => {
       formBuilderKey: 'utilities',
       sequenceProfile: 'utilities',
     });
+    expect(NAME_CHANGE_EXECUTION_TARGETS.courtesy).toMatchObject({
+      key: 'courtesy',
+      lane: 'state',
+      recommendedFormCode: 'COURTESY-SOCIAL-IDENTITY-SYNC',
+      formBuilderKey: 'courtesy',
+      sequenceProfile: 'courtesy',
+    });
     expect(NAME_CHANGE_EXECUTION_TARGETS.voter).toMatchObject({
       key: 'voter',
       lane: 'state',
@@ -95,6 +102,10 @@ describe('name change execution targets', () => {
     });
     expect(NAME_CHANGE_EXECUTION_TARGETS.utilities.prerequisiteRules[0]).toMatchObject({
       requiredStepId: 'state-dmv',
+      requiredStatuses: ['in_progress', 'complete'],
+    });
+    expect(NAME_CHANGE_EXECUTION_TARGETS.courtesy.prerequisiteRules[0]).toMatchObject({
+      requiredStepId: 'institution-banks',
       requiredStatuses: ['in_progress', 'complete'],
     });
     expect(NAME_CHANGE_EXECUTION_TARGETS.voter.prerequisiteRules[0]).toMatchObject({

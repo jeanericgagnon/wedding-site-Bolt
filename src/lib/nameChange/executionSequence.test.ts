@@ -382,4 +382,10 @@ describe('name change execution sequence snapshot', () => {
     expect(snapshot.ready).toBe(true);
     expect(snapshot.dependencies.find((dependency) => dependency.key === 'primary-photo-id-progress')).toMatchObject({ status: 'satisfied' });
   });
+
+  it('keeps courtesy/social sync lightweight when downstream admin rollout has not started yet', () => {
+    const snapshot = buildNameChangeExecutionSequenceSnapshot('courtesy', makeCase(), [], [], null);
+    expect(snapshot.ready).toBe(true);
+    expect(snapshot.dependencies.find((dependency) => dependency.key === 'banks-or-utilities-progress')).toMatchObject({ status: 'missing' });
+  });
 });

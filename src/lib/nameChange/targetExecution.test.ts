@@ -383,4 +383,27 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.recommendedFormCode).toBe('UTILITIES-LEASE-RECORD-UPDATE');
     expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'primary-photo-id-progress')).toMatchObject({ status: 'satisfied' });
   });
+
+  it('builds shared courtesy execution snapshots with lightweight tail-end gating', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+    const basePlan = buildNameChangePlan({ profile: makeCase(), documents, extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'institution-banks'
+        ? { ...step, executionStatus: 'in_progress' as const }
+        : step),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('courtesy', makeCase(), documents, [], plan);
+    expect(snapshot.targetLabel.toLowerCase()).toContain('courtesy');
+    expect(snapshot.recommendedFormCode).toBe('COURTESY-SOCIAL-IDENTITY-SYNC');
+    expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'courtesy-identity-support')).toMatchObject({ status: 'satisfied' });
+  });
 });

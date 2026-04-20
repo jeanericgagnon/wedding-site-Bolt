@@ -219,6 +219,16 @@ export const NAME_CHANGE_SEQUENCE_PROFILE_RECIPES: Record<NameChangeExecutionSeq
     supportSatisfiedReason: 'Utilities/lease identity support exists in intake.',
     supportMissingReason: 'No utilities/lease identity support exists in intake yet.',
   }),
+  courtesy: ({ intake, prerequisiteDependencies }) => [
+    buildDocumentSupportDependency(intake, {
+      key: 'courtesy-identity-support',
+      label: 'Courtesy/social identity context exists',
+      documentKinds: ['current_drivers_license', 'current_passport'],
+      satisfiedReason: 'Courtesy/social identity context exists in intake.',
+      missingReason: 'No courtesy/social identity context exists in intake yet.',
+    }),
+    ...prerequisiteDependencies,
+  ],
   voter: buildVoterDependencies,
   tsa: buildTsaDependencies,
   licenses: buildEmploymentTargetDependencies({

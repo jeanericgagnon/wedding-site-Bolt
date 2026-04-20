@@ -4,6 +4,7 @@ import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { buildNameChangeBankExecutionSnapshot } from '../../../lib/nameChange/bankFlow';
 import { buildNameChangeAutofillPrepSnapshot } from '../../../lib/nameChange/autofill';
+import { buildNameChangeCourtesyExecutionSnapshot } from '../../../lib/nameChange/courtesyFlow';
 import { buildNameChangeDocumentIntakeSnapshot } from '../../../lib/nameChange/documentContract';
 import { buildNameChangeDmvExecutionSnapshot } from '../../../lib/nameChange/dmvFlow';
 import { buildNameChangeEmployerExecutionSnapshot } from '../../../lib/nameChange/employerFlow';
@@ -206,6 +207,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   const documentIntakeSnapshot = useMemo(() => buildNameChangeDocumentIntakeSnapshot(draft, documents, extractedFields), [draft, documents, extractedFields]);
   const autofillPrepSnapshot = useMemo(() => buildNameChangeAutofillPrepSnapshot(draft, documents, extractedFields), [draft, documents, extractedFields]);
   const bankExecutionSnapshot = useMemo(() => buildNameChangeBankExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
+  const courtesyExecutionSnapshot = useMemo(() => buildNameChangeCourtesyExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
   const insuranceExecutionSnapshot = useMemo(() => buildNameChangeInsuranceExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
   const licenseExecutionSnapshot = useMemo(() => buildNameChangeLicenseExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
   const medicalExecutionSnapshot = useMemo(() => buildNameChangeMedicalExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
@@ -337,6 +339,17 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         snapshot: utilitiesExecutionSnapshot,
       },
       {
+        key: 'courtesy',
+        title: 'Guided execution: courtesy / social identity sync',
+        description: 'Tail-end cleanup slice for display names, loyalty profiles, and other lower-stakes account identity updates.',
+        readyLabel: 'ready for courtesy sync',
+        notReadyLabel: 'not ready',
+        sequenceTitle: 'Courtesy/social sync dependencies',
+        payloadTitle: 'Courtesy/social sync packet snapshot',
+        payloadDescription: 'Structured downstream packet for display-name and lightweight social/account identity updates.',
+        snapshot: courtesyExecutionSnapshot,
+      },
+      {
         key: 'voter',
         title: 'Guided execution: California voter registration',
         description: 'California-specific post-DMV execution slice for voter registration follow-through.',
@@ -366,6 +379,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     return cards;
   }, [
     bankExecutionSnapshot,
+    courtesyExecutionSnapshot,
     dmvExecutionSnapshot,
     draft.employment_status,
     draft.passport_needs_update,

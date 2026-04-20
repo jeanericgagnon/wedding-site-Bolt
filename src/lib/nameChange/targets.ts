@@ -1,4 +1,5 @@
 import { NAME_CHANGE_BANK_PACKET_CONTRACT } from './bankPacket';
+import { NAME_CHANGE_COURTESY_PACKET_CONTRACT } from './courtesyPacket';
 import { NAME_CHANGE_DMV_FORM_CONTRACT } from './dmvForm';
 import { NAME_CHANGE_EMPLOYER_PACKET_CONTRACT } from './employerPacket';
 import { NAME_CHANGE_INSURANCE_PACKET_CONTRACT } from './insurancePacket';
@@ -91,7 +92,7 @@ function buildPhotoIdInstitutionTarget(config: {
   };
 }
 
-export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 'employer' | 'banks' | 'insurance' | 'medical' | 'utilities' | 'voter' | 'tsa' | 'licenses', NameChangeExecutionTargetDefinition> = {
+export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 'employer' | 'banks' | 'insurance' | 'medical' | 'utilities' | 'courtesy' | 'voter' | 'tsa' | 'licenses', NameChangeExecutionTargetDefinition> = {
   ssa: {
     key: 'ssa',
     label: 'Social Security Administration',
@@ -484,6 +485,58 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 
       satisfiedReason: 'Bank rollout is already moving for household record coordination.',
     },
   }),
+  courtesy: {
+    key: 'courtesy',
+    label: 'Courtesy / social identity sync',
+    lane: 'state',
+    recommendedFormCode: NAME_CHANGE_COURTESY_PACKET_CONTRACT.formCode,
+    formBuilderKey: 'courtesy',
+    sequenceProfile: 'courtesy',
+    prerequisiteRules: [
+      {
+        key: 'banks-or-utilities-progress',
+        label: 'At least one downstream admin lane is moving',
+        required: false,
+        requiredStepId: 'institution-banks',
+        requiredStatuses: ['in_progress', 'complete'],
+        missingReason: 'No downstream admin lane is moving yet, so courtesy/social sync may be premature.',
+        attentionReason: 'A downstream admin lane is already moving, which makes courtesy/social sync easier to do at the tail end.',
+        satisfiedReason: 'A downstream admin lane is already moving for tail-end courtesy/social sync.',
+      },
+    ],
+    autofillTargetFields: [
+      'applicant.current_first_name',
+      'applicant.current_last_name',
+      'applicant.target_last_name',
+      'applicant.county',
+    ],
+    checklistSpecs: [
+      {
+        key: 'current-legal-name',
+        label: 'Current name available for courtesy sync',
+        kind: 'field_presence',
+        targetField: 'applicant.current_first_name',
+        missingReason: 'Current name fields are still incomplete for courtesy/social sync.',
+        satisfiedReason: 'Current name fields are available for courtesy/social sync.',
+      },
+      {
+        key: 'target-surname',
+        label: 'Target surname available for courtesy sync',
+        kind: 'field_presence',
+        targetField: 'applicant.target_last_name',
+        missingReason: 'Target last name is still missing for courtesy/social sync.',
+        satisfiedReason: 'Target last name is available for courtesy/social sync.',
+      },
+      {
+        key: 'courtesy-support-doc',
+        label: 'Courtesy/social account context available',
+        kind: 'document_support',
+        documentKinds: ['current_drivers_license', 'current_passport'],
+        missingReason: 'No current account-facing identity context is represented in intake yet for courtesy/social sync.',
+        satisfiedReason: 'Current account-facing identity context exists in intake for courtesy/social sync.',
+      },
+    ],
+  },
   voter: {
     key: 'voter',
     label: 'California voter registration',
