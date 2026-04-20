@@ -462,7 +462,7 @@ export const SiteView: React.FC = () => {
           const urlToken = searchParams.get('token');
           const storedToken = sessionStorage.getItem(`dayof_invite_token_${resolvedSlug}`);
           const tokenToCheck = urlToken ?? storedToken;
-          if (!tokenToCheck || (guestToken && tokenToCheck !== guestToken)) {
+          if (!guestToken || !tokenToCheck || tokenToCheck !== guestToken) {
             setPrivacyGate('invite_only');
             setLoading(false);
             return;
