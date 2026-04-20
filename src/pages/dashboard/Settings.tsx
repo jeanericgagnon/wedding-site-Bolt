@@ -454,13 +454,17 @@ export const DashboardSettings: React.FC = () => {
   };
 
   const handleRemovePlannerInvite = () => {
-    writePlannerInvite(siteSlug || user?.id || null, null);
-    setPlannerInvite(null);
-    setPlannerInviteName('');
-    setPlannerInviteEmail('');
-    setPlannerInviteRole('planner');
-    setPlannerInviteError(null);
-    setPlannerInviteSuccess('Planner invite removed.');
+    try {
+      writePlannerInvite(siteSlug || user?.id || null, null);
+      setPlannerInvite(null);
+      setPlannerInviteName('');
+      setPlannerInviteEmail('');
+      setPlannerInviteRole('planner');
+      setPlannerInviteError(null);
+      setPlannerInviteSuccess('Planner invite removed.');
+    } catch (err) {
+      setPlannerInviteError(err instanceof Error ? err.message : 'Failed to remove planner invite.');
+    }
   };
 
   const handleUpdateSlug = async (e: React.FormEvent) => {
