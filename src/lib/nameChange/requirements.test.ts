@@ -90,7 +90,7 @@ describe('name change requirements skeleton', () => {
 
     const snapshot = evaluateNameChangeRequirements(makeCase(), documents, []);
     expect(snapshot.summary).toEqual({
-      satisfied: 3,
+      satisfied: 6,
       missing: 0,
       attention: 1,
     });

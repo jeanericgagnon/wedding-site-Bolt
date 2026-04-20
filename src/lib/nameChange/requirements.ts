@@ -29,6 +29,12 @@ export const NAME_CHANGE_REQUIREMENT_DEFINITIONS: NameChangeRequirementDefinitio
     description: 'County and state context should exist before local sequencing is treated as reliable.',
   },
   {
+    key: 'launch-state-alignment',
+    label: 'Launch-state alignment',
+    stage: 'government',
+    description: 'Downstream state-specific execution should stay aligned with the currently modeled launch state.',
+  },
+  {
     key: 'passport-timing-risk',
     label: 'Passport timing risk reviewed',
     stage: 'institutional',
@@ -77,6 +83,15 @@ export function evaluateNameChangeRequirements(
       reason: canonicalCase.countyResidence && canonicalCase.legalContext.marriageState
         ? `County ${canonicalCase.countyResidence} and state ${canonicalCase.legalContext.marriageState} are present.`
         : 'County residence and/or marriage state context is still incomplete.',
+    },
+    {
+      key: 'launch-state-alignment',
+      label: 'Launch-state alignment',
+      stage: 'government',
+      status: canonicalCase.launchState === 'california' ? 'satisfied' : 'missing',
+      reason: canonicalCase.launchState === 'california'
+        ? 'Current modeled downstream state execution matches the California launch scope.'
+        : `Current modeled downstream state execution assumes California, but launch state is ${canonicalCase.launchState}.`,
     },
     {
       key: 'passport-timing-risk',
