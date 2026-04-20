@@ -489,11 +489,6 @@ export const GuestPhotoSharing: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  const uploadLanding = useMemo(() => {
-    if (!siteSlug) return '';
-    return `${window.location.origin}/site/${siteSlug}`;
-  }, [siteSlug]);
-
   const totalUploads = useMemo(() => uploads.length, [uploads]);
   const activeBucketsCount = useMemo(() => buckets.filter((a) => a.is_active).length, [buckets]);
   const pausedBucketsCount = useMemo(() => buckets.filter((a) => !a.is_active).length, [buckets]);
@@ -1155,20 +1150,20 @@ export const GuestPhotoSharing: React.FC = () => {
                 <Camera className="w-4 h-4 mr-1" />
                 {submitting ? 'Creating...' : 'Add bucket'}
               </Button>
-              {uploadLanding && (
-                <Button variant="outline" onClick={() => void copyText(uploadLanding, 'sheet-dashboard-link')} className="w-full sm:w-auto">
+              {latestUploadUrl && (
+                <Button variant="outline" onClick={() => void copyText(latestUploadUrl, 'sheet-dashboard-link')} className="w-full sm:w-auto">
                   <Copy className="w-4 h-4 mr-1" />
-                  {copied === 'sheet-dashboard-link' ? 'Copied dashboard link' : 'Copy upload dashboard link'}
+                  {copied === 'sheet-dashboard-link' ? 'Copied newest bucket link' : 'Copy newest bucket link'}
                 </Button>
               )}
-              {uploadLanding && (
-                <Button variant="outline" onClick={() => window.open(getBucketQrUrl(uploadLanding), '_blank')} className="w-full sm:w-auto">
-                  QR for dashboard
+              {latestUploadUrl && (
+                <Button variant="outline" onClick={() => window.open(getBucketQrUrl(latestUploadUrl), '_blank')} className="w-full sm:w-auto">
+                  QR for newest bucket
                 </Button>
               )}
-              {uploadLanding && (
-                <Button variant="outline" onClick={() => window.open(uploadLanding, '_blank')} className="w-full sm:w-auto">
-                  <ExternalLink className="w-4 h-4 mr-1" /> Open guest upload site
+              {latestUploadUrl && (
+                <Button variant="outline" onClick={() => window.open(latestUploadUrl, '_blank')} className="w-full sm:w-auto">
+                  <ExternalLink className="w-4 h-4 mr-1" /> Open newest bucket link
                 </Button>
               )}
             </div>
@@ -1204,16 +1199,16 @@ export const GuestPhotoSharing: React.FC = () => {
                 </div>
               </div>
               <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">Upload dashboard</p>
-                <p className="mt-2 text-sm text-neutral-700">Guests should land on one clean place to upload, not hunt through your site.</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">Newest bucket link</p>
+                <p className="mt-2 text-sm text-neutral-700">Use a real bucket upload link here. Don’t hand out a generic site URL and hope guests find the right place.</p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {uploadLanding ? (
+                  {latestUploadUrl ? (
                     <>
-                      <Button size="sm" variant="outline" onClick={() => window.open(uploadLanding, '_blank')}>Open upload dashboard</Button>
-                      <Button size="sm" variant="outline" onClick={() => window.open(getBucketQrUrl(uploadLanding), '_blank')}>Open QR</Button>
+                      <Button size="sm" variant="outline" onClick={() => window.open(latestUploadUrl, '_blank')}>Open newest bucket link</Button>
+                      <Button size="sm" variant="outline" onClick={() => window.open(getBucketQrUrl(latestUploadUrl), '_blank')}>Open QR</Button>
                     </>
                   ) : (
-                    <p className="text-xs text-neutral-500">Guest upload dashboard is not ready until this site has a public slug.</p>
+                    <p className="text-xs text-neutral-500">Create or refresh a bucket link before sharing uploads.</p>
                   )}
                 </div>
               </div>
