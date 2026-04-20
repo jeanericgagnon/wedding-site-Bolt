@@ -4,6 +4,7 @@ import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { buildNameChangeAutofillPrepSnapshot } from '../../../lib/nameChange/autofill';
 import { buildNameChangeDocumentIntakeSnapshot } from '../../../lib/nameChange/documentContract';
+import { buildNameChangeDmvExecutionSnapshot } from '../../../lib/nameChange/dmvFlow';
 import { NAME_CHANGE_FORM_REGISTRY, NAME_CHANGE_INSTITUTION_LIBRARY } from '../../../lib/nameChange/registry';
 import { evaluateNameChangeRequirements } from '../../../lib/nameChange/requirements';
 import { bulkUpdateNameChangeReminderStatus, deriveNameChangeReminderAttention, summarizeNameChangeReminderAttention, summarizeNameChangeReminders, updateNameChangeReminderStatus } from '../../../lib/nameChange/reminders';
@@ -97,6 +98,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   const documentIntakeSnapshot = useMemo(() => buildNameChangeDocumentIntakeSnapshot(draft, documents, extractedFields), [draft, documents, extractedFields]);
   const autofillPrepSnapshot = useMemo(() => buildNameChangeAutofillPrepSnapshot(draft, documents, extractedFields), [draft, documents, extractedFields]);
   const ssaExecutionSnapshot = useMemo(() => buildNameChangeSsaExecutionSnapshot(draft, documents, extractedFields), [draft, documents, extractedFields]);
+  const dmvExecutionSnapshot = useMemo(() => buildNameChangeDmvExecutionSnapshot(draft, documents, extractedFields), [draft, documents, extractedFields]);
   const reminderSummary = useMemo(() => summarizeNameChangeReminders(effectiveReminders), [effectiveReminders]);
   const reminderAttention = useMemo(() => deriveNameChangeReminderAttention(effectiveReminders, plan), [effectiveReminders, plan]);
   const reminderAttentionSummary = useMemo(() => summarizeNameChangeReminderAttention(reminderAttention, {
@@ -355,6 +357,42 @@ export const NameChangePlannerTab: React.FC<Props> = ({
 
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           {ssaExecutionSnapshot.autofillFields.map((field) => (
+            <div key={field.targetField} className="rounded-xl border border-border-subtle p-4">
+              <p className="text-sm font-semibold text-text-primary">{field.label}</p>
+              <p className="mt-2 text-sm text-text-secondary">{field.value.value ?? 'Missing'}</p>
+              <p className="mt-2 text-xs text-text-secondary">{field.targetField} · {field.value.source} · {field.value.confidence}</p>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-semibold text-text-primary">Guided execution: California DMV next</h3>
+            <p className="text-sm text-text-secondary">Second guided execution slice. Reuses the same canonical/intake/autofill layers to judge DMV readiness after SSA.</p>
+          </div>
+          <span className={`rounded-full px-2 py-1 text-xs ${dmvExecutionSnapshot.ready ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
+            {dmvExecutionSnapshot.ready ? 'ready for DL-44 prep' : 'not ready'}
+          </span>
+        </div>
+
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {dmvExecutionSnapshot.checklist.map((item) => (
+            <div key={item.label} className="rounded-xl border border-border-subtle p-4">
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-sm font-semibold text-text-primary">{item.label}</p>
+                <span className={`rounded-full px-2 py-1 text-xs ${item.status === 'ready' ? 'bg-success/10 text-success' : item.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
+                  {item.status}
+                </span>
+              </div>
+              <p className="mt-3 text-sm text-text-secondary">{item.reason}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {dmvExecutionSnapshot.autofillFields.map((field) => (
             <div key={field.targetField} className="rounded-xl border border-border-subtle p-4">
               <p className="text-sm font-semibold text-text-primary">{field.label}</p>
               <p className="mt-2 text-sm text-text-secondary">{field.value.value ?? 'Missing'}</p>
