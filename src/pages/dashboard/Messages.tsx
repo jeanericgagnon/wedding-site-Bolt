@@ -246,6 +246,13 @@ interface SavedComposerTemplate {
   createdAt: string;
 }
 
+function isSavedTemplateScheduleUsable(template: SavedComposerTemplate): boolean {
+  return template.scheduleType === 'later'
+    && !!template.scheduleDate
+    && !!template.scheduleTime
+    && !isPastScheduledTime(`${template.scheduleDate}T${template.scheduleTime}:00`);
+}
+
 const SAVED_COMPOSER_TEMPLATES_STORAGE_KEY = 'dayof.savedComposerTemplates.v1';
 
 function readSavedComposerTemplates(): SavedComposerTemplate[] {
@@ -1843,10 +1850,7 @@ export const DashboardMessages: React.FC = () => {
   }
 
   function applySavedTemplate(template: SavedComposerTemplate) {
-    const savedScheduleIsUsable = template.scheduleType === 'later'
-      && !!template.scheduleDate
-      && !!template.scheduleTime
-      && !isPastScheduledTime(`${template.scheduleDate}T${template.scheduleTime}:00`);
+    const savedScheduleIsUsable = isSavedTemplateScheduleUsable(template);
 
     setFormData((prev) => ({
       ...prev,
@@ -2762,13 +2766,20 @@ export const DashboardMessages: React.FC = () => {
                 <div className="space-y-3">
                   {savedTemplates.map((template) => (
                     <div key={template.id} className="rounded-2xl border border-border-subtle bg-surface-subtle/20 px-4 py-4">
+                      {(() => {
+                        const savedScheduleIsUsable = isSavedTemplateScheduleUsable(template);
+                        return (
                       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                         <div className="min-w-0">
                           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-text-tertiary">{template.channel.toUpperCase()} · {audienceOptions.find((option) => option.value === template.audience)?.label ?? 'Saved audience'}</p>
                           <h3 className="mt-1 text-sm font-semibold text-text-primary">{template.name}</h3>
                           <p className="mt-1 text-xs text-text-secondary line-clamp-2">{template.subject || '(No subject)'}{template.body ? ` — ${template.body}` : ''}</p>
                           {template.scheduleType === 'later' && template.scheduleDate && template.scheduleTime && (
-                            <p className="mt-1 text-[11px] text-text-tertiary">Saved with schedule: {formatScheduledDate(`${template.scheduleDate}T${template.scheduleTime}:00`)}</p>
+                            <p className={`mt-1 text-[11px] ${savedScheduleIsUsable ? 'text-text-tertiary' : 'text-warning'}`}>
+                              {savedScheduleIsUsable
+                                ? `Saved with schedule: ${formatScheduledDate(`${template.scheduleDate}T${template.scheduleTime}:00`)}`
+                                : 'Saved schedule has expired and will not be reused'}
+                            </p>
                           )}
                           <p className="mt-2 text-[11px] text-text-tertiary">Saved {new Date(template.createdAt).toLocaleString()}</p>
                         </div>
@@ -2781,6 +2792,8 @@ export const DashboardMessages: React.FC = () => {
                           </Button>
                         </div>
                       </div>
+                        );
+                      })()}
                     </div>
                   ))}
                 </div>
