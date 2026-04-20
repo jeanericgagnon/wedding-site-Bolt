@@ -1,11 +1,13 @@
 import { buildNameChangeAutofillPrepSnapshot } from './autofill';
 import { buildNameChangeDocumentIntakeSnapshot } from './documentContract';
+import { buildNameChangeDmvFormSnapshot } from './dmvForm';
 import { evaluateNameChangeRequirements } from './requirements';
 import type {
   NameChangeAutofillFieldMapping,
   NameChangeCaseInput,
   NameChangeDocumentInput,
   NameChangeExtractedFieldInput,
+  NameChangeFormPayloadSnapshot,
 } from './types';
 
 export interface NameChangeDmvExecutionSnapshot {
@@ -13,6 +15,7 @@ export interface NameChangeDmvExecutionSnapshot {
   blockers: string[];
   recommendedFormCode: 'CA-DL-44';
   autofillFields: NameChangeAutofillFieldMapping[];
+  formPayload: NameChangeFormPayloadSnapshot;
   checklist: Array<{
     label: string;
     status: 'ready' | 'missing' | 'attention';
@@ -34,6 +37,7 @@ export function buildNameChangeDmvExecutionSnapshot(
   const requirements = evaluateNameChangeRequirements(profile, documents, extractedFields);
   const intake = buildNameChangeDocumentIntakeSnapshot(profile, documents, extractedFields);
   const autofill = buildNameChangeAutofillPrepSnapshot(profile, documents, extractedFields);
+  const formPayload = buildNameChangeDmvFormSnapshot(profile, documents, extractedFields);
 
   const legalProof = requirements.results.find((result) => result.key === 'legal-proof-document');
   const countyContext = requirements.results.find((result) => result.key === 'county-context');
@@ -94,6 +98,7 @@ export function buildNameChangeDmvExecutionSnapshot(
       'applicant.county',
       'legal.marriage_date',
     ].includes(field.targetField)),
+    formPayload,
     checklist,
   };
 }

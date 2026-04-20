@@ -422,6 +422,28 @@ export const NameChangePlannerTab: React.FC<Props> = ({
             </div>
           ))}
         </div>
+
+        <div className="mt-4 rounded-xl border border-border-subtle p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h4 className="text-sm font-semibold text-text-primary">DMV form payload snapshot</h4>
+              <p className="text-xs text-text-secondary">Structured downstream form contract for the California DMV execution target.</p>
+            </div>
+            <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+              {dmvExecutionSnapshot.formPayload.summary.ready} ready · {dmvExecutionSnapshot.formPayload.summary.missing} missing · {dmvExecutionSnapshot.formPayload.summary.extractedBacked} extracted-backed
+            </span>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {dmvExecutionSnapshot.formPayload.fields.map((field) => (
+              <div key={field.fieldKey} className="rounded-xl border border-border-subtle p-4">
+                <p className="text-sm font-semibold text-text-primary">{field.label}</p>
+                <p className="mt-2 text-sm text-text-secondary">{field.value ?? 'Missing'}</p>
+                <p className="mt-2 text-xs text-text-secondary">{field.fieldKey} · {field.source} · {field.confidence}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
