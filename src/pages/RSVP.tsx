@@ -306,6 +306,14 @@ export default function RSVP() {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setGuest(null);
+    setExistingRsvp(null);
+    setAmbiguousGuests([]);
+    setRsvpDeadline(null);
+    setMusicPlaylistUrl(null);
+    setHouseholdGuests([]);
+    setApplyToHousehold(true);
+    setSelectedHouseholdGuestIds([]);
 
     try {
       const lookupResp: { data?: unknown; error?: string } = DEMO_MODE
