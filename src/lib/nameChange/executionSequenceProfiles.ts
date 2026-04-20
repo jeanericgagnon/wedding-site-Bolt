@@ -11,6 +11,7 @@ type RequirementBag = {
   legalProof: NameChangeRequirementResult | undefined;
   identityCoverage: NameChangeRequirementResult | undefined;
   countyContext: NameChangeRequirementResult | undefined;
+  launchStateAlignment: NameChangeRequirementResult | undefined;
   passportTimingRisk: NameChangeRequirementResult | undefined;
   expeditedTravelSequencing: NameChangeRequirementResult | undefined;
   passportEligibilityPath: NameChangeRequirementResult | undefined;
@@ -84,6 +85,7 @@ const buildLegalAndIdentityDependencies: NameChangeDependencyRecipe = ({ require
 
 const buildDmvDependencies: NameChangeDependencyRecipe = ({ intake, requirements, prerequisiteDependencies }) => [
   buildRequirementDependency(requirements.legalProof, 'legal-proof-document', 'Legal proof document ready', true, 'Legal proof requirement not evaluated.'),
+  buildRequirementDependency(requirements.launchStateAlignment, 'launch-state-alignment', 'California launch-state alignment', true, 'California launch-state alignment has not been evaluated.'),
   buildRequirementDependency(requirements.countyContext, 'county-context', 'County / jurisdiction context', true, 'County context requirement not evaluated.'),
   buildDocumentSupportDependency(intake, {
     key: 'identity-document-coverage',
@@ -157,6 +159,7 @@ function buildPhotoIdPacketDependencies(config: {
 }
 
 const buildVoterDependencies: NameChangeDependencyRecipe = ({ intake, requirements, prerequisiteDependencies }) => [
+  buildRequirementDependency(requirements.launchStateAlignment, 'launch-state-alignment', 'California launch-state alignment', true, 'California launch-state alignment has not been evaluated.'),
   buildRequirementDependency(requirements.countyContext, 'county-context', 'County / jurisdiction context', true, 'County context requirement not evaluated.'),
   buildDocumentSupportDependency(intake, {
     key: 'california-voter-support',

@@ -164,4 +164,17 @@ describe('name change requirements skeleton', () => {
       reason: 'Current passport follow-through is not modeled for non-citizen or passport-ineligible cases yet.',
     });
   });
+
+  it('marks launch state alignment missing when the modeled downstream state path is not California', () => {
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase({ launch_state: 'texas' as never }),
+      [],
+      [],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'launch-state-alignment')).toMatchObject({
+      status: 'missing',
+      reason: 'Current modeled downstream state execution assumes California, but launch state is texas.',
+    });
+  });
 });

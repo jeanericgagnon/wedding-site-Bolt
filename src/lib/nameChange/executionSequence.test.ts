@@ -313,6 +313,12 @@ describe('name change execution sequence snapshot', () => {
     expect(snapshot.dependencies.find((dependency) => dependency.key === 'employment-context')).toMatchObject({ status: 'satisfied' });
   });
 
+  it('blocks California DMV sequencing when launch state is not aligned', () => {
+    const snapshot = buildNameChangeExecutionSequenceSnapshot('dmv', makeCase({ launch_state: 'texas' as never }), [], [], null);
+    expect(snapshot.ready).toBe(false);
+    expect(snapshot.dependencies.find((dependency) => dependency.key === 'launch-state-alignment')).toMatchObject({ status: 'missing' });
+  });
+
   it('marks medical/provider sequencing ready when DMV is in progress', () => {
     const documents: NameChangeDocumentInput[] = [
       {
