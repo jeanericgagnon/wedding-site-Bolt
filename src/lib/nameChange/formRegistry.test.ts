@@ -39,6 +39,7 @@ describe('name change form builder registry', () => {
   it('dispatches SS-5 and DMV form builders through a shared registry', () => {
     const banks = NAME_CHANGE_FORM_BUILDERS.banks(makeCase(), [], []);
     const insurance = NAME_CHANGE_FORM_BUILDERS.insurance(makeCase(), [], []);
+    const voter = NAME_CHANGE_FORM_BUILDERS.voter(makeCase(), [], []);
     const ss5 = NAME_CHANGE_FORM_BUILDERS.ss5(makeCase(), [], []);
     const dmv = NAME_CHANGE_FORM_BUILDERS.dmv(makeCase(), [], []);
     const passport = NAME_CHANGE_FORM_BUILDERS.passport(makeCase(), [], []);
@@ -46,6 +47,7 @@ describe('name change form builder registry', () => {
 
     expect(banks.formCode).toBe('BANK-ACCOUNT-UPDATE-PACKET');
     expect(insurance.formCode).toBe('INSURANCE-POLICY-UPDATE-PACKET');
+    expect(voter.formCode).toBe('CA-VOTER-REGISTRATION-UPDATE');
     expect(ss5.formCode).toBe('SSA-SS5');
     expect(dmv.formCode).toBe('CA-DL-44');
     expect(passport.formCode).toBe('DS-82');

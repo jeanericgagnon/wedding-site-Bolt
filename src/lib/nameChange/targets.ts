@@ -4,9 +4,10 @@ import { NAME_CHANGE_EMPLOYER_PACKET_CONTRACT } from './employerPacket';
 import { NAME_CHANGE_INSURANCE_PACKET_CONTRACT } from './insurancePacket';
 import { NAME_CHANGE_PASSPORT_RENEWAL_FORM_CONTRACT } from './passportForm';
 import { NAME_CHANGE_SS5_FORM_CONTRACT } from './ss5Form';
+import { NAME_CHANGE_VOTER_PACKET_CONTRACT } from './voterPacket';
 import type { NameChangeExecutionTargetDefinition } from './types';
 
-export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 'employer' | 'banks' | 'insurance', NameChangeExecutionTargetDefinition> = {
+export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 'employer' | 'banks' | 'insurance' | 'voter', NameChangeExecutionTargetDefinition> = {
   ssa: {
     key: 'ssa',
     label: 'Social Security Administration',
@@ -432,6 +433,65 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 
         documentKinds: ['current_drivers_license', 'current_passport', 'proof_of_address'],
         missingReason: 'No insurance-supporting ID/address document is represented in intake yet.',
         satisfiedReason: 'An insurance-supporting ID/address document exists in intake.',
+      },
+    ],
+  },
+  voter: {
+    key: 'voter',
+    label: 'California voter registration',
+    lane: 'state',
+    recommendedFormCode: NAME_CHANGE_VOTER_PACKET_CONTRACT.formCode,
+    formBuilderKey: 'voter',
+    prerequisiteRules: [
+      {
+        key: 'state-dmv-complete',
+        label: 'DMV completed before voter registration update',
+        required: true,
+        requiredStepId: 'state-dmv',
+        requiredStatuses: ['complete'],
+        missingReason: 'California voter registration should wait until DMV is complete so the state record chain stays aligned.',
+        attentionReason: 'DMV is moving, but voter registration should still wait for the California ID record to settle.',
+        satisfiedReason: 'DMV is complete, so voter registration can be updated cleanly.',
+      },
+    ],
+    autofillTargetFields: [
+      'applicant.current_first_name',
+      'applicant.current_last_name',
+      'applicant.target_last_name',
+      'applicant.county',
+    ],
+    checklistSpecs: [
+      {
+        key: 'county-context',
+        label: 'California county context available',
+        kind: 'requirement',
+        requirementKey: 'county-context',
+        missingReason: 'County context requirement not evaluated.',
+        satisfiedReason: 'County context is available for voter registration prep.',
+      },
+      {
+        key: 'current-legal-name',
+        label: 'Current legal name available for voter update',
+        kind: 'field_presence',
+        targetField: 'applicant.current_first_name',
+        missingReason: 'Current legal name fields are still incomplete for voter update prep.',
+        satisfiedReason: 'Current legal first and last name are available for voter update prep.',
+      },
+      {
+        key: 'target-surname-county',
+        label: 'Target surname + county available',
+        kind: 'field_presence',
+        targetField: 'applicant.target_last_name',
+        missingReason: 'Target surname and/or county are still missing for voter update prep.',
+        satisfiedReason: 'Target surname and county are available for voter update prep.',
+      },
+      {
+        key: 'voter-support-doc',
+        label: 'California voter-supporting intake',
+        kind: 'document_support',
+        documentKinds: ['current_drivers_license', 'proof_of_address'],
+        missingReason: 'No California voter-supporting ID/address document is represented in intake yet.',
+        satisfiedReason: 'A California voter-supporting ID/address document exists in intake.',
       },
     ],
   },

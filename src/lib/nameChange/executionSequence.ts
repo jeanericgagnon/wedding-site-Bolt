@@ -168,7 +168,8 @@ export function buildNameChangeExecutionSequenceSnapshot(
         },
         ...evaluateNameChangeExecutionPrerequisites(target.prerequisiteRules, plan),
       ]
-      : [
+      : targetKey === 'insurance'
+      ? [
         {
           key: 'legal-proof-document',
           label: 'Legal proof document ready',
@@ -193,6 +194,27 @@ export function buildNameChangeExecutionSequenceSnapshot(
           reason: intake.documents.some((document) => ['current_drivers_license', 'current_passport', 'proof_of_address'].includes(document.kind) && document.intakeStatus !== 'not_started')
             ? 'Insurance identity/address support exists in intake.'
             : 'No insurance identity/address support exists in intake yet.',
+        },
+        ...evaluateNameChangeExecutionPrerequisites(target.prerequisiteRules, plan),
+      ]
+      : [
+        {
+          key: 'county-context',
+          label: 'County / jurisdiction context',
+          required: true,
+          status: requirementStatusToDependencyStatus(countyContext?.status ?? 'missing'),
+          reason: countyContext?.reason ?? 'County context requirement not evaluated.',
+        },
+        {
+          key: 'california-voter-support',
+          label: 'California voter-supporting identity/address support',
+          required: false,
+          status: intake.documents.some((document) => ['current_drivers_license', 'proof_of_address'].includes(document.kind) && document.intakeStatus !== 'not_started')
+            ? 'satisfied'
+            : 'attention',
+          reason: intake.documents.some((document) => ['current_drivers_license', 'proof_of_address'].includes(document.kind) && document.intakeStatus !== 'not_started')
+            ? 'California voter-supporting identity/address support exists in intake.'
+            : 'No California voter-supporting identity/address support exists in intake yet.',
         },
         ...evaluateNameChangeExecutionPrerequisites(target.prerequisiteRules, plan),
       ];
