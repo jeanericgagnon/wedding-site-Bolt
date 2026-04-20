@@ -53,6 +53,8 @@ const BuilderV2Lab = lazy(() => import('./pages/BuilderV2Lab').then(m => ({ defa
 const VariantPreviewCapture = lazy(() => import('./pages/VariantPreviewCapture'));
 const TemplateScrollCapture = lazy(() => import('./pages/TemplateScrollCapture'));
 const PhotoUpload = lazy(() => import('./pages/PhotoUpload').then(m => ({ default: m.PhotoUpload })));
+const VendorProfilePage = lazy(() => import('./pages/VendorProfile'));
+const VendorProfileCreatePage = lazy(() => import('./pages/VendorProfileCreate'));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
@@ -83,6 +85,7 @@ const AppContent = () => {
         <Route path="/variant-preview-capture" element={<VariantPreviewCapture />} />
         <Route path="/template-scroll-capture" element={<TemplateScrollCapture />} />
         <Route path="/site/:slug" element={<SiteView />} />
+        <Route path="/vendor/:slug" element={<VendorProfilePage />} />
         <Route path="/vault/:siteSlug" element={<VaultContribute />} />
         <Route path="/vault/:siteSlug/:year" element={<VaultContribute />} />
         <Route path="/accept-collaborator-invite" element={<AcceptCollaboratorInvite />} />
@@ -101,6 +104,14 @@ const AppContent = () => {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/trust" element={<Trust />} />
+        <Route
+          path="/vendor-profile-v1"
+          element={
+            <ProtectedRoute>
+              <VendorProfileCreatePage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/payment-required"
           element={
