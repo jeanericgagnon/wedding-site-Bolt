@@ -825,11 +825,12 @@ export const DashboardSeating: React.FC = () => {
         setTables(saved.tables);
         setAssignments(saved.assignments);
         setAllGuests(guestsData);
-        const attending = guestsData.filter(g => g.is_attending).length;
-        const declined = guestsData.filter(g => isDeclinedRsvpStatus(g.rsvp_status)).length;
-        const pending = guestsData.filter(g => isPendingRsvpStatus(g.rsvp_status)).length;
-        const seated = new Set(saved.assignments.map(a => a.guest_id)).size;
-        setCounters({ invited: guestsData.length, attending, declined, pending, seated, unassigned: Math.max(attending - seated, 0) });
+        const invitedGuests = guestsData.filter(g => g.is_invited_to_event);
+        const attending = invitedGuests.filter(g => g.is_attending).length;
+        const declined = invitedGuests.filter(g => isDeclinedRsvpStatus(g.rsvp_status)).length;
+        const pending = invitedGuests.filter(g => isPendingRsvpStatus(g.rsvp_status)).length;
+        const seated = invitedGuests.filter(g => g.is_attending && saved.assignments.some(a => a.is_valid && a.guest_id === g.id)).length;
+        setCounters({ invited: invitedGuests.length, attending, declined, pending, seated, unassigned: Math.max(attending - seated, 0) });
         setInvalidCount(0);
         return;
       }

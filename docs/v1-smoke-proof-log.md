@@ -276,6 +276,7 @@ Useful if stable, but should not distort the wedding-core launch decision.
 - Concrete finish gap found and fixed: event seating counters were mixing in guest-level declined/pending counts without first restricting to guests actually invited to the event. Event counters now derive invited/attending/declined/pending/seated from the event-invited subset, so event dashboards stop bleeding in unrelated site-wide RSVP state.
 - Concrete finish gap found and fixed: seating/event eligibility was still inheriting global RSVP acceptance when an event invitation existed but no explicit `event_rsvp` response had been recorded yet. Event-specific attendance now requires an explicit positive event RSVP instead of silently treating global wedding acceptance as event attendance.
 - Concrete finish gap found and fixed: Seating Lookup was still loading stale invalid assignments, which could give staff wrong live table/seat answers even after assignment drift was already marked invalid elsewhere. Lookup now restricts itself to `is_valid = true` assignments.
+- Concrete finish gap found and fixed: the Seating demo/proof path was still computing counters from looser guest-level assumptions than the hardened runtime path. Demo counters now mirror invited/attending/seated math more closely so proof behavior stops teaching the wrong event-scoped model.
 
 ## Verification notes
 - `npm run build` passes after the guest-import permission fix.
@@ -294,6 +295,7 @@ Useful if stable, but should not distort the wedding-core launch decision.
 - `npm run build` passes after the event counter invitation-scope fix.
 - `npm run build` passes after the event-specific attendance interpretation fix.
 - `npm run build` passes after the Seating Lookup validity fix.
+- `npm run build` passes after the Seating demo/proof-path alignment fix.
 - `npm run typecheck` is currently failing because of unrelated name-change lane churn (`src/lib/nameChange/*`, `src/pages/dashboard/planning/NameChangePlannerTab.tsx`), not because of the guest-import change.
 
 ## Highest-value next proof seam

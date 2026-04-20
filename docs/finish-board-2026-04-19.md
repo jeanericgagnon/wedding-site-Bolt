@@ -245,6 +245,7 @@ Things that do **not** count as done:
 - event seating counters were still mixing in non-invited guests for declined/pending/attending counts, which made event-level ops truth drift from actual event invitation scope until corrected
 - event seating eligibility was still inheriting global RSVP acceptance when an event-specific invite existed but no explicit event response had been recorded, which could overstate event attendance until corrected
 - Seating Lookup was still surfacing stale invalid assignments, which could give staff wrong live answers even after seating drift had already been marked invalid elsewhere
+- the Seating demo/proof path was still teaching a looser guest-level counter model than the hardened runtime path, which weakened confidence in event-scoped seating truth until corrected
 
 **Proof needed**
 - smoke showing invite flow and role-specific dashboard behavior that makes collaboration feel safe, not sloppy
@@ -446,6 +447,7 @@ Primary proof artifact for this now exists at:
 - Fixed event seating counters so invited/attending/declined/pending/seated counts now derive from the event-invited subset instead of bleeding in unrelated site-wide guest RSVP state.
 - Fixed event-specific attendance interpretation so invited guests are no longer treated as attending a specific event just because they globally accepted the wedding; explicit event RSVP is now required for event attendance.
 - Fixed Seating Lookup to only load valid assignments so staff-facing table/seat answers stop surfacing stale invalid placement data.
+- Fixed the Seating demo/proof path so its counters track invited/attending/seated math more like the hardened runtime model instead of reinforcing a looser event-truth story.
 
 ## Why this batch mattered
 This is real cross-product finish work. The v1 line dies if trust copy lies about privacy, launch state, billing, or access semantics. The board now defines hard done-enough bars per major slice instead of hand-wavy product optimism.
