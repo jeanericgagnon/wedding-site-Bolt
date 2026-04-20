@@ -61,8 +61,9 @@ export const DashboardSeatingLookup: React.FC = () => {
 
         const { data: assignments } = await supabase
           .from('seating_assignments')
-          .select('guest_id, seat_index, checked_in_at, seating_tables(table_name), guests(first_name,last_name,name,email,rsvp_status)')
+          .select('guest_id, seat_index, checked_in_at, is_valid, seating_tables(table_name), guests(first_name,last_name,name,email,rsvp_status)')
           .eq('seating_event_id', eventId)
+          .eq('is_valid', true)
           .order('updated_at', { ascending: false });
 
         const mapped: LookupRow[] = ((assignments || []) as any[]).map((a) => {

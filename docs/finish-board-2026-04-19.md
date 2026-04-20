@@ -244,6 +244,7 @@ Things that do **not** count as done:
 - guest invitation edit rollback still restored invitations without restoring the deleted event-specific RSVP rows behind them, which left a silent data-loss seam until corrected
 - event seating counters were still mixing in non-invited guests for declined/pending/attending counts, which made event-level ops truth drift from actual event invitation scope until corrected
 - event seating eligibility was still inheriting global RSVP acceptance when an event-specific invite existed but no explicit event response had been recorded, which could overstate event attendance until corrected
+- Seating Lookup was still surfacing stale invalid assignments, which could give staff wrong live answers even after seating drift had already been marked invalid elsewhere
 
 **Proof needed**
 - smoke showing invite flow and role-specific dashboard behavior that makes collaboration feel safe, not sloppy
@@ -444,6 +445,7 @@ Primary proof artifact for this now exists at:
 - Fixed guest invitation edit rollback so failed event-invitation edits now restore both the invitations and their prior event-specific RSVP snapshots instead of dropping per-event response history.
 - Fixed event seating counters so invited/attending/declined/pending/seated counts now derive from the event-invited subset instead of bleeding in unrelated site-wide guest RSVP state.
 - Fixed event-specific attendance interpretation so invited guests are no longer treated as attending a specific event just because they globally accepted the wedding; explicit event RSVP is now required for event attendance.
+- Fixed Seating Lookup to only load valid assignments so staff-facing table/seat answers stop surfacing stale invalid placement data.
 
 ## Why this batch mattered
 This is real cross-product finish work. The v1 line dies if trust copy lies about privacy, launch state, billing, or access semantics. The board now defines hard done-enough bars per major slice instead of hand-wavy product optimism.
