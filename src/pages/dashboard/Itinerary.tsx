@@ -797,7 +797,7 @@ Add to itinerary
           {(() => {
             const conflictIds = findConflicts(events);
             return events.map((event) => {
-              const pending = event.invitation_count - event.rsvp_count;
+              const pending = Math.max(0, event.invitation_count - event.attending_count - event.declined_count);
               return (
               <Card key={event.id} className={`p-6 hover:shadow-lg transition-shadow ${conflictIds.has(event.id) ? 'ring-2 ring-amber-300' : ''}`}>
                 <div className="flex items-start justify-between">
