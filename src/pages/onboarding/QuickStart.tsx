@@ -157,6 +157,7 @@ export const QuickStart: React.FC = () => {
   const followUpAnswersRef = useRef<Record<string, string>>({});
   const clarifyingStateRef = useRef<ReturnType<typeof createClarifyingPersistenceFromDecision> | null>(null);
   const [initialSetupAnswers, setInitialSetupAnswers] = useState<InitialSetupAnswers>(createEmptyInitialSetupAnswers());
+  const initialSetupAnswersRef = useRef<InitialSetupAnswers>(createEmptyInitialSetupAnswers());
   const [initialSetupFollowUps] = useState(createEmptyInitialSetupFollowUps());
   const [weddingProfile, setWeddingProfile] = useState(createEmptyWeddingProfile());
   const [hasLocalDraftHydration, setHasLocalDraftHydration] = useState(false);
@@ -229,6 +230,10 @@ export const QuickStart: React.FC = () => {
   useEffect(() => {
     followUpAnswersRef.current = followUpAnswers;
   }, [followUpAnswers]);
+
+  useEffect(() => {
+    initialSetupAnswersRef.current = initialSetupAnswers;
+  }, [initialSetupAnswers]);
 
   useEffect(() => {
     clarifyingStateRef.current = clarifyingState;
@@ -320,11 +325,15 @@ export const QuickStart: React.FC = () => {
   );
 
   const applyAnswer = (questionKey: ConciergeQuestion, rawValue: string) => {
-    setInitialSetupAnswers((prev) => applyQuickStartAnswer(prev, questionKey, rawValue));
+    setInitialSetupAnswers((prev) => {
+      const next = applyQuickStartAnswer(prev, questionKey, rawValue);
+      initialSetupAnswersRef.current = next;
+      return next;
+    });
   };
 
   const finishFlow = async (
-    answersOverride: InitialSetupAnswers = initialSetupAnswers,
+    answersOverride: InitialSetupAnswers = initialSetupAnswersRef.current,
     clarifyingOverride: ReturnType<typeof createClarifyingPersistenceFromDecision> | null = clarifyingStateRef.current,
   ) => {
     setLoading(true);
@@ -615,7 +624,7 @@ export const QuickStart: React.FC = () => {
                 ))}
               </div>
               <div className="mt-6 flex gap-3">
-                <button type="button" onClick={() => void finishFlow(initialSetupAnswers, clarifyingStateRef.current)} disabled={loading} className="rounded-full px-8 py-4 transition-all duration-200 disabled:opacity-30" style={{ backgroundColor: TEXT, color: '#FFFFFF', fontSize: '15px', fontWeight: 500 }}>
+                <button type="button" onClick={() => void finishFlow(initialSetupAnswersRef.current, clarifyingStateRef.current)} disabled={loading} className="rounded-full px-8 py-4 transition-all duration-200 disabled:opacity-30" style={{ backgroundColor: TEXT, color: '#FFFFFF', fontSize: '15px', fontWeight: 500 }}>
                   {loading ? 'Building...' : 'Build my draft'}
                 </button>
                 <button type="button" onClick={() => setShowFollowUps(false)} className="rounded-full px-6 py-4" style={{ backgroundColor: SOFT, color: TEXT }}>
