@@ -22,6 +22,7 @@ import { demoWeddingSite } from '../lib/demoData';
 import { rewriteSignedMediaUrlsToPublicDeep } from '../lib/mediaUrl';
 import { getArchiveModeDescriptor } from '../lib/archiveMode';
 import { getSiteVisibilityState } from '../lib/siteVisibilityState';
+import { getIsPublishedFromSiteRow, getPublicBuilderProject } from '../lib/publicSiteProject';
 
 interface PublicItineraryRow {
   id?: string;
@@ -432,16 +433,7 @@ export const SiteView: React.FC = () => {
         }
 
         const row = data as Record<string, unknown>;
-        const siteJsonMeta = (row.site_json && typeof row.site_json === 'object')
-          ? (row.site_json as Record<string, unknown>)
-          : null;
-
-        const isPublished = Boolean(
-          row.is_published === true ||
-          siteJsonMeta?.publishStatus === 'published' ||
-          (typeof siteJsonMeta?.publishedVersion === 'number' && (siteJsonMeta.publishedVersion as number) > 0) ||
-          (typeof siteJsonMeta?.lastPublishedAt === 'string' && (siteJsonMeta.lastPublishedAt as string).length > 0)
-        );
+        const isPublished = getIsPublishedFromSiteRow(row);
 
         const privacyMode = (data.privacy_mode as string) ?? 'public';
         const visibility = getSiteVisibilityState({ isPublished, privacyMode, hideFromSearch: data.hide_from_search === true });
@@ -482,10 +474,7 @@ export const SiteView: React.FC = () => {
 
         setPrivacyGate('open');
 
-        const rawSiteJson = safeJsonParse<BuilderProject | null>(
-          data.site_json,
-          null
-        );
+        const rawSiteJson = getPublicBuilderProject(row);
         const siteJson = rawSiteJson
           ? rewriteSignedMediaUrlsToPublicDeep({
               ...rawSiteJson,
@@ -502,7 +491,7 @@ export const SiteView: React.FC = () => {
 
         const persistedSections = await siteRepository.fetchPublishedSections(data.id as string).catch(() => []);
 
-        if (persistedSections.length > 0 && !(siteJson && siteJson.pages?.length > 0)) {
+        if (isPublished && persistedSections.length > 0 && !(siteJson && siteJson.pages?.length > 0)) {
           const rawWData = normalizeWeddingData(
             rewriteSignedMediaUrlsToPublicDeep(
               safeJsonParse<WeddingDataV1>(data.wedding_data, createEmptyWeddingData())

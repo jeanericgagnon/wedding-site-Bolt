@@ -281,6 +281,7 @@ Useful if stable, but should not distort the wedding-core launch decision.
 - Concrete finish gap found and fixed: Coordinator Mode's “Next arrivals” list was still showing any unchecked-in guest, including people already flagged for review. That diluted the live fast-path with edge cases. The list now shows only unchecked-in guests whose door status is actually `ready`.
 - Concrete finish gap found and fixed: after narrowing “Next arrivals” to ready guests, the empty-state message could still falsely claim everyone was checked in even when review-needed guests were waiting. The empty state now distinguishes between “no ready arrivals” and “everyone checked in.”
 - Concrete finish gap found and fixed: Messaging retry still trusted button disable state instead of the handler path. Non-compose roles can no longer retry failed or partial campaign sends by reaching the retry action directly.
+- Concrete finish gap found and fixed: the public site path could still fall back to section-based rendering even for unpublished/private-preview access when preview JSON was missing, which risked showing an ambiguous stale render path instead of the actual preview state. Section fallback is now gated to published sites only.
 
 ## Verification notes
 - `npm run build` passes after the guest-import permission fix.
@@ -304,6 +305,7 @@ Useful if stable, but should not distort the wedding-core launch decision.
 - `npm run build` passes after the coordinator next-arrivals focus fix.
 - `npm run build` passes after the coordinator next-arrivals empty-state truth fix.
 - `npm run build` passes after the Messaging retry permission fix.
+- `npm run build` passes after the public preview fallback gating fix.
 - `npm run typecheck` is currently failing because of unrelated name-change lane churn (`src/lib/nameChange/*`, `src/pages/dashboard/planning/NameChangePlannerTab.tsx`), not because of the guest-import change.
 
 ## Highest-value next proof seam

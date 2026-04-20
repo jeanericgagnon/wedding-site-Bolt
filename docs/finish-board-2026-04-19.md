@@ -250,6 +250,7 @@ Things that do **not** count as done:
 - Coordinator Mode's “Next arrivals” list was still mixing review-needed guests into the fast-path arrival cue, which weakened live day-of usefulness until corrected
 - Coordinator Mode's “Next arrivals” empty state could still claim everyone was checked in when review-needed guests were waiting, which weakened live board truth until corrected
 - Messaging retry still relied on button disable state instead of a handler-level permission wall, which left one more campaign-send action path weaker than it should be until corrected
+- the public site path could still fall back to section-based rendering during unpublished/private-preview access when preview JSON was missing, which risked showing a stale ambiguous launch state until corrected
 
 **Proof needed**
 - smoke showing invite flow and role-specific dashboard behavior that makes collaboration feel safe, not sloppy
@@ -456,6 +457,7 @@ Primary proof artifact for this now exists at:
 - Fixed Coordinator Mode’s “Next arrivals” cue so it now shows only ready unchecked-in guests instead of mixing in review-needed arrivals.
 - Fixed Coordinator Mode’s “Next arrivals” empty-state copy so it now distinguishes between “no ready arrivals” and “everyone checked in.”
 - Fixed Messaging retry so non-compose roles can no longer reach failed/partial send retries through the handler path.
+- Fixed public site fallback gating so section-based rendering only kicks in for published sites instead of leaking into unpublished/private-preview access.
 
 ## Why this batch mattered
 This is real cross-product finish work. The v1 line dies if trust copy lies about privacy, launch state, billing, or access semantics. The board now defines hard done-enough bars per major slice instead of hand-wavy product optimism.
