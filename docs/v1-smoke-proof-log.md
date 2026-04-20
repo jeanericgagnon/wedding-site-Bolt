@@ -273,6 +273,7 @@ Useful if stable, but should not distort the wedding-core launch decision.
 - Concrete finish gap found and fixed: assisted/manual RSVP was still drifting from the public RSVP contract on ceremony/reception attendance flags. Manual RSVP now updates `attending_ceremony` and `attending_reception` alongside top-level attendance so per-event state does not go stale after manual changes.
 - Concrete finish gap found and fixed: first-time event-specific RSVP submissions were not stamping `responded_at`, while updates were. Event RSVP now records a response timestamp on insert as well, so fresh event responses and edited event responses behave consistently in downstream itinerary/seating reads.
 - Concrete finish gap found and fixed: guest edit rollback restored deleted event invitations but not the deleted `event_rsvps` rows behind them. Failed guest invitation edits now restore both invitations and their prior event-specific RSVP snapshots instead of silently losing per-event response history.
+- Concrete finish gap found and fixed: event seating counters were mixing in guest-level declined/pending counts without first restricting to guests actually invited to the event. Event counters now derive invited/attending/declined/pending/seated from the event-invited subset, so event dashboards stop bleeding in unrelated site-wide RSVP state.
 
 ## Verification notes
 - `npm run build` passes after the guest-import permission fix.
@@ -288,6 +289,7 @@ Useful if stable, but should not distort the wedding-core launch decision.
 - `npm run build` passes after the assisted/manual event-selection continuity fix.
 - `npm run build` passes after the event-RSVP response-timestamp continuity fix.
 - `npm run build` passes after the guest-invitation rollback continuity fix.
+- `npm run build` passes after the event counter invitation-scope fix.
 - `npm run typecheck` is currently failing because of unrelated name-change lane churn (`src/lib/nameChange/*`, `src/pages/dashboard/planning/NameChangePlannerTab.tsx`), not because of the guest-import change.
 
 ## Highest-value next proof seam

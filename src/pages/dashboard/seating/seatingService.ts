@@ -312,16 +312,17 @@ export async function getEventCounters(
 ): Promise<EventCounters> {
   const guests = await getEligibleGuests(weddingSiteId, itineraryEventId);
   const assignments = await loadAssignments(seatingEventId);
+  const invitedGuests = guests.filter(g => g.is_invited_to_event);
 
   const validAssignmentGuestIds = new Set(
     assignments.filter(a => a.is_valid).map(a => a.guest_id)
   );
 
-  const invited = guests.filter(g => g.is_invited_to_event).length;
-  const attending = guests.filter(g => g.is_attending).length;
-  const declined = guests.filter(g => isDeclinedRsvpStatus(g.rsvp_status)).length;
-  const pending = guests.filter(g => isPendingRsvpStatus(g.rsvp_status)).length;
-  const seated = guests.filter(g => g.is_attending && validAssignmentGuestIds.has(g.id)).length;
+  const invited = invitedGuests.length;
+  const attending = invitedGuests.filter(g => g.is_attending).length;
+  const declined = invitedGuests.filter(g => isDeclinedRsvpStatus(g.rsvp_status)).length;
+  const pending = invitedGuests.filter(g => isPendingRsvpStatus(g.rsvp_status)).length;
+  const seated = invitedGuests.filter(g => g.is_attending && validAssignmentGuestIds.has(g.id)).length;
   const unassigned = attending - seated;
 
   return { invited, attending, declined, pending, seated, unassigned: Math.max(0, unassigned) };
