@@ -531,6 +531,7 @@ function getTemplateKey(message: Message): MessageTemplateKey {
 interface MessageDetailModalProps {
   message: Message;
   deliveries: DeliveryRow[];
+  canManageCampaigns: boolean;
   onClose: () => void;
   onRetry: (message: Message) => Promise<void>;
   onSendScheduledNow: (message: Message) => Promise<void>;
@@ -539,7 +540,7 @@ interface MessageDetailModalProps {
   onLoadIntoComposer: (message: Message, mode: 'edit' | 'duplicate') => void;
 }
 
-const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, deliveries, onClose, onRetry, onSendScheduledNow, onReschedule, onCancelSchedule, onLoadIntoComposer }) => {
+const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, deliveries, canManageCampaigns, onClose, onRetry, onSendScheduledNow, onReschedule, onCancelSchedule, onLoadIntoComposer }) => {
   const [retrying, setRetrying] = React.useState(false);
   const [sendingScheduledNow, setSendingScheduledNow] = React.useState(false);
   const [rescheduling, setRescheduling] = React.useState(false);
@@ -843,6 +844,7 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
               <Button
                 variant="outline"
                 size="sm"
+                disabled={!canManageCampaigns}
                 onClick={() => {
                   onLoadIntoComposer(message, 'edit');
                   onClose();
@@ -854,6 +856,7 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
             <Button
               variant="outline"
               size="sm"
+              disabled={!canManageCampaigns}
               onClick={() => {
                 onLoadIntoComposer(message, 'duplicate');
                 onClose();
@@ -3609,7 +3612,7 @@ export const DashboardMessages: React.FC = () => {
                             <Button size="sm" variant="outline" onClick={() => {
                               loadMessageIntoComposer(message, 'edit');
                               window.scrollTo({ top: 0, behavior: 'smooth' });
-                            }}>
+                            }} disabled={!canCompose}>
                               <Calendar className="w-3.5 h-3.5 mr-1.5" />Reschedule
                             </Button>
                             <Button size="sm" variant="outline" onClick={() => void handleCancelSchedule(message)} disabled={!canCompose}>
@@ -3636,6 +3639,7 @@ export const DashboardMessages: React.FC = () => {
         <MessageDetailModal
           message={viewingMessage}
           deliveries={deliveries}
+          canManageCampaigns={canCompose}
           onClose={() => setViewingMessage(null)}
           onRetry={handleRetry}
           onSendScheduledNow={handleSendScheduledNow}
