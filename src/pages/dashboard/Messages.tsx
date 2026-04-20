@@ -3389,6 +3389,7 @@ export const DashboardMessages: React.FC = () => {
                     <Button
                       size="sm"
                       variant="primary"
+                      disabled={!canCompose}
                       onClick={() => loadMessageIntoComposer(activeCampaignLatestMessage, 'duplicate')}
                     >
                       <Copy className="w-3.5 h-3.5 mr-1.5" />Duplicate thread to composer
@@ -3424,6 +3425,7 @@ export const DashboardMessages: React.FC = () => {
                       <Button
                         size="sm"
                         variant="outline"
+                        disabled={!canCompose}
                         onClick={() => loadMessageIntoComposer(activeCampaignLatestMessage, 'edit')}
                       >
                         Edit in composer
@@ -3434,6 +3436,7 @@ export const DashboardMessages: React.FC = () => {
                     <Button
                       size="sm"
                       variant="outline"
+                      disabled={!canCompose}
                       onClick={() => startFollowUpFromCampaignThread('reminder')}
                     >
                       Next: reminder
@@ -3441,6 +3444,7 @@ export const DashboardMessages: React.FC = () => {
                     <Button
                       size="sm"
                       variant="outline"
+                      disabled={!canCompose}
                       onClick={() => startScheduledFollowUpFromCampaignThread('reminder')}
                     >
                       Schedule reminder
@@ -3448,6 +3452,7 @@ export const DashboardMessages: React.FC = () => {
                     <Button
                       size="sm"
                       variant="outline"
+                      disabled={!canCompose}
                       onClick={() => startFollowUpFromCampaignThread('day-of')}
                     >
                       Next: day-of update
@@ -3455,6 +3460,7 @@ export const DashboardMessages: React.FC = () => {
                     <Button
                       size="sm"
                       variant="outline"
+                      disabled={!canCompose}
                       onClick={() => startScheduledFollowUpFromCampaignThread('day-of')}
                     >
                       Schedule day-of
@@ -3462,6 +3468,7 @@ export const DashboardMessages: React.FC = () => {
                     <Button
                       size="sm"
                       variant="outline"
+                      disabled={!canCompose}
                       onClick={() => startFollowUpFromCampaignThread('thank-you')}
                     >
                       Next: thank you
@@ -3469,6 +3476,7 @@ export const DashboardMessages: React.FC = () => {
                     <Button
                       size="sm"
                       variant="outline"
+                      disabled={!canCompose}
                       onClick={() => startScheduledFollowUpFromCampaignThread('thank-you')}
                     >
                       Schedule thank you
