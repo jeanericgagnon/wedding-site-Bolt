@@ -1328,6 +1328,19 @@ export const DashboardMessages: React.FC = () => {
     }
   };
 
+  const getAudienceSnapshot = (audience: string, channel: 'email' | 'sms') => {
+    const recipients = getRecipients(audience);
+    const reachableCount = channel === 'sms'
+      ? recipients.filter((guest) => !!guest.phone).length
+      : recipients.filter((guest) => !!guest.email).length;
+
+    return {
+      totalAudienceCount: recipients.length,
+      reachableCount,
+      skippedCount: Math.max(recipients.length - reachableCount, 0),
+    };
+  };
+
   const knownPhotoLinksCount = useMemo(() => {
     try {
       const raw = localStorage.getItem('dayof.photoAlbumLinks');
@@ -1803,9 +1816,22 @@ export const DashboardMessages: React.FC = () => {
     }
 
     if (isDemoMode) {
+      const audience = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all';
+      const snapshot = getAudienceSnapshot(audience, message.channel === 'sms' ? 'sms' : 'email');
       setMessages((prev) => prev.map((item) => (
         item.id === message.id
-          ? { ...item, status: 'scheduled', scheduled_for: scheduledFor }
+          ? {
+              ...item,
+              status: 'scheduled',
+              scheduled_for: scheduledFor,
+              recipient_count: snapshot.totalAudienceCount,
+              recipient_filter: {
+                ...(item.recipient_filter ?? {}),
+                recipient_count: snapshot.totalAudienceCount,
+                reachable_count: snapshot.reachableCount,
+                skipped_count: snapshot.skippedCount,
+              },
+            }
           : item
       )));
       toast(`Rescheduled for ${new Date(scheduledFor).toLocaleString()}.`, 'success');
@@ -1813,9 +1839,22 @@ export const DashboardMessages: React.FC = () => {
     }
 
     try {
+      const audience = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all';
+      const snapshot = getAudienceSnapshot(audience, message.channel === 'sms' ? 'sms' : 'email');
       const { error } = await supabase
         .from('messages')
-        .update({ status: 'scheduled', scheduled_for: scheduledFor, sent_at: null })
+        .update({
+          status: 'scheduled',
+          scheduled_for: scheduledFor,
+          sent_at: null,
+          recipient_count: snapshot.totalAudienceCount,
+          recipient_filter: {
+            ...(message.recipient_filter ?? {}),
+            recipient_count: snapshot.totalAudienceCount,
+            reachable_count: snapshot.reachableCount,
+            skipped_count: snapshot.skippedCount,
+          },
+        })
         .eq('id', message.id);
       if (error) throw error;
       toast(`Rescheduled for ${new Date(scheduledFor).toLocaleString()}.`, 'success');
@@ -1832,9 +1871,22 @@ export const DashboardMessages: React.FC = () => {
     }
 
     if (isDemoMode) {
+      const audience = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all';
+      const snapshot = getAudienceSnapshot(audience, message.channel === 'sms' ? 'sms' : 'email');
       setMessages((prev) => prev.map((item) => (
         item.id === message.id
-          ? { ...item, status: 'draft', scheduled_for: null }
+          ? {
+              ...item,
+              status: 'draft',
+              scheduled_for: null,
+              recipient_count: snapshot.totalAudienceCount,
+              recipient_filter: {
+                ...(item.recipient_filter ?? {}),
+                recipient_count: snapshot.totalAudienceCount,
+                reachable_count: snapshot.reachableCount,
+                skipped_count: snapshot.skippedCount,
+              },
+            }
           : item
       )));
       toast('Scheduled campaign moved back to draft.', 'info');
@@ -1842,9 +1894,21 @@ export const DashboardMessages: React.FC = () => {
     }
 
     try {
+      const audience = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all';
+      const snapshot = getAudienceSnapshot(audience, message.channel === 'sms' ? 'sms' : 'email');
       const { error } = await supabase
         .from('messages')
-        .update({ status: 'draft', scheduled_for: null })
+        .update({
+          status: 'draft',
+          scheduled_for: null,
+          recipient_count: snapshot.totalAudienceCount,
+          recipient_filter: {
+            ...(message.recipient_filter ?? {}),
+            recipient_count: snapshot.totalAudienceCount,
+            reachable_count: snapshot.reachableCount,
+            skipped_count: snapshot.skippedCount,
+          },
+        })
         .eq('id', message.id);
       if (error) throw error;
       toast('Scheduled campaign moved back to draft.', 'info');
