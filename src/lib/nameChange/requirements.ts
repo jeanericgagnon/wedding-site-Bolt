@@ -46,6 +46,7 @@ export function evaluateNameChangeRequirements(
   const legalProof = canonicalCase.documents[legalProofKind];
   const identityCoverageKinds: NameChangeDocumentKind[] = ['current_drivers_license', 'current_passport', 'social_security_card'];
   const hasIdentityCoverage = identityCoverageKinds.some((kind) => canonicalCase.documents[kind].intakeStatus !== 'not_started');
+  const hasTravelIdentitySupport = ['current_passport', 'current_drivers_license'].some((kind) => canonicalCase.documents[kind as NameChangeDocumentKind].intakeStatus !== 'not_started');
 
   const results: NameChangeRequirementResult[] = [
     {
@@ -81,9 +82,13 @@ export function evaluateNameChangeRequirements(
       key: 'passport-timing-risk',
       label: 'Passport timing risk reviewed',
       stage: 'institutional',
-      status: canonicalCase.identity.passportNeedsUpdate && canonicalCase.lifeContext.travelBookedSoon ? 'attention' : 'satisfied',
+      status: canonicalCase.identity.passportNeedsUpdate && canonicalCase.lifeContext.travelBookedSoon
+        ? hasTravelIdentitySupport ? 'attention' : 'missing'
+        : 'satisfied',
       reason: canonicalCase.identity.passportNeedsUpdate && canonicalCase.lifeContext.travelBookedSoon
-        ? 'Travel is already booked and passport updates still need to be sequenced carefully.'
+        ? hasTravelIdentitySupport
+          ? 'Travel is already booked and passport updates still need to be sequenced carefully.'
+          : 'Travel is already booked, but no current passport or Real ID support is represented in intake yet.'
         : 'No immediate travel-facing passport timing risk is currently flagged.',
     },
   ];

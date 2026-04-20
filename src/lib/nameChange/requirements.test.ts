@@ -103,4 +103,21 @@ describe('name change requirements skeleton', () => {
     expect(snapshot.results.find((result) => result.key === 'identity-document-coverage')).toMatchObject({ status: 'missing' });
     expect(snapshot.results.find((result) => result.key === 'county-context')).toMatchObject({ status: 'missing' });
   });
+
+  it('escalates passport timing risk to missing when travel is booked soon but travel identity support is missing', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+
+    const snapshot = evaluateNameChangeRequirements(makeCase(), documents, []);
+    expect(snapshot.results.find((result) => result.key === 'passport-timing-risk')).toMatchObject({
+      status: 'missing',
+      reason: 'Travel is already booked, but no current passport or Real ID support is represented in intake yet.',
+    });
+  });
 });
