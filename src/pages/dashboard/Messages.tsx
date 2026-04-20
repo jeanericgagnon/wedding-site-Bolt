@@ -121,7 +121,7 @@ async function triggerBulkSend(messageId: string): Promise<{ delivered: number; 
   return res.json();
 }
 
-async function triggerScheduledDispatch(limit = 10): Promise<{ processed: number; sent: number; failed: number; partial: number; skipped: number }> {
+async function triggerScheduledDispatch(limit = 10): Promise<{ processed: number; sent: number; failed: number; partial: number; skippedMessages: number; skippedRecipients: number }> {
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY;
   const res = await fetch(BULK_SEND_URL, {
@@ -1742,9 +1742,9 @@ export const DashboardMessages: React.FC = () => {
       if (result.processed === 0) {
         toast('No scheduled messages are due right now.', 'info');
       } else if (result.failed === 0 && result.partial === 0) {
-        toast(`Processed ${result.processed} scheduled message${result.processed !== 1 ? 's' : ''}.`, 'success');
+        toast(`Processed ${result.processed} scheduled message${result.processed !== 1 ? 's' : ''}${result.skippedRecipients > 0 ? ` • ${result.skippedRecipients} recipient${result.skippedRecipients !== 1 ? 's' : ''} skipped` : ''}.`, 'success');
       } else {
-        toast(`Processed ${result.processed}: sent ${result.sent}, partial ${result.partial}, failed ${result.failed}${result.skipped > 0 ? `, skipped ${result.skipped}` : ''}.`, result.failed > 0 ? 'error' : 'info');
+        toast(`Processed ${result.processed}: sent ${result.sent}, partial ${result.partial}, failed ${result.failed}${result.skippedRecipients > 0 ? `, skipped recipients ${result.skippedRecipients}` : ''}${result.skippedMessages > 0 ? `, skipped messages ${result.skippedMessages}` : ''}.`, result.failed > 0 ? 'error' : 'info');
       }
       await fetchMessages();
     } catch (err) {

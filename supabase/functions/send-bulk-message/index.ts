@@ -570,7 +570,8 @@ Deno.serve(async (req: Request) => {
       let sent = 0;
       let failed = 0;
       let partial = 0;
-      let skipped = 0;
+      let skippedMessages = 0;
+      let skippedRecipients = 0;
 
       for (const id of messageIds) {
         const result = await deliverMessage({
@@ -585,11 +586,12 @@ Deno.serve(async (req: Request) => {
 
         if (result.ok) {
           const status = String(result.body.status ?? "");
+          skippedRecipients += Number(result.body.skipped ?? 0);
           if (status === "sent") sent += 1;
           else if (status === "partial") partial += 1;
           else if (status === "failed") failed += 1;
         } else if (result.status === 400 && String(result.body.error ?? "").includes("future time")) {
-          skipped += 1;
+          skippedMessages += 1;
         } else {
           failed += 1;
         }
@@ -603,7 +605,8 @@ Deno.serve(async (req: Request) => {
         sent,
         failed,
         partial,
-        skipped,
+        skippedMessages,
+        skippedRecipients,
         messages: results,
       });
     }
