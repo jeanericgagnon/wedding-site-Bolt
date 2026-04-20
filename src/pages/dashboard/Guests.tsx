@@ -1925,6 +1925,10 @@ Proceed with send?`)) return;
   };
 
   const handleSaveAssistedRsvp = async () => {
+    if (isGuestsReadOnly) {
+      toast('Your collaborator role cannot record assisted RSVPs.', 'info');
+      return;
+    }
     if (!assistedRsvpGuest) return;
     let persisted = false;
     try {

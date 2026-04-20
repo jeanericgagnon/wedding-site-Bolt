@@ -267,6 +267,7 @@ Useful if stable, but should not distort the wedding-core launch decision.
 - Concrete finish gap found and fixed: Guests bulk follow-up handlers still trusted menu/button disable states too much. Read-only collaborator roles can no longer trigger thank-you updates, clear all check-ins, or send bulk/due reminders through handler paths.
 - Concrete finish gap found and fixed: Guests individual high-impact actions still trusted button disable states too much. Read-only collaborator roles can no longer trigger invitation sends, check-in changes, or thank-you state changes through direct handler paths.
 - Concrete finish gap found and fixed: a few remaining Coordinator/Guests edge paths still skipped the new permission wall. Undo-last-check-in, coordinator check-in, door escalation, and Q&A answer saves now hard-stop on the collaborator’s actual permission level instead of relying on surrounding UI state.
+- Concrete finish gap found and fixed: assisted RSVP was still one of the remaining manual-ops paths outside the new guest permission wall. Read-only collaborator roles can no longer record assisted RSVPs through the handler path.
 
 ## Verification notes
 - `npm run build` passes after the guest-import permission fix.
@@ -276,6 +277,7 @@ Useful if stable, but should not distort the wedding-core launch decision.
 - `npm run build` passes after the Guests bulk-action permission fix.
 - `npm run build` passes after the Guests individual-action permission fix.
 - `npm run build` passes after the Coordinator/Guests edge-path permission fix.
+- `npm run build` passes after the assisted-RSVP permission fix.
 - `npm run typecheck` is currently failing because of unrelated name-change lane churn (`src/lib/nameChange/*`, `src/pages/dashboard/planning/NameChangePlannerTab.tsx`), not because of the guest-import change.
 
 ## Finish-lane read right now
