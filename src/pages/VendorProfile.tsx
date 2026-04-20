@@ -161,13 +161,13 @@ export const VendorProfilePage: React.FC = () => {
           </section>
         )}
 
-        <section className="grid gap-8 sm:grid-cols-[1.15fr_0.85fr] sm:items-start">
-          <div className="rounded-[28px] bg-white p-6 sm:p-8 shadow-[0_18px_40px_rgba(53,37,22,0.08)] space-y-4">
+        <section className="grid gap-8 lg:grid-cols-[1.12fr_0.88fr] lg:items-start">
+          <div className="rounded-[28px] bg-white p-6 sm:p-8 shadow-[0_18px_40px_rgba(53,37,22,0.08)] space-y-4 sm:space-y-5">
             <h2 className="text-sm uppercase tracking-[0.28em] text-[#8b6f53]">About</h2>
             <p className="text-base sm:text-lg leading-8 text-[#4b3a2c]">{profile.about || `${profile.vendor_name} is a wedding vendor with a focused public profile page for quick review.`}</p>
           </div>
 
-          <div className="rounded-[28px] bg-white p-6 sm:p-8 shadow-[0_18px_40px_rgba(53,37,22,0.08)] space-y-4">
+          <div className="rounded-[28px] bg-white p-6 sm:p-8 shadow-[0_18px_40px_rgba(53,37,22,0.08)] space-y-4 lg:sticky lg:top-6">
             <h2 className="text-sm uppercase tracking-[0.28em] text-[#8b6f53]">Links</h2>
             {publicLinks.length > 0 ? (
               <div className="space-y-3">
@@ -180,6 +180,9 @@ export const VendorProfilePage: React.FC = () => {
               </div>
             ) : (
               <p className="text-sm sm:text-base text-[#6f5843]">Public links will appear here once they’re available for this vendor.</p>
+            )}
+            {publicLinks.length > 0 && (
+              <p className="pt-2 text-xs text-[#8b6f53]">Use these links to browse more recent work, social proof, or the vendor’s main site before reaching out.</p>
             )}
           </div>
         </section>
