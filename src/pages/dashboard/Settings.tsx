@@ -480,11 +480,12 @@ export const DashboardSettings: React.FC = () => {
 
       let targetSiteId = weddingSiteId;
       if (!targetSiteId && user?.id) {
-        const { data: fallbackSite } = await supabase
+        const { data: fallbackSite, error: fallbackSiteError } = await supabase
           .from('wedding_sites')
           .select('id')
           .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
           .maybeSingle();
+        if (fallbackSiteError) throw fallbackSiteError;
         targetSiteId = (fallbackSite?.id as string | null) ?? null;
         if (targetSiteId) setWeddingSiteId(targetSiteId);
       }
@@ -494,11 +495,12 @@ export const DashboardSettings: React.FC = () => {
         return;
       }
 
-      const { data: existing } = await supabase
+      const { data: existing, error: existingError } = await supabase
         .from('wedding_sites')
         .select('id')
         .eq('site_slug', cleaned)
         .maybeSingle();
+      if (existingError) throw existingError;
       if (existing && existing.id !== targetSiteId) {
         setSlugError('That URL is already taken. Please choose another.');
         setSlugSaving(false);
