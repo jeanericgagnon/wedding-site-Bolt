@@ -78,7 +78,8 @@ export function buildNameChangeExecutionSequenceSnapshot(
         },
         ...evaluateNameChangeExecutionPrerequisites(target.prerequisiteRules, plan),
       ]
-      : [
+      : targetKey === 'passport'
+      ? [
         {
           key: 'legal-proof-document',
           label: 'Legal proof document ready',
@@ -108,6 +109,32 @@ export function buildNameChangeExecutionSequenceSnapshot(
           required: false,
           status: requirementStatusToDependencyStatus(passportTimingRisk?.status ?? 'attention'),
           reason: passportTimingRisk?.reason ?? 'Passport timing risk has not been evaluated.',
+        },
+        ...evaluateNameChangeExecutionPrerequisites(target.prerequisiteRules, plan),
+      ]
+      : [
+        {
+          key: 'legal-proof-document',
+          label: 'Legal proof document ready',
+          required: true,
+          status: requirementStatusToDependencyStatus(legalProof?.status ?? 'missing'),
+          reason: legalProof?.reason ?? 'Legal proof requirement not evaluated.',
+        },
+        {
+          key: 'identity-document-coverage',
+          label: 'Identity document coverage',
+          required: true,
+          status: requirementStatusToDependencyStatus(identityCoverage?.status ?? 'missing'),
+          reason: identityCoverage?.reason ?? 'Identity coverage requirement not evaluated.',
+        },
+        {
+          key: 'employment-context',
+          label: 'Employment context eligible for employer packet',
+          required: true,
+          status: profile.employment_status === 'employed' || profile.employment_status === 'self_employed' ? 'satisfied' : 'missing',
+          reason: profile.employment_status === 'employed' || profile.employment_status === 'self_employed'
+            ? 'Employment context is active enough to justify employer / payroll packet prep.'
+            : 'Employer / payroll packet only matters when employment context is active.',
         },
         ...evaluateNameChangeExecutionPrerequisites(target.prerequisiteRules, plan),
       ];

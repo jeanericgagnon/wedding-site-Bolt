@@ -19,6 +19,12 @@ describe('name change execution targets', () => {
       recommendedFormCode: 'DS-82',
       formBuilderKey: 'passport',
     });
+    expect(NAME_CHANGE_EXECUTION_TARGETS.employer).toMatchObject({
+      key: 'employer',
+      lane: 'state',
+      recommendedFormCode: 'EMPLOYER-HR-PACKET',
+      formBuilderKey: 'employer',
+    });
     expect(NAME_CHANGE_EXECUTION_TARGETS.dmv.prerequisiteRules[0]).toMatchObject({
       requiredStepId: 'federal-ssa',
       requiredStatuses: ['complete'],
@@ -26,6 +32,10 @@ describe('name change execution targets', () => {
     expect(NAME_CHANGE_EXECUTION_TARGETS.passport.prerequisiteRules[0]).toMatchObject({
       requiredStepId: 'federal-ssa',
       requiredStatuses: ['in_progress', 'complete'],
+    });
+    expect(NAME_CHANGE_EXECUTION_TARGETS.employer.prerequisiteRules[0]).toMatchObject({
+      requiredStepId: 'federal-ssa',
+      requiredStatuses: ['complete'],
     });
   });
 });

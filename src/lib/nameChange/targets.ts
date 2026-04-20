@@ -1,9 +1,10 @@
 import { NAME_CHANGE_DMV_FORM_CONTRACT } from './dmvForm';
+import { NAME_CHANGE_EMPLOYER_PACKET_CONTRACT } from './employerPacket';
 import { NAME_CHANGE_PASSPORT_RENEWAL_FORM_CONTRACT } from './passportForm';
 import { NAME_CHANGE_SS5_FORM_CONTRACT } from './ss5Form';
 import type { NameChangeExecutionTargetDefinition } from './types';
 
-export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport', NameChangeExecutionTargetDefinition> = {
+export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 'employer', NameChangeExecutionTargetDefinition> = {
   ssa: {
     key: 'ssa',
     label: 'Social Security Administration',
@@ -196,6 +197,83 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport', N
         documentKinds: ['current_passport', 'birth_certificate', 'current_drivers_license'],
         missingReason: 'No passport-supporting identity/citizenship document is represented in intake yet.',
         satisfiedReason: 'A passport-supporting identity/citizenship document exists in intake.',
+      },
+    ],
+  },
+  employer: {
+    key: 'employer',
+    label: 'Employer payroll / HR',
+    lane: 'state',
+    recommendedFormCode: NAME_CHANGE_EMPLOYER_PACKET_CONTRACT.formCode,
+    formBuilderKey: 'employer',
+    prerequisiteRules: [
+      {
+        key: 'federal-ssa-complete',
+        label: 'SSA completed before payroll / HR changes',
+        required: true,
+        requiredStepId: 'federal-ssa',
+        requiredStatuses: ['complete'],
+        missingReason: 'Employer / payroll updates should wait until SSA is complete so tax and payroll records do not drift.',
+        attentionReason: 'SSA is in motion, but payroll / HR should still wait for completion.',
+        satisfiedReason: 'SSA is complete, so employer / payroll updates can proceed cleanly.',
+      },
+      {
+        key: 'primary-photo-id-progress',
+        label: 'Primary photo ID underway before HR packet rollout',
+        required: false,
+        requiredStepId: 'state-dmv',
+        requiredStatuses: ['in_progress', 'complete'],
+        missingReason: 'Primary photo ID has not started moving yet, so some employers may still need interim proof handling.',
+        attentionReason: 'Primary photo ID is moving, which helps HR packet follow-through.',
+        satisfiedReason: 'Primary photo ID is already moving or complete for HR packet follow-through.',
+      },
+    ],
+    autofillTargetFields: [
+      'applicant.current_first_name',
+      'applicant.current_last_name',
+      'applicant.target_last_name',
+      'legal.marriage_date',
+    ],
+    checklistSpecs: [
+      {
+        key: 'legal-proof-document',
+        label: 'Legal proof ready for employer packet',
+        kind: 'requirement',
+        requirementKey: 'legal-proof-document',
+        missingReason: 'Legal proof requirement not evaluated.',
+        satisfiedReason: 'Legal proof document is ready for employer packet prep.',
+      },
+      {
+        key: 'identity-document-coverage',
+        label: 'Identity document coverage',
+        kind: 'requirement',
+        requirementKey: 'identity-document-coverage',
+        missingReason: 'Identity coverage requirement not evaluated.',
+        satisfiedReason: 'Identity document coverage is ready for employer packet prep.',
+      },
+      {
+        key: 'current-legal-name',
+        label: 'Current legal name available for HR packet',
+        kind: 'field_presence',
+        targetField: 'applicant.current_first_name',
+        missingReason: 'Current legal name fields are still incomplete for employer packet prep.',
+        satisfiedReason: 'Current legal first and last name are available for employer packet prep.',
+      },
+      {
+        key: 'target-surname',
+        label: 'Target surname available for HR packet',
+        kind: 'field_presence',
+        targetField: 'applicant.target_last_name',
+        missingReason: 'Target last name is still missing for employer packet prep.',
+        satisfiedReason: 'Target last name is available for employer packet prep.',
+      },
+      {
+        key: 'hr-support-doc',
+        label: 'Employer-supporting document intake',
+        kind: 'document_support',
+        documentKinds: ['social_security_card', 'current_drivers_license', 'current_passport'],
+        missingReason: 'No employer-supporting identity document is represented in intake yet.',
+        satisfiedReason: 'An employer-supporting identity document exists in intake.',
       },
     ],
   },

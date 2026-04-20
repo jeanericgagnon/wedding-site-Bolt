@@ -115,4 +115,32 @@ describe('name change execution sequence snapshot', () => {
     expect(snapshot.ready).toBe(true);
     expect(snapshot.dependencies.find((dependency) => dependency.key === 'federal-ssa-progress')).toMatchObject({ status: 'satisfied' });
   });
+
+  it('marks employer sequencing ready after SSA completion for employed users', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+    const basePlan = buildNameChangePlan({ profile: makeCase(), documents, extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) =>
+        step.id === 'federal-ssa' ? { ...step, executionStatus: 'complete' as const } : step,
+      ),
+    };
+
+    const snapshot = buildNameChangeExecutionSequenceSnapshot('employer', makeCase(), documents, [], plan);
+    expect(snapshot.ready).toBe(true);
+    expect(snapshot.dependencies.find((dependency) => dependency.key === 'employment-context')).toMatchObject({ status: 'satisfied' });
+  });
 });
