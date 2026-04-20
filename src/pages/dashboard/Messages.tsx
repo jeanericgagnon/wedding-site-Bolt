@@ -511,6 +511,9 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
     return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
   }, [message.scheduled_for]);
   const [scheduleInput, setScheduleInput] = React.useState(initialScheduleInput);
+  React.useEffect(() => {
+    setScheduleInput(initialScheduleInput);
+  }, [initialScheduleInput, message.id]);
   const messageDeliveries = deliveries.filter((delivery) => delivery.message_id === message.id);
   const failedDeliveries = messageDeliveries.filter((delivery) => delivery.status === 'failed');
   const skippedDeliveries = messageDeliveries.filter((delivery) => delivery.status === 'skipped');
