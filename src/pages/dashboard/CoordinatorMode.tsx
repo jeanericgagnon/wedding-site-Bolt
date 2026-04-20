@@ -15,6 +15,7 @@ import { buildCoordinatorEscalations } from '../../lib/coordinatorEscalations';
 import { buildCoordinatorPrimaryAction } from '../../lib/coordinatorPrimaryAction';
 import { buildCoordinatorCorrectionCues } from '../../lib/coordinatorCorrectionsSummary';
 import { resolveCoordinatorCorrectionCueTarget } from '../../lib/coordinatorCorrectionCueTarget';
+import { getCoordinatorCorrectionEventId, getCoordinatorCorrectionGuestId } from '../../lib/coordinatorCorrectionTarget';
 import { resolveCoordinatorPrimaryActionTarget } from '../../lib/coordinatorPrimaryActionTarget';
 import { resolveCoordinatorQueueFocus } from '../../lib/coordinatorQueueFocus';
 import { resolveCoordinatorPanelFocus, type CoordinatorPanelFocus } from '../../lib/coordinatorPanelFocus';
@@ -88,6 +89,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [qnaDraftAnswers, setQnaDraftAnswers] = useState<Record<string, string>>({});
   const [activeQnaId, setActiveQnaId] = useState<string | null>(null);
   const [activeTimelineEventId, setActiveTimelineEventId] = useState<string | null>(null);
+  const [activeGuestId, setActiveGuestId] = useState<string | null>(null);
   const [lastAlertSuggestionKey, setLastAlertSuggestionKey] = useState<string | null>(null);
   const [checkInQuery, setCheckInQuery] = useState('');
   const [checkInFilter, setCheckInFilter] = useState<CoordinatorCheckInFilter>('arrivals');
@@ -643,7 +645,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
               {checkInQueue.map((g) => {
                 const doorStatus = getCoordinatorDoorStatus(g);
                 return (
-                  <div key={g.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                  <div key={g.id} className={`flex items-center justify-between gap-3 px-4 py-2.5 ${activeGuestId === g.id ? 'bg-primary/5' : ''}`}>
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium text-text-primary">{g.name}</p>
@@ -663,7 +665,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                         </button>
                       )}
                       <button
-                        onClick={() => canCheckIn && void toggleCheckIn(g)}
+                        onClick={() => { setActiveGuestId(g.id); canCheckIn && void toggleCheckIn(g); }}
                         disabled={!canCheckIn || doorStatus === 'watch'}
                         className={`px-3 py-1.5 text-xs rounded-md border disabled:opacity-40 ${g.checked_in_at ? 'border-success/40 text-success bg-success/5' : doorStatus === 'watch' ? 'border-amber-200 text-amber-700 bg-amber-50' : 'border-border text-text-secondary bg-white'}`}
                       >
