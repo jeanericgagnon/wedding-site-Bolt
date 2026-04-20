@@ -1426,7 +1426,7 @@ export const DashboardMessages: React.FC = () => {
           channel: formData.channel,
           audience_filter: formData.audience,
           recipient_filter: recipientMeta,
-          recipient_count: status === 'queued' ? totalAudienceCount : recipientCount,
+          recipient_count: totalAudienceCount,
           delivered_count: status === 'queued' ? recipientCount : 0,
           failed_count: 0,
         };
@@ -1456,7 +1456,7 @@ export const DashboardMessages: React.FC = () => {
           .from('messages')
           .update({
             audience_filter: formData.audience,
-            recipient_count: recipientCount,
+            recipient_count: totalAudienceCount,
             recipient_filter: recipientMeta,
           })
           .eq('id', inserted.id);
