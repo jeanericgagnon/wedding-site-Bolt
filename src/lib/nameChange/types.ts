@@ -384,9 +384,9 @@ export interface NameChangeExecutionPrerequisiteRule {
   satisfiedReason: string;
 }
 
-export type NameChangeExecutionTargetKey = 'ssa' | 'dmv' | 'passport' | 'employer' | 'banks' | 'insurance' | 'voter' | 'tsa' | 'licenses';
-export type NameChangeFormBuilderKey = 'ss5' | 'dmv' | 'passport' | 'employer' | 'banks' | 'insurance' | 'voter' | 'tsa' | 'licenses';
-export type NameChangeExecutionSequenceProfileKey = 'ssa' | 'dmv' | 'passport' | 'employer' | 'banks' | 'insurance' | 'voter' | 'tsa' | 'licenses';
+export type NameChangeExecutionTargetKey = 'ssa' | 'dmv' | 'passport' | 'employer' | 'banks' | 'insurance' | 'medical' | 'voter' | 'tsa' | 'licenses';
+export type NameChangeFormBuilderKey = 'ss5' | 'dmv' | 'passport' | 'employer' | 'banks' | 'insurance' | 'medical' | 'voter' | 'tsa' | 'licenses';
+export type NameChangeExecutionSequenceProfileKey = 'ssa' | 'dmv' | 'passport' | 'employer' | 'banks' | 'insurance' | 'medical' | 'voter' | 'tsa' | 'licenses';
 
 export interface NameChangeExecutionTargetDefinition {
   key: NameChangeExecutionTargetKey;

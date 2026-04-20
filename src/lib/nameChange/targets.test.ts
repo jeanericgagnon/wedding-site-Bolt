@@ -37,6 +37,13 @@ describe('name change execution targets', () => {
       recommendedFormCode: 'INSURANCE-POLICY-UPDATE-PACKET',
       formBuilderKey: 'insurance',
     });
+    expect(NAME_CHANGE_EXECUTION_TARGETS.medical).toMatchObject({
+      key: 'medical',
+      lane: 'state',
+      recommendedFormCode: 'MEDICAL-PROVIDER-RECORD-UPDATE',
+      formBuilderKey: 'medical',
+      sequenceProfile: 'medical',
+    });
     expect(NAME_CHANGE_EXECUTION_TARGETS.voter).toMatchObject({
       key: 'voter',
       lane: 'state',
@@ -72,6 +79,10 @@ describe('name change execution targets', () => {
       requiredStatuses: ['in_progress', 'complete'],
     });
     expect(NAME_CHANGE_EXECUTION_TARGETS.insurance.prerequisiteRules[0]).toMatchObject({
+      requiredStepId: 'state-dmv',
+      requiredStatuses: ['in_progress', 'complete'],
+    });
+    expect(NAME_CHANGE_EXECUTION_TARGETS.medical.prerequisiteRules[0]).toMatchObject({
       requiredStepId: 'state-dmv',
       requiredStatuses: ['in_progress', 'complete'],
     });

@@ -3,6 +3,7 @@ import { NAME_CHANGE_DMV_FORM_CONTRACT } from './dmvForm';
 import { NAME_CHANGE_EMPLOYER_PACKET_CONTRACT } from './employerPacket';
 import { NAME_CHANGE_INSURANCE_PACKET_CONTRACT } from './insurancePacket';
 import { NAME_CHANGE_LICENSE_PACKET_CONTRACT } from './licensePacket';
+import { NAME_CHANGE_MEDICAL_PACKET_CONTRACT } from './medicalPacket';
 import { NAME_CHANGE_PASSPORT_RENEWAL_FORM_CONTRACT } from './passportForm';
 import { NAME_CHANGE_SS5_FORM_CONTRACT } from './ss5Form';
 import { NAME_CHANGE_TSA_PACKET_CONTRACT } from './tsaPacket';
@@ -47,10 +48,10 @@ function buildSharedIdentityChecklist(targetNoun: string, supportKey: string, su
 }
 
 function buildPhotoIdInstitutionTarget(config: {
-  key: Extract<NameChangeExecutionTargetDefinition['key'], 'banks' | 'insurance'>;
+  key: Extract<NameChangeExecutionTargetDefinition['key'], 'banks' | 'insurance' | 'medical'>;
   label: string;
   recommendedFormCode: string;
-  formBuilderKey: Extract<NameChangeExecutionTargetDefinition['formBuilderKey'], 'banks' | 'insurance'>;
+  formBuilderKey: Extract<NameChangeExecutionTargetDefinition['formBuilderKey'], 'banks' | 'insurance' | 'medical'>;
   supportKey: string;
   supportLabel: string;
   supportDocumentKinds: NameChangeExecutionTargetDefinition['checklistSpecs'][number]['documentKinds'];
@@ -89,7 +90,7 @@ function buildPhotoIdInstitutionTarget(config: {
   };
 }
 
-export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 'employer' | 'banks' | 'insurance' | 'voter' | 'tsa' | 'licenses', NameChangeExecutionTargetDefinition> = {
+export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 'employer' | 'banks' | 'insurance' | 'medical' | 'voter' | 'tsa' | 'licenses', NameChangeExecutionTargetDefinition> = {
   ssa: {
     key: 'ssa',
     label: 'Social Security Administration',
@@ -422,6 +423,35 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 
       missingReason: 'No other institutional rollout step is moving yet, so insurance may be the first account-update lane to start.',
       attentionReason: 'Another institutional lane is already moving, which helps normalize packet handling.',
       satisfiedReason: 'Another institutional lane is already moving for packet normalization.',
+    },
+  }),
+  medical: buildPhotoIdInstitutionTarget({
+    key: 'medical',
+    label: 'Medical providers / insurance cards',
+    recommendedFormCode: NAME_CHANGE_MEDICAL_PACKET_CONTRACT.formCode,
+    formBuilderKey: 'medical',
+    supportKey: 'medical-support-doc',
+    supportLabel: 'Medical-provider-supporting document intake',
+    supportDocumentKinds: ['current_drivers_license', 'current_passport', 'proof_of_address'],
+    primaryRule: {
+      key: 'primary-photo-id-progress',
+      label: 'Primary photo ID underway before medical record rollout',
+      required: true,
+      requiredStepId: 'state-dmv',
+      requiredStatuses: ['in_progress', 'complete'],
+      missingReason: 'Medical/provider record updates usually go smoother once your primary photo ID is moving or already updated.',
+      attentionReason: 'Primary photo ID is moving, which supports medical/provider follow-through.',
+      satisfiedReason: 'Primary photo ID is already moving or complete for medical/provider follow-through.',
+    },
+    secondaryRule: {
+      key: 'insurance-rollout-progress',
+      label: 'Insurance rollout already moving',
+      required: false,
+      requiredStepId: 'institution-insurance',
+      requiredStatuses: ['in_progress', 'complete'],
+      missingReason: 'Insurance rollout is not moving yet, so provider records may be the first healthcare lane to start.',
+      attentionReason: 'Insurance rollout is already moving, which helps member records and provider rosters stay aligned.',
+      satisfiedReason: 'Insurance rollout is already moving for healthcare record coordination.',
     },
   }),
   voter: {

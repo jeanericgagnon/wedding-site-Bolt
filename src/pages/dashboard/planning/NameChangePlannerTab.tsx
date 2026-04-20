@@ -9,6 +9,7 @@ import { buildNameChangeDmvExecutionSnapshot } from '../../../lib/nameChange/dmv
 import { buildNameChangeEmployerExecutionSnapshot } from '../../../lib/nameChange/employerFlow';
 import { buildNameChangeInsuranceExecutionSnapshot } from '../../../lib/nameChange/insuranceFlow';
 import { buildNameChangeLicenseExecutionSnapshot } from '../../../lib/nameChange/licenseFlow';
+import { buildNameChangeMedicalExecutionSnapshot } from '../../../lib/nameChange/medicalFlow';
 import { buildNameChangePassportExecutionSnapshot } from '../../../lib/nameChange/passportFlow';
 import { NAME_CHANGE_FORM_REGISTRY, NAME_CHANGE_INSTITUTION_LIBRARY } from '../../../lib/nameChange/registry';
 import { evaluateNameChangeRequirements } from '../../../lib/nameChange/requirements';
@@ -206,6 +207,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   const bankExecutionSnapshot = useMemo(() => buildNameChangeBankExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
   const insuranceExecutionSnapshot = useMemo(() => buildNameChangeInsuranceExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
   const licenseExecutionSnapshot = useMemo(() => buildNameChangeLicenseExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
+  const medicalExecutionSnapshot = useMemo(() => buildNameChangeMedicalExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
   const voterExecutionSnapshot = useMemo(() => buildNameChangeVoterExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
   const tsaExecutionSnapshot = useMemo(() => buildNameChangeTsaExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
   const ssaExecutionSnapshot = useMemo(() => buildNameChangeSsaExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
@@ -311,6 +313,17 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         snapshot: insuranceExecutionSnapshot,
       },
       {
+        key: 'medical',
+        title: 'Guided execution: medical providers / insurance cards',
+        description: 'Healthcare execution slice for provider rosters, patient portals, and member-card records once primary photo ID is moving.',
+        readyLabel: 'ready for medical record prep',
+        notReadyLabel: 'not ready',
+        sequenceTitle: 'Medical/provider sequencing dependencies',
+        payloadTitle: 'Medical/provider packet snapshot',
+        payloadDescription: 'Structured downstream packet for provider, patient-portal, and insurance-card record updates.',
+        snapshot: medicalExecutionSnapshot,
+      },
+      {
         key: 'voter',
         title: 'Guided execution: California voter registration',
         description: 'California-specific post-DMV execution slice for voter registration follow-through.',
@@ -346,6 +359,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     employerExecutionSnapshot,
     insuranceExecutionSnapshot,
     licenseExecutionSnapshot,
+    medicalExecutionSnapshot,
     passportExecutionSnapshot,
     ssaExecutionSnapshot,
     tsaExecutionSnapshot,
