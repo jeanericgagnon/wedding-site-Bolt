@@ -86,6 +86,7 @@ const EXECUTION_SECTION_STEP_IDS: Record<string, string[]> = {
 };
 
 const NAME_CHANGE_SECTION_PREFS_STORAGE_KEY = 'dayoflove:name-change:collapsed-sections';
+const NAME_CHANGE_ADMIN_PREFS_STORAGE_KEY = 'dayoflove:name-change:show-admin';
 
 interface Props {
   draft: NameChangeCaseInput;
@@ -263,7 +264,15 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   onStepExecutionNoteChange,
   onSave,
 }) => {
-  const [showAdmin, setShowAdmin] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(() => {
+    if (typeof window === 'undefined') return false;
+
+    try {
+      return window.localStorage.getItem(NAME_CHANGE_ADMIN_PREFS_STORAGE_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>(() => {
     if (typeof window === 'undefined') return {};
 
@@ -629,6 +638,16 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       // Ignore localStorage failures; planner still works without persistence.
     }
   }, [collapsedSections]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      window.localStorage.setItem(NAME_CHANGE_ADMIN_PREFS_STORAGE_KEY, String(showAdmin));
+    } catch {
+      // Ignore localStorage failures; planner still works without persistence.
+    }
+  }, [showAdmin]);
 
   return (
     <div className="space-y-6">
