@@ -36,6 +36,7 @@ import { getCoordinatorCheckInBoardTargetId, getCoordinatorCheckInTargetState } 
 import { getCoordinatorTimelineBoardTargetId, getCoordinatorTimelineTargetState } from '../../lib/coordinatorTimelineTargetState';
 import { getCoordinatorQnaTargetState } from '../../lib/coordinatorQnaTargetState';
 import { buildCoordinatorCommandSummary } from '../../lib/coordinatorCommandSummary';
+import { getCoordinatorCommandSummaryTarget } from '../../lib/coordinatorCommandSummaryTarget';
 import { buildCoordinatorAlertTargetCue } from '../../lib/coordinatorAlertTargetCue';
 import { applyCoordinatorAlertSuggestion } from '../../lib/coordinatorAlertSuggestionApply';
 import { getCoordinatorAlertSuggestionState } from '../../lib/coordinatorAlertSuggestionState';
@@ -529,6 +530,23 @@ export const DashboardCoordinatorMode: React.FC = () => {
     }
   };
 
+
+  const jumpToCommandSummaryItem = (label: 'Check-in' | 'Timeline' | 'Q&A' | 'Alerting') => {
+    const target = getCoordinatorCommandSummaryTarget(label);
+    setPanelFocus(target.panelFocus);
+    setCheckInReviewOnly(target.reviewOnly);
+    if (label === 'Check-in') {
+      setCheckInFilter('arrivals');
+      if (checkInBoardTargetId) setActiveGuestId(checkInBoardTargetId);
+    }
+    if (label === 'Timeline' && timelineBoardTargetId) {
+      setActiveTimelineEventId(timelineBoardTargetId);
+    }
+    if (label === 'Q&A') {
+      setActiveQnaId(qnaBoardTargetId ?? getFirstOpenCoordinatorQnaId(qnaItems));
+    }
+  };
+
   const returnToBoard = () => {
     const next = resolveCoordinatorReturnToBoardState({
       hasDoorReview: guests.some((guest) => getCoordinatorDoorStatus(guest) === 'watch'),
@@ -710,11 +728,16 @@ export const DashboardCoordinatorMode: React.FC = () => {
           </div>
           <div className="flex flex-wrap gap-2">
             {commandSummaryItems.map((item) => (
-              <div key={item.label} className="rounded-full border border-border/50 bg-surface-subtle/40 px-2.5 py-1">
+              <button
+                key={item.label}
+                type="button"
+                onClick={() => jumpToCommandSummaryItem(item.label as 'Check-in' | 'Timeline' | 'Q&A' | 'Alerting')}
+                className="rounded-full border border-border/50 bg-surface-subtle/40 px-2.5 py-1 text-left hover:border-primary/35 hover:bg-primary/[0.04]"
+              >
                 <span className="text-[10px] font-medium text-text-primary">{item.label}</span>
                 <span className="mx-1 text-[10px] text-text-tertiary">·</span>
                 <span className="text-[10px] text-text-secondary">{item.detail}</span>
-              </div>
+              </button>
             ))}
           </div>
         </div>
