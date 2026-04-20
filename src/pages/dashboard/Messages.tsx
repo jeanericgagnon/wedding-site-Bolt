@@ -479,6 +479,12 @@ function getUnreachedCount(message: Message, deliveries?: DeliveryRow[]): number
   const delivered = Number(message.delivered_count ?? 0);
   const failed = Number(message.failed_count ?? 0);
   const skipped = deliveries ? getSkippedCount(message, deliveries) : 0;
+  const reachable = message.recipient_filter?.reachable_count;
+
+  if (typeof reachable === 'number' && (!deliveries || deliveries.length === 0)) {
+    return Math.max(reachable - delivered - failed, 0);
+  }
+
   return Math.max(total - delivered - failed - skipped, 0);
 }
 
