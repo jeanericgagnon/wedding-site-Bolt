@@ -1956,10 +1956,22 @@ Proceed with send?`)) return;
         .maybeSingle();
       if (existingRsvpError) throw existingRsvpError;
 
+      const nextAttending = assistedRsvpStatus === 'confirmed';
+      const assistedRsvpPayload = {
+        attending: nextAttending,
+        notes: nextNotes,
+        responded_at: recordedAt,
+        ...(nextAttending ? {} : {
+          meal_choice: null,
+          plus_one_name: null,
+          plus_one_count: 0,
+        }),
+      };
+
       if (existingRsvp?.id) {
         const { error: rsvpError } = await supabase
           .from('rsvps')
-          .update({ attending: assistedRsvpStatus === 'confirmed', notes: nextNotes, responded_at: recordedAt })
+          .update(assistedRsvpPayload)
           .eq('id', existingRsvp.id);
         if (rsvpError) throw rsvpError;
       } else {
@@ -1967,9 +1979,7 @@ Proceed with send?`)) return;
           .from('rsvps')
           .insert({
             guest_id: assistedRsvpGuest.id,
-            attending: assistedRsvpStatus === 'confirmed',
-            notes: nextNotes,
-            responded_at: recordedAt,
+            ...assistedRsvpPayload,
           });
         if (rsvpInsertError) throw rsvpInsertError;
       }

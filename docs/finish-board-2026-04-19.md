@@ -237,6 +237,7 @@ Things that do **not** count as done:
 - Guests individual invitation/check-in/thank-you actions still trusted button disable states too much, which left direct handler paths weaker than they should be for a must-ship ops surface until corrected
 - a few remaining Coordinator/Guests edge handlers still sat outside the new permission wall, which left tail-end role-trust holes until corrected
 - assisted RSVP still sat outside the new guest permission wall, which left a manual-ops recovery path weaker than it should be until corrected
+- assisted RSVP could still leave stale attending-only RSVP detail behind on manual declines, which weakened guest↔RSVP continuity until corrected
 
 **Proof needed**
 - smoke showing invite flow and role-specific dashboard behavior that makes collaboration feel safe, not sloppy
@@ -429,6 +430,7 @@ Primary proof artifact for this now exists at:
 - Fixed Guests individual-action handler gating so read-only collaborator roles can no longer trigger invitation sends, check-in changes, or thank-you status updates just by reaching the action path.
 - Fixed remaining Coordinator/Guests edge-path handler gating so undo check-in, coordinator check-in, door escalation, and guest Q&A answer saves now respect the collaborator’s actual permission level.
 - Fixed assisted-RSVP handler gating so read-only collaborator roles can no longer record manual RSVP outcomes through the action path.
+- Fixed assisted-RSVP decline cleanup so meal and plus-one detail no longer linger after a manual decline and confuse downstream guest-ops surfaces.
 
 ## Why this batch mattered
 This is real cross-product finish work. The v1 line dies if trust copy lies about privacy, launch state, billing, or access semantics. The board now defines hard done-enough bars per major slice instead of hand-wavy product optimism.
