@@ -280,6 +280,7 @@ Useful if stable, but should not distort the wedding-core launch decision.
 - Concrete finish gap found and fixed: itinerary pending counts were derived from raw `rsvp_count`, which could undercount pending guests whenever an `event_rsvp` row existed but `attending` was still null. Pending is now derived from invitation count minus explicit yes/no counts, so itinerary progress stops overstating resolved event responses.
 - Concrete finish gap found and fixed: Coordinator Mode's “Next arrivals” list was still showing any unchecked-in guest, including people already flagged for review. That diluted the live fast-path with edge cases. The list now shows only unchecked-in guests whose door status is actually `ready`.
 - Concrete finish gap found and fixed: after narrowing “Next arrivals” to ready guests, the empty-state message could still falsely claim everyone was checked in even when review-needed guests were waiting. The empty state now distinguishes between “no ready arrivals” and “everyone checked in.”
+- Concrete finish gap found and fixed: Messaging retry still trusted button disable state instead of the handler path. Non-compose roles can no longer retry failed or partial campaign sends by reaching the retry action directly.
 
 ## Verification notes
 - `npm run build` passes after the guest-import permission fix.
@@ -302,6 +303,7 @@ Useful if stable, but should not distort the wedding-core launch decision.
 - `npm run build` passes after the itinerary pending-count truth fix.
 - `npm run build` passes after the coordinator next-arrivals focus fix.
 - `npm run build` passes after the coordinator next-arrivals empty-state truth fix.
+- `npm run build` passes after the Messaging retry permission fix.
 - `npm run typecheck` is currently failing because of unrelated name-change lane churn (`src/lib/nameChange/*`, `src/pages/dashboard/planning/NameChangePlannerTab.tsx`), not because of the guest-import change.
 
 ## Highest-value next proof seam

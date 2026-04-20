@@ -1672,6 +1672,11 @@ export const DashboardMessages: React.FC = () => {
   }
 
   async function handleRetry(message: Message) {
+    if (!canComposeDashboardMessages(messagesRole)) {
+      toast('Your collaborator role cannot retry campaign sends.', 'info');
+      return;
+    }
+
     setRetryingMessageId(message.id);
     try {
       if (isDemoMode) {
@@ -3613,7 +3618,7 @@ export const DashboardMessages: React.FC = () => {
                           </>
                         )}
                         {(message.status === 'failed' || message.status === 'partial') && (
-                          <Button size="sm" variant="outline" onClick={() => void handleRetry(message)} disabled={retryingMessageId === message.id}>
+                          <Button size="sm" variant="outline" onClick={() => void handleRetry(message)} disabled={retryingMessageId === message.id || !canCompose}>
                             <RefreshCw className="w-3.5 h-3.5 mr-1.5" />{retryingMessageId === message.id ? 'Retrying…' : 'Retry'}
                           </Button>
                         )}

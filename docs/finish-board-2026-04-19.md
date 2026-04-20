@@ -249,6 +249,7 @@ Things that do **not** count as done:
 - itinerary pending counts were still derived from raw RSVP-row presence rather than explicit yes/no event responses, which could overstate event RSVP progress until corrected
 - Coordinator Mode's “Next arrivals” list was still mixing review-needed guests into the fast-path arrival cue, which weakened live day-of usefulness until corrected
 - Coordinator Mode's “Next arrivals” empty state could still claim everyone was checked in when review-needed guests were waiting, which weakened live board truth until corrected
+- Messaging retry still relied on button disable state instead of a handler-level permission wall, which left one more campaign-send action path weaker than it should be until corrected
 
 **Proof needed**
 - smoke showing invite flow and role-specific dashboard behavior that makes collaboration feel safe, not sloppy
@@ -454,6 +455,7 @@ Primary proof artifact for this now exists at:
 - Fixed itinerary pending-count math so unresolved event RSVP rows no longer count as “answered” just because a row exists; pending now reflects invitation count minus explicit yes/no responses.
 - Fixed Coordinator Mode’s “Next arrivals” cue so it now shows only ready unchecked-in guests instead of mixing in review-needed arrivals.
 - Fixed Coordinator Mode’s “Next arrivals” empty-state copy so it now distinguishes between “no ready arrivals” and “everyone checked in.”
+- Fixed Messaging retry so non-compose roles can no longer reach failed/partial send retries through the handler path.
 
 ## Why this batch mattered
 This is real cross-product finish work. The v1 line dies if trust copy lies about privacy, launch state, billing, or access semantics. The board now defines hard done-enough bars per major slice instead of hand-wavy product optimism.
