@@ -28,6 +28,7 @@ import { appendCoordinatorAlertLogItem, resolveCoordinatorScheduledFor, validate
 import { buildCoordinatorAlertSuggestions } from '../../lib/coordinatorAlertSuggestions';
 import { getCoordinatorQnaCounts, updateCoordinatorQnaItem } from '../../lib/coordinatorQnaFlow';
 import { getFirstOpenCoordinatorQnaId, getNextCoordinatorQnaFocusId } from '../../lib/coordinatorQnaFocus';
+import { resolveCoordinatorQnaFocusAfterItemsChange, resolveCoordinatorTimelineFocusAfterStateChange } from '../../lib/coordinatorResolvedFocus';
 
 
 type AudienceOption = { value: string; label: string; count: number };
@@ -253,6 +254,18 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const canScheduleAlerts = canScheduleCoordinatorAlerts(coordinatorRole);
 
   const qnaCounts = useMemo(() => getCoordinatorQnaCounts(qnaItems), [qnaItems]);
+
+  useEffect(() => {
+    setActiveQnaId((prev) => resolveCoordinatorQnaFocusAfterItemsChange(qnaItems, prev));
+  }, [qnaItems]);
+
+  useEffect(() => {
+    setActiveTimelineEventId((prev) => resolveCoordinatorTimelineFocusAfterStateChange({
+      events,
+      timelineState,
+      activeTimelineEventId: prev,
+    }));
+  }, [events, timelineState]);
 
   const alertValidationError = useMemo(() => validateCoordinatorAlertForm(alertForm, alertAudienceCount), [alertForm, alertAudienceCount]);
   const handoffCopy = {
