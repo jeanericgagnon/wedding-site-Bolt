@@ -833,9 +833,43 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         </div>
       </Card>
 
+      {executionSectionSummaries.length > 0 && (
+        <Card>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold text-text-primary">Execution section index</h3>
+              <p className="text-sm text-text-secondary">Jump straight to the right lane instead of scrolling through the whole planner stack.</p>
+            </div>
+            <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+              {executionSectionSummaries.length} section{executionSectionSummaries.length === 1 ? '' : 's'}
+            </span>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {executionSectionSummaries.map((section) => (
+              <button
+                key={section.key}
+                type="button"
+                onClick={() => document.getElementById(`execution-section-${section.key}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                className="rounded-xl border border-border-subtle bg-white/60 p-4 text-left transition hover:border-primary/30 hover:bg-primary/5"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-text-primary">{section.title}</p>
+                  <span className={`rounded-full px-2 py-1 text-xs ${section.postureTone === 'danger' ? 'bg-danger/10 text-danger' : section.postureTone === 'warning' ? 'bg-warning/10 text-warning' : section.postureTone === 'primary' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-secondary'}`}>
+                    {section.postureLabel}
+                  </span>
+                </div>
+                <p className="mt-2 text-xs text-text-secondary">{section.progressPercent}% · {section.progressLabel}</p>
+                <p className="mt-2 text-xs text-text-secondary">{section.highestRiskCard}</p>
+              </button>
+            ))}
+          </div>
+        </Card>
+      )}
+
       {executionSectionSummaries.map((section) => (
         <div key={section.key} className="space-y-4">
-          <div className="flex items-start justify-between gap-3">
+          <div id={`execution-section-${section.key}`} className="scroll-mt-24 flex items-start justify-between gap-3">
             <div>
               <h3 className="text-lg font-semibold text-text-primary">{section.title}</h3>
               <p className="text-sm text-text-secondary">{section.description}</p>
