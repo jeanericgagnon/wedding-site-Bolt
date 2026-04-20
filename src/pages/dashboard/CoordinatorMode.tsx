@@ -9,6 +9,7 @@ import { isAttendingRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus
 import { useToast } from '../../components/ui/Toast';
 import { filterCoordinatorCheckInQueue, type CoordinatorCheckInFilter } from '../../lib/coordinatorCheckInQueue';
 import { getCoordinatorDoorStatus, getCoordinatorDoorStatusLabel } from '../../lib/coordinatorCheckInStatus';
+import { getCoordinatorCheckInActionLabel, getCoordinatorTimelineCorrectionAction } from '../../lib/coordinatorCorrectionActions';
 import { buildCoordinatorDoorEscalationPrompt } from '../../lib/coordinatorDoorEscalation';
 import { buildCoordinatorEscalations } from '../../lib/coordinatorEscalations';
 import { buildCoordinatorPrimaryAction } from '../../lib/coordinatorPrimaryAction';
@@ -654,7 +655,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                         disabled={!canCheckIn || doorStatus === 'watch'}
                         className={`px-3 py-1.5 text-xs rounded-md border disabled:opacity-40 ${g.checked_in_at ? 'border-success/40 text-success bg-success/5' : doorStatus === 'watch' ? 'border-amber-200 text-amber-700 bg-amber-50' : 'border-border text-text-secondary bg-white'}`}
                       >
-                        {g.checked_in_at ? 'Checked in' : doorStatus === 'watch' ? 'Review first' : 'Check in'}
+                        {g.checked_in_at ? getCoordinatorCheckInActionLabel(g) : doorStatus === 'watch' ? 'Review first' : getCoordinatorCheckInActionLabel(g)}
                       </button>
                     </div>
                   </div>
@@ -680,6 +681,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                       upNextEventId,
                       timelineState,
                     });
+                    const correctionAction = getCoordinatorTimelineCorrectionAction(state);
                     return (
                       <div key={e.id} className={`rounded-lg border px-3 py-2 ${activeTimelineEventId === e.id ? 'ring-2 ring-primary/10 ' : ''}${isLive ? 'border-primary/35 bg-primary/5' : isUpNext ? 'border-amber-200 bg-amber-50' : 'border-border/50 bg-surface-subtle/40'}`}>
                         <div className="flex items-center justify-between gap-2">
@@ -700,14 +702,26 @@ export const DashboardCoordinatorMode: React.FC = () => {
                         </div>
                         <div className="mt-2 flex items-center justify-between gap-3">
                           <p className="text-xs text-text-tertiary">{e.start_time ? new Date(e.start_time).toLocaleString() : 'Time TBD'}</p>
-                          <button
-                            type="button"
-                            disabled={!canEditTimeline || !primaryAction.nextState}
-                            onClick={() => runTimelineAction(e.id, primaryAction.nextState)}
-                            className="text-[11px] px-2.5 py-1 rounded border border-border bg-white text-text-secondary disabled:opacity-40"
-                          >
-                            {primaryAction.label}
-                          </button>
+                          <div className="flex items-center gap-2">
+                            {correctionAction && (
+                              <button
+                                type="button"
+                                disabled={!canEditTimeline}
+                                onClick={() => runTimelineAction(e.id, correctionAction.nextState)}
+                                className="text-[11px] px-2.5 py-1 rounded border border-amber-200 bg-amber-50 text-amber-700 disabled:opacity-40"
+                              >
+                                {correctionAction.label}
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              disabled={!canEditTimeline || !primaryAction.nextState}
+                              onClick={() => runTimelineAction(e.id, primaryAction.nextState)}
+                              className="text-[11px] px-2.5 py-1 rounded border border-border bg-white text-text-secondary disabled:opacity-40"
+                            >
+                              {primaryAction.label}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );
