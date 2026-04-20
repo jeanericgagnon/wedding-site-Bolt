@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { generateVendorProfileDraft, createVendorProfile } from '../lib/vendorProfiles';
+import { generateVendorProfileDraft, createVendorProfile, type VendorProfileDraft } from '../lib/vendorProfiles';
 import { useToast } from '../components/ui/Toast';
 
 export const VendorProfileCreatePage: React.FC = () => {
@@ -8,7 +8,7 @@ export const VendorProfileCreatePage: React.FC = () => {
   const { toast } = useToast();
   const [form, setForm] = useState({ vendorName: '', instagramUrl: '', websiteUrl: '' });
   const [loading, setLoading] = useState(false);
-  const [draft, setDraft] = useState<any | null>(null);
+  const [draft, setDraft] = useState<VendorProfileDraft | null>(null);
   const [saving, setSaving] = useState(false);
 
   const handleGenerate = async (e: React.FormEvent) => {
@@ -78,8 +78,9 @@ export const VendorProfileCreatePage: React.FC = () => {
               <button type="button" onClick={handlePublish} disabled={saving} className="rounded-2xl bg-[#2f261d] px-5 py-3 text-sm font-semibold text-white disabled:opacity-60">
                 {saving ? 'Publishing…' : 'Publish vendor page'}
               </button>
-              <div className="text-sm text-[#8b6f53] self-center">Live path: /vendor/{draft.slug}</div>
+              <div className="text-sm text-[#8b6f53] self-center">Preferred path: /vendor/{draft.slug}</div>
             </div>
+            <p className="text-xs text-[#8b6f53]">If that slug is already taken, publish will automatically use the next clean available URL.</p>
           </div>
         )}
       </div>

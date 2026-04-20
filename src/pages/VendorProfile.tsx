@@ -87,6 +87,11 @@ export const VendorProfilePage: React.FC = () => {
             <p className="text-xs uppercase tracking-[0.35em] text-[#8b6f53]">Wedding vendor</p>
             <h1 className="text-4xl sm:text-6xl font-semibold leading-tight">{profile.vendor_name}</h1>
             {profile.descriptor && <p className="text-base sm:text-xl text-[#6f5843] max-w-2xl">{profile.descriptor}</p>}
+            <div className="flex flex-wrap gap-2 pt-2">
+              {profile.instagram_url && <span className="rounded-full bg-[#f6f1ea] px-3 py-1 text-xs tracking-[0.18em] uppercase text-[#8b6f53]">Instagram</span>}
+              {profile.website_url && <span className="rounded-full bg-[#f6f1ea] px-3 py-1 text-xs tracking-[0.18em] uppercase text-[#8b6f53]">Website</span>}
+              <span className="rounded-full bg-[#f6f1ea] px-3 py-1 text-xs tracking-[0.18em] uppercase text-[#8b6f53]">Inquire</span>
+            </div>
           </div>
         </section>
 

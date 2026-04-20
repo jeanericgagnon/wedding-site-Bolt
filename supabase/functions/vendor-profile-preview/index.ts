@@ -24,6 +24,28 @@ function normalizeUrl(url: string | null | undefined): string | null {
   }
 }
 
+function extractInstagramHandle(url: string | null): string | null {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    const parts = parsed.pathname.split('/').filter(Boolean);
+    return parts[0]?.replace(/^@/, '') || null;
+  } catch {
+    return null;
+  }
+}
+
+function extractDomainLabel(url: string | null): string | null {
+  if (!url) return null;
+  try {
+    const hostname = new URL(url).hostname.replace(/^www\./, '');
+    const label = hostname.split('.')[0] || '';
+    return label ? label.charAt(0).toUpperCase() + label.slice(1) : null;
+  } catch {
+    return null;
+  }
+}
+
 function extractMeta(html: string, key: string): string | null {
   const patterns = [
     new RegExp(`<meta[^>]+property=["']${key}["'][^>]+content=["']([^"']+)["']`, 'i'),
@@ -48,6 +70,16 @@ function screenshotUrl(url: string | null): string | null {
   return `https://image.thum.io/get/width/1200/noanimate/${url}`;
 }
 
+function logoUrl(url: string | null): string | null {
+  if (!url) return null;
+  try {
+    const hostname = new URL(url).hostname.replace(/^www\./, '');
+    return `https://logo.clearbit.com/${hostname}`;
+  } catch {
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -61,6 +93,8 @@ Deno.serve(async (req) => {
 
     const normalizedWebsite = normalizeUrl(websiteUrl);
     const normalizedInstagram = normalizeUrl(instagramUrl);
+    const instagramHandle = extractInstagramHandle(normalizedInstagram);
+    const websiteLabel = extractDomainLabel(normalizedWebsite);
 
     let websiteTitle: string | null = null;
     let websiteDescription: string | null = null;
@@ -87,14 +121,23 @@ Deno.serve(async (req) => {
 
     const descriptor = websiteTitle && !websiteTitle.toLowerCase().includes(vendorName.toLowerCase())
       ? websiteTitle.slice(0, 80)
-      : '';
+      : instagramHandle
+        ? `Wedding vendor on Instagram @${instagramHandle}`
+        : websiteLabel
+          ? `${websiteLabel} wedding vendor profile`
+          : 'Wedding vendor profile';
 
     const about = websiteDescription?.trim()
       ? websiteDescription.trim().slice(0, 220)
-      : `${vendorName} is a wedding vendor profile generated from public web details so couples can quickly get the essentials in one clean place.`;
+      : instagramHandle
+        ? `${vendorName} is a wedding vendor featured here from public Instagram details so couples can quickly get the essentials in one clean place. Reach out directly to learn more about availability, style, and fit.`
+        : websiteLabel
+          ? `${vendorName} is a wedding vendor profile generated from public web details from ${websiteLabel}, keeping the key images, links, and contact path in one fast page.`
+          : `${vendorName} is a wedding vendor profile generated from public web details so couples can quickly get the essentials in one clean place.`;
 
     const images = [
       websiteImage,
+      logoUrl(normalizedWebsite),
       screenshotUrl(normalizedWebsite),
       screenshotUrl(normalizedInstagram),
     ].filter((value, index, arr): value is string => !!value && arr.indexOf(value) === index).slice(0, 6);

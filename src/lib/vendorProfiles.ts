@@ -34,6 +34,14 @@ export interface VendorProfileDraft {
   source_payload: Record<string, unknown>;
 }
 
+function normalizeSlugPart(input: string): string {
+  return input
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 64);
+}
+
 function normalizeVendorProfile(row: any): VendorProfile {
   return {
     id: row.id,
@@ -59,13 +67,24 @@ export async function generateVendorProfileDraft(input: { vendorName: string; in
 }
 
 export async function createVendorProfile(draft: VendorProfileDraft): Promise<VendorProfile> {
-  const { data, error } = await supabase
-    .from('vendor_profiles')
-    .insert(draft)
-    .select('*')
-    .single();
-  if (error) throw error;
-  return normalizeVendorProfile(data);
+  const baseSlug = normalizeSlugPart(draft.slug || draft.vendor_name) || `vendor-${Date.now()}`;
+
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const nextSlug = attempt === 0 ? baseSlug : `${baseSlug}-${attempt + 1}`.slice(0, 72);
+    const { data, error } = await supabase
+      .from('vendor_profiles')
+      .insert({ ...draft, slug: nextSlug })
+      .select('*')
+      .single();
+
+    if (!error) return normalizeVendorProfile(data);
+
+    const message = (error.message || '').toLowerCase();
+    const duplicateSlug = message.includes('vendor_profiles_slug_key') || message.includes('duplicate key') || message.includes('unique');
+    if (!duplicateSlug) throw error;
+  }
+
+  throw new Error('Could not find an available vendor page URL. Try a slightly different vendor name.');
 }
 
 export async function getVendorProfileBySlug(slug: string): Promise<VendorProfile | null> {
