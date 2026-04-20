@@ -64,6 +64,9 @@ interface ExecutionSectionSummary {
   readyCount: number;
   blockedCount: number;
   attentionCount: number;
+  postureLabel: string;
+  postureDetail: string;
+  postureTone: 'danger' | 'warning' | 'primary' | 'neutral';
   highestRiskCardKey: string | null;
   highestRiskCard: string;
   nextActionLabel: string;
@@ -546,12 +549,36 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       const staleReminderKeys = sectionReminderItems.filter((item) => item.isStale).map((item) => item.reminderKey);
       const reminderKeys = sectionReminderItems.map((item) => item.reminderKey);
       const staleReminderOverlap = staleReminderKeys.length;
+      const posture = blockedCount === section.cards.length
+        ? {
+            postureLabel: 'blocked',
+            postureDetail: 'Every card in this section still has blockers, so this lane needs setup or dependency clearing before it can really move.',
+            postureTone: 'danger' as const,
+          }
+        : readyCount === section.cards.length && attentionCount === 0
+          ? {
+              postureLabel: 'mostly done',
+              postureDetail: 'Everything in this section is ready and there is not much loose attention left here.',
+              postureTone: 'primary' as const,
+            }
+          : readyCount > 0
+            ? {
+                postureLabel: 'moving',
+                postureDetail: 'Some cards are already ready while others still need cleanup, so this section can move now without pretending it is finished.',
+                postureTone: 'warning' as const,
+              }
+            : {
+                postureLabel: 'cleanup only',
+                postureDetail: 'This section is lower-stakes tail work with light dependencies, so it is mostly about cleanup once the bigger lanes settle.',
+                postureTone: 'neutral' as const,
+              };
 
       return {
         ...section,
         readyCount,
         blockedCount,
         attentionCount,
+        ...posture,
         highestRiskCardKey,
         highestRiskCard,
         nextActionLabel,
@@ -792,6 +819,12 @@ export const NameChangePlannerTab: React.FC<Props> = ({
           <div>
             <h3 className="text-lg font-semibold text-text-primary">{section.title}</h3>
             <p className="text-sm text-text-secondary">{section.description}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span className={`rounded-full px-2 py-1 text-xs ${section.postureTone === 'danger' ? 'bg-danger/10 text-danger' : section.postureTone === 'warning' ? 'bg-warning/10 text-warning' : section.postureTone === 'primary' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-secondary'}`}>
+                {section.postureLabel}
+              </span>
+              <span className="text-xs text-text-secondary">{section.postureDetail}</span>
+            </div>
           </div>
 
           {(section.reminderKeys.length > 0 || section.staleReminderKeys.length > 0) && (
