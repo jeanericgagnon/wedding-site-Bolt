@@ -68,6 +68,13 @@ export default function EventRSVP() {
   }, [token]);
 
   async function loadGuestAndEvents() {
+    setGuest(null);
+    setInvitations([]);
+    setSelectedEvent(null);
+    setSubmitError('');
+    setSubmitSuccess(false);
+    setHasEventRsvpSupport(null);
+
     try {
       const { data: guestData, error: guestError } = await supabase
         .from('guests')
