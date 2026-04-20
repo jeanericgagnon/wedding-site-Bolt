@@ -32,6 +32,7 @@ import { getCoordinatorNeutralFocusReason } from '../../lib/coordinatorNeutralFo
 import { resolveCoordinatorNeutralFocusTarget } from '../../lib/coordinatorNeutralFocusTarget';
 import { getCoordinatorActionHint } from '../../lib/coordinatorActionCopy';
 import { getCoordinatorActiveTargetLabel } from '../../lib/coordinatorActiveTargetLabel';
+import { buildCoordinatorAlertTargetCue } from '../../lib/coordinatorAlertTargetCue';
 import { normalizeCoordinatorTimelineWorkState } from '../../lib/coordinatorTimelineWorkState';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
@@ -331,6 +332,12 @@ export const DashboardCoordinatorMode: React.FC = () => {
     recipientCount: alertAudienceCount,
   }), [alertForm, eventAudienceOptions, preferredAlertSuggestion, alertAudienceCount]);
   const alertLaneLabel = useMemo(() => getCoordinatorAlertLaneLabel(preferredAlertSuggestion), [preferredAlertSuggestion]);
+  const alertTargetCue = useMemo(() => buildCoordinatorAlertTargetCue({
+    preferredSuggestion: preferredAlertSuggestion,
+    subject: alertForm.subject,
+    body: alertForm.body,
+    audience: alertForm.audience,
+  }), [preferredAlertSuggestion, alertForm.subject, alertForm.body, alertForm.audience]);
 
   useEffect(() => {
     if (!preferredAlertSuggestion) return;
@@ -942,14 +949,19 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     </div>
                   ) : <div />}
                 </div>
-                <div className="rounded-md border border-primary/20 bg-primary/[0.03] px-3 py-2 space-y-2">
+                <div className={`rounded-md border px-3 py-2 space-y-2 ${alertTargetCue.aligned ? 'border-primary/20 bg-primary/[0.03]' : 'border-amber-200 bg-amber-50/80'}`}>
                   <div className="flex items-center justify-between gap-2">
                     <div>
                       <p className="text-[11px] font-medium text-text-primary">Ready to send</p>
                       <p className="text-[10px] text-text-tertiary/80">{getCoordinatorActiveTargetLabel('alert')}</p>
                     </div>
-                    <span className="px-2 py-0.5 rounded-full border border-primary/20 bg-primary/5 text-[10px] font-medium text-primary">{alertLaneLabel}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-0.5 rounded-full border text-[10px] font-medium ${alertTargetCue.aligned ? 'border-primary/20 bg-primary/5 text-primary' : 'border-amber-300 bg-amber-100 text-amber-800'}`}>{alertTargetCue.aligned ? 'Board-aligned' : 'Customized'}</span>
+                      <span className="px-2 py-0.5 rounded-full border border-primary/20 bg-primary/5 text-[10px] font-medium text-primary">{alertLaneLabel}</span>
+                    </div>
                   </div>
+                  <p className="text-[11px] font-medium text-text-primary">{alertTargetCue.title}</p>
+                  <p className="text-[11px] text-text-secondary">{alertTargetCue.detail}</p>
                   <p className="text-[11px] text-text-secondary">{alertSummary.intentLabel} · {alertSummary.audienceLabel} · {alertSummary.recipientLabel}</p>
                   <p className="text-[11px] text-text-tertiary">{alertSummary.deliveryLabel}</p>
                 </div>
