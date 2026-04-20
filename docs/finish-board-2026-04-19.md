@@ -252,6 +252,7 @@ Things that do **not** count as done:
 - Product grouping still risked blending a should-ship memories slice into the core must-ship usage story
 - Product summary language still risked treating the whole current product shape as equally earned instead of separating core v1 from broader direction
 - Product section framing still had one too-broad label that implied a fully earned bundle instead of a scoped current product shape
+- Home feature-panel copy still risked selling archive/anniversary ambition harder than the current should-ship proof bar supports
 
 **Proof needed**
 - brutal end-to-end smoke over real couple and guest path
@@ -399,6 +400,7 @@ Primary proof artifact for this now exists at:
 - Tightened Product grouping so a should-ship memories slice no longer reads like part of the core must-ship “what couples actually use” v1 story.
 - Tightened Product summary language so the page now explicitly separates the core earned v1 line from broader surrounding product direction.
 - Renamed the Product section header from `Everything you get` to `Current product shape` so the page framing matches the actual must-ship vs should-ship split.
+- Tightened the Home archive/memory panel so it now frames that slice as post-wedding memory foundation instead of a more mature anniversary platform than the current proof supports.
 
 ## Why this batch mattered
 This is real cross-product finish work. The v1 line dies if trust copy lies about privacy, launch state, billing, or access semantics. The board now defines hard done-enough bars per major slice instead of hand-wavy product optimism.

@@ -63,7 +63,7 @@ export const Home: React.FC = () => {
       title: 'Archive & Anniversary',
       icon: Wallet,
       href: '/product',
-      bullets: ['Archive mode after the wedding', 'Guest photo return path', 'Anniversary vaults', 'Keepsake-first post-wedding positioning', 'Reasons to revisit later', 'More than a disposable wedding microsite'],
+      bullets: ['Archive mode after the wedding', 'Guest photo return path', 'Post-wedding memory foundation', 'Keepsake-first positioning', 'Reasons to revisit later', 'A site that can stay meaningful after the event'],
     },
     {
       id: 'travel',
