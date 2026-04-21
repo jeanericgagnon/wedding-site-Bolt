@@ -94,6 +94,7 @@ export default function EventRSVP() {
   async function loadGuestAndEvents() {
     const requestId = activeLoadRequestRef.current + 1;
     activeLoadRequestRef.current = requestId;
+    activeSubmitRequestRef.current += 1;
     let eventRsvpSupportKnown: boolean | null = null;
     let eventRsvpSupportAvailable = true;
 
