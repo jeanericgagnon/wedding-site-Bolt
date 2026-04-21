@@ -269,11 +269,6 @@ async function deliverMessage(opts: {
     return !(g.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(g.email));
   });
 
-  await adminClient
-    .from("messages")
-    .update({ status: "sending", sending_started_at: new Date().toISOString() })
-    .eq("id", messageId);
-
   const coupleName1: string = message.wedding_sites?.couple_name_1 ?? "Partner";
   const coupleName2: string = message.wedding_sites?.couple_name_2 ?? "Partner";
 
@@ -405,6 +400,11 @@ async function deliverMessage(opts: {
       });
     }
   }
+
+  await adminClient
+    .from("messages")
+    .update({ status: "sending", sending_started_at: new Date().toISOString() })
+    .eq("id", messageId);
 
   const deliveryInserts: Array<{
     message_id: string;
