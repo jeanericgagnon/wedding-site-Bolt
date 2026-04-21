@@ -706,6 +706,12 @@ export const DashboardCoordinatorMode: React.FC = () => {
     setCommandJumpTargetId(null);
   };
 
+  const focusCoordinatorAlertLane = () => {
+    clearCoordinatorTransientState();
+    setPanelFocus('timeline');
+    setCommandSource(null);
+  };
+
   const sendDayOfAlert = async () => {
     if (!siteId) return;
     if (!canSendAlerts) {
@@ -1518,6 +1524,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                       type="button"
                       disabled={!canSendAlerts}
                       onClick={() => {
+                        focusCoordinatorAlertLane();
                         setAlertForm((prev) => ({
                           ...prev,
                           subject: suggestion.subject,
@@ -1540,7 +1547,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 <button
                   type="button"
                   disabled={!canSendAlerts}
-                  onClick={() => setAlertForm((prev) => ({ ...prev, channel: 'sms', scheduleType: 'now' }))}
+                  onClick={() => { focusCoordinatorAlertLane(); setAlertForm((prev) => ({ ...prev, channel: 'sms', scheduleType: 'now' })); }}
                   className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary disabled:opacity-40"
                 >
                   Text now
@@ -1548,7 +1555,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 <button
                   type="button"
                   disabled={!canSendAlerts || !canScheduleAlerts}
-                  onClick={() => setAlertForm((prev) => ({ ...prev, channel: 'email', scheduleType: 'later' }))}
+                  onClick={() => { focusCoordinatorAlertLane(); setAlertForm((prev) => ({ ...prev, channel: 'email', scheduleType: 'later' })); }}
                   className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary disabled:opacity-40"
                 >
                   Schedule email
@@ -1558,7 +1565,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     key={audience}
                     type="button"
                     disabled={!canSendAlerts}
-                    onClick={() => setAlertForm((prev) => ({ ...prev, audience }))}
+                    onClick={() => { focusCoordinatorAlertLane(); setAlertForm((prev) => ({ ...prev, audience })); }}
                     className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary disabled:opacity-40"
                   >
                     {audience} ({count})
@@ -1569,19 +1576,19 @@ export const DashboardCoordinatorMode: React.FC = () => {
               <fieldset disabled={!canSendAlerts} className="space-y-2.5">
                 <Input
                   value={alertForm.subject}
-                  onChange={(e) => setAlertForm((prev) => ({ ...prev, subject: e.target.value }))}
+                  onChange={(e) => { focusCoordinatorAlertLane(); setAlertForm((prev) => ({ ...prev, subject: e.target.value })); }}
                   placeholder="Message subject"
                 />
                 <Textarea
                   value={alertForm.body}
-                  onChange={(e) => setAlertForm((prev) => ({ ...prev, body: e.target.value }))}
+                  onChange={(e) => { focusCoordinatorAlertLane(); setAlertForm((prev) => ({ ...prev, body: e.target.value })); }}
                   rows={3}
                   placeholder="Write the update you want guests to receive"
                 />
                 <div className="grid grid-cols-2 gap-2">
                   <select
                     value={alertForm.audience}
-                    onChange={(e) => setAlertForm((prev) => ({ ...prev, audience: e.target.value }))}
+                    onChange={(e) => { focusCoordinatorAlertLane(); setAlertForm((prev) => ({ ...prev, audience: e.target.value })); }}
                     className="text-xs rounded-md border border-border bg-white px-2 py-2 text-text-secondary"
                   >
                     <option value="all">All guests</option>
@@ -1593,7 +1600,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   </select>
                   <select
                     value={alertForm.channel}
-                    onChange={(e) => setAlertForm((prev) => ({ ...prev, channel: e.target.value as 'email' | 'sms' }))}
+                    onChange={(e) => { focusCoordinatorAlertLane(); setAlertForm((prev) => ({ ...prev, channel: e.target.value as 'email' | 'sms' })); }}
                     className="text-xs rounded-md border border-border bg-white px-2 py-2 text-text-secondary"
                   >
                     <option value="email">Email</option>
@@ -1603,7 +1610,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 <div className="grid grid-cols-2 gap-2">
                   <select
                     value={alertForm.scheduleType}
-                    onChange={(e) => setAlertForm((prev) => ({ ...prev, scheduleType: (canScheduleAlerts ? e.target.value : 'now') as 'now' | 'later' }))}
+                    onChange={(e) => { focusCoordinatorAlertLane(); setAlertForm((prev) => ({ ...prev, scheduleType: (canScheduleAlerts ? e.target.value : 'now') as 'now' | 'later' })); }}
                     className="text-xs rounded-md border border-border bg-white px-2 py-2 text-text-secondary"
                   >
                     <option value="now">Send now</option>
@@ -1614,13 +1621,13 @@ export const DashboardCoordinatorMode: React.FC = () => {
                       <input
                         type="date"
                         value={alertForm.scheduleDate}
-                        onChange={(e) => setAlertForm((prev) => ({ ...prev, scheduleDate: e.target.value }))}
+                        onChange={(e) => { focusCoordinatorAlertLane(); setAlertForm((prev) => ({ ...prev, scheduleDate: e.target.value })); }}
                         className="text-xs rounded-md border border-border bg-white px-2 py-2 text-text-secondary"
                       />
                       <input
                         type="time"
                         value={alertForm.scheduleTime}
-                        onChange={(e) => setAlertForm((prev) => ({ ...prev, scheduleTime: e.target.value }))}
+                        onChange={(e) => { focusCoordinatorAlertLane(); setAlertForm((prev) => ({ ...prev, scheduleTime: e.target.value })); }}
                         className="text-xs rounded-md border border-border bg-white px-2 py-2 text-text-secondary"
                       />
                     </div>
@@ -1648,7 +1655,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                         {preferredAlertSuggestion && (
                           <button
                             type="button"
-                            onClick={() => setAlertForm((prev) => applyCoordinatorAlertSuggestion({ form: prev, suggestion: preferredAlertSuggestion }))}
+                            onClick={() => { focusCoordinatorAlertLane(); setAlertForm((prev) => applyCoordinatorAlertSuggestion({ form: prev, suggestion: preferredAlertSuggestion })); }}
                             className="inline-flex w-fit px-2.5 py-1 rounded-md border border-amber-300 bg-white text-[11px] font-medium text-amber-800"
                           >
                             Re-align to {preferredAlertSuggestion.label.toLowerCase()}
@@ -1673,12 +1680,12 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 {alertLog.length > 0 && (
                   <div className="pt-1 space-y-1.5">
                     <div className="flex flex-wrap gap-1.5">
-                      <button type="button" onClick={() => setAlertChannelFilter('all')} className={`text-[11px] px-2 py-0.5 rounded-full border ${alertChannelFilter === 'all' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>All</button>
-                      <button type="button" onClick={() => setAlertChannelFilter('email')} className={`text-[11px] px-2 py-0.5 rounded-full border ${alertChannelFilter === 'email' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>Email</button>
-                      <button type="button" onClick={() => setAlertChannelFilter('sms')} className={`text-[11px] px-2 py-0.5 rounded-full border ${alertChannelFilter === 'sms' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>SMS</button>
-                      <button type="button" onClick={() => setAlertTimingFilter('all')} className={`text-[11px] px-2 py-0.5 rounded-full border ${alertTimingFilter === 'all' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>Any time</button>
-                      <button type="button" onClick={() => setAlertTimingFilter('now')} className={`text-[11px] px-2 py-0.5 rounded-full border ${alertTimingFilter === 'now' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>Send now</button>
-                      <button type="button" onClick={() => setAlertTimingFilter('scheduled')} className={`text-[11px] px-2 py-0.5 rounded-full border ${alertTimingFilter === 'scheduled' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>Scheduled</button>
+                      <button type="button" onClick={() => { focusCoordinatorAlertLane(); setAlertChannelFilter('all'); }} className={`text-[11px] px-2 py-0.5 rounded-full border ${alertChannelFilter === 'all' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>All</button>
+                      <button type="button" onClick={() => { focusCoordinatorAlertLane(); setAlertChannelFilter('email'); }} className={`text-[11px] px-2 py-0.5 rounded-full border ${alertChannelFilter === 'email' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>Email</button>
+                      <button type="button" onClick={() => { focusCoordinatorAlertLane(); setAlertChannelFilter('sms'); }} className={`text-[11px] px-2 py-0.5 rounded-full border ${alertChannelFilter === 'sms' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>SMS</button>
+                      <button type="button" onClick={() => { focusCoordinatorAlertLane(); setAlertTimingFilter('all'); }} className={`text-[11px] px-2 py-0.5 rounded-full border ${alertTimingFilter === 'all' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>Any time</button>
+                      <button type="button" onClick={() => { focusCoordinatorAlertLane(); setAlertTimingFilter('now'); }} className={`text-[11px] px-2 py-0.5 rounded-full border ${alertTimingFilter === 'now' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>Send now</button>
+                      <button type="button" onClick={() => { focusCoordinatorAlertLane(); setAlertTimingFilter('scheduled'); }} className={`text-[11px] px-2 py-0.5 rounded-full border ${alertTimingFilter === 'scheduled' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>Scheduled</button>
                     </div>
                     {filteredAlertLog.slice(0, 4).map((item) => (
                       <div key={item.id} className="text-[11px] text-text-tertiary border border-border/50 rounded-md px-2 py-1.5">
