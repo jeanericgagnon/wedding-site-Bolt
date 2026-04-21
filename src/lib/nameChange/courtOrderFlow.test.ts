@@ -84,4 +84,25 @@ describe('court-order path review execution snapshot', () => {
     expect(snapshot.ready).toBe(false);
     expect(snapshot.blockers).toContain('County context is still missing, so court-order jurisdiction review cannot be grounded yet.');
   });
+
+  it('blocks when launch state is not aligned to the modeled California court-order review path', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'court_order_name_change',
+        display_name: 'Court order',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+
+    const snapshot = buildNameChangeCourtOrderExecutionSnapshot(makeCase({ launch_state: 'texas' as never }), documents, []);
+    expect(snapshot.ready).toBe(false);
+    expect(snapshot.blockers).toContain('Current modeled downstream state execution assumes California, but launch state is texas.');
+  });
 });

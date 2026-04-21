@@ -110,6 +110,14 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'courtOrder' | 'ssa' | 'dmv' 
     ],
     checklistSpecs: [
       {
+        key: 'launch-state-alignment',
+        label: 'California launch-state alignment',
+        kind: 'requirement',
+        requirementKey: 'launch-state-alignment',
+        missingReason: 'California launch-state alignment has not been evaluated yet.',
+        satisfiedReason: 'California launch-state alignment is ready for this modeled court-order review slice.',
+      },
+      {
         key: 'court-order-path-readiness',
         label: 'Court-order path readiness',
         kind: 'requirement',
