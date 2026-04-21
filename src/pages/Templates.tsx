@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { templateCatalog, templateColorwayFacets, templateSeasonFacets, templateStyleFacets } from '../builder/constants/templateCatalog';
 import { getTemplateSupportManifest } from '../builder/constants/templateSupportManifest';
 import { TEMPLATE_USE_CASE_PACKS } from '../builder/constants/templateUseCasePacks';
-import { readSetupDraft, writeSetupDraft } from '../lib/setupDraft';
+import { readSetupDraft, selectSetupDraftTemplate } from '../lib/setupDraft';
 
 type Facet = 'all' | string;
 
@@ -86,10 +86,7 @@ export const Templates: React.FC = () => {
   }, [groupByStyle, filtered]);
 
   const useTemplate = (templateId: string) => {
-    writeSetupDraft({
-      ...readSetupDraft(),
-      selectedTemplateId: templateId,
-    });
+    selectSetupDraftTemplate(templateId);
     navigate('/setup/names');
   };
 

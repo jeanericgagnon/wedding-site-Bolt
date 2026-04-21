@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import {
   emptySetupDraft,
   readSetupDraft,
+  selectSetupDraftTemplate,
   SELECTED_TEMPLATE_KEY,
   SETUP_DRAFT_KEY,
   setupDraftProgress,
@@ -58,6 +59,27 @@ describe('setupDraft', () => {
     });
 
     expect(localStorage.getItem(SELECTED_TEMPLATE_KEY)).toBeNull();
+  });
+
+  it('updates the selected template without dropping the rest of the setup draft', () => {
+    writeSetupDraft({
+      ...emptySetupDraft,
+      partnerOneFirstName: 'Eric',
+      partnerTwoFirstName: 'Alex',
+      weddingCity: 'San Diego',
+      selectedTemplateId: 'modern-luxe',
+    });
+
+    selectSetupDraftTemplate('destination-minimal');
+
+    expect(readSetupDraft()).toEqual({
+      ...emptySetupDraft,
+      partnerOneFirstName: 'Eric',
+      partnerTwoFirstName: 'Alex',
+      weddingCity: 'San Diego',
+      selectedTemplateId: 'destination-minimal',
+    });
+    expect(localStorage.getItem(SELECTED_TEMPLATE_KEY)).toBe('destination-minimal');
   });
 
   it('drops invalid enum values and non-string style entries from persisted drafts', () => {

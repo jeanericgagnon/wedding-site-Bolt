@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { templateCatalog } from '../builder/constants/templateCatalog';
 import { getTemplateSupportManifest } from '../builder/constants/templateSupportManifest';
 import { TEMPLATE_USE_CASE_PACKS } from '../builder/constants/templateUseCasePacks';
+import { selectSetupDraftTemplate } from '../lib/setupDraft';
 
 export const TemplateDetail: React.FC = () => {
   const { templateId } = useParams();
@@ -30,7 +31,7 @@ export const TemplateDetail: React.FC = () => {
     .slice(0, 3);
 
   const useTemplate = (id = tpl.id) => {
-    localStorage.setItem('dayof.builderV2.selectedTemplate', id);
+    selectSetupDraftTemplate(id);
     navigate('/setup/names');
   };
 

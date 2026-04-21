@@ -85,6 +85,13 @@ export const writeSetupDraft = (draft: SetupDraft) => {
   }
 };
 
+export const selectSetupDraftTemplate = (templateId: string) => {
+  writeSetupDraft({
+    ...readSetupDraft(),
+    selectedTemplateId: templateId,
+  });
+};
+
 export const clearSetupDraft = () => {
   localStorage.removeItem(SETUP_DRAFT_KEY);
   localStorage.removeItem(SELECTED_TEMPLATE_KEY);
