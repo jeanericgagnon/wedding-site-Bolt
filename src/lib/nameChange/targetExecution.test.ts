@@ -81,6 +81,23 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.ready).toBe(false);
     expect(snapshot.blockers).toContain('New last name is populated from a low-confidence source and still needs stronger document support.');
     expect(snapshot.formPayload.summary.lowConfidence).toBeGreaterThan(0);
+    expect(snapshot.fieldRisks).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        fieldKey: 'applicant.newLastName',
+        label: 'New last name',
+        severity: 'blocking',
+        confidence: 'low',
+      }),
+    ]));
+  });
+
+  it('surfaces missing packet fields as attention-level field risks', () => {
+    const snapshot = buildNameChangeTargetExecutionSnapshot('dmv', makeCase({ current_first_name: '', current_last_name: '' }), [], []);
+    expect(snapshot.fieldRisks).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        severity: 'attention',
+      }),
+    ]));
   });
 
   it('builds shared DMV execution snapshots with sequencing awareness', () => {

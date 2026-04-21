@@ -26,6 +26,20 @@ export function buildNameChangeTargetExecutionSnapshot(
   const checklist = buildNameChangeTargetChecklist(target, profile, documents, extractedFields);
   const formPayload = NAME_CHANGE_FORM_BUILDERS[target.formBuilderKey](profile, documents, extractedFields);
   const gates = evaluateNameChangeExecutionGates(sequence.dependencies, checklist, formPayload);
+  const fieldRisks = formPayload.fields
+    .filter((field) => !field.value || field.confidence === 'low')
+    .map((field) => ({
+      fieldKey: field.fieldKey,
+      label: field.label,
+      severity: field.value ? 'blocking' as const : 'attention' as const,
+      reason: field.value
+        ? `${field.label} is populated from a low-confidence source and still needs stronger document support.`
+        : `${field.label} is still missing from the current packet draft.`,
+      source: field.source,
+      confidence: field.confidence,
+      sourceDocumentKind: field.sourceDocumentKind,
+      sourceFieldKey: field.sourceFieldKey,
+    }));
 
   return {
     targetKey,
@@ -35,6 +49,7 @@ export function buildNameChangeTargetExecutionSnapshot(
     recommendedFormCode: formPayload.formCode || target.recommendedFormCode,
     autofillFields: autofill.fields.filter((field) => target.autofillTargetFields.includes(field.targetField)),
     formPayload,
+    fieldRisks,
     sequence,
     checklist,
   };

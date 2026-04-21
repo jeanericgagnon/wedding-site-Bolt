@@ -280,6 +280,40 @@ const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
           </div>
         ))}
       </div>
+
+      {snapshot.fieldRisks.length > 0 ? (
+        <div className="mt-4 rounded-xl border border-border-subtle p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h4 className="text-sm font-semibold text-text-primary">Field-level execution risks</h4>
+              <p className="text-xs text-text-secondary">Exactly which packet fields are still blocking or weakening execution readiness.</p>
+            </div>
+            <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+              {snapshot.fieldRisks.filter((risk) => risk.severity === 'blocking').length} blocking · {snapshot.fieldRisks.filter((risk) => risk.severity === 'attention').length} attention
+            </span>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {snapshot.fieldRisks.map((risk) => (
+              <div key={`${risk.fieldKey}-${risk.severity}`} className="rounded-xl border border-border-subtle p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-sm font-semibold text-text-primary">{risk.label}</p>
+                  <span className={`rounded-full px-2 py-1 text-xs ${risk.severity === 'blocking' ? 'bg-danger/10 text-danger' : 'bg-warning/10 text-warning'}`}>
+                    {risk.severity}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm text-text-secondary">{risk.reason}</p>
+                <p className="mt-2 text-xs text-text-secondary">
+                  {risk.fieldKey} · {risk.source}
+                  {risk.sourceDocumentKind ? ` · ${risk.sourceDocumentKind}` : ''}
+                  {risk.sourceFieldKey ? ` · ${risk.sourceFieldKey}` : ''}
+                  {' · '}{risk.confidence}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </div>
   </Card>
 );

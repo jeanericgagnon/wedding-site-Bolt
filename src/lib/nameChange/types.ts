@@ -432,6 +432,16 @@ export interface NameChangeTargetExecutionSnapshot {
   recommendedFormCode: string;
   autofillFields: NameChangeAutofillFieldMapping[];
   formPayload: NameChangeFormPayloadSnapshot;
+  fieldRisks: Array<{
+    fieldKey: string;
+    label: string;
+    severity: 'blocking' | 'attention';
+    reason: string;
+    source: NameChangeFormFieldPayload['source'];
+    confidence: NameChangeFormFieldPayload['confidence'];
+    sourceDocumentKind?: NameChangeDocumentKind;
+    sourceFieldKey?: NameChangeExtractionFieldKey;
+  }>;
   sequence: NameChangeExecutionSequenceSnapshot;
   checklist: Array<{
     key: string;
