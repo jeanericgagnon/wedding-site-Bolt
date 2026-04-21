@@ -31,6 +31,7 @@ npm run smoke:csvmapper
 npm run smoke:checkin
 npm run proof:v1:guests-rsvp-ops
 npm run proof:v1:collaborator-access
+npm run proof:v1:seating-continuity
 npm test -- src/pages/dashboard/registry/registryService.test.ts
 node scripts/v1-proof-board.mjs --markdown
 ```
@@ -126,8 +127,11 @@ Draft -> schedule/send -> history state reads trustworthy enough that core weddi
 RSVP-backed seating assignment, lookup, and counts stay coherent without embarrassing event-level drift.
 
 **Automated support**
-- `npm run build`
-- `npm run smoke:checkin`
+- `npm run proof:v1:seating-continuity`
+- underlying bundle:
+  - `npm test -- src/pages/dashboard/seating/seatingService.test.ts`
+  - `npm run smoke:checkin`
+  - `npm run build`
 
 **Manual proof still required**
 - assign guests using RSVP-backed data

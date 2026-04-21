@@ -73,6 +73,39 @@ export interface EventCounters {
   unassigned: number;
 }
 
+export function deriveGuestEventAttendance(args: {
+  hasEventInvitations: boolean;
+  isInvitedToEvent: boolean;
+  eventRsvp: boolean | null | undefined;
+  rsvpStatus: string | null | undefined;
+}): boolean {
+  if (args.hasEventInvitations) {
+    return args.isInvitedToEvent && args.eventRsvp === true;
+  }
+
+  return isAttendingRsvpStatus(args.rsvpStatus);
+}
+
+export function deriveEventCountersFromGuests(
+  guests: EligibleGuest[],
+  assignments: SeatingAssignment[],
+): EventCounters {
+  const invitedGuests = guests.filter(g => g.is_invited_to_event);
+
+  const validAssignmentGuestIds = new Set(
+    assignments.filter(a => a.is_valid).map(a => a.guest_id)
+  );
+
+  const invited = invitedGuests.length;
+  const attending = invitedGuests.filter(g => g.is_attending).length;
+  const declined = invitedGuests.filter(g => isDeclinedRsvpStatus(g.rsvp_status)).length;
+  const pending = invitedGuests.filter(g => isPendingRsvpStatus(g.rsvp_status)).length;
+  const seated = invitedGuests.filter(g => g.is_attending && validAssignmentGuestIds.has(g.id)).length;
+  const unassigned = attending - seated;
+
+  return { invited, attending, declined, pending, seated, unassigned: Math.max(0, unassigned) };
+}
+
 export async function getWeddingSiteId(): Promise<string | null> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
@@ -284,12 +317,12 @@ export async function getEligibleGuests(
     const eventRsvp = invitationId ? eventRsvpByInvitationId.get(invitationId) : undefined;
     const isInvitedToEvent = !!invitationId;
 
-    let isAttending: boolean;
-    if (hasEventInvitations) {
-      isAttending = isInvitedToEvent && eventRsvp === true;
-    } else {
-      isAttending = isAttendingRsvpStatus(g.rsvp_status);
-    }
+    const isAttending = deriveGuestEventAttendance({
+      hasEventInvitations,
+      isInvitedToEvent,
+      eventRsvp,
+      rsvpStatus: g.rsvp_status,
+    });
 
     return {
       id: g.id,
@@ -311,20 +344,7 @@ export async function getEventCounters(
 ): Promise<EventCounters> {
   const guests = await getEligibleGuests(weddingSiteId, itineraryEventId);
   const assignments = await loadAssignments(seatingEventId);
-  const invitedGuests = guests.filter(g => g.is_invited_to_event);
-
-  const validAssignmentGuestIds = new Set(
-    assignments.filter(a => a.is_valid).map(a => a.guest_id)
-  );
-
-  const invited = invitedGuests.length;
-  const attending = invitedGuests.filter(g => g.is_attending).length;
-  const declined = invitedGuests.filter(g => isDeclinedRsvpStatus(g.rsvp_status)).length;
-  const pending = invitedGuests.filter(g => isPendingRsvpStatus(g.rsvp_status)).length;
-  const seated = invitedGuests.filter(g => g.is_attending && validAssignmentGuestIds.has(g.id)).length;
-  const unassigned = attending - seated;
-
-  return { invited, attending, declined, pending, seated, unassigned: Math.max(0, unassigned) };
+  return deriveEventCountersFromGuests(guests, assignments);
 }
 
 export async function autoCreateTables(
