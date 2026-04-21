@@ -1473,7 +1473,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${stablePromptBadgeToneClassName}`}>{standingPromptBadge}</span>
                   <span>{standingPromptMode === 'secondary' ? stablePrompt.badge : stablePrompt.label}</span>
                   {standingPromptMode === 'full' && stablePromptTargetLabel && <span className="text-text-tertiary">{stablePromptTargetLabel}</span>}
-                  <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${stablePromptStateToneClassName}`}>{stablePromptState ?? (priorityCommandCtaState ?? priorityCommandCta)}</span>
+                  <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${stablePromptStateToneClassName}`}>{standingPromptStateLabel}</span>
                 </button>
               </div>
             </div>
@@ -1488,7 +1488,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${stablePromptBadgeToneClassName}`}>{standingPromptBadge}</span>
                 <span>{standingPromptCopy}</span>
                 {stablePromptTargetLabel && <span className="text-text-tertiary">{stablePromptTargetLabel}</span>}
-                <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${stablePromptStateToneClassName}`}>{stablePromptState ?? (priorityCommandCtaState ?? priorityCommandCta)}</span>
+                <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${stablePromptStateToneClassName}`}>{standingPromptStateLabel}</span>
               </button>
             </div>
           )}
