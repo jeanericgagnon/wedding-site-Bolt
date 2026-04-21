@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../components/ui/Button';
@@ -250,6 +250,7 @@ export default function RSVP() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [tokenAutoLoading, setTokenAutoLoading] = useState(false);
+  const activeLookupRequestRef = useRef(0);
   const [activePredictionIndex, setActivePredictionIndex] = useState(-1);
   const [formStep, setFormStep] = useState<1 | 2 | 3>(1);
   const [rsvpQuestions, setRsvpQuestions] = useState<RSVPQuestion[]>([]);
@@ -293,6 +294,8 @@ export default function RSVP() {
   useEffect(() => {
     const token = searchParams.get('token');
     if (!token) return;
+    const requestId = activeLookupRequestRef.current + 1;
+    activeLookupRequestRef.current = requestId;
     setTokenAutoLoading(true);
     setStep('search');
     setSearchValue(token);
@@ -306,6 +309,7 @@ export default function RSVP() {
     setSelectedHouseholdGuestIds([]);
     (DEMO_MODE ? Promise.resolve({ data: demoLookup(token) as unknown, error: undefined as string | undefined }) : rsvpCall({ action: 'lookup', searchValue: token }))
       .then(({ data, error: err }) => {
+        if (activeLookupRequestRef.current !== requestId) return;
         if (err || !data) {
           setError(err ?? 'Invalid invitation link. Please search by name below.');
           setTokenAutoLoading(false);
@@ -329,12 +333,20 @@ export default function RSVP() {
           setError('Invitation not recognized. Please search by name below.');
         }
       })
-      .catch(() => setError('Failed to load invitation. Please search by name below.'))
-      .finally(() => setTokenAutoLoading(false));
+      .catch(() => {
+        if (activeLookupRequestRef.current !== requestId) return;
+        setError('Failed to load invitation. Please search by name below.');
+      })
+      .finally(() => {
+        if (activeLookupRequestRef.current !== requestId) return;
+        setTokenAutoLoading(false);
+      });
   }, [searchParams]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
+    const requestId = activeLookupRequestRef.current + 1;
+    activeLookupRequestRef.current = requestId;
     setLoading(true);
     setError('');
     setStep('search');
@@ -354,6 +366,7 @@ export default function RSVP() {
       const data = lookupResp.data;
       const err = lookupResp.error;
       if (err) {
+        if (activeLookupRequestRef.current !== requestId) return;
         setError(err);
         return;
       }
@@ -361,6 +374,7 @@ export default function RSVP() {
       const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions?: RSVPQuestion[] | null; rsvpMealConfig?: RSVPMealConfig | null; musicPlaylistUrl?: string | null; householdGuests?: HouseholdGuest[] | null };
 
       if (result.guests && result.guests.length > 1) {
+        if (activeLookupRequestRef.current !== requestId) return;
         setAmbiguousGuests(result.guests);
         setRsvpDeadline(result.rsvpDeadline);
         setRsvpQuestions(result.rsvpQuestions ?? []);
@@ -375,10 +389,13 @@ export default function RSVP() {
       }
 
       const foundGuest = result.guest!;
+      if (activeLookupRequestRef.current !== requestId) return;
       selectGuest(foundGuest, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null);
     } catch {
+      if (activeLookupRequestRef.current !== requestId) return;
       setError('An error occurred. Please try again.');
     } finally {
+      if (activeLookupRequestRef.current !== requestId) return;
       setLoading(false);
     }
   };
@@ -429,6 +446,8 @@ export default function RSVP() {
   };
 
   const handlePickGuest = async (picked: Guest) => {
+    const requestId = activeLookupRequestRef.current + 1;
+    activeLookupRequestRef.current = requestId;
     setLoading(true);
     setError('');
     try {
@@ -438,14 +457,18 @@ export default function RSVP() {
       const data = lookupResp.data;
       const err = lookupResp.error;
       if (err || !data) {
+        if (activeLookupRequestRef.current !== requestId) return;
         selectGuest(picked, null, rsvpDeadline, rsvpQuestions, mealConfig, householdGuests, musicPlaylistUrl);
         return;
       }
       const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions?: RSVPQuestion[] | null; rsvpMealConfig?: RSVPMealConfig | null; musicPlaylistUrl?: string | null; householdGuests?: HouseholdGuest[] | null };
+      if (activeLookupRequestRef.current !== requestId) return;
       selectGuest(result.guest ?? picked, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null);
     } catch {
+      if (activeLookupRequestRef.current !== requestId) return;
       selectGuest(picked, null, rsvpDeadline, rsvpQuestions, mealConfig, householdGuests, musicPlaylistUrl);
     } finally {
+      if (activeLookupRequestRef.current !== requestId) return;
       setLoading(false);
     }
   };
