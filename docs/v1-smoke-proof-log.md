@@ -258,7 +258,7 @@ Useful if stable, but should not distort the wedding-core launch decision.
 
 ## Active blocker list
 - P0: none logged yet
-- P1: no canonical smoke run captured yet
+- P1: canonical smoke automated gate now passes, but the manual canonical couple-path route-note proof is still missing
 - P1: role-aware collaborator/coordinator proof still missing
 - P1: guest-state continuity across RSVP -> messages -> seating still unproven in one run
 
