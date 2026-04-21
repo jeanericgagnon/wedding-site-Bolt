@@ -637,7 +637,10 @@ export const QuickStart: React.FC = () => {
                 <button type="button" onClick={() => void finishFlow(initialSetupAnswersRef.current, clarifyingStateRef.current)} disabled={loading} className="rounded-full px-8 py-4 transition-all duration-200 disabled:opacity-30" style={{ backgroundColor: TEXT, color: '#FFFFFF', fontSize: '15px', fontWeight: 500 }}>
                   {loading ? 'Building...' : 'Build my draft'}
                 </button>
-                <button type="button" onClick={() => setShowFollowUps(false)} className="rounded-full px-6 py-4" style={{ backgroundColor: SOFT, color: TEXT }}>
+                <button type="button" onClick={() => {
+                  setShowFollowUps(false);
+                  setViewState('question');
+                }} className="rounded-full px-6 py-4" style={{ backgroundColor: SOFT, color: TEXT }}>
                   Back
                 </button>
               </div>
