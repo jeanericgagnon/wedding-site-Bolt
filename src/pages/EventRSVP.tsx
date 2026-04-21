@@ -57,6 +57,7 @@ export default function EventRSVP() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [hasEventRsvpSupport, setHasEventRsvpSupport] = useState<boolean | null>(null);
   const postSubmitResetTimeoutRef = useRef<number | null>(null);
+  const activeLoadRequestRef = useRef(0);
 
   useEffect(() => {
     if (token) {
@@ -89,6 +90,9 @@ export default function EventRSVP() {
   }, []);
 
   async function loadGuestAndEvents() {
+    const requestId = activeLoadRequestRef.current + 1;
+    activeLoadRequestRef.current = requestId;
+
     if (postSubmitResetTimeoutRef.current !== null) {
       window.clearTimeout(postSubmitResetTimeoutRef.current);
       postSubmitResetTimeoutRef.current = null;
@@ -113,11 +117,13 @@ export default function EventRSVP() {
 
       if (guestError) throw guestError;
       if (!guestData) {
+        if (activeLoadRequestRef.current !== requestId) return;
         setError("This invitation link isn't valid. Please use the link from your invitation email, or ask the couple for a new one.");
         setLoading(false);
         return;
       }
 
+      if (activeLoadRequestRef.current !== requestId) return;
       setGuest(guestData);
 
       const { data: invitationsData, error: invitationsError } = await supabase
@@ -155,9 +161,21 @@ export default function EventRSVP() {
             if (error) {
               const msg = (error.message || '').toLowerCase();
               if (msg.includes('event_rsvps') || msg.includes('does not exist') || msg.includes('404')) {
+                if (activeLoadRequestRef.current !== requestId) return {
+                  id: invitation.id,
+                  event_id: invitation.event_id,
+                  event: invitation.itinerary_events as unknown as ItineraryEvent,
+                  rsvp: undefined,
+                };
                 setHasEventRsvpSupport(false);
               }
             } else {
+              if (activeLoadRequestRef.current !== requestId) return {
+                id: invitation.id,
+                event_id: invitation.event_id,
+                event: invitation.itinerary_events as unknown as ItineraryEvent,
+                rsvp: undefined,
+              };
               setHasEventRsvpSupport(true);
               rsvpData = (data as { attending: boolean | null; dietary_restrictions: string | null; notes: string | null } | null) ?? null;
             }
@@ -178,10 +196,13 @@ export default function EventRSVP() {
         })
       );
 
+      if (activeLoadRequestRef.current !== requestId) return;
       setInvitations(invitationsWithRsvps);
     } catch {
+      if (activeLoadRequestRef.current !== requestId) return;
       setError('Failed to load your event invitations. Please try again or contact the couple.');
     } finally {
+      if (activeLoadRequestRef.current !== requestId) return;
       setLoading(false);
     }
   }
