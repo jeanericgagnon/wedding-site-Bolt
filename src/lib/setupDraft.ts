@@ -31,10 +31,25 @@ export const emptySetupDraft: SetupDraft = {
   selectedTemplateId: 'modern-luxe',
 };
 
+const VALID_MIGRATION_SOURCES = new Set<SetupDraft['migrationSource']>(['', 'zola', 'joy', 'the-knot', 'other']);
+const VALID_GUEST_ESTIMATE_BANDS = new Set<SetupDraft['guestEstimateBand']>(['', 'lt50', '50to100', '100to200', '200plus']);
+
 const normalizeSelectedTemplateId = (value: string | null | undefined): string => {
   const normalized = value?.trim();
   return normalized || emptySetupDraft.selectedTemplateId;
 };
+
+const normalizeMigrationSource = (value: unknown): SetupDraft['migrationSource'] => (
+  typeof value === 'string' && VALID_MIGRATION_SOURCES.has(value as SetupDraft['migrationSource'])
+    ? value as SetupDraft['migrationSource']
+    : ''
+);
+
+const normalizeGuestEstimateBand = (value: unknown): SetupDraft['guestEstimateBand'] => (
+  typeof value === 'string' && VALID_GUEST_ESTIMATE_BANDS.has(value as SetupDraft['guestEstimateBand'])
+    ? value as SetupDraft['guestEstimateBand']
+    : ''
+);
 
 export const readSetupDraft = (): SetupDraft => {
   const selectedTemplate = normalizeSelectedTemplateId(localStorage.getItem(SELECTED_TEMPLATE_KEY));
@@ -46,13 +61,13 @@ export const readSetupDraft = (): SetupDraft => {
     return {
       ...emptySetupDraft,
       ...parsed,
-      migrationSource: (parsed.migrationSource as SetupDraft['migrationSource']) ?? '',
+      migrationSource: normalizeMigrationSource(parsed.migrationSource),
       dateKnown: parsed.dateKnown ?? true,
       weddingDate: parsed.weddingDate ?? '',
       weddingCity: parsed.weddingCity ?? '',
       weddingRegion: parsed.weddingRegion ?? '',
-      guestEstimateBand: (parsed.guestEstimateBand as SetupDraft['guestEstimateBand']) ?? '',
-      stylePreferences: Array.isArray(parsed.stylePreferences) ? parsed.stylePreferences : [],
+      guestEstimateBand: normalizeGuestEstimateBand(parsed.guestEstimateBand),
+      stylePreferences: Array.isArray(parsed.stylePreferences) ? parsed.stylePreferences.filter((value): value is string => typeof value === 'string') : [],
       selectedTemplateId: normalizeSelectedTemplateId(parsed.selectedTemplateId),
     };
   } catch {

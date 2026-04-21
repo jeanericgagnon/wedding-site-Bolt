@@ -59,4 +59,19 @@ describe('setupDraft', () => {
 
     expect(localStorage.getItem(SELECTED_TEMPLATE_KEY)).toBeNull();
   });
+
+  it('drops invalid enum values and non-string style entries from persisted drafts', () => {
+    localStorage.setItem(SETUP_DRAFT_KEY, JSON.stringify({
+      migrationSource: 'wix',
+      guestEstimateBand: 'gigantic',
+      stylePreferences: ['romantic', 42, null],
+    }));
+
+    expect(readSetupDraft()).toEqual({
+      ...emptySetupDraft,
+      migrationSource: '',
+      guestEstimateBand: '',
+      stylePreferences: ['romantic'],
+    });
+  });
 });
