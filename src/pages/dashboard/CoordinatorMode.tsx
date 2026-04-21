@@ -59,6 +59,7 @@ import { getCoordinatorAlertOverrideCurrentLabel } from '../../lib/coordinatorAl
 import { shouldResetCoordinatorAlertOverride } from '../../lib/coordinatorAlertOverrideReset';
 import { getCoordinatorAlertSummaryStateLabel } from '../../lib/coordinatorAlertSummaryStateLabel';
 import { getCoordinatorAlertSummaryTransitionLabel } from '../../lib/coordinatorAlertSummaryTransitionLabel';
+import { shouldResetCoordinatorSummaryFeedback } from '../../lib/coordinatorSummaryFeedbackReset';
 import { normalizeCoordinatorTimelineWorkState } from '../../lib/coordinatorTimelineWorkState';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
@@ -136,6 +137,9 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [alertOverrideLabelState, setAlertOverrideLabelState] = useState<string | null>(null);
   const [previousAlertAligned, setPreviousAlertAligned] = useState<boolean | null>(null);
   const [realignmentLabel, setRealignmentLabel] = useState<string | null>(null);
+  const [summaryFeedbackPanelFocus, setSummaryFeedbackPanelFocus] = useState<CoordinatorPanelFocus | null>(null);
+  const [summaryFeedbackTargetId, setSummaryFeedbackTargetId] = useState<string | null>(null);
+  const [alertSummaryTransitionLabelState, setAlertSummaryTransitionLabelState] = useState<string | null>(null);
   const [checkInQuery, setCheckInQuery] = useState('');
   const [checkInFilter, setCheckInFilter] = useState<CoordinatorCheckInFilter>('arrivals');
   const [checkInReviewOnly, setCheckInReviewOnly] = useState(false);
@@ -724,6 +728,9 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const clearCoordinatorTransientState = () => {
     setNeutralFocusReason(null);
     setRealignmentLabel(null);
+    setSummaryFeedbackPanelFocus(null);
+    setSummaryFeedbackTargetId(null);
+    setAlertSummaryTransitionLabelState(null);
     setCommandJumpLabel(null);
     setCommandJumpPanelFocus(null);
     setCommandJumpTargetId(null);
@@ -1006,6 +1013,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
     })) {
       setManualOverrideLabel(null);
       setRealignmentLabel(getCoordinatorRealignmentLabel(panelFocus));
+      setSummaryFeedbackPanelFocus(panelFocus);
+      setSummaryFeedbackTargetId(currentTargetId);
     }
   }, [manualOverrideLabel, panelFocus, activeGuestId, activeTimelineEventId, activeQnaId, checkInBoardTargetId, timelineBoardTargetId, qnaBoardTargetId]);
 
@@ -1034,6 +1043,29 @@ export const DashboardCoordinatorMode: React.FC = () => {
     setManualOverrideLabel(nextManualOverrideLabel);
     setRealignmentLabel(null);
   }, [manualOverrideLabel, panelFocus, activeGuestId, activeTimelineEventId, activeQnaId, checkInBoardTargetId, timelineBoardTargetId, qnaBoardTargetId]);
+
+
+  useEffect(() => {
+    const currentTargetId = panelFocus === 'check-in'
+      ? activeGuestId
+      : panelFocus === 'timeline'
+        ? activeTimelineEventId
+        : panelFocus === 'qna'
+          ? activeQnaId
+          : null;
+
+    if (shouldResetCoordinatorSummaryFeedback({
+      feedbackLabel: realignmentLabel,
+      panelFocus,
+      expectedPanelFocus: summaryFeedbackPanelFocus,
+      currentTargetId,
+      expectedTargetId: summaryFeedbackTargetId,
+    })) {
+      setRealignmentLabel(null);
+      setSummaryFeedbackPanelFocus(null);
+      setSummaryFeedbackTargetId(null);
+    }
+  }, [realignmentLabel, panelFocus, summaryFeedbackPanelFocus, summaryFeedbackTargetId, activeGuestId, activeTimelineEventId, activeQnaId]);
 
   const returnToBoard = () => {
     const next = resolveCoordinatorReturnToBoardState({
@@ -1276,8 +1308,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
             <div>
               <p className="text-xs font-medium text-text-primary">Live command summary</p>
               {commandJumpLabel && <p className="text-[11px] text-primary">{commandJumpLabel}</p>}
-              {!commandJumpLabel && alertSummaryTransitionLabel && <p className="text-[11px] text-primary">{alertSummaryTransitionLabel}</p>}
-              {!commandJumpLabel && !alertSummaryTransitionLabel && realignmentLabel && <p className="text-[11px] text-primary">{realignmentLabel}</p>}
+              {!commandJumpLabel && alertSummaryTransitionLabelState && <p className="text-[11px] text-primary">{alertSummaryTransitionLabelState}</p>}
+              {!commandJumpLabel && !alertSummaryTransitionLabelState && realignmentLabel && <p className="text-[11px] text-primary">{realignmentLabel}</p>}
                 {!commandJumpLabel && !alertSummaryTransitionLabel && alertOverrideLabelState && (
                   <p className="text-[11px] text-amber-700">{alertOverrideLabelState}</p>
                 )}
