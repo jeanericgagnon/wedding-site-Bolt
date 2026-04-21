@@ -1,4 +1,5 @@
 import type { BuilderProject } from '../types/builder/project';
+import type { BuilderSectionInstance } from '../types/builder/section';
 import type { WeddingDataV1 } from '../types/weddingData';
 import { safeJsonParse } from './jsonUtils';
 import { rewriteSignedMediaUrlsToPublicDeep } from './mediaUrl';
@@ -30,17 +31,110 @@ const getProjectPages = (project: unknown): unknown[] => {
   return Array.isArray(parsed?.pages) ? parsed.pages : [];
 };
 
+const mergePublishedSection = (
+  publishedSection: BuilderSectionInstance,
+  fallbackSection: BuilderSectionInstance | undefined,
+): BuilderSectionInstance => {
+  if (!fallbackSection) return publishedSection;
+
+  return {
+    ...fallbackSection,
+    ...publishedSection,
+    settings: {
+      ...(fallbackSection.settings ?? {}),
+      ...(publishedSection.settings ?? {}),
+    },
+    bindings: {
+      ...(fallbackSection.bindings ?? {}),
+      ...(publishedSection.bindings ?? {}),
+    },
+    styleOverrides: {
+      ...(fallbackSection.styleOverrides ?? {}),
+      ...(publishedSection.styleOverrides ?? {}),
+    },
+    meta: {
+      ...(fallbackSection.meta ?? {}),
+      ...(publishedSection.meta ?? {}),
+    },
+  };
+};
+
+const mergePublishedProjectWithFallback = (
+  publishedProject: BuilderProject | null,
+  fallbackProject: BuilderProject | null,
+): BuilderProject | null => {
+  if (!publishedProject) return fallbackProject;
+  if (!fallbackProject) return publishedProject;
+
+  if (!Array.isArray(publishedProject.pages) || publishedProject.pages.length === 0) {
+    return {
+      ...fallbackProject,
+      ...publishedProject,
+      pages: fallbackProject.pages,
+      meta: {
+        ...(fallbackProject.meta ?? {}),
+        ...(publishedProject.meta ?? {}),
+      },
+    };
+  }
+
+  const fallbackPagesById = new Map(fallbackProject.pages.map((page) => [page.id, page]));
+  const mergedPages = publishedProject.pages.map((page) => {
+    const fallbackPage = fallbackPagesById.get(page.id);
+
+    if (!fallbackPage) return page;
+    if (!Array.isArray(page.sections) || page.sections.length === 0) {
+      return {
+        ...fallbackPage,
+        ...page,
+        sections: fallbackPage.sections,
+        meta: {
+          ...(fallbackPage.meta ?? {}),
+          ...(page.meta ?? {}),
+        },
+      };
+    }
+
+    const fallbackSectionsById = new Map(fallbackPage.sections.map((section) => [section.id, section]));
+
+    return {
+      ...fallbackPage,
+      ...page,
+      sections: page.sections.map((section) => mergePublishedSection(section, fallbackSectionsById.get(section.id))),
+      meta: {
+        ...(fallbackPage.meta ?? {}),
+        ...(page.meta ?? {}),
+      },
+    };
+  });
+
+  if (mergedPages.length === 0) return fallbackProject;
+
+  return {
+    ...fallbackProject,
+    ...publishedProject,
+    pages: mergedPages,
+    meta: {
+      ...(fallbackProject.meta ?? {}),
+      ...(publishedProject.meta ?? {}),
+    },
+  };
+};
+
 export const getPublicBuilderProject = (row: Record<string, unknown>): BuilderProject | null => {
   const isPublished = getIsPublishedFromSiteRow(row);
   const preferredSource = isPublished ? (row.published_json ?? row.site_json) : row.site_json;
   const preferredProject = safeJsonParse<BuilderProject | null>(preferredSource, null);
+  const fallbackProject = preferredSource === row.site_json
+    ? null
+    : safeJsonParse<BuilderProject | null>(row.site_json, null);
+  const mergedProject = mergePublishedProjectWithFallback(preferredProject, fallbackProject);
 
-  if (preferredProject && getProjectPages(preferredProject).length > 0) {
-    return rewriteSignedMediaUrlsToPublicDeep(preferredProject);
+  if (mergedProject && getProjectPages(mergedProject).length > 0) {
+    return rewriteSignedMediaUrlsToPublicDeep(mergedProject);
   }
 
   if (preferredSource !== row.site_json) {
-    const fallbackProject = safeJsonParse<BuilderProject | null>(row.site_json, null);
     if (fallbackProject && getProjectPages(fallbackProject).length > 0) {
       return rewriteSignedMediaUrlsToPublicDeep(fallbackProject);
     }

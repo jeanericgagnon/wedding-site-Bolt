@@ -187,6 +187,87 @@ describe('publicSiteProject', () => {
     expect(getPublicBuilderProject(row)?.pages[0].sections[0].settings.headline).toBe('Draft headline');
   });
 
+  it('merges partial published sections with site_json to preserve published truth', () => {
+    const row = {
+      is_published: true,
+      site_json: {
+        ...draftProject,
+        pages: [{
+          ...draftProject.pages[0],
+          sections: [{
+            ...draftProject.pages[0].sections[0],
+            settings: {
+              headline: 'Draft headline',
+              subheadline: 'Draft subheadline',
+              ctaLabel: 'Draft CTA',
+            },
+            styleOverrides: {
+              backgroundColor: '#f5f1eb',
+            },
+          }],
+        }],
+      },
+      published_json: {
+        ...publishedProject,
+        pages: [{
+          id: 'home',
+          title: 'Home',
+          slug: 'home',
+          orderIndex: 0,
+          sections: [{
+            id: 's1',
+            type: 'hero',
+            variant: 'default',
+            enabled: true,
+            orderIndex: 0,
+            settings: {
+              headline: 'Published headline',
+            },
+          }],
+          meta: { isHome: true, isHidden: false },
+        }],
+      },
+    };
+
+    const project = getPublicBuilderProject(row);
+    expect(project?.pages[0].sections).toHaveLength(1);
+    expect(project?.pages[0].sections[0].settings.headline).toBe('Published headline');
+    expect(project?.pages[0].sections[0].settings.subheadline).toBe('Draft subheadline');
+    expect(project?.pages[0].sections[0].settings.ctaLabel).toBe('Draft CTA');
+    expect(project?.pages[0].sections[0].styleOverrides.backgroundColor).toBe('#f5f1eb');
+  });
+
+  it('does not append draft-only sections when published snapshot omits them', () => {
+    const row = {
+      is_published: true,
+      site_json: {
+        ...draftProject,
+        pages: [{
+          ...draftProject.pages[0],
+          sections: [
+            draftProject.pages[0].sections[0],
+            {
+              id: 'draft-only',
+              type: 'story',
+              variant: 'default',
+              enabled: true,
+              orderIndex: 1,
+              settings: { title: 'Unpublished story' },
+              styleOverrides: {},
+              bindings: {},
+              meta: { createdAtISO: '2026-04-19T00:00:00.000Z', updatedAtISO: '2026-04-19T00:00:00.000Z' },
+              locked: false,
+            },
+          ],
+        }],
+      },
+      published_json: publishedProject,
+    };
+
+    const project = getPublicBuilderProject(row);
+    expect(project?.pages[0].sections.map((section) => section.id)).toEqual(['s1']);
+  });
+
   it('falls back to site_json wedding snapshot when published_json omits it', () => {
     const row = {
       is_published: true,
