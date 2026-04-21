@@ -1109,6 +1109,45 @@ export const DashboardCoordinatorMode: React.FC = () => {
             </div>
             <p className="text-[11px] text-text-tertiary">What the board thinks matters right now</p>
           </div>
+          <div className="mb-3 rounded-lg border border-border/50 bg-surface-subtle/30 px-3 py-2">
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-[11px] font-medium text-text-primary">{commandModeLabel}</p>
+                <p className="mt-1 text-[11px] text-text-secondary">{commandModeGuidance}</p>
+                {!commandSource && neutralFocusReason && (
+                  <p className="mt-1 text-[10px] text-text-tertiary">{neutralFocusReason}</p>
+                )}
+                <p className="mt-1 text-[10px] text-text-tertiary">{primaryAction.title} — {primaryAction.detail}</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={runPrimaryAction}
+                  className="rounded-full border border-primary/25 bg-primary/5 px-3 py-1 text-[11px] font-medium text-primary hover:bg-primary/10"
+                >
+                  {primaryAction.key === 'all-clear' ? 'Review next best action' : 'Run primary action'}
+                </button>
+                {commandSource && (
+                  <button
+                    type="button"
+                    onClick={returnToBoard}
+                    className="rounded-full border border-border bg-white px-3 py-1 text-[11px] text-text-secondary hover:border-primary/35 hover:text-primary"
+                  >
+                    Return to board
+                  </button>
+                )}
+                {!commandSource && panelFocus && (
+                  <button
+                    type="button"
+                    onClick={revisitNeutralFocus}
+                    className="rounded-full border border-border bg-white px-3 py-1 text-[11px] text-text-secondary hover:border-primary/35 hover:text-primary"
+                  >
+                    Revisit board focus
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
           <div className="flex flex-wrap gap-2">
             {commandSummaryItems.map((item) => (
               <button
