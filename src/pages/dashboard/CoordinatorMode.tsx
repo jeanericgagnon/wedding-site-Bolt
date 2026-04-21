@@ -1426,13 +1426,13 @@ export const DashboardCoordinatorMode: React.FC = () => {
               <p className="text-xs font-medium text-text-primary">Live command summary</p>
               {summaryDisplayCue?.kind === 'feedback' && summaryFeedbackTone && (
                 <div className={`mt-1 inline-flex flex-wrap items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] ${summaryFeedbackTone.containerClassName}`}>
-                  <span className="rounded-full border border-current/15 bg-white/70 px-1.5 py-0.5 text-[9px] font-medium">{summaryFeedbackBadge ?? summaryFeedbackTone.badge}</span>
+                  <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${summaryFeedbackBadgeToneClassName}`}>{summaryFeedbackBadge ?? summaryFeedbackTone.badge}</span>
                   <span>{summaryDisplayCue.feedback.label}</span>
                 </div>
               )}
               {summaryDisplayCue?.kind === 'alert-override' && (
                 <div className="mt-1 inline-flex flex-wrap items-center gap-2 rounded-full border border-amber-200 bg-amber-50/80 px-2.5 py-1 text-[11px] text-amber-800">
-                  <span className="rounded-full border border-amber-200 bg-white/80 px-1.5 py-0.5 text-[9px] font-medium">{alertOverrideBadge}</span>
+                  <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${overrideBadgeToneClassName}`}>{alertOverrideBadge}</span>
                   <span>{summaryDisplayCue.label}</span>
                   {alertOverrideTargetLabel && <span className="text-amber-800/80">{alertOverrideTargetLabel}</span>}
                   {alertOverrideCurrentLabel && <span className="text-text-secondary">{alertOverrideCurrentLabel}</span>}
@@ -1440,7 +1440,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
               )}
               {summaryDisplayCue?.kind === 'manual-override' && (
                 <div className="mt-1 inline-flex flex-wrap items-center gap-2 rounded-full border border-amber-200 bg-amber-50/80 px-2.5 py-1 text-[11px] text-amber-800">
-                  <span className="rounded-full border border-amber-200 bg-white/80 px-1.5 py-0.5 text-[9px] font-medium">{manualOverrideBadge}</span>
+                  <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${overrideBadgeToneClassName}`}>{manualOverrideBadge}</span>
                   <span>{summaryDisplayCue.label}</span>
                   {manualOverrideTargetLabel && <span className="text-amber-800/80">{manualOverrideTargetLabel}</span>}
                   {manualOverrideCurrentTargetLabel && <span className="text-text-secondary">{manualOverrideCurrentTargetLabel}</span>}
