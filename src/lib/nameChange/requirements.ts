@@ -1,4 +1,5 @@
 import { buildNameChangeCanonicalCase } from './canonical';
+import { buildNameChangeDocumentIntakeSnapshot } from './documentContract';
 import type {
   NameChangeCaseInput,
   NameChangeDocumentInput,
@@ -48,10 +49,13 @@ export function evaluateNameChangeRequirements(
   extractedFields: NameChangeExtractedFieldInput[],
 ): NameChangeRequirementSnapshot {
   const canonicalCase = buildNameChangeCanonicalCase(profile, documents, extractedFields);
+  const intakeSnapshot = buildNameChangeDocumentIntakeSnapshot(profile, documents, extractedFields);
   const legalProofKind = canonicalCase.legalBasis === 'marriage' ? 'marriage_certificate' : 'court_order';
   const legalProof = canonicalCase.documents[legalProofKind];
+  const legalProofContract = intakeSnapshot.documents.find((document) => document.kind === legalProofKind);
   const identityCoverageKinds: NameChangeDocumentKind[] = ['current_drivers_license', 'current_passport', 'social_security_card'];
   const hasIdentityCoverage = identityCoverageKinds.some((kind) => canonicalCase.documents[kind].intakeStatus !== 'not_started');
+  const hasIdentityMetadataReady = intakeSnapshot.documents.some((document) => identityCoverageKinds.includes(document.kind) && document.metadataMissing.length === 0 && document.intakeStatus !== 'not_started');
   const hasTravelIdentitySupport = ['current_passport', 'current_drivers_license'].some((kind) => canonicalCase.documents[kind as NameChangeDocumentKind].intakeStatus !== 'not_started');
 
   const results: NameChangeRequirementResult[] = [
@@ -59,9 +63,13 @@ export function evaluateNameChangeRequirements(
       key: 'legal-proof-document',
       label: 'Legal proof document on file',
       stage: 'proof',
-      status: legalProof.intakeStatus === 'reviewed' ? 'satisfied' : legalProof.intakeStatus === 'uploaded' ? 'attention' : 'missing',
+      status: legalProof.intakeStatus === 'reviewed'
+        ? (legalProofContract && legalProofContract.metadataMissing.length > 0 ? 'attention' : 'satisfied')
+        : legalProof.intakeStatus === 'uploaded' ? 'attention' : 'missing',
       reason: legalProof.intakeStatus === 'reviewed'
-        ? `The ${legalProofKind.replace(/_/g, ' ')} is reviewed and ready for downstream use.`
+        ? (legalProofContract && legalProofContract.metadataMissing.length > 0
+          ? `The ${legalProofKind.replace(/_/g, ' ')} is reviewed, but metadata is still missing: ${legalProofContract.metadataMissing.join(', ')}.`
+          : `The ${legalProofKind.replace(/_/g, ' ')} is reviewed and ready for downstream use.`)
         : legalProof.intakeStatus === 'uploaded'
           ? `The ${legalProofKind.replace(/_/g, ' ')} exists but still needs review.`
           : `No ${legalProofKind.replace(/_/g, ' ')} is currently in the intake workspace.`,
@@ -70,9 +78,13 @@ export function evaluateNameChangeRequirements(
       key: 'identity-document-coverage',
       label: 'Identity document coverage',
       stage: 'identity',
-      status: hasIdentityCoverage ? 'satisfied' : 'missing',
+      status: hasIdentityCoverage
+        ? (hasIdentityMetadataReady ? 'satisfied' : 'attention')
+        : 'missing',
       reason: hasIdentityCoverage
-        ? 'At least one current identity document is represented in the case intake.'
+        ? (hasIdentityMetadataReady
+          ? 'At least one current identity document is represented in the case intake with enough metadata for downstream use.'
+          : 'Identity documents exist in intake, but metadata is still too thin for confident downstream use.')
         : 'No current passport, driver license, or social security card has been represented in the case intake yet.',
     },
     {

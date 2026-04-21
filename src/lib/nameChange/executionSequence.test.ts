@@ -44,12 +44,21 @@ describe('name change execution sequence snapshot', () => {
         display_name: 'Certified marriage certificate',
         storage_mode: 'metadata_only',
         intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'San Diego County Clerk',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
       },
       {
         document_kind: 'current_passport',
         display_name: 'Passport',
         storage_mode: 'metadata_only',
         intake_status: 'uploaded',
+        file_name_masked: 'passport-•••.pdf',
+        issuing_authority: 'U.S. Department of State',
+        issued_on: '2024-06-01',
+        expires_on: '2034-06-01',
+        extraction_confidence: 0.92,
       },
     ];
 
@@ -74,6 +83,10 @@ describe('name change execution sequence snapshot', () => {
         display_name: 'Certified marriage certificate',
         storage_mode: 'metadata_only',
         intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'San Diego County Clerk',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
       },
     ];
     const plan = {
@@ -94,12 +107,21 @@ describe('name change execution sequence snapshot', () => {
         display_name: 'Certified marriage certificate',
         storage_mode: 'metadata_only',
         intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'San Diego County Clerk',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
       },
       {
         document_kind: 'current_passport',
         display_name: 'Passport',
         storage_mode: 'metadata_only',
         intake_status: 'uploaded',
+        file_name_masked: 'passport-•••.pdf',
+        issuing_authority: 'U.S. Department of State',
+        issued_on: '2024-06-01',
+        expires_on: '2034-06-01',
+        extraction_confidence: 0.92,
       },
     ];
     const basePlan = buildNameChangePlan({ profile: makeCase(), documents, extractedFields: [] });

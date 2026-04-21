@@ -79,12 +79,21 @@ describe('name change requirements skeleton', () => {
         display_name: 'Certified marriage certificate',
         storage_mode: 'metadata_only',
         intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'San Diego County Clerk',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
       },
       {
         document_kind: 'current_passport',
         display_name: 'Passport',
         storage_mode: 'metadata_only',
         intake_status: 'uploaded',
+        file_name_masked: 'passport-•••.pdf',
+        issuing_authority: 'U.S. Department of State',
+        issued_on: '2024-06-01',
+        expires_on: '2034-06-01',
+        extraction_confidence: 0.92,
       },
     ];
 
@@ -95,6 +104,34 @@ describe('name change requirements skeleton', () => {
       attention: 1,
     });
     expect(snapshot.results.find((result) => result.key === 'passport-timing-risk')).toMatchObject({ status: 'attention' });
+  });
+
+  it('downgrades legal proof and identity coverage when metadata is too thin for downstream use', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+        file_name_masked: 'passport-•••.pdf',
+      },
+    ];
+
+    const snapshot = evaluateNameChangeRequirements(makeCase(), documents, []);
+    expect(snapshot.results.find((result) => result.key === 'legal-proof-document')).toMatchObject({
+      status: 'attention',
+      reason: 'The marriage certificate is reviewed, but metadata is still missing: masked filename, issuing authority, issued date, extraction confidence.',
+    });
+    expect(snapshot.results.find((result) => result.key === 'identity-document-coverage')).toMatchObject({
+      status: 'attention',
+      reason: 'Identity documents exist in intake, but metadata is still too thin for confident downstream use.',
+    });
   });
 
   it('flags missing legal proof and identity coverage when intake is thin', () => {

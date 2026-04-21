@@ -44,12 +44,21 @@ describe('name change DMV execution snapshot', () => {
         display_name: 'Certified marriage certificate',
         storage_mode: 'metadata_only',
         intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'San Diego County Clerk',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
       },
       {
         document_kind: 'current_drivers_license',
         display_name: 'Driver license',
         storage_mode: 'metadata_only',
         intake_status: 'uploaded',
+        file_name_masked: 'license-•••.pdf',
+        issuing_authority: 'California DMV',
+        issued_on: '2025-08-01',
+        expires_on: '2030-08-01',
+        extraction_confidence: 0.9,
       },
     ];
     const extractedFields: NameChangeExtractedFieldInput[] = [
