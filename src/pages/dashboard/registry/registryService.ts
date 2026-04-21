@@ -1,5 +1,15 @@
 import { supabase } from '../../../lib/supabase';
-import { RegistryItem, RegistryPreview, normalizeRegistryComparisonUrl } from './registryTypes';
+import { RegistryItem, RegistryPreview, normalizeRegistryComparisonUrl, sanitizeRegistryQuantityState } from './registryTypes';
+
+function normalizeRegistryItem(item: RegistryItem): RegistryItem {
+  const quantityState = sanitizeRegistryQuantityState(item.quantity_purchased, item.quantity_needed);
+  return {
+    ...item,
+    quantity_needed: quantityState.quantityNeeded,
+    quantity_purchased: quantityState.quantityPurchased,
+    purchase_status: quantityState.purchaseStatus,
+  };
+}
 
 export async function fetchRegistryItems(weddingSiteId: string): Promise<RegistryItem[]> {
   const { data, error } = await supabase
@@ -10,7 +20,7 @@ export async function fetchRegistryItems(weddingSiteId: string): Promise<Registr
     .order('created_at', { ascending: true });
 
   if (error) throw new Error(error.message);
-  return (data ?? []) as RegistryItem[];
+  return ((data ?? []) as RegistryItem[]).map(normalizeRegistryItem);
 }
 
 export async function createRegistryItem(
@@ -43,7 +53,7 @@ export async function createRegistryItem(
     .single();
 
   if (error) throw new Error(error.message);
-  return data as RegistryItem;
+  return normalizeRegistryItem(data as RegistryItem);
 }
 
 export async function updateRegistryItem(
@@ -58,7 +68,7 @@ export async function updateRegistryItem(
     .single();
 
   if (error) throw new Error(error.message);
-  return data as RegistryItem;
+  return normalizeRegistryItem(data as RegistryItem);
 }
 
 export async function deleteRegistryItem(id: string): Promise<void> {
@@ -145,7 +155,7 @@ export async function publicFetchRegistryItems(weddingSiteId: string): Promise<R
     .order('created_at', { ascending: true });
 
   if (error) throw new Error(error.message);
-  return (data ?? []) as RegistryItem[];
+  return ((data ?? []) as RegistryItem[]).map(normalizeRegistryItem);
 }
 
 export async function ownerMarkPurchased(
@@ -159,7 +169,7 @@ export async function ownerMarkPurchased(
   });
 
   if (error) throw new Error(error.message);
-  return data as RegistryItem;
+  return normalizeRegistryItem(data as RegistryItem);
 }
 
 export async function publicIncrementPurchase(
@@ -173,7 +183,7 @@ export async function publicIncrementPurchase(
   });
 
   if (error) throw new Error(error.message);
-  return data as RegistryItem;
+  return normalizeRegistryItem(data as RegistryItem);
 }
 
 export function findDuplicateItem(

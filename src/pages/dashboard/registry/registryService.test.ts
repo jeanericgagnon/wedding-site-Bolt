@@ -262,48 +262,7 @@ describe('ownerMarkPurchased', () => {
 
     const result = await ownerMarkPurchased('item-1', 1);
 
-    expect(result).toBe(rpcResultItem);
+    expect(result).toStrictEqual(rpcResultItem);
   });
 });
 
-describe('purchase status logic', () => {
-  it('status is available when quantity_purchased is 0', () => {
-    const item = { quantity_purchased: 0, quantity_needed: 2 };
-    const status = item.quantity_purchased === 0
-      ? 'available'
-      : item.quantity_purchased >= item.quantity_needed
-      ? 'purchased'
-      : 'partial';
-    expect(status).toBe('available');
-  });
-
-  it('status is partial when some but not all purchased', () => {
-    const item = { quantity_purchased: 1, quantity_needed: 3 };
-    const status = item.quantity_purchased === 0
-      ? 'available'
-      : item.quantity_purchased >= item.quantity_needed
-      ? 'purchased'
-      : 'partial';
-    expect(status).toBe('partial');
-  });
-
-  it('status is purchased when quantity_purchased meets quantity_needed', () => {
-    const item = { quantity_purchased: 2, quantity_needed: 2 };
-    const status = item.quantity_purchased === 0
-      ? 'available'
-      : item.quantity_purchased >= item.quantity_needed
-      ? 'purchased'
-      : 'partial';
-    expect(status).toBe('purchased');
-  });
-
-  it('status is purchased when quantity_purchased exceeds quantity_needed', () => {
-    const item = { quantity_purchased: 3, quantity_needed: 2 };
-    const status = item.quantity_purchased === 0
-      ? 'available'
-      : item.quantity_purchased >= item.quantity_needed
-      ? 'purchased'
-      : 'partial';
-    expect(status).toBe('purchased');
-  });
-});

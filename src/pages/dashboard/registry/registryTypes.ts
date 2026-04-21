@@ -210,6 +210,23 @@ export const EMPTY_DRAFT: RegistryItemDraft = {
 
 export type RegistryFilter = 'all' | 'available' | 'partial' | 'purchased';
 
+export function derivePurchaseStatus(quantityPurchased: number, quantityNeeded: number): PurchaseStatus {
+  if (quantityPurchased <= 0) return 'available';
+  if (quantityPurchased >= quantityNeeded) return 'purchased';
+  return 'partial';
+}
+
+export function sanitizeRegistryQuantityState(quantityPurchased: number, quantityNeeded: number) {
+  const safeNeeded = Math.max(1, Math.trunc(quantityNeeded || 0) || 1);
+  const safePurchased = Math.max(0, Math.min(Math.trunc(quantityPurchased || 0) || 0, safeNeeded));
+
+  return {
+    quantityNeeded: safeNeeded,
+    quantityPurchased: safePurchased,
+    purchaseStatus: derivePurchaseStatus(safePurchased, safeNeeded),
+  };
+}
+
 export function normalizeRegistryComparisonUrl(url: string | null | undefined): string | null {
   const value = (url || '').trim();
   if (!value) return null;

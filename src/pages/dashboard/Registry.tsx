@@ -17,7 +17,7 @@ import {
 import { RegistryItemCard } from './registry/RegistryItemCard';
 import { RegistryItemForm } from './registry/RegistryItemForm';
 import type { RegistryItem, RegistryFilter, RegistryItemDraft } from './registry/registryTypes';
-import { itemNeedsAttention } from './registry/registryTypes';
+import { itemNeedsAttention, sanitizeRegistryQuantityState } from './registry/registryTypes';
 import { demoWeddingSite, demoRegistryItems } from '../../lib/demoData';
 import { getRegistryRepairStates } from './registry/repairState';
 import { findDuplicateRegistryGroups } from './registry/duplicateRegistryItems';
@@ -136,10 +136,7 @@ export const DashboardRegistry: React.FC = () => {
   }
 
   function toDemoRegistryItem(item: typeof demoRegistryItems[number], index: number): RegistryItem {
-    const quantityPurchased = item.quantity_purchased ?? 0;
-    const quantityNeeded = item.quantity_needed ?? 1;
-    const purchaseStatus: RegistryItem['purchase_status'] =
-      quantityPurchased <= 0 ? 'available' : quantityPurchased >= quantityNeeded ? 'purchased' : 'partial';
+    const quantityState = sanitizeRegistryQuantityState(item.quantity_purchased ?? 0, item.quantity_needed ?? 1);
 
     return {
       id: item.id,
@@ -154,10 +151,10 @@ export const DashboardRegistry: React.FC = () => {
       image_url: null,
       description: null,
       notes: null,
-      quantity_needed: quantityNeeded,
-      quantity_purchased: quantityPurchased,
+      quantity_needed: quantityState.quantityNeeded,
+      quantity_purchased: quantityState.quantityPurchased,
       purchaser_name: null,
-      purchase_status: purchaseStatus,
+      purchase_status: quantityState.purchaseStatus,
       hide_when_purchased: false,
       sort_order: index,
       priority: item.priority,
@@ -256,6 +253,11 @@ export const DashboardRegistry: React.FC = () => {
       return;
     }
 
+    const quantityState = sanitizeRegistryQuantityState(
+      editItem?.quantity_purchased ?? 0,
+      isCashFund ? 1 : (parseInt(draft.desired_quantity) || 1),
+    );
+
     const fields: Partial<RegistryItem> = {
       item_type: isCashFund ? 'cash_fund' : 'product',
       item_name: draft.item_name.trim(),
@@ -268,7 +270,9 @@ export const DashboardRegistry: React.FC = () => {
       image_url: normalizedImageUrl,
       description: isCashFund ? null : (draft.description || null),
       notes: draft.notes || draft.description || null,
-      quantity_needed: isCashFund ? 1 : (parseInt(draft.desired_quantity) || 1),
+      quantity_needed: quantityState.quantityNeeded,
+      quantity_purchased: quantityState.quantityPurchased,
+      purchase_status: quantityState.purchaseStatus,
       hide_when_purchased: isCashFund ? false : draft.hide_when_purchased,
       availability: isCashFund ? null : (draft.availability || null),
       metadata_fetch_status: isCashFund ? 'manual' : (draft.metadata_fetch_status || 'manual'),
@@ -371,13 +375,12 @@ export const DashboardRegistry: React.FC = () => {
     try {
       const updated = isDemoMode
         ? (() => {
-            const newQty = Math.min(item.quantity_purchased + qty, item.quantity_needed);
-            const newStatus: RegistryItem['purchase_status'] =
-              newQty >= item.quantity_needed ? 'purchased' : newQty > 0 ? 'partial' : 'available';
+            const quantityState = sanitizeRegistryQuantityState(item.quantity_purchased + qty, item.quantity_needed);
             return {
               ...item,
-              quantity_purchased: newQty,
-              purchase_status: newStatus,
+              quantity_needed: quantityState.quantityNeeded,
+              quantity_purchased: quantityState.quantityPurchased,
+              purchase_status: quantityState.purchaseStatus,
               updated_at: new Date().toISOString(),
             };
           })()
@@ -632,9 +635,11 @@ export const DashboardRegistry: React.FC = () => {
           image_url: preview.image_url ?? null,
           notes: preview.description ?? null,
           quantity_needed: 1,
+          quantity_purchased: 0,
+          purchase_status: 'available',
           hide_when_purchased: false,
           metadata_last_checked_at: new Date().toISOString(),
-      next_refresh_at: new Date(Date.now() + WEEKLY_REFRESH_MS).toISOString(),
+          next_refresh_at: new Date(Date.now() + WEEKLY_REFRESH_MS).toISOString(),
           metadata_fetch_status: preview.fetch_status ?? 'success',
           metadata_confidence_score: preview.confidence_score ?? null,
           availability: preview.availability ?? null,
