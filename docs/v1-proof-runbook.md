@@ -29,6 +29,7 @@ npm run smoke:site
 npm run smoke:rsvp:strict
 npm run smoke:csvmapper
 npm run smoke:checkin
+npm run proof:v1:guests-rsvp-ops
 npm test -- src/pages/dashboard/registry/registryService.test.ts
 node scripts/v1-proof-board.mjs --markdown
 ```
@@ -59,13 +60,19 @@ Home -> auth/demo -> onboarding/builder -> site -> RSVP feels coherent, and priv
 Guest list, householding, public RSVP, assisted RSVP, and downstream dashboard truth stay aligned enough for real planning.
 
 **Automated support**
-- `npm run smoke:rsvp:strict`
-- `npm run smoke:csvmapper`
-- `npm run smoke:checkin`
+- `npm run proof:v1:guests-rsvp-ops`
+- underlying bundle:
+  - `npm run smoke:rsvp:strict`
+  - `npm run smoke:csvmapper`
+  - `npm run smoke:checkin`
 
 **Manual proof still required**
 - create/edit/review guest + household state
 - submit/update RSVP and verify dashboard/event readback
+
+**Blocker semantics**
+- this bundle now distinguishes a real product failure from an environment blocker
+- if RSVP strict smoke is blocked by anon auth / external fixture access, the output will mark the slice as `blocked` instead of pretending the app logic itself failed
 
 ---
 

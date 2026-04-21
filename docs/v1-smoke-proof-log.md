@@ -328,6 +328,8 @@ A slice does **not** count as passed because:
 - Concrete finish gap found and fixed: the remaining Guests, Seating, Travel, and RSVP summary blocks still reused the same blanket “Everything you need, already together” framing that made partially-proven slices sound equally comprehensive. Those pages now describe practical cores instead of total completeness, and RSVP summary language now says “current” visibility instead of implying harder live-state guarantees than the finish board has earned.
 - Concrete finish gap found and fixed: two small but still real launch-claim leaks remained outside the main feature-page pass — RSVP still labeled its visibility block as “Real-Time Analytics,” and the billing modal still promised “Everything you need for a beautiful wedding website.” Those surfaces now use narrower wording that matches the current proven core instead of implying harder live-state guarantees or blanket completeness.
 - Concrete finish gap found and fixed: the existing Playwright "live smoke" was too weak to support the current v1 proof gate. It only checked that the homepage, login page, and invite page loaded. The public smoke now asserts the narrowed v1 story on Home, Product, and Trust, including must-ship / should-ship / cut framing and per-slice reality markers, so the executable smoke better matches the actual launch-truth bar.
+- Concrete finish gap found and fixed: the Guests / RSVP / ops slice still depended on three separate smoke commands with no single slice-level proof entry point. That made the board harder to execute and easier to hand-wave. There is now a dedicated `proof:v1:guests-rsvp-ops` command that runs and summarizes the RSVP strict smoke, CSV mapper guard, and check-in guard as one proof bundle, while still calling out the manual dashboard/public continuity proof that remains required.
+- Concrete finish gap found and fixed: the new Guests / RSVP / ops proof bundle initially treated an environment auth blocker the same as a product failure. That was muddy and would have hidden the real issue. The bundle now classifies blocker-vs-failure explicitly, surfaces blocker details/recommendation in its JSON output, and only exits non-zero for actual required-step failures.
 
 ## Verification notes
 - `npm run proof:v1:board` now gives a machine-readable view of the current v1 proof gate.
@@ -373,6 +375,8 @@ A slice does **not** count as passed because:
 - `npm run build` passes after the final RSVP/billing truth-copy cleanup.
 - `npm run proof:v1:board && npm run build` passes after the v1 proof-board/runbook pass.
 - `PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173 npm run test:e2e:live` passes against local preview after the public v1 trust smoke hardening pass.
+- `npm run proof:v1:guests-rsvp-ops` passes after the Guests / RSVP / ops proof-bundle pass.
+- `npm run proof:v1:guests-rsvp-ops` now returns a structured blocked-state summary when RSVP strict smoke is environment-blocked, instead of collapsing blocker vs failure.
 
 ## Highest-value next proof seam
 - Guest-level RSVP and event-specific RSVP are both materially stronger now, but the next likely continuity seam is how newly created or removed event invitations affect downstream event attendance interpretation in itinerary/seating without a fresh explicit event response. That should be the next runtime proof target rather than more copy or permission cleanup.
