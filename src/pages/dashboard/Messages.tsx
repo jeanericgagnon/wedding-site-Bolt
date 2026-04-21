@@ -225,6 +225,10 @@ function isEmailCapConsumingStatus(status: string | null | undefined): boolean {
   return EMAIL_CAP_CONSUMING_STATUSES.includes((status ?? '') as (typeof EMAIL_CAP_CONSUMING_STATUSES)[number]);
 }
 
+function canRetryMessageStatus(status: string | null | undefined): boolean {
+  return status === 'failed';
+}
+
 type MessageTemplateKey =
   | 'blank'
   | 'save-the-date'
@@ -961,7 +965,7 @@ export const DashboardMessages: React.FC = () => {
   const [eventGuestIds, setEventGuestIds] = useState<Record<string, Set<string>>>({});
   const [messagesRole, setMessagesRole] = useState<PlannerAccessRole>('owner');
   const [activeSiteRole, setActiveSiteRole] = useState<PlannerAccessRole>('owner');
-  const [historyStatusFilter, setHistoryStatusFilter] = useState<'all' | 'sent' | 'scheduled' | 'draft' | 'failed' | 'partial'>('all');
+  const [historyStatusFilter, setHistoryStatusFilter] = useState<'all' | 'active' | 'sent' | 'scheduled' | 'draft' | 'failed' | 'partial'>('all');
   const [historyChannelFilter, setHistoryChannelFilter] = useState<'all' | 'email' | 'sms'>('all');
   const [historyAudienceFilter, setHistoryAudienceFilter] = useState<string>('all');
   const [historyDeliveryFilter, setHistoryDeliveryFilter] = useState<'all' | 'delivered' | 'failed' | 'skipped' | 'unreached'>('all');
@@ -1786,6 +1790,13 @@ export const DashboardMessages: React.FC = () => {
       return;
     }
 
+    if (!canRetryMessageStatus(message.status)) {
+      toast(message.status === 'partial'
+        ? 'Partial campaigns are not retried in-place here because that can duplicate sends. Duplicate the campaign and target the missed guests instead.'
+        : 'Only failed campaigns can be retried from this control.', 'info');
+      return;
+    }
+
     setRetryingMessageId(message.id);
     try {
       if (isDemoMode) {
@@ -2410,7 +2421,9 @@ export const DashboardMessages: React.FC = () => {
   const canCompose = canComposeDashboardMessages(messagesRole);
 
   const filteredHistory = useMemo(() => messages.filter((m) => {
-    if (historyStatusFilter !== 'all' && m.status !== historyStatusFilter) return false;
+    if (historyStatusFilter === 'active') {
+      if (!(m.status === 'queued' || m.status === 'sending')) return false;
+    } else if (historyStatusFilter !== 'all' && m.status !== historyStatusFilter) return false;
     if (historyChannelFilter !== 'all' && m.channel !== historyChannelFilter) return false;
     const aud = m.audience_filter ?? (m.recipient_filter?.audience as string) ?? 'all';
     if (historyAudienceFilter !== 'all' && aud !== historyAudienceFilter) return false;
@@ -3304,6 +3317,7 @@ export const DashboardMessages: React.FC = () => {
               />
               <select value={historyStatusFilter} onChange={(e) => setHistoryStatusFilter(e.target.value as typeof historyStatusFilter)} className="px-2.5 py-1.5 text-xs bg-surface border border-border rounded-lg text-text-secondary">
                 <option value="all">All status</option>
+                <option value="active">Active</option>
                 <option value="sent">Sent</option>
                 <option value="scheduled">Scheduled</option>
                 <option value="partial">Partial</option>
@@ -3636,13 +3650,17 @@ export const DashboardMessages: React.FC = () => {
                       <p className="text-sm font-medium text-text-primary truncate">{m.subject}</p>
                       <p className="text-[11px] text-text-tertiary">{m.status} · {m.channel} · {getRecipientCount(m)} recipients</p>
                     </div>
-                    <button
-                      onClick={() => void handleRetry(m)}
-                      disabled={retryingMessageId !== null || !canCompose}
-                      className="text-xs px-2 py-1 rounded border border-border bg-white text-text-secondary disabled:opacity-50"
-                    >
-                      {retryingMessageId === m.id ? 'Retrying…' : 'Retry'}
-                    </button>
+                    {canRetryMessageStatus(m.status) ? (
+                      <button
+                        onClick={() => void handleRetry(m)}
+                        disabled={retryingMessageId !== null || !canCompose}
+                        className="text-xs px-2 py-1 rounded border border-border bg-white text-text-secondary disabled:opacity-50"
+                      >
+                        {retryingMessageId === m.id ? 'Retrying…' : 'Retry'}
+                      </button>
+                    ) : (
+                      <span className="text-[11px] text-text-tertiary max-w-[220px] text-right">Review partial delivery before sending a follow-up so you do not duplicate messages.</span>
+                    )}
                   </div>
                 ))}
               </div>
@@ -3754,10 +3772,13 @@ export const DashboardMessages: React.FC = () => {
                             </Button>
                           </>
                         )}
-                        {(message.status === 'failed' || message.status === 'partial') && (
+                        {canRetryMessageStatus(message.status) && (
                           <Button size="sm" variant="outline" onClick={() => void handleRetry(message)} disabled={retryingMessageId === message.id || !canCompose}>
                             <RefreshCw className="w-3.5 h-3.5 mr-1.5" />{retryingMessageId === message.id ? 'Retrying…' : 'Retry'}
                           </Button>
+                        )}
+                        {message.status === 'partial' && (
+                          <p className="text-xs text-text-tertiary max-w-xs">Partial campaigns stay review-only here so this control does not re-send guests who already got the message.</p>
                         )}
                       </div>
                     )}
