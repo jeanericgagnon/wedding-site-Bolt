@@ -162,6 +162,7 @@ export const QuickStart: React.FC = () => {
   const [initialSetupFollowUps] = useState(createEmptyInitialSetupFollowUps());
   const [weddingProfile, setWeddingProfile] = useState(createEmptyWeddingProfile());
   const [hasLocalDraftHydration, setHasLocalDraftHydration] = useState(false);
+  const hasLocalDraftHydrationRef = useRef(false);
   const [hasHydratedDraft, setHasHydratedDraft] = useState(false);
   const [isResettingDraft, setIsResettingDraft] = useState(false);
 
@@ -189,6 +190,7 @@ export const QuickStart: React.FC = () => {
       setShowFollowUps(false);
       setViewState('question');
       setInputValue('');
+      hasLocalDraftHydrationRef.current = false;
       setHasLocalDraftHydration(false);
       setHasHydratedDraft(true);
       setIsResettingDraft(false);
@@ -215,7 +217,9 @@ export const QuickStart: React.FC = () => {
       setClarifyingState(normalizedClarifyingState);
       setShowFollowUps(canResumeFollowUps);
       setViewState(resolveQuickStartResumeViewState({ ...parsed, showFollowUps: canResumeFollowUps }));
-      setHasLocalDraftHydration(hasMeaningfulQuickStartAnswers(parsed.initialSetupAnswers) || Object.keys(restoredFollowUps).length > 0 || Boolean(normalizedClarifyingState));
+      const nextHasLocalDraftHydration = hasMeaningfulQuickStartAnswers(parsed.initialSetupAnswers) || Object.keys(restoredFollowUps).length > 0 || Boolean(normalizedClarifyingState);
+      hasLocalDraftHydrationRef.current = nextHasLocalDraftHydration;
+      setHasLocalDraftHydration(nextHasLocalDraftHydration);
     } catch {}
     finally {
       setHasHydratedDraft(true);
@@ -255,7 +259,7 @@ export const QuickStart: React.FC = () => {
       if (data?.onboarding_answers && typeof data.onboarding_answers === 'object') {
         const restored = data.onboarding_answers as InitialSetupAnswers;
         setInitialSetupAnswers((prev) => {
-          const next = hasLocalDraftHydration ? mergeQuickStartSeedIntoDraft(prev, restored) : { ...prev, ...restored };
+          const next = hasLocalDraftHydrationRef.current ? mergeQuickStartSeedIntoDraft(prev, restored) : { ...prev, ...restored };
           setWeddingProfile(applyInitialSetupAnswersToWeddingProfile(next));
           return next;
         });
@@ -270,7 +274,7 @@ export const QuickStart: React.FC = () => {
           venueNameOrTbd: data?.venue_name || '',
         } as InitialSetupAnswers;
         setInitialSetupAnswers((prev) => {
-          const next = hasLocalDraftHydration ? mergeQuickStartSeedIntoDraft(prev, seededAnswers) : { ...prev, ...seededAnswers };
+          const next = hasLocalDraftHydrationRef.current ? mergeQuickStartSeedIntoDraft(prev, seededAnswers) : { ...prev, ...seededAnswers };
           return next;
         });
       }
@@ -319,6 +323,17 @@ export const QuickStart: React.FC = () => {
       default: return '';
     }
   };
+
+  useEffect(() => {
+    if (!hasHydratedDraft || !currentQuestion) return;
+    if (inputValue.trim().length > 0) return;
+    const hydratedValue = getValueForQuestion(currentQuestion.key, formData);
+    if (hydratedValue) {
+      setInputValue(hydratedValue);
+    }
+    // Hydration can land after mount. Only patch blank inputs so we do not clobber live typing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasHydratedDraft, currentIndex, initialSetupAnswers]);
 
   const previousAnswers = useMemo(
     () => questions.slice(0, currentIndex).map((q) => ({ ...q, value: getValueForQuestion(q.key, formData) })).filter((entry) => entry.value.trim()),
