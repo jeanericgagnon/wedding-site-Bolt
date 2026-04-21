@@ -101,6 +101,22 @@ function getActionFeedCtaLabel(intent: 'open_execution_card' | 'open_document_re
   return intent === 'open_execution_card' ? 'Open execution card' : 'Open document repair';
 }
 
+function getActionFeedSectionLabel(sectionKey: 'core-government' | 'work-identity' | 'institutional' | 'cleanup' | 'documents') {
+  switch (sectionKey) {
+    case 'core-government':
+      return 'core government';
+    case 'work-identity':
+      return 'work identity';
+    case 'institutional':
+      return 'institutional';
+    case 'cleanup':
+      return 'cleanup';
+    case 'documents':
+    default:
+      return 'documents';
+  }
+}
+
 interface Props {
   draft: NameChangeCaseInput;
   documents: NameChangeDocumentInput[];
@@ -1223,7 +1239,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 </span>
               </div>
               <p className="mt-3 text-sm text-text-secondary">{item.action.detail}</p>
-              <p className="mt-2 text-xs text-text-secondary">{item.origin === 'execution' ? 'execution lane' : 'document repair'} · {item.action.category} · score {item.score}</p>
+              <p className="mt-2 text-xs text-text-secondary">{getActionFeedSectionLabel(item.sectionKey)} · {item.origin === 'execution' ? 'execution lane' : 'document repair'} · {item.action.category} · score {item.score}</p>
               <p className="mt-3 text-xs font-medium text-primary">{getActionFeedCtaLabel(item.plannerIntent)} →</p>
             </button>
           ))}

@@ -5,6 +5,7 @@ import type { NameChangeGuidedAction, NameChangeTargetExecutionSnapshot } from '
 export interface NameChangeActionFeedItem {
   key: string;
   origin: 'execution' | 'document_repair';
+  sectionKey: 'core-government' | 'work-identity' | 'institutional' | 'cleanup' | 'documents';
   title: string;
   laneLabel: string;
   severity: 'blocking' | 'attention' | 'ready';
@@ -31,6 +32,13 @@ function getExecutionSeverity(snapshot: NameChangeTargetExecutionSnapshot): Name
   return 'ready';
 }
 
+function getExecutionSectionKey(targetKey: NameChangeTargetExecutionSnapshot['targetKey']): NameChangeActionFeedItem['sectionKey'] {
+  if (targetKey === 'ssa' || targetKey === 'dmv' || targetKey === 'passport') return 'core-government';
+  if (targetKey === 'employer' || targetKey === 'licenses') return 'work-identity';
+  if (targetKey === 'banks' || targetKey === 'insurance' || targetKey === 'medical' || targetKey === 'utilities') return 'institutional';
+  return 'cleanup';
+}
+
 export function buildNameChangeActionFeed(
   executionSnapshots: NameChangeTargetExecutionSnapshot[],
   documentRepairQueue: NameChangeDocumentRepairQueueItem[],
@@ -40,6 +48,7 @@ export function buildNameChangeActionFeed(
     return {
       key: `execution:${snapshot.targetKey}`,
       origin: 'execution',
+      sectionKey: getExecutionSectionKey(snapshot.targetKey),
       title: snapshot.targetLabel,
       laneLabel: snapshot.recommendedFormCode,
       severity,
@@ -59,10 +68,11 @@ export function buildNameChangeActionFeed(
     .map((item) => ({
       key: `document:${item.kind}`,
       origin: 'document_repair',
+      sectionKey: 'documents' as const,
       title: item.label,
       laneLabel: 'Document repair',
       severity: item.severity,
-      plannerIntent: 'open_document_repair',
+      plannerIntent: 'open_document_repair' as const,
       focusTargetId: `document-${item.kind}`,
       score: item.score,
       action: item.nextActions[0],
