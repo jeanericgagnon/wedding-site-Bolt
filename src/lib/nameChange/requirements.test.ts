@@ -280,6 +280,19 @@ describe('name change requirements skeleton', () => {
     });
   });
 
+  it('marks court-order jurisdiction context missing when county context is absent', () => {
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase({ legal_basis: 'court_order' as never, county_residence: null }),
+      [],
+      [],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'court-order-jurisdiction-context')).toMatchObject({
+      status: 'missing',
+      reason: 'County context is still missing, so court-order jurisdiction review cannot be grounded yet.',
+    });
+  });
+
   it('requires a marriage certificate when the legal basis is marriage', () => {
     const snapshot = evaluateNameChangeRequirements(
       makeCase(),

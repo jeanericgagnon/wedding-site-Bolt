@@ -31,6 +31,7 @@ export function buildNameChangeExecutionSequenceSnapshot(
       legalProof: results.find((result) => result.key === 'legal-proof-document'),
       identityCoverage: results.find((result) => result.key === 'identity-document-coverage'),
       courtOrderPathReadiness: results.find((result) => result.key === 'court-order-path-readiness'),
+      courtOrderJurisdictionContext: results.find((result) => result.key === 'court-order-jurisdiction-context'),
       countyContext: results.find((result) => result.key === 'county-context'),
       launchStateAlignment: results.find((result) => result.key === 'launch-state-alignment'),
       passportTimingRisk: results.find((result) => result.key === 'passport-timing-risk'),

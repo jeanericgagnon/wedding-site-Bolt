@@ -118,6 +118,14 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'courtOrder' | 'ssa' | 'dmv' 
         satisfiedReason: 'Court-order path readiness is clear for this modeled review slice.',
       },
       {
+        key: 'court-order-jurisdiction-context',
+        label: 'Court-order jurisdiction context is available',
+        kind: 'requirement',
+        requirementKey: 'court-order-jurisdiction-context',
+        missingReason: 'Court-order jurisdiction context has not been evaluated yet.',
+        satisfiedReason: 'Court-order jurisdiction context is available for this modeled review slice.',
+      },
+      {
         key: 'legal-proof-document',
         label: 'Court-order proof ready',
         kind: 'requirement',

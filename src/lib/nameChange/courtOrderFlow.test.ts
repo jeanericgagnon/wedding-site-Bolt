@@ -63,4 +63,25 @@ describe('court-order path review execution snapshot', () => {
     expect(snapshot.ready).toBe(false);
     expect(snapshot.blockers).toContain('Court-order path is selected, but no court-order proof is represented in intake yet.');
   });
+
+  it('blocks when county context is missing for court-order jurisdiction review', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'court_order_name_change',
+        display_name: 'Court order',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+
+    const snapshot = buildNameChangeCourtOrderExecutionSnapshot(makeCase({ county_residence: null }), documents, []);
+    expect(snapshot.ready).toBe(false);
+    expect(snapshot.blockers).toContain('County context is still missing, so court-order jurisdiction review cannot be grounded yet.');
+  });
 });
