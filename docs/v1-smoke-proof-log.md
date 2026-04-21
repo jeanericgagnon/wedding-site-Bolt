@@ -65,10 +65,11 @@ If the product cannot be shown, shared, and trusted publicly, the v1 claim is de
 - Notes:
   - 2026-04-21 automated canonical smoke passed via `npm run proof:v1:canonical-smoke`.
   - `npm run test:e2e:live` passed across Home, Product, Trust, Login, and collaborator invite route load.
+  - Canonical route smoke now also covers signup load, quick-start preview reachability, protected onboarding/builder fallback to login when auth is missing, and RSVP entry guidance.
   - `npm run smoke:site` passed and resolved a real published slug + site_url (`alex-jordan-demo`) from Supabase.
   - `npm run build` passed in the same proof batch.
 - Blockers:
-  - Still need one logged route-note pass for Home -> signup/demo/auth -> onboarding/builder -> public site -> RSVP.
+  - Still need one logged human route-note pass for Home -> signup/demo/auth -> onboarding/builder -> public site -> RSVP, focused on UX quality rather than route availability.
   - Still need explicit manual verification that privacy/access/publish wording matches live runtime behavior in the canonical couple path.
 
 ---

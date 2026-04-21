@@ -42,10 +42,41 @@ test.describe('public v1 trust smoke', () => {
 });
 
 test.describe('public route smoke basics', () => {
+  test('signup page loads with the direct setup promise', async ({ page }) => {
+    await gotoDom(page, '/signup');
+    await expect(page.getByRole('heading', { name: /create your account/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /continue with google/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /create account/i })).toBeVisible();
+  });
+
   test('login page loads', async ({ page }) => {
     await gotoDom(page, '/login');
     await expect(page.getByRole('heading', { name: /welcome back/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /sign in/i })).toBeVisible();
+  });
+
+  test('quick-start preview stays reachable without auth when bypass preview is explicit', async ({ page }) => {
+    await gotoDom(page, '/onboarding/quick-start?bypassPayment=1');
+    await expect(page.getByRole('heading', { name: /who’s getting married\?/i })).toBeVisible();
+    await expect(page.getByText(/use the names exactly how you want guests to see them on the site/i)).toBeVisible();
+  });
+
+  test('protected onboarding route falls back to login when auth is missing', async ({ page }) => {
+    await gotoDom(page, '/onboarding');
+    await expect(page).toHaveURL(/\/login$/);
+    await expect(page.getByRole('heading', { name: /welcome back/i })).toBeVisible();
+  });
+
+  test('protected builder route falls back to login when auth is missing', async ({ page }) => {
+    await gotoDom(page, '/dashboard/builder');
+    await expect(page).toHaveURL(/\/login$/);
+    await expect(page.getByRole('heading', { name: /welcome back/i })).toBeVisible();
+  });
+
+  test('rsvp entry page exposes the secure lookup guidance', async ({ page }) => {
+    await gotoDom(page, '/rsvp');
+    await expect(page.getByText(/use the invitation code from your email for the fastest lookup/i)).toBeVisible();
+    await expect(page.getByText(/make sure you're using the invitation link from your email/i)).not.toBeVisible();
   });
 
   test('collaborator invite page loads with token param', async ({ page }) => {

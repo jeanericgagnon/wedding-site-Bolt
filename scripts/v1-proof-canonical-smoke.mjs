@@ -113,10 +113,11 @@ const output = {
   automatedCoverage: [
     'Build integrity for the current public/onboarding path',
     'Public v1 trust story smoke across Home, Product, and Trust via Playwright live smoke',
+    'Canonical entry-route continuity across signup, login fallback for protected onboarding/builder, quick-start preview, RSVP entry, and collaborator invite load',
     'Published site slug/site_url lookup truth through Supabase site lookup smoke',
   ],
   stillManualProofNeeded: [
-    'Route notes for Home -> signup/demo/auth -> onboarding/builder -> public site -> RSVP',
+    'One logged human route-note pass for Home -> signup/demo/auth -> onboarding/builder -> public site -> RSVP, focused on UX quality instead of basic route reachability',
     'Verify privacy/access/publish wording against the actual runtime behavior',
     'Log exact pass/fail or blocker details in docs/v1-smoke-proof-log.md',
   ],
