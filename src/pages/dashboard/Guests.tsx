@@ -23,6 +23,7 @@ import { useToast } from '../../components/ui/Toast';
 import { demoWeddingSite, demoGuests, demoRSVPs } from '../../lib/demoData';
 import { buildQuickStartPhotosPath } from '../../lib/quickStartContinuation';
 import { sendWeddingInvitation } from '../../lib/emailService';
+import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
 import * as XLSX from 'xlsx';
 
 interface Guest {
@@ -1788,12 +1789,22 @@ Proceed with send?`)) return;
       return;
     }
 
-    const base = import.meta.env.BASE_URL || '/';
-    const normalizedBase = base.endsWith('/') ? base : `${base}/`;
-    const url = `${window.location.origin}${normalizedBase}guest-contact/${weddingSiteId}`;
+    const { data: siteData, error: siteError } = await supabase
+      .from('wedding_sites')
+      .select('id, site_slug, site_url')
+      .eq('id', weddingSiteId)
+      .maybeSingle();
+
+    const publicSlug = resolvePublicSiteSlugFromRow((siteData as Record<string, unknown> | null) ?? null);
+    if (siteError || !publicSlug) {
+      toast('Set a public site slug before sharing the guest update link', 'error');
+      return;
+    }
+
+    const url = `https://${publicSlug}.dayof.love/guest-contact/${publicSlug}`;
     try {
       await navigator.clipboard.writeText(url);
-      toast('Contact update link copied', 'success');
+      toast('Guest update link copied', 'success');
     } catch {
       window.prompt('Copy contact link:', url);
     }

@@ -63,6 +63,9 @@ export const GuestContactUpdate: React.FC = () => {
     if (query.trim().length < 2) return;
     setSearching(true);
     setResult(null);
+    setMatches([]);
+    setSelectedGuestId('');
+    setSelectedHouseholdSize(1);
     try {
       const data = await callPublicFn('guest-contact-lookup', { site_ref: siteRef, query: query.trim() });
       const rows = ((data as any)?.matches ?? []) as Match[];
@@ -70,6 +73,8 @@ export const GuestContactUpdate: React.FC = () => {
       if (rows.length > 0) {
         setSelectedGuestId(rows[0].id);
         setSelectedHouseholdSize(rows[0].household_size ?? 1);
+      } else {
+        setResult({ ok: false, message: 'No guest record matched that search. Try your full name as it appears on the invitation.' });
       }
     } catch (err) {
       if (isDemoSiteRef) {
@@ -82,6 +87,8 @@ export const GuestContactUpdate: React.FC = () => {
         if (rows.length > 0) {
           setSelectedGuestId(rows[0].id);
           setSelectedHouseholdSize(rows[0].household_size ?? 1);
+        } else {
+          setResult({ ok: false, message: 'No demo guest matched that search. Try a full name from the sample guest list.' });
         }
       } else {
         setResult({ ok: false, message: err instanceof Error ? err.message : 'Couldn’t complete that search. Please try again.' });
