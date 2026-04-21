@@ -375,6 +375,7 @@ export default function RSVP() {
     e.preventDefault();
     const requestId = activeLookupRequestRef.current + 1;
     activeLookupRequestRef.current = requestId;
+    setTokenAutoLoading(false);
     setLoading(true);
     setError('');
     setStep('search');
