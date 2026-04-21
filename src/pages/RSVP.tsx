@@ -16,6 +16,7 @@ const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const DEMO_RSVP_QUESTIONS_KEY = 'dayof_demo_rsvp_custom_questions_v1';
 const DEMO_RSVP_RESPONSES_KEY = 'dayof_demo_rsvp_responses_v1';
 const DEMO_RSVP_MEAL_KEY = 'dayof_demo_rsvp_meal_config_v1';
+const DEFAULT_MEAL_CONFIG: RSVPMealConfig = { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] };
 
 async function rsvpCall(body: object): Promise<{ data?: unknown; error?: string }> {
   const res = await fetch(RSVP_FN_URL, {
@@ -257,7 +258,7 @@ export default function RSVP() {
   const [formStep, setFormStep] = useState<1 | 2 | 3>(1);
   const [rsvpQuestions, setRsvpQuestions] = useState<RSVPQuestion[]>([]);
   const [customAnswers, setCustomAnswers] = useState<Record<string, string | string[]>>({});
-  const [mealConfig, setMealConfig] = useState<RSVPMealConfig>({ enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] });
+  const [mealConfig, setMealConfig] = useState<RSVPMealConfig>(DEFAULT_MEAL_CONFIG);
   const [householdGuests, setHouseholdGuests] = useState<HouseholdGuest[]>([]);
   const [applyToHousehold, setApplyToHousehold] = useState(true);
   const [selectedHouseholdGuestIds, setSelectedHouseholdGuestIds] = useState<string[]>([]);
@@ -281,6 +282,7 @@ export default function RSVP() {
     setFormData({ attending: true, attendCeremony: true, attendReception: true, meal_choice: '', plus_one_name: '', notes: '' });
     setCustomAnswers({});
     setRsvpQuestions([]);
+    setMealConfig(DEFAULT_MEAL_CONFIG);
     setHouseholdGuests([]);
     setApplyToHousehold(true);
     setSelectedHouseholdGuestIds([]);
@@ -315,6 +317,8 @@ export default function RSVP() {
       setAmbiguousGuests([]);
       setRsvpDeadline(null);
       setMusicPlaylistUrl(null);
+      setRsvpQuestions([]);
+      setMealConfig(DEFAULT_MEAL_CONFIG);
       setHouseholdGuests([]);
       setApplyToHousehold(true);
       setSelectedHouseholdGuestIds([]);
@@ -328,6 +332,7 @@ export default function RSVP() {
       });
       setCustomAnswers({});
       setFormStep(1);
+      setActivePredictionIndex(-1);
       setError('');
       return;
     }
@@ -343,9 +348,15 @@ export default function RSVP() {
     setAmbiguousGuests([]);
     setRsvpDeadline(null);
     setMusicPlaylistUrl(null);
+    setRsvpQuestions([]);
+    setMealConfig(DEFAULT_MEAL_CONFIG);
     setHouseholdGuests([]);
     setApplyToHousehold(true);
     setSelectedHouseholdGuestIds([]);
+    setCustomAnswers({});
+    setFormData({ attending: true, attendCeremony: true, attendReception: true, meal_choice: '', plus_one_name: '', notes: '' });
+    setFormStep(1);
+    setActivePredictionIndex(-1);
     (DEMO_MODE ? Promise.resolve({ data: demoLookup(token) as unknown, error: undefined as string | undefined }) : rsvpCall({ action: 'lookup', searchValue: token }))
       .then(({ data, error: err }) => {
         if (activeLookupRequestRef.current !== requestId) return;

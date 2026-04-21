@@ -1,7 +1,7 @@
 import React from 'react';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { MemoryRouter } from 'react-router-dom';
+import { BrowserRouter, MemoryRouter } from 'react-router-dom';
 
 vi.mock('../config/env', () => ({ DEMO_MODE: false }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
@@ -95,5 +95,76 @@ describe('RSVP stale submit protection', () => {
     await waitFor(() => {
       expect(screen.queryByText("You're confirmed!")).not.toBeInTheDocument();
     });
+  });
+
+  it('clears stale token-loaded form truth before resolving a replacement token lookup', async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          guest: {
+            id: 'guest-1',
+            first_name: 'Taylor',
+            last_name: 'Rivera',
+            name: 'Taylor Rivera',
+            email: 'taylor@example.com',
+            phone: null,
+            group_name: null,
+            wedding_site_id: 'site-1',
+            plus_one_allowed: false,
+            invited_to_ceremony: true,
+            invited_to_reception: true,
+            invite_token: 'token-1',
+          },
+          existingRsvp: {
+            id: 'rsvp-1',
+            attending: true,
+            attending_ceremony: true,
+            attending_reception: true,
+            meal_choice: 'Chicken',
+            plus_one_name: null,
+            notes: null,
+            custom_answers: { song: 'Dancing Queen' },
+          },
+          guests: null,
+          rsvpDeadline: null,
+          rsvpQuestions: [
+            { id: 'song', label: 'Favorite song', type: 'short_text', required: true },
+          ],
+          rsvpMealConfig: { enabled: true, options: ['Chicken', 'Beef'] },
+          musicPlaylistUrl: null,
+          householdGuests: [],
+        }),
+      });
+
+    const secondLookup = deferred<Response>();
+    fetchMock.mockImplementationOnce(() => secondLookup.promise);
+
+    window.history.pushState({}, '', '/rsvp?token=token-1');
+
+    const view = render(
+      <BrowserRouter>
+        <RSVP />
+      </BrowserRouter>
+    );
+
+    await screen.findByText('Welcome, Taylor Rivera!');
+    fireEvent.click(screen.getByText('Continue to details'));
+    await screen.findByDisplayValue('Chicken');
+    expect(screen.getByDisplayValue('Dancing Queen')).toBeInTheDocument();
+
+    await act(async () => {
+      window.history.pushState({}, '', '/rsvp?token=token-2');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+    view.rerender(
+      <BrowserRouter>
+        <RSVP />
+      </BrowserRouter>
+    );
+
+    expect(await screen.findByText(/Loading your invitation/)).toBeInTheDocument();
+    expect(screen.queryByDisplayValue('Dancing Queen')).not.toBeInTheDocument();
+    expect(screen.queryByDisplayValue('Chicken')).not.toBeInTheDocument();
   });
 });
