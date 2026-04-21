@@ -104,6 +104,7 @@ import { getCoordinatorStandingPromptSecondaryState } from '../../lib/coordinato
 import { getCoordinatorCommandBadgeTone } from '../../lib/coordinatorCommandBadgeTone';
 import { buildCoordinatorOpsSnapshot } from '../../lib/coordinatorOpsSnapshot';
 import { buildCoordinatorRoleCapabilities } from '../../lib/coordinatorRoleCapabilities';
+import { buildCoordinatorCommandDeck } from '../../lib/coordinatorCommandDeck';
 
 
 type AudienceOption = { value: string; label: string; count: number };
@@ -736,6 +737,25 @@ export const DashboardCoordinatorMode: React.FC = () => {
     qnaTargetQuestion: qnaTargetItem?.question ?? null,
   }), [priorityCommandLabel, checkInTargetGuest?.name, timelineTargetEvent?.event_name, qnaTargetItem?.question]);
   const priorityCommandCta = useMemo(() => getCoordinatorCommandPriorityCta(priorityCommandLabel), [priorityCommandLabel]);
+  const commandDeckItems = useMemo(() => buildCoordinatorCommandDeck({
+    items: commandSummaryItems,
+    priorityLabel: priorityCommandLabel,
+    priorityReason,
+    priorityCta: priorityCommandCta,
+    checkInTargetName: checkInTargetGuest?.name ?? null,
+    timelineTargetName: timelineTargetEvent?.event_name ?? null,
+    qnaTargetQuestion: qnaTargetItem?.question ?? null,
+    alertLaneLabel,
+  }), [
+    commandSummaryItems,
+    priorityCommandLabel,
+    priorityReason,
+    priorityCommandCta,
+    checkInTargetGuest?.name,
+    timelineTargetEvent?.event_name,
+    qnaTargetItem?.question,
+    alertLaneLabel,
+  ]);
   const stablePrompt = useMemo(() => buildCoordinatorStablePrompt({
     priority: priorityCommandLabel,
     reason: priorityCommandReason,
@@ -1769,6 +1789,27 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 )}
                 <span className="mx-1 text-[10px] text-text-tertiary">·</span>
                 <span className="text-[10px] text-text-secondary">{item.detail}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
+            {commandDeckItems.map((item) => (
+              <button
+                key={item.label}
+                type="button"
+                onClick={() => jumpToCommandSummaryItem(item.label)}
+                className={`rounded-xl border px-3 py-3 text-left transition hover:border-primary/35 hover:bg-primary/[0.04] ${item.priority ? 'border-primary/30 bg-primary/[0.06]' : 'border-border/50 bg-surface-subtle/25'}`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-[11px] font-medium text-text-primary">{item.label}</p>
+                  <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${item.priority ? 'border-primary/20 bg-white text-primary' : 'border-border bg-white text-text-tertiary'}`}>
+                    {item.status}
+                  </span>
+                </div>
+                <p className="mt-2 text-[11px] text-text-secondary">{item.detail}</p>
+                {item.target && <p className="mt-2 text-[10px] text-text-tertiary">Target · {item.target}</p>}
+                <p className="mt-3 text-[10px] font-medium uppercase tracking-[0.12em] text-text-tertiary">{item.cta}</p>
               </button>
             ))}
           </div>
