@@ -12,6 +12,7 @@ export interface NameChangeDocumentRepairQueueItem {
   severity: 'blocking' | 'attention';
   score: number;
   impactSummary: string;
+  nextActions: string[];
   impactedTargets: string[];
   blockingRiskCount: number;
   attentionRiskCount: number;
@@ -55,11 +56,25 @@ export function buildNameChangeDocumentRepairQueue(
         : 'attention';
 
       const issueBits: string[] = [];
+      const nextActions: string[] = [];
       if (document.intakeStatus === 'not_started') issueBits.push('not started');
       if (document.metadataMissing.length > 0) issueBits.push(`${document.metadataMissing.length} metadata gaps`);
       if (document.missingExtractionFields.length > 0) issueBits.push(`${document.missingExtractionFields.length} extraction gaps`);
       if (blockingRiskCount > 0) issueBits.push(`${blockingRiskCount} blocking field risks`);
       if (attentionRiskCount > 0) issueBits.push(`${attentionRiskCount} attention field risks`);
+
+      if (document.intakeStatus === 'not_started') {
+        nextActions.push(`Add ${document.label.toLowerCase()} to intake and capture baseline metadata.`);
+      }
+      if (document.metadataMissing.length > 0) {
+        nextActions.push(`Fill metadata: ${document.metadataMissing.join(', ')}.`);
+      }
+      if (document.missingExtractionFields.length > 0) {
+        nextActions.push(`Capture extraction fields: ${document.missingExtractionFields.join(', ')}.`);
+      }
+      if (blockingRiskCount > 0 && impactedTargets.size > 0) {
+        nextActions.push(`Rebuild packet trust for ${[...impactedTargets].slice(0, 3).join(', ')} after doc cleanup.`);
+      }
 
       const score =
         (severity === 'blocking' ? 100 : 0) +
@@ -76,6 +91,7 @@ export function buildNameChangeDocumentRepairQueue(
         severity,
         score,
         impactSummary: issueBits.join(' · '),
+        nextActions,
         impactedTargets: [...impactedTargets],
         blockingRiskCount,
         attentionRiskCount,

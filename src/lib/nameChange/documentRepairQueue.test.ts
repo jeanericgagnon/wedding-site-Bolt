@@ -84,6 +84,10 @@ describe('name change document repair queue', () => {
     });
     expect(queue[0].impactSummary).toContain('metadata gaps');
     expect(queue[0].impactedTargets.length).toBeGreaterThan(0);
+    expect(queue[0].nextActions).toEqual(expect.arrayContaining([
+      expect.stringContaining('Fill metadata:'),
+      expect.stringContaining('Capture extraction fields:'),
+    ]));
   });
 
   it('surfaces required not-started docs even before field lineage exists', () => {
@@ -97,6 +101,9 @@ describe('name change document repair queue', () => {
         kind: 'marriage_certificate',
         severity: 'blocking',
         intakeStatus: 'not_started',
+        nextActions: expect.arrayContaining([
+          expect.stringContaining('Add certified marriage certificate to intake'),
+        ]),
       }),
     ]));
   });
