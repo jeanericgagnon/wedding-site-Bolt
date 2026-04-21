@@ -965,20 +965,6 @@ export const DashboardMessages: React.FC = () => {
   });
 
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const prefillSubject = params.get('prefillSubject');
-    const prefillBody = params.get('prefillBody');
-    if (!prefillSubject && !prefillBody) return;
-
-    setFormData((prev) => ({
-      ...prev,
-      campaignName: prev.campaignName,
-      subject: prefillSubject ?? prev.subject,
-      body: prefillBody ?? prev.body,
-    }));
-  }, [location.search]);
-
-  useEffect(() => {
     const loaded = readSavedComposerTemplates();
     setSavedTemplates(loaded);
 
@@ -1314,6 +1300,46 @@ export const DashboardMessages: React.FC = () => {
       setSmsTransactions([]);
     }
   }, [weddingSite, isDemoMode]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const prefillSubject = params.get('prefillSubject');
+    const prefillBody = params.get('prefillBody');
+    const smsCreditsStatus = params.get('smsCredits');
+    if (!prefillSubject && !prefillBody && !smsCreditsStatus) return;
+
+    if (prefillSubject || prefillBody) {
+      setEditingMessageId(null);
+      setFormData((prev) => ({
+        ...prev,
+        campaignName: prev.campaignName,
+        subject: prefillSubject ?? prev.subject,
+        body: prefillBody ?? prev.body,
+      }));
+      setShowRecipientPreview(true);
+    }
+
+    if (smsCreditsStatus === 'success') {
+      toast('SMS credit purchase complete. Refreshing your balance now.', 'success');
+      void fetchWeddingSite();
+      void fetchSmsExpiryPreview();
+    } else if (smsCreditsStatus === 'cancel') {
+      toast('SMS credit checkout was canceled.', 'info');
+    }
+
+    const cleanedParams = new URLSearchParams(location.search);
+    cleanedParams.delete('prefillSubject');
+    cleanedParams.delete('prefillBody');
+    cleanedParams.delete('smsCredits');
+    const nextSearch = cleanedParams.toString();
+    navigate(
+      {
+        pathname: location.pathname,
+        search: nextSearch ? `?${nextSearch}` : '',
+      },
+      { replace: true },
+    );
+  }, [location.pathname, location.search, navigate, fetchWeddingSite, fetchSmsExpiryPreview]);
 
   useEffect(() => { fetchWeddingSite(); }, [fetchWeddingSite]);
   useEffect(() => {
