@@ -248,6 +248,7 @@ export default function RSVP() {
   const [rsvpDeadline, setRsvpDeadline] = useState<string | null>(null);
   const [musicPlaylistUrl, setMusicPlaylistUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [tokenAutoLoading, setTokenAutoLoading] = useState(false);
   const activeLookupRequestRef = useRef(0);

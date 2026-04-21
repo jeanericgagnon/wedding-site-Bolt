@@ -1545,7 +1545,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 className={`mt-1 inline-flex flex-wrap items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] hover:border-primary/35 hover:bg-primary/[0.04] ${standingPromptMode === 'secondary' ? 'border-border/35 bg-surface-subtle/20 text-text-tertiary' : 'border-border/50 bg-surface-subtle/40 text-text-secondary'}`}
               >
                 <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${stablePromptBadgeToneClassName}`}>{standingPromptBadge}</span>
-                <span>{standingPromptMode === 'full' ? standingPromptReason : standingPromptCopy}</span>
+                <span>{standingPromptCopy}</span>
                 {stablePromptTargetLabel && <span className="text-text-tertiary">{stablePromptTargetLabel}</span>}
                 <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${stablePromptStateToneClassName}`}>{standingPromptStateLabel}</span>
               </button>
