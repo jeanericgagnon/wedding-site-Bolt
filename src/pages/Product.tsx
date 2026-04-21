@@ -45,6 +45,42 @@ const FEATURE_AUDIT_GROUPS = [
   },
 ] as const;
 
+const V1_STATUS_GROUPS = [
+  {
+    title: 'Core v1 today',
+    tone: 'must',
+    intro: 'This is the product line DayOf should actually be judged on right now.',
+    items: [
+      'Launch a polished wedding site with honest privacy + access controls',
+      'Run guest list, households, RSVP, meals, and event invites in one place',
+      'Handle core wedding messaging without spreadsheet-to-email-tool chaos',
+      'Use seating, itinerary, and coordination views to run the event week calmly',
+      'Invite a planner or coordinator into a role-aware workspace',
+    ],
+  },
+  {
+    title: 'Should ship, but not carry the launch claim',
+    tone: 'should',
+    intro: 'These matter, but they should not be used to fake a broader v1 than the core product has earned.',
+    items: [
+      'Guest photo collection and post-wedding memory paths',
+      'Archive mode and anniversary-facing memory layers',
+      'Name-change planning support after the wedding',
+    ],
+  },
+  {
+    title: 'Explicitly not part of the current v1 promise',
+    tone: 'cut',
+    intro: 'If these are not fully proven, they should stay out of the sales story instead of hanging around as wishful blur.',
+    items: [
+      'External custom domains as a launch expectation',
+      'Advanced analytics as a major product promise',
+      'Fully automated migration, reminders, or merchant syncing',
+      'Enterprise workflow governance or full event-control software claims',
+    ],
+  },
+] as const;
+
 export const Product: React.FC = () => {
   const navigate = useNavigate();
   const { signIn } = useAuth();
@@ -305,6 +341,50 @@ export const Product: React.FC = () => {
                 </ul>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="section-shell bg-surface border-t border-border-subtle">
+        <div className="container-custom max-w-6xl">
+          <SlideReveal from="left" className="mb-6">
+            <p className="text-xs uppercase tracking-wide text-brand font-semibold">Ruthless v1 line</p>
+            <h2 className="text-2xl md:text-3xl font-serif font-bold text-ink mt-2">What counts as the real launch claim right now</h2>
+            <p className="mt-3 max-w-3xl text-ink/75">DayOf should be judged on whether the core wedding flow is trustworthy end to end. Some surrounding slices are real product direction, but they should not get to blur the current v1 line.</p>
+          </SlideReveal>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {V1_STATUS_GROUPS.map((group) => {
+              const toneClasses = group.tone === 'must'
+                ? 'border-emerald-200 bg-white'
+                : group.tone === 'should'
+                  ? 'border-amber-200 bg-white'
+                  : 'border-rose-200 bg-white';
+              const badgeClasses = group.tone === 'must'
+                ? 'bg-emerald-50 text-emerald-700'
+                : group.tone === 'should'
+                  ? 'bg-amber-50 text-amber-700'
+                  : 'bg-rose-50 text-rose-700';
+              const badgeText = group.tone === 'must' ? 'Must ship' : group.tone === 'should' ? 'Should ship' : 'Cut from promise';
+
+              return (
+                <div key={group.title} className={`rounded-2xl border p-5 ${toneClasses}`}>
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <h3 className="font-semibold text-ink">{group.title}</h3>
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ${badgeClasses}`}>{badgeText}</span>
+                  </div>
+                  <p className="text-sm text-ink/70 mb-4">{group.intro}</p>
+                  <ul className="space-y-2 text-sm text-ink/80">
+                    {group.items.map((item) => (
+                      <li key={item} className="flex items-start gap-2">
+                        <span className="text-brand mt-0.5">•</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
