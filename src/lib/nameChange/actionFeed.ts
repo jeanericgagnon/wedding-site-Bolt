@@ -10,6 +10,7 @@ export interface NameChangeActionFeedItem {
   laneLabel: string;
   severity: 'blocking' | 'attention' | 'ready';
   urgencyTier: 'critical' | 'elevated' | 'normal';
+  urgencyReason: 'blocking_dependency' | 'packet_trust' | 'document_gap' | 'review_queue';
   score: number;
   plannerIntent: 'open_execution_card' | 'open_document_repair';
   focusTargetId: string;
@@ -39,6 +40,13 @@ function getActionFeedUrgencyTier(score: number, severity: NameChangeActionFeedI
   return 'normal';
 }
 
+function getActionFeedUrgencyReason(action: NameChangeGuidedAction, severity: NameChangeActionFeedItem['severity']): NameChangeActionFeedItem['urgencyReason'] {
+  if (action.category === 'dependency' && severity === 'blocking') return 'blocking_dependency';
+  if (action.category === 'packet') return 'packet_trust';
+  if (action.category === 'document') return 'document_gap';
+  return 'review_queue';
+}
+
 function getExecutionSectionKey(targetKey: NameChangeTargetExecutionSnapshot['targetKey']): NameChangeActionFeedItem['sectionKey'] {
   if (targetKey === 'ssa' || targetKey === 'dmv' || targetKey === 'passport') return 'core-government';
   if (targetKey === 'employer' || targetKey === 'licenses') return 'work-identity';
@@ -65,6 +73,7 @@ export function buildNameChangeActionFeed(
       laneLabel: snapshot.recommendedFormCode,
       severity,
       urgencyTier: getActionFeedUrgencyTier(score, severity),
+      urgencyReason: getActionFeedUrgencyReason(snapshot.nextAction, severity),
       plannerIntent: 'open_execution_card',
       focusTargetId: `execution-card-${snapshot.targetKey}`,
       score,
@@ -82,6 +91,7 @@ export function buildNameChangeActionFeed(
       laneLabel: 'Document repair',
       severity: item.severity,
       urgencyTier: getActionFeedUrgencyTier(item.score, item.severity),
+      urgencyReason: getActionFeedUrgencyReason(item.nextActions[0], item.severity),
       plannerIntent: 'open_document_repair' as const,
       focusTargetId: `document-${item.kind}`,
       score: item.score,

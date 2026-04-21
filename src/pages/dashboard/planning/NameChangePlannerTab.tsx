@@ -129,6 +129,20 @@ function getActionFeedUrgencyClass(urgencyTier: 'critical' | 'elevated' | 'norma
   }
 }
 
+function getActionFeedUrgencyReasonLabel(reason: 'blocking_dependency' | 'packet_trust' | 'document_gap' | 'review_queue') {
+  switch (reason) {
+    case 'blocking_dependency':
+      return 'blocking dependency';
+    case 'packet_trust':
+      return 'packet trust';
+    case 'document_gap':
+      return 'document gap';
+    case 'review_queue':
+    default:
+      return 'review queue';
+  }
+}
+
 interface Props {
   draft: NameChangeCaseInput;
   documents: NameChangeDocumentInput[];
@@ -1256,7 +1270,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 </div>
               </div>
               <p className="mt-3 text-sm text-text-secondary">{item.action.detail}</p>
-              <p className="mt-2 text-xs text-text-secondary">{getActionFeedSectionLabel(item.sectionKey)} · {item.origin === 'execution' ? 'execution lane' : 'document repair'} · {item.action.category} · score {item.score}</p>
+              <p className="mt-2 text-xs text-text-secondary">{getActionFeedSectionLabel(item.sectionKey)} · {item.origin === 'execution' ? 'execution lane' : 'document repair'} · {item.action.category} · {getActionFeedUrgencyReasonLabel(item.urgencyReason)} · score {item.score}</p>
               <p className="mt-3 text-xs font-medium text-primary">{getActionFeedCtaLabel(item.plannerIntent)} →</p>
             </button>
           ))}

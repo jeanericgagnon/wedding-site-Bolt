@@ -88,6 +88,7 @@ describe('name change action feed', () => {
     expect(feed.map((item) => item.plannerIntent)).toEqual(expect.arrayContaining(['open_execution_card', 'open_document_repair']));
     expect(feed.map((item) => item.sectionKey)).toEqual(expect.arrayContaining(['core-government', 'documents']));
     expect(feed.map((item) => item.urgencyTier)).toEqual(expect.arrayContaining(['elevated']));
+    expect(feed.map((item) => item.urgencyReason)).toEqual(expect.arrayContaining(['blocking_dependency', 'document_gap']));
   });
 
   it('keeps higher-severity execution work above ready review work', () => {
@@ -135,6 +136,7 @@ describe('name change action feed', () => {
       title: 'Certified marriage certificate',
       sectionKey: 'documents',
       urgencyTier: 'elevated',
+      urgencyReason: 'document_gap',
     });
   });
 
@@ -144,5 +146,29 @@ describe('name change action feed', () => {
     ]);
 
     expect(feed[0]).toMatchObject({ urgencyTier: 'critical' });
+  });
+
+  it('marks packet repair actions with packet-trust urgency reason', () => {
+    const feed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        nextAction: {
+          category: 'packet',
+          label: 'Repair New last name',
+          detail: 'Low-confidence packet field.',
+        },
+        blockers: ['Low-confidence packet field.'],
+        readinessSummary: {
+          status: 'blocked',
+          blockingFieldRisks: 1,
+          attentionFieldRisks: 0,
+          lowConfidenceFields: 1,
+          missingFields: 0,
+          documentRepairDebt: 1,
+          summaryLabel: 'Blocked.',
+        },
+      }),
+    ], []);
+
+    expect(feed[0]).toMatchObject({ urgencyReason: 'packet_trust' });
   });
 });
