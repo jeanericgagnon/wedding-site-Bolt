@@ -294,6 +294,11 @@ export const QuickStart: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex]);
 
+  const getChoiceLabel = (key: ConciergeQuestion, value: string) => {
+    const choice = questions.find((question) => question.key === key)?.choices?.find((item) => item.value === value);
+    return choice?.label || value;
+  };
+
   const getValueForQuestion = (key: ConciergeQuestion, data: typeof formData): string => {
     switch (key) {
       case 'partnerNames': return data.partnerNames || '';
@@ -314,11 +319,11 @@ export const QuickStart: React.FC = () => {
       case 'guestFeel': return data.guestExperience || '';
       case 'weekendEvents': return data.weekendEvents || '';
       case 'ceremonyTime': return data.ceremonyTime || '';
-      case 'guestCount': return data.guestCount || '';
-      case 'plusOnePolicy': return data.plusOnePolicy || '';
-      case 'childrenAllowed': return (data as typeof data & { childrenAllowed?: string }).childrenAllowed || '';
+      case 'guestCount': return getChoiceLabel('guestCount', data.guestCount || '');
+      case 'plusOnePolicy': return getChoiceLabel('plusOnePolicy', data.plusOnePolicy || '');
+      case 'childrenAllowed': return getChoiceLabel('childrenAllowed', (data as typeof data & { childrenAllowed?: string }).childrenAllowed || '');
       case 'rsvpDeadline': return data.rsvpDeadline || '';
-      case 'mealChoice': return data.mealChoice || '';
+      case 'mealChoice': return getChoiceLabel('mealChoice', data.mealChoice || '');
       case 'story': return data.story || '';
       default: return '';
     }

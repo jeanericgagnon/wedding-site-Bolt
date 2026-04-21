@@ -135,4 +135,38 @@ describe('QuickStart flow guards', () => {
 
     expect(await screen.findByDisplayValue('Local Couple')).toBeInTheDocument();
   });
+
+  it('shows human-readable labels for prior choice answers', async () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      currentIndex: 9,
+      showFollowUps: false,
+      viewState: 'question',
+      initialSetupAnswers: {
+        names: 'Alex & Jordan',
+        labelPreference: 'names-only',
+        customLabelPartnerOne: '',
+        customLabelPartnerTwo: '',
+        whenWhere: 'January 17, 2027 — Sayulita, Mexico',
+        venueNameOrTbd: 'Amor Boutique Hotel',
+        style: 'Tropical, relaxed',
+        guestFeel: 'Warm, excited, relaxed',
+        weekendEventsRaw: 'Friday welcome drinks, Saturday wedding, Sunday brunch',
+        ceremonyArrivalTime: '4:30 PM',
+        guestCountBand: '100-150',
+        plusOnePolicy: '',
+        childrenAllowed: '',
+        rsvpDeadline: '',
+        mealChoice: '',
+        registryIntent: '',
+        optionalStory: '',
+      },
+      followUpAnswers: {},
+      clarifyingState: null,
+    }));
+
+    render(<QuickStart />);
+
+    expect(await screen.findByRole('button', { name: /About how many guests are you inviting: 100–150/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /About how many guests are you inviting: 100-150/i })).not.toBeInTheDocument();
+  });
 });
