@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { buildEventRsvpSyncRows } from "../../../src/lib/eventRsvpSync.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -267,6 +268,8 @@ Deno.serve(async (req: Request) => {
         }
       }
 
+      const respondedAt = new Date().toISOString();
+
       for (const targetGuestId of targetGuestIdsFinal) {
         const rsvpPayload = {
           guest_id: targetGuestId,
@@ -280,7 +283,7 @@ Deno.serve(async (req: Request) => {
           notes: notes ?? null,
           conflict_flags: [],
           custom_answers: (customAnswers && typeof customAnswers === "object" && !Array.isArray(customAnswers)) ? customAnswers : {},
-          responded_at: new Date().toISOString(),
+          responded_at: respondedAt,
         };
 
         const { data: existingRsvp } = await adminClient.from("rsvps").select("id").eq("guest_id", targetGuestId).maybeSingle();
@@ -293,7 +296,40 @@ Deno.serve(async (req: Request) => {
         }
       }
 
-      await adminClient.from("guests").update({ rsvp_status: attending ? "confirmed" : "declined", rsvp_received_at: new Date().toISOString() }).in("id", targetGuestIdsFinal);
+      const { data: eventInvitations, error: eventInvitationsError } = await adminClient
+        .from("event_invitations")
+        .select("id, guest_id, itinerary_events(event_name)")
+        .in("guest_id", targetGuestIdsFinal);
+
+      if (eventInvitationsError) throw eventInvitationsError;
+
+      const eventRsvpRows = buildEventRsvpSyncRows({
+        invitations: ((eventInvitations || []) as Array<{ id: string; itinerary_events?: { event_name?: string | null } | Array<{ event_name?: string | null }> | null }>).map((row) => ({
+          event_invitation_id: row.id,
+          event_name: Array.isArray(row.itinerary_events)
+            ? row.itinerary_events[0]?.event_name ?? null
+            : row.itinerary_events?.event_name ?? null,
+        })),
+        attending,
+        attendCeremony,
+        attendReception,
+        respondedAt,
+      });
+
+      if (eventRsvpRows.length > 0) {
+        const { error: eventRsvpSyncError } = await adminClient
+          .from("event_rsvps")
+          .upsert(eventRsvpRows, { onConflict: "event_invitation_id" });
+
+        if (eventRsvpSyncError) {
+          const message = (eventRsvpSyncError.message || "").toLowerCase();
+          if (!message.includes("event_rsvps") && !message.includes("does not exist") && !message.includes("404") && !message.includes("relation")) {
+            throw eventRsvpSyncError;
+          }
+        }
+      }
+
+      await adminClient.from("guests").update({ rsvp_status: attending ? "confirmed" : "declined", rsvp_received_at: respondedAt }).in("id", targetGuestIdsFinal);
 
       const { data: siteData } = await adminClient.from("wedding_sites").select("couple_email, couple_name_1, couple_name_2, wedding_date, venue_name").eq("id", guest.wedding_site_id).maybeSingle();
       const guestName = guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name;
