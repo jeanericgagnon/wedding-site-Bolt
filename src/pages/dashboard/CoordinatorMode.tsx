@@ -8,6 +8,7 @@ import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { isAttendingRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 import { useToast } from '../../components/ui/Toast';
 import { filterCoordinatorCheckInQueue, type CoordinatorCheckInFilter } from '../../lib/coordinatorCheckInQueue';
+import { getNextCoordinatorCheckInFocusId } from '../../lib/coordinatorCheckInAdvance';
 import { getCoordinatorDoorStatus, getCoordinatorDoorStatusLabel } from '../../lib/coordinatorCheckInStatus';
 import { getCoordinatorCheckInActionLabel, getCoordinatorTimelineCorrectionAction } from '../../lib/coordinatorCorrectionActions';
 import { buildCoordinatorDoorEscalationPrompt } from '../../lib/coordinatorDoorEscalation';
@@ -167,6 +168,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [checkInQuery, setCheckInQuery] = useState('');
   const [checkInFilter, setCheckInFilter] = useState<CoordinatorCheckInFilter>('arrivals');
   const [checkInReviewOnly, setCheckInReviewOnly] = useState(false);
+  const [checkInBusyGuestId, setCheckInBusyGuestId] = useState<string | null>(null);
   const [panelFocus, setPanelFocus] = useState<CoordinatorPanelFocus | null>(null);
   const [alertForm, setAlertForm] = useState({
     subject: 'Day-of update',
@@ -427,28 +429,44 @@ export const DashboardCoordinatorMode: React.FC = () => {
       return;
     }
 
+    if (checkInBusyGuestId === guest.id) return;
+
     const next = guest.checked_in_at ? null : new Date().toISOString();
+    const removesFromCurrentQueue = !guest.checked_in_at && (checkInFilter !== 'checked-in');
+    const nextFocusGuestId = getNextCoordinatorCheckInFocusId({
+      queue: checkInQueue,
+      activeGuestId: guest.id,
+      removeActiveGuest: removesFromCurrentQueue,
+    });
 
-    if (isDemoMode) {
+    setCheckInBusyGuestId(guest.id);
+
+    try {
+      if (isDemoMode) {
+        setGuests((prev) => prev.map((g) => (g.id === guest.id ? { ...g, checked_in_at: next } : g)));
+        setActiveGuestId(nextFocusGuestId);
+        toast(next ? 'Guest checked in. Door focus moved to the next guest.' : 'Guest moved back to arrivals.', 'success');
+        return;
+      }
+
+      if (!siteId) return;
+
+      const { error } = await supabase
+        .from('guests')
+        .update({ checked_in_at: next })
+        .eq('id', guest.id)
+        .eq('wedding_site_id', siteId);
+      if (error) {
+        toast(error.message || 'Could not update check-in right now.', 'error');
+        return;
+      }
+
       setGuests((prev) => prev.map((g) => (g.id === guest.id ? { ...g, checked_in_at: next } : g)));
-      toast(next ? 'Guest checked in.' : 'Guest moved back to arrivals.', 'success');
-      return;
+      setActiveGuestId(nextFocusGuestId);
+      toast(next ? 'Guest checked in. Door focus moved to the next guest.' : 'Guest moved back to arrivals.', 'success');
+    } finally {
+      setCheckInBusyGuestId((current) => (current === guest.id ? null : current));
     }
-
-    if (!siteId) return;
-
-    const { error } = await supabase
-      .from('guests')
-      .update({ checked_in_at: next })
-      .eq('id', guest.id)
-      .eq('wedding_site_id', siteId);
-    if (error) {
-      toast(error.message || 'Could not update check-in right now.', 'error');
-      return;
-    }
-
-    setGuests((prev) => prev.map((g) => (g.id === guest.id ? { ...g, checked_in_at: next } : g)));
-    toast(next ? 'Guest checked in.' : 'Guest moved back to arrivals.', 'success');
   };
 
   const sortedGuests = [...guests].sort((a, b) => {
@@ -1724,9 +1742,16 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   onKeyDown={(e) => {
                     if (e.key !== 'Enter') return;
                     e.preventDefault();
+                    const activeGuest = checkInQueue.find((guest) => guest.id === activeGuestId) ?? checkInQueue[0];
+                    if (activeGuest && canCheckIn && !activeGuest.checked_in_at && getCoordinatorDoorStatus(activeGuest) !== 'watch') {
+                      focusCoordinatorCheckInLane();
+                      setActiveGuestId(activeGuest.id);
+                      void toggleCheckIn(activeGuest);
+                      return;
+                    }
                     focusFirstCoordinatorQueueGuest();
                   }}
-                  placeholder="Search guest name or RSVP status"
+                  placeholder="Search guest name or RSVP status · Enter checks in the active ready guest"
                 />
                 <select
                   value={checkInFilter}
@@ -1737,6 +1762,47 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   <option value="checked-in">Checked in</option>
                   <option value="all">All guests</option>
                 </select>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    focusCoordinatorCheckInLane();
+                    setCheckInFilter('arrivals');
+                    setCheckInReviewOnly(false);
+                    setActiveGuestId(nextArrivals[0]?.id ?? null);
+                  }}
+                  className={`rounded-full border px-2.5 py-1 text-[11px] ${!checkInReviewOnly && checkInFilter === 'arrivals' ? 'border-primary/35 bg-primary/5 text-primary' : 'border-border bg-white text-text-secondary hover:border-primary/35 hover:text-primary'}`}
+                >
+                  Ready now{nextArrivals.length ? ` · ${nextArrivals.length}` : ''}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    focusCoordinatorCheckInLane();
+                    setCheckInFilter('arrivals');
+                    setCheckInReviewOnly((prev) => !prev);
+                    setActiveGuestId(checkInBoardTargetId);
+                  }}
+                  className={`rounded-full border px-2.5 py-1 text-[11px] ${checkInReviewOnly ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-border bg-white text-text-secondary hover:border-amber-300 hover:text-amber-800'}`}
+                >
+                  Review only{checkInWatchCount ? ` · ${checkInWatchCount}` : ''}
+                </button>
+                {activeGuestId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const activeGuest = checkInQueue.find((guest) => guest.id === activeGuestId);
+                      if (!activeGuest) return;
+                      focusCoordinatorCheckInLane();
+                      void toggleCheckIn(activeGuest);
+                    }}
+                    disabled={!canCheckIn || checkInBusyGuestId === activeGuestId || !(checkInQueue.find((guest) => guest.id === activeGuestId))}
+                    className="rounded-full border border-primary/25 bg-primary/5 px-2.5 py-1 text-[11px] text-primary disabled:opacity-40"
+                  >
+                    {checkInBusyGuestId === activeGuestId ? 'Updating…' : 'Check in active guest'}
+                  </button>
+                )}
               </div>
             </div>
             <div className="max-h-[60vh] overflow-auto divide-y divide-border-subtle/70">
@@ -1788,10 +1854,10 @@ export const DashboardCoordinatorMode: React.FC = () => {
                       <button
                         type="button"
                           onClick={(e) => { e.stopPropagation(); focusCoordinatorCheckInLane(); setActiveGuestId(g.id); canCheckIn && void toggleCheckIn(g); }}
-                        disabled={!canCheckIn || doorStatus === 'watch'}
+                        disabled={!canCheckIn || doorStatus === 'watch' || checkInBusyGuestId === g.id}
                         className={`px-3 py-1.5 text-xs rounded-md border disabled:opacity-40 ${g.checked_in_at ? 'border-success/40 text-success bg-success/5' : doorStatus === 'watch' ? 'border-amber-200 text-amber-700 bg-amber-50' : 'border-border text-text-secondary bg-white'}`}
                       >
-                        {g.checked_in_at ? getCoordinatorCheckInActionLabel(g) : doorStatus === 'watch' ? 'Review first' : getCoordinatorCheckInActionLabel(g)}
+                        {checkInBusyGuestId === g.id ? 'Updating…' : g.checked_in_at ? getCoordinatorCheckInActionLabel(g) : doorStatus === 'watch' ? 'Review first' : getCoordinatorCheckInActionLabel(g)}
                       </button>
                     </div>
                   </div>
