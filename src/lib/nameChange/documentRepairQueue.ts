@@ -14,6 +14,12 @@ export interface NameChangeDocumentRepairQueueItem {
   impactSummary: string;
   nextActions: string[];
   impactedTargets: string[];
+  impactedFields: Array<{
+    fieldKey: string;
+    label: string;
+    targetLabel: string;
+    severity: 'blocking' | 'attention';
+  }>;
   blockingRiskCount: number;
   attentionRiskCount: number;
   metadataMissing: string[];
@@ -29,6 +35,12 @@ export function buildNameChangeDocumentRepairQueue(
   const queue: Array<NameChangeDocumentRepairQueueItem | null> = intake.documents
     .map((document): NameChangeDocumentRepairQueueItem | null => {
       const impactedTargets = new Set<string>();
+      const impactedFields = new Map<string, {
+        fieldKey: string;
+        label: string;
+        targetLabel: string;
+        severity: 'blocking' | 'attention';
+      }>();
       let blockingRiskCount = 0;
       let attentionRiskCount = 0;
 
@@ -36,6 +48,12 @@ export function buildNameChangeDocumentRepairQueue(
         snapshot.fieldRisks.forEach((risk) => {
           if (risk.sourceDocumentKind !== document.kind) return;
           impactedTargets.add(snapshot.targetLabel);
+          impactedFields.set(`${snapshot.targetKey}:${risk.fieldKey}`, {
+            fieldKey: risk.fieldKey,
+            label: risk.label,
+            targetLabel: snapshot.targetLabel,
+            severity: risk.severity,
+          });
           if (risk.severity === 'blocking') blockingRiskCount += 1;
           else attentionRiskCount += 1;
         });
@@ -75,6 +93,10 @@ export function buildNameChangeDocumentRepairQueue(
       if (blockingRiskCount > 0 && impactedTargets.size > 0) {
         nextActions.push(`Rebuild packet trust for ${[...impactedTargets].slice(0, 3).join(', ')} after doc cleanup.`);
       }
+      if (impactedFields.size > 0) {
+        const fieldPreview = [...impactedFields.values()].slice(0, 3).map((field) => `${field.label} (${field.targetLabel})`).join(', ');
+        nextActions.push(`Recheck impacted packet fields: ${fieldPreview}.`);
+      }
 
       const score =
         (severity === 'blocking' ? 100 : 0) +
@@ -93,6 +115,7 @@ export function buildNameChangeDocumentRepairQueue(
         impactSummary: issueBits.join(' · '),
         nextActions,
         impactedTargets: [...impactedTargets],
+        impactedFields: [...impactedFields.values()],
         blockingRiskCount,
         attentionRiskCount,
         metadataMissing: document.metadataMissing,

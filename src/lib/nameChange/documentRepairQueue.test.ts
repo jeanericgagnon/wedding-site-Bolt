@@ -84,9 +84,16 @@ describe('name change document repair queue', () => {
     });
     expect(queue[0].impactSummary).toContain('metadata gaps');
     expect(queue[0].impactedTargets.length).toBeGreaterThan(0);
+    expect(queue[0].impactedFields).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        targetLabel: expect.any(String),
+        label: expect.any(String),
+      }),
+    ]));
     expect(queue[0].nextActions).toEqual(expect.arrayContaining([
       expect.stringContaining('Fill metadata:'),
       expect.stringContaining('Capture extraction fields:'),
+      expect.stringContaining('Recheck impacted packet fields:'),
     ]));
   });
 

@@ -1247,6 +1247,11 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                     {item.impactedTargets.length > 0 ? (
                       <p className="mt-2 text-xs text-text-secondary">Unblocks: {item.impactedTargets.join(', ')}</p>
                     ) : null}
+                    {item.impactedFields.length > 0 ? (
+                      <p className="mt-2 text-xs text-text-secondary">
+                        Repairs fields: {item.impactedFields.slice(0, 4).map((field) => `${field.label} (${field.targetLabel})`).join(', ')}
+                      </p>
+                    ) : null}
                     {item.nextActions.length > 0 ? (
                       <div className="mt-3 rounded-lg bg-surface-subtle/60 p-3">
                         <p className="text-xs uppercase tracking-wide text-text-tertiary">Next repair actions</p>
