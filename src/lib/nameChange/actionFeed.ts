@@ -9,6 +9,7 @@ export interface NameChangeActionFeedItem {
   title: string;
   laneLabel: string;
   severity: 'blocking' | 'attention' | 'ready';
+  urgencyTier: 'critical' | 'elevated' | 'normal';
   score: number;
   plannerIntent: 'open_execution_card' | 'open_document_repair';
   focusTargetId: string;
@@ -32,6 +33,12 @@ function getExecutionSeverity(snapshot: NameChangeTargetExecutionSnapshot): Name
   return 'ready';
 }
 
+function getActionFeedUrgencyTier(score: number, severity: NameChangeActionFeedItem['severity']): NameChangeActionFeedItem['urgencyTier'] {
+  if (severity === 'blocking' && score >= 300) return 'critical';
+  if (severity === 'blocking' || score >= 180) return 'elevated';
+  return 'normal';
+}
+
 function getExecutionSectionKey(targetKey: NameChangeTargetExecutionSnapshot['targetKey']): NameChangeActionFeedItem['sectionKey'] {
   if (targetKey === 'ssa' || targetKey === 'dmv' || targetKey === 'passport') return 'core-government';
   if (targetKey === 'employer' || targetKey === 'licenses') return 'work-identity';
@@ -45,6 +52,11 @@ export function buildNameChangeActionFeed(
 ): NameChangeActionFeedItem[] {
   const executionItems: NameChangeActionFeedItem[] = executionSnapshots.map((snapshot) => {
     const severity = getExecutionSeverity(snapshot);
+    const score =
+      (getSeverityWeight(severity) * 100) +
+      (snapshot.blockers.length * 10) +
+      (snapshot.readinessSummary.blockingFieldRisks * 5) +
+      getNameChangeGuidedActionWeight(snapshot.nextAction.category);
     return {
       key: `execution:${snapshot.targetKey}`,
       origin: 'execution',
@@ -52,13 +64,10 @@ export function buildNameChangeActionFeed(
       title: snapshot.targetLabel,
       laneLabel: snapshot.recommendedFormCode,
       severity,
+      urgencyTier: getActionFeedUrgencyTier(score, severity),
       plannerIntent: 'open_execution_card',
       focusTargetId: `execution-card-${snapshot.targetKey}`,
-      score:
-        (getSeverityWeight(severity) * 100) +
-        (snapshot.blockers.length * 10) +
-        (snapshot.readinessSummary.blockingFieldRisks * 5) +
-        getNameChangeGuidedActionWeight(snapshot.nextAction.category),
+      score,
       action: snapshot.nextAction,
     };
   });
@@ -72,6 +81,7 @@ export function buildNameChangeActionFeed(
       title: item.label,
       laneLabel: 'Document repair',
       severity: item.severity,
+      urgencyTier: getActionFeedUrgencyTier(item.score, item.severity),
       plannerIntent: 'open_document_repair' as const,
       focusTargetId: `document-${item.kind}`,
       score: item.score,

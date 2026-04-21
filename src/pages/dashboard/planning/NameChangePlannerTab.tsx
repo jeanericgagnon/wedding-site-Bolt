@@ -117,6 +117,18 @@ function getActionFeedSectionLabel(sectionKey: 'core-government' | 'work-identit
   }
 }
 
+function getActionFeedUrgencyClass(urgencyTier: 'critical' | 'elevated' | 'normal') {
+  switch (urgencyTier) {
+    case 'critical':
+      return 'bg-danger/10 text-danger';
+    case 'elevated':
+      return 'bg-warning/10 text-warning';
+    case 'normal':
+    default:
+      return 'bg-surface-subtle text-text-secondary';
+  }
+}
+
 interface Props {
   draft: NameChangeCaseInput;
   documents: NameChangeDocumentInput[];
@@ -1234,9 +1246,14 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                   <p className="text-sm font-semibold text-text-primary">{item.action.label}</p>
                   <p className="mt-1 text-xs text-text-secondary">{item.title} · {item.laneLabel}</p>
                 </div>
-                <span className={`rounded-full px-2 py-1 text-xs ${item.severity === 'blocking' ? 'bg-danger/10 text-danger' : item.severity === 'attention' ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'}`}>
-                  {item.severity}
-                </span>
+                <div className="flex flex-col items-end gap-1">
+                  <span className={`rounded-full px-2 py-1 text-xs ${item.severity === 'blocking' ? 'bg-danger/10 text-danger' : item.severity === 'attention' ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'}`}>
+                    {item.severity}
+                  </span>
+                  <span className={`rounded-full px-2 py-1 text-xs ${getActionFeedUrgencyClass(item.urgencyTier)}`}>
+                    {item.urgencyTier}
+                  </span>
+                </div>
               </div>
               <p className="mt-3 text-sm text-text-secondary">{item.action.detail}</p>
               <p className="mt-2 text-xs text-text-secondary">{getActionFeedSectionLabel(item.sectionKey)} · {item.origin === 'execution' ? 'execution lane' : 'document repair'} · {item.action.category} · score {item.score}</p>

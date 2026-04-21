@@ -87,6 +87,7 @@ describe('name change action feed', () => {
     expect(feed.map((item) => item.focusTargetId)).toEqual(expect.arrayContaining(['execution-card-ssa', 'document-marriage_certificate']));
     expect(feed.map((item) => item.plannerIntent)).toEqual(expect.arrayContaining(['open_execution_card', 'open_document_repair']));
     expect(feed.map((item) => item.sectionKey)).toEqual(expect.arrayContaining(['core-government', 'documents']));
+    expect(feed.map((item) => item.urgencyTier)).toEqual(expect.arrayContaining(['elevated']));
   });
 
   it('keeps higher-severity execution work above ready review work', () => {
@@ -133,6 +134,15 @@ describe('name change action feed', () => {
       origin: 'document_repair',
       title: 'Certified marriage certificate',
       sectionKey: 'documents',
+      urgencyTier: 'elevated',
     });
+  });
+
+  it('promotes very high-scoring blocking items to critical urgency', () => {
+    const feed = buildNameChangeActionFeed([], [
+      makeRepairItem({ score: 320, severity: 'blocking' }),
+    ]);
+
+    expect(feed[0]).toMatchObject({ urgencyTier: 'critical' });
   });
 });
