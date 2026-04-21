@@ -414,15 +414,14 @@ export default function RSVP() {
     }
     if (!foundRsvp) {
       setExistingRsvp(null);
-      setFormData(prev => ({
-        ...prev,
+      setFormData({
         attending: true,
         attendCeremony: !!foundGuest.invited_to_ceremony,
         attendReception: !!foundGuest.invited_to_reception,
         meal_choice: '',
         plus_one_name: '',
         notes: '',
-      }));
+      });
       setCustomAnswers({});
     }
     setFormStep(1);
