@@ -730,6 +730,20 @@ export const DashboardCoordinatorMode: React.FC = () => {
     setActiveTimelineEventId(eventId);
   };
 
+  const focusFirstCoordinatorQueueGuest = () => {
+    const firstGuest = checkInQueue[0];
+    if (!firstGuest) return;
+    focusCoordinatorCheckInLane();
+    setActiveGuestId(firstGuest.id);
+  };
+
+  const focusFirstCoordinatorOpenQna = () => {
+    const nextQnaId = getFirstOpenCoordinatorQnaId(qnaItems) ?? qnaItems[0]?.id ?? null;
+    if (!nextQnaId) return;
+    focusCoordinatorQnaLane();
+    setActiveQnaId(nextQnaId);
+  };
+
   const focusCoordinatorQnaLane = () => {
     clearCoordinatorTransientState();
     setPanelFocus('qna');
@@ -1349,6 +1363,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 <Input
                   value={checkInQuery}
                   onChange={(e) => { focusCoordinatorCheckInLane(); setCheckInQuery(e.target.value); }}
+                  onKeyDown={(e) => {
+                    if (e.key !== 'Enter') return;
+                    e.preventDefault();
+                    focusFirstCoordinatorQueueGuest();
+                  }}
                   placeholder="Search guest name or RSVP status"
                 />
                 <select
@@ -1760,6 +1779,15 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 <Input
                   value={qnaInput}
                   onChange={(e) => { focusCoordinatorQnaLane(); setQnaInput(e.target.value); }}
+                  onKeyDown={(e) => {
+                    if (e.key !== 'Enter' || e.shiftKey) return;
+                    e.preventDefault();
+                    if (qnaInput.trim()) {
+                      void addQnaItem();
+                      return;
+                    }
+                    focusFirstCoordinatorOpenQna();
+                  }}
                   placeholder="Add a guest question"
                 />
                 <button onClick={addQnaItem} className="px-3 py-2 text-xs rounded-md border border-border bg-white text-text-secondary disabled:opacity-40">Add question</button>
