@@ -63,6 +63,7 @@ import { shouldResetCoordinatorSummaryFeedback } from '../../lib/coordinatorSumm
 import { createCoordinatorSummaryFeedback, type CoordinatorSummaryFeedback } from '../../lib/coordinatorSummaryFeedback';
 import { getCoordinatorSummaryFeedbackTone } from '../../lib/coordinatorSummaryFeedbackTone';
 import { getCoordinatorSummaryFeedbackEmphasis } from '../../lib/coordinatorSummaryFeedbackEmphasis';
+import { getCoordinatorSummaryFeedbackLayout } from '../../lib/coordinatorSummaryFeedbackLayout';
 import { getCoordinatorSummaryFeedbackBadge } from '../../lib/coordinatorSummaryFeedbackBadge';
 import { getCoordinatorOverrideSupportBadge } from '../../lib/coordinatorOverrideSupportBadge';
 import { resolveCoordinatorSummaryDisplayCue } from '../../lib/coordinatorSummaryDisplayCue';
@@ -86,6 +87,15 @@ import { normalizeCoordinatorAlertIntentState, resolveCoordinatorPreferredAlertS
 import { getCoordinatorQnaCounts, updateCoordinatorQnaItem } from '../../lib/coordinatorQnaFlow';
 import { getFirstOpenCoordinatorQnaId, getNextCoordinatorQnaFocusId } from '../../lib/coordinatorQnaFocus';
 import { resolveCoordinatorQnaFocusAfterItemsChange, resolveCoordinatorTimelineFocusAfterStateChange } from '../../lib/coordinatorResolvedFocus';
+import { buildCoordinatorStablePrompt } from '../../lib/coordinatorStablePrompt';
+import { getCoordinatorStablePromptState } from '../../lib/coordinatorStablePromptState';
+import { getCoordinatorStablePromptTarget } from '../../lib/coordinatorStablePromptTarget';
+import { getCoordinatorStablePromptTargetLabel } from '../../lib/coordinatorStablePromptTargetLabel';
+import { getCoordinatorStandingPromptBadge } from '../../lib/coordinatorStandingPromptBadge';
+import { getCoordinatorStandingPromptCopy } from '../../lib/coordinatorStandingPromptCopy';
+import { getCoordinatorStandingPromptMode } from '../../lib/coordinatorStandingPromptMode';
+import { getCoordinatorStandingPromptSecondaryState } from '../../lib/coordinatorStandingPromptSecondaryState';
+import { getCoordinatorCommandBadgeTone } from '../../lib/coordinatorCommandBadgeTone';
 
 
 type AudienceOption = { value: string; label: string; count: number };
@@ -557,6 +567,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const summaryFeedbackTone = useMemo(() => summaryFeedback ? getCoordinatorSummaryFeedbackTone(summaryFeedback.kind) : null, [summaryFeedback]);
   const summaryFeedbackBadge = useMemo(() => summaryFeedback ? getCoordinatorSummaryFeedbackBadge({ kind: summaryFeedback.kind, panelFocus: summaryFeedback.panelFocus }) : null, [summaryFeedback]);
   const summaryFeedbackEmphasis = useMemo(() => summaryFeedback ? getCoordinatorSummaryFeedbackEmphasis(summaryFeedback.kind) : null, [summaryFeedback]);
+  const summaryFeedbackLayout = useMemo(() => summaryFeedback ? getCoordinatorSummaryFeedbackLayout(summaryFeedback.kind) : null, [summaryFeedback]);
   const manualOverrideBadge = useMemo(() => getCoordinatorOverrideSupportBadge({ panelFocus, kind: 'manual' }), [panelFocus]);
   const alertOverrideBadge = useMemo(() => getCoordinatorOverrideSupportBadge({ panelFocus: null, kind: 'alert' }), []);
   const overrideDisplayCue = useMemo(() => resolveCoordinatorOverrideDisplayCue({
@@ -570,6 +581,17 @@ export const DashboardCoordinatorMode: React.FC = () => {
     alertOverrideLabel: overrideDisplayCue?.kind === 'alert-override' ? overrideDisplayCue.label : null,
     manualOverrideLabel: overrideDisplayCue?.kind === 'manual-override' ? overrideDisplayCue.label : null,
   }), [summaryFeedback, overrideDisplayCue]);
+  const summaryFeedbackBadgeToneClassName = useMemo(() => {
+    if (!summaryFeedback) return getCoordinatorCommandBadgeTone({ tone: 'neutral' });
+    return getCoordinatorCommandBadgeTone({
+      tone: summaryFeedback.kind === 'transition'
+        ? 'warning'
+        : summaryFeedback.kind === 'realignment'
+          ? 'success'
+          : 'primary',
+    });
+  }, [summaryFeedback]);
+  const overrideBadgeToneClassName = useMemo(() => getCoordinatorCommandBadgeTone({ tone: 'warning' }), []);
 
   useEffect(() => {
     if (shouldResetCoordinatorAlertOverride({
@@ -655,6 +677,44 @@ export const DashboardCoordinatorMode: React.FC = () => {
     qnaTargetQuestion: qnaTargetItem?.question ?? null,
   }), [priorityCommandLabel, checkInTargetGuest?.name, timelineTargetEvent?.event_name, qnaTargetItem?.question]);
   const priorityCommandCta = useMemo(() => getCoordinatorCommandPriorityCta(priorityCommandLabel), [priorityCommandLabel]);
+  const stablePrompt = useMemo(() => buildCoordinatorStablePrompt({
+    priority: priorityCommandLabel,
+    reason: priorityCommandReason,
+    cta: priorityCommandCta,
+  }), [priorityCommandLabel, priorityCommandReason, priorityCommandCta]);
+  const standingPromptMode = useMemo(() => getCoordinatorStandingPromptMode(Boolean(summaryDisplayCue)), [summaryDisplayCue]);
+  const standingPromptBadge = useMemo(() => getCoordinatorStandingPromptBadge({
+    mode: standingPromptMode,
+    badge: stablePrompt.badge,
+  }), [standingPromptMode, stablePrompt.badge]);
+  const standingPromptCopy = useMemo(() => getCoordinatorStandingPromptCopy({
+    mode: standingPromptMode,
+    label: stablePrompt.label,
+  }), [standingPromptMode, stablePrompt.label]);
+  const stablePromptTargetLabel = useMemo(() => getCoordinatorStablePromptTargetLabel({
+    priority: priorityCommandLabel,
+    targetName: priorityCommandLabel === 'Check-in'
+      ? checkInTargetGuest?.name ?? null
+      : priorityCommandLabel === 'Timeline'
+        ? timelineTargetEvent?.event_name ?? null
+        : priorityCommandLabel === 'Q&A'
+          ? qnaTargetItem?.question ?? null
+          : alertLaneLabel,
+  }), [priorityCommandLabel, checkInTargetGuest?.name, timelineTargetEvent?.event_name, qnaTargetItem?.question, alertLaneLabel]);
+  const stablePromptState = useMemo(() => getCoordinatorStablePromptState({
+    priority: priorityCommandLabel,
+    panelFocus,
+  }), [priorityCommandLabel, panelFocus]);
+  const standingPromptStateLabel = useMemo(() => getCoordinatorStandingPromptSecondaryState({
+    mode: standingPromptMode,
+    state: stablePromptState,
+  }), [standingPromptMode, stablePromptState]);
+  const stablePromptBadgeToneClassName = useMemo(() => getCoordinatorCommandBadgeTone({
+    tone: standingPromptMode === 'secondary' ? 'neutral' : 'primary',
+  }), [standingPromptMode]);
+  const stablePromptStateToneClassName = useMemo(() => getCoordinatorCommandBadgeTone({
+    tone: standingPromptStateLabel ? 'success' : 'neutral',
+  }), [standingPromptStateLabel]);
   const manualOverrideActionLabel = useMemo(() => getCoordinatorManualOverrideActionLabel(panelFocus), [panelFocus]);
   const manualOverrideTargetLabel = useMemo(() => getCoordinatorManualOverrideTargetLabel({
     panelFocus,
@@ -763,8 +823,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
     setCommandJumpLabel(null);
     setCommandJumpPanelFocus(null);
     setCommandJumpTargetId(null);
-    setSummaryFeedback(createCoordinatorSummaryFeedback({ label: jumpLabel, panelFocus: null, targetId: null, kind: 'jump' }));
-    setSummaryFeedbackShownAt(Date.now());
   };
 
   const focusCoordinatorAlertLane = () => {
@@ -1143,10 +1201,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
     })) {
       setSummaryFeedback(null);
       setSummaryFeedbackShownAt(null);
-    setSummaryFeedbackShownAt(null);
-    setAlertOverrideUpdatedAt(null);
-    setManualOverrideUpdatedAt(null);
-    setOverrideCueShownAt(null);
     }
   }, [summaryFeedback, panelFocus, activeGuestId, activeTimelineEventId, activeQnaId]);
 
@@ -1433,7 +1487,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
               <div>
                 <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-text-tertiary">Live signal</p>
                 {summaryDisplayCue.kind === 'feedback' && summaryFeedbackTone && (
-                  <div className={`mt-1 inline-flex flex-wrap items-center gap-2 rounded-full border px-2.5 text-[11px] ${summaryFeedbackTone.containerClassName} ${summaryFeedbackEmphasis === 'strong' ? 'py-1.5 shadow-[0_2px_8px_rgba(15,23,42,0.08)]' : summaryFeedbackEmphasis === 'medium' ? 'py-1' : 'py-0.5 opacity-90'}`}>
+                  <div className={`mt-1 inline-flex flex-wrap items-center gap-2 rounded-full border px-2.5 text-[11px] ${summaryFeedbackTone.containerClassName} ${summaryFeedbackLayout === 'prominent' ? 'py-1.5 shadow-[0_2px_8px_rgba(15,23,42,0.08)]' : summaryFeedbackLayout === 'standard' ? 'py-1' : 'py-0.5 opacity-90'}`}>
                     <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${summaryFeedbackBadgeToneClassName}`}>{summaryFeedbackBadge ?? summaryFeedbackTone.badge}</span>
                     <span>{summaryDisplayCue.feedback.label}</span>
                   </div>
