@@ -46,4 +46,32 @@ describe('guidedSetupPersistence', () => {
 
     expect(normalized).toEqual(defaults);
   });
+
+  it('keeps only string form fields from persisted guided setup drafts', () => {
+    const normalized = normalizeGuidedSetupDraftSnapshot({
+      currentStep: 'design',
+      coupleNames: { name1: 'Alex', name2: 42 },
+      formData: {
+        city: 'San Diego',
+        template: ['destination'],
+        colorScheme: 'sunset',
+        mealOptions: false,
+        ignoredKey: 'nope',
+      },
+    }, defaults);
+
+    expect(normalized).toEqual({
+      currentStep: 'design',
+      coupleNames: { name1: 'Alex', name2: '' },
+      formData: {
+        ...defaults.formData,
+        city: 'San Diego',
+        colorScheme: 'sunset',
+      },
+    });
+  });
+
+  it('falls back to defaults when array-like draft blobs are stored', () => {
+    expect(normalizeGuidedSetupDraftSnapshot([], defaults)).toEqual(defaults);
+  });
 });

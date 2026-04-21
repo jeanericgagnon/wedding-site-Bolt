@@ -35,24 +35,39 @@ export type GuidedSetupDraftSnapshot = {
 
 export const GUIDED_SETUP_STORAGE_KEY = 'dayoflove:guided-setup-draft';
 
+const VALID_GUIDED_SETUP_STEPS: GuidedSetupStep[] = ['welcome', 'basics', 'events', 'travel', 'rsvp', 'faq', 'design', 'guests', 'complete'];
+
+const normalizeGuidedSetupFormData = (
+  value: unknown,
+  defaults: GuidedSetupFormData,
+): GuidedSetupFormData => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return defaults;
+
+  const next = { ...defaults };
+  for (const [key, fieldValue] of Object.entries(value)) {
+    if (key in defaults && typeof fieldValue === 'string') {
+      next[key as keyof GuidedSetupFormData] = fieldValue;
+    }
+  }
+
+  return next;
+};
+
 export const normalizeGuidedSetupDraftSnapshot = (
   value: unknown,
   defaults: GuidedSetupDraftSnapshot,
 ): GuidedSetupDraftSnapshot => {
-  if (!value || typeof value !== 'object') return defaults;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return defaults;
   const parsed = value as Partial<GuidedSetupDraftSnapshot>;
-  const validSteps: GuidedSetupStep[] = ['welcome', 'basics', 'events', 'travel', 'rsvp', 'faq', 'design', 'guests', 'complete'];
 
   return {
-    currentStep: validSteps.includes(parsed.currentStep as GuidedSetupStep) ? parsed.currentStep as GuidedSetupStep : defaults.currentStep,
-    coupleNames: parsed.coupleNames && typeof parsed.coupleNames === 'object'
+    currentStep: VALID_GUIDED_SETUP_STEPS.includes(parsed.currentStep as GuidedSetupStep) ? parsed.currentStep as GuidedSetupStep : defaults.currentStep,
+    coupleNames: parsed.coupleNames && typeof parsed.coupleNames === 'object' && !Array.isArray(parsed.coupleNames)
       ? {
           name1: typeof parsed.coupleNames.name1 === 'string' ? parsed.coupleNames.name1 : defaults.coupleNames.name1,
           name2: typeof parsed.coupleNames.name2 === 'string' ? parsed.coupleNames.name2 : defaults.coupleNames.name2,
         }
       : defaults.coupleNames,
-    formData: parsed.formData && typeof parsed.formData === 'object'
-      ? { ...defaults.formData, ...parsed.formData }
-      : defaults.formData,
+    formData: normalizeGuidedSetupFormData(parsed.formData, defaults.formData),
   };
 };
