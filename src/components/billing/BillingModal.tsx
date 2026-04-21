@@ -71,7 +71,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({ onClose, currentPlan
               Unlock Full Access
             </h2>
             <p className="text-sm text-text-secondary mt-0.5">
-              Everything you need for a beautiful wedding website.
+              Access the core wedding site + guest ops product for one flat payment.
             </p>
           </div>
           <button

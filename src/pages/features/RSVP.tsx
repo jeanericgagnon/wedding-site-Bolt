@@ -140,7 +140,7 @@ Built to keep things clear
               <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
                 <BarChart className="w-6 h-6 text-brand" />
               </div>
-              <h3 className="text-xl font-serif font-bold text-ink mb-3">Real-Time Analytics</h3>
+              <h3 className="text-xl font-serif font-bold text-ink mb-3">Current RSVP visibility</h3>
               <p className="text-ink/70 mb-4">
                 Keep a current read on replies, headcounts, meal choices, and dietary needs so planning decisions stay grounded in the latest saved responses.
               </p>

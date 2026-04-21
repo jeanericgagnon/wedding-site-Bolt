@@ -326,6 +326,7 @@ A slice does **not** count as passed because:
 - Concrete finish gap found and fixed: the Trust page still framed the high-level v1 line, but did not expose the per-slice reality of what is done enough vs still missing vs proof-needed. Trust now carries the current slice-by-slice v1 read so the public truth surface cannot quietly flatten partially-proven slices into one equally-earned launch claim.
 - Concrete finish gap found and fixed: feature marketing pages for Messaging, Registry, and RSVP still had a few “everything,” “complete,” and “real-time” phrases that oversold slices the finish board still marks as proof-needed or must-prove. Those pages now frame the offer as strong practical cores, not fully-earned comprehensive systems, and RSVP analytics now points to the latest saved responses instead of implying harder live-state guarantees than the current proof bar supports.
 - Concrete finish gap found and fixed: the remaining Guests, Seating, Travel, and RSVP summary blocks still reused the same blanket “Everything you need, already together” framing that made partially-proven slices sound equally comprehensive. Those pages now describe practical cores instead of total completeness, and RSVP summary language now says “current” visibility instead of implying harder live-state guarantees than the finish board has earned.
+- Concrete finish gap found and fixed: two small but still real launch-claim leaks remained outside the main feature-page pass — RSVP still labeled its visibility block as “Real-Time Analytics,” and the billing modal still promised “Everything you need for a beautiful wedding website.” Those surfaces now use narrower wording that matches the current proven core instead of implying harder live-state guarantees or blanket completeness.
 
 ## Verification notes
 - `npm run build` passes after the guest-import permission fix.
@@ -366,6 +367,7 @@ A slice does **not** count as passed because:
 - `npm run build` passes after the Trust-page per-slice v1 truth pass.
 - `npm run build` passes after the feature-page v1 truth pass for Messaging, Registry, and RSVP.
 - `npm run build` passes after the remaining feature-page completeness-language cleanup for Guests, Seating, Travel, and RSVP.
+- `npm run build` passes after the final RSVP/billing truth-copy cleanup.
 
 ## Highest-value next proof seam
 - Guest-level RSVP and event-specific RSVP are both materially stronger now, but the next likely continuity seam is how newly created or removed event invitations affect downstream event attendance interpretation in itinerary/seating without a fresh explicit event response. That should be the next runtime proof target rather than more copy or permission cleanup.
