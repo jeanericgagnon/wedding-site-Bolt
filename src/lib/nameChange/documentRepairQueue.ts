@@ -17,6 +17,7 @@ export interface NameChangeDocumentRepairQueueItem {
   payoffSummary: string;
   nextActions: NameChangeGuidedAction[];
   impactedTargets: string[];
+  canonicalConflictCount: number;
   impactedFields: Array<{
     fieldKey: string;
     label: string;
@@ -62,16 +63,18 @@ export function buildNameChangeDocumentRepairQueue(
         });
       });
 
+      const canonicalConflictCount = document.canonicalConflicts.length;
       const hasRepairNeed = document.intakeStatus === 'not_started'
         ? document.required
-        : document.metadataMissing.length > 0 || document.missingExtractionFields.length > 0;
+        : document.metadataMissing.length > 0 || document.missingExtractionFields.length > 0 || canonicalConflictCount > 0;
 
       if (!hasRepairNeed && blockingRiskCount === 0 && attentionRiskCount === 0) return null;
 
       const severity: 'blocking' | 'attention' = document.required && (
         document.intakeStatus === 'not_started' ||
         blockingRiskCount > 0 ||
-        document.metadataMissing.length > 0
+        document.metadataMissing.length > 0 ||
+        canonicalConflictCount > 0
       )
         ? 'blocking'
         : 'attention';
@@ -81,6 +84,7 @@ export function buildNameChangeDocumentRepairQueue(
       if (document.intakeStatus === 'not_started') issueBits.push('not started');
       if (document.metadataMissing.length > 0) issueBits.push(`${document.metadataMissing.length} metadata gaps`);
       if (document.missingExtractionFields.length > 0) issueBits.push(`${document.missingExtractionFields.length} extraction gaps`);
+      if (canonicalConflictCount > 0) issueBits.push(`${canonicalConflictCount} canonical conflict${canonicalConflictCount === 1 ? '' : 's'}`);
       if (blockingRiskCount > 0) issueBits.push(`${blockingRiskCount} blocking field risks`);
       if (attentionRiskCount > 0) issueBits.push(`${attentionRiskCount} attention field risks`);
 
@@ -105,6 +109,14 @@ export function buildNameChangeDocumentRepairQueue(
           detail: `Missing extraction fields: ${document.missingExtractionFields.join(', ')}.`,
         });
       }
+      if (canonicalConflictCount > 0) {
+        const preview = document.canonicalConflicts.slice(0, 2).map((conflict) => conflict.label).join(', ');
+        nextActions.push({
+          category: 'document',
+          label: `Resolve canonical conflicts for ${document.label.toLowerCase()}`,
+          detail: `${preview}${document.canonicalConflicts.length > 2 ? ', …' : ''}.`,
+        });
+      }
       if (blockingRiskCount > 0 && impactedTargets.size > 0) {
         nextActions.push({
           category: 'packet',
@@ -126,12 +138,14 @@ export function buildNameChangeDocumentRepairQueue(
         (document.required ? 30 : 0) +
         (blockingRiskCount * 10) +
         (attentionRiskCount * 4) +
+        (canonicalConflictCount * 12) +
         (document.metadataMissing.length * 3) +
         (document.missingExtractionFields.length * 2) +
         (document.intakeStatus === 'not_started' ? 15 : 0) +
         (nextActions.length > 0 ? getNameChangeGuidedActionWeight(nextActions[0].category) * 2 : 0);
 
       const payoffBits: string[] = [];
+      if (canonicalConflictCount > 0) payoffBits.push(`resolves ${canonicalConflictCount} canonical conflict${canonicalConflictCount === 1 ? '' : 's'}`);
       if (blockingRiskCount > 0) payoffBits.push(`removes ${blockingRiskCount} blocking field risk${blockingRiskCount === 1 ? '' : 's'}`);
       if (attentionRiskCount > 0) payoffBits.push(`clears ${attentionRiskCount} attention field risk${attentionRiskCount === 1 ? '' : 's'}`);
       if (impactedTargets.size > 0) payoffBits.push(`helps ${impactedTargets.size} target${impactedTargets.size === 1 ? '' : 's'}`);
@@ -148,6 +162,7 @@ export function buildNameChangeDocumentRepairQueue(
         payoffSummary: payoffBits.join(' · '),
         nextActions,
         impactedTargets: [...impactedTargets],
+        canonicalConflictCount,
         impactedFields: [...impactedFields.values()],
         blockingRiskCount,
         attentionRiskCount,

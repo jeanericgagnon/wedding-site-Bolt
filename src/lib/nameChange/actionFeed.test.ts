@@ -63,6 +63,7 @@ function makeRepairItem(overrides: Partial<NameChangeDocumentRepairQueueItem> = 
       detail: 'Capture baseline metadata so this document can support downstream packets.',
     }],
     impactedTargets: ['Social Security Administration'],
+    canonicalConflictCount: 0,
     impactedFields: [],
     blockingRiskCount: 0,
     attentionRiskCount: 0,

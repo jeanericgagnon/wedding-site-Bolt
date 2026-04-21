@@ -151,4 +151,74 @@ describe('name change document repair queue', () => {
     expect(queue[0]?.score).toBeGreaterThanOrEqual(queue[1]?.score ?? 0);
     expect(queue[0]?.nextActions[0]?.category).toBeDefined();
   });
+
+  it('prioritizes canonical-conflict repair on the source document', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-marriage',
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'San Diego County Clerk',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
+      },
+      {
+        id: 'doc-passport',
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'passport-•••.pdf',
+        issuing_authority: 'U.S. Department of State',
+        issued_on: '2024-06-01',
+        expires_on: '2034-06-01',
+        extraction_confidence: 0.92,
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'doc-marriage',
+        field_key: 'spouse_last_name',
+        field_label: 'Spouse last name',
+        field_value_masked: 'Jordan-Smith',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'doc-passport',
+        field_key: 'first_name',
+        field_label: 'First name',
+        field_value_masked: 'Alicia',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+
+    const intake = buildNameChangeDocumentIntakeSnapshot(makeCase(), documents, extractedFields);
+    const queue = buildNameChangeDocumentRepairQueue(intake, [
+      buildNameChangeTargetExecutionSnapshot('ssa', makeCase(), documents, extractedFields),
+    ]);
+
+    expect(queue).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        kind: 'marriage_certificate',
+        canonicalConflictCount: 1,
+        impactSummary: expect.stringContaining('canonical conflict'),
+        payoffSummary: expect.stringContaining('resolves 1 canonical conflict'),
+        nextActions: expect.arrayContaining([
+          expect.objectContaining({
+            category: 'document',
+            label: 'Resolve canonical conflicts for certified marriage certificate',
+          }),
+        ]),
+      }),
+      expect.objectContaining({
+        kind: 'current_passport',
+        canonicalConflictCount: 1,
+      }),
+    ]));
+  });
 });

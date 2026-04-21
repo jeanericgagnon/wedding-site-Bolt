@@ -160,6 +160,7 @@ export function buildNameChangeDocumentIntakeSnapshot(
     const missingExtractionFields = definition.extractionFields.filter((field) => !capturedExtractionFields.includes(field));
     const required = definition.requiredFor.includes('all') || definition.requiredFor.includes(canonicalCase.legalBasis);
     const metadataMissing = metadataMissingForDocument(documents.find((document) => matchesDocumentKind(document.document_kind, definition.kind)));
+    const canonicalConflicts = extraction.conflicts.filter((conflict) => conflict.documentKind === definition.kind);
 
     return {
       kind: definition.kind,
@@ -174,6 +175,7 @@ export function buildNameChangeDocumentIntakeSnapshot(
       expectedExtractionFields: definition.extractionFields,
       capturedExtractionFields,
       missingExtractionFields,
+      canonicalConflicts,
     };
   });
 
