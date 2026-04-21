@@ -4,6 +4,7 @@ import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { buildNameChangeBankExecutionSnapshot } from '../../../lib/nameChange/bankFlow';
 import { buildNameChangeAutofillPrepSnapshot } from '../../../lib/nameChange/autofill';
+import { buildNameChangeActionFeed } from '../../../lib/nameChange/actionFeed';
 import { buildNameChangeCourtesyExecutionSnapshot } from '../../../lib/nameChange/courtesyFlow';
 import { NAME_CHANGE_DOCUMENT_CONTRACTS } from '../../../lib/nameChange/documentContract';
 import { buildNameChangeDocumentIntakeSnapshot } from '../../../lib/nameChange/documentContract';
@@ -450,6 +451,10 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   const documentRepairQueue = useMemo(
     () => buildNameChangeDocumentRepairQueue(documentIntakeSnapshot, executionSnapshots),
     [documentIntakeSnapshot, executionSnapshots],
+  );
+  const actionFeed = useMemo(
+    () => buildNameChangeActionFeed(executionSnapshots, documentRepairQueue),
+    [executionSnapshots, documentRepairQueue],
   );
   const reminderSummary = useMemo(() => summarizeNameChangeReminders(effectiveReminders), [effectiveReminders]);
   const reminderAttention = useMemo(() => deriveNameChangeReminderAttention(effectiveReminders, plan), [effectiveReminders, plan]);
@@ -1181,9 +1186,39 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       ))}
 
       <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-        <Card>
-          <div className="flex items-center gap-2">
-            <FileStack className="h-5 w-5 text-primary" />
+      <Card>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-semibold text-text-primary">Guided action feed</h3>
+            <p className="text-sm text-text-secondary">One ordered worklist that merges execution next steps with document-repair actions.</p>
+          </div>
+          <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+            {actionFeed.length} action{actionFeed.length === 1 ? '' : 's'}
+          </span>
+        </div>
+
+        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {actionFeed.slice(0, 6).map((item) => (
+            <div key={item.key} className="rounded-xl border border-border-subtle p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-text-primary">{item.action.label}</p>
+                  <p className="mt-1 text-xs text-text-secondary">{item.title} · {item.laneLabel}</p>
+                </div>
+                <span className={`rounded-full px-2 py-1 text-xs ${item.severity === 'blocking' ? 'bg-danger/10 text-danger' : item.severity === 'attention' ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'}`}>
+                  {item.severity}
+                </span>
+              </div>
+              <p className="mt-3 text-sm text-text-secondary">{item.action.detail}</p>
+              <p className="mt-2 text-xs text-text-secondary">{item.origin === 'execution' ? 'execution lane' : 'document repair'} · {item.action.category} · score {item.score}</p>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card>
+        <div className="flex items-center gap-2">
+          <FileStack className="h-5 w-5 text-primary" />
             <div>
               <h3 className="text-lg font-semibold text-text-primary">Document intake accelerator</h3>
               <p className="text-sm text-text-secondary">Optional metadata only. No raw-document dependency in the engine.</p>
