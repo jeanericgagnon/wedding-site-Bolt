@@ -33,8 +33,8 @@ const proofBoard = {
     {
       id: 'canonical-v1-smoke',
       rank: 1,
-      title: 'Capture the canonical v1 smoke run',
-      whyNow: 'This is the top cross-product truth gate. Until one real couple path is captured, readiness is still argued instead of proven.',
+      title: 'Finish canonical smoke with route-note proof',
+      whyNow: 'The automated gate is green. The remaining work is the manual couple-path route notes that turn this from strong automated coverage into a fully logged proof artifact.',
       focusSlices: ['public-site-trust', 'onboarding'],
       commands: [
         'npm run proof:v1:canonical-smoke',
@@ -43,8 +43,8 @@ const proofBoard = {
         'Home -> signup/demo/auth -> onboarding/builder -> public site -> RSVP route notes',
         'Capture exact pass/fail points in docs/v1-smoke-proof-log.md',
       ],
-      exitBar: 'One clean logged canonical path or one exact blocker, with no hand-waving.',
-      status: 'READY',
+      exitBar: 'Automated canonical smoke stays green and one logged canonical route-note pass is captured in docs/v1-smoke-proof-log.md.',
+      status: 'AUTOMATED_PASS_MANUAL_NOTES_PENDING',
     },
     {
       id: 'guest-rsvp-continuity-proof',
