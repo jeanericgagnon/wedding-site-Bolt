@@ -331,8 +331,7 @@ export default function RSVP() {
       })
       .catch(() => setError('Failed to load invitation. Please search by name below.'))
       .finally(() => setTokenAutoLoading(false));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [searchParams]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
