@@ -44,6 +44,10 @@ describe('name change target execution snapshot', () => {
         display_name: 'Certified marriage certificate',
         storage_mode: 'metadata_only',
         intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'San Diego County Clerk',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
       },
     ];
 
@@ -52,6 +56,31 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.recommendedFormCode).toBe('SSA-SS5');
     expect(snapshot.formPayload.formCode).toBe('SSA-SS5');
     expect(snapshot.checklist.length).toBeGreaterThan(0);
+  });
+
+  it('blocks execution-ready posture when packet fields are still low confidence', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        field_key: 'spouse_last_name',
+        field_label: 'Spouse last name',
+        field_value_masked: 'Jordan-Smith',
+        source_type: 'manual',
+        is_verified: true,
+      },
+    ];
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('ssa', makeCase(), documents, extractedFields);
+    expect(snapshot.ready).toBe(false);
+    expect(snapshot.blockers).toContain('New last name is populated from a low-confidence source and still needs stronger document support.');
+    expect(snapshot.formPayload.summary.lowConfidence).toBeGreaterThan(0);
   });
 
   it('builds shared DMV execution snapshots with sequencing awareness', () => {

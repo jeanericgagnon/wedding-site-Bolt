@@ -25,7 +25,7 @@ export function buildNameChangeTargetExecutionSnapshot(
   const sequence = buildNameChangeExecutionSequenceSnapshot(targetKey, profile, documents, extractedFields, plan);
   const checklist = buildNameChangeTargetChecklist(target, profile, documents, extractedFields);
   const formPayload = NAME_CHANGE_FORM_BUILDERS[target.formBuilderKey](profile, documents, extractedFields);
-  const gates = evaluateNameChangeExecutionGates(sequence.dependencies, checklist);
+  const gates = evaluateNameChangeExecutionGates(sequence.dependencies, checklist, formPayload);
 
   return {
     targetKey,
