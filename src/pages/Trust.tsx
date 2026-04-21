@@ -28,6 +28,27 @@ const SAFETY_NOTES = [
   'Planner collaboration is intentionally couple-led, with clearer boundaries instead of pretending this is enterprise workflow software.',
 ];
 
+const V1_TRUST_LINE = [
+  {
+    title: 'Core v1 claim',
+    badge: 'Must ship',
+    tone: 'must',
+    body: 'DayOf should be judged on whether couples can launch a polished wedding site, collect RSVPs, manage guests, send core updates, run seating, and coordinate the event week from one trustworthy product.',
+  },
+  {
+    title: 'Real product direction',
+    badge: 'Should ship',
+    tone: 'should',
+    body: 'Photo return paths, archive mode, anniversary memory layers, and name-change support can be meaningful, but they should not be used to fake a broader launch claim than the core wedding workflow has earned.',
+  },
+  {
+    title: 'Not part of the current promise',
+    badge: 'Cut from promise',
+    tone: 'cut',
+    body: 'We should not imply external custom domains, advanced analytics, enterprise workflow governance, or magical one-click automation unless those things are actually proven live.',
+  },
+] as const;
+
 export const Trust: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background text-text-primary">
@@ -84,6 +105,43 @@ export const Trust: React.FC = () => {
                   </li>
                 ))}
               </ul>
+            </div>
+          </div>
+        </section>
+
+        <section className="px-6 py-14 md:py-16">
+          <div className="mx-auto max-w-5xl">
+            <div className="max-w-3xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Current v1 line</p>
+              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-text-primary">Trust gets a lot easier when the launch claim is narrow and real.</h2>
+              <p className="mt-3 text-sm leading-6 text-text-secondary">
+                The point is not to sound smaller. The point is to say the true thing clearly enough that couples can trust what they are buying and the team can actually finish what it promises.
+              </p>
+            </div>
+
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
+              {V1_TRUST_LINE.map((item) => {
+                const toneClasses = item.tone === 'must'
+                  ? 'border-emerald-200 bg-white'
+                  : item.tone === 'should'
+                    ? 'border-amber-200 bg-white'
+                    : 'border-rose-200 bg-white';
+                const badgeClasses = item.tone === 'must'
+                  ? 'bg-emerald-50 text-emerald-700'
+                  : item.tone === 'should'
+                    ? 'bg-amber-50 text-amber-700'
+                    : 'bg-rose-50 text-rose-700';
+
+                return (
+                  <div key={item.title} className={`rounded-3xl border p-6 shadow-sm ${toneClasses}`}>
+                    <div className="flex items-center justify-between gap-3">
+                      <h3 className="text-lg font-semibold text-text-primary">{item.title}</h3>
+                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${badgeClasses}`}>{item.badge}</span>
+                    </div>
+                    <p className="mt-3 text-sm leading-6 text-text-secondary">{item.body}</p>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </section>
