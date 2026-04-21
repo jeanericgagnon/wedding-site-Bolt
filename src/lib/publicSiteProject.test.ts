@@ -173,4 +173,33 @@ describe('publicSiteProject', () => {
       'https://xyz.supabase.co/storage/v1/object/public/site-media/stringified.jpg',
     );
   });
+
+  it('falls back to site_json builder pages when published_json is partial', () => {
+    const row = {
+      is_published: true,
+      site_json: draftProject,
+      published_json: {
+        publishStatus: 'published',
+        weddingDataSnapshot: publishedWeddingData,
+      },
+    };
+
+    expect(getPublicBuilderProject(row)?.pages[0].sections[0].settings.headline).toBe('Draft headline');
+  });
+
+  it('falls back to site_json wedding snapshot when published_json omits it', () => {
+    const row = {
+      is_published: true,
+      site_json: {
+        ...draftProject,
+        weddingDataSnapshot: publishedWeddingData,
+      },
+      published_json: {
+        ...publishedProject,
+      },
+      wedding_data: liveWeddingData,
+    };
+
+    expect(getPublicWeddingData(row)?.couple.displayName).toBe('Published Names');
+  });
 });
