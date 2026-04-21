@@ -49,6 +49,65 @@ const V1_TRUST_LINE = [
   },
 ] as const;
 
+const V1_SLICE_STATUS = [
+  {
+    name: 'Public site + trust',
+    status: 'Proof needed',
+    tone: 'proof',
+    done: 'Launch/privacy wording and runtime trust are materially tighter now.',
+    missing: 'Still needs one canonical public-path smoke and captured proof.',
+  },
+  {
+    name: 'Guests + RSVP',
+    status: 'Mostly done',
+    tone: 'done',
+    done: 'Core guest + RSVP flow is broad and recent continuity seams were fixed.',
+    missing: 'Still needs one guest -> RSVP -> dashboard proof run without state drift.',
+  },
+  {
+    name: 'Planner access',
+    status: 'Mostly done',
+    tone: 'done',
+    done: 'Invite flow, shell framing, and permission truth are much more believable.',
+    missing: 'Still needs executed role-boundary proof with a real forbidden-action check.',
+  },
+  {
+    name: 'Coordinator / day-of',
+    status: 'Mostly done',
+    tone: 'done',
+    done: 'Coordinator mode is pointed at real event-week questions, not fake dashboard theater.',
+    missing: 'Still needs a realistic live-use proof run under actual coordinator flow.',
+  },
+  {
+    name: 'Comms center',
+    status: 'Must prove',
+    tone: 'risk',
+    done: 'Draft/schedule/history surface exists with tighter permission truth.',
+    missing: 'Still needs proof that send-state and history are trustworthy enough to promise.',
+  },
+  {
+    name: 'Seating',
+    status: 'Proof needed',
+    tone: 'proof',
+    done: 'Planner, lookup, and event-scoped logic are materially there.',
+    missing: 'Still needs RSVP-backed assign/lookup proof without count drift.',
+  },
+  {
+    name: 'Registry',
+    status: 'Must prove',
+    tone: 'risk',
+    done: 'Add/import/edit/repair flows are real enough to use already.',
+    missing: 'Still needs harder purchased-state and reliability proof before broader claims.',
+  },
+  {
+    name: 'Onboarding',
+    status: 'Must prove',
+    tone: 'risk',
+    done: 'First-run path exists and its trust copy is now materially more honest.',
+    missing: 'Still needs one hard first-run proof pass from entry to usable site/dashboard state.',
+  },
+] as const;
+
 export const Trust: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background text-text-primary">
@@ -139,6 +198,42 @@ export const Trust: React.FC = () => {
                       <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${badgeClasses}`}>{item.badge}</span>
                     </div>
                     <p className="mt-3 text-sm leading-6 text-text-secondary">{item.body}</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-10 max-w-3xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Per-slice v1 read</p>
+              <h3 className="mt-3 text-2xl font-semibold tracking-tight text-text-primary">What is actually done enough versus what still needs proof</h3>
+              <p className="mt-3 text-sm leading-6 text-text-secondary">
+                This is the harsher read behind the launch line. The product can be directionally strong and still need proof before a slice earns broader public confidence.
+              </p>
+            </div>
+
+            <div className="mt-8 grid gap-4 md:grid-cols-2">
+              {V1_SLICE_STATUS.map((item) => {
+                const toneClasses = item.tone === 'done'
+                  ? 'border-emerald-200 bg-white'
+                  : item.tone === 'proof'
+                    ? 'border-sky-200 bg-white'
+                    : 'border-amber-200 bg-white';
+                const badgeClasses = item.tone === 'done'
+                  ? 'bg-emerald-50 text-emerald-700'
+                  : item.tone === 'proof'
+                    ? 'bg-sky-50 text-sky-700'
+                    : 'bg-amber-50 text-amber-700';
+
+                return (
+                  <div key={item.name} className={`rounded-3xl border p-6 shadow-sm ${toneClasses}`}>
+                    <div className="flex items-center justify-between gap-3">
+                      <h3 className="text-lg font-semibold text-text-primary">{item.name}</h3>
+                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${badgeClasses}`}>{item.status}</span>
+                    </div>
+                    <div className="mt-4 space-y-2 text-sm leading-6 text-text-secondary">
+                      <p><span className="font-semibold text-text-primary">Done:</span> {item.done}</p>
+                      <p><span className="font-semibold text-text-primary">Still missing:</span> {item.missing}</p>
+                    </div>
                   </div>
                 );
               })}
