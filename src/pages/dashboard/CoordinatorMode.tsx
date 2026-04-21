@@ -238,7 +238,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
         ]);
       }
       const storedRole = readPlannerAccessRole('coordinator', siteId);
-      if (storedRole) setCoordinatorRole(storedRole);
+      if (activeSiteRole === 'owner' && storedRole) setCoordinatorRole(storedRole);
+      if (activeSiteRole !== 'owner') setCoordinatorRole(activeSiteRole);
 
       const rawSessionState = localStorage.getItem(`dayof.coordinator.session.${siteId}`);
       const sessionState = normalizeCoordinatorModeSessionState(rawSessionState ? JSON.parse(rawSessionState) : null);
@@ -267,7 +268,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
       const savedCommandState = normalizeCoordinatorCommandState(rawCommandState ? JSON.parse(rawCommandState) : null);
       setCommandSource(savedCommandState.source);
     } catch {}
-  }, [siteId]);
+  }, [siteId, activeSiteRole]);
 
   useEffect(() => {
     if (!siteId) return;
@@ -286,12 +287,13 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
   useEffect(() => {
     if (!siteId) return;
+    if (activeSiteRole !== 'owner') return;
     try {
       writePlannerAccessRole('coordinator', siteId, coordinatorRole);
     } catch {
       // noop
     }
-  }, [siteId, coordinatorRole]);
+  }, [siteId, coordinatorRole, activeSiteRole]);
 
   useEffect(() => {
     if (!siteId) return;
