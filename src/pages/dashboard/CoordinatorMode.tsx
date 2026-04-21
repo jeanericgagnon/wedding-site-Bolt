@@ -621,6 +621,27 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const correctionGuestId = useMemo(() => getCoordinatorCorrectionGuestId(sortedGuests), [sortedGuests]);
   const correctionEventId = useMemo(() => getCoordinatorCorrectionEventId(events, timelineState), [events, timelineState]);
 
+  useEffect(() => {
+    if (commandSource !== 'primary-action') return;
+    if (primaryAction.key !== 'all-clear') return;
+    setCommandSource(null);
+    setNeutralFocusReason(getCoordinatorNeutralFocusReason(panelFocus));
+  }, [commandSource, primaryAction.key, panelFocus]);
+
+  useEffect(() => {
+    if (commandSource !== 'escalation') return;
+    if (liveIssues.length > 0) return;
+    setCommandSource(null);
+    setNeutralFocusReason(getCoordinatorNeutralFocusReason(panelFocus));
+  }, [commandSource, liveIssues.length, panelFocus]);
+
+  useEffect(() => {
+    if (commandSource !== 'correction') return;
+    if (correctionCues.length > 0) return;
+    setCommandSource(null);
+    setNeutralFocusReason(getCoordinatorNeutralFocusReason(panelFocus));
+  }, [commandSource, correctionCues.length, panelFocus]);
+
   const filteredAlertLog = useMemo(
     () => alertLog.filter((a) => {
       if (alertChannelFilter !== 'all' && a.channel !== alertChannelFilter) return false;
