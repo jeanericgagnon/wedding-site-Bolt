@@ -209,10 +209,34 @@ const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
       <div>
         <h3 className="text-lg font-semibold text-text-primary">{title}</h3>
         <p className="text-sm text-text-secondary">{description}</p>
+        <p className="mt-2 text-xs text-text-secondary">{snapshot.readinessSummary.summaryLabel}</p>
       </div>
       <span className={`rounded-full px-2 py-1 text-xs ${snapshot.ready ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
         {snapshot.ready ? readyLabel : notReadyLabel}
       </span>
+    </div>
+
+    <div className="mt-4 grid gap-3 md:grid-cols-5">
+      <div className="rounded-xl border border-border-subtle p-3">
+        <p className="text-xs uppercase tracking-wide text-text-tertiary">Status</p>
+        <p className="mt-2 text-sm font-semibold text-text-primary">{snapshot.readinessSummary.status}</p>
+      </div>
+      <div className="rounded-xl border border-border-subtle p-3">
+        <p className="text-xs uppercase tracking-wide text-text-tertiary">Blocking fields</p>
+        <p className="mt-2 text-sm font-semibold text-text-primary">{snapshot.readinessSummary.blockingFieldRisks}</p>
+      </div>
+      <div className="rounded-xl border border-border-subtle p-3">
+        <p className="text-xs uppercase tracking-wide text-text-tertiary">Attention fields</p>
+        <p className="mt-2 text-sm font-semibold text-text-primary">{snapshot.readinessSummary.attentionFieldRisks}</p>
+      </div>
+      <div className="rounded-xl border border-border-subtle p-3">
+        <p className="text-xs uppercase tracking-wide text-text-tertiary">Low-confidence</p>
+        <p className="mt-2 text-sm font-semibold text-text-primary">{snapshot.readinessSummary.lowConfidenceFields}</p>
+      </div>
+      <div className="rounded-xl border border-border-subtle p-3">
+        <p className="text-xs uppercase tracking-wide text-text-tertiary">Doc repair debt</p>
+        <p className="mt-2 text-sm font-semibold text-text-primary">{snapshot.readinessSummary.documentRepairDebt}</p>
+      </div>
     </div>
 
     <div className="mt-4 grid gap-3 md:grid-cols-2">

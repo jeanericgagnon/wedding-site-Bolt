@@ -429,6 +429,15 @@ export interface NameChangeTargetExecutionSnapshot {
   targetLabel: string;
   ready: boolean;
   blockers: string[];
+  readinessSummary: {
+    status: 'ready' | 'blocked' | 'attention';
+    blockingFieldRisks: number;
+    attentionFieldRisks: number;
+    lowConfidenceFields: number;
+    missingFields: number;
+    documentRepairDebt: number;
+    summaryLabel: string;
+  };
   recommendedFormCode: string;
   autofillFields: NameChangeAutofillFieldMapping[];
   formPayload: NameChangeFormPayloadSnapshot;

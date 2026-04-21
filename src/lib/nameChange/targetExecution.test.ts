@@ -56,6 +56,7 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.recommendedFormCode).toBe('SSA-SS5');
     expect(snapshot.formPayload.formCode).toBe('SSA-SS5');
     expect(snapshot.checklist.length).toBeGreaterThan(0);
+    expect(snapshot.readinessSummary.status).toBe('blocked');
   });
 
   it('blocks execution-ready posture when packet fields are still low confidence', () => {
@@ -89,6 +90,12 @@ describe('name change target execution snapshot', () => {
         confidence: 'low',
       }),
     ]));
+    expect(snapshot.readinessSummary).toMatchObject({
+      status: 'blocked',
+      blockingFieldRisks: expect.any(Number),
+      lowConfidenceFields: expect.any(Number),
+      documentRepairDebt: expect.any(Number),
+    });
   });
 
   it('surfaces missing packet fields as attention-level field risks', () => {
@@ -98,6 +105,10 @@ describe('name change target execution snapshot', () => {
         severity: 'attention',
       }),
     ]));
+    expect(snapshot.readinessSummary).toMatchObject({
+      attentionFieldRisks: expect.any(Number),
+      missingFields: expect.any(Number),
+    });
   });
 
   it('builds shared DMV execution snapshots with sequencing awareness', () => {
