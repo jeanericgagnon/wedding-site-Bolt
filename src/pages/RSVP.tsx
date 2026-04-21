@@ -261,6 +261,7 @@ export default function RSVP() {
   const [selectedHouseholdGuestIds, setSelectedHouseholdGuestIds] = useState<string[]>([]);
 
   const resetToSearch = useCallback((preserveToken = false) => {
+    activeLookupRequestRef.current += 1;
     setStep('search');
     setError('');
     setGuest(null);
