@@ -58,11 +58,13 @@ export default function EventRSVP() {
   const [hasEventRsvpSupport, setHasEventRsvpSupport] = useState<boolean | null>(null);
   const postSubmitResetTimeoutRef = useRef<number | null>(null);
   const activeLoadRequestRef = useRef(0);
+  const activeSubmitRequestRef = useRef(0);
 
   useEffect(() => {
     if (token) {
       loadGuestAndEvents();
     } else {
+      activeSubmitRequestRef.current += 1;
       if (postSubmitResetTimeoutRef.current !== null) {
         window.clearTimeout(postSubmitResetTimeoutRef.current);
         postSubmitResetTimeoutRef.current = null;
@@ -256,6 +258,8 @@ export default function EventRSVP() {
   async function handleSubmitRsvp(e: React.FormEvent) {
     e.preventDefault();
     if (!selectedEvent || submitting) return;
+    const requestId = activeSubmitRequestRef.current + 1;
+    activeSubmitRequestRef.current = requestId;
 
     setSubmitting(true);
     setSubmitError('');
@@ -265,6 +269,7 @@ export default function EventRSVP() {
       if (!invitation) return;
 
       if (hasEventRsvpSupport === false) {
+        if (activeSubmitRequestRef.current !== requestId) return;
         setSubmitError('Event-specific RSVP is temporarily unavailable for this site.');
         return;
       }
@@ -309,19 +314,23 @@ export default function EventRSVP() {
         }
       }
 
+      if (activeSubmitRequestRef.current !== requestId) return;
       setSubmitSuccess(true);
       if (postSubmitResetTimeoutRef.current !== null) {
         window.clearTimeout(postSubmitResetTimeoutRef.current);
       }
       postSubmitResetTimeoutRef.current = window.setTimeout(() => {
+        if (activeSubmitRequestRef.current !== requestId) return;
         setSelectedEvent(null);
         setSubmitSuccess(false);
         loadGuestAndEvents();
         postSubmitResetTimeoutRef.current = null;
       }, 2000);
     } catch {
+      if (activeSubmitRequestRef.current !== requestId) return;
       setSubmitError('Failed to save your RSVP. Please try again.');
     } finally {
+      if (activeSubmitRequestRef.current !== requestId) return;
       setSubmitting(false);
     }
   }
