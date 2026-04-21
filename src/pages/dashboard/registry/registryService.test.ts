@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { RegistryItem, RegistryPreview } from './registryTypes';
+import { derivePurchaseStatus, sanitizeRegistryQuantityState } from './registryTypes';
 import { fetchUrlPreview, findDuplicateItem, ownerMarkPurchased } from './registryService';
 
 const mockRpcResult = {
@@ -264,5 +265,52 @@ describe('ownerMarkPurchased', () => {
 
     expect(result).toStrictEqual(rpcResultItem);
   });
+
+  it('normalizes stale over-purchased RPC responses before returning them', async () => {
+    mockRpcResult.data = {
+      id: 'item-1',
+      quantity_purchased: 4,
+      quantity_needed: 2,
+      purchase_status: 'partial',
+    };
+    mockRpcResult.error = null;
+
+    const result = await ownerMarkPurchased('item-1', 1);
+
+    expect(result.quantity_needed).toBe(2);
+    expect(result.quantity_purchased).toBe(2);
+    expect(result.purchase_status).toBe('purchased');
+  });
 });
 
+describe('purchase status logic', () => {
+  it('status is available when quantity_purchased is 0', () => {
+    expect(derivePurchaseStatus(0, 2)).toBe('available');
+  });
+
+  it('status is partial when some but not all purchased', () => {
+    expect(derivePurchaseStatus(1, 3)).toBe('partial');
+  });
+
+  it('status is purchased when quantity_purchased meets quantity_needed', () => {
+    expect(derivePurchaseStatus(2, 2)).toBe('purchased');
+  });
+
+  it('status is purchased when quantity_purchased exceeds quantity_needed', () => {
+    expect(derivePurchaseStatus(3, 2)).toBe('purchased');
+  });
+
+  it('sanitizes impossible quantity states before they leak into UI logic', () => {
+    expect(sanitizeRegistryQuantityState(5, 2)).toEqual({
+      quantityNeeded: 2,
+      quantityPurchased: 2,
+      purchaseStatus: 'purchased',
+    });
+
+    expect(sanitizeRegistryQuantityState(-3, 0)).toEqual({
+      quantityNeeded: 1,
+      quantityPurchased: 0,
+      purchaseStatus: 'available',
+    });
+  });
+});
