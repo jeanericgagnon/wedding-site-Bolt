@@ -178,6 +178,19 @@ function ensureDocument(documents: NameChangeDocumentInput[], kind: NameChangeDo
   ];
 }
 
+function updateDocument(
+  documents: NameChangeDocumentInput[],
+  kind: NameChangeDocumentInput['document_kind'],
+  updates: Partial<NameChangeDocumentInput>,
+): NameChangeDocumentInput[] {
+  return documents.map((document) => document.document_kind === kind
+    ? {
+        ...document,
+        ...updates,
+      }
+    : document);
+}
+
 const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
   anchorId,
   title,
@@ -324,6 +337,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       return {};
     }
   });
+  const [documentSnapshotDrafts, setDocumentSnapshotDrafts] = useState<Record<string, string>>({});
   const stepCounts = useMemo(() => ({
     ready: plan.steps.filter((step) => step.status === 'ready').length,
     blocked: plan.steps.filter((step) => step.status === 'blocked').length,
@@ -690,6 +704,22 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       // Ignore localStorage failures; planner still works without persistence.
     }
   }, [showAdmin]);
+
+  useEffect(() => {
+    setDocumentSnapshotDrafts((current) => {
+      const next = { ...current };
+      documents.forEach((document) => {
+        const snapshotText = document.extracted_snapshot ? JSON.stringify(document.extracted_snapshot, null, 2) : '';
+        if (next[document.document_kind] === undefined) {
+          next[document.document_kind] = snapshotText;
+        }
+      });
+      Object.keys(next).forEach((key) => {
+        if (!documents.some((document) => document.document_kind === key)) delete next[key];
+      });
+      return next;
+    });
+  }, [documents]);
 
   return (
     <div className="space-y-6">
@@ -1100,14 +1130,133 @@ export const NameChangePlannerTab: React.FC<Props> = ({
             {documents.length === 0 ? (
               <p className="text-sm text-text-tertiary">No document metadata yet. That is fine — the planner can still work off manual structured fields.</p>
             ) : documents.map((document) => (
-              <div key={document.document_kind} className="rounded-xl border border-border-subtle p-3">
-                <div className="flex items-center justify-between gap-3">
+              <div key={document.document_kind} className="rounded-xl border border-border-subtle p-4">
+                <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-medium text-text-primary">{document.display_name}</p>
-                    <p className="text-xs text-text-secondary">{document.storage_mode === 'metadata_only' ? 'Metadata only' : 'No file stored'}</p>
+                    <p className="text-xs text-text-secondary">{document.storage_mode === 'metadata_only' ? 'Metadata only' : 'No file stored'} · {document.document_kind}</p>
                   </div>
-                  <span className="rounded-full bg-success/10 px-2 py-1 text-xs text-success">{document.intake_status}</span>
+                  <div className="flex items-center gap-2">
+                    <span className={`rounded-full px-2 py-1 text-xs ${document.intake_status === 'reviewed' ? 'bg-success/10 text-success' : document.intake_status === 'uploaded' ? 'bg-warning/10 text-warning' : 'bg-surface-subtle text-text-secondary'}`}>{document.intake_status}</span>
+                    <Button variant="ghost" size="sm" onClick={() => onDocumentsChange(documents.filter((item) => item.document_kind !== document.document_kind))}>Remove</Button>
+                  </div>
                 </div>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <label className="text-sm">
+                    <span className="mb-1 block text-xs font-medium text-text-secondary">Document label</span>
+                    <input
+                      className="w-full rounded-lg border border-border px-3 py-2"
+                      value={document.display_name}
+                      onChange={(e) => onDocumentsChange(updateDocument(documents, document.document_kind, { display_name: e.target.value }))}
+                    />
+                  </label>
+                  <label className="text-sm">
+                    <span className="mb-1 block text-xs font-medium text-text-secondary">Intake status</span>
+                    <select
+                      className="w-full rounded-lg border border-border px-3 py-2"
+                      value={document.intake_status}
+                      onChange={(e) => onDocumentsChange(updateDocument(documents, document.document_kind, { intake_status: e.target.value as NameChangeDocumentInput['intake_status'] }))}
+                    >
+                      <option value="not_started">Not started</option>
+                      <option value="uploaded">Uploaded / captured</option>
+                      <option value="reviewed">Reviewed</option>
+                    </select>
+                  </label>
+                  <label className="text-sm">
+                    <span className="mb-1 block text-xs font-medium text-text-secondary">Masked filename</span>
+                    <input
+                      className="w-full rounded-lg border border-border px-3 py-2"
+                      value={document.file_name_masked ?? ''}
+                      onChange={(e) => onDocumentsChange(updateDocument(documents, document.document_kind, { file_name_masked: e.target.value || null }))}
+                      placeholder="license-•••.pdf"
+                    />
+                  </label>
+                  <label className="text-sm">
+                    <span className="mb-1 block text-xs font-medium text-text-secondary">Issuing authority</span>
+                    <input
+                      className="w-full rounded-lg border border-border px-3 py-2"
+                      value={document.issuing_authority ?? ''}
+                      onChange={(e) => onDocumentsChange(updateDocument(documents, document.document_kind, { issuing_authority: e.target.value || null }))}
+                      placeholder="California DMV / County Clerk"
+                    />
+                  </label>
+                  <label className="text-sm">
+                    <span className="mb-1 block text-xs font-medium text-text-secondary">Issued on</span>
+                    <input
+                      type="date"
+                      className="w-full rounded-lg border border-border px-3 py-2"
+                      value={document.issued_on ?? ''}
+                      onChange={(e) => onDocumentsChange(updateDocument(documents, document.document_kind, { issued_on: e.target.value || null }))}
+                    />
+                  </label>
+                  <label className="text-sm">
+                    <span className="mb-1 block text-xs font-medium text-text-secondary">Expires on</span>
+                    <input
+                      type="date"
+                      className="w-full rounded-lg border border-border px-3 py-2"
+                      value={document.expires_on ?? ''}
+                      onChange={(e) => onDocumentsChange(updateDocument(documents, document.document_kind, { expires_on: e.target.value || null }))}
+                    />
+                  </label>
+                </div>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <label className="text-sm">
+                    <span className="mb-1 block text-xs font-medium text-text-secondary">Extraction confidence</span>
+                    <input
+                      type="number"
+                      min="0"
+                      max="1"
+                      step="0.01"
+                      className="w-full rounded-lg border border-border px-3 py-2"
+                      value={document.extraction_confidence ?? ''}
+                      onChange={(e) => onDocumentsChange(updateDocument(documents, document.document_kind, {
+                        extraction_confidence: e.target.value === '' ? null : Math.max(0, Math.min(1, Number(e.target.value))),
+                      }))}
+                      placeholder="0.92"
+                    />
+                  </label>
+                  <label className="text-sm">
+                    <span className="mb-1 block text-xs font-medium text-text-secondary">Storage mode</span>
+                    <select
+                      className="w-full rounded-lg border border-border px-3 py-2"
+                      value={document.storage_mode}
+                      onChange={(e) => onDocumentsChange(updateDocument(documents, document.document_kind, { storage_mode: e.target.value as NameChangeDocumentInput['storage_mode'] }))}
+                    >
+                      <option value="metadata_only">Metadata only</option>
+                      <option value="none">No file stored</option>
+                    </select>
+                  </label>
+                </div>
+
+                <label className="mt-4 block text-sm">
+                  <span className="mb-1 block text-xs font-medium text-text-secondary">Structured extraction notes / snapshot JSON</span>
+                  <textarea
+                    className="min-h-[92px] w-full rounded-lg border border-border px-3 py-2 text-sm"
+                    value={documentSnapshotDrafts[document.document_kind] ?? ''}
+                    onChange={(e) => {
+                      const rawValue = e.target.value;
+                      setDocumentSnapshotDrafts((current) => ({
+                        ...current,
+                        [document.document_kind]: rawValue,
+                      }));
+
+                      const nextValue = rawValue.trim();
+                      if (!nextValue) {
+                        onDocumentsChange(updateDocument(documents, document.document_kind, { extracted_snapshot: null }));
+                        return;
+                      }
+
+                      try {
+                        onDocumentsChange(updateDocument(documents, document.document_kind, { extracted_snapshot: JSON.parse(nextValue) as Record<string, unknown> }));
+                      } catch {
+                        // Leave the local draft alone until the JSON is valid.
+                      }
+                    }}
+                    placeholder='{"issuer":"County Clerk","reviewNotes":"Name legible"}'
+                  />
+                </label>
               </div>
             ))}
           </div>
