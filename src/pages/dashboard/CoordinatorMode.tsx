@@ -66,6 +66,7 @@ import { getCoordinatorSummaryFeedbackBadge } from '../../lib/coordinatorSummary
 import { getCoordinatorOverrideSupportBadge } from '../../lib/coordinatorOverrideSupportBadge';
 import { resolveCoordinatorSummaryDisplayCue } from '../../lib/coordinatorSummaryDisplayCue';
 import { resolveCoordinatorOverrideDisplayCue } from '../../lib/coordinatorOverrideDisplayCue';
+import { shouldExpireCoordinatorCue } from '../../lib/coordinatorCueExpiry';
 import { normalizeCoordinatorTimelineWorkState } from '../../lib/coordinatorTimelineWorkState';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
@@ -143,6 +144,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [manualOverrideUpdatedAt, setManualOverrideUpdatedAt] = useState<number | null>(null);
   const [alertOverrideLabelState, setAlertOverrideLabelState] = useState<string | null>(null);
   const [alertOverrideUpdatedAt, setAlertOverrideUpdatedAt] = useState<number | null>(null);
+  const [summaryFeedbackShownAt, setSummaryFeedbackShownAt] = useState<number | null>(null);
   const [previousAlertAligned, setPreviousAlertAligned] = useState<boolean | null>(null);
   const [summaryFeedback, setSummaryFeedback] = useState<CoordinatorSummaryFeedback | null>(null);
   const [checkInQuery, setCheckInQuery] = useState('');
@@ -749,12 +751,14 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const clearCoordinatorTransientState = () => {
     setNeutralFocusReason(null);
     setSummaryFeedback(null);
+    setSummaryFeedbackShownAt(null);
     setAlertOverrideUpdatedAt(null);
     setManualOverrideUpdatedAt(null);
     setCommandJumpLabel(null);
     setCommandJumpPanelFocus(null);
     setCommandJumpTargetId(null);
     setSummaryFeedback(createCoordinatorSummaryFeedback({ label: jumpLabel, panelFocus: null, targetId: null, kind: 'jump' }));
+    setSummaryFeedbackShownAt(Date.now());
   };
 
   const focusCoordinatorAlertLane = () => {
@@ -934,12 +938,14 @@ export const DashboardCoordinatorMode: React.FC = () => {
       setCheckInFilter('arrivals');
       setCommandJumpTargetId(checkInBoardTargetId);
       setSummaryFeedback(createCoordinatorSummaryFeedback({ label: jumpLabel, panelFocus: 'check-in', targetId: checkInBoardTargetId, kind: 'jump' }));
+      setSummaryFeedbackShownAt(Date.now());
       if (checkInBoardTargetId) setActiveGuestId(checkInBoardTargetId);
       return;
     }
     if (label === 'Timeline') {
       setCommandJumpTargetId(timelineBoardTargetId);
       setSummaryFeedback(createCoordinatorSummaryFeedback({ label: jumpLabel, panelFocus: 'timeline', targetId: timelineBoardTargetId, kind: 'jump' }));
+      setSummaryFeedbackShownAt(Date.now());
       if (timelineBoardTargetId) setActiveTimelineEventId(timelineBoardTargetId);
       return;
     }
@@ -947,11 +953,13 @@ export const DashboardCoordinatorMode: React.FC = () => {
       const nextQnaId = qnaBoardTargetId ?? getFirstOpenCoordinatorQnaId(qnaItems);
       setCommandJumpTargetId(nextQnaId);
       setSummaryFeedback(createCoordinatorSummaryFeedback({ label: jumpLabel, panelFocus: 'qna', targetId: nextQnaId, kind: 'jump' }));
+      setSummaryFeedbackShownAt(Date.now());
       setActiveQnaId(nextQnaId);
       return;
     }
     setCommandJumpTargetId(null);
     setSummaryFeedback(createCoordinatorSummaryFeedback({ label: jumpLabel, panelFocus: null, targetId: null, kind: 'jump' }));
+    setSummaryFeedbackShownAt(Date.now());
   };
 
 
@@ -1050,6 +1058,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
           targetId: currentTargetId,
           kind: 'realignment',
         }));
+        setSummaryFeedbackShownAt(Date.now());
       }
     }
   }, [manualOverrideLabel, panelFocus, activeGuestId, activeTimelineEventId, activeQnaId, checkInBoardTargetId, timelineBoardTargetId, qnaBoardTargetId]);
@@ -1098,10 +1107,29 @@ export const DashboardCoordinatorMode: React.FC = () => {
       expectedTargetId: summaryFeedback?.targetId ?? null,
     })) {
       setSummaryFeedback(null);
+      setSummaryFeedbackShownAt(null);
+    setSummaryFeedbackShownAt(null);
     setAlertOverrideUpdatedAt(null);
     setManualOverrideUpdatedAt(null);
     }
   }, [summaryFeedback, panelFocus, activeGuestId, activeTimelineEventId, activeQnaId]);
+
+
+  useEffect(() => {
+    if (!summaryFeedback) return;
+    const timer = window.setTimeout(() => {
+      if (shouldExpireCoordinatorCue({
+        shownAt: summaryFeedbackShownAt,
+        now: Date.now(),
+        maxAgeMs: 5000,
+      })) {
+        setSummaryFeedback(null);
+        setSummaryFeedbackShownAt(null);
+      }
+    }, 5000);
+
+    return () => window.clearTimeout(timer);
+  }, [summaryFeedback, summaryFeedbackShownAt]);
 
   const returnToBoard = () => {
     const next = resolveCoordinatorReturnToBoardState({
