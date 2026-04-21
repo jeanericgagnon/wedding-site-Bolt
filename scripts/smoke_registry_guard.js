@@ -4,6 +4,8 @@ import { resolve } from 'node:path';
 
 const registryPage = readFileSync(resolve(process.cwd(), 'src/pages/dashboard/Registry.tsx'), 'utf8');
 const registryTypes = readFileSync(resolve(process.cwd(), 'src/pages/dashboard/registry/registryTypes.ts'), 'utf8');
+const repairState = readFileSync(resolve(process.cwd(), 'src/pages/dashboard/registry/repairState.ts'), 'utf8');
+const duplicateRegistryItems = readFileSync(resolve(process.cwd(), 'src/pages/dashboard/registry/duplicateRegistryItems.ts'), 'utf8');
 
 const checks = [
   { name: 'dashboard uses sanitizeRegistryQuantityState', ok: registryPage.includes('sanitizeRegistryQuantityState') },
@@ -12,6 +14,8 @@ const checks = [
   { name: 'registry types expose blocked retailer messaging', ok: registryTypes.includes('Amazon blocks automated product lookups') },
   { name: 'registry types expose quantity sanitation', ok: registryTypes.includes('export function sanitizeRegistryQuantityState') },
   { name: 'registry types expose comparison URL normalization', ok: registryTypes.includes('export function normalizeRegistryComparisonUrl') },
+  { name: 'repair state exposes getRegistryRepairStates', ok: repairState.includes('export function getRegistryRepairStates') },
+  { name: 'duplicate grouping normalizes title-only items', ok: duplicateRegistryItems.includes('normalizeRegistryTitleForComparison') },
 ];
 
 const failures = checks.filter((check) => !check.ok);
