@@ -322,6 +322,7 @@ A slice does **not** count as passed because:
 - Concrete finish gap found and fixed: RSVP token auto-load had the same stale-state problem as manual search. A bad or changed token could leave the last guest/RSVP/household context hanging behind the error state. Token-driven lookups now clear prior guest context before loading.
 - Concrete finish gap found and fixed: SiteView could start a new slug load while still carrying the prior site’s privacy gate, error, or coming-soon state until the next fetch resolved. Public site loads now reset those gate/error fields up front so one site’s state does not bleed into another site view attempt.
 - Concrete finish gap found and fixed: the public Home/Product story was still giving post-wedding memory layers near-equal billing with the hard wedding-core v1 slices. Home now centers the feature carousel on must-ship wedding execution work, swaps the archive/memory panel out for day-of coordination, and explicitly demotes archive/photo/name-change language into an adjacent-not-core lane instead of letting the launch claim blur.
+- Concrete finish gap found and fixed: onboarding and setup completion copy still blurred “starter draft created” with “site is ready,” and one RSVP tip still implied stronger live-response proof than the current v1 bar earns. Onboarding now frames the output as a starter draft, points couples back to dashboard refinement before launch, removes the stale “real-time responses” promise, and replaces “preview privately” wording with access-mode language that matches the actual product truth better.
 
 ## Verification notes
 - `npm run build` passes after the guest-import permission fix.
@@ -358,6 +359,7 @@ A slice does **not** count as passed because:
 - `npm run build` passes after the RSVP token-auto-load state reset fix.
 - `npm run build` passes after the SiteView stale-gate reset fix.
 - `npm run typecheck && npm run build` passes after the Home/Product v1-story tightening pass.
+- `npm run build` passes after the onboarding first-run truth-copy tightening pass.
 
 ## Highest-value next proof seam
 - Guest-level RSVP and event-specific RSVP are both materially stronger now, but the next likely continuity seam is how newly created or removed event invitations affect downstream event attendance interpretation in itinerary/seating without a fresh explicit event response. That should be the next runtime proof target rather than more copy or permission cleanup.

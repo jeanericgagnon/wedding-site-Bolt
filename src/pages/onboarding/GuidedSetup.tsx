@@ -786,7 +786,7 @@ export const GuidedSetup: React.FC = () => {
 
             <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
               <p className="text-sm text-text-secondary">
-                <span className="font-medium text-primary">Tip:</span> You can manage all RSVPs and view real-time responses from your guest list dashboard
+                <span className="font-medium text-primary">Tip:</span> You can manage all RSVPs and review the latest responses from your guest list dashboard
               </p>
             </div>
           </div>
@@ -1038,7 +1038,7 @@ export const GuidedSetup: React.FC = () => {
               You're All Set!
             </h2>
             <p className="text-text-secondary max-w-md mx-auto mb-6">
-              Your wedding site is ready. We've created all your pages with the information you provided. You can edit everything from your dashboard.
+              Your starter wedding site is ready. We drafted the core pages from what you shared, and you can keep refining everything from your dashboard before you go live.
             </p>
 
             <div className="bg-surface-subtle rounded-lg p-6 text-left">
@@ -1049,8 +1049,8 @@ export const GuidedSetup: React.FC = () => {
                     <span className="text-xs font-bold text-primary">1</span>
                   </div>
                   <div>
-                    <p className="font-medium text-text-primary">Preview your site</p>
-                    <p className="text-sm text-text-secondary">See how it looks to your guests</p>
+                    <p className="font-medium text-text-primary">Review your starter site</p>
+                    <p className="text-sm text-text-secondary">Check the draft, fix details, and make sure it feels like you</p>
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
@@ -1067,8 +1067,8 @@ export const GuidedSetup: React.FC = () => {
                     <span className="text-xs font-bold text-primary">3</span>
                   </div>
                   <div>
-                    <p className="font-medium text-text-primary">Refine, preview privately, and go live</p>
-                    <p className="text-sm text-text-secondary">Make it yours, then share when it feels ready</p>
+                    <p className="font-medium text-text-primary">Refine access, preview, and go live when ready</p>
+                    <p className="text-sm text-text-secondary">Set the guest-facing access you want, then share once the site feels solid</p>
                   </div>
                 </li>
               </ul>
@@ -1087,7 +1087,7 @@ export const GuidedSetup: React.FC = () => {
               onClick={handleComplete}
               disabled={loading}
             >
-              {loading ? 'Creating your website...' : 'Go to dashboard'}
+              {loading ? 'Creating your starter site...' : 'Go to dashboard'}
             </Button>
           </div>
         );

@@ -714,7 +714,7 @@ export const Onboarding: React.FC = () => {
                 Quick Setup
               </h2>
               <p className="text-text-secondary mb-6">
-                Answer a few questions and we will generate a strong starting draft. You can keep refining it before you publish.
+                Answer a few questions and we will generate a strong starting draft. You can keep refining it in the dashboard before you decide to publish.
               </p>
               <ul className="space-y-3 mb-8">
                 <li className="flex items-start gap-3">
@@ -736,7 +736,7 @@ export const Onboarding: React.FC = () => {
                 Start guided setup
               </Button>
               <Button variant="outline" size="lg" fullWidth onClick={handleOneClickStarter} disabled={loading}>
-                {loading ? 'Creating starter site...' : 'Starter draft only (fastest)'}
+                {loading ? 'Creating starter draft...' : 'Starter draft only (fastest)'}
               </Button>
             </div>
           </div>
