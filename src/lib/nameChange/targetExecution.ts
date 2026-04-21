@@ -59,12 +59,44 @@ export function buildNameChangeTargetExecutionSnapshot(
   const firstAttentionDependency = sequence.dependencies.find((dependency) => dependency.status === 'attention');
   const firstMissingChecklistItem = checklist.find((item) => item.status === 'missing');
   const firstAttentionChecklistItem = checklist.find((item) => item.status === 'attention');
+  const buildCourtOrderNextAction = () => {
+    const referenceExtractionDependency = sequence.dependencies.find((dependency) => dependency.key === 'court-order-reference-extraction' && dependency.status === 'missing');
+    if (referenceExtractionDependency) {
+      return {
+        category: 'document' as const,
+        label: 'Capture court-order reference fields',
+        detail: referenceExtractionDependency.reason,
+      };
+    }
+
+    const jurisdictionDependency = sequence.dependencies.find((dependency) => dependency.key === 'court-order-jurisdiction-context' && dependency.status === 'missing');
+    if (jurisdictionDependency) {
+      return {
+        category: 'dependency' as const,
+        label: 'Ground court-order jurisdiction review',
+        detail: jurisdictionDependency.reason,
+      };
+    }
+
+    const readinessChecklistItem = checklist.find((item) => item.key === 'court-order-path-readiness' && item.status === 'attention');
+    if (readinessChecklistItem) {
+      return {
+        category: 'review' as const,
+        label: 'Review court-order path readiness',
+        detail: readinessChecklistItem.reason,
+      };
+    }
+
+    return null;
+  };
   const nextAction = firstBlockingFieldRisk
     ? {
         category: 'packet' as const,
         label: `Repair ${firstBlockingFieldRisk.label}`,
         detail: firstBlockingFieldRisk.reason,
       }
+    : targetKey === 'courtOrder' && buildCourtOrderNextAction()
+      ? buildCourtOrderNextAction()
     : firstMissingDependency
       ? {
           category: firstMissingDependency.key.includes('support') || firstMissingDependency.key.includes('document') ? 'document' as const : 'dependency' as const,
