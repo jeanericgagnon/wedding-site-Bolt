@@ -210,38 +210,45 @@ export const VendorProfilePage: React.FC = () => {
               <p className="mt-3 text-sm text-[#d8c4ad]">This profile is intentionally light for now, but the inquiry form below still gives couples a clear next step.</p>
             )}
           </div>
-          {profile.contact_email && (
-            <div className="rounded-[24px] bg-white/8 border border-white/10 p-4 sm:p-5 space-y-3">
-              <p className="text-xs uppercase tracking-[0.22em] text-[#d8c4ad]">Fastest contact path</p>
-              <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
-                <a
-                  href={`mailto:${profile.contact_email}?subject=${encodeURIComponent(`Inquiry for ${profile.vendor_name}`)}`}
-                  className="inline-flex items-center justify-center rounded-2xl bg-[#f5e9db] px-5 py-3 text-sm font-semibold text-[#2f261d] hover:bg-white"
-                >
-                  Email {profile.vendor_name}
-                </a>
-                <a
-                  href={`mailto:${profile.contact_email}`}
-                  className="inline-flex items-center justify-center rounded-2xl border border-white/20 px-5 py-3 text-sm font-semibold text-white hover:bg-white/10 break-all"
-                >
-                  {profile.contact_email}
-                </a>
+          <div className={`grid gap-4 ${profile.contact_email ? 'lg:grid-cols-[0.92fr_1.08fr]' : ''}`}>
+            {profile.contact_email && (
+              <div className="rounded-[24px] bg-white/8 border border-white/10 p-4 sm:p-5 space-y-3 h-full">
+                <p className="text-xs uppercase tracking-[0.22em] text-[#d8c4ad]">Fastest contact path</p>
+                <p className="text-sm text-[#efe4d8] leading-6">Direct email is the clearest path when you already know you want to start the conversation.</p>
+                <div className="grid gap-3">
+                  <a
+                    href={`mailto:${profile.contact_email}?subject=${encodeURIComponent(`Inquiry for ${profile.vendor_name}`)}`}
+                    className="inline-flex items-center justify-center rounded-2xl bg-[#f5e9db] px-5 py-3 text-sm font-semibold text-[#2f261d] hover:bg-white"
+                  >
+                    Email {profile.vendor_name}
+                  </a>
+                  <a
+                    href={`mailto:${profile.contact_email}`}
+                    className="inline-flex items-center justify-center rounded-2xl border border-white/20 px-5 py-3 text-sm font-semibold text-white hover:bg-white/10 break-all text-center"
+                  >
+                    {profile.contact_email}
+                  </a>
+                </div>
               </div>
+            )}
+
+            <div className="rounded-[24px] bg-white/8 border border-white/10 p-4 sm:p-5 space-y-3">
+              {sent ? (
+                <div className="rounded-2xl bg-white/10 px-4 py-4 text-sm text-[#f5e9db]">Inquiry sent. We saved your message for follow-up.</div>
+              ) : (
+                <form onSubmit={handleSubmit} className="grid gap-3 sm:grid-cols-2">
+                  {profile.contact_email && <p className="sm:col-span-2 text-xs uppercase tracking-[0.22em] text-[#d8c4ad]">Or send an inquiry here</p>}
+                  {!profile.contact_email && <p className="sm:col-span-2 text-xs uppercase tracking-[0.22em] text-[#d8c4ad]">Inquiry form</p>}
+                  <input value={form.name} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} placeholder="Your name" className="rounded-2xl bg-white/10 border border-white/15 px-4 py-3 text-white placeholder:text-white/60 outline-none" required />
+                  <input type="email" value={form.email} onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))} placeholder="Email" className="rounded-2xl bg-white/10 border border-white/15 px-4 py-3 text-white placeholder:text-white/60 outline-none" required />
+                  <textarea value={form.message} onChange={(e) => setForm((prev) => ({ ...prev, message: e.target.value }))} placeholder="What are you looking for?" className="sm:col-span-2 min-h-[150px] rounded-2xl bg-white/10 border border-white/15 px-4 py-3 text-white placeholder:text-white/60 outline-none" required />
+                  <button disabled={sending} className="sm:col-span-2 rounded-2xl bg-[#f5e9db] px-5 py-3 text-sm font-semibold text-[#2f261d] hover:bg-white disabled:opacity-60">
+                    {sending ? 'Sending…' : 'Send inquiry'}
+                  </button>
+                </form>
+              )}
             </div>
-          )}
-          {sent ? (
-            <div className="rounded-2xl bg-white/10 px-4 py-4 text-sm text-[#f5e9db]">Inquiry sent. We saved your message for follow-up.</div>
-          ) : (
-            <form onSubmit={handleSubmit} className="grid gap-3 sm:grid-cols-2">
-              {profile.contact_email && <p className="sm:col-span-2 text-xs uppercase tracking-[0.22em] text-[#d8c4ad]">Or send an inquiry here</p>}
-              <input value={form.name} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} placeholder="Your name" className="rounded-2xl bg-white/10 border border-white/15 px-4 py-3 text-white placeholder:text-white/60 outline-none" required />
-              <input type="email" value={form.email} onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))} placeholder="Email" className="rounded-2xl bg-white/10 border border-white/15 px-4 py-3 text-white placeholder:text-white/60 outline-none" required />
-              <textarea value={form.message} onChange={(e) => setForm((prev) => ({ ...prev, message: e.target.value }))} placeholder="What are you looking for?" className="sm:col-span-2 min-h-[150px] rounded-2xl bg-white/10 border border-white/15 px-4 py-3 text-white placeholder:text-white/60 outline-none" required />
-              <button disabled={sending} className="sm:col-span-2 rounded-2xl bg-[#f5e9db] px-5 py-3 text-sm font-semibold text-[#2f261d] hover:bg-white disabled:opacity-60">
-                {sending ? 'Sending…' : 'Send inquiry'}
-              </button>
-            </form>
-          )}
+          </div>
         </section>
       </div>
     </div>
