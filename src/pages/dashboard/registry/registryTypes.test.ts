@@ -1,86 +1,127 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-  EMPTY_DRAFT,
-  derivePurchaseStatus,
-  sanitizeRegistryQuantityState,
-  type RegistryItemDraft,
-  type PurchaseStatus,
+  buildRegistryPreviewFromItem,
+  computeConfidence,
+  getBlockedMessage,
+  getRegistryItemMetadataState,
+  itemNeedsAttention,
+  normalizeRegistryComparisonUrl,
+  type RegistryItem,
+  type RegistryPreview,
 } from './registryTypes';
 
-describe('EMPTY_DRAFT', () => {
-  it('has empty item_name', () => {
-    expect(EMPTY_DRAFT.item_name).toBe('');
+function makeItem(overrides: Partial<RegistryItem> = {}): RegistryItem {
+  return {
+    id: 'item-1',
+    wedding_site_id: 'site-1',
+    item_name: 'KitchenAid Mixer',
+    price_label: '$399.99',
+    price_amount: 399.99,
+    store_name: 'Amazon',
+    merchant: 'amazon.com',
+    item_url: 'https://example.com/product',
+    canonical_url: 'https://example.com/product',
+    image_url: 'https://example.com/image.jpg',
+    description: 'A stand mixer',
+    notes: null,
+    quantity_needed: 1,
+    quantity_purchased: 0,
+    purchaser_name: null,
+    purchase_status: 'available',
+    hide_when_purchased: false,
+    sort_order: 0,
+    priority: 'medium',
+    created_at: '2026-01-01T00:00:00.000Z',
+    updated_at: '2026-01-01T00:00:00.000Z',
+    metadata_fetch_status: 'success',
+    metadata_confidence_score: 0.9,
+    metadata_source_method: 'adapter',
+    metadata_retailer: 'amazon',
+    ...overrides,
+  };
+}
+
+describe('registry metadata confidence + attention state', () => {
+  it('computes full confidence for strong successful previews', () => {
+    const preview: RegistryPreview = {
+      title: 'KitchenAid Mixer',
+      price_label: '$399.99',
+      price_amount: 399.99,
+      image_url: 'https://example.com/image.jpg',
+      merchant: 'amazon.com',
+      canonical_url: 'https://example.com/product',
+      description: null,
+      currency: null,
+      availability: null,
+      brand: null,
+      retailer: 'amazon',
+      confidence_score: 0.92,
+      source_method: 'adapter',
+      fetch_status: 'success',
+      error: null,
+    };
+
+    expect(computeConfidence(preview)).toBe('full');
   });
 
-  it('has desired_quantity of 1', () => {
-    expect(EMPTY_DRAFT.desired_quantity).toBe('1');
+  it('treats blocked previews as manual and explains the block', () => {
+    const preview: RegistryPreview = {
+      title: null,
+      price_label: null,
+      price_amount: null,
+      image_url: null,
+      merchant: 'amazon.com',
+      canonical_url: 'https://amazon.com/dp/B001',
+      description: null,
+      currency: null,
+      availability: null,
+      brand: null,
+      retailer: 'amazon',
+      confidence_score: null,
+      source_method: 'adapter',
+      fetch_status: 'blocked',
+      error: null,
+    };
+
+    expect(computeConfidence(preview)).toBe('manual');
+    expect(getBlockedMessage(preview)).toMatch(/Amazon blocks automated product lookups/i);
   });
 
-  it('has hide_when_purchased false', () => {
-    expect(EMPTY_DRAFT.hide_when_purchased).toBe(false);
+  it('marks broken imports and missing fields as attention-worthy', () => {
+    const item = makeItem({
+      item_name: 'Page not found',
+      image_url: null,
+      price_label: null,
+      price_amount: null,
+      metadata_fetch_status: 'blocked',
+      metadata_confidence_score: null,
+    });
+
+    const state = getRegistryItemMetadataState(item);
+
+    expect(state.hasBadImportTitle).toBe(true);
+    expect(state.missingSummary).toMatch(/Missing:/);
+    expect(state.repairStates).toEqual(expect.arrayContaining(['broken-import', 'stale-details', 'manual-review']));
+    expect(itemNeedsAttention(item)).toBe(true);
   });
 
-  it('has all string fields empty', () => {
-    const strFields: (keyof RegistryItemDraft)[] = [
-      'price_label',
-      'price_amount',
-      'merchant',
-      'item_url',
-      'image_url',
-      'notes',
-    ];
-    for (const field of strFields) {
-      expect(EMPTY_DRAFT[field]).toBe('');
-    }
-  });
-});
-
-describe('PurchaseStatus type values', () => {
-  it('accepts available', () => {
-    const s: PurchaseStatus = 'available';
-    expect(s).toBe('available');
-  });
-
-  it('accepts partial', () => {
-    const s: PurchaseStatus = 'partial';
-    expect(s).toBe('partial');
-  });
-
-  it('accepts purchased', () => {
-    const s: PurchaseStatus = 'purchased';
-    expect(s).toBe('purchased');
-  });
-});
-
-describe('derivePurchaseStatus', () => {
-  it('returns available when nothing has been purchased', () => {
-    expect(derivePurchaseStatus(0, 2)).toBe('available');
-  });
-
-  it('returns partial when some but not all quantity is purchased', () => {
-    expect(derivePurchaseStatus(1, 3)).toBe('partial');
-  });
-
-  it('returns purchased once purchased quantity meets or exceeds needed quantity', () => {
-    expect(derivePurchaseStatus(2, 2)).toBe('purchased');
-    expect(derivePurchaseStatus(3, 2)).toBe('purchased');
-  });
-});
-
-describe('sanitizeRegistryQuantityState', () => {
-  it('normalizes invalid values and keeps status truthful', () => {
-    expect(sanitizeRegistryQuantityState(-4, 0)).toEqual({
-      quantityNeeded: 1,
-      quantityPurchased: 0,
-      purchaseStatus: 'available',
+  it('builds preview data from stored registry item fields', () => {
+    const item = makeItem();
+    expect(buildRegistryPreviewFromItem(item)).toMatchObject({
+      title: 'KitchenAid Mixer',
+      merchant: 'amazon.com',
+      price_amount: 399.99,
+      fetch_status: 'success',
     });
   });
+});
 
-  it('clamps purchased quantity to the needed quantity', () => {
-    expect(sanitizeRegistryQuantityState(5, 2)).toEqual({
-      quantityNeeded: 2,
-      quantityPurchased: 2,
-      purchaseStatus: 'purchased',
-    });
+describe('normalizeRegistryComparisonUrl', () => {
+  it('drops tracking params and normalizes host/path', () => {
+    expect(normalizeRegistryComparisonUrl('https://Example.com/product/?utm_source=ig&ref=abc')).toBe('example.com/product');
+  });
+
+  it('preserves meaningful query params while removing tracking noise', () => {
+    expect(normalizeRegistryComparisonUrl('https://shop.example.com/product?id=42&utm_campaign=test')).toBe('shop.example.com/product?id=42');
   });
 });

@@ -30,10 +30,12 @@ npm run smoke:rsvp:strict
 npm run smoke:csvmapper
 npm run smoke:checkin
 npm run smoke:messages
+npm run smoke:registry
 npm run proof:v1:guests-rsvp-ops
 npm run proof:v1:collaborator-access
 npm run proof:v1:collaborator-runtime
 npm run proof:v1:comms-center
+npm run proof:v1:registry
 npm run proof:v1:seating-continuity
 npm test -- src/pages/dashboard/registry/registryService.test.ts
 node scripts/v1-proof-board.mjs --markdown
@@ -156,8 +158,12 @@ RSVP-backed seating assignment, lookup, and counts stay coherent without embarra
 Add/import/edit/repair plus purchased-state handling survives one realistic smoke without trust drift.
 
 **Automated support**
-- `npm test -- src/pages/dashboard/registry/registryService.test.ts`
-- `npm run build`
+- `npm run proof:v1:registry`
+- underlying bundle:
+  - `npm test -- src/pages/dashboard/registry/registryService.test.ts`
+  - `npm test -- src/pages/dashboard/registry/registryTypes.test.ts`
+  - `npm run smoke:registry`
+  - `npm run build`
 
 **Manual proof still required**
 - add/import/edit a registry item

@@ -209,6 +209,7 @@ If that line fails, the rest is noise.
 - cleaner proof around purchased-state consistency and import/edit reliability in a launch-critical read
 
 **Proof needed**
+- `npm run proof:v1:registry`
 - add/import/edit + internal purchased-state smoke
 
 **Launch read**
@@ -306,7 +307,7 @@ If that line fails, the rest is noise.
    - command floor: `npm run proof:v1:seating-continuity`
 7. **Registry proof + first broken-path fix**
    - exit bar: add/import/edit/purchased-state path survives one realistic smoke
-   - command floor: `npm test -- src/pages/dashboard/registry/registryService.test.ts && npm run build`
+   - command floor: `npm run proof:v1:registry`
 8. **Launch call prep**
    - re-read the board, cut any unproven promise language, call go/no-go honestly
    - exit bar: every remaining launch claim maps to proof or a consciously accepted gap

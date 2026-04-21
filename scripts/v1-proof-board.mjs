@@ -125,8 +125,7 @@ const proofBoard = {
       tier: 2,
       exitBar: 'Add/import/edit/repair plus purchased-state handling survives one realistic smoke without trust drift.',
       automatedProof: [
-        'npm test -- src/pages/dashboard/registry/registryService.test.ts',
-        'npm run build',
+        'npm run proof:v1:registry',
       ],
       manualProof: [
         'Add/import/edit a registry item',
