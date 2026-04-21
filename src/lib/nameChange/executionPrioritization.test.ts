@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getHighestPriorityNameChangeExecutionCard, rankNameChangeExecutionCards } from './executionPrioritization';
+import { getHighestPriorityNameChangeExecutionCard, getNameChangeGuidedActionWeight, rankNameChangeExecutionCards } from './executionPrioritization';
 import type { NameChangeTargetExecutionSnapshot } from './types';
 
 function makeSnapshot(overrides: Partial<NameChangeTargetExecutionSnapshot> = {}): NameChangeTargetExecutionSnapshot {
@@ -49,6 +49,13 @@ function makeSnapshot(overrides: Partial<NameChangeTargetExecutionSnapshot> = {}
 }
 
 describe('name change execution prioritization', () => {
+  it('keeps guided action weights in descending urgency order', () => {
+    expect(getNameChangeGuidedActionWeight('packet')).toBeGreaterThan(getNameChangeGuidedActionWeight('dependency'));
+    expect(getNameChangeGuidedActionWeight('dependency')).toBeGreaterThan(getNameChangeGuidedActionWeight('document'));
+    expect(getNameChangeGuidedActionWeight('document')).toBeGreaterThan(getNameChangeGuidedActionWeight('checklist'));
+    expect(getNameChangeGuidedActionWeight('checklist')).toBeGreaterThan(getNameChangeGuidedActionWeight('review'));
+  });
+
   it('prefers blocked cards over already-ready cards', () => {
     const ranked = rankNameChangeExecutionCards([
       { key: 'ready-card', title: 'Ready card', snapshot: makeSnapshot({ ready: true, blockers: [], nextAction: { category: 'review', label: 'Prepare SSA-SS5', detail: 'Ready.' } }) },

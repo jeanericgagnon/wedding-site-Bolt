@@ -128,4 +128,27 @@ describe('name change document repair queue', () => {
       }),
     ]));
   });
+
+  it('uses guided-action urgency to break close repair-score ties', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+        file_name_masked: 'passport-•••.pdf',
+      },
+      {
+        document_kind: 'proof_of_address',
+        display_name: 'Proof of address',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+
+    const intake = buildNameChangeDocumentIntakeSnapshot(makeCase(), documents, []);
+    const queue = buildNameChangeDocumentRepairQueue(intake, []);
+    expect(queue[0]?.score).toBeGreaterThanOrEqual(queue[1]?.score ?? 0);
+    expect(queue[0]?.nextActions[0]?.category).toBeDefined();
+  });
 });

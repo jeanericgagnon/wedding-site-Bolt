@@ -6,6 +6,7 @@ import type {
   NameChangeTargetExecutionSnapshot,
   NameChangeExtractionFieldKey,
 } from './types';
+import { getNameChangeGuidedActionWeight } from './executionPrioritization';
 
 export interface NameChangeDocumentRepairQueueItem {
   kind: NameChangeDocumentKind;
@@ -127,7 +128,8 @@ export function buildNameChangeDocumentRepairQueue(
         (attentionRiskCount * 4) +
         (document.metadataMissing.length * 3) +
         (document.missingExtractionFields.length * 2) +
-        (document.intakeStatus === 'not_started' ? 15 : 0);
+        (document.intakeStatus === 'not_started' ? 15 : 0) +
+        (nextActions.length > 0 ? getNameChangeGuidedActionWeight(nextActions[0].category) * 2 : 0);
 
       const payoffBits: string[] = [];
       if (blockingRiskCount > 0) payoffBits.push(`removes ${blockingRiskCount} blocking field risk${blockingRiskCount === 1 ? '' : 's'}`);

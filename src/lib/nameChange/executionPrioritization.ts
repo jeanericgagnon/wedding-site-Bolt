@@ -1,4 +1,4 @@
-import type { NameChangeTargetExecutionSnapshot } from './types';
+import type { NameChangeGuidedAction, NameChangeTargetExecutionSnapshot } from './types';
 
 export interface NameChangeExecutionPriorityInput {
   key: string;
@@ -6,7 +6,7 @@ export interface NameChangeExecutionPriorityInput {
   snapshot: Pick<NameChangeTargetExecutionSnapshot, 'ready' | 'blockers' | 'checklist' | 'nextAction'>;
 }
 
-function nextActionCategoryWeight(category: NameChangeTargetExecutionSnapshot['nextAction']['category']) {
+export function getNameChangeGuidedActionWeight(category: NameChangeGuidedAction['category']) {
   switch (category) {
     case 'packet':
       return 5;
@@ -30,8 +30,8 @@ export function rankNameChangeExecutionCards(cards: NameChangeExecutionPriorityI
     const rightBlockers = right.snapshot.blockers.length;
     if (leftBlockers !== rightBlockers) return rightBlockers - leftBlockers;
 
-    const leftActionWeight = nextActionCategoryWeight(left.snapshot.nextAction.category);
-    const rightActionWeight = nextActionCategoryWeight(right.snapshot.nextAction.category);
+    const leftActionWeight = getNameChangeGuidedActionWeight(left.snapshot.nextAction.category);
+    const rightActionWeight = getNameChangeGuidedActionWeight(right.snapshot.nextAction.category);
     if (leftActionWeight !== rightActionWeight) return rightActionWeight - leftActionWeight;
 
     const leftAttention = left.snapshot.checklist.filter((item) => item.status === 'attention').length;
