@@ -227,4 +227,17 @@ describe('name change requirements skeleton', () => {
       reason: 'Current modeled downstream state execution assumes California, but launch state is texas.',
     });
   });
+
+  it('marks legal-basis path alignment missing when the case is not marriage-based', () => {
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase({ legal_basis: 'court_order' as never }),
+      [],
+      [],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'legal-basis-path-alignment')).toMatchObject({
+      status: 'missing',
+      reason: 'Current guided execution slices are modeled for marriage-based name changes, but legal basis is court_order.',
+    });
+  });
 });
