@@ -65,6 +65,7 @@ import { getCoordinatorSummaryFeedbackTone } from '../../lib/coordinatorSummaryF
 import { getCoordinatorSummaryFeedbackBadge } from '../../lib/coordinatorSummaryFeedbackBadge';
 import { getCoordinatorOverrideSupportBadge } from '../../lib/coordinatorOverrideSupportBadge';
 import { resolveCoordinatorSummaryDisplayCue } from '../../lib/coordinatorSummaryDisplayCue';
+import { resolveCoordinatorOverrideDisplayCue } from '../../lib/coordinatorOverrideDisplayCue';
 import { normalizeCoordinatorTimelineWorkState } from '../../lib/coordinatorTimelineWorkState';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
@@ -139,7 +140,9 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [commandJumpPanelFocus, setCommandJumpPanelFocus] = useState<CoordinatorPanelFocus | null>(null);
   const [commandJumpTargetId, setCommandJumpTargetId] = useState<string | null>(null);
   const [manualOverrideLabel, setManualOverrideLabel] = useState<string | null>(null);
+  const [manualOverrideUpdatedAt, setManualOverrideUpdatedAt] = useState<number | null>(null);
   const [alertOverrideLabelState, setAlertOverrideLabelState] = useState<string | null>(null);
+  const [alertOverrideUpdatedAt, setAlertOverrideUpdatedAt] = useState<number | null>(null);
   const [previousAlertAligned, setPreviousAlertAligned] = useState<boolean | null>(null);
   const [summaryFeedback, setSummaryFeedback] = useState<CoordinatorSummaryFeedback | null>(null);
   const [checkInQuery, setCheckInQuery] = useState('');
@@ -550,11 +553,17 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const summaryFeedbackBadge = useMemo(() => summaryFeedback ? getCoordinatorSummaryFeedbackBadge({ kind: summaryFeedback.kind, panelFocus: summaryFeedback.panelFocus }) : null, [summaryFeedback]);
   const manualOverrideBadge = useMemo(() => getCoordinatorOverrideSupportBadge({ panelFocus, kind: 'manual' }), [panelFocus]);
   const alertOverrideBadge = useMemo(() => getCoordinatorOverrideSupportBadge({ panelFocus: null, kind: 'alert' }), []);
+  const overrideDisplayCue = useMemo(() => resolveCoordinatorOverrideDisplayCue({
+    alertOverrideLabel: alertOverrideLabelState,
+    alertOverrideUpdatedAt,
+    manualOverrideLabel,
+    manualOverrideUpdatedAt,
+  }), [alertOverrideLabelState, alertOverrideUpdatedAt, manualOverrideLabel, manualOverrideUpdatedAt]);
   const summaryDisplayCue = useMemo(() => resolveCoordinatorSummaryDisplayCue({
     summaryFeedback,
-    alertOverrideLabel: alertOverrideLabelState,
-    manualOverrideLabel,
-  }), [summaryFeedback, alertOverrideLabelState, manualOverrideLabel]);
+    alertOverrideLabel: overrideDisplayCue?.kind === 'alert-override' ? overrideDisplayCue.label : null,
+    manualOverrideLabel: overrideDisplayCue?.kind === 'manual-override' ? overrideDisplayCue.label : null,
+  }), [summaryFeedback, overrideDisplayCue]);
 
   useEffect(() => {
     if (shouldResetCoordinatorAlertOverride({
@@ -562,6 +571,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
       aligned: alertTargetCue.aligned,
     })) {
       setAlertOverrideLabelState(null);
+      setAlertOverrideUpdatedAt(null);
     }
   }, [alertOverrideLabelState, alertTargetCue.aligned]);
 
@@ -739,6 +749,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const clearCoordinatorTransientState = () => {
     setNeutralFocusReason(null);
     setSummaryFeedback(null);
+    setAlertOverrideUpdatedAt(null);
+    setManualOverrideUpdatedAt(null);
     setCommandJumpLabel(null);
     setCommandJumpPanelFocus(null);
     setCommandJumpTargetId(null);
@@ -987,17 +999,20 @@ export const DashboardCoordinatorMode: React.FC = () => {
       setCheckInFilter('arrivals');
       setCheckInReviewOnly(true);
       setManualOverrideLabel(null);
+      setManualOverrideUpdatedAt(null);
       return;
     }
     if (panelFocus === 'timeline' && timelineBoardTargetId) {
       setActiveTimelineEventId(timelineBoardTargetId);
       setManualOverrideLabel(null);
+      setManualOverrideUpdatedAt(null);
       return;
     }
     if (panelFocus === 'qna') {
       const nextQnaId = qnaBoardTargetId ?? getFirstOpenCoordinatorQnaId(qnaItems);
       setActiveQnaId(nextQnaId);
       setManualOverrideLabel(null);
+      setManualOverrideUpdatedAt(null);
     }
   };
 
@@ -1026,6 +1041,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
       currentTargetId,
     })) {
       setManualOverrideLabel(null);
+      setManualOverrideUpdatedAt(null);
       const realignment = getCoordinatorRealignmentLabel(panelFocus);
       if (realignment) {
         setSummaryFeedback(createCoordinatorSummaryFeedback({
@@ -1061,6 +1077,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
     if (!nextManualOverrideLabel || manualOverrideLabel === nextManualOverrideLabel) return;
 
     setManualOverrideLabel(nextManualOverrideLabel);
+    setManualOverrideUpdatedAt(Date.now());
   }, [manualOverrideLabel, panelFocus, activeGuestId, activeTimelineEventId, activeQnaId, checkInBoardTargetId, timelineBoardTargetId, qnaBoardTargetId]);
 
 
@@ -1081,6 +1098,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
       expectedTargetId: summaryFeedback?.targetId ?? null,
     })) {
       setSummaryFeedback(null);
+    setAlertOverrideUpdatedAt(null);
+    setManualOverrideUpdatedAt(null);
     }
   }, [summaryFeedback, panelFocus, activeGuestId, activeTimelineEventId, activeQnaId]);
 
