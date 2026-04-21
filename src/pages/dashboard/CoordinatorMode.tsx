@@ -847,6 +847,32 @@ export const DashboardCoordinatorMode: React.FC = () => {
     }
   }, [manualOverrideLabel, panelFocus, activeGuestId, activeTimelineEventId, activeQnaId, checkInBoardTargetId, timelineBoardTargetId, qnaBoardTargetId]);
 
+  useEffect(() => {
+    const currentTargetId = panelFocus === 'check-in'
+      ? activeGuestId
+      : panelFocus === 'timeline'
+        ? activeTimelineEventId
+        : panelFocus === 'qna'
+          ? activeQnaId
+          : null;
+
+    const boardTargetId = panelFocus === 'check-in'
+      ? checkInBoardTargetId
+      : panelFocus === 'timeline'
+        ? timelineBoardTargetId
+        : panelFocus === 'qna'
+          ? qnaBoardTargetId
+          : null;
+
+    if (!panelFocus || !currentTargetId || !boardTargetId || currentTargetId === boardTargetId) return;
+
+    const nextManualOverrideLabel = getCoordinatorManualOverrideLabel(panelFocus);
+    if (!nextManualOverrideLabel || manualOverrideLabel === nextManualOverrideLabel) return;
+
+    setManualOverrideLabel(nextManualOverrideLabel);
+    setRealignmentLabel(null);
+  }, [manualOverrideLabel, panelFocus, activeGuestId, activeTimelineEventId, activeQnaId, checkInBoardTargetId, timelineBoardTargetId, qnaBoardTargetId]);
+
   const returnToBoard = () => {
     const next = resolveCoordinatorReturnToBoardState({
       hasDoorReview: guests.some((guest) => getCoordinatorDoorStatus(guest) === 'watch'),
