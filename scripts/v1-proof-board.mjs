@@ -37,9 +37,7 @@ const proofBoard = {
       whyNow: 'This is the top cross-product truth gate. Until one real couple path is captured, readiness is still argued instead of proven.',
       focusSlices: ['public-site-trust', 'onboarding'],
       commands: [
-        'npm run build',
-        'npm run test:e2e:live',
-        'npm run smoke:site',
+        'npm run proof:v1:canonical-smoke',
       ],
       manualProof: [
         'Home -> signup/demo/auth -> onboarding/builder -> public site -> RSVP route notes',
@@ -92,9 +90,7 @@ const proofBoard = {
       tier: 1,
       exitBar: 'Home -> auth/demo -> onboarding/builder -> site -> RSVP feels coherent, and privacy/access/publish behavior matches the copy.',
       automatedProof: [
-        'npm run build',
-        'npm run test:e2e:live',
-        'npm run smoke:site',
+        'npm run proof:v1:canonical-smoke',
       ],
       manualProof: [
         'Home -> signup/demo/auth -> onboarding/builder -> public site route notes',

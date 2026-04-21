@@ -24,6 +24,7 @@ Low-friction proof commands already available in this repo:
 
 ```bash
 npm run build
+npm run proof:v1:canonical-smoke
 npm run test:e2e:live
 npm run smoke:site
 npm run smoke:rsvp:strict
@@ -54,9 +55,11 @@ That board now also carries the explicit real v1 line plus the ruthless next-3 q
 Home -> auth/demo -> onboarding/builder -> site -> RSVP feels coherent, and privacy/access/publish behavior matches the copy.
 
 **Automated support**
-- `npm run build`
-- `npm run test:e2e:live`
-- `npm run smoke:site`
+- `npm run proof:v1:canonical-smoke`
+- underlying bundle:
+  - `npm run build`
+  - `npm run test:e2e:live`
+  - `npm run smoke:site`
 
 **Manual proof still required**
 - route notes for Home -> signup/demo/auth -> onboarding/builder -> public site
@@ -204,7 +207,7 @@ Entry -> onboarding -> usable draft site/dashboard state is fast, honest, and do
 
 1. **Canonical v1 smoke run**
    - why first: it is the top cross-product truth gate; until one real couple path is captured, readiness is still argued instead of proven
-   - commands: `npm run build && npm run test:e2e:live && npm run smoke:site`
+   - commands: `npm run proof:v1:canonical-smoke`
    - exit bar: one clean logged canonical path or one exact blocker in `docs/v1-smoke-proof-log.md`
 2. **Guest -> RSVP -> ops continuity proof**
    - why second: guest truth feeds seating, messaging, and event counts
