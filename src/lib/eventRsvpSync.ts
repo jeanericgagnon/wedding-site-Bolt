@@ -61,6 +61,10 @@ export function buildEventRsvpSyncRows(params: {
       }];
     }
 
-    return [];
+    return [{
+      event_invitation_id: invitation.event_invitation_id,
+      attending: true,
+      responded_at: respondedAt,
+    }];
   });
 }

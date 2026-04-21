@@ -24,6 +24,11 @@ describe('buildEventRsvpSyncRows', () => {
         attending: false,
         responded_at: '2026-04-21T21:30:00.000Z',
       },
+      {
+        event_invitation_id: 'welcome-invite',
+        attending: true,
+        responded_at: '2026-04-21T21:30:00.000Z',
+      },
     ]);
   });
 
