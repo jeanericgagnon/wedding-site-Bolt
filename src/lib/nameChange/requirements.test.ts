@@ -280,4 +280,37 @@ describe('name change requirements skeleton', () => {
       reason: 'No court-order proof is represented in intake yet for the modeled legal basis.',
     });
   });
+
+  it('flags out-of-state marriage handling as attention when California launch has the certificate in intake', () => {
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase({ marriage_state: 'Nevada' }),
+      [
+        {
+          document_kind: 'marriage_certificate',
+          display_name: 'Marriage certificate',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+        },
+      ],
+      [],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'marriage-jurisdiction-alignment')).toMatchObject({
+      status: 'attention',
+      reason: 'Marriage occurred in Nevada, so california follow-through should expect out-of-state certificate handling.',
+    });
+  });
+
+  it('blocks out-of-state marriage handling when the certificate is not represented in intake', () => {
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase({ marriage_state: 'Nevada' }),
+      [],
+      [],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'marriage-jurisdiction-alignment')).toMatchObject({
+      status: 'missing',
+      reason: 'Marriage occurred in Nevada, but no marriage certificate is represented in intake for out-of-state certificate handling.',
+    });
+  });
 });
