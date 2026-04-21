@@ -64,6 +64,7 @@ import { createCoordinatorSummaryFeedback, type CoordinatorSummaryFeedback } fro
 import { getCoordinatorSummaryFeedbackTone } from '../../lib/coordinatorSummaryFeedbackTone';
 import { getCoordinatorSummaryFeedbackEmphasis } from '../../lib/coordinatorSummaryFeedbackEmphasis';
 import { getCoordinatorSummaryFeedbackLayout } from '../../lib/coordinatorSummaryFeedbackLayout';
+import { getCoordinatorSummaryFeedbackCopy } from '../../lib/coordinatorSummaryFeedbackCopy';
 import { getCoordinatorSummaryFeedbackBadge } from '../../lib/coordinatorSummaryFeedbackBadge';
 import { getCoordinatorOverrideSupportBadge } from '../../lib/coordinatorOverrideSupportBadge';
 import { resolveCoordinatorSummaryDisplayCue } from '../../lib/coordinatorSummaryDisplayCue';
@@ -568,6 +569,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const summaryFeedbackBadge = useMemo(() => summaryFeedback ? getCoordinatorSummaryFeedbackBadge({ kind: summaryFeedback.kind, panelFocus: summaryFeedback.panelFocus }) : null, [summaryFeedback]);
   const summaryFeedbackEmphasis = useMemo(() => summaryFeedback ? getCoordinatorSummaryFeedbackEmphasis(summaryFeedback.kind) : null, [summaryFeedback]);
   const summaryFeedbackLayout = useMemo(() => summaryFeedback ? getCoordinatorSummaryFeedbackLayout(summaryFeedback.kind) : null, [summaryFeedback]);
+  const summaryFeedbackCopy = useMemo(() => summaryFeedback ? getCoordinatorSummaryFeedbackCopy({ kind: summaryFeedback.kind, label: summaryFeedback.label }) : null, [summaryFeedback]);
   const manualOverrideBadge = useMemo(() => getCoordinatorOverrideSupportBadge({ panelFocus, kind: 'manual' }), [panelFocus]);
   const alertOverrideBadge = useMemo(() => getCoordinatorOverrideSupportBadge({ panelFocus: null, kind: 'alert' }), []);
   const overrideDisplayCue = useMemo(() => resolveCoordinatorOverrideDisplayCue({
@@ -1489,7 +1491,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 {summaryDisplayCue.kind === 'feedback' && summaryFeedbackTone && (
                   <div className={`mt-1 inline-flex flex-wrap items-center gap-2 rounded-full border px-2.5 text-[11px] ${summaryFeedbackTone.containerClassName} ${summaryFeedbackLayout === 'prominent' ? 'py-1.5 shadow-[0_2px_8px_rgba(15,23,42,0.08)]' : summaryFeedbackLayout === 'standard' ? 'py-1' : 'py-0.5 opacity-90'}`}>
                     <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${summaryFeedbackBadgeToneClassName}`}>{summaryFeedbackBadge ?? summaryFeedbackTone.badge}</span>
-                    <span>{summaryDisplayCue.feedback.label}</span>
+                    <span>{summaryFeedbackCopy ?? summaryDisplayCue.feedback.label}</span>
                   </div>
                 )}
                 {summaryDisplayCue.kind === 'alert-override' && (
