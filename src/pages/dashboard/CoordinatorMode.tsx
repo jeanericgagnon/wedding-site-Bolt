@@ -1344,7 +1344,15 @@ export const DashboardCoordinatorMode: React.FC = () => {
               {checkInQueue.map((g) => {
                 const doorStatus = getCoordinatorDoorStatus(g);
                 return (
-                  <div key={g.id} className={`flex items-center justify-between gap-3 px-4 py-2.5 ${activeGuestId === g.id ? 'bg-primary/5' : ''}`}>
+                  <div
+                    key={g.id}
+                    className={`flex items-center justify-between gap-3 px-4 py-2.5 cursor-pointer ${activeGuestId === g.id ? 'bg-primary/5' : ''}`}
+                    onClick={() => {
+                      clearCoordinatorTransientState();
+                      setPanelFocus('check-in');
+                      setActiveGuestId(g.id);
+                    }}
+                  >
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-sm font-medium text-text-primary">{g.name}</p>
@@ -1367,14 +1375,16 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     <div className="flex items-center gap-2">
                       {doorStatus === 'watch' && canEditQna && (
                         <button
-                          onClick={() => escalateDoorReview(g)}
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); escalateDoorReview(g); }}
                           className="px-3 py-1.5 text-xs rounded-md border border-amber-200 text-amber-700 bg-amber-50"
                         >
                           Escalate
                         </button>
                       )}
                       <button
-                        onClick={() => { clearCoordinatorTransientState(); setPanelFocus('check-in'); setActiveGuestId(g.id); canCheckIn && void toggleCheckIn(g); }}
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); clearCoordinatorTransientState(); setPanelFocus('check-in'); setActiveGuestId(g.id); canCheckIn && void toggleCheckIn(g); }}
                         disabled={!canCheckIn || doorStatus === 'watch'}
                         className={`px-3 py-1.5 text-xs rounded-md border disabled:opacity-40 ${g.checked_in_at ? 'border-success/40 text-success bg-success/5' : doorStatus === 'watch' ? 'border-amber-200 text-amber-700 bg-amber-50' : 'border-border text-text-secondary bg-white'}`}
                       >
@@ -1406,7 +1416,15 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     });
                     const correctionAction = getCoordinatorTimelineCorrectionAction(state);
                     return (
-                      <div key={e.id} className={`rounded-lg border px-3 py-2 ${activeTimelineEventId === e.id ? 'ring-2 ring-primary/10 ' : ''}${isLive ? 'border-primary/35 bg-primary/5' : isUpNext ? 'border-amber-200 bg-amber-50' : 'border-border/50 bg-surface-subtle/40'}`}>
+                      <div
+                        key={e.id}
+                        className={`rounded-lg border px-3 py-2 cursor-pointer ${activeTimelineEventId === e.id ? 'ring-2 ring-primary/10 ' : ''}${isLive ? 'border-primary/35 bg-primary/5' : isUpNext ? 'border-amber-200 bg-amber-50' : 'border-border/50 bg-surface-subtle/40'}`}
+                        onClick={() => {
+                          clearCoordinatorTransientState();
+                          setPanelFocus('timeline');
+                          setActiveTimelineEventId(e.id);
+                        }}
+                      >
                         <div className="flex items-center justify-between gap-2">
                           <div>
                             <div className="flex flex-wrap items-center gap-2">
@@ -1426,6 +1444,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                           </div>
                           <select
                             value={state}
+                            onClick={(e) => e.stopPropagation()}
                             onChange={(ev) => { if (canEditTimeline) selectTimelineState(e.id, ev.target.value as TimelineState); }}
                             disabled={!canEditTimeline}
                             className="text-[11px] rounded-md border border-border bg-white px-2 py-1 text-text-secondary disabled:opacity-40"
@@ -1442,7 +1461,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                               <button
                                 type="button"
                                 disabled={!canEditTimeline}
-                                onClick={() => runTimelineAction(e.id, correctionAction.nextState)}
+                                onClick={(ev) => { ev.stopPropagation(); runTimelineAction(e.id, correctionAction.nextState); }}
                                 className="text-[11px] px-2.5 py-1 rounded border border-amber-200 bg-amber-50 text-amber-700 disabled:opacity-40"
                               >
                                 {correctionAction.label}
@@ -1451,7 +1470,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                             <button
                               type="button"
                               disabled={!canEditTimeline || !primaryAction.nextState}
-                              onClick={() => runTimelineAction(e.id, primaryAction.nextState)}
+                              onClick={(ev) => { ev.stopPropagation(); runTimelineAction(e.id, primaryAction.nextState); }}
                               className="text-[11px] px-2.5 py-1 rounded border border-border bg-white text-text-secondary disabled:opacity-40"
                             >
                               {primaryAction.label}
@@ -1695,7 +1714,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   qnaItems.slice(0, 8).map((item) => (
                     <div
                       key={item.id}
-                      className={`text-xs border rounded-md px-2.5 py-2 space-y-2 ${activeQnaId === item.id ? 'border-primary/40 ring-2 ring-primary/10 bg-primary/5' : 'border-border/50'}`}
+                      className={`text-xs border rounded-md px-2.5 py-2 space-y-2 cursor-pointer ${activeQnaId === item.id ? 'border-primary/40 ring-2 ring-primary/10 bg-primary/5' : 'border-border/50'}`}
                       onClick={() => {
                         clearCoordinatorTransientState();
                         setPanelFocus('qna');
@@ -1724,13 +1743,15 @@ export const DashboardCoordinatorMode: React.FC = () => {
                       </div>
                       <Textarea
                         value={qnaDraftAnswers[item.id] ?? item.answer ?? ''}
+                        onClick={(e) => e.stopPropagation()}
                         onChange={(e) => { clearCoordinatorTransientState(); setPanelFocus('qna'); setQnaDraftAnswers((prev) => ({ ...prev, [item.id]: e.target.value })); setActiveQnaId(item.id); }}
                         rows={2}
                         placeholder="Add the answer the coordinator should use"
                       />
                       <div className="flex justify-end">
                         <button
-                          onClick={() => { clearCoordinatorTransientState(); setPanelFocus('qna'); setActiveQnaId(item.id); void saveQnaAnswer(item.id); }}
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); clearCoordinatorTransientState(); setPanelFocus('qna'); setActiveQnaId(item.id); void saveQnaAnswer(item.id); }}
                           className="px-2.5 py-1 rounded border border-border bg-white text-text-secondary disabled:opacity-40"
                         >
                           {(qnaDraftAnswers[item.id] ?? item.answer ?? '').trim() ? 'Save answer' : 'Mark unresolved'}
