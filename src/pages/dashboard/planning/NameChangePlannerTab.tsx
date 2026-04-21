@@ -97,6 +97,10 @@ function scrollToPlannerTarget(targetId: string) {
   document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+function getActionFeedCtaLabel(intent: 'open_execution_card' | 'open_document_repair') {
+  return intent === 'open_execution_card' ? 'Open execution card' : 'Open document repair';
+}
+
 interface Props {
   draft: NameChangeCaseInput;
   documents: NameChangeDocumentInput[];
@@ -1220,6 +1224,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               </div>
               <p className="mt-3 text-sm text-text-secondary">{item.action.detail}</p>
               <p className="mt-2 text-xs text-text-secondary">{item.origin === 'execution' ? 'execution lane' : 'document repair'} · {item.action.category} · score {item.score}</p>
+              <p className="mt-3 text-xs font-medium text-primary">{getActionFeedCtaLabel(item.plannerIntent)} →</p>
             </button>
           ))}
         </div>
