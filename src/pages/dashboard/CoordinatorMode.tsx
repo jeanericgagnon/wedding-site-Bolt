@@ -3,7 +3,7 @@ import { Input, Textarea } from '../../components/ui';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
-import { PLANNER_ROLE_OPTIONS, derivePlannerRoleFromPermissions, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
+import { PLANNER_ROLE_OPTIONS, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { isAttendingRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 import { useToast } from '../../components/ui/Toast';
@@ -237,8 +237,35 @@ export const DashboardCoordinatorMode: React.FC = () => {
           { id: 'q2', question: 'Is parking available at the venue?', status: 'answered' },
         ]);
       }
-      const rawRole = localStorage.getItem(`dayof.coordinator.role.${siteId}`) as PlannerAccessRole | null;
-      if (rawRole === 'owner' || rawRole === 'planner' || rawRole === 'coordinator' || rawRole === 'viewer') setCoordinatorRole(rawRole);
+      const storedRole = readPlannerAccessRole('coordinator', siteId);
+      if (storedRole) setCoordinatorRole(storedRole);
+
+      const rawSessionState = localStorage.getItem(`dayof.coordinator.session.${siteId}`);
+      const sessionState = normalizeCoordinatorModeSessionState(rawSessionState ? JSON.parse(rawSessionState) : null);
+      setCheckInFilter(sessionState.checkInFilter);
+      setCheckInReviewOnly(sessionState.checkInReviewOnly);
+      setPanelFocus(sessionState.panelFocus);
+
+      const rawDraftState = localStorage.getItem(`dayof.coordinator.draft.${siteId}`);
+      const draftState = normalizeCoordinatorDraftState(rawDraftState ? JSON.parse(rawDraftState) : null);
+      setAlertForm((prev) => ({ ...prev, ...draftState.alertForm }));
+      setQnaDraftAnswers(draftState.qnaDraftAnswers);
+
+      const rawActiveWorkState = localStorage.getItem(`dayof.coordinator.active.${siteId}`);
+      const activeWorkState = normalizeCoordinatorActiveWorkState(rawActiveWorkState ? JSON.parse(rawActiveWorkState) : null);
+      setActiveQnaId(activeWorkState.activeQnaId);
+
+      const rawGuestWorkState = localStorage.getItem(`dayof.coordinator.guest.${siteId}`);
+      const guestWorkState = normalizeCoordinatorGuestWorkState(rawGuestWorkState ? JSON.parse(rawGuestWorkState) : null);
+      setActiveGuestId(guestWorkState.activeGuestId);
+
+      const rawTimelineWorkState = localStorage.getItem(`dayof.coordinator.timelinework.${siteId}`);
+      const timelineWorkState = normalizeCoordinatorTimelineWorkState(rawTimelineWorkState ? JSON.parse(rawTimelineWorkState) : null);
+      setActiveTimelineEventId(timelineWorkState.activeTimelineEventId);
+
+      const rawCommandState = localStorage.getItem(`dayof.coordinator.command.${siteId}`);
+      const savedCommandState = normalizeCoordinatorCommandState(rawCommandState ? JSON.parse(rawCommandState) : null);
+      setCommandSource(savedCommandState.source);
     } catch {}
   }, [siteId]);
 
@@ -265,6 +292,66 @@ export const DashboardCoordinatorMode: React.FC = () => {
       // noop
     }
   }, [siteId, coordinatorRole]);
+
+  useEffect(() => {
+    if (!siteId) return;
+    try {
+      localStorage.setItem(`dayof.coordinator.session.${siteId}`, JSON.stringify({
+        checkInFilter,
+        checkInReviewOnly,
+        panelFocus,
+      }));
+    } catch {}
+  }, [siteId, checkInFilter, checkInReviewOnly, panelFocus]);
+
+  useEffect(() => {
+    if (!siteId) return;
+    try {
+      localStorage.setItem(`dayof.coordinator.draft.${siteId}`, JSON.stringify({
+        alertForm,
+        qnaDraftAnswers,
+      }));
+    } catch {}
+  }, [siteId, alertForm, qnaDraftAnswers]);
+
+  useEffect(() => {
+    if (!siteId) return;
+    try {
+      localStorage.setItem(`dayof.coordinator.active.${siteId}`, JSON.stringify({
+        activeQnaId,
+      }));
+    } catch {}
+  }, [siteId, activeQnaId]);
+
+  useEffect(() => {
+    if (!siteId) return;
+    try {
+      localStorage.setItem(`dayof.coordinator.guest.${siteId}`, JSON.stringify({
+        activeGuestId,
+      }));
+    } catch {}
+  }, [siteId, activeGuestId]);
+
+  useEffect(() => {
+    if (!siteId) return;
+    try {
+      localStorage.setItem(`dayof.coordinator.timelinework.${siteId}`, JSON.stringify({
+        activeTimelineEventId,
+      }));
+    } catch {}
+  }, [siteId, activeTimelineEventId]);
+
+  useEffect(() => {
+    if (!siteId) return;
+    try {
+      localStorage.setItem(`dayof.coordinator.command.${siteId}`, JSON.stringify({
+        source: commandSource,
+        panelFocus,
+        checkInFilter,
+        checkInReviewOnly,
+      }));
+    } catch {}
+  }, [siteId, commandSource, panelFocus, checkInFilter, checkInReviewOnly]);
 
   const stats = useMemo(() => {
     const total = guests.length;
@@ -392,6 +479,15 @@ export const DashboardCoordinatorMode: React.FC = () => {
     previousAligned: previousAlertAligned,
     currentAligned: alertTargetCue.aligned,
   }), [previousAlertAligned, alertTargetCue.aligned]);
+
+  useEffect(() => {
+    if (shouldResetCoordinatorAlertOverride({
+      overrideLabel: alertOverrideLabelState,
+      aligned: alertTargetCue.aligned,
+    })) {
+      setAlertOverrideLabelState(null);
+    }
+  }, [alertOverrideLabelState, alertTargetCue.aligned]);
 
   useEffect(() => {
     if (!preferredAlertSuggestion) return;
@@ -560,6 +656,14 @@ export const DashboardCoordinatorMode: React.FC = () => {
         queuedAt: new Date().toISOString(),
         sendAt: scheduledFor,
       }));
+      setPreviousAlertAligned(alertTargetCue.aligned);
+      setAlertOverrideLabelState(alertTargetCue.aligned ? null : alertOverrideLabel);
+      setAlertForm((prev) => {
+        const reset = resetCoordinatorAlertFormAfterSend(prev);
+        return preferredAlertSuggestion
+          ? applyCoordinatorAlertSuggestion({ form: reset, suggestion: preferredAlertSuggestion })
+          : reset;
+      });
       toast(scheduledFor ? 'Coordinator alert scheduled.' : 'Coordinator alert queued.', 'success');
     } catch (err) {
       toast(err instanceof Error ? err.message : 'Could not queue that alert right now.', 'error');
@@ -924,7 +1028,10 @@ export const DashboardCoordinatorMode: React.FC = () => {
               {commandJumpLabel && <p className="text-[11px] text-primary">{commandJumpLabel}</p>}
               {!commandJumpLabel && alertSummaryTransitionLabel && <p className="text-[11px] text-primary">{alertSummaryTransitionLabel}</p>}
               {!commandJumpLabel && !alertSummaryTransitionLabel && realignmentLabel && <p className="text-[11px] text-primary">{realignmentLabel}</p>}
-              {!commandJumpLabel && manualOverrideLabel && (
+                {!commandJumpLabel && !alertSummaryTransitionLabel && alertOverrideLabelState && (
+                  <p className="text-[11px] text-amber-700">{alertOverrideLabelState}</p>
+                )}
+                {!commandJumpLabel && manualOverrideLabel && (
                 <div className="flex flex-wrap items-center gap-2 text-[11px]">
                   <p className="text-amber-700">{manualOverrideLabel}</p>
                   {manualOverrideTargetLabel && <p className="text-amber-800/80">{manualOverrideTargetLabel}</p>}
