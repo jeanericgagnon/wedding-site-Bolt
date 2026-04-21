@@ -229,6 +229,11 @@ function canRetryMessageStatus(status: string | null | undefined): boolean {
   return status === 'failed';
 }
 
+function getDeliveryScopedRows(messages: Message[], deliveries: DeliveryRow[], predicate: (message: Message) => boolean): DeliveryRow[] {
+  const allowedMessageIds = new Set(messages.filter(predicate).map((message) => message.id));
+  return deliveries.filter((delivery) => allowedMessageIds.has(delivery.message_id));
+}
+
 type MessageTemplateKey =
   | 'blank'
   | 'save-the-date'
@@ -2513,10 +2518,11 @@ export const DashboardMessages: React.FC = () => {
 
   const deliveryHealth = useMemo(() => {
     const deliveryActiveMessages = messages.filter((m) => isDeliveryActiveStatus(m.status));
+    const deliveryActiveRows = getDeliveryScopedRows(messages, deliveries, (message) => isDeliveryActiveStatus(message.status));
     const delivered = deliveryActiveMessages.reduce((sum, m) => sum + (m.delivered_count ?? 0), 0);
     const failed = deliveryActiveMessages.reduce((sum, m) => sum + (m.failed_count ?? 0), 0);
     const targeted = deliveryActiveMessages.reduce((sum, m) => sum + getRecipientCount(m), 0);
-    const skipped = deliveries.filter((d) => d.status === 'skipped').length;
+    const skipped = deliveryActiveRows.filter((d) => d.status === 'skipped').length;
     const successRate = targeted > 0 ? Math.round((delivered / targeted) * 100) : 0;
     const failRate = targeted > 0 ? Math.round((failed / targeted) * 100) : 0;
     const skippedRate = targeted > 0 ? Math.round((skipped / targeted) * 100) : 0;
@@ -2593,13 +2599,14 @@ export const DashboardMessages: React.FC = () => {
   const activeCampaignLatestMessage = activeCampaignMessages[0] ?? null;
 
   const providerTelemetry = useMemo(() => {
-    const attempted = deliveries.filter((d) => d.status === 'sent' || d.status === 'failed');
-    const sent = deliveries.filter((d) => d.status === 'sent').length;
-    const failed = deliveries.filter((d) => d.status === 'failed').length;
-    const skipped = deliveries.filter((d) => d.status === 'skipped').length;
-    const withProviderId = deliveries.filter((d) => !!d.provider_message_id).length;
+    const completedDeliveryRows = getDeliveryScopedRows(messages, deliveries, (message) => isDeliveryCompletedStatus(message.status));
+    const attempted = completedDeliveryRows.filter((d) => d.status === 'sent' || d.status === 'failed');
+    const sent = completedDeliveryRows.filter((d) => d.status === 'sent').length;
+    const failed = completedDeliveryRows.filter((d) => d.status === 'failed').length;
+    const skipped = completedDeliveryRows.filter((d) => d.status === 'skipped').length;
+    const withProviderId = completedDeliveryRows.filter((d) => !!d.provider_message_id).length;
     const errorTop = Array.from(
-      deliveries
+      completedDeliveryRows
         .filter((d) => d.status === 'failed' && d.error_message)
         .reduce((map, d) => {
           const key = (d.error_message || 'Unknown').slice(0, 60);
@@ -2610,7 +2617,7 @@ export const DashboardMessages: React.FC = () => {
     ).sort((a, b) => b[1] - a[1]).slice(0, 3);
     const sentRate = attempted.length > 0 ? Math.round((sent / attempted.length) * 100) : 0;
     return { attempted: attempted.length, sent, failed, skipped, withProviderId, sentRate, errorTop };
-  }, [deliveries]);
+  }, [messages, deliveries]);
 
   if (loading) {
     return (
