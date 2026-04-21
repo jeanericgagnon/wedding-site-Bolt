@@ -294,7 +294,22 @@ export default function RSVP() {
 
   useEffect(() => {
     const token = searchParams.get('token');
-    if (!token) return;
+    if (!token) {
+      activeLookupRequestRef.current += 1;
+      setTokenAutoLoading(false);
+      setStep('search');
+      setGuest(null);
+      setExistingRsvp(null);
+      setAmbiguousGuests([]);
+      setRsvpDeadline(null);
+      setMusicPlaylistUrl(null);
+      setHouseholdGuests([]);
+      setApplyToHousehold(true);
+      setSelectedHouseholdGuestIds([]);
+      setFormStep(1);
+      setError('');
+      return;
+    }
     const requestId = activeLookupRequestRef.current + 1;
     activeLookupRequestRef.current = requestId;
     setTokenAutoLoading(true);
