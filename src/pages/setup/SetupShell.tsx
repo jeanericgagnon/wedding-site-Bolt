@@ -5,6 +5,7 @@ import { invokeFunctionOrThrow } from '../../lib/invokeFunctionOrThrow';
 import { templateCatalog } from '../../builder/constants/templateCatalog';
 import { TEMPLATE_USE_CASE_PACKS } from '../../builder/constants/templateUseCasePacks';
 import { clearSetupDraft, clearSetupDraftOnly, readSetupDraft, setupDraftProgress, type SetupDraft, writeSetupDraft } from '../../lib/setupDraft';
+import { deriveSetupMode, getRecommendedTemplates, SETUP_STYLE_OPTIONS } from '../../lib/setupDraftRecommendations';
 
 const steps = [
   { key: 'migration', label: 'Migration' },
@@ -14,18 +15,6 @@ const steps = [
   { key: 'guest-estimate', label: 'Guest estimate' },
   { key: 'style', label: 'Style preferences' },
   { key: 'review', label: 'Review & continue' },
-] as const;
-
-const styleOptions = [
-  'Modern',
-  'Classic',
-  'Floral',
-  'Minimal',
-  'Romantic',
-  'Rustic',
-  'Bold',
-  'Destination',
-  'Weekend',
 ] as const;
 
 export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
@@ -140,29 +129,9 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
   }, [draft.selectedTemplateId]);
 
 
-  const setupMode = useMemo(() => {
-    const prefs = new Set(draft.stylePreferences);
-    const destination = prefs.has('Destination');
-    const bilingual = prefs.has('Bilingual');
-    const interfaith = prefs.has('Interfaith');
-    const weekend = prefs.has('Weekend') || destination || draft.guestEstimateBand === '200plus';
-    return { destination, bilingual, interfaith, weekend };
-  }, [draft.stylePreferences, draft.guestEstimateBand]);
+  const setupMode = useMemo(() => deriveSetupMode(draft), [draft]);
 
-  const recommendedTemplates = useMemo(() => {
-    const prefs = new Set(draft.stylePreferences);
-    if (prefs.size === 0) return templateCatalog.slice(0, 3);
-
-    return [...templateCatalog]
-      .map((t) => ({
-        template: t,
-        score: t.styleTags.filter((tag) => prefs.has(tag)).length,
-      }))
-      .sort((a, b) => b.score - a.score)
-      .filter((x) => x.score > 0)
-      .slice(0, 3)
-      .map((x) => x.template);
-  }, [draft.stylePreferences]);
+  const recommendedTemplates = useMemo(() => getRecommendedTemplates(draft, templateCatalog), [draft]);
 
   const resetSetupDraft = () => {
     clearSetupDraft();
@@ -373,7 +342,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
           {activeStep === 'style' && (
             <div className="mt-4 space-y-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                {styleOptions.map((style) => {
+                {SETUP_STYLE_OPTIONS.map((style) => {
                   const selected = draft.stylePreferences.includes(style);
                   return (
                     <button

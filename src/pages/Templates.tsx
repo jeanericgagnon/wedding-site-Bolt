@@ -4,6 +4,7 @@ import { templateCatalog, templateColorwayFacets, templateSeasonFacets, template
 import { getTemplateSupportManifest } from '../builder/constants/templateSupportManifest';
 import { TEMPLATE_USE_CASE_PACKS } from '../builder/constants/templateUseCasePacks';
 import { readSetupDraft, selectSetupDraftTemplate } from '../lib/setupDraft';
+import { getRecommendedTemplates } from '../lib/setupDraftRecommendations';
 
 type Facet = 'all' | string;
 
@@ -19,15 +20,8 @@ export const Templates: React.FC = () => {
   const selectedTemplateId = readSetupDraft().selectedTemplateId;
 
   const recommendedTemplateIds = useMemo(() => {
-    const d = readSetupDraft();
-    const prefs = new Set((d.stylePreferences ?? []).filter(Boolean));
-    if (prefs.size === 0) return [] as string[];
-    return [...templateCatalog]
-      .map((t) => ({ id: t.id, score: t.styleTags.filter((tag) => prefs.has(tag)).length }))
-      .filter((x) => x.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 3)
-      .map((x) => x.id);
+    const draft = readSetupDraft();
+    return getRecommendedTemplates(draft, templateCatalog).map((template) => template.id);
   }, []);
 
   const filtered = useMemo(() => {
