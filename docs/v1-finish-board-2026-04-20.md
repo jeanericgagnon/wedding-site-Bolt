@@ -112,6 +112,7 @@ If that line fails, the rest is noise.
 
 **Proof needed**
 - `npm run proof:v1:collaborator-access`
+- `npm run proof:v1:collaborator-runtime`
 - role-aware smoke over settings invite -> accept -> dashboard -> restricted action attempt
 
 **Launch read**
@@ -289,6 +290,7 @@ If that line fails, the rest is noise.
    - owner invite -> collaborator accept -> role-aware dashboard -> restricted action attempts
    - exit bar: one planner and one coordinator boundary proven with evidence
    - command floor: `npm run proof:v1:collaborator-access`
+   - runtime gate: `npm run proof:v1:collaborator-runtime`
 4. **Coordinator runtime proof + fix**
    - queue/check-in/timeline/Q&A under a real role-aware path
    - exit bar: coordinator can answer who is here / what is next / what needs action without confusion

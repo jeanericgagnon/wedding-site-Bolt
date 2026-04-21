@@ -31,6 +31,7 @@ npm run smoke:csvmapper
 npm run smoke:checkin
 npm run proof:v1:guests-rsvp-ops
 npm run proof:v1:collaborator-access
+npm run proof:v1:collaborator-runtime
 npm run proof:v1:seating-continuity
 npm test -- src/pages/dashboard/registry/registryService.test.ts
 node scripts/v1-proof-board.mjs --markdown
@@ -92,6 +93,11 @@ Invite flow feels safe, collaborator lands in a role-aware surface, and at least
 **Manual proof still required**
 - owner invite -> accept -> planner/coordinator dashboard framing
 - one forbidden action attempt per non-owner role tested
+
+**Runtime collaborator proof gate**
+- `npm run proof:v1:collaborator-runtime`
+- this bundle turns the invite/accept runtime path into a pass/fail/blocked gate
+- if owner/collaborator proof credentials are missing, it reports a structured blocker instead of pretending the slice itself failed
 
 ---
 

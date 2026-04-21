@@ -64,6 +64,7 @@ const proofBoard = {
       exitBar: 'Invite flow feels safe, collaborator lands in a role-aware surface, and at least one forbidden action is actually blocked per non-owner role tested.',
       automatedProof: [
         'npm run proof:v1:collaborator-access',
+        'npm run proof:v1:collaborator-runtime',
       ],
       manualProof: [
         'Owner invite -> accept -> planner/coordinator dashboard framing',
