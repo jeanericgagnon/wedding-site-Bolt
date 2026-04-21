@@ -63,6 +63,7 @@ import { shouldResetCoordinatorSummaryFeedback } from '../../lib/coordinatorSumm
 import { createCoordinatorSummaryFeedback, type CoordinatorSummaryFeedback } from '../../lib/coordinatorSummaryFeedback';
 import { getCoordinatorSummaryFeedbackTone } from '../../lib/coordinatorSummaryFeedbackTone';
 import { getCoordinatorSummaryFeedbackBadge } from '../../lib/coordinatorSummaryFeedbackBadge';
+import { getCoordinatorOverrideSupportBadge } from '../../lib/coordinatorOverrideSupportBadge';
 import { normalizeCoordinatorTimelineWorkState } from '../../lib/coordinatorTimelineWorkState';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
@@ -546,6 +547,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
   }), [previousAlertAligned, alertTargetCue.aligned]);
   const summaryFeedbackTone = useMemo(() => summaryFeedback ? getCoordinatorSummaryFeedbackTone(summaryFeedback.kind) : null, [summaryFeedback]);
   const summaryFeedbackBadge = useMemo(() => summaryFeedback ? getCoordinatorSummaryFeedbackBadge({ kind: summaryFeedback.kind, panelFocus: summaryFeedback.panelFocus }) : null, [summaryFeedback]);
+  const manualOverrideBadge = useMemo(() => getCoordinatorOverrideSupportBadge({ panelFocus, kind: 'manual' }), [panelFocus]);
+  const alertOverrideBadge = useMemo(() => getCoordinatorOverrideSupportBadge({ panelFocus: null, kind: 'alert' }), []);
 
   useEffect(() => {
     if (shouldResetCoordinatorAlertOverride({
@@ -1322,13 +1325,19 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 </div>
               )}
               {!summaryFeedback && alertOverrideLabelState && (
-                <p className="text-[11px] text-amber-700">{alertOverrideLabelState}</p>
+                <div className="mt-1 inline-flex flex-wrap items-center gap-2 rounded-full border border-amber-200 bg-amber-50/80 px-2.5 py-1 text-[11px] text-amber-800">
+                  <span className="rounded-full border border-amber-200 bg-white/80 px-1.5 py-0.5 text-[9px] font-medium">{alertOverrideBadge}</span>
+                  <span>{alertOverrideLabelState}</span>
+                  {alertOverrideTargetLabel && <span className="text-amber-800/80">{alertOverrideTargetLabel}</span>}
+                  {alertOverrideCurrentLabel && <span className="text-text-secondary">{alertOverrideCurrentLabel}</span>}
+                </div>
               )}
               {!summaryFeedback && manualOverrideLabel && (
-                <div className="flex flex-wrap items-center gap-2 text-[11px]">
-                  <p className="text-amber-700">{manualOverrideLabel}</p>
-                  {manualOverrideTargetLabel && <p className="text-amber-800/80">{manualOverrideTargetLabel}</p>}
-                  {manualOverrideCurrentTargetLabel && <p className="text-text-secondary">{manualOverrideCurrentTargetLabel}</p>}
+                <div className="mt-1 inline-flex flex-wrap items-center gap-2 rounded-full border border-amber-200 bg-amber-50/80 px-2.5 py-1 text-[11px] text-amber-800">
+                  <span className="rounded-full border border-amber-200 bg-white/80 px-1.5 py-0.5 text-[9px] font-medium">{manualOverrideBadge}</span>
+                  <span>{manualOverrideLabel}</span>
+                  {manualOverrideTargetLabel && <span className="text-amber-800/80">{manualOverrideTargetLabel}</span>}
+                  {manualOverrideCurrentTargetLabel && <span className="text-text-secondary">{manualOverrideCurrentTargetLabel}</span>}
                   {manualOverrideActionLabel && (
                     <button
                       type="button"
