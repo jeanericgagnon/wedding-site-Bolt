@@ -7,6 +7,7 @@ import { buildNameChangeAutofillPrepSnapshot } from '../../../lib/nameChange/aut
 import { buildNameChangeCourtesyExecutionSnapshot } from '../../../lib/nameChange/courtesyFlow';
 import { NAME_CHANGE_DOCUMENT_CONTRACTS } from '../../../lib/nameChange/documentContract';
 import { buildNameChangeDocumentIntakeSnapshot } from '../../../lib/nameChange/documentContract';
+import { buildNameChangeDocumentRepairQueue } from '../../../lib/nameChange/documentRepairQueue';
 import { buildNameChangeExtractionContractSnapshot } from '../../../lib/nameChange/extractionContract';
 import { buildNameChangeDmvExecutionSnapshot } from '../../../lib/nameChange/dmvFlow';
 import { buildNameChangeEmployerExecutionSnapshot } from '../../../lib/nameChange/employerFlow';
@@ -394,6 +395,37 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   const dmvExecutionSnapshot = useMemo(() => buildNameChangeDmvExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
   const passportExecutionSnapshot = useMemo(() => buildNameChangePassportExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
   const employerExecutionSnapshot = useMemo(() => buildNameChangeEmployerExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
+  const executionSnapshots = useMemo(() => [
+    ssaExecutionSnapshot,
+    dmvExecutionSnapshot,
+    passportExecutionSnapshot,
+    employerExecutionSnapshot,
+    bankExecutionSnapshot,
+    insuranceExecutionSnapshot,
+    medicalExecutionSnapshot,
+    utilitiesExecutionSnapshot,
+    courtesyExecutionSnapshot,
+    voterExecutionSnapshot,
+    tsaExecutionSnapshot,
+    licenseExecutionSnapshot,
+  ], [
+    ssaExecutionSnapshot,
+    dmvExecutionSnapshot,
+    passportExecutionSnapshot,
+    employerExecutionSnapshot,
+    bankExecutionSnapshot,
+    insuranceExecutionSnapshot,
+    medicalExecutionSnapshot,
+    utilitiesExecutionSnapshot,
+    courtesyExecutionSnapshot,
+    voterExecutionSnapshot,
+    tsaExecutionSnapshot,
+    licenseExecutionSnapshot,
+  ]);
+  const documentRepairQueue = useMemo(
+    () => buildNameChangeDocumentRepairQueue(documentIntakeSnapshot, executionSnapshots),
+    [documentIntakeSnapshot, executionSnapshots],
+  );
   const reminderSummary = useMemo(() => summarizeNameChangeReminders(effectiveReminders), [effectiveReminders]);
   const reminderAttention = useMemo(() => deriveNameChangeReminderAttention(effectiveReminders, plan), [effectiveReminders, plan]);
   const reminderAttentionSummary = useMemo(() => summarizeNameChangeReminderAttention(reminderAttention, {
@@ -1178,6 +1210,48 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               <p className="mt-2 text-sm font-semibold text-text-primary">{documentIntakeSnapshot.summary.metadataGaps}</p>
             </div>
           </div>
+
+          {documentRepairQueue.length > 0 ? (
+            <div className="mt-4 rounded-xl border border-border-subtle p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h4 className="text-sm font-semibold text-text-primary">Document repair queue</h4>
+                  <p className="text-xs text-text-secondary">Highest-leverage artifact fixes based on current metadata gaps, extraction gaps, and field-level execution risk.</p>
+                </div>
+                <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+                  {documentRepairQueue.filter((item) => item.severity === 'blocking').length} blocking · {documentRepairQueue.filter((item) => item.severity === 'attention').length} attention
+                </span>
+              </div>
+
+              <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                {documentRepairQueue.slice(0, 6).map((item) => (
+                  <div key={item.kind} className="rounded-xl border border-border-subtle p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-text-primary">{item.label}</p>
+                        <p className="mt-1 text-xs text-text-secondary">score {item.score} · {item.required ? 'required' : 'supporting'} · {item.intakeStatus}</p>
+                      </div>
+                      <span className={`rounded-full px-2 py-1 text-xs ${item.severity === 'blocking' ? 'bg-danger/10 text-danger' : 'bg-warning/10 text-warning'}`}>
+                        {item.severity}
+                      </span>
+                    </div>
+
+                    <p className="mt-3 text-sm text-text-secondary">{item.impactSummary}</p>
+
+                    {item.metadataMissing.length > 0 ? (
+                      <p className="mt-2 text-xs text-text-secondary">Metadata missing: {item.metadataMissing.join(', ')}</p>
+                    ) : null}
+                    {item.missingExtractionFields.length > 0 ? (
+                      <p className="mt-2 text-xs text-text-secondary">Extraction missing: {item.missingExtractionFields.join(', ')}</p>
+                    ) : null}
+                    {item.impactedTargets.length > 0 ? (
+                      <p className="mt-2 text-xs text-text-secondary">Unblocks: {item.impactedTargets.join(', ')}</p>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           <div className="mt-4 space-y-3">
             {documents.length === 0 ? (
