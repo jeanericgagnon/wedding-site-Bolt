@@ -240,4 +240,44 @@ describe('name change requirements skeleton', () => {
       reason: 'Current guided execution slices are modeled for marriage-based name changes, but legal basis is court_order.',
     });
   });
+
+  it('requires a marriage certificate when the legal basis is marriage', () => {
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase(),
+      [
+        {
+          document_kind: 'court_order_name_change',
+          display_name: 'Court order',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+        },
+      ],
+      [],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'legal-proof-document')).toMatchObject({
+      status: 'missing',
+      reason: 'No marriage certificate is represented in intake yet for the modeled legal basis.',
+    });
+  });
+
+  it('requires a court order when the legal basis is court order', () => {
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase({ legal_basis: 'court_order' as never }),
+      [
+        {
+          document_kind: 'marriage_certificate',
+          display_name: 'Marriage certificate',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+        },
+      ],
+      [],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'legal-proof-document')).toMatchObject({
+      status: 'missing',
+      reason: 'No court-order proof is represented in intake yet for the modeled legal basis.',
+    });
+  });
 });
