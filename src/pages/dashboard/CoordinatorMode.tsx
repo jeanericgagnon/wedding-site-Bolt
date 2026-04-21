@@ -99,6 +99,7 @@ import { getCoordinatorStandingPromptCopy } from '../../lib/coordinatorStandingP
 import { getCoordinatorStandingPromptMode } from '../../lib/coordinatorStandingPromptMode';
 import { getCoordinatorStandingPromptSecondaryState } from '../../lib/coordinatorStandingPromptSecondaryState';
 import { getCoordinatorCommandBadgeTone } from '../../lib/coordinatorCommandBadgeTone';
+import { buildCoordinatorOpsSnapshot } from '../../lib/coordinatorOpsSnapshot';
 
 
 type AudienceOption = { value: string; label: string; count: number };
@@ -640,6 +641,27 @@ export const DashboardCoordinatorMode: React.FC = () => {
     [sortedGuests],
   );
   const checkInWatchCount = useMemo(() => guests.filter((guest) => getCoordinatorDoorStatus(guest) === 'watch').length, [guests]);
+  const opsSnapshotItems = useMemo(() => buildCoordinatorOpsSnapshot({
+    role: coordinatorRole,
+    reviewCount: checkInWatchCount,
+    nextArrivalName: nextArrivals[0]?.name ?? null,
+    liveEventName: liveEvent?.event_name ?? null,
+    upNextEventName: upNextEvent?.event_name ?? null,
+    openQnaCount: qnaCounts.open,
+    preferredAlertLabel: preferredAlertSuggestion?.label ?? null,
+    alertAligned: alertTargetCue.aligned,
+    canScheduleAlerts,
+  }), [
+    coordinatorRole,
+    checkInWatchCount,
+    nextArrivals,
+    liveEvent?.event_name,
+    upNextEvent?.event_name,
+    qnaCounts.open,
+    preferredAlertSuggestion?.label,
+    alertTargetCue.aligned,
+    canScheduleAlerts,
+  ]);
 
   const checkInQueue = useMemo(() => {
     const base = filterCoordinatorCheckInQueue(sortedGuests, checkInQuery, checkInFilter);
@@ -871,6 +893,44 @@ export const DashboardCoordinatorMode: React.FC = () => {
     clearCoordinatorTransientState();
     setPanelFocus('qna');
     setCommandSource(null);
+  };
+
+  const jumpToOpsSnapshotLane = (key: 'check-in' | 'timeline' | 'qna' | 'alerting') => {
+    if (key === 'check-in') {
+      focusCoordinatorCheckInLane();
+      if (checkInBoardTargetId) {
+        setCheckInReviewOnly(checkInWatchCount > 0);
+        setActiveGuestId(checkInBoardTargetId);
+      } else if (nextArrivals[0]) {
+        setCheckInFilter('arrivals');
+        setCheckInReviewOnly(false);
+        setActiveGuestId(nextArrivals[0].id);
+      }
+      return;
+    }
+
+    if (key === 'timeline') {
+      focusCoordinatorTimelineLane();
+      if (liveEventId) {
+        setActiveTimelineEventId(liveEventId);
+      } else if (upNextEventId) {
+        setActiveTimelineEventId(upNextEventId);
+      } else if (timelineBoardTargetId) {
+        setActiveTimelineEventId(timelineBoardTargetId);
+      }
+      return;
+    }
+
+    if (key === 'qna') {
+      focusCoordinatorQnaLane();
+      if (qnaBoardTargetId) setActiveQnaId(qnaBoardTargetId);
+      return;
+    }
+
+    focusCoordinatorAlertLane();
+    if (preferredAlertSuggestion && !alertTargetCue.aligned && canSendAlerts) {
+      setAlertForm((prev) => applyCoordinatorAlertSuggestion({ form: prev, suggestion: preferredAlertSuggestion }));
+    }
   };
 
   const sendDayOfAlert = async () => {
@@ -1609,6 +1669,28 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 )}
                 <span className="mx-1 text-[10px] text-text-tertiary">·</span>
                 <span className="text-[10px] text-text-secondary">{item.detail}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
+            {opsSnapshotItems.map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => jumpToOpsSnapshotLane(item.key)}
+                className={`rounded-xl border px-3 py-3 text-left transition hover:border-primary/35 hover:bg-primary/[0.04] ${item.tone === 'warning' ? 'border-amber-200 bg-amber-50/70' : item.tone === 'success' ? 'border-emerald-200 bg-emerald-50/70' : 'border-border/50 bg-surface-subtle/30'}`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="text-[11px] font-medium text-text-primary">{item.title}</p>
+                    <p className="mt-1 text-[11px] text-text-secondary">{item.detail}</p>
+                  </div>
+                  <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${item.locked ? 'border-border bg-white text-text-tertiary' : item.tone === 'warning' ? 'border-amber-200 bg-white text-amber-700' : item.tone === 'success' ? 'border-emerald-200 bg-white text-emerald-700' : 'border-primary/20 bg-white text-primary'}`}>
+                    {item.locked ? 'Read only' : item.tone === 'warning' ? 'Needs action' : item.tone === 'success' ? 'On track' : 'Ready'}
+                  </span>
+                </div>
+                <p className="mt-3 text-[10px] font-medium uppercase tracking-[0.12em] text-text-tertiary">{item.cta}</p>
               </button>
             ))}
           </div>
