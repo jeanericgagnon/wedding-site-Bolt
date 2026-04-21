@@ -299,6 +299,7 @@ export default function RSVP() {
     if (!token) {
       activeLookupRequestRef.current += 1;
       setTokenAutoLoading(false);
+      setSubmitting(false);
       setSearchValue('');
       setStep('search');
       setGuest(null);
@@ -325,6 +326,7 @@ export default function RSVP() {
     const requestId = activeLookupRequestRef.current + 1;
     activeLookupRequestRef.current = requestId;
     setTokenAutoLoading(true);
+    setSubmitting(false);
     setStep('search');
     setSearchValue(token);
     setGuest(null);
@@ -376,6 +378,7 @@ export default function RSVP() {
     const requestId = activeLookupRequestRef.current + 1;
     activeLookupRequestRef.current = requestId;
     setTokenAutoLoading(false);
+    setSubmitting(false);
     setLoading(true);
     setError('');
     setStep('search');
