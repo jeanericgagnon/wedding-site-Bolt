@@ -12,6 +12,7 @@ import { buildNameChangeDocumentIntakeSnapshot } from '../../../lib/nameChange/d
 import { buildNameChangeDocumentRepairQueue } from '../../../lib/nameChange/documentRepairQueue';
 import { buildNameChangeExtractionContractSnapshot } from '../../../lib/nameChange/extractionContract';
 import { buildNameChangeDmvExecutionSnapshot } from '../../../lib/nameChange/dmvFlow';
+import { matchesNameChangeDocumentKind } from '../../../lib/nameChange/documentKinds';
 import { buildNameChangeEmployerExecutionSnapshot } from '../../../lib/nameChange/employerFlow';
 import { getHighestPriorityNameChangeExecutionCard } from '../../../lib/nameChange/executionPrioritization';
 import { buildNameChangeInsuranceExecutionSnapshot } from '../../../lib/nameChange/insuranceFlow';
@@ -199,7 +200,7 @@ function matchesContractDocumentKind(
   actualKind: NameChangeDocumentInput['document_kind'],
   contractKind: NameChangeDocumentInput['document_kind'],
 ) {
-  return actualKind === contractKind || (contractKind === 'court_order' && actualKind === 'court_order_name_change');
+  return matchesNameChangeDocumentKind(actualKind, contractKind);
 }
 
 function findContractDocument(
@@ -223,7 +224,7 @@ function findContractExtractedField(
 }
 
 function ensureDocument(documents: NameChangeDocumentInput[], kind: NameChangeDocumentInput['document_kind'], label: string): NameChangeDocumentInput[] {
-  if (documents.some((document) => document.document_kind === kind)) return documents;
+  if (documents.some((document) => matchesNameChangeDocumentKind(document.document_kind, kind))) return documents;
   return [
     ...documents,
     createDraftNameChangeDocument(kind, label),
@@ -235,7 +236,7 @@ function updateDocument(
   kind: NameChangeDocumentInput['document_kind'],
   updates: Partial<NameChangeDocumentInput>,
 ): NameChangeDocumentInput[] {
-  return documents.map((document) => document.document_kind === kind
+  return documents.map((document) => matchesNameChangeDocumentKind(document.document_kind, kind)
     ? {
         ...document,
         ...updates,
