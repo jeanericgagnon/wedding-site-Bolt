@@ -5,6 +5,7 @@ import { Button } from '../../../components/ui/Button';
 import { buildNameChangeBankExecutionSnapshot } from '../../../lib/nameChange/bankFlow';
 import { buildNameChangeAutofillPrepSnapshot } from '../../../lib/nameChange/autofill';
 import { buildNameChangeActionFeed } from '../../../lib/nameChange/actionFeed';
+import { createDraftNameChangeDocument, upsertDraftNameChangeExtractedField } from '../../../lib/nameChange/intakeDraft';
 import { buildNameChangeCourtesyExecutionSnapshot } from '../../../lib/nameChange/courtesyFlow';
 import { NAME_CHANGE_DOCUMENT_CONTRACTS } from '../../../lib/nameChange/documentContract';
 import { buildNameChangeDocumentIntakeSnapshot } from '../../../lib/nameChange/documentContract';
@@ -221,42 +222,11 @@ function findContractExtractedField(
   return extractedFields.find((field) => !field.document_id && field.field_key === fieldKey);
 }
 
-function upsertExtractedField(
-  extractedFields: NameChangeExtractedFieldInput[],
-  fieldKey: NameChangeExtractedFieldInput['field_key'],
-  nextValue: string,
-): NameChangeExtractedFieldInput[] {
-  const rest = extractedFields.filter((field) => field.field_key !== fieldKey);
-  if (!nextValue.trim()) return rest;
-
-  return [
-    ...rest,
-    {
-      field_key: fieldKey,
-      field_label: extractionFieldLabels[fieldKey],
-      field_value_masked: nextValue,
-      source_type: 'manual',
-      is_verified: true,
-    },
-  ];
-}
-
 function ensureDocument(documents: NameChangeDocumentInput[], kind: NameChangeDocumentInput['document_kind'], label: string): NameChangeDocumentInput[] {
   if (documents.some((document) => document.document_kind === kind)) return documents;
   return [
     ...documents,
-    {
-      document_kind: kind,
-      display_name: label,
-      storage_mode: 'metadata_only',
-      intake_status: 'uploaded',
-      file_name_masked: `${kind.replace(/_/g, '-')}-•••.pdf`,
-      issuing_authority: null,
-      issued_on: null,
-      expires_on: null,
-      extraction_confidence: 0.92,
-      extracted_snapshot: null,
-    },
+    createDraftNameChangeDocument(kind, label),
   ];
 }
 
@@ -1629,7 +1599,13 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                             <input
                               className="w-full rounded-lg border border-border px-3 py-2"
                               value={current?.field_value_masked ?? ''}
-                              onChange={(e) => onExtractedFieldsChange(upsertExtractedField(extractedFields, fieldKey, e.target.value))}
+                              onChange={(e) => onExtractedFieldsChange(upsertDraftNameChangeExtractedField(
+                                extractedFields,
+                                contractDocument?.id,
+                                fieldKey,
+                                extractionFieldLabels[fieldKey],
+                                e.target.value,
+                              ))}
                               placeholder={extractionFieldPlaceholders[fieldKey] ?? 'Masked structured value'}
                             />
                           </label>

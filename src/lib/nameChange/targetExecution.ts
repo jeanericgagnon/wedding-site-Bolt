@@ -89,14 +89,15 @@ export function buildNameChangeTargetExecutionSnapshot(
 
     return null;
   };
+  const courtOrderNextAction = targetKey === 'courtOrder' ? buildCourtOrderNextAction() : null;
   const nextAction = firstBlockingFieldRisk
     ? {
         category: 'packet' as const,
         label: `Repair ${firstBlockingFieldRisk.label}`,
         detail: firstBlockingFieldRisk.reason,
       }
-    : targetKey === 'courtOrder' && buildCourtOrderNextAction()
-      ? buildCourtOrderNextAction()
+    : courtOrderNextAction
+      ? courtOrderNextAction
     : firstMissingDependency
       ? {
           category: firstMissingDependency.key.includes('support') || firstMissingDependency.key.includes('document') ? 'document' as const : 'dependency' as const,
