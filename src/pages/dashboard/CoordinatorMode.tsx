@@ -61,6 +61,7 @@ import { getCoordinatorAlertSummaryStateLabel } from '../../lib/coordinatorAlert
 import { getCoordinatorAlertSummaryTransitionLabel } from '../../lib/coordinatorAlertSummaryTransitionLabel';
 import { shouldResetCoordinatorSummaryFeedback } from '../../lib/coordinatorSummaryFeedbackReset';
 import { createCoordinatorSummaryFeedback, type CoordinatorSummaryFeedback } from '../../lib/coordinatorSummaryFeedback';
+import { getCoordinatorSummaryFeedbackTone } from '../../lib/coordinatorSummaryFeedbackTone';
 import { normalizeCoordinatorTimelineWorkState } from '../../lib/coordinatorTimelineWorkState';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
@@ -542,6 +543,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
     previousAligned: previousAlertAligned,
     currentAligned: alertTargetCue.aligned,
   }), [previousAlertAligned, alertTargetCue.aligned]);
+  const summaryFeedbackTone = useMemo(() => summaryFeedback ? getCoordinatorSummaryFeedbackTone(summaryFeedback.kind) : null, [summaryFeedback]);
 
   useEffect(() => {
     if (shouldResetCoordinatorAlertOverride({
@@ -1311,12 +1313,16 @@ export const DashboardCoordinatorMode: React.FC = () => {
           <div className="flex items-center justify-between gap-3 mb-2">
             <div>
               <p className="text-xs font-medium text-text-primary">Live command summary</p>
-              {commandJumpLabel && <p className="text-[11px] text-primary">{commandJumpLabel}</p>}
-              {summaryFeedback && <p className="text-[11px] text-primary">{summaryFeedback.label}</p>}
-                {!commandJumpLabel && !alertSummaryTransitionLabel && alertOverrideLabelState && (
-                  <p className="text-[11px] text-amber-700">{alertOverrideLabelState}</p>
-                )}
-                {!commandJumpLabel && manualOverrideLabel && (
+              {summaryFeedback && summaryFeedbackTone && (
+                <div className={`mt-1 inline-flex flex-wrap items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] ${summaryFeedbackTone.containerClassName}`}>
+                  <span className="rounded-full border border-current/15 bg-white/70 px-1.5 py-0.5 text-[9px] font-medium">{summaryFeedbackTone.badge}</span>
+                  <span>{summaryFeedback.label}</span>
+                </div>
+              )}
+              {!summaryFeedback && alertOverrideLabelState && (
+                <p className="text-[11px] text-amber-700">{alertOverrideLabelState}</p>
+              )}
+              {!summaryFeedback && manualOverrideLabel && (
                 <div className="flex flex-wrap items-center gap-2 text-[11px]">
                   <p className="text-amber-700">{manualOverrideLabel}</p>
                   {manualOverrideTargetLabel && <p className="text-amber-800/80">{manualOverrideTargetLabel}</p>}
