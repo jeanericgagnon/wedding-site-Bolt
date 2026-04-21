@@ -262,9 +262,15 @@ export default function RSVP() {
   const [applyToHousehold, setApplyToHousehold] = useState(true);
   const [selectedHouseholdGuestIds, setSelectedHouseholdGuestIds] = useState<string[]>([]);
 
+  const invalidateActiveSubmit = useCallback(() => {
+    activeSubmitRequestRef.current += 1;
+    setLoading(false);
+    setSubmitting(false);
+  }, []);
+
   const resetToSearch = useCallback((preserveToken = false) => {
     activeLookupRequestRef.current += 1;
-    activeSubmitRequestRef.current += 1;
+    invalidateActiveSubmit();
     setStep('search');
     setError('');
     setGuest(null);
@@ -284,7 +290,7 @@ export default function RSVP() {
     if (!preserveToken && searchParams.get('token')) {
       navigate('/rsvp', { replace: true });
     }
-  }, [navigate, searchParams]);
+  }, [invalidateActiveSubmit, navigate, searchParams]);
 
   const [formData, setFormData] = useState({
     attending: true,
@@ -380,8 +386,8 @@ export default function RSVP() {
     e.preventDefault();
     const requestId = activeLookupRequestRef.current + 1;
     activeLookupRequestRef.current = requestId;
+    invalidateActiveSubmit();
     setTokenAutoLoading(false);
-    setSubmitting(false);
     setLoading(true);
     setError('');
     setStep('search');
@@ -483,6 +489,7 @@ export default function RSVP() {
   const handlePickGuest = async (picked: Guest) => {
     const requestId = activeLookupRequestRef.current + 1;
     activeLookupRequestRef.current = requestId;
+    invalidateActiveSubmit();
     setLoading(true);
     setError('');
     try {
@@ -1246,6 +1253,7 @@ export default function RSVP() {
                   type="button"
                   variant="outline"
                   onClick={() => {
+                    invalidateActiveSubmit();
                     if (formStep > 1) {
                       setFormStep((formStep - 1) as 1 | 2 | 3);
                     } else {
@@ -1254,6 +1262,7 @@ export default function RSVP() {
                     }
                   }}
                   className="flex-1 min-h-[48px] text-base"
+                  disabled={loading}
                 >
                   {formStep > 1 ? 'Back' : 'Cancel'}
                 </Button>
