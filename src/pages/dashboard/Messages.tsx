@@ -2462,7 +2462,12 @@ export const DashboardMessages: React.FC = () => {
   }, [messages]);
 
   const retryCandidates = useMemo(
-    () => messages.filter((m) => m.status === 'failed' || m.status === 'partial').slice(0, 5),
+    () => messages.filter((m) => m.status === 'failed').slice(0, 5),
+    [messages],
+  );
+
+  const reviewCandidates = useMemo(
+    () => messages.filter((m) => m.status === 'partial').slice(0, 5),
     [messages],
   );
 
@@ -2527,8 +2532,9 @@ export const DashboardMessages: React.FC = () => {
     const failRate = targeted > 0 ? Math.round((failed / targeted) * 100) : 0;
     const skippedRate = targeted > 0 ? Math.round((skipped / targeted) * 100) : 0;
     const overdueScheduled = messages.filter((m) => m.status === 'scheduled' && isPastScheduledTime(m.scheduled_for)).length;
-    const retryBacklog = messages.filter((m) => m.status === 'failed' || m.status === 'partial').length;
-    return { successRate, failRate, skipped, skippedRate, overdueScheduled, retryBacklog };
+    const retryBacklog = messages.filter((m) => m.status === 'failed').length;
+    const reviewBacklog = messages.filter((m) => m.status === 'partial').length;
+    return { successRate, failRate, skipped, skippedRate, overdueScheduled, retryBacklog, reviewBacklog };
   }, [messages, deliveries]);
 
   const campaignThreads = useMemo(() => {
@@ -3649,7 +3655,7 @@ export const DashboardMessages: React.FC = () => {
               <div className="flex items-center justify-between mb-3 gap-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">Retry queue</p>
-                  <p className="mt-1 text-sm font-medium text-text-primary">Needs another try</p>
+                  <p className="mt-1 text-sm font-medium text-text-primary">Failed campaigns ready to retry</p>
                 </div>
                 <button onClick={() => { setHistoryStatusFilter('failed'); setHistoryChannelFilter('all'); }} className="text-xs text-primary">View failed</button>
               </div>
@@ -3671,6 +3677,37 @@ export const DashboardMessages: React.FC = () => {
                     ) : (
                       <span className="text-[11px] text-text-tertiary max-w-[220px] text-right">Review partial delivery before sending a follow-up so you do not duplicate messages.</span>
                     )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {reviewCandidates.length > 0 && (
+            <div className="rounded-2xl border border-accent/20 bg-accent/5 p-4 mb-4">
+              <div className="flex items-center justify-between mb-3 gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">Review queue</p>
+                  <p className="mt-1 text-sm font-medium text-text-primary">Partial campaigns that need follow-up judgment</p>
+                </div>
+                <button onClick={() => { setHistoryStatusFilter('partial'); setHistoryChannelFilter('all'); }} className="text-xs text-primary">View partial</button>
+              </div>
+              <div className="space-y-2">
+                {reviewCandidates.map((m) => (
+                  <div key={m.id} className="flex items-center justify-between gap-2 rounded-xl border border-accent/20 px-3 py-3 bg-white">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-text-primary truncate">{m.subject}</p>
+                      <p className="text-[11px] text-text-tertiary">{m.channel} · delivered {m.delivered_count ?? 0} · failed {m.failed_count ?? 0} · skipped {getSkippedCount(m, deliveries)}</p>
+                    </div>
+                    <div className="text-right">
+                      <button
+                        onClick={() => setViewingMessage(m)}
+                        className="text-xs px-2 py-1 rounded border border-border bg-white text-text-secondary"
+                      >
+                        Review
+                      </button>
+                      <p className="mt-1 text-[11px] text-text-tertiary max-w-[220px]">Do not retry in place. Review misses, then duplicate if you need a follow-up.</p>
+                    </div>
                   </div>
                 ))}
               </div>
