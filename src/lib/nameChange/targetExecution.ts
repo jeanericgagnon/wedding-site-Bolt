@@ -1,6 +1,7 @@
 import { buildNameChangeAutofillPrepSnapshot } from './autofill';
 import { evaluateNameChangeExecutionGates } from './executionGates';
 import { buildNameChangeExecutionSequenceSnapshot } from './executionSequence';
+import { buildNameChangeExtractionContractSnapshot } from './extractionContract';
 import { NAME_CHANGE_FORM_BUILDERS } from './formRegistry';
 import { buildNameChangeTargetChecklist } from './targetChecklist';
 import { NAME_CHANGE_EXECUTION_TARGETS } from './targets';
@@ -24,6 +25,7 @@ export function buildNameChangeTargetExecutionSnapshot(
   const autofill = buildNameChangeAutofillPrepSnapshot(profile, documents, extractedFields);
   const sequence = buildNameChangeExecutionSequenceSnapshot(targetKey, profile, documents, extractedFields, plan);
   const checklist = buildNameChangeTargetChecklist(target, profile, documents, extractedFields);
+  const extraction = buildNameChangeExtractionContractSnapshot(profile, documents, extractedFields);
   const formPayload = NAME_CHANGE_FORM_BUILDERS[target.formBuilderKey](profile, documents, extractedFields);
   const gates = evaluateNameChangeExecutionGates(sequence.dependencies, checklist, formPayload);
   const fieldRisks = formPayload.fields
@@ -60,6 +62,7 @@ export function buildNameChangeTargetExecutionSnapshot(
   const firstMissingChecklistItem = checklist.find((item) => item.status === 'missing');
   const blockingAttentionChecklistKeys = new Set(['canonical-extraction-alignment']);
   const firstBlockingAttentionChecklistItem = checklist.find((item) => item.status === 'attention' && blockingAttentionChecklistKeys.has(item.key));
+  const primaryCanonicalConflict = extraction.conflicts[0] ?? null;
   const firstAttentionChecklistItem = checklist.find((item) => item.status === 'attention');
   const buildCourtOrderNextAction = () => {
     const referenceExtractionDependency = sequence.dependencies.find((dependency) => dependency.key === 'court-order-reference-extraction' && dependency.status === 'missing');
@@ -115,8 +118,12 @@ export function buildNameChangeTargetExecutionSnapshot(
         : firstBlockingAttentionChecklistItem
           ? {
               category: firstBlockingAttentionChecklistItem.key.includes('alignment') ? 'document' as const : 'review' as const,
-              label: `${firstBlockingAttentionChecklistItem.key.includes('alignment') ? 'Unblock' : 'Review'} ${firstBlockingAttentionChecklistItem.label}`,
-              detail: firstBlockingAttentionChecklistItem.reason,
+              label: primaryCanonicalConflict
+                ? `Resolve ${primaryCanonicalConflict.documentKind.replace(/_/g, ' ')} conflict`
+                : `${firstBlockingAttentionChecklistItem.key.includes('alignment') ? 'Unblock' : 'Review'} ${firstBlockingAttentionChecklistItem.label}`,
+              detail: primaryCanonicalConflict
+                ? primaryCanonicalConflict.reason
+                : firstBlockingAttentionChecklistItem.reason,
             }
           : firstMissingFieldRisk
           ? {

@@ -741,7 +741,8 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.blockers).toContain('Structured case truth conflicts with extracted document values in 2 places: Current first name vs passport extraction, Target last name vs marriage certificate spouse surname.');
     expect(snapshot.nextAction).toMatchObject({
       category: 'document',
-      label: 'Unblock Canonical vs extracted values aligned',
+      label: 'Resolve current passport conflict',
+      detail: 'Current first name vs passport extraction disagree. Structured case says Alex, but extracted document value says Alicia.',
     });
   });
 });
