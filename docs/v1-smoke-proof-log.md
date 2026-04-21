@@ -256,6 +256,34 @@ Useful if stable, but should not distort the wedding-core launch decision.
 ## Proof notes from current inspection
 - Collaborator invite claim already enforces invited-email match in both the Accept Collaborator Invite UI flow and the `claim_collaborator_invite` RPC. That older gap should no longer be treated as an active v1 blocker.
 - The collaborator proof gap is now narrower and more concrete: role behavior and permission boundaries still need executed QA, not speculative trust-copy cleanup.
+
+## Canonical run order
+1. **Public site / launch path / trust surface**
+   - this is the first truth gate because it controls whether the product can even be shown honestly
+2. **Guests / RSVP ops**
+   - this is the operational spine and the highest-likelihood downstream drift source
+3. **Planner / collaborator access**
+   - this proves DayOf is not faking multi-role support
+4. **Coordinator / day-of**
+   - this proves the event-week story is useful instead of decorative
+5. **Comms center**
+6. **Seating**
+7. **Registry**
+
+## Evidence standard per slice
+For each slice, capture:
+- routes touched
+- role/account context used
+- test data or guest state used
+- exact pass/fail call
+- exact blocker if failed
+- whether the issue is P0, P1, or P2
+
+A slice does **not** count as passed because:
+- code looks right
+- build passes
+- demo mode looks polished
+- a doc says it should work
 - Concrete finish gap found and fixed: major collaborator-facing ops surfaces were still defaulting to `owner` until a local role override existed. Planning, Guests, Messages, and Coordinator Mode now bootstrap from the active site role first, then allow a saved per-surface override.
 - Concrete finish gap found and fixed: the dashboard shell knew the active-site role but still showed a too-broad owner-shaped navigation map. The shell now filters nav affordances by real role so viewers/coordinators do not get the wrong product shape presented up front.
 - Concrete finish gap found and fixed: collaborator-facing role selectors on Planning, Messages, and Coordinator Mode could still let non-owners locally impersonate a stronger role. Those selectors are now owner-only, and collaborators see their real role as read-through state instead.
