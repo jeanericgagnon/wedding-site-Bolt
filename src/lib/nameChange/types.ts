@@ -359,6 +359,8 @@ export interface NameChangeFormPayloadSnapshot {
   summary: {
     ready: number;
     missing: number;
+    trustedReady: number;
+    lowConfidence: number;
     extractedBacked: number;
   };
 }

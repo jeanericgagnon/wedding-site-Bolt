@@ -66,6 +66,11 @@ export function buildNameChangeFormPayloadSnapshot(
         const field = fields.find((item) => item.fieldKey === spec.fieldKey);
         return !field?.value;
       }).length,
+      trustedReady: requiredSpecs.filter((spec) => {
+        const field = fields.find((item) => item.fieldKey === spec.fieldKey);
+        return Boolean(field?.value) && field?.confidence !== 'low';
+      }).length,
+      lowConfidence: fields.filter((field) => Boolean(field.value) && field.confidence === 'low').length,
       extractedBacked: fields.filter((field) => field.source === 'extracted_field').length,
     },
   };

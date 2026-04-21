@@ -262,7 +262,7 @@ const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
           <p className="text-xs text-text-secondary">{payloadDescription}</p>
         </div>
         <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
-          {snapshot.formPayload.summary.ready} ready · {snapshot.formPayload.summary.missing} missing · {snapshot.formPayload.summary.extractedBacked} extracted-backed
+          {snapshot.formPayload.summary.ready} filled · {snapshot.formPayload.summary.trustedReady} trusted · {snapshot.formPayload.summary.lowConfidence} low-confidence · {snapshot.formPayload.summary.missing} missing
         </span>
       </div>
 

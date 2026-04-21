@@ -51,6 +51,8 @@ describe('name change shared form contract builder', () => {
     expect(snapshot.summary).toEqual({
       ready: 1,
       missing: 0,
+      trustedReady: 1,
+      lowConfidence: 0,
       extractedBacked: 0,
     });
   });
@@ -87,5 +89,42 @@ describe('name change shared form contract builder', () => {
       source: 'extracted_field',
     });
     expect(snapshot.summary.extractedBacked).toBe(1);
+    expect(snapshot.summary.trustedReady).toBe(0);
+    expect(snapshot.summary.lowConfidence).toBe(1);
+  });
+
+  it('counts metadata-backed extracted values as trusted ready', () => {
+    const definition: NameChangeFormContractDefinition = {
+      formCode: 'TEST',
+      label: 'Test form',
+      fieldSpecs: [
+        { fieldKey: 'new.last', label: 'New last name', sourceTargetField: 'applicant.target_last_name' },
+      ],
+    };
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'San Diego County Clerk',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        field_key: 'spouse_last_name',
+        field_label: 'Spouse last name',
+        field_value_masked: 'Jordan-Smith',
+        source_type: 'manual',
+        is_verified: true,
+      },
+    ];
+
+    const snapshot = buildNameChangeFormPayloadSnapshot(definition, makeCase(), documents, extractedFields);
+    expect(snapshot.summary.trustedReady).toBe(1);
+    expect(snapshot.summary.lowConfidence).toBe(0);
   });
 });
