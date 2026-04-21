@@ -409,11 +409,20 @@ export const SiteView: React.FC = () => {
 
   useEffect(() => {
     const loadSite = async () => {
+      const clearSiteState = () => {
+        setWeddingSiteId(null);
+        setWeddingData(null);
+        setLayoutConfig(null);
+        setBuilderSections(null);
+        setUseNewRenderer(false);
+        setHideFromSearch(false);
+      };
+
       setPrivacyGate('loading');
       setPasswordGateError('');
       setIsComingSoon(false);
       setError(null);
-      setWeddingSiteId(null);
+      clearSiteState();
 
       if (!resolvedSlug) {
         setError('Invalid site URL');
@@ -575,6 +584,7 @@ export const SiteView: React.FC = () => {
           setLayoutConfig(lConfig);
         }
       } catch {
+        clearSiteState();
         setError('Failed to load wedding site');
       } finally {
         setLoading(false);
