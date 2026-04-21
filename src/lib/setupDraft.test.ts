@@ -5,6 +5,7 @@ import {
   SELECTED_TEMPLATE_KEY,
   SETUP_DRAFT_KEY,
   setupDraftProgress,
+  writeSetupDraft,
 } from './setupDraft';
 
 describe('setupDraft', () => {
@@ -31,5 +32,17 @@ describe('setupDraft', () => {
       weddingCity: 'San Diego',
       guestEstimateBand: '50to100',
     })).toBe(100);
+  });
+
+  it('clears stale selected template storage when the draft no longer has one', () => {
+    localStorage.setItem(SELECTED_TEMPLATE_KEY, 'editorial-minimal');
+
+    writeSetupDraft({
+      ...emptySetupDraft,
+      selectedTemplateId: '',
+    });
+
+    expect(localStorage.getItem(SELECTED_TEMPLATE_KEY)).toBeNull();
+    expect(readSetupDraft().selectedTemplateId).toBe(emptySetupDraft.selectedTemplateId);
   });
 });

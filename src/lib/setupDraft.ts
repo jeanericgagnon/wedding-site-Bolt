@@ -48,7 +48,7 @@ export const readSetupDraft = (): SetupDraft => {
       weddingRegion: parsed.weddingRegion ?? '',
       guestEstimateBand: (parsed.guestEstimateBand as SetupDraft['guestEstimateBand']) ?? '',
       stylePreferences: Array.isArray(parsed.stylePreferences) ? parsed.stylePreferences : [],
-      selectedTemplateId: parsed.selectedTemplateId ?? selectedTemplate,
+      selectedTemplateId: parsed.selectedTemplateId || selectedTemplate,
     };
   } catch {
     return { ...emptySetupDraft, selectedTemplateId: selectedTemplate };
@@ -59,6 +59,8 @@ export const writeSetupDraft = (draft: SetupDraft) => {
   localStorage.setItem(SETUP_DRAFT_KEY, JSON.stringify(draft));
   if (draft.selectedTemplateId) {
     localStorage.setItem(SELECTED_TEMPLATE_KEY, draft.selectedTemplateId);
+  } else {
+    localStorage.removeItem(SELECTED_TEMPLATE_KEY);
   }
 };
 
