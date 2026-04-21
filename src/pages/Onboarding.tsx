@@ -699,7 +699,7 @@ export const Onboarding: React.FC = () => {
           Let's create your wedding site
         </h1>
         <p className="text-lg text-text-secondary">
-          Choose how you'd like to get started
+          Choose the setup path that gets you to a solid first draft fastest
         </p>
         {typeof window !== 'undefined' && window.localStorage.getItem(ONBOARDING_STORAGE_KEY) && (
           <p className="mt-3 text-sm text-primary">You have a saved draft here, so you can pick up where you left off.</p>
@@ -714,16 +714,16 @@ export const Onboarding: React.FC = () => {
                 Quick Setup
               </h2>
               <p className="text-text-secondary mb-6">
-                Answer a few questions and we'll build your site for you. Publish in under 10 minutes.
+                Answer a few questions and we will generate a strong starting draft. You can keep refining it before you publish.
               </p>
               <ul className="space-y-3 mb-8">
                 <li className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-success mt-0.5 flex-shrink-0" aria-hidden="true" />
-                  <span className="text-text-secondary">Auto-populate all sections</span>
+                  <span className="text-text-secondary">Pre-fill the main site sections from your answers</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-success mt-0.5 flex-shrink-0" aria-hidden="true" />
-                  <span className="text-text-secondary">Smart defaults based on your answers</span>
+                  <span className="text-text-secondary">Use guided defaults instead of starting from a blank page</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-success mt-0.5 flex-shrink-0" aria-hidden="true" />
@@ -736,7 +736,7 @@ export const Onboarding: React.FC = () => {
                 Start guided setup
               </Button>
               <Button variant="outline" size="lg" fullWidth onClick={handleOneClickStarter} disabled={loading}>
-                {loading ? 'Creating starter site...' : 'One-click starter (fastest)'}
+                {loading ? 'Creating starter site...' : 'Starter draft only (fastest)'}
               </Button>
             </div>
           </div>
@@ -749,7 +749,7 @@ export const Onboarding: React.FC = () => {
                 Manual Setup
               </h2>
               <p className="text-text-secondary mb-6">
-                Jump straight to the builder and customize everything from scratch. Full control.
+                Jump straight to the builder and shape the site yourself from the beginning.
               </p>
               <ul className="space-y-3 mb-8">
                 <li className="flex items-start gap-3">
