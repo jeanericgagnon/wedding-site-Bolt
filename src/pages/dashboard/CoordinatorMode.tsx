@@ -690,6 +690,14 @@ export const DashboardCoordinatorMode: React.FC = () => {
     [alertLog, alertChannelFilter, alertTimingFilter],
   );
 
+  const clearCoordinatorTransientState = () => {
+    setNeutralFocusReason(null);
+    setRealignmentLabel(null);
+    setCommandJumpLabel(null);
+    setCommandJumpPanelFocus(null);
+    setCommandJumpTargetId(null);
+  };
+
   const sendDayOfAlert = async () => {
     if (!siteId) return;
     if (!canSendAlerts) {
@@ -757,6 +765,9 @@ export const DashboardCoordinatorMode: React.FC = () => {
     const q = qnaInput.trim();
     if (!q) return;
 
+    clearCoordinatorTransientState();
+    setPanelFocus('qna');
+
     if (!isDemoMode && siteId) {
       const { data, error } = await supabase
         .from('guest_qna_items')
@@ -782,6 +793,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
       toast('Your collaborator role cannot escalate door issues into guest Q&A.', 'info');
       return;
     }
+    clearCoordinatorTransientState();
     setQnaInput(buildCoordinatorDoorEscalationPrompt(guest));
     setCommandSource('escalation');
     setPanelFocus('qna');
@@ -795,10 +807,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
   const revisitNeutralFocus = () => {
     const target = resolveCoordinatorNeutralFocusTarget(panelFocus);
-    setCommandJumpLabel(null);
-    setCommandJumpPanelFocus(null);
-    setCommandJumpTargetId(null);
-    setRealignmentLabel(null);
+    clearCoordinatorTransientState();
     setNeutralFocusReason(getCoordinatorNeutralFocusReason(target.panelFocus));
     setPanelFocus(target.panelFocus);
     setCheckInReviewOnly(target.reviewOnly);
@@ -813,8 +822,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
   const jumpToCommandSummaryItem = (label: 'Check-in' | 'Timeline' | 'Q&A' | 'Alerting') => {
     const target = getCoordinatorCommandSummaryTarget(label);
-    setNeutralFocusReason(null);
-    setRealignmentLabel(null);
+    clearCoordinatorTransientState();
     setPanelFocus(target.panelFocus);
     setCheckInReviewOnly(target.reviewOnly);
     setCommandJumpLabel(getCoordinatorCommandJumpLabel(label));
@@ -878,11 +886,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
 
   const returnToBoardTarget = () => {
-    setCommandJumpLabel(null);
-    setCommandJumpPanelFocus(null);
-    setCommandJumpTargetId(null);
-    setRealignmentLabel(null);
-    setNeutralFocusReason(null);
+    clearCoordinatorTransientState();
     if (panelFocus === 'check-in' && checkInBoardTargetId) {
       setActiveGuestId(checkInBoardTargetId);
       setCheckInFilter('arrivals');
@@ -975,11 +979,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
   const runPrimaryAction = () => {
     const target = resolveCoordinatorPrimaryActionTarget(primaryAction);
-    setNeutralFocusReason(null);
-    setRealignmentLabel(null);
-    setCommandJumpLabel(null);
-    setCommandJumpPanelFocus(null);
-    setCommandJumpTargetId(null);
+    clearCoordinatorTransientState();
     if (target.panelFocus === 'check-in') {
       setCommandSource('primary-action');
       setCheckInFilter('arrivals');
@@ -1006,8 +1006,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
   const runTimelineAction = (eventId: string, nextState: TimelineState | null) => {
     if (!nextState || !canEditTimeline) return;
-    setNeutralFocusReason(null);
-    setRealignmentLabel(null);
+    clearCoordinatorTransientState();
     setTimelineState((prev) => setCoordinatorEventTimelineState(prev, eventId, nextState));
     setActiveTimelineEventId(eventId);
     const suggestedIntent = resolveCoordinatorTimelineAlertIntent(alertSuggestions, eventId);
@@ -1023,11 +1022,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
   const runCorrectionCue = (cue: (typeof correctionCues)[number]) => {
     const target = resolveCoordinatorCorrectionCueTarget(cue);
-    setNeutralFocusReason(null);
-    setRealignmentLabel(null);
-    setCommandJumpLabel(null);
-    setCommandJumpPanelFocus(null);
-    setCommandJumpTargetId(null);
+    clearCoordinatorTransientState();
     setCommandSource('correction');
     setPanelFocus(target.panelFocus);
     setCheckInReviewOnly(target.reviewOnly);
@@ -1048,6 +1043,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
       toast('Your collaborator role cannot edit guest questions here.', 'info');
       return;
     }
+    clearCoordinatorTransientState();
+    setPanelFocus('qna');
     const draftAnswer = qnaDraftAnswers[id] ?? qnaItems.find((item) => item.id === id)?.answer ?? '';
     const nextItems = updateCoordinatorQnaItem(qnaItems, id, draftAnswer);
     const nextItem = nextItems.find((item) => item.id === id);
@@ -1123,11 +1120,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     const focus = resolveCoordinatorQueueFocus(item.key);
                     const nextPanelFocus = resolveCoordinatorPanelFocus(item.key);
                     const timelineTarget = resolveCoordinatorEscalationTimelineTarget({ escalationKey: item.key, upNextEvent });
-                    setNeutralFocusReason(null);
-                    setRealignmentLabel(null);
-                    setCommandJumpLabel(null);
-                    setCommandJumpPanelFocus(null);
-                    setCommandJumpTargetId(null);
+                    clearCoordinatorTransientState();
                     if (item.key === 'open-qna') setActiveQnaId(getFirstOpenCoordinatorQnaId(qnaItems));
                     setCommandSource('escalation');
                     setCheckInFilter(focus.filter);
@@ -1304,7 +1297,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 />
                 <select
                   value={checkInFilter}
-                  onChange={(e) => { setCheckInFilter(e.target.value as CoordinatorCheckInFilter); setCheckInReviewOnly(false); setPanelFocus('check-in'); }}
+                  onChange={(e) => { clearCoordinatorTransientState(); setCheckInFilter(e.target.value as CoordinatorCheckInFilter); setCheckInReviewOnly(false); setPanelFocus('check-in'); }}
                   className="sm:w-40 text-xs rounded-md border border-border bg-white px-2 py-2 text-text-secondary"
                 >
                   <option value="arrivals">Arrivals</option>
@@ -1347,7 +1340,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                         </button>
                       )}
                       <button
-                        onClick={() => { setActiveGuestId(g.id); canCheckIn && void toggleCheckIn(g); }}
+                        onClick={() => { clearCoordinatorTransientState(); setPanelFocus('check-in'); setActiveGuestId(g.id); canCheckIn && void toggleCheckIn(g); }}
                         disabled={!canCheckIn || doorStatus === 'watch'}
                         className={`px-3 py-1.5 text-xs rounded-md border disabled:opacity-40 ${g.checked_in_at ? 'border-success/40 text-success bg-success/5' : doorStatus === 'watch' ? 'border-amber-200 text-amber-700 bg-amber-50' : 'border-border text-text-secondary bg-white'}`}
                       >
@@ -1685,13 +1678,13 @@ export const DashboardCoordinatorMode: React.FC = () => {
                       </div>
                       <Textarea
                         value={qnaDraftAnswers[item.id] ?? item.answer ?? ''}
-                        onChange={(e) => { setQnaDraftAnswers((prev) => ({ ...prev, [item.id]: e.target.value })); setActiveQnaId(item.id); }}
+                        onChange={(e) => { clearCoordinatorTransientState(); setPanelFocus('qna'); setQnaDraftAnswers((prev) => ({ ...prev, [item.id]: e.target.value })); setActiveQnaId(item.id); }}
                         rows={2}
                         placeholder="Add the answer the coordinator should use"
                       />
                       <div className="flex justify-end">
                         <button
-                          onClick={() => { setActiveQnaId(item.id); void saveQnaAnswer(item.id); }}
+                          onClick={() => { clearCoordinatorTransientState(); setPanelFocus('qna'); setActiveQnaId(item.id); void saveQnaAnswer(item.id); }}
                           className="px-2.5 py-1 rounded border border-border bg-white text-text-secondary disabled:opacity-40"
                         >
                           {(qnaDraftAnswers[item.id] ?? item.answer ?? '').trim() ? 'Save answer' : 'Mark unresolved'}
