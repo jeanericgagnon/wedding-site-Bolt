@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { NameChangeCaseInput, NameChangeCaseRecord, NameChangeDocumentInput, NameChangeExtractedFieldInput } from '../../../lib/nameChange/types';
+import type { NameChangeCaseInput, NameChangeCaseRecord, NameChangeDocumentInput, NameChangeDocumentRecord, NameChangeExtractedFieldInput } from '../../../lib/nameChange/types';
 import {
   annotateNameChangePlanStepsFromReminderChanges,
   appendNameChangeExecutionActivity,
@@ -14,6 +14,7 @@ import {
   normalizeNameChangeCaseInput,
   normalizeNameChangeDocuments,
   normalizeNameChangeExtractedFields,
+  remapNameChangeExtractedFieldsToPersistedDocuments,
 } from './nameChangeService';
 
 function makeCase(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseInput {
@@ -124,6 +125,104 @@ describe('nameChangeService normalization', () => {
         source_type: 'manual',
         is_verified: true,
       },
+    ]);
+  });
+
+  it('remaps extracted field document links onto freshly persisted documents', () => {
+    const sourceDocuments: NameChangeDocumentInput[] = [
+      {
+        id: 'temp-marriage',
+        document_kind: 'marriage_certificate',
+        display_name: 'Marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        id: 'temp-passport',
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+    const persistedDocuments: NameChangeDocumentRecord[] = [
+      {
+        id: 'db-marriage',
+        name_change_case_id: 'case-1',
+        document_kind: 'marriage_certificate',
+        display_name: 'Marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: null,
+        issuing_authority: null,
+        issued_on: null,
+        expires_on: null,
+        extraction_confidence: null,
+        extracted_snapshot: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      {
+        id: 'db-passport',
+        name_change_case_id: 'case-1',
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+        file_name_masked: null,
+        issuing_authority: null,
+        issued_on: null,
+        expires_on: null,
+        extraction_confidence: null,
+        extracted_snapshot: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+    ];
+
+    expect(remapNameChangeExtractedFieldsToPersistedDocuments(sourceDocuments, persistedDocuments, [
+      {
+        document_id: 'temp-marriage',
+        field_key: 'spouse_last_name',
+        field_label: 'Spouse last name',
+        field_value_masked: 'Jordan',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'temp-passport',
+        field_key: 'issuance_date',
+        field_label: 'Passport issue date',
+        field_value_masked: '2024-06-01',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        field_key: 'county',
+        field_label: 'County',
+        field_value_masked: 'San Diego',
+        source_type: 'manual',
+        is_verified: true,
+      },
+    ])).toEqual([
+      expect.objectContaining({ document_id: 'db-marriage', field_key: 'spouse_last_name' }),
+      expect.objectContaining({ document_id: 'db-passport', field_key: 'issuance_date' }),
+      expect.objectContaining({ document_id: null, field_key: 'county' }),
+    ]);
+  });
+
+  it('drops stale document links when a source document can no longer be matched', () => {
+    expect(remapNameChangeExtractedFieldsToPersistedDocuments([], [], [
+      {
+        document_id: 'missing-doc',
+        field_key: 'spouse_last_name',
+        field_label: 'Spouse last name',
+        field_value_masked: 'Jordan',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ])).toEqual([
+      expect.objectContaining({ document_id: null, field_key: 'spouse_last_name' }),
     ]);
   });
 

@@ -803,11 +803,40 @@ export async function replaceNameChangeDocuments(caseId: string, documents: Name
 
   const { data, error } = await supabase
     .from('name_change_documents')
-    .insert(normalizedDocuments.map((document) => ({ ...document, name_change_case_id: caseId })))
+    .insert(normalizedDocuments.map(({ id: _id, ...document }) => ({ ...document, name_change_case_id: caseId })))
     .select();
 
   if (error) throw error;
   return (data as NameChangeDocumentRecord[] | null) ?? [];
+}
+
+export function remapNameChangeExtractedFieldsToPersistedDocuments(
+  sourceDocuments: NameChangeDocumentInput[],
+  persistedDocuments: NameChangeDocumentRecord[],
+  extractedFields: NameChangeExtractedFieldInput[],
+): NameChangeExtractedFieldInput[] {
+  const sourceDocumentKindById = new Map(
+    sourceDocuments
+      .filter((document): document is NameChangeDocumentInput & { id: string } => Boolean(document.id))
+      .map((document) => [document.id, document.document_kind]),
+  );
+  const persistedDocumentIdByKind = new Map(
+    persistedDocuments.map((document) => [document.document_kind, document.id]),
+  );
+
+  return extractedFields.map((field) => {
+    if (!field.document_id) return { ...field, document_id: null };
+
+    const sourceKind = sourceDocumentKindById.get(field.document_id)
+      ?? sourceDocuments.find((document) => document.document_kind === field.document_id)?.document_kind
+      ?? null;
+    if (!sourceKind) return { ...field, document_id: null };
+
+    return {
+      ...field,
+      document_id: persistedDocumentIdByKind.get(sourceKind) ?? null,
+    };
+  });
 }
 
 export async function replaceNameChangeExtractedFields(caseId: string, fields: NameChangeExtractedFieldInput[]): Promise<NameChangeExtractedFieldRecord[]> {
@@ -899,8 +928,13 @@ export async function saveNameChangeWorkspace(
     latest_plan_summary: plan.summary as unknown as Record<string, unknown>,
   });
 
-  await replaceNameChangeDocuments(caseRecord.id, normalizedDocuments);
-  await replaceNameChangeExtractedFields(caseRecord.id, normalizedExtractedFields);
+  const persistedDocuments = await replaceNameChangeDocuments(caseRecord.id, normalizedDocuments);
+  const remappedExtractedFields = remapNameChangeExtractedFieldsToPersistedDocuments(
+    normalizedDocuments,
+    persistedDocuments,
+    normalizedExtractedFields,
+  );
+  await replaceNameChangeExtractedFields(caseRecord.id, remappedExtractedFields);
   await replaceNameChangeReminders(caseRecord.id, workspace.reminders);
   await createNameChangePlanSnapshot(caseRecord.id, plan);
 
