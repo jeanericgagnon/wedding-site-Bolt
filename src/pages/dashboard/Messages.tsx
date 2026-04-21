@@ -926,6 +926,7 @@ export const DashboardMessages: React.FC = () => {
   const [processingScheduled, setProcessingScheduled] = useState(false);
   const [savedTemplates, setSavedTemplates] = useState<SavedComposerTemplate[]>([]);
   const [retryingMessageId, setRetryingMessageId] = useState<string | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [showRecipientPreview, setShowRecipientPreview] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [viewingMessage, setViewingMessage] = useState<Message | null>(null);
@@ -1438,9 +1439,10 @@ export const DashboardMessages: React.FC = () => {
       };
 
       let inserted: { id: string } | null = null;
+      const isEditingExistingMessage = !!editingMessageId;
 
       if (isDemoMode) {
-        inserted = { id: `demo-msg-${Date.now()}` };
+        inserted = { id: editingMessageId ?? `demo-msg-${Date.now()}` };
         const demoMessage: Message = {
           id: inserted.id,
           subject: normalizedSubject,
@@ -1455,49 +1457,84 @@ export const DashboardMessages: React.FC = () => {
           delivered_count: status === 'queued' ? recipientCount : 0,
           failed_count: 0,
         };
-        setMessages(prev => [demoMessage, ...prev]);
+        setMessages(prev => {
+          if (!isEditingExistingMessage) return [demoMessage, ...prev];
+          return prev.map((item) => (item.id === inserted!.id ? demoMessage : item));
+        });
       } else {
-        // Write with a minimal stable payload first (resilient to schema drift),
-        // then best-effort patch extended analytics columns.
-        const { data, error } = await supabase
-          .from('messages')
-          .insert([{
-            wedding_site_id: weddingSite.id,
-            subject: normalizedSubject,
-            body: formData.body,
-            channel: formData.channel,
-            status,
-            scheduled_for: scheduledFor,
-            sent_at: null,
-          }])
-          .select('id')
-          .single();
+        if (isEditingExistingMessage) {
+          inserted = { id: editingMessageId };
 
-        if (error) throw error;
-        inserted = data;
+          const { error } = await supabase
+            .from('messages')
+            .update({
+              subject: normalizedSubject,
+              body: formData.body,
+              channel: formData.channel,
+              status,
+              scheduled_for: scheduledFor,
+              sent_at: null,
+              delivered_count: status === 'queued' ? 0 : null,
+              failed_count: status === 'queued' ? 0 : null,
+              sending_started_at: null,
+              sending_finished_at: null,
+            })
+            .eq('id', editingMessageId);
 
-        // Non-blocking enrichment for optional columns.
-        void supabase
-          .from('messages')
-          .update({
-            audience_filter: formData.audience,
-            recipient_count: totalAudienceCount,
-            recipient_filter: recipientMeta,
-          })
-          .eq('id', inserted.id);
+          if (error) throw error;
+
+          void supabase
+            .from('messages')
+            .update({
+              audience_filter: formData.audience,
+              recipient_count: totalAudienceCount,
+              recipient_filter: recipientMeta,
+            })
+            .eq('id', editingMessageId);
+        } else {
+          // Write with a minimal stable payload first (resilient to schema drift),
+          // then best-effort patch extended analytics columns.
+          const { data, error } = await supabase
+            .from('messages')
+            .insert([{
+              wedding_site_id: weddingSite.id,
+              subject: normalizedSubject,
+              body: formData.body,
+              channel: formData.channel,
+              status,
+              scheduled_for: scheduledFor,
+              sent_at: null,
+            }])
+            .select('id')
+            .single();
+
+          if (error) throw error;
+          inserted = data;
+
+          // Non-blocking enrichment for optional columns.
+          void supabase
+            .from('messages')
+            .update({
+              audience_filter: formData.audience,
+              recipient_count: totalAudienceCount,
+              recipient_filter: recipientMeta,
+            })
+            .eq('id', inserted.id);
+        }
       }
 
       setShowRecipientPreview(false);
+      setEditingMessageId(null);
       setFormData({ campaignName: '', templateKey: 'blank', subject: '', body: '', audience: 'all', channel: formData.channel, scheduleType: 'now', scheduleDate: '', scheduleTime: '' });
 
       if (saveAsDraft) {
-        toast('Saved as draft', 'info');
+        toast(isEditingExistingMessage ? 'Draft updated' : 'Saved as draft', 'info');
         await fetchMessages();
         return;
       }
 
       if (isScheduled) {
-        toast(`Scheduled for ${new Date(scheduledFor!).toLocaleString()} — ${recipientCount} recipient${recipientCount !== 1 ? 's' : ''}`, 'info');
+        toast(`${isEditingExistingMessage ? 'Updated' : 'Scheduled'} for ${new Date(scheduledFor!).toLocaleString()} — ${recipientCount} recipient${recipientCount !== 1 ? 's' : ''}`, 'info');
         await fetchMessages();
         return;
       }
@@ -1505,9 +1542,9 @@ export const DashboardMessages: React.FC = () => {
       if (isSendNow && inserted?.id) {
         if (isDemoMode) {
           if (skippedRecipientCount > 0) {
-            toast(`Delivered ${recipientCount} • skipped ${skippedRecipientCount} (demo)`, 'info');
+            toast(`${isEditingExistingMessage ? 'Updated and delivered' : 'Delivered'} ${recipientCount} • skipped ${skippedRecipientCount} (demo)`, 'info');
           } else {
-            toast(`Delivered to ${recipientCount} guest${recipientCount !== 1 ? 's' : ''} (demo)`, 'success');
+            toast(`${isEditingExistingMessage ? 'Updated and delivered' : 'Delivered'} to ${recipientCount} guest${recipientCount !== 1 ? 's' : ''} (demo)`, 'success');
           }
           return;
         }
@@ -1550,6 +1587,7 @@ export const DashboardMessages: React.FC = () => {
     const scheduleDate = scheduledAt ? `${scheduledAt.getFullYear()}-${String(scheduledAt.getMonth() + 1).padStart(2, '0')}-${String(scheduledAt.getDate()).padStart(2, '0')}` : '';
     const scheduleTime = scheduledAt ? `${String(scheduledAt.getHours()).padStart(2, '0')}:${String(scheduledAt.getMinutes()).padStart(2, '0')}` : '';
 
+    setEditingMessageId(mode === 'edit' ? message.id : null);
     setFormData({
       campaignName: mode === 'duplicate'
         ? `Copy of ${getCampaignName(message) ?? getCampaignTypeLabel(message) ?? message.subject}`
@@ -2066,6 +2104,7 @@ export const DashboardMessages: React.FC = () => {
   const selectedAudience = audienceOptions.find(opt => opt.value === formData.audience);
 
   function applyComposerTemplate(templateKey: MessageTemplateKey, overrides?: Partial<typeof formData>) {
+    setEditingMessageId(null);
     const template = COMPOSER_TEMPLATES.find((tpl) => tpl.key === templateKey) ?? COMPOSER_TEMPLATES[0];
     const nextAudienceValue = overrides?.audience ?? formData.audience;
     const nextAudience = audienceOptions.find((opt) => opt.value === nextAudienceValue) ?? null;
@@ -2088,6 +2127,7 @@ export const DashboardMessages: React.FC = () => {
   }
 
   function applySavedTemplate(template: SavedComposerTemplate) {
+    setEditingMessageId(null);
     const savedScheduleIsUsable = isSavedTemplateScheduleUsable(template);
 
     setFormData((prev) => ({
