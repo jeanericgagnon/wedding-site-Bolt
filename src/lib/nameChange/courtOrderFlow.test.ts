@@ -36,7 +36,7 @@ function makeCase(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseI
 }
 
 describe('court-order path review execution snapshot', () => {
-  it('is ready when court-order proof and identity coverage are present', () => {
+  it('stays in attention when court-order proof and identity coverage are present', () => {
     const documents: NameChangeDocumentInput[] = [
       {
         document_kind: 'court_order_name_change',
@@ -52,9 +52,17 @@ describe('court-order path review execution snapshot', () => {
       },
     ];
 
-    const snapshot = buildNameChangeCourtOrderExecutionSnapshot(makeCase(), documents, []);
+    const snapshot = buildNameChangeCourtOrderExecutionSnapshot(makeCase(), documents, [
+      {
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: '24-CV-1188',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ]);
     expect(snapshot.recommendedFormCode).toBe('COURT-ORDER-PATH-REVIEW');
-    expect(snapshot.ready).toBe(true);
+    expect(snapshot.ready).toBe(false);
     expect(snapshot.checklist.find((item) => item.key === 'court-order-path-readiness')).toMatchObject({ status: 'attention' });
   });
 
@@ -106,7 +114,7 @@ describe('court-order path review execution snapshot', () => {
     expect(snapshot.blockers).toContain('Court-order proof is in intake, but no verified case-number or signed-date extraction is represented yet.');
   });
 
-  it('is ready once court-order reference extraction is represented', () => {
+  it('still stays in attention once court-order reference extraction is represented', () => {
     const documents: NameChangeDocumentInput[] = [
       {
         document_kind: 'court_order_name_change',
@@ -131,7 +139,7 @@ describe('court-order path review execution snapshot', () => {
         is_verified: true,
       },
     ]);
-    expect(snapshot.ready).toBe(true);
+    expect(snapshot.ready).toBe(false);
     expect(snapshot.checklist.find((item) => item.key === 'court-order-reference-extraction')).toMatchObject({ status: 'ready' });
   });
 

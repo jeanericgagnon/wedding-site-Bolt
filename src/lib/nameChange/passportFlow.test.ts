@@ -187,4 +187,20 @@ describe('name change passport execution snapshot', () => {
     expect(snapshot.ready).toBe(true);
     expect(snapshot.checklist.find((item) => item.key === 'expedited-travel-sequencing')).toMatchObject({ status: 'attention' });
   });
+
+  it('blocks passport execution when out-of-state marriage handling has no certificate intake support', () => {
+    const profile = makeCase({ marriage_state: 'Nevada' });
+    const basePlan = buildNameChangePlan({ profile, documents: [], extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-ssa'
+        ? { ...step, executionStatus: 'in_progress' as const }
+        : step),
+    };
+
+    const snapshot = buildNameChangePassportExecutionSnapshot(profile, [], [], plan);
+    expect(snapshot.ready).toBe(false);
+    expect(snapshot.blockers).toContain('Marriage occurred in Nevada, but no marriage certificate is represented in intake for out-of-state certificate handling.');
+    expect(snapshot.checklist.find((item) => item.key === 'marriage-jurisdiction-alignment')).toMatchObject({ status: 'missing' });
+  });
 });

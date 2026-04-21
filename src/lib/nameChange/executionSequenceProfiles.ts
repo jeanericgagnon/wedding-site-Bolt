@@ -11,6 +11,9 @@ type RequirementBag = {
   legalProof: NameChangeRequirementResult | undefined;
   identityCoverage: NameChangeRequirementResult | undefined;
   courtOrderPathReadiness: NameChangeRequirementResult | undefined;
+  courtOrderReferenceExtraction: NameChangeRequirementResult | undefined;
+  courtOrderJurisdictionContext: NameChangeRequirementResult | undefined;
+  marriageJurisdictionAlignment: NameChangeRequirementResult | undefined;
   countyContext: NameChangeRequirementResult | undefined;
   launchStateAlignment: NameChangeRequirementResult | undefined;
   passportTimingRisk: NameChangeRequirementResult | undefined;
@@ -109,8 +112,17 @@ const buildDmvDependencies: NameChangeDependencyRecipe = ({ intake, requirements
   ...prerequisiteDependencies,
 ];
 
+const buildCourtOrderDependencies: NameChangeDependencyRecipe = ({ requirements }) => [
+  buildRequirementDependency(requirements.launchStateAlignment, 'launch-state-alignment', 'California launch-state alignment', true, 'California launch-state alignment has not been evaluated.', true),
+  buildRequirementDependency(requirements.courtOrderPathReadiness, 'court-order-path-readiness', 'Court-order path readiness', true, 'Court-order path readiness has not been evaluated.', true),
+  buildRequirementDependency(requirements.courtOrderJurisdictionContext, 'court-order-jurisdiction-context', 'Court-order jurisdiction context', true, 'Court-order jurisdiction context has not been evaluated.', true),
+  buildRequirementDependency(requirements.courtOrderReferenceExtraction, 'court-order-reference-extraction', 'Court-order reference extraction', true, 'Court-order reference extraction has not been evaluated.', true),
+  buildRequirementDependency(requirements.identityCoverage, 'identity-document-coverage', 'Identity document coverage', true, 'Identity coverage requirement not evaluated.', true),
+];
+
 const buildPassportDependencies: NameChangeDependencyRecipe = ({ profile, requirements, prerequisiteDependencies }) => [
   ...buildStrictLegalAndIdentityDependencies({ profile, intake: null as never, requirements, prerequisiteDependencies }),
+  buildRequirementDependency(requirements.marriageJurisdictionAlignment, 'marriage-jurisdiction-alignment', 'Marriage jurisdiction alignment', true, 'Marriage jurisdiction alignment has not been evaluated.', true),
   {
     key: 'citizenship-eligibility',
     label: 'Citizenship eligible for passport path',
@@ -184,6 +196,7 @@ const buildVoterDependencies: NameChangeDependencyRecipe = ({ intake, requiremen
 ];
 
 const buildTsaDependencies: NameChangeDependencyRecipe = ({ intake, requirements, prerequisiteDependencies }) => [
+  buildRequirementDependency(requirements.marriageJurisdictionAlignment, 'marriage-jurisdiction-alignment', 'Marriage jurisdiction alignment', true, 'Marriage jurisdiction alignment has not been evaluated.', true),
   buildRequirementDependency(requirements.identityCoverage, 'identity-document-coverage', 'Identity document coverage', true, 'Identity coverage requirement not evaluated.'),
   buildRequirementDependency(requirements.passportTimingRisk, 'passport-timing-risk', 'Passport timing risk reviewed', false, 'Passport timing risk has not been evaluated.'),
   buildRequirementDependency(requirements.expeditedTravelSequencing, 'expedited-travel-sequencing', 'Expedited travel sequencing ready', false, 'Expedited travel sequencing has not been evaluated.'),
@@ -199,6 +212,7 @@ const buildTsaDependencies: NameChangeDependencyRecipe = ({ intake, requirements
 ];
 
 export const NAME_CHANGE_SEQUENCE_PROFILE_RECIPES: Record<NameChangeExecutionSequenceProfileKey, NameChangeDependencyRecipe> = {
+  courtOrder: buildCourtOrderDependencies,
   ssa: buildStrictLegalAndIdentityDependencies,
   dmv: buildDmvDependencies,
   passport: buildPassportDependencies,

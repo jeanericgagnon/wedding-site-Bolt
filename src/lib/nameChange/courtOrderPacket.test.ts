@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildNameChangeCourtOrderPacketSnapshot } from './courtOrderPacket';
-import type { NameChangeCaseInput } from './types';
+import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput } from './types';
 
 function makeCase(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseInput {
   return {
@@ -37,8 +37,42 @@ function makeCase(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseI
 
 describe('court-order name change packet snapshot', () => {
   it('builds a structured court-order path review payload', () => {
-    const snapshot = buildNameChangeCourtOrderPacketSnapshot(makeCase(), [], []);
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-court-order',
+        document_kind: 'court_order_name_change',
+        display_name: 'Court order name change',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'court-order-•••.pdf',
+        issuing_authority: 'San Diego Superior Court',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.93,
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'doc-court-order',
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: '24-CV-1188',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'doc-court-order',
+        field_key: 'court_order_date',
+        field_label: 'Court order date',
+        field_value_masked: '2026-04-05',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+
+    const snapshot = buildNameChangeCourtOrderPacketSnapshot(makeCase(), documents, extractedFields);
     expect(snapshot.formCode).toBe('COURT-ORDER-PATH-REVIEW');
     expect(snapshot.fields.find((field) => field.fieldKey === 'case.targetLastName')).toMatchObject({ value: 'Jordan' });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'case.caseNumber')).toMatchObject({ value: '24-CV-1188' });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'case.orderDate')).toMatchObject({ value: '2026-04-05' });
   });
 });

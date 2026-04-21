@@ -93,4 +93,69 @@ describe('name change document intake contract', () => {
     expect(snapshot.documents.find((document) => document.kind === 'court_order')).toMatchObject({ required: true });
     expect(snapshot.documents.find((document) => document.kind === 'marriage_certificate')).toMatchObject({ required: false });
   });
+
+  it('treats court_order_name_change as the court-order intake contract and exposes case-number extraction gaps', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-court-order',
+        document_kind: 'court_order_name_change',
+        display_name: 'Court order name change',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'court-order-•••.pdf',
+        issuing_authority: 'San Diego Superior Court',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.93,
+      },
+    ];
+
+    const snapshotWithoutCaseNumber = buildNameChangeDocumentIntakeSnapshot(
+      makeCase({ legal_basis: 'court_order', marriage_state: null, marriage_date: null }),
+      documents,
+      [
+        {
+          document_id: 'doc-court-order',
+          field_key: 'court_order_date',
+          field_label: 'Court order date',
+          field_value_masked: '2026-04-05',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+      ],
+    );
+
+    expect(snapshotWithoutCaseNumber.documents.find((document) => document.kind === 'court_order')).toMatchObject({
+      required: true,
+      intakeStatus: 'reviewed',
+      metadataMissing: [],
+      missingExtractionFields: expect.arrayContaining(['case_number']),
+    });
+
+    const snapshotWithCaseNumber = buildNameChangeDocumentIntakeSnapshot(
+      makeCase({ legal_basis: 'court_order', marriage_state: null, marriage_date: null }),
+      documents,
+      [
+        {
+          document_id: 'doc-court-order',
+          field_key: 'case_number',
+          field_label: 'Case number',
+          field_value_masked: '24-CV-1188',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-court-order',
+          field_key: 'court_order_date',
+          field_label: 'Court order date',
+          field_value_masked: '2026-04-05',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+      ],
+    );
+
+    expect(snapshotWithCaseNumber.documents.find((document) => document.kind === 'court_order')).toMatchObject({
+      capturedExtractionFields: expect.arrayContaining(['case_number', 'court_order_date']),
+    });
+  });
 });

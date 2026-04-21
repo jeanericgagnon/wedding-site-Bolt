@@ -177,6 +177,7 @@ const extractionFieldLabels: Record<NameChangeExtractedFieldInput['field_key'], 
   spouse_last_name: 'Spouse last name',
   issuance_date: 'Issue date',
   certificate_number: 'Certificate number',
+  case_number: 'Case number',
   county: 'County',
   court_order_date: 'Court order date',
 };
@@ -188,9 +189,37 @@ const extractionFieldPlaceholders: Partial<Record<NameChangeExtractedFieldInput[
   spouse_last_name: 'Jordan',
   issuance_date: '2026-04-05',
   certificate_number: 'Masked certificate number',
+  case_number: '24-CV-1188',
   county: 'San Diego',
   court_order_date: '2026-04-05',
 };
+
+function matchesContractDocumentKind(
+  actualKind: NameChangeDocumentInput['document_kind'],
+  contractKind: NameChangeDocumentInput['document_kind'],
+) {
+  return actualKind === contractKind || (contractKind === 'court_order' && actualKind === 'court_order_name_change');
+}
+
+function findContractDocument(
+  documents: NameChangeDocumentInput[],
+  contractKind: NameChangeDocumentInput['document_kind'],
+) {
+  return documents.find((document) => matchesContractDocumentKind(document.document_kind, contractKind));
+}
+
+function findContractExtractedField(
+  extractedFields: NameChangeExtractedFieldInput[],
+  documentId: string | null | undefined,
+  fieldKey: NameChangeExtractedFieldInput['field_key'],
+) {
+  if (documentId) {
+    const linkedField = extractedFields.find((field) => field.document_id === documentId && field.field_key === fieldKey);
+    if (linkedField) return linkedField;
+  }
+
+  return extractedFields.find((field) => !field.document_id && field.field_key === fieldKey);
+}
 
 function upsertExtractedField(
   extractedFields: NameChangeExtractedFieldInput[],
@@ -1557,9 +1586,10 @@ export const NameChangePlannerTab: React.FC<Props> = ({
           <div className="mt-4 grid gap-4">
             {NAME_CHANGE_DOCUMENT_CONTRACTS
               .filter((contract) => contract.extractionFields.length > 0)
-              .filter((contract) => contract.requiredFor.includes('all') || contract.requiredFor.includes(draft.legal_basis) || documents.some((document) => document.document_kind === contract.kind))
+              .filter((contract) => contract.requiredFor.includes('all') || contract.requiredFor.includes(draft.legal_basis) || documents.some((document) => matchesContractDocumentKind(document.document_kind, contract.kind)))
               .map((contract) => {
                 const status = documentIntakeSnapshot.documents.find((document) => document.kind === contract.kind);
+                const contractDocument = findContractDocument(documents, contract.kind);
                 const typedSnapshot = contract.kind === 'marriage_certificate'
                   ? extractionContractSnapshot.marriageCertificate
                   : contract.kind === 'court_order'
@@ -1586,7 +1616,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
 
                     <div className="mt-3 grid gap-2 md:grid-cols-2">
                       {contract.extractionFields.map((fieldKey) => {
-                        const current = extractedFields.find((field) => field.field_key === fieldKey);
+                        const current = findContractExtractedField(extractedFields, contractDocument?.id, fieldKey);
                         const isCaptured = status?.capturedExtractionFields.includes(fieldKey) ?? false;
                         return (
                           <label key={`${contract.kind}-${fieldKey}`} className="block text-sm">

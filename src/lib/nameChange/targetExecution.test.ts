@@ -584,10 +584,15 @@ describe('name change target execution snapshot', () => {
     });
     const documents: NameChangeDocumentInput[] = [
       {
+        id: 'doc-court-order',
         document_kind: 'court_order_name_change',
         display_name: 'Court order',
         storage_mode: 'metadata_only',
         intake_status: 'reviewed',
+        file_name_masked: 'court-order-•••.pdf',
+        issuing_authority: 'San Diego Superior Court',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.93,
       },
       {
         document_kind: 'current_drivers_license',
@@ -596,10 +601,43 @@ describe('name change target execution snapshot', () => {
         intake_status: 'uploaded',
       },
     ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'doc-court-order',
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: '24-CV-1188',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'doc-court-order',
+        field_key: 'court_order_date',
+        field_label: 'Court order date',
+        field_value_masked: '2026-04-05',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
 
-    const snapshot = buildNameChangeTargetExecutionSnapshot('courtOrder', profile, documents, []);
+    const snapshot = buildNameChangeTargetExecutionSnapshot('courtOrder', profile, documents, extractedFields);
     expect(snapshot.targetLabel).toContain('Court-order');
     expect(snapshot.recommendedFormCode).toBe('COURT-ORDER-PATH-REVIEW');
-    expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'court-order-path-readiness')).toMatchObject({ status: 'attention' });
+    expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'court-order-path-readiness')).toMatchObject({ status: 'missing' });
+    expect(snapshot.checklist.find((item) => item.key === 'court-order-path-readiness')).toMatchObject({ status: 'attention' });
+    expect(snapshot.autofillFields.find((field) => field.targetField === 'legal.court_order_case_number')).toMatchObject({
+      value: expect.objectContaining({
+        source: 'extracted_field',
+        value: '24-CV-1188',
+        sourceFieldKey: 'case_number',
+      }),
+    });
+    expect(snapshot.autofillFields.find((field) => field.targetField === 'legal.court_order_date')).toMatchObject({
+      value: expect.objectContaining({
+        source: 'extracted_field',
+        value: '2026-04-05',
+        sourceFieldKey: 'court_order_date',
+      }),
+    });
   });
 });

@@ -102,6 +102,7 @@ export function buildNameChangeAutofillPrepSnapshot(
     directField('applicant.target_last_name', 'Target last name', canonicalCase.targetName.last, { value: extraction.marriageCertificate.spouseLastName, sourceDocumentKind: 'marriage_certificate', sourceFieldKey: 'spouse_last_name' }),
     directField('applicant.county', 'County', canonicalCase.countyResidence, { value: extraction.marriageCertificate.county, sourceDocumentKind: 'marriage_certificate', sourceFieldKey: 'county' }),
     directField('legal.marriage_date', 'Marriage date', canonicalCase.legalContext.marriageDate, { value: extraction.marriageCertificate.issuanceDate, sourceDocumentKind: 'marriage_certificate', sourceFieldKey: 'issuance_date' }),
+    directField('legal.court_order_case_number', 'Court-order case number', null, { value: extraction.courtOrder.caseNumber, sourceDocumentKind: 'court_order', sourceFieldKey: 'case_number' }),
     directField('legal.court_order_date', 'Court order date', null, { value: extraction.courtOrder.courtOrderDate, sourceDocumentKind: 'court_order', sourceFieldKey: 'court_order_date' }),
     directField('identity.passport_issue_date', 'Passport issue date', null, { value: extraction.currentPassport.issuanceDate, sourceDocumentKind: 'current_passport', sourceFieldKey: 'issuance_date' }),
   ];

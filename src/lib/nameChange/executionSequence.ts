@@ -33,6 +33,7 @@ export function buildNameChangeExecutionSequenceSnapshot(
       courtOrderPathReadiness: results.find((result) => result.key === 'court-order-path-readiness'),
       courtOrderReferenceExtraction: results.find((result) => result.key === 'court-order-reference-extraction'),
       courtOrderJurisdictionContext: results.find((result) => result.key === 'court-order-jurisdiction-context'),
+      marriageJurisdictionAlignment: results.find((result) => result.key === 'marriage-jurisdiction-alignment'),
       countyContext: results.find((result) => result.key === 'county-context'),
       launchStateAlignment: results.find((result) => result.key === 'launch-state-alignment'),
       passportTimingRisk: results.find((result) => result.key === 'passport-timing-risk'),

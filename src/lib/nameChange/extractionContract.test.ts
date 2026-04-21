@@ -96,7 +96,34 @@ describe('name change extraction contract', () => {
     expect(snapshot.courtOrder).toMatchObject({
       firstName: null,
       lastName: null,
+      caseNumber: null,
       courtOrderDate: null,
+    });
+  });
+
+  it('maps court-order name-change documents and case-number extraction into the typed court-order snapshot', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-court-order',
+        document_kind: 'court_order_name_change',
+        display_name: 'Court order name change',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      { document_id: 'doc-court-order', field_key: 'first_name', field_label: 'First name', field_value_masked: 'Alex', source_type: 'document_extract', is_verified: true },
+      { document_id: 'doc-court-order', field_key: 'last_name', field_label: 'Last name', field_value_masked: 'Rivera', source_type: 'document_extract', is_verified: true },
+      { document_id: 'doc-court-order', field_key: 'case_number', field_label: 'Case number', field_value_masked: '24-CV-1188', source_type: 'document_extract', is_verified: true },
+      { document_id: 'doc-court-order', field_key: 'court_order_date', field_label: 'Court order date', field_value_masked: '2026-04-05', source_type: 'document_extract', is_verified: true },
+    ];
+
+    const snapshot = buildNameChangeExtractionContractSnapshot(makeCase({ legal_basis: 'court_order', marriage_state: null, marriage_date: null }), documents, extractedFields);
+    expect(snapshot.courtOrder).toMatchObject({
+      firstName: 'Alex',
+      lastName: 'Rivera',
+      caseNumber: '24-CV-1188',
+      courtOrderDate: '2026-04-05',
     });
   });
 });

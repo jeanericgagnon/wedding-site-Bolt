@@ -107,6 +107,8 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'courtOrder' | 'ssa' | 'dmv' 
       'applicant.current_last_name',
       'applicant.target_last_name',
       'applicant.county',
+      'legal.court_order_case_number',
+      'legal.court_order_date',
     ],
     checklistSpecs: [
       {
@@ -338,6 +340,15 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'courtOrder' | 'ssa' | 'dmv' 
         requirementKey: 'identity-document-coverage',
         missingReason: 'Identity coverage requirement not evaluated.',
         satisfiedReason: 'Identity document coverage is ready for passport prep.',
+      },
+      {
+        key: 'marriage-jurisdiction-alignment',
+        label: 'Marriage jurisdiction alignment',
+        kind: 'requirement',
+        requirementKey: 'marriage-jurisdiction-alignment',
+        missingReason: 'Marriage jurisdiction alignment has not been evaluated yet.',
+        attentionReason: 'Marriage happened outside California, so passport follow-through should keep the out-of-state certificate path in view.',
+        satisfiedReason: 'Marriage jurisdiction is aligned for the modeled passport prep flow.',
       },
       {
         key: 'passport-timing-risk',
@@ -720,6 +731,15 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'courtOrder' | 'ssa' | 'dmv' 
         requirementKey: 'identity-document-coverage',
         missingReason: 'Identity coverage requirement not evaluated.',
         satisfiedReason: 'Identity document coverage is ready for TSA / travel profile prep.',
+      },
+      {
+        key: 'marriage-jurisdiction-alignment',
+        label: 'Marriage jurisdiction alignment',
+        kind: 'requirement',
+        requirementKey: 'marriage-jurisdiction-alignment',
+        missingReason: 'Marriage jurisdiction alignment has not been evaluated yet.',
+        attentionReason: 'Marriage happened outside California, so TSA / travel-profile follow-through should keep the out-of-state certificate path in view.',
+        satisfiedReason: 'Marriage jurisdiction is aligned for the modeled TSA / travel-profile flow.',
       },
       {
         key: 'passport-timing-risk',

@@ -10,6 +10,10 @@ import type {
   NameChangeExtractionFieldKey,
 } from './types';
 
+function matchesDocumentKind(actualKind: NameChangeDocumentInput['document_kind'], expectedKind: NameChangeDocumentContractDefinition['kind']) {
+  return actualKind === expectedKind || (expectedKind === 'court_order' && actualKind === 'court_order_name_change');
+}
+
 export const NAME_CHANGE_DOCUMENT_CONTRACTS: NameChangeDocumentContractDefinition[] = [
   {
     kind: 'marriage_certificate',
@@ -24,7 +28,7 @@ export const NAME_CHANGE_DOCUMENT_CONTRACTS: NameChangeDocumentContractDefinitio
     label: 'Court order',
     requiredFor: ['court_order'],
     preferredForAutofill: true,
-    extractionFields: ['first_name', 'last_name', 'court_order_date'],
+    extractionFields: ['first_name', 'last_name', 'case_number', 'court_order_date'],
     acceptedSignals: ['signed court order', 'filed order metadata'],
   },
   {
@@ -122,6 +126,7 @@ export function buildNameChangeDocumentIntakeSnapshot(
             const mapping = {
               firstName: 'first_name',
               lastName: 'last_name',
+              caseNumber: 'case_number',
               courtOrderDate: 'court_order_date',
             } as const;
             return mapping[key as keyof typeof mapping];
@@ -154,7 +159,7 @@ export function buildNameChangeDocumentIntakeSnapshot(
       .filter((field): field is NameChangeExtractionFieldKey => definition.extractionFields.includes(field as NameChangeExtractionFieldKey));
     const missingExtractionFields = definition.extractionFields.filter((field) => !capturedExtractionFields.includes(field));
     const required = definition.requiredFor.includes('all') || definition.requiredFor.includes(canonicalCase.legalBasis);
-    const metadataMissing = metadataMissingForDocument(documents.find((document) => document.document_kind === definition.kind));
+    const metadataMissing = metadataMissingForDocument(documents.find((document) => matchesDocumentKind(document.document_kind, definition.kind)));
 
     return {
       kind: definition.kind,

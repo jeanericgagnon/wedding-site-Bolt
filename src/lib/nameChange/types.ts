@@ -4,6 +4,7 @@ export type NameChangeWorkflowStatus = 'draft' | 'ready' | 'in_progress' | 'comp
 export type NameChangeDocumentKind =
   | 'marriage_certificate'
   | 'court_order'
+  | 'court_order_name_change'
   | 'current_drivers_license'
   | 'current_passport'
   | 'social_security_card'
@@ -18,11 +19,12 @@ export type NameChangeExtractionFieldKey =
   | 'spouse_last_name'
   | 'issuance_date'
   | 'certificate_number'
+  | 'case_number'
   | 'county'
   | 'court_order_date';
 
 export interface NameChangeStructuredIntake {
-  spouseLastName: string;
+  spouseLastName: string | null;
   travelBookedSoon: boolean;
   wantsDocumentIntakeHelp: boolean;
 }
@@ -487,6 +489,7 @@ export interface NameChangeMarriageCertificateExtraction {
 export interface NameChangeCourtOrderExtraction {
   firstName: string | null;
   lastName: string | null;
+  caseNumber: string | null;
   courtOrderDate: string | null;
 }
 

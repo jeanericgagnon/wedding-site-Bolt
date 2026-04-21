@@ -36,6 +36,36 @@ export const NAME_CHANGE_REQUIREMENT_DEFINITIONS: NameChangeRequirementDefinitio
     description: 'Downstream state-specific execution should stay aligned with the currently modeled launch state.',
   },
   {
+    key: 'marriage-jurisdiction-alignment',
+    label: 'Marriage jurisdiction alignment',
+    stage: 'government',
+    description: 'California-modeled marriage follow-through should acknowledge when the marriage certificate comes from another state.',
+  },
+  {
+    key: 'legal-basis-path-alignment',
+    label: 'Legal-basis path alignment',
+    stage: 'government',
+    description: 'The currently modeled guided execution path should stay honest about whether it is marriage-based or court-order-based.',
+  },
+  {
+    key: 'court-order-path-readiness',
+    label: 'Court-order path readiness',
+    stage: 'government',
+    description: 'Court-order cases should expose whether proof and identity support are present for grounded review.',
+  },
+  {
+    key: 'court-order-jurisdiction-context',
+    label: 'Court-order jurisdiction context',
+    stage: 'government',
+    description: 'Court-order review needs county context before jurisdiction guidance is treated as grounded.',
+  },
+  {
+    key: 'court-order-reference-extraction',
+    label: 'Court-order reference extraction',
+    stage: 'proof',
+    description: 'Court-order review should have a verified case number or signed-date extraction before downstream use is treated as grounded.',
+  },
+  {
     key: 'passport-timing-risk',
     label: 'Passport timing risk reviewed',
     stage: 'institutional',
@@ -57,6 +87,9 @@ export function evaluateNameChangeRequirements(
   const hasIdentityCoverage = identityCoverageKinds.some((kind) => canonicalCase.documents[kind].intakeStatus !== 'not_started');
   const hasIdentityMetadataReady = intakeSnapshot.documents.some((document) => identityCoverageKinds.includes(document.kind) && document.metadataMissing.length === 0 && document.intakeStatus !== 'not_started');
   const hasTravelIdentitySupport = ['current_passport', 'current_drivers_license'].some((kind) => canonicalCase.documents[kind as NameChangeDocumentKind].intakeStatus !== 'not_started');
+  const hasCourtOrderProof = canonicalCase.documents.court_order.intakeStatus !== 'not_started';
+  const hasVerifiedCourtOrderReferenceExtraction = extractedFields.some((field) => field.is_verified && (field.field_key === 'case_number' || field.field_key === 'court_order_date'));
+  const legalBasisLabel = canonicalCase.legalBasis === 'court_order' ? 'court-order proof' : legalProofKind.replace(/_/g, ' ');
 
   const results: NameChangeRequirementResult[] = [
     {
@@ -68,11 +101,11 @@ export function evaluateNameChangeRequirements(
         : legalProof.intakeStatus === 'uploaded' ? 'attention' : 'missing',
       reason: legalProof.intakeStatus === 'reviewed'
         ? (legalProofContract && legalProofContract.metadataMissing.length > 0
-          ? `The ${legalProofKind.replace(/_/g, ' ')} is reviewed, but metadata is still missing: ${legalProofContract.metadataMissing.join(', ')}.`
-          : `The ${legalProofKind.replace(/_/g, ' ')} is reviewed and ready for downstream use.`)
+          ? `The ${legalBasisLabel} is reviewed, but metadata is still missing: ${legalProofContract.metadataMissing.join(', ')}.`
+          : `The ${legalBasisLabel} is reviewed and ready for downstream use.`)
         : legalProof.intakeStatus === 'uploaded'
-          ? `The ${legalProofKind.replace(/_/g, ' ')} exists but still needs review.`
-          : `No ${legalProofKind.replace(/_/g, ' ')} is currently in the intake workspace.`,
+          ? `The ${legalBasisLabel} exists but still needs review.`
+          : `No ${legalBasisLabel} is represented in intake yet for the modeled legal basis.`,
     },
     {
       key: 'identity-document-coverage',
@@ -104,6 +137,83 @@ export function evaluateNameChangeRequirements(
       reason: canonicalCase.launchState === 'california'
         ? 'Current modeled downstream state execution matches the California launch scope.'
         : `Current modeled downstream state execution assumes California, but launch state is ${canonicalCase.launchState}.`,
+    },
+    {
+      key: 'marriage-jurisdiction-alignment',
+      label: 'Marriage jurisdiction alignment',
+      stage: 'government',
+      status: canonicalCase.legalBasis !== 'marriage' || !canonicalCase.legalContext.marriageState || canonicalCase.legalContext.marriageState === 'California'
+        ? 'satisfied'
+        : canonicalCase.documents.marriage_certificate.intakeStatus === 'not_started'
+          ? 'missing'
+          : 'attention',
+      reason: canonicalCase.legalBasis !== 'marriage' || !canonicalCase.legalContext.marriageState || canonicalCase.legalContext.marriageState === 'California'
+        ? 'Current marriage jurisdiction matches the modeled California follow-through path.'
+        : canonicalCase.documents.marriage_certificate.intakeStatus === 'not_started'
+          ? `Marriage occurred in ${canonicalCase.legalContext.marriageState}, but no marriage certificate is represented in intake for out-of-state certificate handling.`
+          : `Marriage occurred in ${canonicalCase.legalContext.marriageState}, so california follow-through should expect out-of-state certificate handling.`,
+    },
+    {
+      key: 'legal-basis-path-alignment',
+      label: 'Legal-basis path alignment',
+      stage: 'government',
+      status: canonicalCase.legalBasis === 'marriage' ? 'satisfied' : 'missing',
+      reason: canonicalCase.legalBasis === 'marriage'
+        ? 'Current guided execution slices match a marriage-based name change path.'
+        : `Current guided execution slices are modeled for marriage-based name changes, but legal basis is ${canonicalCase.legalBasis}.`,
+    },
+    {
+      key: 'court-order-path-readiness',
+      label: 'Court-order path readiness',
+      stage: 'government',
+      status: canonicalCase.legalBasis !== 'court_order'
+        ? 'satisfied'
+        : !hasCourtOrderProof
+          ? 'missing'
+          : hasIdentityCoverage
+            ? 'attention'
+            : 'missing',
+      reason: canonicalCase.legalBasis !== 'court_order'
+        ? 'Court-order path readiness is not needed for marriage-based cases.'
+        : !hasCourtOrderProof
+          ? 'Court-order path is selected, but no court-order proof is represented in intake yet.'
+          : hasIdentityCoverage
+            ? 'Court-order proof exists and identity coverage is present, but downstream court-order execution slices are still not fully modeled.'
+            : 'Court-order proof exists, but identity coverage is still too thin for grounded court-order follow-through.',
+    },
+    {
+      key: 'court-order-jurisdiction-context',
+      label: 'Court-order jurisdiction context',
+      stage: 'government',
+      status: canonicalCase.legalBasis !== 'court_order'
+        ? 'satisfied'
+        : canonicalCase.countyResidence
+          ? 'satisfied'
+          : 'missing',
+      reason: canonicalCase.legalBasis !== 'court_order'
+        ? 'Court-order jurisdiction review is not needed for marriage-based cases.'
+        : canonicalCase.countyResidence
+          ? `County ${canonicalCase.countyResidence} is present for grounded court-order jurisdiction review.`
+          : 'County context is still missing, so court-order jurisdiction review cannot be grounded yet.',
+    },
+    {
+      key: 'court-order-reference-extraction',
+      label: 'Court-order reference extraction',
+      stage: 'proof',
+      status: canonicalCase.legalBasis !== 'court_order'
+        ? 'satisfied'
+        : !hasCourtOrderProof
+          ? 'missing'
+          : hasVerifiedCourtOrderReferenceExtraction
+            ? 'satisfied'
+            : 'missing',
+      reason: canonicalCase.legalBasis !== 'court_order'
+        ? 'Court-order reference extraction is not needed for marriage-based cases.'
+        : !hasCourtOrderProof
+          ? 'Court-order path is selected, but no court-order proof is represented in intake yet.'
+          : hasVerifiedCourtOrderReferenceExtraction
+            ? 'Court-order reference extraction is present for the modeled review path.'
+            : 'Court-order proof is in intake, but no verified case-number or signed-date extraction is represented yet.',
     },
     {
       key: 'passport-timing-risk',

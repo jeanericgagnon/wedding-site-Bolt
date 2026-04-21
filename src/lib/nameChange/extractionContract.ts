@@ -11,13 +11,18 @@ import type {
   NameChangePassportExtraction,
 } from './types';
 
+function getDocumentKindAliases(kind: NameChangeDocumentKind): NameChangeDocumentKind[] {
+  return kind === 'court_order' ? ['court_order', 'court_order_name_change'] : [kind];
+}
+
 function normalizeValue(value: string | null | undefined) {
   const normalized = (value ?? '').trim();
   return normalized || null;
 }
 
 function getDocumentByKind(documents: NameChangeDocumentInput[], kind: NameChangeDocumentKind) {
-  return documents.find((document) => document.document_kind === kind);
+  const kinds = getDocumentKindAliases(kind);
+  return documents.find((document) => kinds.includes(document.document_kind));
 }
 
 function getLinkedFieldValue(
@@ -91,6 +96,7 @@ function buildCourtOrderExtraction(
   return {
     firstName: getDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'first_name'),
     lastName: getDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'last_name'),
+    caseNumber: getDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'case_number'),
     courtOrderDate: getDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'court_order_date'),
   };
 }
