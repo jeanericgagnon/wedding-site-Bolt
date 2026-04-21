@@ -724,6 +724,12 @@ export const DashboardCoordinatorMode: React.FC = () => {
     setCommandSource(null);
   };
 
+  const jumpToTimelineEvent = (eventId: string | null | undefined) => {
+    if (!eventId) return;
+    focusCoordinatorTimelineLane();
+    setActiveTimelineEventId(eventId);
+  };
+
   const focusCoordinatorQnaLane = () => {
     clearCoordinatorTransientState();
     setPanelFocus('qna');
@@ -1420,6 +1426,37 @@ export const DashboardCoordinatorMode: React.FC = () => {
           <div className="rounded-2xl border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] p-4 space-y-4">
             <div>
               <p className="text-sm font-medium text-text-primary mb-2">Run-of-show timeline{panelFocus === 'timeline' ? ' · focus' : ''}{activeTimelineEventId ? ` · ${getCoordinatorActiveTargetLabel('timeline')}` : ''}{timelineTargetState.label ? ` · ${timelineTargetState.label}` : ''}</p>
+              {(liveEventId || upNextEventId || timelineBoardTargetId) && (
+                <div className="mb-2 flex flex-wrap gap-1.5">
+                  {liveEventId && (
+                    <button
+                      type="button"
+                      onClick={() => jumpToTimelineEvent(liveEventId)}
+                      className={`text-[11px] px-2 py-1 rounded-full border ${activeTimelineEventId === liveEventId ? 'border-primary/30 bg-primary/10 text-primary' : 'border-primary/20 bg-primary/5 text-primary hover:bg-primary/10'}`}
+                    >
+                      Jump to live event
+                    </button>
+                  )}
+                  {upNextEventId && (
+                    <button
+                      type="button"
+                      onClick={() => jumpToTimelineEvent(upNextEventId)}
+                      className={`text-[11px] px-2 py-1 rounded-full border ${activeTimelineEventId === upNextEventId ? 'border-amber-300 bg-amber-100 text-amber-800' : 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'}`}
+                    >
+                      Jump to up next
+                    </button>
+                  )}
+                  {timelineBoardTargetId && timelineBoardTargetId !== liveEventId && timelineBoardTargetId !== upNextEventId && (
+                    <button
+                      type="button"
+                      onClick={() => jumpToTimelineEvent(timelineBoardTargetId)}
+                      className={`text-[11px] px-2 py-1 rounded-full border ${activeTimelineEventId === timelineBoardTargetId ? 'border-primary/30 bg-primary/10 text-primary' : 'border-border bg-white text-text-secondary hover:border-primary/35 hover:text-primary'}`}
+                    >
+                      Jump to board target
+                    </button>
+                  )}
+                </div>
+              )}
               <div className="space-y-2">
                 {events.length === 0 ? (
                   <p className="text-xs text-text-tertiary">No itinerary events yet.</p>
