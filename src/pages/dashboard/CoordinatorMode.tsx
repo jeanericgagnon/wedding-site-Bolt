@@ -210,8 +210,16 @@ export const DashboardCoordinatorMode: React.FC = () => {
         setGuests((guestsData as GuestLiteForCoordinator[]) || []);
         setEvents((eventsData as EventLite[]) || []);
         setEventGuestIds(inviteMap);
+        const rawCachedQna = typeof window !== 'undefined' && resolvedSiteId
+          ? localStorage.getItem(`dayof.qna.${resolvedSiteId}`)
+          : null;
+        const cachedQna = rawCachedQna
+          ? normalizeCoordinatorQnaItems(JSON.parse(rawCachedQna)) as QnaItem[]
+          : [];
         if (qnaData && qnaData.length > 0) {
           setQnaItems((qnaData as Array<{ id: string; question: string; status: 'new' | 'answered'; answer?: string | null }>));
+        } else if (cachedQna.length > 0) {
+          setQnaItems(cachedQna);
         }
       } finally {
         if (mounted) setLoading(false);
@@ -229,10 +237,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
       if (rawTimeline) setTimelineState(normalizeCoordinatorTimelineState(JSON.parse(rawTimeline)) as Record<string, TimelineState>);
       const rawAlerts = localStorage.getItem(`dayof.alertlog.${siteId}`);
       if (rawAlerts) setAlertLog(normalizeCoordinatorAlertLog(JSON.parse(rawAlerts)) as AlertLog[]);
-      if (isDemoMode) {
-        const rawQna = localStorage.getItem(`dayof.qna.${siteId}`);
-        if (rawQna) setQnaItems(normalizeCoordinatorQnaItems(JSON.parse(rawQna)) as QnaItem[]);
-        else setQnaItems([
+      const rawQna = localStorage.getItem(`dayof.qna.${siteId}`);
+      if (rawQna) {
+        setQnaItems(normalizeCoordinatorQnaItems(JSON.parse(rawQna)) as QnaItem[]);
+      } else if (isDemoMode) {
+        setQnaItems([
           { id: 'q1', question: 'What time should we arrive?', status: 'new' },
           { id: 'q2', question: 'Is parking available at the venue?', status: 'answered' },
         ]);
@@ -285,9 +294,9 @@ export const DashboardCoordinatorMode: React.FC = () => {
   }, [siteId, alertLog]);
 
   useEffect(() => {
-    if (!siteId || !isDemoMode) return;
+    if (!siteId) return;
     try { localStorage.setItem(`dayof.qna.${siteId}`, JSON.stringify(qnaItems)); } catch {}
-  }, [siteId, qnaItems, isDemoMode]);
+  }, [siteId, qnaItems]);
 
   useEffect(() => {
     if (!siteId) return;
