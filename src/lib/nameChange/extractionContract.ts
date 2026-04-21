@@ -1,4 +1,5 @@
 import { buildNameChangeCanonicalCase } from './canonical';
+import { getNameChangeDocumentKindAliases } from './documentKinds';
 import type {
   NameChangeCanonicalFieldConflict,
   NameChangeCaseInput,
@@ -13,17 +14,13 @@ import type {
   NameChangePassportExtraction,
 } from './types';
 
-function getDocumentKindAliases(kind: NameChangeDocumentKind): NameChangeDocumentKind[] {
-  return kind === 'court_order' ? ['court_order', 'court_order_name_change'] : [kind];
-}
-
 function normalizeValue(value: string | null | undefined) {
   const normalized = (value ?? '').trim();
   return normalized || null;
 }
 
 function getDocumentByKind(documents: NameChangeDocumentInput[], kind: NameChangeDocumentKind) {
-  const kinds = getDocumentKindAliases(kind);
+  const kinds = getNameChangeDocumentKindAliases(kind);
   return documents.find((document) => kinds.includes(document.document_kind));
 }
 

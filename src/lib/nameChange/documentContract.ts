@@ -1,4 +1,5 @@
 import { buildNameChangeCanonicalCase } from './canonical';
+import { matchesNameChangeDocumentKind } from './documentKinds';
 import { buildNameChangeExtractionContractSnapshot, getDocumentCapturedFieldKeys } from './extractionContract';
 import type {
   NameChangeCaseInput,
@@ -9,10 +10,6 @@ import type {
   NameChangeExtractedFieldInput,
   NameChangeExtractionFieldKey,
 } from './types';
-
-function matchesDocumentKind(actualKind: NameChangeDocumentInput['document_kind'], expectedKind: NameChangeDocumentContractDefinition['kind']) {
-  return actualKind === expectedKind || (expectedKind === 'court_order' && actualKind === 'court_order_name_change');
-}
 
 export const NAME_CHANGE_DOCUMENT_CONTRACTS: NameChangeDocumentContractDefinition[] = [
   {
@@ -159,7 +156,7 @@ export function buildNameChangeDocumentIntakeSnapshot(
       .filter((field): field is NameChangeExtractionFieldKey => definition.extractionFields.includes(field as NameChangeExtractionFieldKey));
     const missingExtractionFields = definition.extractionFields.filter((field) => !capturedExtractionFields.includes(field));
     const required = definition.requiredFor.includes('all') || definition.requiredFor.includes(canonicalCase.legalBasis);
-    const metadataMissing = metadataMissingForDocument(documents.find((document) => matchesDocumentKind(document.document_kind, definition.kind)));
+    const metadataMissing = metadataMissingForDocument(documents.find((document) => matchesNameChangeDocumentKind(document.document_kind, definition.kind)));
     const canonicalConflicts = extraction.conflicts.filter((conflict) => conflict.documentKind === definition.kind);
 
     return {

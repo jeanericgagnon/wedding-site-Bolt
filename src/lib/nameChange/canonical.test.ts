@@ -1,0 +1,77 @@
+import { describe, expect, it } from 'vitest';
+import { buildNameChangeCanonicalCase } from './canonical';
+import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput } from './types';
+
+function makeCase(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseInput {
+  return {
+    workflow_status: 'draft',
+    launch_state: 'california',
+    legal_basis: 'court_order',
+    current_first_name: 'Alex',
+    current_middle_name: 'Marie',
+    current_last_name: 'Rivera',
+    target_first_name: 'Alex',
+    target_middle_name: 'Marie',
+    target_last_name: 'Jordan',
+    email: null,
+    phone_last4: null,
+    county_residence: 'San Diego',
+    marriage_state: null,
+    marriage_date: null,
+    urgency_level: 'standard',
+    has_us_passport: true,
+    passport_needs_update: true,
+    has_real_id_license: true,
+    is_us_citizen: true,
+    employment_status: 'employed',
+    change_reasons: ['court_order'],
+    structured_intake: {
+      spouseLastName: null,
+      travelBookedSoon: false,
+      wantsDocumentIntakeHelp: true,
+    },
+    latest_plan_summary: null,
+    ...overrides,
+  };
+}
+
+describe('name change canonical case', () => {
+  it('treats legacy court-order documents as the canonical court-order slot', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-court-order',
+        document_kind: 'court_order_name_change',
+        display_name: 'Court order name change',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'doc-court-order',
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: '24-CV-1188',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'doc-court-order',
+        field_key: 'court_order_date',
+        field_label: 'Court order date',
+        field_value_masked: '2026-04-05',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+
+    const canonical = buildNameChangeCanonicalCase(makeCase(), documents, extractedFields);
+
+    expect(canonical.documents.court_order).toMatchObject({
+      intakeStatus: 'reviewed',
+      storageMode: 'metadata_only',
+      extractionFieldCount: 2,
+      extractedFieldKeys: expect.arrayContaining(['case_number', 'court_order_date']),
+    });
+  });
+});
