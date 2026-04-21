@@ -299,6 +299,7 @@ export default function RSVP() {
     if (!token) {
       activeLookupRequestRef.current += 1;
       setTokenAutoLoading(false);
+      setSearchValue('');
       setStep('search');
       setGuest(null);
       setExistingRsvp(null);
