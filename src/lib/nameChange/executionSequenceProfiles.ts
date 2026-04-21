@@ -10,6 +10,7 @@ import type {
 type RequirementBag = {
   legalProof: NameChangeRequirementResult | undefined;
   identityCoverage: NameChangeRequirementResult | undefined;
+  courtOrderPathReadiness: NameChangeRequirementResult | undefined;
   countyContext: NameChangeRequirementResult | undefined;
   launchStateAlignment: NameChangeRequirementResult | undefined;
   passportTimingRisk: NameChangeRequirementResult | undefined;

@@ -1,4 +1,5 @@
 import { NAME_CHANGE_BANK_PACKET_CONTRACT } from './bankPacket';
+import { NAME_CHANGE_COURT_ORDER_PACKET_CONTRACT } from './courtOrderPacket';
 import { NAME_CHANGE_COURTESY_PACKET_CONTRACT } from './courtesyPacket';
 import { NAME_CHANGE_DMV_FORM_CONTRACT } from './dmvForm';
 import { NAME_CHANGE_EMPLOYER_PACKET_CONTRACT } from './employerPacket';
@@ -92,7 +93,56 @@ function buildPhotoIdInstitutionTarget(config: {
   };
 }
 
-export const NAME_CHANGE_EXECUTION_TARGETS: Record<'ssa' | 'dmv' | 'passport' | 'employer' | 'banks' | 'insurance' | 'medical' | 'utilities' | 'courtesy' | 'voter' | 'tsa' | 'licenses', NameChangeExecutionTargetDefinition> = {
+export const NAME_CHANGE_EXECUTION_TARGETS: Record<'courtOrder' | 'ssa' | 'dmv' | 'passport' | 'employer' | 'banks' | 'insurance' | 'medical' | 'utilities' | 'courtesy' | 'voter' | 'tsa' | 'licenses', NameChangeExecutionTargetDefinition> = {
+  courtOrder: {
+    key: 'courtOrder',
+    label: 'Court-order path review',
+    lane: 'state',
+    recommendedFormCode: NAME_CHANGE_COURT_ORDER_PACKET_CONTRACT.formCode,
+    formBuilderKey: 'courtOrder',
+    sequenceProfile: 'courtOrder',
+    prerequisiteRules: [],
+    autofillTargetFields: [
+      'applicant.current_first_name',
+      'applicant.current_last_name',
+      'applicant.target_last_name',
+      'applicant.county',
+    ],
+    checklistSpecs: [
+      {
+        key: 'court-order-path-readiness',
+        label: 'Court-order path readiness',
+        kind: 'requirement',
+        requirementKey: 'court-order-path-readiness',
+        missingReason: 'Court-order path readiness has not been evaluated yet.',
+        satisfiedReason: 'Court-order path readiness is clear for this modeled review slice.',
+      },
+      {
+        key: 'legal-proof-document',
+        label: 'Court-order proof ready',
+        kind: 'requirement',
+        requirementKey: 'legal-proof-document',
+        missingReason: 'Court-order proof requirement has not been evaluated yet.',
+        satisfiedReason: 'Court-order proof is ready for this modeled review slice.',
+      },
+      {
+        key: 'identity-document-coverage',
+        label: 'Identity document coverage',
+        kind: 'requirement',
+        requirementKey: 'identity-document-coverage',
+        missingReason: 'Identity coverage requirement has not been evaluated yet.',
+        satisfiedReason: 'Identity document coverage is ready for this modeled review slice.',
+      },
+      {
+        key: 'target-surname',
+        label: 'Target surname available for court-order path',
+        kind: 'field_presence',
+        targetField: 'applicant.target_last_name',
+        missingReason: 'Target last name is still missing for the court-order path.',
+        satisfiedReason: 'Target last name is available for the court-order path.',
+      },
+    ],
+  },
   ssa: {
     key: 'ssa',
     label: 'Social Security Administration',

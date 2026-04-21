@@ -569,4 +569,37 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.recommendedFormCode).toBe('COURTESY-SOCIAL-IDENTITY-SYNC');
     expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'courtesy-identity-support')).toMatchObject({ status: 'satisfied' });
   });
+
+  it('builds a dedicated court-order path review snapshot', () => {
+    const profile = makeCase({
+      legal_basis: 'court_order' as never,
+      marriage_state: null,
+      marriage_date: null,
+      structured_intake: {
+        spouseLastName: null,
+        travelBookedSoon: false,
+        wantsDocumentIntakeHelp: true,
+      },
+      change_reasons: ['court_order'],
+    });
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'court_order_name_change',
+        display_name: 'Court order',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('courtOrder', profile, documents, []);
+    expect(snapshot.targetLabel).toContain('Court-order');
+    expect(snapshot.recommendedFormCode).toBe('COURT-ORDER-PATH-REVIEW');
+    expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'court-order-path-readiness')).toMatchObject({ status: 'attention' });
+  });
 });

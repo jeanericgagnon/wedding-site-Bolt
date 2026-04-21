@@ -1,4 +1,5 @@
 import { buildNameChangeBankPacketSnapshot } from './bankPacket';
+import { buildNameChangeCourtOrderPacketSnapshot } from './courtOrderPacket';
 import { buildNameChangeCourtesyPacketSnapshot } from './courtesyPacket';
 import { buildNameChangeDmvFormSnapshot } from './dmvForm';
 import { buildNameChangeEmployerPacketSnapshot } from './employerPacket';
@@ -25,6 +26,7 @@ export type NameChangeFormBuilder = (
 ) => NameChangeFormPayloadSnapshot;
 
 export const NAME_CHANGE_FORM_BUILDERS: Record<NameChangeFormBuilderKey, NameChangeFormBuilder> = {
+  courtOrder: buildNameChangeCourtOrderPacketSnapshot,
   courtesy: buildNameChangeCourtesyPacketSnapshot,
   banks: buildNameChangeBankPacketSnapshot,
   insurance: buildNameChangeInsurancePacketSnapshot,

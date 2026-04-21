@@ -58,6 +58,13 @@ describe('name change execution targets', () => {
       formBuilderKey: 'courtesy',
       sequenceProfile: 'courtesy',
     });
+    expect(NAME_CHANGE_EXECUTION_TARGETS.courtOrder).toMatchObject({
+      key: 'courtOrder',
+      lane: 'state',
+      recommendedFormCode: 'COURT-ORDER-PATH-REVIEW',
+      formBuilderKey: 'courtOrder',
+      sequenceProfile: 'courtOrder',
+    });
     expect(NAME_CHANGE_EXECUTION_TARGETS.voter).toMatchObject({
       key: 'voter',
       lane: 'state',

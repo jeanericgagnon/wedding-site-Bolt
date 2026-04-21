@@ -44,6 +44,7 @@ describe('name change form builder registry', () => {
     const tsa = NAME_CHANGE_FORM_BUILDERS.tsa(makeCase(), [], []);
     const utilities = NAME_CHANGE_FORM_BUILDERS.utilities(makeCase(), [], []);
     const courtesy = NAME_CHANGE_FORM_BUILDERS.courtesy(makeCase(), [], []);
+    const courtOrder = NAME_CHANGE_FORM_BUILDERS.courtOrder(makeCase({ legal_basis: 'court_order' as never, marriage_state: null, marriage_date: null, structured_intake: { spouseLastName: null, travelBookedSoon: false, wantsDocumentIntakeHelp: true }, change_reasons: ['court_order'] }), [], []);
     const voter = NAME_CHANGE_FORM_BUILDERS.voter(makeCase(), [], []);
     const ss5 = NAME_CHANGE_FORM_BUILDERS.ss5(makeCase(), [], []);
     const dmv = NAME_CHANGE_FORM_BUILDERS.dmv(makeCase(), [], []);
@@ -57,6 +58,7 @@ describe('name change form builder registry', () => {
     expect(tsa.formCode).toBe('TSA-TRAVEL-PROFILE-UPDATE');
     expect(utilities.formCode).toBe('UTILITIES-LEASE-RECORD-UPDATE');
     expect(courtesy.formCode).toBe('COURTESY-SOCIAL-IDENTITY-SYNC');
+    expect(courtOrder.formCode).toBe('COURT-ORDER-PATH-REVIEW');
     expect(voter.formCode).toBe('CA-VOTER-REGISTRATION-UPDATE');
     expect(ss5.formCode).toBe('SSA-SS5');
     expect(dmv.formCode).toBe('CA-DL-44');
