@@ -57,6 +57,11 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.formPayload.formCode).toBe('SSA-SS5');
     expect(snapshot.checklist.length).toBeGreaterThan(0);
     expect(snapshot.readinessSummary.status).toBe('blocked');
+    expect(snapshot.nextAction).toMatchObject({
+      category: expect.any(String),
+      label: expect.any(String),
+      detail: expect.any(String),
+    });
   });
 
   it('blocks execution-ready posture when packet fields are still low confidence', () => {
@@ -95,6 +100,10 @@ describe('name change target execution snapshot', () => {
       blockingFieldRisks: expect.any(Number),
       lowConfidenceFields: expect.any(Number),
       documentRepairDebt: expect.any(Number),
+    });
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'packet',
+      label: 'Repair New last name',
     });
   });
 
@@ -153,6 +162,59 @@ describe('name change target execution snapshot', () => {
     });
     expect(snapshot.ready).toBe(false);
     expect(snapshot.blockers).toContain('Identity documents exist in intake, but metadata is still too thin for confident downstream use.');
+    expect(snapshot.nextAction).toMatchObject({
+      category: expect.stringMatching(/dependency|document/),
+      label: expect.stringContaining('Unblock'),
+    });
+  });
+
+  it('promotes a ready packet into a final review next action', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'San Diego County Clerk',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
+      },
+      {
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'passport-•••.pdf',
+        issuing_authority: 'U.S. Department of State',
+        issued_on: '2024-06-01',
+        expires_on: '2034-06-01',
+        extraction_confidence: 0.92,
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        field_key: 'spouse_last_name',
+        field_label: 'Spouse last name',
+        field_value_masked: 'Jordan',
+        source_type: 'manual',
+        is_verified: true,
+      },
+      {
+        field_key: 'issuance_date',
+        field_label: 'Passport issue date',
+        field_value_masked: '2024-06-01',
+        source_type: 'manual',
+        is_verified: true,
+      },
+    ];
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('ssa', makeCase(), documents, extractedFields);
+    expect(snapshot.ready).toBe(true);
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'review',
+      label: 'Prepare SSA-SS5',
+    });
   });
 
   it('builds shared DMV execution snapshots with sequencing awareness', () => {

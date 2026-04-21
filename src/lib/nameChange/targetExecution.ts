@@ -53,6 +53,53 @@ export function buildNameChangeTargetExecutionSnapshot(
       .filter((spec) => checklist.find((item) => item.key === spec.key)?.status !== 'ready')
       .map((spec) => spec.key),
   ]).size;
+  const firstBlockingFieldRisk = fieldRisks.find((risk) => risk.severity === 'blocking');
+  const firstMissingFieldRisk = fieldRisks.find((risk) => risk.severity === 'attention');
+  const firstMissingDependency = sequence.dependencies.find((dependency) => dependency.required && dependency.status === 'missing');
+  const firstAttentionDependency = sequence.dependencies.find((dependency) => dependency.status === 'attention');
+  const firstMissingChecklistItem = checklist.find((item) => item.status === 'missing');
+  const firstAttentionChecklistItem = checklist.find((item) => item.status === 'attention');
+  const nextAction = firstBlockingFieldRisk
+    ? {
+        category: 'packet' as const,
+        label: `Repair ${firstBlockingFieldRisk.label}`,
+        detail: firstBlockingFieldRisk.reason,
+      }
+    : firstMissingDependency
+      ? {
+          category: firstMissingDependency.key.includes('support') || firstMissingDependency.key.includes('document') ? 'document' as const : 'dependency' as const,
+          label: `Unblock ${firstMissingDependency.label}`,
+          detail: firstMissingDependency.reason,
+        }
+      : firstMissingChecklistItem
+        ? {
+            category: firstMissingChecklistItem.key.includes('support') || firstMissingChecklistItem.key.includes('document') ? 'document' as const : 'checklist' as const,
+            label: `Complete ${firstMissingChecklistItem.label}`,
+            detail: firstMissingChecklistItem.reason,
+          }
+        : firstMissingFieldRisk
+          ? {
+              category: firstMissingFieldRisk.sourceDocumentKind ? 'document' as const : 'packet' as const,
+              label: `Fill ${firstMissingFieldRisk.label}`,
+              detail: firstMissingFieldRisk.reason,
+            }
+          : firstAttentionDependency
+            ? {
+                category: 'review' as const,
+                label: `Review ${firstAttentionDependency.label}`,
+                detail: firstAttentionDependency.reason,
+              }
+            : firstAttentionChecklistItem
+              ? {
+                  category: firstAttentionChecklistItem.key.includes('support') || firstAttentionChecklistItem.key.includes('document') ? 'document' as const : 'review' as const,
+                  label: `Review ${firstAttentionChecklistItem.label}`,
+                  detail: firstAttentionChecklistItem.reason,
+                }
+              : {
+                  category: 'review' as const,
+                  label: `Prepare ${formPayload.formCode || target.recommendedFormCode}`,
+                  detail: 'Packet is execution-ready. Final review and submission prep can move now.',
+                };
   const readinessSummary = {
     status: gates.ready ? 'ready' as const : blockingFieldRisks > 0 || gates.blockers.length > 0 ? 'blocked' as const : 'attention' as const,
     blockingFieldRisks,
@@ -74,6 +121,7 @@ export function buildNameChangeTargetExecutionSnapshot(
     targetLabel: target.label,
     ready: gates.ready,
     blockers: gates.blockers,
+    nextAction,
     readinessSummary,
     recommendedFormCode: formPayload.formCode || target.recommendedFormCode,
     autofillFields: autofill.fields.filter((field) => target.autofillTargetFields.includes(field.targetField)),

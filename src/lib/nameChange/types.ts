@@ -437,6 +437,11 @@ export interface NameChangeTargetExecutionSnapshot {
   targetLabel: string;
   ready: boolean;
   blockers: string[];
+  nextAction: {
+    category: 'packet' | 'dependency' | 'checklist' | 'document' | 'review';
+    label: string;
+    detail: string;
+  };
   readinessSummary: {
     status: 'ready' | 'blocked' | 'attention';
     blockingFieldRisks: number;
