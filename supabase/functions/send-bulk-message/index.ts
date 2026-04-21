@@ -247,11 +247,11 @@ async function deliverMessage(opts: {
       ? guestQuery.in("id", ["00000000-0000-0000-0000-000000000000"])
       : guestQuery.in("id", guestIds);
   } else if (audience === "attending") {
-    guestQuery = guestQuery.eq("rsvp_status", "confirmed");
+    guestQuery = guestQuery.in("rsvp_status", ["confirmed", "attending", "accepted"]);
   } else if (audience === "not_responded") {
-    guestQuery = guestQuery.eq("rsvp_status", "pending");
+    guestQuery = guestQuery.or("rsvp_status.is.null,rsvp_status.eq.pending");
   } else if (audience === "declined") {
-    guestQuery = guestQuery.eq("rsvp_status", "declined");
+    guestQuery = guestQuery.in("rsvp_status", ["declined", "not_attending"]);
   }
 
   const { data: guests, error: guestErr } = await guestQuery;
