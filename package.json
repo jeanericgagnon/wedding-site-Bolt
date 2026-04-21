@@ -27,7 +27,9 @@
     "variant-previews:manifest": "node scripts/extract_variant_preview_manifest.cjs",
     "audit:template-hardening": "node scripts/run_template_hardening_audit.mjs",
     "hardpass:rsvp": "npm test && npm run build && npm run smoke:rsvp:strict && npm run smoke:csvmapper && npm run smoke:checkin",
-    "smoke:full": "bash scripts/smoke_full.sh"
+    "smoke:full": "bash scripts/smoke_full.sh",
+    "proof:v1:board": "node scripts/v1-proof-board.mjs",
+    "proof:v1:board:md": "node scripts/v1-proof-board.mjs --markdown"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

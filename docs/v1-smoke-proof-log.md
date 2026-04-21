@@ -329,6 +329,8 @@ A slice does **not** count as passed because:
 - Concrete finish gap found and fixed: two small but still real launch-claim leaks remained outside the main feature-page pass — RSVP still labeled its visibility block as “Real-Time Analytics,” and the billing modal still promised “Everything you need for a beautiful wedding website.” Those surfaces now use narrower wording that matches the current proven core instead of implying harder live-state guarantees or blanket completeness.
 
 ## Verification notes
+- `npm run proof:v1:board` now gives a machine-readable view of the current v1 proof gate.
+- `npm run proof:v1:board:md` now gives a human-readable proof-board export for quick review.
 - `npm run build` passes after the guest-import permission fix.
 - `npm run build` passes after the Messaging scheduled-send permission fix.
 - `npm run build` passes after the Coordinator Mode permission fix.
@@ -368,6 +370,7 @@ A slice does **not** count as passed because:
 - `npm run build` passes after the feature-page v1 truth pass for Messaging, Registry, and RSVP.
 - `npm run build` passes after the remaining feature-page completeness-language cleanup for Guests, Seating, Travel, and RSVP.
 - `npm run build` passes after the final RSVP/billing truth-copy cleanup.
+- `npm run proof:v1:board && npm run build` passes after the v1 proof-board/runbook pass.
 
 ## Highest-value next proof seam
 - Guest-level RSVP and event-specific RSVP are both materially stronger now, but the next likely continuity seam is how newly created or removed event invitations affect downstream event attendance interpretation in itinerary/seating without a fresh explicit event response. That should be the next runtime proof target rather than more copy or permission cleanup.
