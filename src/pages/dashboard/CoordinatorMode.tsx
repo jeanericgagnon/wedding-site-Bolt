@@ -267,6 +267,10 @@ export const DashboardCoordinatorMode: React.FC = () => {
       const rawCommandState = localStorage.getItem(`dayof.coordinator.command.${siteId}`);
       const savedCommandState = normalizeCoordinatorCommandState(rawCommandState ? JSON.parse(rawCommandState) : null);
       setCommandSource(savedCommandState.source);
+
+      const rawAlertIntentState = localStorage.getItem(`dayof.coordinator.alertintent.${siteId}`);
+      const alertIntentState = normalizeCoordinatorAlertIntentState(rawAlertIntentState ? JSON.parse(rawAlertIntentState) : null);
+      setLastAlertSuggestionKey(alertIntentState.lastSuggestionKey);
     } catch {}
   }, [siteId, activeSiteRole]);
 
@@ -354,6 +358,15 @@ export const DashboardCoordinatorMode: React.FC = () => {
       }));
     } catch {}
   }, [siteId, commandSource, panelFocus, checkInFilter, checkInReviewOnly]);
+
+  useEffect(() => {
+    if (!siteId) return;
+    try {
+      localStorage.setItem(`dayof.coordinator.alertintent.${siteId}`, JSON.stringify({
+        lastSuggestionKey: lastAlertSuggestionKey,
+      }));
+    } catch {}
+  }, [siteId, lastAlertSuggestionKey]);
 
   const stats = useMemo(() => {
     const total = guests.length;
@@ -497,12 +510,12 @@ export const DashboardCoordinatorMode: React.FC = () => {
       if (prev.subject.trim() || prev.body.trim()) return prev;
       return {
         ...prev,
-        audience: prev.audience || preferredAlertSuggestion.audience,
+        audience: prev.audience || liveEventAudience || preferredAlertSuggestion.audience,
         subject: preferredAlertSuggestion.subject,
         body: preferredAlertSuggestion.body,
       };
     });
-  }, [preferredAlertSuggestion]);
+  }, [preferredAlertSuggestion, liveEventAudience]);
 
   const alertStats = useMemo(() => {
     const total = alertLog.length;
