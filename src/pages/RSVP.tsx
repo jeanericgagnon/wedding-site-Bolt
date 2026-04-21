@@ -294,6 +294,7 @@ export default function RSVP() {
     const token = searchParams.get('token');
     if (!token) return;
     setTokenAutoLoading(true);
+    setStep('search');
     setSearchValue(token);
     setGuest(null);
     setExistingRsvp(null);
@@ -337,6 +338,7 @@ export default function RSVP() {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setStep('search');
     setGuest(null);
     setExistingRsvp(null);
     setAmbiguousGuests([]);
