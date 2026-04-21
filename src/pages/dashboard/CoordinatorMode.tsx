@@ -605,6 +605,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
     events,
     timelineState,
   }), [guests, events, timelineState]);
+  const correctionGuestId = useMemo(() => getCoordinatorCorrectionGuestId(sortedGuests), [sortedGuests]);
+  const correctionEventId = useMemo(() => getCoordinatorCorrectionEventId(events, timelineState), [events, timelineState]);
 
   const filteredAlertLog = useMemo(
     () => alertLog.filter((a) => {
@@ -898,6 +900,23 @@ export const DashboardCoordinatorMode: React.FC = () => {
     setPanelFocus('timeline');
   };
 
+  const runCorrectionCue = (cue: (typeof correctionCues)[number]) => {
+    const target = resolveCoordinatorCorrectionCueTarget(cue);
+    setCommandSource('correction');
+    setPanelFocus(target.panelFocus);
+    setCheckInReviewOnly(target.reviewOnly);
+
+    if (cue.key === 'undo-check-in') {
+      setCheckInFilter('checked-in');
+      if (correctionGuestId) setActiveGuestId(correctionGuestId);
+      return;
+    }
+
+    if (cue.key === 'reopen-event' && correctionEventId) {
+      setActiveTimelineEventId(correctionEventId);
+    }
+  };
+
   const saveQnaAnswer = async (id: string) => {
     if (!canEditQna) {
       toast('Your collaborator role cannot edit guest questions here.', 'info');
@@ -992,6 +1011,18 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   <p className="text-sm font-medium text-text-primary">{item.title}</p>
                   <p className="mt-1 text-xs text-text-secondary">{item.detail}</p>
                   <p className="mt-1 text-[10px] text-text-tertiary/80">{getCoordinatorActionHint('escalation')}</p>
+                </button>
+              ))}
+              {correctionCues.map((cue) => (
+                <button
+                  key={cue.key}
+                  type="button"
+                  onClick={() => runCorrectionCue(cue)}
+                  className="w-full text-left rounded-lg border border-amber-200 bg-amber-50 px-3 py-2"
+                >
+                  <p className="text-sm font-medium text-text-primary">{cue.title}</p>
+                  <p className="mt-1 text-xs text-text-secondary">{cue.detail}</p>
+                  <p className="mt-1 text-[10px] text-text-tertiary/80">{getCoordinatorActionHint('correction')}</p>
                 </button>
               ))}
             </div>
