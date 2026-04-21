@@ -62,6 +62,10 @@ export default function EventRSVP() {
     if (token) {
       loadGuestAndEvents();
     } else {
+      if (postSubmitResetTimeoutRef.current !== null) {
+        window.clearTimeout(postSubmitResetTimeoutRef.current);
+        postSubmitResetTimeoutRef.current = null;
+      }
       setGuest(null);
       setInvitations([]);
       setSelectedEvent(null);
@@ -84,6 +88,10 @@ export default function EventRSVP() {
   }, []);
 
   async function loadGuestAndEvents() {
+    if (postSubmitResetTimeoutRef.current !== null) {
+      window.clearTimeout(postSubmitResetTimeoutRef.current);
+      postSubmitResetTimeoutRef.current = null;
+    }
     setLoading(true);
     setError('');
     setGuest(null);
