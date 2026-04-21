@@ -19,4 +19,19 @@ describe('deriveInviteEvents', () => {
       { id: 'seed-2', event_name: 'Welcome Dinner', event_date: '', start_time: '', location_name: 'Amor Boutique Hotel' },
     ]);
   });
+
+  it('falls back to RSVP seeds when itinerary rows exist but are only blank placeholders', () => {
+    const fallback = deriveInviteEvents([
+      { id: 'placeholder-1', event_name: '', event_date: '', start_time: '', location_name: '' },
+      { id: 'placeholder-2', event_name: '   ', event_date: null, start_time: null, location_name: '   ' },
+    ], [
+      { id: 'seed-1', label: 'Welcome Party', locationName: 'Casa Verde' },
+      { id: 'seed-2', label: 'Farewell Brunch', locationName: 'Beach Club' },
+    ]);
+
+    expect(fallback).toEqual([
+      { id: 'seed-1', event_name: 'Welcome Party', event_date: '', start_time: '', location_name: 'Casa Verde' },
+      { id: 'seed-2', event_name: 'Farewell Brunch', event_date: '', start_time: '', location_name: 'Beach Club' },
+    ]);
+  });
 });
