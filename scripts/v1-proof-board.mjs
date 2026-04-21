@@ -79,7 +79,7 @@ const proofBoard = {
       tier: 1,
       exitBar: 'Queue/check-in/timeline/Q&A feel calmer under realistic use and do not collapse into role or state confusion.',
       automatedProof: [
-        'npm run smoke:checkin',
+        'npm run proof:v1:coordinator-dayof',
       ],
       manualProof: [
         'Coordinator mode queue/check-in/timeline/Q&A smoke',

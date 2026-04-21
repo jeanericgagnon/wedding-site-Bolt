@@ -137,6 +137,7 @@ If that line fails, the rest is noise.
 - clearer proof that browser-local/session-local behavior does not undercut trust for actual event usage
 
 **Proof needed**
+- `npm run proof:v1:coordinator-dayof`
 - queue/check-in/timeline/alert smoke under a role-aware path
 
 **Launch read**
@@ -296,7 +297,7 @@ If that line fails, the rest is noise.
 4. **Coordinator runtime proof + fix**
    - queue/check-in/timeline/Q&A under a real role-aware path
    - exit bar: coordinator can answer who is here / what is next / what needs action without confusion
-   - command floor: `npm run smoke:checkin`
+   - command floor: `npm run proof:v1:coordinator-dayof`
 
 ### Week 2 — harden the must-ship layer
 5. **Comms center proof + first broken-path fix**

@@ -336,6 +336,7 @@ A slice does **not** count as passed because:
 - Concrete finish gap found and fixed: collaborator runtime proof was still sitting in the runbook as a manual intention, even though the repo already had an invite/create/claim Playwright script. There is now a dedicated `proof:v1:collaborator-runtime` gate that executes that runtime path when disposable proof credentials are available, and reports a structured blocker when those credentials are missing instead of leaving the lane stuck in vague “manual later” language.
 - Concrete finish gap found and fixed: comms center still relied too much on surface plausibility. The core message-state truth and non-compose permission boundaries were not captured in an executable slice-level proof gate. There is now a dedicated comms-center proof bundle, direct tests for delivery-state labeling, and a messaging guard smoke that asserts compose/send/retry/reschedule/run-due actions stay permission-gated in the dashboard surface.
 - Concrete finish gap found and fixed: registry was still lagging the other major slices in proof structure. It had service coverage, but no slice-level proof gate for metadata/repair attention truth or dashboard guardrails. There is now a dedicated registry proof bundle, direct tests for blocked retailer messaging + repair-state attention logic, and a registry guard smoke that asserts the dashboard still routes through quantity sanitation, duplicate review, and attention-state helpers.
+- Concrete finish gap found and fixed: coordinator/day-of proof was stronger than the board implied, but its checks were scattered. The slice now has a dedicated coordinator-dayof proof bundle that groups role-access boundaries, check-in queue behavior, single-live-event timeline state, the check-in guard smoke, and build integrity into one executable gate.
 
 ## Verification notes
 - `npm run proof:v1:board` now gives a machine-readable view of the current v1 proof gate.
@@ -389,6 +390,7 @@ A slice does **not** count as passed because:
 - `npm run proof:v1:collaborator-runtime` now returns a structured blocked-state summary when runtime proof credentials are missing, instead of leaving collaborator runtime proof as vague manual work.
 - `npm run proof:v1:comms-center` passes after the comms-center proof-bundle pass.
 - `npm run proof:v1:registry` passes after the registry proof-bundle pass.
+- `npm run proof:v1:coordinator-dayof` passes after the coordinator/day-of proof-bundle pass.
 
 ## Highest-value next proof seam
 - Guest-level RSVP and event-specific RSVP are both materially stronger now, but the next likely continuity seam is how newly created or removed event invitations affect downstream event attendance interpretation in itinerary/seating without a fresh explicit event response. That should be the next runtime proof target rather than more copy or permission cleanup.

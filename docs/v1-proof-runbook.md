@@ -35,6 +35,7 @@ npm run proof:v1:guests-rsvp-ops
 npm run proof:v1:collaborator-access
 npm run proof:v1:collaborator-runtime
 npm run proof:v1:comms-center
+npm run proof:v1:coordinator-dayof
 npm run proof:v1:registry
 npm run proof:v1:seating-continuity
 npm test -- src/pages/dashboard/registry/registryService.test.ts
@@ -110,7 +111,13 @@ Invite flow feels safe, collaborator lands in a role-aware surface, and at least
 Queue/check-in/timeline/Q&A feel calmer under realistic use and do not collapse into role or state confusion.
 
 **Automated support**
-- `npm run smoke:checkin`
+- `npm run proof:v1:coordinator-dayof`
+- underlying bundle:
+  - `npm test -- src/lib/coordinatorRoleAccess.test.ts`
+  - `npm test -- src/lib/coordinatorCheckInQueue.test.ts`
+  - `npm test -- src/lib/coordinatorTimelineState.test.ts`
+  - `npm run smoke:checkin`
+  - `npm run build`
 
 **Manual proof still required**
 - coordinator mode queue/check-in/timeline/Q&A smoke
