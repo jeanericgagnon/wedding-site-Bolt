@@ -237,6 +237,7 @@ export default function EventRSVP() {
   }
 
   function openRsvpForm(invitation: EventInvitation) {
+    activeSubmitRequestRef.current += 1;
     setSelectedEvent(invitation.id);
     setSubmitError('');
     setSubmitSuccess(false);
@@ -591,7 +592,10 @@ export default function EventRSVP() {
                       type="button"
                       variant="outline"
                       onClick={() => {
-                        if (!submitting) setSelectedEvent(null);
+                        if (!submitting) {
+                          activeSubmitRequestRef.current += 1;
+                          setSelectedEvent(null);
+                        }
                       }}
                       className="flex-1"
                       disabled={submitting}
