@@ -209,6 +209,17 @@ interface DeliveryRow {
 
 type ChannelType = 'email' | 'sms';
 
+const DELIVERY_ACTIVE_STATUSES = ['queued', 'sending', 'sent', 'partial', 'failed'] as const;
+const DELIVERY_COMPLETED_STATUSES = ['sent', 'partial', 'failed'] as const;
+
+function isDeliveryActiveStatus(status: string | null | undefined): boolean {
+  return DELIVERY_ACTIVE_STATUSES.includes((status ?? '') as (typeof DELIVERY_ACTIVE_STATUSES)[number]);
+}
+
+function isDeliveryCompletedStatus(status: string | null | undefined): boolean {
+  return DELIVERY_COMPLETED_STATUSES.includes((status ?? '') as (typeof DELIVERY_COMPLETED_STATUSES)[number]);
+}
+
 type MessageTemplateKey =
   | 'blank'
   | 'save-the-date'
@@ -2358,7 +2369,7 @@ export const DashboardMessages: React.FC = () => {
   const smsCreditsSufficient = smsCredits >= smsCreditsNeeded;
   const HARD_EMAIL_CAP = 1000;
   const usedEmailRecipients = messages
-    .filter((m) => m.channel === 'email' && ['sent', 'partial', 'queued'].includes(m.status))
+    .filter((m) => m.channel === 'email' && isDeliveryActiveStatus(m.status))
     .reduce((sum, m) => sum + getRecipientCount(m), 0);
   const remainingEmailRecipients = Math.max(HARD_EMAIL_CAP - usedEmailRecipients, 0);
   const emailCapacityAfterSend = Math.max(remainingEmailRecipients - recipientsWithEmail, 0);
@@ -2376,12 +2387,19 @@ export const DashboardMessages: React.FC = () => {
   }, [formData.audience, guests, eventGuestIds]);
 
   const deliveryStats = useMemo(() => {
-    const sentish = messages.filter((m) => ['sent', 'partial', 'failed'].includes(m.status));
+    const sentish = messages.filter((m) => isDeliveryCompletedStatus(m.status));
     const delivered = sentish.reduce((sum, m) => sum + (m.delivered_count ?? 0), 0);
     const failed = sentish.reduce((sum, m) => sum + (m.failed_count ?? 0), 0);
     const targeted = sentish.reduce((sum, m) => sum + getRecipientCount(m), 0);
     const rate = targeted > 0 ? Math.round((delivered / targeted) * 100) : 0;
-    return { delivered, failed, targeted, rate, scheduled: messages.filter((m) => m.status === 'scheduled').length };
+    return {
+      delivered,
+      failed,
+      targeted,
+      rate,
+      scheduled: messages.filter((m) => m.status === 'scheduled').length,
+      active: messages.filter((m) => m.status === 'queued' || m.status === 'sending').length,
+    };
   }, [messages]);
 
   const canCompose = canComposeDashboardMessages(messagesRole);
@@ -2447,6 +2465,7 @@ export const DashboardMessages: React.FC = () => {
 
   const historyStatusCounts = useMemo(() => ({
     sent: messages.filter((m) => m.status === 'sent').length,
+    active: messages.filter((m) => m.status === 'queued' || m.status === 'sending').length,
     scheduled: messages.filter((m) => m.status === 'scheduled').length,
     partial: messages.filter((m) => m.status === 'partial').length,
     failed: messages.filter((m) => m.status === 'failed').length,
@@ -2464,15 +2483,18 @@ export const DashboardMessages: React.FC = () => {
       if (m.status === 'scheduled') init[ch].scheduled += 1;
       if (m.status === 'failed') init[ch].failed += 1;
       if (m.status === 'partial') init[ch].partial += 1;
-      init[ch].targeted += getRecipientCount(m);
+      if (isDeliveryActiveStatus(m.status)) {
+        init[ch].targeted += getRecipientCount(m);
+      }
     });
     return init;
   }, [messages]);
 
   const deliveryHealth = useMemo(() => {
-    const delivered = messages.reduce((sum, m) => sum + (m.delivered_count ?? 0), 0);
-    const failed = messages.reduce((sum, m) => sum + (m.failed_count ?? 0), 0);
-    const targeted = messages.reduce((sum, m) => sum + getRecipientCount(m), 0);
+    const deliveryActiveMessages = messages.filter((m) => isDeliveryActiveStatus(m.status));
+    const delivered = deliveryActiveMessages.reduce((sum, m) => sum + (m.delivered_count ?? 0), 0);
+    const failed = deliveryActiveMessages.reduce((sum, m) => sum + (m.failed_count ?? 0), 0);
+    const targeted = deliveryActiveMessages.reduce((sum, m) => sum + getRecipientCount(m), 0);
     const skipped = deliveries.filter((d) => d.status === 'skipped').length;
     const successRate = targeted > 0 ? Math.round((delivered / targeted) * 100) : 0;
     const failRate = targeted > 0 ? Math.round((failed / targeted) * 100) : 0;
@@ -2596,7 +2618,7 @@ export const DashboardMessages: React.FC = () => {
                 <p className="mt-2 text-2xl font-semibold text-text-primary">{deliveryStats.scheduled}</p>
               </div>
               <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
-                <p className="text-xs uppercase tracking-wide text-text-tertiary">Recipients</p>
+                <p className="text-xs uppercase tracking-wide text-text-tertiary">Recipients reached / attempted</p>
                 <p className="mt-2 text-2xl font-semibold text-text-primary">{deliveryStats.targeted}</p>
               </div>
               <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
@@ -3164,9 +3186,9 @@ export const DashboardMessages: React.FC = () => {
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-text-primary">
-                      {messages.filter(m => m.status === 'sent' || m.status === 'queued').length}
+                      {messages.filter(m => m.status === 'sent' || m.status === 'queued' || m.status === 'sending').length}
                     </p>
-                    <p className="text-sm text-text-secondary">Sent / Queued</p>
+                    <p className="text-sm text-text-secondary">Sent / Active</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -3325,10 +3347,10 @@ export const DashboardMessages: React.FC = () => {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
             {[
               ['Sent', historyStatusCounts.sent],
+              ['Active', historyStatusCounts.active],
               ['Scheduled', historyStatusCounts.scheduled],
               ['Partial', historyStatusCounts.partial],
               ['Failed', historyStatusCounts.failed],
-              ['Drafts', historyStatusCounts.draft],
             ].map(([label, count]) => (
               <div key={String(label)} className="rounded-lg border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.04)] px-2.5 py-2">
                 <p className="text-[11px] uppercase tracking-wide text-text-tertiary">{label}</p>
