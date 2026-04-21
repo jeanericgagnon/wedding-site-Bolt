@@ -43,6 +43,7 @@ node scripts/v1-proof-board.mjs --markdown
 ```
 
 Use `node scripts/v1-proof-board.mjs` for the machine-readable version of the current proof board.
+That board now also carries the explicit real v1 line plus the ruthless next-3 queue, so the next finish move is executable instead of buried in prose.
 
 ---
 
@@ -199,9 +200,19 @@ Entry -> onboarding -> usable draft site/dashboard state is fast, honest, and do
 - the main blocker is no longer copy drift
 - the main blocker is captured proof on the must-ship flows
 
-## Next honest move
+## Ruthless next 3
 
-Use this runbook to capture one of these before anything else:
-1. canonical v1 smoke run
-2. guest -> RSVP -> ops continuity proof
-3. role-aware collaborator proof
+1. **Canonical v1 smoke run**
+   - why first: it is the top cross-product truth gate; until one real couple path is captured, readiness is still argued instead of proven
+   - commands: `npm run build && npm run test:e2e:live && npm run smoke:site`
+   - exit bar: one clean logged canonical path or one exact blocker in `docs/v1-smoke-proof-log.md`
+2. **Guest -> RSVP -> ops continuity proof**
+   - why second: guest truth feeds seating, messaging, and event counts
+   - commands: `npm run proof:v1:guests-rsvp-ops`
+   - current blocker: `validate-rsvp-token` anon auth 401 in this environment
+   - exit bar: one guest can move through dashboard and public RSVP without trust drift
+3. **Collaborator runtime forbidden-action proof**
+   - why third: planner/coordinator support is a core differentiator and the easiest slice to overclaim if runtime boundaries are not captured
+   - commands: `npm run proof:v1:collaborator-access && npm run proof:v1:collaborator-runtime`
+   - runtime dependency: disposable owner/collaborator proof credentials
+   - exit bar: one planner and one coordinator runtime path logged with at least one blocked forbidden action each

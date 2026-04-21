@@ -3,6 +3,13 @@
 const proofBoard = {
   generatedAt: new Date().toISOString(),
   purpose: 'Executable map of the current DayOf v1 proof gate.',
+  realV1Line: [
+    'A couple can get from setup to a polished live wedding site without obvious trust breaks.',
+    'Guests can find the site, access it correctly, and RSVP without weird state drift.',
+    'The couple can run the core wedding ops layer from one product: guests, RSVP, messages, seating, registry, itinerary, settings.',
+    'A planner or coordinator can be invited into a role-aware version of the product without fake permissions.',
+    'The public story matches the real runtime closely enough that launch does not feel dishonest.',
+  ],
   summary: {
     mustShip: [
       'public-site-trust',
@@ -22,6 +29,61 @@ const proofBoard = {
       'enterprise-governance-claims',
     ],
   },
+  ruthlessNextThree: [
+    {
+      id: 'canonical-v1-smoke',
+      rank: 1,
+      title: 'Capture the canonical v1 smoke run',
+      whyNow: 'This is the top cross-product truth gate. Until one real couple path is captured, readiness is still argued instead of proven.',
+      focusSlices: ['public-site-trust', 'onboarding'],
+      commands: [
+        'npm run build',
+        'npm run test:e2e:live',
+        'npm run smoke:site',
+      ],
+      manualProof: [
+        'Home -> signup/demo/auth -> onboarding/builder -> public site -> RSVP route notes',
+        'Capture exact pass/fail points in docs/v1-smoke-proof-log.md',
+      ],
+      exitBar: 'One clean logged canonical path or one exact blocker, with no hand-waving.',
+      status: 'READY',
+    },
+    {
+      id: 'guest-rsvp-continuity-proof',
+      rank: 2,
+      title: 'Prove guest -> RSVP -> downstream ops continuity',
+      whyNow: 'Guest truth feeds seating, messaging, and event counts. If this seam is weak, the wedding ops story is weak.',
+      focusSlices: ['guests-rsvp', 'seating', 'comms-center'],
+      commands: [
+        'npm run proof:v1:guests-rsvp-ops',
+      ],
+      manualProof: [
+        'Create/edit/review guest + household state',
+        'Submit/update RSVP and verify dashboard/event readback',
+      ],
+      exitBar: 'One guest can move through dashboard and public RSVP without trust drift.',
+      status: 'BLOCKED_ON_ENV',
+      blocker: 'RSVP strict smoke is currently environment-blocked by validate-rsvp-token anon auth (401) in this environment.',
+    },
+    {
+      id: 'collaborator-forbidden-action-proof',
+      rank: 3,
+      title: 'Capture role-aware collaborator runtime proof with forbidden actions',
+      whyNow: 'Planner/coordinator support is a core differentiator and the easiest slice to overclaim if runtime boundaries are not captured.',
+      focusSlices: ['planner-access', 'coordinator-dayof'],
+      commands: [
+        'npm run proof:v1:collaborator-access',
+        'npm run proof:v1:collaborator-runtime',
+      ],
+      manualProof: [
+        'Owner invite -> accept -> planner/coordinator dashboard framing',
+        'Attempt at least one forbidden action per non-owner role tested',
+      ],
+      exitBar: 'One planner and one coordinator runtime path logged with at least one blocked forbidden action each.',
+      status: 'READY_IF_CREDENTIALS_EXIST',
+      blocker: 'Runtime proof still depends on disposable owner/collaborator proof credentials.',
+    },
+  ],
   slices: [
     {
       id: 'public-site-trust',
@@ -157,6 +219,23 @@ const asMarkdown = process.argv.includes('--markdown');
 if (asMarkdown) {
   console.log('# V1 Proof Board\n');
   console.log(`_Generated:_ ${proofBoard.generatedAt}\n`);
+  console.log('## Real v1 line');
+  for (const line of proofBoard.realV1Line) console.log(`- ${line}`);
+  console.log('');
+  console.log('## Ruthless next 3');
+  for (const item of proofBoard.ruthlessNextThree) {
+    console.log(`### ${item.rank}) ${item.title}`);
+    console.log(`- status: ${item.status}`);
+    console.log(`- why now: ${item.whyNow}`);
+    console.log(`- focus slices: ${item.focusSlices.join(', ')}`);
+    console.log(`- commands:`);
+    for (const cmd of item.commands) console.log(`  - \`${cmd}\``);
+    console.log(`- manual proof:`);
+    for (const step of item.manualProof) console.log(`  - ${step}`);
+    console.log(`- exit bar: ${item.exitBar}`);
+    if (item.blocker) console.log(`- blocker: ${item.blocker}`);
+    console.log('');
+  }
   for (const slice of proofBoard.slices) {
     console.log(`## ${slice.title}`);
     console.log(`- status: ${slice.status}`);
@@ -166,6 +245,7 @@ if (asMarkdown) {
     for (const cmd of slice.automatedProof) console.log(`  - \`${cmd}\``);
     console.log(`- manual proof:`);
     for (const step of slice.manualProof) console.log(`  - ${step}`);
+    if (slice.blocker) console.log(`- blocker: ${slice.blocker}`);
     console.log(`- evidence target: ${slice.evidenceTarget}\n`);
   }
 } else {
