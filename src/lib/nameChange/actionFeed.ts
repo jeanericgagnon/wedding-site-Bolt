@@ -9,6 +9,7 @@ export interface NameChangeActionFeedItem {
   laneLabel: string;
   severity: 'blocking' | 'attention' | 'ready';
   score: number;
+  focusTargetId: string;
   action: NameChangeGuidedAction;
 }
 
@@ -41,6 +42,7 @@ export function buildNameChangeActionFeed(
       title: snapshot.targetLabel,
       laneLabel: snapshot.recommendedFormCode,
       severity,
+      focusTargetId: `execution-card-${snapshot.targetKey}`,
       score:
         (getSeverityWeight(severity) * 100) +
         (snapshot.blockers.length * 10) +
@@ -58,6 +60,7 @@ export function buildNameChangeActionFeed(
       title: item.label,
       laneLabel: 'Document repair',
       severity: item.severity,
+      focusTargetId: `document-${item.kind}`,
       score: item.score,
       action: item.nextActions[0],
     }));

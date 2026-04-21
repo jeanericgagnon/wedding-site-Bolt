@@ -93,6 +93,10 @@ const EXECUTION_SECTION_STEP_IDS: Record<string, string[]> = {
 const NAME_CHANGE_SECTION_PREFS_STORAGE_KEY = 'dayoflove:name-change:collapsed-sections';
 const NAME_CHANGE_ADMIN_PREFS_STORAGE_KEY = 'dayoflove:name-change:show-admin';
 
+function scrollToPlannerTarget(targetId: string) {
+  document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 interface Props {
   draft: NameChangeCaseInput;
   documents: NameChangeDocumentInput[];
@@ -1048,7 +1052,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               <button
                 key={section.key}
                 type="button"
-                onClick={() => document.getElementById(`execution-section-${section.key}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                onClick={() => scrollToPlannerTarget(`execution-section-${section.key}`)}
                 className="rounded-xl border border-border-subtle bg-white/60 p-4 text-left transition hover:border-primary/30 hover:bg-primary/5"
               >
                 <div className="flex items-center justify-between gap-3">
@@ -1102,7 +1106,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => document.getElementById(`execution-card-${section.highestRiskCardKey}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  onClick={() => section.highestRiskCardKey && scrollToPlannerTarget(`execution-card-${section.highestRiskCardKey}`)}
                 >
                   Focus highest-risk card
                 </Button>
@@ -1167,7 +1171,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               {section.highestRiskCardKey && (
                 <Button
                   size="sm"
-                  onClick={() => document.getElementById(`execution-card-${section.highestRiskCardKey}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  onClick={() => section.highestRiskCardKey && scrollToPlannerTarget(`execution-card-${section.highestRiskCardKey}`)}
                 >
                   Open next action
                 </Button>
@@ -1199,7 +1203,12 @@ export const NameChangePlannerTab: React.FC<Props> = ({
 
         <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {actionFeed.slice(0, 6).map((item) => (
-            <div key={item.key} className="rounded-xl border border-border-subtle p-4">
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => scrollToPlannerTarget(item.focusTargetId)}
+              className="rounded-xl border border-border-subtle p-4 text-left transition hover:border-primary/30 hover:bg-primary/5"
+            >
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-text-primary">{item.action.label}</p>
@@ -1211,7 +1220,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               </div>
               <p className="mt-3 text-sm text-text-secondary">{item.action.detail}</p>
               <p className="mt-2 text-xs text-text-secondary">{item.origin === 'execution' ? 'execution lane' : 'document repair'} · {item.action.category} · score {item.score}</p>
-            </div>
+            </button>
           ))}
         </div>
       </Card>
@@ -1275,7 +1284,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
 
               <div className="mt-4 grid gap-3 lg:grid-cols-2">
                 {documentRepairQueue.slice(0, 6).map((item) => (
-                  <div key={item.kind} className="rounded-xl border border-border-subtle p-4">
+                  <div id={`document-${item.kind}`} key={item.kind} className="rounded-xl border border-border-subtle p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold text-text-primary">{item.label}</p>

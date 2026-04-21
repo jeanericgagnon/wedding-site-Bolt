@@ -84,6 +84,7 @@ describe('name change action feed', () => {
 
     expect(feed).toHaveLength(2);
     expect(feed.map((item) => item.origin)).toEqual(expect.arrayContaining(['execution', 'document_repair']));
+    expect(feed.map((item) => item.focusTargetId)).toEqual(expect.arrayContaining(['execution-card-ssa', 'document-marriage_certificate']));
   });
 
   it('keeps higher-severity execution work above ready review work', () => {
