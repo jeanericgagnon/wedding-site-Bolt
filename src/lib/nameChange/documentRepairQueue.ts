@@ -12,6 +12,7 @@ export interface NameChangeDocumentRepairQueueItem {
   severity: 'blocking' | 'attention';
   score: number;
   impactSummary: string;
+  payoffSummary: string;
   nextActions: string[];
   impactedTargets: string[];
   impactedFields: Array<{
@@ -107,12 +108,21 @@ export function buildNameChangeDocumentRepairQueue(
         (document.missingExtractionFields.length * 2) +
         (document.intakeStatus === 'not_started' ? 15 : 0);
 
+      const payoffBits: string[] = [];
+      if (blockingRiskCount > 0) payoffBits.push(`removes ${blockingRiskCount} blocking field risk${blockingRiskCount === 1 ? '' : 's'}`);
+      if (attentionRiskCount > 0) payoffBits.push(`clears ${attentionRiskCount} attention field risk${attentionRiskCount === 1 ? '' : 's'}`);
+      if (impactedTargets.size > 0) payoffBits.push(`helps ${impactedTargets.size} target${impactedTargets.size === 1 ? '' : 's'}`);
+      if (payoffBits.length === 0 && document.required && document.intakeStatus === 'not_started') {
+        payoffBits.push('restores a missing required artifact');
+      }
+
       return {
         kind: document.kind,
         label: document.label,
         severity,
         score,
         impactSummary: issueBits.join(' · '),
+        payoffSummary: payoffBits.join(' · '),
         nextActions,
         impactedTargets: [...impactedTargets],
         impactedFields: [...impactedFields.values()],

@@ -1237,6 +1237,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                     </div>
 
                     <p className="mt-3 text-sm text-text-secondary">{item.impactSummary}</p>
+                    <p className="mt-2 text-xs text-text-secondary">Payoff: {item.payoffSummary}</p>
 
                     {item.metadataMissing.length > 0 ? (
                       <p className="mt-2 text-xs text-text-secondary">Metadata missing: {item.metadataMissing.join(', ')}</p>

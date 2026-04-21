@@ -83,6 +83,7 @@ describe('name change document repair queue', () => {
       severity: 'blocking',
     });
     expect(queue[0].impactSummary).toContain('metadata gaps');
+    expect(queue[0].payoffSummary).toContain('removes');
     expect(queue[0].impactedTargets.length).toBeGreaterThan(0);
     expect(queue[0].impactedFields).toEqual(expect.arrayContaining([
       expect.objectContaining({
@@ -108,6 +109,7 @@ describe('name change document repair queue', () => {
         kind: 'marriage_certificate',
         severity: 'blocking',
         intakeStatus: 'not_started',
+        payoffSummary: expect.stringContaining('restores a missing required artifact'),
         nextActions: expect.arrayContaining([
           expect.stringContaining('Add certified marriage certificate to intake'),
         ]),
