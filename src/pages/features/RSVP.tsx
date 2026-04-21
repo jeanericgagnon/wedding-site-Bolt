@@ -226,13 +226,13 @@ Built to keep things clear
 
       <section className="py-20 bg-white">
         <div className="container-custom">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-6">
-              Everything you need, already together
-            </h2>
-            <p className="text-xl text-ink/70 mb-8">
-              Everything you need to collect replies without extra back-and-forth.
-            </p>
+            <div className="max-w-3xl mx-auto text-center">
+              <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-6">
+              A strong RSVP core, already together
+              </h2>
+              <p className="text-xl text-ink/70 mb-8">
+              A practical RSVP flow that keeps replies cleaner and easier to trust, without pretending every reminder or admin edge path is fully automatic.
+              </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12 text-left">
               {[
@@ -245,7 +245,7 @@ Built to keep things clear
                 'Reminder scheduling in rollout',
                 'Plus-one acceptance',
                 'Response editing',
-                'Live RSVP visibility',
+                'Current RSVP visibility',
                 'Export-friendly reporting',
                 'Mobile-friendly',
               ].map((feature, idx) => (

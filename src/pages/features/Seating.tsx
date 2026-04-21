@@ -212,13 +212,13 @@ export const SeatingFeature: React.FC = () => {
 
       <section className="py-20 bg-white">
         <div className="container-custom">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-6">
-              Everything you need, already together
-            </h2>
-            <p className="text-xl text-ink/70 mb-8">
-              Everything you need for seating decisions and day-of guest flow.
-            </p>
+            <div className="max-w-3xl mx-auto text-center">
+              <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-6">
+              A practical seating core, already together
+              </h2>
+              <p className="text-xl text-ink/70 mb-8">
+              A strong seating workflow for assignments, lookup, and day-of support — without pretending every live event wrinkle is fully solved.
+              </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12 text-left">
               {[

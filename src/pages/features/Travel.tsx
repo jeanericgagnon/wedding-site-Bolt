@@ -212,13 +212,13 @@ export const TravelFeature: React.FC = () => {
 
       <section className="py-20 bg-white">
         <div className="container-custom">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-6">
-              Everything you need, already together
-            </h2>
-            <p className="text-xl text-ink/70 mb-8">
-              Everything you need to make travel, timing, and guest planning feel easier.
-            </p>
+            <div className="max-w-3xl mx-auto text-center">
+              <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-6">
+              A practical travel + itinerary core, already together
+              </h2>
+              <p className="text-xl text-ink/70 mb-8">
+              A clean travel and timing layer that helps guests orient themselves without overselling beyond the wedding-core product.
+              </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12 text-left">
               {[
