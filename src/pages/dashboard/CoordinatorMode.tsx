@@ -795,6 +795,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
   const revisitNeutralFocus = () => {
     const target = resolveCoordinatorNeutralFocusTarget(panelFocus);
+    setCommandJumpLabel(null);
+    setCommandJumpPanelFocus(null);
+    setCommandJumpTargetId(null);
+    setRealignmentLabel(null);
+    setNeutralFocusReason(getCoordinatorNeutralFocusReason(target.panelFocus));
     setPanelFocus(target.panelFocus);
     setCheckInReviewOnly(target.reviewOnly);
     if (target.panelFocus === 'check-in') {
@@ -808,6 +813,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
   const jumpToCommandSummaryItem = (label: 'Check-in' | 'Timeline' | 'Q&A' | 'Alerting') => {
     const target = getCoordinatorCommandSummaryTarget(label);
+    setNeutralFocusReason(null);
+    setRealignmentLabel(null);
     setPanelFocus(target.panelFocus);
     setCheckInReviewOnly(target.reviewOnly);
     setCommandJumpLabel(getCoordinatorCommandJumpLabel(label));
@@ -871,6 +878,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
 
   const returnToBoardTarget = () => {
+    setCommandJumpLabel(null);
+    setCommandJumpPanelFocus(null);
+    setCommandJumpTargetId(null);
+    setRealignmentLabel(null);
+    setNeutralFocusReason(null);
     if (panelFocus === 'check-in' && checkInBoardTargetId) {
       setActiveGuestId(checkInBoardTargetId);
       setCheckInFilter('arrivals');
@@ -963,6 +975,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
   const runPrimaryAction = () => {
     const target = resolveCoordinatorPrimaryActionTarget(primaryAction);
+    setNeutralFocusReason(null);
+    setRealignmentLabel(null);
+    setCommandJumpLabel(null);
+    setCommandJumpPanelFocus(null);
+    setCommandJumpTargetId(null);
     if (target.panelFocus === 'check-in') {
       setCommandSource('primary-action');
       setCheckInFilter('arrivals');
@@ -989,6 +1006,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
   const runTimelineAction = (eventId: string, nextState: TimelineState | null) => {
     if (!nextState || !canEditTimeline) return;
+    setNeutralFocusReason(null);
+    setRealignmentLabel(null);
     setTimelineState((prev) => setCoordinatorEventTimelineState(prev, eventId, nextState));
     setActiveTimelineEventId(eventId);
     const suggestedIntent = resolveCoordinatorTimelineAlertIntent(alertSuggestions, eventId);
@@ -1004,6 +1023,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
   const runCorrectionCue = (cue: (typeof correctionCues)[number]) => {
     const target = resolveCoordinatorCorrectionCueTarget(cue);
+    setNeutralFocusReason(null);
+    setRealignmentLabel(null);
+    setCommandJumpLabel(null);
+    setCommandJumpPanelFocus(null);
+    setCommandJumpTargetId(null);
     setCommandSource('correction');
     setPanelFocus(target.panelFocus);
     setCheckInReviewOnly(target.reviewOnly);
@@ -1099,6 +1123,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     const focus = resolveCoordinatorQueueFocus(item.key);
                     const nextPanelFocus = resolveCoordinatorPanelFocus(item.key);
                     const timelineTarget = resolveCoordinatorEscalationTimelineTarget({ escalationKey: item.key, upNextEvent });
+                    setNeutralFocusReason(null);
+                    setRealignmentLabel(null);
+                    setCommandJumpLabel(null);
+                    setCommandJumpPanelFocus(null);
+                    setCommandJumpTargetId(null);
                     if (item.key === 'open-qna') setActiveQnaId(getFirstOpenCoordinatorQnaId(qnaItems));
                     setCommandSource('escalation');
                     setCheckInFilter(focus.filter);
