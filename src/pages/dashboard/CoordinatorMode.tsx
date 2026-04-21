@@ -666,6 +666,29 @@ export const DashboardCoordinatorMode: React.FC = () => {
   }), [guests, events, timelineState]);
   const correctionGuestId = useMemo(() => getCoordinatorCorrectionGuestId(sortedGuests), [sortedGuests]);
   const correctionEventId = useMemo(() => getCoordinatorCorrectionEventId(events, timelineState), [events, timelineState]);
+  const activeTimelineEvent = useMemo(
+    () => events.find((event) => event.id === activeTimelineEventId) ?? null,
+    [events, activeTimelineEventId],
+  );
+  const activeTimelineEventState = useMemo<TimelineState | null>(
+    () => (activeTimelineEvent ? (timelineState[activeTimelineEvent.id] || 'up-next') : null),
+    [activeTimelineEvent, timelineState],
+  );
+  const activeTimelinePrimaryAction = useMemo(
+    () => activeTimelineEvent
+      ? getCoordinatorPrimaryTimelineAction({
+          event: activeTimelineEvent,
+          liveEventId,
+          upNextEventId,
+          timelineState,
+        })
+      : null,
+    [activeTimelineEvent, liveEventId, upNextEventId, timelineState],
+  );
+  const activeTimelineCorrectionAction = useMemo(
+    () => (activeTimelineEventState ? getCoordinatorTimelineCorrectionAction(activeTimelineEventState) : null),
+    [activeTimelineEventState],
+  );
 
   useEffect(() => {
     if (commandSource !== 'primary-action') return;
@@ -1445,6 +1468,42 @@ export const DashboardCoordinatorMode: React.FC = () => {
           <div className="rounded-2xl border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] p-4 space-y-4">
             <div>
               <p className="text-sm font-medium text-text-primary mb-2">Run-of-show timeline{panelFocus === 'timeline' ? ' · focus' : ''}{activeTimelineEventId ? ` · ${getCoordinatorActiveTargetLabel('timeline')}` : ''}{timelineTargetState.label ? ` · ${timelineTargetState.label}` : ''}</p>
+              {activeTimelineEvent && (
+                <div className="mb-2 rounded-lg border border-border/50 bg-surface-subtle/30 px-3 py-2">
+                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <p className="text-xs font-medium text-text-primary">Focused event</p>
+                      <p className="text-sm text-text-primary">{activeTimelineEvent.event_name}</p>
+                      <p className="text-[11px] text-text-tertiary">
+                        {activeTimelineEvent.start_time ? new Date(activeTimelineEvent.start_time).toLocaleString() : 'Time TBD'}
+                        {activeTimelineEventState ? ` · ${activeTimelineEventState === 'live' ? 'Live now' : activeTimelineEventState === 'done' ? 'Completed' : 'Up next'}` : ''}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {activeTimelineCorrectionAction && (
+                        <button
+                          type="button"
+                          disabled={!canEditTimeline}
+                          onClick={() => runTimelineAction(activeTimelineEvent.id, activeTimelineCorrectionAction.nextState)}
+                          className="text-[11px] px-2.5 py-1 rounded border border-amber-200 bg-amber-50 text-amber-700 disabled:opacity-40"
+                        >
+                          {activeTimelineCorrectionAction.label}
+                        </button>
+                      )}
+                      {activeTimelinePrimaryAction?.nextState && (
+                        <button
+                          type="button"
+                          disabled={!canEditTimeline}
+                          onClick={() => runTimelineAction(activeTimelineEvent.id, activeTimelinePrimaryAction.nextState)}
+                          className="text-[11px] px-2.5 py-1 rounded border border-primary/25 bg-primary/5 text-primary disabled:opacity-40"
+                        >
+                          {activeTimelinePrimaryAction.label}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
               {(liveEventId || upNextEventId || timelineBoardTargetId) && (
                 <div className="mb-2 flex flex-wrap gap-1.5">
                   {liveEventId && (
