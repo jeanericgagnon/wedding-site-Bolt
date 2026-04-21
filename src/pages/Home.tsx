@@ -17,6 +17,39 @@ import {
 } from 'lucide-react';
 import { GridItem, HeroReveal, Reveal, SlideReveal, StaggerGrid } from '../components/marketing/Reveal';
 
+const V1_HOME_GROUPS = [
+  {
+    title: 'Core v1 today',
+    badge: 'Must ship',
+    tone: 'must',
+    items: [
+      'Wedding site, RSVP, guests, messaging, seating, registry, itinerary, and day-of coordination in one coherent flow',
+      'Planner/coordinator access that stays couple-led and role-aware',
+      'Launch/privacy controls that are honest about what is live, hidden from search, or guest-access protected',
+    ],
+  },
+  {
+    title: 'Real, but not carrying the launch claim',
+    badge: 'Should ship',
+    tone: 'should',
+    items: [
+      'Archive mode, guest photo return paths, and post-wedding memory layers',
+      'Name-change planning support after the wedding',
+      'Surrounding retention ideas that should stay smaller than the wedding-core promise',
+    ],
+  },
+  {
+    title: 'Not part of the current promise',
+    badge: 'Cut from promise',
+    tone: 'cut',
+    items: [
+      'External custom domains as a default launch expectation',
+      'Advanced analytics as a major product claim',
+      'Fake one-click automation language around migration, reminders, or merchant sync',
+    ],
+  },
+] as const;
+
 export const Home: React.FC = () => {
   const navigate = useNavigate();
   const { signIn } = useAuth();
@@ -319,9 +352,44 @@ export const Home: React.FC = () => {
         <div className="container-custom">
           <SlideReveal from="left" className="section-intro">
             <h2 className="section-title mb-4">
-              Everything you need—nothing you don't
+              Core wedding flow first. Broader product ambition second.
             </h2>
+            <p className="text-ink/70 max-w-3xl">
+              DayOf should be judged on the core wedding path couples actually need right now. Some surrounding slices are real direction, but they should not blur the current v1 line.
+            </p>
           </SlideReveal>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+            {V1_HOME_GROUPS.map((group) => {
+              const toneClasses = group.tone === 'must'
+                ? 'border-emerald-200 bg-white'
+                : group.tone === 'should'
+                  ? 'border-amber-200 bg-white'
+                  : 'border-rose-200 bg-white';
+              const badgeClasses = group.tone === 'must'
+                ? 'bg-emerald-50 text-emerald-700'
+                : group.tone === 'should'
+                  ? 'bg-amber-50 text-amber-700'
+                  : 'bg-rose-50 text-rose-700';
+
+              return (
+                <div key={group.title} className={`rounded-2xl border p-5 ${toneClasses}`}>
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <h3 className="font-semibold text-ink">{group.title}</h3>
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ${badgeClasses}`}>{group.badge}</span>
+                  </div>
+                  <ul className="space-y-2 text-sm text-ink/80">
+                    {group.items.map((item) => (
+                      <li key={item} className="flex items-start gap-2">
+                        <span className="text-brand mt-0.5">•</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
 
           <div className="mb-8 sticky top-20 z-10">
             <div className="bg-white/90 backdrop-blur border border-border-subtle rounded-2xl p-2 overflow-x-auto">
@@ -443,7 +511,7 @@ export const Home: React.FC = () => {
           <div className="max-w-lg mx-auto mb-14">
             <div className="bg-white border border-brand/25 rounded-2xl p-7 shadow-[0_1px_2px_rgba(15,23,42,0.06)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)] transition-shadow duration-200">
               <div className="text-center mb-7">
-                <h3 className="text-[1.5rem] font-serif font-bold text-ink mb-6 leading-[1.2] updates-tight">Complete Wedding Platform</h3>
+                <h3 className="text-[1.5rem] font-serif font-bold text-ink mb-6 leading-[1.2] updates-tight">Core wedding site + ops</h3>
                 <div className="mb-5">
                   <div className="flex items-baseline justify-center gap-2">
                     <span className="text-[4.5rem] font-bold text-brand leading-[1] updates-tight">$49</span>
