@@ -43,12 +43,21 @@ describe('name change autofill prep snapshot', () => {
         display_name: 'Certified marriage certificate',
         storage_mode: 'metadata_only',
         intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'San Diego County Clerk',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
       },
       {
         document_kind: 'current_passport',
         display_name: 'Passport',
         storage_mode: 'metadata_only',
         intake_status: 'uploaded',
+        file_name_masked: 'passport-•••.pdf',
+        issuing_authority: 'U.S. Department of State',
+        issued_on: '2024-06-01',
+        expires_on: '2034-06-01',
+        extraction_confidence: 0.92,
       },
     ];
     const extractedFields: NameChangeExtractedFieldInput[] = [
@@ -92,6 +101,36 @@ describe('name change autofill prep snapshot', () => {
     });
     expect(snapshot.fields.find((field) => field.targetField === 'legal.marriage_date')).toMatchObject({
       value: expect.objectContaining({ value: null, confidence: 'low' }),
+    });
+  });
+
+  it('downgrades extracted confidence when the source document metadata is too thin', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        field_key: 'spouse_last_name',
+        field_label: 'Spouse last name',
+        field_value_masked: 'Jordan-Smith',
+        source_type: 'manual',
+        is_verified: true,
+      },
+    ];
+
+    const snapshot = buildNameChangeAutofillPrepSnapshot(makeCase(), documents, extractedFields);
+    expect(snapshot.fields.find((field) => field.targetField === 'applicant.target_last_name')).toMatchObject({
+      value: expect.objectContaining({
+        source: 'extracted_field',
+        value: 'Jordan-Smith',
+        confidence: 'low',
+        sourceDocumentKind: 'marriage_certificate',
+      }),
     });
   });
 });

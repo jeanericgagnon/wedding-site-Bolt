@@ -1,4 +1,5 @@
 import { buildNameChangeCanonicalCase } from './canonical';
+import { buildNameChangeDocumentIntakeSnapshot } from './documentContract';
 import { buildNameChangeExtractionContractSnapshot } from './extractionContract';
 import type {
   NameChangeAutofillFieldMapping,
@@ -54,10 +55,14 @@ function makeField(
   label: string,
   canonicalValue: string | null,
   extracted: ExtractionLookupResult,
+  metadataReady = true,
 ): NameChangeAutofillFieldMapping {
   const extractedValue = normalizeValue(extracted.value);
   const finalValue = extractedValue ?? normalizeValue(canonicalValue);
   const source = extractedValue ? 'extracted_field' : 'canonical_case';
+  const confidence = extractedValue
+    ? (metadataReady ? 'medium' : 'low')
+    : finalValue ? 'high' : 'low';
 
   return {
     targetField,
@@ -65,7 +70,7 @@ function makeField(
     value: {
       source,
       value: finalValue,
-      confidence: extractedValue ? 'medium' : finalValue ? 'high' : 'low',
+      confidence,
       sourceDocumentKind: extracted.sourceDocumentKind,
       sourceFieldKey: extracted.sourceFieldKey,
     },
@@ -78,19 +83,32 @@ export function buildNameChangeAutofillPrepSnapshot(
   extractedFields: NameChangeExtractedFieldInput[],
 ): NameChangeAutofillPrepSnapshot {
   const canonicalCase = buildNameChangeCanonicalCase(profile, documents, extractedFields);
+  const intakeSnapshot = buildNameChangeDocumentIntakeSnapshot(profile, documents, extractedFields);
   const extraction = buildNameChangeExtractionContractSnapshot(profile, documents, extractedFields);
   const lookup = buildExtractionLookup(documents, extractedFields);
+  const isDocumentMetadataReady = (kind: NameChangeDocumentKind | undefined) => {
+    if (!kind) return true;
+    const contract = intakeSnapshot.documents.find((document) => document.kind === kind);
+    return !contract || contract.metadataMissing.length === 0;
+  };
+
+  const directField = (
+    targetField: string,
+    label: string,
+    canonicalValue: string | null,
+    extractedValue: ExtractionLookupResult,
+  ) => makeField(targetField, label, canonicalValue, extractedValue, isDocumentMetadataReady(extractedValue.sourceDocumentKind));
 
   const fields: NameChangeAutofillFieldMapping[] = [
-    makeField('applicant.current_first_name', 'Current first name', canonicalCase.currentName.first, lookup('first_name', ['current_drivers_license', 'current_passport', 'marriage_certificate', 'court_order'])),
-    makeField('applicant.current_middle_name', 'Current middle name', canonicalCase.currentName.middle, lookup('middle_name', ['current_drivers_license', 'current_passport'])),
-    makeField('applicant.current_last_name', 'Current last name', canonicalCase.currentName.last, lookup('last_name', ['current_drivers_license', 'current_passport', 'marriage_certificate', 'court_order'])),
-    makeField('applicant.target_first_name', 'Target first name', canonicalCase.targetName.first, lookup('first_name', ['marriage_certificate', 'court_order'])),
-    makeField('applicant.target_last_name', 'Target last name', canonicalCase.targetName.last, { value: extraction.marriageCertificate.spouseLastName, sourceDocumentKind: 'marriage_certificate', sourceFieldKey: 'spouse_last_name' }),
-    makeField('applicant.county', 'County', canonicalCase.countyResidence, { value: extraction.marriageCertificate.county, sourceDocumentKind: 'marriage_certificate', sourceFieldKey: 'county' }),
-    makeField('legal.marriage_date', 'Marriage date', canonicalCase.legalContext.marriageDate, { value: extraction.marriageCertificate.issuanceDate, sourceDocumentKind: 'marriage_certificate', sourceFieldKey: 'issuance_date' }),
-    makeField('legal.court_order_date', 'Court order date', null, { value: extraction.courtOrder.courtOrderDate, sourceDocumentKind: 'court_order', sourceFieldKey: 'court_order_date' }),
-    makeField('identity.passport_issue_date', 'Passport issue date', null, { value: extraction.currentPassport.issuanceDate, sourceDocumentKind: 'current_passport', sourceFieldKey: 'issuance_date' }),
+    directField('applicant.current_first_name', 'Current first name', canonicalCase.currentName.first, lookup('first_name', ['current_drivers_license', 'current_passport', 'marriage_certificate', 'court_order'])),
+    directField('applicant.current_middle_name', 'Current middle name', canonicalCase.currentName.middle, lookup('middle_name', ['current_drivers_license', 'current_passport'])),
+    directField('applicant.current_last_name', 'Current last name', canonicalCase.currentName.last, lookup('last_name', ['current_drivers_license', 'current_passport', 'marriage_certificate', 'court_order'])),
+    directField('applicant.target_first_name', 'Target first name', canonicalCase.targetName.first, lookup('first_name', ['marriage_certificate', 'court_order'])),
+    directField('applicant.target_last_name', 'Target last name', canonicalCase.targetName.last, { value: extraction.marriageCertificate.spouseLastName, sourceDocumentKind: 'marriage_certificate', sourceFieldKey: 'spouse_last_name' }),
+    directField('applicant.county', 'County', canonicalCase.countyResidence, { value: extraction.marriageCertificate.county, sourceDocumentKind: 'marriage_certificate', sourceFieldKey: 'county' }),
+    directField('legal.marriage_date', 'Marriage date', canonicalCase.legalContext.marriageDate, { value: extraction.marriageCertificate.issuanceDate, sourceDocumentKind: 'marriage_certificate', sourceFieldKey: 'issuance_date' }),
+    directField('legal.court_order_date', 'Court order date', null, { value: extraction.courtOrder.courtOrderDate, sourceDocumentKind: 'court_order', sourceFieldKey: 'court_order_date' }),
+    directField('identity.passport_issue_date', 'Passport issue date', null, { value: extraction.currentPassport.issuanceDate, sourceDocumentKind: 'current_passport', sourceFieldKey: 'issuance_date' }),
   ];
 
   return {
