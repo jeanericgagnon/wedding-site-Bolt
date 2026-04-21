@@ -9,6 +9,7 @@ describe('onboardingFollowUpMerge', () => {
       ...createEmptyInitialSetupAnswers(),
       names: 'Alex & Jordan',
       optionalStory: 'We met online.',
+      weekendEventsRaw: 'Friday welcome drinks, Saturday wedding',
     };
     const formData = initialSetupAnswersToOnboardingFormShape(initialSetupAnswers);
 
@@ -19,7 +20,7 @@ describe('onboardingFollowUpMerge', () => {
       followUpAnswers: {
         'plusOnePolicy': 'all',
         'story-detail': 'We kept choosing each other after that first trip.',
-        'event-location-1': 'Pool terrace',
+        'event-location-welcome-drinks-1': 'Pool terrace',
         'event-time-1': '6:00 PM',
         'venue-clarity': 'Ocean bluff ceremony lawn',
       },
@@ -27,8 +28,12 @@ describe('onboardingFollowUpMerge', () => {
 
     expect(merged.initialSetupAnswers.plusOnePolicy).toBe('all');
     expect(merged.initialSetupFollowUps.storyClarification).toBe('We kept choosing each other after that first trip.');
-    expect(merged.initialSetupFollowUps.eventLocations['event-location-1']).toBe('Pool terrace');
-    expect(merged.initialSetupFollowUps.eventTimes['event-time-1']).toBe('6:00 PM');
+    expect(merged.initialSetupFollowUps.eventLocations['welcome-drinks-1']).toBe('Pool terrace');
+    expect(merged.initialSetupFollowUps.eventTimes['welcome-drinks-1']).toBe('6:00 PM');
+    expect(merged.weddingProfile.event.structuredWeekendEvents[0]).toMatchObject({
+      id: 'welcome-drinks-1',
+      title: 'welcome drinks',
+    });
     expect(merged.initialSetupFollowUps.venueClarification).toBe('Ocean bluff ceremony lawn');
   });
 

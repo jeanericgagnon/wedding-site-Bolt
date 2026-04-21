@@ -45,10 +45,14 @@ describe('aiOnboardingClarifyingAdapter', () => {
     });
 
     expect(decision.questions).toHaveLength(6);
+    expect(decision.questions[0]?.id).toBe('event-time-welcome-drinks-1');
     expect(decision.questions[0]?.question).toContain('welcome drinks');
     expect(decision.questions[0]?.question).toContain('what time');
+    expect(decision.questions[1]?.id).toBe('event-location-welcome-drinks-1');
     expect(decision.questions[1]?.question).toContain('where');
+    expect(decision.questions[2]?.id).toBe('event-time-wedding-2');
     expect(decision.questions[2]?.question).toContain('wedding');
+    expect(decision.questions[4]?.id).toBe('event-time-brunch-3');
     expect(decision.questions[4]?.question).toContain('brunch');
 
     const persistence = createClarifyingPersistenceFromDecision(decision);

@@ -15,6 +15,7 @@ import {
 import { createEmptyInitialSetupFollowUps } from '../../lib/initialSetupFollowUps';
 import { buildInitialSetupSnapshot } from '../../lib/initialSetupSnapshot';
 import { buildInitialSetupDerivedOutputs } from '../../lib/initialSetupDerivedOutputs';
+import { mergeOnboardingFollowUpAnswers } from '../../lib/onboardingFollowUpMerge';
 import { createOnboardingSessionStateFromInitialSetup } from '../../lib/aiOnboarding';
 import { createClarifyingDecisionFromInitialSetup, createClarifyingPersistenceFromDecision } from '../../lib/aiOnboardingClarifyingAdapter';
 import { buildClarifyingAnswerPatchSet } from '../../lib/aiClarifyingFlow';
@@ -360,7 +361,16 @@ export const QuickStart: React.FC = () => {
         });
         return;
       }
-      const { weddingProfile: derivedProfile } = buildInitialSetupDerivedOutputs(answersOverride, initialSetupFollowUps);
+      const mergedFollowUpState = mergeOnboardingFollowUpAnswers({
+        initialSetupAnswers: answersOverride,
+        initialSetupFollowUps,
+        followUpAnswers: followUpAnswersRef.current,
+        formData: initialSetupAnswersToOnboardingFormShape(answersOverride),
+      });
+      const { weddingProfile: derivedProfile } = buildInitialSetupDerivedOutputs(
+        mergedFollowUpState.initialSetupAnswers,
+        mergedFollowUpState.initialSetupFollowUps,
+      );
       const { data: site, error: siteError } = await supabase
         .from('wedding_sites')
         .select('id, wedding_data, active_template_id, template_id, wedding_date, venue_name, wedding_location, couple_name_1, couple_name_2')

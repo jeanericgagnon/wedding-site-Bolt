@@ -4,6 +4,17 @@ import { type initialSetupAnswersToOnboardingFormShape } from './initialSetupAns
 import { applyQuickStartAnswer, type ConciergeQuestion } from './quickStartFlow';
 import { applyInitialSetupAnswersToWeddingProfile } from './weddingProfile';
 
+const resolveStructuredEventId = (answers: InitialSetupAnswers, key: string, prefix: 'event-location-' | 'event-time-') => {
+  const rawEventKey = key.slice(prefix.length);
+  if (!rawEventKey) return key;
+
+  const profile = applyInitialSetupAnswersToWeddingProfile(answers);
+  const events = profile.event.structuredWeekendEvents;
+  const indexedMatch = /^\d+$/.test(rawEventKey) ? events[Number.parseInt(rawEventKey, 10) - 1]?.id : null;
+
+  return indexedMatch || rawEventKey;
+};
+
 const append = (current: string, next: string) => [current, next].filter(Boolean).join(current && next ? '\n\n' : '');
 
 const isQuestionKey = (value: string): value is ConciergeQuestion => (
@@ -84,12 +95,14 @@ export const mergeOnboardingFollowUpAnswers = ({
     }
 
     if (key.startsWith('event-location-')) {
-      nextFollowUps.eventLocations[key] = value;
+      const eventId = resolveStructuredEventId(nextAnswers, key, 'event-location-');
+      nextFollowUps.eventLocations[eventId] = value;
       continue;
     }
 
     if (key.startsWith('event-time-')) {
-      nextFollowUps.eventTimes[key] = value;
+      const eventId = resolveStructuredEventId(nextAnswers, key, 'event-time-');
+      nextFollowUps.eventTimes[eventId] = value;
       continue;
     }
   }

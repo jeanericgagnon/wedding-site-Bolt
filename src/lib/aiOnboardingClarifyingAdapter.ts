@@ -3,33 +3,30 @@ import type { OnboardingSessionState } from './aiOnboarding';
 import { generateClarifyingQuestionDecision, type ClarifyingQuestionInput, type ClarifyingQuestionDecision } from './aiClarifyingQuestions';
 import type { ClarifyingPersistenceEnvelope, StoredClarifyingQuestion } from './aiClarifyingPersistence';
 import { createEmptyClarifyingPersistence } from './aiClarifyingPersistence';
-
-const splitWeekendEvents = (raw: string) => raw
-  .split(/\n|,|;/)
-  .map((part) => part.trim())
-  .filter(Boolean)
-  .filter((part) => !/^(maybe|tbd|unknown)$/i.test(part));
+import { parseWeekendEvents } from './weddingProfile';
 
 const expandEventStructureQuestions = (decision: ClarifyingQuestionDecision, answers: InitialSetupAnswers): ClarifyingQuestionDecision => {
   const baseEventQuestion = decision.questions.find((question) => question.category === 'event_structure');
   if (!baseEventQuestion) return decision;
 
-  const events = splitWeekendEvents(answers.weekendEventsRaw);
+  const events = parseWeekendEvents(answers.weekendEventsRaw)
+    .filter((event) => event.title.trim())
+    .filter((event) => !/^(maybe|tbd|unknown)$/i.test(event.title.trim()));
   if (!events.length) return decision;
 
   const expandedQuestions = events.flatMap((event, index) => {
-    const title = event.replace(/^(friday|saturday|sunday|thursday|monday)\s+/i, '').trim() || event;
+    const title = event.title.trim();
     return [
       {
         ...baseEventQuestion,
-        id: `${baseEventQuestion.id || 'event-structure'}-${index + 1}-time`,
+        id: `event-time-${event.id}`,
         question: `${title}: what time is it?`,
         targetFields: [`events.${index}.time`],
         affectedSections: ['schedule'],
       },
       {
         ...baseEventQuestion,
-        id: `${baseEventQuestion.id || 'event-structure'}-${index + 1}-location`,
+        id: `event-location-${event.id}`,
         question: `${title}: where is it happening?`,
         targetFields: [`events.${index}.location`],
         affectedSections: ['schedule', 'travel'],
