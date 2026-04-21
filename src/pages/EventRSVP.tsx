@@ -92,6 +92,8 @@ export default function EventRSVP() {
   async function loadGuestAndEvents() {
     const requestId = activeLoadRequestRef.current + 1;
     activeLoadRequestRef.current = requestId;
+    let eventRsvpSupportKnown: boolean | null = null;
+    let eventRsvpSupportAvailable = true;
 
     if (postSubmitResetTimeoutRef.current !== null) {
       window.clearTimeout(postSubmitResetTimeoutRef.current);
@@ -151,7 +153,7 @@ export default function EventRSVP() {
       const invitationsWithRsvps = await Promise.all(
         (invitationsData || []).map(async (invitation) => {
           let rsvpData: { attending: boolean | null; dietary_restrictions: string | null; notes: string | null } | null = null;
-          if (hasEventRsvpSupport !== false) {
+          if (eventRsvpSupportAvailable) {
             const { data, error } = await supabase
               .from('event_rsvps')
               .select('attending, dietary_restrictions, notes')
@@ -167,7 +169,8 @@ export default function EventRSVP() {
                   event: invitation.itinerary_events as unknown as ItineraryEvent,
                   rsvp: undefined,
                 };
-                setHasEventRsvpSupport(false);
+                eventRsvpSupportAvailable = false;
+                eventRsvpSupportKnown = false;
               }
             } else {
               if (activeLoadRequestRef.current !== requestId) return {
@@ -176,7 +179,7 @@ export default function EventRSVP() {
                 event: invitation.itinerary_events as unknown as ItineraryEvent,
                 rsvp: undefined,
               };
-              setHasEventRsvpSupport(true);
+              eventRsvpSupportKnown = true;
               rsvpData = (data as { attending: boolean | null; dietary_restrictions: string | null; notes: string | null } | null) ?? null;
             }
           }
@@ -198,6 +201,7 @@ export default function EventRSVP() {
 
       if (activeLoadRequestRef.current !== requestId) return;
       setInvitations(invitationsWithRsvps);
+      setHasEventRsvpSupport(eventRsvpSupportKnown);
     } catch {
       if (activeLoadRequestRef.current !== requestId) return;
       setError('Failed to load your event invitations. Please try again or contact the couple.');
