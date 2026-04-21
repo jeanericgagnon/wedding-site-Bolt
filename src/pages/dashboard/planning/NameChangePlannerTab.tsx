@@ -5,7 +5,9 @@ import { Button } from '../../../components/ui/Button';
 import { buildNameChangeBankExecutionSnapshot } from '../../../lib/nameChange/bankFlow';
 import { buildNameChangeAutofillPrepSnapshot } from '../../../lib/nameChange/autofill';
 import { buildNameChangeCourtesyExecutionSnapshot } from '../../../lib/nameChange/courtesyFlow';
+import { NAME_CHANGE_DOCUMENT_CONTRACTS } from '../../../lib/nameChange/documentContract';
 import { buildNameChangeDocumentIntakeSnapshot } from '../../../lib/nameChange/documentContract';
+import { buildNameChangeExtractionContractSnapshot } from '../../../lib/nameChange/extractionContract';
 import { buildNameChangeDmvExecutionSnapshot } from '../../../lib/nameChange/dmvFlow';
 import { buildNameChangeEmployerExecutionSnapshot } from '../../../lib/nameChange/employerFlow';
 import { buildNameChangeInsuranceExecutionSnapshot } from '../../../lib/nameChange/insuranceFlow';
@@ -115,13 +117,47 @@ const documentOptions: Array<{ key: NameChangeDocumentInput['document_kind']; la
   { key: 'proof_of_address', label: 'Proof of address' },
 ];
 
-const fieldTemplates: Array<{ key: NameChangeExtractedFieldInput['field_key']; label: string }> = [
-  { key: 'first_name', label: 'Current first name' },
-  { key: 'last_name', label: 'Current last name' },
-  { key: 'spouse_last_name', label: 'Spouse last name' },
-  { key: 'issuance_date', label: 'Document issue date' },
-  { key: 'county', label: 'County' },
-];
+const extractionFieldLabels: Record<NameChangeExtractedFieldInput['field_key'], string> = {
+  first_name: 'First name',
+  middle_name: 'Middle name',
+  last_name: 'Last name',
+  spouse_last_name: 'Spouse last name',
+  issuance_date: 'Issue date',
+  certificate_number: 'Certificate number',
+  county: 'County',
+  court_order_date: 'Court order date',
+};
+
+const extractionFieldPlaceholders: Partial<Record<NameChangeExtractedFieldInput['field_key'], string>> = {
+  first_name: 'Alex',
+  middle_name: 'Marie',
+  last_name: 'Rivera',
+  spouse_last_name: 'Jordan',
+  issuance_date: '2026-04-05',
+  certificate_number: 'Masked certificate number',
+  county: 'San Diego',
+  court_order_date: '2026-04-05',
+};
+
+function upsertExtractedField(
+  extractedFields: NameChangeExtractedFieldInput[],
+  fieldKey: NameChangeExtractedFieldInput['field_key'],
+  nextValue: string,
+): NameChangeExtractedFieldInput[] {
+  const rest = extractedFields.filter((field) => field.field_key !== fieldKey);
+  if (!nextValue.trim()) return rest;
+
+  return [
+    ...rest,
+    {
+      field_key: fieldKey,
+      field_label: extractionFieldLabels[fieldKey],
+      field_value_masked: nextValue,
+      source_type: 'manual',
+      is_verified: true,
+    },
+  ];
+}
 
 function ensureDocument(documents: NameChangeDocumentInput[], kind: NameChangeDocumentInput['document_kind'], label: string): NameChangeDocumentInput[] {
   if (documents.some((document) => document.document_kind === kind)) return documents;
@@ -291,6 +327,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   const effectiveReminders = useMemo(() => reminders, [reminders]);
   const requirementSnapshot = useMemo(() => evaluateNameChangeRequirements(draft, documents, extractedFields), [draft, documents, extractedFields]);
   const documentIntakeSnapshot = useMemo(() => buildNameChangeDocumentIntakeSnapshot(draft, documents, extractedFields), [draft, documents, extractedFields]);
+  const extractionContractSnapshot = useMemo(() => buildNameChangeExtractionContractSnapshot(draft, documents, extractedFields), [draft, documents, extractedFields]);
   const autofillPrepSnapshot = useMemo(() => buildNameChangeAutofillPrepSnapshot(draft, documents, extractedFields), [draft, documents, extractedFields]);
   const bankExecutionSnapshot = useMemo(() => buildNameChangeBankExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
   const courtesyExecutionSnapshot = useMemo(() => buildNameChangeCourtesyExecutionSnapshot(draft, documents, extractedFields, plan), [draft, documents, extractedFields, plan]);
@@ -1075,41 +1112,79 @@ export const NameChangePlannerTab: React.FC<Props> = ({
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
             <div>
-              <h3 className="text-lg font-semibold text-text-primary">Structured extracted fields</h3>
-              <p className="text-sm text-text-secondary">The source of truth the engine actually reads.</p>
+              <h3 className="text-lg font-semibold text-text-primary">Extraction contract workspace</h3>
+              <p className="text-sm text-text-secondary">Document-specific structured fields the broader name-change system actually reads.</p>
             </div>
           </div>
 
-          <div className="mt-4 space-y-3">
-            {fieldTemplates.map((template) => {
-              const current = extractedFields.find((field) => field.field_key === template.key);
-              return (
-                <label key={template.key} className="block text-sm">
-                  <span className="mb-1 block text-xs font-medium text-text-secondary">{template.label}</span>
-                  <input
-                    className="w-full rounded-lg border border-border px-3 py-2"
-                    value={current?.field_value_masked ?? ''}
-                    onChange={(e) => {
-                      const nextValue = e.target.value;
-                      const rest = extractedFields.filter((field) => field.field_key !== template.key);
-                      onExtractedFieldsChange(nextValue.trim()
-                        ? [
-                            ...rest,
-                            {
-                              field_key: template.key,
-                              field_label: template.label,
-                              field_value_masked: nextValue,
-                              source_type: 'manual',
-                              is_verified: true,
-                            },
-                          ]
-                        : rest);
-                    }}
-                    placeholder="Masked or structured value"
-                  />
-                </label>
-              );
-            })}
+          <div className="mt-4 grid gap-4">
+            {NAME_CHANGE_DOCUMENT_CONTRACTS
+              .filter((contract) => contract.extractionFields.length > 0)
+              .filter((contract) => contract.requiredFor.includes('all') || contract.requiredFor.includes(draft.legal_basis) || documents.some((document) => document.document_kind === contract.kind))
+              .map((contract) => {
+                const status = documentIntakeSnapshot.documents.find((document) => document.kind === contract.kind);
+                const typedSnapshot = contract.kind === 'marriage_certificate'
+                  ? extractionContractSnapshot.marriageCertificate
+                  : contract.kind === 'court_order'
+                    ? extractionContractSnapshot.courtOrder
+                    : contract.kind === 'current_passport'
+                      ? extractionContractSnapshot.currentPassport
+                      : contract.kind === 'current_drivers_license'
+                        ? extractionContractSnapshot.currentDriversLicense
+                        : null;
+
+                return (
+                  <div key={contract.kind} className="rounded-xl border border-border-subtle p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-text-primary">{contract.label}</p>
+                        <p className="mt-1 text-xs text-text-secondary">
+                          {status?.required ? 'required' : 'supporting'} · {status?.preferredForAutofill ? 'autofill-driving' : 'reference-only'}
+                        </p>
+                      </div>
+                      <span className={`rounded-full px-2 py-1 text-xs ${status?.intakeStatus === 'reviewed' ? 'bg-success/10 text-success' : status?.intakeStatus === 'uploaded' ? 'bg-warning/10 text-warning' : 'bg-surface-subtle text-text-secondary'}`}>
+                        {status?.intakeStatus ?? 'not started'}
+                      </span>
+                    </div>
+
+                    <div className="mt-3 grid gap-2 md:grid-cols-2">
+                      {contract.extractionFields.map((fieldKey) => {
+                        const current = extractedFields.find((field) => field.field_key === fieldKey);
+                        const isCaptured = status?.capturedExtractionFields.includes(fieldKey) ?? false;
+                        return (
+                          <label key={`${contract.kind}-${fieldKey}`} className="block text-sm">
+                            <span className="mb-1 flex items-center justify-between gap-2 text-xs font-medium text-text-secondary">
+                              <span>{extractionFieldLabels[fieldKey]}</span>
+                              <span className={`rounded-full px-2 py-0.5 text-[10px] ${isCaptured ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
+                                {isCaptured ? 'captured' : 'missing'}
+                              </span>
+                            </span>
+                            <input
+                              className="w-full rounded-lg border border-border px-3 py-2"
+                              value={current?.field_value_masked ?? ''}
+                              onChange={(e) => onExtractedFieldsChange(upsertExtractedField(extractedFields, fieldKey, e.target.value))}
+                              placeholder={extractionFieldPlaceholders[fieldKey] ?? 'Masked structured value'}
+                            />
+                          </label>
+                        );
+                      })}
+                    </div>
+
+                    <div className="mt-3 grid gap-3 md:grid-cols-2">
+                      <div className="rounded-lg bg-surface-subtle/60 p-3">
+                        <p className="text-xs uppercase tracking-wide text-text-tertiary">Accepted signals</p>
+                        <p className="mt-2 text-xs text-text-secondary">{contract.acceptedSignals.join(' · ')}</p>
+                      </div>
+                      <div className="rounded-lg bg-surface-subtle/60 p-3">
+                        <p className="text-xs uppercase tracking-wide text-text-tertiary">Typed extraction snapshot</p>
+                        <p className="mt-2 text-xs text-text-secondary break-words">
+                          {typedSnapshot ? JSON.stringify(typedSnapshot) : 'No typed extraction view for this document kind yet.'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
           </div>
         </Card>
       </div>
