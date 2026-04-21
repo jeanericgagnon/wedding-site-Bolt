@@ -14,6 +14,7 @@ const checks = [
   { name: 'registry types expose blocked retailer messaging', ok: registryTypes.includes('Amazon blocks automated product lookups') },
   { name: 'registry types expose quantity sanitation', ok: registryTypes.includes('export function sanitizeRegistryQuantityState') },
   { name: 'registry types expose comparison URL normalization', ok: registryTypes.includes('export function normalizeRegistryComparisonUrl') },
+  { name: 'registry types expose title normalization', ok: registryTypes.includes('export function normalizeRegistryTitleForComparison') },
   { name: 'repair state exposes getRegistryRepairStates', ok: repairState.includes('export function getRegistryRepairStates') },
   { name: 'duplicate grouping normalizes title-only items', ok: duplicateRegistryItems.includes('normalizeRegistryTitleForComparison') },
 ];

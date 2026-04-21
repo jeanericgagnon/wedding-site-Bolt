@@ -245,6 +245,17 @@ export function normalizeRegistryComparisonUrl(url: string | null | undefined): 
   }
 }
 
+export function normalizeRegistryTitleForComparison(title: string | null | undefined): string | null {
+  const value = (title || '')
+    .toLowerCase()
+    .replace(/['’]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(/\s+/g, ' ');
+
+  return value || null;
+}
+
 export function itemNeedsAttention(item: RegistryItem): boolean {
   const metadataState = getRegistryItemMetadataState(item);
   return Boolean(

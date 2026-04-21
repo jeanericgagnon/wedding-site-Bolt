@@ -1,5 +1,5 @@
 import { supabase } from '../../../lib/supabase';
-import { RegistryItem, RegistryPreview, normalizeRegistryComparisonUrl, sanitizeRegistryQuantityState } from './registryTypes';
+import { RegistryItem, RegistryPreview, normalizeRegistryComparisonUrl, normalizeRegistryTitleForComparison, sanitizeRegistryQuantityState } from './registryTypes';
 
 function normalizeRegistryItem(item: RegistryItem): RegistryItem {
   const quantityState = sanitizeRegistryQuantityState(item.quantity_purchased, item.quantity_needed);
@@ -193,14 +193,14 @@ export function findDuplicateItem(
   excludeId?: string
 ): RegistryItem | null {
   const normalizedUrl = normalizeRegistryComparisonUrl(url);
-  const normalizedTitle = title?.toLowerCase().trim();
+  const normalizedTitle = normalizeRegistryTitleForComparison(title);
 
   for (const item of existingItems) {
     if (excludeId && item.id === excludeId) continue;
 
     const itemCanonical = normalizeRegistryComparisonUrl(item.canonical_url);
     const itemUrl = normalizeRegistryComparisonUrl(item.item_url);
-    const itemTitle = item.item_name.toLowerCase().trim();
+    const itemTitle = normalizeRegistryTitleForComparison(item.item_name);
 
     if (normalizedUrl && itemCanonical && itemCanonical === normalizedUrl) {
       return item;
@@ -210,7 +210,7 @@ export function findDuplicateItem(
       return item;
     }
 
-    if (normalizedTitle && itemTitle === normalizedTitle) {
+    if (normalizedTitle && itemTitle && itemTitle === normalizedTitle) {
       return item;
     }
   }

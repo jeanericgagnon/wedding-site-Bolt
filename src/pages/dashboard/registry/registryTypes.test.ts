@@ -6,6 +6,7 @@ import {
   getRegistryItemMetadataState,
   itemNeedsAttention,
   normalizeRegistryComparisonUrl,
+  normalizeRegistryTitleForComparison,
   type RegistryItem,
   type RegistryPreview,
 } from './registryTypes';
@@ -123,5 +124,13 @@ describe('normalizeRegistryComparisonUrl', () => {
 
   it('preserves meaningful query params while removing tracking noise', () => {
     expect(normalizeRegistryComparisonUrl('https://shop.example.com/product?id=42&utm_campaign=test')).toBe('shop.example.com/product?id=42');
+  });
+});
+
+describe('normalizeRegistryTitleForComparison', () => {
+  it('normalizes punctuation, apostrophes, and whitespace drift', () => {
+    expect(normalizeRegistryTitleForComparison("KitchenAid   Mixer — Matte Black!!!")).toBe('kitchenaid mixer matte black');
+    expect(normalizeRegistryTitleForComparison("KitchenAid Mixer, Matte Black")).toBe('kitchenaid mixer matte black');
+    expect(normalizeRegistryTitleForComparison("The Couple’s Favorite Pan")).toBe('the couples favorite pan');
   });
 });

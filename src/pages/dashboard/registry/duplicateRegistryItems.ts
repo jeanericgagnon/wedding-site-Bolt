@@ -1,16 +1,5 @@
 import type { RegistryItem } from './registryTypes';
-import { normalizeRegistryComparisonUrl } from './registryTypes';
-
-function normalizeRegistryTitleForComparison(title: string | null | undefined): string | null {
-  const value = (title || '')
-    .toLowerCase()
-    .replace(/['’]/g, '')
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim()
-    .replace(/\s+/g, ' ');
-
-  return value || null;
-}
+import { normalizeRegistryComparisonUrl, normalizeRegistryTitleForComparison } from './registryTypes';
 
 export function findDuplicateRegistryGroups(items: RegistryItem[]): RegistryItem[][] {
   const groups = new Map<string, RegistryItem[]>();

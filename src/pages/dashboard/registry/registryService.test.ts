@@ -248,6 +248,26 @@ describe('findDuplicateItem', () => {
     expect(duplicate).not.toBeNull();
     expect(duplicate?.id).toBe('item-1');
   });
+
+  it('matches duplicate titles despite punctuation and spacing drift', () => {
+    const items = [
+      mockItem({
+        id: 'item-1',
+        item_name: "KitchenAid   Mixer — Matte Black!",
+        canonical_url: null,
+        item_url: null,
+      }),
+    ];
+
+    const duplicate = findDuplicateItem(
+      'https://different-store.com/product',
+      'KitchenAid Mixer Matte Black',
+      items,
+    );
+
+    expect(duplicate).not.toBeNull();
+    expect(duplicate?.id).toBe('item-1');
+  });
 });
 
 describe('ownerMarkPurchased', () => {
