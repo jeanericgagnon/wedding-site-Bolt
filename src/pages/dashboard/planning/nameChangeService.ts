@@ -95,6 +95,7 @@ export function normalizeNameChangeDocuments(documents: NameChangeDocumentInput[
   documents.forEach((document) => {
     deduped.set(document.document_kind, {
       ...document,
+      id: document.id,
       display_name: normalizeText(document.display_name) || document.document_kind.replace(/_/g, ' '),
       file_name_masked: normalizeNullableText(document.file_name_masked),
       issuing_authority: normalizeNullableText(document.issuing_authority),
@@ -700,6 +701,7 @@ export function mapCaseRecordToNameChangeInput(caseRecord: NameChangeCaseRecord)
 
 export function mapDocumentRecordToInput(document: NameChangeDocumentRecord): NameChangeDocumentInput {
   return {
+    id: document.id,
     document_kind: document.document_kind,
     display_name: document.display_name,
     storage_mode: document.storage_mode,

@@ -1,12 +1,11 @@
 import { buildNameChangeCanonicalCase } from './canonical';
-import { buildNameChangeExtractionContractSnapshot } from './extractionContract';
+import { buildNameChangeExtractionContractSnapshot, getDocumentCapturedFieldKeys } from './extractionContract';
 import type {
   NameChangeCaseInput,
   NameChangeDocumentContractDefinition,
   NameChangeDocumentContractStatus,
   NameChangeDocumentInput,
   NameChangeDocumentIntakeSnapshot,
-  NameChangeDocumentKind,
   NameChangeExtractedFieldInput,
   NameChangeExtractionFieldKey,
 } from './types';
@@ -94,21 +93,6 @@ function metadataMissingForDocument(document: NameChangeDocumentInput | undefine
   return missing;
 }
 
-function fieldsForDocumentKind(
-  kind: NameChangeDocumentKind,
-  documents: NameChangeDocumentInput[],
-  extractedFields: NameChangeExtractedFieldInput[],
-): NameChangeExtractionFieldKey[] {
-  const hasDocument = documents.some((document) => document.document_kind === kind);
-  if (!hasDocument) return [];
-
-  const canonicalFieldHints = new Set<NameChangeExtractionFieldKey>();
-  extractedFields.forEach((field) => {
-    if (field.source_type === 'manual') canonicalFieldHints.add(field.field_key);
-  });
-  return [...canonicalFieldHints];
-}
-
 export function buildNameChangeDocumentIntakeSnapshot(
   profile: NameChangeCaseInput,
   documents: NameChangeDocumentInput[],
@@ -163,7 +147,7 @@ export function buildNameChangeDocumentIntakeSnapshot(
             return mapping[key as keyof typeof mapping];
           });
         default:
-          return fieldsForDocumentKind(definition.kind, documents, extractedFields);
+          return getDocumentCapturedFieldKeys(documents, extractedFields, definition.kind);
       }
     })();
     const capturedExtractionFields = typedCapturedFields

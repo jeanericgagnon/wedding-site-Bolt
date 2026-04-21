@@ -40,12 +40,14 @@ describe('name change canonical case', () => {
   it('builds canonical names and document coverage from case input', () => {
     const documents: NameChangeDocumentInput[] = [
       {
+        id: 'doc-marriage',
         document_kind: 'marriage_certificate',
         display_name: 'Certified marriage certificate',
         storage_mode: 'metadata_only',
         intake_status: 'reviewed',
       },
       {
+        id: 'doc-passport',
         document_kind: 'current_passport',
         display_name: 'Passport',
         storage_mode: 'metadata_only',
@@ -54,10 +56,19 @@ describe('name change canonical case', () => {
     ];
     const extractedFields: NameChangeExtractedFieldInput[] = [
       {
+        document_id: 'doc-marriage',
         field_key: 'spouse_last_name',
         field_label: 'Spouse last name',
         field_value_masked: 'Jordan',
-        source_type: 'manual',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'doc-passport',
+        field_key: 'issuance_date',
+        field_label: 'Passport issue date',
+        field_value_masked: '2024-06-01',
+        source_type: 'document_extract',
         is_verified: true,
       },
     ];
@@ -66,7 +77,9 @@ describe('name change canonical case', () => {
     expect(canonical.currentName.full).toBe('Alex Marie Rivera');
     expect(canonical.targetName.full).toBe('Alex Marie Jordan');
     expect(canonical.documents.marriage_certificate.intakeStatus).toBe('reviewed');
+    expect(canonical.documents.marriage_certificate.extractedFieldKeys).toEqual(['spouse_last_name']);
     expect(canonical.documents.current_passport.intakeStatus).toBe('uploaded');
+    expect(canonical.documents.current_passport.extractedFieldKeys).toEqual(['issuance_date']);
     expect(canonical.lifeContext.travelBookedSoon).toBe(true);
   });
 });

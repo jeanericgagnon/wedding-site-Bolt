@@ -36,9 +36,10 @@ function makeCase(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseI
 }
 
 describe('name change autofill prep snapshot', () => {
-  it('builds candidate autofill fields from canonical case + extracted fields', () => {
+  it('builds candidate autofill fields from canonical case + document-linked extracted fields', () => {
     const documents: NameChangeDocumentInput[] = [
       {
+        id: 'doc-marriage',
         document_kind: 'marriage_certificate',
         display_name: 'Certified marriage certificate',
         storage_mode: 'metadata_only',
@@ -49,6 +50,7 @@ describe('name change autofill prep snapshot', () => {
         extraction_confidence: 0.97,
       },
       {
+        id: 'doc-passport',
         document_kind: 'current_passport',
         display_name: 'Passport',
         storage_mode: 'metadata_only',
@@ -62,17 +64,27 @@ describe('name change autofill prep snapshot', () => {
     ];
     const extractedFields: NameChangeExtractedFieldInput[] = [
       {
+        document_id: 'doc-marriage',
         field_key: 'spouse_last_name',
         field_label: 'Spouse last name',
         field_value_masked: 'Jordan-Smith',
-        source_type: 'manual',
+        source_type: 'document_extract',
         is_verified: true,
       },
       {
+        document_id: 'doc-marriage',
         field_key: 'county',
         field_label: 'County',
         field_value_masked: 'Orange County',
-        source_type: 'manual',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'doc-passport',
+        field_key: 'first_name',
+        field_label: 'First name',
+        field_value_masked: 'Alicia',
+        source_type: 'document_extract',
         is_verified: true,
       },
     ];
@@ -88,8 +100,55 @@ describe('name change autofill prep snapshot', () => {
     });
     expect(snapshot.fields.find((field) => field.targetField === 'applicant.current_first_name')).toMatchObject({
       value: expect.objectContaining({
+        source: 'extracted_field',
+        value: 'Alicia',
+        sourceDocumentKind: 'current_passport',
+      }),
+    });
+  });
+
+  it('does not let an unrelated document override a preferred document lane', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-marriage',
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'San Diego County Clerk',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
+      },
+      {
+        id: 'doc-passport',
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'passport-•••.pdf',
+        issuing_authority: 'U.S. Department of State',
+        issued_on: '2024-06-01',
+        expires_on: '2034-06-01',
+        extraction_confidence: 0.92,
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'doc-passport',
+        field_key: 'spouse_last_name',
+        field_label: 'Spouse last name',
+        field_value_masked: 'Wrong-Source',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+
+    const snapshot = buildNameChangeAutofillPrepSnapshot(makeCase(), documents, extractedFields);
+    expect(snapshot.fields.find((field) => field.targetField === 'applicant.target_last_name')).toMatchObject({
+      value: expect.objectContaining({
         source: 'canonical_case',
-        value: 'Alex',
+        value: 'Jordan',
       }),
     });
   });

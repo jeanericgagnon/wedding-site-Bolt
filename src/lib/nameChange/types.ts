@@ -95,6 +95,7 @@ export interface NameChangeDocumentRecord {
 }
 
 export interface NameChangeDocumentInput {
+  id?: string;
   document_kind: NameChangeDocumentKind;
   display_name: string;
   storage_mode: 'none' | 'metadata_only';

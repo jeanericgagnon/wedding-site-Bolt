@@ -60,6 +60,7 @@ describe('nameChangeService normalization', () => {
   it('dedupes documents by kind and trims metadata', () => {
     const documents: NameChangeDocumentInput[] = [
       {
+        id: 'doc-old',
         document_kind: 'marriage_certificate',
         display_name: '  Marriage cert  ',
         storage_mode: 'metadata_only',
@@ -68,6 +69,7 @@ describe('nameChangeService normalization', () => {
         issuing_authority: ' San Diego County ',
       },
       {
+        id: 'doc-final',
         document_kind: 'marriage_certificate',
         display_name: ' Final certificate ',
         storage_mode: 'metadata_only',
@@ -79,6 +81,7 @@ describe('nameChangeService normalization', () => {
 
     expect(normalizeNameChangeDocuments(documents)).toEqual([
       expect.objectContaining({
+        id: 'doc-final',
         document_kind: 'marriage_certificate',
         display_name: 'Final certificate',
         file_name_masked: 'final-cert.pdf',
@@ -179,7 +182,7 @@ describe('nameChangeService normalization', () => {
     });
 
     expect(hydrated.draft).toEqual(mapCaseRecordToNameChangeInput(caseRecord));
-    expect(hydrated.documents[0]).toMatchObject({ display_name: 'Marriage cert', file_name_masked: 'cert.pdf' });
+    expect(hydrated.documents[0]).toMatchObject({ id: 'doc-1', display_name: 'Marriage cert', file_name_masked: 'cert.pdf' });
     expect(hydrated.extractedFields[0]).toMatchObject({ field_value_masked: 'Jordan' });
     expect(hydrated.plan.summary.readinessPercent).toBeGreaterThan(0);
     expect(hydrated.reminders.length).toBeGreaterThan(0);

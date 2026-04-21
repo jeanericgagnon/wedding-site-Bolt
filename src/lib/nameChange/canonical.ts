@@ -1,3 +1,4 @@
+import { getDocumentCapturedFieldKeys } from './extractionContract';
 import type {
   NameChangeCanonicalCase,
   NameChangeCanonicalPersonName,
@@ -33,28 +34,16 @@ export function buildNameChangeCanonicalCase(
   documents: NameChangeDocumentInput[],
   extractedFields: NameChangeExtractedFieldInput[],
 ): NameChangeCanonicalCase {
-  const fieldsByDocumentKind = new Map<NameChangeDocumentKind, NameChangeExtractedFieldInput[]>();
   const documentsByKind = new Map(documents.map((document) => [document.document_kind, document]));
-
-  DOCUMENT_KINDS.forEach((kind) => {
-    fieldsByDocumentKind.set(kind, []);
-  });
-
-  extractedFields.forEach((field) => {
-    const matchedDocument = documents.find((document) => document.document_kind === field.document_id);
-    if (matchedDocument) {
-      fieldsByDocumentKind.get(matchedDocument.document_kind)?.push(field);
-    }
-  });
 
   const canonicalDocuments = DOCUMENT_KINDS.reduce<NameChangeCanonicalCase['documents']>((acc, kind) => {
     const document = documentsByKind.get(kind);
-    const fields = fieldsByDocumentKind.get(kind) ?? [];
+    const extractedFieldKeys = getDocumentCapturedFieldKeys(documents, extractedFields, kind);
     acc[kind] = {
       intakeStatus: document?.intake_status ?? 'not_started',
       storageMode: document?.storage_mode ?? 'none',
-      extractionFieldCount: fields.length,
-      extractedFieldKeys: fields.map((field) => field.field_key),
+      extractionFieldCount: extractedFieldKeys.length,
+      extractedFieldKeys,
     };
     return acc;
   }, {} as NameChangeCanonicalCase['documents']);

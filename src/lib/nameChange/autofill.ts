@@ -1,6 +1,6 @@
 import { buildNameChangeCanonicalCase } from './canonical';
 import { buildNameChangeDocumentIntakeSnapshot } from './documentContract';
-import { buildNameChangeExtractionContractSnapshot } from './extractionContract';
+import { buildNameChangeExtractionContractSnapshot, getDocumentLinkedFieldValue } from './extractionContract';
 import type {
   NameChangeAutofillFieldMapping,
   NameChangeAutofillPrepSnapshot,
@@ -28,23 +28,18 @@ function buildExtractionLookup(
 ) {
   return (fieldKey: NameChangeExtractionFieldKey, preferredDocumentKinds: NameChangeDocumentKind[] = []): ExtractionLookupResult => {
     for (const kind of preferredDocumentKinds) {
-      const matchingDocument = documents.find((document) => document.document_kind === kind);
-      if (!matchingDocument) continue;
-      const matchingField = extractedFields.find((field) => field.field_key === fieldKey);
-      if (matchingField) {
+      const value = getDocumentLinkedFieldValue(documents, extractedFields, kind, fieldKey);
+      if (value) {
         return {
-          value: normalizeValue(matchingField.field_value_masked),
+          value,
           sourceDocumentKind: kind,
           sourceFieldKey: fieldKey,
         };
       }
     }
 
-    const fallbackField = extractedFields.find((field) => field.field_key === fieldKey);
-    if (!fallbackField) return { value: null };
-
     return {
-      value: normalizeValue(fallbackField.field_value_masked),
+      value: null,
       sourceFieldKey: fieldKey,
     };
   };
