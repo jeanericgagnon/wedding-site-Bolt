@@ -11,6 +11,7 @@ import { buildNameChangeDocumentRepairQueue } from '../../../lib/nameChange/docu
 import { buildNameChangeExtractionContractSnapshot } from '../../../lib/nameChange/extractionContract';
 import { buildNameChangeDmvExecutionSnapshot } from '../../../lib/nameChange/dmvFlow';
 import { buildNameChangeEmployerExecutionSnapshot } from '../../../lib/nameChange/employerFlow';
+import { getHighestPriorityNameChangeExecutionCard } from '../../../lib/nameChange/executionPrioritization';
 import { buildNameChangeInsuranceExecutionSnapshot } from '../../../lib/nameChange/insuranceFlow';
 import { buildNameChangeLicenseExecutionSnapshot } from '../../../lib/nameChange/licenseFlow';
 import { buildNameChangeMedicalExecutionSnapshot } from '../../../lib/nameChange/medicalFlow';
@@ -696,24 +697,14 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       const attentionCount = section.cards.reduce((sum, card) => sum + card.snapshot.checklist.filter((item) => item.status === 'attention').length, 0);
       const progressPercent = Math.round((readyCount / section.cards.length) * 100);
       const progressLabel = `${readyCount}/${section.cards.length} cards ready`;
-      const highestRiskCardConfig = section.cards.reduce((current, card) => {
-        const blockerCount = card.snapshot.blockers.length;
-        const currentBlockerCount = current?.snapshot.blockers.length ?? -1;
-        if (blockerCount > currentBlockerCount) return card;
-
-        const cardAttention = card.snapshot.checklist.filter((item) => item.status === 'attention').length;
-        const currentAttention = current ? current.snapshot.checklist.filter((item) => item.status === 'attention').length : -1;
-        return cardAttention > currentAttention ? card : current;
-      }, null as ExecutionCardConfig | null);
+      const highestRiskCardConfig = getHighestPriorityNameChangeExecutionCard(section.cards) as ExecutionCardConfig | null;
       const highestRiskCardKey = highestRiskCardConfig?.key ?? null;
       const highestRiskCard = highestRiskCardConfig?.title ?? 'No major risk in this section';
-      const nextActionLabel = highestRiskCardConfig?.snapshot.ready
-        ? `Push ${highestRiskCardConfig.title.replace('Guided execution: ', '')} forward`
-        : `Clear ${highestRiskCardConfig?.title.replace('Guided execution: ', '') ?? 'the top blocker'}`;
+      const nextActionLabel = highestRiskCardConfig
+        ? highestRiskCardConfig.snapshot.nextAction.label
+        : 'No immediate action needed';
       const nextActionDetail = highestRiskCardConfig
-        ? (highestRiskCardConfig.snapshot.blockers[0]
-          ?? highestRiskCardConfig.snapshot.checklist.find((item) => item.status === 'attention')?.reason
-          ?? 'Review the highest-risk card and move the next dependent step.')
+        ? highestRiskCardConfig.snapshot.nextAction.detail
         : 'No immediate action needed in this section.';
       const relatedStepIds = EXECUTION_SECTION_STEP_IDS[section.key] ?? [];
       const sectionReminderItems = reminderAttention.filter((item) => relatedStepIds.includes(item.dependsOnStepId));
