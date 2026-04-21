@@ -1,4 +1,6 @@
+import { buildNameChangeCanonicalCase } from './canonical';
 import type {
+  NameChangeCanonicalFieldConflict,
   NameChangeCaseInput,
   NameChangeCourtOrderExtraction,
   NameChangeDocumentInput,
@@ -125,15 +127,114 @@ function buildDriversLicenseExtraction(
   };
 }
 
+function valuesConflict(canonicalValue: string | null | undefined, extractedValue: string | null | undefined) {
+  const canonical = normalizeValue(canonicalValue);
+  const extracted = normalizeValue(extractedValue);
+  return Boolean(canonical && extracted && canonical !== extracted);
+}
+
+function buildCanonicalFieldConflicts(
+  profile: NameChangeCaseInput,
+  documents: NameChangeDocumentInput[],
+  extractedFields: NameChangeExtractedFieldInput[],
+): NameChangeCanonicalFieldConflict[] {
+  const canonicalCase = buildNameChangeCanonicalCase(profile, documents, extractedFields);
+  const candidates: Array<{
+    key: string;
+    label: string;
+    documentKind: NameChangeDocumentKind;
+    fieldKey: NameChangeExtractionFieldKey;
+    canonicalValue: string | null;
+    extractedValue: string | null;
+  }> = [
+    {
+      key: 'current-first-name-passport',
+      label: 'Current first name vs passport extraction',
+      documentKind: 'current_passport',
+      fieldKey: 'first_name',
+      canonicalValue: canonicalCase.currentName.first,
+      extractedValue: getDocumentLinkedFieldValue(documents, extractedFields, 'current_passport', 'first_name'),
+    },
+    {
+      key: 'current-last-name-passport',
+      label: 'Current last name vs passport extraction',
+      documentKind: 'current_passport',
+      fieldKey: 'last_name',
+      canonicalValue: canonicalCase.currentName.last,
+      extractedValue: getDocumentLinkedFieldValue(documents, extractedFields, 'current_passport', 'last_name'),
+    },
+    {
+      key: 'current-first-name-license',
+      label: 'Current first name vs driver license extraction',
+      documentKind: 'current_drivers_license',
+      fieldKey: 'first_name',
+      canonicalValue: canonicalCase.currentName.first,
+      extractedValue: getDocumentLinkedFieldValue(documents, extractedFields, 'current_drivers_license', 'first_name'),
+    },
+    {
+      key: 'current-last-name-license',
+      label: 'Current last name vs driver license extraction',
+      documentKind: 'current_drivers_license',
+      fieldKey: 'last_name',
+      canonicalValue: canonicalCase.currentName.last,
+      extractedValue: getDocumentLinkedFieldValue(documents, extractedFields, 'current_drivers_license', 'last_name'),
+    },
+    {
+      key: 'target-last-name-marriage',
+      label: 'Target last name vs marriage certificate spouse surname',
+      documentKind: 'marriage_certificate',
+      fieldKey: 'spouse_last_name',
+      canonicalValue: canonicalCase.targetName.last,
+      extractedValue: getDocumentLinkedFieldValue(documents, extractedFields, 'marriage_certificate', 'spouse_last_name'),
+    },
+    {
+      key: 'county-marriage',
+      label: 'County residence vs marriage certificate county',
+      documentKind: 'marriage_certificate',
+      fieldKey: 'county',
+      canonicalValue: canonicalCase.countyResidence,
+      extractedValue: getDocumentLinkedFieldValue(documents, extractedFields, 'marriage_certificate', 'county'),
+    },
+    {
+      key: 'court-order-date',
+      label: 'Marriage date vs court-order signed date',
+      documentKind: 'court_order',
+      fieldKey: 'court_order_date',
+      canonicalValue: canonicalCase.legalBasis === 'court_order' ? null : canonicalCase.legalContext.marriageDate,
+      extractedValue: canonicalCase.legalBasis === 'court_order'
+        ? null
+        : getDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'court_order_date'),
+    },
+  ];
+
+  return candidates
+    .filter((candidate) => valuesConflict(candidate.canonicalValue, candidate.extractedValue))
+    .map((candidate) => ({
+      key: candidate.key,
+      label: candidate.label,
+      documentKind: candidate.documentKind,
+      fieldKey: candidate.fieldKey,
+      canonicalValue: normalizeValue(candidate.canonicalValue),
+      extractedValue: normalizeValue(candidate.extractedValue) as string,
+      reason: `${candidate.label} disagree. Structured case says ${normalizeValue(candidate.canonicalValue)}, but extracted document value says ${normalizeValue(candidate.extractedValue)}.`,
+    }));
+}
+
 export function buildNameChangeExtractionContractSnapshot(
-  _profile: NameChangeCaseInput,
+  profile: NameChangeCaseInput,
   documents: NameChangeDocumentInput[],
   extractedFields: NameChangeExtractedFieldInput[],
 ): NameChangeExtractionContractSnapshot {
+  const conflicts = buildCanonicalFieldConflicts(profile, documents, extractedFields);
+
   return {
     marriageCertificate: buildMarriageCertificateExtraction(documents, extractedFields),
     courtOrder: buildCourtOrderExtraction(documents, extractedFields),
     currentPassport: buildPassportExtraction(documents, extractedFields),
     currentDriversLicense: buildDriversLicenseExtraction(documents, extractedFields),
+    conflicts,
+    summary: {
+      conflictCount: conflicts.length,
+    },
   };
 }

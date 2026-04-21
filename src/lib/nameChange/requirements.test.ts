@@ -112,7 +112,7 @@ describe('name change requirements skeleton', () => {
 
     const snapshot = evaluateNameChangeRequirements(makeCase(), documents, []);
     expect(snapshot.summary).toEqual({
-      satisfied: 11,
+      satisfied: 12,
       missing: 0,
       attention: 1,
     });
@@ -423,6 +423,51 @@ describe('name change requirements skeleton', () => {
     expect(snapshot.results.find((result) => result.key === 'marriage-jurisdiction-alignment')).toMatchObject({
       status: 'missing',
       reason: 'Marriage occurred in Nevada, but no marriage certificate is represented in intake for out-of-state certificate handling.',
+    });
+  });
+
+  it('flags canonical/extraction conflicts as attention instead of silently trusting them', () => {
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase(),
+      [
+        {
+          id: 'doc-marriage',
+          document_kind: 'marriage_certificate',
+          display_name: 'Marriage certificate',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+        },
+        {
+          id: 'doc-passport',
+          document_kind: 'current_passport',
+          display_name: 'Passport',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+        },
+      ],
+      [
+        {
+          document_id: 'doc-marriage',
+          field_key: 'spouse_last_name',
+          field_label: 'Spouse last name',
+          field_value_masked: 'Jordan-Smith',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-passport',
+          field_key: 'first_name',
+          field_label: 'First name',
+          field_value_masked: 'Alicia',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+      ],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'canonical-extraction-alignment')).toMatchObject({
+      status: 'attention',
+      reason: 'Structured case truth conflicts with extracted document values in 2 places: Current first name vs passport extraction, Target last name vs marriage certificate spouse surname.',
     });
   });
 });

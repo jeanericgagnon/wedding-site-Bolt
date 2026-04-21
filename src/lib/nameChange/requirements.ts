@@ -1,5 +1,6 @@
 import { buildNameChangeCanonicalCase } from './canonical';
 import { buildNameChangeDocumentIntakeSnapshot } from './documentContract';
+import { buildNameChangeExtractionContractSnapshot } from './extractionContract';
 import type {
   NameChangeCaseInput,
   NameChangeDocumentInput,
@@ -71,6 +72,12 @@ export const NAME_CHANGE_REQUIREMENT_DEFINITIONS: NameChangeRequirementDefinitio
     stage: 'institutional',
     description: 'Travel-facing passport timing should be reviewed when passport updates are relevant.',
   },
+  {
+    key: 'canonical-extraction-alignment',
+    label: 'Canonical vs extracted values aligned',
+    stage: 'proof',
+    description: 'Structured case truth should not quietly disagree with extracted document values that downstream packets rely on.',
+  },
 ];
 
 export function evaluateNameChangeRequirements(
@@ -80,6 +87,7 @@ export function evaluateNameChangeRequirements(
 ): NameChangeRequirementSnapshot {
   const canonicalCase = buildNameChangeCanonicalCase(profile, documents, extractedFields);
   const intakeSnapshot = buildNameChangeDocumentIntakeSnapshot(profile, documents, extractedFields);
+  const extractionSnapshot = buildNameChangeExtractionContractSnapshot(profile, documents, extractedFields);
   const legalProofKind = canonicalCase.legalBasis === 'marriage' ? 'marriage_certificate' : 'court_order';
   const legalProof = canonicalCase.documents[legalProofKind];
   const legalProofContract = intakeSnapshot.documents.find((document) => document.kind === legalProofKind);
@@ -227,6 +235,15 @@ export function evaluateNameChangeRequirements(
           ? 'Travel is already booked and passport updates still need to be sequenced carefully.'
           : 'Travel is already booked, but no current passport or Real ID support is represented in intake yet.'
         : 'No immediate travel-facing passport timing risk is currently flagged.',
+    },
+    {
+      key: 'canonical-extraction-alignment',
+      label: 'Canonical vs extracted values aligned',
+      stage: 'proof',
+      status: extractionSnapshot.conflicts.length === 0 ? 'satisfied' : 'attention',
+      reason: extractionSnapshot.conflicts.length === 0
+        ? 'Structured case truth and extracted document values are aligned across the currently modeled fields.'
+        : `Structured case truth conflicts with extracted document values in ${extractionSnapshot.conflicts.length} place${extractionSnapshot.conflicts.length === 1 ? '' : 's'}: ${extractionSnapshot.conflicts.map((conflict) => conflict.label).join(', ')}.`,
     },
     {
       key: 'expedited-travel-sequencing',

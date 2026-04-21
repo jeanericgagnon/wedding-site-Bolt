@@ -1554,6 +1554,29 @@ export const NameChangePlannerTab: React.FC<Props> = ({
             </div>
           </div>
 
+          {extractionContractSnapshot.summary.conflictCount > 0 && (
+            <div className="mt-4 rounded-xl border border-warning/30 bg-warning/5 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h4 className="text-sm font-semibold text-text-primary">Canonical conflicts to resolve</h4>
+                  <p className="text-xs text-text-secondary">Structured case truth and extracted document values are disagreeing. Fix this before treating autofill as trustworthy.</p>
+                </div>
+                <span className="rounded-full bg-warning/10 px-2 py-1 text-xs text-warning">
+                  {extractionContractSnapshot.summary.conflictCount} conflict{extractionContractSnapshot.summary.conflictCount === 1 ? '' : 's'}
+                </span>
+              </div>
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                {extractionContractSnapshot.conflicts.map((conflict) => (
+                  <div key={conflict.key} className="rounded-lg border border-warning/20 bg-white/70 p-3">
+                    <p className="text-sm font-medium text-text-primary">{conflict.label}</p>
+                    <p className="mt-2 text-xs text-text-secondary">Structured: {conflict.canonicalValue ?? 'missing'} · Extracted: {conflict.extractedValue}</p>
+                    <p className="mt-2 text-xs text-text-secondary">{conflict.documentKind} · {conflict.fieldKey}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="mt-4 grid gap-4">
             {NAME_CHANGE_DOCUMENT_CONTRACTS
               .filter((contract) => contract.extractionFields.length > 0)

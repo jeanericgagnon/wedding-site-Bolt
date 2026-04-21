@@ -99,6 +99,37 @@ describe('name change extraction contract', () => {
       caseNumber: null,
       courtOrderDate: null,
     });
+    expect(snapshot.summary.conflictCount).toBe(0);
+  });
+
+  it('surfaces canonical conflicts when extracted values disagree with structured case truth', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-marriage',
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        id: 'doc-passport',
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      { document_id: 'doc-marriage', field_key: 'spouse_last_name', field_label: 'Spouse last name', field_value_masked: 'Jordan-Smith', source_type: 'document_extract', is_verified: true },
+      { document_id: 'doc-passport', field_key: 'first_name', field_label: 'First name', field_value_masked: 'Alicia', source_type: 'document_extract', is_verified: true },
+    ];
+
+    const snapshot = buildNameChangeExtractionContractSnapshot(makeCase(), documents, extractedFields);
+    expect(snapshot.summary.conflictCount).toBe(2);
+    expect(snapshot.conflicts).toEqual(expect.arrayContaining([
+      expect.objectContaining({ key: 'target-last-name-marriage', extractedValue: 'Jordan-Smith', canonicalValue: 'Jordan' }),
+      expect.objectContaining({ key: 'current-first-name-passport', extractedValue: 'Alicia', canonicalValue: 'Alex' }),
+    ]));
   });
 
   it('maps court-order name-change documents and case-number extraction into the typed court-order snapshot', () => {

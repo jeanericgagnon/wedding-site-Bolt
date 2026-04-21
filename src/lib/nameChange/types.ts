@@ -291,6 +291,16 @@ export interface NameChangeRequirementSnapshot {
   };
 }
 
+export interface NameChangeCanonicalFieldConflict {
+  key: string;
+  label: string;
+  documentKind: NameChangeDocumentKind;
+  fieldKey: NameChangeExtractionFieldKey;
+  canonicalValue: string | null;
+  extractedValue: string;
+  reason: string;
+}
+
 export interface NameChangeDocumentContractDefinition {
   kind: NameChangeDocumentKind;
   label: string;
@@ -512,6 +522,10 @@ export interface NameChangeExtractionContractSnapshot {
   courtOrder: NameChangeCourtOrderExtraction;
   currentPassport: NameChangePassportExtraction;
   currentDriversLicense: NameChangeDriversLicenseExtraction;
+  conflicts: NameChangeCanonicalFieldConflict[];
+  summary: {
+    conflictCount: number;
+  };
 }
 
 export interface NameChangeReminderSuggestion {
