@@ -67,6 +67,7 @@ import { getCoordinatorOverrideSupportBadge } from '../../lib/coordinatorOverrid
 import { resolveCoordinatorSummaryDisplayCue } from '../../lib/coordinatorSummaryDisplayCue';
 import { resolveCoordinatorOverrideDisplayCue } from '../../lib/coordinatorOverrideDisplayCue';
 import { shouldExpireCoordinatorCue } from '../../lib/coordinatorCueExpiry';
+import { shouldExpireCoordinatorOverrideCue } from '../../lib/coordinatorOverrideCueExpiry';
 import { normalizeCoordinatorTimelineWorkState } from '../../lib/coordinatorTimelineWorkState';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
@@ -144,6 +145,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [manualOverrideUpdatedAt, setManualOverrideUpdatedAt] = useState<number | null>(null);
   const [alertOverrideLabelState, setAlertOverrideLabelState] = useState<string | null>(null);
   const [alertOverrideUpdatedAt, setAlertOverrideUpdatedAt] = useState<number | null>(null);
+  const [overrideCueShownAt, setOverrideCueShownAt] = useState<number | null>(null);
   const [summaryFeedbackShownAt, setSummaryFeedbackShownAt] = useState<number | null>(null);
   const [previousAlertAligned, setPreviousAlertAligned] = useState<boolean | null>(null);
   const [summaryFeedback, setSummaryFeedback] = useState<CoordinatorSummaryFeedback | null>(null);
@@ -574,6 +576,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
     })) {
       setAlertOverrideLabelState(null);
       setAlertOverrideUpdatedAt(null);
+      setOverrideCueShownAt(null);
     }
   }, [alertOverrideLabelState, alertTargetCue.aligned]);
 
@@ -754,6 +757,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
     setSummaryFeedbackShownAt(null);
     setAlertOverrideUpdatedAt(null);
     setManualOverrideUpdatedAt(null);
+    setOverrideCueShownAt(null);
     setCommandJumpLabel(null);
     setCommandJumpPanelFocus(null);
     setCommandJumpTargetId(null);
@@ -1008,12 +1012,14 @@ export const DashboardCoordinatorMode: React.FC = () => {
       setCheckInReviewOnly(true);
       setManualOverrideLabel(null);
       setManualOverrideUpdatedAt(null);
+      setOverrideCueShownAt(null);
       return;
     }
     if (panelFocus === 'timeline' && timelineBoardTargetId) {
       setActiveTimelineEventId(timelineBoardTargetId);
       setManualOverrideLabel(null);
       setManualOverrideUpdatedAt(null);
+      setOverrideCueShownAt(null);
       return;
     }
     if (panelFocus === 'qna') {
@@ -1021,6 +1027,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
       setActiveQnaId(nextQnaId);
       setManualOverrideLabel(null);
       setManualOverrideUpdatedAt(null);
+      setOverrideCueShownAt(null);
     }
   };
 
@@ -1050,6 +1057,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
     })) {
       setManualOverrideLabel(null);
       setManualOverrideUpdatedAt(null);
+      setOverrideCueShownAt(null);
       const realignment = getCoordinatorRealignmentLabel(panelFocus);
       if (realignment) {
         setSummaryFeedback(createCoordinatorSummaryFeedback({
@@ -1085,8 +1093,10 @@ export const DashboardCoordinatorMode: React.FC = () => {
     const nextManualOverrideLabel = getCoordinatorManualOverrideLabel(panelFocus);
     if (!nextManualOverrideLabel || manualOverrideLabel === nextManualOverrideLabel) return;
 
+    const nextManualOverrideTime = Date.now();
     setManualOverrideLabel(nextManualOverrideLabel);
-    setManualOverrideUpdatedAt(Date.now());
+    setManualOverrideUpdatedAt(nextManualOverrideTime);
+    setOverrideCueShownAt(nextManualOverrideTime);
   }, [manualOverrideLabel, panelFocus, activeGuestId, activeTimelineEventId, activeQnaId, checkInBoardTargetId, timelineBoardTargetId, qnaBoardTargetId]);
 
 
@@ -1111,9 +1121,29 @@ export const DashboardCoordinatorMode: React.FC = () => {
     setSummaryFeedbackShownAt(null);
     setAlertOverrideUpdatedAt(null);
     setManualOverrideUpdatedAt(null);
+    setOverrideCueShownAt(null);
     }
   }, [summaryFeedback, panelFocus, activeGuestId, activeTimelineEventId, activeQnaId]);
 
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      if (shouldExpireCoordinatorOverrideCue({
+        shownAt: overrideCueShownAt,
+        now: Date.now(),
+        maxAgeMs: 5000,
+        hasSummaryFeedback: !!summaryFeedback,
+      })) {
+        setAlertOverrideLabelState(null);
+        setAlertOverrideUpdatedAt(null);
+        setManualOverrideLabel(null);
+        setManualOverrideUpdatedAt(null);
+        setOverrideCueShownAt(null);
+      }
+    }, 5000);
+
+    return () => window.clearTimeout(timer);
+  }, [overrideCueShownAt, summaryFeedback]);
 
   useEffect(() => {
     if (!summaryFeedback) return;
