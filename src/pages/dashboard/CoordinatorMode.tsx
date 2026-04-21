@@ -62,6 +62,7 @@ import { getCoordinatorAlertSummaryTransitionLabel } from '../../lib/coordinator
 import { shouldResetCoordinatorSummaryFeedback } from '../../lib/coordinatorSummaryFeedbackReset';
 import { createCoordinatorSummaryFeedback, type CoordinatorSummaryFeedback } from '../../lib/coordinatorSummaryFeedback';
 import { getCoordinatorSummaryFeedbackTone } from '../../lib/coordinatorSummaryFeedbackTone';
+import { getCoordinatorSummaryFeedbackBadge } from '../../lib/coordinatorSummaryFeedbackBadge';
 import { normalizeCoordinatorTimelineWorkState } from '../../lib/coordinatorTimelineWorkState';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
@@ -544,6 +545,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
     currentAligned: alertTargetCue.aligned,
   }), [previousAlertAligned, alertTargetCue.aligned]);
   const summaryFeedbackTone = useMemo(() => summaryFeedback ? getCoordinatorSummaryFeedbackTone(summaryFeedback.kind) : null, [summaryFeedback]);
+  const summaryFeedbackBadge = useMemo(() => summaryFeedback ? getCoordinatorSummaryFeedbackBadge({ kind: summaryFeedback.kind, panelFocus: summaryFeedback.panelFocus }) : null, [summaryFeedback]);
 
   useEffect(() => {
     if (shouldResetCoordinatorAlertOverride({
@@ -1315,7 +1317,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
               <p className="text-xs font-medium text-text-primary">Live command summary</p>
               {summaryFeedback && summaryFeedbackTone && (
                 <div className={`mt-1 inline-flex flex-wrap items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] ${summaryFeedbackTone.containerClassName}`}>
-                  <span className="rounded-full border border-current/15 bg-white/70 px-1.5 py-0.5 text-[9px] font-medium">{summaryFeedbackTone.badge}</span>
+                  <span className="rounded-full border border-current/15 bg-white/70 px-1.5 py-0.5 text-[9px] font-medium">{summaryFeedbackBadge ?? summaryFeedbackTone.badge}</span>
                   <span>{summaryFeedback.label}</span>
                 </div>
               )}
