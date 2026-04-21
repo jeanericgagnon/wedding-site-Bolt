@@ -58,6 +58,8 @@ export function buildNameChangeTargetExecutionSnapshot(
   const firstMissingDependency = sequence.dependencies.find((dependency) => dependency.required && dependency.status === 'missing');
   const firstAttentionDependency = sequence.dependencies.find((dependency) => dependency.status === 'attention');
   const firstMissingChecklistItem = checklist.find((item) => item.status === 'missing');
+  const blockingAttentionChecklistKeys = new Set(['canonical-extraction-alignment']);
+  const firstBlockingAttentionChecklistItem = checklist.find((item) => item.status === 'attention' && blockingAttentionChecklistKeys.has(item.key));
   const firstAttentionChecklistItem = checklist.find((item) => item.status === 'attention');
   const buildCourtOrderNextAction = () => {
     const referenceExtractionDependency = sequence.dependencies.find((dependency) => dependency.key === 'court-order-reference-extraction' && dependency.status === 'missing');
@@ -110,7 +112,13 @@ export function buildNameChangeTargetExecutionSnapshot(
             label: `Complete ${firstMissingChecklistItem.label}`,
             detail: firstMissingChecklistItem.reason,
           }
-        : firstMissingFieldRisk
+        : firstBlockingAttentionChecklistItem
+          ? {
+              category: firstBlockingAttentionChecklistItem.key.includes('alignment') ? 'document' as const : 'review' as const,
+              label: `${firstBlockingAttentionChecklistItem.key.includes('alignment') ? 'Unblock' : 'Review'} ${firstBlockingAttentionChecklistItem.label}`,
+              detail: firstBlockingAttentionChecklistItem.reason,
+            }
+          : firstMissingFieldRisk
           ? {
               category: firstMissingFieldRisk.sourceDocumentKind ? 'document' as const : 'packet' as const,
               label: `Fill ${firstMissingFieldRisk.label}`,
