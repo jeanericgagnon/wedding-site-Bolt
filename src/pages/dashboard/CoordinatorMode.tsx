@@ -930,6 +930,29 @@ export const DashboardCoordinatorMode: React.FC = () => {
   };
 
 
+
+  const jumpToStablePrompt = () => {
+    const target = getCoordinatorStablePromptTarget(priorityCommandLabel);
+    setPanelFocus(target.panelFocus);
+    setCheckInReviewOnly(target.reviewOnly);
+
+    if (priorityCommandLabel === 'Check-in') {
+      setCheckInFilter('arrivals');
+      if (checkInBoardTargetId) setActiveGuestId(checkInBoardTargetId);
+      return;
+    }
+
+    if (priorityCommandLabel === 'Timeline') {
+      if (timelineBoardTargetId) setActiveTimelineEventId(timelineBoardTargetId);
+      return;
+    }
+
+    if (priorityCommandLabel === 'Q&A') {
+      const nextQnaId = qnaBoardTargetId ?? getFirstOpenCoordinatorQnaId(qnaItems);
+      setActiveQnaId(nextQnaId);
+    }
+  };
+
   const jumpToCommandSummaryItem = (label: 'Check-in' | 'Timeline' | 'Q&A' | 'Alerting') => {
     const target = getCoordinatorCommandSummaryTarget(label);
     clearCoordinatorTransientState();
