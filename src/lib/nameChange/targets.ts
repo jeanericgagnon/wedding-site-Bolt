@@ -134,6 +134,14 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'courtOrder' | 'ssa' | 'dmv' 
         satisfiedReason: 'Court-order jurisdiction context is available for this modeled review slice.',
       },
       {
+        key: 'court-order-reference-extraction',
+        label: 'Court-order reference extraction is available',
+        kind: 'requirement',
+        requirementKey: 'court-order-reference-extraction',
+        missingReason: 'Court-order reference extraction has not been evaluated yet.',
+        satisfiedReason: 'Court-order reference extraction is available for this modeled review slice.',
+      },
+      {
         key: 'legal-proof-document',
         label: 'Court-order proof ready',
         kind: 'requirement',

@@ -293,6 +293,66 @@ describe('name change requirements skeleton', () => {
     });
   });
 
+  it('marks court-order reference extraction missing when proof exists but no verified extracted reference fields are present', () => {
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase({ legal_basis: 'court_order' as never }),
+      [
+        {
+          document_kind: 'court_order_name_change',
+          display_name: 'Court order',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+        },
+        {
+          document_kind: 'current_drivers_license',
+          display_name: 'Driver license',
+          storage_mode: 'metadata_only',
+          intake_status: 'uploaded',
+        },
+      ],
+      [],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'court-order-reference-extraction')).toMatchObject({
+      status: 'missing',
+      reason: 'Court-order proof is in intake, but no verified case-number or signed-date extraction is represented yet.',
+    });
+  });
+
+  it('marks court-order reference extraction satisfied when verified extracted reference fields exist', () => {
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase({ legal_basis: 'court_order' as never }),
+      [
+        {
+          document_kind: 'court_order_name_change',
+          display_name: 'Court order',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+        },
+        {
+          document_kind: 'current_drivers_license',
+          display_name: 'Driver license',
+          storage_mode: 'metadata_only',
+          intake_status: 'uploaded',
+        },
+      ],
+      [
+        {
+          field_key: 'case_number',
+          field_label: 'Case number',
+          field_value_masked: '24-CV-1188',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+      ],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'court-order-reference-extraction')).toMatchObject({
+      status: 'satisfied',
+      reason: 'Court-order reference extraction is present for the modeled review path.',
+    });
+  });
+
   it('requires a marriage certificate when the legal basis is marriage', () => {
     const snapshot = evaluateNameChangeRequirements(
       makeCase(),

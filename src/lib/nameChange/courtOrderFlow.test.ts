@@ -85,6 +85,56 @@ describe('court-order path review execution snapshot', () => {
     expect(snapshot.blockers).toContain('County context is still missing, so court-order jurisdiction review cannot be grounded yet.');
   });
 
+  it('blocks when court-order reference extraction is still missing', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'court_order_name_change',
+        display_name: 'Court order',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+
+    const snapshot = buildNameChangeCourtOrderExecutionSnapshot(makeCase(), documents, []);
+    expect(snapshot.ready).toBe(false);
+    expect(snapshot.blockers).toContain('Court-order proof is in intake, but no verified case-number or signed-date extraction is represented yet.');
+  });
+
+  it('is ready once court-order reference extraction is represented', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'court_order_name_change',
+        display_name: 'Court order',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+
+    const snapshot = buildNameChangeCourtOrderExecutionSnapshot(makeCase(), documents, [
+      {
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: '24-CV-1188',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ]);
+    expect(snapshot.ready).toBe(true);
+    expect(snapshot.checklist.find((item) => item.key === 'court-order-reference-extraction')).toMatchObject({ status: 'ready' });
+  });
+
   it('blocks when launch state is not aligned to the modeled California court-order review path', () => {
     const documents: NameChangeDocumentInput[] = [
       {
