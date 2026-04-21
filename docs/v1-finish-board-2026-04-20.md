@@ -81,17 +81,20 @@ If that line fails, the rest is noise.
 **Still missing**
 - one clear proof run from guest ops -> public RSVP -> back to dashboard truth
 - harder proof that event-specific RSVP state survives common admin edits cleanly
+- RSVP strict smoke environment access that can actually call `validate-rsvp-token` without 401
 
 **Proof needed**
+- `npm run proof:v1:guests-rsvp-ops`
 - one evidence run covering create/edit/review guest, RSVP submit/update, dashboard readback, event-aware visibility
 
 **Launch read**
 - **Done:** feature breadth + several trust fixes are in
 - **Missing:** one canonical continuity proof and maybe one last admin-edit drift fix
 - **Proof-needed:** guest edit -> RSVP submit/update -> dashboard/event readback
+- **Blocked:** current env still cannot run the strict RSVP smoke end-to-end because `validate-rsvp-token` anon access returns 401
 
 **Status**
-- `MOSTLY-DONE / PROOF-NEEDED`
+- `BLOCKED ON ENV-PROOF`
 
 ### 3) Planner / collaborator access
 **Must be true**
@@ -108,6 +111,7 @@ If that line fails, the rest is noise.
 - hard executed role smoke proving owner vs planner vs coordinator boundaries in live surfaces
 
 **Proof needed**
+- `npm run proof:v1:collaborator-access`
 - role-aware smoke over settings invite -> accept -> dashboard -> restricted action attempt
 
 **Launch read**
@@ -179,6 +183,7 @@ If that line fails, the rest is noise.
 - one hard proof run of create/assign/lookup/export or day-of lookup
 
 **Proof needed**
+- `npm run proof:v1:seating-continuity`
 - real seating smoke tied to actual RSVP-backed guest state
 
 **Launch read**
@@ -257,9 +262,10 @@ If that line fails, the rest is noise.
 
 ### P1 blockers
 1. No canonical v1 smoke run is logged yet
-2. No executed role-aware collaborator proof is logged yet
+2. No executed runtime role-aware collaborator proof is logged yet
 3. No executed guest -> RSVP -> ops continuity proof is logged yet
-4. Comms/registry still rely more on surface plausibility than recent finish proof
+4. Guests / RSVP proof is partially blocked by environment auth for `validate-rsvp-token`
+5. Comms/registry still rely more on surface plausibility than recent finish proof
 
 ### P2 blockers
 1. Memories slice still reads bigger than its hard proof
@@ -273,23 +279,30 @@ If that line fails, the rest is noise.
    - output goes into `docs/v1-smoke-proof-log.md`
    - owner: finish lane
    - exit bar: one clean pass log + exact failures called out, not hand-waved
+   - command floor: `npm run test:e2e:live && npm run smoke:site`
 2. **Guest-state continuity smoke + fix**
    - prove or fix guest edits, RSVP updates, event-level visibility, downstream reads
    - exit bar: one guest can move through public and dashboard surfaces without trust drift
+   - command floor: `npm run proof:v1:guests-rsvp-ops`
+   - current blocker: RSVP strict smoke is environment-blocked by anon auth (401)
 3. **Role-aware collaborator smoke + fix**
    - owner invite -> collaborator accept -> role-aware dashboard -> restricted action attempts
    - exit bar: one planner and one coordinator boundary proven with evidence
-4. **Product truth tightening**
-   - public product/marketing surfaces must show core v1 vs surrounding product direction cleanly
-   - exit bar: public story only promises what the current core can defend
+   - command floor: `npm run proof:v1:collaborator-access`
+4. **Coordinator runtime proof + fix**
+   - queue/check-in/timeline/Q&A under a real role-aware path
+   - exit bar: coordinator can answer who is here / what is next / what needs action without confusion
+   - command floor: `npm run smoke:checkin`
 
 ### Week 2 — harden the must-ship layer
 5. **Comms center proof + first broken-path fix**
    - exit bar: draft -> schedule/send -> history state reads trustworthy
 6. **Seating proof + first broken-path fix**
    - exit bar: RSVP-backed seating assign/lookup works without count drift
+   - command floor: `npm run proof:v1:seating-continuity`
 7. **Registry proof + first broken-path fix**
    - exit bar: add/import/edit/purchased-state path survives one realistic smoke
+   - command floor: `npm test -- src/pages/dashboard/registry/registryService.test.ts && npm run build`
 8. **Launch call prep**
    - re-read the board, cut any unproven promise language, call go/no-go honestly
    - exit bar: every remaining launch claim maps to proof or a consciously accepted gap
@@ -302,14 +315,14 @@ If that line fails, the rest is noise.
 ## Next highest-leverage concrete task
 The next best cross-product finish task is:
 
-**Make the public product story show the real v1 split clearly.**
+**Capture one real runtime proof run for the must-ship spine, starting with guest -> RSVP -> downstream ops continuity or collaborator claim -> forbidden action proof.**
 
 Reason:
-- this shapes what the product is allowed to claim before deeper proof arrives
-- it reduces launch dishonesty risk across multiple slices at once
-- it turns the finish board from internal truth into external truth
+- the public claim stack is already materially tightened
+- multiple slices now have executable proof bundles
+- the main remaining launch risk is runtime proof, not wording
 
 What that means concretely:
-- keep the marketing story centered on website + guest ops + execution
-- demote archive/anniversary/name-change language out of the core launch claim
-- make must-ship vs should-ship vs not-in-v1 visible enough that launch copy cannot quietly blur it
+- unblock RSVP proof env auth or use a valid fixture-capable environment
+- run one real collaborator invite/accept/restricted-action smoke
+- capture the evidence in `docs/v1-smoke-proof-log.md` instead of adding more surface polish

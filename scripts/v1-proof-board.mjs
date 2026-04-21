@@ -43,18 +43,17 @@ const proofBoard = {
     {
       id: 'guests-rsvp',
       title: 'Guests / RSVP ops',
-      status: 'MOSTLY_DONE_PROOF_NEEDED',
+      status: 'BLOCKED_ON_ENV_PROOF',
       tier: 1,
       exitBar: 'Guest list, householding, public RSVP, assisted RSVP, and downstream dashboard truth stay aligned enough for real planning.',
       automatedProof: [
-        'npm run smoke:rsvp:strict',
-        'npm run smoke:csvmapper',
-        'npm run smoke:checkin',
+        'npm run proof:v1:guests-rsvp-ops',
       ],
       manualProof: [
         'Create/edit/review guest + household state',
         'Submit/update RSVP and verify dashboard/event readback',
       ],
+      blocker: 'RSVP strict smoke is currently environment-blocked by validate-rsvp-token anon auth (401) in this environment.',
       evidenceTarget: 'docs/v1-smoke-proof-log.md',
     },
     {
@@ -64,7 +63,7 @@ const proofBoard = {
       tier: 1,
       exitBar: 'Invite flow feels safe, collaborator lands in a role-aware surface, and at least one forbidden action is actually blocked per non-owner role tested.',
       automatedProof: [
-        'npm run build',
+        'npm run proof:v1:collaborator-access',
       ],
       manualProof: [
         'Owner invite -> accept -> planner/coordinator dashboard framing',
@@ -110,8 +109,7 @@ const proofBoard = {
       tier: 2,
       exitBar: 'RSVP-backed seating assignment, lookup, and counts stay coherent without embarrassing event-level drift.',
       automatedProof: [
-        'npm run build',
-        'npm run smoke:checkin',
+        'npm run proof:v1:seating-continuity',
       ],
       manualProof: [
         'Assign guests using RSVP-backed data',

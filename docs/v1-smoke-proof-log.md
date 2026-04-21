@@ -332,6 +332,7 @@ A slice does **not** count as passed because:
 - Concrete finish gap found and fixed: the new Guests / RSVP / ops proof bundle initially treated an environment auth blocker the same as a product failure. That was muddy and would have hidden the real issue. The bundle now classifies blocker-vs-failure explicitly, surfaces blocker details/recommendation in its JSON output, and only exits non-zero for actual required-step failures.
 - Concrete finish gap found and fixed: collaborator access still lacked automated proof for the actual role-permission matrix. Invite utilities were lightly tested, but the owner/planner/coordinator/viewer boundaries themselves were not locked. There is now a dedicated collaborator-access proof bundle plus plannerAccess role-matrix tests that assert the current v1 boundaries for editing, budget/vendors, dashboard message composition, coordinator updates, and preset-to-role derivation.
 - Concrete finish gap found and fixed: seating continuity still relied on event-scoped attendance and counter math buried inside the service layer without direct proof. That left the highest-risk seating truth seam under-locked. Seating now exposes pure helpers for event attendance interpretation and invited-only counter derivation, has direct tests for explicit event RSVP vs top-level RSVP fallback behavior, and ships with a dedicated seating-continuity proof bundle.
+- Concrete finish gap found and fixed: the human finish board and machine-readable proof board had drifted behind the actual finish lane. They still pointed at outdated next steps and older raw commands even after proof bundles existed. The board now reflects the current executable gates, the real env blocker on RSVP strict smoke, and the fact that the next highest-leverage work is runtime proof capture, not more claim cleanup.
 
 ## Verification notes
 - `npm run proof:v1:board` now gives a machine-readable view of the current v1 proof gate.
@@ -381,6 +382,7 @@ A slice does **not** count as passed because:
 - `npm run proof:v1:guests-rsvp-ops` now returns a structured blocked-state summary when RSVP strict smoke is environment-blocked, instead of collapsing blocker vs failure.
 - `npm run proof:v1:collaborator-access` passes after the collaborator-access proof-bundle + role-matrix test pass.
 - `npm run proof:v1:seating-continuity` passes after the seating continuity proof-bundle pass.
+- `npm run proof:v1:board && npm run proof:v1:board:md` pass after syncing the finish/proof boards to the current executable lane reality.
 
 ## Highest-value next proof seam
 - Guest-level RSVP and event-specific RSVP are both materially stronger now, but the next likely continuity seam is how newly created or removed event invitations affect downstream event attendance interpretation in itinerary/seating without a fresh explicit event response. That should be the next runtime proof target rather than more copy or permission cleanup.
