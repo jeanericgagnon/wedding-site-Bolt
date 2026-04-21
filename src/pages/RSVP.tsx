@@ -251,6 +251,7 @@ export default function RSVP() {
   const [error, setError] = useState('');
   const [tokenAutoLoading, setTokenAutoLoading] = useState(false);
   const activeLookupRequestRef = useRef(0);
+  const activeSubmitRequestRef = useRef(0);
   const [activePredictionIndex, setActivePredictionIndex] = useState(-1);
   const [formStep, setFormStep] = useState<1 | 2 | 3>(1);
   const [rsvpQuestions, setRsvpQuestions] = useState<RSVPQuestion[]>([]);
@@ -262,6 +263,7 @@ export default function RSVP() {
 
   const resetToSearch = useCallback((preserveToken = false) => {
     activeLookupRequestRef.current += 1;
+    activeSubmitRequestRef.current += 1;
     setStep('search');
     setError('');
     setGuest(null);
@@ -491,6 +493,8 @@ export default function RSVP() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const requestId = activeSubmitRequestRef.current + 1;
+    activeSubmitRequestRef.current = requestId;
     setLoading(true);
     setError('');
 
@@ -498,16 +502,19 @@ export default function RSVP() {
       if (!guest) return;
 
       if (deadlinePassed && !existingRsvp) {
+        if (activeSubmitRequestRef.current !== requestId) return;
         setError('The RSVP deadline has passed. Please contact the couple directly if you still need to respond.');
         return;
       }
 
       if (!guest.invite_token) {
+        if (activeSubmitRequestRef.current !== requestId) return;
         setError('Your invitation is missing a secure token. Please use the RSVP link from your invitation email.');
         return;
       }
 
       if (formData.attending && guest.invited_to_ceremony && guest.invited_to_reception && !formData.attendCeremony && !formData.attendReception) {
+        if (activeSubmitRequestRef.current !== requestId) return;
         setError('Please choose at least one event from your invitation, or mark not attending.');
         return;
       }
@@ -515,6 +522,7 @@ export default function RSVP() {
       const notesPayload = (formData.notes || '').trim();
 
       if (applyToHousehold && householdGuests.length > 0 && selectedHouseholdGuestIds.length === 0) {
+        if (activeSubmitRequestRef.current !== requestId) return;
         setError('Pick at least one household guest to share this RSVP with, or turn inheritance off.');
         return;
       }
@@ -536,6 +544,7 @@ export default function RSVP() {
         const targetIds = applyToHousehold ? [guest.id, ...selectedHouseholdGuestIds] : [guest.id];
         targetIds.forEach((id) => { stored[id] = { ...payload, id: `demo-rsvp-${id}` }; });
         localStorage.setItem(DEMO_RSVP_RESPONSES_KEY, JSON.stringify(stored));
+        if (activeSubmitRequestRef.current !== requestId) return;
         setExistingRsvp(payload);
         setStep('success');
         return;
@@ -563,14 +572,18 @@ export default function RSVP() {
       });
 
       if (err) {
+        if (activeSubmitRequestRef.current !== requestId) return;
         setError(err);
         return;
       }
 
+      if (activeSubmitRequestRef.current !== requestId) return;
       setStep('success');
     } catch {
+      if (activeSubmitRequestRef.current !== requestId) return;
       setError('Failed to submit RSVP. Please try again.');
     } finally {
+      if (activeSubmitRequestRef.current !== requestId) return;
       setLoading(false);
     }
   };
