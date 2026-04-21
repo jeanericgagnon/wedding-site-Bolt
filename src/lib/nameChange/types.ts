@@ -418,6 +418,7 @@ export interface NameChangeExecutionTargetDefinition {
     kind: 'requirement' | 'field_presence' | 'document_support';
     requirementKey?: string;
     targetField?: string;
+    targetFields?: string[];
     documentKinds?: NameChangeDocumentKind[];
     missingReason: string;
     attentionReason?: string;

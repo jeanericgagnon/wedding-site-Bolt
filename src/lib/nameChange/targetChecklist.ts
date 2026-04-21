@@ -37,36 +37,22 @@ export function buildNameChangeTargetChecklist(
     }
 
     if (spec.kind === 'field_presence') {
-      if (spec.key === 'current-legal-name') {
-        const first = autofill.fields.find((field) => field.targetField === 'applicant.current_first_name');
-        const last = autofill.fields.find((field) => field.targetField === 'applicant.current_last_name');
-        const ready = Boolean(first?.value.value && last?.value.value);
-        return {
-          key: spec.key,
-          label: spec.label,
-          status: ready ? 'ready' : 'missing',
-          reason: ready ? spec.satisfiedReason : spec.missingReason,
-        } satisfies NameChangeTargetChecklistItem;
-      }
+      const targetFields = spec.targetFields?.length
+        ? spec.targetFields
+        : spec.targetField
+          ? [spec.targetField]
+          : [];
+      const ready = targetFields.length > 0
+        && targetFields.every((targetField) => {
+          const field = autofill.fields.find((candidate) => candidate.targetField === targetField);
+          return Boolean(field?.value.value);
+        });
 
-      if (spec.key === 'target-surname-county') {
-        const targetLast = autofill.fields.find((field) => field.targetField === 'applicant.target_last_name');
-        const county = autofill.fields.find((field) => field.targetField === 'applicant.county');
-        const ready = Boolean(targetLast?.value.value && county?.value.value);
-        return {
-          key: spec.key,
-          label: spec.label,
-          status: ready ? 'ready' : 'missing',
-          reason: ready ? spec.satisfiedReason : spec.missingReason,
-        } satisfies NameChangeTargetChecklistItem;
-      }
-
-      const field = autofill.fields.find((candidate) => candidate.targetField === spec.targetField);
       return {
         key: spec.key,
         label: spec.label,
-        status: field?.value.value ? 'ready' : 'missing',
-        reason: field?.value.value ? spec.satisfiedReason : spec.missingReason,
+        status: ready ? 'ready' : 'missing',
+        reason: ready ? spec.satisfiedReason : spec.missingReason,
       } satisfies NameChangeTargetChecklistItem;
     }
 
