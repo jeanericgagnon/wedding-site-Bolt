@@ -130,6 +130,31 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.readinessSummary.documentRepairDebt).toBeGreaterThan(0);
   });
 
+  it('blocks execution readiness when a required requirement is only attention-level trusted', () => {
+    const snapshot = buildNameChangeTargetExecutionSnapshot('ssa', makeCase(), [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+        file_name_masked: 'passport-•••.pdf',
+      },
+    ], []);
+
+    expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'identity-document-coverage')).toMatchObject({
+      status: 'missing',
+      required: true,
+    });
+    expect(snapshot.ready).toBe(false);
+    expect(snapshot.blockers).toContain('Identity documents exist in intake, but metadata is still too thin for confident downstream use.');
+  });
+
   it('builds shared DMV execution snapshots with sequencing awareness', () => {
     const documents: NameChangeDocumentInput[] = [
       {

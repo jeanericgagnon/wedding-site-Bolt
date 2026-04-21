@@ -26,7 +26,12 @@ export type NameChangeSequenceContext = {
 
 export type NameChangeDependencyRecipe = (context: NameChangeSequenceContext) => NameChangeExecutionDependency[];
 
-function requirementStatusToDependencyStatus(status: 'satisfied' | 'missing' | 'attention'): NameChangeExecutionDependency['status'] {
+function requirementStatusToDependencyStatus(
+  status: 'satisfied' | 'missing' | 'attention',
+  required: boolean,
+  blockOnAttention: boolean,
+): NameChangeExecutionDependency['status'] {
+  if (required && blockOnAttention && status === 'attention') return 'missing';
   return status;
 }
 
@@ -36,12 +41,13 @@ function buildRequirementDependency(
   label: string,
   required = true,
   fallbackReason: string,
+  blockOnAttention = false,
 ): NameChangeExecutionDependency {
   return {
     key,
     label,
     required,
-    status: requirementStatusToDependencyStatus(result?.status ?? 'missing'),
+    status: requirementStatusToDependencyStatus(result?.status ?? 'missing', required, blockOnAttention),
     reason: result?.reason ?? fallbackReason,
   };
 }
@@ -83,10 +89,15 @@ const buildLegalAndIdentityDependencies: NameChangeDependencyRecipe = ({ require
   buildRequirementDependency(requirements.identityCoverage, 'identity-document-coverage', 'Identity document coverage', true, 'Identity coverage requirement not evaluated.'),
 ];
 
+const buildStrictLegalAndIdentityDependencies: NameChangeDependencyRecipe = ({ requirements }) => [
+  buildRequirementDependency(requirements.legalProof, 'legal-proof-document', 'Legal proof document ready', true, 'Legal proof requirement not evaluated.', true),
+  buildRequirementDependency(requirements.identityCoverage, 'identity-document-coverage', 'Identity document coverage', true, 'Identity coverage requirement not evaluated.', true),
+];
+
 const buildDmvDependencies: NameChangeDependencyRecipe = ({ intake, requirements, prerequisiteDependencies }) => [
-  buildRequirementDependency(requirements.legalProof, 'legal-proof-document', 'Legal proof document ready', true, 'Legal proof requirement not evaluated.'),
-  buildRequirementDependency(requirements.launchStateAlignment, 'launch-state-alignment', 'California launch-state alignment', true, 'California launch-state alignment has not been evaluated.'),
-  buildRequirementDependency(requirements.countyContext, 'county-context', 'County / jurisdiction context', true, 'County context requirement not evaluated.'),
+  buildRequirementDependency(requirements.legalProof, 'legal-proof-document', 'Legal proof document ready', true, 'Legal proof requirement not evaluated.', true),
+  buildRequirementDependency(requirements.launchStateAlignment, 'launch-state-alignment', 'California launch-state alignment', true, 'California launch-state alignment has not been evaluated.', true),
+  buildRequirementDependency(requirements.countyContext, 'county-context', 'County / jurisdiction context', true, 'County context requirement not evaluated.', true),
   buildDocumentSupportDependency(intake, {
     key: 'identity-document-coverage',
     label: 'California-facing identity/address support',
@@ -98,7 +109,7 @@ const buildDmvDependencies: NameChangeDependencyRecipe = ({ intake, requirements
 ];
 
 const buildPassportDependencies: NameChangeDependencyRecipe = ({ profile, requirements, prerequisiteDependencies }) => [
-  ...buildLegalAndIdentityDependencies({ profile, intake: null as never, requirements, prerequisiteDependencies }),
+  ...buildStrictLegalAndIdentityDependencies({ profile, intake: null as never, requirements, prerequisiteDependencies }),
   {
     key: 'citizenship-eligibility',
     label: 'Citizenship eligible for passport path',
@@ -110,7 +121,7 @@ const buildPassportDependencies: NameChangeDependencyRecipe = ({ profile, requir
   },
   buildRequirementDependency(requirements.passportTimingRisk, 'passport-timing-risk', 'Passport timing risk reviewed', false, 'Passport timing risk has not been evaluated.'),
   buildRequirementDependency(requirements.expeditedTravelSequencing, 'expedited-travel-sequencing', 'Expedited travel sequencing ready', false, 'Expedited travel sequencing has not been evaluated.'),
-  buildRequirementDependency(requirements.passportEligibilityPath, 'passport-eligibility-path', 'Passport eligibility path is clear', true, 'Passport eligibility path has not been evaluated.'),
+  buildRequirementDependency(requirements.passportEligibilityPath, 'passport-eligibility-path', 'Passport eligibility path is clear', true, 'Passport eligibility path has not been evaluated.', true),
   ...prerequisiteDependencies,
 ];
 
@@ -175,7 +186,7 @@ const buildTsaDependencies: NameChangeDependencyRecipe = ({ intake, requirements
   buildRequirementDependency(requirements.identityCoverage, 'identity-document-coverage', 'Identity document coverage', true, 'Identity coverage requirement not evaluated.'),
   buildRequirementDependency(requirements.passportTimingRisk, 'passport-timing-risk', 'Passport timing risk reviewed', false, 'Passport timing risk has not been evaluated.'),
   buildRequirementDependency(requirements.expeditedTravelSequencing, 'expedited-travel-sequencing', 'Expedited travel sequencing ready', false, 'Expedited travel sequencing has not been evaluated.'),
-  buildRequirementDependency(requirements.passportEligibilityPath, 'passport-eligibility-path', 'Passport eligibility path is clear', true, 'Passport eligibility path has not been evaluated.'),
+  buildRequirementDependency(requirements.passportEligibilityPath, 'passport-eligibility-path', 'Passport eligibility path is clear', true, 'Passport eligibility path has not been evaluated.', true),
   buildDocumentSupportDependency(intake, {
     key: 'travel-profile-support',
     label: 'Travel-profile support exists',
@@ -187,7 +198,7 @@ const buildTsaDependencies: NameChangeDependencyRecipe = ({ intake, requirements
 ];
 
 export const NAME_CHANGE_SEQUENCE_PROFILE_RECIPES: Record<NameChangeExecutionSequenceProfileKey, NameChangeDependencyRecipe> = {
-  ssa: buildLegalAndIdentityDependencies,
+  ssa: buildStrictLegalAndIdentityDependencies,
   dmv: buildDmvDependencies,
   passport: buildPassportDependencies,
   employer: ({ profile, requirements, prerequisiteDependencies }) => [

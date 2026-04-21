@@ -416,4 +416,30 @@ describe('name change execution sequence snapshot', () => {
     expect(snapshot.ready).toBe(true);
     expect(snapshot.dependencies.find((dependency) => dependency.key === 'banks-or-utilities-progress')).toMatchObject({ status: 'missing' });
   });
+
+  it('downgrades required requirement attention to not-ready dependencies', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+        file_name_masked: 'passport-•••.pdf',
+      },
+    ];
+
+    const snapshot = buildNameChangeExecutionSequenceSnapshot('ssa', makeCase(), documents, []);
+    expect(snapshot.dependencies.find((dependency) => dependency.key === 'identity-document-coverage')).toMatchObject({
+      status: 'missing',
+      required: true,
+      reason: 'Identity documents exist in intake, but metadata is still too thin for confident downstream use.',
+    });
+    expect(snapshot.ready).toBe(false);
+  });
 });

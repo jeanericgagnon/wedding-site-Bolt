@@ -27,12 +27,12 @@ describe('name change execution gates', () => {
     expect(result.blockers).toEqual(['Dependency blocker', 'Checklist blocker']);
   });
 
-  it('tracks attention separately from blockers', () => {
+  it('tracks attention separately from blockers when the attention is advisory', () => {
     const dependencies: NameChangeExecutionDependency[] = [
       {
         key: 'dep-1',
         label: 'Dependency 1',
-        required: true,
+        required: false,
         status: 'attention',
         reason: 'Dependency attention',
       },
