@@ -13,7 +13,7 @@ import {
   Hotel,
   ChevronDown,
   ArrowRight,
-  Wallet,
+  Radio,
 } from 'lucide-react';
 import { GridItem, HeroReveal, Reveal, SlideReveal, StaggerGrid } from '../components/marketing/Reveal';
 
@@ -92,11 +92,11 @@ export const Home: React.FC = () => {
       bullets: ['Invite your planner from the couple side', 'Named planner invite with role preset', 'Planner coordination view', 'Shared guest + seating + timeline context', 'Read-only or operational access', 'Built for real event-day help'],
     },
     {
-      id: 'memory',
-      title: 'Archive & Anniversary',
-      icon: Wallet,
+      id: 'dayof',
+      title: 'Day-of Coordination',
+      icon: Radio,
       href: '/product',
-      bullets: ['Archive mode after the wedding', 'Guest photo return path', 'Post-wedding memory foundation', 'Keepsake-first positioning', 'Reasons to revisit later', 'A site that can stay meaningful after the event'],
+      bullets: ['Live coordinator view', 'Check-in and arrivals focus', 'Timeline + Q&A context', 'Fast guest lookup', 'Alert and issue visibility', 'Built for calmer event-week execution'],
     },
     {
       id: 'travel',
@@ -482,6 +482,12 @@ export const Home: React.FC = () => {
               );
             })}
             </div>
+          </div>
+
+          <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-5 md:p-6 mb-8">
+            <p className="text-xs uppercase tracking-wide text-amber-700 font-semibold">Adjacent, not carrying v1</p>
+            <h3 className="text-xl md:text-2xl font-serif font-bold text-ink mt-2">Post-wedding memory layers stay in the product direction bucket for now.</h3>
+            <p className="mt-3 max-w-3xl text-sm md:text-base text-ink/75">Archive mode, guest photo return paths, and name-change support can stay real without pretending they are the reason to trust DayOf first. The hard launch line is still website + guest ops + calm execution.</p>
           </div>
 
           <SlideReveal from="right" className="text-center">

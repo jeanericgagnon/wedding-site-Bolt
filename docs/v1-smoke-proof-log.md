@@ -321,6 +321,7 @@ A slice does **not** count as passed because:
 - Concrete finish gap found and fixed: RSVP search/lookup could leave the prior guest context hanging around while a new lookup was in flight or after it failed, because the handler did not clear guest/RSVP/household state before searching again. Fresh lookups now reset the prior guest context before the next lookup runs.
 - Concrete finish gap found and fixed: RSVP token auto-load had the same stale-state problem as manual search. A bad or changed token could leave the last guest/RSVP/household context hanging behind the error state. Token-driven lookups now clear prior guest context before loading.
 - Concrete finish gap found and fixed: SiteView could start a new slug load while still carrying the prior site’s privacy gate, error, or coming-soon state until the next fetch resolved. Public site loads now reset those gate/error fields up front so one site’s state does not bleed into another site view attempt.
+- Concrete finish gap found and fixed: the public Home/Product story was still giving post-wedding memory layers near-equal billing with the hard wedding-core v1 slices. Home now centers the feature carousel on must-ship wedding execution work, swaps the archive/memory panel out for day-of coordination, and explicitly demotes archive/photo/name-change language into an adjacent-not-core lane instead of letting the launch claim blur.
 
 ## Verification notes
 - `npm run build` passes after the guest-import permission fix.
@@ -356,7 +357,7 @@ A slice does **not** count as passed because:
 - `npm run build` passes after the RSVP fresh-lookup state reset fix.
 - `npm run build` passes after the RSVP token-auto-load state reset fix.
 - `npm run build` passes after the SiteView stale-gate reset fix.
-- `npm run typecheck` is currently failing because of unrelated name-change lane churn (`src/lib/nameChange/*`, `src/pages/dashboard/planning/NameChangePlannerTab.tsx`), not because of the guest-import change.
+- `npm run typecheck && npm run build` passes after the Home/Product v1-story tightening pass.
 
 ## Highest-value next proof seam
 - Guest-level RSVP and event-specific RSVP are both materially stronger now, but the next likely continuity seam is how newly created or removed event invitations affect downstream event attendance interpretation in itinerary/seating without a fresh explicit event response. That should be the next runtime proof target rather than more copy or permission cleanup.

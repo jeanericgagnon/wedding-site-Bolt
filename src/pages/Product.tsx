@@ -29,7 +29,7 @@ const STEPS: Step[] = [
 const FEATURE_AUDIT_GROUPS = [
   {
     title: 'Public experience',
-    items: ['Wedding site templates', 'Public RSVP page', 'Event-specific RSVP', 'Photo upload page', 'Archive mode foundation', 'Guest memory collection'],
+    items: ['Wedding site templates', 'Public RSVP page', 'Event-specific RSVP', 'Travel + logistics guidance', 'Launch/privacy controls that match the story'],
   },
   {
     title: 'Planning core',
@@ -37,11 +37,11 @@ const FEATURE_AUDIT_GROUPS = [
   },
   {
     title: 'Operations',
-    items: ['Guest messaging', 'Planner coordination view', 'Dashboard overview', 'Planning workspace', 'Settings + preferences'],
+    items: ['Guest messaging', 'Planner coordination view', 'Coordinator mode', 'Dashboard overview', 'Planning workspace', 'Settings + preferences'],
   },
   {
-    title: 'What couples actually use',
-    items: ['Drag-and-drop seating chart', 'Seat finder lookup for guests and staff', 'Planner-ready coordination view', 'RSVP board visibility', 'Planning hub for tasks + decisions', 'Core guest ops that hold together'],
+    title: 'Adjacent, not carrying v1',
+    items: ['Photo upload page', 'Guest memory collection', 'Archive mode foundation', 'Name-change support after the wedding'],
   },
 ] as const;
 
@@ -246,8 +246,8 @@ export const Product: React.FC = () => {
       <section className="py-10 md:py-14 bg-paper text-ink">
         <div className="container-custom max-w-7xl">
           <SlideReveal from="left" className="mb-8">
-            <h2 className="text-[2rem] md:text-[2.6rem] font-serif font-bold mb-2">See how the website leads everything else.</h2>
-            <p className="text-ink/70">Start with a beautiful site, then move into guests, RSVPs, messaging, seating, and day-of details without switching tools constantly.</p>
+            <h2 className="text-[2rem] md:text-[2.6rem] font-serif font-bold mb-2">See the actual v1 spine, not the wishlist.</h2>
+            <p className="text-ink/70">Start with a beautiful site, then move into guests, RSVPs, messaging, seating, and day-of execution without switching tools constantly.</p>
           </SlideReveal>
 
           <div className="grid grid-cols-1 lg:grid-cols-[260px,1fr,260px] gap-4 lg:gap-5">
@@ -387,7 +387,7 @@ export const Product: React.FC = () => {
         <div className="container-custom max-w-6xl">
           <SlideReveal from="left" className="mb-6">
             <h2 className="section-title mb-2">Current product shape</h2>
-            <p className="text-ink/70">This is the current DayOf product shape. The core v1 line is centered on what couples can actually rely on today, while some surrounding slices remain broader product direction unless proven harder.</p>
+            <p className="text-ink/70">This is the current DayOf product shape with the launch line separated from adjacent product direction. Core wedding execution gets top billing; post-wedding and sidecar layers do not.</p>
           </SlideReveal>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {FEATURE_AUDIT_GROUPS.map((group) => (
