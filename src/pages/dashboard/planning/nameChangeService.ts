@@ -1,5 +1,6 @@
 import { supabase } from '../../../lib/supabase';
 import { buildNameChangePlan } from '../../../lib/nameChange/engine';
+import { canonicalizeNameChangeDocumentKind } from '../../../lib/nameChange/documentKinds';
 import { NAME_CHANGE_ENGINE_VERSION } from '../../../lib/nameChange/registry';
 import { buildNameChangeReminderSuggestions, mapReminderSuggestionsToInputs } from '../../../lib/nameChange/reminders';
 import type {
@@ -101,10 +102,12 @@ export function normalizeNameChangeDocuments(documents: NameChangeDocumentInput[
   const deduped = new Map<NameChangeDocumentInput['document_kind'], NameChangeDocumentInput>();
 
   documents.forEach((document) => {
-    deduped.set(document.document_kind, {
+    const canonicalKind = canonicalizeNameChangeDocumentKind(document.document_kind);
+    deduped.set(canonicalKind, {
       ...document,
       id: document.id,
-      display_name: normalizeText(document.display_name) || document.document_kind.replace(/_/g, ' '),
+      document_kind: canonicalKind,
+      display_name: normalizeText(document.display_name) || canonicalKind.replace(/_/g, ' '),
       file_name_masked: normalizeNullableText(document.file_name_masked),
       issuing_authority: normalizeNullableText(document.issuing_authority),
       issued_on: normalizeNullableText(document.issued_on),

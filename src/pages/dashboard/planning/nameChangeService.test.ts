@@ -111,6 +111,36 @@ describe('nameChangeService normalization', () => {
     ]);
   });
 
+  it('collapses legacy court-order aliases into one normalized document row', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-legacy',
+        document_kind: 'court_order_name_change',
+        display_name: '  Court order PDF  ',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+        file_name_masked: ' order.pdf ',
+      },
+      {
+        id: 'doc-draft',
+        document_kind: 'court_order',
+        display_name: ' Court order ',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: ' reviewed.pdf ',
+      },
+    ];
+
+    expect(normalizeNameChangeDocuments(documents)).toEqual([
+      expect.objectContaining({
+        id: 'doc-draft',
+        document_kind: 'court_order',
+        display_name: 'Court order',
+        file_name_masked: 'reviewed.pdf',
+      }),
+    ]);
+  });
+
   it('drops blank extracted fields and dedupes by source + key', () => {
     const fields: NameChangeExtractedFieldInput[] = [
       {
