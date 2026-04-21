@@ -381,15 +381,29 @@ export const DashboardCoordinatorMode: React.FC = () => {
       toast('Your collaborator role cannot update coordinator check-in.', 'info');
       return;
     }
-    if (!siteId || isDemoMode) return;
+
     const next = guest.checked_in_at ? null : new Date().toISOString();
+
+    if (isDemoMode) {
+      setGuests((prev) => prev.map((g) => (g.id === guest.id ? { ...g, checked_in_at: next } : g)));
+      toast(next ? 'Guest checked in.' : 'Guest moved back to arrivals.', 'success');
+      return;
+    }
+
+    if (!siteId) return;
+
     const { error } = await supabase
       .from('guests')
       .update({ checked_in_at: next })
       .eq('id', guest.id)
       .eq('wedding_site_id', siteId);
-    if (error) return;
+    if (error) {
+      toast(error.message || 'Could not update check-in right now.', 'error');
+      return;
+    }
+
     setGuests((prev) => prev.map((g) => (g.id === guest.id ? { ...g, checked_in_at: next } : g)));
+    toast(next ? 'Guest checked in.' : 'Guest moved back to arrivals.', 'success');
   };
 
   const sortedGuests = [...guests].sort((a, b) => {
@@ -975,6 +989,10 @@ export const DashboardCoordinatorMode: React.FC = () => {
     setPanelFocus('timeline');
   };
 
+  const selectTimelineState = (eventId: string, nextState: TimelineState) => {
+    runTimelineAction(eventId, nextState);
+  };
+
   const runCorrectionCue = (cue: (typeof correctionCues)[number]) => {
     const target = resolveCoordinatorCorrectionCueTarget(cue);
     setCommandSource('correction');
@@ -1343,7 +1361,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                           </div>
                           <select
                             value={state}
-                            onChange={(ev) => { if (canEditTimeline) { setActiveTimelineEventId(e.id); setTimelineState((prev) => setCoordinatorEventTimelineState(prev, e.id, ev.target.value as TimelineState)); } }}
+                            onChange={(ev) => { if (canEditTimeline) selectTimelineState(e.id, ev.target.value as TimelineState); }}
                             disabled={!canEditTimeline}
                             className="text-[11px] rounded-md border border-border bg-white px-2 py-1 text-text-secondary disabled:opacity-40"
                           >
