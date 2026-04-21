@@ -1464,26 +1464,26 @@ export const DashboardCoordinatorMode: React.FC = () => {
               </div>
 
               <div>
-                <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-text-tertiary">Standing prompt</p>
+                <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-text-tertiary">{standingPromptMode === 'secondary' ? 'Next up' : 'Standing prompt'}</p>
                 <button
                   type="button"
                   onClick={jumpToStablePrompt}
-                  className="mt-1 inline-flex flex-wrap items-center gap-2 rounded-full border border-border/50 bg-surface-subtle/40 px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/35 hover:bg-primary/[0.04]"
+                  className={`mt-1 inline-flex flex-wrap items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] hover:border-primary/35 hover:bg-primary/[0.04] ${standingPromptMode === 'secondary' ? 'border-border/35 bg-surface-subtle/20 text-text-tertiary' : 'border-border/50 bg-surface-subtle/40 text-text-secondary'}`}
                 >
                   <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${stablePromptBadgeToneClassName}`}>{stablePrompt.badge}</span>
-                  <span>{stablePrompt.label}</span>
-                  {stablePromptTargetLabel && <span className="text-text-tertiary">{stablePromptTargetLabel}</span>}
+                  <span>{standingPromptMode === 'secondary' ? stablePrompt.badge : stablePrompt.label}</span>
+                  {standingPromptMode === 'full' && stablePromptTargetLabel && <span className="text-text-tertiary">{stablePromptTargetLabel}</span>}
                   <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${stablePromptStateToneClassName}`}>{stablePromptState ?? (priorityCommandCtaState ?? priorityCommandCta)}</span>
                 </button>
               </div>
             </div>
           ) : (
             <div className="mb-3">
-              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-text-tertiary">Standing prompt</p>
+              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-text-tertiary">{standingPromptMode === 'secondary' ? 'Next up' : 'Standing prompt'}</p>
               <button
                 type="button"
                 onClick={jumpToStablePrompt}
-                className="mt-1 inline-flex flex-wrap items-center gap-2 rounded-full border border-border/50 bg-surface-subtle/40 px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/35 hover:bg-primary/[0.04]"
+                className={`mt-1 inline-flex flex-wrap items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] hover:border-primary/35 hover:bg-primary/[0.04] ${standingPromptMode === 'secondary' ? 'border-border/35 bg-surface-subtle/20 text-text-tertiary' : 'border-border/50 bg-surface-subtle/40 text-text-secondary'}`}
               >
                 <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${stablePromptBadgeToneClassName}`}>{stablePrompt.badge}</span>
                 <span>{stablePrompt.label}</span>
