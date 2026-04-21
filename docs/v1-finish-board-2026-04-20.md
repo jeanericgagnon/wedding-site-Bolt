@@ -161,6 +161,7 @@ If that line fails, the rest is noise.
 - proof that state transitions read as trustworthy under normal usage
 
 **Proof needed**
+- `npm run proof:v1:comms-center`
 - draft -> scheduled or sent -> history verification
 
 **Launch read**
@@ -299,6 +300,7 @@ If that line fails, the rest is noise.
 ### Week 2 — harden the must-ship layer
 5. **Comms center proof + first broken-path fix**
    - exit bar: draft -> schedule/send -> history state reads trustworthy
+   - command floor: `npm run proof:v1:comms-center`
 6. **Seating proof + first broken-path fix**
    - exit bar: RSVP-backed seating assign/lookup works without count drift
    - command floor: `npm run proof:v1:seating-continuity`

@@ -29,9 +29,11 @@ npm run smoke:site
 npm run smoke:rsvp:strict
 npm run smoke:csvmapper
 npm run smoke:checkin
+npm run smoke:messages
 npm run proof:v1:guests-rsvp-ops
 npm run proof:v1:collaborator-access
 npm run proof:v1:collaborator-runtime
+npm run proof:v1:comms-center
 npm run proof:v1:seating-continuity
 npm test -- src/pages/dashboard/registry/registryService.test.ts
 node scripts/v1-proof-board.mjs --markdown
@@ -119,7 +121,11 @@ Queue/check-in/timeline/Q&A feel calmer under realistic use and do not collapse 
 Draft -> schedule/send -> history state reads trustworthy enough that core wedding messaging can stay inside DayOf.
 
 **Automated support**
-- `npm run build`
+- `npm run proof:v1:comms-center`
+- underlying bundle:
+  - `npm test -- src/lib/messageDeliveryState.test.ts`
+  - `npm run smoke:messages`
+  - `npm run build`
 
 **Manual proof still required**
 - create or inspect a draft

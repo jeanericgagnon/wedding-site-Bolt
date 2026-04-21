@@ -94,7 +94,7 @@ const proofBoard = {
       tier: 2,
       exitBar: 'Draft -> schedule/send -> history state reads trustworthy enough that core wedding messaging can stay inside DayOf.',
       automatedProof: [
-        'npm run build',
+        'npm run proof:v1:comms-center',
       ],
       manualProof: [
         'Create or inspect a draft',

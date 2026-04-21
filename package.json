@@ -22,6 +22,7 @@
     "smoke:rsvp:strict": "node scripts/rsvp_smoke.js --strict",
     "smoke:csvmapper": "node scripts/smoke_csv_mapper_guard.js",
     "smoke:checkin": "node scripts/smoke_checkin_guard.js",
+    "smoke:messages": "node scripts/smoke_messages_guard.js",
     "smoke:site": "node scripts/site_lookup_smoke.js",
     "previews:manifest": "node scripts/generate_template_preview_manifest.cjs",
     "variant-previews:manifest": "node scripts/extract_variant_preview_manifest.cjs",
@@ -33,6 +34,7 @@
     "proof:v1:guests-rsvp-ops": "node scripts/v1-proof-guests-rsvp-ops.mjs",
     "proof:v1:collaborator-access": "node scripts/v1-proof-collaborator-access.mjs",
     "proof:v1:collaborator-runtime": "node scripts/v1-proof-collaborator-runtime.mjs",
+    "proof:v1:comms-center": "node scripts/v1-proof-comms-center.mjs",
     "proof:v1:seating-continuity": "node scripts/v1-proof-seating-continuity.mjs"
   },
   "dependencies": {
