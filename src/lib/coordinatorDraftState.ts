@@ -9,6 +9,7 @@ export type CoordinatorDraftState = {
     scheduleTime: string;
   };
   qnaDraftAnswers: Record<string, string>;
+  qnaInput: string;
 };
 
 export const normalizeCoordinatorDraftState = (value: unknown): CoordinatorDraftState => {
@@ -23,6 +24,7 @@ export const normalizeCoordinatorDraftState = (value: unknown): CoordinatorDraft
       scheduleTime: '',
     },
     qnaDraftAnswers: {},
+    qnaInput: '',
   };
 
   if (!value || typeof value !== 'object' || Array.isArray(value)) return base;
@@ -41,5 +43,6 @@ export const normalizeCoordinatorDraftState = (value: unknown): CoordinatorDraft
         }
       : base.alertForm,
     qnaDraftAnswers,
+    qnaInput: typeof parsed.qnaInput === 'string' ? parsed.qnaInput : '',
   };
 };

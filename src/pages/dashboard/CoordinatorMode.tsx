@@ -253,13 +253,17 @@ export const DashboardCoordinatorMode: React.FC = () => {
       const rawSessionState = localStorage.getItem(`dayof.coordinator.session.${siteId}`);
       const sessionState = normalizeCoordinatorModeSessionState(rawSessionState ? JSON.parse(rawSessionState) : null);
       setCheckInFilter(sessionState.checkInFilter);
+      setCheckInQuery(sessionState.checkInQuery);
       setCheckInReviewOnly(sessionState.checkInReviewOnly);
       setPanelFocus(sessionState.panelFocus);
+      setAlertChannelFilter(sessionState.alertChannelFilter);
+      setAlertTimingFilter(sessionState.alertTimingFilter);
 
       const rawDraftState = localStorage.getItem(`dayof.coordinator.draft.${siteId}`);
       const draftState = normalizeCoordinatorDraftState(rawDraftState ? JSON.parse(rawDraftState) : null);
       setAlertForm((prev) => ({ ...prev, ...draftState.alertForm }));
       setQnaDraftAnswers(draftState.qnaDraftAnswers);
+      setQnaInput(draftState.qnaInput);
 
       const rawActiveWorkState = localStorage.getItem(`dayof.coordinator.active.${siteId}`);
       const activeWorkState = normalizeCoordinatorActiveWorkState(rawActiveWorkState ? JSON.parse(rawActiveWorkState) : null);
@@ -313,11 +317,14 @@ export const DashboardCoordinatorMode: React.FC = () => {
     try {
       localStorage.setItem(`dayof.coordinator.session.${siteId}`, JSON.stringify({
         checkInFilter,
+        checkInQuery,
         checkInReviewOnly,
         panelFocus,
+        alertChannelFilter,
+        alertTimingFilter,
       }));
     } catch {}
-  }, [siteId, checkInFilter, checkInReviewOnly, panelFocus]);
+  }, [siteId, checkInFilter, checkInQuery, checkInReviewOnly, panelFocus, alertChannelFilter, alertTimingFilter]);
 
   useEffect(() => {
     if (!siteId) return;
@@ -325,9 +332,10 @@ export const DashboardCoordinatorMode: React.FC = () => {
       localStorage.setItem(`dayof.coordinator.draft.${siteId}`, JSON.stringify({
         alertForm,
         qnaDraftAnswers,
+        qnaInput,
       }));
     } catch {}
-  }, [siteId, alertForm, qnaDraftAnswers]);
+  }, [siteId, alertForm, qnaDraftAnswers, qnaInput]);
 
   useEffect(() => {
     if (!siteId) return;

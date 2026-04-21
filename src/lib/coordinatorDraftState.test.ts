@@ -16,6 +16,7 @@ describe('coordinatorDraftState', () => {
       qnaDraftAnswers: {
         q1: 'Use the hotel valet lot.',
       },
+      qnaInput: 'Can we move grandma closer to the aisle?',
     })).toEqual({
       alertForm: {
         subject: 'Weather update',
@@ -29,6 +30,7 @@ describe('coordinatorDraftState', () => {
       qnaDraftAnswers: {
         q1: 'Use the hotel valet lot.',
       },
+      qnaInput: 'Can we move grandma closer to the aisle?',
     });
   });
 
@@ -39,6 +41,7 @@ describe('coordinatorDraftState', () => {
         scheduleType: 'sometime',
       },
       qnaDraftAnswers: ['bad'],
+      qnaInput: 42,
     })).toEqual({
       alertForm: {
         subject: '',
@@ -50,6 +53,7 @@ describe('coordinatorDraftState', () => {
         scheduleTime: '',
       },
       qnaDraftAnswers: {},
+      qnaInput: '',
     });
   });
 });
