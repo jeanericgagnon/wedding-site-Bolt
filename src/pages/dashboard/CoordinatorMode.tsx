@@ -440,6 +440,21 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
   const alertValidationError = useMemo(() => validateCoordinatorAlertForm(alertForm, alertAudienceCount), [alertForm, alertAudienceCount]);
 
+  useEffect(() => {
+    if (canSendAlerts && (canScheduleAlerts || alertForm.scheduleType !== 'later')) return;
+
+    setAlertForm((prev) => {
+      if (!canSendAlerts && prev.scheduleType === 'now') return prev;
+      if (canSendAlerts && prev.scheduleType !== 'later') return prev;
+      return {
+        ...prev,
+        scheduleType: 'now',
+        scheduleDate: '',
+        scheduleTime: '',
+      };
+    });
+  }, [canSendAlerts, canScheduleAlerts, alertForm.scheduleType]);
+
   const handoffCopy = {
     title: coordinatorRole === 'viewer' ? 'Viewer handoff' : coordinatorRole === 'coordinator' ? 'Coordinator handoff' : 'Planner handoff',
     detail: coordinatorRole === 'viewer'
@@ -1399,6 +1414,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     <button
                       key={suggestion.key}
                       type="button"
+                      disabled={!canSendAlerts}
                       onClick={() => {
                         setAlertForm((prev) => ({
                           ...prev,
@@ -1408,7 +1424,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                         }));
                         setLastAlertSuggestionKey(suggestion.key);
                       }}
-                      className={`text-[11px] px-2 py-1 rounded-full border inline-flex items-center gap-1.5 ${suggestionState.isDraftMatch ? 'border-primary/35 bg-primary/10 text-primary' : suggestionState.isBoardTarget ? 'border-primary/25 bg-primary/5 text-primary hover:bg-primary/10' : 'border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary'}`}
+                      className={`text-[11px] px-2 py-1 rounded-full border inline-flex items-center gap-1.5 disabled:opacity-40 ${suggestionState.isDraftMatch ? 'border-primary/35 bg-primary/10 text-primary' : suggestionState.isBoardTarget ? 'border-primary/25 bg-primary/5 text-primary hover:bg-primary/10' : 'border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary'}`}
                     >
                       <span>{suggestion.label}</span>
                       {suggestionState.badge && (
@@ -1421,15 +1437,17 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 })}
                 <button
                   type="button"
+                  disabled={!canSendAlerts}
                   onClick={() => setAlertForm((prev) => ({ ...prev, channel: 'sms', scheduleType: 'now' }))}
-                  className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary"
+                  className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary disabled:opacity-40"
                 >
                   Text now
                 </button>
                 <button
                   type="button"
+                  disabled={!canSendAlerts || !canScheduleAlerts}
                   onClick={() => setAlertForm((prev) => ({ ...prev, channel: 'email', scheduleType: 'later' }))}
-                  className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary"
+                  className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary disabled:opacity-40"
                 >
                   Schedule email
                 </button>
@@ -1437,8 +1455,9 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   <button
                     key={audience}
                     type="button"
+                    disabled={!canSendAlerts}
                     onClick={() => setAlertForm((prev) => ({ ...prev, audience }))}
-                    className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary"
+                    className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary disabled:opacity-40"
                   >
                     {audience} ({count})
                   </button>
