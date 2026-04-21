@@ -3,9 +3,14 @@ import type { WeddingDataV1 } from '../types/weddingData';
 import { safeJsonParse } from './jsonUtils';
 import { rewriteSignedMediaUrlsToPublicDeep } from './mediaUrl';
 
-const asRecord = (value: unknown): Record<string, unknown> | null => (
-  value && typeof value === 'object' ? value as Record<string, unknown> : null
-);
+const asRecord = (value: unknown): Record<string, unknown> | null => {
+  if (value && typeof value === 'object') return value as Record<string, unknown>;
+  if (typeof value === 'string') {
+    const parsed = safeJsonParse<Record<string, unknown> | null>(value, null);
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  }
+  return null;
+};
 
 export const getIsPublishedFromSiteRow = (row: Record<string, unknown>): boolean => {
   const siteJsonMeta = asRecord(row.site_json);

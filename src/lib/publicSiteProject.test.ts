@@ -139,4 +139,38 @@ describe('publicSiteProject', () => {
       'https://xyz.supabase.co/storage/v1/object/public/site-media/bar.jpg',
     );
   });
+
+  it('recognizes published state from stringified published_json metadata', () => {
+    const row = {
+      site_json: JSON.stringify(draftProject),
+      published_json: JSON.stringify(publishedProject),
+    };
+
+    expect(getIsPublishedFromSiteRow(row)).toBe(true);
+    expect(getPublicBuilderProject(row)?.pages[0].sections[0].settings.headline).toBe('Published headline');
+  });
+
+  it('extracts published wedding data snapshot from stringified site rows', () => {
+    const row = {
+      is_published: true,
+      site_json: JSON.stringify(draftProject),
+      published_json: JSON.stringify({
+        ...publishedProject,
+        weddingDataSnapshot: JSON.stringify({
+          ...publishedWeddingData,
+          media: {
+            gallery: [],
+            heroImageUrl: 'https://xyz.supabase.co/storage/v1/object/sign/site-media/stringified.jpg?token=abc',
+          },
+        }),
+      }),
+      wedding_data: JSON.stringify(liveWeddingData),
+    };
+
+    const data = getPublicWeddingData(row);
+    expect(data?.couple.displayName).toBe('Published Names');
+    expect(data?.media.heroImageUrl).toBe(
+      'https://xyz.supabase.co/storage/v1/object/public/site-media/stringified.jpg',
+    );
+  });
 });
