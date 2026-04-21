@@ -1342,7 +1342,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
               <div className="flex flex-col sm:flex-row gap-2">
                 <Input
                   value={checkInQuery}
-                  onChange={(e) => setCheckInQuery(e.target.value)}
+                  onChange={(e) => { focusCoordinatorCheckInLane(); setCheckInQuery(e.target.value); }}
                   placeholder="Search guest name or RSVP status"
                 />
                 <select
@@ -1722,7 +1722,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
               <div className="flex gap-2 mb-2">
                 <Input
                   value={qnaInput}
-                  onChange={(e) => setQnaInput(e.target.value)}
+                  onChange={(e) => { focusCoordinatorQnaLane(); setQnaInput(e.target.value); }}
                   placeholder="Add a guest question"
                 />
                 <button onClick={addQnaItem} className="px-3 py-2 text-xs rounded-md border border-border bg-white text-text-secondary disabled:opacity-40">Add question</button>
@@ -1736,8 +1736,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                       key={item.id}
                       className={`text-xs border rounded-md px-2.5 py-2 space-y-2 cursor-pointer ${activeQnaId === item.id ? 'border-primary/40 ring-2 ring-primary/10 bg-primary/5' : 'border-border/50'}`}
                       onClick={() => {
-                        clearCoordinatorTransientState();
-                        setPanelFocus('qna');
+                        focusCoordinatorQnaLane();
                         setActiveQnaId(item.id);
                       }}
                     >
