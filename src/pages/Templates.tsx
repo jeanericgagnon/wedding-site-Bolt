@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { templateCatalog, templateColorwayFacets, templateSeasonFacets, templateStyleFacets } from '../builder/constants/templateCatalog';
 import { getTemplateSupportManifest } from '../builder/constants/templateSupportManifest';
 import { TEMPLATE_USE_CASE_PACKS } from '../builder/constants/templateUseCasePacks';
-import { readSetupDraft, SELECTED_TEMPLATE_KEY } from '../lib/setupDraft';
+import { readSetupDraft, writeSetupDraft } from '../lib/setupDraft';
 
 type Facet = 'all' | string;
 
@@ -16,7 +16,7 @@ export const Templates: React.FC = () => {
   const [sortBy, setSortBy] = useState<'recommended' | 'name' | 'style'>('recommended');
   const [groupByStyle, setGroupByStyle] = useState(false);
   const [compareIds, setCompareIds] = useState<string[]>([]);
-  const selectedTemplateId = localStorage.getItem(SELECTED_TEMPLATE_KEY) || '';
+  const selectedTemplateId = readSetupDraft().selectedTemplateId;
 
   const recommendedTemplateIds = useMemo(() => {
     const d = readSetupDraft();
@@ -86,7 +86,10 @@ export const Templates: React.FC = () => {
   }, [groupByStyle, filtered]);
 
   const useTemplate = (templateId: string) => {
-    localStorage.setItem(SELECTED_TEMPLATE_KEY, templateId);
+    writeSetupDraft({
+      ...readSetupDraft(),
+      selectedTemplateId: templateId,
+    });
     navigate('/setup/names');
   };
 
