@@ -1422,42 +1422,77 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
         <div className="rounded-lg border border-border/35 bg-white px-3 py-2 shadow-[0_4px_14px_rgba(15,23,42,0.05)]">
           <div className="flex items-center justify-between gap-3 mb-2">
-            <div>
-              <p className="text-xs font-medium text-text-primary">Live command summary</p>
-              {summaryDisplayCue?.kind === 'feedback' && summaryFeedbackTone && (
-                <div className={`mt-1 inline-flex flex-wrap items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] ${summaryFeedbackTone.containerClassName}`}>
-                  <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${summaryFeedbackBadgeToneClassName}`}>{summaryFeedbackBadge ?? summaryFeedbackTone.badge}</span>
-                  <span>{summaryDisplayCue.feedback.label}</span>
-                </div>
-              )}
-              {summaryDisplayCue?.kind === 'alert-override' && (
-                <div className="mt-1 inline-flex flex-wrap items-center gap-2 rounded-full border border-amber-200 bg-amber-50/80 px-2.5 py-1 text-[11px] text-amber-800">
-                  <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${overrideBadgeToneClassName}`}>{alertOverrideBadge}</span>
-                  <span>{summaryDisplayCue.label}</span>
-                  {alertOverrideTargetLabel && <span className="text-amber-800/80">{alertOverrideTargetLabel}</span>}
-                  {alertOverrideCurrentLabel && <span className="text-text-secondary">{alertOverrideCurrentLabel}</span>}
-                </div>
-              )}
-              {summaryDisplayCue?.kind === 'manual-override' && (
-                <div className="mt-1 inline-flex flex-wrap items-center gap-2 rounded-full border border-amber-200 bg-amber-50/80 px-2.5 py-1 text-[11px] text-amber-800">
-                  <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${overrideBadgeToneClassName}`}>{manualOverrideBadge}</span>
-                  <span>{summaryDisplayCue.label}</span>
-                  {manualOverrideTargetLabel && <span className="text-amber-800/80">{manualOverrideTargetLabel}</span>}
-                  {manualOverrideCurrentTargetLabel && <span className="text-text-secondary">{manualOverrideCurrentTargetLabel}</span>}
-                  {manualOverrideActionLabel && (
-                    <button
-                      type="button"
-                      onClick={returnToBoardTarget}
-                      className="rounded-full border border-amber-200 bg-white px-2 py-0.5 text-amber-700"
-                    >
-                      {manualOverrideActionLabel}
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
+            <p className="text-xs font-medium text-text-primary">Live command summary</p>
             <p className="text-[11px] text-text-tertiary">What the board thinks matters right now</p>
           </div>
+
+          {summaryDisplayCue ? (
+            <div className="mb-3 space-y-2">
+              <div>
+                <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-text-tertiary">Live signal</p>
+                {summaryDisplayCue.kind === 'feedback' && summaryFeedbackTone && (
+                  <div className={`mt-1 inline-flex flex-wrap items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] ${summaryFeedbackTone.containerClassName}`}>
+                    <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${summaryFeedbackBadgeToneClassName}`}>{summaryFeedbackBadge ?? summaryFeedbackTone.badge}</span>
+                    <span>{summaryDisplayCue.feedback.label}</span>
+                  </div>
+                )}
+                {summaryDisplayCue.kind === 'alert-override' && (
+                  <div className="mt-1 inline-flex flex-wrap items-center gap-2 rounded-full border border-amber-200 bg-amber-50/80 px-2.5 py-1 text-[11px] text-amber-800">
+                    <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${overrideBadgeToneClassName}`}>{alertOverrideBadge}</span>
+                    <span>{summaryDisplayCue.label}</span>
+                    {alertOverrideTargetLabel && <span className="text-amber-800/80">{alertOverrideTargetLabel}</span>}
+                    {alertOverrideCurrentLabel && <span className="text-text-secondary">{alertOverrideCurrentLabel}</span>}
+                  </div>
+                )}
+                {summaryDisplayCue.kind === 'manual-override' && (
+                  <div className="mt-1 inline-flex flex-wrap items-center gap-2 rounded-full border border-amber-200 bg-amber-50/80 px-2.5 py-1 text-[11px] text-amber-800">
+                    <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${overrideBadgeToneClassName}`}>{manualOverrideBadge}</span>
+                    <span>{summaryDisplayCue.label}</span>
+                    {manualOverrideTargetLabel && <span className="text-amber-800/80">{manualOverrideTargetLabel}</span>}
+                    {manualOverrideCurrentTargetLabel && <span className="text-text-secondary">{manualOverrideCurrentTargetLabel}</span>}
+                    {manualOverrideActionLabel && (
+                      <button
+                        type="button"
+                        onClick={returnToBoardTarget}
+                        className="rounded-full border border-amber-200 bg-white px-2 py-0.5 text-amber-700"
+                      >
+                        {manualOverrideActionLabel}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-text-tertiary">Standing prompt</p>
+                <button
+                  type="button"
+                  onClick={jumpToStablePrompt}
+                  className="mt-1 inline-flex flex-wrap items-center gap-2 rounded-full border border-border/50 bg-surface-subtle/40 px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/35 hover:bg-primary/[0.04]"
+                >
+                  <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${stablePromptBadgeToneClassName}`}>{stablePrompt.badge}</span>
+                  <span>{stablePrompt.label}</span>
+                  {stablePromptTargetLabel && <span className="text-text-tertiary">{stablePromptTargetLabel}</span>}
+                  <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${stablePromptStateToneClassName}`}>{stablePromptState ?? (priorityCommandCtaState ?? priorityCommandCta)}</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="mb-3">
+              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-text-tertiary">Standing prompt</p>
+              <button
+                type="button"
+                onClick={jumpToStablePrompt}
+                className="mt-1 inline-flex flex-wrap items-center gap-2 rounded-full border border-border/50 bg-surface-subtle/40 px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/35 hover:bg-primary/[0.04]"
+              >
+                <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${stablePromptBadgeToneClassName}`}>{stablePrompt.badge}</span>
+                <span>{stablePrompt.label}</span>
+                {stablePromptTargetLabel && <span className="text-text-tertiary">{stablePromptTargetLabel}</span>}
+                <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${stablePromptStateToneClassName}`}>{stablePromptState ?? (priorityCommandCtaState ?? priorityCommandCta)}</span>
+              </button>
+            </div>
+          )}
+
           <div className="mb-3 rounded-lg border border-border/50 bg-surface-subtle/30 px-3 py-2">
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <div>
