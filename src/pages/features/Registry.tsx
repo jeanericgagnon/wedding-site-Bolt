@@ -52,7 +52,7 @@ export const RegistryFeature: React.FC = () => {
         <div className="container-custom">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-6">
-              Registry presentation that feels complete
+              Registry presentation that feels clean and trustworthy
             </h2>
             <p className="text-xl text-ink/70 max-w-3xl mx-auto">
               No sponsored clutter. No games with ordering. Just a clean registry that feels like part of your site.
@@ -213,10 +213,10 @@ export const RegistryFeature: React.FC = () => {
         <div className="container-custom">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-6">
-              Everything you need, already together
+              A practical registry core, already together
             </h2>
             <p className="text-xl text-ink/70 mb-8">
-              Everything you need for a registry that feels polished, useful, and complete.
+              A polished registry flow with guided cleanup where merchants cooperate — not a fake promise of perfect merchant parity.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12 text-left">

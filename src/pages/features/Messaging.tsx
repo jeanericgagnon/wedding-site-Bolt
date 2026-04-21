@@ -230,13 +230,13 @@ export const MessagingFeature: React.FC = () => {
 
       <section className="py-20 bg-white">
         <div className="container-custom">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-6">
-              Everything you need, already together
-            </h2>
-            <p className="text-xl text-ink/70 mb-8">
-              Everything you need to send updates without duct-taping extra tools together.
-            </p>
+            <div className="max-w-3xl mx-auto text-center">
+              <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-6">
+              Core wedding messaging, together in one place
+              </h2>
+              <p className="text-xl text-ink/70 mb-8">
+              A strong core messaging flow for wedding updates, without pretending this is a full communications suite.
+              </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12 text-left">
               {[

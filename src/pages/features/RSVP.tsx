@@ -142,7 +142,7 @@ Built to keep things clear
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Real-Time Analytics</h3>
               <p className="text-ink/70 mb-4">
-                Keep a live read on replies, headcounts, meal choices, and dietary needs so planning decisions stay grounded in the latest responses.
+                Keep a current read on replies, headcounts, meal choices, and dietary needs so planning decisions stay grounded in the latest saved responses.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• Current headcount by event</li>
