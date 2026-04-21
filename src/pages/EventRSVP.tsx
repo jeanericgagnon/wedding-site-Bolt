@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Calendar, Clock, MapPin, Check, X, ExternalLink, AlertCircle, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -56,6 +56,7 @@ export default function EventRSVP() {
   const [submitError, setSubmitError] = useState('');
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [hasEventRsvpSupport, setHasEventRsvpSupport] = useState<boolean | null>(null);
+  const postSubmitResetTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (token) {
@@ -73,6 +74,14 @@ export default function EventRSVP() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
+
+  useEffect(() => {
+    return () => {
+      if (postSubmitResetTimeoutRef.current !== null) {
+        window.clearTimeout(postSubmitResetTimeoutRef.current);
+      }
+    };
+  }, []);
 
   async function loadGuestAndEvents() {
     setLoading(true);
@@ -266,10 +275,14 @@ export default function EventRSVP() {
       }
 
       setSubmitSuccess(true);
-      setTimeout(() => {
+      if (postSubmitResetTimeoutRef.current !== null) {
+        window.clearTimeout(postSubmitResetTimeoutRef.current);
+      }
+      postSubmitResetTimeoutRef.current = window.setTimeout(() => {
         setSelectedEvent(null);
         setSubmitSuccess(false);
         loadGuestAndEvents();
+        postSubmitResetTimeoutRef.current = null;
       }, 2000);
     } catch {
       setSubmitError('Failed to save your RSVP. Please try again.');
