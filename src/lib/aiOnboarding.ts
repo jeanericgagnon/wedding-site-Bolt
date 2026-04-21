@@ -116,18 +116,25 @@ const onboardingExtractionSchema = z.object({
 
 const getQuestionKeyFromNeed = (need: string): string | null => NEED_TO_QUESTION_KEY[need.toLowerCase()] ?? null;
 const getSuggestedFollowUps = (
+  readiness: WeddingProfileReadiness,
   clarifying: ClarifyingPersistenceEnvelope | undefined,
   fallback: FollowUpQuestion[],
 ): FollowUpQuestion[] => {
   const clarifyingQuestions = clarifying?.clarifying.questions ?? [];
-  if (!clarifyingQuestions.length) return fallback;
+  if (clarifyingQuestions.length) {
+    return clarifyingQuestions.map((question) => ({
+      key: question.id,
+      priority: 100,
+      affects: question.affectedSections,
+      variants: [question.question, question.question, question.question] as [string, string, string],
+    }));
+  }
 
-  return clarifyingQuestions.map((question) => ({
-    key: question.id,
-    priority: 100,
-    affects: question.affectedSections,
-    variants: [question.question, question.question, question.question] as [string, string, string],
-  }));
+  if (readiness.hasEnoughToDraft && readiness.missingCriticalFields.length === 0) {
+    return [];
+  }
+
+  return fallback;
 };
 
 const getSuggestedPrompt = (questionKey: string | null, profile?: WeddingProfile) => {
@@ -366,7 +373,7 @@ export const createOnboardingSessionState = (
     confirmedFields: [],
     unresolvedConflicts: [],
     suggestedPrompt: getSuggestedPrompt(nextQuestionKey, profile),
-    suggestedFollowUps: getSuggestedFollowUps(undefined, planFollowUpQuestions(buildIntakeSnapshot(profile), askedQuestions.length).questions),
+    suggestedFollowUps: getSuggestedFollowUps(readiness, undefined, planFollowUpQuestions(buildIntakeSnapshot(profile), askedQuestions.length).questions),
     clarifying: undefined,
     confidence: readiness.hasEnoughToDraft ? 0.9 : 0.45,
   };
@@ -398,7 +405,7 @@ export const applyOnboardingInput = async (
     confirmedFields: session.confirmedFields,
     unresolvedConflicts: extraction.conflicts,
     suggestedPrompt: getSuggestedPrompt(nextQuestionKey, nextProfile),
-    suggestedFollowUps: getSuggestedFollowUps(session.clarifying, planFollowUpQuestions(buildIntakeSnapshot(nextProfile), session.askedQuestions.length).questions),
+    suggestedFollowUps: getSuggestedFollowUps(readiness, session.clarifying, planFollowUpQuestions(buildIntakeSnapshot(nextProfile), session.askedQuestions.length).questions),
     clarifying: session.clarifying,
     confidence: extraction.conflicts.length > 0 || extraction.requiresConfirmation ? extraction.confidence : readiness.hasEnoughToDraft ? Math.max(extraction.confidence, 0.9) : Math.max(extraction.confidence, 0.6),
   };
@@ -424,7 +431,7 @@ export const createOnboardingSessionStateFromInitialSetup = (
     confirmedFields: [],
     unresolvedConflicts: [],
     suggestedPrompt: null,
-    suggestedFollowUps: getSuggestedFollowUps(undefined, planFollowUpQuestions(buildInitialSetupSnapshot(answers), askedQuestions.length).questions),
+    suggestedFollowUps: getSuggestedFollowUps(readiness, undefined, planFollowUpQuestions(buildInitialSetupSnapshot(answers), askedQuestions.length).questions),
     clarifying: undefined,
     confidence: 0.45,
   };
