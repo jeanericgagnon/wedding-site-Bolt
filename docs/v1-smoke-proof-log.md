@@ -1,7 +1,7 @@
 # V1 Smoke Proof Log
 
-_Date:_ 2026-04-19
-_Status:_ Pending first hard run
+_Date:_ 2026-04-21
+_Status:_ Canonical smoke automation landed; manual runtime notes still needed
 _Owner:_ Product finish lane
 
 ## Purpose
@@ -61,9 +61,15 @@ If the product cannot be shown, shared, and trusted publicly, the v1 claim is de
 - exact failure point if broken
 
 **Pass / Fail**
-- Status: PENDING
+- Status: AUTOMATED_PASS / MANUAL_NOTES_PENDING
 - Notes:
+  - 2026-04-21 automated canonical smoke passed via `npm run proof:v1:canonical-smoke`.
+  - `npm run test:e2e:live` passed across Home, Product, Trust, Login, and collaborator invite route load.
+  - `npm run smoke:site` passed and resolved a real published slug + site_url (`alex-jordan-demo`) from Supabase.
+  - `npm run build` passed in the same proof batch.
 - Blockers:
+  - Still need one logged route-note pass for Home -> signup/demo/auth -> onboarding/builder -> public site -> RSVP.
+  - Still need explicit manual verification that privacy/access/publish wording matches live runtime behavior in the canonical couple path.
 
 ---
 
@@ -90,9 +96,12 @@ This is the operational spine. If guest state is weak, messages, seating, and fi
 - any mismatch between public and dashboard state
 
 **Pass / Fail**
-- Status: PENDING
+- Status: BLOCKED_ON_ENV
 - Notes:
+  - Current automated target remains `npm run proof:v1:guests-rsvp-ops`.
+  - The known blocker in this pass is environment auth on the RSVP validation seam, not a newly observed product-flow regression.
 - Blockers:
+  - `validate-rsvp-token` anon auth returns 401 in this environment, blocking the strict RSVP smoke needed for guest -> RSVP -> downstream ops proof.
 
 ---
 
