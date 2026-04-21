@@ -103,6 +103,7 @@ import { getCoordinatorStandingPromptMode } from '../../lib/coordinatorStandingP
 import { getCoordinatorStandingPromptSecondaryState } from '../../lib/coordinatorStandingPromptSecondaryState';
 import { getCoordinatorCommandBadgeTone } from '../../lib/coordinatorCommandBadgeTone';
 import { buildCoordinatorOpsSnapshot } from '../../lib/coordinatorOpsSnapshot';
+import { buildCoordinatorRoleCapabilities } from '../../lib/coordinatorRoleCapabilities';
 
 
 type AudienceOption = { value: string; label: string; count: number };
@@ -553,6 +554,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
         ? 'Keep live updates moving and flag anything sensitive back to the couple.'
         : 'Run the room, keep communications aligned, and escalate only the decisions that need the couple.'
   };
+  const roleCapabilities = useMemo(() => buildCoordinatorRoleCapabilities(coordinatorRole), [coordinatorRole]);
 
   const liveEventId = useMemo(() => getCoordinatorLiveEventId(events, timelineState), [events, timelineState]);
   const upNextEventId = useMemo(() => getCoordinatorUpNextEventId(events, timelineState), [events, timelineState]);
@@ -1602,6 +1604,40 @@ export const DashboardCoordinatorMode: React.FC = () => {
           <p className="font-medium">{handoffCopy.title}</p>
           <p className="mt-1 text-primary/80">{handoffCopy.detail}</p>
           <p className="mt-2 text-primary/70">Final couple decisions still sit above this workspace when something needs approval.</p>
+        </div>
+
+        <div className="rounded-lg border border-border/35 bg-white px-3 py-3 shadow-[0_4px_14px_rgba(15,23,42,0.05)]">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-medium text-text-primary">Role-aware live ops access</p>
+              <p className="mt-1 text-[11px] text-text-tertiary">
+                {coordinatorRole === 'viewer'
+                  ? 'Read-only visibility for day-of coordination.'
+                  : coordinatorRole === 'coordinator'
+                    ? 'Live operator access for event-day execution.'
+                    : 'Broader planner access with live ops control.'}
+              </p>
+            </div>
+            <span className={`rounded-full border px-2 py-1 text-[10px] font-medium ${coordinatorRole === 'viewer' ? 'border-border bg-surface-subtle text-text-tertiary' : coordinatorRole === 'coordinator' ? 'border-primary/20 bg-primary/5 text-primary' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}>
+              {coordinatorRole === 'viewer' ? 'Read only' : coordinatorRole === 'coordinator' ? 'Coordinator operator' : 'Planner operator'}
+            </span>
+          </div>
+          <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-5">
+            {roleCapabilities.map((item) => (
+              <div
+                key={item.key}
+                className={`rounded-xl border px-3 py-3 ${item.enabled ? 'border-primary/20 bg-primary/[0.03]' : 'border-border/50 bg-surface-subtle/25'}`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[11px] font-medium text-text-primary">{item.label}</p>
+                  <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${item.enabled ? 'border-primary/20 bg-white text-primary' : 'border-border bg-white text-text-tertiary'}`}>
+                    {item.enabled ? 'Enabled' : 'Blocked'}
+                  </span>
+                </div>
+                <p className="mt-2 text-[11px] text-text-secondary">{item.detail}</p>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="rounded-lg border border-border/35 bg-white px-3 py-2 shadow-[0_4px_14px_rgba(15,23,42,0.05)]">
