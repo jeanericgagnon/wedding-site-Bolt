@@ -1120,6 +1120,12 @@ export const DashboardCoordinatorMode: React.FC = () => {
             <p className="text-sm font-medium text-text-primary mb-2">Attention now</p>
             <p className="text-[11px] text-text-tertiary mb-2">This pulls together the live exceptions the coordinator should resolve first.</p>
             <div className="space-y-2">
+              {liveIssues.length === 0 && correctionCues.length === 0 && (
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2">
+                  <p className="text-sm font-medium text-emerald-800">Board is clear right now</p>
+                  <p className="mt-1 text-xs text-emerald-700">No active escalations or recovery cues are waiting. Use the command center to review the next-best action.</p>
+                </div>
+              )}
               {liveIssues.map((item) => (
                 <button
                   key={item.key}
@@ -1168,7 +1174,22 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 </p>
               ) : (
                 <div className="mt-2 space-y-1">
-                  {nextArrivals.map((guest) => <p key={guest.id} className="text-xs text-text-secondary">• {guest.name} — {guest.rsvp_status}</p>)}
+                  {nextArrivals.map((guest) => (
+                    <button
+                      key={guest.id}
+                      type="button"
+                      onClick={() => {
+                        clearCoordinatorTransientState();
+                        setPanelFocus('check-in');
+                        setCheckInFilter('arrivals');
+                        setCheckInReviewOnly(false);
+                        setActiveGuestId(guest.id);
+                      }}
+                      className="block w-full text-left text-xs text-text-secondary hover:text-primary"
+                    >
+                      • {guest.name} — {guest.rsvp_status}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
@@ -1315,6 +1336,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
               </div>
             </div>
             <div className="max-h-[60vh] overflow-auto divide-y divide-border-subtle/70">
+              {checkInQueue.length === 0 && (
+                <div className="px-4 py-4 text-xs text-text-tertiary">
+                  No guests match this queue right now. Try a different filter or search to keep the door moving.
+                </div>
+              )}
               {checkInQueue.map((g) => {
                 const doorStatus = getCoordinatorDoorStatus(g);
                 return (
@@ -1618,8 +1644,9 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 {!canScheduleAlerts && canSendAlerts && <p className="text-[11px] text-text-tertiary">Coordinators can send updates now; scheduled sends stay with planners and the couple.</p>}
                 {alertValidationError && <p className="text-[11px] text-error">{alertValidationError}</p>}
                 <button
+                  type="button"
                   onClick={() => void sendDayOfAlert()}
-                  disabled={alertBusy || !!alertValidationError}
+                  disabled={alertBusy || !!alertValidationError || !canSendAlerts}
                   className="w-full px-3 py-2 text-sm rounded-md border border-primary/30 bg-primary/10 text-primary disabled:opacity-50"
                 >
                   {alertBusy ? 'Saving...' : alertForm.scheduleType === 'later' ? 'Schedule message' : 'Send message'}
@@ -1639,6 +1666,9 @@ export const DashboardCoordinatorMode: React.FC = () => {
                         {item.subject} · {item.channel.toUpperCase()} · {item.audience}{item.sendAt ? ` · Scheduled ${new Date(item.sendAt).toLocaleString()}` : ''}
                       </div>
                     ))}
+                    {filteredAlertLog.length === 0 && (
+                      <p className="text-[11px] text-text-tertiary">No messages match the current alert filters.</p>
+                    )}
                   </div>
                 )}
               </fieldset>
@@ -1663,7 +1693,15 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   <p className="text-xs text-text-tertiary">No guest questions yet.</p>
                 ) : (
                   qnaItems.slice(0, 8).map((item) => (
-                    <div key={item.id} className={`text-xs border rounded-md px-2.5 py-2 space-y-2 ${activeQnaId === item.id ? 'border-primary/40 ring-2 ring-primary/10 bg-primary/5' : 'border-border/50'}`}>
+                    <div
+                      key={item.id}
+                      className={`text-xs border rounded-md px-2.5 py-2 space-y-2 ${activeQnaId === item.id ? 'border-primary/40 ring-2 ring-primary/10 bg-primary/5' : 'border-border/50'}`}
+                      onClick={() => {
+                        clearCoordinatorTransientState();
+                        setPanelFocus('qna');
+                        setActiveQnaId(item.id);
+                      }}
+                    >
                       <div className="flex items-start justify-between gap-2">
                         <div className="space-y-1">
                           <span className="text-text-secondary">{item.question}</span>
