@@ -1,5 +1,5 @@
 import React from 'react';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 let currentToken = 'old-token';
@@ -14,6 +14,8 @@ vi.mock('react-router-dom', async () => {
 
 const maybeSingleQueue: Array<{ data: any; error: any }> = [];
 const selectQueue: Array<{ data: any; error: any }> = [];
+const insertQueue: Array<{ error: any }> = [];
+const updateQueue: Array<{ error: any }> = [];
 
 vi.mock('../lib/supabase', () => ({
   supabase: {
@@ -43,6 +45,22 @@ vi.mock('../lib/supabase', () => ({
 
         throw new Error(`Unexpected table ${table}`);
       },
+      insert: () => {
+        if (table === 'event_rsvps') {
+          return Promise.resolve(insertQueue.shift() ?? { error: null });
+        }
+
+        throw new Error(`Unexpected insert table ${table}`);
+      },
+      update: () => ({
+        eq: () => {
+          if (table === 'event_rsvps') {
+            return Promise.resolve(updateQueue.shift() ?? { error: null });
+          }
+
+          throw new Error(`Unexpected update table ${table}`);
+        },
+      }),
     }),
   },
 }));
@@ -59,10 +77,13 @@ describe('EventRSVP token trust continuity', () => {
     currentToken = 'old-token';
     maybeSingleQueue.length = 0;
     selectQueue.length = 0;
+    insertQueue.length = 0;
+    updateQueue.length = 0;
   });
 
   afterEach(() => {
     cleanup();
+    vi.useRealTimers();
   });
 
   it('re-reads event RSVP truth after switching from an unsupported token to a supported one', async () => {
@@ -132,4 +153,53 @@ describe('EventRSVP token trust continuity', () => {
     });
     expect(screen.getByText('Ceremony')).toBeInTheDocument();
   });
+
+  it('keeps the saved event RSVP visible locally after submit without depending on a refetch', async () => {
+    currentToken = 'guest-token';
+
+    maybeSingleQueue.push(
+      { data: { id: 'guest-1', name: 'Taylor', email: 'taylor@example.com' }, error: null },
+      { data: null, error: null },
+    );
+
+    selectQueue.push({
+      data: [
+        {
+          id: 'inv-1',
+          event_id: 'event-1',
+          itinerary_events: {
+            id: 'event-1',
+            event_name: 'Welcome Dinner',
+            description: '',
+            event_date: '2026-05-01',
+            start_time: '18:00:00',
+            end_time: null,
+            location_name: 'The Loft',
+            location_address: '',
+            dress_code: null,
+            notes: null,
+          },
+        },
+      ],
+      error: null,
+    });
+
+    insertQueue.push({ error: null });
+
+    render(<EventRSVP />);
+
+    expect(await screen.findByText('Hello, Taylor!')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'RSVP for this event' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Submit RSVP' }));
+
+    await waitFor(() => {
+      expect(screen.getByText("You're in!")).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Attending')).toBeInTheDocument();
+    }, { timeout: 4000 });
+    expect(screen.getByRole('button', { name: 'Update my RSVP' })).toBeInTheDocument();
+    expect(selectQueue).toHaveLength(0);
+  }, 10000);
 });

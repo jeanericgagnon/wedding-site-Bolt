@@ -38,6 +38,12 @@ interface EventInvitation {
   };
 }
 
+interface EventRsvpFormState {
+  attending: boolean;
+  dietary_restrictions: string;
+  notes: string;
+}
+
 export default function EventRSVP() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
@@ -47,7 +53,7 @@ export default function EventRSVP() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
-  const [rsvpForm, setRsvpForm] = useState({
+  const [rsvpForm, setRsvpForm] = useState<EventRsvpFormState>({
     attending: true,
     dietary_restrictions: '',
     notes: '',
@@ -257,6 +263,26 @@ export default function EventRSVP() {
     }
   }
 
+  function buildInvitationRsvp(form: EventRsvpFormState) {
+    return {
+      attending: form.attending,
+      dietary_restrictions: form.dietary_restrictions || null,
+      notes: form.notes || null,
+    };
+  }
+
+  function applyInvitationRsvp(invitationId: string, form: EventRsvpFormState) {
+    const nextRsvp = buildInvitationRsvp(form);
+    setInvitations((current) => current.map((invitation) => (
+      invitation.id === invitationId
+        ? {
+            ...invitation,
+            rsvp: nextRsvp,
+          }
+        : invitation
+    )));
+  }
+
   async function handleSubmitRsvp(e: React.FormEvent) {
     e.preventDefault();
     if (!selectedEvent || submitting) return;
@@ -280,9 +306,7 @@ export default function EventRSVP() {
         const { error } = await supabase
           .from('event_rsvps')
           .update({
-            attending: rsvpForm.attending,
-            dietary_restrictions: rsvpForm.dietary_restrictions || null,
-            notes: rsvpForm.notes || null,
+            ...buildInvitationRsvp(rsvpForm),
             responded_at: new Date().toISOString(),
           })
           .eq('event_invitation_id', selectedEvent);
@@ -300,9 +324,7 @@ export default function EventRSVP() {
           .insert([
             {
               event_invitation_id: selectedEvent,
-              attending: rsvpForm.attending,
-              dietary_restrictions: rsvpForm.dietary_restrictions || null,
-              notes: rsvpForm.notes || null,
+              ...buildInvitationRsvp(rsvpForm),
               responded_at: new Date().toISOString(),
             },
           ]);
@@ -317,6 +339,7 @@ export default function EventRSVP() {
       }
 
       if (activeSubmitRequestRef.current !== requestId) return;
+      applyInvitationRsvp(selectedEvent, rsvpForm);
       setSubmitSuccess(true);
       if (postSubmitResetTimeoutRef.current !== null) {
         window.clearTimeout(postSubmitResetTimeoutRef.current);
@@ -325,7 +348,6 @@ export default function EventRSVP() {
         if (activeSubmitRequestRef.current !== requestId) return;
         setSelectedEvent(null);
         setSubmitSuccess(false);
-        loadGuestAndEvents();
         postSubmitResetTimeoutRef.current = null;
       }, 2000);
     } catch {
