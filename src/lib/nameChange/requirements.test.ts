@@ -241,6 +241,45 @@ describe('name change requirements skeleton', () => {
     });
   });
 
+  it('marks court-order path readiness missing when no court-order proof is represented', () => {
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase({ legal_basis: 'court_order' as never }),
+      [],
+      [],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'court-order-path-readiness')).toMatchObject({
+      status: 'missing',
+      reason: 'Court-order path is selected, but no court-order proof is represented in intake yet.',
+    });
+  });
+
+  it('marks court-order path readiness as attention once proof and identity coverage exist', () => {
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase({ legal_basis: 'court_order' as never }),
+      [
+        {
+          document_kind: 'court_order_name_change',
+          display_name: 'Court order',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+        },
+        {
+          document_kind: 'current_drivers_license',
+          display_name: 'Driver license',
+          storage_mode: 'metadata_only',
+          intake_status: 'uploaded',
+        },
+      ],
+      [],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'court-order-path-readiness')).toMatchObject({
+      status: 'attention',
+      reason: 'Court-order proof exists and identity coverage is present, but downstream court-order execution slices are still not fully modeled.',
+    });
+  });
+
   it('requires a marriage certificate when the legal basis is marriage', () => {
     const snapshot = evaluateNameChangeRequirements(
       makeCase(),
