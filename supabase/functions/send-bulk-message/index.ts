@@ -13,6 +13,8 @@ interface SendBulkPayload {
   limit?: number;
 }
 
+type SiteMessagingRole = "owner" | "planner" | "coordinator" | "viewer";
+
 async function sendViaTwilio(opts: {
   accountSid: string;
   authToken: string;
@@ -129,6 +131,52 @@ function isMissingDeliveriesTableError(error: { message?: string; details?: stri
     || haystack.includes("42p01");
 }
 
+async function resolveSiteMessagingRole(adminClient: ReturnType<typeof createClient>, weddingSiteId: string, userId: string): Promise<SiteMessagingRole | null> {
+  const { data: ownedSite, error: ownedError } = await adminClient
+    .from("wedding_sites")
+    .select("id")
+    .eq("id", weddingSiteId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (ownedError) throw ownedError;
+  if (ownedSite?.id) return "owner";
+
+  const { data: collaboratorRow, error: collaboratorError } = await adminClient
+    .from("wedding_site_collaborators")
+    .select("role")
+    .eq("wedding_site_id", weddingSiteId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (collaboratorError) throw collaboratorError;
+  const role = collaboratorRow?.role;
+  if (role === "planner" || role === "coordinator" || role === "viewer") return role;
+  return null;
+}
+
+async function listMessageManageableSiteIds(adminClient: ReturnType<typeof createClient>, userId: string): Promise<string[]> {
+  const [{ data: ownedSites, error: ownedError }, { data: collaboratorSites, error: collaboratorError }] = await Promise.all([
+    adminClient
+      .from("wedding_sites")
+      .select("id")
+      .eq("user_id", userId),
+    adminClient
+      .from("wedding_site_collaborators")
+      .select("wedding_site_id, role")
+      .eq("user_id", userId)
+      .eq("role", "planner"),
+  ]);
+
+  if (ownedError) throw ownedError;
+  if (collaboratorError) throw collaboratorError;
+
+  return Array.from(new Set([
+    ...(ownedSites ?? []).map((row: { id: string }) => row.id),
+    ...(collaboratorSites ?? []).map((row: { wedding_site_id: string }) => row.wedding_site_id),
+  ].filter(Boolean)));
+}
+
 async function deliverMessage(opts: {
   adminClient: ReturnType<typeof createClient>;
   userId: string;
@@ -150,7 +198,8 @@ async function deliverMessage(opts: {
     return { ok: false, status: 404, body: { error: "Message not found" } };
   }
 
-  if (message.wedding_sites?.user_id !== userId) {
+  const siteRole = await resolveSiteMessagingRole(adminClient, message.wedding_sites.id, userId);
+  if (siteRole !== "owner" && siteRole !== "planner") {
     return { ok: false, status: 403, body: { error: "Forbidden" } };
   }
 
@@ -569,12 +618,26 @@ Deno.serve(async (req: Request) => {
     if (payload.processScheduled) {
       const limit = Math.max(1, Math.min(Number(payload.limit ?? 10) || 10, 25));
       const nowIso = new Date().toISOString();
+      const manageableSiteIds = await listMessageManageableSiteIds(adminClient, user.id);
+
+      if (manageableSiteIds.length === 0) {
+        return jsonResponse(200, {
+          success: true,
+          processed: 0,
+          sent: 0,
+          failed: 0,
+          partial: 0,
+          skipped: 0,
+          messages: [],
+        });
+      }
+
       const { data: dueMessages, error: dueMessagesError } = await adminClient
         .from("messages")
-        .select("id, scheduled_for, wedding_sites!inner(user_id)")
+        .select("id, scheduled_for, wedding_site_id")
         .eq("status", "scheduled")
         .lte("scheduled_for", nowIso)
-        .eq("wedding_sites.user_id", user.id)
+        .in("wedding_site_id", manageableSiteIds)
         .order("scheduled_for", { ascending: true })
         .limit(limit);
 

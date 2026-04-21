@@ -1414,11 +1414,14 @@ export const DashboardMessages: React.FC = () => {
         }
       }
 
-      const isScheduled = !saveAsDraft && formData.scheduleType === 'later' && formData.scheduleDate && formData.scheduleTime;
+      const requestedScheduledFor = !saveAsDraft && formData.scheduleType === 'later' && formData.scheduleDate && formData.scheduleTime
+        ? `${formData.scheduleDate}T${formData.scheduleTime}:00`
+        : null;
+      const isScheduled = !!requestedScheduledFor && !isPastScheduledTime(requestedScheduledFor);
       const isSendNow = !saveAsDraft && !isScheduled;
 
       const status = saveAsDraft ? 'draft' : isScheduled ? 'scheduled' : 'queued';
-      const scheduledFor = isScheduled ? `${formData.scheduleDate}T${formData.scheduleTime}:00` : null;
+      const scheduledFor = isScheduled ? requestedScheduledFor : null;
       const campaignName = formData.campaignName.trim();
       const normalizedSubject = formData.channel === 'sms'
         ? (formData.subject.trim() || `SMS • ${selectedAudience?.label ?? 'All guests'}`)
@@ -2274,6 +2277,8 @@ export const DashboardMessages: React.FC = () => {
   const activeRecipients = formData.channel === 'sms' ? recipientsWithPhone : recipientsWithEmail;
   const previewRecipients = getRecipients(formData.audience).filter((guest) => formData.channel === 'sms' ? !!guest.phone : !!guest.email);
   const unreachableRecipients = (selectedAudience?.count ?? 0) - activeRecipients;
+  const selectedScheduleIsPast = !!(formData.scheduleDate && formData.scheduleTime)
+    && isPastScheduledTime(`${formData.scheduleDate}T${formData.scheduleTime}:00`);
   const smsCredits = weddingSite?.sms_credits_balance ?? 0;
   const smsCreditsNeeded = recipientsWithPhone;
   const smsCreditsSufficient = smsCredits >= smsCreditsNeeded;
@@ -2981,7 +2986,7 @@ export const DashboardMessages: React.FC = () => {
                     disabled={sending || activeRecipients === 0 || (formData.channel === 'email' && !emailCapacityEnough)}
                   >
                     {sending ? 'Processing...' : (
-                      formData.scheduleType === 'later' ? (
+                      formData.scheduleType === 'later' && !selectedScheduleIsPast ? (
                         <><Calendar className="w-4 h-4 mr-2" />Schedule message</>
                       ) : (
                         <><Send className="w-4 h-4 mr-2" />Send now</>
