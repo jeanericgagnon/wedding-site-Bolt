@@ -327,6 +327,7 @@ export default function RSVP() {
     }
     const requestId = activeLookupRequestRef.current + 1;
     activeLookupRequestRef.current = requestId;
+    activeSubmitRequestRef.current += 1;
     setTokenAutoLoading(true);
     setSubmitting(false);
     setStep('search');
