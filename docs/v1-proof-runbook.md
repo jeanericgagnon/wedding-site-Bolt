@@ -30,6 +30,7 @@ npm run smoke:rsvp:strict
 npm run smoke:csvmapper
 npm run smoke:checkin
 npm run proof:v1:guests-rsvp-ops
+npm run proof:v1:collaborator-access
 npm test -- src/pages/dashboard/registry/registryService.test.ts
 node scripts/v1-proof-board.mjs --markdown
 ```
@@ -81,7 +82,11 @@ Guest list, householding, public RSVP, assisted RSVP, and downstream dashboard t
 Invite flow feels safe, collaborator lands in a role-aware surface, and at least one forbidden action is actually blocked per non-owner role tested.
 
 **Automated support**
-- `npm run build`
+- `npm run proof:v1:collaborator-access`
+- underlying bundle:
+  - `npm test -- src/pages/acceptCollaboratorInviteUtils.test.ts`
+  - `npm test -- src/lib/plannerAccess.test.ts`
+  - `npm run build`
 
 **Manual proof still required**
 - owner invite -> accept -> planner/coordinator dashboard framing

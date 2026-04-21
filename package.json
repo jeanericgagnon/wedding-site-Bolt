@@ -30,7 +30,8 @@
     "smoke:full": "bash scripts/smoke_full.sh",
     "proof:v1:board": "node scripts/v1-proof-board.mjs",
     "proof:v1:board:md": "node scripts/v1-proof-board.mjs --markdown",
-    "proof:v1:guests-rsvp-ops": "node scripts/v1-proof-guests-rsvp-ops.mjs"
+    "proof:v1:guests-rsvp-ops": "node scripts/v1-proof-guests-rsvp-ops.mjs",
+    "proof:v1:collaborator-access": "node scripts/v1-proof-collaborator-access.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
