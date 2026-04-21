@@ -14,7 +14,14 @@ import type {
   NameChangePlanSnapshotRecord,
   NameChangeReminderInput,
   NameChangeReminderRecord,
+  NameChangeStructuredIntake,
 } from '../../../lib/nameChange/types';
+
+export const defaultNameChangeStructuredIntake: NameChangeStructuredIntake = {
+  spouseLastName: '',
+  travelBookedSoon: false,
+  wantsDocumentIntakeHelp: true,
+};
 
 export const defaultNameChangeCaseInput: NameChangeCaseInput = {
   workflow_status: 'draft',
@@ -38,11 +45,7 @@ export const defaultNameChangeCaseInput: NameChangeCaseInput = {
   is_us_citizen: true,
   employment_status: 'employed',
   change_reasons: ['marriage'],
-  structured_intake: {
-    spouseLastName: '',
-    travelBookedSoon: false,
-    wantsDocumentIntakeHelp: true,
-  },
+  structured_intake: defaultNameChangeStructuredIntake,
 };
 
 function normalizeText(value: string | null | undefined) {
@@ -63,8 +66,18 @@ function uniqueStrings(values: string[]) {
   return [...new Set(values.map((value) => normalizeText(value)).filter(Boolean))];
 }
 
+export function normalizeNameChangeStructuredIntake(
+  intake: Partial<NameChangeStructuredIntake> | Record<string, unknown> | null | undefined,
+): NameChangeStructuredIntake {
+  return {
+    spouseLastName: normalizeText(String(intake?.spouseLastName ?? '')),
+    travelBookedSoon: Boolean(intake?.travelBookedSoon),
+    wantsDocumentIntakeHelp: intake?.wantsDocumentIntakeHelp !== false,
+  };
+}
+
 export function normalizeNameChangeCaseInput(input: NameChangeCaseInput): NameChangeCaseInput {
-  const spouseLastName = normalizeText(String(input.structured_intake.spouseLastName ?? ''));
+  const structuredIntake = normalizeNameChangeStructuredIntake(input.structured_intake);
 
   return {
     ...input,
@@ -80,12 +93,7 @@ export function normalizeNameChangeCaseInput(input: NameChangeCaseInput): NameCh
     marriage_state: normalizeNullableText(input.marriage_state),
     marriage_date: normalizeNullableText(input.marriage_date),
     change_reasons: uniqueStrings(input.change_reasons),
-    structured_intake: {
-      ...input.structured_intake,
-      spouseLastName,
-      travelBookedSoon: Boolean(input.structured_intake.travelBookedSoon),
-      wantsDocumentIntakeHelp: input.structured_intake.wantsDocumentIntakeHelp !== false,
-    },
+    structured_intake: structuredIntake,
   };
 }
 
@@ -694,7 +702,7 @@ export function mapCaseRecordToNameChangeInput(caseRecord: NameChangeCaseRecord)
     is_us_citizen: caseRecord.is_us_citizen,
     employment_status: caseRecord.employment_status,
     change_reasons: caseRecord.change_reasons,
-    structured_intake: caseRecord.structured_intake ?? {},
+    structured_intake: normalizeNameChangeStructuredIntake(caseRecord.structured_intake),
     latest_plan_summary: caseRecord.latest_plan_summary,
   });
 }

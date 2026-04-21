@@ -14,6 +14,7 @@ import {
   normalizeNameChangeCaseInput,
   normalizeNameChangeDocuments,
   normalizeNameChangeExtractedFields,
+  normalizeNameChangeStructuredIntake,
   remapNameChangeExtractedFieldsToPersistedDocuments,
 } from './nameChangeService';
 
@@ -33,8 +34,8 @@ function makeCase(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseI
     change_reasons: ['marriage', ' marriage ', ''],
     structured_intake: {
       spouseLastName: ' Jordan ',
-      travelBookedSoon: 1,
-      wantsDocumentIntakeHelp: undefined,
+      travelBookedSoon: true,
+      wantsDocumentIntakeHelp: true,
     },
     ...overrides,
   };
@@ -51,9 +52,28 @@ describe('nameChangeService normalization', () => {
     expect(normalized.county_residence).toBe('San Diego');
     expect(normalized.marriage_date).toBe('2026-04-05');
     expect(normalized.change_reasons).toEqual(['marriage']);
-    expect(normalized.structured_intake).toMatchObject({
+    expect(normalized.structured_intake).toEqual({
       spouseLastName: 'Jordan',
       travelBookedSoon: true,
+      wantsDocumentIntakeHelp: true,
+    });
+  });
+
+  it('normalizes structured intake into a stable typed contract', () => {
+    expect(normalizeNameChangeStructuredIntake({
+      spouseLastName: ' Jordan ',
+      travelBookedSoon: 1,
+      wantsDocumentIntakeHelp: undefined,
+      randomNoise: 'ignore me',
+    } as unknown as Record<string, unknown>)).toEqual({
+      spouseLastName: 'Jordan',
+      travelBookedSoon: true,
+      wantsDocumentIntakeHelp: true,
+    });
+
+    expect(normalizeNameChangeStructuredIntake(null)).toEqual({
+      spouseLastName: '',
+      travelBookedSoon: false,
       wantsDocumentIntakeHelp: true,
     });
   });

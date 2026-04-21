@@ -28,6 +28,8 @@ function makeInput(overrides: Partial<NameChangeEngineInput['profile']> = {}): N
       change_reasons: ['marriage'],
       structured_intake: {
         spouseLastName: 'Jordan',
+        travelBookedSoon: false,
+        wantsDocumentIntakeHelp: true,
       },
       latest_plan_summary: null,
       ...overrides,

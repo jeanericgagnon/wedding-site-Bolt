@@ -21,6 +21,12 @@ export type NameChangeExtractionFieldKey =
   | 'county'
   | 'court_order_date';
 
+export interface NameChangeStructuredIntake {
+  spouseLastName: string;
+  travelBookedSoon: boolean;
+  wantsDocumentIntakeHelp: boolean;
+}
+
 export interface NameChangeCaseRecord {
   id: string;
   wedding_site_id: string;
@@ -45,7 +51,7 @@ export interface NameChangeCaseRecord {
   is_us_citizen: boolean;
   employment_status: 'employed' | 'self_employed' | 'not_employed' | 'prefer_not_to_say';
   change_reasons: string[];
-  structured_intake: Record<string, unknown>;
+  structured_intake: NameChangeStructuredIntake;
   latest_plan_summary: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
@@ -73,7 +79,7 @@ export interface NameChangeCaseInput {
   is_us_citizen: boolean;
   employment_status: 'employed' | 'self_employed' | 'not_employed' | 'prefer_not_to_say';
   change_reasons: string[];
-  structured_intake: Record<string, unknown>;
+  structured_intake: NameChangeStructuredIntake;
   latest_plan_summary?: Record<string, unknown> | null;
 }
 
