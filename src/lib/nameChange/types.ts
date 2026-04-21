@@ -345,6 +345,8 @@ export interface NameChangeFormFieldPayload {
   value: string | null;
   source: 'canonical_case' | 'extracted_field' | 'derived';
   confidence: 'high' | 'medium' | 'low';
+  sourceDocumentKind?: NameChangeDocumentKind;
+  sourceFieldKey?: NameChangeExtractionFieldKey;
 }
 
 export interface NameChangeFormPayloadSnapshot {

@@ -258,7 +258,12 @@ const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
           <div key={field.fieldKey} className="rounded-xl border border-border-subtle p-4">
             <p className="text-sm font-semibold text-text-primary">{field.label}</p>
             <p className="mt-2 text-sm text-text-secondary">{field.value ?? 'Missing'}</p>
-            <p className="mt-2 text-xs text-text-secondary">{field.fieldKey} · {field.source} · {field.confidence}</p>
+            <p className="mt-2 text-xs text-text-secondary">
+              {field.fieldKey} · {field.source}
+              {field.sourceDocumentKind ? ` · ${field.sourceDocumentKind}` : ''}
+              {field.sourceFieldKey ? ` · ${field.sourceFieldKey}` : ''}
+              {' · '}{field.confidence}
+            </p>
           </div>
         ))}
       </div>

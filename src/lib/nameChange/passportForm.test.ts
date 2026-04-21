@@ -57,7 +57,12 @@ describe('name change passport form snapshot', () => {
 
     const snapshot = buildNameChangePassportFormSnapshot(makeCase(), documents, extractedFields);
     expect(snapshot.formCode).toBe('DS-82');
-    expect(snapshot.fields.find((field) => field.fieldKey === 'identity.passportIssueDate')).toMatchObject({ value: '2024-06-01' });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'identity.passportIssueDate')).toMatchObject({
+      value: '2024-06-01',
+      source: 'extracted_field',
+      sourceDocumentKind: 'current_passport',
+      sourceFieldKey: 'issuance_date',
+    });
   });
 
   it('uses DS-11 when the user does not already have a passport', () => {

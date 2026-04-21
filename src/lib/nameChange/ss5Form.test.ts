@@ -60,6 +60,8 @@ describe('name change SS-5 form snapshot', () => {
     expect(snapshot.fields.find((field) => field.fieldKey === 'applicant.newLastName')).toMatchObject({
       value: 'Jordan-Smith',
       source: 'extracted_field',
+      sourceDocumentKind: 'marriage_certificate',
+      sourceFieldKey: 'spouse_last_name',
     });
     expect(snapshot.summary.ready).toBeGreaterThan(0);
   });

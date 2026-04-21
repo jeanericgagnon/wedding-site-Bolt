@@ -39,6 +39,8 @@ function mapField(
     value: sourceField?.value.value ?? null,
     source: sourceField?.value.source ?? 'canonical_case',
     confidence: sourceField?.value.confidence ?? 'low',
+    sourceDocumentKind: sourceField?.value.sourceDocumentKind,
+    sourceFieldKey: sourceField?.value.sourceFieldKey,
   };
 }
 

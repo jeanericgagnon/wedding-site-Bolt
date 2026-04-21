@@ -67,10 +67,14 @@ describe('name change DMV form snapshot', () => {
     expect(snapshot.fields.find((field) => field.fieldKey === 'applicant.newLastName')).toMatchObject({
       value: 'Jordan-Smith',
       source: 'extracted_field',
+      sourceDocumentKind: 'marriage_certificate',
+      sourceFieldKey: 'spouse_last_name',
     });
     expect(snapshot.fields.find((field) => field.fieldKey === 'applicant.county')).toMatchObject({
       value: 'Orange County',
       source: 'extracted_field',
+      sourceDocumentKind: 'marriage_certificate',
+      sourceFieldKey: 'county',
     });
   });
 
