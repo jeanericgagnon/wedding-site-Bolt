@@ -86,7 +86,7 @@ const proofBoard = {
     {
       id: 'public-site-trust',
       title: 'Public site / launch path / trust surface',
-      status: 'PROOF_NEEDED',
+      status: 'AUTOMATED_PASS_MANUAL_NOTES_PENDING',
       tier: 1,
       exitBar: 'Home -> auth/demo -> onboarding/builder -> site -> RSVP feels coherent, and privacy/access/publish behavior matches the copy.',
       automatedProof: [
@@ -195,7 +195,7 @@ const proofBoard = {
     {
       id: 'onboarding',
       title: 'Onboarding truth / first-run continuity',
-      status: 'MUST_PROVE',
+      status: 'AUTOMATED_BASELINE_PASS_MANUAL_NOTES_PENDING',
       tier: 1,
       exitBar: 'Entry -> onboarding -> usable draft site/dashboard state is fast, honest, and does not oversell launch-readiness.',
       automatedProof: [
