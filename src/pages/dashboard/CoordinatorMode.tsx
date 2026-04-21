@@ -712,6 +712,24 @@ export const DashboardCoordinatorMode: React.FC = () => {
     setCommandSource(null);
   };
 
+  const focusCoordinatorCheckInLane = () => {
+    clearCoordinatorTransientState();
+    setPanelFocus('check-in');
+    setCommandSource(null);
+  };
+
+  const focusCoordinatorTimelineLane = () => {
+    clearCoordinatorTransientState();
+    setPanelFocus('timeline');
+    setCommandSource(null);
+  };
+
+  const focusCoordinatorQnaLane = () => {
+    clearCoordinatorTransientState();
+    setPanelFocus('qna');
+    setCommandSource(null);
+  };
+
   const sendDayOfAlert = async () => {
     if (!siteId) return;
     if (!canSendAlerts) {
@@ -779,8 +797,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
     const q = qnaInput.trim();
     if (!q) return;
 
-    clearCoordinatorTransientState();
-    setPanelFocus('qna');
+    focusCoordinatorQnaLane();
 
     if (!isDemoMode && siteId) {
       const { data, error } = await supabase
@@ -1057,8 +1074,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
       toast('Your collaborator role cannot edit guest questions here.', 'info');
       return;
     }
-    clearCoordinatorTransientState();
-    setPanelFocus('qna');
+    focusCoordinatorQnaLane();
     const draftAnswer = qnaDraftAnswers[id] ?? qnaItems.find((item) => item.id === id)?.answer ?? '';
     const nextItems = updateCoordinatorQnaItem(qnaItems, id, draftAnswer);
     const nextItem = nextItems.find((item) => item.id === id);
@@ -1185,8 +1201,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                       key={guest.id}
                       type="button"
                       onClick={() => {
-                        clearCoordinatorTransientState();
-                        setPanelFocus('check-in');
+                        focusCoordinatorCheckInLane();
                         setCheckInFilter('arrivals');
                         setCheckInReviewOnly(false);
                         setActiveGuestId(guest.id);
@@ -1332,7 +1347,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 />
                 <select
                   value={checkInFilter}
-                  onChange={(e) => { clearCoordinatorTransientState(); setCheckInFilter(e.target.value as CoordinatorCheckInFilter); setCheckInReviewOnly(false); setPanelFocus('check-in'); }}
+                  onChange={(e) => { focusCoordinatorCheckInLane(); setCheckInFilter(e.target.value as CoordinatorCheckInFilter); setCheckInReviewOnly(false); }}
                   className="sm:w-40 text-xs rounded-md border border-border bg-white px-2 py-2 text-text-secondary"
                 >
                   <option value="arrivals">Arrivals</option>
@@ -1354,8 +1369,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     key={g.id}
                     className={`flex items-center justify-between gap-3 px-4 py-2.5 cursor-pointer ${activeGuestId === g.id ? 'bg-primary/5' : ''}`}
                     onClick={() => {
-                      clearCoordinatorTransientState();
-                      setPanelFocus('check-in');
+                      focusCoordinatorCheckInLane();
                       setActiveGuestId(g.id);
                     }}
                   >
@@ -1390,7 +1404,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                       )}
                       <button
                         type="button"
-                        onClick={(e) => { e.stopPropagation(); clearCoordinatorTransientState(); setPanelFocus('check-in'); setActiveGuestId(g.id); canCheckIn && void toggleCheckIn(g); }}
+                          onClick={(e) => { e.stopPropagation(); focusCoordinatorCheckInLane(); setActiveGuestId(g.id); canCheckIn && void toggleCheckIn(g); }}
                         disabled={!canCheckIn || doorStatus === 'watch'}
                         className={`px-3 py-1.5 text-xs rounded-md border disabled:opacity-40 ${g.checked_in_at ? 'border-success/40 text-success bg-success/5' : doorStatus === 'watch' ? 'border-amber-200 text-amber-700 bg-amber-50' : 'border-border text-text-secondary bg-white'}`}
                       >
@@ -1426,8 +1440,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                         key={e.id}
                         className={`rounded-lg border px-3 py-2 cursor-pointer ${activeTimelineEventId === e.id ? 'ring-2 ring-primary/10 ' : ''}${isLive ? 'border-primary/35 bg-primary/5' : isUpNext ? 'border-amber-200 bg-amber-50' : 'border-border/50 bg-surface-subtle/40'}`}
                         onClick={() => {
-                          clearCoordinatorTransientState();
-                          setPanelFocus('timeline');
+                          focusCoordinatorTimelineLane();
                           setActiveTimelineEventId(e.id);
                         }}
                       >
@@ -1751,14 +1764,14 @@ export const DashboardCoordinatorMode: React.FC = () => {
                       <Textarea
                         value={qnaDraftAnswers[item.id] ?? item.answer ?? ''}
                         onClick={(e) => e.stopPropagation()}
-                        onChange={(e) => { clearCoordinatorTransientState(); setPanelFocus('qna'); setQnaDraftAnswers((prev) => ({ ...prev, [item.id]: e.target.value })); setActiveQnaId(item.id); }}
+                        onChange={(e) => { focusCoordinatorQnaLane(); setQnaDraftAnswers((prev) => ({ ...prev, [item.id]: e.target.value })); setActiveQnaId(item.id); }}
                         rows={2}
                         placeholder="Add the answer the coordinator should use"
                       />
                       <div className="flex justify-end">
                         <button
                           type="button"
-                          onClick={(e) => { e.stopPropagation(); clearCoordinatorTransientState(); setPanelFocus('qna'); setActiveQnaId(item.id); void saveQnaAnswer(item.id); }}
+                          onClick={(e) => { e.stopPropagation(); focusCoordinatorQnaLane(); setActiveQnaId(item.id); void saveQnaAnswer(item.id); }}
                           className="px-2.5 py-1 rounded border border-border bg-white text-text-secondary disabled:opacity-40"
                         >
                           {(qnaDraftAnswers[item.id] ?? item.answer ?? '').trim() ? 'Save answer' : 'Mark unresolved'}
