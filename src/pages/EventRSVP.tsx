@@ -64,6 +64,7 @@ export default function EventRSVP() {
       setGuest(null);
       setInvitations([]);
       setSelectedEvent(null);
+      setRsvpForm({ attending: true, dietary_restrictions: '', notes: '' });
       setSubmitError('');
       setSubmitSuccess(false);
       setHasEventRsvpSupport(null);
@@ -79,6 +80,7 @@ export default function EventRSVP() {
     setGuest(null);
     setInvitations([]);
     setSelectedEvent(null);
+    setRsvpForm({ attending: true, dietary_restrictions: '', notes: '' });
     setSubmitError('');
     setSubmitSuccess(false);
     setHasEventRsvpSupport(null);
