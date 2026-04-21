@@ -299,6 +299,8 @@ export interface NameChangeDocumentContractStatus {
   intakeStatus: NameChangeDocumentInput['intake_status'];
   storageMode: NameChangeDocumentInput['storage_mode'];
   extractionFieldCount: number;
+  metadataReady: number;
+  metadataMissing: string[];
   expectedExtractionFields: NameChangeExtractionFieldKey[];
   capturedExtractionFields: NameChangeExtractionFieldKey[];
   missingExtractionFields: NameChangeExtractionFieldKey[];
@@ -310,6 +312,8 @@ export interface NameChangeDocumentIntakeSnapshot {
   summary: {
     requiredReady: number;
     requiredMissing: number;
+    metadataReady: number;
+    metadataGaps: number;
     autofillReady: number;
     extractionGaps: number;
   };

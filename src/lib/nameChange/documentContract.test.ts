@@ -43,12 +43,17 @@ describe('name change document intake contract', () => {
         display_name: 'Certified marriage certificate',
         storage_mode: 'metadata_only',
         intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'San Diego County Clerk',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
       },
       {
         document_kind: 'current_passport',
         display_name: 'Passport',
         storage_mode: 'metadata_only',
         intake_status: 'uploaded',
+        file_name_masked: 'passport-•••.pdf',
       },
     ];
     const extractedFields: NameChangeExtractedFieldInput[] = [
@@ -73,8 +78,14 @@ describe('name change document intake contract', () => {
     expect(snapshot.documents.find((document) => document.kind === 'marriage_certificate')).toMatchObject({
       required: true,
       intakeStatus: 'reviewed',
+      metadataMissing: [],
       missingExtractionFields: expect.arrayContaining(['first_name', 'last_name']),
     });
+    expect(snapshot.documents.find((document) => document.kind === 'current_passport')).toMatchObject({
+      metadataMissing: expect.arrayContaining(['issuing authority', 'issued date', 'expiration date', 'extraction confidence']),
+    });
+    expect(snapshot.summary.metadataReady).toBe(1);
+    expect(snapshot.summary.metadataGaps).toBe(1);
   });
 
   it('switches required legal proof to court order for court-order cases', () => {

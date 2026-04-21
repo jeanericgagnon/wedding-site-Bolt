@@ -1126,6 +1126,25 @@ export const NameChangePlannerTab: React.FC<Props> = ({
             })}
           </div>
 
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-xl border border-border-subtle p-3">
+              <p className="text-xs uppercase tracking-wide text-text-tertiary">Required ready</p>
+              <p className="mt-2 text-sm font-semibold text-text-primary">{documentIntakeSnapshot.summary.requiredReady}</p>
+            </div>
+            <div className="rounded-xl border border-border-subtle p-3">
+              <p className="text-xs uppercase tracking-wide text-text-tertiary">Required missing</p>
+              <p className="mt-2 text-sm font-semibold text-text-primary">{documentIntakeSnapshot.summary.requiredMissing}</p>
+            </div>
+            <div className="rounded-xl border border-border-subtle p-3">
+              <p className="text-xs uppercase tracking-wide text-text-tertiary">Metadata ready</p>
+              <p className="mt-2 text-sm font-semibold text-text-primary">{documentIntakeSnapshot.summary.metadataReady}</p>
+            </div>
+            <div className="rounded-xl border border-border-subtle p-3">
+              <p className="text-xs uppercase tracking-wide text-text-tertiary">Metadata gaps</p>
+              <p className="mt-2 text-sm font-semibold text-text-primary">{documentIntakeSnapshot.summary.metadataGaps}</p>
+            </div>
+          </div>
+
           <div className="mt-4 space-y-3">
             {documents.length === 0 ? (
               <p className="text-sm text-text-tertiary">No document metadata yet. That is fine — the planner can still work off manual structured fields.</p>
@@ -1141,6 +1160,32 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                     <Button variant="ghost" size="sm" onClick={() => onDocumentsChange(documents.filter((item) => item.document_kind !== document.document_kind))}>Remove</Button>
                   </div>
                 </div>
+
+                {(() => {
+                  const contractStatus = documentIntakeSnapshot.documents.find((item) => item.kind === document.document_kind);
+                  if (!contractStatus) return null;
+
+                  return (
+                    <div className="mt-3 grid gap-3 md:grid-cols-2">
+                      <div className="rounded-lg bg-surface-subtle/60 p-3">
+                        <p className="text-xs uppercase tracking-wide text-text-tertiary">Metadata completeness</p>
+                        <p className="mt-2 text-xs text-text-secondary">
+                          {contractStatus.metadataMissing.length === 0
+                            ? 'Ready for downstream use.'
+                            : `Missing: ${contractStatus.metadataMissing.join(', ')}`}
+                        </p>
+                      </div>
+                      <div className="rounded-lg bg-surface-subtle/60 p-3">
+                        <p className="text-xs uppercase tracking-wide text-text-tertiary">Extraction coverage</p>
+                        <p className="mt-2 text-xs text-text-secondary">
+                          {contractStatus.missingExtractionFields.length === 0
+                            ? 'All expected extraction fields captured.'
+                            : `Missing: ${contractStatus.missingExtractionFields.join(', ')}`}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 <div className="mt-4 grid gap-3 md:grid-cols-2">
                   <label className="text-sm">

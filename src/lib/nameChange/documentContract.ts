@@ -78,6 +78,22 @@ export const NAME_CHANGE_DOCUMENT_CONTRACTS: NameChangeDocumentContractDefinitio
   },
 ];
 
+function metadataMissingForDocument(document: NameChangeDocumentInput | undefined): string[] {
+  if (!document || document.intake_status === 'not_started') return [];
+
+  const missing: string[] = [];
+  if (!document.file_name_masked?.trim()) missing.push('masked filename');
+  if (!document.issuing_authority?.trim()) missing.push('issuing authority');
+  if (!document.issued_on?.trim()) missing.push('issued date');
+
+  if (document.document_kind === 'current_passport' || document.document_kind === 'current_drivers_license') {
+    if (!document.expires_on?.trim()) missing.push('expiration date');
+  }
+
+  if (document.extraction_confidence == null) missing.push('extraction confidence');
+  return missing;
+}
+
 function fieldsForDocumentKind(
   kind: NameChangeDocumentKind,
   documents: NameChangeDocumentInput[],
@@ -154,6 +170,7 @@ export function buildNameChangeDocumentIntakeSnapshot(
       .filter((field): field is NameChangeExtractionFieldKey => definition.extractionFields.includes(field as NameChangeExtractionFieldKey));
     const missingExtractionFields = definition.extractionFields.filter((field) => !capturedExtractionFields.includes(field));
     const required = definition.requiredFor.includes('all') || definition.requiredFor.includes(canonicalCase.legalBasis);
+    const metadataMissing = metadataMissingForDocument(documents.find((document) => document.document_kind === definition.kind));
 
     return {
       kind: definition.kind,
@@ -163,6 +180,8 @@ export function buildNameChangeDocumentIntakeSnapshot(
       intakeStatus: documentState.intakeStatus,
       storageMode: documentState.storageMode,
       extractionFieldCount: documentState.extractionFieldCount,
+      metadataReady: metadataMissing.length === 0 && documentState.intakeStatus !== 'not_started' ? 1 : 0,
+      metadataMissing,
       expectedExtractionFields: definition.extractionFields,
       capturedExtractionFields,
       missingExtractionFields,
@@ -175,6 +194,8 @@ export function buildNameChangeDocumentIntakeSnapshot(
     summary: {
       requiredReady: statuses.filter((status) => status.required && status.intakeStatus === 'reviewed').length,
       requiredMissing: statuses.filter((status) => status.required && status.intakeStatus === 'not_started').length,
+      metadataReady: statuses.filter((status) => status.intakeStatus !== 'not_started' && status.metadataMissing.length === 0).length,
+      metadataGaps: statuses.filter((status) => status.intakeStatus !== 'not_started' && status.metadataMissing.length > 0).length,
       autofillReady: statuses.filter((status) => status.preferredForAutofill && status.missingExtractionFields.length === 0 && status.intakeStatus !== 'not_started').length,
       extractionGaps: statuses.filter((status) => status.intakeStatus !== 'not_started' && status.missingExtractionFields.length > 0).length,
     },
