@@ -309,6 +309,15 @@ export default function RSVP() {
       setHouseholdGuests([]);
       setApplyToHousehold(true);
       setSelectedHouseholdGuestIds([]);
+      setFormData({
+        attending: true,
+        attendCeremony: false,
+        attendReception: false,
+        meal_choice: '',
+        plus_one_name: '',
+        notes: '',
+      });
+      setCustomAnswers({});
       setFormStep(1);
       setError('');
       return;
