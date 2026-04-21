@@ -892,7 +892,7 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
             >
               Duplicate to composer
             </Button>
-            {(message.status === 'failed' || message.status === 'partial') && (
+            {canRetryMessageStatus(message.status) && (
               <Button
                 variant="primary"
                 size="sm"
@@ -909,9 +909,12 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
               >
                 {retrying
                   ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Retrying…</>
-                  : <><RefreshCw className="w-3.5 h-3.5 mr-1.5" />{message.status === 'partial' ? 'Retry failed recipients' : 'Retry send'}</>
+                  : <><RefreshCw className="w-3.5 h-3.5 mr-1.5" />Retry send</>
                 }
               </Button>
+            )}
+            {message.status === 'partial' && (
+              <p className="text-xs text-text-tertiary max-w-xs">Partial campaigns are review-only here so this control does not re-send guests who already got the message.</p>
             )}
             {message.status === 'scheduled' && (
               <Button
@@ -1449,14 +1452,14 @@ export const DashboardMessages: React.FC = () => {
       const recipients = getRecipients(formData.audience);
       const totalAudienceCount = recipients.length;
       const recipientCount = formData.channel === 'sms'
-        ? recipients.filter(g => g.phone).length
-        : recipients.filter(g => g.email).length;
+        ? recipients.filter(g => hasReachablePhone(g.phone)).length
+        : recipients.filter(g => hasReachableEmail(g.email)).length;
       const skippedRecipientCount = Math.max(totalAudienceCount - recipientCount, 0);
 
       if (recipientCount === 0 && !saveAsDraft) {
         toast(formData.channel === 'sms'
-          ? 'No recipients have phone numbers. Add phone numbers to your guests first.'
-          : 'No recipients have email addresses. Add email addresses to your guests first.', 'error');
+          ? 'No recipients have reachable phone numbers. Add phone numbers to your guests first.'
+          : 'No recipients have valid email addresses. Add valid emails to your guests first.', 'error');
         setSending(false);
         return;
       }
@@ -3194,7 +3197,7 @@ export const DashboardMessages: React.FC = () => {
                     <CheckCircle className="w-5 h-5 text-success" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-text-primary">{guests.filter(g => g.email).length}</p>
+                    <p className="text-2xl font-bold text-text-primary">{guests.filter(g => hasReachableEmail(g.email)).length}</p>
                     <p className="text-sm text-text-secondary">With Email</p>
                   </div>
                 </div>
