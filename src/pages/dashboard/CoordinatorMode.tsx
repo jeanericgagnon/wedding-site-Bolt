@@ -36,6 +36,7 @@ import { getCoordinatorActiveTargetLabel } from '../../lib/coordinatorActiveTarg
 import { getCoordinatorCheckInBoardTargetId, getCoordinatorCheckInTargetState } from '../../lib/coordinatorCheckInTargetState';
 import { getCoordinatorTimelineBoardTargetId, getCoordinatorTimelineTargetState } from '../../lib/coordinatorTimelineTargetState';
 import { getCoordinatorQnaTargetState } from '../../lib/coordinatorQnaTargetState';
+import { getCoordinatorTimelineTransitionLabel, syncCoordinatorAlertDraftForTimelineTransition } from '../../lib/coordinatorTimelineTransition';
 import { buildCoordinatorCommandSummary } from '../../lib/coordinatorCommandSummary';
 import { getCoordinatorCommandSummaryTarget } from '../../lib/coordinatorCommandSummaryTarget';
 import { getCoordinatorCommandPriority } from '../../lib/coordinatorCommandPriority';
@@ -1368,11 +1369,36 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const runTimelineAction = (eventId: string, nextState: TimelineState | null) => {
     if (!nextState || !canEditTimeline) return;
     clearCoordinatorTransientState();
+    const transitionEvent = events.find((event) => event.id === eventId) ?? null;
     setTimelineState((prev) => setCoordinatorEventTimelineState(prev, eventId, nextState));
     setActiveTimelineEventId(eventId);
     const suggestedIntent = resolveCoordinatorTimelineAlertIntent(alertSuggestions, eventId);
+    const nextSuggestion = suggestedIntent
+      ? alertSuggestions.find((suggestion) => suggestion.key === suggestedIntent) ?? null
+      : null;
+    const shouldSyncAlertDraft = alertTargetCue.aligned || (!alertForm.subject.trim() && !alertForm.body.trim());
     if (suggestedIntent) {
       setLastAlertSuggestionKey(suggestedIntent);
+    }
+    if (nextSuggestion) {
+      setAlertForm((prev) => syncCoordinatorAlertDraftForTimelineTransition({
+        form: prev,
+        nextSuggestion,
+        shouldSync: shouldSyncAlertDraft,
+      }));
+    }
+    if (transitionEvent) {
+      setSummaryFeedback(createCoordinatorSummaryFeedback({
+        label: getCoordinatorTimelineTransitionLabel({
+          eventName: transitionEvent.event_name,
+          nextState,
+          syncedAlert: Boolean(nextSuggestion) && shouldSyncAlertDraft,
+        }),
+        panelFocus: 'timeline',
+        targetId: eventId,
+        kind: 'transition',
+      }));
+      setSummaryFeedbackShownAt(Date.now());
     }
     setPanelFocus('timeline');
   };
