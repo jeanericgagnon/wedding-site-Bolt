@@ -94,6 +94,7 @@ import { getCoordinatorStablePromptTarget } from '../../lib/coordinatorStablePro
 import { getCoordinatorStablePromptTargetLabel } from '../../lib/coordinatorStablePromptTargetLabel';
 import { getCoordinatorStandingPromptBadge } from '../../lib/coordinatorStandingPromptBadge';
 import { getCoordinatorStandingPromptReason } from '../../lib/coordinatorStandingPromptReason';
+import { getCoordinatorStandingPromptReasonTightened } from '../../lib/coordinatorStandingPromptReasonTighten';
 import { getCoordinatorStandingPromptCopy } from '../../lib/coordinatorStandingPromptCopy';
 import { getCoordinatorStandingPromptMode } from '../../lib/coordinatorStandingPromptMode';
 import { getCoordinatorStandingPromptSecondaryState } from '../../lib/coordinatorStandingPromptSecondaryState';
