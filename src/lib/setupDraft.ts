@@ -31,8 +31,13 @@ export const emptySetupDraft: SetupDraft = {
   selectedTemplateId: 'modern-luxe',
 };
 
+const normalizeSelectedTemplateId = (value: string | null | undefined): string => {
+  const normalized = value?.trim();
+  return normalized || emptySetupDraft.selectedTemplateId;
+};
+
 export const readSetupDraft = (): SetupDraft => {
-  const selectedTemplate = localStorage.getItem(SELECTED_TEMPLATE_KEY) ?? emptySetupDraft.selectedTemplateId;
+  const selectedTemplate = normalizeSelectedTemplateId(localStorage.getItem(SELECTED_TEMPLATE_KEY));
 
   try {
     const raw = localStorage.getItem(SETUP_DRAFT_KEY);
@@ -48,7 +53,7 @@ export const readSetupDraft = (): SetupDraft => {
       weddingRegion: parsed.weddingRegion ?? '',
       guestEstimateBand: (parsed.guestEstimateBand as SetupDraft['guestEstimateBand']) ?? '',
       stylePreferences: Array.isArray(parsed.stylePreferences) ? parsed.stylePreferences : [],
-      selectedTemplateId: parsed.selectedTemplateId || selectedTemplate,
+      selectedTemplateId: normalizeSelectedTemplateId(parsed.selectedTemplateId),
     };
   } catch {
     return { ...emptySetupDraft, selectedTemplateId: selectedTemplate };
@@ -57,8 +62,9 @@ export const readSetupDraft = (): SetupDraft => {
 
 export const writeSetupDraft = (draft: SetupDraft) => {
   localStorage.setItem(SETUP_DRAFT_KEY, JSON.stringify(draft));
-  if (draft.selectedTemplateId) {
-    localStorage.setItem(SELECTED_TEMPLATE_KEY, draft.selectedTemplateId);
+  const selectedTemplateId = draft.selectedTemplateId.trim();
+  if (selectedTemplateId) {
+    localStorage.setItem(SELECTED_TEMPLATE_KEY, selectedTemplateId);
   } else {
     localStorage.removeItem(SELECTED_TEMPLATE_KEY);
   }

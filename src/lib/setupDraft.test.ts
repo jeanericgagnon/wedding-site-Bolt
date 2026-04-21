@@ -45,4 +45,18 @@ describe('setupDraft', () => {
     expect(localStorage.getItem(SELECTED_TEMPLATE_KEY)).toBeNull();
     expect(readSetupDraft().selectedTemplateId).toBe(emptySetupDraft.selectedTemplateId);
   });
+
+  it('normalizes whitespace-only template selections back to the default template', () => {
+    localStorage.setItem(SELECTED_TEMPLATE_KEY, '   ');
+    localStorage.setItem(SETUP_DRAFT_KEY, JSON.stringify({ selectedTemplateId: '   ' }));
+
+    expect(readSetupDraft().selectedTemplateId).toBe(emptySetupDraft.selectedTemplateId);
+
+    writeSetupDraft({
+      ...emptySetupDraft,
+      selectedTemplateId: '   ',
+    });
+
+    expect(localStorage.getItem(SELECTED_TEMPLATE_KEY)).toBeNull();
+  });
 });
