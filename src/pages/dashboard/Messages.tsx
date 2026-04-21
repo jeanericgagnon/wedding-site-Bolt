@@ -211,6 +211,7 @@ type ChannelType = 'email' | 'sms';
 
 const DELIVERY_ACTIVE_STATUSES = ['queued', 'sending', 'sent', 'partial', 'failed'] as const;
 const DELIVERY_COMPLETED_STATUSES = ['sent', 'partial', 'failed'] as const;
+const EMAIL_CAP_CONSUMING_STATUSES = ['queued', 'sent', 'partial'] as const;
 
 function isDeliveryActiveStatus(status: string | null | undefined): boolean {
   return DELIVERY_ACTIVE_STATUSES.includes((status ?? '') as (typeof DELIVERY_ACTIVE_STATUSES)[number]);
@@ -218,6 +219,10 @@ function isDeliveryActiveStatus(status: string | null | undefined): boolean {
 
 function isDeliveryCompletedStatus(status: string | null | undefined): boolean {
   return DELIVERY_COMPLETED_STATUSES.includes((status ?? '') as (typeof DELIVERY_COMPLETED_STATUSES)[number]);
+}
+
+function isEmailCapConsumingStatus(status: string | null | undefined): boolean {
+  return EMAIL_CAP_CONSUMING_STATUSES.includes((status ?? '') as (typeof EMAIL_CAP_CONSUMING_STATUSES)[number]);
 }
 
 type MessageTemplateKey =
@@ -2369,7 +2374,7 @@ export const DashboardMessages: React.FC = () => {
   const smsCreditsSufficient = smsCredits >= smsCreditsNeeded;
   const HARD_EMAIL_CAP = 1000;
   const usedEmailRecipients = messages
-    .filter((m) => m.channel === 'email' && isDeliveryActiveStatus(m.status))
+    .filter((m) => m.channel === 'email' && isEmailCapConsumingStatus(m.status))
     .reduce((sum, m) => sum + getRecipientCount(m), 0);
   const remainingEmailRecipients = Math.max(HARD_EMAIL_CAP - usedEmailRecipients, 0);
   const emailCapacityAfterSend = Math.max(remainingEmailRecipients - recipientsWithEmail, 0);
