@@ -407,6 +407,14 @@ function isPastScheduledTime(scheduledFor: string | null): boolean {
   return new Date(scheduledFor) < new Date();
 }
 
+function hasReachableEmail(email: string | null | undefined): boolean {
+  return !!email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function hasReachablePhone(phone: string | null | undefined): boolean {
+  return !!phone?.trim();
+}
+
 function formatScheduledDate(scheduledFor: string): string {
   const d = new Date(scheduledFor);
   const local = d.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
@@ -1341,8 +1349,8 @@ export const DashboardMessages: React.FC = () => {
   const getAudienceSnapshot = (audience: string, channel: 'email' | 'sms') => {
     const recipients = getRecipients(audience);
     const reachableCount = channel === 'sms'
-      ? recipients.filter((guest) => !!guest.phone).length
-      : recipients.filter((guest) => !!guest.email).length;
+      ? recipients.filter((guest) => hasReachablePhone(guest.phone)).length
+      : recipients.filter((guest) => hasReachableEmail(guest.email)).length;
 
     return {
       totalAudienceCount: recipients.length,
@@ -2312,10 +2320,10 @@ export const DashboardMessages: React.FC = () => {
   const applyDayOfAlertPreset = () => {
     applyDayOfDraft();
   };
-  const recipientsWithEmail = getRecipients(formData.audience).filter(g => g.email).length;
-  const recipientsWithPhone = getRecipients(formData.audience).filter(g => g.phone).length;
+  const recipientsWithEmail = getRecipients(formData.audience).filter(g => hasReachableEmail(g.email)).length;
+  const recipientsWithPhone = getRecipients(formData.audience).filter(g => hasReachablePhone(g.phone)).length;
   const activeRecipients = formData.channel === 'sms' ? recipientsWithPhone : recipientsWithEmail;
-  const previewRecipients = getRecipients(formData.audience).filter((guest) => formData.channel === 'sms' ? !!guest.phone : !!guest.email);
+  const previewRecipients = getRecipients(formData.audience).filter((guest) => formData.channel === 'sms' ? hasReachablePhone(guest.phone) : hasReachableEmail(guest.email));
   const unreachableRecipients = (selectedAudience?.count ?? 0) - activeRecipients;
   const selectedScheduleIsPast = !!(formData.scheduleDate && formData.scheduleTime)
     && isPastScheduledTime(`${formData.scheduleDate}T${formData.scheduleTime}:00`);
@@ -2332,8 +2340,8 @@ export const DashboardMessages: React.FC = () => {
 
   const audienceReachability = useMemo(() => {
     const allRecipients = getRecipients(formData.audience);
-    const withEmail = allRecipients.filter((guest) => !!guest.email).length;
-    const withPhone = allRecipients.filter((guest) => !!guest.phone).length;
+    const withEmail = allRecipients.filter((guest) => hasReachableEmail(guest.email)).length;
+    const withPhone = allRecipients.filter((guest) => hasReachablePhone(guest.phone)).length;
     return {
       total: allRecipients.length,
       missingEmail: Math.max(allRecipients.length - withEmail, 0),
