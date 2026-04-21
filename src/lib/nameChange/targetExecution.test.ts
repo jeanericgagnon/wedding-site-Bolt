@@ -111,6 +111,25 @@ describe('name change target execution snapshot', () => {
     });
   });
 
+  it('counts missing support-doc intake as document repair debt even before a field points at it', () => {
+    const snapshot = buildNameChangeTargetExecutionSnapshot('ssa', makeCase(), [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ], []);
+
+    expect(snapshot.checklist).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        key: 'ssa-support-doc',
+        status: 'attention',
+      }),
+    ]));
+    expect(snapshot.readinessSummary.documentRepairDebt).toBeGreaterThan(0);
+  });
+
   it('builds shared DMV execution snapshots with sequencing awareness', () => {
     const documents: NameChangeDocumentInput[] = [
       {

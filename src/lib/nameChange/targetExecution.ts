@@ -44,7 +44,15 @@ export function buildNameChangeTargetExecutionSnapshot(
   const attentionFieldRisks = fieldRisks.filter((risk) => risk.severity === 'attention').length;
   const lowConfidenceFields = formPayload.fields.filter((field) => field.value && field.confidence === 'low').length;
   const missingFields = formPayload.fields.filter((field) => !field.value).length;
-  const documentRepairDebt = fieldRisks.filter((risk) => risk.sourceDocumentKind).length;
+  const documentRepairDebt = new Set([
+    ...fieldRisks
+      .map((risk) => risk.sourceDocumentKind)
+      .filter((kind): kind is NonNullable<typeof kind> => Boolean(kind)),
+    ...target.checklistSpecs
+      .filter((spec) => spec.kind === 'document_support')
+      .filter((spec) => checklist.find((item) => item.key === spec.key)?.status !== 'ready')
+      .map((spec) => spec.key),
+  ]).size;
   const readinessSummary = {
     status: gates.ready ? 'ready' as const : blockingFieldRisks > 0 || gates.blockers.length > 0 ? 'blocked' as const : 'attention' as const,
     blockingFieldRisks,
