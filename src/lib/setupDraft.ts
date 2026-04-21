@@ -32,9 +32,10 @@ export const emptySetupDraft: SetupDraft = {
 };
 
 export const readSetupDraft = (): SetupDraft => {
+  const selectedTemplate = localStorage.getItem(SELECTED_TEMPLATE_KEY) ?? emptySetupDraft.selectedTemplateId;
+
   try {
     const raw = localStorage.getItem(SETUP_DRAFT_KEY);
-    const selectedTemplate = localStorage.getItem(SELECTED_TEMPLATE_KEY) ?? emptySetupDraft.selectedTemplateId;
     if (!raw) return { ...emptySetupDraft, selectedTemplateId: selectedTemplate };
     const parsed = JSON.parse(raw) as Partial<SetupDraft>;
     return {
@@ -50,7 +51,7 @@ export const readSetupDraft = (): SetupDraft => {
       selectedTemplateId: parsed.selectedTemplateId ?? selectedTemplate,
     };
   } catch {
-    return { ...emptySetupDraft };
+    return { ...emptySetupDraft, selectedTemplateId: selectedTemplate };
   }
 };
 
