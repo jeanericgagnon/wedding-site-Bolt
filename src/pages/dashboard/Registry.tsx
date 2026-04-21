@@ -21,6 +21,7 @@ import { itemNeedsAttention, sanitizeRegistryQuantityState } from './registry/re
 import { demoWeddingSite, demoRegistryItems } from '../../lib/demoData';
 import { getRegistryRepairStates } from './registry/repairState';
 import { findDuplicateRegistryGroups } from './registry/duplicateRegistryItems';
+import { getCurrentMonthKey, resolveRegistryRefreshBudgetState } from './registry/refreshBudget';
 
 interface Toast {
   id: number;
@@ -204,10 +205,11 @@ export const DashboardRegistry: React.FC = () => {
           setWeddingSiteId(site.id);
           setWeddingDate((site as { wedding_date?: string | null }).wedding_date ?? null);
           const typedSite = site as { registry_refresh_enabled_until?: string | null; registry_monthly_refresh_cap?: number | null; registry_monthly_refresh_count?: number | null; registry_monthly_refresh_month?: string | null; registry_auto_refresh_enabled?: boolean | null; registry_refresh_include_purchased?: boolean | null; registry_refresh_policy_updated_at?: string | null; registry_refresh_policy_updated_by?: string | null; wedding_date?: string | null };
-          const monthKey = new Date().toISOString().slice(0, 7);
-          const loadedMonth = typedSite.registry_monthly_refresh_month ?? monthKey;
-          setMonthlyRefreshMonth(loadedMonth);
-          const resetCount = loadedMonth !== monthKey;
+          const budgetState = resolveRegistryRefreshBudgetState({
+            storedMonthKey: typedSite.registry_monthly_refresh_month ?? null,
+            storedCount: typedSite.registry_monthly_refresh_count ?? 0,
+          });
+          setMonthlyRefreshMonth(budgetState.monthKey);
           setRefreshEnabledUntil(typedSite.registry_refresh_enabled_until ?? null);
           setAutoRefreshEnabled(typedSite.registry_auto_refresh_enabled ?? true);
           setRefreshIncludePurchased(typedSite.registry_refresh_include_purchased ?? false);
@@ -218,7 +220,7 @@ export const DashboardRegistry: React.FC = () => {
           setMonthlyRefreshCap(loadedCap);
           setRefreshCapDraft(loadedCap);
           setRefreshPreset(loadedCap <= 60 ? 'lean' : loadedCap <= 160 ? 'balanced' : 'aggressive');
-          setMonthlyRefreshCount(resetCount ? 0 : (typedSite.registry_monthly_refresh_count ?? 0));
+          setMonthlyRefreshCount(budgetState.count);
           await loadItems(site.id);
         }
       } catch {
@@ -773,7 +775,7 @@ export const DashboardRegistry: React.FC = () => {
   }, [loading, isDemoMode, items.length]);
 
 
-  const todayMonthKey = new Date().toISOString().slice(0, 7);
+  const todayMonthKey = getCurrentMonthKey();
   const refreshWindowUntil = refreshEnabledUntil
     ? new Date(refreshEnabledUntil)
     : (weddingDate ? new Date(new Date(weddingDate).getTime() + 1000 * 60 * 60 * 24 * 30) : null);
@@ -786,22 +788,22 @@ export const DashboardRegistry: React.FC = () => {
   const projectedRefreshCoverage = eligibleItemCount > 0 ? Math.round((projectedMonthlyCalls / eligibleItemCount) * 100) : 100;
   const daysUntilRefreshWindowEnd = refreshWindowUntil ? Math.ceil((refreshWindowUntil.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
   async function ensureMonthlyBudgetState() {
-    const monthKey = new Date().toISOString().slice(0, 7);
-    if (!weddingSiteId || isDemoMode) return { monthKey, count: monthlyRefreshCount };
-    if (monthlyRefreshMonth === monthKey && monthlyRefreshCount >= 0) return { monthKey, count: monthlyRefreshCount };
+    const budgetState = resolveRegistryRefreshBudgetState({
+      storedMonthKey: monthlyRefreshMonth,
+      storedCount: monthlyRefreshCount,
+      currentMonthKey: todayMonthKey,
+    });
 
-    // local reset if month key drifted
-    const shouldReset = monthKey !== todayMonthKey;
-    if (shouldReset) {
-      setMonthlyRefreshCount(0);
-      setMonthlyRefreshMonth(monthKey);
-      await supabase
-        .from('wedding_sites')
-        .update({ registry_monthly_refresh_count: 0, registry_monthly_refresh_month: monthKey })
-        .eq('id', weddingSiteId);
-      return { monthKey, count: 0 };
-    }
-    return { monthKey, count: monthlyRefreshCount };
+    if (!weddingSiteId || isDemoMode) return { monthKey: budgetState.monthKey, count: budgetState.count };
+    if (!budgetState.shouldReset) return { monthKey: budgetState.monthKey, count: budgetState.count };
+
+    setMonthlyRefreshCount(0);
+    setMonthlyRefreshMonth(budgetState.monthKey);
+    await supabase
+      .from('wedding_sites')
+      .update({ registry_monthly_refresh_count: 0, registry_monthly_refresh_month: budgetState.monthKey })
+      .eq('id', weddingSiteId);
+    return { monthKey: budgetState.monthKey, count: 0 };
   }
 
   const baseRecommendedPreset: 'lean' | 'balanced' | 'aggressive' = items.length <= 40 ? 'lean' : items.length <= 120 ? 'balanced' : 'aggressive';
