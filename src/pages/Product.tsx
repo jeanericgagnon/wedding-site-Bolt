@@ -81,6 +81,65 @@ const V1_STATUS_GROUPS = [
   },
 ] as const;
 
+const V1_SLICE_STATUS = [
+  {
+    name: 'Public site + trust',
+    status: 'Proof needed',
+    tone: 'proof',
+    done: 'Launch/privacy surfaces are materially tighter.',
+    missing: 'One canonical public-path smoke and final claim discipline.',
+  },
+  {
+    name: 'Guests + RSVP',
+    status: 'Mostly done',
+    tone: 'done',
+    done: 'Core guest/RSVP breadth exists and recent trust seams were fixed.',
+    missing: 'Need one clear guest -> RSVP -> dashboard continuity proof.',
+  },
+  {
+    name: 'Planner access',
+    status: 'Mostly done',
+    tone: 'done',
+    done: 'Invite + role-aware shell are far more honest now.',
+    missing: 'Need role-boundary smoke with a real restricted-action failure.',
+  },
+  {
+    name: 'Coordinator / day-of',
+    status: 'Mostly done',
+    tone: 'done',
+    done: 'Coordinator mode exists around real event-day questions.',
+    missing: 'Needs a realistic live-use proof run.',
+  },
+  {
+    name: 'Comms center',
+    status: 'Must prove',
+    tone: 'risk',
+    done: 'Draft/schedule/history surface is there.',
+    missing: 'Needs proof that send-state is trustworthy enough to promise.',
+  },
+  {
+    name: 'Seating',
+    status: 'Proof needed',
+    tone: 'proof',
+    done: 'Planner + lookup surface exist.',
+    missing: 'Needs RSVP-backed assign/lookup proof without count drift.',
+  },
+  {
+    name: 'Registry',
+    status: 'Must prove',
+    tone: 'risk',
+    done: 'Real add/import/edit work already exists.',
+    missing: 'Needs purchased-state reliability proof.',
+  },
+  {
+    name: 'Onboarding',
+    status: 'Must prove',
+    tone: 'risk',
+    done: 'Gets couples into the product directionally.',
+    missing: 'Needs a hard first-run proof pass and tighter promise discipline.',
+  },
+] as const;
+
 export const Product: React.FC = () => {
   const navigate = useNavigate();
   const { signIn } = useAuth();
@@ -245,11 +304,11 @@ export const Product: React.FC = () => {
           <div className="rounded-2xl border border-border-subtle bg-surface p-6 md:p-7">
             <div className="max-w-3xl">
               <p className="text-xs uppercase tracking-wide text-brand font-semibold">Switching story</p>
-              <h2 className="text-2xl md:text-3xl font-serif font-bold text-ink mt-2">If another wedding platform already has your attention, DayOf should still be an easy move.</h2>
-              <p className="mt-3 text-ink/75">The goal is not to trap couples in a setup they already regret. The goal is to help them move the important stuff over and end up with a better website, better guest operations, and a calmer event-day setup.</p>
+              <h2 className="text-2xl md:text-3xl font-serif font-bold text-ink mt-2">If you already started elsewhere, DayOf is strongest when you move the core wedding spine.</h2>
+              <p className="mt-3 text-ink/75">This is not a promise that every edge case migrates itself. The credible move today is the important stuff: a better wedding site, cleaner guest operations, and calmer execution in one place.</p>
             </div>
             <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
-              {['Move your guest list and core details', 'Keep the wedding website polished', 'Upgrade into RSVP, seating, messaging, and day-of ops'].map((item) => (
+              {['Move your guest list and essential wedding details', 'Keep the website polished and guest-facing', 'Upgrade into RSVP, seating, messaging, and day-of ops'].map((item) => (
                 <div key={item} className="rounded-xl border border-border bg-white p-4 text-sm text-ink/75">• {item}</div>
               ))}
             </div>
@@ -260,22 +319,22 @@ export const Product: React.FC = () => {
 
       <section className="section-shell bg-white border-t border-border-subtle">
         <div className="container-custom max-w-6xl">
-          <div className="rounded-2xl border border-border-subtle bg-surface p-6 md:p-7">
-            <p className="text-xs uppercase tracking-wide text-brand font-semibold">Archive + anniversary layer</p>
-            <h2 className="text-2xl md:text-3xl font-serif font-bold text-ink mt-2">The wedding site should not become disposable the moment the event is over.</h2>
-            <p className="mt-3 max-w-3xl text-ink/75">DayOf should be able to shift from planning and live coordination into archive mode: public story still worth revisiting, guest photos still gathered cleanly, and anniversary memories preserved without pretending the post-wedding layer is already a giant platform.</p>
+          <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-6 md:p-7">
+            <p className="text-xs uppercase tracking-wide text-amber-700 font-semibold">Beyond the core v1 line</p>
+            <h2 className="text-2xl md:text-3xl font-serif font-bold text-ink mt-2">Post-wedding memory layers matter — they just should not pretend to be the launch claim.</h2>
+            <p className="mt-3 max-w-3xl text-ink/75">Archive mode, photo return paths, and anniversary-style memories are real product direction. They are not the current bar DayOf should ask couples to trust first. The launch story is website + guest ops + calm execution.</p>
             <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="rounded-xl border border-border-subtle bg-white p-4">
+              <div className="rounded-xl border border-amber-200 bg-white p-4">
                 <p className="text-sm font-medium text-ink">Archive mode</p>
-                <p className="mt-1 text-sm text-ink/70">Quiet the urgent planning layer once the wedding has passed.</p>
+                <p className="mt-1 text-sm text-ink/70">Worth building, but not a reason to blur the current v1 promise.</p>
               </div>
-              <div className="rounded-xl border border-border-subtle bg-white p-4">
+              <div className="rounded-xl border border-amber-200 bg-white p-4">
                 <p className="text-sm font-medium text-ink">Photo return path</p>
-                <p className="mt-1 text-sm text-ink/70">Keep the best guest photos and make the site worth revisiting.</p>
+                <p className="mt-1 text-sm text-ink/70">Good adjacent value once the core wedding flow is nailed.</p>
               </div>
-              <div className="rounded-xl border border-border-subtle bg-white p-4">
-                <p className="text-sm font-medium text-ink">Anniversary vaults</p>
-                <p className="mt-1 text-sm text-ink/70">Let future anniversaries unlock memories naturally instead of forcing couples to rebuild context later.</p>
+              <div className="rounded-xl border border-amber-200 bg-white p-4">
+                <p className="text-sm font-medium text-ink">Anniversary memories</p>
+                <p className="mt-1 text-sm text-ink/70">Interesting future layer, not part of the hard launch bar today.</p>
               </div>
             </div>
           </div>
@@ -352,6 +411,34 @@ export const Product: React.FC = () => {
             <h2 className="text-2xl md:text-3xl font-serif font-bold text-ink mt-2">What counts as the real launch claim right now</h2>
             <p className="mt-3 max-w-3xl text-ink/75">DayOf should be judged on whether the core wedding flow is trustworthy end to end. Some surrounding slices are real product direction, but they should not get to blur the current v1 line.</p>
           </SlideReveal>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            {V1_SLICE_STATUS.map((slice) => {
+              const toneClasses = slice.tone === 'done'
+                ? 'border-emerald-200 bg-white'
+                : slice.tone === 'proof'
+                  ? 'border-sky-200 bg-white'
+                  : 'border-amber-200 bg-white';
+              const badgeClasses = slice.tone === 'done'
+                ? 'bg-emerald-50 text-emerald-700'
+                : slice.tone === 'proof'
+                  ? 'bg-sky-50 text-sky-700'
+                  : 'bg-amber-50 text-amber-700';
+
+              return (
+                <div key={slice.name} className={`rounded-2xl border p-5 ${toneClasses}`}>
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <h3 className="font-semibold text-ink">{slice.name}</h3>
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ${badgeClasses}`}>{slice.status}</span>
+                  </div>
+                  <div className="space-y-2 text-sm text-ink/80">
+                    <p><span className="font-semibold text-ink">Done:</span> {slice.done}</p>
+                    <p><span className="font-semibold text-ink">Still missing:</span> {slice.missing}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {V1_STATUS_GROUPS.map((group) => {

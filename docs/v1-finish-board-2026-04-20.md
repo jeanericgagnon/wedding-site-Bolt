@@ -58,6 +58,11 @@ If that line fails, the rest is noise.
 **Proof needed**
 - route-by-route smoke log with failure notes or pass notes
 
+**Launch read**
+- **Done:** launch/privacy mechanics are mostly there
+- **Missing:** one canonical proof run and final claim discipline across public pages
+- **Proof-needed:** end-to-end route smoke with screenshots/log notes
+
 **Status**
 - `PROOF-NEEDED`
 
@@ -80,6 +85,11 @@ If that line fails, the rest is noise.
 **Proof needed**
 - one evidence run covering create/edit/review guest, RSVP submit/update, dashboard readback, event-aware visibility
 
+**Launch read**
+- **Done:** feature breadth + several trust fixes are in
+- **Missing:** one canonical continuity proof and maybe one last admin-edit drift fix
+- **Proof-needed:** guest edit -> RSVP submit/update -> dashboard/event readback
+
 **Status**
 - `MOSTLY-DONE / PROOF-NEEDED`
 
@@ -100,6 +110,11 @@ If that line fails, the rest is noise.
 **Proof needed**
 - role-aware smoke over settings invite -> accept -> dashboard -> restricted action attempt
 
+**Launch read**
+- **Done:** collaborator path exists and reads substantially more honest
+- **Missing:** proof that roles break cleanly under real clicks, not just code inspection
+- **Proof-needed:** owner/planner/coordinator smoke with one forbidden action each
+
 **Status**
 - `MOSTLY-DONE / PROOF-NEEDED`
 
@@ -118,6 +133,11 @@ If that line fails, the rest is noise.
 
 **Proof needed**
 - queue/check-in/timeline/alert smoke under a role-aware path
+
+**Launch read**
+- **Done:** the surface exists and is pointed at real event-day questions
+- **Missing:** proof that it is calm under actual usage, not just feature-complete looking
+- **Proof-needed:** timed check-in/timeline/Q&A smoke
 
 **Status**
 - `MOSTLY-DONE / PROOF-NEEDED`
@@ -138,6 +158,11 @@ If that line fails, the rest is noise.
 **Proof needed**
 - draft -> scheduled or sent -> history verification
 
+**Launch read**
+- **Done:** surface area and core lifecycle are present
+- **Missing:** confidence that send/schedule/history are actually dependable enough to promise
+- **Proof-needed:** one real end-to-end message lifecycle smoke
+
 **Status**
 - `PARTIAL / MUST-PROVE`
 
@@ -155,6 +180,11 @@ If that line fails, the rest is noise.
 
 **Proof needed**
 - real seating smoke tied to actual RSVP-backed guest state
+
+**Launch read**
+- **Done:** the core planner/lookup shape is there
+- **Missing:** proof that seating truth follows RSVP truth without drift
+- **Proof-needed:** RSVP-backed seating assign + lookup verification
 
 **Status**
 - `MOSTLY-DONE / PROOF-NEEDED`
@@ -174,6 +204,11 @@ If that line fails, the rest is noise.
 **Proof needed**
 - add/import/edit + internal purchased-state smoke
 
+**Launch read**
+- **Done:** couples can do real registry work already
+- **Missing:** proof that item-state reliability is good enough for public trust
+- **Proof-needed:** add/import/edit/purchased-state smoke
+
 **Status**
 - `PARTIAL / MUST-PROVE`
 
@@ -192,6 +227,11 @@ If that line fails, the rest is noise.
 
 **Proof needed**
 - first-run smoke from entry to usable builder/dashboard/site state
+
+**Launch read**
+- **Done:** first-run flow exists and is directionally right
+- **Missing:** proof that it is fast, honest, and lands people in a usable state consistently
+- **Proof-needed:** entry -> onboarding -> builder/dashboard/site smoke
 
 **Status**
 - `PARTIAL / MUST-PROVE`
@@ -231,19 +271,33 @@ If that line fails, the rest is noise.
 1. **Canonical v1 smoke pass**
    - Home -> auth/demo -> onboarding/builder -> site -> RSVP -> guests/settings
    - output goes into `docs/v1-smoke-proof-log.md`
+   - owner: finish lane
+   - exit bar: one clean pass log + exact failures called out, not hand-waved
 2. **Guest-state continuity smoke + fix**
    - prove or fix guest edits, RSVP updates, event-level visibility, downstream reads
+   - exit bar: one guest can move through public and dashboard surfaces without trust drift
 3. **Role-aware collaborator smoke + fix**
    - owner invite -> collaborator accept -> role-aware dashboard -> restricted action attempts
+   - exit bar: one planner and one coordinator boundary proven with evidence
 4. **Product truth tightening**
    - public product/marketing surfaces must show core v1 vs surrounding product direction cleanly
+   - exit bar: public story only promises what the current core can defend
 
 ### Week 2 — harden the must-ship layer
 5. **Comms center proof + first broken-path fix**
+   - exit bar: draft -> schedule/send -> history state reads trustworthy
 6. **Seating proof + first broken-path fix**
+   - exit bar: RSVP-backed seating assign/lookup works without count drift
 7. **Registry proof + first broken-path fix**
+   - exit bar: add/import/edit/purchased-state path survives one realistic smoke
 8. **Launch call prep**
    - re-read the board, cut any unproven promise language, call go/no-go honestly
+   - exit bar: every remaining launch claim maps to proof or a consciously accepted gap
+
+## Ship / cut call by slice right now
+- **Must-ship now:** public trust path, guests/RSVP, planner access, coordinator/day-of, comms, seating, registry, onboarding truth
+- **Should-ship if stable:** memories/photo return path, name-change planner, extra route cleanup
+- **Cut from launch claim unless proven:** archive/anniversary story as a major promise, external domains, advanced analytics, “fully automated” anything, enterprise governance language
 
 ## Next highest-leverage concrete task
 The next best cross-product finish task is:
@@ -255,4 +309,7 @@ Reason:
 - it reduces launch dishonesty risk across multiple slices at once
 - it turns the finish board from internal truth into external truth
 
-That task should land directly in the Product surface, not just in docs.
+What that means concretely:
+- keep the marketing story centered on website + guest ops + execution
+- demote archive/anniversary/name-change language out of the core launch claim
+- make must-ship vs should-ship vs not-in-v1 visible enough that launch copy cannot quietly blur it
