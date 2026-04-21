@@ -168,12 +168,31 @@ BEGIN
     RAISE EXCEPTION 'Registry item not found: %', p_item_id;
   END IF;
 
-  -- Verify item is on a published site (public safety check)
+  -- Public guests can only claim items on published sites.
+  -- Authenticated owners/planners/coordinators should still be able to keep
+  -- purchase truth accurate from the dashboard before publish.
   IF NOT EXISTS (
-    SELECT 1 FROM wedding_sites
-    WHERE id = v_row.wedding_site_id AND is_published = true
+    SELECT 1
+    FROM wedding_sites ws
+    WHERE ws.id = v_row.wedding_site_id
+      AND (
+        ws.is_published = true
+        OR (
+          auth.uid() IS NOT NULL
+          AND (
+            ws.user_id = auth.uid()
+            OR EXISTS (
+              SELECT 1
+              FROM wedding_site_collaborators c
+              WHERE c.wedding_site_id = ws.id
+                AND c.user_id = auth.uid()
+                AND c.role IN ('owner', 'planner', 'coordinator')
+            )
+          )
+        )
+      )
   ) THEN
-    RAISE EXCEPTION 'Item is not on a published site';
+    RAISE EXCEPTION 'Registry purchase updates require a published site or dashboard access';
   END IF;
 
   -- Cap at desired_quantity

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { RegistryItem, RegistryPreview } from './registryTypes';
 import { derivePurchaseStatus, sanitizeRegistryQuantityState } from './registryTypes';
-import { fetchUrlPreview, findDuplicateItem, ownerMarkPurchased } from './registryService';
+import { fetchUrlPreview, findDuplicateItem, ownerMarkPurchased, publicIncrementPurchase } from './registryService';
 
 const mockRpcResult = {
   data: null as unknown,
@@ -280,6 +280,26 @@ describe('ownerMarkPurchased', () => {
     expect(result.quantity_needed).toBe(2);
     expect(result.quantity_purchased).toBe(2);
     expect(result.purchase_status).toBe('purchased');
+  });
+});
+
+describe('publicIncrementPurchase', () => {
+  it('normalizes stale RPC quantity/status data for the guest-facing claim path too', async () => {
+    mockRpcResult.data = {
+      id: 'item-1',
+      quantity_purchased: 9,
+      quantity_needed: 3,
+      purchase_status: 'partial',
+      purchaser_name: 'Alex',
+    };
+    mockRpcResult.error = null;
+
+    const result = await publicIncrementPurchase('item-1', 'Alex');
+
+    expect(result.quantity_needed).toBe(3);
+    expect(result.quantity_purchased).toBe(3);
+    expect(result.purchase_status).toBe('purchased');
+    expect(result.purchaser_name).toBe('Alex');
   });
 });
 
