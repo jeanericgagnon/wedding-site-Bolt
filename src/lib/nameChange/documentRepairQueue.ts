@@ -1,5 +1,6 @@
 import type {
   NameChangeDocumentContractStatus,
+  NameChangeGuidedAction,
   NameChangeDocumentIntakeSnapshot,
   NameChangeDocumentKind,
   NameChangeTargetExecutionSnapshot,
@@ -13,7 +14,7 @@ export interface NameChangeDocumentRepairQueueItem {
   score: number;
   impactSummary: string;
   payoffSummary: string;
-  nextActions: string[];
+  nextActions: NameChangeGuidedAction[];
   impactedTargets: string[];
   impactedFields: Array<{
     fieldKey: string;
@@ -75,7 +76,7 @@ export function buildNameChangeDocumentRepairQueue(
         : 'attention';
 
       const issueBits: string[] = [];
-      const nextActions: string[] = [];
+      const nextActions: NameChangeGuidedAction[] = [];
       if (document.intakeStatus === 'not_started') issueBits.push('not started');
       if (document.metadataMissing.length > 0) issueBits.push(`${document.metadataMissing.length} metadata gaps`);
       if (document.missingExtractionFields.length > 0) issueBits.push(`${document.missingExtractionFields.length} extraction gaps`);
@@ -83,20 +84,40 @@ export function buildNameChangeDocumentRepairQueue(
       if (attentionRiskCount > 0) issueBits.push(`${attentionRiskCount} attention field risks`);
 
       if (document.intakeStatus === 'not_started') {
-        nextActions.push(`Add ${document.label.toLowerCase()} to intake and capture baseline metadata.`);
+        nextActions.push({
+          category: 'document',
+          label: `Add ${document.label.toLowerCase()} to intake`,
+          detail: 'Capture baseline metadata so this document can support downstream packets.',
+        });
       }
       if (document.metadataMissing.length > 0) {
-        nextActions.push(`Fill metadata: ${document.metadataMissing.join(', ')}.`);
+        nextActions.push({
+          category: 'document',
+          label: `Fill metadata for ${document.label.toLowerCase()}`,
+          detail: `Missing metadata: ${document.metadataMissing.join(', ')}.`,
+        });
       }
       if (document.missingExtractionFields.length > 0) {
-        nextActions.push(`Capture extraction fields: ${document.missingExtractionFields.join(', ')}.`);
+        nextActions.push({
+          category: 'document',
+          label: `Capture extraction fields for ${document.label.toLowerCase()}`,
+          detail: `Missing extraction fields: ${document.missingExtractionFields.join(', ')}.`,
+        });
       }
       if (blockingRiskCount > 0 && impactedTargets.size > 0) {
-        nextActions.push(`Rebuild packet trust for ${[...impactedTargets].slice(0, 3).join(', ')} after doc cleanup.`);
+        nextActions.push({
+          category: 'packet',
+          label: `Rebuild packet trust for ${[...impactedTargets].slice(0, 3).join(', ')}`,
+          detail: 'Refresh document-backed packet fields after this document is cleaned up.',
+        });
       }
       if (impactedFields.size > 0) {
         const fieldPreview = [...impactedFields.values()].slice(0, 3).map((field) => `${field.label} (${field.targetLabel})`).join(', ');
-        nextActions.push(`Recheck impacted packet fields: ${fieldPreview}.`);
+        nextActions.push({
+          category: 'review',
+          label: 'Recheck impacted packet fields',
+          detail: `${fieldPreview}.`,
+        });
       }
 
       const score =

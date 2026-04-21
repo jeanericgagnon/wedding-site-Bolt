@@ -92,9 +92,18 @@ describe('name change document repair queue', () => {
       }),
     ]));
     expect(queue[0].nextActions).toEqual(expect.arrayContaining([
-      expect.stringContaining('Fill metadata:'),
-      expect.stringContaining('Capture extraction fields:'),
-      expect.stringContaining('Recheck impacted packet fields:'),
+      expect.objectContaining({
+        category: 'document',
+        label: expect.stringContaining('Fill metadata'),
+      }),
+      expect.objectContaining({
+        category: 'document',
+        label: expect.stringContaining('Capture extraction fields'),
+      }),
+      expect.objectContaining({
+        category: 'review',
+        label: 'Recheck impacted packet fields',
+      }),
     ]));
   });
 
@@ -111,7 +120,10 @@ describe('name change document repair queue', () => {
         intakeStatus: 'not_started',
         payoffSummary: expect.stringContaining('restores a missing required artifact'),
         nextActions: expect.arrayContaining([
-          expect.stringContaining('Add certified marriage certificate to intake'),
+          expect.objectContaining({
+            category: 'document',
+            label: 'Add certified marriage certificate to intake',
+          }),
         ]),
       }),
     ]));

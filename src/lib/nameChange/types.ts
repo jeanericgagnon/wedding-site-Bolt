@@ -437,11 +437,7 @@ export interface NameChangeTargetExecutionSnapshot {
   targetLabel: string;
   ready: boolean;
   blockers: string[];
-  nextAction: {
-    category: 'packet' | 'dependency' | 'checklist' | 'document' | 'review';
-    label: string;
-    detail: string;
-  };
+  nextAction: NameChangeGuidedAction;
   readinessSummary: {
     status: 'ready' | 'blocked' | 'attention';
     blockingFieldRisks: number;
@@ -471,6 +467,12 @@ export interface NameChangeTargetExecutionSnapshot {
     status: 'ready' | 'missing' | 'attention';
     reason: string;
   }>;
+}
+
+export interface NameChangeGuidedAction {
+  category: 'packet' | 'dependency' | 'checklist' | 'document' | 'review';
+  label: string;
+  detail: string;
 }
 
 export interface NameChangeMarriageCertificateExtraction {

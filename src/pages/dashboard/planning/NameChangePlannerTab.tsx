@@ -1271,9 +1271,12 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                     {item.nextActions.length > 0 ? (
                       <div className="mt-3 rounded-lg bg-surface-subtle/60 p-3">
                         <p className="text-xs uppercase tracking-wide text-text-tertiary">Next repair actions</p>
-                        <ul className="mt-2 space-y-1 text-xs text-text-secondary">
+                        <ul className="mt-2 space-y-2 text-xs text-text-secondary">
                           {item.nextActions.map((action) => (
-                            <li key={action}>• {action}</li>
+                            <li key={`${action.category}:${action.label}`} className="rounded-lg border border-border-subtle bg-white/70 px-3 py-2">
+                              <p className="font-medium text-text-primary">{action.label}</p>
+                              <p className="mt-1 text-xs text-text-secondary">{action.detail}</p>
+                            </li>
                           ))}
                         </ul>
                       </div>
