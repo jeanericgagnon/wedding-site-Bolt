@@ -1811,8 +1811,8 @@ export const DashboardMessages: React.FC = () => {
         const audience = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all';
         const recipients = getRecipients(audience);
         const deliveredCount = message.channel === 'sms'
-          ? recipients.filter((guest) => !!guest.phone).length
-          : recipients.filter((guest) => !!guest.email).length;
+          ? recipients.filter((guest) => hasReachablePhone(guest.phone)).length
+          : recipients.filter((guest) => hasReachableEmail(guest.email)).length;
         const skippedCount = Math.max(recipients.length - deliveredCount, 0);
 
         setMessages((prev) => prev.map((item) => (
@@ -1887,8 +1887,8 @@ export const DashboardMessages: React.FC = () => {
       const audience = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all';
       const recipients = getRecipients(audience);
       const deliveredCount = message.channel === 'sms'
-        ? recipients.filter((guest) => !!guest.phone).length
-        : recipients.filter((guest) => !!guest.email).length;
+        ? recipients.filter((guest) => hasReachablePhone(guest.phone)).length
+        : recipients.filter((guest) => hasReachableEmail(guest.email)).length;
       const skippedCount = Math.max(recipients.length - deliveredCount, 0);
 
       setMessages((prev) => prev.map((item) => (
@@ -2117,8 +2117,8 @@ export const DashboardMessages: React.FC = () => {
           const audience = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all';
           const recipients = getRecipients(audience);
           const deliveredCount = message.channel === 'sms'
-            ? recipients.filter((guest) => !!guest.phone).length
-            : recipients.filter((guest) => !!guest.email).length;
+            ? recipients.filter((guest) => hasReachablePhone(guest.phone)).length
+            : recipients.filter((guest) => hasReachableEmail(guest.email)).length;
           const skippedCount = Math.max(recipients.length - deliveredCount, 0);
           skippedRecipients += skippedCount;
 
@@ -2309,8 +2309,8 @@ export const DashboardMessages: React.FC = () => {
         campaignType: 'save-the-date',
         templateKey: 'save-the-date',
         recipient_count: guests.length,
-        reachable_count: guests.filter((guest) => !!guest.email).length,
-        skipped_count: guests.filter((guest) => !guest.email).length,
+        reachable_count: guests.filter((guest) => hasReachableEmail(guest.email)).length,
+        skipped_count: guests.filter((guest) => !hasReachableEmail(guest.email)).length,
       },
       scheduled_for: tomorrow.toISOString(),
       status: 'scheduled',
