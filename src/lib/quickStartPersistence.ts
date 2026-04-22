@@ -282,6 +282,6 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     followUpAnswers: restoredFollowUpAnswers,
     showFollowUps,
     clarifyingState,
-    viewState: viewState === 'followups' && !hasOpenFollowUps ? 'question' : viewState,
+    viewState: viewState === 'followups' && !showFollowUps ? 'question' : viewState,
   };
 };

@@ -408,4 +408,36 @@ describe('quickStartStateTransfer', () => {
       lodging: 'Need to confirm hotel block',
     });
   });
+
+  it('rewrites stale follow-up view state back to question when the follow-up flag is off', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      showFollowUps: false,
+      viewState: 'followups',
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'transport',
+            category: 'travel',
+            question: 'How should guests get there?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.transport'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'pending',
+            answer: '',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    }));
+
+    const restored = readQuickStartDraftSnapshot();
+
+    expect(restored?.showFollowUps).toBe(false);
+    expect(restored?.viewState).toBe('question');
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').viewState).toBe('question');
+  });
 });

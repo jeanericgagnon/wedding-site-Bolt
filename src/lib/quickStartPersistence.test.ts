@@ -647,6 +647,35 @@ describe('quickStartPersistence', () => {
     expect(normalized.followUpAnswers).toEqual({ transport: 'Need shuttle details' });
   });
 
+  it('reopens question view when follow-up flag is off even if stale follow-up view was persisted', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      showFollowUps: false,
+      viewState: 'followups',
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'transport',
+            category: 'travel',
+            question: 'How should guests get there?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.transport'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'pending',
+            answer: '',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.showFollowUps).toBe(false);
+    expect(normalized.viewState).toBe('question');
+  });
+
   it('keeps answered follow-up answers when older restores still store them on questions without history', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       followUpAnswers: {
