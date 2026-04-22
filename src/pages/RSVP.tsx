@@ -215,8 +215,9 @@ function parseEventSelectionsFromNotes(notes: string | null, guest: Guest): { cl
     const eventPart = bracketMatch[1] || '';
     const map = Object.fromEntries(
       eventPart
-        .split(',')
+        .split(/[;,/&|]/)
         .map((piece) => piece.trim())
+        .filter(Boolean)
         .map((piece) => {
           const [k, v] = piece.split(':').map((x) => (x || '').trim().toLowerCase());
           return [k, v === 'yes'];
