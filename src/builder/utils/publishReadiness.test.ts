@@ -1099,6 +1099,36 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('falls back to the lowest-order real page when persisted page order indexes are numeric strings', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages = [
+      {
+        ...project.pages[0],
+        id: 'page-2',
+        title: 'Details',
+        // @ts-expect-error exercising runtime guard for incomplete persisted data
+        orderIndex: '2',
+        sections: [makeSection({ id: 'details-hidden', enabled: false })],
+      },
+      {
+        ...project.pages[0],
+        id: 'page-1',
+        title: 'Home',
+        // @ts-expect-error exercising runtime guard for incomplete persisted data
+        orderIndex: '0',
+        sections: [makeSection({ id: 'home-live', enabled: true })],
+      },
+    ];
+
+    const readiness = buildPublishReadiness(project, undefined, { activePageId: 'missing-page' });
+    expect(readiness.find((item) => item.id === 'current-page')).toEqual({
+      id: 'current-page',
+      label: 'Current page has visible content',
+      done: true,
+      detail: 'Home has visible sections.',
+    });
+  });
+
   it('returns no-pages when persisted page arrays contain only null entries', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages = [

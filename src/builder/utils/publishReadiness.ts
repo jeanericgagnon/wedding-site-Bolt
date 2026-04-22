@@ -19,13 +19,18 @@ export interface PublishReadinessItem {
 const hasNonEmptyString = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
 const isPageLike = (value: unknown): value is BuilderProject['pages'][number] =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
-const isFiniteOrderIndex = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
+const getComparableOrderIndex = (value: unknown) => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number(value.trim());
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return Number.MAX_SAFE_INTEGER;
+};
 const getNormalizedPages = (project: BuilderProject) =>
-  (Array.isArray(project.pages) ? project.pages.filter(isPageLike) : []).sort((a, b) => {
-    const aIndex = isFiniteOrderIndex(a?.orderIndex) ? a.orderIndex : Number.MAX_SAFE_INTEGER;
-    const bIndex = isFiniteOrderIndex(b?.orderIndex) ? b.orderIndex : Number.MAX_SAFE_INTEGER;
-    return aIndex - bIndex;
-  });
+  (Array.isArray(project.pages) ? project.pages.filter(isPageLike) : []).sort((a, b) =>
+    getComparableOrderIndex(a?.orderIndex) - getComparableOrderIndex(b?.orderIndex)
+  );
 const isSectionLike = (value: unknown): value is NonNullable<BuilderProject['pages'][number]>['sections'][number] =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 const getNormalizedSections = (page: BuilderProject['pages'][number] | undefined) =>
