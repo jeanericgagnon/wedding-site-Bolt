@@ -7,7 +7,7 @@ import { isPaymentGateEnabled } from '../lib/paymentGate';
 import { consumeSignupReturnPath, writeSignupReturnPath } from '../lib/signupContinuation';
 import { resolveSignupReturnPath } from '../lib/signupReturnResolver';
 import { buildQuickStartEntryPath } from '../lib/quickStartContinuation';
-import { createQuickStartDraftSnapshot, persistQuickStartDraftSnapshot } from '../lib/quickStartStateTransfer';
+import { createQuickStartDraftSnapshot, hasMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnapshot } from '../lib/quickStartStateTransfer';
 
 const makeBaseSlug = (email: string) => {
   const local = (email.split('@')[0] || 'ourwedding').toLowerCase();
@@ -72,10 +72,11 @@ export const Signup: React.FC = () => {
 
   const explicitReturnPath = (location.state as { returnTo?: string } | null)?.returnTo || null;
   const quickStartDraft = (location.state as { quickStartDraft?: unknown } | null)?.quickStartDraft;
-  const normalizedQuickStartDraft = useMemo(
-    () => (quickStartDraft ? createQuickStartDraftSnapshot(quickStartDraft) : null),
-    [quickStartDraft],
-  );
+  const normalizedQuickStartDraft = useMemo(() => {
+    if (!quickStartDraft) return null;
+    const normalized = createQuickStartDraftSnapshot(quickStartDraft);
+    return hasMeaningfulQuickStartDraftSnapshot(normalized) ? normalized : null;
+  }, [quickStartDraft]);
 
   useEffect(() => {
     if (!explicitReturnPath && !normalizedQuickStartDraft && !hasInviteContext) {

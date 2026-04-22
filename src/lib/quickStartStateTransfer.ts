@@ -1,10 +1,23 @@
 import { normalizeQuickStartDraftSnapshot, type QuickStartDraftSnapshot } from './quickStartPersistence';
+import { hasMeaningfulQuickStartAnswers } from './quickStartHydration';
 
 export const QUICK_START_STORAGE_KEY = 'dayoflove:quickstart-shell';
 
 export const createQuickStartDraftSnapshot = (value: unknown): QuickStartDraftSnapshot => (
   normalizeQuickStartDraftSnapshot(value)
 );
+
+
+export const hasMeaningfulQuickStartDraftSnapshot = (snapshot: QuickStartDraftSnapshot | null | undefined) => {
+  if (!snapshot) return false;
+
+  return hasMeaningfulQuickStartAnswers(snapshot.initialSetupAnswers)
+    || snapshot.currentIndex > 0
+    || Object.keys(snapshot.followUpAnswers).length > 0
+    || snapshot.showFollowUps
+    || snapshot.viewState !== 'question'
+    || snapshot.clarifyingState !== null;
+};
 
 export const persistQuickStartDraftSnapshot = (value: unknown) => {
   if (typeof window === 'undefined') return null;

@@ -71,4 +71,24 @@ describe('Signup quick start handoff', () => {
       expect(stored.viewState).toBe('question');
     });
   });
+
+
+  it('ignores empty carried onboarding drafts during signup handoff', async () => {
+    useLocationMock.mockReturnValue({ state: {
+      quickStartDraft: {
+        currentIndex: 0,
+        initialSetupAnswers: {},
+        followUpAnswers: {},
+        showFollowUps: false,
+        viewState: 'question',
+        clarifyingState: null,
+      },
+    } });
+
+    render(<Signup />);
+
+    await waitFor(() => {
+      expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
+    });
+  });
 });
