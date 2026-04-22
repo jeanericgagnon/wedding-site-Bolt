@@ -73,7 +73,14 @@ function normalizeDraftDocumentKind(value: string) {
     state_identification: 'current_drivers_license',
     state_identification_card: 'current_drivers_license',
     social_security: 'social_security_card',
+    social_security_card: 'social_security_card',
     social_security_card_copy: 'social_security_card',
+    ssn_card: 'social_security_card',
+    birth_cert: 'birth_certificate',
+    birth_record: 'birth_certificate',
+    utility_bill: 'proof_of_address',
+    residence_proof: 'proof_of_address',
+    proof_address: 'proof_of_address',
   };
 
   const canonicalKind = (kindAliases[normalizedKind] ?? normalizedKind) as NameChangeDocumentInput['document_kind'];

@@ -102,6 +102,18 @@ describe('name change intake draft helpers', () => {
       id: 'draft-current_drivers_license',
       document_kind: 'current_drivers_license',
     });
+    expect(createDraftNameChangeDocument('ssn card' as never, ' SSN card ')).toMatchObject({
+      id: 'draft-social_security_card',
+      document_kind: 'social_security_card',
+    });
+    expect(createDraftNameChangeDocument('birth cert' as never, ' Birth cert ')).toMatchObject({
+      id: 'draft-birth_certificate',
+      document_kind: 'birth_certificate',
+    });
+    expect(createDraftNameChangeDocument('utility bill' as never, ' Utility bill ')).toMatchObject({
+      id: 'draft-proof_of_address',
+      document_kind: 'proof_of_address',
+    });
     expect(normalizeDraftNameChangeDocumentId('draft-social-security-card-copy')).toBe('draft-social_security_card');
   });
 
