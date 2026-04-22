@@ -172,6 +172,17 @@ describe('publicSiteProject', () => {
     expect(getIsPublishedFromSiteRow(row)).toBe(true);
   });
 
+  it('recognizes published state from stringified site_json lastPublishedAt metadata when version is missing', () => {
+    const row = {
+      site_json: JSON.stringify({
+        ...draftProject,
+        lastPublishedAt: '2026-04-20T12:00:00.000Z',
+      }),
+    };
+
+    expect(getIsPublishedFromSiteRow(row)).toBe(true);
+  });
+
   it('extracts published wedding data snapshot from stringified site rows', () => {
     const row = {
       is_published: true,
