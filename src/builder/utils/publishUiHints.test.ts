@@ -120,6 +120,7 @@ describe('publishUiHints', () => {
     expect(getPublishStatusLabel(true, false)).toBe('Live site is up to date');
     expect(getPublishStatusLabel(false, false)).not.toBe('Live site is up to date');
     expect(getPublishStatusLabel(false, true)).not.toBe('Draft only');
+    expect(getPublishStatusLabel(true, true)).not.toBe('Live site is up to date');
   });
 
   it('labels publish progress for empty, partial, and complete readiness', () => {
