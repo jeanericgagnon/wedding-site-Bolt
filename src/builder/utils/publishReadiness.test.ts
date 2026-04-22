@@ -186,6 +186,17 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('marks saved readiness complete when the builder is clean', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+
+    expect(buildPublishReadiness(project, undefined, { isDirty: false }).find((item) => item.id === 'saved')).toEqual({
+      id: 'saved',
+      label: 'Latest edits are saved',
+      done: true,
+      detail: 'Everything is saved.',
+    });
+  });
+
   it('shows current-page readiness against the active page, not just the first page', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages = [
