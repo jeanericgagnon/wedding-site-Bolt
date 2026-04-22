@@ -587,6 +587,28 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('breaks tied venue order indexes by venue id so venue readiness stays deterministic', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
+    const data = createEmptyWeddingData();
+    data.couple.partner1Name = 'Alex';
+    data.couple.partner2Name = 'Jordan';
+    data.event.weddingDateISO = '2027-06-12';
+    data.rsvp.enabled = true;
+    data.venues = [
+      { id: 'venue-zeta', orderIndex: 1, name: '   ', address: '   ' },
+      { id: 'venue-alpha', orderIndex: 1, name: 'Sunset Cliffs', address: '   ' },
+    ];
+
+    expect(getPublishIssue(project, data)).toBeNull();
+    expect(buildPublishReadiness(project, data).find((item) => item.id === 'venue')).toEqual({
+      id: 'venue',
+      label: 'Venue details are set',
+      done: true,
+      detail: 'Venue details are ready.',
+    });
+  });
+
   it('marks date readiness incomplete when the wedding date is an empty string', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];

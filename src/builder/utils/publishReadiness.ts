@@ -55,10 +55,13 @@ const isVenueLike = (value: unknown): value is NonNullable<WeddingDataV1['venues
   && value !== null
   && !Array.isArray(value)
   && hasNonEmptyString((value as { id?: unknown }).id);
-const getNormalizedVenueIdentity = (venue: NonNullable<WeddingDataV1['venues']>[number]) =>
-  `${getComparableOrderIndex((venue as { orderIndex?: unknown }).orderIndex)}:${getNormalizedId((venue as { id?: unknown }).id)}`;
 const getSortedNormalizedVenues = (weddingData?: WeddingDataV1 | null) =>
-  getNormalizedVenues(weddingData).sort((a, b) => getNormalizedVenueIdentity(a).localeCompare(getNormalizedVenueIdentity(b)));
+  getNormalizedVenues(weddingData).sort((a, b) => {
+    const orderDelta = getComparableOrderIndex((a as { orderIndex?: unknown }).orderIndex)
+      - getComparableOrderIndex((b as { orderIndex?: unknown }).orderIndex);
+    if (orderDelta !== 0) return orderDelta;
+    return getNormalizedId((a as { id?: unknown }).id).localeCompare(getNormalizedId((b as { id?: unknown }).id));
+  });
 const getNormalizedVenues = (weddingData?: WeddingDataV1 | null) =>
   (Array.isArray(weddingData?.venues) ? weddingData.venues.filter(isVenueLike) : []);
 
