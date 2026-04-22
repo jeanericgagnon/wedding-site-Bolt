@@ -177,4 +177,33 @@ describe('quickStartPersistence', () => {
     expect(normalized.clarifyingState?.clarifying.questions).toEqual([]);
     expect(normalized.showFollowUps).toBe(false);
   });
+
+  it('drops clarifying questions with blank ids after trimming during restore', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      showFollowUps: true,
+      viewState: 'followups',
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: '   ',
+            category: 'event_structure',
+            question: 'When is dinner?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['events.0.time'],
+            affectedSections: ['schedule'],
+            skippable: true,
+            round: 1,
+            status: 'pending',
+            answer: '',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.clarifyingState?.clarifying.questions).toEqual([]);
+    expect(normalized.showFollowUps).toBe(false);
+  });
 });
