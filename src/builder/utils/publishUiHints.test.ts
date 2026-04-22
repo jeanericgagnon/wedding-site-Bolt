@@ -38,6 +38,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('Select a section on the canvas');
   });
 
+  it('returns section guidance when short blocker copy is lowercased by upstream formatting', () => {
+    const hints = getPublishBlockedHints('turn on a section before going live.');
+    expect(hints[0]).toContain('Select a section on the canvas');
+  });
+
   it('returns partner-name guidance', () => {
     const hints = getPublishBlockedHints('Add both partner names before publishing.');
     expect(hints[0]).toContain('couple details');
