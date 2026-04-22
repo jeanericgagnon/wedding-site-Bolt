@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { consumeSignupReturnPath, readSignupReturnPath, resolvePostSignupPath, writeSignupReturnPath } from './signupContinuation';
+import { clearSignupReturnPath, consumeSignupReturnPath, readSignupReturnPath, resolvePostSignupPath, writeSignupReturnPath } from './signupContinuation';
 import { buildQuickStartEntryPath } from './quickStartContinuation';
 
 describe('signupContinuation', () => {
@@ -68,4 +68,24 @@ describe('signupContinuation', () => {
     expect(readSignupReturnPath()).toBe('/onboarding/quick-start');
     expect(window.localStorage.getItem('dayoflove:signup-return-path')).toBe('/onboarding/quick-start');
   });
+
+  it('skips redundant signup return path cleanup deletes when storage is already clear', () => {
+    const removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem');
+
+    clearSignupReturnPath();
+
+    expect(removeItemSpy).not.toHaveBeenCalled();
+    removeItemSpy.mockRestore();
+  });
+
+  it('tolerates signup return path cleanup failures', () => {
+    writeSignupReturnPath(buildQuickStartEntryPath());
+    const removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+      throw new Error('blocked');
+    });
+
+    expect(() => clearSignupReturnPath()).not.toThrow();
+    removeItemSpy.mockRestore();
+  });
+
 });

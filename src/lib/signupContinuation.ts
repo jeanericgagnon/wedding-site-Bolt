@@ -3,6 +3,17 @@ const SIGNUP_RETURN_PATH_KEY = 'dayoflove:signup-return-path';
 const canUseStorage = () => typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
 const isSafeReturnPath = (path: string) => path.startsWith('/') && !path.startsWith('//');
 
+export const clearSignupReturnPath = () => {
+  if (!canUseStorage()) return;
+  try {
+    if (window.localStorage.getItem(SIGNUP_RETURN_PATH_KEY) !== null) {
+      window.localStorage.removeItem(SIGNUP_RETURN_PATH_KEY);
+    }
+  } catch {
+    // ignore
+  }
+};
+
 export const readSignupReturnPath = (): string | null => {
   if (!canUseStorage()) return null;
   try {
@@ -17,7 +28,7 @@ export const readSignupReturnPath = (): string | null => {
     }
 
     if (raw !== null) {
-      window.localStorage.removeItem(SIGNUP_RETURN_PATH_KEY);
+      clearSignupReturnPath();
     }
     return null;
   } catch {
@@ -39,7 +50,7 @@ export const writeSignupReturnPath = (path: string | null | undefined) => {
     }
 
     if (existingPath !== null) {
-      window.localStorage.removeItem(SIGNUP_RETURN_PATH_KEY);
+      clearSignupReturnPath();
     }
   } catch {
     // ignore
