@@ -54,4 +54,20 @@ describe('mediaService', () => {
       altText: 'Couple portrait',
     }));
   });
+
+  it('stores video uploads without pretending they have image thumbnails', async () => {
+    const file = new File(['video'], 'toast.mp4', { type: 'video/mp4' });
+    upload.mockResolvedValue({
+      url: 'https://cdn.example.com/toast.mp4',
+      path: 'w1/toast.mp4',
+    });
+    save.mockResolvedValue({ id: 'asset-2' });
+
+    await mediaService.uploadAsset('w1', file);
+
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({
+      assetType: 'video',
+      thumbnailUrl: undefined,
+    }));
+  });
 });
