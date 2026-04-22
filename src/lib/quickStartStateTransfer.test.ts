@@ -21,33 +21,24 @@ describe('quickStartStateTransfer', () => {
 
   it('survives malformed existing storage by normalizing on read', () => {
     window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({ followUpAnswers: ['bad'] }));
-    expect(readQuickStartDraftSnapshot()?.followUpAnswers).toEqual({});
-    expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBe(JSON.stringify({
-      initialSetupAnswers: {
-        names: '',
-        labelPreference: 'names-only',
-        customLabelPartnerOne: '',
-        customLabelPartnerTwo: '',
-        whenWhere: '',
-        venueNameOrTbd: '',
-        style: '',
-        guestFeel: '',
-        weekendEventsRaw: '',
-        ceremonyArrivalTime: '',
-        guestCountBand: '',
-        plusOnePolicy: '',
-        childrenAllowed: '',
-        rsvpDeadline: '',
-        mealChoice: '',
-        registryIntent: '',
-        optionalStory: '',
-      },
-      currentIndex: 0,
-      followUpAnswers: {},
-      showFollowUps: false,
-      clarifyingState: null,
-      viewState: 'question',
+    expect(readQuickStartDraftSnapshot()).toBeNull();
+    expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
+  });
+
+
+  it('clears empty quick start snapshots when read normalization strips them to inert state', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      currentIndex: Number.MAX_SAFE_INTEGER + 1,
+      followUpAnswers: ['bad'],
+      showFollowUps: 'true',
+      clarifyingState: { clarifying: [] },
+      viewState: 'bogus',
     }));
+
+    const restored = readQuickStartDraftSnapshot();
+
+    expect(restored).toBeNull();
+    expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
   });
 
 
@@ -75,8 +66,8 @@ describe('quickStartStateTransfer', () => {
 
     const restored = readQuickStartDraftSnapshot();
 
-    expect(restored?.currentIndex).toBe(0);
-    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').currentIndex).toBe(0);
+    expect(restored).toBeNull();
+    expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
   });
 
 
@@ -90,9 +81,8 @@ describe('quickStartStateTransfer', () => {
 
     const restored = readQuickStartDraftSnapshot();
 
-    expect(restored?.clarifyingState).toBeNull();
-    expect(restored?.followUpAnswers).toEqual({});
-    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').followUpAnswers).toEqual({});
+    expect(restored).toBeNull();
+    expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
   });
 
   it('rehydrates older clarifying snapshots that were missing draft outputs', () => {
@@ -1243,10 +1233,8 @@ describe('quickStartStateTransfer', () => {
 
     const restored = readQuickStartDraftSnapshot();
 
-    expect(restored?.showFollowUps).toBe(false);
-    expect(restored?.viewState).toBe('question');
-    expect(restored?.followUpAnswers).toEqual({});
-    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').followUpAnswers).toEqual({});
+    expect(restored).toBeNull();
+    expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
   });
 
 
@@ -1269,10 +1257,8 @@ describe('quickStartStateTransfer', () => {
 
     const restored = readQuickStartDraftSnapshot();
 
-    expect(restored?.showFollowUps).toBe(false);
-    expect(restored?.viewState).toBe('question');
-    expect(restored?.followUpAnswers).toEqual({});
-    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').followUpAnswers).toEqual({});
+    expect(restored).toBeNull();
+    expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
   });
 
 
@@ -1295,10 +1281,8 @@ describe('quickStartStateTransfer', () => {
 
     const restored = readQuickStartDraftSnapshot();
 
-    expect(restored?.showFollowUps).toBe(false);
-    expect(restored?.viewState).toBe('question');
-    expect(restored?.followUpAnswers).toEqual({});
-    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').followUpAnswers).toEqual({});
+    expect(restored).toBeNull();
+    expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
   });
 
 
@@ -1320,10 +1304,8 @@ describe('quickStartStateTransfer', () => {
 
     const restored = readQuickStartDraftSnapshot();
 
-    expect(restored?.showFollowUps).toBe(false);
-    expect(restored?.viewState).toBe('question');
-    expect(restored?.followUpAnswers).toEqual({});
-    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').followUpAnswers).toEqual({});
+    expect(restored).toBeNull();
+    expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
   });
 
   it('rewrites stale thinking restores back to question when the clarifying state is missing entirely', () => {
@@ -1338,10 +1320,8 @@ describe('quickStartStateTransfer', () => {
 
     const restored = readQuickStartDraftSnapshot();
 
-    expect(restored?.showFollowUps).toBe(false);
-    expect(restored?.viewState).toBe('question');
-    expect(restored?.followUpAnswers).toEqual({});
-    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').followUpAnswers).toEqual({});
+    expect(restored).toBeNull();
+    expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
   });
 
 
@@ -1356,10 +1336,8 @@ describe('quickStartStateTransfer', () => {
 
     const restored = readQuickStartDraftSnapshot();
 
-    expect(restored?.showFollowUps).toBe(false);
-    expect(restored?.viewState).toBe('question');
-    expect(restored?.followUpAnswers).toEqual({});
-    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').followUpAnswers).toEqual({});
+    expect(restored).toBeNull();
+    expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
   });
 
   it('rewrites stale thinking restores back to question when no open clarifying work remains', () => {

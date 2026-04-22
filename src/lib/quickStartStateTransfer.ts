@@ -11,12 +11,20 @@ export const createQuickStartDraftSnapshot = (value: unknown): QuickStartDraftSn
 export const hasMeaningfulQuickStartDraftSnapshot = (snapshot: QuickStartDraftSnapshot | null | undefined) => {
   if (!snapshot) return false;
 
+  const hasMeaningfulClarifyingState = Boolean(
+    snapshot.clarifyingState && (
+      snapshot.clarifyingState.clarifying.questions.length > 0
+      || snapshot.clarifyingState.clarifying.history.length > 0
+      || Object.keys(snapshot.clarifyingState.draftOutputs).length > 0
+    )
+  );
+
   return hasMeaningfulQuickStartAnswers(snapshot.initialSetupAnswers)
     || snapshot.currentIndex > 0
     || Object.keys(snapshot.followUpAnswers).length > 0
     || snapshot.showFollowUps
     || snapshot.viewState !== 'question'
-    || snapshot.clarifyingState !== null;
+    || hasMeaningfulClarifyingState;
 };
 
 export const persistQuickStartDraftSnapshot = (value: unknown) => {
@@ -47,12 +55,17 @@ export const readQuickStartDraftSnapshot = (): QuickStartDraftSnapshot | null =>
   if (!raw) return null;
   try {
     const normalized = createQuickStartDraftSnapshot(JSON.parse(raw));
+    const hasMeaningfulDraft = hasMeaningfulQuickStartDraftSnapshot(normalized);
     try {
-      window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify(normalized));
+      if (hasMeaningfulDraft) {
+        window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify(normalized));
+      } else {
+        window.localStorage.removeItem(QUICK_START_STORAGE_KEY);
+      }
     } catch {
       // ignore storage rewrite failures and still return the normalized draft
     }
-    return normalized;
+    return hasMeaningfulDraft ? normalized : null;
   } catch {
     try {
       window.localStorage.removeItem(QUICK_START_STORAGE_KEY);
