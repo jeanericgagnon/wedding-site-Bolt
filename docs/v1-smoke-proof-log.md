@@ -79,6 +79,7 @@ If the product cannot be shown, shared, and trusted publicly, the v1 claim is de
 - Blockers:
   - Still need one logged human route-note pass for Home -> signup/demo/auth -> onboarding/builder -> public site -> RSVP, focused on UX quality rather than route availability.
   - Still need explicit manual verification that privacy/access/publish wording matches live runtime behavior in the canonical couple path.
+  - Still need explicit manual verification that marketing, settings, and billing wording stays honest against the live runtime behavior.
 
 ---
 
