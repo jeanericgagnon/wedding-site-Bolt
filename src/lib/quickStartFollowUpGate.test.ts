@@ -60,4 +60,40 @@ describe('quickStartFollowUpGate', () => {
 
     expect(canResumeQuickStartFollowUps(true, clarifying)).toBe(false);
   });
+
+  it('does not resume follow-ups when restored clarifying questions were only skipped', () => {
+    const clarifying = createEmptyClarifyingPersistence();
+    clarifying.clarifying.questions = [{
+      id: 'q1',
+      category: 'travel',
+      question: 'How should guests get there?',
+      expectedAnswerType: 'short_text',
+      targetFields: ['travel.transport'],
+      affectedSections: ['travel'],
+      skippable: true,
+      round: 1,
+      status: 'skipped',
+      answer: '',
+    }];
+
+    expect(canResumeQuickStartFollowUps(true, clarifying)).toBe(false);
+  });
+
+  it('keeps follow-ups resumable for unresolved clarifying questions', () => {
+    const clarifying = createEmptyClarifyingPersistence();
+    clarifying.clarifying.questions = [{
+      id: 'q1',
+      category: 'travel',
+      question: 'How should guests get there?',
+      expectedAnswerType: 'short_text',
+      targetFields: ['travel.transport'],
+      affectedSections: ['travel'],
+      skippable: true,
+      round: 1,
+      status: 'unresolved',
+      answer: '',
+    }];
+
+    expect(canResumeQuickStartFollowUps(true, clarifying)).toBe(true);
+  });
 });
