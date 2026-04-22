@@ -24,6 +24,8 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
     || normalizedErrorLower.includes('everything is saved')
     || normalizedErrorLower.includes('ready to go live')
     || normalizedErrorLower.includes('no checks yet')
+    || normalizedErrorLower.includes('thing left before guest-facing launch')
+    || normalizedErrorLower.includes('things left before guest-facing launch')
     || normalizedErrorLower.includes('draft only')
     || normalizedErrorLower.includes('draft has unsaved changes')
     || normalizedErrorLower.includes('live site unchanged')

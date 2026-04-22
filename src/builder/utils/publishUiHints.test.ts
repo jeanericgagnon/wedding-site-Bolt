@@ -267,6 +267,15 @@ describe('publishUiHints', () => {
     ]);
   });
 
+  it('does not mistake remaining-progress copy for a blocker', () => {
+    expect(getPublishBlockedHints('1 thing left before guest-facing launch')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
+    expect(getPublishBlockedHints('2 things left before guest-facing launch')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
+  });
+
   it('does not mistake empty-progress copy for a blocker', () => {
     expect(getPublishBlockedHints('No checks yet')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
