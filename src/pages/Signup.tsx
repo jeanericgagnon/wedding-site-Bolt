@@ -7,7 +7,7 @@ import { isPaymentGateEnabled } from '../lib/paymentGate';
 import { consumeSignupReturnPath, writeSignupReturnPath } from '../lib/signupContinuation';
 import { resolveSignupReturnPath } from '../lib/signupReturnResolver';
 import { buildQuickStartEntryPath } from '../lib/quickStartContinuation';
-import { persistQuickStartDraftSnapshot } from '../lib/quickStartStateTransfer';
+import { createQuickStartDraftSnapshot, persistQuickStartDraftSnapshot } from '../lib/quickStartStateTransfer';
 
 const makeBaseSlug = (email: string) => {
   const local = (email.split('@')[0] || 'ourwedding').toLowerCase();
@@ -72,17 +72,21 @@ export const Signup: React.FC = () => {
 
   const explicitReturnPath = (location.state as { returnTo?: string } | null)?.returnTo || null;
   const quickStartDraft = (location.state as { quickStartDraft?: unknown } | null)?.quickStartDraft;
+  const normalizedQuickStartDraft = useMemo(
+    () => (quickStartDraft ? createQuickStartDraftSnapshot(quickStartDraft) : null),
+    [quickStartDraft],
+  );
 
   useEffect(() => {
-    if (!explicitReturnPath && !quickStartDraft && !hasInviteContext) {
+    if (!explicitReturnPath && !normalizedQuickStartDraft && !hasInviteContext) {
       writeSignupReturnPath(null);
     }
-  }, [explicitReturnPath, quickStartDraft, hasInviteContext]);
+  }, [explicitReturnPath, normalizedQuickStartDraft, hasInviteContext]);
 
   useEffect(() => {
     if (explicitReturnPath) writeSignupReturnPath(explicitReturnPath);
-    if (quickStartDraft) persistQuickStartDraftSnapshot(quickStartDraft);
-  }, [explicitReturnPath, quickStartDraft]);
+    if (normalizedQuickStartDraft) persistQuickStartDraftSnapshot(normalizedQuickStartDraft);
+  }, [explicitReturnPath, normalizedQuickStartDraft]);
 
   const inviteReturnSearch = useMemo(() => {
     if (!inviteToken) return '';
@@ -105,7 +109,7 @@ export const Signup: React.FC = () => {
     setError('');
     try {
       if (explicitReturnPath) writeSignupReturnPath(explicitReturnPath);
-      if (quickStartDraft) persistQuickStartDraftSnapshot(quickStartDraft);
+      if (normalizedQuickStartDraft) persistQuickStartDraftSnapshot(normalizedQuickStartDraft);
       const fallbackRedirectPath = paymentGateEnabled ? '/payment-required?oauth=google' : '/onboarding?oauth=google';
       const redirectPath = hasInviteContext
         ? `/accept-collaborator-invite${inviteReturnSearch}&oauth=google`

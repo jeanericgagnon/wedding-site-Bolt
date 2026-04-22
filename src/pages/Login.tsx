@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { consumeSignupReturnPath, writeSignupReturnPath } from '../lib/signupContinuation';
 import { resolveLoginReturnPath } from '../lib/loginReturnResolver';
-import { persistQuickStartDraftSnapshot } from '../lib/quickStartStateTransfer';
+import { createQuickStartDraftSnapshot, persistQuickStartDraftSnapshot } from '../lib/quickStartStateTransfer';
 
 type AuthView = 'login' | 'forgot-password' | 'forgot-sent';
 
@@ -30,6 +30,10 @@ export const Login: React.FC = () => {
 
   const explicitReturnPath = (location.state as { returnTo?: string } | null)?.returnTo || null;
   const quickStartDraft = (location.state as { quickStartDraft?: unknown } | null)?.quickStartDraft;
+  const normalizedQuickStartDraft = useMemo(
+    () => (quickStartDraft ? createQuickStartDraftSnapshot(quickStartDraft) : null),
+    [quickStartDraft],
+  );
 
   const inviteToken = searchParams.get('inviteToken');
   const inviteEmail = searchParams.get('inviteEmail');
@@ -48,14 +52,14 @@ export const Login: React.FC = () => {
   }, [inviteToken, inviteEmail]);
 
   useEffect(() => {
-    if (!explicitReturnPath && !quickStartDraft && !hasInviteContext) {
+    if (!explicitReturnPath && !normalizedQuickStartDraft && !hasInviteContext) {
       writeSignupReturnPath(null);
     }
-  }, [explicitReturnPath, quickStartDraft, hasInviteContext]);
+  }, [explicitReturnPath, normalizedQuickStartDraft, hasInviteContext]);
 
   useEffect(() => {
     if (explicitReturnPath) writeSignupReturnPath(explicitReturnPath);
-    if (quickStartDraft) persistQuickStartDraftSnapshot(quickStartDraft);
+    if (normalizedQuickStartDraft) persistQuickStartDraftSnapshot(normalizedQuickStartDraft);
 
     if (searchParams.get('reason') === 'session_expired') {
       setNotice('Your session expired. Please sign in again.');
@@ -96,7 +100,7 @@ export const Login: React.FC = () => {
       mounted = false;
       authListener.subscription.unsubscribe();
     };
-  }, [searchParams, navigate, inviteEmail, explicitReturnPath, quickStartDraft]);
+  }, [searchParams, navigate, inviteEmail, explicitReturnPath, normalizedQuickStartDraft]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
