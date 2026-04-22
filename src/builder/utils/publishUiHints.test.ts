@@ -555,6 +555,10 @@ describe('publishUiHints', () => {
     ]);
   });
 
+  it('still returns venue guidance for publishing-era venue blockers after CTA guard tightening', () => {
+    expect(getPublishBlockedHints('Add at least one venue before publishing.')[0]).toContain('venue');
+  });
+
   it('labels publish status across draft and live states', () => {
     expect(getPublishStatusLabel(false, true)).toBe('Draft has unsaved changes');
     expect(getPublishStatusLabel(false, false)).toBe('Draft only');
