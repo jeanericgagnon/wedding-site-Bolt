@@ -173,6 +173,18 @@ describe('publicSiteProject', () => {
     expect(getPublicBuilderProject(row)?.pages[0].sections[0].settings.headline).toBe('Published headline');
   });
 
+  it('recognizes published state from site_json flag even when is_published is false', () => {
+    const row = {
+      is_published: false,
+      site_json: {
+        ...draftProject,
+        publishStatus: 'published',
+      },
+    };
+
+    expect(getIsPublishedFromSiteRow(row)).toBe(true);
+  });
+
   it('recognizes published state from stringified site_json metadata when no published snapshot exists', () => {
     const row = {
       site_json: JSON.stringify({
