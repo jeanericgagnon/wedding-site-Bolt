@@ -158,6 +158,12 @@ describe('carryOverRegistryLinks', () => {
     ]);
   });
 
+  it('dedupes persisted registry links after normalization and keeps the stronger label', () => {
+    expect(parsePersistedRegistryLinks('https://zola.com/registry/jane/\nCustom Honeymoon Fund | https://zola.com/registry/jane')).toEqual([
+      { url: 'https://zola.com/registry/jane', sourceLabel: 'Custom Honeymoon Fund' },
+    ]);
+  });
+
   it('merges stronger carryover labels without dropping unmatched persisted registry links', () => {
     expect(mergeRegistrySourceLabels(
       [{ url: 'https://zola.com/registry/jane', sourceLabel: 'Custom Honeymoon Fund' }],

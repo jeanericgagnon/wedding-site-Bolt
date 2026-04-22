@@ -90,7 +90,7 @@ function finalizeCarryoverRegistryLink(
 export function parsePersistedRegistryLinks(raw: string | null | undefined): CarryoverRegistryLink[] {
   if (!raw?.trim()) return [];
 
-  return raw
+  const persisted = raw
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean)
@@ -115,6 +115,24 @@ export function parsePersistedRegistryLinks(raw: string | null | undefined): Car
       return sourceLabel ? [{ url: normalizedUrl, sourceLabel }] : [{ url: normalizedUrl }];
     })
     .filter((link): link is CarryoverRegistryLink => Boolean(link));
+
+  const deduped = new Map<string, CarryoverRegistryLink>();
+  for (const link of persisted) {
+    const existing = deduped.get(link.url);
+    if (!existing) {
+      deduped.set(link.url, link);
+      continue;
+    }
+
+    const existingInferredLabel = inferSourceLabel(existing.url);
+    if (!existing.sourceLabel && link.sourceLabel) {
+      deduped.set(link.url, link);
+    } else if (link.sourceLabel && existing.sourceLabel === existingInferredLabel && link.sourceLabel !== existing.sourceLabel) {
+      deduped.set(link.url, link);
+    }
+  }
+
+  return Array.from(deduped.values());
 }
 
 export function mergeRegistrySourceLabels(
