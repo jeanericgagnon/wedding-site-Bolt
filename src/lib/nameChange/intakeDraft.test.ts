@@ -106,6 +106,23 @@ describe('name change intake draft helpers', () => {
     ]);
   });
 
+  it('replaces legacy court-order draft fields instead of leaving duplicate alias rows behind', () => {
+    const next = upsertDraftNameChangeExtractedField([
+      {
+        document_id: 'draft-court_order_name_change',
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: '24-CV-1000',
+        source_type: 'manual',
+        is_verified: true,
+      },
+    ], 'draft-court_order', 'case_number', 'Case number', '24-CV-1188');
+
+    expect(next).toEqual([
+      expect.objectContaining({ document_id: 'draft-court_order', field_key: 'case_number', field_value_masked: '24-CV-1188' }),
+    ]);
+  });
+
   it('normalizes draft field labels and values before downstream document truth reads them', () => {
     const next = upsertDraftNameChangeExtractedField([], 'draft-marriage_certificate', 'county', '  ', '  San Diego  ');
 
@@ -116,6 +133,31 @@ describe('name change intake draft helpers', () => {
         field_label: 'County',
         field_value_masked: 'San Diego',
       }),
+    ]);
+  });
+
+  it('clears legacy court-order draft alias rows when the canonical field is emptied', () => {
+    const next = upsertDraftNameChangeExtractedField([
+      {
+        document_id: 'draft-court_order_name_change',
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: '24-CV-1000',
+        source_type: 'manual',
+        is_verified: true,
+      },
+      {
+        document_id: null,
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: 'manual fallback',
+        source_type: 'manual',
+        is_verified: true,
+      },
+    ], 'draft-court_order', 'case_number', 'Case number', '   ');
+
+    expect(next).toEqual([
+      expect.objectContaining({ document_id: null, field_key: 'case_number', field_value_masked: 'manual fallback' }),
     ]);
   });
 });
