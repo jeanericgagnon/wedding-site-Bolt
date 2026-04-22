@@ -30,6 +30,7 @@ _Machine-readable evidence log:_ `manualProofSummary.evidenceLogPath: docs/v1-sm
 _Machine-readable blocker:_ `manualProofBlockingReasons[canonicalCouplePath]` = no logged human route-note pass yet
 _Machine-readable blocker:_ `manualProofBlockingReasons[runtimeWordingVerification]` = privacy/access/publish and marketing/settings/billing runtime wording not yet verified
 _Machine-readable blocker:_ `manualProofBlockingReasons[onboardingStarterDraftWording]` = onboarding and first-run starter-draft wording not yet verified
+_Machine-readable next step:_ `manualProofBlockingReasons[onboardingStarterDraftWording].nextStep` = verify onboarding + first-run draft wording in runtime and log pass/fail notes here
 
 ## Purpose
 This is the hard proof artifact for whether DayOf can credibly claim **v1 / done-enough**.
