@@ -1382,6 +1382,35 @@ describe('quickStartPersistence', () => {
     expect(normalized.viewState).toBe('followups');
   });
 
+  it('reopens follow-ups from explicit question restores when pending clarifying mode normalizes back to ask', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      viewState: 'question',
+      clarifyingState: {
+        clarifying: {
+          mode: 'draft',
+          questions: [{
+            id: 'transport',
+            category: 'travel',
+            question: 'How should guests get there?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.transport'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'pending',
+            answer: '',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.clarifyingState?.clarifying.mode).toBe('ask');
+    expect(normalized.showFollowUps).toBe(true);
+    expect(normalized.viewState).toBe('followups');
+  });
+
   it('does not reopen follow-ups from invalid views when restored clarifying mode is already draft', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       viewState: 42 as never,

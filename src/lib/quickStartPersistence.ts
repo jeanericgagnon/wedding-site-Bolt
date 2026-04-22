@@ -273,8 +273,11 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
   );
   const hasMissingResumeFlagForOpenClarifyingWork = !hasExplicitShowFollowUps
     && hasOpenFollowUps
-    && viewState === 'question'
-    && rawClarifyingState?.clarifying.mode === 'ask';
+    && clarifyingState?.clarifying.mode === 'ask'
+    && (
+      parsed.viewState === 'question'
+      || rawClarifyingState?.clarifying.mode === 'ask'
+    );
   const isThinkingGenerationInFlight = parsed.showFollowUps !== false
     && viewState === 'thinking'
     && rawClarifyingState !== null

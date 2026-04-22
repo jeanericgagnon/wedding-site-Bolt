@@ -1217,6 +1217,41 @@ describe('quickStartStateTransfer', () => {
     expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').showFollowUps).toBe(true);
   });
 
+  it('rewrites explicit question restores back into follow-up mode when pending clarifying mode normalizes back to ask', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      viewState: 'question',
+      clarifyingState: {
+        clarifying: {
+          mode: 'draft',
+          questions: [{
+            id: 'transport',
+            category: 'travel',
+            question: 'How should guests get there?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.transport'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'pending',
+            answer: '',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    }));
+
+    const restored = readQuickStartDraftSnapshot();
+    const stored = JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}');
+
+    expect(restored?.clarifyingState?.clarifying.mode).toBe('ask');
+    expect(restored?.showFollowUps).toBe(true);
+    expect(restored?.viewState).toBe('followups');
+    expect(stored.clarifyingState?.clarifying?.mode).toBe('ask');
+    expect(stored.showFollowUps).toBe(true);
+    expect(stored.viewState).toBe('followups');
+  });
+
   it('rewrites invalid-view restores back to question when clarifying mode is already draft', () => {
     window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
       viewState: 42,
