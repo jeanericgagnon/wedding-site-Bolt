@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Footer, Header } from '../components/layout';
+import { SITE_TRUST_COPY } from '../lib/siteTrustCopy';
 
 const TRUST_PILLARS = [
   {
@@ -22,7 +23,7 @@ const TRUST_PILLARS = [
 ];
 
 const SAFETY_NOTES = [
-  'Custom DayOf URLs are real. Couples can share a polished DayOf link without a separate domain upsell. External custom-domain mapping is not something we claim unless it is actually live.',
+  `${SITE_TRUST_COPY.customWeddingUrlExplainer} External custom-domain mapping is not something we claim unless it is actually live.`,
   'Message history should reflect real states like draft, scheduled, sent, partial, or failed instead of vague fake success language.',
   'Registry repair and cleanup are guided workflows with human review, not a guaranteed one-click fix for every merchant.',
   'Planner collaboration is intentionally couple-led, with clearer boundaries instead of pretending this is enterprise workflow software.',

@@ -601,7 +601,7 @@ export const Home: React.FC = () => {
                   a: 'Email is included. For urgent updates (venue changes, weather), you can purchase SMS credits. We charge $0.02/message with no markup.',
                 },
                 {
-                  q: 'Do I get a custom wedding URL?',
+                  q: SITE_TRUST_COPY.customWeddingUrl,
                   a: SITE_TRUST_COPY.customWeddingUrlExplainer,
                 },
                 {
