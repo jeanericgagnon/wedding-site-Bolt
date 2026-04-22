@@ -83,6 +83,7 @@ describe('versionHistory', () => {
     const weddingId = `w_${Date.now()}_g`;
 
     expect(listBuilderRevisions(weddingId)).toEqual([]);
+    expect(listBuilderRevisions(weddingId)).not.toBe(listBuilderRevisions(weddingId));
   });
 
   it('returns null when asking for a revision from an empty history', () => {
