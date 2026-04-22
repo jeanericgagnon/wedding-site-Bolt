@@ -98,8 +98,9 @@ export function evaluateNameChangeRequirements(
   const hasCourtOrderProof = canonicalCase.documents.court_order.intakeStatus !== 'not_started';
   const hasAnyCourtOrderReferenceExtraction = hasAnyDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'case_number')
     || hasAnyDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'court_order_date');
-  const hasVerifiedCourtOrderReferenceExtraction = hasVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'case_number')
-    || hasVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'court_order_date');
+  const hasVerifiedCourtOrderCaseNumber = hasVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'case_number');
+  const hasVerifiedCourtOrderSignedDate = hasVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'court_order_date');
+  const hasVerifiedCourtOrderReferenceExtraction = hasVerifiedCourtOrderCaseNumber || hasVerifiedCourtOrderSignedDate;
   const legalBasisLabel = canonicalCase.legalBasis === 'court_order' ? 'court-order proof' : legalProofKind.replace(/_/g, ' ');
   const hasReviewedCourtOrderProof = legalProof.intakeStatus === 'reviewed';
 
@@ -217,7 +218,9 @@ export function evaluateNameChangeRequirements(
         : !hasCourtOrderProof
           ? 'missing'
           : hasVerifiedCourtOrderReferenceExtraction
-            ? hasReviewedCourtOrderProof ? 'satisfied' : 'attention'
+            ? hasVerifiedCourtOrderCaseNumber && hasVerifiedCourtOrderSignedDate
+              ? hasReviewedCourtOrderProof ? 'satisfied' : 'attention'
+              : 'attention'
             : hasAnyCourtOrderReferenceExtraction
               ? 'attention'
               : 'missing',
@@ -226,9 +229,13 @@ export function evaluateNameChangeRequirements(
         : !hasCourtOrderProof
           ? 'Court-order path is selected, but no court-order proof is represented in intake yet.'
           : hasVerifiedCourtOrderReferenceExtraction
-            ? hasReviewedCourtOrderProof
-              ? 'Court-order reference extraction is present for the modeled review path.'
-              : 'Court-order reference extraction exists, but the proof document still needs review before downstream use is grounded.'
+            ? hasVerifiedCourtOrderCaseNumber && hasVerifiedCourtOrderSignedDate
+              ? hasReviewedCourtOrderProof
+                ? 'Court-order reference extraction is present for the modeled review path.'
+                : 'Court-order reference extraction exists, but the proof document still needs review before downstream use is grounded.'
+              : hasVerifiedCourtOrderCaseNumber
+                ? 'Court-order case number is verified, but the signed date still needs grounded extraction before downstream use is fully trusted.'
+                : 'Court-order signed date is verified, but the case number still needs grounded extraction before downstream use is fully trusted.'
             : hasAnyCourtOrderReferenceExtraction
               ? 'Court-order reference data exists, but it is still unverified so downstream use is not grounded yet.'
               : 'Court-order proof is in intake, but no verified case-number or signed-date extraction is represented yet.',
