@@ -282,6 +282,7 @@ describe('sections registry resolution', () => {
     expect(registrySectionComponent).toContain('export function normalizePublicRegistryItemState(item: RegistryItem): RegistryItem {');
     expect(registrySectionComponent).toContain('purchase_status: quantityState.purchaseStatus,');
     expect(registrySectionComponent).toContain("purchaser_name: quantityState.purchaseStatus === 'available' ? null : item.purchaser_name,");
+    expect(registrySectionComponent).toContain('getRegistryEmptyStateMessage(normalizedItems, groupMode)');
     expect(registryCards).toContain('export function normalizeRegistryStoreGroupItems(items: RegistryItem[]): RegistryItem[] {');
     expect(registryFeatured).toContain('export function normalizeRegistryFeaturedItems(items: RegistryItem[]): RegistryItem[] {');
     expect(registryFeatured).toContain('for (const item of normalizeRegistryFeaturedItems(items)) {');

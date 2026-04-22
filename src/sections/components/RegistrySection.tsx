@@ -444,7 +444,7 @@ function RegistryItemsDisplay({ items, settings, notes, updateItem }: {
       {sortedItems.length === 0 ? (
         <div className="text-center py-12">
           <Gift className="w-10 h-10 text-text-tertiary mx-auto mb-3" />
-          <p className="text-text-secondary">{getRegistryEmptyStateMessage(items, groupMode)}</p>
+          <p className="text-text-secondary">{getRegistryEmptyStateMessage(normalizedItems, groupMode)}</p>
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 md:gap-6">
