@@ -104,6 +104,13 @@ const output = {
   blocked: blockedRequired.length > 0,
   slice: 'canonical-v1-smoke',
   generatedAt: new Date().toISOString(),
+  currentV1Line: [
+    'couples can create and launch a polished wedding site',
+    'guests can use the public site and RSVP flows reliably',
+    'couples can run the core ops layer: guests, RSVP, messages, seating, registry, itinerary, settings',
+    'planner/collaborator support exists in a real usable form',
+    'marketing, settings, and billing surfaces describe the product honestly',
+  ],
   summary: {
     total: results.length,
     passed: results.filter((result) => result.ok).length,
@@ -120,6 +127,10 @@ const output = {
     'One logged human route-note pass for Home -> signup/demo/auth -> onboarding/builder -> public site -> RSVP, focused on UX quality instead of basic route reachability',
     'Verify privacy/access/publish plus marketing/settings/billing wording against the actual runtime behavior',
     'Log exact pass/fail or blocker details in docs/v1-smoke-proof-log.md, including the current v1 line and any environment blockers',
+  ],
+  launchTruthGaps: [
+    'Guests / RSVP ops proof remains blocked outside this canonical smoke gate because validate-rsvp-token is not callable with current anon credentials (401)',
+    'Canonical smoke covers route continuity; it does not replace the remaining manual couple-path and wording-truth pass',
   ],
   blockers: blockedRequired.map((result) => ({
     id: result.id,
