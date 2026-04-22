@@ -51,4 +51,15 @@ describe('quickStartClarifyingRestore', () => {
 
     expect(restored.lodging).toBe('Use the hotel block at La Valencia.');
   });
+
+  it('drops blank follow-up fallback values during clarifying restore', () => {
+    const clarifying = createEmptyClarifyingPersistence();
+
+    const restored = deriveFollowUpAnswersFromClarifyingState(clarifying, {
+      'event-1-time': '   ',
+      lodging: 'Use the hotel block.',
+    });
+
+    expect(restored).toEqual({ lodging: 'Use the hotel block.' });
+  });
 });
