@@ -7,6 +7,7 @@ _Public v1 claim status:_ Not clear to claim yet
 _Launch call right now:_ NO-GO for public v1 claim
 _Why no-go:_ critical trust proof is still missing on the canonical couple path and runtime wording truth
 _Highest-risk trust gap:_ guests / RSVP ops proof is still blocked by anon-auth 401 on `validate-rsvp-token`
+_Secondary trust gap:_ canonical couple-path truth notes and wording verification are still missing
 
 ## Purpose
 This is the hard proof artifact for whether DayOf can credibly claim **v1 / done-enough**.
