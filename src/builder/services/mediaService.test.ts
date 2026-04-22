@@ -221,4 +221,23 @@ describe('mediaService', () => {
       tags: ['decor'],
     }));
   });
+
+  it('keeps caption truth alongside section attachment when both are provided', async () => {
+    const file = new File(['img'], 'aisle.jpg', { type: 'image/jpeg' });
+    upload.mockResolvedValue({
+      url: 'https://cdn.example.com/aisle.jpg',
+      path: 'w1/aisle.jpg',
+    });
+    save.mockResolvedValue({ id: 'asset-12' });
+
+    await mediaService.uploadAsset('w1', file, {
+      attachToSectionId: 'section-hero',
+      caption: 'Ceremony aisle',
+    });
+
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({
+      attachedSectionIds: ['section-hero'],
+      caption: 'Ceremony aisle',
+    }));
+  });
 });
