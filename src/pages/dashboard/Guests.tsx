@@ -21,7 +21,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/ui/Toast';
 import { demoWeddingSite, demoGuests, demoRSVPs } from '../../lib/demoData';
-import { buildQuickStartPhotosPath } from '../../lib/quickStartContinuation';
+import { buildQuickStartPhotosPath, readQuickStartDashboardContinuation } from '../../lib/quickStartContinuation';
 import { sendWeddingInvitation } from '../../lib/emailService';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
 import * as XLSX from 'xlsx';
@@ -269,8 +269,7 @@ interface ItineraryEvent {
 export const DashboardGuests: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const fromQuickStart = searchParams.get('fromQuickStart') === '1';
-  const nextStep = searchParams.get('next');
+  const { fromQuickStart, nextStep } = readQuickStartDashboardContinuation(searchParams);
   const { user, isDemoMode } = useAuth();
   const { toast } = useToast();
   const [guests, setGuests] = useState<GuestWithRSVP[]>([]);

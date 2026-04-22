@@ -14,7 +14,7 @@ import { mediaRepository } from '../../builder/services/mediaRepository';
 import { PhotoBucketKind } from '../../lib/aiPhotoBuckets';
 import { buildPhotoPlacementPlan } from '../../lib/aiPhotoPlacement';
 import { mergeGeneratedDraftIntoBuilderProject } from '../../lib/aiBuilderProjectPatch';
-import { buildQuickStartOverviewPath } from '../../lib/quickStartContinuation';
+import { buildQuickStartOverviewPath, readQuickStartDashboardContinuation } from '../../lib/quickStartContinuation';
 
 type ItineraryEvent = {
   id: string;
@@ -90,8 +90,7 @@ export const GuestPhotoSharing: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const fromQuickStart = searchParams.get('fromQuickStart') === '1';
-  const nextStep = searchParams.get('next');
+  const { fromQuickStart, nextStep } = readQuickStartDashboardContinuation(searchParams);
   const search = useMemo(() => new URLSearchParams(location.search), [location.search]);
 
   const [loading, setLoading] = useState(true);
