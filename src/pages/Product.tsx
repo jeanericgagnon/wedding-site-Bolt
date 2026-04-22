@@ -105,10 +105,10 @@ const V1_SLICE_STATUS = [
   },
   {
     name: 'Coordinator / day-of',
-    status: 'Mostly done',
-    tone: 'done',
+    status: 'Proof needed',
+    tone: 'proof',
     done: 'Coordinator mode exists around real event-day questions.',
-    missing: 'Needs a realistic live-use proof run.',
+    missing: 'Still needs a realistic live-use proof run before this slice reads launch-ready.',
   },
   {
     name: 'Comms center',
