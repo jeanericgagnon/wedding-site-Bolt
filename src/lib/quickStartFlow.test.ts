@@ -118,4 +118,13 @@ describe('quickStartFlow', () => {
     expect(applyQuickStartAnswer(base, 'ceremonyTime', 'guests arrive by 4:30 pm please').ceremonyArrivalTime).toBe('4:30 PM');
   });
 
+
+  it('drops sparse placeholder text for optional freeform onboarding answers', () => {
+    const base = createEmptyInitialSetupAnswers();
+
+    expect(applyQuickStartAnswer(base, 'venueName', 'to be determined').venueNameOrTbd).toBe('');
+    expect(applyQuickStartAnswer(base, 'weekendEvents', 'none yet').weekendEventsRaw).toBe('');
+    expect(applyQuickStartAnswer(base, 'story', 'skip for now').optionalStory).toBe('');
+  });
+
 });

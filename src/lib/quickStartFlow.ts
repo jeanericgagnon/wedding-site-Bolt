@@ -2,6 +2,15 @@ import type { InitialSetupAnswers } from './initialSetupAnswers';
 import type { ClarifyingPersistenceEnvelope, ClarifyingQuestionStatus, StoredClarifyingQuestion } from './aiClarifyingPersistence';
 
 
+
+const normalizeSparseFreeformText = (rawValue: string, emptyPhrases: ReadonlyArray<string> = []) => {
+  const trimmed = rawValue.trim();
+  const normalized = trimmed.toLowerCase();
+  if (!trimmed) return '';
+  if (emptyPhrases.includes(normalized)) return '';
+  return trimmed;
+};
+
 const normalizeSparseEnumAnswer = <T extends string>(
   rawValue: string,
   options: ReadonlyArray<T>,
@@ -106,7 +115,7 @@ export const applyQuickStartAnswer = (
       next.whenWhere = value;
       break;
     case 'venueName':
-      next.venueNameOrTbd = value;
+      next.venueNameOrTbd = normalizeSparseFreeformText(value, ['tbd', 'to be decided', 'to be determined', 'not sure yet']);
       break;
     case 'theme':
       next.style = value;
@@ -115,7 +124,7 @@ export const applyQuickStartAnswer = (
       next.guestFeel = value;
       break;
     case 'weekendEvents':
-      next.weekendEventsRaw = value;
+      next.weekendEventsRaw = normalizeSparseFreeformText(value, ['none', 'none yet', 'no extra events', 'no weekend events', 'nothing yet']);
       break;
     case 'ceremonyTime': {
       const timeMatch = value.match(/(?:^|[^\d])(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/i);
@@ -204,7 +213,7 @@ export const applyQuickStartAnswer = (
       });
       break;
     case 'story':
-      next.optionalStory = value;
+      next.optionalStory = normalizeSparseFreeformText(value, ['none', 'none for now', 'skip', 'skip for now', 'n/a']);
       break;
   }
 
