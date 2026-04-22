@@ -3775,6 +3775,116 @@ describe('RSVP stale submit protection', () => {
     expect(screen.queryByDisplayValue('[Events wedding ceremony:yes, wedding reception:no] Please seat me near the dance floor')).not.toBeInTheDocument();
   });
 
+  it('normalizes bracketed RSVP event notes with underscored keys before opening existing response details', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        guest: {
+          id: 'guest-1',
+          first_name: 'Taylor',
+          last_name: 'Rivera',
+          name: 'Taylor Rivera',
+          email: 'taylor@example.com',
+          phone: null,
+          group_name: null,
+          wedding_site_id: 'site-1',
+          plus_one_allowed: false,
+          invited_to_ceremony: true,
+          invited_to_reception: true,
+          invite_token: 'token-1',
+        },
+        existingRsvp: {
+          id: 'rsvp-1',
+          attending: true,
+          attending_ceremony: null,
+          attending_reception: null,
+          meal_choice: null,
+          plus_one_name: null,
+          notes: '[Events wedding_ceremony:yes, wedding_reception:no] Please seat me near the dance floor',
+          custom_answers: {},
+        },
+        guests: null,
+        rsvpDeadline: null,
+        rsvpQuestions: [],
+        rsvpMealConfig: { enabled: false, options: [] },
+        musicPlaylistUrl: null,
+        householdGuests: [],
+      }),
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/rsvp']}>
+        <RSVP />
+      </MemoryRouter>
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('rsvp.search_placeholder'), { target: { value: 'Taylor Rivera' } });
+    fireEvent.click(screen.getByText('Find My Invitation'));
+
+    expect(await screen.findByText("You've already responded. You can update your response below.")).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Continue to details'));
+
+    expect(screen.getByLabelText('Wedding Ceremony')).toBeChecked();
+    expect(screen.getByLabelText('Reception')).not.toBeChecked();
+    expect(screen.getByDisplayValue('Please seat me near the dance floor')).toBeInTheDocument();
+    expect(screen.queryByDisplayValue('[Events wedding_ceremony:yes, wedding_reception:no] Please seat me near the dance floor')).not.toBeInTheDocument();
+  });
+
+  it('normalizes bracketed RSVP event notes with hyphenated keys before opening existing response details', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        guest: {
+          id: 'guest-1',
+          first_name: 'Taylor',
+          last_name: 'Rivera',
+          name: 'Taylor Rivera',
+          email: 'taylor@example.com',
+          phone: null,
+          group_name: null,
+          wedding_site_id: 'site-1',
+          plus_one_allowed: false,
+          invited_to_ceremony: true,
+          invited_to_reception: true,
+          invite_token: 'token-1',
+        },
+        existingRsvp: {
+          id: 'rsvp-1',
+          attending: true,
+          attending_ceremony: null,
+          attending_reception: null,
+          meal_choice: null,
+          plus_one_name: null,
+          notes: '[Events wedding-ceremony:yes, wedding-reception:no] Please seat me near the dance floor',
+          custom_answers: {},
+        },
+        guests: null,
+        rsvpDeadline: null,
+        rsvpQuestions: [],
+        rsvpMealConfig: { enabled: false, options: [] },
+        musicPlaylistUrl: null,
+        householdGuests: [],
+      }),
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/rsvp']}>
+        <RSVP />
+      </MemoryRouter>
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('rsvp.search_placeholder'), { target: { value: 'Taylor Rivera' } });
+    fireEvent.click(screen.getByText('Find My Invitation'));
+
+    expect(await screen.findByText("You've already responded. You can update your response below.")).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Continue to details'));
+
+    expect(screen.getByLabelText('Wedding Ceremony')).toBeChecked();
+    expect(screen.getByLabelText('Reception')).not.toBeChecked();
+    expect(screen.getByDisplayValue('Please seat me near the dance floor')).toBeInTheDocument();
+    expect(screen.queryByDisplayValue('[Events wedding-ceremony:yes, wedding-reception:no] Please seat me near the dance floor')).not.toBeInTheDocument();
+  });
+
   it('normalizes bracketed RSVP event notes with attendance-style keys before opening existing response details', async () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,

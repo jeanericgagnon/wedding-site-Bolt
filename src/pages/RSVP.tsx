@@ -131,7 +131,7 @@ function parseLegacyEventAttendanceToken(value: string | undefined): boolean {
 }
 
 function normalizeLegacyEventKey(value: string | undefined): string {
-  const normalized = (value || '').trim().toLowerCase();
+  const normalized = (value || '').trim().toLowerCase().replace(/[_-]+/g, ' ');
   if (normalized === 'wedding ceremony') return 'ceremony';
   if (normalized === 'wedding reception') return 'reception';
   if (normalized === 'ceremony attendance') return 'ceremony';
