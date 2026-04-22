@@ -58,6 +58,8 @@ describe('sections registry resolution', () => {
     expect(resolveAndParse('registry-section' as never, 'default', {}, { strictVariant: true })?.def.variant).toBe('cards');
     expect(resolveAndParse('RegistrySection' as never, 'default', {}, { strictVariant: true })?.def.variant).toBe('cards');
     expect(getDefinition('RegistrySection' as never, 'cards')?.variant).toBe('cards');
+    expect(getDefinition('registry-section' as never, 'default' as never)?.variant).toBe('cards');
+    expect(getDefinition('Registry' as never, 'luxury' as never)?.variant).toBe('featured');
     expect(getVariantsForType('registry-section' as never).map((definition) => definition.variant)).toEqual(expect.arrayContaining(['cards', 'featured']));
     expect(resolveAndParse('registry', 'default', {}, { strictVariant: true })?.def.variant).toBe('cards');
     expect(resolveAndParse('registry', 'grid', {}, { strictVariant: true })?.def.variant).toBe('cards');
@@ -331,7 +333,7 @@ describe('sections registry resolution', () => {
     expect(sectionRegistry).toContain("function isRegistrySectionType(type: unknown): boolean {");
     expect(sectionRegistry).toContain("function normalizeRegistrySectionType(type: unknown): string {");
     expect(sectionRegistry).toContain("return normalizedType === 'registry' || normalizedType.startsWith('registrysection');");
-    expect(sectionRegistry).toContain("return SECTION_REGISTRY.get(makeKey(normalizeRegistrySectionType(type), variant)) ?? null;");
+    expect(sectionRegistry).toContain("return SECTION_REGISTRY.get(makeKey(normalizeRegistrySectionType(type), resolveRegistryVariant(type, variant))) ?? null;");
     expect(sectionRegistry).toContain("return typeof variant === 'string'");
     expect(sectionRegistry).toContain("const normalizedType = normalizeRegistrySectionType(type);");
     expect(sectionRegistry).toContain("const normalizedTypeKey = normalizeRegistrySectionType(type);");

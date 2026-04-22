@@ -361,7 +361,7 @@ registerDefinition(videoCardDefinition);
 registerDefinition(videoInlineDefinition);
 
 export function getDefinition(type: string, variant: string): SectionDefinition | null {
-  return SECTION_REGISTRY.get(makeKey(normalizeRegistrySectionType(type), variant)) ?? null;
+  return SECTION_REGISTRY.get(makeKey(normalizeRegistrySectionType(type), resolveRegistryVariant(type, variant))) ?? null;
 }
 
 export function getDefinitionOrThrow(type: string, variant: string): SectionDefinition {
