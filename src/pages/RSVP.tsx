@@ -338,6 +338,8 @@ export default function RSVP() {
       attending_reception: formData.attendReception,
       meal_choice: formData.meal_choice || null,
       plus_one_name: formData.plus_one_name || null,
+      plus_one_count: formData.plus_one_name.trim() ? 1 : 0,
+      children_count: 0,
       notes: formData.notes || null,
       custom_answers: customAnswers,
     });
