@@ -860,6 +860,7 @@ export default function RSVP() {
                     if (loading) {
                       activeLookupRequestRef.current += 1;
                       setLoading(false);
+                      setSubmitting(false);
                     }
                     setError('');
                     setSearchValue(e.target.value);
