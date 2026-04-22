@@ -64,6 +64,7 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
     normalizedErrorLower.includes('rsvp')
     || normalizedErrorLower.includes('turn rsvp on')
     || normalizedErrorLower.includes('rsvp is turned on')
+    || normalizedErrorLower.includes('guests can reply')
   ) {
     return [
       'Turn RSVP back on before going live.',
