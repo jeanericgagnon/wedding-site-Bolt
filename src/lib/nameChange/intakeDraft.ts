@@ -195,7 +195,7 @@ function parseDraftMonthName(monthName: string) {
 }
 
 function normalizeDraftDateValue(value: string) {
-  const zoneTokenPattern = '(?:Z|[+-]\\d{2}:?\\d{2}|UTC[+-]?\\d{0,2}(?::?\\d{2})?|GMT[+-]?\\d{0,2}(?::?\\d{2})?|[A-Za-z]{2,5}|[A-Za-z_-]+(?:\\/[A-Za-z_-]+)+|\\([^)]*\\)|\\[[^\\]]+\\])';
+  const zoneTokenPattern = '(?:Z|[+-]\\d{1,2}:?\\d{2}|UTC[+-]?\\d{0,2}(?::?\\d{2})?|GMT[+-]?\\d{0,2}(?::?\\d{2})?|[A-Za-z]{2,5}|[A-Za-z_-]+(?:\\/[A-Za-z_-]+)+|\\([^)]*\\)|\\[[^\\]]+\\])';
   const normalizeIsoParts = (year: string, month: string, day: string) => {
     const normalizedYear = year.padStart(4, '0');
     const normalizedMonth = month.padStart(2, '0');
