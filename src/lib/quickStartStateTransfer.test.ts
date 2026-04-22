@@ -22,6 +22,32 @@ describe('quickStartStateTransfer', () => {
   it('survives malformed existing storage by normalizing on read', () => {
     window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({ followUpAnswers: ['bad'] }));
     expect(readQuickStartDraftSnapshot()?.followUpAnswers).toEqual({});
+    expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBe(JSON.stringify({
+      initialSetupAnswers: {
+        names: '',
+        labelPreference: 'names-only',
+        customLabelPartnerOne: '',
+        customLabelPartnerTwo: '',
+        whenWhere: '',
+        venueNameOrTbd: '',
+        style: '',
+        guestFeel: '',
+        weekendEventsRaw: '',
+        ceremonyArrivalTime: '',
+        guestCountBand: '',
+        plusOnePolicy: '',
+        childrenAllowed: '',
+        rsvpDeadline: '',
+        mealChoice: '',
+        registryIntent: '',
+        optionalStory: '',
+      },
+      currentIndex: 0,
+      followUpAnswers: {},
+      showFollowUps: false,
+      clarifyingState: null,
+      viewState: 'question',
+    }));
   });
 
   it('drops malformed existing storage completely when the payload is invalid json', () => {

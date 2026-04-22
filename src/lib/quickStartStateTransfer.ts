@@ -14,7 +14,9 @@ export const readQuickStartDraftSnapshot = (): QuickStartDraftSnapshot | null =>
   const raw = window.localStorage.getItem(QUICK_START_STORAGE_KEY);
   if (!raw) return null;
   try {
-    return normalizeQuickStartDraftSnapshot(JSON.parse(raw));
+    const normalized = normalizeQuickStartDraftSnapshot(JSON.parse(raw));
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify(normalized));
+    return normalized;
   } catch {
     window.localStorage.removeItem(QUICK_START_STORAGE_KEY);
     return null;
