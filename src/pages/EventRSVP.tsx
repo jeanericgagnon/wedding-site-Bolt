@@ -336,6 +336,7 @@ export default function EventRSVP() {
   }
 
   function updateRsvpForm(updater: (current: EventRsvpFormState) => EventRsvpFormState) {
+    setError('');
     setSubmitError('');
     setSubmitSuccess(false);
     if (postSubmitResetTimeoutRef.current !== null) {
