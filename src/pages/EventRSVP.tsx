@@ -289,9 +289,21 @@ export default function EventRSVP() {
     setError('');
     if (invitation.rsvp) {
       setRsvpForm({
-        attending: invitation.rsvp.attending,
-        dietary_restrictions: (invitation.rsvp.dietary_restrictions || '').trim(),
-        notes: (invitation.rsvp.notes || '').trim(),
+        attending: buildInvitationRsvp({
+          attending: invitation.rsvp.attending,
+          dietary_restrictions: invitation.rsvp.dietary_restrictions || '',
+          notes: invitation.rsvp.notes || '',
+        }).attending,
+        dietary_restrictions: buildInvitationRsvp({
+          attending: invitation.rsvp.attending,
+          dietary_restrictions: invitation.rsvp.dietary_restrictions || '',
+          notes: invitation.rsvp.notes || '',
+        }).dietary_restrictions || '',
+        notes: buildInvitationRsvp({
+          attending: invitation.rsvp.attending,
+          dietary_restrictions: invitation.rsvp.dietary_restrictions || '',
+          notes: invitation.rsvp.notes || '',
+        }).notes || '',
       });
     } else {
       setRsvpForm({
