@@ -198,6 +198,7 @@ function normalizeDraftDateValue(value: string) {
   const rawOffsetPattern = '[+-](?:\\d{1,2}|\\d{3,4}|\\d{1,2}:\\d{2})';
   const namedOffsetPattern = '(?:UTC|GMT)[+-]?(?:\\d{1,2}|\\d{3,4}|\\d{1,2}:\\d{2})?';
   const zoneTokenPattern = `(?:Z|${rawOffsetPattern}|${namedOffsetPattern}|[A-Za-z]{2,5}|[A-Za-z_-]+(?:\\/[A-Za-z_-]+)+|\\([^)]*\\)|\\[[^\\]]+\\])`;
+  const weekdayPrefixPattern = /^(?:(?:mon|tues|wednes|thurs|fri|satur|sun)day|(?:mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun))\b[,.\s-]*/i;
   const normalizeIsoParts = (year: string, month: string, day: string) => {
     const normalizedYear = year.padStart(4, '0');
     const normalizedMonth = month.padStart(2, '0');
@@ -221,7 +222,8 @@ function normalizeDraftDateValue(value: string) {
     return `${normalizedYear}-${normalizedMonth}-${normalizedDay}`;
   };
   const normalizedOrdinalValue = value.replace(/\b(\d{1,2})(st|nd|rd|th)\b/gi, '$1');
-  const sanitizedTimestampValue = normalizedOrdinalValue.replace(/,\s*(\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?)\b/g, ' $1');
+  const deweekdayValue = normalizedOrdinalValue.replace(weekdayPrefixPattern, '');
+  const sanitizedTimestampValue = deweekdayValue.replace(/,\s*(\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?)\b/g, ' $1');
   const compactTimestampValue = sanitizedTimestampValue.replace(/\s+/g, ' ').trim();
   const normalizedTimestampValue = compactTimestampValue.replace(/\b(am|pm)\b/gi, (_, meridiem: string) => meridiem.toUpperCase());
   const canonicalTimestampValue = normalizedTimestampValue
