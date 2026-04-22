@@ -23,4 +23,9 @@ describe('getVariantPreviewSource', () => {
     expect(getVariantPreviewSource('registry', 'featured')).toBe('featured');
     expect(getVariantPreviewSource('registry', 'honeymoon')).toBe('featured');
   });
+
+  it('maps drifted registry section types onto canonical public preview fixtures', () => {
+    expect(getVariantPreviewSource('RegistrySection', 'default')).toBe('cards');
+    expect(getVariantPreviewSource('registry-section', 'luxury')).toBe('featured');
+  });
 });

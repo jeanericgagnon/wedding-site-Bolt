@@ -145,21 +145,26 @@ const normalizeVariantKey = (value: unknown) => typeof value === 'string'
   ? value.toLowerCase().replace(/[^a-z0-9]/g, '')
   : '';
 
+function normalizeBuilderSectionType(type: SectionType): SectionType {
+  return (normalizeVariantKey(type) === 'registrysection' ? 'registry' : type) as SectionType;
+}
+
 function getPreferredBuilderFallbackVariant(type: SectionType, supported: string[]): string {
   if (type === 'registry') return supported.includes('cards') ? 'cards' : supported[0] ?? 'default';
   return supported[0] ?? 'default';
 }
 
 export function resolveBuilderVariant(type: SectionType, variant: unknown): string {
-  const supported = LEGACY_SELECTOR_VARIANTS[type] ?? ['default'];
-  const fallbackVariant = getPreferredBuilderFallbackVariant(type, supported);
+  const normalizedType = normalizeBuilderSectionType(type);
+  const supported = LEGACY_SELECTOR_VARIANTS[normalizedType] ?? ['default'];
+  const fallbackVariant = getPreferredBuilderFallbackVariant(normalizedType, supported);
   const normalizedVariant = typeof variant === 'string' ? variant.trim() : '';
   const normalizedVariantKey = normalizeVariantKey(normalizedVariant);
   const supportedByKey = new Map(supported.map((supportedVariant) => [normalizeVariantKey(supportedVariant), supportedVariant]));
   const canonicalVariant = supportedByKey.get(normalizedVariantKey) ?? normalizedVariant;
   if (supported.includes(canonicalVariant)) return canonicalVariant;
 
-  const aliases = VARIANT_ALIASES[type] ?? {};
+  const aliases = VARIANT_ALIASES[normalizedType] ?? {};
   const alias = aliases[canonicalVariant]
     ?? aliases[normalizedVariant]
     ?? Object.entries(aliases).find(([aliasVariant]) => normalizeVariantKey(aliasVariant) === normalizedVariantKey)?.[1];
