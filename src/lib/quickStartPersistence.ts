@@ -268,7 +268,7 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     : null;
   const normalizedFollowUpAnswers = activeClarifyingIds && (activeClarifyingIds.size > 0 || hasAnyClarifyingRecords)
     ? Object.fromEntries(Object.entries(followUpAnswers).filter(([key]) => activeClarifyingIds.has(key)))
-    : clarifyingState && !hasAnyClarifyingRecords
+    : clarifyingState === null
       ? {}
       : followUpAnswers;
   const reopenedClarifyingIds = clarifyingState

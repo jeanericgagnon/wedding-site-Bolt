@@ -1092,6 +1092,9 @@ describe('quickStartStateTransfer', () => {
     window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
       showFollowUps: true,
       viewState: 'thinking',
+      followUpAnswers: {
+        lodging: 'Need shuttle details',
+      },
       clarifyingState: null,
     }));
 
@@ -1099,7 +1102,8 @@ describe('quickStartStateTransfer', () => {
 
     expect(restored?.showFollowUps).toBe(false);
     expect(restored?.viewState).toBe('question');
-    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').viewState).toBe('question');
+    expect(restored?.followUpAnswers).toEqual({});
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').followUpAnswers).toEqual({});
   });
 
   it('rewrites stale thinking restores back to question when no open clarifying work remains', () => {

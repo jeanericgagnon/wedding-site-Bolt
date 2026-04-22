@@ -1527,11 +1527,15 @@ describe('quickStartPersistence', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       showFollowUps: true,
       viewState: 'thinking',
+      followUpAnswers: {
+        lodging: 'Need shuttle details',
+      },
       clarifyingState: null,
     });
 
     expect(normalized.showFollowUps).toBe(false);
     expect(normalized.viewState).toBe('question');
+    expect(normalized.followUpAnswers).toEqual({});
   });
 
   it('closes stale thinking restores when no open clarifying work remains', () => {
