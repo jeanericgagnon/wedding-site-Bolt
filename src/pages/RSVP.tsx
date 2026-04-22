@@ -125,6 +125,18 @@ function normalizeCustomAnswers(answers: Record<string, string | string[]>) {
   );
 }
 
+function invalidateRsvpSubmitState(
+  activeSubmitRequestRef: React.MutableRefObject<number>,
+  submitInFlightRef: React.MutableRefObject<boolean>,
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>,
+  setSubmitting: React.Dispatch<React.SetStateAction<boolean>>,
+) {
+  activeSubmitRequestRef.current += 1;
+  submitInFlightRef.current = false;
+  setLoading(false);
+  setSubmitting(false);
+}
+
 
 function parseEventSelectionsFromNotes(notes: string | null, guest: Guest): { cleanNotes: string; attendCeremony: boolean; attendReception: boolean } {
   const fallback = {
@@ -293,10 +305,7 @@ export default function RSVP() {
   const [selectedHouseholdGuestIds, setSelectedHouseholdGuestIds] = useState<string[]>([]);
 
   const invalidateActiveSubmit = useCallback(() => {
-    activeSubmitRequestRef.current += 1;
-    submitInFlightRef.current = false;
-    setLoading(false);
-    setSubmitting(false);
+    invalidateRsvpSubmitState(activeSubmitRequestRef, submitInFlightRef, setLoading, setSubmitting);
   }, []);
 
   const invalidateSubmitFromEdit = useCallback(() => {
