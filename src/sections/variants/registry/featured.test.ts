@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getRegistryItemPublicUrl, groupRegistryStoreLinks, registryFeaturedSchema } from './featured';
+import { getRegistryItemPublicUrl, groupRegistryStoreLinks, registryFeaturedSchema, shouldUseLiveRegistryFeaturedData } from './featured';
 import type { RegistryItem } from '../../../pages/dashboard/registry/registryTypes';
 
 const makeItem = (overrides: Partial<RegistryItem>): RegistryItem => ({
@@ -80,5 +80,10 @@ describe('registry featured public parity helpers', () => {
 
     expect(parsed.layout).toBe('hero');
     expect(parsed.featuredGifts[0]?.isPartiallyClaimed).toBe(true);
+  });
+
+  it('does not fall back to template featured data once live registry loads empty', () => {
+    expect(shouldUseLiveRegistryFeaturedData([])).toBe(true);
+    expect(shouldUseLiveRegistryFeaturedData(null)).toBe(false);
   });
 });

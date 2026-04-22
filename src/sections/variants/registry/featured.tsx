@@ -215,6 +215,10 @@ export function getRegistryItemPublicUrl(item: Pick<RegistryItem, 'item_url' | '
   return item.item_url ?? item.canonical_url ?? '';
 }
 
+export function shouldUseLiveRegistryFeaturedData(liveItems: RegistryItem[] | null): boolean {
+  return liveItems !== null;
+}
+
 export function groupRegistryStoreLinks(items: RegistryItem[]): z.infer<typeof RegistryStoreLinkSchema>[] {
   const grouped = new Map<string, z.infer<typeof RegistryStoreLinkSchema>>();
 
@@ -274,7 +278,9 @@ const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = 
   const safeFeaturedGifts = Array.isArray(data.featuredGifts) ? data.featuredGifts : [];
   const safeStoreLinks = Array.isArray(data.storeLinks) ? data.storeLinks : [];
 
-  const displayGifts = (liveItems
+  const shouldUseLiveData = shouldUseLiveRegistryFeaturedData(liveItems);
+
+  const displayGifts = (shouldUseLiveData
     ? liveItems.map(registryItemToGift)
     : safeFeaturedGifts
   ).map(gift => ({
@@ -283,7 +289,7 @@ const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = 
     price: normalizePriceLabel(gift.price),
   }));
 
-  const displayStoreLinks = liveItems ? groupRegistryStoreLinks(liveItems) : safeStoreLinks;
+  const displayStoreLinks = shouldUseLiveData ? groupRegistryStoreLinks(liveItems) : safeStoreLinks;
 
   const colClass = data.layout === '3col'
     ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3'
