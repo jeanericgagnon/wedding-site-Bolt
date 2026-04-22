@@ -351,7 +351,7 @@ export const Product: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="rounded-xl border border-border-subtle bg-white p-4">
               <p className="text-sm font-medium text-ink">Starts from the couple</p>
-              <p className="mt-1 text-sm text-ink/70">Planner access begins in Settings with a named invite, role preset, and a clean permissions preview, but it still needs executed role-boundary proof before this slice reads fully launch-ready.</p>
+              <p className="mt-1 text-sm text-ink/70">Planner access begins in Settings with a named invite, role preset, and a clean permissions preview, but it still needs executed role-boundary proof before this slice reads fully proven.</p>
             </div>
             <div className="rounded-xl border border-border-subtle bg-white p-4">
               <p className="text-sm font-medium text-ink">Planner workspace is real</p>
