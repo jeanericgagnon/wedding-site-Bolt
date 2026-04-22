@@ -31,6 +31,13 @@ const normalizePublishCopyForMatch = (value: string) =>
     .trim()
     .replace(/[.!?]+$/g, '');
 
+const normalizePublishErrorForMatch = (value: string) =>
+  value
+    .replace(/[–—]/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+
 const isNonBlockingPublishCopy = (normalizedErrorLower: string): boolean => {
   const normalizedStatusCopy = normalizePublishCopyForMatch(normalizedErrorLower);
   if (NON_BLOCKING_PUBLISH_COPY.has(normalizedStatusCopy)) return true;
@@ -47,7 +54,7 @@ const isNonBlockingPublishCopy = (normalizedErrorLower: string): boolean => {
 export const getPublishBlockedHints = (publishValidationError?: string | null): string[] => {
   if (!publishValidationError) return [];
   const normalizedError = publishValidationError.trim();
-  const normalizedErrorLower = normalizedError.toLowerCase();
+  const normalizedErrorLower = normalizePublishErrorForMatch(normalizedError);
   if (isNonBlockingPublishCopy(normalizedErrorLower)) {
     return ['Use Fix next to move through the last blockers before the guest-facing launch.'];
   }

@@ -102,6 +102,10 @@ describe('publishUiHints', () => {
       'Open your couple details.',
       'Add both names exactly how you want guests to see them.',
     ]);
+    expect(getPublishBlockedHints('Add both names exactly how you want them shown\n before going live.')).toEqual([
+      'Open your couple details.',
+      'Add both names exactly how you want guests to see them.',
+    ]);
     expect(getPublishBlockedHints('add both names exactly how you want them shown.')).toEqual([
       'Open your couple details.',
       'Add both names exactly how you want guests to see them.',
@@ -203,6 +207,10 @@ describe('publishUiHints', () => {
       'Open event details.',
       'Add your wedding date before going live.',
     ]);
+    expect(getPublishBlockedHints('Choose your wedding date\n before going live.')).toEqual([
+      'Open event details.',
+      'Add your wedding date before going live.',
+    ]);
   });
 
   it('does not mistake the date success detail for a blocker', () => {
@@ -243,6 +251,11 @@ describe('publishUiHints', () => {
 
   it('returns venue guidance when blocker copy focuses on venue name or address wording', () => {
     const hints = getPublishBlockedHints('Venue name or address is still missing.');
+    expect(hints[0]).toContain('venue');
+  });
+
+  it('normalizes multiline venue blocker copy before matching', () => {
+    const hints = getPublishBlockedHints('Venue name or address\n is still missing.');
     expect(hints[0]).toContain('venue');
   });
 
