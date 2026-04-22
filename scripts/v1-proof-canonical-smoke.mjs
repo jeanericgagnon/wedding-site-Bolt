@@ -163,6 +163,7 @@ const output = {
     recommendation: 'Provide anon-callable function auth in this environment or run with credentials that can invoke the function.',
   },
   launchCriticalBlockerCommand: 'npm run proof:v1:guests-rsvp-ops',
+  highestRiskTrustGapKey: 'guests_rsvp_ops_and_manual_truth_pass',
   blockers: blockedRequired.map((result) => ({
     id: result.id,
     label: result.label,
