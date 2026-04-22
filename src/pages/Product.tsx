@@ -175,7 +175,7 @@ export const Product: React.FC = () => {
       return (
         <div className="space-y-4">
           <p className="text-sm text-ink/70">Template: Modern Luxe • Website: starter draft is ready to review before sharing it with guests</p>
-          <button className="px-5 py-2.5 rounded-xl bg-brand text-paper font-semibold">Review draft privacy + launch settings</button>
+          <button className="px-5 py-2.5 rounded-xl bg-brand text-paper font-semibold">Review draft privacy + share settings</button>
         </div>
       );
     }
