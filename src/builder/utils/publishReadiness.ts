@@ -23,8 +23,10 @@ const getNormalizedPages = (project: BuilderProject) =>
   (Array.isArray(project.pages) ? project.pages.filter(isPageLike) : []);
 const getNormalizedSections = (page: BuilderProject['pages'][number] | undefined) =>
   (Array.isArray(page?.sections) ? page.sections.filter(Boolean) : []);
+const isVenueLike = (value: unknown): value is NonNullable<WeddingDataV1['venues']>[number] =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
 const getNormalizedVenues = (weddingData?: WeddingDataV1 | null) =>
-  (Array.isArray(weddingData?.venues) ? weddingData.venues.filter(Boolean) : []);
+  (Array.isArray(weddingData?.venues) ? weddingData.venues.filter(isVenueLike) : []);
 
 export const getPublishIssue = (project: BuilderProject, weddingData?: WeddingDataV1 | null): PublishIssue | null => {
   const normalizedPages = getNormalizedPages(project);
