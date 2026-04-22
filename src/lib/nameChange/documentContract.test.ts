@@ -905,7 +905,7 @@ describe('name change document intake contract', () => {
       upsertDraftNameChangeExtractedField(
       upsertDraftNameChangeExtractedField([], marriageDraft.id, 'cert #' as never, '  ', 'mc - 123'),
       courtOrderDraft.id,
-      'signature date' as never,
+      'signed dt' as never,
       '  ',
       'Executed on Friday, April 5, 2026 1:30 PM PST',
     ),
