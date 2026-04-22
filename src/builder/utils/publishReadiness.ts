@@ -17,16 +17,19 @@ export interface PublishReadinessItem {
 }
 
 const hasNonEmptyString = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
+const getNormalizedPages = (project: BuilderProject) => (Array.isArray(project.pages) ? project.pages.filter(Boolean) : []);
+const getNormalizedSections = (page: BuilderProject['pages'][number] | undefined) =>
+  (Array.isArray(page?.sections) ? page.sections.filter(Boolean) : []);
 
 export const getPublishIssue = (project: BuilderProject, weddingData?: WeddingDataV1 | null): PublishIssue | null => {
-  const normalizedPages = project.pages.filter(Boolean);
+  const normalizedPages = getNormalizedPages(project);
 
   if (!normalizedPages.length) {
     return { kind: 'no-pages', message: 'Add at least one page before going live.' };
   }
 
-  const firstSection = normalizedPages.flatMap((p) => (p.sections ?? []).map((s) => ({ pageId: p.id, sectionId: s.id })))[0];
-  const hasEnabledSection = normalizedPages.some((page) => page.sections?.some((section) => section?.enabled));
+  const firstSection = normalizedPages.flatMap((p) => getNormalizedSections(p).map((s) => ({ pageId: p.id, sectionId: s.id })))[0];
+  const hasEnabledSection = normalizedPages.some((page) => getNormalizedSections(page).some((section) => section?.enabled));
   if (!hasEnabledSection) {
     return {
       kind: 'no-enabled-sections',
@@ -71,10 +74,10 @@ export const buildPublishReadiness = (
   const normalizedActivePageId = typeof options?.activePageId === 'string'
     ? options.activePageId.trim() || null
     : options?.activePageId;
-  const normalizedPages = project.pages.filter(Boolean);
+  const normalizedPages = getNormalizedPages(project);
   const activePage = normalizedPages.find((page) => page?.id === normalizedActivePageId) ?? normalizedPages[0];
   const enabledSectionCount = normalizedPages.reduce(
-    (count, page) => count + (page?.sections?.filter((section) => section?.enabled).length ?? 0),
+    (count, page) => count + getNormalizedSections(page).filter((section) => section?.enabled).length,
     0
   );
   const hasVenue = Boolean(weddingData?.venues?.some((v) => hasNonEmptyString(v?.name) || hasNonEmptyString(v?.address)));
@@ -82,7 +85,7 @@ export const buildPublishReadiness = (
   const hasWeddingDate = hasNonEmptyString(weddingData?.event?.weddingDateISO);
   const hasRsvpEnabled = weddingData ? weddingData.rsvp?.enabled === true : true;
   const hasUnsavedChanges = options?.isDirty === true;
-  const activePageHasVisibleSections = Boolean(activePage?.sections?.some((section) => section?.enabled));
+  const activePageHasVisibleSections = getNormalizedSections(activePage).some((section) => section?.enabled);
   const activePageTitle = typeof activePage?.title === 'string' ? activePage.title.trim() || 'the current page' : 'the current page';
 
   return [

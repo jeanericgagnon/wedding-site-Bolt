@@ -942,6 +942,20 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('falls back to no visible current-page content when persisted page sections are not arrays', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    // @ts-expect-error exercising runtime guard for incomplete persisted data
+    project.pages[0].sections = { broken: true };
+
+    const readiness = buildPublishReadiness(project, undefined, { activePageId: project.pages[0].id });
+    expect(readiness.find((item) => item.id === 'current-page')).toEqual({
+      id: 'current-page',
+      label: 'Current page has visible content',
+      done: false,
+      detail: 'Turn on content for Home.',
+    });
+  });
+
   it('falls back to the first real page when persisted page arrays contain null entries', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages = [
@@ -975,6 +989,23 @@ describe('publishReadiness', () => {
     expect(getPublishIssue(project)).toEqual({
       kind: 'no-pages',
       message: 'Add at least one page before going live.',
+    });
+  });
+
+  it('returns no-pages when persisted page collections are not arrays', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    // @ts-expect-error exercising runtime guard for incomplete persisted data
+    project.pages = { broken: true };
+
+    expect(getPublishIssue(project)).toEqual({
+      kind: 'no-pages',
+      message: 'Add at least one page before going live.',
+    });
+    expect(buildPublishReadiness(project).find((item) => item.id === 'page')).toEqual({
+      id: 'page',
+      label: 'A page exists',
+      done: false,
+      detail: 'Add a page or apply a starting design.',
     });
   });
 
