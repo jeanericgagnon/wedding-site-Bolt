@@ -32,7 +32,8 @@ function normalizeDraftFieldKey(value: string) {
 }
 
 export function buildDraftNameChangeDocumentId(kind: NameChangeDocumentInput['document_kind']) {
-  return `draft-${canonicalizeNameChangeDocumentKind(normalizeDraftDocumentKind(kind))}`;
+  const normalizedKind = normalizeDraftDocumentKind(kind) || 'other';
+  return `draft-${canonicalizeNameChangeDocumentKind(normalizedKind as NameChangeDocumentInput['document_kind'])}`;
 }
 
 export function normalizeDraftNameChangeDocumentId(documentId: string | null | undefined) {
@@ -48,7 +49,7 @@ export function createDraftNameChangeDocument(
   kind: NameChangeDocumentInput['document_kind'],
   label: string,
 ): NameChangeDocumentInput {
-  const canonicalKind = canonicalizeNameChangeDocumentKind(normalizeDraftDocumentKind(kind));
+  const canonicalKind = canonicalizeNameChangeDocumentKind((normalizeDraftDocumentKind(kind) || 'other') as NameChangeDocumentInput['document_kind']);
   const normalizedLabel = normalizeDraftText(label) || humanizeDraftToken(canonicalKind);
 
   return {

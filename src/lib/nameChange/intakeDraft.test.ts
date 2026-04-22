@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createDraftNameChangeDocument, normalizeDraftNameChangeDocumentId, upsertDraftNameChangeExtractedField } from './intakeDraft';
+import { buildDraftNameChangeDocumentId, createDraftNameChangeDocument, normalizeDraftNameChangeDocumentId, upsertDraftNameChangeExtractedField } from './intakeDraft';
 import type { NameChangeExtractedFieldInput } from './types';
 
 describe('name change intake draft helpers', () => {
@@ -19,6 +19,15 @@ describe('name change intake draft helpers', () => {
       document_kind: 'marriage_certificate',
       display_name: 'Marriage Certificate',
     });
+  });
+
+  it('falls back to other when a draft document kind normalizes empty', () => {
+    expect(createDraftNameChangeDocument('___' as never, '   ')).toMatchObject({
+      id: 'draft-other',
+      document_kind: 'other',
+      display_name: 'Other',
+    });
+    expect(buildDraftNameChangeDocumentId('___' as never)).toBe('draft-other');
   });
 
   it('collapses draft document labels into one clean downstream display name', () => {
