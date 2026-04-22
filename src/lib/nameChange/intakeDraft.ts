@@ -17,6 +17,13 @@ function buildDraftMaskedFileName(kind: NameChangeDocumentInput['document_kind']
   return `${kind.replace(/_/g, '-')}-draft.pdf`;
 }
 
+function shouldBlockDraftDocumentFieldWrite(documentId: string | null | undefined, normalizedDocumentId: string | null) {
+  const trimmedDocumentId = typeof documentId === 'string' ? documentId.trim() : '';
+  const requestedDraftDocumentId = trimmedDocumentId.toLowerCase().startsWith('draft');
+  const requestedBareDraftDocumentId = /^draft$/i.test(trimmedDocumentId);
+  return requestedDraftDocumentId && (!normalizedDocumentId || requestedBareDraftDocumentId || normalizedDocumentId === 'draft-other');
+}
+
 function normalizeDraftDocumentKind(value: string) {
   return value
     .trim()
@@ -92,9 +99,7 @@ export function upsertDraftNameChangeExtractedField(
   nextValue: string,
 ): NameChangeExtractedFieldInput[] {
   const normalizedDocumentId = normalizeDraftNameChangeDocumentId(documentId);
-  const requestedDraftDocumentId = typeof documentId === 'string' && documentId.trim().toLowerCase().startsWith('draft');
-  const requestedBareDraftDocumentId = typeof documentId === 'string' && /^draft$/i.test(documentId.trim());
-  if (requestedDraftDocumentId && (!normalizedDocumentId || requestedBareDraftDocumentId || normalizedDocumentId === 'draft-other')) {
+  if (shouldBlockDraftDocumentFieldWrite(documentId, normalizedDocumentId)) {
     return extractedFields;
   }
   const normalizedFieldKey = normalizeDraftFieldKey(fieldKey);
