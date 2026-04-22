@@ -534,7 +534,10 @@ export const Product: React.FC = () => {
             )}
           </div>
           <p className="text-sm text-ink/65">
-            Or <Link to="/templates" className="text-brand font-semibold hover:underline">browse templates</Link>
+            Or{' '}
+            <Link to={user ? '/dashboard/builder' : '/templates'} className="text-brand font-semibold hover:underline">
+              {user ? 'open your builder' : 'browse templates'}
+            </Link>
           </p>
         </div>
       </section>

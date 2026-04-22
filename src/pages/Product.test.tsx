@@ -111,6 +111,7 @@ describe('Product starter draft truth', () => {
     expect(screen.getAllByRole('button', { name: 'Open your dashboard' }).length).toBe(2);
     expect(screen.getByText('Ready to keep shaping your draft?')).toBeInTheDocument();
     expect(screen.queryByText('Want to see the full flow in action?')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'open your builder' })).toHaveAttribute('href', '/dashboard/builder');
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Review your draft' })[0]);
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
@@ -126,6 +127,7 @@ describe('Product starter draft truth', () => {
     expect(screen.getAllByRole('button', { name: 'Try product demo' }).length).toBe(2);
     expect(screen.queryByRole('button', { name: 'Open your dashboard' })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'See collaboration trust notes' })).toHaveAttribute('href', '/trust');
+    expect(screen.getByRole('link', { name: 'browse templates' })).toHaveAttribute('href', '/templates');
   });
 
   it('gives signed-in couples a direct collaboration settings shortcut', () => {
