@@ -59,6 +59,35 @@ describe('quickStartStateTransfer', () => {
   });
 
 
+  it('treats index-only quick start snapshots as inert when no answers survived', () => {
+    const persisted = persistQuickStartDraftSnapshot({
+      currentIndex: 7,
+      initialSetupAnswers: {},
+      followUpAnswers: {},
+      showFollowUps: false,
+      clarifyingState: null,
+      viewState: 'question',
+    });
+
+    expect(persisted).toBeNull();
+    expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
+  });
+
+  it('keeps progressed quick start snapshots when meaningful answers survived', () => {
+    const persisted = persistQuickStartDraftSnapshot({
+      currentIndex: 7,
+      initialSetupAnswers: { names: 'Alex & Jordan' },
+      followUpAnswers: {},
+      showFollowUps: false,
+      clarifyingState: null,
+      viewState: 'question',
+    });
+
+    expect(persisted?.currentIndex).toBe(7);
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').currentIndex).toBe(7);
+  });
+
+
   it('rewrites unsafe quick start step indexes back to zero on read', () => {
     window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
       currentIndex: Number.MAX_SAFE_INTEGER + 1,

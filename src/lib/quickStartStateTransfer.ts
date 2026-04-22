@@ -23,8 +23,10 @@ export const hasMeaningfulQuickStartDraftSnapshot = (snapshot: QuickStartDraftSn
     )
   );
 
-  return hasMeaningfulQuickStartAnswers(snapshot.initialSetupAnswers)
-    || snapshot.currentIndex > 0
+  const hasMeaningfulSetupAnswers = hasMeaningfulQuickStartAnswers(snapshot.initialSetupAnswers);
+
+  return hasMeaningfulSetupAnswers
+    || (snapshot.currentIndex > 0 && hasMeaningfulSetupAnswers)
     || Object.keys(snapshot.followUpAnswers).length > 0
     || snapshot.showFollowUps
     || snapshot.viewState !== 'question'

@@ -114,4 +114,16 @@ describe('login quick start state transfer', () => {
     })).toBeNull();
   });
 
+
+  it('drops carried quick start drafts that only contain an index with no surviving answers', () => {
+    expect(normalizeMeaningfulQuickStartDraftSnapshot({
+      currentIndex: 5,
+      initialSetupAnswers: {},
+      followUpAnswers: {},
+      showFollowUps: false,
+      clarifyingState: null,
+      viewState: 'question',
+    })).toBeNull();
+  });
+
 });
