@@ -27,6 +27,9 @@ _Machine-readable status:_ `manualProofSummary.missingCount: 3` (`canonicalCoupl
 _Machine-readable status:_ `manualProofSummary.blockingCount: 3`
 _Machine-readable status:_ `manualProofSummary.blockingKeys: canonicalCouplePath, runtimeWordingVerification, onboardingStarterDraftWording`
 _Machine-readable evidence log:_ `manualProofSummary.evidenceLogPath: docs/v1-smoke-proof-log.md`
+_Machine-readable blocker:_ `manualProofBlockingReasons[canonicalCouplePath]` = no logged human route-note pass yet
+_Machine-readable blocker:_ `manualProofBlockingReasons[runtimeWordingVerification]` = privacy/access/publish and marketing/settings/billing runtime wording not yet verified
+_Machine-readable blocker:_ `manualProofBlockingReasons[onboardingStarterDraftWording]` = onboarding and first-run starter-draft wording not yet verified
 
 ## Purpose
 This is the hard proof artifact for whether DayOf can credibly claim **v1 / done-enough**.
