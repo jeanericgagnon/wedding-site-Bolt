@@ -378,6 +378,7 @@ describe('sections registry resolution', () => {
     expect(weddingDataBindings).toContain("return normalizedType === 'registrysection' ? 'registry' : type;");
     expect(guidedBuilderModules).toContain("const normalizeModuleSectionType = (type: string) => type.trim().toLowerCase().replace(/[^a-z0-9]/g, '');");
     expect(guidedBuilderModules).toContain("normalizeModuleSectionType(s.type) === normalizeModuleSectionType(sectionType)");
+    expect(guidedBuilderModules).toContain("switch (normalizeModuleSectionType(moduleId)) {");
     expect(builderV2Adapter).toContain("const normalizeBuilderV2SectionType = (type: string) => {");
     expect(builderV2Adapter).toContain("return normalizedType === 'registrysection' ? 'registry' : type;");
   });

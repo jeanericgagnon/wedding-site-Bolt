@@ -114,7 +114,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
   };
 
   const getModuleStatus = (moduleId: ModuleId): 'complete' | 'incomplete' => {
-    switch (moduleId) {
+    switch (normalizeModuleSectionType(moduleId)) {
       case 'hero':
         return weddingData.couple.partner1Name && weddingData.couple.partner2Name && weddingData.event.weddingDateISO
           ? 'complete'
