@@ -860,12 +860,16 @@ describe('name change document intake contract', () => {
     const snapshot = buildNameChangeDocumentIntakeSnapshot(
       makeCase(),
       [
+        createDraftNameChangeDocument('marriage cert' as never, 'Marriage cert'),
         createDraftNameChangeDocument('SSA card' as never, 'SSA card'),
         createDraftNameChangeDocument('residency document' as never, 'Residency document'),
       ],
       [],
     );
 
+    expect(snapshot.documents.find((document) => document.kind === 'marriage_certificate')).toMatchObject({
+      intakeStatus: 'uploaded',
+    });
     expect(snapshot.documents.find((document) => document.kind === 'social_security_card')).toMatchObject({
       intakeStatus: 'uploaded',
     });

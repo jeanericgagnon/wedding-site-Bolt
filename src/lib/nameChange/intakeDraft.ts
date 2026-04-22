@@ -63,6 +63,9 @@ function normalizeDraftDocumentKind(value: string) {
     .replace(/^_+|_+$/g, '');
 
   const kindAliases: Record<string, NameChangeDocumentInput['document_kind']> = {
+    marriage_cert: 'marriage_certificate',
+    marriage_record: 'marriage_certificate',
+    marriage_license_certificate: 'marriage_certificate',
     passport: 'current_passport',
     passport_book: 'current_passport',
     passport_card: 'current_passport',
@@ -79,6 +82,7 @@ function normalizeDraftDocumentKind(value: string) {
     social_security_number_card: 'social_security_card',
     ssa_card: 'social_security_card',
     ss_card: 'social_security_card',
+    soc_sec_card: 'social_security_card',
     social_security_card_copy: 'social_security_card',
     ssn_card: 'social_security_card',
     birth_cert: 'birth_certificate',

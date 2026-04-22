@@ -90,6 +90,10 @@ describe('name change intake draft helpers', () => {
   });
 
   it('maps common human draft document aliases onto canonical supported kinds', () => {
+    expect(createDraftNameChangeDocument('marriage cert' as never, ' Marriage cert ')).toMatchObject({
+      id: 'draft-marriage_certificate',
+      document_kind: 'marriage_certificate',
+    });
     expect(createDraftNameChangeDocument('passport' as never, ' Passport ')).toMatchObject({
       id: 'draft-current_passport',
       document_kind: 'current_passport',
@@ -115,6 +119,10 @@ describe('name change intake draft helpers', () => {
       document_kind: 'social_security_card',
     });
     expect(createDraftNameChangeDocument('SSA card' as never, ' SSA card ')).toMatchObject({
+      id: 'draft-social_security_card',
+      document_kind: 'social_security_card',
+    });
+    expect(createDraftNameChangeDocument('soc sec card' as never, ' Soc sec card ')).toMatchObject({
       id: 'draft-social_security_card',
       document_kind: 'social_security_card',
     });
