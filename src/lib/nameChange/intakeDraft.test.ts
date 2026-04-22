@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildDraftNameChangeDocumentId, createDraftNameChangeDocument, normalizeDraftNameChangeDocumentId, upsertDraftNameChangeExtractedField } from './intakeDraft';
+import { buildDraftNameChangeDocumentId, createDraftNameChangeDocument, isDraftNameChangePlaceholderDocument, normalizeDraftNameChangeDocumentId, upsertDraftNameChangeExtractedField } from './intakeDraft';
 import type { NameChangeExtractedFieldInput } from './types';
 
 describe('name change intake draft helpers', () => {
@@ -48,6 +48,13 @@ describe('name change intake draft helpers', () => {
       display_name: 'Court order',
       file_name_masked: 'court-order-draft.pdf',
     });
+  });
+
+  it('recognizes draft placeholder documents from ids or masked draft filenames', () => {
+    expect(isDraftNameChangePlaceholderDocument({ id: 'draft-current_passport', file_name_masked: 'passport-•••.pdf' })).toBe(true);
+    expect(isDraftNameChangePlaceholderDocument({ id: null, file_name_masked: 'current-passport-draft.pdf' })).toBe(true);
+    expect(isDraftNameChangePlaceholderDocument({ id: 'doc-passport', file_name_masked: 'passport-•••.pdf' })).toBe(false);
+    expect(isDraftNameChangePlaceholderDocument({ id: 'external-doc-id', file_name_masked: null })).toBe(false);
   });
 
   it('uses draft-marked masked filenames for normal draft documents', () => {

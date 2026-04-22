@@ -1,7 +1,7 @@
 import { buildNameChangeCanonicalCase } from './canonical';
 import { canonicalizeNameChangeDocumentKind, matchesNameChangeDocumentKind } from './documentKinds';
 import { buildNameChangeExtractionContractSnapshot, getDocumentCapturedFieldKeys } from './extractionContract';
-import { isDraftNameChangeDocumentId, isDraftNameChangeMaskedFileName } from './intakeDraft';
+import { isDraftNameChangePlaceholderDocument } from './intakeDraft';
 import type {
   NameChangeCaseInput,
   NameChangeDocumentContractDefinition,
@@ -99,7 +99,7 @@ function metadataMissingForDocument(document: NameChangeDocumentInput | undefine
   if (document.document_kind === 'other') return [];
 
   const missing: string[] = [];
-  if (!document.file_name_masked?.trim() || isDraftNameChangeMaskedFileName(document.file_name_masked)) missing.push('masked filename');
+  if (!document.file_name_masked?.trim() || isDraftNameChangePlaceholderDocument({ file_name_masked: document.file_name_masked })) missing.push('masked filename');
   if (!document.issuing_authority?.trim()) missing.push('issuing authority');
   if (!document.issued_on?.trim()) missing.push('issued date');
 
@@ -115,8 +115,9 @@ function getDocumentContractPriority(
   document: NameChangeDocumentInput,
   kind: NameChangeDocumentInput['document_kind'],
 ) {
-  const reviewedMetadataReadyWeight = document.intake_status === 'reviewed' && metadataMissingForDocument(document).length === 0 ? 1 : 0;
-  const persistedDocumentWeight = isDraftNameChangeDocumentId(document.id) ? 0 : 1;
+  const placeholderDocument = isDraftNameChangePlaceholderDocument(document);
+  const reviewedMetadataReadyWeight = !placeholderDocument && document.intake_status === 'reviewed' && metadataMissingForDocument(document).length === 0 ? 1 : 0;
+  const persistedDocumentWeight = placeholderDocument ? 0 : 1;
   const intakeWeight = document.intake_status === 'reviewed'
     ? 2
     : document.intake_status === 'uploaded'
@@ -135,8 +136,11 @@ function findBestContractDocument(
   const preferredDocuments = matchingDocuments.some((document) => document.document_kind === canonicalKind)
     ? matchingDocuments.filter((document) => document.document_kind === canonicalKind)
     : matchingDocuments;
+  const rankedDocuments = preferredDocuments.some((document) => !isDraftNameChangePlaceholderDocument(document))
+    ? preferredDocuments.filter((document) => !isDraftNameChangePlaceholderDocument(document))
+    : preferredDocuments;
 
-  return preferredDocuments
+  return rankedDocuments
     .sort((left, right) => {
       const priorityDelta = getDocumentContractPriority(right, kind) - getDocumentContractPriority(left, kind);
       if (priorityDelta !== 0) return priorityDelta;

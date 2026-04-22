@@ -145,7 +145,14 @@ export function normalizeDraftNameChangeDocumentId(documentId: string | null | u
 }
 
 export function isDraftNameChangeDocumentId(documentId: string | null | undefined) {
-  return normalizeDraftNameChangeDocumentId(documentId) != null;
+  return typeof documentId === 'string'
+    && documentId.trim().toLowerCase().startsWith('draft')
+    && normalizeDraftNameChangeDocumentId(documentId) != null;
+}
+
+export function isDraftNameChangePlaceholderDocument(document: Pick<NameChangeDocumentInput, 'id' | 'file_name_masked'> | null | undefined) {
+  if (!document) return false;
+  return isDraftNameChangeDocumentId(document.id) || isDraftNameChangeMaskedFileName(document.file_name_masked);
 }
 
 export function createDraftNameChangeDocument(
