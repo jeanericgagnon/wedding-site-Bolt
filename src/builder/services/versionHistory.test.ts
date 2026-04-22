@@ -162,4 +162,13 @@ describe('versionHistory', () => {
 
     expect(getBuilderRevision(weddingId, newest.id)?.id).toBe(newest.id);
   });
+
+  it('keeps older builder revision lookups available after newer records are added', () => {
+    const weddingId = `w_${Date.now()}_p`;
+    const project = createEmptyBuilderProject(weddingId, 'modern-luxe');
+    const older = recordBuilderRevision({ weddingId, project, action: 'save', actor: 'tester-1' });
+    recordBuilderRevision({ weddingId, project, action: 'publish', actor: 'tester-2' });
+
+    expect(getBuilderRevision(weddingId, older.id)?.id).toBe(older.id);
+  });
 });
