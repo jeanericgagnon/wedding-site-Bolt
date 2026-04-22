@@ -39,7 +39,7 @@ export const getPublishIssue = (project: BuilderProject, weddingData?: WeddingDa
       return { kind: 'missing-couple-names', message: 'Add both partner names before going live.' };
     }
 
-    if (!weddingData.event.weddingDateISO?.trim()) {
+    if (!weddingData.event?.weddingDateISO?.trim()) {
       return { kind: 'missing-event-date', message: 'Add your wedding date before going live.' };
     }
 
