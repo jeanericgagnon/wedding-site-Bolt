@@ -259,4 +259,23 @@ describe('mediaService', () => {
       altText: 'Seating chart display',
     }));
   });
+
+  it('keeps original filename truth alongside section attachment when both are provided', async () => {
+    const file = new File(['img'], 'welcome-sign.jpg', { type: 'image/jpeg' });
+    upload.mockResolvedValue({
+      url: 'https://cdn.example.com/renamed-welcome.jpg',
+      path: 'w1/renamed-welcome.jpg',
+    });
+    save.mockResolvedValue({ id: 'asset-14' });
+
+    await mediaService.uploadAsset('w1', file, {
+      attachToSectionId: 'section-welcome',
+    });
+
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({
+      attachedSectionIds: ['section-welcome'],
+      filename: 'renamed-welcome.jpg',
+      originalFilename: 'welcome-sign.jpg',
+    }));
+  });
 });
