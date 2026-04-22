@@ -302,6 +302,7 @@ describe('sections registry resolution', () => {
     expect(registryOwnerCard).toContain("? `Purchased by ${item.purchaser_name}`");
     expect(registryItemForm).toContain('canonical_url: nextUrl,');
     expect(registryDashboard).toContain('const normalizedItems = items.map((item) => {');
+    expect(registryDashboard).toContain('const filtered = normalizedItems.filter(item => {');
     expect(registryDashboard).toContain('purchaser_name: quantityState.purchaseStatus === \'available\' ? null : item.purchaser_name,');
     expect(registryDashboard).toContain('badImports: normalizedItems.filter((i) => getRegistryItemMetadataState(i).hasBadImportTitle).length,');
     expect(registryDashboard).toContain('const actionableBadImportCount = items.filter((item) => getRegistryItemMetadataState(item).hasBadImportTitle && !!(item.item_url || item.canonical_url)).length;');

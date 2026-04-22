@@ -752,7 +752,18 @@ export const DashboardRegistry: React.FC = () => {
     setShowForm(true);
   }
 
-  const filtered = items.filter(item => {
+  const normalizedItems = items.map((item) => {
+    const quantityState = sanitizeRegistryQuantityState(item.quantity_purchased ?? 0, item.quantity_needed ?? 1);
+    return {
+      ...item,
+      quantity_needed: quantityState.quantityNeeded,
+      quantity_purchased: quantityState.quantityPurchased,
+      purchase_status: quantityState.purchaseStatus,
+      purchaser_name: quantityState.purchaseStatus === 'available' ? null : item.purchaser_name,
+    };
+  });
+
+  const filtered = normalizedItems.filter(item => {
     const q = search.toLowerCase();
     const matchesSearch =
       !q ||
@@ -789,16 +800,6 @@ export const DashboardRegistry: React.FC = () => {
   const refreshBudgetRemaining = Math.max(0, monthlyRefreshCap - monthlyRefreshCount);
   const budgetUtilization = monthlyRefreshCap > 0 ? monthlyRefreshCount / monthlyRefreshCap : 0;
   const nearBudgetCap = budgetUtilization >= 0.8;
-  const normalizedItems = items.map((item) => {
-    const quantityState = sanitizeRegistryQuantityState(item.quantity_purchased ?? 0, item.quantity_needed ?? 1);
-    return {
-      ...item,
-      quantity_needed: quantityState.quantityNeeded,
-      quantity_purchased: quantityState.quantityPurchased,
-      purchase_status: quantityState.purchaseStatus,
-      purchaser_name: quantityState.purchaseStatus === 'available' ? null : item.purchaser_name,
-    };
-  });
   const eligibleItemCount = normalizedItems.filter((item) => refreshIncludePurchased || (item.purchase_status !== 'purchased' && !item.hide_when_purchased)).length;
   const projectedMonthlyCalls = Math.min(eligibleItemCount, monthlyRefreshCap);
   const projectedRefreshCoverage = eligibleItemCount > 0 ? Math.round((projectedMonthlyCalls / eligibleItemCount) * 100) : 100;
