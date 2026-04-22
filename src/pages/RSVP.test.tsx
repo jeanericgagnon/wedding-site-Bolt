@@ -2614,6 +2614,73 @@ describe('RSVP stale submit protection', () => {
     expect(screen.getByText('Need the 3 PM shuttle')).toBeInTheDocument();
   });
 
+  it('normalizes loaded RSVP truth before opening existing response details', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        guest: {
+          id: 'guest-1',
+          first_name: 'Taylor',
+          last_name: 'Rivera',
+          name: 'Taylor Rivera',
+          email: 'taylor@example.com',
+          phone: null,
+          group_name: null,
+          wedding_site_id: 'site-1',
+          plus_one_allowed: false,
+          invited_to_ceremony: true,
+          invited_to_reception: true,
+          invite_token: 'token-1',
+        },
+        existingRsvp: {
+          id: 'rsvp-1',
+          attending: true,
+          attending_ceremony: true,
+          attending_reception: true,
+          meal_choice: '  Chicken  ',
+          plus_one_name: '  Sam Rivera  ',
+          notes: '  See you on the dance floor  ',
+          custom_answers: {
+            'q-1': '  Play Dancing Queen  ',
+          },
+        },
+        guests: null,
+        rsvpDeadline: null,
+        rsvpQuestions: [
+          {
+            id: 'q-1',
+            label: 'Song request',
+            type: 'short_text',
+            required: false,
+            options: [],
+          },
+        ],
+        rsvpMealConfig: { enabled: true, options: ['Chicken', 'Beef'] },
+        musicPlaylistUrl: null,
+        householdGuests: [],
+      }),
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/rsvp']}>
+        <RSVP />
+      </MemoryRouter>
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('rsvp.search_placeholder'), { target: { value: 'Taylor Rivera' } });
+    fireEvent.click(screen.getByText('Find My Invitation'));
+
+    expect(await screen.findByText("You've already responded. You can update your response below.")).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Continue to details'));
+
+    expect(screen.getByRole('combobox')).toHaveValue('Chicken');
+    expect(screen.getByDisplayValue('See you on the dance floor')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Play Dancing Queen')).toBeInTheDocument();
+    expect(screen.queryByDisplayValue('  Chicken  ')).not.toBeInTheDocument();
+    expect(screen.queryByDisplayValue('  See you on the dance floor  ')).not.toBeInTheDocument();
+    expect(screen.queryByDisplayValue('  Play Dancing Queen  ')).not.toBeInTheDocument();
+  });
+
   it('drops stale token submit completions after the page unmounts', async () => {
     const submitRequest = deferred<Response>();
 

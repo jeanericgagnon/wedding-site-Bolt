@@ -125,6 +125,23 @@ function normalizeCustomAnswers(answers: Record<string, string | string[]>) {
   );
 }
 
+function normalizeExistingRsvp(existingRsvp: ExistingRSVP): ExistingRSVP {
+  const mealChoice = (existingRsvp.meal_choice || '').trim();
+  const plusOneName = (existingRsvp.plus_one_name || '').trim();
+  const notes = (existingRsvp.notes || '').trim();
+
+  return {
+    ...existingRsvp,
+    meal_choice: mealChoice || null,
+    plus_one_name: plusOneName || null,
+    plus_one_count: plusOneName ? 1 : 0,
+    notes: notes || null,
+    custom_answers: existingRsvp.custom_answers && typeof existingRsvp.custom_answers === 'object'
+      ? normalizeCustomAnswers(existingRsvp.custom_answers as Record<string, string | string[]>)
+      : {},
+  };
+}
+
 function invalidateRsvpSubmitState(
   activeSubmitRequestRef: React.MutableRefObject<number>,
   submitInFlightRef: React.MutableRefObject<boolean>,
@@ -569,6 +586,7 @@ export default function RSVP() {
   };
 
   const selectGuest = (foundGuest: Guest, foundRsvp: ExistingRSVP | null, deadline: string | null = null, questions: RSVPQuestion[] = [], meal: RSVPMealConfig = { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, household: HouseholdGuest[] = [], playlistUrl: string | null = null) => {
+    const normalizedRsvp = foundRsvp ? normalizeExistingRsvp(foundRsvp) : null;
     setGuest(foundGuest);
     setFormStep(1);
     setActivePredictionIndex(-1);
@@ -579,31 +597,31 @@ export default function RSVP() {
     setHouseholdGuests(household);
     setApplyToHousehold(household.length > 0);
     setSelectedHouseholdGuestIds(household.map((h) => h.id));
-    if (foundRsvp) {
-      setExistingRsvp(foundRsvp);
-      const parsed = parseEventSelectionsFromNotes(foundRsvp.notes, foundGuest);
-      const attendCeremony = typeof foundRsvp.attending_ceremony === 'boolean' ? foundRsvp.attending_ceremony : parsed.attendCeremony;
-      const attendReception = typeof foundRsvp.attending_reception === 'boolean' ? foundRsvp.attending_reception : parsed.attendReception;
+    if (normalizedRsvp) {
+      setExistingRsvp(normalizedRsvp);
+      const parsed = parseEventSelectionsFromNotes(normalizedRsvp.notes, foundGuest);
+      const attendCeremony = typeof normalizedRsvp.attending_ceremony === 'boolean' ? normalizedRsvp.attending_ceremony : parsed.attendCeremony;
+      const attendReception = typeof normalizedRsvp.attending_reception === 'boolean' ? normalizedRsvp.attending_reception : parsed.attendReception;
       setFormData({
-        attending: foundRsvp.attending,
+        attending: normalizedRsvp.attending,
         attendCeremony,
         attendReception,
         meal_choice: (() => {
-          const current = (foundRsvp.meal_choice || '').trim();
+          const current = normalizedRsvp.meal_choice || '';
           if (!current) return '';
           const match = meal.options.find((opt) => opt.toLowerCase() === current.toLowerCase());
           return match ?? current;
         })(),
-        plus_one_name: (foundRsvp.plus_one_name || '').trim(),
+        plus_one_name: normalizedRsvp.plus_one_name || '',
         notes: parsed.cleanNotes,
       });
       setCustomAnswers(
-        foundRsvp.custom_answers && typeof foundRsvp.custom_answers === 'object'
-          ? normalizeCustomAnswers(foundRsvp.custom_answers as Record<string, string | string[]>)
+        normalizedRsvp.custom_answers && typeof normalizedRsvp.custom_answers === 'object'
+          ? normalizeCustomAnswers(normalizedRsvp.custom_answers as Record<string, string | string[]>)
           : {},
       );
     }
-    if (!foundRsvp) {
+    if (!normalizedRsvp) {
       setExistingRsvp(null);
       setFormData({
         attending: true,
