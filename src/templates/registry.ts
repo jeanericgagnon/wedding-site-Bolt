@@ -821,5 +821,5 @@ export function getTemplate(templateId: unknown): TemplateDefinition {
 }
 
 export function getAllTemplates(): TemplateDefinition[] {
-  return templateRegistry.map(cloneTemplateDefinition);
+  return Object.values(templateById).map(cloneTemplateDefinition);
 }

@@ -515,7 +515,7 @@ describe('sections registry resolution', () => {
     expect(templateRegistrySource).toContain('function cloneTemplateDefinition(template: TemplateDefinition): TemplateDefinition {');
     expect(templateRegistrySource).toContain('const sourceTemplateId = TEMPLATE_ALIAS_TARGETS[canonicalTemplateId] ?? canonicalTemplateId;');
     expect(templateRegistrySource).toContain('return cloneTemplateDefinition(templateById[sourceTemplateId] || templateById[TEMPLATE_ALIAS_TARGETS.base] || templateRegistry[0]);');
-    expect(templateRegistrySource).toContain('return templateRegistry.map(cloneTemplateDefinition);');
+    expect(templateRegistrySource).toContain('return Object.values(templateById).map(cloneTemplateDefinition);');
     expect(sectionRegistrySource).toContain('export function resolveCanonicalRegistrySectionInput(type: unknown, variant: unknown): { type: string; variant: string } {');
     expect(sectionRegistrySource).toContain('export function resolveCanonicalRegistrySectionType(type: unknown): string {');
     expect(sectionRegistrySource).toContain('export function resolveCanonicalRegistryVariant(variant: unknown): string {');
