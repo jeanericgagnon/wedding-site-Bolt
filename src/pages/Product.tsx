@@ -201,7 +201,7 @@ export const Product: React.FC = () => {
     if (activeStep === 'message') {
       return (
         <div className="space-y-4">
-          <p className="text-sm text-ink/70">Status: <strong>{messageState === 'draft' ? 'Ready to send' : 'Sent to 86 guests'}</strong></p>
+          <p className="text-sm text-ink/70">Status: <strong>{messageState === 'draft' ? 'Draft prepared for review' : 'Sent to 86 guests'}</strong></p>
           <button onClick={() => setMessageState((s) => (s === 'draft' ? 'sent' : 'draft'))} className="px-4 py-2 rounded-lg border border-brand/40 hover:bg-brand/5">
             {messageState === 'draft' ? 'Send update' : 'Reset draft state'}
           </button>
