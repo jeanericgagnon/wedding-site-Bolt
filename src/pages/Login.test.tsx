@@ -23,6 +23,14 @@ vi.mock('../hooks/useAuth', () => ({
   useAuth: () => ({ signIn: vi.fn() }),
 }));
 
+vi.mock('../lib/signupContinuation', async () => {
+  const actual = await vi.importActual<typeof import('../lib/signupContinuation')>('../lib/signupContinuation');
+  return {
+    ...actual,
+    clearSignupReturnPath: vi.fn(actual.clearSignupReturnPath),
+  };
+});
+
 vi.mock('../lib/supabase', () => ({
   supabase: {
     auth: {
