@@ -54,7 +54,7 @@ describe('quickStartStateTransfer', () => {
       viewState: 'question',
     });
 
-    expect(persisted?.currentIndex).toBe(0);
+    expect(persisted).toBeNull();
     expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
   });
 

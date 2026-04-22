@@ -30,8 +30,10 @@ export const hasMeaningfulQuickStartDraftSnapshot = (snapshot: QuickStartDraftSn
 export const persistQuickStartDraftSnapshot = (value: unknown) => {
   if (typeof window === 'undefined') return null;
   const normalized = createQuickStartDraftSnapshot(value);
+  const hasMeaningfulDraft = hasMeaningfulQuickStartDraftSnapshot(normalized);
+
   try {
-    if (hasMeaningfulQuickStartDraftSnapshot(normalized)) {
+    if (hasMeaningfulDraft) {
       window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify(normalized));
     } else {
       window.localStorage.removeItem(QUICK_START_STORAGE_KEY);
@@ -39,7 +41,8 @@ export const persistQuickStartDraftSnapshot = (value: unknown) => {
   } catch {
     // ignore storage write failures and keep the normalized in-memory result usable
   }
-  return normalized;
+
+  return hasMeaningfulDraft ? normalized : null;
 };
 
 export const readQuickStartDraftSnapshot = (): QuickStartDraftSnapshot | null => {

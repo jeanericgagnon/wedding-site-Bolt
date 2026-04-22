@@ -88,4 +88,18 @@ describe('login quick start state transfer', () => {
 
     expect(window.localStorage.getItem('dayoflove:quickstart-shell')).toBeNull();
   });
+
+
+  it('returns null when carried quick start payloads normalize to empty state', () => {
+    const persisted = persistQuickStartDraftSnapshot({
+      currentIndex: 0,
+      initialSetupAnswers: {},
+      followUpAnswers: {},
+      showFollowUps: false,
+      clarifyingState: null,
+      viewState: 'question',
+    });
+
+    expect(persisted).toBeNull();
+  });
 });
