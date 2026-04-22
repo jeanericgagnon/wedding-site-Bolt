@@ -454,6 +454,20 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('marks RSVP readiness complete when replies are enabled in wedding data', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
+    const data = createEmptyWeddingData();
+    data.rsvp.enabled = true;
+
+    expect(buildPublishReadiness(project, data).find((item) => item.id === 'rsvp')).toEqual({
+      id: 'rsvp',
+      label: 'RSVP is turned on',
+      done: true,
+      detail: 'Guests can reply.',
+    });
+  });
+
   it('marks page readiness with plural page copy when multiple pages exist', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages.push({
