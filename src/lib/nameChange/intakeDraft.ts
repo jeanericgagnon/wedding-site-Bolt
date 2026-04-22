@@ -197,6 +197,11 @@ function parseDraftMonthName(monthName: string) {
 function normalizeDraftDateValue(value: string) {
   const normalizeIsoParts = (year: string, month: string, day: string) => `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
   const normalizedOrdinalValue = value.replace(/\b(\d{1,2})(st|nd|rd|th)\b/gi, '$1');
+  const isoTimestampMatch = normalizedOrdinalValue.match(/^(\d{4})-(\d{2})-(\d{2})[T\s].*$/);
+  if (isoTimestampMatch) {
+    const [, year, month, day] = isoTimestampMatch;
+    return normalizeIsoParts(year, month, day);
+  }
 
   const monthFirstNumericMatch = normalizedOrdinalValue.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
   if (monthFirstNumericMatch) {
