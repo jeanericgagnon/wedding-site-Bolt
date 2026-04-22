@@ -64,4 +64,21 @@ describe('registry featured public parity helpers', () => {
     expect(parsed.featuredGifts[0]?.isPartiallyClaimed).toBe(true);
     expect(parsed.featuredGifts[0]?.isClaimed).toBe(false);
   });
+
+  it('keeps hero featured gifts schema-compatible with partial purchase state', () => {
+    const parsed = registryFeaturedSchema.parse({
+      layout: 'hero',
+      featuredGifts: [
+        {
+          id: 'gift-hero',
+          name: 'Stand Mixer',
+          isPartiallyClaimed: true,
+          url: 'https://example.com/mixer',
+        },
+      ],
+    });
+
+    expect(parsed.layout).toBe('hero');
+    expect(parsed.featuredGifts[0]?.isPartiallyClaimed).toBe(true);
+  });
 });

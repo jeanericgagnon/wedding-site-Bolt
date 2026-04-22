@@ -328,6 +328,11 @@ const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = 
                     <div className="flex items-center gap-2 mb-3">
                       <Heart size={14} className="text-rose-400 fill-rose-400" />
                       <span className="text-xs text-rose-500 font-medium uppercase tracking-wide">Top Pick</span>
+                      {heroGift.isPartiallyClaimed && !heroGift.isClaimed && (
+                        <span className="text-[10px] px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-100 rounded-full font-medium uppercase tracking-wide">
+                          Partially claimed
+                        </span>
+                      )}
                     </div>
                     {heroGift.category && <p className="text-xs text-stone-400 uppercase tracking-wide mb-1">{heroGift.category}</p>}
                     <h3 className="text-xl font-semibold text-stone-900 mb-1">{heroGift.name}</h3>
@@ -335,7 +340,7 @@ const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = 
                     {heroGift.description && <p className="text-sm text-stone-500 font-light leading-relaxed mb-4">{heroGift.description}</p>}
                     <div className="flex items-center justify-between">
                       {heroGift.price && <span className="text-lg font-bold text-stone-900">{heroGift.price}</span>}
-                      {!heroGift.isClaimed && <span className="text-xs text-stone-400 group-hover:text-stone-700 transition-colors flex items-center gap-1.5 uppercase tracking-wide font-medium"><ExternalLink size={12} />View gift</span>}
+                      {!heroGift.isClaimed && <span className="text-xs text-stone-400 group-hover:text-stone-700 transition-colors flex items-center gap-1.5 uppercase tracking-wide font-medium"><ExternalLink size={12} />{heroGift.isPartiallyClaimed ? 'View remaining gift' : 'View gift'}</span>}
                     </div>
                   </div>
                 </a>
