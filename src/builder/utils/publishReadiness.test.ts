@@ -154,7 +154,7 @@ describe('publishReadiness', () => {
 
     const issue = getPublishIssue(project, data);
     expect(issue?.kind).toBe('missing-couple-names');
-    expect(getPublishValidationError(project, data)).toBe('Add both partner names before going live.');
+    expect(getPublishValidationError(project, data)).toBe('Add both names exactly how you want them shown before going live.');
   });
 
   it('passes data preflight when names/date/venue/rsvp are configured', () => {
@@ -194,7 +194,7 @@ describe('publishReadiness', () => {
     data.rsvp.enabled = true;
 
     expect(getPublishIssue(project, data)?.kind).toBe('missing-venue');
-    expect(getPublishValidationError(project, data)).toBe('Add at least one venue before going live.');
+    expect(getPublishValidationError(project, data)).toBe('Add at least one venue name or address before going live.');
   });
 
   it('blocks publish when RSVP is disabled even if names, date, and venue are configured', () => {
@@ -273,7 +273,7 @@ describe('publishReadiness', () => {
     delete data.venues;
 
     expect(getPublishIssue(project, data)?.kind).toBe('missing-venue');
-    expect(getPublishValidationError(project, data)).toBe('Add at least one venue before going live.');
+    expect(getPublishValidationError(project, data)).toBe('Add at least one venue name or address before going live.');
   });
 
   it('blocks publish when persisted wedding data is missing the couple object entirely', () => {
@@ -287,7 +287,7 @@ describe('publishReadiness', () => {
     delete data.couple;
 
     expect(getPublishIssue(project, data)?.kind).toBe('missing-couple-names');
-    expect(getPublishValidationError(project, data)).toBe('Add both partner names before going live.');
+    expect(getPublishValidationError(project, data)).toBe('Add both names exactly how you want them shown before going live.');
   });
 
   it('blocks publish when persisted wedding data has a non-object couple shape', () => {

@@ -106,7 +106,7 @@ export const getPublishIssue = (project: BuilderProject, weddingData?: WeddingDa
     const hasPartner1 = hasNonEmptyString(couple?.partner1Name);
     const hasPartner2 = hasNonEmptyString(couple?.partner2Name);
     if (!hasPartner1 || !hasPartner2) {
-      return { kind: 'missing-couple-names', message: 'Add both partner names before going live.' };
+      return { kind: 'missing-couple-names', message: 'Add both names exactly how you want them shown before going live.' };
     }
 
     if (!hasNonEmptyString(event?.weddingDateISO)) {
@@ -115,7 +115,7 @@ export const getPublishIssue = (project: BuilderProject, weddingData?: WeddingDa
 
     const hasVenue = getSortedNormalizedVenues(weddingData).some((v) => hasNonEmptyString(v?.name) || hasNonEmptyString(v?.address));
     if (!hasVenue) {
-      return { kind: 'missing-venue', message: 'Add at least one venue before going live.' };
+      return { kind: 'missing-venue', message: 'Add at least one venue name or address before going live.' };
     }
 
     if (rsvp?.enabled !== true) {

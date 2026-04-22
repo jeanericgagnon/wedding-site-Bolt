@@ -98,6 +98,10 @@ describe('publishUiHints', () => {
       'Open your couple details.',
       'Add both names exactly how you want guests to see them.',
     ]);
+    expect(getPublishBlockedHints('Add both names exactly how you want them shown before going live.')).toEqual([
+      'Open your couple details.',
+      'Add both names exactly how you want guests to see them.',
+    ]);
     expect(getPublishBlockedHints('add both names exactly how you want them shown.')).toEqual([
       'Open your couple details.',
       'Add both names exactly how you want guests to see them.',
@@ -705,6 +709,10 @@ describe('publishUiHints', () => {
       'Use Fix next to move through the last blockers before the guest-facing launch.',
     ]);
     expect(getPublishBlockedHints('Add at least one venue before going live.')).toEqual([
+      'Add at least one venue name or address.',
+      'Make sure guests can tell where they are meant to go.',
+    ]);
+    expect(getPublishBlockedHints('Add at least one venue name or address before going live.')).toEqual([
       'Add at least one venue name or address.',
       'Make sure guests can tell where they are meant to go.',
     ]);
