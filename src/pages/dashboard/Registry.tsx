@@ -427,7 +427,10 @@ export const DashboardRegistry: React.FC = () => {
         fields.price_amount = preview.price_amount;
       }
       if (preview.image_url && (replaceExisting || !item.image_url)) fields.image_url = preview.image_url;
-      if ((preview.merchant ?? preview.brand) && (replaceExisting || !item.merchant)) fields.merchant = (preview.merchant ?? preview.brand)!;
+      if ((preview.merchant ?? preview.brand) && (replaceExisting || !item.merchant)) {
+        fields.merchant = (preview.merchant ?? preview.brand)!;
+        fields.store_name = (preview.merchant ?? preview.brand)!;
+      }
       if (preview.canonical_url) fields.canonical_url = preview.canonical_url;
       if (Object.keys(fields).length > 0) {
         const updated = await updateRegistryItem(item.id, fields);
