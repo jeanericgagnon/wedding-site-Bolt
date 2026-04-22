@@ -8,6 +8,7 @@ import { mediaService } from '../services/mediaService';
 import { generateBuilderId } from '../../types/builder/project';
 import { getSectionManifest } from '../registry/sectionManifests';
 import { markFieldAsUserEdited } from '../../lib/weddingProfile';
+import { mergeMediaAssetsAfterUploadRefresh } from '../utils/mediaRefresh';
 
 function resolveImageSettingKey(sectionType: string): string {
   try {
@@ -127,7 +128,7 @@ interface UploadDropAreaProps {
 }
 
 export const UploadDropArea: React.FC<UploadDropAreaProps> = ({ weddingId }) => {
-  const { dispatch } = useBuilderContext();
+  const { state, dispatch } = useBuilderContext();
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadErrors, setUploadErrors] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -194,9 +195,10 @@ export const UploadDropArea: React.FC<UploadDropAreaProps> = ({ weddingId }) => 
 
     try {
       const freshAssets = await mediaService.listAssets(weddingId);
-      dispatch(builderActions.setMediaAssets(freshAssets));
+      const mergedAssets = mergeMediaAssetsAfterUploadRefresh(state.mediaAssets, freshAssets, uploadedCount);
+      dispatch(builderActions.setMediaAssets(mergedAssets));
       if (uploadedCount > 0 && freshAssets.length === 0) {
-        dispatch(builderActions.setError('Your photo upload finished, but the media library did not reload correctly. Refresh the page and check again.'));
+        dispatch(builderActions.setError('Your photo upload finished, but the media library refresh was stale. Your uploaded photo is being kept locally until the library catches up.'));
       }
     } catch (err) {
       if (uploadedCount > 0) {
@@ -205,7 +207,7 @@ export const UploadDropArea: React.FC<UploadDropAreaProps> = ({ weddingId }) => 
       }
       // Keep optimistic local assets if refresh fails.
     }
-  }, [weddingId, dispatch]);
+  }, [weddingId, state.mediaAssets, dispatch]);
 
   return (
     <div className="px-6 pt-4 pb-2">
