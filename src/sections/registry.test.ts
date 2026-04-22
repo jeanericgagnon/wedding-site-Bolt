@@ -94,4 +94,13 @@ describe('sections registry resolution', () => {
     expect(getSectionComponent('registry', 'illustrated')).toBe(RegistryGrid);
     expect(getSectionComponent('registry', 'featured')).toBe(RegistryFundHighlight);
   });
+
+  it('keeps every builder-supported registry variant renderable in the legacy runtime', () => {
+    const registryManifest = getSectionManifest('registry');
+
+    for (const variant of registryManifest?.supportedVariants ?? []) {
+      expect(getSectionVariants('registry')).toContain(variant);
+      expect(getSectionComponent('registry', variant)).toBeTypeOf('function');
+    }
+  });
 });
