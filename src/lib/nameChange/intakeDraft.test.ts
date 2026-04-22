@@ -49,6 +49,12 @@ describe('name change intake draft helpers', () => {
     });
   });
 
+  it('uses draft-marked masked filenames for normal draft documents', () => {
+    expect(createDraftNameChangeDocument('current_passport', 'Passport')).toMatchObject({
+      file_name_masked: 'current-passport-draft.pdf',
+    });
+  });
+
   it('trims messy draft document kinds before canonicalizing ids and labels', () => {
     expect(createDraftNameChangeDocument(' court_order_name_change ' as never, ' Court order ')).toMatchObject({
       id: 'draft-court_order',
