@@ -16,6 +16,8 @@ export interface PublishReadinessItem {
   detail: string;
 }
 
+const hasNonEmptyString = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
+
 export const getPublishIssue = (project: BuilderProject, weddingData?: WeddingDataV1 | null): PublishIssue | null => {
   const normalizedPages = project.pages.filter(Boolean);
 
@@ -35,17 +37,17 @@ export const getPublishIssue = (project: BuilderProject, weddingData?: WeddingDa
   }
 
   if (weddingData) {
-    const hasPartner1 = !!weddingData.couple?.partner1Name?.trim();
-    const hasPartner2 = !!weddingData.couple?.partner2Name?.trim();
+    const hasPartner1 = hasNonEmptyString(weddingData.couple?.partner1Name);
+    const hasPartner2 = hasNonEmptyString(weddingData.couple?.partner2Name);
     if (!hasPartner1 || !hasPartner2) {
       return { kind: 'missing-couple-names', message: 'Add both partner names before going live.' };
     }
 
-    if (!weddingData.event?.weddingDateISO?.trim()) {
+    if (!hasNonEmptyString(weddingData.event?.weddingDateISO)) {
       return { kind: 'missing-event-date', message: 'Add your wedding date before going live.' };
     }
 
-    const hasVenue = Boolean(weddingData.venues?.some((v) => !!v?.name?.trim() || !!v?.address?.trim()));
+    const hasVenue = Boolean(weddingData.venues?.some((v) => hasNonEmptyString(v?.name) || hasNonEmptyString(v?.address)));
     if (!hasVenue) {
       return { kind: 'missing-venue', message: 'Add at least one venue before going live.' };
     }
@@ -75,9 +77,9 @@ export const buildPublishReadiness = (
     (count, page) => count + (page?.sections?.filter((section) => section?.enabled).length ?? 0),
     0
   );
-  const hasVenue = Boolean(weddingData?.venues?.some((v) => !!v?.name?.trim() || !!v?.address?.trim()));
-  const hasNames = Boolean(weddingData?.couple?.partner1Name?.trim() && weddingData?.couple?.partner2Name?.trim());
-  const hasWeddingDate = Boolean(weddingData?.event?.weddingDateISO?.trim());
+  const hasVenue = Boolean(weddingData?.venues?.some((v) => hasNonEmptyString(v?.name) || hasNonEmptyString(v?.address)));
+  const hasNames = hasNonEmptyString(weddingData?.couple?.partner1Name) && hasNonEmptyString(weddingData?.couple?.partner2Name);
+  const hasWeddingDate = hasNonEmptyString(weddingData?.event?.weddingDateISO);
   const hasRsvpEnabled = weddingData ? weddingData.rsvp?.enabled === true : true;
   const hasUnsavedChanges = options?.isDirty === true;
   const activePageHasVisibleSections = Boolean(activePage?.sections?.some((section) => section?.enabled));
