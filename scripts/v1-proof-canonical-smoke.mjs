@@ -157,6 +157,7 @@ const output = {
     message: 'validate-rsvp-token function is not callable with current anon credentials (401)',
     recommendation: 'Provide anon-callable function auth in this environment or run with credentials that can invoke the function.',
   },
+  launchCriticalBlockerCommand: 'npm run proof:v1:guests-rsvp-ops',
   blockers: blockedRequired.map((result) => ({
     id: result.id,
     label: result.label,
