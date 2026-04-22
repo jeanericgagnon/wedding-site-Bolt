@@ -78,5 +78,6 @@ describe('publishUiHints', () => {
   it('keeps the fallback blocker copy when the error is blank', () => {
     expect(getPublishBlockedHints('')).toEqual([]);
     expect(getPublishBlockedHints(null)).toEqual([]);
+    expect(getPublishBlockedHints(undefined)).toEqual([]);
   });
 });
