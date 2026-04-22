@@ -767,7 +767,7 @@ export default function RSVP() {
         });
 
       if (requiredMissing) {
-        setError(`Please answer: ${requiredMissing.label || requiredMissing.question_text || 'this question'}`);
+        setError(`Please answer: ${getRsvpQuestionLabel(requiredMissing).toLowerCase() === 'question' ? 'this question' : getRsvpQuestionLabel(requiredMissing)}`);
         return;
       }
       setError('');
