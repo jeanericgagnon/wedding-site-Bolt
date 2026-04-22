@@ -205,6 +205,20 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('marks date readiness complete when the wedding date has surrounding whitespace but real content', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
+    const data = createEmptyWeddingData();
+    data.event.weddingDateISO = ' 2027-06-12 ';
+
+    expect(buildPublishReadiness(project, data).find((item) => item.id === 'date')).toEqual({
+      id: 'date',
+      label: 'Wedding date is set',
+      done: true,
+      detail: 'Date is ready.',
+    });
+  });
+
   it('treats whitespace partner-one names as missing for publish truth', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
