@@ -74,6 +74,18 @@ function notifyRsvpContinuityUpdate() {
   window.dispatchEvent(new CustomEvent(RSVP_CONTINUITY_EVENT, { detail: { updatedAt } }));
 }
 
+function resetEventRsvpModalTransientState(
+  setSubmitting: React.Dispatch<React.SetStateAction<boolean>>,
+  setSubmitError: React.Dispatch<React.SetStateAction<string>>,
+  setSubmitSuccess: React.Dispatch<React.SetStateAction<boolean>>,
+  setError: React.Dispatch<React.SetStateAction<string>>,
+) {
+  setSubmitting(false);
+  setSubmitError('');
+  setSubmitSuccess(false);
+  setError('');
+}
+
 export default function EventRSVP() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
@@ -148,9 +160,7 @@ export default function EventRSVP() {
     setInvitations([]);
     setSelectedEvent(null);
     setRsvpForm(buildDefaultEventRsvpFormState());
-    setSubmitting(false);
-    setSubmitError('');
-    setSubmitSuccess(false);
+    resetEventRsvpModalTransientState(setSubmitting, setSubmitError, setSubmitSuccess, setError);
     setHasEventRsvpSupport(null);
 
     try {
@@ -288,10 +298,7 @@ export default function EventRSVP() {
       postSubmitResetTimeoutRef.current = null;
     }
     setSelectedEvent(invitation.id);
-    setSubmitting(false);
-    setSubmitError('');
-    setSubmitSuccess(false);
-    setError('');
+    resetEventRsvpModalTransientState(setSubmitting, setSubmitError, setSubmitSuccess, setError);
     if (invitation.rsvp) {
       setRsvpForm(buildInvitationRsvpFormState(invitation.rsvp));
     } else {
@@ -364,10 +371,7 @@ export default function EventRSVP() {
       window.clearTimeout(postSubmitResetTimeoutRef.current);
       postSubmitResetTimeoutRef.current = null;
     }
-    setSubmitting(false);
-    setSubmitError('');
-    setSubmitSuccess(false);
-    setError('');
+    resetEventRsvpModalTransientState(setSubmitting, setSubmitError, setSubmitSuccess, setError);
     setLoading(false);
     setRsvpForm(buildDefaultEventRsvpFormState());
     setSelectedEvent(null);
