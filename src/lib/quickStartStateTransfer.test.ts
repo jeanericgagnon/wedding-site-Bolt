@@ -23,4 +23,11 @@ describe('quickStartStateTransfer', () => {
     window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({ followUpAnswers: ['bad'] }));
     expect(readQuickStartDraftSnapshot()?.followUpAnswers).toEqual({});
   });
+
+  it('drops malformed existing storage completely when the payload is invalid json', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, '{bad json');
+
+    expect(readQuickStartDraftSnapshot()).toBeNull();
+    expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
+  });
 });

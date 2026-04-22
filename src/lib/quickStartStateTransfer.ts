@@ -16,6 +16,7 @@ export const readQuickStartDraftSnapshot = (): QuickStartDraftSnapshot | null =>
   try {
     return normalizeQuickStartDraftSnapshot(JSON.parse(raw));
   } catch {
+    window.localStorage.removeItem(QUICK_START_STORAGE_KEY);
     return null;
   }
 };
