@@ -408,4 +408,63 @@ describe('RSVP stale submit protection', () => {
       expect(screen.queryByText('Welcome, Taylor Rivera!')).not.toBeInTheDocument();
     });
   });
+
+  it('drops stale token submit completions after the page unmounts', async () => {
+    const submitRequest = deferred<Response>();
+
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          guest: {
+            id: 'guest-1',
+            first_name: 'Taylor',
+            last_name: 'Rivera',
+            name: 'Taylor Rivera',
+            email: 'taylor@example.com',
+            phone: null,
+            group_name: null,
+            wedding_site_id: 'site-1',
+            plus_one_allowed: false,
+            invited_to_ceremony: true,
+            invited_to_reception: true,
+            invite_token: 'token-1',
+          },
+          existingRsvp: null,
+          guests: null,
+          rsvpDeadline: null,
+          rsvpQuestions: [],
+          rsvpMealConfig: { enabled: true, options: ['Chicken', 'Beef'] },
+          musicPlaylistUrl: null,
+          householdGuests: [],
+        }),
+      })
+      .mockImplementationOnce(() => submitRequest.promise);
+
+    window.history.pushState({}, '', '/rsvp?token=token-1');
+
+    const view = render(
+      <BrowserRouter>
+        <RSVP />
+      </BrowserRouter>
+    );
+
+    await screen.findByText('Welcome, Taylor Rivera!');
+    fireEvent.click(screen.getByText('Continue to details'));
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'Chicken' } });
+    fireEvent.click(screen.getByText('Continue to review'));
+    fireEvent.click(screen.getByText('Submit RSVP'));
+
+    await screen.findByText('Submitting...');
+    view.unmount();
+
+    submitRequest.resolve({
+      ok: true,
+      json: async () => ({ success: true, guestName: 'Taylor Rivera', attending: true }),
+    } as Response);
+
+    await waitFor(() => {
+      expect(screen.queryByText("You're confirmed!")).not.toBeInTheDocument();
+    });
+  });
 });
