@@ -164,7 +164,7 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     };
   };
 
-  const clarifyingState = normalizeQuickStartClarifyingMode(normalizeQuickStartClarifyingState(
+  const rawClarifyingState = normalizeQuickStartClarifyingState(
     parsed.clarifyingState
       && typeof parsed.clarifyingState === 'object'
       && !Array.isArray(parsed.clarifyingState)
@@ -213,8 +213,10 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
             },
           } as ClarifyingPersistenceEnvelope
         : null,
-  ));
+  );
+  const clarifyingState = normalizeQuickStartClarifyingMode(rawClarifyingState);
 
+  const hasStoredClarifyingState = parsed.clarifyingState !== undefined;
   const viewState = parsed.viewState === 'thinking' || parsed.viewState === 'followups' ? parsed.viewState : 'question';
   const hasOpenFollowUps = (clarifyingState?.clarifying.questions.some((question) => (
     question.status === 'pending' || question.status === 'unresolved'
@@ -240,8 +242,14 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
   const hasMissingResumeFlagForOpenClarifyingWork = !hasExplicitShowFollowUps
     && hasOpenFollowUps
     && viewState === 'question'
-    && clarifyingState?.clarifying.mode === 'ask';
-  const showFollowUps = hasOpenFollowUps && (
+    && rawClarifyingState?.clarifying.mode === 'ask';
+  const isThinkingGenerationInFlight = parsed.showFollowUps === true
+    && viewState === 'thinking'
+    && rawClarifyingState?.clarifying.mode === 'ask'
+    && (rawClarifyingState.clarifying.questions.length === 0)
+    && (rawClarifyingState.clarifying.history.length === 0)
+    && Object.keys(followUpAnswers).length === 0;
+  const showFollowUps = isThinkingGenerationInFlight || (hasOpenFollowUps && (
     parsed.showFollowUps === true
     || hasMissingResumeFlagForOpenClarifyingWork
     || (!hasExplicitShowFollowUps && (
@@ -251,7 +259,7 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
       || hasActiveDraftedFollowUpAnswers
       || (hasDraftedFollowUpAnswers && !hasAnsweredClarifyingHistory)
     ))
-  );
+  ));
   const hasAnyClarifyingRecords = Boolean(
     clarifyingState && (clarifyingState.clarifying.questions.length > 0 || clarifyingState.clarifying.history.length > 0)
   );
@@ -269,9 +277,20 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
           .map((question) => question.id),
       ])
     : null;
+  const shouldDropOrphanedFollowUpAnswers = (
+    hasStoredClarifyingState
+    && clarifyingState === null
+    && (viewState === 'thinking' || parsed.showFollowUps === true)
+  ) || (
+    hasStoredClarifyingState
+    && viewState === 'thinking'
+    && rawClarifyingState !== null
+    && rawClarifyingState.clarifying.questions.length === 0
+    && rawClarifyingState.clarifying.history.length === 0
+  );
   const normalizedFollowUpAnswers = activeClarifyingIds && (activeClarifyingIds.size > 0 || hasAnyClarifyingRecords)
     ? Object.fromEntries(Object.entries(followUpAnswers).filter(([key]) => activeClarifyingIds.has(key)))
-    : clarifyingState === null
+    : shouldDropOrphanedFollowUpAnswers
       ? {}
       : followUpAnswers;
   const reopenedClarifyingIds = clarifyingState
@@ -316,6 +335,12 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     followUpAnswers: restoredFollowUpAnswers,
     showFollowUps,
     clarifyingState,
-    viewState: showFollowUps ? 'followups' : viewState === 'followups' || viewState === 'thinking' ? 'question' : viewState,
+    viewState: showFollowUps
+      ? viewState === 'thinking' && isThinkingGenerationInFlight
+        ? 'thinking'
+        : 'followups'
+      : viewState === 'followups' || viewState === 'thinking'
+        ? 'question'
+        : viewState,
   };
 };
