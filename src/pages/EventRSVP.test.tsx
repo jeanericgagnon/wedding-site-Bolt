@@ -479,6 +479,57 @@ describe('EventRSVP token trust continuity', () => {
     expect(screen.queryByDisplayValue('See you there')).not.toBeInTheDocument();
   });
 
+  it('clears hidden event RSVP note state immediately when an existing RSVP is toggled to not attending', async () => {
+    currentToken = 'guest-token';
+
+    maybeSingleQueue.push(
+      { data: { id: 'guest-1', name: 'Taylor', email: 'taylor@example.com' }, error: null },
+      { data: { attending: true, dietary_restrictions: 'Vegetarian', notes: 'See you there' }, error: null },
+    );
+
+    selectQueue.push({
+      data: [
+        {
+          id: 'inv-1',
+          event_id: 'event-1',
+          itinerary_events: {
+            id: 'event-1',
+            event_name: 'Welcome Dinner',
+            description: '',
+            event_date: '2026-05-01',
+            start_time: '18:00:00',
+            end_time: null,
+            location_name: 'The Loft',
+            location_address: '',
+            dress_code: null,
+            notes: null,
+          },
+        },
+      ],
+      error: null,
+    });
+
+    render(<EventRSVP />);
+
+    expect(await screen.findByText('Hello, Taylor!')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Update my RSVP' }));
+
+    expect(screen.getByDisplayValue('Vegetarian')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('See you there')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: "Can't make it" }));
+
+    expect(screen.queryByPlaceholderText('e.g., Vegetarian, Gluten-free, Nut allergy')).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Any special requests or messages for the couple')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: "Yes, I'll be there" }));
+
+    expect(screen.getByPlaceholderText('e.g., Vegetarian, Gluten-free, Nut allergy')).toHaveValue('');
+    expect(screen.getByPlaceholderText('Any special requests or messages for the couple')).toHaveValue('');
+    expect(screen.queryByDisplayValue('Vegetarian')).not.toBeInTheDocument();
+    expect(screen.queryByDisplayValue('See you there')).not.toBeInTheDocument();
+  });
+
   it('normalizes loaded event RSVP truth before reopening an existing response', async () => {
     currentToken = 'guest-token';
 
