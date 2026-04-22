@@ -78,4 +78,10 @@ describe('versionHistory', () => {
 
     expect(getBuilderRevision(weddingId, 'missing-revision')).toBeNull();
   });
+
+  it('returns an empty revision list when nothing has been recorded yet', () => {
+    const weddingId = `w_${Date.now()}_g`;
+
+    expect(listBuilderRevisions(weddingId)).toEqual([]);
+  });
 });
