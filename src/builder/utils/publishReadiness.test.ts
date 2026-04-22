@@ -1199,6 +1199,36 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('matches persisted active pages when runtime activePageId leaks in as a number', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages = [
+      {
+        ...project.pages[0],
+        // @ts-expect-error exercising runtime guard for incomplete persisted data
+        id: 101,
+        title: 'Home',
+        orderIndex: 0,
+        sections: [makeSection({ id: 'home-live', enabled: true })],
+      },
+      {
+        ...project.pages[0],
+        // @ts-expect-error exercising runtime guard for incomplete persisted data
+        id: 202,
+        title: 'Details',
+        orderIndex: 1,
+        sections: [makeSection({ id: 'details-hidden', enabled: false })],
+      },
+    ];
+
+    const readiness = buildPublishReadiness(project, undefined, { activePageId: 202 as never });
+    expect(readiness.find((item) => item.id === 'current-page')).toEqual({
+      id: 'current-page',
+      label: 'Current page has visible content',
+      done: false,
+      detail: 'Turn on content for Details.',
+    });
+  });
+
   it('trims blocker target ids when persisted page and section ids include harmless whitespace', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages = [
