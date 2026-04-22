@@ -5,6 +5,7 @@ import { builderActions } from '../state/builderActions';
 import { markFieldAsUserEdited, readBuilderValue } from '../../lib/weddingProfile';
 import { selectSelectedSection, selectActivePage, selectActivePageSections } from '../state/builderSelectors';
 import { getSectionManifest } from '../registry/sectionManifests';
+import { getVariantPreviewSource } from '../registry/variantPreviewSource';
 import { BuilderSectionRail } from './BuilderSectionRail';
 import { BuilderSettingsField } from '../../types/builder/section';
 import { CustomBlock } from '../../sections/variants/custom/skeletons';
@@ -250,7 +251,7 @@ export const BuilderInspectorPanel: React.FC = () => {
                 >
                   <div className="mb-2 h-20 overflow-hidden rounded-md border border-[var(--color-border-subtle)] bg-white">
                     <img
-                      src={`/variant-previews/${selectedSection.type}__${v.id}.webp`}
+                      src={`/variant-previews/${selectedSection.type}__${getVariantPreviewSource(selectedSection.type, v.id)}.webp`}
                       alt={`${manifest.label} ${v.label} preview`}
                       className="w-full h-full object-cover"
                       loading="lazy"

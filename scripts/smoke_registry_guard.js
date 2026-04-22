@@ -18,6 +18,9 @@ const templateRegistry = readFileSync(resolve(process.cwd(), 'src/templates/regi
 const sectionVariantCompatibility = readFileSync(resolve(process.cwd(), 'src/lib/sectionVariantCompatibility.ts'), 'utf8');
 const builderV2Lab = readFileSync(resolve(process.cwd(), 'src/pages/BuilderV2Lab.tsx'), 'utf8');
 const legacySectionRegistry = readFileSync(resolve(process.cwd(), 'src/sections/sectionRegistry.tsx'), 'utf8');
+const builderInspectorPanel = readFileSync(resolve(process.cwd(), 'src/builder/components/BuilderInspectorPanel.tsx'), 'utf8');
+const builderSectionRail = readFileSync(resolve(process.cwd(), 'src/builder/components/BuilderSectionRail.tsx'), 'utf8');
+const variantPreviewSource = readFileSync(resolve(process.cwd(), 'src/builder/registry/variantPreviewSource.ts'), 'utf8');
 
 const checks = [
   { name: 'dashboard uses sanitizeRegistryQuantityState', ok: registryPage.includes('sanitizeRegistryQuantityState') },
@@ -33,6 +36,7 @@ const checks = [
   { name: 'builder lab registry picker exposes shipped template variants', ok: builderV2Lab.includes("registry: ['default', 'cards', 'grid', 'fundHighlight', 'featured', 'minimal', 'honeymoon', 'tabs', 'illustrated', 'classic', 'luxury', 'experiences', 'modern', 'playful']") },
   { name: 'builder lab registry commands expose shipped template variants', ok: builderV2Lab.includes("['default', 'countdown', 'timeline', 'dayTabs', 'localGuide', 'iconGrid', 'cards', 'grid', 'fundHighlight', 'featured', 'minimal', 'honeymoon', 'tabs', 'illustrated', 'classic', 'luxury', 'experiences', 'modern', 'playful']") },
   { name: 'legacy section registry preserves public registry aliases', ok: legacySectionRegistry.includes("classic: RegistryGrid") && legacySectionRegistry.includes("luxury: RegistryFundHighlight") && legacySectionRegistry.includes("cards: RegistrySection") },
+  { name: 'builder registry previews map aliases onto guest-visible layouts', ok: variantPreviewSource.includes("case 'classic':") && variantPreviewSource.includes("return 'cards';") && variantPreviewSource.includes("case 'luxury':") && variantPreviewSource.includes("return 'featured';") && builderInspectorPanel.includes('getVariantPreviewSource(selectedSection.type, v.id)') && builderSectionRail.includes('getVariantPreviewSource(addTypeManifest.type, v.id)') },
   { name: 'canonical registry validation accepts template-backed registry aliases', ok: canonicalSectionRegistry.includes("luxury: 'featured'") && canonicalSectionRegistry.includes("experiences: 'featured'") && canonicalSectionRegistry.includes("classic: 'cards'") },
   { name: 'public registry cards keep canonical-only store links usable', ok: registryCardsSection.includes("return item.item_url ?? item.canonical_url ?? null;") && registryCardsSection.includes('url: existing.url ?? publicUrl') },
   { name: 'public registry cards separate partial and claimed store counts', ok: registryCardsSection.includes("partial: existing.partial + (item.purchase_status === 'partial' ? 1 : 0)") && registryCardsSection.includes("group.purchased > 0 ? ` · ${group.purchased} claimed` : ''") },

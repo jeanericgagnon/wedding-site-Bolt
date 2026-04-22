@@ -1,6 +1,7 @@
 import React from 'react';
 import { ChevronRight, GripVertical, ArrowUp, ArrowDown, Sparkles } from 'lucide-react';
 import { getAllSectionManifests, getSectionManifest } from '../registry/sectionManifests';
+import { getVariantPreviewSource } from '../registry/variantPreviewSource';
 
 interface RailSection {
   id: string;
@@ -225,7 +226,7 @@ export const BuilderSectionRail: React.FC<BuilderSectionRailProps> = ({
                     >
                       <div className="mb-2 h-28 overflow-hidden rounded-md border border-[var(--color-border-subtle)] bg-white">
                         <img
-                          src={`/variant-previews/${addTypeManifest.type}__${v.id}.webp`}
+                          src={`/variant-previews/${addTypeManifest.type}__${getVariantPreviewSource(addTypeManifest.type, v.id)}.webp`}
                           alt={`${addTypeManifest.label} ${v.label} preview`}
                           className="w-full h-full object-cover"
                           loading="lazy"
