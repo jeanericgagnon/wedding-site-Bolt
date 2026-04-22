@@ -266,6 +266,23 @@ function makeKey(type: string, variant: string): RegistryKey {
   return `${type}::${variant}`;
 }
 
+function normalizeRegistryVariantKey(variant: string): string {
+  return variant.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function resolveRegistryVariant(type: string, variant: string): string {
+  if (type !== 'registry') return variant;
+
+  const normalizedVariantKey = normalizeRegistryVariantKey(variant);
+  if (!normalizedVariantKey) return variant;
+
+  const directRegistryVariant = getVariantsForType('registry').find((definition) => normalizeRegistryVariantKey(definition.variant) === normalizedVariantKey)?.variant;
+  if (directRegistryVariant) return directRegistryVariant;
+
+  const registryAlias = Object.entries(VARIANT_FALLBACKS.registry ?? {}).find(([aliasVariant]) => normalizeRegistryVariantKey(aliasVariant) === normalizedVariantKey)?.[0];
+  return registryAlias ?? variant;
+}
+
 function registerDefinition<T>(def: SectionDefinition<T>): void {
   SECTION_REGISTRY.set(makeKey(def.type, def.variant), def as SectionDefinition<any>);
 }
@@ -358,18 +375,19 @@ export function resolveAndParse(
     'wedding-party': 'weddingParty',
     'dress-code': 'dressCode',
   } as Record<string, string>)[type] ?? type;
+  const normalizedVariant = resolveRegistryVariant(type, variant);
 
   const def = strictVariant
     ? (
-      getDefinition(normalizedType, variant)
-      ?? (VARIANT_FALLBACKS[type]?.[variant] ? getDefinition(normalizedType, VARIANT_FALLBACKS[type][variant]) : null)
-      ?? (VARIANT_FALLBACKS[normalizedType]?.[variant] ? getDefinition(normalizedType, VARIANT_FALLBACKS[normalizedType][variant]) : null)
+      getDefinition(normalizedType, normalizedVariant)
+      ?? (VARIANT_FALLBACKS[type]?.[normalizedVariant] ? getDefinition(normalizedType, VARIANT_FALLBACKS[type][normalizedVariant]) : null)
+      ?? (VARIANT_FALLBACKS[normalizedType]?.[normalizedVariant] ? getDefinition(normalizedType, VARIANT_FALLBACKS[normalizedType][normalizedVariant]) : null)
       ?? null
     )
     : (
-      getDefinition(normalizedType, variant)
-      ?? (VARIANT_FALLBACKS[type]?.[variant] ? getDefinition(normalizedType, VARIANT_FALLBACKS[type][variant]) : null)
-      ?? (VARIANT_FALLBACKS[normalizedType]?.[variant] ? getDefinition(normalizedType, VARIANT_FALLBACKS[normalizedType][variant]) : null)
+      getDefinition(normalizedType, normalizedVariant)
+      ?? (VARIANT_FALLBACKS[type]?.[normalizedVariant] ? getDefinition(normalizedType, VARIANT_FALLBACKS[type][normalizedVariant]) : null)
+      ?? (VARIANT_FALLBACKS[normalizedType]?.[normalizedVariant] ? getDefinition(normalizedType, VARIANT_FALLBACKS[normalizedType][normalizedVariant]) : null)
       ?? getDefinition(normalizedType, 'default')
       ?? getVariantsForType(normalizedType)[0]
       ?? null

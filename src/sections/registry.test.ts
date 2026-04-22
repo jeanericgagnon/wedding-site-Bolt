@@ -53,6 +53,13 @@ describe('sections registry resolution', () => {
     }
   });
 
+  it('keeps registry owner and guest renders aligned when persisted registry variants drift in casing or punctuation', () => {
+    expect(resolveAndParse('registry', ' Luxury ', {}, { strictVariant: true })?.def.variant).toBe('featured');
+    expect(resolveAndParse('registry', 'fund-highlight', {}, { strictVariant: true })?.def.variant).toBe('featured');
+    expect(resolveAndParse('registry', 'FUND.HIGHLIGHT', {}, { strictVariant: true })?.def.variant).toBe('featured');
+    expect(resolveAndParse('registry', 'Playful', {}, { strictVariant: true })?.def.variant).toBe('cards');
+  });
+
   it('exposes template-backed registry aliases to the builder manifest', () => {
     const registryManifest = getSectionManifest('registry');
     expect(registryManifest?.supportedVariants).toEqual(expect.arrayContaining(['default', 'grid', 'classic', 'luxury', 'experiences', 'modern', 'playful']));
@@ -165,5 +172,12 @@ describe('sections registry resolution', () => {
     expect(compatibilityTest).toContain("expect(resolveBuilderVariant('registry', 'Experiences')).toBe('experiences');");
     expect(compatibilityTest).toContain("expect(resolveBuilderVariant('registry', 'fund-highlight')).toBe('fundHighlight');");
     expect(compatibilityTest).toContain("expect(resolveBuilderVariant('registry', 'fund.highlight')).toBe('fundHighlight');");
+  });
+
+  it('keeps runtime registry resolution tolerant of persisted trim casing and punctuation drift', () => {
+    const sectionRegistry = readFileSync(resolve(__dirname, './registry.ts'), 'utf8');
+    expect(sectionRegistry).toContain("function normalizeRegistryVariantKey(variant: string): string {");
+    expect(sectionRegistry).toContain("const normalizedVariant = resolveRegistryVariant(type, variant);");
+    expect(sectionRegistry).toContain("normalizeRegistryVariantKey(aliasVariant) === normalizedVariantKey");
   });
 });
