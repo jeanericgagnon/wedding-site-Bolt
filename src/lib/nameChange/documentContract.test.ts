@@ -158,4 +158,37 @@ describe('name change document intake contract', () => {
       capturedExtractionFields: expect.arrayContaining(['case_number', 'court_order_date']),
     });
   });
+
+  it('prefers the strongest matching document when alias duplicates exist in intake', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase({ legal_basis: 'court_order', marriage_state: null, marriage_date: null }),
+      [
+        {
+          id: 'doc-stale-alias',
+          document_kind: 'court_order_name_change',
+          display_name: 'Court order alias',
+          storage_mode: 'metadata_only',
+          intake_status: 'uploaded',
+          file_name_masked: 'court-order-•••.pdf',
+        },
+        {
+          id: 'doc-canonical',
+          document_kind: 'court_order',
+          display_name: 'Court order',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'court-order-•••.pdf',
+          issuing_authority: 'San Diego Superior Court',
+          issued_on: '2026-04-05',
+          extraction_confidence: 0.93,
+        },
+      ],
+      [],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'court_order')).toMatchObject({
+      intakeStatus: 'reviewed',
+      metadataMissing: [],
+    });
+  });
 });

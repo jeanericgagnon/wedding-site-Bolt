@@ -94,6 +94,24 @@ function metadataMissingForDocument(document: NameChangeDocumentInput | undefine
   return missing;
 }
 
+function getDocumentContractPriority(document: NameChangeDocumentInput) {
+  const intakeWeight = document.intake_status === 'reviewed'
+    ? 2
+    : document.intake_status === 'uploaded'
+      ? 1
+      : 0;
+  return (intakeWeight * 100) - metadataMissingForDocument(document).length;
+}
+
+function findBestContractDocument(
+  documents: NameChangeDocumentInput[],
+  kind: NameChangeDocumentInput['document_kind'],
+) {
+  return documents
+    .filter((document) => matchesNameChangeDocumentKind(document.document_kind, kind))
+    .sort((left, right) => getDocumentContractPriority(right) - getDocumentContractPriority(left))[0];
+}
+
 export function buildNameChangeDocumentIntakeSnapshot(
   profile: NameChangeCaseInput,
   documents: NameChangeDocumentInput[],
@@ -103,6 +121,7 @@ export function buildNameChangeDocumentIntakeSnapshot(
   const extraction = buildNameChangeExtractionContractSnapshot(profile, documents, extractedFields);
 
   const statuses: NameChangeDocumentContractStatus[] = NAME_CHANGE_DOCUMENT_CONTRACTS.map((definition) => {
+    const canonicalDocument = findBestContractDocument(documents, definition.kind);
     const documentState = canonicalCase.documents[definition.kind];
     const typedCapturedFields = (() => {
       switch (definition.kind) {
@@ -156,7 +175,7 @@ export function buildNameChangeDocumentIntakeSnapshot(
       .filter((field): field is NameChangeExtractionFieldKey => definition.extractionFields.includes(field as NameChangeExtractionFieldKey));
     const missingExtractionFields = definition.extractionFields.filter((field) => !capturedExtractionFields.includes(field));
     const required = definition.requiredFor.includes('all') || definition.requiredFor.includes(canonicalCase.legalBasis);
-    const metadataMissing = metadataMissingForDocument(documents.find((document) => matchesNameChangeDocumentKind(document.document_kind, definition.kind)));
+    const metadataMissing = metadataMissingForDocument(canonicalDocument);
     const canonicalConflicts = extraction.conflicts.filter((conflict) => conflict.documentKind === definition.kind);
 
     return {
@@ -164,8 +183,8 @@ export function buildNameChangeDocumentIntakeSnapshot(
       label: definition.label,
       required,
       preferredForAutofill: definition.preferredForAutofill,
-      intakeStatus: documentState.intakeStatus,
-      storageMode: documentState.storageMode,
+      intakeStatus: canonicalDocument?.intake_status ?? documentState.intakeStatus,
+      storageMode: canonicalDocument?.storage_mode ?? documentState.storageMode,
       extractionFieldCount: documentState.extractionFieldCount,
       metadataReady: metadataMissing.length === 0 && documentState.intakeStatus !== 'not_started' ? 1 : 0,
       metadataMissing,
