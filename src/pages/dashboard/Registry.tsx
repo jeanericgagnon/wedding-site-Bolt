@@ -861,6 +861,7 @@ export const DashboardRegistry: React.FC = () => {
     imageIssues: normalizedItems.filter((i) => !i.image_url || i.image_url.includes('thum.io') || i.image_url.includes('weserv.nl')).length,
     badImports: normalizedItems.filter((i) => getRegistryItemMetadataState(i).hasBadImportTitle).length,
   };
+  const actionableBadImportCount = items.filter((item) => getRegistryItemMetadataState(item).hasBadImportTitle && !!(item.item_url || item.canonical_url)).length;
 
 
   const tabCount = (key: RegistryFilter) => {
@@ -1091,7 +1092,7 @@ Import a list of links
               Image issues: {alertCounts.imageIssues}
             </span>
             <span className="px-2 py-1 rounded-full border border-border text-text-tertiary text-xs font-medium">
-              Imported gifts to fix: {alertCounts.badImports}
+              Imported gifts to fix: {actionableBadImportCount}
             </span>
             <span className="px-2 py-1 rounded-full border border-border text-text-tertiary text-xs font-medium">
               Repair states: {normalizedItems.filter((item) => getRegistryRepairStates(item).length > 0).length}
@@ -1099,7 +1100,7 @@ Import a list of links
             <span className="px-2 py-1 rounded-full border border-border text-text-tertiary text-xs font-medium">
               Duplicate groups: {duplicateGroups.length}
             </span>
-            {alertCounts.badImports > 0 && (
+            {actionableBadImportCount > 0 && (
               <button
                 onClick={() => void handleRepairBadImports()}
                 disabled={repairingBadImports}
