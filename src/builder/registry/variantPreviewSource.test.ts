@@ -27,5 +27,6 @@ describe('getVariantPreviewSource', () => {
   it('maps drifted registry section types onto canonical public preview fixtures', () => {
     expect(getVariantPreviewSource('RegistrySection', 'default')).toBe('cards');
     expect(getVariantPreviewSource('registry-section', 'luxury')).toBe('featured');
+    expect(getVariantPreviewSource('registry_section_preview', 'modern')).toBe('cards');
   });
 });

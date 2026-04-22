@@ -2,8 +2,13 @@ function normalizePreviewSectionType(type: string): string {
   return type.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
+function isRegistryPreviewSectionType(type: string): boolean {
+  const normalizedType = normalizePreviewSectionType(type);
+  return normalizedType === 'registry' || normalizedType.startsWith('registrysection');
+}
+
 export function getVariantPreviewSource(type: string, variant: string): string {
-  if (normalizePreviewSectionType(type) !== 'registry' && normalizePreviewSectionType(type) !== 'registrysection') {
+  if (!isRegistryPreviewSectionType(type)) {
     return variant;
   }
 

@@ -333,6 +333,7 @@ describe('sections registry resolution', () => {
 
   it('keeps runtime registry resolution tolerant of persisted trim casing and punctuation drift', () => {
     const sectionRegistry = readFileSync(resolve(__dirname, './registry.ts'), 'utf8');
+    const previewSource = readFileSync(resolve(__dirname, '../builder/registry/variantPreviewSource.ts'), 'utf8');
     expect(sectionRegistry).toContain("function normalizeRegistryVariantKey(variant: unknown): string {");
     expect(sectionRegistry).toContain("function isRegistrySectionType(type: unknown): boolean {");
     expect(sectionRegistry).toContain("function normalizeRegistrySectionType(type: unknown): string {");
@@ -347,6 +348,8 @@ describe('sections registry resolution', () => {
     expect(sectionRegistry).toContain("grid: 'cards'");
     expect(sectionRegistry).toContain("return registryAliasTarget ?? 'cards';");
     expect(sectionRegistry).toContain("normalizeRegistryVariantKey(aliasVariant) === normalizedVariantKey)?.[1]");
+    expect(previewSource).toContain('function isRegistryPreviewSectionType(type: string): boolean {');
+    expect(previewSource).toContain("return normalizedType === 'registry' || normalizedType.startsWith('registrysection');");
   });
 
   it('keeps legacy public registry surfaces from falling back to stale links after live loads', () => {
