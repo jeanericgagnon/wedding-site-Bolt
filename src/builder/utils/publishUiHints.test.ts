@@ -99,6 +99,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('event details');
   });
 
+  it('returns wedding-date guidance when blocker copy says event date instead of wedding date', () => {
+    const hints = getPublishBlockedHints('Add your event date before going live.');
+    expect(hints[0]).toContain('event details');
+  });
+
   it('returns wedding-date guidance when short date blocker copy is lowercased by upstream formatting', () => {
     const hints = getPublishBlockedHints('add your wedding date.');
     expect(hints[0]).toContain('event details');

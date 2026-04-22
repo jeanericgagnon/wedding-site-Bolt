@@ -29,7 +29,7 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
       'Add both names exactly how you want guests to see them.',
     ];
   }
-  if (normalizedErrorLower.includes('wedding date')) {
+  if (normalizedErrorLower.includes('wedding date') || normalizedErrorLower.includes('event date')) {
     return [
       'Open event details.',
       'Add your wedding date before going live.',
