@@ -91,6 +91,19 @@ describe('publishReadiness', () => {
     expect(getPublishValidationError(project, data)).toBe('Add your wedding date before going live.');
   });
 
+  it('blocks publish when venue is missing even if names, date, and RSVP are configured', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
+    const data = createEmptyWeddingData();
+    data.couple.partner1Name = 'Alex';
+    data.couple.partner2Name = 'Jordan';
+    data.event.weddingDateISO = '2027-06-12';
+    data.rsvp.enabled = true;
+
+    expect(getPublishIssue(project, data)?.kind).toBe('missing-venue');
+    expect(getPublishValidationError(project, data)).toBe('Add at least one venue before going live.');
+  });
+
   it('shows current-page readiness against the active page, not just the first page', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages = [
