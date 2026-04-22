@@ -81,6 +81,10 @@ export function normalizeDraftNameChangeDocumentId(documentId: string | null | u
   return buildDraftNameChangeDocumentId(normalizedKind as NameChangeDocumentInput['document_kind']);
 }
 
+export function isDraftNameChangeDocumentId(documentId: string | null | undefined) {
+  return normalizeDraftNameChangeDocumentId(documentId) != null;
+}
+
 export function createDraftNameChangeDocument(
   kind: NameChangeDocumentInput['document_kind'],
   label: string,
