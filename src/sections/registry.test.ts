@@ -60,6 +60,12 @@ describe('sections registry resolution', () => {
     expect(resolveAndParse('registry', 'Playful', {}, { strictVariant: true })?.def.variant).toBe('cards');
   });
 
+  it('keeps registry runtime resolution from crashing on malformed persisted variants', () => {
+    expect(resolveAndParse('registry', undefined as never, {}, { strictVariant: true })?.def.variant).toBe('cards');
+    expect(resolveAndParse('registry', null as never, {}, { strictVariant: true })?.def.variant).toBe('cards');
+    expect(resolveAndParse('registry', { variant: 'featured' } as never, {}, { strictVariant: true })?.def.variant).toBe('cards');
+  });
+
   it('exposes template-backed registry aliases to the builder manifest', () => {
     const registryManifest = getSectionManifest('registry');
     expect(registryManifest?.supportedVariants).toEqual(expect.arrayContaining(['default', 'grid', 'classic', 'luxury', 'experiences', 'modern', 'playful']));
@@ -197,7 +203,8 @@ describe('sections registry resolution', () => {
 
   it('keeps runtime registry resolution tolerant of persisted trim casing and punctuation drift', () => {
     const sectionRegistry = readFileSync(resolve(__dirname, './registry.ts'), 'utf8');
-    expect(sectionRegistry).toContain("function normalizeRegistryVariantKey(variant: string): string {");
+    expect(sectionRegistry).toContain("function normalizeRegistryVariantKey(variant: unknown): string {");
+    expect(sectionRegistry).toContain("return typeof variant === 'string'");
     expect(sectionRegistry).toContain("const normalizedVariant = resolveRegistryVariant(type, variant);");
     expect(sectionRegistry).toContain("normalizeRegistryVariantKey(aliasVariant) === normalizedVariantKey");
   });

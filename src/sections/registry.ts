@@ -266,21 +266,23 @@ function makeKey(type: string, variant: string): RegistryKey {
   return `${type}::${variant}`;
 }
 
-function normalizeRegistryVariantKey(variant: string): string {
-  return variant.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+function normalizeRegistryVariantKey(variant: unknown): string {
+  return typeof variant === 'string'
+    ? variant.trim().toLowerCase().replace(/[^a-z0-9]/g, '')
+    : '';
 }
 
-function resolveRegistryVariant(type: string, variant: string): string {
-  if (type !== 'registry') return variant;
+function resolveRegistryVariant(type: string, variant: unknown): string {
+  if (type !== 'registry') return typeof variant === 'string' ? variant : '';
 
   const normalizedVariantKey = normalizeRegistryVariantKey(variant);
-  if (!normalizedVariantKey) return variant;
+  if (!normalizedVariantKey) return 'cards';
 
   const directRegistryVariant = getVariantsForType('registry').find((definition) => normalizeRegistryVariantKey(definition.variant) === normalizedVariantKey)?.variant;
   if (directRegistryVariant) return directRegistryVariant;
 
   const registryAlias = Object.entries(VARIANT_FALLBACKS.registry ?? {}).find(([aliasVariant]) => normalizeRegistryVariantKey(aliasVariant) === normalizedVariantKey)?.[0];
-  return registryAlias ?? variant;
+  return registryAlias ?? (typeof variant === 'string' ? variant : 'cards');
 }
 
 function registerDefinition<T>(def: SectionDefinition<T>): void {
@@ -365,7 +367,7 @@ export function getVariantsForType(type: string): SectionDefinition[] {
 
 export function resolveAndParse(
   type: string,
-  variant: string,
+  variant: unknown,
   rawData: Record<string, unknown>,
   options?: { strictVariant?: boolean }
 ): { def: SectionDefinition; parsedData: Record<string, unknown> } | null {
