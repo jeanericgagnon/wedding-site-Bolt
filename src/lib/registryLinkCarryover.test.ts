@@ -152,6 +152,12 @@ describe('carryOverRegistryLinks', () => {
     ]);
   });
 
+  it('upgrades merchant-labeled duplicate registry links when a later explicit label is stronger', () => {
+    expect(carryOverRegistryLinks('Zola Registry | https://zola.com/registry/jane\nCustom Honeymoon Fund | https://zola.com/registry/jane')).toEqual([
+      { url: 'https://zola.com/registry/jane', sourceLabel: 'Custom Honeymoon Fund' },
+    ]);
+  });
+
   it('does not leak internal carryover label metadata to callers', () => {
     expect(carryOverRegistryLinks('https://zola.com/registry/jane')).toEqual([
       { url: 'https://zola.com/registry/jane', sourceLabel: 'Zola' },

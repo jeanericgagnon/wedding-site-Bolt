@@ -299,8 +299,10 @@ export function carryOverRegistryLinks(raw: string | null | undefined): Carryove
       }
 
       const existingMode = (existing as CarryoverRegistryLink & { sourceLabelMode?: 'explicit' | 'inferred' }).sourceLabelMode;
+      const existingInferredLabel = inferSourceLabel(existing.url);
       if (
         (!existing.sourceLabel && token.sourceLabel)
+        || (token.sourceLabel && existing.sourceLabel === existingInferredLabel && token.sourceLabel !== existing.sourceLabel)
         || (existingMode !== 'explicit' && token.sourceLabelMode === 'explicit' && token.sourceLabel)
       ) {
         carried.set(token.url, { ...existing, sourceLabel: token.sourceLabel });
