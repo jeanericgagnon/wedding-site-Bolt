@@ -644,6 +644,8 @@ export default function EventRSVP() {
                       onClick={() => {
                         if (!submitting) {
                           activeSubmitRequestRef.current += 1;
+                          setSubmitError('');
+                          setSubmitSuccess(false);
                           setSelectedEvent(null);
                         }
                       }}
