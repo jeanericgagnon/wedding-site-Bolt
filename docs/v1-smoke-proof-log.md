@@ -27,6 +27,7 @@ _Machine-readable requirement:_ `manualProofRequirements.runtimeWordingVerificat
 _Machine-readable requirement:_ `manualProofRequirements.onboardingStarterDraftWording`
 _Machine-readable status:_ `manualProofSummary.requiredCount: 3`
 _Machine-readable status:_ `manualProofSummary.missingCount: 3` (`canonicalCouplePath`, `runtimeWordingVerification`, `onboardingStarterDraftWording`)
+_Machine-readable status:_ all three missing manual-proof requirements are currently blocking, so `manualProofSummary.missingCount` still matches `manualProofSummary.blockingCount`
 _Machine-readable status:_ `manualProofSummary.blockingCount: 3`
 _Machine-readable status:_ `manualProofSummary.blockingKeys: canonicalCouplePath, runtimeWordingVerification, onboardingStarterDraftWording`
 _Machine-readable status:_ `manualProofSummary.blockingNextSteps` mirrors the remaining runtime-proof actions in order
