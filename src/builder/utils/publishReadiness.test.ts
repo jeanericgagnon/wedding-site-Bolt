@@ -73,6 +73,40 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('picks the lowest-order section as the first blocker target when section arrays are out of order', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    const pageId = project.pages[0].id;
+    project.pages[0].sections = [
+      makeSection({ id: 'sec-late', enabled: false, orderIndex: 5 }),
+      makeSection({ id: 'sec-early', enabled: false, orderIndex: 1 }),
+    ];
+
+    const issue = getPublishIssue(project);
+    expect(issue?.kind).toBe('no-enabled-sections');
+    if (issue?.kind === 'no-enabled-sections') {
+      expect(issue.firstPageId).toBe(pageId);
+      expect(issue.firstSectionId).toBe('sec-early');
+    }
+  });
+
+  it('picks the lowest-order section when persisted section order indexes are numeric strings', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    const pageId = project.pages[0].id;
+    project.pages[0].sections = [
+      // @ts-expect-error exercising runtime guard for incomplete persisted data
+      makeSection({ id: 'sec-late', enabled: false, orderIndex: '5' }),
+      // @ts-expect-error exercising runtime guard for incomplete persisted data
+      makeSection({ id: 'sec-early', enabled: false, orderIndex: '1' }),
+    ];
+
+    const issue = getPublishIssue(project);
+    expect(issue?.kind).toBe('no-enabled-sections');
+    if (issue?.kind === 'no-enabled-sections') {
+      expect(issue.firstPageId).toBe(pageId);
+      expect(issue.firstSectionId).toBe('sec-early');
+    }
+  });
+
   it('returns null when publish requirements are met', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
