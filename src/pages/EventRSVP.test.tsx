@@ -253,6 +253,49 @@ describe('EventRSVP token trust continuity', () => {
     expect(selectQueue).toHaveLength(0);
   }, 10000);
 
+  it('normalizes loaded event RSVP truth before reopening an existing response', async () => {
+    currentToken = 'guest-token';
+
+    maybeSingleQueue.push(
+      { data: { id: 'guest-1', name: 'Taylor', email: 'taylor@example.com' }, error: null },
+      { data: { attending: true, dietary_restrictions: '  Vegetarian  ', notes: '  See you there  ' }, error: null },
+    );
+
+    selectQueue.push({
+      data: [
+        {
+          id: 'inv-1',
+          event_id: 'event-1',
+          itinerary_events: {
+            id: 'event-1',
+            event_name: 'Welcome Dinner',
+            description: '',
+            event_date: '2026-05-01',
+            start_time: '18:00:00',
+            end_time: null,
+            location_name: 'The Loft',
+            location_address: '',
+            dress_code: null,
+            notes: null,
+          },
+        },
+      ],
+      error: null,
+    });
+
+    render(<EventRSVP />);
+
+    expect(await screen.findByText('Hello, Taylor!')).toBeInTheDocument();
+    expect(screen.getByText('Attending')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Update my RSVP' }));
+
+    expect(screen.getByDisplayValue('Vegetarian')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('See you there')).toBeInTheDocument();
+    expect(screen.queryByDisplayValue('  Vegetarian  ')).not.toBeInTheDocument();
+    expect(screen.queryByDisplayValue('  See you there  ')).not.toBeInTheDocument();
+  });
+
   it('marks event RSVP support as available after a successful submit', async () => {
     currentToken = 'guest-token';
 

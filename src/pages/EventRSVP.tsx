@@ -230,11 +230,11 @@ export default function EventRSVP() {
             event_id: invitation.event_id,
             event: invitation.itinerary_events as unknown as ItineraryEvent,
             rsvp: rsvpData
-              ? {
+              ? buildInvitationRsvp({
                   attending: rsvpData.attending ?? true,
-                  dietary_restrictions: rsvpData.dietary_restrictions,
-                  notes: rsvpData.notes,
-                }
+                  dietary_restrictions: rsvpData.dietary_restrictions || '',
+                  notes: rsvpData.notes || '',
+                })
               : undefined,
           };
         })
