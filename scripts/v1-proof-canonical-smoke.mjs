@@ -151,6 +151,19 @@ const output = {
   launchDecisionDependsOnManualTruthPass: true,
   manualTruthPassMissing: true,
   runtimeWordingVerificationMissing: true,
+  manualProofRequirements: {
+    canonicalCouplePath: {
+      required: true,
+      status: 'missing',
+      route: 'Home -> signup/demo/auth -> onboarding/builder -> public site -> RSVP',
+      focus: 'UX quality and runtime truth, not just route reachability',
+    },
+    runtimeWordingVerification: {
+      required: true,
+      status: 'missing',
+      surfaces: ['privacy/access/publish', 'marketing/settings/billing'],
+    },
+  },
   whatMustChangeBeforeGo: [
     'Close the anon-auth RSVP blocker on validate-rsvp-token',
     'Log the canonical couple-path truth pass with runtime wording verification',
