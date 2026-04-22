@@ -299,6 +299,7 @@ If that line fails, the rest is noise.
    - operator unblock condition: only downgrade this warning after the canonical blocker list shrinks in `docs/v1-smoke-proof-log.md`
    - operator checkpoint before GO: confirm both the blocker command state and `manualProofSummary.missingCount` directly from the proof log, not memory
    - operator stop condition: if those two checks are unchanged, do not soften launch posture language in this board
+   - operator audit shortcut: compare this slice against `publicV1ClaimStatus`, `publicV1ClaimBlockers`, and `manualProofSummary` before changing any launch-facing wording
    - operator read rule: treat green automation here as route continuity only, not public-v1 launch clearance
 2. **Guest-state continuity smoke + fix**
    - prove or fix guest edits, RSVP updates, event-level visibility, downstream reads
