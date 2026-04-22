@@ -72,4 +72,13 @@ describe('quickStartFlow', () => {
     expect(applyQuickStartAnswer(base, 'partnerLabels', ' Bride | Groom ').labelPreference).toBe('bride-groom');
     expect(applyQuickStartAnswer(base, 'partnerLabels', 'groom | groom').labelPreference).toBe('groom-groom');
   });
+
+  it('normalizes sparse enum answers before applying them', () => {
+    const base = createEmptyInitialSetupAnswers();
+
+    expect(applyQuickStartAnswer(base, 'guestCount', ' 100-150 ').guestCountBand).toBe('100-150');
+    expect(applyQuickStartAnswer(base, 'plusOnePolicy', ' SOME ').plusOnePolicy).toBe('some');
+    expect(applyQuickStartAnswer(base, 'childrenAllowed', ' Unsure ').childrenAllowed).toBe('unsure');
+    expect(applyQuickStartAnswer(base, 'mealChoice', ' YES ').mealChoice).toBe('yes');
+  });
 });

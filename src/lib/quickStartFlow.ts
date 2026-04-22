@@ -23,7 +23,8 @@ export const applyQuickStartAnswer = (
   rawValue: string,
 ): InitialSetupAnswers => {
   const value = rawValue.trim();
-  const normalizedDelimitedValue = value.toLowerCase().split('|').map((part) => part.trim()).join('|');
+  const normalizedLowerValue = value.toLowerCase();
+  const normalizedDelimitedValue = normalizedLowerValue.split('|').map((part) => part.trim()).join('|');
   const next = { ...answers };
 
   switch (questionKey) {
@@ -55,19 +56,19 @@ export const applyQuickStartAnswer = (
       next.ceremonyArrivalTime = value;
       break;
     case 'guestCount':
-      next.guestCountBand = value as InitialSetupAnswers['guestCountBand'];
+      next.guestCountBand = normalizedLowerValue as InitialSetupAnswers['guestCountBand'];
       break;
     case 'plusOnePolicy':
-      next.plusOnePolicy = value as InitialSetupAnswers['plusOnePolicy'];
+      next.plusOnePolicy = normalizedLowerValue as InitialSetupAnswers['plusOnePolicy'];
       break;
     case 'childrenAllowed':
-      next.childrenAllowed = value as InitialSetupAnswers['childrenAllowed'];
+      next.childrenAllowed = normalizedLowerValue as InitialSetupAnswers['childrenAllowed'];
       break;
     case 'rsvpDeadline':
       next.rsvpDeadline = value;
       break;
     case 'mealChoice':
-      next.mealChoice = value as InitialSetupAnswers['mealChoice'];
+      next.mealChoice = normalizedLowerValue as InitialSetupAnswers['mealChoice'];
       break;
     case 'story':
       next.optionalStory = value;
