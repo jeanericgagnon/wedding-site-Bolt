@@ -31,4 +31,10 @@ describe('signupReturnResolver', () => {
 
     expect(resolveSignupReturnPath('https://evil.example/steal', '/onboarding?signup=1')).toBe(buildQuickStartEntryPath());
   });
+
+  it('ignores protocol-relative stored return paths and uses the onboarding fallback', () => {
+    writeSignupReturnPath('//evil.example/steal');
+
+    expect(resolveSignupReturnPath(null, '/onboarding?signup=1')).toBe('/onboarding?signup=1');
+  });
 });
