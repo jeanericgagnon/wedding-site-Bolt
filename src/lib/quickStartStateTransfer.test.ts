@@ -1205,6 +1205,24 @@ describe('quickStartStateTransfer', () => {
     expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').followUpAnswers).toEqual({});
   });
 
+
+  it('drops stale follow-up answers when clarifying state is missing but follow-up view survives', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      viewState: 'followups',
+      followUpAnswers: {
+        lodging: 'Need shuttle details',
+      },
+      clarifyingState: null,
+    }));
+
+    const restored = readQuickStartDraftSnapshot();
+
+    expect(restored?.showFollowUps).toBe(false);
+    expect(restored?.viewState).toBe('question');
+    expect(restored?.followUpAnswers).toEqual({});
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').followUpAnswers).toEqual({});
+  });
+
   it('rewrites stale thinking restores back to question when no open clarifying work remains', () => {
     window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
       viewState: 'thinking',

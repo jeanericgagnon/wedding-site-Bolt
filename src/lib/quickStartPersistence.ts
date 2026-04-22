@@ -282,7 +282,11 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     : null;
   const shouldDropOrphanedFollowUpAnswers = hasMalformedClarifyingEnvelope || (
     parsed.clarifyingState === null
-    && (viewState === 'thinking' || parsed.showFollowUps === true)
+    && (
+      viewState === 'thinking'
+      || viewState === 'followups'
+      || parsed.showFollowUps === true
+    )
   ) || (
     hasStoredClarifyingState
     && (
