@@ -80,4 +80,10 @@ describe('resolveBuilderVariant onboarding handoff compatibility', () => {
     expect(resolveBuilderVariant('schedule', 'day.tabs')).toBe('dayTabs');
     expect(resolveBuilderVariant('registry', 'fund.highlight')).toBe('fundHighlight');
   });
+
+  it('accepts mixed punctuation and casing in ai handoff variants before builder fallback', () => {
+    expect(resolveBuilderVariant('travel', 'LOCAL-GUIDE')).toBe('localGuide');
+    expect(resolveBuilderVariant('schedule', 'Day.Tabs')).toBe('dayTabs');
+    expect(resolveBuilderVariant('registry', 'FUND_HIGHLIGHT')).toBe('fundHighlight');
+  });
 });
