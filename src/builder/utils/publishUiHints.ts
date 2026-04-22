@@ -10,6 +10,7 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
     || normalizedErrorLower.includes('venue details are ready')
     || normalizedErrorLower.includes('guests can reply')
     || normalizedErrorLower.includes('everything is saved')
+    || normalizedErrorLower.includes('live site is up to date')
   ) {
     return ['Use Fix next to move through the last blockers before the guest-facing launch.'];
   }
