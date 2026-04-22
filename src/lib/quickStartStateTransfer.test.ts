@@ -51,6 +51,23 @@ describe('quickStartStateTransfer', () => {
   });
 
 
+  it('clears empty quick start snapshots instead of persisting inert storage', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, 'stale');
+
+    const persisted = persistQuickStartDraftSnapshot({
+      currentIndex: 0,
+      initialSetupAnswers: {},
+      followUpAnswers: {},
+      showFollowUps: false,
+      clarifyingState: null,
+      viewState: 'question',
+    });
+
+    expect(persisted?.currentIndex).toBe(0);
+    expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
+  });
+
+
   it('rewrites unsafe quick start step indexes back to zero on read', () => {
     window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
       currentIndex: Number.MAX_SAFE_INTEGER + 1,

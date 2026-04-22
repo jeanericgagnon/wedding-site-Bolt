@@ -72,4 +72,20 @@ describe('login quick start state transfer', () => {
     expect(window.localStorage.getItem('dayoflove:quickstart-shell')).not.toContain('lodging');
     expect(window.localStorage.getItem('dayoflove:quickstart-shell')).not.toContain('"":"bad"');
   });
+
+
+  it('clears empty carried quick start payloads before auth continuation', () => {
+    window.localStorage.setItem('dayoflove:quickstart-shell', 'stale');
+
+    persistQuickStartDraftSnapshot({
+      currentIndex: 0,
+      initialSetupAnswers: {},
+      followUpAnswers: {},
+      showFollowUps: false,
+      clarifyingState: null,
+      viewState: 'question',
+    });
+
+    expect(window.localStorage.getItem('dayoflove:quickstart-shell')).toBeNull();
+  });
 });
