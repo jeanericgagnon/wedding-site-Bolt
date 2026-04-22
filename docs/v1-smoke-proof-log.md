@@ -14,6 +14,8 @@ Current v1 line for this proof pass:
 - planner/collaborator support exists in a real usable form
 - marketing, settings, and billing surfaces describe the product honestly
 
+Source of truth: `docs/finish-board-2026-04-19.md`
+
 This is **not** a generic QA checklist.
 This is the must-ship truth gate.
 
