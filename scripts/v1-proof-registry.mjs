@@ -81,11 +81,18 @@ const output = {
     secondaryTrustGap: 'registry_repair_and_import_persistence_manual_verification_missing',
     manualProofRequired: true,
     truthGateSummary: 'automation_green_manual_truth_red',
+    evidenceLogPath: 'docs/v1-smoke-proof-log.md',
+    manualProofStatus: 'pending_runtime_registry_notes',
     manualProofRequirements: [
       'owner_manage_import_persistence_runtime_pass',
       'owner_repair_cleanup_runtime_pass',
       'guest_visible_purchase_truth_runtime_pass',
     ],
+    manualProofBlockingReasons: {
+      owner_manage_import_persistence_runtime_pass: 'real owner add/import/edit persistence notes are not logged yet',
+      owner_repair_cleanup_runtime_pass: 'repair or cleanup runtime notes are not logged yet',
+      guest_visible_purchase_truth_runtime_pass: 'guest-visible purchase-state notes after owner edits are not logged yet',
+    },
   },
   summary: {
     total: results.length,

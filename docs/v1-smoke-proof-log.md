@@ -298,7 +298,11 @@ Not the spine of the product, but still part of a credible all-in-one wedding pl
 - Status: PENDING
 - Notes:
   - Protected route smoke now covers `/dashboard/registry` auth fallback as part of canonical live smoke.
+  - `npm run proof:v1:registry` is intentionally still automation-green / manual-red until this log contains runtime notes for owner import/edit persistence, repair cleanup, and guest-visible purchase truth.
 - Blockers:
+  - Still need one logged runtime pass for owner add/import/edit persistence on a real registry item.
+  - Still need one logged runtime pass for repair or cleanup on a weak imported item.
+  - Still need one logged runtime pass confirming guest-visible purchase state stays aligned after owner-side edits.
 
 ---
 
