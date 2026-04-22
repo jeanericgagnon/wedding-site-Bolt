@@ -51,4 +51,19 @@ describe('name change execution gates', () => {
     expect(result.blockers).toEqual([]);
     expect(result.attentionItems).toEqual(['Dependency attention', 'Checklist attention']);
   });
+
+  it('treats canonical extraction alignment drift as a blocker', () => {
+    const result = evaluateNameChangeExecutionGates([], [
+      {
+        key: 'canonical-extraction-alignment',
+        label: 'Canonical vs extracted values aligned',
+        status: 'attention',
+        reason: 'Structured case truth and extracted document values still disagree.',
+      },
+    ]);
+
+    expect(result.ready).toBe(false);
+    expect(result.blockers).toEqual(['Structured case truth and extracted document values still disagree.']);
+    expect(result.attentionItems).toEqual([]);
+  });
 });
