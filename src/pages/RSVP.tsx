@@ -661,6 +661,7 @@ export default function RSVP() {
       }
 
       const notesPayload = (formData.notes || '').trim();
+      const mealChoice = (formData.meal_choice || '').trim();
 
       if (applyToHousehold && householdGuests.length > 0 && selectedHouseholdGuestIds.length === 0) {
         if (activeSubmitRequestRef.current !== requestId) return;
@@ -676,7 +677,7 @@ export default function RSVP() {
           attending: formData.attending,
           attending_ceremony: formData.attendCeremony,
           attending_reception: formData.attendReception,
-          meal_choice: formData.meal_choice || null,
+          meal_choice: mealChoice || null,
           plus_one_name: plusOneName || null,
           plus_one_count: plusOneName ? 1 : 0,
           children_count: 0,
@@ -703,7 +704,7 @@ export default function RSVP() {
         attending: formData.attending,
         attendCeremony: formData.attendCeremony,
         attendReception: formData.attendReception,
-        mealChoice: formData.meal_choice || null,
+        mealChoice: mealChoice || null,
         plusOneName: formData.plus_one_name || null,
         plusOneCount: formData.plus_one_name.trim() ? 1 : 0,
         childrenCount: 0,
@@ -728,7 +729,7 @@ export default function RSVP() {
         attending: formData.attending,
         attending_ceremony: formData.attendCeremony,
         attending_reception: formData.attendReception,
-        meal_choice: formData.meal_choice || null,
+        meal_choice: mealChoice || null,
         plus_one_name: plusOneName || null,
         plus_one_count: plusOneName ? 1 : 0,
         children_count: 0,
