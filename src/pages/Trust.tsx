@@ -66,10 +66,10 @@ const V1_SLICE_STATUS = [
   },
   {
     name: 'Planner access',
-    status: 'Mostly done',
-    tone: 'done',
+    status: 'Proof needed',
+    tone: 'proof',
     done: 'Invite flow, shell framing, and permission truth are much more believable.',
-    missing: 'Still needs executed role-boundary proof with a real forbidden-action check.',
+    missing: 'Still needs executed role-boundary proof with a real forbidden-action check before this slice reads launch-ready.',
   },
   {
     name: 'Coordinator / day-of',
