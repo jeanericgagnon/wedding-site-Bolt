@@ -51,7 +51,7 @@ Latest published-site lookup confirmation: `alex-jordan-demo`
 Latest live smoke breadth: 31 Playwright checks passing
 Latest canonical smoke result: `ok: true`, `blocked: false`
 Latest site lookup statuses: list 200, bySlug 200, byUrl 200
-Canonical manual-proof scope: route-note pass plus privacy/access/publish and marketing/settings/billing wording verification
+Canonical manual-proof scope: route-note pass plus privacy/access/publish, marketing/settings/billing, and starter-draft wording verification
 Starter-draft manual-proof scope: onboarding and first-run dashboard/site draft wording verification
 Starter-draft wording proof scope: onboarding plus first-run dashboard/site draft wording still needs explicit runtime-truth verification
 
