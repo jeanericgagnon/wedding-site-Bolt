@@ -56,6 +56,7 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ item, onClose, onConfirm 
   }
 
   const displayPrice = item.price_label ?? (item.price_amount != null ? `$${item.price_amount.toFixed(2)}` : null);
+  const dialogCopy = getRegistryPurchaseDialogCopy(item);
 
   return (
     <div
@@ -69,12 +70,12 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ item, onClose, onConfirm 
               <CheckCircle2 className="w-7 h-7 text-success" />
             </div>
             <p className="font-semibold text-text-primary">Thank you!</p>
-            <p className="text-sm text-text-secondary">This gift is now marked as being purchased.</p>
+            <p className="text-sm text-text-secondary">{dialogCopy.successMessage}</p>
           </div>
         ) : (
           <>
             <div className="flex items-center justify-between px-5 pt-5 pb-3">
-              <h3 className="font-semibold text-text-primary">Mark as purchasing</h3>
+              <h3 className="font-semibold text-text-primary">{dialogCopy.title}</h3>
               <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-surface-subtle text-text-tertiary transition-colors">
                 <X className="w-4 h-4" />
               </button>
@@ -117,7 +118,7 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ item, onClose, onConfirm 
                 className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-text-inverse text-sm font-medium rounded-xl hover:bg-primary-hover disabled:opacity-50 transition-colors"
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                {loading ? 'Saving…' : 'Confirm purchase'}
+                {loading ? 'Saving…' : dialogCopy.confirmLabel}
               </button>
               <button type="button" onClick={onClose} className="w-full text-sm text-text-secondary hover:text-text-primary transition-colors py-1">
                 Cancel
@@ -137,6 +138,26 @@ interface RegistryCardProps {
 
 export function getRegistryPurchaseCtaLabel(item: Pick<RegistryItem, 'purchase_status'>): string {
   return item.purchase_status === 'partial' ? 'Buy remaining' : 'Mark as purchasing';
+}
+
+export function getRegistryPurchaseDialogCopy(item: Pick<RegistryItem, 'purchase_status'>): {
+  title: string;
+  confirmLabel: string;
+  successMessage: string;
+} {
+  if (item.purchase_status === 'partial') {
+    return {
+      title: 'Buy remaining gift',
+      confirmLabel: 'Confirm remaining purchase',
+      successMessage: 'This gift is now updated with the remaining purchase.',
+    };
+  }
+
+  return {
+    title: 'Mark as purchasing',
+    confirmLabel: 'Confirm purchase',
+    successMessage: 'This gift is now marked as being purchased.',
+  };
 }
 
 export function getRegistryDisplayPriority(item: Pick<RegistryItem, 'purchase_status' | 'item_type'>): number {

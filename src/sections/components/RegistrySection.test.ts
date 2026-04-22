@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getRegistryDisplayPriority, getRegistryPurchaseCtaLabel } from './RegistrySection';
+import { getRegistryDisplayPriority, getRegistryPurchaseCtaLabel, getRegistryPurchaseDialogCopy } from './RegistrySection';
 
 describe('getRegistryPurchaseCtaLabel', () => {
   it('keeps available items in purchasing state language', () => {
@@ -13,5 +13,13 @@ describe('getRegistryPurchaseCtaLabel', () => {
   it('keeps partial registry items ahead of purchased ones in public sorting', () => {
     expect(getRegistryDisplayPriority({ purchase_status: 'partial', item_type: 'physical' })).toBe(1);
     expect(getRegistryDisplayPriority({ purchase_status: 'purchased', item_type: 'physical' })).toBe(0);
+  });
+
+  it('keeps partial registry dialog copy aligned with remaining-purchase flow', () => {
+    expect(getRegistryPurchaseDialogCopy({ purchase_status: 'partial' })).toEqual({
+      title: 'Buy remaining gift',
+      confirmLabel: 'Confirm remaining purchase',
+      successMessage: 'This gift is now updated with the remaining purchase.',
+    });
   });
 });
