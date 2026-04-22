@@ -25,4 +25,10 @@ describe('signupReturnResolver', () => {
   it('uses the generic fallback when nothing else exists', () => {
     expect(resolveSignupReturnPath(null, '/onboarding?signup=1')).toBe('/onboarding?signup=1');
   });
+
+  it('ignores external explicit return paths and keeps onboarding fallback continuity', () => {
+    writeSignupReturnPath(buildQuickStartEntryPath());
+
+    expect(resolveSignupReturnPath('https://evil.example/steal', '/onboarding?signup=1')).toBe(buildQuickStartEntryPath());
+  });
 });
