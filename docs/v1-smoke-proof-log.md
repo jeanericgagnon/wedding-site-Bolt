@@ -18,6 +18,7 @@ Source of truth: `docs/finish-board-2026-04-19.md`
 Last aligned from source: 2026-04-21
 Alignment scope: current v1 line bullets only
 Verification gate for this log: `npm run proof:v1:canonical-smoke`
+Environment-specific blocker gate: `npm run proof:v1:guests-rsvp-ops`
 
 This is **not** a generic QA checklist.
 This is the must-ship truth gate.
