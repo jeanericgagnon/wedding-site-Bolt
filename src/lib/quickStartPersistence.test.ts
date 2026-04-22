@@ -647,6 +647,38 @@ describe('quickStartPersistence', () => {
     expect(normalized.followUpAnswers).toEqual({ transport: 'Need shuttle details' });
   });
 
+  it('reopens follow-up view when resumable clarifying work survives a stale question view restore', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      showFollowUps: true,
+      viewState: 'question',
+      followUpAnswers: {
+        transport: 'Need shuttle details',
+      },
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'transport',
+            category: 'travel',
+            question: 'How should guests get there?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.transport'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'pending',
+            answer: '',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.showFollowUps).toBe(true);
+    expect(normalized.viewState).toBe('followups');
+  });
+
   it('reopens question view when follow-up flag is off even if stale follow-up view was persisted', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       showFollowUps: false,
