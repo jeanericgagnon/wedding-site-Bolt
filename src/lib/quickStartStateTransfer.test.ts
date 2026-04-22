@@ -880,7 +880,7 @@ describe('quickStartStateTransfer', () => {
     expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').showFollowUps).toBe(true);
   });
 
-  it('preserves thinking view when resumable onboarding work was still generating on restore', () => {
+  it('rewrites stale thinking restores back into follow-up mode once questions already exist', () => {
     window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
       showFollowUps: true,
       viewState: 'thinking',
@@ -908,8 +908,8 @@ describe('quickStartStateTransfer', () => {
     const restored = readQuickStartDraftSnapshot();
 
     expect(restored?.showFollowUps).toBe(true);
-    expect(restored?.viewState).toBe('thinking');
-    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').viewState).toBe('thinking');
+    expect(restored?.viewState).toBe('followups');
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').viewState).toBe('followups');
   });
 
   it('rewrites stale thinking restores back into follow-up mode when active draft answers survived', () => {
@@ -948,24 +948,14 @@ describe('quickStartStateTransfer', () => {
     expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').viewState).toBe('followups');
   });
 
-  it('rewrites missing follow-up flags back on when restore was still in thinking view', () => {
+  it('preserves thinking only when restore generation has not produced questions yet', () => {
     window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      showFollowUps: true,
       viewState: 'thinking',
       clarifyingState: {
         clarifying: {
           mode: 'ask',
-          questions: [{
-            id: 'lodging',
-            category: 'travel',
-            question: 'Where should guests stay?',
-            expectedAnswerType: 'short_text',
-            targetFields: ['travel.lodging'],
-            affectedSections: ['travel'],
-            skippable: true,
-            round: 2,
-            status: 'pending',
-            answer: '',
-          }],
+          questions: [],
           history: [],
         },
         draftOutputs: {},
@@ -974,9 +964,9 @@ describe('quickStartStateTransfer', () => {
 
     const restored = readQuickStartDraftSnapshot();
 
-    expect(restored?.showFollowUps).toBe(true);
-    expect(restored?.viewState).toBe('thinking');
-    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').showFollowUps).toBe(true);
+    expect(restored?.showFollowUps).toBe(false);
+    expect(restored?.viewState).toBe('question');
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').viewState).toBe('question');
   });
 
   it('rewrites stale thinking restores back to question when follow-up resume is off', () => {

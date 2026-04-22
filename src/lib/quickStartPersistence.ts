@@ -310,7 +310,12 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     showFollowUps,
     clarifyingState,
     viewState: showFollowUps
-      ? viewState === 'thinking' && !hasTypedClarifyingDraftAnswers && !hasActiveDraftedFollowUpAnswers ? 'thinking' : 'followups'
+      ? viewState === 'thinking'
+        && !hasTypedClarifyingDraftAnswers
+        && !hasActiveDraftedFollowUpAnswers
+        && !hasOpenFollowUps
+        ? 'thinking'
+        : 'followups'
       : viewState === 'followups' || viewState === 'thinking' ? 'question' : viewState,
   };
 };

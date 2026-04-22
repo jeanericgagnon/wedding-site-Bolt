@@ -1238,7 +1238,7 @@ describe('quickStartPersistence', () => {
     expect(normalized.followUpAnswers).toEqual({ lodging: 'Need shuttle details' });
   });
 
-  it('preserves thinking view when resumable onboarding work was still generating on restore', () => {
+  it('reopens follow-up view when stale thinking restores already have pending clarifying questions', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       showFollowUps: true,
       viewState: 'thinking',
@@ -1264,7 +1264,7 @@ describe('quickStartPersistence', () => {
     });
 
     expect(normalized.showFollowUps).toBe(true);
-    expect(normalized.viewState).toBe('thinking');
+    expect(normalized.viewState).toBe('followups');
   });
 
   it('reopens follow-up view instead of stale thinking when active draft answers survived restore', () => {
@@ -1300,7 +1300,7 @@ describe('quickStartPersistence', () => {
     expect(normalized.followUpAnswers).toEqual({ lodging: 'Need shuttle details' });
   });
 
-  it('preserves thinking view when older restores lost the follow-up flag during generation', () => {
+  it('reopens follow-up view when older restores lost the follow-up flag after questions were generated', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       viewState: 'thinking',
       clarifyingState: {
@@ -1325,7 +1325,7 @@ describe('quickStartPersistence', () => {
     });
 
     expect(normalized.showFollowUps).toBe(true);
-    expect(normalized.viewState).toBe('thinking');
+    expect(normalized.viewState).toBe('followups');
   });
 
   it('closes stale thinking view when follow-up resume is no longer active', () => {
@@ -1347,6 +1347,24 @@ describe('quickStartPersistence', () => {
             status: 'pending',
             answer: '',
           }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.showFollowUps).toBe(false);
+    expect(normalized.viewState).toBe('question');
+  });
+
+  it('preserves thinking view only while clarifying generation has not produced questions yet', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      showFollowUps: true,
+      viewState: 'thinking',
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [],
           history: [],
         },
         draftOutputs: {},
