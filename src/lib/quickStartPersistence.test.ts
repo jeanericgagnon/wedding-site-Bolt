@@ -59,7 +59,7 @@ describe('quickStartPersistence', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       followUpAnswers: {
         '': 'should disappear',
-        'event-1-time': '6:00 PM',
+        'event-1-time': ' 6:00 PM ',
         'lodging': '   ',
       },
     });

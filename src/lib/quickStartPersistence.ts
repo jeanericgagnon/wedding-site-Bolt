@@ -25,7 +25,9 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
 
   const followUpAnswers = parsed.followUpAnswers && typeof parsed.followUpAnswers === 'object' && !Array.isArray(parsed.followUpAnswers)
     ? Object.fromEntries(
-        Object.entries(parsed.followUpAnswers).filter(([key, val]) => key.trim().length > 0 && typeof val === 'string' && val.trim().length > 0),
+        Object.entries(parsed.followUpAnswers)
+          .filter(([key, val]) => key.trim().length > 0 && typeof val === 'string' && val.trim().length > 0)
+          .map(([key, val]) => [key, val.trim()]),
       )
     : {};
 
