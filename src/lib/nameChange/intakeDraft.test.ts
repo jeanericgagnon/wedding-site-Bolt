@@ -71,6 +71,11 @@ describe('name change intake draft helpers', () => {
     expect(normalizeDraftNameChangeDocumentId('draft-COURT-ORDER-NAME-CHANGE')).toBe('draft-court_order');
   });
 
+  it('normalizes messy draft prefixes before canonicalizing draft ids', () => {
+    expect(normalizeDraftNameChangeDocumentId('draft _ CURRENT PASSPORT')).toBe('draft-current_passport');
+    expect(normalizeDraftNameChangeDocumentId('draft - court order name change')).toBe('draft-court_order');
+  });
+
   it('normalizes legacy draft document ids onto the canonical draft id', () => {
     expect(normalizeDraftNameChangeDocumentId('draft-court_order_name_change')).toBe('draft-court_order');
     expect(normalizeDraftNameChangeDocumentId(' draft-marriage_certificate ')).toBe('draft-marriage_certificate');

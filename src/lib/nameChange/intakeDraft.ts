@@ -21,8 +21,9 @@ export function buildDraftNameChangeDocumentId(kind: NameChangeDocumentInput['do
 
 export function normalizeDraftNameChangeDocumentId(documentId: string | null | undefined) {
   const normalizedDocumentId = documentId?.trim() || null;
-  if (!normalizedDocumentId?.startsWith('draft-')) return normalizedDocumentId;
-  return buildDraftNameChangeDocumentId(normalizedDocumentId.slice('draft-'.length) as NameChangeDocumentInput['document_kind']);
+  const normalizedDraftPrefix = normalizedDocumentId?.replace(/^draft\s*[-_]\s*/i, 'draft-') ?? null;
+  if (!normalizedDraftPrefix?.startsWith('draft-')) return normalizedDocumentId;
+  return buildDraftNameChangeDocumentId(normalizedDraftPrefix.slice('draft-'.length) as NameChangeDocumentInput['document_kind']);
 }
 
 export function createDraftNameChangeDocument(
