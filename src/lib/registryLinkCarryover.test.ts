@@ -50,4 +50,11 @@ describe('carryOverRegistryLinks', () => {
       { url: 'https://amazon.com/shop/list-3', sourceLabel: 'Amazon' },
     ]);
   });
+
+  it('preserves multiple imported registry links when they share one line', () => {
+    expect(carryOverRegistryLinks('Amazon Registry | amazon.com/shop; Target Registry | target.com/list')).toEqual([
+      { url: 'https://amazon.com/shop', sourceLabel: 'Amazon' },
+      { url: 'https://target.com/list', sourceLabel: 'Target' },
+    ]);
+  });
 });
