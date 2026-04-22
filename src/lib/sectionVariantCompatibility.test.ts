@@ -53,4 +53,9 @@ describe('resolveBuilderVariant registry compatibility', () => {
     expect(resolveBuilderVariant('registry', 'Classic')).toBe('classic');
     expect(resolveBuilderVariant('registry', 'Experiences')).toBe('experiences');
   });
+
+  it('preserves builder-native registry variants when alias fallback resolves with different casing', () => {
+    expect(resolveBuilderVariant('registry', 'PLAYFUL')).toBe('playful');
+    expect(resolveBuilderVariant('registry', 'Luxury')).toBe('luxury');
+  });
 });
