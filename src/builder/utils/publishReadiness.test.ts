@@ -691,6 +691,26 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('treats non-boolean RSVP enabled values as disabled for publish truth', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
+    const data = createEmptyWeddingData();
+    data.couple.partner1Name = 'Alex';
+    data.couple.partner2Name = 'Jordan';
+    data.event.weddingDateISO = '2027-06-12';
+    data.venues = [{ id: 'v1', name: 'Test Venue', address: '123 Main St' }];
+    // @ts-expect-error exercising runtime guard for incomplete persisted data
+    data.rsvp.enabled = 'true';
+
+    expect(getPublishIssue(project, data)?.kind).toBe('rsvp-disabled');
+    expect(buildPublishReadiness(project, data).find((item) => item.id === 'rsvp')).toEqual({
+      id: 'rsvp',
+      label: 'RSVP is turned on',
+      done: false,
+      detail: 'Turn RSVP on or remove RSVP calls to action.',
+    });
+  });
+
   it('marks page readiness with plural page copy when multiple pages exist', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages.push({

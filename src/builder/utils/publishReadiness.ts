@@ -50,7 +50,7 @@ export const getPublishIssue = (project: BuilderProject, weddingData?: WeddingDa
       return { kind: 'missing-venue', message: 'Add at least one venue before going live.' };
     }
 
-    if (!weddingData.rsvp?.enabled) {
+    if (weddingData.rsvp?.enabled !== true) {
       return { kind: 'rsvp-disabled', message: 'Turn RSVP on before going live.' };
     }
   }
@@ -78,7 +78,7 @@ export const buildPublishReadiness = (
   const hasVenue = Boolean(weddingData?.venues?.some((v) => !!v?.name?.trim() || !!v?.address?.trim()));
   const hasNames = Boolean(weddingData?.couple?.partner1Name?.trim() && weddingData?.couple?.partner2Name?.trim());
   const hasWeddingDate = Boolean(weddingData?.event?.weddingDateISO?.trim());
-  const hasRsvpEnabled = weddingData ? Boolean(weddingData.rsvp?.enabled) : true;
+  const hasRsvpEnabled = weddingData ? weddingData.rsvp?.enabled === true : true;
   const hasUnsavedChanges = options?.isDirty === true;
   const activePageHasVisibleSections = Boolean(activePage?.sections?.some((section) => section?.enabled));
   const activePageTitle = typeof activePage?.title === 'string' ? activePage.title.trim() || 'the current page' : 'the current page';
