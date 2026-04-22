@@ -1083,7 +1083,7 @@ export const DashboardOverview: React.FC = () => {
                     )}
                     <Button variant="outline" size="md" fullWidth onClick={() => navigate('/dashboard/builder?photoTips=1')}>
                       <Edit className="w-5 h-5 mr-2" aria-hidden="true" />
-                      {stats?.isPublished ? 'Edit live website' : 'Edit draft and go live'}
+                      {stats?.isPublished ? 'Edit live website' : 'Edit draft before you go live'}
                     </Button>
                   </div>
                 </CardContent>
