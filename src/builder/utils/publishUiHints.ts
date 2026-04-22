@@ -8,7 +8,11 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
       'Or add a page and turn on at least one section.',
     ];
   }
-  if (normalizedErrorLower.includes('turn on at least one section') || normalizedErrorLower.includes('turn on a section')) {
+  if (
+    normalizedErrorLower.includes('turn on at least one section')
+    || normalizedErrorLower.includes('turn on a section')
+    || normalizedErrorLower.includes('turn on section')
+  ) {
     return [
       'Select a section on the canvas.',
       'Turn it on in the right panel, then save and go live again.',
