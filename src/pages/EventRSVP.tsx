@@ -290,8 +290,8 @@ export default function EventRSVP() {
     if (invitation.rsvp) {
       setRsvpForm({
         attending: invitation.rsvp.attending,
-        dietary_restrictions: invitation.rsvp.dietary_restrictions || '',
-        notes: invitation.rsvp.notes || '',
+        dietary_restrictions: (invitation.rsvp.dietary_restrictions || '').trim(),
+        notes: (invitation.rsvp.notes || '').trim(),
       });
     } else {
       setRsvpForm({
