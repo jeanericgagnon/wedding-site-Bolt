@@ -127,7 +127,7 @@ function normalizeCustomAnswers(answers: Record<string, string | string[]>) {
 
 function parseLegacyEventAttendanceToken(value: string | undefined): boolean {
   const normalized = (value || '').trim().toLowerCase();
-  return normalized === 'yes' || normalized === 'y' || normalized === 'true' || normalized === '1' || normalized === 'attending';
+  return normalized === 'yes' || normalized === 'y' || normalized === 'true' || normalized === '1' || normalized === 'attending' || normalized === 'going';
 }
 
 function normalizeLegacyEventKey(value: string | undefined): string {
