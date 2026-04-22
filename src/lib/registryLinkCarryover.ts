@@ -73,6 +73,10 @@ function extractExplicitSourceLabelFragment(text: string): string | undefined {
   return /[a-z]/i.test(cleaned) ? cleaned : undefined;
 }
 
+function normalizeExplicitSourceLabel(label: string | undefined): string | undefined {
+  return label ? extractExplicitSourceLabelFragment(label) : undefined;
+}
+
 function extractExplicitSourceLabelFromTokenText(text: string): string | undefined {
   const withoutUrls = text
     .replace(/\((https?:\/\/[^)]+|www\.[^)]+|(?:[a-z0-9-]+\.)+[a-z]{2,}[^)]*)\)/gi, ' ')
@@ -105,7 +109,7 @@ export function parsePersistedRegistryLinks(raw: string | null | undefined): Car
       const [label, ...rest] = line.split('|').map((part) => part.trim()).filter(Boolean);
       if (!label) return [];
 
-      const explicitSourceLabel = rest.length > 0 ? label : undefined;
+      const explicitSourceLabel = rest.length > 0 ? normalizeExplicitSourceLabel(label) : undefined;
       const candidateUrl = rest.length > 0 ? rest.join(' | ') : line;
       const parsedLinks = carryOverRegistryLinks(candidateUrl);
       if (parsedLinks.length > 0) {

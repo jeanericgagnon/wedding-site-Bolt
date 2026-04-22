@@ -186,6 +186,13 @@ describe('carryOverRegistryLinks', () => {
     ]);
   });
 
+  it('strips purchaser-name annotations from persisted registry labels before merges', () => {
+    expect(parsePersistedRegistryLinks('Target Registry purchased by Alex | target.com/list\nCustom Honeymoon Fund claimed by Sam | https://example.com/fund')).toEqual([
+      { url: 'https://target.com/list', sourceLabel: 'Target' },
+      { url: 'https://example.com/fund', sourceLabel: 'Custom Honeymoon Fund' },
+    ]);
+  });
+
   it('merges stronger carryover labels without dropping unmatched persisted registry links', () => {
     expect(mergeRegistrySourceLabels(
       [{ url: 'https://zola.com/registry/jane', sourceLabel: 'Custom Honeymoon Fund' }],

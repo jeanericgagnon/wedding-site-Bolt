@@ -473,6 +473,7 @@ describe('sections registry resolution', () => {
     expect(registryLinkCarryover).toContain('function extractExplicitSourceLabelFromTokenText(text: string): string | undefined {');
     expect(registryLinkCarryover).toContain('claimed|claiming|reserved|reserving|booked|booking)\\s+by\\s+[a-z]');
     expect(registryLinkCarryover).toContain('purchasing|buying|already|claimed|partially|partial|pending|done|complete|later');
+    expect(registryLinkCarryover).toContain('function normalizeExplicitSourceLabel(label: string | undefined): string | undefined {');
     expect(registryLinkCarryover).toContain('const inferredSourceLabel = inferSourceLabel(url);');
     expect(registryLinkCarryover).toContain('sourceLabel: token.sourceLabel ?? inferredSourceLabel');
     expect(registryLinkCarryover).toContain("sourceLabelMode?: 'explicit' | 'inferred';");
