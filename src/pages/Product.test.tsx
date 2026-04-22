@@ -2,17 +2,23 @@ import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const navigateMock = vi.fn();
+const authState = {
+  signIn: vi.fn(),
+  user: null as null | { id: string },
+};
+
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
   return {
     ...actual,
     Link: ({ children, to, ...props }: any) => <a href={to} {...props}>{children}</a>,
-    useNavigate: () => vi.fn(),
+    useNavigate: () => navigateMock,
   };
 });
 
 vi.mock('../hooks/useAuth', () => ({
-  useAuth: () => ({ signIn: vi.fn() }),
+  useAuth: () => authState,
 }));
 
 vi.mock('../components/ui/Toast', () => ({
@@ -34,6 +40,8 @@ import { Product } from './Product';
 describe('Product starter draft truth', () => {
   beforeEach(() => {
     window.localStorage.clear();
+    navigateMock.mockReset();
+    authState.user = null;
   });
 
   it('keeps the launch step framed as a starter draft that is reviewed before sharing with guests', () => {
@@ -75,5 +83,22 @@ describe('Product starter draft truth', () => {
 
     expect(screen.getAllByRole('button', { name: 'Start your draft' }).length).toBe(2);
     expect(screen.queryByRole('button', { name: 'Start your site' })).not.toBeInTheDocument();
+  });
+
+  it('sends anonymous visitors to signup when they review draft privacy and share settings', () => {
+    render(<Product />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Review draft privacy + share settings' }));
+
+    expect(navigateMock).toHaveBeenCalledWith('/signup');
+  });
+
+  it('sends signed-in users straight to the builder when they review draft privacy and share settings', () => {
+    authState.user = { id: 'user-1' };
+    render(<Product />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Review draft privacy + share settings' }));
+
+    expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
   });
 });

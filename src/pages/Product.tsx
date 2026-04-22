@@ -142,7 +142,7 @@ const V1_SLICE_STATUS = [
 
 export const Product: React.FC = () => {
   const navigate = useNavigate();
-  const { signIn } = useAuth();
+  const { signIn, user } = useAuth();
   const { toast } = useToast();
   const [demoLoading, setDemoLoading] = useState(false);
   const [activeStep, setActiveStep] = useState<StepId>('launch');
@@ -153,6 +153,15 @@ export const Product: React.FC = () => {
   const [seated, setSeated] = useState(42);
 
   const handleSignUp = () => navigate('/signup');
+
+  const handleLaunchStepReview = () => {
+    if (user) {
+      navigate('/dashboard/builder');
+      return;
+    }
+
+    navigate('/signup');
+  };
 
   const handleDemoLogin = async () => {
     if (demoLoading) return;
@@ -175,7 +184,7 @@ export const Product: React.FC = () => {
       return (
         <div className="space-y-4">
           <p className="text-sm text-ink/70">Template: Modern Luxe • Website: starter draft is ready to review before sharing it with guests</p>
-          <button className="px-5 py-2.5 rounded-xl bg-brand text-paper font-semibold">Review draft privacy + share settings</button>
+          <button onClick={handleLaunchStepReview} className="px-5 py-2.5 rounded-xl bg-brand text-paper font-semibold">Review draft privacy + share settings</button>
         </div>
       );
     }
