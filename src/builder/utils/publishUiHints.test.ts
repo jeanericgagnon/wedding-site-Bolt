@@ -78,6 +78,12 @@ describe('publishUiHints', () => {
     expect(hints).toEqual(['Use Fix next to move through the last blockers before the guest-facing launch.']);
   });
 
+  it('falls back to generic guidance for whitespace-only blocker copy', () => {
+    expect(getPublishBlockedHints('   ')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
+  });
+
   it('returns page guidance for whitespace-padded no-page message', () => {
     const hints = getPublishBlockedHints('   Add at least one page before publishing.   ');
     expect(hints[0]).toContain('Designs');
