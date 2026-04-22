@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getAllSectionManifests } from '../builder/registry/sectionManifests';
+import { getAllSectionManifests, getSectionManifest } from '../builder/registry/sectionManifests';
 import { resolveAndParse } from './registry';
 
 const EXPECTED_ALIAS_TARGETS: Array<{ type: string; variant: string; expectedResolvedVariant: string }> = [
@@ -46,5 +46,10 @@ describe('sections registry resolution', () => {
       expect(resolved, `strict unresolved alias ${type}:${variant}`).not.toBeNull();
       expect(resolved?.def.variant).toBe(expectedResolvedVariant);
     }
+  });
+
+  it('exposes template-backed registry aliases to the builder manifest', () => {
+    const registryManifest = getSectionManifest('registry');
+    expect(registryManifest?.supportedVariants).toEqual(expect.arrayContaining(['classic', 'luxury', 'experiences', 'modern', 'playful']));
   });
 });

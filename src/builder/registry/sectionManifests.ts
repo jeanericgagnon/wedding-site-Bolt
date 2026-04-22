@@ -177,7 +177,7 @@ export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinit
     label: 'Registry',
     icon: 'Gift',
     defaultVariant: 'cards',
-    supportedVariants: ['cards', 'fundHighlight', 'featured', 'minimal', 'honeymoon', 'tabs', 'illustrated'],
+    supportedVariants: ['cards', 'fundHighlight', 'featured', 'minimal', 'honeymoon', 'tabs', 'illustrated', 'classic', 'luxury', 'experiences', 'modern', 'playful'],
     variantMeta: [
       { id: 'cards', label: 'Store Links', description: 'Registry links as clickable store cards' },
       { id: 'fundHighlight', label: 'Fund Highlight', description: 'Highlights one featured fund/link first, then secondary registry links' },
@@ -186,6 +186,11 @@ export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinit
       { id: 'honeymoon', label: 'Honeymoon Fund', description: 'Large fund card with destination photo and contribute button' },
       { id: 'tabs', label: 'Tabbed', description: 'Tabbed layout to browse Home, Experiences, and Cash Fund registries' },
       { id: 'illustrated', label: 'Illustrated', description: 'Gift icons and watercolor illustrations with registry links' },
+      { id: 'classic', label: 'Classic', description: 'Classic registry cards used by legacy templates and published sites' },
+      { id: 'luxury', label: 'Luxury', description: 'Luxury featured registry layout used by published templates' },
+      { id: 'experiences', label: 'Experiences', description: 'Experience-first featured registry layout used by published templates' },
+      { id: 'modern', label: 'Modern', description: 'Modern registry cards used by published templates' },
+      { id: 'playful', label: 'Playful', description: 'Playful registry cards used by published templates' },
     ],
     capabilities: { ...defaultCapabilities, hasBindings: true },
     settingsSchema: {
