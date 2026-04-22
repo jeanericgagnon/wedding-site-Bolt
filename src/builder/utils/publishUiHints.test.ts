@@ -84,6 +84,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('couple details');
   });
 
+  it('returns partner-name guidance when blocker copy uses the readiness detail wording', () => {
+    const hints = getPublishBlockedHints('Names are ready for guests.');
+    expect(hints[0]).toContain('couple details');
+  });
+
   it('returns partner-name guidance when both-names blocker copy is lowercased by upstream formatting', () => {
     const hints = getPublishBlockedHints('add both names exactly how you want them shown.');
     expect(hints[0]).toContain('couple details');
