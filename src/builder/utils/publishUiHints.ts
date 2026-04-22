@@ -14,6 +14,7 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
     || normalizedErrorLower.includes('latest edits are saved')
     || normalizedErrorLower.includes('everything is saved')
     || normalizedErrorLower.includes('ready to go live')
+    || normalizedErrorLower.includes('no checks yet')
     || normalizedErrorLower.includes('draft only')
     || normalizedErrorLower.includes('draft has unsaved changes')
     || normalizedErrorLower.includes('live site unchanged — you have new draft edits')
