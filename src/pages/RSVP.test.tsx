@@ -803,6 +803,108 @@ describe('RSVP stale submit protection', () => {
     expect(screen.queryByText('Welcome, Taylor Rivera!')).not.toBeInTheDocument();
   });
 
+  it('keeps search reset truth if a picked-guest lookup resolves after searching again', async () => {
+    const pickedGuestLookup = deferred<Response>();
+
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          guest: null,
+          existingRsvp: null,
+          guests: [
+            {
+              id: 'guest-1',
+              first_name: 'Taylor',
+              last_name: 'Rivera',
+              name: 'Taylor Rivera',
+              email: 'taylor@example.com',
+              phone: null,
+              group_name: null,
+              wedding_site_id: 'site-1',
+              plus_one_allowed: false,
+              invited_to_ceremony: true,
+              invited_to_reception: true,
+              invite_token: 'token-1',
+            },
+            {
+              id: 'guest-2',
+              first_name: 'Jordan',
+              last_name: 'Lee',
+              name: 'Jordan Lee',
+              email: 'jordan@example.com',
+              phone: null,
+              group_name: null,
+              wedding_site_id: 'site-1',
+              plus_one_allowed: false,
+              invited_to_ceremony: true,
+              invited_to_reception: true,
+              invite_token: 'token-2',
+            },
+          ],
+          rsvpDeadline: null,
+          rsvpQuestions: [],
+          rsvpMealConfig: { enabled: true, options: ['Chicken', 'Beef'] },
+          musicPlaylistUrl: null,
+          householdGuests: [],
+        }),
+      })
+      .mockImplementationOnce(() => pickedGuestLookup.promise);
+
+    render(
+      <MemoryRouter initialEntries={['/rsvp']}>
+        <RSVP />
+      </MemoryRouter>
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('rsvp.search_placeholder'), { target: { value: 'Taylor' } });
+    fireEvent.click(screen.getByText('Find My Invitation'));
+
+    await screen.findByText('Multiple matches found');
+    fireEvent.click(screen.getByText('Taylor Rivera'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Taylor Rivera').closest('button')).toBeDisabled();
+    });
+
+    fireEvent.click(screen.getByText('Search again'));
+
+    expect(await screen.findByPlaceholderText('rsvp.search_placeholder')).toBeInTheDocument();
+    expect(screen.queryByText('Multiple matches found')).not.toBeInTheDocument();
+
+    pickedGuestLookup.resolve({
+      ok: true,
+      json: async () => ({
+        guest: {
+          id: 'guest-1',
+          first_name: 'Taylor',
+          last_name: 'Rivera',
+          name: 'Taylor Rivera',
+          email: 'taylor@example.com',
+          phone: null,
+          group_name: null,
+          wedding_site_id: 'site-1',
+          plus_one_allowed: false,
+          invited_to_ceremony: true,
+          invited_to_reception: true,
+          invite_token: 'token-1',
+        },
+        existingRsvp: null,
+        guests: null,
+        rsvpDeadline: null,
+        rsvpQuestions: [],
+        rsvpMealConfig: { enabled: true, options: ['Chicken', 'Beef'] },
+        musicPlaylistUrl: null,
+        householdGuests: [],
+      }),
+    } as Response);
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('rsvp.search_placeholder')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Welcome, Taylor Rivera!')).not.toBeInTheDocument();
+  });
+
   it('keeps reset search truth if a token-linked submit resolves after the token is removed', async () => {
     const submitRequest = deferred<Response>();
 
