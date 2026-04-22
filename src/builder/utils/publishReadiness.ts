@@ -48,7 +48,7 @@ export const getPublishIssue = (project: BuilderProject, weddingData?: WeddingDa
       return { kind: 'missing-venue', message: 'Add at least one venue before going live.' };
     }
 
-    if (!weddingData.rsvp.enabled) {
+    if (!weddingData.rsvp?.enabled) {
       return { kind: 'rsvp-disabled', message: 'Turn RSVP on before going live.' };
     }
   }
