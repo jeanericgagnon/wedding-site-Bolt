@@ -48,6 +48,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('event details');
   });
 
+  it('returns wedding-date guidance for the real publish readiness blocker copy', () => {
+    const hints = getPublishBlockedHints('Add your wedding date before going live.');
+    expect(hints[0]).toContain('event details');
+  });
+
   it('returns wedding-date guidance for whitespace-padded date message', () => {
     const hints = getPublishBlockedHints('   Add your wedding date before publishing.   ');
     expect(hints[0]).toContain('event details');
