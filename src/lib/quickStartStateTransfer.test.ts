@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { persistQuickStartDraftSnapshot, QUICK_START_STORAGE_KEY, readQuickStartDraftSnapshot } from './quickStartStateTransfer';
 
 describe('quickStartStateTransfer', () => {
@@ -55,5 +55,15 @@ describe('quickStartStateTransfer', () => {
 
     expect(readQuickStartDraftSnapshot()).toBeNull();
     expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
+  });
+
+  it('returns normalized draft even when local storage writes fail', () => {
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('quota exceeded');
+    });
+
+    expect(persistQuickStartDraftSnapshot({ initialSetupAnswers: { names: 'Alex & Jordan' } })?.initialSetupAnswers.names).toBe('Alex & Jordan');
+
+    setItemSpy.mockRestore();
   });
 });
