@@ -5601,7 +5601,14 @@ describe('RSVP stale submit protection', () => {
 
     expect(await screen.findByText("You've already responded. You can update your response below.")).toBeInTheDocument();
     expect(screen.getByText('Inherit this RSVP to selected household guests')).toBeInTheDocument();
-    expect(screen.getByRole('checkbox', { name: /Inherit this RSVP to selected household guests/i })).not.toBeChecked();
+
+    const inheritCheckbox = screen.getByRole('checkbox', { name: /Inherit this RSVP to selected household guests/i });
+    expect(inheritCheckbox).not.toBeChecked();
+
+    fireEvent.click(inheritCheckbox);
+    fireEvent.click(screen.getByText('Choose household guests'));
+
+    expect(screen.getByText('0/1 selected')).toBeInTheDocument();
   });
 
   it('normalizes the live RSVP form state immediately after submit success', async () => {

@@ -710,7 +710,7 @@ export default function RSVP() {
     const applyToSelectedHousehold = shouldApplyToHousehold(normalizedRsvp, household, foundGuest.id);
     setHouseholdGuests(household);
     setApplyToHousehold(applyToSelectedHousehold);
-    setSelectedHouseholdGuestIds(selectedGuestIds);
+    setSelectedHouseholdGuestIds(applyToSelectedHousehold ? selectedGuestIds : []);
     if (normalizedRsvp) {
       setExistingRsvp(normalizedRsvp);
       setFormData(buildNormalizedRsvpFormData(foundGuest, normalizedRsvp, meal));
