@@ -303,6 +303,23 @@ export default function RSVP() {
     notes: '',
   });
 
+  const returnToLoadedRsvp = useCallback(() => {
+    invalidateActiveSubmit();
+    setError('');
+    setStep('form');
+    setFormStep(1);
+    setExistingRsvp({
+      id: 'local-rsvp-confirmation',
+      attending: formData.attending,
+      attending_ceremony: formData.attendCeremony,
+      attending_reception: formData.attendReception,
+      meal_choice: formData.meal_choice || null,
+      plus_one_name: formData.plus_one_name || null,
+      notes: formData.notes || null,
+      custom_answers: customAnswers,
+    });
+  }, [customAnswers, formData, invalidateActiveSubmit]);
+
   useEffect(() => {
     const token = searchParams.get('token');
     if (!token) {
@@ -1388,6 +1405,10 @@ export default function RSVP() {
             <div className="space-y-1.5">
               <Button
                 onClick={() => {
+                  if (guest?.invite_token) {
+                    returnToLoadedRsvp();
+                    return;
+                  }
                   resetToSearch(true);
                 }}
                 className="w-full h-11"

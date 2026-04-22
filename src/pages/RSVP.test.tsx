@@ -97,6 +97,128 @@ describe('RSVP stale submit protection', () => {
     });
   });
 
+  it('returns token-linked guests to their loaded RSVP instead of dumping them to generic search after success', async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          guest: {
+            id: 'guest-1',
+            first_name: 'Taylor',
+            last_name: 'Rivera',
+            name: 'Taylor Rivera',
+            email: 'taylor@example.com',
+            phone: null,
+            group_name: null,
+            wedding_site_id: 'site-1',
+            plus_one_allowed: false,
+            invited_to_ceremony: true,
+            invited_to_reception: true,
+            invite_token: 'token-1',
+          },
+          existingRsvp: null,
+          guests: null,
+          rsvpDeadline: null,
+          rsvpQuestions: [],
+          rsvpMealConfig: { enabled: true, options: ['Chicken', 'Beef'] },
+          musicPlaylistUrl: null,
+          householdGuests: [],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true, guestName: 'Taylor Rivera', attending: true }),
+      });
+
+    window.history.pushState({}, '', '/rsvp?token=token-1');
+
+    render(
+      <BrowserRouter>
+        <RSVP />
+      </BrowserRouter>
+    );
+
+    await screen.findByText('Welcome, Taylor Rivera!');
+    fireEvent.click(screen.getByText('Continue to details'));
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'Chicken' } });
+    fireEvent.click(screen.getByText('Continue to review'));
+    fireEvent.click(screen.getByText('Submit RSVP'));
+
+    await screen.findByText("You're confirmed!");
+    fireEvent.click(screen.getByText('Done'));
+
+    await screen.findByText('Welcome, Taylor Rivera!');
+    expect(screen.queryByText('Find My Invitation')).not.toBeInTheDocument();
+    expect(screen.getByText("You've already responded. You can update your response below.")).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Continue to details'));
+    expect(screen.getByDisplayValue('Chicken')).toBeInTheDocument();
+  });
+
+  it('returns token-linked guests to their just-submitted RSVP truth after updating an existing response', async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          guest: {
+            id: 'guest-1',
+            first_name: 'Taylor',
+            last_name: 'Rivera',
+            name: 'Taylor Rivera',
+            email: 'taylor@example.com',
+            phone: null,
+            group_name: null,
+            wedding_site_id: 'site-1',
+            plus_one_allowed: false,
+            invited_to_ceremony: true,
+            invited_to_reception: true,
+            invite_token: 'token-1',
+          },
+          existingRsvp: {
+            id: 'rsvp-1',
+            attending: true,
+            attending_ceremony: true,
+            attending_reception: true,
+            meal_choice: 'Chicken',
+            plus_one_name: null,
+            notes: null,
+            custom_answers: {},
+          },
+          guests: null,
+          rsvpDeadline: null,
+          rsvpQuestions: [],
+          rsvpMealConfig: { enabled: true, options: ['Chicken', 'Beef'] },
+          musicPlaylistUrl: null,
+          householdGuests: [],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true, guestName: 'Taylor Rivera', attending: true }),
+      });
+
+    window.history.pushState({}, '', '/rsvp?token=token-1');
+
+    render(
+      <BrowserRouter>
+        <RSVP />
+      </BrowserRouter>
+    );
+
+    await screen.findByText('Welcome, Taylor Rivera!');
+    fireEvent.click(screen.getByText('Continue to details'));
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'Beef' } });
+    fireEvent.click(screen.getByText('Continue to review'));
+    fireEvent.click(screen.getByText('Update RSVP'));
+
+    await screen.findByText("You're confirmed!");
+    fireEvent.click(screen.getByText('Done'));
+
+    await screen.findByText('Welcome, Taylor Rivera!');
+    fireEvent.click(screen.getByText('Continue to details'));
+    expect(screen.getByDisplayValue('Beef')).toBeInTheDocument();
+    expect(screen.queryByDisplayValue('Chicken')).not.toBeInTheDocument();
+  });
+
   it('clears stale token-loaded form truth before resolving a replacement token lookup', async () => {
     fetchMock
       .mockResolvedValueOnce({
