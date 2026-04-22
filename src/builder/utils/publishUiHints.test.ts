@@ -295,6 +295,12 @@ describe('publishUiHints', () => {
     ]);
   });
 
+  it('does not mistake the current-page success detail for a page blocker', () => {
+    expect(getPublishBlockedHints('Current page has visible sections.')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
+  });
+
   it('returns section guidance when blocker copy comes from current-page readiness detail', () => {
     const hints = getPublishBlockedHints('Turn on content for Details.');
     expect(hints[0]).toContain('Select a section on the canvas');

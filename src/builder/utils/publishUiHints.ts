@@ -3,6 +3,12 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
   const normalizedError = publishValidationError.trim();
   const normalizedErrorLower = normalizedError.toLowerCase();
   if (
+    normalizedErrorLower.includes('current page has visible content')
+    || normalizedErrorLower.includes('current page has visible sections')
+  ) {
+    return ['Use Fix next to move through the last blockers before the guest-facing launch.'];
+  }
+  if (
     normalizedErrorLower.includes('add at least one page')
     || normalizedErrorLower.includes('add a page')
     || normalizedErrorLower.includes('apply a starting design')
