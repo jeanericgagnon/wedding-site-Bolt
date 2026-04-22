@@ -562,7 +562,13 @@ describe('publishUiHints', () => {
     expect(getPublishBlockedHints('Go live')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
     ]);
+    expect(getPublishBlockedHints('Go live.')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
     expect(getPublishBlockedHints('Update guest-facing site')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
+    expect(getPublishBlockedHints('Update guest-facing site.')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
     ]);
     expect(getPublishBlockedHints('Guest-facing site')).toEqual([
