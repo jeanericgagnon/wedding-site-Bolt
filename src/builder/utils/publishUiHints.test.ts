@@ -220,6 +220,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('Designs');
   });
 
+  it('returns page guidance when the shorter blocker copy is whitespace-padded', () => {
+    const hints = getPublishBlockedHints('   Add a page or apply a starting design.   ');
+    expect(hints[0]).toContain('Designs');
+  });
+
   it('detects publishNow from querystring', () => {
     expect(shouldAutoPublishFromSearch('?publishNow=1')).toBe(true);
     expect(shouldAutoPublishFromSearch('?foo=bar&publishNow=1')).toBe(true);
