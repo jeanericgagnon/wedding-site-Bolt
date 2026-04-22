@@ -312,4 +312,43 @@ describe('quickStartPersistence', () => {
     expect(normalized.clarifyingState?.clarifying.questions).toEqual([]);
     expect(normalized.showFollowUps).toBe(false);
   });
+
+  it('dedupes trimmed clarifying history ids so the latest answer wins', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [],
+          history: [{
+            id: 'event-1-time',
+            category: 'event_structure',
+            question: 'When is dinner?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['events.0.time'],
+            affectedSections: ['schedule'],
+            skippable: true,
+            round: 1,
+            status: 'pending',
+            answer: '',
+          }, {
+            id: ' event-1-time ',
+            category: 'event_structure',
+            question: 'When is dinner exactly?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['events.0.time'],
+            affectedSections: ['schedule'],
+            skippable: true,
+            round: 2,
+            status: 'answered',
+            answer: '6:00 PM',
+          }],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.clarifyingState?.clarifying.history).toHaveLength(1);
+    expect(normalized.clarifyingState?.clarifying.history[0]?.id).toBe('event-1-time');
+    expect(normalized.clarifyingState?.clarifying.history[0]?.answer).toBe('6:00 PM');
+  });
 });
