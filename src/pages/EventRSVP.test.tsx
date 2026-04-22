@@ -458,4 +458,23 @@ describe('EventRSVP token trust continuity', () => {
     expect(screen.queryByText("You're in!")).not.toBeInTheDocument();
     expect(screen.queryByText('Hello, Taylor!')).not.toBeInTheDocument();
   });
+
+  it('drops stale async completions after the page unmounts', async () => {
+    currentToken = 'guest-token';
+
+    const deferredGuestLookup = createDeferredMaybeSingle();
+    maybeSingleQueue.push(deferredGuestLookup.promise);
+
+    const view = render(<EventRSVP />);
+    view.unmount();
+
+    deferredGuestLookup.resolve({
+      data: { id: 'guest-1', name: 'Taylor', email: 'taylor@example.com' },
+      error: null,
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Hello, Taylor!')).not.toBeInTheDocument();
+    });
+  });
 });

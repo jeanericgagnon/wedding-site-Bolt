@@ -92,8 +92,11 @@ export default function EventRSVP() {
 
   useEffect(() => {
     return () => {
+      activeLoadRequestRef.current += 1;
+      activeSubmitRequestRef.current += 1;
       if (postSubmitResetTimeoutRef.current !== null) {
         window.clearTimeout(postSubmitResetTimeoutRef.current);
+        postSubmitResetTimeoutRef.current = null;
       }
     };
   }, []);
