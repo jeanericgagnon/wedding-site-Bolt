@@ -132,6 +132,24 @@ describe('name change intake draft helpers', () => {
     ]);
   });
 
+  it('humanizes person-name draft field values into stable title case', () => {
+    expect(upsertDraftNameChangeExtractedField([], 'draft-current_passport', 'given_name' as never, '  ', '  aLIcia   ')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-current_passport',
+        field_key: 'first_name',
+        field_value_masked: 'Alicia',
+      }),
+    ]);
+
+    expect(upsertDraftNameChangeExtractedField([], 'draft-marriage_certificate', 'spouse family name' as never, '  ', '  joRDAN  ')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-marriage_certificate',
+        field_key: 'spouse_last_name',
+        field_value_masked: 'Jordan',
+      }),
+    ]);
+  });
+
   it('ignores unsupported draft field aliases instead of inventing non-contract keys', () => {
     const startingFields: NameChangeExtractedFieldInput[] = [
       {

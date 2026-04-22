@@ -93,6 +93,17 @@ function normalizeDraftFieldKey(value: string) {
   return SUPPORTED_DRAFT_FIELD_KEYS.has(canonicalFieldKey) ? canonicalFieldKey : '' as NameChangeExtractedFieldInput['field_key'];
 }
 
+function normalizeDraftFieldValue(fieldKey: NameChangeExtractedFieldInput['field_key'], value: string) {
+  const normalizedValue = normalizeDraftText(value);
+  if (!normalizedValue) return '';
+
+  if (fieldKey === 'first_name' || fieldKey === 'middle_name' || fieldKey === 'last_name' || fieldKey === 'spouse_last_name' || fieldKey === 'county') {
+    return humanizeDraftToken(normalizedValue.toLowerCase());
+  }
+
+  return normalizedValue;
+}
+
 function buildDraftFieldLabel(fieldKey: NameChangeExtractedFieldInput['field_key'], fieldLabel: string) {
   return normalizeDraftText(fieldLabel) || humanizeDraftToken(fieldKey);
 }
@@ -176,7 +187,7 @@ export function upsertDraftNameChangeExtractedField(
   if (!normalizedFieldKey) {
     return extractedFields;
   }
-  const normalizedValue = normalizeDraftText(nextValue);
+  const normalizedValue = normalizeDraftFieldValue(normalizedFieldKey, nextValue);
   const normalizedLabel = buildDraftFieldLabel(normalizedFieldKey, fieldLabel);
   const rest = extractedFields.filter((field) => !(
     normalizeDraftNameChangeDocumentId(field.document_id) === normalizedDocumentId
