@@ -210,7 +210,10 @@ const VARIANTS_BY_TYPE: Record<string, string[]> = {
   rsvp: ['default'],
 };
 
-const isRegistryBuilderSectionType = (type: string) => type.trim().toLowerCase().replace(/[^a-z0-9]/g, '') === 'registry';
+const isRegistryBuilderSectionType = (type: string) => {
+  const normalizedType = type.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+  return normalizedType === 'registry' || normalizedType.startsWith('registrysection');
+};
 
 const SECTION_TYPE_MAP: Record<string, SectionType> = {
   hero: 'hero',
