@@ -278,13 +278,22 @@ export const Trust: React.FC = () => {
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               {user ? (
-                <button
-                  type="button"
-                  onClick={() => navigate('/settings')}
-                  className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary/90"
-                >
-                  Open account settings
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/settings')}
+                    className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary/90"
+                  >
+                    Open account settings
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/dashboard/overview')}
+                    className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
+                  >
+                    Open your dashboard
+                  </button>
+                </>
               ) : null}
               <Link to="/privacy" className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary">
                 Privacy policy
