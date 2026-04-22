@@ -493,7 +493,8 @@ describe('sections registry resolution', () => {
     expect(templateRegistrySource).toContain("import { resolveCanonicalRegistrySectionInput } from '../sections/registry';");
     expect(templateRegistrySource).toContain('function normalizeTemplateIdKey(templateId: unknown): string {');
     expect(templateRegistrySource).toContain('const templateIdAliases = new Map<string, string>(');
-    expect(templateRegistrySource).toContain('Object.entries(TEMPLATE_REGISTRY).flatMap(([templateId, template]) => {');
+    expect(templateRegistrySource).toContain('Object.entries(templateById).flatMap(([templateId, template]) => {');
+    expect(templateRegistrySource).toContain('Object.entries(TEMPLATE_ALIAS_TARGETS).map(([aliasId, canonicalId]) => [normalizeTemplateIdKey(aliasId), canonicalId])');
     expect(templateRegistrySource).toContain('normalizeTemplateIdKey(template.name)');
     expect(templateRegistrySource).toContain('export function getTemplate(templateId: unknown): TemplateDefinition {');
     expect(templateRegistrySource).toContain("const templateIdValue = typeof templateId === 'string' ? templateId : '';");

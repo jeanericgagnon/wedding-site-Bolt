@@ -805,10 +805,13 @@ export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = {
 };
 
 const templateIdAliases = new Map<string, string>(
-  Object.entries(TEMPLATE_REGISTRY).flatMap(([templateId, template]) => {
-    const keys = new Set([normalizeTemplateIdKey(templateId), normalizeTemplateIdKey(template.name)]);
-    return Array.from(keys).filter(Boolean).map((key) => [key, templateId]);
-  }),
+  [
+    ...Object.entries(templateById).flatMap(([templateId, template]) => {
+      const keys = new Set([normalizeTemplateIdKey(templateId), normalizeTemplateIdKey(template.name)]);
+      return Array.from(keys).filter(Boolean).map((key) => [key, templateId]);
+    }),
+    ...Object.entries(TEMPLATE_ALIAS_TARGETS).map(([aliasId, canonicalId]) => [normalizeTemplateIdKey(aliasId), canonicalId]),
+  ],
 );
 
 export function getTemplate(templateId: unknown): TemplateDefinition {
