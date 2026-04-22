@@ -96,6 +96,7 @@ describe('name change autofill prep snapshot', () => {
         source: 'extracted_field',
         value: 'Jordan-Smith',
         sourceFieldKey: 'spouse_last_name',
+        confidence: 'low',
       }),
     });
     expect(snapshot.fields.find((field) => field.targetField === 'applicant.current_first_name')).toMatchObject({
@@ -103,6 +104,42 @@ describe('name change autofill prep snapshot', () => {
         source: 'extracted_field',
         value: 'Alicia',
         sourceDocumentKind: 'current_passport',
+        confidence: 'low',
+      }),
+    });
+  });
+
+  it('keeps non-conflicting extracted values at normal extracted confidence', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-marriage',
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'San Diego County Clerk',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'doc-marriage',
+        field_key: 'issuance_date',
+        field_label: 'Issue date',
+        field_value_masked: '2026-04-05',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+
+    const snapshot = buildNameChangeAutofillPrepSnapshot(makeCase(), documents, extractedFields);
+    expect(snapshot.fields.find((field) => field.targetField === 'legal.marriage_date')).toMatchObject({
+      value: expect.objectContaining({
+        source: 'extracted_field',
+        value: '2026-04-05',
+        confidence: 'medium',
       }),
     });
   });

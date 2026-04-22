@@ -102,8 +102,9 @@ describe('name change target execution snapshot', () => {
       documentRepairDebt: expect.any(Number),
     });
     expect(snapshot.nextAction).toMatchObject({
-      category: 'packet',
-      label: 'Repair New last name',
+      category: 'document',
+      label: 'Resolve marriage certificate conflict',
+      detail: 'Target last name vs marriage certificate spouse surname disagree. Structured case says Jordan, but extracted document value says Jordan-Smith.',
     });
   });
 

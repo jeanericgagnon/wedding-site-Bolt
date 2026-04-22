@@ -51,12 +51,13 @@ function makeField(
   canonicalValue: string | null,
   extracted: ExtractionLookupResult,
   metadataReady = true,
+  hasCanonicalConflict = false,
 ): NameChangeAutofillFieldMapping {
   const extractedValue = normalizeValue(extracted.value);
   const finalValue = extractedValue ?? normalizeValue(canonicalValue);
   const source = extractedValue ? 'extracted_field' : 'canonical_case';
   const confidence = extractedValue
-    ? (metadataReady ? 'medium' : 'low')
+    ? (metadataReady && !hasCanonicalConflict ? 'medium' : 'low')
     : finalValue ? 'high' : 'low';
 
   return {
@@ -87,12 +88,25 @@ export function buildNameChangeAutofillPrepSnapshot(
     return !contract || contract.metadataMissing.length === 0;
   };
 
+  const conflictingExtractionKeys = new Set(
+    extraction.conflicts.map((conflict) => `${conflict.documentKind}:${conflict.fieldKey}`),
+  );
+
   const directField = (
     targetField: string,
     label: string,
     canonicalValue: string | null,
     extractedValue: ExtractionLookupResult,
-  ) => makeField(targetField, label, canonicalValue, extractedValue, isDocumentMetadataReady(extractedValue.sourceDocumentKind));
+  ) => makeField(
+    targetField,
+    label,
+    canonicalValue,
+    extractedValue,
+    isDocumentMetadataReady(extractedValue.sourceDocumentKind),
+    extractedValue.sourceDocumentKind != null
+      && extractedValue.sourceFieldKey != null
+      && conflictingExtractionKeys.has(`${extractedValue.sourceDocumentKind}:${extractedValue.sourceFieldKey}`),
+  );
 
   const targetFirstNameExtraction = canonicalCase.legalBasis === 'court_order'
     ? { value: extraction.courtOrder.firstName, sourceDocumentKind: 'court_order' as const, sourceFieldKey: 'first_name' as const }

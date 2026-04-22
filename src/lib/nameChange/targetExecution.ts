@@ -95,12 +95,23 @@ export function buildNameChangeTargetExecutionSnapshot(
     return null;
   };
   const courtOrderNextAction = targetKey === 'courtOrder' ? buildCourtOrderNextAction() : null;
-  const nextAction = firstBlockingFieldRisk
+  const blockingFieldConflict = primaryCanonicalConflict && firstBlockingFieldRisk
+    && primaryCanonicalConflict.documentKind === firstBlockingFieldRisk.sourceDocumentKind
+    && primaryCanonicalConflict.fieldKey === firstBlockingFieldRisk.sourceFieldKey
+      ? primaryCanonicalConflict
+      : null;
+  const nextAction = blockingFieldConflict
     ? {
-        category: 'packet' as const,
-        label: `Repair ${firstBlockingFieldRisk.label}`,
-        detail: firstBlockingFieldRisk.reason,
+        category: 'document' as const,
+        label: `Resolve ${blockingFieldConflict.documentKind.replace(/_/g, ' ')} conflict`,
+        detail: blockingFieldConflict.reason,
       }
+    : firstBlockingFieldRisk
+      ? {
+          category: 'packet' as const,
+          label: `Repair ${firstBlockingFieldRisk.label}`,
+          detail: firstBlockingFieldRisk.reason,
+        }
     : courtOrderNextAction
       ? courtOrderNextAction
     : firstMissingDependency
