@@ -171,4 +171,15 @@ describe('versionHistory', () => {
 
     expect(getBuilderRevision(weddingId, older.id)?.id).toBe(older.id);
   });
+
+  it('retains exactly five builder revisions after overflow trimming', () => {
+    const weddingId = `w_${Date.now()}_q`;
+    const project = createEmptyBuilderProject(weddingId, 'modern-luxe');
+
+    for (let index = 0; index < 8; index += 1) {
+      recordBuilderRevision({ weddingId, project, action: 'save', actor: `tester-${index}` });
+    }
+
+    expect(listBuilderRevisions(weddingId)).toHaveLength(5);
+  });
 });
