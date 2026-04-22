@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-router-dom', async () => {
@@ -32,6 +32,26 @@ import { Onboarding } from './Onboarding';
 describe('Onboarding starter draft wording truth', () => {
   beforeEach(() => {
     window.localStorage.clear();
+  });
+
+
+
+  it('clears malformed onboarding continuation state on restore failure', async () => {
+    window.localStorage.setItem('dayoflove:onboarding-draft', '{bad json');
+    window.localStorage.setItem('dayoflove:onboarding-resume-hint', 'first-incomplete');
+    window.localStorage.setItem('dayoflove:onboarding-resume-index', '9');
+    window.localStorage.setItem('dayoflove:signup-return-path', '/onboarding/quick-start');
+
+    render(<Onboarding />);
+
+    await waitFor(() => {
+      const restoredDraft = JSON.parse(window.localStorage.getItem('dayoflove:onboarding-draft') || '{}');
+      expect(restoredDraft.step).toBe('choice');
+      expect(restoredDraft.conversationIndex).toBe(0);
+      expect(window.localStorage.getItem('dayoflove:onboarding-resume-hint')).toBeNull();
+      expect(window.localStorage.getItem('dayoflove:onboarding-resume-index')).toBeNull();
+      expect(window.localStorage.getItem('dayoflove:signup-return-path')).toBeNull();
+    });
   });
 
   it('frames quick setup as a starter draft that still needs dashboard refinement before publish', () => {

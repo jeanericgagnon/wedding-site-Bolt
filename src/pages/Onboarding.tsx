@@ -256,7 +256,7 @@ export const Onboarding: React.FC = () => {
         setStep(parsed.step);
       }
     } catch {
-      clearAllOnboardingDraftStorage();
+      clearAllOnboardingContinuationState();
     } finally {
       setHasHydratedDraft(true);
     }
