@@ -758,7 +758,7 @@ export default function RSVP() {
         });
 
       if (requiredMissing) {
-        setError(`Please answer: ${requiredMissing.label}`);
+        setError(`Please answer: ${requiredMissing.label || requiredMissing.question_text || 'this question'}`);
         return;
       }
       setError('');

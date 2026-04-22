@@ -1145,6 +1145,62 @@ describe('RSVP stale submit protection', () => {
     expect(screen.queryByText('Please choose a meal option before review.')).not.toBeInTheDocument();
   });
 
+  it('clears stale required-question errors when the guest answers before retrying', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        guest: {
+          id: 'guest-1',
+          first_name: 'Taylor',
+          last_name: 'Rivera',
+          name: 'Taylor Rivera',
+          email: 'taylor@example.com',
+          phone: null,
+          group_name: null,
+          wedding_site_id: 'site-1',
+          plus_one_allowed: false,
+          invited_to_ceremony: true,
+          invited_to_reception: true,
+          invite_token: 'token-1',
+        },
+        existingRsvp: null,
+        guests: null,
+        rsvpDeadline: null,
+        rsvpQuestions: [
+          {
+            id: 'q-1',
+            question_text: 'What song gets you on the dance floor?',
+            type: 'text',
+            required: true,
+            options: [],
+          },
+        ],
+        rsvpMealConfig: { enabled: false, options: [] },
+        musicPlaylistUrl: null,
+        householdGuests: [],
+      }),
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/rsvp']}>
+        <RSVP />
+      </MemoryRouter>
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('rsvp.search_placeholder'), { target: { value: 'Taylor Rivera' } });
+    fireEvent.click(screen.getByText('Find My Invitation'));
+
+    await screen.findByText('Welcome, Taylor Rivera!');
+    fireEvent.click(screen.getByText('Continue to details'));
+    fireEvent.click(screen.getByText('Continue to review'));
+
+    expect(await screen.findByText('Please answer: What song gets you on the dance floor?')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByPlaceholderText('Your answer'), { target: { value: 'Dancing Queen' } });
+
+    expect(screen.queryByText('Please answer: What song gets you on the dance floor?')).not.toBeInTheDocument();
+  });
+
   it('drops stale token submit completions after the page unmounts', async () => {
     const submitRequest = deferred<Response>();
 
