@@ -75,6 +75,9 @@ export function upsertDraftNameChangeExtractedField(
 ): NameChangeExtractedFieldInput[] {
   const normalizedDocumentId = normalizeDraftNameChangeDocumentId(documentId);
   const normalizedFieldKey = normalizeDraftFieldKey(fieldKey);
+  if (!normalizedFieldKey) {
+    return extractedFields;
+  }
   const normalizedValue = normalizeDraftText(nextValue);
   const normalizedLabel = normalizeDraftText(fieldLabel) || humanizeDraftToken(normalizedFieldKey);
   const rest = extractedFields.filter((field) => !(

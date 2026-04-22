@@ -360,6 +360,21 @@ describe('name change intake draft helpers', () => {
     ]);
   });
 
+  it('ignores empty draft field keys instead of creating malformed rows', () => {
+    const startingFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'draft-current_passport',
+        field_key: 'issuance_date',
+        field_label: 'Issue date',
+        field_value_masked: '2024-06-01',
+        source_type: 'manual',
+        is_verified: true,
+      },
+    ];
+
+    expect(upsertDraftNameChangeExtractedField(startingFields, 'draft-current_passport', '___' as never, '  ', ' 2025-01-01 ')).toEqual(startingFields);
+  });
+
   it('deduplicates camelCase draft field-key rows instead of leaving duplicates behind', () => {
     const next = upsertDraftNameChangeExtractedField([
       {
