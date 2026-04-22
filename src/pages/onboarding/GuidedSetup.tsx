@@ -1035,10 +1035,10 @@ export const GuidedSetup: React.FC = () => {
               <Check className="w-10 h-10 text-accent" aria-hidden="true" />
             </div>
             <h2 className="text-2xl font-bold text-text-primary mb-3">
-              You're All Set!
+              Your starter draft is ready to review
             </h2>
             <p className="text-text-secondary max-w-md mx-auto mb-6">
-              Your starter wedding site is ready. We drafted the core pages from what you shared, and you can keep refining everything from your dashboard before you go live.
+              We drafted the core pages from what you shared. Review the starter draft in your dashboard, tighten the details, and only publish once it feels launch-ready.
             </p>
 
             <div className="bg-surface-subtle rounded-lg p-6 text-left">
