@@ -386,7 +386,7 @@ export default function RSVP() {
       .then(({ data, error: err }) => {
         if (activeLookupRequestRef.current !== requestId) return;
         if (err || !data) {
-          setError(err ?? 'Invalid invitation link. Please search by name below.');
+          setError(err ?? 'Invitation not recognized. Please search by name below.');
           setTokenAutoLoading(false);
           return;
         }

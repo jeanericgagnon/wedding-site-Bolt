@@ -186,6 +186,24 @@ describe('RSVP stale submit protection', () => {
     expect(screen.queryByText('Invitation not recognized. Please search by name below.')).not.toBeInTheDocument();
   });
 
+  it('shows invitation-not-recognized truth when token lookup returns no payload', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => null,
+    });
+
+    window.history.pushState({}, '', '/rsvp?token=token-1');
+
+    render(
+      <BrowserRouter>
+        <RSVP />
+      </BrowserRouter>
+    );
+
+    expect(await screen.findByText('Invitation not recognized. Please search by name below.')).toBeInTheDocument();
+    expect(screen.queryByText('Invalid invitation link. Please search by name below.')).not.toBeInTheDocument();
+  });
+
   it('accepts a single fallback guest result after picking from ambiguous matches', async () => {
     fetchMock
       .mockResolvedValueOnce({
