@@ -303,10 +303,13 @@ export default function EventRSVP() {
   }
 
   function buildInvitationRsvp(form: EventRsvpFormState) {
+    const dietaryRestrictions = form.dietary_restrictions.trim();
+    const notes = form.notes.trim();
+
     return {
       attending: form.attending,
-      dietary_restrictions: form.dietary_restrictions || null,
-      notes: form.notes || null,
+      dietary_restrictions: dietaryRestrictions || null,
+      notes: notes || null,
     };
   }
 
