@@ -473,6 +473,14 @@ describe('name change intake draft helpers', () => {
         field_value_masked: '2026-04-05',
       }),
     ]);
+
+    expect(upsertDraftNameChangeExtractedField([], 'draft-court_order', 'signed date' as never, '  ', 'April 5, 2026')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-court_order',
+        field_key: 'court_order_date',
+        field_value_masked: '2026-04-05',
+      }),
+    ]);
   });
 
   it('ignores unsupported draft field aliases instead of inventing non-contract keys', () => {

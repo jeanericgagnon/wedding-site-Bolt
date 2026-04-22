@@ -202,6 +202,16 @@ function normalizeDraftFieldValue(fieldKey: NameChangeExtractedFieldInput['field
       const [, year, month, day] = leadingYearDateMatch;
       return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
     }
+
+    const writtenDateMatch = normalizedValue.match(/^([A-Za-z]+)\s+(\d{1,2}),\s*(\d{4})$/);
+    if (writtenDateMatch) {
+      const [, monthName, day, year] = writtenDateMatch;
+      const monthIndex = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december']
+        .indexOf(monthName.toLowerCase());
+      if (monthIndex >= 0) {
+        return `${year}-${String(monthIndex + 1).padStart(2, '0')}-${day.padStart(2, '0')}`;
+      }
+    }
   }
 
   return normalizedValue;
