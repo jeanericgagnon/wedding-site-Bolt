@@ -158,6 +158,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('venue');
   });
 
+  it('returns venue guidance when the real blocker copy is lowercased by upstream formatting', () => {
+    const hints = getPublishBlockedHints('add at least one venue before going live.');
+    expect(hints[0]).toContain('venue');
+  });
+
   it('returns venue guidance for whitespace-padded venue message', () => {
     const hints = getPublishBlockedHints('   Add at least one venue before publishing.   ');
     expect(hints[0]).toContain('venue');
