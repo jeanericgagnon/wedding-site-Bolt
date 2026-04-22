@@ -207,7 +207,25 @@ describe('quickStartStateTransfer', () => {
     expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
   });
 
-  it('keeps progressed quick start snapshots when meaningful answers survived', () => {
+  it('rewrites completed onboarding step progress back to the first missing required setup answer', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      currentIndex: 8,
+      initialSetupAnswers: {
+        names: 'Alex & Jordan',
+        labelPreference: 'names-only',
+        whenWhere: 'January 17, 2027 — Sayulita, Mexico',
+        style: 'Tropical, relaxed',
+      },
+    }));
+
+    const restored = readQuickStartDraftSnapshot();
+    const stored = JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}');
+
+    expect(restored?.currentIndex).toBe(5);
+    expect(stored.currentIndex).toBe(5);
+  });
+
+  it('clamps progressed quick start snapshots to the surviving completed setup steps', () => {
     const persisted = persistQuickStartDraftSnapshot({
       currentIndex: 7,
       initialSetupAnswers: { names: 'Alex & Jordan' },
@@ -217,8 +235,8 @@ describe('quickStartStateTransfer', () => {
       viewState: 'question',
     });
 
-    expect(persisted?.currentIndex).toBe(7);
-    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').currentIndex).toBe(7);
+    expect(persisted?.currentIndex).toBe(2);
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').currentIndex).toBe(2);
   });
 
 

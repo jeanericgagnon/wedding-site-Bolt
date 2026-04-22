@@ -13,6 +13,41 @@ export type QuickStartDraftSnapshot = {
   viewState: 'question' | 'thinking' | 'followups';
 };
 
+const RESTORABLE_SETUP_STEPS: Array<{ key: keyof InitialSetupAnswers; optional?: boolean }> = [
+  { key: 'names' },
+  { key: 'labelPreference' },
+  { key: 'whenWhere' },
+  { key: 'venueNameOrTbd', optional: true },
+  { key: 'style' },
+  { key: 'guestFeel' },
+  { key: 'weekendEventsRaw' },
+  { key: 'ceremonyArrivalTime' },
+  { key: 'guestCountBand' },
+  { key: 'plusOnePolicy' },
+  { key: 'childrenAllowed' },
+  { key: 'rsvpDeadline' },
+  { key: 'mealChoice' },
+  { key: 'optionalStory', optional: true },
+];
+
+const resolveRestorableCurrentIndex = (currentIndex: number, answers: InitialSetupAnswers): number => {
+  let maxIndex = 0;
+
+  for (let index = 0; index < RESTORABLE_SETUP_STEPS.length; index += 1) {
+    const step = RESTORABLE_SETUP_STEPS[index];
+    const value = answers[step.key];
+    const isAnswered = typeof value === 'string' && value.trim().length > 0;
+
+    if (!step.optional && !isAnswered) {
+      break;
+    }
+
+    maxIndex = index + 1;
+  }
+
+  return Math.min(currentIndex, maxIndex);
+};
+
 export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraftSnapshot => {
   const base: QuickStartDraftSnapshot = {
     initialSetupAnswers: createEmptyInitialSetupAnswers(),
@@ -419,7 +454,7 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     && Number.isSafeInteger(parsed.currentIndex)
     && parsed.currentIndex >= 0
     && hasMeaningfulQuickStartAnswers(normalizedInitialSetupAnswers)
-    ? parsed.currentIndex
+    ? resolveRestorableCurrentIndex(parsed.currentIndex, normalizedInitialSetupAnswers)
     : 0;
 
   return {

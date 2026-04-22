@@ -23,7 +23,7 @@ describe('quickStartPersistence', () => {
       },
     });
 
-    expect(normalized.currentIndex).toBe(13);
+    expect(normalized.currentIndex).toBe(2);
     expect(normalized.showFollowUps).toBe(false);
     expect(normalized.viewState).toBe('question');
     expect(normalized.followUpAnswers).toEqual({});
@@ -73,6 +73,20 @@ describe('quickStartPersistence', () => {
     });
 
     expect(normalized.currentIndex).toBe(0);
+  });
+
+  it('clamps completed onboarding step progress to the first missing required setup answer', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      currentIndex: 8,
+      initialSetupAnswers: {
+        names: 'Alex & Jordan',
+        labelPreference: 'names-only',
+        whenWhere: 'January 17, 2027 — Sayulita, Mexico',
+        style: 'Tropical, relaxed',
+      },
+    });
+
+    expect(normalized.currentIndex).toBe(5);
   });
 
   it('drops malformed follow-up answers with blank keys', () => {
