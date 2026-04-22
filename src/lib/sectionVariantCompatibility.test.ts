@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { resolveBuilderVariant } from './sectionVariantCompatibility';
 
-describe('resolveBuilderVariant registry compatibility', () => {
+describe('resolveBuilderVariant onboarding handoff compatibility', () => {
   it('keeps shipped registry template aliases on stable builder variants', () => {
     expect(resolveBuilderVariant('registry', 'cards')).toBe('cards');
     expect(resolveBuilderVariant('registry', 'featured')).toBe('featured');
@@ -42,9 +42,11 @@ describe('resolveBuilderVariant registry compatibility', () => {
     expect(resolveBuilderVariant('registry', 'not-a-real-variant')).toBe('default');
   });
 
-  it('tolerates missing onboarding handoff variants without crashing', () => {
+  it('tolerates missing or malformed onboarding handoff variants without crashing', () => {
     expect(resolveBuilderVariant('registry', undefined as never)).toBe('default');
     expect(resolveBuilderVariant('registry', null as never)).toBe('default');
+    expect(resolveBuilderVariant('travel', { variant: 'localGuide' } as never)).toBe('default');
+    expect(resolveBuilderVariant('faq', 42 as never)).toBe('default');
   });
 
   it('keeps persisted registry aliases on builder-native variants after trim and casing normalization', () => {
@@ -57,5 +59,11 @@ describe('resolveBuilderVariant registry compatibility', () => {
   it('preserves builder-native registry variants when alias fallback resolves with different casing', () => {
     expect(resolveBuilderVariant('registry', 'PLAYFUL')).toBe('playful');
     expect(resolveBuilderVariant('registry', 'Luxury')).toBe('luxury');
+  });
+
+  it('normalizes ai-assisted setup handoff variants across onboarding-driven sections', () => {
+    expect(resolveBuilderVariant('travel', ' localguide ')).toBe('localGuide');
+    expect(resolveBuilderVariant('schedule', 'DAYTABS')).toBe('dayTabs');
+    expect(resolveBuilderVariant('faq', ' icongrid ')).toBe('iconGrid');
   });
 });

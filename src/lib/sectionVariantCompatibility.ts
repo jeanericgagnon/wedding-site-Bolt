@@ -141,7 +141,7 @@ const VARIANT_ALIASES: Partial<Record<SectionType, Record<string, string>>> = {
   },
 };
 
-export function resolveBuilderVariant(type: SectionType, variant: string): string {
+export function resolveBuilderVariant(type: SectionType, variant: unknown): string {
   const supported = LEGACY_SELECTOR_VARIANTS[type] ?? ['default'];
   const normalizedVariant = typeof variant === 'string' ? variant.trim() : '';
   const normalizedVariantKey = normalizedVariant.toLowerCase();
