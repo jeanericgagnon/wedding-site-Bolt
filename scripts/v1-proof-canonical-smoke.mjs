@@ -151,6 +151,7 @@ const output = {
   trustLieClosedInThisGate: 'Canonical smoke output now explicitly says public v1 is a no-go instead of implying launch-clear status from automation alone',
   automationCaveat: 'Passing canonical smoke is evidence of route continuity and build health, not launch clearance on its own',
   truthGateSummary: 'Automation is green, but launch truth is still red until the canonical manual proof and guests/RSVP proof gaps are closed',
+  groundedManualProofStatus: 'All three current manual-proof requirements are still missing and blocking, so the no-go call remains fully backed by named proof gaps',
   launchDecisionDependsOnManualTruthPass: true,
   manualTruthPassMissing: true,
   runtimeWordingVerificationMissing: true,
