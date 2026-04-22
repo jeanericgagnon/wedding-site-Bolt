@@ -29,6 +29,7 @@ async function rsvpCall(body: object): Promise<{ data?: unknown; error?: string 
   });
   const json = await res.json().catch(() => ({}));
   if (!res.ok) return { error: (json as { error?: string })?.error ?? `Error ${res.status}` };
+  if ((json as { error?: string })?.error) return { error: (json as { error?: string }).error };
   return { data: json };
 }
 
