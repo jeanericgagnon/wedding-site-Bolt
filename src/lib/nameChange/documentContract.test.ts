@@ -440,6 +440,81 @@ describe('name change document intake contract', () => {
     });
   });
 
+  it('does not count conflict-heavy documents as autofill-ready even when fields are present', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase(),
+      [
+        {
+          id: 'doc-marriage',
+          document_kind: 'marriage_certificate',
+          display_name: 'Certified marriage certificate',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'marriage-certificate-•••.pdf',
+          issuing_authority: 'San Diego County Clerk',
+          issued_on: '2026-04-05',
+          extraction_confidence: 0.97,
+        },
+      ],
+      [
+        {
+          document_id: 'doc-marriage',
+          field_key: 'first_name',
+          field_label: 'First name',
+          field_value_masked: 'Alex',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-marriage',
+          field_key: 'last_name',
+          field_label: 'Last name',
+          field_value_masked: 'Rivera',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-marriage',
+          field_key: 'spouse_last_name',
+          field_label: 'Spouse last name',
+          field_value_masked: 'Jordan-Smith',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-marriage',
+          field_key: 'issuance_date',
+          field_label: 'Issue date',
+          field_value_masked: '2026-04-05',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-marriage',
+          field_key: 'county',
+          field_label: 'County',
+          field_value_masked: 'San Diego',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-marriage',
+          field_key: 'certificate_number',
+          field_label: 'Certificate number',
+          field_value_masked: 'MC-123',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+      ],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'marriage_certificate')).toMatchObject({
+      missingExtractionFields: [],
+      canonicalConflicts: [expect.objectContaining({ key: 'target-last-name-marriage' })],
+    });
+    expect(snapshot.summary.autofillReady).toBe(0);
+  });
+
   it('does not surface extraction expectations for documents that are not started', () => {
     const snapshot = buildNameChangeDocumentIntakeSnapshot(
       makeCase(),
