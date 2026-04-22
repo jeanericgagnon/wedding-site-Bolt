@@ -714,6 +714,16 @@ export default function RSVP() {
     setCustomAnswers((current) => updater(current));
   }, []);
 
+  const updateApplyToHousehold = useCallback((nextValue: boolean) => {
+    setError('');
+    setApplyToHousehold(nextValue);
+  }, []);
+
+  const updateSelectedHouseholdGuestIds = useCallback((updater: (current: string[]) => string[]) => {
+    setError('');
+    setSelectedHouseholdGuestIds((current) => updater(current));
+  }, []);
+
 
   const goToNextFormStep = () => {
     if (formStep === 1) {
@@ -1025,7 +1035,7 @@ export default function RSVP() {
                   {householdGuests.length > 0 && (
                     <div className="text-sm p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-3">
                       <label className="flex items-start gap-3">
-                        <input type="checkbox" checked={applyToHousehold} onChange={(e) => setApplyToHousehold(e.target.checked)} className="w-5 h-5 mt-0.5" />
+                        <input type="checkbox" checked={applyToHousehold} onChange={(e) => updateApplyToHousehold(e.target.checked)} className="w-5 h-5 mt-0.5" />
                         <span className="font-semibold text-base text-gray-900">Inherit this RSVP to selected household guests</span>
                       </label>
 
@@ -1039,14 +1049,14 @@ export default function RSVP() {
                             <div className="flex items-center gap-2 flex-wrap">
                               <button
                                 type="button"
-                                onClick={() => setSelectedHouseholdGuestIds(householdGuests.map((h) => h.id))}
+                                onClick={() => updateSelectedHouseholdGuestIds(() => householdGuests.map((h) => h.id))}
                                 className="text-xs px-3 py-2 rounded-lg border border-amber-300 text-amber-900 hover:bg-amber-100"
                               >
                                 Select all
                               </button>
                               <button
                                 type="button"
-                                onClick={() => setSelectedHouseholdGuestIds([])}
+                                onClick={() => updateSelectedHouseholdGuestIds(() => [])}
                                 className="text-xs px-3 py-2 rounded-lg border border-amber-300 text-amber-900 hover:bg-amber-100"
                               >
                                 Clear
@@ -1066,7 +1076,7 @@ export default function RSVP() {
                                         type="checkbox"
                                         checked={checked}
                                         onChange={(e) => {
-                                          setSelectedHouseholdGuestIds((prev) => e.target.checked ? [...new Set([...prev, h.id])] : prev.filter((id) => id !== h.id));
+                                          updateSelectedHouseholdGuestIds((prev) => e.target.checked ? [...new Set([...prev, h.id])] : prev.filter((id) => id !== h.id));
                                         }}
                                         className="w-5 h-5"
                                       />
