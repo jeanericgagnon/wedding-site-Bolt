@@ -307,6 +307,7 @@ If that line fails, the rest is noise.
    - operator blocker mirror: keep the named proof gaps here aligned with `publicV1ClaimBlockers` before softening any launch language
    - operator manual-proof mirror: keep this slice aligned with `manualProofSummary.blockingKeys` before claiming the spine is clear
    - operator blocker-count mirror: do not treat this spine as clear while `manualProofSummary.blockingCount` remains `3`
+   - operator blocker-owner check: if the RSVP blocker command is still env-blocked, keep the launch posture here red even if the route smoke stays green
    - operator read rule: treat green automation here as route continuity only, not public-v1 launch clearance
 2. **Guest-state continuity smoke + fix**
    - prove or fix guest edits, RSVP updates, event-level visibility, downstream reads
