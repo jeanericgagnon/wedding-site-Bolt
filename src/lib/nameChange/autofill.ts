@@ -1,6 +1,6 @@
 import { buildNameChangeCanonicalCase } from './canonical';
 import { buildNameChangeDocumentIntakeSnapshot } from './documentContract';
-import { buildNameChangeExtractionContractSnapshot, getDocumentLinkedFieldValue } from './extractionContract';
+import { buildNameChangeExtractionContractSnapshot, getVerifiedDocumentLinkedFieldValue } from './extractionContract';
 import type {
   NameChangeAutofillFieldMapping,
   NameChangeAutofillPrepSnapshot,
@@ -28,7 +28,7 @@ function buildExtractionLookup(
 ) {
   return (fieldKey: NameChangeExtractionFieldKey, preferredDocumentKinds: NameChangeDocumentKind[] = []): ExtractionLookupResult => {
     for (const kind of preferredDocumentKinds) {
-      const value = getDocumentLinkedFieldValue(documents, extractedFields, kind, fieldKey);
+      const value = getVerifiedDocumentLinkedFieldValue(documents, extractedFields, kind, fieldKey);
       if (value) {
         return {
           value,
