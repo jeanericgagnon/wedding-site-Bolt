@@ -54,4 +54,12 @@ describe('publishNowFlow', () => {
   it('keeps returning skip when both intent and project are missing', () => {
     expect(getPublishNowAction(false, null)).toBe('skip');
   });
+
+  it('treats missing wedding data as optional when the project is otherwise publish-ready', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [createDefaultSectionInstance('hero', 'default', 0)];
+    project.pages[0].sections[0].enabled = true;
+
+    expect(getPublishNowAction(true, project, null)).toBe('publish');
+  });
 });
