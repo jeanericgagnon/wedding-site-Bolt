@@ -303,6 +303,7 @@ describe('sections registry resolution', () => {
     expect(registryItemForm).toContain('canonical_url: nextUrl,');
     expect(registryDashboard).toContain('const normalizedItems = items.map((item) => {');
     expect(registryDashboard).toContain('purchaser_name: quantityState.purchaseStatus === \'available\' ? null : item.purchaser_name,');
+    expect(registryDashboard).toContain('badImports: normalizedItems.filter((i) => getRegistryItemMetadataState(i).hasBadImportTitle).length,');
   });
 
   it('keeps template registry definitions cloned before import/edit flows mutate them', () => {

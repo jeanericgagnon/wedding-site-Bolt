@@ -17,7 +17,7 @@ import {
 import { RegistryItemCard } from './registry/RegistryItemCard';
 import { RegistryItemForm } from './registry/RegistryItemForm';
 import type { RegistryItem, RegistryFilter, RegistryItemDraft } from './registry/registryTypes';
-import { itemNeedsAttention, sanitizeRegistryQuantityState } from './registry/registryTypes';
+import { getRegistryItemMetadataState, itemNeedsAttention, sanitizeRegistryQuantityState } from './registry/registryTypes';
 import { demoWeddingSite, demoRegistryItems } from '../../lib/demoData';
 import { getRegistryRepairStates } from './registry/repairState';
 import { findDuplicateRegistryGroups } from './registry/duplicateRegistryItems';
@@ -859,7 +859,7 @@ export const DashboardRegistry: React.FC = () => {
     priceChanged: normalizedItems.filter((i) => i.previous_price_amount != null && i.price_amount != null && i.previous_price_amount !== i.price_amount).length,
     outOfStock: normalizedItems.filter((i) => (i.availability || '').toLowerCase().includes('out')).length,
     imageIssues: normalizedItems.filter((i) => !i.image_url || i.image_url.includes('thum.io') || i.image_url.includes('weserv.nl')).length,
-    badImports: normalizedItems.filter((i) => /^(page not found|gift from\s.+)$/i.test((i.item_name || '').trim())).length,
+    badImports: normalizedItems.filter((i) => getRegistryItemMetadataState(i).hasBadImportTitle).length,
   };
 
 
