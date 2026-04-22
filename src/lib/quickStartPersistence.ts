@@ -275,7 +275,7 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     && hasOpenFollowUps
     && viewState === 'question'
     && rawClarifyingState?.clarifying.mode === 'ask';
-  const isThinkingGenerationInFlight = parsed.showFollowUps === true
+  const isThinkingGenerationInFlight = parsed.showFollowUps !== false
     && viewState === 'thinking'
     && rawClarifyingState?.clarifying.mode === 'ask'
     && (rawClarifyingState.clarifying.questions.length === 0)

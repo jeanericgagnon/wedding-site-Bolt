@@ -1660,6 +1660,25 @@ describe('quickStartPersistence', () => {
   });
 
 
+  it('recovers thinking view when pending clarifying generation survives without a follow-up flag', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      viewState: 'thinking',
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.showFollowUps).toBe(true);
+    expect(normalized.viewState).toBe('thinking');
+  });
+
+
+
   it('closes thinking view when draft outputs already survived restore', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       showFollowUps: true,

@@ -1415,6 +1415,83 @@ describe('quickStartStateTransfer', () => {
   });
 
 
+  it('rewrites missing follow-up flags back to thinking while clarifying generation is still pending', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      viewState: 'thinking',
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    }));
+
+    const restored = readQuickStartDraftSnapshot();
+    const stored = JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}');
+
+    expect(restored?.showFollowUps).toBe(true);
+    expect(restored?.viewState).toBe('thinking');
+    expect(stored.showFollowUps).toBe(true);
+    expect(stored.viewState).toBe('thinking');
+  });
+
+
+
+  it('treats question-view ask-mode shells as inert when generation never started', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      showFollowUps: false,
+      viewState: 'question',
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    }));
+
+    const restored = readQuickStartDraftSnapshot();
+
+    expect(restored).toBeNull();
+    expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
+  });
+
+
+  it('treats stale thinking restores with only skipped clarifying history as inert', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      showFollowUps: true,
+      viewState: 'thinking',
+      clarifyingState: {
+        clarifying: {
+          mode: 'draft',
+          questions: [],
+          history: [{
+            id: 'lodging',
+            category: 'travel',
+            question: 'Where should guests stay?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.lodging'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'skipped',
+            answer: '',
+          }],
+        },
+        draftOutputs: {},
+      },
+    }));
+
+    const restored = readQuickStartDraftSnapshot();
+
+    expect(restored).toBeNull();
+    expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
+  });
+
+
   it('rewrites thinking restores back to question when draft outputs already survived restore', () => {
     window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
       showFollowUps: true,
