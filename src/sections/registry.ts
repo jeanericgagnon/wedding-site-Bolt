@@ -423,13 +423,13 @@ export function resolveAndParse(
   const def = strictVariant
     ? (
       getDefinition(normalizedType, normalizedVariant)
-      ?? (VARIANT_FALLBACKS[type]?.[normalizedVariant] ? getDefinition(normalizedType, VARIANT_FALLBACKS[type][normalizedVariant]) : null)
+      ?? (VARIANT_FALLBACKS[canonicalSection.type]?.[normalizedVariant] ? getDefinition(normalizedType, VARIANT_FALLBACKS[canonicalSection.type][normalizedVariant]) : null)
       ?? (VARIANT_FALLBACKS[normalizedType]?.[normalizedVariant] ? getDefinition(normalizedType, VARIANT_FALLBACKS[normalizedType][normalizedVariant]) : null)
       ?? null
     )
     : (
       getDefinition(normalizedType, normalizedVariant)
-      ?? (VARIANT_FALLBACKS[type]?.[normalizedVariant] ? getDefinition(normalizedType, VARIANT_FALLBACKS[type][normalizedVariant]) : null)
+      ?? (VARIANT_FALLBACKS[canonicalSection.type]?.[normalizedVariant] ? getDefinition(normalizedType, VARIANT_FALLBACKS[canonicalSection.type][normalizedVariant]) : null)
       ?? (VARIANT_FALLBACKS[normalizedType]?.[normalizedVariant] ? getDefinition(normalizedType, VARIANT_FALLBACKS[normalizedType][normalizedVariant]) : null)
       ?? getDefinition(normalizedType, 'default')
       ?? getVariantsForType(normalizedType)[0]

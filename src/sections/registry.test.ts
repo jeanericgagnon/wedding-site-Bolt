@@ -69,6 +69,7 @@ describe('sections registry resolution', () => {
     expect(resolveAndParse('registry', 'fund-highlight', {}, { strictVariant: true })?.def.variant).toBe('featured');
     expect(resolveAndParse('registry', 'FUND.HIGHLIGHT', {}, { strictVariant: true })?.def.variant).toBe('featured');
     expect(resolveAndParse('registry', 'Playful', {}, { strictVariant: true })?.def.variant).toBe('cards');
+    expect(resolveAndParse('RegistrySection' as never, 'Luxury' as never, {}, { strictVariant: true })?.def.variant).toBe('featured');
     expect(resolveCanonicalRegistryVariant(' Luxury ')).toBe('featured');
     expect(resolveCanonicalRegistryVariant('fund-highlight')).toBe('featured');
     expect(resolveCanonicalRegistryVariant('legacy-default')).toBe('cards');
@@ -531,6 +532,7 @@ describe('sections registry resolution', () => {
     expect(sectionRegistrySource).toContain('export function resolveCanonicalRegistrySectionType(type: unknown): string {');
     expect(sectionRegistrySource).toContain('export function resolveCanonicalRegistryVariant(variant: unknown): string {');
     expect(sectionRegistrySource).toContain('const canonicalSection = resolveCanonicalRegistrySectionInput(type, variant);');
+    expect(sectionRegistrySource).toContain("VARIANT_FALLBACKS[canonicalSection.type]?.[normalizedVariant]");
     expect(initialLayoutSource).toContain('overrides: sectionDef.overrides ? { ...sectionDef.overrides } : undefined,');
     expect(initialLayoutSource).toContain('locked: sectionDef.locked,');
     expect(initialLayoutSource).toContain('function normalizeSectionTypeKey(type: unknown): string {');
