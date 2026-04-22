@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getRegistryItemPublicUrl, groupRegistryStoreLinks, registryFeaturedSchema, shouldUseLiveRegistryFeaturedData } from './featured';
+import { getRegistryItemPublicUrl, groupRegistryStoreLinks, normalizeRegistryFeaturedItems, registryFeaturedSchema, shouldUseLiveRegistryFeaturedData } from './featured';
 import type { RegistryItem } from '../../../pages/dashboard/registry/registryTypes';
 
 const makeItem = (overrides: Partial<RegistryItem>): RegistryItem => ({
@@ -14,7 +14,6 @@ const makeItem = (overrides: Partial<RegistryItem>): RegistryItem => ({
   hide_when_purchased: overrides.hide_when_purchased ?? false,
   quantity_needed: overrides.quantity_needed ?? 1,
   quantity_purchased: overrides.quantity_purchased ?? 0,
-  quantity_remaining: overrides.quantity_remaining ?? 1,
   image_url: overrides.image_url ?? null,
   notes: overrides.notes ?? null,
   description: overrides.description ?? null,
@@ -30,8 +29,6 @@ const makeItem = (overrides: Partial<RegistryItem>): RegistryItem => ({
   metadata_retailer: overrides.metadata_retailer ?? null,
   availability: overrides.availability ?? null,
   purchaser_name: overrides.purchaser_name ?? null,
-  purchased_at: overrides.purchased_at ?? null,
-  claimed_by_user_id: overrides.claimed_by_user_id ?? null,
 }) as RegistryItem;
 
 describe('registry featured public parity helpers', () => {
@@ -85,5 +82,18 @@ describe('registry featured public parity helpers', () => {
   it('does not fall back to template featured data once live registry loads empty', () => {
     expect(shouldUseLiveRegistryFeaturedData([])).toBe(true);
     expect(shouldUseLiveRegistryFeaturedData(null)).toBe(false);
+  });
+
+  it('normalizes contradictory purchase truth before featured cards render live state', () => {
+    expect(normalizeRegistryFeaturedItems([
+      makeItem({ purchase_status: 'purchased', quantity_purchased: 0, quantity_needed: 1, purchaser_name: 'Alex' }),
+    ])).toEqual([
+      expect.objectContaining({
+        purchase_status: 'available',
+        quantity_purchased: 0,
+        quantity_needed: 1,
+        purchaser_name: null,
+      }),
+    ]);
   });
 });

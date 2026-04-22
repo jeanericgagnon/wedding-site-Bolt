@@ -4,7 +4,7 @@ import { ExternalLink, Gift, Heart, ShoppingBag } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
 import { useSiteView } from '../../../contexts/SiteViewContext';
 import { publicFetchRegistryItems } from '../../../pages/dashboard/registry/registryService';
-import { RegistryItem } from '../../../pages/dashboard/registry/registryTypes';
+import { RegistryItem, sanitizeRegistryQuantityState } from '../../../pages/dashboard/registry/registryTypes';
 
 const FeaturedGiftSchema = z.object({
   id: z.string(),
@@ -71,6 +71,7 @@ export const defaultRegistryFeaturedData: RegistryFeaturedData = {
       category: 'Kitchen',
       isPriority: true,
       isClaimed: false,
+      isPartiallyClaimed: false,
     },
     {
       id: '2',
@@ -83,6 +84,7 @@ export const defaultRegistryFeaturedData: RegistryFeaturedData = {
       category: 'Kitchen',
       isPriority: false,
       isClaimed: false,
+      isPartiallyClaimed: false,
     },
     {
       id: '3',
@@ -95,6 +97,7 @@ export const defaultRegistryFeaturedData: RegistryFeaturedData = {
       category: 'Bedroom',
       isPriority: true,
       isClaimed: false,
+      isPartiallyClaimed: false,
     },
     {
       id: '4',
@@ -107,6 +110,7 @@ export const defaultRegistryFeaturedData: RegistryFeaturedData = {
       category: 'Kitchen',
       isPriority: false,
       isClaimed: true,
+      isPartiallyClaimed: false,
     },
   ],
 };
@@ -219,6 +223,19 @@ export function shouldUseLiveRegistryFeaturedData(liveItems: RegistryItem[] | nu
   return liveItems !== null;
 }
 
+export function normalizeRegistryFeaturedItems(items: RegistryItem[]): RegistryItem[] {
+  return items.map((item) => {
+    const quantityState = sanitizeRegistryQuantityState(item.quantity_purchased, item.quantity_needed);
+    return {
+      ...item,
+      quantity_needed: quantityState.quantityNeeded,
+      quantity_purchased: quantityState.quantityPurchased,
+      purchase_status: quantityState.purchaseStatus,
+      purchaser_name: quantityState.purchaseStatus === 'available' ? null : item.purchaser_name,
+    };
+  });
+}
+
 export function groupRegistryStoreLinks(items: RegistryItem[]): z.infer<typeof RegistryStoreLinkSchema>[] {
   const grouped = new Map<string, z.infer<typeof RegistryStoreLinkSchema>>();
 
@@ -269,7 +286,7 @@ const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = 
     if (!weddingSiteId) return;
     publicFetchRegistryItems(weddingSiteId)
       .then((items) => {
-        const safeItems = Array.isArray(items) ? items : [];
+        const safeItems = normalizeRegistryFeaturedItems(Array.isArray(items) ? items : []);
         setLiveItems(safeItems.filter((i) => !i.hide_when_purchased || i.purchase_status !== 'purchased'));
       })
       .catch(() => setLiveItems(null));
@@ -281,7 +298,7 @@ const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = 
   const shouldUseLiveData = shouldUseLiveRegistryFeaturedData(liveItems);
 
   const displayGifts = (shouldUseLiveData
-    ? liveItems.map(registryItemToGift)
+    ? (liveItems ?? []).map(registryItemToGift)
     : safeFeaturedGifts
   ).map(gift => ({
     ...gift,
@@ -289,7 +306,7 @@ const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = 
     price: normalizePriceLabel(gift.price),
   }));
 
-  const displayStoreLinks = shouldUseLiveData ? groupRegistryStoreLinks(liveItems) : safeStoreLinks;
+  const displayStoreLinks = shouldUseLiveData ? groupRegistryStoreLinks(liveItems ?? []) : safeStoreLinks;
 
   const colClass = data.layout === '3col'
     ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3'

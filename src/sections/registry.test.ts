@@ -275,11 +275,15 @@ describe('sections registry resolution', () => {
 
   it('keeps legacy public registry surfaces from falling back to stale links after live loads', () => {
     const registrySectionComponent = readFileSync(resolve(__dirname, './components/RegistrySection.tsx'), 'utf8');
+    const registryCards = readFileSync(resolve(__dirname, './variants/registry/cards.tsx'), 'utf8');
+    const registryFeatured = readFileSync(resolve(__dirname, './variants/registry/featured.tsx'), 'utf8');
     expect(registrySectionComponent).toContain('export function shouldUseLiveRegistryItems(items: RegistryItem[] | null): items is RegistryItem[] {');
     expect(registrySectionComponent).toContain('if (shouldUseLiveRegistryItems(items)) {');
     expect(registrySectionComponent).toContain('export function normalizePublicRegistryItemState(item: RegistryItem): RegistryItem {');
     expect(registrySectionComponent).toContain('purchase_status: quantityState.purchaseStatus,');
     expect(registrySectionComponent).toContain("purchaser_name: quantityState.purchaseStatus === 'available' ? null : item.purchaser_name,");
+    expect(registryCards).toContain('export function normalizeRegistryStoreGroupItems(items: RegistryItem[]): RegistryItem[] {');
+    expect(registryFeatured).toContain('export function normalizeRegistryFeaturedItems(items: RegistryItem[]): RegistryItem[] {');
   });
 
   it('keeps public purchaser status aligned with owner purchase state truth', () => {

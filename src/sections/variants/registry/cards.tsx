@@ -4,7 +4,7 @@ import { ExternalLink, Gift, ShoppingBag } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
 import { useSiteView } from '../../../contexts/SiteViewContext';
 import { publicFetchRegistryItems } from '../../../pages/dashboard/registry/registryService';
-import { RegistryItem } from '../../../pages/dashboard/registry/registryTypes';
+import { RegistryItem, sanitizeRegistryQuantityState } from '../../../pages/dashboard/registry/registryTypes';
 
 const RegistryLinkSchema = z.object({
   id: z.string(),
@@ -50,6 +50,19 @@ export function shouldUseLiveRegistryStoreGroups(liveItems: RegistryItem[] | nul
   return liveItems !== null;
 }
 
+export function normalizeRegistryStoreGroupItems(items: RegistryItem[]): RegistryItem[] {
+  return items.map((item) => {
+    const quantityState = sanitizeRegistryQuantityState(item.quantity_purchased, item.quantity_needed);
+    return {
+      ...item,
+      quantity_needed: quantityState.quantityNeeded,
+      quantity_purchased: quantityState.quantityPurchased,
+      purchase_status: quantityState.purchaseStatus,
+      purchaser_name: quantityState.purchaseStatus === 'available' ? null : item.purchaser_name,
+    };
+  });
+}
+
 export function groupByStore(items: RegistryItem[]): Array<{ store: string; count: number; available: number; partial: number; purchased: number; url: string | null }> {
   const map = new Map<string, { count: number; available: number; partial: number; purchased: number; url: string | null }>();
   for (const item of items) {
@@ -75,7 +88,7 @@ const RegistryCards: React.FC<SectionComponentProps<RegistryCardsData>> = ({ dat
     if (!weddingSiteId) return;
     publicFetchRegistryItems(weddingSiteId)
       .then((items) => {
-        const safeItems = Array.isArray(items) ? items : [];
+        const safeItems = normalizeRegistryStoreGroupItems(Array.isArray(items) ? items : []);
         setLiveItems(safeItems.filter((i) => !i.hide_when_purchased || i.purchase_status !== 'purchased'));
       })
       .catch(() => setLiveItems(null));
