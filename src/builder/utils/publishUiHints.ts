@@ -82,10 +82,9 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
     ];
   }
   if (
-    normalizedErrorLower.includes('venue')
+    normalizedErrorLower.includes('add at least one venue name or address')
+    || normalizedErrorLower.includes('venue')
     || normalizedErrorLower.includes('location')
-    || normalizedErrorLower.includes('venue details are set')
-    || normalizedErrorLower.includes('venue details are ready')
   ) {
     return [
       'Add at least one venue name or address.',

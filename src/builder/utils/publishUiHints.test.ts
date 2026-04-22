@@ -163,9 +163,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('venue');
   });
 
-  it('returns venue guidance when blocker copy uses the shorter readiness detail wording', () => {
-    const hints = getPublishBlockedHints('Add at least one venue name or address.');
-    expect(hints[0]).toContain('venue');
+  it('returns venue guidance when blocker copy uses the venue readiness detail prompt', () => {
+    expect(getPublishBlockedHints('Add at least one venue name or address.')).toEqual([
+      'Add at least one venue name or address.',
+      'Make sure guests can tell where they are meant to go.',
+    ]);
   });
 
   it('returns venue guidance when blocker copy says location instead of venue', () => {
