@@ -144,6 +144,13 @@ describe('carryOverRegistryLinks', () => {
     ]);
   });
 
+  it('parses markdown and bracketed persisted registry links before onboarding merges labels', () => {
+    expect(parsePersistedRegistryLinks('Target | [Target Registry](target.com/list-2)\n<https://zola.com/registry/jane>')).toEqual([
+      { url: 'https://target.com/list-2', sourceLabel: 'Target' },
+      { url: 'https://zola.com/registry/jane', sourceLabel: 'Zola' },
+    ]);
+  });
+
   it('merges stronger carryover labels without dropping unmatched persisted registry links', () => {
     expect(mergeRegistrySourceLabels(
       [{ url: 'https://zola.com/registry/jane', sourceLabel: 'Custom Honeymoon Fund' }],

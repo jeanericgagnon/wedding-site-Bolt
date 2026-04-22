@@ -94,16 +94,25 @@ export function parsePersistedRegistryLinks(raw: string | null | undefined): Car
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean)
-    .map((line) => {
+    .flatMap((line) => {
       const [label, ...rest] = line.split('|').map((part) => part.trim()).filter(Boolean);
-      if (!label) return null;
+      if (!label) return [];
 
-      const candidateUrl = rest.length > 0 ? rest.join(' | ') : label;
-      const normalizedUrl = normalizeUrl(cleanRegistryUrlToken(candidateUrl));
-      if (!normalizedUrl) return null;
+      const explicitSourceLabel = rest.length > 0 ? label : undefined;
+      const candidateUrl = rest.length > 0 ? rest.join(' | ') : line;
+      const parsedLinks = carryOverRegistryLinks(candidateUrl);
+      if (parsedLinks.length > 0) {
+        return parsedLinks.map((parsedLink) => ({
+          url: parsedLink.url,
+          sourceLabel: explicitSourceLabel ?? parsedLink.sourceLabel,
+        }));
+      }
 
-      const sourceLabel = rest.length > 0 ? label : inferSourceLabel(normalizedUrl);
-      return sourceLabel ? { url: normalizedUrl, sourceLabel } : { url: normalizedUrl };
+      const normalizedUrl = normalizeUrl(cleanRegistryUrlToken(rest.length > 0 ? candidateUrl : label));
+      if (!normalizedUrl) return [];
+
+      const sourceLabel = explicitSourceLabel ?? inferSourceLabel(normalizedUrl);
+      return sourceLabel ? [{ url: normalizedUrl, sourceLabel }] : [{ url: normalizedUrl }];
     })
     .filter((link): link is CarryoverRegistryLink => Boolean(link));
 }
