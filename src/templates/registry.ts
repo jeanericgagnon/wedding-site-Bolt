@@ -817,9 +817,10 @@ const templateIdAliases = new Map<string, string>(
   }),
 );
 
-export function getTemplate(templateId: string): TemplateDefinition {
-  const canonicalTemplateId = TEMPLATE_REGISTRY[templateId]
-    ? templateId
+export function getTemplate(templateId: unknown): TemplateDefinition {
+  const templateIdValue = typeof templateId === 'string' ? templateId : '';
+  const canonicalTemplateId = TEMPLATE_REGISTRY[templateIdValue]
+    ? templateIdValue
     : templateIdAliases.get(normalizeTemplateIdKey(templateId)) ?? 'base';
   return cloneTemplateDefinition(TEMPLATE_REGISTRY[canonicalTemplateId] || TEMPLATE_REGISTRY.base || templateRegistry[0]);
 }

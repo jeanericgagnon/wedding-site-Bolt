@@ -134,6 +134,8 @@ describe('sections registry resolution', () => {
     expect(getTemplate('TIMELESS_CLASSIC').id).toBe('timeless-classic');
     expect(getTemplate('Playful Celebration').id).toBe('playful-celebration');
     expect(getTemplate('EDITORIAL').id).toBe('editorial-impact');
+    expect(getTemplate(undefined as never).id).toBe('timeless-classic');
+    expect(getTemplate({ templateId: 'base' } as never).id).toBe('timeless-classic');
   });
 
   it('keeps imported registry template bindings and overrides isolated from later edits', () => {
@@ -301,6 +303,8 @@ describe('sections registry resolution', () => {
     expect(templateRegistrySource).toContain('const templateIdAliases = new Map<string, string>(');
     expect(templateRegistrySource).toContain('Object.entries(TEMPLATE_REGISTRY).flatMap(([templateId, template]) => {');
     expect(templateRegistrySource).toContain('normalizeTemplateIdKey(template.name)');
+    expect(templateRegistrySource).toContain('export function getTemplate(templateId: unknown): TemplateDefinition {');
+    expect(templateRegistrySource).toContain("const templateIdValue = typeof templateId === 'string' ? templateId : '';");
     expect(templateRegistrySource).toContain("templateIdAliases.get(normalizeTemplateIdKey(templateId)) ?? 'base'");
     expect(templateRegistrySource).toContain('function cloneTemplateValue<T>(value: T): T {');
     expect(templateRegistrySource).toContain("templateRegistry.map((template) => [template.id, cloneTemplateDefinition(template)])");
