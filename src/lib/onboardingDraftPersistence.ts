@@ -57,7 +57,14 @@ export const normalizeOnboardingDraftSnapshot = (value: unknown): OnboardingDraf
       : 0,
     weddingProfile: isWeddingProfile(parsed.weddingProfile) ? parsed.weddingProfile : base.weddingProfile,
     initialSetupAnswers: parsed.initialSetupAnswers && typeof parsed.initialSetupAnswers === 'object'
-      ? { ...base.initialSetupAnswers, ...parsed.initialSetupAnswers }
+      ? {
+          ...base.initialSetupAnswers,
+          ...Object.fromEntries(
+            Object.entries(parsed.initialSetupAnswers)
+              .filter(([, value]) => typeof value === 'string')
+              .map(([key, value]) => [key, value.trim()]),
+          ),
+        }
       : base.initialSetupAnswers,
     initialSetupFollowUps,
     followUpAnswers: sanitizeStringRecord(parsed.followUpAnswers),

@@ -77,4 +77,20 @@ describe('onboardingDraftPersistence', () => {
     expect(normalized.initialSetupFollowUps.eventLocations).toEqual({ friday: 'Pool terrace' });
     expect(normalized.initialSetupFollowUps.eventTimes).toEqual({ friday: '6:00 PM' });
   });
+
+  it('trims and filters carried initial setup answers before restoring handoff state', () => {
+    const normalized = normalizeOnboardingDraftSnapshot({
+      initialSetupAnswers: {
+        names: ' Alex & Jordan ',
+        whenWhere: ' June 12, 2027 — San Diego ',
+        venueNameOrTbd: '   ',
+        guestFeel: 7,
+      },
+    });
+
+    expect(normalized.initialSetupAnswers.names).toBe('Alex & Jordan');
+    expect(normalized.initialSetupAnswers.whenWhere).toBe('June 12, 2027 — San Diego');
+    expect(normalized.initialSetupAnswers.venueNameOrTbd).toBe('');
+    expect(normalized.initialSetupAnswers.guestFeel).toBe('');
+  });
 });
