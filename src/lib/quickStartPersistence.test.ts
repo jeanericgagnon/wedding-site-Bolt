@@ -1542,6 +1542,32 @@ describe('quickStartPersistence', () => {
     expect(normalized.viewState).toBe('thinking');
   });
 
+
+  it('closes thinking view when draft outputs already survived restore', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      showFollowUps: true,
+      viewState: 'thinking',
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [],
+          history: [],
+        },
+        draftOutputs: {
+          hero: {
+            headline: 'Welcome to our wedding',
+          },
+        },
+      },
+    });
+
+    expect(normalized.showFollowUps).toBe(false);
+    expect(normalized.viewState).toBe('question');
+    expect(normalized.clarifyingState?.draftOutputs).toEqual({
+      hero: { headline: 'Welcome to our wedding' },
+    });
+  });
+
   it('drops orphaned follow-up answers when no clarifying records survive', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       showFollowUps: true,

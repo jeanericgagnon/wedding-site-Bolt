@@ -1110,6 +1110,35 @@ describe('quickStartStateTransfer', () => {
     expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').viewState).toBe('thinking');
   });
 
+
+  it('rewrites thinking restores back to question when draft outputs already survived restore', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      showFollowUps: true,
+      viewState: 'thinking',
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [],
+          history: [],
+        },
+        draftOutputs: {
+          hero: {
+            headline: 'Welcome to our wedding',
+          },
+        },
+      },
+    }));
+
+    const restored = readQuickStartDraftSnapshot();
+
+    expect(restored?.showFollowUps).toBe(false);
+    expect(restored?.viewState).toBe('question');
+    expect(restored?.clarifyingState?.draftOutputs).toEqual({
+      hero: { headline: 'Welcome to our wedding' },
+    });
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').viewState).toBe('question');
+  });
+
   it('drops orphaned follow-up answers when no clarifying records survive', () => {
     window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
       showFollowUps: true,
