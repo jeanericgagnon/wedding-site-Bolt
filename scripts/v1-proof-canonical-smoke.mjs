@@ -184,6 +184,11 @@ const output = {
     missingCount: 3,
     blockingCount: 3,
     blockingKeys: ['canonicalCouplePath', 'runtimeWordingVerification', 'onboardingStarterDraftWording'],
+    blockingNextSteps: [
+      'Run and log the Home -> signup/demo/auth -> onboarding/builder -> public site -> RSVP truth pass in docs/v1-smoke-proof-log.md.',
+      'Verify privacy/access/publish plus marketing/settings/billing runtime wording and log pass/fail notes in docs/v1-smoke-proof-log.md.',
+      'Verify onboarding + first-run draft wording in runtime and log pass/fail notes in docs/v1-smoke-proof-log.md.',
+    ],
     evidenceLogPath: 'docs/v1-smoke-proof-log.md',
   },
   manualProofBlockingReasons: [
