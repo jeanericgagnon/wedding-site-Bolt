@@ -116,6 +116,22 @@ describe('sections registry resolution', () => {
       ?.defaultLayout.sections.find((section) => section.type === 'registry')?.variant).toBe('cards');
   });
 
+  it('keeps imported registry template bindings and overrides isolated from later edits', () => {
+    const importedTemplate = getTemplate('registry-wish-focused');
+    const importedRegistrySection = importedTemplate.defaultLayout.sections.find((section) => section.type === 'registry');
+
+    expect(importedRegistrySection).toBeDefined();
+
+    importedRegistrySection!.bindings = { linkIds: ['gift-1'] };
+    importedRegistrySection!.settings = { nested: { title: 'Edited title' } };
+    importedRegistrySection!.overrides = { cards: [{ id: 'gift-1' }] };
+
+    const freshRegistrySection = getTemplate('registry-wish-focused').defaultLayout.sections.find((section) => section.type === 'registry');
+    expect(freshRegistrySection?.bindings).toEqual({});
+    expect(freshRegistrySection?.settings).toEqual({});
+    expect(freshRegistrySection?.overrides).toBeUndefined();
+  });
+
   it('keeps every shipped template registry variant renderable in the legacy runtime', () => {
     const templateVariants = Array.from(new Set(
       getAllTemplates()
@@ -234,7 +250,11 @@ describe('sections registry resolution', () => {
   it('keeps template registry definitions cloned before import/edit flows mutate them', () => {
     const templateRegistrySource = readFileSync(resolve(__dirname, '../templates/registry.ts'), 'utf8');
     expect(templateRegistrySource).toContain('const REGISTRY_VARIANT_ALIASES: Record<string, string> = {');
+    expect(templateRegistrySource).toContain('function cloneTemplateValue<T>(value: T): T {');
     expect(templateRegistrySource).toContain("variant: section.type === 'registry' && typeof section.variant === 'string'");
+    expect(templateRegistrySource).toContain('bindings: cloneTemplateValue(section.bindings ?? {}),');
+    expect(templateRegistrySource).toContain('settings: cloneTemplateValue(section.settings ?? {}),');
+    expect(templateRegistrySource).toContain('overrides: cloneTemplateValue(section.overrides ?? undefined),');
     expect(templateRegistrySource).toContain('function cloneTemplateDefinition(template: TemplateDefinition): TemplateDefinition {');
     expect(templateRegistrySource).toContain('return cloneTemplateDefinition(TEMPLATE_REGISTRY[templateId] || TEMPLATE_REGISTRY.base || templateRegistry[0]);');
     expect(templateRegistrySource).toContain('return templateRegistry.map(cloneTemplateDefinition);');

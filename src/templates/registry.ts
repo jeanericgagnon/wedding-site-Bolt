@@ -35,6 +35,16 @@ function normalizeRegistryTemplateVariant(variant: string): string {
   return REGISTRY_VARIANT_ALIASES[normalizedVariant] ?? variant;
 }
 
+function cloneTemplateValue<T>(value: T): T {
+  if (Array.isArray(value)) return value.map((entry) => cloneTemplateValue(entry)) as T;
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, entry]) => [key, cloneTemplateValue(entry)]),
+    ) as T;
+  }
+  return value;
+}
+
 const templateRegistry: TemplateDefinition[] = [
   // 1. HERO-FOCUSED: Editorial Impact (Large, dramatic photography)
   {
@@ -777,8 +787,9 @@ function cloneTemplateSection(section: TemplateSection): TemplateSection {
     variant: section.type === 'registry' && typeof section.variant === 'string'
       ? normalizeRegistryTemplateVariant(section.variant)
       : section.variant,
-    bindings: { ...(section.bindings ?? {}) },
-    settings: { ...(section.settings ?? {}) },
+    bindings: cloneTemplateValue(section.bindings ?? {}),
+    settings: cloneTemplateValue(section.settings ?? {}),
+    overrides: cloneTemplateValue(section.overrides ?? undefined),
   };
 }
 
