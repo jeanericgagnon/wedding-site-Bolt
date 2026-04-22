@@ -46,7 +46,8 @@ export const mediaService = {
       return asset;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown database error';
-      throw new Error(`Photo uploaded, but saving it to your media library failed: ${message}`);
+      const assetLabel = assetType === 'image' ? 'Photo' : assetType === 'video' ? 'Video' : 'Document';
+      throw new Error(`${assetLabel} uploaded, but saving it to your media library failed: ${message}`);
     }
   },
 
