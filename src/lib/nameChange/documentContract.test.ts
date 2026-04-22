@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildNameChangeDocumentIntakeSnapshot } from './documentContract';
-import { createDraftNameChangeDocument } from './intakeDraft';
+import { createDraftNameChangeDocument, upsertDraftNameChangeExtractedField } from './intakeDraft';
 import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput } from './types';
 
 function makeCase(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseInput {
@@ -874,6 +874,49 @@ describe('name change document intake contract', () => {
     });
     expect(snapshot.documents.find((document) => document.kind === 'other')).toMatchObject({
       intakeStatus: 'not_started',
+    });
+  });
+
+  it('treats normalized draft extraction aliases as canonical contract capture for marriage and court-order docs', () => {
+    const marriageDraft = {
+      ...createDraftNameChangeDocument('marriage certificate' as never, 'Marriage certificate'),
+      id: 'doc-marriage',
+      intake_status: 'reviewed' as const,
+      file_name_masked: 'marriage-certificate-•••.pdf',
+      issuing_authority: 'San Diego County Clerk',
+      issued_on: '2026-04-05',
+      extraction_confidence: 0.97,
+    };
+    const courtOrderDraft = {
+      ...createDraftNameChangeDocument('court order name change' as never, 'Court order'),
+      id: 'doc-court-order',
+      intake_status: 'reviewed' as const,
+      file_name_masked: 'court-order-•••.pdf',
+      issuing_authority: 'San Diego Superior Court',
+      issued_on: '2026-04-05',
+      extraction_confidence: 0.93,
+    };
+    const extractedFields = upsertDraftNameChangeExtractedField(
+      upsertDraftNameChangeExtractedField([], marriageDraft.id, 'cert no' as never, '  ', 'MC-123'),
+      courtOrderDraft.id,
+      'signed date' as never,
+      '  ',
+      '2026-04-05',
+    );
+
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase({ legal_basis: 'court_order', marriage_state: null, marriage_date: null }),
+      [marriageDraft, courtOrderDraft],
+      extractedFields,
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'marriage_certificate')).toMatchObject({
+      capturedExtractionFields: ['certificate_number'],
+      extractionFieldCount: 1,
+    });
+    expect(snapshot.documents.find((document) => document.kind === 'court_order')).toMatchObject({
+      capturedExtractionFields: ['court_order_date'],
+      extractionFieldCount: 1,
     });
   });
 });
