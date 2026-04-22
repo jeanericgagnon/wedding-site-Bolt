@@ -210,6 +210,22 @@ describe('name change autofill prep snapshot', () => {
     const extractedFields: NameChangeExtractedFieldInput[] = [
       {
         document_id: 'doc-court-order',
+        field_key: 'first_name',
+        field_label: 'First name',
+        field_value_masked: 'Avery',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'doc-court-order',
+        field_key: 'last_name',
+        field_label: 'Last name',
+        field_value_masked: 'Jordan',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'doc-court-order',
         field_key: 'case_number',
         field_label: 'Case number',
         field_value_masked: '24-CV-1188',
@@ -227,11 +243,33 @@ describe('name change autofill prep snapshot', () => {
     ];
 
     const snapshot = buildNameChangeAutofillPrepSnapshot(
-      makeCase({ legal_basis: 'court_order', marriage_state: null, marriage_date: null, structured_intake: { spouseLastName: null, travelBookedSoon: true, wantsDocumentIntakeHelp: true } }),
+      makeCase({
+        legal_basis: 'court_order',
+        target_first_name: 'Avery',
+        marriage_state: null,
+        marriage_date: null,
+        structured_intake: { spouseLastName: null, travelBookedSoon: true, wantsDocumentIntakeHelp: true },
+      }),
       documents,
       extractedFields,
     );
 
+    expect(snapshot.fields.find((field) => field.targetField === 'applicant.target_first_name')).toMatchObject({
+      value: expect.objectContaining({
+        source: 'extracted_field',
+        value: 'Avery',
+        sourceDocumentKind: 'court_order',
+        sourceFieldKey: 'first_name',
+      }),
+    });
+    expect(snapshot.fields.find((field) => field.targetField === 'applicant.target_last_name')).toMatchObject({
+      value: expect.objectContaining({
+        source: 'extracted_field',
+        value: 'Jordan',
+        sourceDocumentKind: 'court_order',
+        sourceFieldKey: 'last_name',
+      }),
+    });
     expect(snapshot.fields.find((field) => field.targetField === 'legal.court_order_case_number')).toMatchObject({
       value: expect.objectContaining({
         source: 'extracted_field',

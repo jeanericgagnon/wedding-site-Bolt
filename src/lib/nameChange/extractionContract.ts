@@ -193,6 +193,26 @@ function buildCanonicalFieldConflicts(
       extractedValue: getDocumentLinkedFieldValue(documents, extractedFields, 'marriage_certificate', 'county'),
     },
     {
+      key: 'target-first-name-court-order',
+      label: 'Target first name vs court-order extraction',
+      documentKind: 'court_order',
+      fieldKey: 'first_name',
+      canonicalValue: canonicalCase.legalBasis === 'court_order' ? canonicalCase.targetName.first : null,
+      extractedValue: canonicalCase.legalBasis === 'court_order'
+        ? getDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'first_name')
+        : null,
+    },
+    {
+      key: 'target-last-name-court-order',
+      label: 'Target last name vs court-order extraction',
+      documentKind: 'court_order',
+      fieldKey: 'last_name',
+      canonicalValue: canonicalCase.legalBasis === 'court_order' ? canonicalCase.targetName.last : null,
+      extractedValue: canonicalCase.legalBasis === 'court_order'
+        ? getDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'last_name')
+        : null,
+    },
+    {
       key: 'court-order-date',
       label: 'Marriage date vs court-order signed date',
       documentKind: 'court_order',

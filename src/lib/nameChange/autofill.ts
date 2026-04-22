@@ -94,12 +94,19 @@ export function buildNameChangeAutofillPrepSnapshot(
     extractedValue: ExtractionLookupResult,
   ) => makeField(targetField, label, canonicalValue, extractedValue, isDocumentMetadataReady(extractedValue.sourceDocumentKind));
 
+  const targetFirstNameExtraction = canonicalCase.legalBasis === 'court_order'
+    ? { value: extraction.courtOrder.firstName, sourceDocumentKind: 'court_order' as const, sourceFieldKey: 'first_name' as const }
+    : lookup('first_name', ['marriage_certificate', 'court_order']);
+  const targetLastNameExtraction = canonicalCase.legalBasis === 'court_order'
+    ? { value: extraction.courtOrder.lastName, sourceDocumentKind: 'court_order' as const, sourceFieldKey: 'last_name' as const }
+    : { value: extraction.marriageCertificate.spouseLastName, sourceDocumentKind: 'marriage_certificate' as const, sourceFieldKey: 'spouse_last_name' as const };
+
   const fields: NameChangeAutofillFieldMapping[] = [
     directField('applicant.current_first_name', 'Current first name', canonicalCase.currentName.first, lookup('first_name', ['current_drivers_license', 'current_passport', 'marriage_certificate', 'court_order'])),
     directField('applicant.current_middle_name', 'Current middle name', canonicalCase.currentName.middle, lookup('middle_name', ['current_drivers_license', 'current_passport'])),
     directField('applicant.current_last_name', 'Current last name', canonicalCase.currentName.last, lookup('last_name', ['current_drivers_license', 'current_passport', 'marriage_certificate', 'court_order'])),
-    directField('applicant.target_first_name', 'Target first name', canonicalCase.targetName.first, lookup('first_name', ['marriage_certificate', 'court_order'])),
-    directField('applicant.target_last_name', 'Target last name', canonicalCase.targetName.last, { value: extraction.marriageCertificate.spouseLastName, sourceDocumentKind: 'marriage_certificate', sourceFieldKey: 'spouse_last_name' }),
+    directField('applicant.target_first_name', 'Target first name', canonicalCase.targetName.first, targetFirstNameExtraction),
+    directField('applicant.target_last_name', 'Target last name', canonicalCase.targetName.last, targetLastNameExtraction),
     directField('applicant.county', 'County', canonicalCase.countyResidence, { value: extraction.marriageCertificate.county, sourceDocumentKind: 'marriage_certificate', sourceFieldKey: 'county' }),
     directField('legal.marriage_date', 'Marriage date', canonicalCase.legalContext.marriageDate, { value: extraction.marriageCertificate.issuanceDate, sourceDocumentKind: 'marriage_certificate', sourceFieldKey: 'issuance_date' }),
     directField('legal.court_order_case_number', 'Court-order case number', null, { value: extraction.courtOrder.caseNumber, sourceDocumentKind: 'court_order', sourceFieldKey: 'case_number' }),

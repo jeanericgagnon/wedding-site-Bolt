@@ -157,4 +157,38 @@ describe('name change extraction contract', () => {
       courtOrderDate: '2026-04-05',
     });
   });
+
+  it('flags court-order target-name conflicts against canonical case truth', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-court-order',
+        document_kind: 'court_order_name_change',
+        display_name: 'Court order',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      { document_id: 'doc-court-order', field_key: 'first_name', field_label: 'First name', field_value_masked: 'Avery', source_type: 'document_extract', is_verified: true },
+      { document_id: 'doc-court-order', field_key: 'last_name', field_label: 'Last name', field_value_masked: 'Jordan-Smith', source_type: 'document_extract', is_verified: true },
+    ];
+
+    const snapshot = buildNameChangeExtractionContractSnapshot(
+      makeCase({
+        legal_basis: 'court_order',
+        target_first_name: 'Alex',
+        target_last_name: 'Jordan',
+        marriage_state: null,
+        marriage_date: null,
+        structured_intake: { spouseLastName: null, travelBookedSoon: false, wantsDocumentIntakeHelp: true },
+      }),
+      documents,
+      extractedFields,
+    );
+
+    expect(snapshot.conflicts).toEqual(expect.arrayContaining([
+      expect.objectContaining({ key: 'target-first-name-court-order', documentKind: 'court_order', canonicalValue: 'Alex', extractedValue: 'Avery' }),
+      expect.objectContaining({ key: 'target-last-name-court-order', documentKind: 'court_order', canonicalValue: 'Jordan', extractedValue: 'Jordan-Smith' }),
+    ]));
+  });
 });
