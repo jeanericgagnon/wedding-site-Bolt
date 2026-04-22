@@ -205,6 +205,36 @@ const GiftCard: React.FC<{ gift: z.infer<typeof FeaturedGiftSchema>; compact?: b
   </a>
 );
 
+export function getRegistryItemPublicUrl(item: Pick<RegistryItem, 'item_url' | 'canonical_url'>): string {
+  return item.item_url ?? item.canonical_url ?? '';
+}
+
+export function groupRegistryStoreLinks(items: RegistryItem[]): z.infer<typeof RegistryStoreLinkSchema>[] {
+  const grouped = new Map<string, z.infer<typeof RegistryStoreLinkSchema>>();
+
+  for (const item of items) {
+    const store = item.store_name ?? item.merchant ?? 'Registry';
+    const publicUrl = getRegistryItemPublicUrl(item);
+    const existing = grouped.get(store);
+
+    if (!existing) {
+      grouped.set(store, {
+        id: item.id,
+        store,
+        url: publicUrl,
+        description: '',
+      });
+      continue;
+    }
+
+    if (!existing.url && publicUrl) {
+      existing.url = publicUrl;
+    }
+  }
+
+  return Array.from(grouped.values());
+}
+
 function registryItemToGift(item: RegistryItem): z.infer<typeof FeaturedGiftSchema> {
   return {
     id: item.id,
@@ -246,11 +276,13 @@ const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = 
     price: normalizePriceLabel(gift.price),
   }));
 
+  const displayStoreLinks = liveItems ? groupRegistryStoreLinks(liveItems) : safeStoreLinks;
+
   const colClass = data.layout === '3col'
     ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3'
     : 'grid-cols-1 sm:grid-cols-2';
 
-  const hasStoreLinks = safeStoreLinks.length > 0;
+  const hasStoreLinks = displayStoreLinks.length > 0;
 
   const heroGift = data.layout === 'hero' && displayGifts[0];
   const restGifts = data.layout === 'hero' ? displayGifts.slice(1) : displayGifts;
@@ -323,7 +355,7 @@ const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = 
               <div className="flex-1 h-px bg-stone-100" />
             </div>
             <div className="flex flex-wrap gap-3">
-              {safeStoreLinks.map(link => (
+              {displayStoreLinks.map(link => (
                 <a
                   key={link.id}
                   href={link.url || '#'}
