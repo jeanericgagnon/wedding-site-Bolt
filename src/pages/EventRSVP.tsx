@@ -351,6 +351,7 @@ export default function EventRSVP() {
 
   function closeRsvpForm() {
     activeSubmitRequestRef.current += 1;
+    activeLoadRequestRef.current += 1;
     submitInFlightRef.current = false;
     if (postSubmitResetTimeoutRef.current !== null) {
       window.clearTimeout(postSubmitResetTimeoutRef.current);
