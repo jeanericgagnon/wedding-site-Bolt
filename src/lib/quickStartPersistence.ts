@@ -61,7 +61,9 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
       && typeof question.question === 'string'
       && typeof question.expectedAnswerType === 'string'
       && Array.isArray(question.targetFields)
+      && question.targetFields.every((field) => typeof field === 'string')
       && Array.isArray(question.affectedSections)
+      && question.affectedSections.every((section) => typeof section === 'string')
       && typeof question.skippable === 'boolean'
       && typeof question.round === 'number'
       && Number.isFinite(question.round)
