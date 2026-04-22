@@ -528,6 +528,15 @@ describe('publishUiHints', () => {
     expect(getPublishCtaLabel(true)).toBe('Update guest-facing site');
   });
 
+  it('does not mistake publish CTA copy for a blocker', () => {
+    expect(getPublishBlockedHints('Go live')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
+    expect(getPublishBlockedHints('Update guest-facing site')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
+  });
+
   it('labels publish status across draft and live states', () => {
     expect(getPublishStatusLabel(false, true)).toBe('Draft has unsaved changes');
     expect(getPublishStatusLabel(false, false)).toBe('Draft only');
