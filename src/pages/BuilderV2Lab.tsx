@@ -210,6 +210,8 @@ const VARIANTS_BY_TYPE: Record<string, string[]> = {
   rsvp: ['default'],
 };
 
+const isRegistryBuilderSectionType = (type: string) => type.trim().toLowerCase().replace(/[^a-z0-9]/g, '') === 'registry';
+
 const SECTION_TYPE_MAP: Record<string, SectionType> = {
   hero: 'hero',
   story: 'story',
@@ -1441,7 +1443,7 @@ export const BuilderV2Lab: React.FC = () => {
                         </div>
                       )}
 
-                      {selected.type === 'registry' && (
+                      {isRegistryBuilderSectionType(selected.type) && (
                         <div id="rail-section-registry" className="border border-border-subtle rounded-md p-3 bg-white space-y-2.5 shadow-sm transition-all duration-200">
                           <p className="text-[11px] uppercase updates-wide text-text-tertiary font-medium">Registry</p>
                           <label className="block"><span className="text-[11px] text-text-tertiary">Featured registry item</span><input value={previewFields.registryTitle} onChange={(e) => updatePreviewField('registryTitle', e.target.value)} className="mt-1 w-full border rounded-md px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" /></label>

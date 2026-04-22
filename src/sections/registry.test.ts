@@ -240,6 +240,8 @@ describe('sections registry resolution', () => {
   it('keeps the builder lab registry variant picker aligned with shipped template aliases', () => {
     const builderLab = readFileSync(resolve(__dirname, '../pages/BuilderV2Lab.tsx'), 'utf8');
     expect(builderLab).toContain("registry: ['default', 'cards', 'grid', 'fundHighlight', 'featured', 'minimal', 'honeymoon', 'tabs', 'illustrated', 'classic', 'luxury', 'experiences', 'modern', 'playful']");
+    expect(builderLab).toContain("const isRegistryBuilderSectionType = (type: string) => type.trim().toLowerCase().replace(/[^a-z0-9]/g, '') === 'registry';");
+    expect(builderLab).toContain("{isRegistryBuilderSectionType(selected.type) && (");
   });
 
   it('keeps the builder lab variant commands aligned with shipped registry aliases', () => {
