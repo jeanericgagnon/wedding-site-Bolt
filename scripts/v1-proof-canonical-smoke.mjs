@@ -157,6 +157,7 @@ const output = {
   externalBlockedProof: {
     command: 'npm run proof:v1:guests-rsvp-ops',
     blockerType: 'external_fixture_required',
+    severity: 'critical',
     message: 'validate-rsvp-token function is not callable with current anon credentials (401)',
     recommendation: 'Provide anon-callable function auth in this environment or run with credentials that can invoke the function.',
   },
