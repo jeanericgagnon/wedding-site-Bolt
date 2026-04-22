@@ -844,6 +844,29 @@ describe('RSVP stale submit protection', () => {
     expect(await screen.findByText('Welcome, Taylor Rivera!')).toBeInTheDocument();
   });
 
+  it('clears stale search errors when the guest edits the search input before retrying', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      json: async () => ({ error: 'Invitation not recognized. Please search by name below.' }),
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/rsvp']}>
+        <RSVP />
+      </MemoryRouter>
+    );
+
+    const searchInput = screen.getByPlaceholderText('rsvp.search_placeholder');
+    fireEvent.change(searchInput, { target: { value: 'Nobody' } });
+    fireEvent.click(screen.getByText('Find My Invitation'));
+
+    expect(await screen.findByText('Invitation not recognized. Please search by name below.')).toBeInTheDocument();
+
+    fireEvent.change(searchInput, { target: { value: 'Taylor' } });
+
+    expect(screen.queryByText('Invitation not recognized. Please search by name below.')).not.toBeInTheDocument();
+  });
+
   it('ignores a second submit click while the first RSVP submit is still in flight', async () => {
     const submitRequest = deferred<Response>();
 

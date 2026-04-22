@@ -817,7 +817,10 @@ export default function RSVP() {
                 <Input
                   type="text"
                   value={searchValue}
-                  onChange={(e) => setSearchValue(e.target.value)}
+                  onChange={(e) => {
+                    setError('');
+                    setSearchValue(e.target.value);
+                  }}
                   onKeyDown={(e) => {
                     if (guestPredictions.length === 0) return;
                     if (e.key === 'ArrowDown') {
