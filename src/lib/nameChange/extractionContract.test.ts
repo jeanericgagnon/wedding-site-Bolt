@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildNameChangeExtractionContractSnapshot, hasVerifiedDocumentLinkedFieldValue } from './extractionContract';
+import { buildNameChangeExtractionContractSnapshot, hasAnyDocumentLinkedFieldValue, hasVerifiedDocumentLinkedFieldValue } from './extractionContract';
 import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput } from './types';
 
 function makeCase(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseInput {
@@ -202,6 +202,17 @@ describe('name change extraction contract', () => {
         intake_status: 'reviewed',
       },
     ];
+
+    expect(hasAnyDocumentLinkedFieldValue(documents, [
+      {
+        document_id: 'doc-court-order',
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: '24-CV-1188',
+        source_type: 'document_extract',
+        is_verified: false,
+      },
+    ], 'court_order', 'case_number')).toBe(true);
 
     expect(hasVerifiedDocumentLinkedFieldValue(documents, [
       {

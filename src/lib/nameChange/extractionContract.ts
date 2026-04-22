@@ -60,6 +60,23 @@ export function getDocumentLinkedFieldValue(
   return getLinkedFieldValue(documents, extractedFields, kind, fieldKey) ?? getManualFallbackValue(extractedFields, fieldKey);
 }
 
+export function hasAnyDocumentLinkedFieldValue(
+  documents: NameChangeDocumentInput[],
+  extractedFields: NameChangeExtractedFieldInput[],
+  kind: NameChangeDocumentKind,
+  fieldKey: NameChangeExtractionFieldKey,
+): boolean {
+  const document = getDocumentByKind(documents, kind);
+  const linkedField = document?.id
+    ? extractedFields.find((item) => item.document_id === document.id && item.field_key === fieldKey)
+    : null;
+
+  if (normalizeValue(linkedField?.field_value_masked)) return true;
+
+  const manualField = getManualFallbackField(extractedFields, fieldKey);
+  return Boolean(manualField && manualField.source_type === 'manual' && normalizeValue(manualField.field_value_masked));
+}
+
 export function hasVerifiedDocumentLinkedFieldValue(
   documents: NameChangeDocumentInput[],
   extractedFields: NameChangeExtractedFieldInput[],

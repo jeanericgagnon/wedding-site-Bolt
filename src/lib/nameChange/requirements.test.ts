@@ -390,6 +390,42 @@ describe('name change requirements skeleton', () => {
     });
   });
 
+  it('marks court-order reference extraction attention when linked reference data exists but is still unverified', () => {
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase({ legal_basis: 'court_order' as never }),
+      [
+        {
+          id: 'doc-court-order',
+          document_kind: 'court_order_name_change',
+          display_name: 'Court order',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+        },
+        {
+          document_kind: 'current_drivers_license',
+          display_name: 'Driver license',
+          storage_mode: 'metadata_only',
+          intake_status: 'uploaded',
+        },
+      ],
+      [
+        {
+          document_id: 'doc-court-order',
+          field_key: 'case_number',
+          field_label: 'Case number',
+          field_value_masked: '24-CV-1188',
+          source_type: 'document_extract',
+          is_verified: false,
+        },
+      ],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'court-order-reference-extraction')).toMatchObject({
+      status: 'attention',
+      reason: 'Court-order reference data exists, but it is still unverified so downstream use is not grounded yet.',
+    });
+  });
+
   it('requires a marriage certificate when the legal basis is marriage', () => {
     const snapshot = evaluateNameChangeRequirements(
       makeCase(),
