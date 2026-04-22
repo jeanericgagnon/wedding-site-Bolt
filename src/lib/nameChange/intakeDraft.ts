@@ -194,10 +194,73 @@ function parseDraftMonthName(monthName: string) {
   return monthMap[normalizedMonthName as keyof typeof monthMap] ?? null;
 }
 
+function normalizeDraftDateValue(value: string) {
+  const normalizeIsoParts = (year: string, month: string, day: string) => `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  const normalizedOrdinalValue = value.replace(/\b(\d{1,2})(st|nd|rd|th)\b/gi, '$1');
+
+  const monthFirstNumericMatch = normalizedOrdinalValue.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+  if (monthFirstNumericMatch) {
+    const [, month, day, year] = monthFirstNumericMatch;
+    return normalizeIsoParts(year, month, day);
+  }
+
+  const yearFirstNumericMatch = normalizedOrdinalValue.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/);
+  if (yearFirstNumericMatch) {
+    const [, year, month, day] = yearFirstNumericMatch;
+    return normalizeIsoParts(year, month, day);
+  }
+
+  const yearFirstSpacedMatch = normalizedOrdinalValue.match(/^(\d{4})\s+(\d{1,2})\s+(\d{1,2})$/);
+  if (yearFirstSpacedMatch) {
+    const [, year, month, day] = yearFirstSpacedMatch;
+    return normalizeIsoParts(year, month, day);
+  }
+
+  const monthFirstWrittenMatch = normalizedOrdinalValue.match(/^([A-Za-z]+\.?)[\s]+(\d{1,2})(?:,)?\s*(\d{4})$/);
+  if (monthFirstWrittenMatch) {
+    const [, monthName, day, year] = monthFirstWrittenMatch;
+    const month = parseDraftMonthName(monthName);
+    if (month) return normalizeIsoParts(year, String(month), day);
+  }
+
+  const dayFirstWrittenMatch = normalizedOrdinalValue.match(/^(\d{1,2})\s+([A-Za-z]+\.?)[\s,]+(\d{4})$/);
+  if (dayFirstWrittenMatch) {
+    const [, day, monthName, year] = dayFirstWrittenMatch;
+    const month = parseDraftMonthName(monthName);
+    if (month) return normalizeIsoParts(year, String(month), day);
+  }
+
+  const hyphenatedWrittenMatch = normalizedOrdinalValue.match(/^(\d{1,2})-([A-Za-z]+\.?)-(\d{4})$/);
+  if (hyphenatedWrittenMatch) {
+    const [, day, monthName, year] = hyphenatedWrittenMatch;
+    const month = parseDraftMonthName(monthName);
+    if (month) return normalizeIsoParts(year, String(month), day);
+  }
+
+  const compactIsoMatch = normalizedOrdinalValue.match(/^(19\d{2}|20\d{2})(\d{2})(\d{2})$/);
+  if (compactIsoMatch) {
+    const [, year, month, day] = compactIsoMatch;
+    return normalizeIsoParts(year, month, day);
+  }
+
+  const compactUsMatch = normalizedOrdinalValue.match(/^(\d{2})(\d{2})(\d{4})$/);
+  if (compactUsMatch) {
+    const [, month, day, year] = compactUsMatch;
+    return normalizeIsoParts(year, month, day);
+  }
+
+  const dottedYearFirstMatch = normalizedOrdinalValue.match(/^(\d{4})\.(\d{1,2})\.(\d{1,2})$/);
+  if (dottedYearFirstMatch) {
+    const [, year, month, day] = dottedYearFirstMatch;
+    return normalizeIsoParts(year, month, day);
+  }
+
+  return normalizedOrdinalValue;
+}
+
 function normalizeDraftFieldValue(fieldKey: NameChangeExtractedFieldInput['field_key'], value: string) {
   const normalizedValue = normalizeDraftText(value);
   if (!normalizedValue) return '';
-  const normalizedOrdinalValue = normalizedValue.replace(/\b(\d{1,2})(st|nd|rd|th)\b/gi, '$1');
 
   if (fieldKey === 'first_name' || fieldKey === 'middle_name' || fieldKey === 'last_name' || fieldKey === 'spouse_last_name' || fieldKey === 'county') {
     return humanizeDraftToken(normalizedValue.toLowerCase());
@@ -213,64 +276,7 @@ function normalizeDraftFieldValue(fieldKey: NameChangeExtractedFieldInput['field
   }
 
   if (fieldKey === 'court_order_date' || fieldKey === 'issuance_date') {
-    const normalizeIsoParts = (year: string, month: string, day: string) => `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-
-    const isoDateMatch = normalizedOrdinalValue.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
-    if (isoDateMatch) {
-      const [, month, day, year] = isoDateMatch;
-      return normalizeIsoParts(year, month, day);
-    }
-
-    const leadingYearDateMatch = normalizedOrdinalValue.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/);
-    if (leadingYearDateMatch) {
-      const [, year, month, day] = leadingYearDateMatch;
-      return normalizeIsoParts(year, month, day);
-    }
-
-    const writtenDateMatch = normalizedOrdinalValue.match(/^([A-Za-z]+\.?)[\s]+(\d{1,2})(?:,)?\s*(\d{4})$/);
-    if (writtenDateMatch) {
-      const [, monthName, day, year] = writtenDateMatch;
-      const month = parseDraftMonthName(monthName);
-      if (month) {
-        return normalizeIsoParts(year, String(month), day);
-      }
-    }
-
-    const dayFirstWrittenDateMatch = normalizedOrdinalValue.match(/^(\d{1,2})\s+([A-Za-z]+\.?)[\s,]+(\d{4})$/);
-    if (dayFirstWrittenDateMatch) {
-      const [, day, monthName, year] = dayFirstWrittenDateMatch;
-      const month = parseDraftMonthName(monthName);
-      if (month) {
-        return normalizeIsoParts(year, String(month), day);
-      }
-    }
-
-    const hyphenatedWrittenDateMatch = normalizedOrdinalValue.match(/^(\d{1,2})-([A-Za-z]+\.?)-(\d{4})$/);
-    if (hyphenatedWrittenDateMatch) {
-      const [, day, monthName, year] = hyphenatedWrittenDateMatch;
-      const month = parseDraftMonthName(monthName);
-      if (month) {
-        return normalizeIsoParts(year, String(month), day);
-      }
-    }
-
-    const compactDateMatch = normalizedOrdinalValue.match(/^(19\d{2}|20\d{2})(\d{2})(\d{2})$/);
-    if (compactDateMatch) {
-      const [, year, month, day] = compactDateMatch;
-      return normalizeIsoParts(year, month, day);
-    }
-
-    const compactUsDateMatch = normalizedOrdinalValue.match(/^(\d{2})(\d{2})(\d{4})$/);
-    if (compactUsDateMatch) {
-      const [, month, day, year] = compactUsDateMatch;
-      return normalizeIsoParts(year, month, day);
-    }
-
-    const dotSeparatedYearDateMatch = normalizedOrdinalValue.match(/^(\d{4})\.(\d{1,2})\.(\d{1,2})$/);
-    if (dotSeparatedYearDateMatch) {
-      const [, year, month, day] = dotSeparatedYearDateMatch;
-      return normalizeIsoParts(year, month, day);
-    }
+    return normalizeDraftDateValue(normalizedValue);
   }
 
   return normalizedValue;
