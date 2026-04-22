@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createEmptyBuilderProject } from '../../types/builder/project';
 import type { BuilderSectionInstance } from '../../types/builder/section';
-import { getPublishIssue, getPublishValidationError } from './publishReadiness';
+import { buildPublishReadiness, getPublishIssue, getPublishValidationError } from './publishReadiness';
 import { createEmptyWeddingData } from '../../types/weddingData';
 
 function makeSection(overrides?: Partial<BuilderSectionInstance>): BuilderSectionInstance {
@@ -76,5 +76,33 @@ describe('publishReadiness', () => {
 
     expect(getPublishIssue(project, data)).toBeNull();
     expect(getPublishValidationError(project, data)).toBeNull();
+  });
+
+  it('shows current-page readiness against the active page, not just the first page', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages = [
+      {
+        ...project.pages[0],
+        id: 'page-1',
+        title: 'Home',
+        orderIndex: 0,
+        sections: [makeSection({ id: 'home-hidden', enabled: false })],
+      },
+      {
+        ...project.pages[0],
+        id: 'page-2',
+        title: 'Schedule',
+        orderIndex: 1,
+        sections: [makeSection({ id: 'schedule-live', enabled: true })],
+      },
+    ];
+
+    const readiness = buildPublishReadiness(project, undefined, { activePageId: 'page-2' });
+    expect(readiness.find((item) => item.id === 'current-page')).toEqual({
+      id: 'current-page',
+      label: 'Current page has visible content',
+      done: true,
+      detail: 'Schedule has visible sections.',
+    });
   });
 });

@@ -62,9 +62,9 @@ export const getPublishValidationError = (project: BuilderProject, weddingData?:
 export const buildPublishReadiness = (
   project: BuilderProject,
   weddingData?: WeddingDataV1 | null,
-  options?: { isDirty?: boolean }
+  options?: { isDirty?: boolean; activePageId?: string | null }
 ): PublishReadinessItem[] => {
-  const activePage = project.pages[0];
+  const activePage = project.pages.find((page) => page.id === options?.activePageId) ?? project.pages[0];
   const enabledSectionCount = project.pages.reduce(
     (count, page) => count + page.sections.filter((section) => section.enabled).length,
     0
@@ -74,6 +74,7 @@ export const buildPublishReadiness = (
   const hasWeddingDate = Boolean(weddingData?.event.weddingDateISO);
   const hasRsvpEnabled = weddingData ? weddingData.rsvp.enabled : true;
   const hasUnsavedChanges = Boolean(options?.isDirty);
+  const activePageHasVisibleSections = Boolean(activePage?.sections.some((section) => section.enabled));
 
   return [
     {
@@ -121,8 +122,8 @@ export const buildPublishReadiness = (
     {
       id: 'current-page',
       label: 'Current page has visible content',
-      done: Boolean(activePage?.sections.some((section) => section.enabled)),
-      detail: activePage?.sections.some((section) => section.enabled)
+      done: activePageHasVisibleSections,
+      detail: activePageHasVisibleSections
         ? `${activePage?.title ?? 'Current page'} has visible sections.`
         : `Turn on content for ${activePage?.title ?? 'the current page'}.`,
     },
