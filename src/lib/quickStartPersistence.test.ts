@@ -36,7 +36,7 @@ describe('quickStartPersistence', () => {
       currentIndex: 2.5,
       followUpAnswers: ['bad'],
       viewState: 'bogus',
-      clarifyingState: [],
+      clarifyingState: { clarifying: [] },
       initialSetupAnswers: {
         names: 'Alex & Jordan',
         labelPreference: 'wizard-mode',
