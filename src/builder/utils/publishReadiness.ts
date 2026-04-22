@@ -17,12 +17,14 @@ export interface PublishReadinessItem {
 }
 
 export const getPublishIssue = (project: BuilderProject, weddingData?: WeddingDataV1 | null): PublishIssue | null => {
-  if (!project.pages.length) {
+  const normalizedPages = project.pages.filter(Boolean);
+
+  if (!normalizedPages.length) {
     return { kind: 'no-pages', message: 'Add at least one page before going live.' };
   }
 
-  const firstSection = project.pages.flatMap((p) => p.sections.map((s) => ({ pageId: p.id, sectionId: s.id })))[0];
-  const hasEnabledSection = project.pages.some((page) => page.sections.some((section) => section.enabled));
+  const firstSection = normalizedPages.flatMap((p) => (p.sections ?? []).map((s) => ({ pageId: p.id, sectionId: s.id })))[0];
+  const hasEnabledSection = normalizedPages.some((page) => page.sections?.some((section) => section?.enabled));
   if (!hasEnabledSection) {
     return {
       kind: 'no-enabled-sections',
@@ -67,8 +69,9 @@ export const buildPublishReadiness = (
   const normalizedActivePageId = typeof options?.activePageId === 'string'
     ? options.activePageId.trim() || null
     : options?.activePageId;
-  const activePage = project.pages.find((page) => page?.id === normalizedActivePageId) ?? project.pages.find(Boolean);
-  const enabledSectionCount = project.pages.reduce(
+  const normalizedPages = project.pages.filter(Boolean);
+  const activePage = normalizedPages.find((page) => page?.id === normalizedActivePageId) ?? normalizedPages[0];
+  const enabledSectionCount = normalizedPages.reduce(
     (count, page) => count + (page?.sections?.filter((section) => section?.enabled).length ?? 0),
     0
   );
@@ -84,9 +87,9 @@ export const buildPublishReadiness = (
     {
       id: 'page',
       label: 'A page exists',
-      done: project.pages.length > 0,
-      detail: project.pages.length > 0
-        ? `${project.pages.length} page${project.pages.length === 1 ? '' : 's'} ready`
+      done: normalizedPages.length > 0,
+      detail: normalizedPages.length > 0
+        ? `${normalizedPages.length} page${normalizedPages.length === 1 ? '' : 's'} ready`
         : 'Add a page or apply a starting design.',
     },
     {
