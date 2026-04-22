@@ -156,4 +156,20 @@ describe('mediaService', () => {
       originalFilename: 'original-name.jpg',
     }));
   });
+
+  it('stores document uploads without pretending they have thumbnails', async () => {
+    const file = new File(['doc'], 'menu.pdf', { type: 'application/pdf' });
+    upload.mockResolvedValue({
+      url: 'https://cdn.example.com/menu.pdf',
+      path: 'w1/menu.pdf',
+    });
+    save.mockResolvedValue({ id: 'asset-8' });
+
+    await mediaService.uploadAsset('w1', file);
+
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({
+      assetType: 'document',
+      thumbnailUrl: undefined,
+    }));
+  });
 });
