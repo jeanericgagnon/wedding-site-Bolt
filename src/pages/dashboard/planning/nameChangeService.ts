@@ -829,10 +829,10 @@ export function remapNameChangeExtractedFieldsToPersistedDocuments(
   const sourceDocumentKindById = new Map(
     sourceDocuments
       .filter((document): document is NameChangeDocumentInput & { id: string } => Boolean(document.id))
-      .map((document) => [document.id, document.document_kind]),
+      .map((document) => [document.id, canonicalizeNameChangeDocumentKind(document.document_kind)]),
   );
   const persistedDocumentIdByKind = new Map(
-    persistedDocuments.map((document) => [document.document_kind, document.id]),
+    persistedDocuments.map((document) => [canonicalizeNameChangeDocumentKind(document.document_kind), document.id]),
   );
 
   return extractedFields.map((field) => {

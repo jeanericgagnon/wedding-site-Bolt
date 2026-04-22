@@ -261,6 +261,49 @@ describe('nameChangeService normalization', () => {
     ]);
   });
 
+  it('remaps legacy court-order extracted fields onto canonical persisted court-order documents', () => {
+    const sourceDocuments: NameChangeDocumentInput[] = [
+      {
+        id: 'temp-court-order',
+        document_kind: 'court_order_name_change',
+        display_name: 'Court order name change',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const persistedDocuments: NameChangeDocumentRecord[] = [
+      {
+        id: 'db-court-order',
+        name_change_case_id: 'case-1',
+        document_kind: 'court_order',
+        display_name: 'Court order',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: null,
+        issuing_authority: null,
+        issued_on: null,
+        expires_on: null,
+        extraction_confidence: null,
+        extracted_snapshot: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+    ];
+
+    expect(remapNameChangeExtractedFieldsToPersistedDocuments(sourceDocuments, persistedDocuments, [
+      {
+        document_id: 'temp-court-order',
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: '24-CV-1188',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ])).toEqual([
+      expect.objectContaining({ document_id: 'db-court-order', field_key: 'case_number' }),
+    ]);
+  });
+
   it('drops stale document links when a source document can no longer be matched', () => {
     expect(remapNameChangeExtractedFieldsToPersistedDocuments([], [], [
       {
