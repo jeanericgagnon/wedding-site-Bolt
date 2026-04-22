@@ -70,6 +70,14 @@ describe('name change intake draft helpers', () => {
     expect(normalizeDraftNameChangeDocumentId('draft-current__passport')).toBe('draft-current_passport');
   });
 
+  it('trims edge underscores from messy draft document kinds and ids', () => {
+    expect(createDraftNameChangeDocument('_current_passport_' as never, ' Passport ')).toMatchObject({
+      id: 'draft-current_passport',
+      document_kind: 'current_passport',
+    });
+    expect(normalizeDraftNameChangeDocumentId('draft-_court_order_name_change_')).toBe('draft-court_order');
+  });
+
   it('normalizes uppercase draft document kinds before canonicalizing ids', () => {
     expect(createDraftNameChangeDocument('CURRENT PASSPORT' as never, ' Passport ')).toMatchObject({
       id: 'draft-current_passport',
@@ -263,6 +271,19 @@ describe('name change intake draft helpers', () => {
 
   it('collapses repeated underscores in messy draft field keys before storing rows', () => {
     const next = upsertDraftNameChangeExtractedField([], 'draft-current_passport', 'issuance__date' as never, '  ', ' 2024-06-01 ');
+
+    expect(next).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-current_passport',
+        field_key: 'issuance_date',
+        field_label: 'Issuance Date',
+        field_value_masked: '2024-06-01',
+      }),
+    ]);
+  });
+
+  it('trims edge underscores from messy draft field keys before storing rows', () => {
+    const next = upsertDraftNameChangeExtractedField([], 'draft-current_passport', '_issuance_date_' as never, '  ', ' 2024-06-01 ');
 
     expect(next).toEqual([
       expect.objectContaining({

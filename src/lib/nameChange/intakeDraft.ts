@@ -17,7 +17,8 @@ function normalizeDraftDocumentKind(value: string) {
     .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
     .toLowerCase()
     .replace(/[-\s]+/g, '_')
-    .replace(/_+/g, '_') as NameChangeDocumentInput['document_kind'];
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '') as NameChangeDocumentInput['document_kind'];
 }
 
 function normalizeDraftFieldKey(value: string) {
@@ -26,7 +27,8 @@ function normalizeDraftFieldKey(value: string) {
     .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
     .toLowerCase()
     .replace(/[-\s]+/g, '_')
-    .replace(/_+/g, '_') as NameChangeExtractedFieldInput['field_key'];
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '') as NameChangeExtractedFieldInput['field_key'];
 }
 
 export function buildDraftNameChangeDocumentId(kind: NameChangeDocumentInput['document_kind']) {
