@@ -4,6 +4,8 @@ import { resolveAndParse } from './registry';
 import { getAllTemplates } from '../templates/registry';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { getSectionComponent, getSectionVariants } from './sectionRegistry';
+import { RegistryFundHighlight, RegistryGrid, RegistrySection } from './components/RegistrySection';
 
 const EXPECTED_ALIAS_TARGETS: Array<{ type: string; variant: string; expectedResolvedVariant: string }> = [
   { type: 'venue', variant: 'banner', expectedResolvedVariant: 'splitMap' },
@@ -76,5 +78,12 @@ describe('sections registry resolution', () => {
   it('keeps the builder lab variant commands aligned with shipped registry aliases', () => {
     const builderLab = readFileSync(resolve(__dirname, '../pages/BuilderV2Lab.tsx'), 'utf8');
     expect(builderLab).toContain("['default', 'countdown', 'timeline', 'dayTabs', 'localGuide', 'iconGrid', 'fundHighlight', 'classic', 'luxury', 'experiences', 'modern', 'playful']");
+  });
+
+  it('keeps legacy section registry aligned with public registry aliases', () => {
+    expect(getSectionVariants('registry')).toEqual(expect.arrayContaining(['cards', 'featured', 'minimal', 'honeymoon', 'tabs', 'illustrated', 'classic', 'luxury', 'experiences', 'modern', 'playful']));
+    expect(getSectionComponent('registry', 'classic')).toBe(RegistryGrid);
+    expect(getSectionComponent('registry', 'luxury')).toBe(RegistryFundHighlight);
+    expect(getSectionComponent('registry', 'cards')).toBe(RegistrySection);
   });
 });

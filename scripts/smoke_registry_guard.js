@@ -17,6 +17,7 @@ const sectionManifests = readFileSync(resolve(process.cwd(), 'src/builder/regist
 const templateRegistry = readFileSync(resolve(process.cwd(), 'src/templates/registry.ts'), 'utf8');
 const sectionVariantCompatibility = readFileSync(resolve(process.cwd(), 'src/lib/sectionVariantCompatibility.ts'), 'utf8');
 const builderV2Lab = readFileSync(resolve(process.cwd(), 'src/pages/BuilderV2Lab.tsx'), 'utf8');
+const legacySectionRegistry = readFileSync(resolve(process.cwd(), 'src/sections/sectionRegistry.tsx'), 'utf8');
 
 const checks = [
   { name: 'dashboard uses sanitizeRegistryQuantityState', ok: registryPage.includes('sanitizeRegistryQuantityState') },
@@ -31,6 +32,7 @@ const checks = [
   { name: 'builder registry variant compatibility preserves shipped public aliases', ok: sectionVariantCompatibility.includes("registry: ['default', 'grid', 'fundHighlight', 'classic', 'luxury', 'experiences', 'modern', 'playful']") && sectionVariantCompatibility.includes("luxury: 'fundHighlight'") && sectionVariantCompatibility.includes("experiences: 'fundHighlight'") },
   { name: 'builder lab registry picker exposes shipped template aliases', ok: builderV2Lab.includes("registry: ['default', 'fundHighlight', 'classic', 'luxury', 'experiences', 'modern', 'playful']") },
   { name: 'builder lab registry commands expose shipped template aliases', ok: builderV2Lab.includes("['default', 'countdown', 'timeline', 'dayTabs', 'localGuide', 'iconGrid', 'fundHighlight', 'classic', 'luxury', 'experiences', 'modern', 'playful']") },
+  { name: 'legacy section registry preserves public registry aliases', ok: legacySectionRegistry.includes("classic: RegistryGrid") && legacySectionRegistry.includes("luxury: RegistryFundHighlight") && legacySectionRegistry.includes("cards: RegistrySection") },
   { name: 'canonical registry validation accepts template-backed registry aliases', ok: canonicalSectionRegistry.includes("luxury: 'featured'") && canonicalSectionRegistry.includes("experiences: 'featured'") && canonicalSectionRegistry.includes("classic: 'cards'") },
   { name: 'public registry cards keep canonical-only store links usable', ok: registryCardsSection.includes("return item.item_url ?? item.canonical_url ?? null;") && registryCardsSection.includes('url: existing.url ?? publicUrl') },
   { name: 'public registry cards separate partial and claimed store counts', ok: registryCardsSection.includes("partial: existing.partial + (item.purchase_status === 'partial' ? 1 : 0)") && registryCardsSection.includes("group.purchased > 0 ? ` · ${group.purchased} claimed` : ''") },
