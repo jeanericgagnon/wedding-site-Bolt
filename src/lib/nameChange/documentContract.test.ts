@@ -172,6 +172,86 @@ describe('name change document intake contract', () => {
     expect(snapshot.summary.requiredMissing).toBe(1);
   });
 
+  it('counts reviewed required proof with metadata gaps as still missing from readiness', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase(),
+      [
+        {
+          document_kind: 'marriage_certificate',
+          display_name: 'Certified marriage certificate',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'marriage-certificate-•••.pdf',
+          issuing_authority: null,
+          issued_on: '2026-04-05',
+          extraction_confidence: 0.97,
+        },
+        {
+          document_kind: 'current_drivers_license',
+          display_name: 'Driver license',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'driver-license-•••.pdf',
+          issuing_authority: 'California DMV',
+          issued_on: '2025-01-10',
+          expires_on: '2030-01-10',
+          extraction_confidence: 0.95,
+        },
+        {
+          document_kind: 'current_passport',
+          display_name: 'Passport',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'passport-•••.pdf',
+          issuing_authority: 'U.S. Department of State',
+          issued_on: '2024-06-01',
+          expires_on: '2034-06-01',
+          extraction_confidence: 0.92,
+        },
+        {
+          document_kind: 'social_security_card',
+          display_name: 'Social Security card',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'ssa-card-•••.pdf',
+          issuing_authority: 'Social Security Administration',
+          issued_on: '2020-01-01',
+          extraction_confidence: 0.9,
+        },
+        {
+          document_kind: 'birth_certificate',
+          display_name: 'Birth certificate',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'birth-certificate-•••.pdf',
+          issuing_authority: 'California Department of Public Health',
+          issued_on: '1990-01-01',
+          extraction_confidence: 0.9,
+        },
+        {
+          document_kind: 'proof_of_address',
+          display_name: 'Proof of address',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'utility-bill-•••.pdf',
+          issuing_authority: 'SDG&E',
+          issued_on: '2026-04-01',
+          extraction_confidence: 0.88,
+        },
+      ],
+      [],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'marriage_certificate')).toMatchObject({
+      required: true,
+      intakeStatus: 'reviewed',
+      metadataMissing: ['issuing authority'],
+      metadataReady: 0,
+    });
+    expect(snapshot.summary.requiredReady).toBe(5);
+    expect(snapshot.summary.requiredMissing).toBe(1);
+  });
+
   it('keeps uploaded preferred documents out of reviewed-ready summary counters until review is complete', () => {
     const snapshot = buildNameChangeDocumentIntakeSnapshot(
       makeCase(),
