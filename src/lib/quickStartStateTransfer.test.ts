@@ -472,4 +472,35 @@ describe('quickStartStateTransfer', () => {
     expect(restored?.viewState).toBe('followups');
     expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').viewState).toBe('followups');
   });
+
+  it('rewrites follow-up restores back on when older snapshots lost the follow-up flag', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      viewState: 'followups',
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'transport',
+            category: 'travel',
+            question: 'How should guests get there?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.transport'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'pending',
+            answer: '',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    }));
+
+    const restored = readQuickStartDraftSnapshot();
+
+    expect(restored?.showFollowUps).toBe(true);
+    expect(restored?.viewState).toBe('followups');
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').showFollowUps).toBe(true);
+  });
 });

@@ -679,6 +679,34 @@ describe('quickStartPersistence', () => {
     expect(normalized.viewState).toBe('followups');
   });
 
+  it('restores follow-up mode when older snapshots lost the follow-up flag but kept the follow-up view', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      viewState: 'followups',
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'transport',
+            category: 'travel',
+            question: 'How should guests get there?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.transport'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'pending',
+            answer: '',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.showFollowUps).toBe(true);
+    expect(normalized.viewState).toBe('followups');
+  });
+
   it('reopens question view when follow-up flag is off even if stale follow-up view was persisted', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       showFollowUps: false,
