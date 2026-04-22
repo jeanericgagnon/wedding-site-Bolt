@@ -1094,7 +1094,7 @@ Import a list of links
               Imported gifts to fix: {alertCounts.badImports}
             </span>
             <span className="px-2 py-1 rounded-full border border-border text-text-tertiary text-xs font-medium">
-              Repair states: {items.filter((item) => getRegistryRepairStates(item).length > 0).length}
+              Repair states: {normalizedItems.filter((item) => getRegistryRepairStates(item).length > 0).length}
             </span>
             <span className="px-2 py-1 rounded-full border border-border text-text-tertiary text-xs font-medium">
               Duplicate groups: {duplicateGroups.length}

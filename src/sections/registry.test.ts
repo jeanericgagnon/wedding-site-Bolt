@@ -306,6 +306,7 @@ describe('sections registry resolution', () => {
     expect(registryDashboard).toContain('badImports: normalizedItems.filter((i) => getRegistryItemMetadataState(i).hasBadImportTitle).length,');
     expect(registryDashboard).toContain('filter((i) => getRegistryItemMetadataState(i).hasBadImportTitle)');
     expect(registryDashboard).toContain('repair: items.filter((item) => getRegistryItemMetadataState(item).hasBadImportTitle && !!(item.item_url || item.canonical_url)).length,');
+    expect(registryDashboard).toContain('Repair states: {normalizedItems.filter((item) => getRegistryRepairStates(item).length > 0).length}');
   });
 
   it('keeps template registry definitions cloned before import/edit flows mutate them', () => {
