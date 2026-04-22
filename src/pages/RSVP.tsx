@@ -879,6 +879,7 @@ export default function RSVP() {
                       setSubmitting(false);
                     }
                     setError('');
+                    setActivePredictionIndex(-1);
                     setSearchValue(e.target.value);
                   }}
                   onKeyDown={(e) => {
