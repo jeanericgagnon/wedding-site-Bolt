@@ -11,6 +11,7 @@ _Secondary trust gap:_ canonical couple-path truth notes, runtime wording verifi
 _Automation caveat:_ passing canonical smoke is not launch clearance by itself
 _Truth gate summary:_ automation is green, launch truth is still red
 _Grounded status line:_ `manualProofSummary` is still `requiredCount: 3`, `missingCount: 3`, `blockingCount: 3`
+_Grounded next-step line:_ `manualProofSummary.blockingNextSteps` still points to the canonical couple-path truth pass, runtime wording verification, and starter-draft wording verification in that order
 _What must change before GO:_ close the anon-auth RSVP blocker, log the canonical couple-path truth pass, verify privacy/access/publish plus marketing/settings/billing runtime wording, and verify starter-draft wording against live runtime behavior
 _False-positive avoided:_ a green canonical smoke run no longer reads like public launch approval
 _Externally blocked proof seam:_ `npm run proof:v1:guests-rsvp-ops` is `external_fixture_required` until anon-callable auth exists for `validate-rsvp-token`
