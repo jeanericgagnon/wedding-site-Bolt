@@ -282,6 +282,43 @@ describe('EventRSVP token trust continuity', () => {
     }, { timeout: 4000 });
   }, 10000);
 
+  it('shows a load error instead of fake blank RSVP truth on unexpected event RSVP read failures', async () => {
+    currentToken = 'guest-token';
+
+    maybeSingleQueue.push(
+      { data: { id: 'guest-1', name: 'Jordan', email: 'jordan@example.com' }, error: null },
+      { data: null, error: { message: 'permission denied while reading RSVP rows' } },
+    );
+
+    selectQueue.push({
+      data: [
+        {
+          id: 'inv-1',
+          event_id: 'event-1',
+          itinerary_events: {
+            id: 'event-1',
+            event_name: 'Ceremony',
+            description: '',
+            event_date: '2026-05-02',
+            start_time: '16:00:00',
+            end_time: null,
+            location_name: 'Garden',
+            location_address: '',
+            dress_code: null,
+            notes: null,
+          },
+        },
+      ],
+      error: null,
+    });
+
+    render(<EventRSVP />);
+
+    expect(await screen.findByText('Link Not Recognized')).toBeInTheDocument();
+    expect(screen.getByText('Failed to load your event invitations. Please try again or contact the couple.')).toBeInTheDocument();
+    expect(screen.queryByText('Hello, Jordan!')).not.toBeInTheDocument();
+  });
+
   it('does not let a stale prior submit disable event RSVP support for a new token', async () => {
     currentToken = 'old-token';
 

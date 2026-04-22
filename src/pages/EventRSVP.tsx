@@ -181,6 +181,8 @@ export default function EventRSVP() {
                 };
                 eventRsvpSupportAvailable = false;
                 eventRsvpSupportKnown = false;
+              } else {
+                throw error;
               }
             } else {
               if (activeLoadRequestRef.current !== requestId) return {
