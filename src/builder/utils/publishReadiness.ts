@@ -51,6 +51,10 @@ const isVenueLike = (value: unknown): value is NonNullable<WeddingDataV1['venues
   && value !== null
   && !Array.isArray(value)
   && hasNonEmptyString((value as { id?: unknown }).id);
+const getNormalizedVenueIdentity = (venue: NonNullable<WeddingDataV1['venues']>[number]) =>
+  `${getComparableOrderIndex((venue as { orderIndex?: unknown }).orderIndex)}:${getNormalizedId((venue as { id?: unknown }).id)}`;
+const getSortedNormalizedVenues = (weddingData?: WeddingDataV1 | null) =>
+  getNormalizedVenues(weddingData).sort((a, b) => getNormalizedVenueIdentity(a).localeCompare(getNormalizedVenueIdentity(b)));
 const getNormalizedVenues = (weddingData?: WeddingDataV1 | null) =>
   (Array.isArray(weddingData?.venues) ? weddingData.venues.filter(isVenueLike) : []);
 
@@ -86,7 +90,7 @@ export const getPublishIssue = (project: BuilderProject, weddingData?: WeddingDa
       return { kind: 'missing-event-date', message: 'Add your wedding date before going live.' };
     }
 
-    const hasVenue = getNormalizedVenues(weddingData).some((v) => hasNonEmptyString(v?.name) || hasNonEmptyString(v?.address));
+    const hasVenue = getSortedNormalizedVenues(weddingData).some((v) => hasNonEmptyString(v?.name) || hasNonEmptyString(v?.address));
     if (!hasVenue) {
       return { kind: 'missing-venue', message: 'Add at least one venue before going live.' };
     }
@@ -119,7 +123,7 @@ export const buildPublishReadiness = (
   const couple = typeof weddingData?.couple === 'object' && weddingData.couple !== null ? weddingData.couple : undefined;
   const event = typeof weddingData?.event === 'object' && weddingData.event !== null ? weddingData.event : undefined;
   const rsvp = typeof weddingData?.rsvp === 'object' && weddingData.rsvp !== null ? weddingData.rsvp : undefined;
-  const hasVenue = getNormalizedVenues(weddingData).some((v) => hasNonEmptyString(v?.name) || hasNonEmptyString(v?.address));
+  const hasVenue = getSortedNormalizedVenues(weddingData).some((v) => hasNonEmptyString(v?.name) || hasNonEmptyString(v?.address));
   const hasNames = hasNonEmptyString(couple?.partner1Name) && hasNonEmptyString(couple?.partner2Name);
   const hasWeddingDate = hasNonEmptyString(event?.weddingDateISO);
   const hasRsvpEnabled = weddingData ? rsvp?.enabled === true : true;
