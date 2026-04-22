@@ -95,4 +95,19 @@ describe('mediaService', () => {
       attachedSectionIds: ['section-hero'],
     }));
   });
+
+  it('stores provided media tags without dropping them during save', async () => {
+    const file = new File(['img'], 'tablescape.jpg', { type: 'image/jpeg' });
+    upload.mockResolvedValue({
+      url: 'https://cdn.example.com/tablescape.jpg',
+      path: 'w1/tablescape.jpg',
+    });
+    save.mockResolvedValue({ id: 'asset-4' });
+
+    await mediaService.uploadAsset('w1', file, { tags: ['hero', 'floral'] });
+
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({
+      tags: ['hero', 'floral'],
+    }));
+  });
 });
