@@ -580,7 +580,7 @@ describe('quickStartPersistence', () => {
     expect(normalized.followUpAnswers).toEqual({ lodging: 'Stay at the resort' });
   });
 
-  it('reopens the question view when restored follow-ups only contain skipped questions', () => {
+  it('drops skipped-question follow-up answers and reopens the question view', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       showFollowUps: true,
       viewState: 'followups',
@@ -611,7 +611,7 @@ describe('quickStartPersistence', () => {
     expect(normalized.showFollowUps).toBe(false);
     expect(normalized.viewState).toBe('question');
     expect(normalized.clarifyingState?.clarifying.mode).toBe('draft');
-    expect(normalized.followUpAnswers).toEqual({ transport: 'Shuttle leaves at 4 PM' });
+    expect(normalized.followUpAnswers).toEqual({});
   });
 
   it('keeps follow-up mode open for unresolved restored clarifying questions', () => {

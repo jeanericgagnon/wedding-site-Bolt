@@ -235,4 +235,39 @@ describe('quickStartStateTransfer', () => {
       lodging: 'Stay at the resort',
     });
   });
+
+  it('drops skipped-question follow-up answers during restore rewrites', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      showFollowUps: true,
+      viewState: 'followups',
+      followUpAnswers: {
+        transport: 'Shuttle leaves at 4 PM',
+      },
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'transport',
+            category: 'travel',
+            question: 'How should guests get there?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.transport'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'skipped',
+            answer: '',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    }));
+
+    const restored = readQuickStartDraftSnapshot();
+
+    expect(restored?.followUpAnswers).toEqual({});
+    expect(restored?.showFollowUps).toBe(false);
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').followUpAnswers).toEqual({});
+  });
 });
