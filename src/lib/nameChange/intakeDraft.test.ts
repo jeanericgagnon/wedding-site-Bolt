@@ -242,6 +242,30 @@ describe('name change intake draft helpers', () => {
       }),
     ]);
 
+    expect(upsertDraftNameChangeExtractedField([], 'draft-court_order', 'execution date' as never, '  ', '2026-04-05')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-court_order',
+        field_key: 'court_order_date',
+        field_label: 'Court Order Date',
+      }),
+    ]);
+
+    expect(upsertDraftNameChangeExtractedField([], 'draft-court_order', 'date of signature' as never, '  ', '2026-04-05')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-court_order',
+        field_key: 'court_order_date',
+        field_label: 'Court Order Date',
+      }),
+    ]);
+
+    expect(upsertDraftNameChangeExtractedField([], 'draft-marriage_certificate', 'date of issuance' as never, '  ', '2024-06-01')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-marriage_certificate',
+        field_key: 'issuance_date',
+        field_label: 'Issuance Date',
+      }),
+    ]);
+
     expect(upsertDraftNameChangeExtractedField([], 'draft-marriage_certificate', 'cert no' as never, '  ', 'MC-123')).toEqual([
       expect.objectContaining({
         document_id: 'draft-marriage_certificate',
