@@ -168,13 +168,17 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     parsed.clarifyingState
       && typeof parsed.clarifyingState === 'object'
       && !Array.isArray(parsed.clarifyingState)
-      && 'clarifying' in parsed.clarifyingState
-      && parsed.clarifyingState.clarifying
-      && typeof parsed.clarifyingState.clarifying === 'object'
-      && !Array.isArray(parsed.clarifyingState.clarifying)
       && (
-        Array.isArray(parsed.clarifyingState.clarifying.questions)
-        || Array.isArray(parsed.clarifyingState.clarifying.history)
+        (
+          'clarifying' in parsed.clarifyingState
+          && parsed.clarifyingState.clarifying
+          && typeof parsed.clarifyingState.clarifying === 'object'
+          && !Array.isArray(parsed.clarifyingState.clarifying)
+          && (
+            Array.isArray(parsed.clarifyingState.clarifying.questions)
+            || Array.isArray(parsed.clarifyingState.clarifying.history)
+          )
+        )
         || (
           parsed.clarifyingState.draftOutputs
           && typeof parsed.clarifyingState.draftOutputs === 'object'
@@ -191,8 +195,16 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
                 : {},
             ),
             clarifying: {
-              ...parsed.clarifyingState.clarifying,
-              questions: Array.isArray(parsed.clarifyingState.clarifying.questions)
+              mode: parsed.clarifyingState.clarifying
+                && typeof parsed.clarifyingState.clarifying === 'object'
+                && !Array.isArray(parsed.clarifyingState.clarifying)
+                && parsed.clarifyingState.clarifying.mode === 'ask'
+                  ? 'ask'
+                  : 'draft',
+              questions: parsed.clarifyingState.clarifying
+                && typeof parsed.clarifyingState.clarifying === 'object'
+                && !Array.isArray(parsed.clarifyingState.clarifying)
+                && Array.isArray(parsed.clarifyingState.clarifying.questions)
                 ? parsed.clarifyingState.clarifying.questions
                     .filter(isStoredClarifyingQuestion)
                     .map((question) => ({
@@ -206,7 +218,10 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
                       answer: question.answer.trim(),
                     }))
                 : [],
-              history: Array.isArray(parsed.clarifyingState.clarifying.history)
+              history: parsed.clarifyingState.clarifying
+                && typeof parsed.clarifyingState.clarifying === 'object'
+                && !Array.isArray(parsed.clarifyingState.clarifying)
+                && Array.isArray(parsed.clarifyingState.clarifying.history)
                 ? parsed.clarifyingState.clarifying.history
                     .filter(isStoredClarifyingQuestion)
                     .map((question) => ({

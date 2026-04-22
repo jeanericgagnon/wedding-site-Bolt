@@ -122,6 +122,29 @@ describe('quickStartStateTransfer', () => {
     expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').clarifyingState?.clarifying.history).toEqual([]);
   });
 
+
+  it('rehydrates draft-only clarifying snapshots when older payloads omitted the clarifying envelope entirely', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      clarifyingState: {
+        draftOutputs: {
+          hero: {
+            headline: 'Welcome to our wedding',
+          },
+        },
+      },
+    }));
+
+    const restored = readQuickStartDraftSnapshot();
+
+    expect(restored?.clarifyingState?.clarifying.mode).toBe('draft');
+    expect(restored?.clarifyingState?.clarifying.questions).toEqual([]);
+    expect(restored?.clarifyingState?.clarifying.history).toEqual([]);
+    expect(restored?.clarifyingState?.draftOutputs).toEqual({
+      hero: { headline: 'Welcome to our wedding' },
+    });
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').clarifyingState?.clarifying?.questions).toEqual([]);
+  });
+
   it('drops malformed existing storage completely when the payload is invalid json', () => {
     window.localStorage.setItem(QUICK_START_STORAGE_KEY, '{bad json');
 
