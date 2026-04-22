@@ -21,7 +21,7 @@ function shouldBlockDraftDocumentFieldWrite(documentId: string | null | undefine
   const trimmedDocumentId = typeof documentId === 'string' ? documentId.trim() : '';
   const requestedDraftDocumentId = trimmedDocumentId.toLowerCase().startsWith('draft');
   const requestedBareDraftDocumentId = /^draft$/i.test(trimmedDocumentId);
-  return requestedDraftDocumentId && (!normalizedDocumentId || requestedBareDraftDocumentId || normalizedDocumentId === 'draft-other');
+  return requestedDraftDocumentId && (!normalizedDocumentId || requestedBareDraftDocumentId);
 }
 
 function normalizeDraftDocumentKind(value: string) {
