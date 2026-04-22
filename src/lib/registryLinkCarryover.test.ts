@@ -57,4 +57,10 @@ describe('carryOverRegistryLinks', () => {
       { url: 'https://target.com/list', sourceLabel: 'Target' },
     ]);
   });
+
+  it('does not duplicate a single extracted registry link across labeled fragments', () => {
+    expect(carryOverRegistryLinks('Amazon Registry | Purchased | https://amazon.com/shop')).toEqual([
+      { url: 'https://amazon.com/shop', sourceLabel: 'Amazon' },
+    ]);
+  });
 });

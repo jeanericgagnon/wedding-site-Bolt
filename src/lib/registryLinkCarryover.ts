@@ -49,7 +49,14 @@ export function carryOverRegistryLinks(raw: string | null | undefined): Carryove
   const seen = new Set<string>();
   return raw
     .split('\n')
-    .flatMap((line) => line.split(/[|,;]/).map((part) => part.trim()).filter(Boolean))
+    .flatMap((line) => {
+      const extractedUrl = extractRegistryUrlToken(line);
+      if (!extractedUrl) return [line.trim()].filter(Boolean);
+      return line
+        .split(/[|,;]/)
+        .map((part) => part.trim())
+        .filter((part) => part.toLowerCase().includes(extractedUrl.toLowerCase()) || /\.[a-z]{2,}/i.test(part));
+    })
     .map((line) => normalizeUrl(extractRegistryUrlToken(line) ?? line))
     .filter((url): url is string => Boolean(url))
     .filter((url) => {

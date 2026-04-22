@@ -381,7 +381,8 @@ describe('sections registry resolution', () => {
     expect(registryLinkCarryover).toContain("const quotedHref = line.match(/[\"'](https?:\\/\\/[^\"']+|www\\.[^\"']+)[\"']/i)?.[1] ?? null;");
     expect(registryLinkCarryover).toContain("const markdownBareHref = line.match(/\\[[^\\]]+\\]\\(((?:[a-z0-9-]+\\.)+[a-z]{2,}[^)]*)\\)/i)?.[1] ?? null;");
     expect(registryLinkCarryover).toContain("const bareDomainMatch = line.match(/(?:^|\\s)((?:[a-z0-9-]+\\.)+[a-z]{2,}(?:\\/[^\\s]*)?)/i)?.[1] ?? null;");
-    expect(registryLinkCarryover).toContain(".flatMap((line) => line.split(/[|,;]/).map((part) => part.trim()).filter(Boolean))");
+    expect(registryLinkCarryover).toContain("const extractedUrl = extractRegistryUrlToken(line);");
+    expect(registryLinkCarryover).toContain("part.toLowerCase().includes(extractedUrl.toLowerCase()) || /\\.[a-z]{2,}/i.test(part)");
     expect(registryLinkCarryover).toContain(".map((line) => normalizeUrl(extractRegistryUrlToken(line) ?? line))");
     expect(registryLinkCarryover).toContain("replace(/[),.;:!?]+$/, '')");
     expect(weddingDataBindings).toContain('function normalizeBindableSectionType(type: string): string {');
