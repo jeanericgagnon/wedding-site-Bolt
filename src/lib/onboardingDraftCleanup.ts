@@ -3,10 +3,12 @@ import { clearQuickStartDraftSnapshot } from './quickStartStateTransfer';
 
 export const ONBOARDING_DRAFT_STORAGE_KEY = 'dayoflove:onboarding-draft';
 
-const clearStorageKeyIfPresent = (key: string) => {
+export const clearOnboardingDraftSnapshot = () => {
+  if (typeof window === 'undefined') return;
+
   try {
-    if (window.localStorage.getItem(key) !== null) {
-      window.localStorage.removeItem(key);
+    if (window.localStorage.getItem(ONBOARDING_DRAFT_STORAGE_KEY) !== null) {
+      window.localStorage.removeItem(ONBOARDING_DRAFT_STORAGE_KEY);
     }
   } catch {
     // ignore cleanup failures so other onboarding draft keys can still clear
@@ -15,7 +17,7 @@ const clearStorageKeyIfPresent = (key: string) => {
 
 export const clearAllOnboardingDraftStorage = () => {
   if (typeof window === 'undefined') return;
-  clearStorageKeyIfPresent(ONBOARDING_DRAFT_STORAGE_KEY);
+  clearOnboardingDraftSnapshot();
   clearQuickStartDraftSnapshot();
   clearGuidedSetupDraftSnapshot();
 };

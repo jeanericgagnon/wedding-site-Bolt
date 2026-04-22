@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { clearAllOnboardingDraftStorage, ONBOARDING_DRAFT_STORAGE_KEY } from './onboardingDraftCleanup';
+import { clearAllOnboardingDraftStorage, clearOnboardingDraftSnapshot, ONBOARDING_DRAFT_STORAGE_KEY } from './onboardingDraftCleanup';
 import { GUIDED_SETUP_STORAGE_KEY } from './guidedSetupPersistence';
 import { QUICK_START_STORAGE_KEY } from './quickStartStateTransfer';
 
@@ -49,6 +49,26 @@ describe('onboardingDraftCleanup', () => {
     expect(window.localStorage.getItem(ONBOARDING_DRAFT_STORAGE_KEY)).toBe('1');
     expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
     expect(window.localStorage.getItem(GUIDED_SETUP_STORAGE_KEY)).toBeNull();
+    removeItemSpy.mockRestore();
+  });
+
+
+  it('skips generic onboarding draft cleanup deletes when storage is already clear', () => {
+    const removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem');
+
+    clearOnboardingDraftSnapshot();
+
+    expect(removeItemSpy).not.toHaveBeenCalled();
+    removeItemSpy.mockRestore();
+  });
+
+  it('tolerates generic onboarding draft cleanup failures', () => {
+    window.localStorage.setItem(ONBOARDING_DRAFT_STORAGE_KEY, 'stale');
+    const removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+      throw new Error('blocked');
+    });
+
+    expect(() => clearOnboardingDraftSnapshot()).not.toThrow();
     removeItemSpy.mockRestore();
   });
 
