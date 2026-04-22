@@ -1,5 +1,6 @@
 import { clearGuidedSetupDraftSnapshot } from './guidedSetupPersistence';
 import { clearQuickStartDraftSnapshot } from './quickStartStateTransfer';
+import { clearSignupReturnPath } from './signupContinuation';
 
 export const ONBOARDING_DRAFT_STORAGE_KEY = 'dayoflove:onboarding-draft';
 
@@ -20,4 +21,5 @@ export const clearAllOnboardingDraftStorage = () => {
   clearOnboardingDraftSnapshot();
   clearQuickStartDraftSnapshot();
   clearGuidedSetupDraftSnapshot();
+  clearSignupReturnPath();
 };

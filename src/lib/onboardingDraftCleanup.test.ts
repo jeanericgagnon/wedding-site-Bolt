@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { clearAllOnboardingDraftStorage, clearOnboardingDraftSnapshot, ONBOARDING_DRAFT_STORAGE_KEY } from './onboardingDraftCleanup';
+import { readSignupReturnPath, writeSignupReturnPath } from './signupContinuation';
 import { GUIDED_SETUP_STORAGE_KEY } from './guidedSetupPersistence';
 import { QUICK_START_STORAGE_KEY } from './quickStartStateTransfer';
 
@@ -8,16 +9,18 @@ describe('onboardingDraftCleanup', () => {
     window.localStorage.clear();
   });
 
-  it('clears generic onboarding, quick start, and guided setup draft storage together', () => {
+  it('clears generic onboarding, quick start, guided setup, and signup return storage together', () => {
     window.localStorage.setItem(ONBOARDING_DRAFT_STORAGE_KEY, '1');
     window.localStorage.setItem(QUICK_START_STORAGE_KEY, '1');
     window.localStorage.setItem(GUIDED_SETUP_STORAGE_KEY, '1');
+    writeSignupReturnPath('/onboarding/quick-start');
 
     clearAllOnboardingDraftStorage();
 
     expect(window.localStorage.getItem(ONBOARDING_DRAFT_STORAGE_KEY)).toBeNull();
     expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
     expect(window.localStorage.getItem(GUIDED_SETUP_STORAGE_KEY)).toBeNull();
+    expect(readSignupReturnPath()).toBeNull();
   });
 
   it('skips onboarding draft cleanup deletes when storage is already clear', () => {
@@ -35,6 +38,7 @@ describe('onboardingDraftCleanup', () => {
     window.localStorage.setItem(ONBOARDING_DRAFT_STORAGE_KEY, '1');
     window.localStorage.setItem(QUICK_START_STORAGE_KEY, '1');
     window.localStorage.setItem(GUIDED_SETUP_STORAGE_KEY, '1');
+    writeSignupReturnPath('/onboarding/quick-start');
 
     const originalRemoveItem = Storage.prototype.removeItem;
     const removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(function (this: Storage, key: string) {
@@ -49,6 +53,7 @@ describe('onboardingDraftCleanup', () => {
     expect(window.localStorage.getItem(ONBOARDING_DRAFT_STORAGE_KEY)).toBe('1');
     expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
     expect(window.localStorage.getItem(GUIDED_SETUP_STORAGE_KEY)).toBeNull();
+    expect(readSignupReturnPath()).toBeNull();
     removeItemSpy.mockRestore();
   });
 
