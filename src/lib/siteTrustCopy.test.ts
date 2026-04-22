@@ -31,6 +31,11 @@ describe('SITE_TRUST_COPY starter draft truth', () => {
     expect(SITE_TRUST_COPY.reviewBeforeSendMessaging.toLowerCase()).not.toContain('ready-to-send');
   });
 
+  it('keeps the launch story core framed around starter draft + guest ops + calm execution', () => {
+    expect(SITE_TRUST_COPY.launchStoryCore).toBe('starter draft + guest ops + calm execution');
+    expect(SITE_TRUST_COPY.launchStoryCore).not.toContain('website + guest ops');
+  });
+
   it('keeps custom URL copy framed around sharing a DayOf link instead of implying a separate domain product', () => {
     expect(SITE_TRUST_COPY.customWeddingUrl).toBe('Share-ready DayOf URL. No separate-domain upsell.');
     expect(SITE_TRUST_COPY.customWeddingUrlExplainer).toBe('Every site includes a personalized DayOf URL, so you can share a polished DayOf link with guests without a separate domain upsell.');
