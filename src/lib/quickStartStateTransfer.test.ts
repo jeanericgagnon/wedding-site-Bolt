@@ -441,6 +441,42 @@ describe('quickStartStateTransfer', () => {
     expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').viewState).toBe('question');
   });
 
+  it('keeps explicit follow-up opt-out closed even when typed draft answers survive restore', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      showFollowUps: false,
+      viewState: 'followups',
+      followUpAnswers: {
+        transport: 'Need shuttle details',
+      },
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'transport',
+            category: 'travel',
+            question: 'How should guests get there?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.transport'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'unresolved',
+            answer: 'Need shuttle details',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    }));
+
+    const restored = readQuickStartDraftSnapshot();
+
+    expect(restored?.showFollowUps).toBe(false);
+    expect(restored?.viewState).toBe('question');
+    expect(restored?.followUpAnswers).toEqual({ transport: 'Need shuttle details' });
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').showFollowUps).toBe(false);
+  });
+
   it('rewrites stale question-view restores back into follow-up mode when work remains', () => {
     window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
       showFollowUps: true,
