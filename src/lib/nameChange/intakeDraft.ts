@@ -12,8 +12,9 @@ export function buildDraftNameChangeDocumentId(kind: NameChangeDocumentInput['do
 }
 
 export function normalizeDraftNameChangeDocumentId(documentId: string | null | undefined) {
-  if (!documentId?.startsWith('draft-')) return documentId ?? null;
-  return buildDraftNameChangeDocumentId(documentId.slice('draft-'.length) as NameChangeDocumentInput['document_kind']);
+  const normalizedDocumentId = documentId?.trim() || null;
+  if (!normalizedDocumentId?.startsWith('draft-')) return normalizedDocumentId;
+  return buildDraftNameChangeDocumentId(normalizedDocumentId.slice('draft-'.length) as NameChangeDocumentInput['document_kind']);
 }
 
 export function createDraftNameChangeDocument(
