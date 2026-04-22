@@ -6,7 +6,14 @@ export const deriveFollowUpAnswersFromClarifyingState = (
 ) => {
   if (!clarifyingState) return fallback;
 
-  const derived = clarifyingState.clarifying.questions.reduce<Record<string, string>>((acc, question) => {
+  const derivedFromHistory = clarifyingState.clarifying.history.reduce<Record<string, string>>((acc, question) => {
+    if (question.answer?.trim()) {
+      acc[question.id] = question.answer;
+    }
+    return acc;
+  }, {});
+
+  const derivedFromActiveQuestions = clarifyingState.clarifying.questions.reduce<Record<string, string>>((acc, question) => {
     if (question.answer?.trim()) {
       acc[question.id] = question.answer;
     }
@@ -15,6 +22,7 @@ export const deriveFollowUpAnswersFromClarifyingState = (
 
   return {
     ...fallback,
-    ...derived,
+    ...derivedFromHistory,
+    ...derivedFromActiveQuestions,
   };
 };

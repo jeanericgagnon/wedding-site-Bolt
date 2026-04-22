@@ -29,4 +29,26 @@ describe('quickStartClarifyingRestore', () => {
   it('falls back to saved follow-up answers when clarifying state is missing', () => {
     expect(deriveFollowUpAnswersFromClarifyingState(null, { foo: 'bar' })).toEqual({ foo: 'bar' });
   });
+
+  it('restores the latest answered follow-up from clarifying history when active questions were already cleared', () => {
+    const clarifying = createEmptyClarifyingPersistence();
+    clarifying.clarifying.history = [
+      {
+        id: 'lodging',
+        category: 'travel',
+        question: 'Where should guests stay?',
+        expectedAnswerType: 'short_text',
+        targetFields: ['travel.lodging'],
+        affectedSections: ['travel'],
+        skippable: true,
+        round: 1,
+        status: 'answered',
+        answer: 'Use the hotel block at La Valencia.',
+      },
+    ];
+
+    const restored = deriveFollowUpAnswersFromClarifyingState(clarifying, { lodging: 'stale fallback' });
+
+    expect(restored.lodging).toBe('Use the hotel block at La Valencia.');
+  });
 });
