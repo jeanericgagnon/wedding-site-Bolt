@@ -372,7 +372,7 @@ export const Product: React.FC = () => {
             { icon: Mail, title: 'Built-in comms', text: 'Keep guests synced without duct tape.' },
             { icon: Users, title: 'Guest logic that scales', text: 'Households and plus-ones stay sane.' },
             { icon: Calendar, title: 'Day-of readiness', text: 'Timeline and execution stay aligned.' },
-            { icon: CheckCircle2, title: 'Clear path to live', text: 'Less friction between signup and a site you can share.' },
+            { icon: CheckCircle2, title: 'Clear path to review', text: 'Less friction between signup and a launch-ready draft you can tighten before sharing.' },
           ].map((item) => (
             <div key={item.title} className="card-clean p-5">
               <item.icon className="w-5 h-5 text-brand mb-3" />
