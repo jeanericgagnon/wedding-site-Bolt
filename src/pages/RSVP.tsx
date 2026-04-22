@@ -344,6 +344,7 @@ export default function RSVP() {
     const plusOneName = (formData.plus_one_name || '').trim();
     const normalizedCustomAnswers = normalizeCustomAnswers(customAnswers);
     setError('');
+    setCustomAnswers(normalizedCustomAnswers);
     setStep('form');
     setFormStep(1);
     setExistingRsvp({
