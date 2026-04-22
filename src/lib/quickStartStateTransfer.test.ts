@@ -605,6 +605,39 @@ describe('quickStartStateTransfer', () => {
     expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').showFollowUps).toBe(true);
   });
 
+  it('ignores malformed follow-up opt-out flags when typed clarifying drafts still need resume', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      showFollowUps: 'false',
+      viewState: 'question',
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'transport',
+            category: 'travel',
+            question: 'How should guests get there?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.transport'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'unresolved',
+            answer: 'Need shuttle details',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    }));
+
+    const restored = readQuickStartDraftSnapshot();
+
+    expect(restored?.showFollowUps).toBe(true);
+    expect(restored?.viewState).toBe('followups');
+    expect(restored?.followUpAnswers).toEqual({ transport: 'Need shuttle details' });
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').showFollowUps).toBe(true);
+  });
+
   it('rewrites in-progress follow-up restores back on when the flag is missing', () => {
     window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
       viewState: 'question',
