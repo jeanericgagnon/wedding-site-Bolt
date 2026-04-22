@@ -44,6 +44,13 @@ interface EventRsvpFormState {
   notes: string;
 }
 
+function isMissingEventRsvpSupportError(message: string) {
+  const normalized = message.toLowerCase();
+  return normalized.includes('does not exist')
+    || normalized.includes('relation "event_rsvps"')
+    || normalized.includes('404');
+}
+
 export default function EventRSVP() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
@@ -174,8 +181,8 @@ export default function EventRSVP() {
               .maybeSingle();
 
             if (error) {
-              const msg = (error.message || '').toLowerCase();
-              if (msg.includes('event_rsvps') || msg.includes('does not exist') || msg.includes('404')) {
+              const msg = error.message || '';
+              if (isMissingEventRsvpSupportError(msg)) {
                 if (activeLoadRequestRef.current !== requestId) return {
                   id: invitation.id,
                   event_id: invitation.event_id,
@@ -297,13 +304,6 @@ export default function EventRSVP() {
 
     setSubmitting(true);
     setSubmitError('');
-
-    const isMissingEventRsvpSupportError = (message: string) => {
-      const normalized = message.toLowerCase();
-      return normalized.includes('does not exist')
-        || normalized.includes('relation "event_rsvps"')
-        || normalized.includes('404');
-    };
 
     try {
       const invitation = invitations.find((i) => i.id === selectedEvent);
