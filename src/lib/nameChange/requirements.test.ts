@@ -324,6 +324,43 @@ describe('name change requirements skeleton', () => {
       makeCase({ legal_basis: 'court_order' as never }),
       [
         {
+          id: 'doc-court-order',
+          document_kind: 'court_order_name_change',
+          display_name: 'Court order',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+        },
+        {
+          document_kind: 'current_drivers_license',
+          display_name: 'Driver license',
+          storage_mode: 'metadata_only',
+          intake_status: 'uploaded',
+        },
+      ],
+      [
+        {
+          document_id: 'doc-court-order',
+          field_key: 'case_number',
+          field_label: 'Case number',
+          field_value_masked: '24-CV-1188',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+      ],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'court-order-reference-extraction')).toMatchObject({
+      status: 'satisfied',
+      reason: 'Court-order reference extraction is present for the modeled review path.',
+    });
+  });
+
+  it('keeps court-order reference extraction missing when an unlinked extract claims a case number', () => {
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase({ legal_basis: 'court_order' as never }),
+      [
+        {
+          id: 'doc-court-order',
           document_kind: 'court_order_name_change',
           display_name: 'Court order',
           storage_mode: 'metadata_only',
@@ -348,8 +385,8 @@ describe('name change requirements skeleton', () => {
     );
 
     expect(snapshot.results.find((result) => result.key === 'court-order-reference-extraction')).toMatchObject({
-      status: 'satisfied',
-      reason: 'Court-order reference extraction is present for the modeled review path.',
+      status: 'missing',
+      reason: 'Court-order proof is in intake, but no verified case-number or signed-date extraction is represented yet.',
     });
   });
 

@@ -37,12 +37,18 @@ function getLinkedFieldValue(
   return normalizeValue(field?.field_value_masked);
 }
 
+function getManualFallbackField(
+  extractedFields: NameChangeExtractedFieldInput[],
+  fieldKey: NameChangeExtractionFieldKey,
+): NameChangeExtractedFieldInput | null {
+  return extractedFields.find((item) => !item.document_id && item.field_key === fieldKey) ?? null;
+}
+
 function getManualFallbackValue(
   extractedFields: NameChangeExtractedFieldInput[],
   fieldKey: NameChangeExtractionFieldKey,
 ): string | null {
-  const field = extractedFields.find((item) => !item.document_id && item.field_key === fieldKey);
-  return normalizeValue(field?.field_value_masked);
+  return normalizeValue(getManualFallbackField(extractedFields, fieldKey)?.field_value_masked);
 }
 
 export function getDocumentLinkedFieldValue(
@@ -52,6 +58,23 @@ export function getDocumentLinkedFieldValue(
   fieldKey: NameChangeExtractionFieldKey,
 ): string | null {
   return getLinkedFieldValue(documents, extractedFields, kind, fieldKey) ?? getManualFallbackValue(extractedFields, fieldKey);
+}
+
+export function hasVerifiedDocumentLinkedFieldValue(
+  documents: NameChangeDocumentInput[],
+  extractedFields: NameChangeExtractedFieldInput[],
+  kind: NameChangeDocumentKind,
+  fieldKey: NameChangeExtractionFieldKey,
+): boolean {
+  const document = getDocumentByKind(documents, kind);
+  const linkedField = document?.id
+    ? extractedFields.find((item) => item.document_id === document.id && item.field_key === fieldKey && item.is_verified)
+    : null;
+
+  if (normalizeValue(linkedField?.field_value_masked)) return true;
+
+  const manualField = getManualFallbackField(extractedFields, fieldKey);
+  return Boolean(manualField && manualField.source_type === 'manual' && manualField.is_verified && normalizeValue(manualField.field_value_masked));
 }
 
 export function getDocumentCapturedFieldKeys(

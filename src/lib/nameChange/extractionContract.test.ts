@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildNameChangeExtractionContractSnapshot } from './extractionContract';
+import { buildNameChangeExtractionContractSnapshot, hasVerifiedDocumentLinkedFieldValue } from './extractionContract';
 import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput } from './types';
 
 function makeCase(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseInput {
@@ -190,5 +190,37 @@ describe('name change extraction contract', () => {
       expect.objectContaining({ key: 'target-first-name-court-order', documentKind: 'court_order', canonicalValue: 'Alex', extractedValue: 'Avery' }),
       expect.objectContaining({ key: 'target-last-name-court-order', documentKind: 'court_order', canonicalValue: 'Jordan', extractedValue: 'Jordan-Smith' }),
     ]));
+  });
+
+  it('only treats linked or manual verified court-order reference fields as grounded', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-court-order',
+        document_kind: 'court_order_name_change',
+        display_name: 'Court order name change',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+
+    expect(hasVerifiedDocumentLinkedFieldValue(documents, [
+      {
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: '24-CV-1188',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ], 'court_order', 'case_number')).toBe(false);
+
+    expect(hasVerifiedDocumentLinkedFieldValue(documents, [
+      {
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: '24-CV-1188',
+        source_type: 'manual',
+        is_verified: true,
+      },
+    ], 'court_order', 'case_number')).toBe(true);
   });
 });

@@ -1,6 +1,6 @@
 import { buildNameChangeCanonicalCase } from './canonical';
 import { buildNameChangeDocumentIntakeSnapshot } from './documentContract';
-import { buildNameChangeExtractionContractSnapshot } from './extractionContract';
+import { buildNameChangeExtractionContractSnapshot, hasVerifiedDocumentLinkedFieldValue } from './extractionContract';
 import type {
   NameChangeCaseInput,
   NameChangeDocumentInput,
@@ -96,7 +96,8 @@ export function evaluateNameChangeRequirements(
   const hasIdentityMetadataReady = intakeSnapshot.documents.some((document) => identityCoverageKinds.includes(document.kind) && document.metadataMissing.length === 0 && document.intakeStatus !== 'not_started');
   const hasTravelIdentitySupport = ['current_passport', 'current_drivers_license'].some((kind) => canonicalCase.documents[kind as NameChangeDocumentKind].intakeStatus !== 'not_started');
   const hasCourtOrderProof = canonicalCase.documents.court_order.intakeStatus !== 'not_started';
-  const hasVerifiedCourtOrderReferenceExtraction = extractedFields.some((field) => field.is_verified && (field.field_key === 'case_number' || field.field_key === 'court_order_date'));
+  const hasVerifiedCourtOrderReferenceExtraction = hasVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'case_number')
+    || hasVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'court_order_date');
   const legalBasisLabel = canonicalCase.legalBasis === 'court_order' ? 'court-order proof' : legalProofKind.replace(/_/g, ' ');
 
   const results: NameChangeRequirementResult[] = [
