@@ -6,6 +6,8 @@ const registryPage = readFileSync(resolve(process.cwd(), 'src/pages/dashboard/Re
 const registryTypes = readFileSync(resolve(process.cwd(), 'src/pages/dashboard/registry/registryTypes.ts'), 'utf8');
 const repairState = readFileSync(resolve(process.cwd(), 'src/pages/dashboard/registry/repairState.ts'), 'utf8');
 const duplicateRegistryItems = readFileSync(resolve(process.cwd(), 'src/pages/dashboard/registry/duplicateRegistryItems.ts'), 'utf8');
+const registryItemCard = readFileSync(resolve(process.cwd(), 'src/pages/dashboard/registry/RegistryItemCard.tsx'), 'utf8');
+const registryItemForm = readFileSync(resolve(process.cwd(), 'src/pages/dashboard/registry/RegistryItemForm.tsx'), 'utf8');
 
 const checks = [
   { name: 'dashboard uses sanitizeRegistryQuantityState', ok: registryPage.includes('sanitizeRegistryQuantityState') },
@@ -17,6 +19,8 @@ const checks = [
   { name: 'registry types expose title normalization', ok: registryTypes.includes('export function normalizeRegistryTitleForComparison') },
   { name: 'repair state exposes getRegistryRepairStates', ok: repairState.includes('export function getRegistryRepairStates') },
   { name: 'duplicate grouping normalizes title-only items', ok: duplicateRegistryItems.includes('normalizeRegistryTitleForComparison') },
+  { name: 'registry cards fall back to canonical page preview URLs', ok: registryItemCard.includes('const pagePreviewSourceUrl = item.item_url ?? item.canonical_url ?? null;') },
+  { name: 'registry form seeds canonical links into editable product URLs', ok: registryItemForm.includes("const [urlInput, setUrlInput] = useState(initial?.item_url ?? initial?.canonical_url ?? '');") },
 ];
 
 const failures = checks.filter((check) => !check.ok);
