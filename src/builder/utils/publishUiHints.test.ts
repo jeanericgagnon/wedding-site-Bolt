@@ -237,9 +237,10 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('RSVP');
   });
 
-  it('returns RSVP guidance when blocker copy uses the readiness detail wording', () => {
-    const hints = getPublishBlockedHints('Guests can reply.');
-    expect(hints[0]).toContain('RSVP');
+  it('does not mistake the RSVP success detail for a blocker', () => {
+    expect(getPublishBlockedHints('Guests can reply.')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
   });
 
   it('returns fallback guidance for unknown message', () => {
