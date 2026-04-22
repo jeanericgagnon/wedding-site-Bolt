@@ -416,9 +416,7 @@ export default function EventRSVP() {
       }
       postSubmitResetTimeoutRef.current = window.setTimeout(() => {
         if (activeSubmitRequestRef.current !== requestId) return;
-        submitInFlightRef.current = false;
-        setSelectedEvent(null);
-        setSubmitSuccess(false);
+        closeRsvpForm();
         postSubmitResetTimeoutRef.current = null;
       }, 2000);
     } catch {
