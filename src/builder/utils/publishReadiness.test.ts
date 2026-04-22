@@ -147,4 +147,18 @@ describe('publishReadiness', () => {
       detail: 'Home has visible sections.',
     });
   });
+
+  it('falls back to the first page when activePageId is an empty string', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].title = 'Home';
+    project.pages[0].sections = [makeSection({ id: 'home-live', enabled: true })];
+
+    const readiness = buildPublishReadiness(project, undefined, { activePageId: '' });
+    expect(readiness.find((item) => item.id === 'current-page')).toEqual({
+      id: 'current-page',
+      label: 'Current page has visible content',
+      done: true,
+      detail: 'Home has visible sections.',
+    });
+  });
 });
