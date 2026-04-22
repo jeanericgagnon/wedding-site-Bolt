@@ -35,11 +35,16 @@ export const persistQuickStartDraftSnapshot = (value: unknown) => {
   if (typeof window === 'undefined') return null;
   const normalized = createQuickStartDraftSnapshot(value);
   const hasMeaningfulDraft = hasMeaningfulQuickStartDraftSnapshot(normalized);
+  const normalizedRaw = hasMeaningfulDraft ? JSON.stringify(normalized) : null;
 
   try {
-    if (hasMeaningfulDraft) {
-      window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify(normalized));
-    } else {
+    const existingRaw = window.localStorage.getItem(QUICK_START_STORAGE_KEY);
+
+    if (normalizedRaw !== null) {
+      if (existingRaw !== normalizedRaw) {
+        window.localStorage.setItem(QUICK_START_STORAGE_KEY, normalizedRaw);
+      }
+    } else if (existingRaw !== null) {
       window.localStorage.removeItem(QUICK_START_STORAGE_KEY);
     }
   } catch {

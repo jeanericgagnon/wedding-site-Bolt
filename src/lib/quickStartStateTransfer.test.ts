@@ -181,6 +181,61 @@ describe('quickStartStateTransfer', () => {
     setItemSpy.mockRestore();
   });
 
+
+  it('skips storage writes when persisting a quick start snapshot that is already normalized', () => {
+    const normalizedRaw = JSON.stringify({
+      initialSetupAnswers: {
+        names: 'Alex & Jordan',
+        labelPreference: 'names-only',
+        customLabelPartnerOne: '',
+        customLabelPartnerTwo: '',
+        whenWhere: '',
+        venueNameOrTbd: '',
+        style: '',
+        guestFeel: '',
+        weekendEventsRaw: '',
+        ceremonyArrivalTime: '',
+        guestCountBand: '',
+        plusOnePolicy: '',
+        childrenAllowed: '',
+        rsvpDeadline: '',
+        mealChoice: '',
+        registryIntent: '',
+        optionalStory: '',
+      },
+      currentIndex: 0,
+      followUpAnswers: {},
+      showFollowUps: false,
+      clarifyingState: null,
+      viewState: 'question',
+    });
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, normalizedRaw);
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+
+    const persisted = persistQuickStartDraftSnapshot({ initialSetupAnswers: { names: 'Alex & Jordan' } });
+
+    expect(persisted?.initialSetupAnswers.names).toBe('Alex & Jordan');
+    expect(setItemSpy).not.toHaveBeenCalled();
+    setItemSpy.mockRestore();
+  });
+
+  it('skips storage deletes when persisting an empty quick start snapshot and storage is already clear', () => {
+    const removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem');
+
+    const persisted = persistQuickStartDraftSnapshot({
+      currentIndex: 0,
+      initialSetupAnswers: {},
+      followUpAnswers: {},
+      showFollowUps: false,
+      clarifyingState: null,
+      viewState: 'question',
+    });
+
+    expect(persisted).toBeNull();
+    expect(removeItemSpy).not.toHaveBeenCalled();
+    removeItemSpy.mockRestore();
+  });
+
   it('returns normalized restored draft when rewrite-on-read storage updates fail', () => {
     window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({ initialSetupAnswers: { names: ' Alex & Jordan ' } }));
     const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
