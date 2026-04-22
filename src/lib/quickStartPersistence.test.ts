@@ -37,11 +37,17 @@ describe('quickStartPersistence', () => {
       followUpAnswers: ['bad'],
       viewState: 'bogus',
       clarifyingState: [],
+      initialSetupAnswers: {
+        names: 'Alex & Jordan',
+        labelPreference: 'wizard-mode',
+      },
     });
 
     expect(normalized.currentIndex).toBe(0);
     expect(normalized.followUpAnswers).toEqual({});
     expect(normalized.viewState).toBe('question');
     expect(normalized.clarifyingState).toBeNull();
+    expect(normalized.initialSetupAnswers.names).toBe('Alex & Jordan');
+    expect(normalized.initialSetupAnswers.labelPreference).toBe('names-only');
   });
 });

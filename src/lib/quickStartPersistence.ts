@@ -29,7 +29,13 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
 
   const initialSetupAnswers = parsed.initialSetupAnswers && typeof parsed.initialSetupAnswers === 'object' && !Array.isArray(parsed.initialSetupAnswers)
     ? Object.fromEntries(
-        Object.entries(parsed.initialSetupAnswers).filter(([, val]) => typeof val === 'string'),
+        Object.entries(parsed.initialSetupAnswers).filter(([key, val]) => {
+          if (typeof val !== 'string') return false;
+          if (key === 'labelPreference') {
+            return ['names-only', 'bride-groom', 'bride-bride', 'groom-groom', 'custom'].includes(val);
+          }
+          return true;
+        }),
       ) as Partial<InitialSetupAnswers>
     : {};
 
