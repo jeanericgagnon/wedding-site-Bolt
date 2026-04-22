@@ -1,7 +1,7 @@
 import { buildNameChangeCanonicalCase } from './canonical';
 import { canonicalizeNameChangeDocumentKind, matchesNameChangeDocumentKind } from './documentKinds';
 import { buildNameChangeExtractionContractSnapshot, getDocumentCapturedFieldKeys } from './extractionContract';
-import { isDraftNameChangeDocumentId } from './intakeDraft';
+import { isDraftNameChangeDocumentId, isDraftNameChangeMaskedFileName } from './intakeDraft';
 import type {
   NameChangeCaseInput,
   NameChangeDocumentContractDefinition,
@@ -99,7 +99,7 @@ function metadataMissingForDocument(document: NameChangeDocumentInput | undefine
   if (document.document_kind === 'other') return [];
 
   const missing: string[] = [];
-  if (!document.file_name_masked?.trim()) missing.push('masked filename');
+  if (!document.file_name_masked?.trim() || isDraftNameChangeMaskedFileName(document.file_name_masked)) missing.push('masked filename');
   if (!document.issuing_authority?.trim()) missing.push('issuing authority');
   if (!document.issued_on?.trim()) missing.push('issued date');
 

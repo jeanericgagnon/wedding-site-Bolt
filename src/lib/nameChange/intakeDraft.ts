@@ -29,6 +29,10 @@ function buildDraftMaskedFileName(kind: NameChangeDocumentInput['document_kind']
   return `${kind.replace(/_/g, '-')}-draft.pdf`;
 }
 
+export function isDraftNameChangeMaskedFileName(fileName: string | null | undefined) {
+  return typeof fileName === 'string' && /-draft\.pdf$/i.test(fileName.trim());
+}
+
 function shouldBlockDraftDocumentFieldWrite(documentId: string | null | undefined, normalizedDocumentId: string | null) {
   const trimmedDocumentId = typeof documentId === 'string' ? documentId.trim() : '';
   const requestedDraftDocumentId = trimmedDocumentId.toLowerCase().startsWith('draft');

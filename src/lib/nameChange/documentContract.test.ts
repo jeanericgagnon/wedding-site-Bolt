@@ -359,10 +359,39 @@ describe('name change document intake contract', () => {
 
     expect(snapshot.documents.find((document) => document.kind === 'current_passport')).toMatchObject({
       intakeStatus: 'uploaded',
-      metadataMissing: expect.arrayContaining(['issuing authority', 'issued date', 'expiration date', 'extraction confidence']),
+      metadataMissing: expect.arrayContaining(['masked filename', 'issuing authority', 'issued date', 'expiration date', 'extraction confidence']),
       metadataReady: 0,
     });
     expect(snapshot.summary.metadataGaps).toBe(1);
+  });
+
+  it('treats reviewed draft filenames as metadata gaps until a real masked filename exists', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase(),
+      [
+        {
+          id: 'doc-reviewed',
+          document_kind: 'current_passport',
+          display_name: 'Passport reviewed',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'current-passport-draft.pdf',
+          issuing_authority: 'U.S. Department of State',
+          issued_on: '2024-06-01',
+          expires_on: '2034-06-01',
+          extraction_confidence: 0.92,
+        },
+      ],
+      [],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'current_passport')).toMatchObject({
+      intakeStatus: 'reviewed',
+      metadataMissing: ['masked filename'],
+      metadataReady: 0,
+    });
+    expect(snapshot.summary.metadataGaps).toBe(1);
+    expect(snapshot.summary.metadataReady).toBe(0);
   });
 
   it('treats court_order_name_change as the court-order intake contract and exposes case-number extraction gaps', () => {
