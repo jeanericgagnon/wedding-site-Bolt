@@ -24,7 +24,9 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
   const parsed = value as Partial<QuickStartDraftSnapshot>;
 
   const followUpAnswers = parsed.followUpAnswers && typeof parsed.followUpAnswers === 'object' && !Array.isArray(parsed.followUpAnswers)
-    ? Object.fromEntries(Object.entries(parsed.followUpAnswers).filter(([, val]) => typeof val === 'string'))
+    ? Object.fromEntries(
+        Object.entries(parsed.followUpAnswers).filter(([key, val]) => key.trim().length > 0 && typeof val === 'string'),
+      )
     : {};
 
   const allowedInitialSetupValues: Partial<Record<keyof InitialSetupAnswers, readonly string[]>> = {

@@ -54,4 +54,15 @@ describe('quickStartPersistence', () => {
     expect(normalized.initialSetupAnswers.guestCountBand).toBe('');
     expect(normalized.initialSetupAnswers.plusOnePolicy).toBe('');
   });
+
+  it('drops malformed follow-up answers with blank keys', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      followUpAnswers: {
+        '': 'should disappear',
+        'event-1-time': '6:00 PM',
+      },
+    });
+
+    expect(normalized.followUpAnswers).toEqual({ 'event-1-time': '6:00 PM' });
+  });
 });
