@@ -1465,15 +1465,15 @@ describe('publishReadiness', () => {
     project.pages = [
       {
         ...project.pages[0],
-        id: 'page-zeta',
-        title: 'Details',
+        id: 'page-alpha',
+        title: 'Zulu',
         orderIndex: 1,
         sections: [makeSection({ id: 'details-hidden', enabled: false })],
       },
       {
         ...project.pages[0],
-        id: 'page-alpha',
-        title: 'Home',
+        id: 'page-zeta',
+        title: 'Alpha',
         orderIndex: 1,
         sections: [makeSection({ id: 'home-live', enabled: true })],
       },
@@ -1484,7 +1484,7 @@ describe('publishReadiness', () => {
       id: 'current-page',
       label: 'Current page has visible content',
       done: true,
-      detail: 'Home has visible sections.',
+      detail: 'Alpha has visible sections.',
     });
   });
 
