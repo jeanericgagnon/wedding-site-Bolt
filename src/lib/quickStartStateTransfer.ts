@@ -19,7 +19,11 @@ export const readQuickStartDraftSnapshot = (): QuickStartDraftSnapshot | null =>
   if (!raw) return null;
   try {
     const normalized = normalizeQuickStartDraftSnapshot(JSON.parse(raw));
-    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify(normalized));
+    try {
+      window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify(normalized));
+    } catch {
+      // ignore storage rewrite failures and still return the normalized draft
+    }
     return normalized;
   } catch {
     window.localStorage.removeItem(QUICK_START_STORAGE_KEY);

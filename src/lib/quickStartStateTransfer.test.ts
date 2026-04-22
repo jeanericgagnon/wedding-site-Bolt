@@ -66,4 +66,16 @@ describe('quickStartStateTransfer', () => {
 
     setItemSpy.mockRestore();
   });
+
+  it('returns normalized restored draft when rewrite-on-read storage updates fail', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({ initialSetupAnswers: { names: ' Alex & Jordan ' } }));
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('quota exceeded');
+    });
+
+    expect(readQuickStartDraftSnapshot()?.initialSetupAnswers.names).toBe('Alex & Jordan');
+    expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toContain(' Alex & Jordan ');
+
+    setItemSpy.mockRestore();
+  });
 });
