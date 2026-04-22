@@ -551,6 +551,7 @@ export default function RSVP() {
   const selectGuest = (foundGuest: Guest, foundRsvp: ExistingRSVP | null, deadline: string | null = null, questions: RSVPQuestion[] = [], meal: RSVPMealConfig = { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, household: HouseholdGuest[] = [], playlistUrl: string | null = null) => {
     setGuest(foundGuest);
     setFormStep(1);
+    setActivePredictionIndex(-1);
     setRsvpDeadline(deadline);
     setRsvpQuestions(questions);
     setMealConfig(meal);
