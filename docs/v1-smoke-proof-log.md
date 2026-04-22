@@ -24,6 +24,8 @@ _Machine-readable requirement:_ `manualProofRequirements.canonicalCouplePath`
 _Machine-readable requirement:_ `manualProofRequirements.runtimeWordingVerification`
 _Machine-readable requirement:_ `manualProofRequirements.onboardingStarterDraftWording`
 _Machine-readable status:_ `manualProofSummary.missingCount: 3` (`canonicalCouplePath`, `runtimeWordingVerification`, `onboardingStarterDraftWording`)
+_Machine-readable status:_ `manualProofSummary.blockingCount: 3`
+_Machine-readable evidence log:_ `manualProofSummary.evidenceLogPath: docs/v1-smoke-proof-log.md`
 
 ## Purpose
 This is the hard proof artifact for whether DayOf can credibly claim **v1 / done-enough**.
