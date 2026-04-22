@@ -205,6 +205,7 @@ function normalizeDraftFieldValue(fieldKey: NameChangeExtractedFieldInput['field
   if (fieldKey === 'case_number' || fieldKey === 'certificate_number') {
     return normalizedValue
       .toUpperCase()
+      .replace(/[–—−]/g, '-')
       .replace(/\s*([\-/#])\s*/g, '$1')
       .replace(/\s+/g, ' ')
       .trim();

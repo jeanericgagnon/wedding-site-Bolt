@@ -907,7 +907,7 @@ describe('name change document intake contract', () => {
         courtOrderDraft.id,
         'case #' as never,
         '  ',
-        '24-cv - 1188',
+        '24–cv—1188',
       ),
       courtOrderDraft.id,
       'signed date' as never,
