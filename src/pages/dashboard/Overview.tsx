@@ -797,7 +797,7 @@ export const DashboardOverview: React.FC = () => {
                             type="button"
                             onClick={() => {
                               if (typeof window !== 'undefined') {
-                                window.localStorage.setItem('dayoflove:onboarding-resume-hint', item.questionKey);
+                                writeOnboardingResumeHint(item.questionKey);
                               }
                               navigate('/onboarding');
                             }}
@@ -815,7 +815,7 @@ export const DashboardOverview: React.FC = () => {
                       size="sm"
                       onClick={() => {
                         if (typeof window !== 'undefined') {
-                          window.localStorage.setItem('dayoflove:onboarding-resume-hint', 'first-incomplete');
+                          writeOnboardingResumeHint('first-incomplete');
                         }
                         navigate('/onboarding');
                       }}
