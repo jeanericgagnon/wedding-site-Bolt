@@ -252,9 +252,15 @@ function normalizeDraftFieldValue(fieldKey: NameChangeExtractedFieldInput['field
       }
     }
 
-    const compactDateMatch = normalizedValue.match(/^(\d{4})(\d{2})(\d{2})$/);
+    const compactDateMatch = normalizedValue.match(/^(19\d{2}|20\d{2})(\d{2})(\d{2})$/);
     if (compactDateMatch) {
       const [, year, month, day] = compactDateMatch;
+      return `${year}-${month}-${day}`;
+    }
+
+    const compactUsDateMatch = normalizedValue.match(/^(\d{2})(\d{2})(\d{4})$/);
+    if (compactUsDateMatch) {
+      const [, month, day, year] = compactUsDateMatch;
       return `${year}-${month}-${day}`;
     }
   }
