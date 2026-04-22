@@ -351,4 +351,34 @@ describe('quickStartPersistence', () => {
     expect(normalized.clarifyingState?.clarifying.history[0]?.id).toBe('event-1-time');
     expect(normalized.clarifyingState?.clarifying.history[0]?.answer).toBe('6:00 PM');
   });
+
+  it('drops answered clarifying entries whose answers become blank after trimming', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      showFollowUps: true,
+      viewState: 'followups',
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'event-1-time',
+            category: 'event_structure',
+            question: 'When is dinner?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['events.0.time'],
+            affectedSections: ['schedule'],
+            skippable: true,
+            round: 1,
+            status: 'answered',
+            answer: '   ',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.clarifyingState?.clarifying.questions).toEqual([]);
+    expect(normalized.showFollowUps).toBe(false);
+    expect(normalized.viewState).toBe('question');
+  });
 });

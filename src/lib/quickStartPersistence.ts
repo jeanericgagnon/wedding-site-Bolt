@@ -74,7 +74,8 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
       && Number.isInteger(question.round)
       && typeof question.status === 'string'
       && ['pending', 'answered', 'skipped', 'unresolved'].includes(question.status)
-      && typeof question.answer === 'string';
+      && typeof question.answer === 'string'
+      && (question.status !== 'answered' || question.answer.trim().length > 0);
   };
 
   const clarifyingState = normalizeQuickStartClarifyingMode(normalizeQuickStartClarifyingState(
