@@ -344,6 +344,7 @@ export default function EventRSVP() {
     }
     activeSubmitRequestRef.current += 1;
     submitInFlightRef.current = false;
+    setSubmitting(false);
     setRsvpForm((current) => updater(current));
   }
 
