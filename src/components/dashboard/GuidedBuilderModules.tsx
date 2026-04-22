@@ -89,16 +89,17 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
   saving,
 }) => {
   const [activeModule, setActiveModule] = useState<ModuleId>('hero');
+  const normalizeModuleSectionType = (type: string) => type.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
 
   const isSectionEnabled = (sectionType: SectionType): boolean => {
     return layoutConfig.pages[0].sections.some(
-      (s) => s.type === sectionType && s.enabled
+      (s) => normalizeModuleSectionType(s.type) === normalizeModuleSectionType(sectionType) && s.enabled
     );
   };
 
   const toggleSection = (sectionType: SectionType) => {
     const updatedSections = layoutConfig.pages[0].sections.map((s) =>
-      s.type === sectionType ? { ...s, enabled: !s.enabled } : s
+      normalizeModuleSectionType(s.type) === normalizeModuleSectionType(sectionType) ? { ...s, enabled: !s.enabled } : s
     );
 
     onLayoutChange({

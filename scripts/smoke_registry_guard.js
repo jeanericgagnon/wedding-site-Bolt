@@ -21,6 +21,7 @@ const aiBuilderProjectPatch = readFileSync(resolve(process.cwd(), 'src/lib/aiBui
 const weddingDataAdapter = readFileSync(resolve(process.cwd(), 'src/builder/adapters/weddingDataAdapter.ts'), 'utf8');
 const canonicalContentMapper = readFileSync(resolve(process.cwd(), 'src/lib/aiCanonicalContentMapper.ts'), 'utf8');
 const weddingDataBindings = readFileSync(resolve(process.cwd(), 'src/render/weddingDataBindings.ts'), 'utf8');
+const guidedBuilderModules = readFileSync(resolve(process.cwd(), 'src/components/dashboard/GuidedBuilderModules.tsx'), 'utf8');
 const sectionVariantCompatibility = readFileSync(resolve(process.cwd(), 'src/lib/sectionVariantCompatibility.ts'), 'utf8');
 const builderV2Lab = readFileSync(resolve(process.cwd(), 'src/pages/BuilderV2Lab.tsx'), 'utf8');
 const legacySectionRegistry = readFileSync(resolve(process.cwd(), 'src/sections/sectionRegistry.tsx'), 'utf8');
@@ -64,6 +65,7 @@ const checks = [
   { name: 'builder registry wedding-data bindings tolerate drifted registry section types', ok: weddingDataAdapter.includes("function normalizeBuilderBindingSectionType(type: BuilderSectionInstance['type']): BuilderSectionInstance['type'] {") && weddingDataAdapter.includes("return (normalizedType === 'registrysection' ? 'registry' : type) as BuilderSectionInstance['type'];") },
   { name: 'canonical registry content mapping tolerates drifted registry section types', ok: canonicalContentMapper.includes("const normalizedType = type.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');") && canonicalContentMapper.includes("case 'registrysection':") },
   { name: 'rendered registry wedding-data bindings tolerate drifted registry section types', ok: weddingDataBindings.includes('function normalizeBindableSectionType(type: string): string {') && weddingDataBindings.includes("return normalizedType === 'registrysection' ? 'registry' : type;") },
+  { name: 'guided builder registry toggles tolerate drifted registry section types', ok: guidedBuilderModules.includes("const normalizeModuleSectionType = (type: string) => type.trim().toLowerCase().replace(/[^a-z0-9]/g, '');") && guidedBuilderModules.includes("normalizeModuleSectionType(s.type) === normalizeModuleSectionType(sectionType)") },
   { name: 'canonical registry validation accepts template-backed registry aliases', ok: canonicalSectionRegistry.includes("luxury: 'featured'") && canonicalSectionRegistry.includes("experiences: 'featured'") && canonicalSectionRegistry.includes("classic: 'cards'") },
   { name: 'public registry cards keep canonical-only store links usable', ok: registryCardsSection.includes("return item.item_url ?? item.canonical_url ?? null;") && registryCardsSection.includes('url: existing.url ?? publicUrl') },
   { name: 'public registry cards separate partial and claimed store counts', ok: registryCardsSection.includes("partial: existing.partial + (item.purchase_status === 'partial' ? 1 : 0)") && registryCardsSection.includes("group.purchased > 0 ? ` · ${group.purchased} claimed` : ''") },
