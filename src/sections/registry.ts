@@ -318,8 +318,9 @@ function getCanonicalSectionFallbackVariant(type: string, inputType: string, var
 
 function resolveCanonicalSectionVariantForType(type: string, inputType: string, variant: unknown): string {
   const normalizedVariantKey = normalizeRegistryVariantKey(variant);
+  const defaultVariant = getAllDefinitions().find((definition) => definition.type === type)?.variant;
   if (!normalizedVariantKey) {
-    return getAllDefinitions().find((definition) => definition.type === type)?.variant ?? (typeof variant === 'string' ? variant : '');
+    return defaultVariant ?? (typeof variant === 'string' ? variant : '');
   }
 
   const directVariant = getAllDefinitions()
@@ -328,6 +329,7 @@ function resolveCanonicalSectionVariantForType(type: string, inputType: string, 
   if (directVariant) return directVariant;
 
   return getCanonicalSectionFallbackVariant(type, inputType, normalizedVariantKey)
+    ?? defaultVariant
     ?? (typeof variant === 'string' ? variant : '');
 }
 
