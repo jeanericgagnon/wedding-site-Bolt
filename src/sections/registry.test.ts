@@ -111,9 +111,13 @@ describe('sections registry resolution', () => {
     expect(getSectionVariants('registry').slice(0, publicVariantOrder.length)).toEqual(publicVariantOrder);
   });
 
-  it('keeps site view registry fallback normalization aligned with public cards first', () => {
+  it('keeps site view registry fallback normalization aligned with public registry aliases', () => {
     const siteView = readFileSync(resolve(__dirname, '../pages/SiteView.tsx'), 'utf8');
-    expect(siteView).toContain("const supported = getSectionVariants(section.type);");
+    expect(siteView).toContain("registry: {");
+    expect(siteView).toContain("default: 'cards'");
+    expect(siteView).toContain("fundHighlight: 'featured'");
+    expect(siteView).toContain("luxury: 'featured'");
+    expect(siteView).toContain("modern: 'cards'");
     expect(siteView).toContain("const nextVariant = fallbackMap[section.type]?.[section.variant] ?? supported[0] ?? 'default';");
   });
 });
