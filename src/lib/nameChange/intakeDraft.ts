@@ -61,7 +61,7 @@ function normalizeDraftDocumentKind(value: string) {
     .trim()
     .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
     .toLowerCase()
-    .replace(/[\\/.:\-\s]+/g, '_')
+    .replace(/[\\/.:\-'’\s]+/g, '_')
     .replace(/_+/g, '_')
     .replace(/^_+|_+$/g, '');
 
@@ -69,13 +69,18 @@ function normalizeDraftDocumentKind(value: string) {
     marriage_cert: 'marriage_certificate',
     marriage_record: 'marriage_certificate',
     marriage_license_certificate: 'marriage_certificate',
+    court_decree: 'court_order',
+    name_change_decree: 'court_order',
+    name_change_order: 'court_order',
     passport: 'current_passport',
     passport_book: 'current_passport',
     passport_card: 'current_passport',
     driver_license: 'current_drivers_license',
     drivers_license: 'current_drivers_license',
+    driver_s_license: 'current_drivers_license',
     driver_licence: 'current_drivers_license',
     drivers_licence: 'current_drivers_license',
+    driver_s_licence: 'current_drivers_license',
     dmv_id: 'current_drivers_license',
     state_id: 'current_drivers_license',
     state_identification: 'current_drivers_license',
@@ -111,7 +116,7 @@ function normalizeDraftFieldKey(value: string) {
     .trim()
     .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
     .toLowerCase()
-    .replace(/[\\/.:\-\s]+/g, '_')
+    .replace(/[\\/.:\-'’\s]+/g, '_')
     .replace(/_+/g, '_')
     .replace(/^_+|_+$/g, '');
 
@@ -140,7 +145,9 @@ function normalizeDraftFieldKey(value: string) {
     surname: 'last_name',
     family_name: 'last_name',
     given_name: 'first_name',
+    first_given_name: 'first_name',
     middle_initial: 'middle_name',
+    middle_given_name: 'middle_name',
   };
 
   const canonicalFieldKey = (fieldAliases[normalizedFieldKey] ?? normalizedFieldKey) as NameChangeExtractedFieldInput['field_key'];

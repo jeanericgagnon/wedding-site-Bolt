@@ -96,6 +96,14 @@ describe('name change intake draft helpers', () => {
       id: 'draft-marriage_certificate',
       document_kind: 'marriage_certificate',
     });
+    expect(createDraftNameChangeDocument('court decree' as never, ' Court decree ')).toMatchObject({
+      id: 'draft-court_order',
+      document_kind: 'court_order',
+    });
+    expect(createDraftNameChangeDocument("driver's license" as never, " Driver's license ")).toMatchObject({
+      id: 'draft-current_drivers_license',
+      document_kind: 'current_drivers_license',
+    });
     expect(createDraftNameChangeDocument('passport' as never, ' Passport ')).toMatchObject({
       id: 'draft-current_passport',
       document_kind: 'current_passport',
@@ -232,6 +240,24 @@ describe('name change intake draft helpers', () => {
         document_id: 'draft-current_passport',
         field_key: 'middle_name',
         field_label: 'Middle Name',
+      }),
+    ]);
+
+    expect(upsertDraftNameChangeExtractedField([], 'draft-current_passport', 'first given name' as never, '  ', 'alice')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-current_passport',
+        field_key: 'first_name',
+        field_label: 'First Name',
+        field_value_masked: 'Alice',
+      }),
+    ]);
+
+    expect(upsertDraftNameChangeExtractedField([], 'draft-current_passport', 'middle given name' as never, '  ', 'beth')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-current_passport',
+        field_key: 'middle_name',
+        field_label: 'Middle Name',
+        field_value_masked: 'Beth',
       }),
     ]);
 
