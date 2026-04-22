@@ -148,11 +148,14 @@ describe('sections registry resolution', () => {
     const compatibility = readFileSync(resolve(__dirname, '../lib/sectionVariantCompatibility.ts'), 'utf8');
     const compatibilityTest = readFileSync(resolve(__dirname, '../lib/sectionVariantCompatibility.test.ts'), 'utf8');
     expect(compatibility).toContain('const supportedByLowercase = new Map');
+    expect(compatibility).toContain('export function resolveBuilderVariant(type: SectionType, variant: unknown): string {');
     expect(compatibility).toContain("const normalizedVariant = typeof variant === 'string' ? variant.trim() : '';");
     expect(compatibility).toContain('const canonicalVariant = supportedByLowercase.get(normalizedVariantKey) ?? normalizedVariant;');
     expect(compatibility).toContain("Object.entries(aliases).find(([aliasVariant]) => aliasVariant.toLowerCase() === normalizedVariantKey)?.[1]");
     expect(compatibilityTest).toContain("expect(resolveBuilderVariant('registry', '   ')).toBe('default');");
     expect(compatibilityTest).toContain("expect(resolveBuilderVariant('registry', 'not-a-real-variant')).toBe('default');");
+    expect(compatibilityTest).toContain("expect(resolveBuilderVariant('registry', undefined as never)).toBe('default');");
+    expect(compatibilityTest).toContain("expect(resolveBuilderVariant('travel', { variant: 'localGuide' } as never)).toBe('default');");
     expect(compatibilityTest).toContain("expect(resolveBuilderVariant('registry', ' FEATURED ')).toBe('featured');");
     expect(compatibilityTest).toContain("expect(resolveBuilderVariant('registry', 'Experiences')).toBe('experiences');");
   });
