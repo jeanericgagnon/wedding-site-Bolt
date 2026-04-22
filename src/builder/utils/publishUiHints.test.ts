@@ -104,6 +104,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('event details');
   });
 
+  it('returns wedding-date guidance when blocker copy uses the readiness label wording', () => {
+    const hints = getPublishBlockedHints('Wedding date is set');
+    expect(hints[0]).toContain('event details');
+  });
+
   it('returns wedding-date guidance when short date blocker copy is lowercased by upstream formatting', () => {
     const hints = getPublishBlockedHints('add your wedding date.');
     expect(hints[0]).toContain('event details');
