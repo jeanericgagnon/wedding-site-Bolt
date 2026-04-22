@@ -75,7 +75,7 @@ export const Home: React.FC = () => {
       title: 'RSVP Engine',
       icon: CheckCircle2,
       href: '/features/rsvp',
-      bullets: ['Multi-event RSVP', 'Household-aware flow', 'Meal selection', 'Dietary updates', 'Deadline handling', 'Live response view'],
+      bullets: ['Multi-event RSVP', 'Household-aware flow', 'Meal selection', 'Dietary updates', 'Deadline handling', 'Response tracking dashboard'],
     },
     {
       id: 'messaging',
