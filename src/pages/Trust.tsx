@@ -207,7 +207,7 @@ export const Trust: React.FC = () => {
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Per-slice v1 read</p>
               <h3 className="mt-3 text-2xl font-semibold tracking-tight text-text-primary">What is actually done enough versus what still needs proof</h3>
               <p className="mt-3 text-sm leading-6 text-text-secondary">
-                This is the harsher read behind the launch line. The product can be directionally strong and still need proof before a slice earns broader public confidence.
+                This is the harsher read behind the launch line. The product can be directionally strong and still need proof before a slice earns broader public confidence, so unfinished proof should narrow the claim instead of hiding behind polished copy.
               </p>
             </div>
 
