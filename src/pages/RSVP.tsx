@@ -605,7 +605,7 @@ export default function RSVP() {
       const err = lookupResp.error;
       if (err || !data) {
         if (activeLookupRequestRef.current !== requestId) return;
-        selectGuest(picked, null, rsvpDeadline, rsvpQuestions, mealConfig, [], musicPlaylistUrl);
+        selectGuest(picked, null, null, [], DEFAULT_MEAL_CONFIG, [], null);
         return;
       }
       const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions?: RSVPQuestion[] | null; rsvpMealConfig?: RSVPMealConfig | null; musicPlaylistUrl?: string | null; householdGuests?: HouseholdGuest[] | null };
@@ -616,7 +616,7 @@ export default function RSVP() {
       selectGuest(resolvedGuest, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null);
     } catch {
       if (activeLookupRequestRef.current !== requestId) return;
-      selectGuest(picked, null, rsvpDeadline, rsvpQuestions, mealConfig, [], musicPlaylistUrl);
+      selectGuest(picked, null, null, [], DEFAULT_MEAL_CONFIG, [], null);
     } finally {
       if (activeLookupRequestRef.current !== requestId) return;
       setLoading(false);
