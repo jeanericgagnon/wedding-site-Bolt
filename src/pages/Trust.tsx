@@ -13,7 +13,7 @@ const TRUST_PILLARS = [
   },
   {
     title: 'Guest access handled carefully',
-    body: 'Search visibility and guest access are not the same thing. Couples can keep a site out of search and use live access controls without us pretending that means a whole separate unpublished product exists when it does not.',
+    body: 'Search visibility and guest access are not the same thing. Couples can keep a site out of search and use access controls without us pretending that means a whole separate unpublished product exists when it does not.',
   },
   {
     title: 'AI helps draft, not secretly operate',
