@@ -292,6 +292,7 @@ If that line fails, the rest is noise.
    - current launch-critical blocker command: `npm run proof:v1:guests-rsvp-ops` remains env-blocked until anon-callable auth exists for `validate-rsvp-token`
    - current launch call mirrors canonical smoke output: `not_clear_to_claim_yet` / `no_go_for_public_v1_claim`
    - current blocking proof gaps: `canonicalCouplePath`, `runtimeWordingVerification`, `onboardingStarterDraftWording`
+   - current proof order mirrors canonical smoke: canonical couple-path truth pass -> runtime wording verification -> onboarding + first-run starter-draft wording verification
    - operator read rule: treat green automation here as route continuity only, not public-v1 launch clearance
 2. **Guest-state continuity smoke + fix**
    - prove or fix guest edits, RSVP updates, event-level visibility, downstream reads
