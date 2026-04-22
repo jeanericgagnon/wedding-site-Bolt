@@ -360,6 +360,7 @@ export default function EventRSVP() {
     setSubmitError('');
     setSubmitSuccess(false);
     setError('');
+    setHasEventRsvpSupport(null);
     setRsvpForm({ attending: true, dietary_restrictions: '', notes: '' });
     setSelectedEvent(null);
   }
