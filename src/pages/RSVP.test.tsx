@@ -2673,12 +2673,83 @@ describe('RSVP stale submit protection', () => {
     expect(await screen.findByText("You've already responded. You can update your response below.")).toBeInTheDocument();
     fireEvent.click(screen.getByText('Continue to details'));
 
-    expect(screen.getByRole('combobox')).toHaveValue('Chicken');
+    expect(screen.getByDisplayValue('Chicken')).toBeInTheDocument();
     expect(screen.getByDisplayValue('See you on the dance floor')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Play Dancing Queen')).toBeInTheDocument();
     expect(screen.queryByDisplayValue('  Chicken  ')).not.toBeInTheDocument();
     expect(screen.queryByDisplayValue('  See you on the dance floor  ')).not.toBeInTheDocument();
     expect(screen.queryByDisplayValue('  Play Dancing Queen  ')).not.toBeInTheDocument();
+  });
+
+  it('keeps returned RSVP truth normalized after a local submit success', async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          guest: {
+            id: 'guest-1',
+            first_name: 'Taylor',
+            last_name: 'Rivera',
+            name: 'Taylor Rivera',
+            email: 'taylor@example.com',
+            phone: null,
+            group_name: null,
+            wedding_site_id: 'site-1',
+            plus_one_allowed: false,
+            invited_to_ceremony: true,
+            invited_to_reception: true,
+            invite_token: 'token-1',
+          },
+          existingRsvp: null,
+          guests: null,
+          rsvpDeadline: null,
+          rsvpQuestions: [
+            {
+              id: 'q-1',
+              label: 'Song request',
+              type: 'short_text',
+              required: false,
+              options: [],
+            },
+          ],
+          rsvpMealConfig: { enabled: true, options: ['Chicken', 'Beef'] },
+          musicPlaylistUrl: null,
+          householdGuests: [],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true, guestName: 'Taylor Rivera', attending: true }),
+      });
+
+    render(
+      <MemoryRouter initialEntries={['/rsvp']}>
+        <RSVP />
+      </MemoryRouter>
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('rsvp.search_placeholder'), { target: { value: 'Taylor Rivera' } });
+    fireEvent.click(screen.getByText('Find My Invitation'));
+
+    await screen.findByText('Welcome, Taylor Rivera!');
+    fireEvent.click(screen.getByText('Continue to details'));
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'Chicken' } });
+    fireEvent.change(screen.getByPlaceholderText('Your answer'), { target: { value: '  Play Dancing Queen  ' } });
+    fireEvent.change(screen.getByPlaceholderText('Dietary restrictions, accessibility needs, or special requests'), {
+      target: { value: '  See you on the dance floor  ' },
+    });
+    fireEvent.click(screen.getByText('Continue to review'));
+    fireEvent.click(screen.getByText('Submit RSVP'));
+
+    expect(await screen.findByText("You're confirmed!")).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Done'));
+    fireEvent.click(screen.getByText('Continue to details'));
+
+    expect(screen.getByDisplayValue('Chicken')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Play Dancing Queen')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('See you on the dance floor')).toBeInTheDocument();
+    expect(screen.queryByDisplayValue('  Play Dancing Queen  ')).not.toBeInTheDocument();
+    expect(screen.queryByDisplayValue('  See you on the dance floor  ')).not.toBeInTheDocument();
   });
 
   it('drops stale token submit completions after the page unmounts', async () => {

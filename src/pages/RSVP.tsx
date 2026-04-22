@@ -142,6 +142,28 @@ function normalizeExistingRsvp(existingRsvp: ExistingRSVP): ExistingRSVP {
   };
 }
 
+function buildNormalizedExistingRsvp(formData: {
+  attending: boolean;
+  attendCeremony: boolean;
+  attendReception: boolean;
+  meal_choice: string;
+  plus_one_name: string;
+  notes: string;
+}, customAnswers: Record<string, string | string[]>, id: string): ExistingRSVP {
+  return normalizeExistingRsvp({
+    id,
+    attending: formData.attending,
+    attending_ceremony: formData.attendCeremony,
+    attending_reception: formData.attendReception,
+    meal_choice: formData.meal_choice,
+    plus_one_name: formData.plus_one_name,
+    plus_one_count: formData.plus_one_name.trim() ? 1 : 0,
+    children_count: 0,
+    notes: formData.notes,
+    custom_answers: customAnswers,
+  });
+}
+
 function invalidateRsvpSubmitState(
   activeSubmitRequestRef: React.MutableRefObject<number>,
   submitInFlightRef: React.MutableRefObject<boolean>,
@@ -370,32 +392,18 @@ export default function RSVP() {
 
   const returnToLoadedRsvp = useCallback(() => {
     invalidateActiveSubmit();
-    const notesPayload = (formData.notes || '').trim();
-    const mealChoice = (formData.meal_choice || '').trim();
-    const plusOneName = (formData.plus_one_name || '').trim();
-    const normalizedCustomAnswers = normalizeCustomAnswers(customAnswers);
+    const normalizedExistingRsvp = buildNormalizedExistingRsvp(formData, customAnswers, 'local-rsvp-confirmation');
     setError('');
     setFormData((current) => ({
       ...current,
-      meal_choice: mealChoice,
-      plus_one_name: plusOneName,
-      notes: notesPayload,
+      meal_choice: normalizedExistingRsvp.meal_choice || '',
+      plus_one_name: normalizedExistingRsvp.plus_one_name || '',
+      notes: normalizedExistingRsvp.notes || '',
     }));
-    setCustomAnswers(normalizedCustomAnswers);
+    setCustomAnswers(normalizedExistingRsvp.custom_answers || {});
     setStep('form');
     setFormStep(1);
-    setExistingRsvp({
-      id: 'local-rsvp-confirmation',
-      attending: formData.attending,
-      attending_ceremony: formData.attendCeremony,
-      attending_reception: formData.attendReception,
-      meal_choice: mealChoice || null,
-      plus_one_name: plusOneName || null,
-      plus_one_count: plusOneName ? 1 : 0,
-      children_count: 0,
-      notes: notesPayload || null,
-      custom_answers: normalizedCustomAnswers,
-    });
+    setExistingRsvp(normalizedExistingRsvp);
   }, [customAnswers, formData, invalidateActiveSubmit]);
 
   useEffect(() => {
@@ -731,18 +739,7 @@ export default function RSVP() {
 
       if (DEMO_MODE) {
         const stored = getDemoStoredResponses();
-        const payload: ExistingRSVP = {
-          id: `demo-rsvp-${guest.id}`,
-          attending: formData.attending,
-          attending_ceremony: formData.attendCeremony,
-          attending_reception: formData.attendReception,
-          meal_choice: mealChoice || null,
-          plus_one_name: plusOneName || null,
-          plus_one_count: plusOneName ? 1 : 0,
-          children_count: 0,
-          notes: notesPayload || null,
-          custom_answers: normalizedCustomAnswers,
-        };
+        const payload = buildNormalizedExistingRsvp(formData, customAnswers, `demo-rsvp-${guest.id}`);
         const targetIds = applyToHousehold ? [guest.id, ...selectedHouseholdGuestIds] : [guest.id];
         targetIds.forEach((id) => { stored[id] = { ...payload, id: `demo-rsvp-${id}` }; });
         localStorage.setItem(DEMO_RSVP_RESPONSES_KEY, JSON.stringify(stored));
@@ -782,18 +779,7 @@ export default function RSVP() {
       }
 
       if (activeSubmitRequestRef.current !== requestId) return;
-      setExistingRsvp({
-        id: existingRsvp?.id ?? 'submitted-rsvp',
-        attending: formData.attending,
-        attending_ceremony: formData.attendCeremony,
-        attending_reception: formData.attendReception,
-        meal_choice: mealChoice || null,
-        plus_one_name: plusOneName || null,
-        plus_one_count: plusOneName ? 1 : 0,
-        children_count: 0,
-        notes: notesPayload || null,
-        custom_answers: normalizedCustomAnswers,
-      });
+      setExistingRsvp(buildNormalizedExistingRsvp(formData, customAnswers, existingRsvp?.id ?? 'submitted-rsvp'));
       setStep('success');
     } catch {
       if (activeSubmitRequestRef.current !== requestId) return;
