@@ -5,6 +5,7 @@ _Status:_ Canonical smoke automation covers public, setup, onboarding, and dashb
 _Owner:_ Product finish lane
 _Public v1 claim status:_ Not clear to claim yet
 _Launch call right now:_ NO-GO for public v1 claim
+_Why no-go:_ critical trust proof is still missing on the canonical couple path and runtime wording truth
 
 ## Purpose
 This is the hard proof artifact for whether DayOf can credibly claim **v1 / done-enough**.
