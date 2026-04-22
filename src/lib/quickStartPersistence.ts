@@ -172,7 +172,10 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
       && parsed.clarifyingState.clarifying
       && typeof parsed.clarifyingState.clarifying === 'object'
       && !Array.isArray(parsed.clarifyingState.clarifying)
-      && Array.isArray(parsed.clarifyingState.clarifying.questions)
+      && (
+        Array.isArray(parsed.clarifyingState.clarifying.questions)
+        || Array.isArray(parsed.clarifyingState.clarifying.history)
+      )
         ? {
             ...parsed.clarifyingState,
             draftOutputs: sanitizeDraftOutputs(
@@ -184,18 +187,20 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
             ),
             clarifying: {
               ...parsed.clarifyingState.clarifying,
-              questions: parsed.clarifyingState.clarifying.questions
-                .filter(isStoredClarifyingQuestion)
-                .map((question) => ({
-                  ...question,
-                  id: question.id.trim(),
-                  category: question.category.trim(),
-                  question: question.question.trim(),
-                  expectedAnswerType: question.expectedAnswerType.trim(),
-                  targetFields: question.targetFields.map((field) => field.trim()),
-                  affectedSections: question.affectedSections.map((section) => section.trim()),
-                  answer: question.answer.trim(),
-                })),
+              questions: Array.isArray(parsed.clarifyingState.clarifying.questions)
+                ? parsed.clarifyingState.clarifying.questions
+                    .filter(isStoredClarifyingQuestion)
+                    .map((question) => ({
+                      ...question,
+                      id: question.id.trim(),
+                      category: question.category.trim(),
+                      question: question.question.trim(),
+                      expectedAnswerType: question.expectedAnswerType.trim(),
+                      targetFields: question.targetFields.map((field) => field.trim()),
+                      affectedSections: question.affectedSections.map((section) => section.trim()),
+                      answer: question.answer.trim(),
+                    }))
+                : [],
               history: Array.isArray(parsed.clarifyingState.clarifying.history)
                 ? parsed.clarifyingState.clarifying.history
                     .filter(isStoredClarifyingQuestion)

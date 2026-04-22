@@ -190,6 +190,41 @@ describe('quickStartPersistence', () => {
     expect(normalized.showFollowUps).toBe(true);
   });
 
+
+  it('restores clarifying state even when older snapshots omitted questions', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      clarifyingState: {
+        clarifying: {
+          mode: 'draft',
+          history: [{
+            id: 'lodging',
+            category: 'travel',
+            question: 'Where should guests stay?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.lodging'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'answered',
+            answer: 'Stay at the resort',
+          }],
+        },
+        draftOutputs: {
+          hero: {
+            headline: 'Welcome to our wedding',
+          },
+        },
+      },
+    });
+
+    expect(normalized.clarifyingState?.clarifying.questions).toEqual([]);
+    expect(normalized.clarifyingState?.clarifying.history).toHaveLength(1);
+    expect(normalized.clarifyingState?.draftOutputs).toEqual({
+      hero: { headline: 'Welcome to our wedding' },
+    });
+    expect(normalized.followUpAnswers).toEqual({ lodging: 'Stay at the resort' });
+  });
+
   it('drops clarifying questions with non-string target fields during restore', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       showFollowUps: true,
