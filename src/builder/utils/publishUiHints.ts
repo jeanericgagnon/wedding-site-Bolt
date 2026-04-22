@@ -39,9 +39,6 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
     normalizedErrorLower.includes('add at least one page')
     || normalizedErrorLower.includes('add a page')
     || normalizedErrorLower.includes('apply a starting design')
-    || normalizedErrorLower.includes('a page exists')
-    || normalizedErrorLower.includes('page ready')
-    || normalizedErrorLower.includes('pages ready')
   ) {
     return [
       'Open Designs and apply a starting layout.',
@@ -63,8 +60,6 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
   if (
     normalizedErrorLower.includes('partner names')
     || normalizedErrorLower.includes('couple names')
-    || normalizedErrorLower.includes('couple names are filled in')
-    || normalizedErrorLower.includes('names are ready for guests')
     || normalizedErrorLower.includes('both names')
     || normalizedErrorLower.includes('both partners')
   ) {
@@ -76,8 +71,6 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
   if (
     normalizedErrorLower.includes('wedding date')
     || normalizedErrorLower.includes('event date')
-    || normalizedErrorLower.includes('date is set')
-    || normalizedErrorLower.includes('date is ready')
     || normalizedErrorLower.includes('add your date')
   ) {
     return [
@@ -104,8 +97,6 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
   if (
     normalizedErrorLower.includes('rsvp')
     || normalizedErrorLower.includes('turn rsvp on')
-    || normalizedErrorLower.includes('rsvp is turned on')
-    || normalizedErrorLower.includes('guests can reply')
   ) {
     return [
       'Turn RSVP back on before going live.',
