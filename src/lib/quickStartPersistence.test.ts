@@ -66,4 +66,15 @@ describe('quickStartPersistence', () => {
 
     expect(normalized.followUpAnswers).toEqual({ 'event-1-time': '6:00 PM' });
   });
+
+  it('dedupes trimmed follow-up keys so the latest answer wins', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      followUpAnswers: {
+        'event-1-time': '5:00 PM',
+        ' event-1-time ': '6:00 PM',
+      },
+    });
+
+    expect(normalized.followUpAnswers).toEqual({ 'event-1-time': '6:00 PM' });
+  });
 });
