@@ -107,6 +107,12 @@ test.describe('public route smoke basics', () => {
     await expect(page.getByRole('heading', { name: /welcome back/i })).toBeVisible();
   });
 
+  test('protected onboarding celebration route falls back to login when auth is missing', async ({ page }) => {
+    await gotoDom(page, '/onboarding/celebration');
+    await expect(page).toHaveURL(/\/login$/);
+    await expect(page.getByRole('heading', { name: /welcome back/i })).toBeVisible();
+  });
+
   test('rsvp entry page exposes the secure lookup guidance', async ({ page }) => {
     await gotoDom(page, '/rsvp');
     await expect(page.getByText(/use the invitation code from your email for the fastest lookup/i)).toBeVisible();
