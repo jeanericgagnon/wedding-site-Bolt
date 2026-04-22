@@ -70,4 +70,8 @@ describe('publishUiHints', () => {
     expect(getPublishProgressLabel(4, 5)).toBe('1 thing left before guest-facing launch');
     expect(getPublishProgressLabel(5, 5)).toBe('Ready to go live');
   });
+
+  it('treats over-complete progress as ready to go live', () => {
+    expect(getPublishProgressLabel(9, 5)).toBe('Ready to go live');
+  });
 });
