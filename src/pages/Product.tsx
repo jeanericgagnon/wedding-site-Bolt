@@ -355,7 +355,7 @@ export const Product: React.FC = () => {
             </div>
             <div className="rounded-xl border border-border-subtle bg-white p-4">
               <p className="text-sm font-medium text-ink">Planner workspace is real</p>
-              <p className="mt-1 text-sm text-ink/70">Guests, planning, messages, and coordinator mode now carry planner-specific framing instead of forcing every collaborator through a couple-only view.</p>
+              <p className="mt-1 text-sm text-ink/70">Guests, planning, messages, and coordinator mode now carry planner-specific framing instead of forcing every collaborator through a couple-only view, but the role boundaries still need executed proof before this slice reads fully launch-ready.</p>
             </div>
             <div className="rounded-xl border border-border-subtle bg-white p-4">
               <p className="text-sm font-medium text-ink">Permissions actually differ</p>
