@@ -403,6 +403,12 @@ export const DashboardCoordinatorMode: React.FC = () => {
   }, [siteId, activeTimelineEventId]);
 
   useEffect(() => {
+    if (!activeTimelineEventId) return;
+    if (events.some((event) => event.id === activeTimelineEventId)) return;
+    setActiveTimelineEventId(null);
+  }, [events, activeTimelineEventId]);
+
+  useEffect(() => {
     if (!siteId) return;
     try {
       localStorage.setItem(`dayof.coordinator.command.${siteId}`, JSON.stringify({
