@@ -103,6 +103,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('venue');
   });
 
+  it('returns partner-name guidance when blocker copy uses the shorter readiness detail wording', () => {
+    const hints = getPublishBlockedHints('Add both names exactly how you want them shown.');
+    expect(hints[0]).toContain('couple details');
+  });
+
   it('returns RSVP guidance', () => {
     const hints = getPublishBlockedHints('Enable RSVP before publishing.');
     expect(hints[0]).toContain('RSVP');
