@@ -72,4 +72,9 @@ describe('sections registry resolution', () => {
     const builderLab = readFileSync(resolve(__dirname, '../pages/BuilderV2Lab.tsx'), 'utf8');
     expect(builderLab).toContain("registry: ['default', 'fundHighlight', 'classic', 'luxury', 'experiences', 'modern', 'playful']");
   });
+
+  it('keeps the builder lab variant commands aligned with shipped registry aliases', () => {
+    const builderLab = readFileSync(resolve(__dirname, '../pages/BuilderV2Lab.tsx'), 'utf8');
+    expect(builderLab).toContain("['default', 'countdown', 'timeline', 'dayTabs', 'localGuide', 'iconGrid', 'fundHighlight', 'classic', 'luxury', 'experiences', 'modern', 'playful']");
+  });
 });
