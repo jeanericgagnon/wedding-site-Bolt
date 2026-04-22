@@ -240,6 +240,7 @@ Not the spine of the product, but still part of a credible all-in-one wedding pl
 **Pass / Fail**
 - Status: PENDING
 - Notes:
+  - Protected route smoke now covers `/dashboard/registry` auth fallback as part of canonical live smoke.
 - Blockers:
 
 ---
