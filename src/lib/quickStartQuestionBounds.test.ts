@@ -12,6 +12,12 @@ describe('quickStartQuestionBounds', () => {
     expect(clampQuickStartQuestionIndex(Number.MAX_SAFE_INTEGER + 1, 14)).toBe(0);
   });
 
+  it('clamps invalid question counts to zero', () => {
+    expect(clampQuickStartQuestionIndex(2, 2.5)).toBe(0);
+    expect(clampQuickStartQuestionIndex(2, Number.MAX_SAFE_INTEGER + 1)).toBe(0);
+    expect(clampQuickStartQuestionIndex(2, Number.NaN)).toBe(0);
+  });
+
   it('clamps oversized indexes to the last valid question', () => {
     expect(clampQuickStartQuestionIndex(99, 14)).toBe(13);
   });
