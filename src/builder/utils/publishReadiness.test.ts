@@ -820,4 +820,32 @@ describe('publishReadiness', () => {
       detail: 'Home has visible sections.',
     });
   });
+
+  it('uses the requested active page when the page id is padded with harmless whitespace', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages = [
+      {
+        ...project.pages[0],
+        id: 'page-1',
+        title: 'Home',
+        orderIndex: 0,
+        sections: [makeSection({ id: 'home-live', enabled: true })],
+      },
+      {
+        ...project.pages[0],
+        id: 'page-2',
+        title: 'Details',
+        orderIndex: 1,
+        sections: [makeSection({ id: 'details-hidden', enabled: false })],
+      },
+    ];
+
+    const readiness = buildPublishReadiness(project, undefined, { activePageId: ' page-2 ' });
+    expect(readiness.find((item) => item.id === 'current-page')).toEqual({
+      id: 'current-page',
+      label: 'Current page has visible content',
+      done: false,
+      detail: 'Turn on content for Details.',
+    });
+  });
 });
