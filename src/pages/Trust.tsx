@@ -83,7 +83,7 @@ const V1_SLICE_STATUS = [
     status: 'Must prove',
     tone: 'risk',
     done: 'Draft/schedule/history surface exists with tighter permission truth.',
-    missing: 'Still needs proof that send-state and history are solid enough before this slice carries broader launch claims.',
+    missing: 'Still needs proof that send-state and history stay stable before this slice carries broader launch claims.',
   },
   {
     name: 'Seating',
