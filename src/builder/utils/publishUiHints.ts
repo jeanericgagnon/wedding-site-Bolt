@@ -49,7 +49,11 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
       'Make sure guests can tell where they are meant to go.',
     ];
   }
-  if (normalizedErrorLower.includes('rsvp') || normalizedErrorLower.includes('turn rsvp on')) {
+  if (
+    normalizedErrorLower.includes('rsvp')
+    || normalizedErrorLower.includes('turn rsvp on')
+    || normalizedErrorLower.includes('rsvp is turned on')
+  ) {
     return [
       'Turn RSVP back on before going live.',
       'If you are not collecting replies yet, remove RSVP calls to action first.',
