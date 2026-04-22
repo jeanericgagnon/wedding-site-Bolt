@@ -42,4 +42,22 @@ describe('quickStartFollowUpGate', () => {
 
     expect(canResumeQuickStartFollowUps(true, clarifying)).toBe(true);
   });
+
+  it('does not resume follow-ups when every clarifying question was already answered', () => {
+    const clarifying = createEmptyClarifyingPersistence();
+    clarifying.clarifying.questions = [{
+      id: 'q1',
+      category: 'event_structure',
+      question: 'When is dinner?',
+      expectedAnswerType: 'short_text',
+      targetFields: ['events.0.time'],
+      affectedSections: ['schedule'],
+      skippable: true,
+      round: 1,
+      status: 'answered',
+      answer: '6:00 PM',
+    }];
+
+    expect(canResumeQuickStartFollowUps(true, clarifying)).toBe(false);
+  });
 });
