@@ -20,6 +20,8 @@ const hasNonEmptyString = (value: unknown): value is string => typeof value === 
 const getNormalizedPages = (project: BuilderProject) => (Array.isArray(project.pages) ? project.pages.filter(Boolean) : []);
 const getNormalizedSections = (page: BuilderProject['pages'][number] | undefined) =>
   (Array.isArray(page?.sections) ? page.sections.filter(Boolean) : []);
+const getNormalizedVenues = (weddingData?: WeddingDataV1 | null) =>
+  (Array.isArray(weddingData?.venues) ? weddingData.venues.filter(Boolean) : []);
 
 export const getPublishIssue = (project: BuilderProject, weddingData?: WeddingDataV1 | null): PublishIssue | null => {
   const normalizedPages = getNormalizedPages(project);
@@ -50,7 +52,7 @@ export const getPublishIssue = (project: BuilderProject, weddingData?: WeddingDa
       return { kind: 'missing-event-date', message: 'Add your wedding date before going live.' };
     }
 
-    const hasVenue = Boolean(weddingData.venues?.some((v) => hasNonEmptyString(v?.name) || hasNonEmptyString(v?.address)));
+    const hasVenue = getNormalizedVenues(weddingData).some((v) => hasNonEmptyString(v?.name) || hasNonEmptyString(v?.address));
     if (!hasVenue) {
       return { kind: 'missing-venue', message: 'Add at least one venue before going live.' };
     }
@@ -80,7 +82,7 @@ export const buildPublishReadiness = (
     (count, page) => count + getNormalizedSections(page).filter((section) => section?.enabled).length,
     0
   );
-  const hasVenue = Boolean(weddingData?.venues?.some((v) => hasNonEmptyString(v?.name) || hasNonEmptyString(v?.address)));
+  const hasVenue = getNormalizedVenues(weddingData).some((v) => hasNonEmptyString(v?.name) || hasNonEmptyString(v?.address));
   const hasNames = hasNonEmptyString(weddingData?.couple?.partner1Name) && hasNonEmptyString(weddingData?.couple?.partner2Name);
   const hasWeddingDate = hasNonEmptyString(weddingData?.event?.weddingDateISO);
   const hasRsvpEnabled = weddingData ? weddingData.rsvp?.enabled === true : true;
