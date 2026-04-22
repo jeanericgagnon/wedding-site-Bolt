@@ -867,7 +867,7 @@ describe('RSVP stale submit protection', () => {
       expect(screen.queryByText('Taylor Rivera')).not.toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('Search again'));
+    fireEvent.change(screen.getByPlaceholderText('rsvp.search_placeholder'), { target: { value: 'Jordan' } });
 
     expect(await screen.findByPlaceholderText('rsvp.search_placeholder')).toBeInTheDocument();
     expect(screen.queryByText('Multiple matches found')).not.toBeInTheDocument();
@@ -969,7 +969,7 @@ describe('RSVP stale submit protection', () => {
       expect(screen.queryByText('Taylor Rivera')).not.toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('Search again'));
+    fireEvent.change(screen.getByPlaceholderText('rsvp.search_placeholder'), { target: { value: 'Jordan' } });
 
     const searchInput = await screen.findByPlaceholderText('rsvp.search_placeholder');
     const searchButton = screen.getByText('Find My Invitation');

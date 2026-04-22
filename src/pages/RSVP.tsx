@@ -582,6 +582,7 @@ export default function RSVP() {
     setSubmitting(false);
     setActivePredictionIndex(-1);
     setError('');
+    setStep('search');
     setAmbiguousGuests([]);
     setGuest(null);
     setExistingRsvp(null);
