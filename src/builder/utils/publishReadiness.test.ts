@@ -411,6 +411,21 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('marks names readiness complete when both names have surrounding whitespace but real content', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
+    const data = createEmptyWeddingData();
+    data.couple.partner1Name = ' Alex ';
+    data.couple.partner2Name = ' Jordan ';
+
+    expect(buildPublishReadiness(project, data).find((item) => item.id === 'names')).toEqual({
+      id: 'names',
+      label: 'Couple names are filled in',
+      done: true,
+      detail: 'Names are ready for guests.',
+    });
+  });
+
   it('marks page readiness with plural page copy when multiple pages exist', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages.push({
