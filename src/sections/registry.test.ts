@@ -351,6 +351,7 @@ describe('sections registry resolution', () => {
     const previewSource = readFileSync(resolve(__dirname, '../builder/registry/variantPreviewSource.ts'), 'utf8');
     const weddingDataAdapter = readFileSync(resolve(__dirname, '../builder/adapters/weddingDataAdapter.ts'), 'utf8');
     const canonicalMapper = readFileSync(resolve(__dirname, '../lib/aiCanonicalContentMapper.ts'), 'utf8');
+    const registryLinkCarryover = readFileSync(resolve(__dirname, '../lib/registryLinkCarryover.ts'), 'utf8');
     const weddingDataBindings = readFileSync(resolve(__dirname, '../render/weddingDataBindings.ts'), 'utf8');
     const guidedBuilderModules = readFileSync(resolve(__dirname, '../components/dashboard/GuidedBuilderModules.tsx'), 'utf8');
     const builderV2Adapter = readFileSync(resolve(__dirname, '../builder-v2/adapter.ts'), 'utf8');
@@ -374,6 +375,8 @@ describe('sections registry resolution', () => {
     expect(weddingDataAdapter).toContain("return (normalizedType === 'registrysection' ? 'registry' : type) as BuilderSectionInstance['type'];");
     expect(canonicalMapper).toContain("const normalizedType = type.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');");
     expect(canonicalMapper).toContain("case 'registrysection':");
+    expect(registryLinkCarryover).toContain('function extractRegistryUrlToken(line: string): string | null {');
+    expect(registryLinkCarryover).toContain(".map((line) => normalizeUrl(extractRegistryUrlToken(line) ?? line))");
     expect(weddingDataBindings).toContain('function normalizeBindableSectionType(type: string): string {');
     expect(weddingDataBindings).toContain("return normalizedType === 'registrysection' ? 'registry' : type;");
     expect(guidedBuilderModules).toContain("const normalizeModuleSectionType = (type: string) => type.trim().toLowerCase().replace(/[^a-z0-9]/g, '');");
