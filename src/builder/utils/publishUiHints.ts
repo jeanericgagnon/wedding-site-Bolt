@@ -27,13 +27,13 @@ const NON_BLOCKING_PUBLISH_COPY = new Set([
 const isNonBlockingPublishCopy = (normalizedErrorLower: string): boolean => {
   const normalizedStatusCopy = normalizedErrorLower.replace(/[.!?]+$/g, '');
   if (NON_BLOCKING_PUBLISH_COPY.has(normalizedStatusCopy)) return true;
-  if (/^.+ has visible sections\.?$/.test(normalizedErrorLower)) return true;
-  if (/^\d+ sections? visible\.?$/.test(normalizedErrorLower)) return true;
-  if (/^\d+ pages? ready\.?$/.test(normalizedErrorLower)) return true;
-  if (/^\d+ things? left before guest-facing launch\.?$/.test(normalizedErrorLower)) return true;
-  if (/^draft has unsaved changes[.!?]*$/.test(normalizedErrorLower)) return true;
-  if (/^live site unchanged(?: — you have new draft edits)?[.!?]*$/.test(normalizedErrorLower)) return true;
-  if (/^guest-facing site[.!?]*$/.test(normalizedErrorLower)) return true;
+  if (/^.+ has visible sections$/.test(normalizedStatusCopy)) return true;
+  if (/^\d+ sections? visible$/.test(normalizedStatusCopy)) return true;
+  if (/^\d+ pages? ready$/.test(normalizedStatusCopy)) return true;
+  if (/^\d+ things? left before guest-facing launch$/.test(normalizedStatusCopy)) return true;
+  if (/^draft has unsaved changes$/.test(normalizedStatusCopy)) return true;
+  if (/^live site unchanged(?: — you have new draft edits)?$/.test(normalizedStatusCopy)) return true;
+  if (/^guest-facing site$/.test(normalizedStatusCopy)) return true;
   return false;
 };
 

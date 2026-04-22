@@ -398,6 +398,9 @@ describe('publishUiHints', () => {
     expect(getPublishBlockedHints('2 things left before guest-facing launch')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
     ]);
+    expect(getPublishBlockedHints('2 things left before guest-facing launch!!!')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
   });
 
   it('does not mistake empty-progress copy for a blocker', () => {
@@ -501,6 +504,9 @@ describe('publishUiHints', () => {
     expect(getPublishBlockedHints('2 pages ready')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
     ]);
+    expect(getPublishBlockedHints('2 pages ready!!!')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
   });
 
   it('does not mistake singular page-count readiness detail for a blocker', () => {
@@ -530,6 +536,9 @@ describe('publishUiHints', () => {
 
   it('does not mistake the current-page success detail for a page blocker', () => {
     expect(getPublishBlockedHints('Current page has visible sections.')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
+    expect(getPublishBlockedHints('Current page has visible sections!!!')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
     ]);
   });
