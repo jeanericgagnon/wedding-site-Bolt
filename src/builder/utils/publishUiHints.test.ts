@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { getPublishBlockedHints, shouldAutoPublishFromSearch, shouldOpenPhotoTipsFromSearch } from './publishUiHints';
+import {
+  getPublishBlockedHints,
+  getPublishProgressLabel,
+  getPublishStatusLabel,
+  shouldAutoPublishFromSearch,
+  shouldOpenPhotoTipsFromSearch,
+} from './publishUiHints';
 
 describe('publishUiHints', () => {
   it('returns page guidance for no-page message', () => {
@@ -49,5 +55,19 @@ describe('publishUiHints', () => {
     expect(shouldOpenPhotoTipsFromSearch('?foo=bar&photoTips=1')).toBe(true);
     expect(shouldOpenPhotoTipsFromSearch('?photoTips=0')).toBe(false);
     expect(shouldOpenPhotoTipsFromSearch('')).toBe(false);
+  });
+
+  it('labels publish status across draft and live states', () => {
+    expect(getPublishStatusLabel(false, true)).toBe('Draft has unsaved changes');
+    expect(getPublishStatusLabel(false, false)).toBe('Draft only');
+    expect(getPublishStatusLabel(true, true)).toBe('Live site unchanged — you have new draft edits');
+    expect(getPublishStatusLabel(true, false)).toBe('Live site is up to date');
+  });
+
+  it('labels publish progress for empty, partial, and complete readiness', () => {
+    expect(getPublishProgressLabel(0, 0)).toBe('No checks yet');
+    expect(getPublishProgressLabel(3, 5)).toBe('2 things left before guest-facing launch');
+    expect(getPublishProgressLabel(4, 5)).toBe('1 thing left before guest-facing launch');
+    expect(getPublishProgressLabel(5, 5)).toBe('Ready to go live');
   });
 });
