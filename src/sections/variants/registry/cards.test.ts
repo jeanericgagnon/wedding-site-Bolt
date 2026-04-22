@@ -54,7 +54,28 @@ describe('registry cards public parity helpers', () => {
         store: 'Crate & Barrel',
         count: 1,
         available: 1,
+        partial: 0,
+        purchased: 0,
         url: 'https://example.com/canonical',
+      },
+    ]);
+  });
+
+  it('tracks partial and purchased registry truth separately in store summaries', () => {
+    const groups = groupByStore([
+      makeItem({ id: 'available', store_name: 'Target', purchase_status: 'available' }),
+      makeItem({ id: 'partial', store_name: 'Target', purchase_status: 'partial' }),
+      makeItem({ id: 'purchased', store_name: 'Target', purchase_status: 'purchased' }),
+    ]);
+
+    expect(groups).toEqual([
+      {
+        store: 'Target',
+        count: 3,
+        available: 1,
+        partial: 1,
+        purchased: 1,
+        url: null,
       },
     ]);
   });

@@ -46,15 +46,17 @@ export function getRegistryItemPublicUrl(item: Pick<RegistryItem, 'item_url' | '
   return item.item_url ?? item.canonical_url ?? null;
 }
 
-export function groupByStore(items: RegistryItem[]): Array<{ store: string; count: number; available: number; url: string | null }> {
-  const map = new Map<string, { count: number; available: number; url: string | null }>();
+export function groupByStore(items: RegistryItem[]): Array<{ store: string; count: number; available: number; partial: number; purchased: number; url: string | null }> {
+  const map = new Map<string, { count: number; available: number; partial: number; purchased: number; url: string | null }>();
   for (const item of items) {
     const store = item.store_name ?? item.merchant ?? 'Other';
     const publicUrl = getRegistryItemPublicUrl(item);
-    const existing = map.get(store) ?? { count: 0, available: 0, url: publicUrl };
+    const existing = map.get(store) ?? { count: 0, available: 0, partial: 0, purchased: 0, url: publicUrl };
     map.set(store, {
       count: existing.count + 1,
       available: existing.available + (item.purchase_status === 'available' ? 1 : 0),
+      partial: existing.partial + (item.purchase_status === 'partial' ? 1 : 0),
+      purchased: existing.purchased + (item.purchase_status === 'purchased' ? 1 : 0),
       url: existing.url ?? publicUrl,
     });
   }
@@ -110,7 +112,8 @@ const RegistryCards: React.FC<SectionComponentProps<RegistryCardsData>> = ({ dat
                 <h3 className="font-medium text-stone-900 text-base mb-1.5">{group.store}</h3>
                 <p className="text-sm text-stone-400 leading-relaxed">
                   {group.count} {group.count === 1 ? 'item' : 'items'}
-                  {group.available < group.count ? ` · ${group.count - group.available} claimed` : ''}
+                  {group.partial > 0 ? ` · ${group.partial} partial` : ''}
+                  {group.purchased > 0 ? ` · ${group.purchased} claimed` : ''}
                 </p>
                 <div className="mt-auto pt-4">
                   <span className="text-xs text-stone-400 group-hover:text-stone-600 transition-colors uppercase tracking-wide font-medium">
