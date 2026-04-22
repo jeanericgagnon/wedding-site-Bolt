@@ -30,6 +30,7 @@ const checks = [
   { name: 'dashboard uses sanitizeRegistryQuantityState', ok: registryPage.includes('sanitizeRegistryQuantityState') },
   { name: 'dashboard analytics normalize registry purchase truth before owner summaries', ok: registryPage.includes('const normalizedItems = items.map((item) => {') && registryPage.includes("purchaser_name: quantityState.purchaseStatus === 'available' ? null : item.purchaser_name,") },
   { name: 'dashboard bad import counts stay aligned with shared registry import truth', ok: registryPage.includes('badImports: normalizedItems.filter((i) => getRegistryItemMetadataState(i).hasBadImportTitle).length,') && registryPage.includes('filter((i) => getRegistryItemMetadataState(i).hasBadImportTitle)') },
+  { name: 'dashboard repair review counts stay aligned with actionable import truth', ok: registryPage.includes('repair: items.filter((item) => getRegistryItemMetadataState(item).hasBadImportTitle && !!(item.item_url || item.canonical_url)).length,') },
   { name: 'dashboard loads duplicate registry groups', ok: registryPage.includes('findDuplicateRegistryGroups') },
   { name: 'dashboard demo creates preserve canonical registry metadata', ok: registryPage.includes('canonical_url: fields.canonical_url ?? null') && registryPage.includes('metadata_fetch_status: fields.metadata_fetch_status ?? \'manual\'') },
   { name: 'dashboard repair queue includes unavailable registry imports', ok: registryPage.includes('product unavailable') },

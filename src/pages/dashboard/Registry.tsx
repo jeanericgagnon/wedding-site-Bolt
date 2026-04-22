@@ -108,7 +108,7 @@ export const DashboardRegistry: React.FC = () => {
   const [registryActionsOpen, setRegistryActionsOpen] = useState(false);
   const duplicateGroups = findDuplicateRegistryGroups(items);
   const bulkReviewCounts = {
-    repair: items.filter((item) => getRegistryRepairStates(item).length > 0).length,
+    repair: items.filter((item) => getRegistryItemMetadataState(item).hasBadImportTitle && !!(item.item_url || item.canonical_url)).length,
     duplicates: duplicateGroups.reduce((sum, group) => sum + group.length, 0),
     imageIssues: items.filter((item) => !item.image_url).length,
   };
