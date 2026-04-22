@@ -360,7 +360,12 @@ export function resolveAndParse(
   } as Record<string, string>)[type] ?? type;
 
   const def = strictVariant
-    ? (getDefinition(normalizedType, variant) ?? null)
+    ? (
+      getDefinition(normalizedType, variant)
+      ?? (VARIANT_FALLBACKS[type]?.[variant] ? getDefinition(normalizedType, VARIANT_FALLBACKS[type][variant]) : null)
+      ?? (VARIANT_FALLBACKS[normalizedType]?.[variant] ? getDefinition(normalizedType, VARIANT_FALLBACKS[normalizedType][variant]) : null)
+      ?? null
+    )
     : (
       getDefinition(normalizedType, variant)
       ?? (VARIANT_FALLBACKS[type]?.[variant] ? getDefinition(normalizedType, VARIANT_FALLBACKS[type][variant]) : null)

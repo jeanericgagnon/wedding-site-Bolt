@@ -15,6 +15,8 @@ const EXPECTED_ALIAS_TARGETS: Array<{ type: string; variant: string; expectedRes
   { type: 'registry', variant: 'tabs', expectedResolvedVariant: 'cards' },
   { type: 'registry', variant: 'illustrated', expectedResolvedVariant: 'cards' },
   { type: 'registry', variant: 'minimal', expectedResolvedVariant: 'cards' },
+  { type: 'registry', variant: 'experiences', expectedResolvedVariant: 'featured' },
+  { type: 'registry', variant: 'luxury', expectedResolvedVariant: 'featured' },
 ];
 
 describe('sections registry resolution', () => {
@@ -34,6 +36,14 @@ describe('sections registry resolution', () => {
     for (const { type, variant, expectedResolvedVariant } of EXPECTED_ALIAS_TARGETS) {
       const resolved = resolveAndParse(type, variant, {});
       expect(resolved, `unresolved alias ${type}:${variant}`).not.toBeNull();
+      expect(resolved?.def.variant).toBe(expectedResolvedVariant);
+    }
+  });
+
+  it('keeps strict variant rendering compatible with registry template aliases', () => {
+    for (const { type, variant, expectedResolvedVariant } of EXPECTED_ALIAS_TARGETS.filter((entry) => entry.type === 'registry')) {
+      const resolved = resolveAndParse(type, variant, {}, { strictVariant: true });
+      expect(resolved, `strict unresolved alias ${type}:${variant}`).not.toBeNull();
       expect(resolved?.def.variant).toBe(expectedResolvedVariant);
     }
   });

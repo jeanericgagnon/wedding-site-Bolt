@@ -8,6 +8,7 @@ const repairState = readFileSync(resolve(process.cwd(), 'src/pages/dashboard/reg
 const duplicateRegistryItems = readFileSync(resolve(process.cwd(), 'src/pages/dashboard/registry/duplicateRegistryItems.ts'), 'utf8');
 const registryItemCard = readFileSync(resolve(process.cwd(), 'src/pages/dashboard/registry/RegistryItemCard.tsx'), 'utf8');
 const registryItemForm = readFileSync(resolve(process.cwd(), 'src/pages/dashboard/registry/RegistryItemForm.tsx'), 'utf8');
+const sectionRegistry = readFileSync(resolve(process.cwd(), 'src/sections/registry.ts'), 'utf8');
 
 const checks = [
   { name: 'dashboard uses sanitizeRegistryQuantityState', ok: registryPage.includes('sanitizeRegistryQuantityState') },
@@ -16,6 +17,7 @@ const checks = [
   { name: 'dashboard repair queue includes unavailable registry imports', ok: registryPage.includes('product unavailable') },
   { name: 'dashboard refresh syncs merchant into store_name', ok: registryPage.includes('fields.store_name = (preview.merchant ?? preview.brand)!;') },
   { name: 'dashboard auto-refresh syncs merchant into store_name', ok: registryPage.includes('if (preview.merchant ?? preview.brand) {\n          fields.merchant = (preview.merchant ?? preview.brand)!;\n          fields.store_name = (preview.merchant ?? preview.brand)!;\n        }') },
+  { name: 'section registry keeps strict alias fallbacks for template-backed registry variants', ok: sectionRegistry.includes('const def = strictVariant') && sectionRegistry.includes('VARIANT_FALLBACKS[type]?.[variant] ? getDefinition(normalizedType, VARIANT_FALLBACKS[type][variant]) : null') },
   { name: 'registry types expose itemNeedsAttention', ok: registryTypes.includes('export function itemNeedsAttention') },
   { name: 'registry types expose blocked retailer messaging', ok: registryTypes.includes('Amazon blocks automated product lookups') },
   { name: 'registry types expose quantity sanitation', ok: registryTypes.includes('export function sanitizeRegistryQuantityState') },
