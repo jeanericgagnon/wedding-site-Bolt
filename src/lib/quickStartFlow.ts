@@ -98,9 +98,16 @@ export const applyQuickStartAnswer = (
     case 'weekendEvents':
       next.weekendEventsRaw = value;
       break;
-    case 'ceremonyTime':
-      next.ceremonyArrivalTime = value;
+    case 'ceremonyTime': {
+      const timeMatch = value.match(/(?:^|[^\d])(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/i);
+      if (timeMatch) {
+        const [, hours, minutes = '00', meridiem] = timeMatch;
+        next.ceremonyArrivalTime = `${hours}:${minutes.padStart(2, '0')} ${meridiem.toUpperCase()}`;
+      } else {
+        next.ceremonyArrivalTime = value;
+      }
       break;
+    }
     case 'guestCount':
       next.guestCountBand = normalizeSparseGuestCountBand(value);
       break;

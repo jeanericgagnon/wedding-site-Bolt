@@ -110,4 +110,12 @@ describe('quickStartFlow', () => {
     expect(applyQuickStartAnswer(base, 'mealChoice', 'collect dietary restrictions only').mealChoice).toBe('yes');
   });
 
+
+  it('normalizes sparse ceremony times when people answer in loose freeform text', () => {
+    const base = createEmptyInitialSetupAnswers();
+
+    expect(applyQuickStartAnswer(base, 'ceremonyTime', 'ceremony starts around 4pm').ceremonyArrivalTime).toBe('4:00 PM');
+    expect(applyQuickStartAnswer(base, 'ceremonyTime', 'guests arrive by 4:30 pm please').ceremonyArrivalTime).toBe('4:30 PM');
+  });
+
 });
