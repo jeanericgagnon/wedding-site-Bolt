@@ -79,9 +79,10 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('couple details');
   });
 
-  it('returns partner-name guidance when blocker copy uses the readiness label wording', () => {
-    const hints = getPublishBlockedHints('Couple names are filled in');
-    expect(hints[0]).toContain('couple details');
+  it('does not mistake the names readiness label for a blocker', () => {
+    expect(getPublishBlockedHints('Couple names are filled in')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
   });
 
   it('does not mistake the names success detail for a blocker', () => {
@@ -120,9 +121,10 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('event details');
   });
 
-  it('returns wedding-date guidance when blocker copy uses the readiness label wording', () => {
-    const hints = getPublishBlockedHints('Wedding date is set');
-    expect(hints[0]).toContain('event details');
+  it('does not mistake the date readiness label for a blocker', () => {
+    expect(getPublishBlockedHints('Wedding date is set')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
   });
 
   it('does not mistake the date success detail for a blocker', () => {
@@ -171,9 +173,10 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('venue');
   });
 
-  it('returns venue guidance when blocker copy uses the readiness label wording', () => {
-    const hints = getPublishBlockedHints('Venue details are set');
-    expect(hints[0]).toContain('venue');
+  it('does not mistake the venue readiness label for a blocker', () => {
+    expect(getPublishBlockedHints('Venue details are set')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
   });
 
   it('does not mistake the venue success detail for a blocker', () => {
@@ -232,9 +235,10 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('RSVP');
   });
 
-  it('returns RSVP guidance when blocker copy uses the readiness label wording', () => {
-    const hints = getPublishBlockedHints('RSVP is turned on');
-    expect(hints[0]).toContain('RSVP');
+  it('does not mistake the RSVP readiness label for a blocker', () => {
+    expect(getPublishBlockedHints('RSVP is turned on')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
   });
 
   it('does not mistake the RSVP success detail for a blocker', () => {
