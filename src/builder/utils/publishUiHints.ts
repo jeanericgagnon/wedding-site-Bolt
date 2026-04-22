@@ -17,15 +17,22 @@ const NON_BLOCKING_PUBLISH_COPY = new Set([
   'no checks yet',
   'draft only',
   'live site unchanged',
-  'live site unchanged — you have new draft edits',
+  'live site unchanged - you have new draft edits',
   'live site is up to date',
   'guest-facing site',
   'go live',
   'update guest-facing site',
 ]);
 
+const normalizePublishCopyForMatch = (value: string) =>
+  value
+    .replace(/[–—]/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/[.!?]+$/g, '');
+
 const isNonBlockingPublishCopy = (normalizedErrorLower: string): boolean => {
-  const normalizedStatusCopy = normalizedErrorLower.replace(/[.!?]+$/g, '');
+  const normalizedStatusCopy = normalizePublishCopyForMatch(normalizedErrorLower);
   if (NON_BLOCKING_PUBLISH_COPY.has(normalizedStatusCopy)) return true;
   if (/^.+ has visible sections$/.test(normalizedStatusCopy)) return true;
   if (/^\d+ sections? visible$/.test(normalizedStatusCopy)) return true;
