@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildNameChangeDocumentIntakeSnapshot } from './documentContract';
+import { createDraftNameChangeDocument } from './intakeDraft';
 import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput } from './types';
 
 function makeCase(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseInput {
@@ -853,5 +854,26 @@ describe('name change document intake contract', () => {
     expect(snapshot.summary.extractionGaps).toBe(0);
     expect(snapshot.summary.requiredReady).toBe(0);
     expect(snapshot.summary.requiredMissing).toBe(6);
+  });
+
+  it('treats intake aliases for supporting documents as canonical contract kinds', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase(),
+      [
+        createDraftNameChangeDocument('SSA card' as never, 'SSA card'),
+        createDraftNameChangeDocument('residency document' as never, 'Residency document'),
+      ],
+      [],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'social_security_card')).toMatchObject({
+      intakeStatus: 'uploaded',
+    });
+    expect(snapshot.documents.find((document) => document.kind === 'proof_of_address')).toMatchObject({
+      intakeStatus: 'uploaded',
+    });
+    expect(snapshot.documents.find((document) => document.kind === 'other')).toMatchObject({
+      intakeStatus: 'not_started',
+    });
   });
 });

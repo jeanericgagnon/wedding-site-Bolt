@@ -114,7 +114,15 @@ describe('name change intake draft helpers', () => {
       id: 'draft-social_security_card',
       document_kind: 'social_security_card',
     });
+    expect(createDraftNameChangeDocument('SSA card' as never, ' SSA card ')).toMatchObject({
+      id: 'draft-social_security_card',
+      document_kind: 'social_security_card',
+    });
     expect(createDraftNameChangeDocument('birth cert' as never, ' Birth cert ')).toMatchObject({
+      id: 'draft-birth_certificate',
+      document_kind: 'birth_certificate',
+    });
+    expect(createDraftNameChangeDocument('vital record' as never, ' Vital record ')).toMatchObject({
       id: 'draft-birth_certificate',
       document_kind: 'birth_certificate',
     });
@@ -123,6 +131,10 @@ describe('name change intake draft helpers', () => {
       document_kind: 'proof_of_address',
     });
     expect(createDraftNameChangeDocument('proof of residence' as never, ' Proof of residence ')).toMatchObject({
+      id: 'draft-proof_of_address',
+      document_kind: 'proof_of_address',
+    });
+    expect(createDraftNameChangeDocument('residency document' as never, ' Residency document ')).toMatchObject({
       id: 'draft-proof_of_address',
       document_kind: 'proof_of_address',
     });
