@@ -205,13 +205,17 @@ function normalizeDraftDateValue(value: string) {
     .replace(/\butc\b/gi, 'UTC')
     .replace(/\bgmt\b/gi, 'GMT')
     .replace(/\b(UTC|GMT)\s+([+-]\d{1,2})\b/g, '$1$2');
+  const suffixStrippedTimestampValue = canonicalTimestampValue.replace(
+    /(?:,?\s+\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:\s*[AP]M)?(?:\s+(?:Z|UTC[+-]?\d{0,2}|GMT[+-]?\d{0,2}|[A-Za-z]{2,5}|[A-Za-z]{3,9}\/[A-Za-z_]+|\([^)]*\)|\[[^\]]+\]))?|\s+(?:Z|UTC[+-]?\d{0,2}|GMT[+-]?\d{0,2}|[A-Za-z]{2,5}|[A-Za-z]{3,9}\/[A-Za-z_]+|\([^)]*\)|\[[^\]]+\]))$/,
+    '',
+  );
   const isoTimestampMatch = canonicalTimestampValue.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s].*|[+-]\d{2}:?\d{2}|Z|\s+[A-Za-z]{2,5}|\(.*\)|\s+\[[^\]]+\]|\s+[A-Za-z]{3,9}\/[A-Za-z_]+|\s+GMT[+-]\d{1,2}|\s+UTC[+-]\d{1,2}|\s+\d{1,2}:\d{2}\s*[AP]M)?$/);
   if (isoTimestampMatch) {
     const [, year, month, day] = isoTimestampMatch;
     return normalizeIsoParts(year, month, day);
   }
 
-  const monthFirstNumericMatch = normalizedOrdinalValue.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+  const monthFirstNumericMatch = suffixStrippedTimestampValue.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
   if (monthFirstNumericMatch) {
     const [, month, day, year] = monthFirstNumericMatch;
     return normalizeIsoParts(year, month, day);
@@ -229,14 +233,14 @@ function normalizeDraftDateValue(value: string) {
     return normalizeIsoParts(year, month, day);
   }
 
-  const monthFirstWrittenMatch = normalizedOrdinalValue.match(/^([A-Za-z]+\.?)[\s]+(\d{1,2})(?:,)?\s*(\d{4})$/);
+  const monthFirstWrittenMatch = suffixStrippedTimestampValue.match(/^([A-Za-z]+\.?)[\s]+(\d{1,2})(?:,)?\s*(\d{4})$/);
   if (monthFirstWrittenMatch) {
     const [, monthName, day, year] = monthFirstWrittenMatch;
     const month = parseDraftMonthName(monthName);
     if (month) return normalizeIsoParts(year, String(month), day);
   }
 
-  const dayFirstWrittenMatch = normalizedOrdinalValue.match(/^(\d{1,2})\s+([A-Za-z]+\.?)[\s,]+(\d{4})$/);
+  const dayFirstWrittenMatch = suffixStrippedTimestampValue.match(/^(\d{1,2})\s+([A-Za-z]+\.?)[\s,]+(\d{4})$/);
   if (dayFirstWrittenMatch) {
     const [, day, monthName, year] = dayFirstWrittenMatch;
     const month = parseDraftMonthName(monthName);
