@@ -363,6 +363,13 @@ describe('publishUiHints', () => {
     ]);
   });
 
+  it('still returns section guidance when current-page blocker copy says to turn on content for the current page', () => {
+    expect(getPublishBlockedHints('Turn on content for the current page.')).toEqual([
+      'Select a section on the canvas.',
+      'Turn it on in the right panel, then save and go live again.',
+    ]);
+  });
+
   it('does not mistake the current-page success detail for a page blocker', () => {
     expect(getPublishBlockedHints('Current page has visible sections.')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',

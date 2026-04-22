@@ -3,9 +3,9 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
   const normalizedError = publishValidationError.trim();
   const normalizedErrorLower = normalizedError.toLowerCase();
   if (
-    normalizedErrorLower.includes('current page has visible content')
+    normalizedErrorLower === 'current page'
+    || normalizedErrorLower.includes('current page has visible content')
     || normalizedErrorLower.includes('has visible sections')
-    || normalizedErrorLower.includes('current page')
     || normalizedErrorLower.includes('section visible')
     || normalizedErrorLower.includes('sections visible')
     || normalizedErrorLower.includes('a page exists')
