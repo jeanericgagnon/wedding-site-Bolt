@@ -207,6 +207,10 @@ describe('publishUiHints', () => {
       'Open event details.',
       'Add your wedding date before going live.',
     ]);
+    expect(getPublishBlockedHints('Choose your date before going live.')).toEqual([
+      'Open event details.',
+      'Add your wedding date before going live.',
+    ]);
     expect(getPublishBlockedHints('Choose your wedding date\n before going live.')).toEqual([
       'Open event details.',
       'Add your wedding date before going live.',

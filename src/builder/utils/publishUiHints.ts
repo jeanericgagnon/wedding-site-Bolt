@@ -110,6 +110,7 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
     || normalizedErrorLower.includes('set your date')
     || normalizedErrorLower.includes('choose your wedding date')
     || normalizedErrorLower.includes('choose your event date')
+    || normalizedErrorLower.includes('choose your date')
     || normalizedErrorLower.includes('wedding date before going live')
     || normalizedErrorLower.includes('event date before going live')
   ) {
