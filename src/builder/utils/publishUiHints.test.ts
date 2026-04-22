@@ -209,6 +209,15 @@ describe('publishUiHints', () => {
     ]);
   });
 
+  it('does not mistake venue success labels for blockers after tightening generic venue matching', () => {
+    expect(getPublishBlockedHints('Venue details are set')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
+    expect(getPublishBlockedHints('Venue details are ready.')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
+  });
+
   it('does not mistake the venue success detail for a blocker', () => {
     expect(getPublishBlockedHints('Venue details are ready.')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
