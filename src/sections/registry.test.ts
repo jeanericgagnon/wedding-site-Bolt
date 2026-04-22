@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { getAllSectionManifests, getSectionManifest } from '../builder/registry/sectionManifests';
-import { getDefinition, getVariantsForType, resolveAndParse } from './registry';
+import { getDefinition, getVariantsForType, resolveAndParse, resolveCanonicalRegistryVariant } from './registry';
 import { getAllTemplates, getTemplate, TEMPLATE_REGISTRY } from '../templates/registry';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -67,6 +67,9 @@ describe('sections registry resolution', () => {
     expect(resolveAndParse('registry', 'fund-highlight', {}, { strictVariant: true })?.def.variant).toBe('featured');
     expect(resolveAndParse('registry', 'FUND.HIGHLIGHT', {}, { strictVariant: true })?.def.variant).toBe('featured');
     expect(resolveAndParse('registry', 'Playful', {}, { strictVariant: true })?.def.variant).toBe('cards');
+    expect(resolveCanonicalRegistryVariant(' Luxury ')).toBe('featured');
+    expect(resolveCanonicalRegistryVariant('fund-highlight')).toBe('featured');
+    expect(resolveCanonicalRegistryVariant('legacy-default')).toBe('cards');
   });
 
   it('keeps registry runtime resolution from crashing on malformed persisted variants', () => {
@@ -477,12 +480,11 @@ describe('sections registry resolution', () => {
   });
 
   it('keeps template registry definitions cloned before import/edit flows mutate them', () => {
+    const sectionRegistrySource = readFileSync(resolve(__dirname, './registry.ts'), 'utf8');
     const templateRegistrySource = readFileSync(resolve(__dirname, '../templates/registry.ts'), 'utf8');
     const initialLayoutSource = readFileSync(resolve(__dirname, '../lib/generateInitialLayout.ts'), 'utf8');
     const siteGeneratorSource = readFileSync(resolve(__dirname, '../lib/siteGenerator.ts'), 'utf8');
-    expect(templateRegistrySource).toContain('const REGISTRY_VARIANT_ALIASES: Record<string, string> = {');
-    expect(templateRegistrySource).toContain("default: 'cards'");
-    expect(templateRegistrySource).toContain("grid: 'cards'");
+    expect(templateRegistrySource).toContain("import { resolveCanonicalRegistryVariant } from '../sections/registry';");
     expect(templateRegistrySource).toContain('function normalizeTemplateIdKey(templateId: unknown): string {');
     expect(templateRegistrySource).toContain('const templateIdAliases = new Map<string, string>(');
     expect(templateRegistrySource).toContain('Object.entries(TEMPLATE_REGISTRY).flatMap(([templateId, template]) => {');
@@ -495,7 +497,7 @@ describe('sections registry resolution', () => {
     expect(templateRegistrySource).toContain("base: cloneTemplateDefinition(templateById['timeless-classic'] ?? templateRegistry[0]),");
     expect(templateRegistrySource).toContain("variant: isRegistryTemplateSectionType(section.type)");
     expect(templateRegistrySource).toContain("? (typeof section.variant === 'string' ? normalizeRegistryTemplateVariant(section.variant) : 'cards')");
-    expect(templateRegistrySource).toContain("return REGISTRY_VARIANT_ALIASES[normalizedVariant] ?? 'cards';");
+    expect(templateRegistrySource).toContain('return resolveCanonicalRegistryVariant(variant);');
     expect(templateRegistrySource).toContain("function isRegistryTemplateSectionType(type: unknown): boolean {");
     expect(templateRegistrySource).toContain("return normalizedType === 'registry' || normalizedType.startsWith('registrysection');");
     expect(templateRegistrySource).toContain("type: isRegistryTemplateSectionType(section.type) ? 'registry' : section.type,");
@@ -505,6 +507,7 @@ describe('sections registry resolution', () => {
     expect(templateRegistrySource).toContain('function cloneTemplateDefinition(template: TemplateDefinition): TemplateDefinition {');
     expect(templateRegistrySource).toContain('return cloneTemplateDefinition(TEMPLATE_REGISTRY[canonicalTemplateId] || TEMPLATE_REGISTRY.base || templateRegistry[0]);');
     expect(templateRegistrySource).toContain('return templateRegistry.map(cloneTemplateDefinition);');
+    expect(sectionRegistrySource).toContain('export function resolveCanonicalRegistryVariant(variant: unknown): string {');
     expect(initialLayoutSource).toContain('overrides: sectionDef.overrides ? { ...sectionDef.overrides } : undefined,');
     expect(initialLayoutSource).toContain('locked: sectionDef.locked,');
     expect(initialLayoutSource).toContain('function normalizeSectionTypeKey(type: unknown): string {');

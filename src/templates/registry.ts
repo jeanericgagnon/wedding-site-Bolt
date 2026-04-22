@@ -1,4 +1,5 @@
 import { SectionInstance, SectionType } from '../types/layoutConfig';
+import { resolveCanonicalRegistryVariant } from '../sections/registry';
 
 type TemplateSection = Omit<SectionInstance, 'id' | 'type'> & {
   // Keep compatibility with imported template artifacts while preserving known section keys.
@@ -15,26 +16,8 @@ export interface TemplateDefinition {
   };
 }
 
-const REGISTRY_VARIANT_ALIASES: Record<string, string> = {
-  default: 'cards',
-  grid: 'cards',
-  fundhighlight: 'featured',
-  honeymoon: 'featured',
-  tabs: 'cards',
-  illustrated: 'cards',
-  minimal: 'cards',
-  classic: 'cards',
-  luxury: 'featured',
-  experiences: 'featured',
-  modern: 'cards',
-  playful: 'cards',
-  featured: 'featured',
-  cards: 'cards',
-};
-
 function normalizeRegistryTemplateVariant(variant: string): string {
-  const normalizedVariant = variant.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-  return REGISTRY_VARIANT_ALIASES[normalizedVariant] ?? 'cards';
+  return resolveCanonicalRegistryVariant(variant);
 }
 
 function normalizeTemplateIdKey(templateId: unknown): string {

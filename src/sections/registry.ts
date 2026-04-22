@@ -298,6 +298,10 @@ function resolveRegistryVariant(type: string, variant: unknown): string {
   return registryAliasTarget ?? 'cards';
 }
 
+export function resolveCanonicalRegistryVariant(variant: unknown): string {
+  return resolveRegistryVariant('registry', variant) || 'cards';
+}
+
 function registerDefinition<T>(def: SectionDefinition<T>): void {
   SECTION_REGISTRY.set(makeKey(def.type, def.variant), def as SectionDefinition<any>);
 }
