@@ -23,6 +23,7 @@ export const applyQuickStartAnswer = (
   rawValue: string,
 ): InitialSetupAnswers => {
   const value = rawValue.trim();
+  const normalizedDelimitedValue = value.toLowerCase().split('|').map((part) => part.trim()).join('|');
   const next = { ...answers };
 
   switch (questionKey) {
@@ -30,9 +31,9 @@ export const applyQuickStartAnswer = (
       next.names = value;
       break;
     case 'partnerLabels':
-      if (value === 'bride|groom') next.labelPreference = 'bride-groom';
-      else if (value === 'bride|bride') next.labelPreference = 'bride-bride';
-      else if (value === 'groom|groom') next.labelPreference = 'groom-groom';
+      if (normalizedDelimitedValue === 'bride|groom') next.labelPreference = 'bride-groom';
+      else if (normalizedDelimitedValue === 'bride|bride') next.labelPreference = 'bride-bride';
+      else if (normalizedDelimitedValue === 'groom|groom') next.labelPreference = 'groom-groom';
       else next.labelPreference = 'names-only';
       break;
     case 'venueLocation':

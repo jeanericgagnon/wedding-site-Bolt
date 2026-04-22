@@ -65,4 +65,11 @@ describe('quickStartFlow', () => {
     expect(updated?.clarifying.history).toHaveLength(1);
     expect(updated?.clarifying.history[0]?.answer).toBe('6:30 PM');
   });
+
+  it('normalizes sparse partner label answers before applying them', () => {
+    const base = createEmptyInitialSetupAnswers();
+
+    expect(applyQuickStartAnswer(base, 'partnerLabels', ' Bride | Groom ').labelPreference).toBe('bride-groom');
+    expect(applyQuickStartAnswer(base, 'partnerLabels', 'groom | groom').labelPreference).toBe('groom-groom');
+  });
 });
