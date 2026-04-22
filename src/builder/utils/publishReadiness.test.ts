@@ -107,12 +107,28 @@ describe('publishReadiness', () => {
     }
   });
 
-  it('breaks tied section order indexes by section id so blocker targeting stays deterministic', () => {
+  it('breaks tied section order indexes by section title so blocker targeting stays deterministic', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     const pageId = project.pages[0].id;
     project.pages[0].sections = [
-      makeSection({ id: 'sec-zeta', enabled: false, orderIndex: 1 }),
-      makeSection({ id: 'sec-alpha', enabled: false, orderIndex: 1 }),
+      makeSection({ id: 'sec-zeta', enabled: false, orderIndex: 1, displayName: 'Zeta section' }),
+      makeSection({ id: 'sec-alpha', enabled: false, orderIndex: 1, displayName: 'Alpha section' }),
+    ];
+
+    const issue = getPublishIssue(project);
+    expect(issue?.kind).toBe('no-enabled-sections');
+    if (issue?.kind === 'no-enabled-sections') {
+      expect(issue.firstPageId).toBe(pageId);
+      expect(issue.firstSectionId).toBe('sec-alpha');
+    }
+  });
+
+  it('breaks tied section order indexes by section id when titles are also tied', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    const pageId = project.pages[0].id;
+    project.pages[0].sections = [
+      makeSection({ id: 'sec-zeta', enabled: false, orderIndex: 1, displayName: 'Same section' }),
+      makeSection({ id: 'sec-alpha', enabled: false, orderIndex: 1, displayName: 'Same section' }),
     ];
 
     const issue = getPublishIssue(project);
