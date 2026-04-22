@@ -294,7 +294,15 @@ export const Trust: React.FC = () => {
                     Open your dashboard
                   </button>
                 </>
-              ) : null}
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => navigate('/signup')}
+                  className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary/90"
+                >
+                  Start your draft
+                </button>
+              )}
               <Link to="/privacy" className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary">
                 Privacy policy
               </Link>
