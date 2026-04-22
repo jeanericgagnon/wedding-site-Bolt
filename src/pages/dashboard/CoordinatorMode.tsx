@@ -110,6 +110,7 @@ import { buildCoordinatorTimelineBoard } from '../../lib/coordinatorTimelineBoar
 import { buildCoordinatorQnaBoard } from '../../lib/coordinatorQnaBoard';
 import { buildCoordinatorCheckInBoard } from '../../lib/coordinatorCheckInBoard';
 import { buildCoordinatorCommandBoard } from '../../lib/coordinatorCommandBoard';
+import { buildCoordinatorRoleBoard } from '../../lib/coordinatorRoleBoard';
 
 
 type AudienceOption = { value: string; label: string; count: number };
@@ -730,6 +731,10 @@ export const DashboardCoordinatorMode: React.FC = () => {
     alertTargetCue.aligned,
     canScheduleAlerts,
   ]);
+  const roleBoard = useMemo(() => buildCoordinatorRoleBoard({
+    role: coordinatorRole,
+    capabilities: roleCapabilities,
+  }), [coordinatorRole, roleCapabilities]);
 
   const checkInQueue = useMemo(() => {
     const base = filterCoordinatorCheckInQueue(sortedGuests, checkInQuery, checkInFilter);
@@ -779,7 +784,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const commandDeckItems = useMemo(() => buildCoordinatorCommandDeck({
     items: commandSummaryItems,
     priorityLabel: priorityCommandLabel,
-    priorityReason,
+    priorityReason: priorityCommandReason,
     priorityCta: priorityCommandCta,
     checkInTargetName: checkInTargetGuest?.name ?? null,
     timelineTargetName: timelineTargetEvent?.event_name ?? null,
@@ -788,7 +793,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   }), [
     commandSummaryItems,
     priorityCommandLabel,
-    priorityReason,
+    priorityCommandReason,
     priorityCommandCta,
     checkInTargetGuest?.name,
     timelineTargetEvent?.event_name,
@@ -1698,6 +1703,28 @@ export const DashboardCoordinatorMode: React.FC = () => {
             <span className={`rounded-full border px-2 py-1 text-[10px] font-medium ${coordinatorRole === 'viewer' ? 'border-border bg-surface-subtle text-text-tertiary' : coordinatorRole === 'coordinator' ? 'border-primary/20 bg-primary/5 text-primary' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}>
               {coordinatorRole === 'viewer' ? 'Read only' : coordinatorRole === 'coordinator' ? 'Coordinator operator' : 'Planner operator'}
             </span>
+          </div>
+          <div className="mt-3 rounded-lg border border-border/50 bg-surface-subtle/25 px-3 py-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-medium text-text-primary">Operator posture</p>
+                <p className="mt-1 text-[11px] text-text-secondary">Mode · {roleBoard.modeLabel}</p>
+                <p className="text-[11px] text-text-secondary">Enabled · {roleBoard.enabledLabel}</p>
+              </div>
+              <span className={`rounded-full border px-2 py-1 text-[10px] font-medium ${roleBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : roleBoard.tone === 'warning' ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-border bg-white text-text-tertiary'}`}>
+                {roleBoard.statusLabel}
+              </span>
+            </div>
+            <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+              <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
+                <p className="text-[10px] uppercase tracking-wide text-text-tertiary">Blocked here</p>
+                <p className="mt-1 text-[11px] text-text-primary">{roleBoard.blockedLabel}</p>
+              </div>
+              <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
+                <p className="text-[10px] uppercase tracking-wide text-text-tertiary">Operating note</p>
+                <p className="mt-1 text-[11px] text-text-primary">{roleBoard.guidanceLabel}</p>
+              </div>
+            </div>
           </div>
           <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-5">
             {roleCapabilities.map((item) => (
