@@ -299,6 +299,11 @@ export default function RSVP() {
     setSubmitting(false);
   }, []);
 
+  const invalidateSubmitFromEdit = useCallback(() => {
+    invalidateActiveSubmit();
+    setError('');
+  }, [invalidateActiveSubmit]);
+
   const resetToSearch = useCallback((preserveToken = false) => {
     activeLookupRequestRef.current += 1;
     invalidateActiveSubmit();
@@ -801,24 +806,24 @@ export default function RSVP() {
   }, [searchValue]);
 
   const updateFormData = useCallback((updater: (current: typeof formData) => typeof formData) => {
-    setError('');
+    invalidateSubmitFromEdit();
     setFormData((current) => updater(current));
-  }, []);
+  }, [invalidateSubmitFromEdit]);
 
   const updateCustomAnswers = useCallback((updater: (current: Record<string, string | string[]>) => Record<string, string | string[]>) => {
-    setError('');
+    invalidateSubmitFromEdit();
     setCustomAnswers((current) => updater(current));
-  }, []);
+  }, [invalidateSubmitFromEdit]);
 
   const updateApplyToHousehold = useCallback((nextValue: boolean) => {
-    setError('');
+    invalidateSubmitFromEdit();
     setApplyToHousehold(nextValue);
-  }, []);
+  }, [invalidateSubmitFromEdit]);
 
   const updateSelectedHouseholdGuestIds = useCallback((updater: (current: string[]) => string[]) => {
-    setError('');
+    invalidateSubmitFromEdit();
     setSelectedHouseholdGuestIds((current) => updater(current));
-  }, []);
+  }, [invalidateSubmitFromEdit]);
 
 
   const goToNextFormStep = () => {
