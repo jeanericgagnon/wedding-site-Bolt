@@ -266,7 +266,7 @@ function normalizeDraftDateValue(value: string) {
     return normalizeIsoParts(year, month, day);
   }
 
-  const dottedYearFirstMatch = normalizedOrdinalValue.match(/^(\d{4})\.(\d{1,2})\.(\d{1,2})$/);
+  const dottedYearFirstMatch = suffixStrippedTimestampValue.match(/^(\d{4})\.(\d{1,2})\.(\d{1,2})$/);
   if (dottedYearFirstMatch) {
     const [, year, month, day] = dottedYearFirstMatch;
     return normalizeIsoParts(year, month, day);
