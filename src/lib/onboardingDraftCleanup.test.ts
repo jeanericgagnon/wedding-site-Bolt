@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { clearAllOnboardingDraftStorage, ONBOARDING_DRAFT_STORAGE_KEY } from './onboardingDraftCleanup';
 import { GUIDED_SETUP_STORAGE_KEY } from './guidedSetupPersistence';
 import { QUICK_START_STORAGE_KEY } from './quickStartStateTransfer';
@@ -19,4 +19,14 @@ describe('onboardingDraftCleanup', () => {
     expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
     expect(window.localStorage.getItem(GUIDED_SETUP_STORAGE_KEY)).toBeNull();
   });
+
+  it('skips quick start cleanup deletes when draft storage is already clear', () => {
+    const removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem');
+
+    clearAllOnboardingDraftStorage();
+
+    expect(removeItemSpy).not.toHaveBeenCalledWith(QUICK_START_STORAGE_KEY);
+    removeItemSpy.mockRestore();
+  });
+
 });

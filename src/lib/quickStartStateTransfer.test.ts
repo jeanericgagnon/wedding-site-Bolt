@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { persistQuickStartDraftSnapshot, QUICK_START_STORAGE_KEY, readQuickStartDraftSnapshot } from './quickStartStateTransfer';
+import { clearQuickStartDraftSnapshot, persistQuickStartDraftSnapshot, QUICK_START_STORAGE_KEY, readQuickStartDraftSnapshot } from './quickStartStateTransfer';
 
 describe('quickStartStateTransfer', () => {
   beforeEach(() => {
@@ -233,6 +233,26 @@ describe('quickStartStateTransfer', () => {
 
     expect(persisted).toBeNull();
     expect(removeItemSpy).not.toHaveBeenCalled();
+    removeItemSpy.mockRestore();
+  });
+
+
+  it('skips redundant quick start draft cleanup deletes when storage is already clear', () => {
+    const removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem');
+
+    clearQuickStartDraftSnapshot();
+
+    expect(removeItemSpy).not.toHaveBeenCalled();
+    removeItemSpy.mockRestore();
+  });
+
+  it('tolerates quick start draft cleanup failures', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, 'stale');
+    const removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+      throw new Error('blocked');
+    });
+
+    expect(() => clearQuickStartDraftSnapshot()).not.toThrow();
     removeItemSpy.mockRestore();
   });
 

@@ -31,6 +31,19 @@ export const hasMeaningfulQuickStartDraftSnapshot = (snapshot: QuickStartDraftSn
     || hasMeaningfulClarifyingState;
 };
 
+
+export const clearQuickStartDraftSnapshot = () => {
+  if (typeof window === 'undefined') return;
+
+  try {
+    if (window.localStorage.getItem(QUICK_START_STORAGE_KEY) !== null) {
+      window.localStorage.removeItem(QUICK_START_STORAGE_KEY);
+    }
+  } catch {
+    // ignore cleanup failures so restore callers can keep moving
+  }
+};
+
 export const persistQuickStartDraftSnapshot = (value: unknown) => {
   if (typeof window === 'undefined') return null;
   const normalized = createQuickStartDraftSnapshot(value);
@@ -45,7 +58,7 @@ export const persistQuickStartDraftSnapshot = (value: unknown) => {
         window.localStorage.setItem(QUICK_START_STORAGE_KEY, normalizedRaw);
       }
     } else if (existingRaw !== null) {
-      window.localStorage.removeItem(QUICK_START_STORAGE_KEY);
+      clearQuickStartDraftSnapshot();
     }
   } catch {
     // ignore storage write failures and keep the normalized in-memory result usable
@@ -75,7 +88,7 @@ export const readQuickStartDraftSnapshot = (): QuickStartDraftSnapshot | null =>
           window.localStorage.setItem(QUICK_START_STORAGE_KEY, normalizedRaw);
         }
       } else {
-        window.localStorage.removeItem(QUICK_START_STORAGE_KEY);
+        clearQuickStartDraftSnapshot();
       }
     } catch {
       // ignore storage rewrite failures and still return the normalized draft
@@ -83,7 +96,7 @@ export const readQuickStartDraftSnapshot = (): QuickStartDraftSnapshot | null =>
     return hasMeaningfulDraft ? normalized : null;
   } catch {
     try {
-      window.localStorage.removeItem(QUICK_START_STORAGE_KEY);
+      clearQuickStartDraftSnapshot();
     } catch {
       // ignore cleanup failures after broken payloads and still treat restore as unavailable
     }
