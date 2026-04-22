@@ -17,6 +17,8 @@ import { buildEventReminderDraft } from '../../lib/eventReminderHelper';
 
 const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bulk-message`;
 const DEMO_MESSAGES_STORAGE_KEY = 'dayof.demo.messages.history';
+const RSVP_CONTINUITY_EVENT = 'dayof:rsvp-updated';
+const RSVP_CONTINUITY_STORAGE_KEY = 'dayof.rsvp.updatedAt';
 
 // Optional table: can be missing in lean deployments.
 // Start unknown, then permanently disable after one confirmed missing-table miss.
@@ -1381,16 +1383,29 @@ export const DashboardMessages: React.FC = () => {
       void fetchGuests();
     };
 
+    const handleRsvpContinuityUpdate = () => {
+      refreshGuestMessageContinuity();
+    };
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== RSVP_CONTINUITY_STORAGE_KEY || !event.newValue) return;
+      refreshGuestMessageContinuity();
+    };
+
     const handleVisibilityChange = () => {
       if (document.visibilityState !== 'visible') return;
       refreshGuestMessageContinuity();
     };
 
     window.addEventListener('focus', refreshGuestMessageContinuity);
+    window.addEventListener(RSVP_CONTINUITY_EVENT, handleRsvpContinuityUpdate);
+    window.addEventListener('storage', handleStorage);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       window.removeEventListener('focus', refreshGuestMessageContinuity);
+      window.removeEventListener(RSVP_CONTINUITY_EVENT, handleRsvpContinuityUpdate);
+      window.removeEventListener('storage', handleStorage);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [weddingSite, isDemoMode, fetchGuests]);

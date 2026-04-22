@@ -44,11 +44,26 @@ interface EventRsvpFormState {
   notes: string;
 }
 
+const RSVP_CONTINUITY_EVENT = 'dayof:rsvp-updated';
+const RSVP_CONTINUITY_STORAGE_KEY = 'dayof.rsvp.updatedAt';
+
 function isMissingEventRsvpSupportError(message: string) {
   const normalized = message.toLowerCase();
   return normalized.includes('does not exist')
     || normalized.includes('relation "event_rsvps"')
     || normalized.includes('404');
+}
+
+function notifyRsvpContinuityUpdate() {
+  const updatedAt = new Date().toISOString();
+
+  try {
+    window.localStorage.setItem(RSVP_CONTINUITY_STORAGE_KEY, updatedAt);
+  } catch {
+    // Ignore storage failures and still notify the current tab.
+  }
+
+  window.dispatchEvent(new CustomEvent(RSVP_CONTINUITY_EVENT, { detail: { updatedAt } }));
 }
 
 export default function EventRSVP() {
@@ -378,6 +393,7 @@ export default function EventRSVP() {
       if (activeSubmitRequestRef.current !== requestId) return;
       setHasEventRsvpSupport(true);
       applyInvitationRsvp(selectedEvent, rsvpForm);
+      notifyRsvpContinuityUpdate();
       setSubmitSuccess(true);
       submittedSuccessfully = true;
       if (postSubmitResetTimeoutRef.current !== null) {
