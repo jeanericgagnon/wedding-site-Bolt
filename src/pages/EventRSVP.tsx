@@ -70,6 +70,7 @@ export default function EventRSVP() {
     if (token) {
       loadGuestAndEvents();
     } else {
+      activeLoadRequestRef.current += 1;
       activeSubmitRequestRef.current += 1;
       if (postSubmitResetTimeoutRef.current !== null) {
         window.clearTimeout(postSubmitResetTimeoutRef.current);

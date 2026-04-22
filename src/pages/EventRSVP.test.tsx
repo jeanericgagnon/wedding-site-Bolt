@@ -12,10 +12,18 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-const maybeSingleQueue: Array<{ data: any; error: any }> = [];
+const maybeSingleQueue: Array<{ data: any; error: any } | Promise<{ data: any; error: any }>> = [];
 const selectQueue: Array<{ data: any; error: any }> = [];
 const insertQueue: Array<{ error: any }> = [];
 const updateQueue: Array<{ error: any }> = [];
+
+function createDeferredMaybeSingle() {
+  let resolve!: (value: { data: any; error: any }) => void;
+  const promise = new Promise<{ data: any; error: any }>((res) => {
+    resolve = res;
+  });
+  return { promise, resolve };
+}
 
 vi.mock('../lib/supabase', () => ({
   supabase: {
@@ -152,6 +160,29 @@ describe('EventRSVP token trust continuity', () => {
       expect(screen.getByText('Attending')).toBeInTheDocument();
     });
     expect(screen.getByText('Ceremony')).toBeInTheDocument();
+  });
+
+  it('keeps the no-token error truth if an older token load resolves late', async () => {
+    const deferredGuestLookup = createDeferredMaybeSingle();
+    maybeSingleQueue.push(deferredGuestLookup.promise);
+
+    const view = render(<EventRSVP />);
+
+    currentToken = '';
+    view.rerender(<EventRSVP />);
+
+    expect(await screen.findByText('Link Not Recognized')).toBeInTheDocument();
+    expect(screen.getByText('No invitation link found. Please use the link from your invitation email.')).toBeInTheDocument();
+
+    deferredGuestLookup.resolve({
+      data: { id: 'guest-1', name: 'Late Guest', email: 'late@example.com' },
+      error: null,
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('No invitation link found. Please use the link from your invitation email.')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Hello, Late Guest!')).not.toBeInTheDocument();
   });
 
   it('keeps the saved event RSVP visible locally after submit without depending on a refetch', async () => {
