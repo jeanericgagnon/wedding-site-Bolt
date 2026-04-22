@@ -119,7 +119,7 @@ const output = {
   stillManualProofNeeded: [
     'One logged human route-note pass for Home -> signup/demo/auth -> onboarding/builder -> public site -> RSVP, focused on UX quality instead of basic route reachability',
     'Verify privacy/access/publish wording against the actual runtime behavior',
-    'Log exact pass/fail or blocker details in docs/v1-smoke-proof-log.md',
+    'Log exact pass/fail or blocker details in docs/v1-smoke-proof-log.md, including the current v1 line and any environment blockers',
   ],
   blockers: blockedRequired.map((result) => ({
     id: result.id,
