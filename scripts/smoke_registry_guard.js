@@ -70,6 +70,7 @@ const checks = [
   { name: 'repair state exposes getRegistryRepairStates', ok: repairState.includes('export function getRegistryRepairStates') },
   { name: 'duplicate grouping normalizes title-only items', ok: duplicateRegistryItems.includes('normalizeRegistryTitleForComparison') },
   { name: 'registry cards fall back to canonical page preview URLs', ok: registryItemCard.includes('const pagePreviewSourceUrl = item.item_url ?? item.canonical_url ?? null;') },
+  { name: 'owner registry purchaser labels stay aligned with purchase state truth', ok: registryItemCard.includes("export function getOwnerRegistryPurchaserLabel(item: Pick<RegistryItem, 'purchase_status' | 'purchaser_name'>): string | null {") && registryItemCard.includes("? `Purchased by ${item.purchaser_name}`") },
   { name: 'registry form seeds canonical links into editable product URLs', ok: registryItemForm.includes("const [urlInput, setUrlInput] = useState(initial?.item_url ?? initial?.canonical_url ?? '');") },
 ];
 

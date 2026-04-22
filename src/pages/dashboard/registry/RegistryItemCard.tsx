@@ -29,6 +29,13 @@ function statusBadge(status: PurchaseStatus, qty: number, needed: number) {
   return <Badge variant="neutral">Available</Badge>;
 }
 
+export function getOwnerRegistryPurchaserLabel(item: Pick<RegistryItem, 'purchase_status' | 'purchaser_name'>): string | null {
+  if (!item.purchaser_name || item.purchase_status === 'available') return null;
+  return item.purchase_status === 'purchased'
+    ? `Purchased by ${item.purchaser_name}`
+    : `by ${item.purchaser_name}`;
+}
+
 interface PurchaseConfirmProps {
   item: RegistryItem;
   onConfirm: (qty: number) => void;
@@ -378,8 +385,8 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
           </div>
         )}
 
-        {item.purchaser_name && item.purchase_status !== 'available' && (
-          <p className="text-xs text-text-secondary">by {item.purchaser_name}</p>
+        {getOwnerRegistryPurchaserLabel(item) && (
+          <p className="text-xs text-text-secondary">{getOwnerRegistryPurchaserLabel(item)}</p>
         )}
 
         {canMarkPurchased && (

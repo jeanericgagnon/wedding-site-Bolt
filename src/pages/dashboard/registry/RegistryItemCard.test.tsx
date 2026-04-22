@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { RegistryItemCard } from './RegistryItemCard';
+import { getOwnerRegistryPurchaserLabel, RegistryItemCard } from './RegistryItemCard';
 import type { RegistryItem } from './registryTypes';
 
 function makeItem(overrides: Partial<RegistryItem> = {}): RegistryItem {
@@ -74,5 +74,11 @@ describe('RegistryItemCard', () => {
     fireEvent.error(image);
 
     expect(image.getAttribute('src')).toContain(encodeURIComponent('https://example.com/canonical-product'));
+  });
+
+  it('keeps owner purchaser labels aligned with actual purchase state', () => {
+    expect(getOwnerRegistryPurchaserLabel(makeItem({ purchase_status: 'available', purchaser_name: 'Alex' }))).toBeNull();
+    expect(getOwnerRegistryPurchaserLabel(makeItem({ purchase_status: 'partial', purchaser_name: 'Alex' }))).toBe('by Alex');
+    expect(getOwnerRegistryPurchaserLabel(makeItem({ purchase_status: 'purchased', purchaser_name: 'Alex' }))).toBe('Purchased by Alex');
   });
 });

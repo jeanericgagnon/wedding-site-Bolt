@@ -254,9 +254,12 @@ describe('sections registry resolution', () => {
 
   it('keeps public purchaser status aligned with owner purchase state truth', () => {
     const registrySectionComponent = readFileSync(resolve(__dirname, './components/RegistrySection.tsx'), 'utf8');
+    const registryOwnerCard = readFileSync(resolve(__dirname, '../pages/dashboard/registry/RegistryItemCard.tsx'), 'utf8');
     expect(registrySectionComponent).toContain("export function getRegistryPurchaserStatusLabel(item: Pick<RegistryItem, 'purchase_status' | 'purchaser_name'>): string | null {");
     expect(registrySectionComponent).toContain("if (!item.purchaser_name || item.purchase_status === 'available') return null;");
     expect(registrySectionComponent).toContain("? `Purchased by ${item.purchaser_name}`");
+    expect(registryOwnerCard).toContain("export function getOwnerRegistryPurchaserLabel(item: Pick<RegistryItem, 'purchase_status' | 'purchaser_name'>): string | null {");
+    expect(registryOwnerCard).toContain("? `Purchased by ${item.purchaser_name}`");
   });
 
   it('keeps template registry definitions cloned before import/edit flows mutate them', () => {
