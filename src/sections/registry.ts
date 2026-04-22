@@ -314,7 +314,9 @@ function resolveCanonicalSectionVariantForType(type: string, inputType: string, 
   const normalizedVariantKey = normalizeRegistryVariantKey(variant);
   if (!normalizedVariantKey) return typeof variant === 'string' ? variant : '';
 
-  const directVariant = getVariantsForType(type).find((definition) => normalizeRegistryVariantKey(definition.variant) === normalizedVariantKey)?.variant;
+  const directVariant = getAllDefinitions()
+    .filter((definition) => definition.type === type)
+    .find((definition) => normalizeRegistryVariantKey(definition.variant) === normalizedVariantKey)?.variant;
   if (directVariant) return directVariant;
 
   const fallbackVariants = VARIANT_FALLBACKS[type]
