@@ -287,7 +287,6 @@ export default function EventRSVP() {
     setSubmitError('');
     setSubmitSuccess(false);
     setError('');
-    setHasEventRsvpSupport(null);
     if (invitation.rsvp) {
       setRsvpForm(buildInvitationRsvpFormState(invitation.rsvp));
     } else {
@@ -361,7 +360,6 @@ export default function EventRSVP() {
     setSubmitError('');
     setSubmitSuccess(false);
     setError('');
-    setHasEventRsvpSupport(null);
     setRsvpForm({ attending: true, dietary_restrictions: '', notes: '' });
     setSelectedEvent(null);
   }
