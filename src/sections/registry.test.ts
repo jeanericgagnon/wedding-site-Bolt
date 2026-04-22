@@ -95,6 +95,8 @@ describe('sections registry resolution', () => {
     expect(resolveAndParse('registry', null as never, {}, { strictVariant: true })?.def.variant).toBe('cards');
     expect(resolveAndParse('registry', { variant: 'featured' } as never, {}, { strictVariant: true })?.def.variant).toBe('cards');
     expect(resolveAndParse('registry', 'legacy-default', {}, { strictVariant: true })?.def.variant).toBe('cards');
+    expect(getDefinition('registry', undefined as never)?.variant).toBe('cards');
+    expect(getDefinitionOrThrow('registry', undefined as never).variant).toBe('cards');
   });
 
   it('exposes template-backed registry aliases to the builder manifest', () => {
@@ -414,6 +416,8 @@ describe('sections registry resolution', () => {
     expect(sectionRegistry).toContain('.filter((definition) => definition.type === type)');
     expect(sectionRegistry).toContain('variant: resolveCanonicalSectionVariantForType(normalizedType, normalizedInputType, variant),');
     expect(sectionRegistry).toContain("return SECTION_REGISTRY.get(makeKey(canonicalSection.type, canonicalSection.variant)) ?? null;");
+    expect(sectionRegistry).toContain('export function getDefinition(type: string, variant: unknown): SectionDefinition | null {');
+    expect(sectionRegistry).toContain('export function getDefinitionOrThrow(type: string, variant: unknown): SectionDefinition {');
     expect(sectionRegistry).toContain("return typeof variant === 'string'");
     expect(sectionRegistry).toContain("const normalizedType = resolveCanonicalRegistrySectionInput(type, undefined).type || normalizeRegistrySectionType(type);");
     expect(sectionRegistry).toContain("const normalizedTypeKey = normalizeRegistrySectionType(canonicalSection.type);");

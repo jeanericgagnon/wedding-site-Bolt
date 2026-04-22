@@ -410,12 +410,12 @@ registerDefinition(videoFullDefinition);
 registerDefinition(videoCardDefinition);
 registerDefinition(videoInlineDefinition);
 
-export function getDefinition(type: string, variant: string): SectionDefinition | null {
+export function getDefinition(type: string, variant: unknown): SectionDefinition | null {
   const canonicalSection = resolveCanonicalRegistrySectionInput(type, variant);
   return SECTION_REGISTRY.get(makeKey(canonicalSection.type, canonicalSection.variant)) ?? null;
 }
 
-export function getDefinitionOrThrow(type: string, variant: string): SectionDefinition {
+export function getDefinitionOrThrow(type: string, variant: unknown): SectionDefinition {
   const canonicalSection = resolveCanonicalRegistrySectionInput(type, variant);
   const def = getDefinition(type, variant);
   if (!def) throw new Error(`No section definition for ${canonicalSection.type}::${canonicalSection.variant}`);
