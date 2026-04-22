@@ -1667,6 +1667,60 @@ describe('RSVP stale submit protection', () => {
     expect(screen.queryByText("You've already responded. You can update your response below.")).not.toBeInTheDocument();
   });
 
+  it('clears stale token current-rsvp advisory truth when the guest cancels back to search', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        guest: {
+          id: 'guest-1',
+          first_name: 'Taylor',
+          last_name: 'Rivera',
+          name: 'Taylor Rivera',
+          email: 'taylor@example.com',
+          phone: null,
+          group_name: null,
+          wedding_site_id: 'site-1',
+          plus_one_allowed: false,
+          invited_to_ceremony: true,
+          invited_to_reception: true,
+          invite_token: 'token-1',
+        },
+        existingRsvp: {
+          id: 'rsvp-1',
+          attending: true,
+          attending_ceremony: true,
+          attending_reception: true,
+          meal_choice: null,
+          plus_one_name: null,
+          notes: null,
+          custom_answers: {},
+        },
+        guests: null,
+        rsvpDeadline: null,
+        rsvpQuestions: [],
+        rsvpMealConfig: { enabled: false, options: [] },
+        musicPlaylistUrl: null,
+        householdGuests: [],
+      }),
+    });
+
+    window.history.pushState({}, '', '/rsvp?token=token-1');
+
+    render(
+      <BrowserRouter>
+        <RSVP />
+      </BrowserRouter>
+    );
+
+    expect(await screen.findByText('We have your current RSVP on file.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Cancel'));
+
+    expect(await screen.findByPlaceholderText('rsvp.search_placeholder')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('token-1')).toBeInTheDocument();
+    expect(screen.queryByText('We have your current RSVP on file.')).not.toBeInTheDocument();
+  });
+
   it('clears stale token-loaded RSVP details after editing them before cancel reset', async () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
