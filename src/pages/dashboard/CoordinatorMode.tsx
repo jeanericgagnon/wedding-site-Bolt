@@ -112,6 +112,7 @@ import { buildCoordinatorCheckInBoard } from '../../lib/coordinatorCheckInBoard'
 import { buildCoordinatorCommandBoard } from '../../lib/coordinatorCommandBoard';
 import { buildCoordinatorRoleBoard } from '../../lib/coordinatorRoleBoard';
 import { buildCoordinatorAlertActivityBoard } from '../../lib/coordinatorAlertActivityBoard';
+import { buildCoordinatorPrimaryActionBoard } from '../../lib/coordinatorPrimaryActionBoard';
 
 
 type AudienceOption = { value: string; label: string; count: number };
@@ -874,6 +875,12 @@ export const DashboardCoordinatorMode: React.FC = () => {
     events,
     timelineState,
   }), [guests, qnaItems, events, timelineState]);
+  const primaryActionTarget = useMemo(() => resolveCoordinatorPrimaryActionTarget(primaryAction), [primaryAction]);
+  const primaryActionBoard = useMemo(() => buildCoordinatorPrimaryActionBoard({
+    action: primaryAction,
+    target: primaryActionTarget,
+    canAutoRunTimeline: Boolean(upNextEventId && canEditTimeline),
+  }), [primaryAction, primaryActionTarget, upNextEventId, canEditTimeline]);
   const secondaryCommandLabel = useMemo(
     () => commandSummaryItems.find((item) => item.label !== priorityCommandLabel)?.label ?? null,
     [commandSummaryItems, priorityCommandLabel],
@@ -1856,6 +1863,22 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   </button>
                 )}
               </div>
+            </div>
+          </div>
+          <div className="mb-3 rounded-lg border border-border/50 bg-surface-subtle/25 px-3 py-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-medium text-text-primary">Primary action path</p>
+                <p className="mt-1 text-[11px] text-text-secondary">Destination · {primaryActionBoard.destinationLabel}</p>
+                <p className="text-[11px] text-text-secondary">Execution · {primaryActionBoard.executionLabel}</p>
+              </div>
+              <span className={`rounded-full border px-2 py-1 text-[10px] font-medium ${primaryActionBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : primaryActionBoard.tone === 'warning' ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-border bg-white text-text-tertiary'}`}>
+                {primaryActionBoard.statusLabel}
+              </span>
+            </div>
+            <div className="mt-3 rounded-md border border-border/50 bg-white px-2.5 py-2">
+              <p className="text-[10px] uppercase tracking-wide text-text-tertiary">Action detail</p>
+              <p className="mt-1 text-[11px] text-text-primary">{primaryActionBoard.detailLabel}</p>
             </div>
           </div>
           <div className="mb-3 rounded-lg border border-border/50 bg-surface-subtle/25 px-3 py-3">
