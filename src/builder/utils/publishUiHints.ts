@@ -11,6 +11,8 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
     || normalizedErrorLower.includes('guests can reply')
     || normalizedErrorLower.includes('everything is saved')
     || normalizedErrorLower.includes('draft only')
+    || normalizedErrorLower.includes('draft has unsaved changes')
+    || normalizedErrorLower.includes('live site unchanged — you have new draft edits')
     || normalizedErrorLower.includes('live site is up to date')
   ) {
     return ['Use Fix next to move through the last blockers before the guest-facing launch.'];
