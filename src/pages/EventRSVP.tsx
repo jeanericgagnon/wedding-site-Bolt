@@ -329,6 +329,7 @@ export default function EventRSVP() {
       window.clearTimeout(postSubmitResetTimeoutRef.current);
       postSubmitResetTimeoutRef.current = null;
     }
+    submitInFlightRef.current = false;
     setRsvpForm((current) => updater(current));
   }
 

@@ -1231,4 +1231,5 @@ describe('EventRSVP token trust continuity', () => {
 
     expect(screen.queryByText('Failed to save your RSVP. Please try again.')).not.toBeInTheDocument();
   });
+
 });
