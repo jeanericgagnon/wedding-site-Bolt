@@ -29,6 +29,17 @@ interface Toast {
   type: 'success' | 'error';
 }
 
+function normalizeOwnerDashboardRegistryItem(item: RegistryItem): RegistryItem {
+  const quantityState = sanitizeRegistryQuantityState(item.quantity_purchased ?? 0, item.quantity_needed ?? 1);
+  return {
+    ...item,
+    quantity_needed: quantityState.quantityNeeded,
+    quantity_purchased: quantityState.quantityPurchased,
+    purchase_status: quantityState.purchaseStatus,
+    purchaser_name: quantityState.purchaseStatus === 'available' ? null : item.purchaser_name,
+  };
+}
+
 const ToastList: React.FC<{ toasts: Toast[] }> = ({ toasts }) => (
   <div className="fixed bottom-6 right-6 z-50 space-y-2 pointer-events-none">
     {toasts.map(t => (
@@ -106,7 +117,8 @@ export const DashboardRegistry: React.FC = () => {
   const [repairingBadImports, setRepairingBadImports] = useState(false);
   const [autoRefreshing, setAutoRefreshing] = useState(false);
   const [registryActionsOpen, setRegistryActionsOpen] = useState(false);
-  const duplicateGroups = findDuplicateRegistryGroups(items);
+  const normalizedItems = items.map(normalizeOwnerDashboardRegistryItem);
+  const duplicateGroups = findDuplicateRegistryGroups(normalizedItems);
   const bulkReviewCounts = {
     repair: items.filter((item) => getRegistryItemMetadataState(item).hasBadImportTitle && !!(item.item_url || item.canonical_url)).length,
     duplicates: duplicateGroups.reduce((sum, group) => sum + group.length, 0),
@@ -178,7 +190,7 @@ export const DashboardRegistry: React.FC = () => {
   const loadItems = useCallback(async (siteId: string) => {
     try {
       const data = await fetchRegistryItems(siteId);
-      setItems(data);
+      setItems(data.map(normalizeOwnerDashboardRegistryItem));
     } catch {
       toast('Couldn’t load registry items right now. Please try again.', 'error');
     }
@@ -751,17 +763,6 @@ export const DashboardRegistry: React.FC = () => {
     setEditItem(null);
     setShowForm(true);
   }
-
-  const normalizedItems = items.map((item) => {
-    const quantityState = sanitizeRegistryQuantityState(item.quantity_purchased ?? 0, item.quantity_needed ?? 1);
-    return {
-      ...item,
-      quantity_needed: quantityState.quantityNeeded,
-      quantity_purchased: quantityState.quantityPurchased,
-      purchase_status: quantityState.purchaseStatus,
-      purchaser_name: quantityState.purchaseStatus === 'available' ? null : item.purchaser_name,
-    };
-  });
 
   const filtered = normalizedItems.filter(item => {
     const q = search.toLowerCase();
