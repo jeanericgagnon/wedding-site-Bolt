@@ -131,6 +131,18 @@ describe('sections registry resolution', () => {
     TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry')!.variant = originalVariant;
   });
 
+  it('keeps unknown imported registry template variants from leaking past cards fallback', () => {
+    const baseRegistrySection = TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry');
+    expect(baseRegistrySection).toBeDefined();
+
+    const originalVariant = baseRegistrySection?.variant;
+    TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry')!.variant = 'legacy-default';
+
+    expect(getTemplate('base').defaultLayout.sections.find((section) => section.type === 'registry')?.variant).toBe('cards');
+
+    TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry')!.variant = originalVariant;
+  });
+
   it('keeps legacy registry template variants normalized onto guest-visible cards', () => {
     const baseRegistrySection = TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry');
     expect(baseRegistrySection).toBeDefined();
@@ -356,6 +368,7 @@ describe('sections registry resolution', () => {
     expect(templateRegistrySource).toContain("base: cloneTemplateDefinition(templateById['timeless-classic'] ?? templateRegistry[0]),");
     expect(templateRegistrySource).toContain("variant: section.type === 'registry'");
     expect(templateRegistrySource).toContain("? (typeof section.variant === 'string' ? normalizeRegistryTemplateVariant(section.variant) : 'cards')");
+    expect(templateRegistrySource).toContain("return REGISTRY_VARIANT_ALIASES[normalizedVariant] ?? 'cards';");
     expect(templateRegistrySource).toContain('bindings: cloneTemplateValue(section.bindings ?? {}),');
     expect(templateRegistrySource).toContain('settings: cloneTemplateValue(section.settings ?? {}),');
     expect(templateRegistrySource).toContain('overrides: cloneTemplateValue(section.overrides ?? undefined),');

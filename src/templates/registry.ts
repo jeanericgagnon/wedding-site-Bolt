@@ -34,7 +34,7 @@ const REGISTRY_VARIANT_ALIASES: Record<string, string> = {
 
 function normalizeRegistryTemplateVariant(variant: string): string {
   const normalizedVariant = variant.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-  return REGISTRY_VARIANT_ALIASES[normalizedVariant] ?? variant;
+  return REGISTRY_VARIANT_ALIASES[normalizedVariant] ?? 'cards';
 }
 
 function normalizeTemplateIdKey(templateId: unknown): string {
