@@ -376,6 +376,7 @@ describe('sections registry resolution', () => {
     expect(canonicalMapper).toContain("const normalizedType = type.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');");
     expect(canonicalMapper).toContain("case 'registrysection':");
     expect(registryLinkCarryover).toContain('function extractRegistryUrlToken(line: string): string | null {');
+    expect(registryLinkCarryover).toContain("const markdownHref = line.match(/\\[[^\\]]+\\]\\((https?:\\/\\/[^)]+|www\\.[^)]+)\\)/i)?.[1] ?? null;");
     expect(registryLinkCarryover).toContain(".map((line) => normalizeUrl(extractRegistryUrlToken(line) ?? line))");
     expect(registryLinkCarryover).toContain("replace(/[),.;:!?]+$/, '')");
     expect(weddingDataBindings).toContain('function normalizeBindableSectionType(type: string): string {');

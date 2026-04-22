@@ -20,4 +20,10 @@ describe('carryOverRegistryLinks', () => {
       { url: 'https://amazon.com/shop', sourceLabel: 'Amazon' },
     ]);
   });
+
+  it('extracts markdown registry links without losing purchase annotations', () => {
+    expect(carryOverRegistryLinks('[Amazon Registry — Purchased](https://amazon.com/shop)')).toEqual([
+      { url: 'https://amazon.com/shop', sourceLabel: 'Amazon' },
+    ]);
+  });
 });
