@@ -332,17 +332,29 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
       || viewState === 'thinking'
       || viewState === 'followups'
       || parsed.showFollowUps === true
-      || parsed.showFollowUps === false
     )
     && rawClarifyingState !== null
     && rawClarifyingState.clarifying.questions.length === 0
     && rawClarifyingState.clarifying.history.length === 0
   );
-  const normalizedFollowUpAnswers = activeClarifyingIds && (activeClarifyingIds.size > 0 || hasAnyClarifyingRecords)
+  const hasOnlyDraftOutputs = Boolean(
+    clarifyingState
+    && clarifyingState.clarifying.questions.length === 0
+    && clarifyingState.clarifying.history.length === 0
+    && Object.keys(clarifyingState.draftOutputs).length > 0
+  );
+  const hasSkippedClarifyingQuestions = Boolean(
+    clarifyingState?.clarifying.questions.some((question) => question.status === 'skipped')
+  );
+  const normalizedFollowUpAnswers = activeClarifyingIds && activeClarifyingIds.size > 0
     ? Object.fromEntries(Object.entries(followUpAnswers).filter(([key]) => activeClarifyingIds.has(key)))
-    : shouldDropOrphanedFollowUpAnswers
+    : hasSkippedClarifyingQuestions
       ? {}
-      : followUpAnswers;
+      : hasOnlyDraftOutputs && !shouldDropOrphanedFollowUpAnswers
+        ? followUpAnswers
+        : shouldDropOrphanedFollowUpAnswers
+          ? {}
+          : followUpAnswers;
   const reopenedClarifyingIds = clarifyingState
     ? new Set(
         clarifyingState.clarifying.questions
