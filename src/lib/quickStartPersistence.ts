@@ -215,13 +215,22 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
   const viewState = parsed.viewState === 'thinking' || parsed.viewState === 'followups' ? parsed.viewState : 'question';
   const hasOpenFollowUps = (clarifyingState?.clarifying.questions.some((question) => question.status !== 'answered') || false);
   const showFollowUps = parsed.showFollowUps === true && hasOpenFollowUps;
+  const activeClarifyingIds = clarifyingState
+    ? new Set([
+        ...clarifyingState.clarifying.questions.map((question) => question.id),
+        ...clarifyingState.clarifying.history.map((question) => question.id),
+      ])
+    : null;
+  const normalizedFollowUpAnswers = activeClarifyingIds && activeClarifyingIds.size > 0
+    ? Object.fromEntries(Object.entries(followUpAnswers).filter(([key]) => activeClarifyingIds.has(key)))
+    : followUpAnswers;
 
   return {
     initialSetupAnswers: { ...base.initialSetupAnswers, ...initialSetupAnswers },
     currentIndex: typeof parsed.currentIndex === 'number' && Number.isFinite(parsed.currentIndex) && Number.isInteger(parsed.currentIndex) && parsed.currentIndex >= 0
       ? parsed.currentIndex
       : 0,
-    followUpAnswers,
+    followUpAnswers: normalizedFollowUpAnswers,
     showFollowUps,
     clarifyingState,
     viewState: viewState === 'followups' && !hasOpenFollowUps ? 'question' : viewState,

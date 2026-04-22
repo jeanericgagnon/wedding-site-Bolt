@@ -450,4 +450,34 @@ describe('quickStartPersistence', () => {
       },
     });
   });
+
+  it('drops stale follow-up answers that no longer match restored clarifying state', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      followUpAnswers: {
+        lodging: 'Stay at the resort',
+        transport: 'Shuttle leaves at 4 PM',
+      },
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'lodging',
+            category: 'travel',
+            question: 'Where should guests stay?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.lodging'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'pending',
+            answer: '',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.followUpAnswers).toEqual({ lodging: 'Stay at the resort' });
+  });
 });
