@@ -504,6 +504,17 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('marks saved readiness complete when a non-boolean dirty flag leaks in from runtime state', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+
+    expect(buildPublishReadiness(project, undefined, { isDirty: 'yes' as never }).find((item) => item.id === 'saved')).toEqual({
+      id: 'saved',
+      label: 'Latest edits are saved',
+      done: true,
+      detail: 'Everything is saved.',
+    });
+  });
+
   it('marks current-page readiness incomplete when there is no page yet', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages = [];
