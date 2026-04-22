@@ -812,6 +812,10 @@ function getCanonicalTemplateSource(templateId: string | undefined): TemplateDef
     || templateRegistry[0];
 }
 
+function getCanonicalTemplateSourceId(templateId: unknown): string {
+  return TEMPLATE_ALIAS_TARGETS[resolveCanonicalTemplateId(templateId)] ?? resolveCanonicalTemplateId(templateId);
+}
+
 export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = deepFreezeTemplateValue({
   ...templateById,
   // Back-compat aliases used by older flows
@@ -841,8 +845,7 @@ export function resolveCanonicalTemplateId(templateId: unknown): string {
 }
 
 export function getTemplate(templateId: unknown): TemplateDefinition {
-  const canonicalTemplateId = resolveCanonicalTemplateId(templateId);
-  return cloneTemplateDefinition(getCanonicalTemplateSource(canonicalTemplateId));
+  return cloneTemplateDefinition(getCanonicalTemplateSource(getCanonicalTemplateSourceId(templateId)));
 }
 
 export function getAllTemplates(): TemplateDefinition[] {
