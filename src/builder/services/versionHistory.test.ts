@@ -57,4 +57,17 @@ describe('versionHistory', () => {
     const listed = listBuilderRevisions(weddingId);
     expect(listed).toHaveLength(5);
   });
+
+  it('keeps the newest builder revision when storage is capped', () => {
+    const weddingId = `w_${Date.now()}_e`;
+    const project = createEmptyBuilderProject(weddingId, 'modern-luxe');
+
+    let newestId = '';
+    for (let index = 0; index < 12; index += 1) {
+      const revision = recordBuilderRevision({ weddingId, project, action: 'save', actor: `tester-${index}` });
+      newestId = revision.id;
+    }
+
+    expect(listBuilderRevisions(weddingId)[0]?.id).toBe(newestId);
+  });
 });
