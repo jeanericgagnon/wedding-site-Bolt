@@ -912,7 +912,7 @@ describe('name change document intake contract', () => {
       courtOrderDraft.id,
       'signed date' as never,
       '  ',
-      '2026-04-05T12:30:00Z',
+      '2026/04/05 12:30:00',
     );
 
     const snapshot = buildNameChangeDocumentIntakeSnapshot(

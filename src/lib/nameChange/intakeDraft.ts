@@ -260,6 +260,12 @@ function normalizeDraftDateValue(value: string) {
     return normalizeIsoParts(year, month, day);
   }
 
+  const timestampSlashMatch = normalizedOrdinalValue.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})[T\s].*$/);
+  if (timestampSlashMatch) {
+    const [, year, month, day] = timestampSlashMatch;
+    return normalizeIsoParts(year, month, day);
+  }
+
   return normalizedOrdinalValue;
 }
 
