@@ -410,8 +410,8 @@ export const Login: React.FC = () => {
                     }
                   : { pathname: '/signup' }}
                 state={explicitReturnPath || normalizedQuickStartDraft ? {
-                  returnTo: explicitReturnPath,
-                  quickStartDraft: normalizedQuickStartDraft,
+                  ...(explicitReturnPath ? { returnTo: explicitReturnPath } : {}),
+                  ...(normalizedQuickStartDraft ? { quickStartDraft: normalizedQuickStartDraft } : {}),
                 } : undefined}
                 className="text-primary hover:text-primary-hover font-medium transition-colors"
               >

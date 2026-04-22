@@ -116,4 +116,16 @@ describe('Login quick start handoff', () => {
       viewState: 'question',
     }));
   });
+
+
+  it('omits empty onboarding drafts when switching from login to signup', async () => {
+    useLocationMock.mockReturnValue({ state: { returnTo: '/onboarding' } });
+
+    render(<Login />);
+
+    const link = screen.getByRole('link', { name: 'Get started — $49' });
+    const state = JSON.parse(link.getAttribute('data-nav-state') || '{}');
+
+    expect(state).toEqual({ returnTo: '/onboarding' });
+  });
 });

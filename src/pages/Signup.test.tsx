@@ -105,13 +105,27 @@ describe('Signup quick start handoff', () => {
 
     expect(navigateMock).toHaveBeenCalledWith('/login', {
       state: {
-        returnTo: null,
         quickStartDraft: expect.objectContaining({
           currentIndex: 0,
           followUpAnswers: {},
           showFollowUps: false,
           viewState: 'question',
         }),
+      },
+    });
+  });
+
+
+  it('omits empty onboarding drafts when switching from signup to login', async () => {
+    useLocationMock.mockReturnValue({ state: { returnTo: '/onboarding' } });
+
+    render(<Signup />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+
+    expect(navigateMock).toHaveBeenCalledWith('/login', {
+      state: {
+        returnTo: '/onboarding',
       },
     });
   });

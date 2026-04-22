@@ -301,8 +301,8 @@ export const Signup: React.FC = () => {
                     : '/login',
                   explicitReturnPath || normalizedQuickStartDraft ? {
                     state: {
-                      returnTo: explicitReturnPath,
-                      quickStartDraft: normalizedQuickStartDraft,
+                      ...(explicitReturnPath ? { returnTo: explicitReturnPath } : {}),
+                      ...(normalizedQuickStartDraft ? { quickStartDraft: normalizedQuickStartDraft } : {}),
                     },
                   } : undefined,
                 )}
