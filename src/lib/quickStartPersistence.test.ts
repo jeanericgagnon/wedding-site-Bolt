@@ -8,7 +8,7 @@ describe('quickStartPersistence', () => {
       showFollowUps: true,
       viewState: 'followups',
       initialSetupAnswers: {
-        names: 'Alex & Jordan',
+        names: ' Alex & Jordan ',
       },
       followUpAnswers: {
         'event-1-time': '6:00 PM',

@@ -42,10 +42,11 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
 
   const initialSetupAnswers = parsed.initialSetupAnswers && typeof parsed.initialSetupAnswers === 'object' && !Array.isArray(parsed.initialSetupAnswers)
     ? Object.fromEntries(
-        Object.entries(parsed.initialSetupAnswers).filter(([key, val]) => {
-          if (typeof val !== 'string') return false;
+        Object.entries(parsed.initialSetupAnswers).flatMap(([key, val]) => {
+          if (typeof val !== 'string') return [];
+          const trimmedValue = val.trim();
           const allowedValues = allowedInitialSetupValues[key as keyof InitialSetupAnswers];
-          return !allowedValues || allowedValues.includes(val);
+          return !allowedValues || allowedValues.includes(trimmedValue) ? [[key, trimmedValue]] : [];
         }),
       ) as Partial<InitialSetupAnswers>
     : {};
