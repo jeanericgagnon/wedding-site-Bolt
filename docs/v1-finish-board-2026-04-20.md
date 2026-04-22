@@ -266,7 +266,7 @@ If that line fails, the rest is noise.
 - none currently identified in code review after the latest trust/continuity fixes
 
 ### P1 blockers
-1. No canonical v1 smoke run is logged yet
+1. Canonical v1 smoke is automated and logged, but the required human couple-path truth pass is still missing
 2. No executed runtime role-aware collaborator proof is logged yet
 3. No executed guest -> RSVP -> ops continuity proof is logged yet
 4. Guests / RSVP proof is partially blocked by environment auth for `validate-rsvp-token`
