@@ -115,7 +115,7 @@ const V1_SLICE_STATUS = [
     status: 'Must prove',
     tone: 'risk',
     done: 'Draft/schedule/history surface is there.',
-    missing: 'Needs proof that send-state is trustworthy enough to promise.',
+    missing: 'Needs proof that send-state is solid enough for broader launch claims.',
   },
   {
     name: 'Seating',
