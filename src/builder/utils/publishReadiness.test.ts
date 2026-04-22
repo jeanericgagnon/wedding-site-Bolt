@@ -118,6 +118,20 @@ describe('publishReadiness', () => {
     expect(getPublishValidationError(project, data)).toBe('Turn RSVP on before going live.');
   });
 
+  it('marks RSVP readiness incomplete when wedding data disables replies', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
+    const data = createEmptyWeddingData();
+    data.rsvp.enabled = false;
+
+    expect(buildPublishReadiness(project, data).find((item) => item.id === 'rsvp')).toEqual({
+      id: 'rsvp',
+      label: 'RSVP is turned on',
+      done: false,
+      detail: 'Turn RSVP on or remove RSVP calls to action.',
+    });
+  });
+
   it('shows current-page readiness against the active page, not just the first page', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages = [
