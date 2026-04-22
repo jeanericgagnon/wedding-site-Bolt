@@ -16,7 +16,6 @@ describe('payment bypass cleanup parity', () => {
 
     clearAllOnboardingDraftStorage();
     clearOnboardingResumeStorage();
-    writeSignupReturnPath(null);
 
     expect(window.localStorage.getItem(ONBOARDING_DRAFT_STORAGE_KEY)).toBeNull();
     expect(window.localStorage.getItem(ONBOARDING_RESUME_HINT_STORAGE_KEY)).toBeNull();

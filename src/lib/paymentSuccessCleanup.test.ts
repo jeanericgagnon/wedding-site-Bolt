@@ -16,7 +16,6 @@ describe('paymentSuccess cleanup', () => {
     writeSignupReturnPath('/onboarding/quick-start?bypassPayment=1');
 
     clearAllOnboardingDraftStorage();
-    writeSignupReturnPath(null);
 
     expect(window.localStorage.getItem(ONBOARDING_DRAFT_STORAGE_KEY)).toBeNull();
     expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
