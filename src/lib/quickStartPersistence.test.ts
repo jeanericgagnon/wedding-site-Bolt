@@ -191,6 +191,29 @@ describe('quickStartPersistence', () => {
   });
 
 
+  it('restores draft-only clarifying snapshots when older payloads omitted questions and history', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      clarifyingState: {
+        clarifying: {
+          mode: 'draft',
+        },
+        draftOutputs: {
+          hero: {
+            headline: 'Welcome to our wedding',
+          },
+        },
+      },
+    });
+
+    expect(normalized.clarifyingState?.clarifying.mode).toBe('draft');
+    expect(normalized.clarifyingState?.clarifying.questions).toEqual([]);
+    expect(normalized.clarifyingState?.clarifying.history).toEqual([]);
+    expect(normalized.clarifyingState?.draftOutputs).toEqual({
+      hero: { headline: 'Welcome to our wedding' },
+    });
+  });
+
+
   it('restores clarifying state even when older snapshots omitted questions', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       clarifyingState: {

@@ -175,6 +175,11 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
       && (
         Array.isArray(parsed.clarifyingState.clarifying.questions)
         || Array.isArray(parsed.clarifyingState.clarifying.history)
+        || (
+          parsed.clarifyingState.draftOutputs
+          && typeof parsed.clarifyingState.draftOutputs === 'object'
+          && !Array.isArray(parsed.clarifyingState.draftOutputs)
+        )
       )
         ? {
             ...parsed.clarifyingState,
