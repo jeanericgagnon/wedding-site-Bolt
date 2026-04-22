@@ -203,7 +203,7 @@ const VARIANTS_BY_TYPE: Record<string, string[]> = {
   story: ['default', 'timeline'],
   schedule: ['default', 'dayTabs'],
   travel: ['default', 'localGuide'],
-  registry: ['default', 'fundHighlight'],
+  registry: ['default', 'fundHighlight', 'classic', 'luxury', 'experiences', 'modern', 'playful'],
   faq: ['default', 'iconGrid'],
   venue: ['default'],
   countdown: ['default'],

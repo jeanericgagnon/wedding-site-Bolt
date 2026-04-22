@@ -16,6 +16,7 @@ const registrySectionComponent = readFileSync(resolve(process.cwd(), 'src/sectio
 const sectionManifests = readFileSync(resolve(process.cwd(), 'src/builder/registry/sectionManifests.ts'), 'utf8');
 const templateRegistry = readFileSync(resolve(process.cwd(), 'src/templates/registry.ts'), 'utf8');
 const sectionVariantCompatibility = readFileSync(resolve(process.cwd(), 'src/lib/sectionVariantCompatibility.ts'), 'utf8');
+const builderV2Lab = readFileSync(resolve(process.cwd(), 'src/pages/BuilderV2Lab.tsx'), 'utf8');
 
 const checks = [
   { name: 'dashboard uses sanitizeRegistryQuantityState', ok: registryPage.includes('sanitizeRegistryQuantityState') },
@@ -28,6 +29,7 @@ const checks = [
   { name: 'builder registry manifest exposes template-backed registry aliases', ok: sectionManifests.includes("'classic'") && sectionManifests.includes("'luxury'") && sectionManifests.includes("'experiences'") && sectionManifests.includes("'modern'") && sectionManifests.includes("'playful'") },
   { name: 'shipped templates only use builder-supported registry variants', ok: templateRegistry.includes("variant: 'classic'") && templateRegistry.includes("variant: 'luxury'") && templateRegistry.includes("variant: 'experiences'") && sectionManifests.includes("'classic'") && sectionManifests.includes("'luxury'") && sectionManifests.includes("'experiences'") },
   { name: 'builder registry variant compatibility preserves shipped public aliases', ok: sectionVariantCompatibility.includes("registry: ['default', 'grid', 'fundHighlight', 'classic', 'luxury', 'experiences', 'modern', 'playful']") && sectionVariantCompatibility.includes("luxury: 'fundHighlight'") && sectionVariantCompatibility.includes("experiences: 'fundHighlight'") },
+  { name: 'builder lab registry picker exposes shipped template aliases', ok: builderV2Lab.includes("registry: ['default', 'fundHighlight', 'classic', 'luxury', 'experiences', 'modern', 'playful']") },
   { name: 'canonical registry validation accepts template-backed registry aliases', ok: canonicalSectionRegistry.includes("luxury: 'featured'") && canonicalSectionRegistry.includes("experiences: 'featured'") && canonicalSectionRegistry.includes("classic: 'cards'") },
   { name: 'public registry cards keep canonical-only store links usable', ok: registryCardsSection.includes("return item.item_url ?? item.canonical_url ?? null;") && registryCardsSection.includes('url: existing.url ?? publicUrl') },
   { name: 'public registry cards separate partial and claimed store counts', ok: registryCardsSection.includes("partial: existing.partial + (item.purchase_status === 'partial' ? 1 : 0)") && registryCardsSection.includes("group.purchased > 0 ? ` · ${group.purchased} claimed` : ''") },

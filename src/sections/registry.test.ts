@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { getAllSectionManifests, getSectionManifest } from '../builder/registry/sectionManifests';
 import { resolveAndParse } from './registry';
 import { getAllTemplates } from '../templates/registry';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 const EXPECTED_ALIAS_TARGETS: Array<{ type: string; variant: string; expectedResolvedVariant: string }> = [
   { type: 'venue', variant: 'banner', expectedResolvedVariant: 'splitMap' },
@@ -64,5 +66,10 @@ describe('sections registry resolution', () => {
     ));
 
     expect(registryManifest?.supportedVariants).toEqual(expect.arrayContaining(templateVariants));
+  });
+
+  it('keeps the builder lab registry variant picker aligned with shipped template aliases', () => {
+    const builderLab = readFileSync(resolve(__dirname, '../pages/BuilderV2Lab.tsx'), 'utf8');
+    expect(builderLab).toContain("registry: ['default', 'fundHighlight', 'classic', 'luxury', 'experiences', 'modern', 'playful']");
   });
 });
