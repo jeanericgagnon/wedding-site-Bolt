@@ -45,7 +45,7 @@ describe('name change intake draft helpers', () => {
       id: 'draft-court_order',
       document_kind: 'court_order',
       display_name: 'Court order',
-      file_name_masked: 'court-order-•••.pdf',
+      file_name_masked: 'court-order-draft.pdf',
     });
   });
 

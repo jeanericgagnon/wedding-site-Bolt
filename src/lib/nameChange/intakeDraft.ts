@@ -71,7 +71,7 @@ export function createDraftNameChangeDocument(
     display_name: normalizedLabel,
     storage_mode: 'metadata_only',
     intake_status: defaultIntakeStatus,
-    file_name_masked: shouldUseMaskedFileName ? `${canonicalKind.replace(/_/g, '-')}-•••.pdf` : null,
+    file_name_masked: shouldUseMaskedFileName ? `${canonicalKind.replace(/_/g, '-')}-draft.pdf` : null,
     issuing_authority: null,
     issued_on: null,
     expires_on: null,
