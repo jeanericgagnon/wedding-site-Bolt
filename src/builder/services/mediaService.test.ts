@@ -202,4 +202,23 @@ describe('mediaService', () => {
       attachedSectionIds: [],
     }));
   });
+
+  it('keeps section attachment truth alongside tags when both are provided', async () => {
+    const file = new File(['img'], 'escort-wall.jpg', { type: 'image/jpeg' });
+    upload.mockResolvedValue({
+      url: 'https://cdn.example.com/escort-wall.jpg',
+      path: 'w1/escort-wall.jpg',
+    });
+    save.mockResolvedValue({ id: 'asset-11' });
+
+    await mediaService.uploadAsset('w1', file, {
+      attachToSectionId: 'section-gallery',
+      tags: ['decor'],
+    });
+
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({
+      attachedSectionIds: ['section-gallery'],
+      tags: ['decor'],
+    }));
+  });
 });
