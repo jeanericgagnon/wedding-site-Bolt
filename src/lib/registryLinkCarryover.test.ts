@@ -32,4 +32,10 @@ describe('carryOverRegistryLinks', () => {
       { url: 'https://target.com/list', sourceLabel: 'Target' },
     ]);
   });
+
+  it('extracts bare-domain registry links from purchase-annotated notes', () => {
+    expect(carryOverRegistryLinks('Already purchased — amazon.com/shop/list-1')).toEqual([
+      { url: 'https://amazon.com/shop/list-1', sourceLabel: 'Amazon' },
+    ]);
+  });
 });

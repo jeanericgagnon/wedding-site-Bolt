@@ -31,6 +31,8 @@ function extractRegistryUrlToken(line: string): string | null {
   if (markdownHref) return markdownHref.replace(/[),.;:!?]+$/, '');
   const bracketedHref = line.match(/<(https?:\/\/[^>]+|www\.[^>]+)>/i)?.[1] ?? null;
   if (bracketedHref) return bracketedHref.replace(/[),.;:!?]+$/, '');
+  const bareDomainMatch = line.match(/(?:^|\s)((?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s]*)?)/i)?.[1] ?? null;
+  if (bareDomainMatch) return bareDomainMatch.replace(/[),.;:!?]+$/, '');
   const directMatch = line.match(/https?:\/\/\S+/i)?.[0] ?? line.match(/www\.\S+/i)?.[0] ?? null;
   if (directMatch) return directMatch.replace(/[),.;:!?]+$/, '');
   const parts = line.split(/[|,;]/).map((part) => part.trim()).filter(Boolean);
