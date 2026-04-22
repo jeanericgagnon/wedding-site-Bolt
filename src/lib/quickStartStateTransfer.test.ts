@@ -193,6 +193,45 @@ describe('quickStartStateTransfer', () => {
     setItemSpy.mockRestore();
   });
 
+
+  it('skips rewrite-on-read storage updates when the snapshot is already normalized', () => {
+    const normalizedRaw = JSON.stringify({
+      initialSetupAnswers: {
+        names: 'Alex & Jordan',
+        labelPreference: 'names-only',
+        customLabelPartnerOne: '',
+        customLabelPartnerTwo: '',
+        whenWhere: '',
+        venueNameOrTbd: '',
+        style: '',
+        guestFeel: '',
+        weekendEventsRaw: '',
+        ceremonyArrivalTime: '',
+        guestCountBand: '',
+        plusOnePolicy: '',
+        childrenAllowed: '',
+        rsvpDeadline: '',
+        mealChoice: '',
+        registryIntent: '',
+        optionalStory: '',
+      },
+      currentIndex: 0,
+      followUpAnswers: {},
+      showFollowUps: false,
+      clarifyingState: null,
+      viewState: 'question',
+    });
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, normalizedRaw);
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+
+    const restored = readQuickStartDraftSnapshot();
+
+    expect(restored?.initialSetupAnswers.names).toBe('Alex & Jordan');
+    expect(setItemSpy).not.toHaveBeenCalledWith(QUICK_START_STORAGE_KEY, normalizedRaw);
+
+    setItemSpy.mockRestore();
+  });
+
   it('still clears broken storage when invalid json cleanup cannot remove the payload', () => {
     window.localStorage.setItem(QUICK_START_STORAGE_KEY, '{bad json');
     const removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
