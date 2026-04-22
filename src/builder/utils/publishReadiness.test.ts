@@ -320,6 +320,19 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('uses generic current-page success copy when the active page title is blank', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].title = '   ';
+    project.pages[0].sections = [makeSection({ id: 'home-live', enabled: true })];
+
+    expect(buildPublishReadiness(project, undefined, { activePageId: project.pages[0].id }).find((item) => item.id === 'current-page')).toEqual({
+      id: 'current-page',
+      label: 'Current page has visible content',
+      done: true,
+      detail: 'Current page has visible sections.',
+    });
+  });
+
   it('marks current-page readiness incomplete when the requested active page exists but all of its sections are disabled', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages = [
