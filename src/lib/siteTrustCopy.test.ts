@@ -20,4 +20,9 @@ describe('SITE_TRUST_COPY starter draft truth', () => {
     expect(SITE_TRUST_COPY.hiddenFromSearchExplainer).toBe('You can keep search indexing off while you review access settings and decide when to share the site with guests.');
     expect(SITE_TRUST_COPY.hiddenFromSearchExplainer.toLowerCase()).not.toContain('live for guests');
   });
+
+  it('keeps custom URL copy framed around sharing a DayOf link instead of implying a separate domain product', () => {
+    expect(SITE_TRUST_COPY.customWeddingUrlExplainer).toBe('Every site includes a personalized DayOf URL, so you can share a polished DayOf link with guests without a separate domain upsell.');
+    expect(SITE_TRUST_COPY.customWeddingUrlExplainer.toLowerCase()).not.toContain('separate domain product');
+  });
 });
