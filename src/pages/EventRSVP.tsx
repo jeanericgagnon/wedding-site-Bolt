@@ -44,6 +44,12 @@ interface EventRsvpFormState {
   notes: string;
 }
 
+const DEFAULT_EVENT_RSVP_FORM_STATE: EventRsvpFormState = {
+  attending: true,
+  dietary_restrictions: '',
+  notes: '',
+};
+
 const RSVP_CONTINUITY_EVENT = 'dayof:rsvp-updated';
 const RSVP_CONTINUITY_STORAGE_KEY = 'dayof.rsvp.updatedAt';
 
@@ -75,11 +81,7 @@ export default function EventRSVP() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
-  const [rsvpForm, setRsvpForm] = useState<EventRsvpFormState>({
-    attending: true,
-    dietary_restrictions: '',
-    notes: '',
-  });
+  const [rsvpForm, setRsvpForm] = useState<EventRsvpFormState>(DEFAULT_EVENT_RSVP_FORM_STATE);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -143,7 +145,7 @@ export default function EventRSVP() {
     setGuest(null);
     setInvitations([]);
     setSelectedEvent(null);
-    setRsvpForm({ attending: true, dietary_restrictions: '', notes: '' });
+    setRsvpForm(DEFAULT_EVENT_RSVP_FORM_STATE);
     setSubmitting(false);
     setSubmitError('');
     setSubmitSuccess(false);
@@ -291,11 +293,7 @@ export default function EventRSVP() {
     if (invitation.rsvp) {
       setRsvpForm(buildInvitationRsvpFormState(invitation.rsvp));
     } else {
-      setRsvpForm({
-        attending: true,
-        dietary_restrictions: '',
-        notes: '',
-      });
+      setRsvpForm(DEFAULT_EVENT_RSVP_FORM_STATE);
     }
   }
 
@@ -311,10 +309,12 @@ export default function EventRSVP() {
   }
 
   function buildInvitationRsvpFormState(rsvp: EventInvitation['rsvp'] | null | undefined): EventRsvpFormState {
+    if (!rsvp) return DEFAULT_EVENT_RSVP_FORM_STATE;
+
     const normalized = buildInvitationRsvp({
-      attending: rsvp?.attending ?? true,
-      dietary_restrictions: rsvp?.dietary_restrictions || '',
-      notes: rsvp?.notes || '',
+      attending: rsvp.attending,
+      dietary_restrictions: rsvp.dietary_restrictions || '',
+      notes: rsvp.notes || '',
     });
 
     return {
@@ -367,7 +367,7 @@ export default function EventRSVP() {
     setSubmitSuccess(false);
     setError('');
     setLoading(false);
-    setRsvpForm({ attending: true, dietary_restrictions: '', notes: '' });
+    setRsvpForm(DEFAULT_EVENT_RSVP_FORM_STATE);
     setSelectedEvent(null);
   }
 

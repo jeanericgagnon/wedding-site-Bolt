@@ -296,6 +296,48 @@ describe('EventRSVP token trust continuity', () => {
     expect(screen.queryByDisplayValue('  See you there  ')).not.toBeInTheDocument();
   });
 
+  it('reopens a blank event RSVP with the default attending form state', async () => {
+    currentToken = 'guest-token';
+
+    maybeSingleQueue.push(
+      { data: { id: 'guest-1', name: 'Taylor', email: 'taylor@example.com' }, error: null },
+      { data: null, error: null },
+    );
+
+    selectQueue.push({
+      data: [
+        {
+          id: 'inv-1',
+          event_id: 'event-1',
+          itinerary_events: {
+            id: 'event-1',
+            event_name: 'Welcome Dinner',
+            description: '',
+            event_date: '2026-05-01',
+            start_time: '18:00:00',
+            end_time: null,
+            location_name: 'The Loft',
+            location_address: '',
+            dress_code: null,
+            notes: null,
+          },
+        },
+      ],
+      error: null,
+    });
+
+    render(<EventRSVP />);
+
+    expect(await screen.findByText('Hello, Taylor!')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'RSVP for this event' }));
+    fireEvent.click(screen.getByRole('button', { name: "Can't make it" }));
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(screen.getByRole('button', { name: 'RSVP for this event' }));
+
+    expect(screen.getByRole('button', { name: "Yes, I'll be there" })).toHaveClass('bg-green-600');
+    expect(screen.queryByRole('button', { name: "Can't make it" })).toHaveClass('bg-neutral-100');
+  });
+
   it('marks event RSVP support as available after a successful submit', async () => {
     currentToken = 'guest-token';
 
