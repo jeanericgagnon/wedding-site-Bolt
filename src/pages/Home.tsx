@@ -287,7 +287,7 @@ export const Home: React.FC = () => {
               </div>
               <div className="rounded-xl border border-border bg-white p-4">
                 <p className="font-semibold text-ink">Keep the site beautiful</p>
-                <p className="mt-1 text-sm text-ink/70">Switching should not mean downgrading the guest-facing experience.</p>
+                <p className="mt-1 text-sm text-ink/70">Switching should not mean downgrading the site quality couples are working toward.</p>
               </div>
               <div className="rounded-xl border border-border bg-white p-4">
                 <p className="font-semibold text-ink">Land in a better ops flow</p>
