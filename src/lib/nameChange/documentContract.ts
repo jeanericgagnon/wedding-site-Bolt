@@ -78,6 +78,10 @@ export const NAME_CHANGE_DOCUMENT_CONTRACTS: NameChangeDocumentContractDefinitio
   },
 ];
 
+function isCountableNameChangeContractKind(kind: NameChangeDocumentContractDefinition['kind']) {
+  return kind !== 'other';
+}
+
 function metadataMissingForDocument(document: NameChangeDocumentInput | undefined): string[] {
   if (!document || document.intake_status === 'not_started') return [];
 
@@ -209,7 +213,7 @@ export function buildNameChangeDocumentIntakeSnapshot(
       intakeStatus: contractIntakeStatus,
       storageMode: contractStorageMode,
       extractionFieldCount: visibleCapturedExtractionFields.length,
-      metadataReady: metadataMissing.length === 0 && contractIntakeStatus === 'reviewed' && canonicalConflicts.length === 0 ? 1 : 0,
+      metadataReady: isCountableNameChangeContractKind(definition.kind) && metadataMissing.length === 0 && contractIntakeStatus === 'reviewed' && canonicalConflicts.length === 0 ? 1 : 0,
       metadataMissing,
       expectedExtractionFields: extractionChecklistBlocked ? [] : definition.extractionFields,
       capturedExtractionFields: visibleCapturedExtractionFields,
@@ -224,10 +228,10 @@ export function buildNameChangeDocumentIntakeSnapshot(
     summary: {
       requiredReady: statuses.filter((status) => status.required && status.intakeStatus === 'reviewed' && status.canonicalConflicts.length === 0 && status.metadataMissing.length === 0).length,
       requiredMissing: statuses.filter((status) => status.required && (status.intakeStatus !== 'reviewed' || status.canonicalConflicts.length > 0 || status.metadataMissing.length > 0)).length,
-      metadataReady: statuses.filter((status) => status.kind !== 'other' && status.intakeStatus === 'reviewed' && status.metadataMissing.length === 0 && status.canonicalConflicts.length === 0).length,
-      metadataGaps: statuses.filter((status) => status.kind !== 'other' && status.intakeStatus !== 'not_started' && (status.metadataMissing.length > 0 || (status.metadataMissing.length === 0 && status.canonicalConflicts.length > 0))).length,
-      autofillReady: statuses.filter((status) => status.kind !== 'other' && status.preferredForAutofill && status.missingExtractionFields.length === 0 && status.canonicalConflicts.length === 0 && status.metadataMissing.length === 0 && status.intakeStatus === 'reviewed').length,
-      extractionGaps: statuses.filter((status) => status.kind !== 'other' && status.intakeStatus === 'reviewed' && status.metadataMissing.length === 0 && (status.missingExtractionFields.length > 0 || status.canonicalConflicts.length > 0)).length,
+      metadataReady: statuses.filter((status) => isCountableNameChangeContractKind(status.kind) && status.intakeStatus === 'reviewed' && status.metadataMissing.length === 0 && status.canonicalConflicts.length === 0).length,
+      metadataGaps: statuses.filter((status) => isCountableNameChangeContractKind(status.kind) && status.intakeStatus !== 'not_started' && (status.metadataMissing.length > 0 || (status.metadataMissing.length === 0 && status.canonicalConflicts.length > 0))).length,
+      autofillReady: statuses.filter((status) => isCountableNameChangeContractKind(status.kind) && status.preferredForAutofill && status.missingExtractionFields.length === 0 && status.canonicalConflicts.length === 0 && status.metadataMissing.length === 0 && status.intakeStatus === 'reviewed').length,
+      extractionGaps: statuses.filter((status) => isCountableNameChangeContractKind(status.kind) && status.intakeStatus === 'reviewed' && status.metadataMissing.length === 0 && (status.missingExtractionFields.length > 0 || status.canonicalConflicts.length > 0)).length,
     },
   };
 }
