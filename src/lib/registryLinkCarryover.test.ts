@@ -38,4 +38,10 @@ describe('carryOverRegistryLinks', () => {
       { url: 'https://amazon.com/shop/list-1', sourceLabel: 'Amazon' },
     ]);
   });
+
+  it('extracts markdown bare-domain registry links from purchase-annotated notes', () => {
+    expect(carryOverRegistryLinks('[Target Registry](target.com/list-2)')).toEqual([
+      { url: 'https://target.com/list-2', sourceLabel: 'Target' },
+    ]);
+  });
 });
