@@ -884,6 +884,11 @@ export default function RSVP() {
                     }
                     if (e.key === 'Enter' && activePredictionIndex >= 0) {
                       e.preventDefault();
+                      if (loading) {
+                        activeLookupRequestRef.current += 1;
+                        setLoading(false);
+                        setSubmitting(false);
+                      }
                       setError('');
                       setActivePredictionIndex(-1);
                       setSearchValue(guestPredictions[activePredictionIndex]);
@@ -903,6 +908,11 @@ export default function RSVP() {
                         key={name}
                         type="button"
                         onClick={() => {
+                          if (loading) {
+                            activeLookupRequestRef.current += 1;
+                            setLoading(false);
+                            setSubmitting(false);
+                          }
                           setError('');
                           setActivePredictionIndex(-1);
                           setSearchValue(name);
