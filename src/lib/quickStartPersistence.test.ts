@@ -862,4 +862,32 @@ describe('quickStartPersistence', () => {
     expect(normalized.showFollowUps).toBe(true);
     expect(normalized.viewState).toBe('followups');
   });
+
+  it('keeps question view closed when older restores explicitly turned follow-ups off', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      showFollowUps: false,
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'transport',
+            category: 'travel',
+            question: 'How should guests get there?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.transport'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'pending',
+            answer: '',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.showFollowUps).toBe(false);
+    expect(normalized.viewState).toBe('question');
+  });
 });
