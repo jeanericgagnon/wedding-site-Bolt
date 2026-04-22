@@ -1339,6 +1339,62 @@ describe('RSVP stale submit protection', () => {
     expect(screen.queryByText('Failed to submit RSVP. Please try again.')).not.toBeInTheDocument();
   });
 
+  it('clears stale submit errors when the guest backs out of review before retrying', async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          guest: {
+            id: 'guest-1',
+            first_name: 'Taylor',
+            last_name: 'Rivera',
+            name: 'Taylor Rivera',
+            email: 'taylor@example.com',
+            phone: null,
+            group_name: null,
+            wedding_site_id: 'site-1',
+            plus_one_allowed: false,
+            invited_to_ceremony: true,
+            invited_to_reception: true,
+            invite_token: 'token-1',
+          },
+          existingRsvp: null,
+          guests: null,
+          rsvpDeadline: null,
+          rsvpQuestions: [],
+          rsvpMealConfig: { enabled: true, options: ['Chicken', 'Beef'] },
+          musicPlaylistUrl: null,
+          householdGuests: [],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({ error: 'Failed to submit RSVP. Please try again.' }),
+      });
+
+    render(
+      <MemoryRouter initialEntries={['/rsvp']}>
+        <RSVP />
+      </MemoryRouter>
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('rsvp.search_placeholder'), { target: { value: 'Taylor Rivera' } });
+    fireEvent.click(screen.getByText('Find My Invitation'));
+
+    await screen.findByText('Welcome, Taylor Rivera!');
+    fireEvent.click(screen.getByText('Continue to details'));
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'Chicken' } });
+    fireEvent.click(screen.getByText('Continue to review'));
+    fireEvent.click(screen.getByText('Submit RSVP'));
+
+    expect(await screen.findByText('Failed to submit RSVP. Please try again.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Back'));
+
+    await screen.findByText('Continue to review');
+    expect(screen.queryByText('Failed to submit RSVP. Please try again.')).not.toBeInTheDocument();
+  });
+
   it('clears stale meal-selection errors when the guest changes their RSVP details before retrying', async () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,

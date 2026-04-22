@@ -1356,6 +1356,7 @@ export default function RSVP() {
                   onClick={() => {
                     invalidateActiveSubmit();
                     if (formStep > 1) {
+                      setError('');
                       setFormStep((formStep - 1) as 1 | 2 | 3);
                     } else {
                       setStep('search');
