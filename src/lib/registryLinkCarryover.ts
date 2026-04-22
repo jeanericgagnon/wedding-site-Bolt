@@ -28,9 +28,10 @@ function inferSourceLabel(url: string): string | undefined {
 
 function extractRegistryUrlToken(line: string): string | null {
   const directMatch = line.match(/https?:\/\/\S+/i)?.[0] ?? line.match(/www\.\S+/i)?.[0] ?? null;
-  if (directMatch) return directMatch;
+  if (directMatch) return directMatch.replace(/[),.;:!?]+$/, '');
   const parts = line.split(/[|,;]/).map((part) => part.trim()).filter(Boolean);
-  return parts.find((part) => /\.[a-z]{2,}(?:\/|$)/i.test(part)) ?? null;
+  const candidate = parts.find((part) => /\.[a-z]{2,}(?:\/|$)/i.test(part)) ?? null;
+  return candidate ? candidate.replace(/[),.;:!?]+$/, '') : null;
 }
 
 export function carryOverRegistryLinks(raw: string | null | undefined): CarryoverRegistryLink[] {

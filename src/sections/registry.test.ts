@@ -377,6 +377,7 @@ describe('sections registry resolution', () => {
     expect(canonicalMapper).toContain("case 'registrysection':");
     expect(registryLinkCarryover).toContain('function extractRegistryUrlToken(line: string): string | null {');
     expect(registryLinkCarryover).toContain(".map((line) => normalizeUrl(extractRegistryUrlToken(line) ?? line))");
+    expect(registryLinkCarryover).toContain("replace(/[),.;:!?]+$/, '')");
     expect(weddingDataBindings).toContain('function normalizeBindableSectionType(type: string): string {');
     expect(weddingDataBindings).toContain("return normalizedType === 'registrysection' ? 'registry' : type;");
     expect(guidedBuilderModules).toContain("const normalizeModuleSectionType = (type: string) => type.trim().toLowerCase().replace(/[^a-z0-9]/g, '');");
