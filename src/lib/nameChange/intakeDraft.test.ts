@@ -433,6 +433,24 @@ describe('name change intake draft helpers', () => {
     ]);
   });
 
+  it('normalizes slash-formatted draft dates into iso yyyy-mm-dd values', () => {
+    expect(upsertDraftNameChangeExtractedField([], 'draft-court_order', 'signed date' as never, '  ', '4/5/2026')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-court_order',
+        field_key: 'court_order_date',
+        field_value_masked: '2026-04-05',
+      }),
+    ]);
+
+    expect(upsertDraftNameChangeExtractedField([], 'draft-current_passport', 'issue date' as never, '  ', '6-1-2024')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-current_passport',
+        field_key: 'issuance_date',
+        field_value_masked: '2024-06-01',
+      }),
+    ]);
+  });
+
   it('ignores unsupported draft field aliases instead of inventing non-contract keys', () => {
     const startingFields: NameChangeExtractedFieldInput[] = [
       {

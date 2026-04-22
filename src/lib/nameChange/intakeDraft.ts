@@ -186,6 +186,14 @@ function normalizeDraftFieldValue(fieldKey: NameChangeExtractedFieldInput['field
     return normalizedValue.toUpperCase();
   }
 
+  if (fieldKey === 'court_order_date' || fieldKey === 'issuance_date') {
+    const isoDateMatch = normalizedValue.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+    if (isoDateMatch) {
+      const [, month, day, year] = isoDateMatch;
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+  }
+
   return normalizedValue;
 }
 
