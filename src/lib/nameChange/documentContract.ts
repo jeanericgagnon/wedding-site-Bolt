@@ -86,6 +86,13 @@ function isReadyCountableNameChangeContractStatus(status: NameChangeDocumentCont
   return isCountableNameChangeContractKind(status.kind);
 }
 
+function isReviewedReadyNameChangeContractStatus(status: NameChangeDocumentContractStatus) {
+  return isReadyCountableNameChangeContractStatus(status)
+    && status.intakeStatus === 'reviewed'
+    && status.metadataMissing.length === 0
+    && status.canonicalConflicts.length === 0;
+}
+
 function metadataMissingForDocument(document: NameChangeDocumentInput | undefined): string[] {
   if (!document || document.intake_status === 'not_started') return [];
   if (document.document_kind === 'other') return [];
@@ -231,9 +238,9 @@ export function buildNameChangeDocumentIntakeSnapshot(
     canonicalCase,
     documents: statuses,
     summary: {
-      requiredReady: statuses.filter((status) => isReadyCountableNameChangeContractStatus(status) && status.required && status.intakeStatus === 'reviewed' && status.canonicalConflicts.length === 0 && status.metadataMissing.length === 0).length,
+      requiredReady: statuses.filter((status) => status.required && isReviewedReadyNameChangeContractStatus(status)).length,
       requiredMissing: statuses.filter((status) => isReadyCountableNameChangeContractStatus(status) && status.required && (status.intakeStatus !== 'reviewed' || status.canonicalConflicts.length > 0 || status.metadataMissing.length > 0)).length,
-      metadataReady: statuses.filter((status) => isReadyCountableNameChangeContractStatus(status) && status.intakeStatus === 'reviewed' && status.metadataMissing.length === 0 && status.canonicalConflicts.length === 0).length,
+      metadataReady: statuses.filter((status) => isReviewedReadyNameChangeContractStatus(status)).length,
       metadataGaps: statuses.filter((status) => isReadyCountableNameChangeContractStatus(status) && status.intakeStatus !== 'not_started' && (status.metadataMissing.length > 0 || (status.metadataMissing.length === 0 && status.canonicalConflicts.length > 0))).length,
       autofillReady: statuses.filter((status) => isReadyCountableNameChangeContractStatus(status) && status.preferredForAutofill && status.missingExtractionFields.length === 0 && status.canonicalConflicts.length === 0 && status.metadataMissing.length === 0 && status.intakeStatus === 'reviewed').length,
       extractionGaps: statuses.filter((status) => isReadyCountableNameChangeContractStatus(status) && status.intakeStatus === 'reviewed' && status.metadataMissing.length === 0 && (status.missingExtractionFields.length > 0 || status.canonicalConflicts.length > 0)).length,
