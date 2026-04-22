@@ -16,7 +16,7 @@ describe('quickStartStateTransfer', () => {
 
     expect(persisted?.initialSetupAnswers.names).toBe('Alex & Jordan');
     expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').showFollowUps).toBe(false);
-    expect(readQuickStartDraftSnapshot()?.followUpAnswers['event-1-time']).toBe('6:00 PM');
+    expect(readQuickStartDraftSnapshot()?.followUpAnswers).toEqual({ 'event-1-time': '6:00 PM' });
   });
 
   it('survives malformed existing storage by normalizing on read', () => {
@@ -48,6 +48,22 @@ describe('quickStartStateTransfer', () => {
       clarifyingState: null,
       viewState: 'question',
     }));
+  });
+
+
+  it('drops follow-up answers when a malformed clarifying envelope survives storage restore', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      followUpAnswers: {
+        lodging: 'Need shuttle details',
+      },
+      clarifyingState: { clarifying: [] },
+    }));
+
+    const restored = readQuickStartDraftSnapshot();
+
+    expect(restored?.clarifyingState).toBeNull();
+    expect(restored?.followUpAnswers).toEqual({});
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').followUpAnswers).toEqual({});
   });
 
   it('rehydrates older clarifying snapshots that were missing draft outputs', () => {
@@ -1098,6 +1114,32 @@ describe('quickStartStateTransfer', () => {
     window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
       showFollowUps: true,
       viewState: 'thinking',
+      followUpAnswers: {
+        lodging: 'Need shuttle details',
+      },
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    }));
+
+    const restored = readQuickStartDraftSnapshot();
+
+    expect(restored?.showFollowUps).toBe(false);
+    expect(restored?.viewState).toBe('question');
+    expect(restored?.followUpAnswers).toEqual({});
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').followUpAnswers).toEqual({});
+  });
+
+
+  it('drops orphaned follow-up answers when stale follow-up view survives without clarifying records', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      showFollowUps: true,
+      viewState: 'followups',
       followUpAnswers: {
         lodging: 'Need shuttle details',
       },

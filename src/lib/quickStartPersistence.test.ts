@@ -26,7 +26,7 @@ describe('quickStartPersistence', () => {
     expect(normalized.currentIndex).toBe(13);
     expect(normalized.showFollowUps).toBe(false);
     expect(normalized.viewState).toBe('question');
-    expect(normalized.followUpAnswers['event-1-time']).toBe('6:00 PM');
+    expect(normalized.followUpAnswers).toEqual({});
     expect(normalized.initialSetupAnswers.names).toBe('Alex & Jordan');
     expect(normalized.clarifyingState?.clarifying.mode).toBe('draft');
   });
@@ -87,6 +87,19 @@ describe('quickStartPersistence', () => {
 
     expect(normalized.showFollowUps).toBe(false);
     expect(normalized.viewState).toBe('question');
+  });
+
+
+  it('drops follow-up answers when a malformed clarifying envelope survives restore', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      followUpAnswers: {
+        lodging: 'Need shuttle details',
+      },
+      clarifyingState: { clarifying: [] },
+    });
+
+    expect(normalized.clarifyingState).toBeNull();
+    expect(normalized.followUpAnswers).toEqual({});
   });
 
   it('drops malformed clarifying question entries during restore', () => {
@@ -1533,6 +1546,29 @@ describe('quickStartPersistence', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       showFollowUps: true,
       viewState: 'thinking',
+      followUpAnswers: {
+        lodging: 'Need shuttle details',
+      },
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.showFollowUps).toBe(false);
+    expect(normalized.viewState).toBe('question');
+    expect(normalized.followUpAnswers).toEqual({});
+  });
+
+
+  it('drops orphaned follow-up answers when stale follow-up view survives without clarifying records', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      showFollowUps: true,
+      viewState: 'followups',
       followUpAnswers: {
         lodging: 'Need shuttle details',
       },
