@@ -61,6 +61,7 @@ function normalizeDraftDocumentKind(value: string) {
     .trim()
     .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
     .toLowerCase()
+    .replace(/\bno\.?\b/g, 'number')
     .replace(/[+#,&()\\/.:\-'’\s]+/g, '_')
     .replace(/_+/g, '_')
     .replace(/^_+|_+$/g, '');
@@ -124,6 +125,7 @@ function normalizeDraftFieldKey(value: string) {
     .trim()
     .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
     .toLowerCase()
+    .replace(/\bno\.?\b/g, 'number')
     .replace(/[+#,&()\\/.:\-'’\s]+/g, '_')
     .replace(/_+/g, '_')
     .replace(/^_+|_+$/g, '');
@@ -148,6 +150,7 @@ function normalizeDraftFieldKey(value: string) {
     county_residence_name: 'county',
     case: 'case_number',
     case_no: 'case_number',
+    case_docket_number: 'case_number',
     case_num_no: 'case_number',
     case_num: 'case_number',
     docket_number: 'case_number',
