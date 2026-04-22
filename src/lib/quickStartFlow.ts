@@ -15,6 +15,7 @@ export type ConciergeQuestion =
   | 'childrenAllowed'
   | 'rsvpDeadline'
   | 'mealChoice'
+  | 'registryIntent'
   | 'story';
 
 export const applyQuickStartAnswer = (
@@ -69,6 +70,9 @@ export const applyQuickStartAnswer = (
       break;
     case 'mealChoice':
       next.mealChoice = normalizedLowerValue as InitialSetupAnswers['mealChoice'];
+      break;
+    case 'registryIntent':
+      next.registryIntent = normalizedLowerValue as InitialSetupAnswers['registryIntent'];
       break;
     case 'story':
       next.optionalStory = value;

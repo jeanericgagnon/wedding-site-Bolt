@@ -80,5 +80,6 @@ describe('quickStartFlow', () => {
     expect(applyQuickStartAnswer(base, 'plusOnePolicy', ' SOME ').plusOnePolicy).toBe('some');
     expect(applyQuickStartAnswer(base, 'childrenAllowed', ' Unsure ').childrenAllowed).toBe('unsure');
     expect(applyQuickStartAnswer(base, 'mealChoice', ' YES ').mealChoice).toBe('yes');
+    expect(applyQuickStartAnswer(base, 'registryIntent', ' BOTH ').registryIntent).toBe('both');
   });
 });
