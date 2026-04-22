@@ -286,6 +286,7 @@ export default function EventRSVP() {
     setSubmitting(false);
     setSubmitError('');
     setSubmitSuccess(false);
+    setError('');
     if (invitation.rsvp) {
       setRsvpForm({
         attending: invitation.rsvp.attending,
