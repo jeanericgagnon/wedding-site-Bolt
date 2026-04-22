@@ -322,7 +322,7 @@ export const Product: React.FC = () => {
           <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-6 md:p-7">
             <p className="text-xs uppercase tracking-wide text-amber-700 font-semibold">Beyond the core v1 line</p>
             <h2 className="text-2xl md:text-3xl font-serif font-bold text-ink mt-2">Post-wedding memory layers matter — they just should not pretend to be the launch claim.</h2>
-            <p className="mt-3 max-w-3xl text-ink/75">Archive mode, photo return paths, and anniversary-style memories are real product direction. They are not the current bar DayOf should ask couples to trust first. The launch story is website + guest ops + calm execution.</p>
+            <p className="mt-3 max-w-3xl text-ink/75">Archive mode, photo return paths, and anniversary-style memories are real product direction. They are not the current bar DayOf should ask couples to trust first. The launch story is starter draft + guest ops + calm execution.</p>
             <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="rounded-xl border border-amber-200 bg-white p-4">
                 <p className="text-sm font-medium text-ink">Archive mode</p>

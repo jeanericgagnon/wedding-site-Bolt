@@ -488,7 +488,7 @@ export const Home: React.FC = () => {
           <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-5 md:p-6 mb-8">
             <p className="text-xs uppercase tracking-wide text-amber-700 font-semibold">Adjacent, not carrying v1</p>
             <h3 className="text-xl md:text-2xl font-serif font-bold text-ink mt-2">Post-wedding memory layers stay in the product direction bucket for now.</h3>
-            <p className="mt-3 max-w-3xl text-sm md:text-base text-ink/75">Archive mode, guest photo return paths, and name-change support can stay real without pretending they are the reason to trust DayOf first. The hard launch line is still website + guest ops + calm execution.</p>
+            <p className="mt-3 max-w-3xl text-sm md:text-base text-ink/75">Archive mode, guest photo return paths, and name-change support can stay real without pretending they are the reason to trust DayOf first. The hard launch line is still starter draft + guest ops + calm execution.</p>
           </div>
 
           <SlideReveal from="right" className="text-center">

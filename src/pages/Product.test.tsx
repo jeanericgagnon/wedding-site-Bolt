@@ -62,4 +62,11 @@ describe('Product starter draft truth', () => {
     expect(screen.getByText('Privacy + guest-access controls that match the story')).toBeInTheDocument();
     expect(screen.queryByText('Launch/privacy controls that match the story')).not.toBeInTheDocument();
   });
+
+  it('keeps the launch story framed around a starter draft instead of a fully launched site', () => {
+    render(<Product />);
+
+    expect(screen.getByText((_, node) => node?.textContent === 'Archive mode, photo return paths, and anniversary-style memories are real product direction. They are not the current bar DayOf should ask couples to trust first. The launch story is starter draft + guest ops + calm execution.')).toBeInTheDocument();
+    expect(screen.queryByText('The launch story is website + guest ops + calm execution.')).not.toBeInTheDocument();
+  });
 });
