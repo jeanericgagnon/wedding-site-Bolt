@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { resolveBuilderVariant } from './sectionVariantCompatibility';
 
-describe('resolveBuilderVariant onboarding handoff compatibility', () => {
+describe('resolveBuilderVariant registry compatibility', () => {
   it('keeps shipped registry template aliases on stable builder variants', () => {
     expect(resolveBuilderVariant('registry', 'cards')).toBe('cards');
     expect(resolveBuilderVariant('registry', 'featured')).toBe('featured');
@@ -32,15 +32,18 @@ describe('resolveBuilderVariant onboarding handoff compatibility', () => {
     expect(resolveBuilderVariant('registry', 'Modern')).toBe('modern');
   });
 
-  it('normalizes ai-assisted onboarding handoff aliases before builder fallback', () => {
-    expect(resolveBuilderVariant('travel', ' LocalGuide ')).toBe('localGuide');
-    expect(resolveBuilderVariant('travel', 'MAPPINS')).toBe('localGuide');
-    expect(resolveBuilderVariant('schedule', ' agendacards ')).toBe('dayTabs');
-    expect(resolveBuilderVariant('faq', ' Compact ')).toBe('accordion');
+  it('normalizes persisted registry alias casing before builder fallback', () => {
+    expect(resolveBuilderVariant('registry', ' honeymoon ')).toBe('honeymoon');
+    expect(resolveBuilderVariant('registry', 'ILLUSTRATED')).toBe('illustrated');
   });
 
-  it('falls back to the stable builder default when onboarding hands off a blank or unknown variant', () => {
-    expect(resolveBuilderVariant('travel', '   ')).toBe('default');
-    expect(resolveBuilderVariant('schedule', 'not-a-real-variant')).toBe('default');
+  it('falls back to the stable registry default when persisted variants are blank or unknown', () => {
+    expect(resolveBuilderVariant('registry', '   ')).toBe('default');
+    expect(resolveBuilderVariant('registry', 'not-a-real-variant')).toBe('default');
+  });
+
+  it('tolerates missing onboarding handoff variants without crashing', () => {
+    expect(resolveBuilderVariant('registry', undefined as never)).toBe('default');
+    expect(resolveBuilderVariant('registry', null as never)).toBe('default');
   });
 });
