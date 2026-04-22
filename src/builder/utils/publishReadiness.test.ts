@@ -236,6 +236,17 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('marks page readiness with singular page copy when only one page exists', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+
+    expect(buildPublishReadiness(project).find((item) => item.id === 'page')).toEqual({
+      id: 'page',
+      label: 'A page exists',
+      done: true,
+      detail: '1 page ready',
+    });
+  });
+
   it('shows current-page readiness against the active page, not just the first page', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages = [
