@@ -196,6 +196,12 @@ function normalizeDraftFieldValue(fieldKey: NameChangeExtractedFieldInput['field
       const [, month, day, year] = isoDateMatch;
       return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
     }
+
+    const leadingYearDateMatch = normalizedValue.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/);
+    if (leadingYearDateMatch) {
+      const [, year, month, day] = leadingYearDateMatch;
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
   }
 
   return normalizedValue;
