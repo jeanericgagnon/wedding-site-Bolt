@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { RegistryItemForm } from './RegistryItemForm';
@@ -44,5 +44,32 @@ describe('RegistryItemForm', () => {
 
     expect(screen.getByDisplayValue('https://example.com/canonical-product')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /re-fetch details/i })).toBeInTheDocument();
+  });
+
+  it('keeps canonical_url in sync when an owner edits an imported item link manually', async () => {
+    const onSave = vi.fn(async () => {});
+
+    render(
+      <RegistryItemForm
+        initial={makeItem({
+          item_url: 'https://example.com/original-product',
+          canonical_url: 'https://example.com/original-product',
+        })}
+        existingItems={[]}
+        onSave={onSave}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    fireEvent.change(screen.getByDisplayValue('https://example.com/original-product'), {
+      target: { value: 'https://example.com/updated-product' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
+      item_url: 'https://example.com/updated-product',
+      canonical_url: 'https://example.com/updated-product',
+    }));
   });
 });

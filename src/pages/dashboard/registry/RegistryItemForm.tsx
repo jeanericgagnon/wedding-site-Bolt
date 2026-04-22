@@ -322,8 +322,13 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                   type="url"
                   value={urlInput}
                   onChange={e => {
-                    setUrlInput(e.target.value);
-                    set('item_url', e.target.value);
+                    const nextUrl = e.target.value;
+                    setUrlInput(nextUrl);
+                    setDraft(prev => ({
+                      ...prev,
+                      item_url: nextUrl,
+                      canonical_url: nextUrl,
+                    }));
                   }}
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleFetch(); } }}
                   placeholder="https://amazon.com/product/… or any store URL"
