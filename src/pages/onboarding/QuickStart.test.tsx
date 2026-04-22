@@ -170,6 +170,40 @@ describe('QuickStart flow guards', () => {
     expect(screen.queryByRole('button', { name: /About how many guests are you inviting: 100-150/i })).not.toBeInTheDocument();
   });
 
+
+  it('clamps oversized restored question indexes before rendering', async () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      currentIndex: Number.MAX_SAFE_INTEGER,
+      showFollowUps: false,
+      viewState: 'question',
+      initialSetupAnswers: {
+        names: 'Alex & Jordan',
+        labelPreference: 'names-only',
+        customLabelPartnerOne: '',
+        customLabelPartnerTwo: '',
+        whenWhere: 'January 17, 2027 — Sayulita, Mexico',
+        venueNameOrTbd: 'Amor Boutique Hotel',
+        style: 'Tropical, relaxed',
+        guestFeel: 'Warm, excited, relaxed',
+        weekendEventsRaw: 'Friday welcome drinks, Saturday wedding, Sunday brunch',
+        ceremonyArrivalTime: '4:30 PM',
+        guestCountBand: '100-150',
+        plusOnePolicy: 'all',
+        childrenAllowed: 'yes',
+        rsvpDeadline: '2026-12-01',
+        mealChoice: 'yes',
+        registryIntent: 'both',
+        optionalStory: '',
+      },
+      followUpAnswers: {},
+      clarifyingState: null,
+    }));
+
+    render(<QuickStart />);
+
+    expect(await screen.findByText('Want to add your story? (totally optional)')).toBeInTheDocument();
+  });
+
   it('sanitizes malformed onboarding answer seeds loaded from the saved wedding site', async () => {
     authUser = { id: 'user-1' };
     weddingSiteRow = {

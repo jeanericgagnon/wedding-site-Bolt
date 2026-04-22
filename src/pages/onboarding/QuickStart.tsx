@@ -166,7 +166,8 @@ export const QuickStart: React.FC = () => {
   const [hasHydratedDraft, setHasHydratedDraft] = useState(false);
   const [isResettingDraft, setIsResettingDraft] = useState(false);
 
-  const currentQuestion = questions[currentIndex];
+  const safeCurrentIndex = clampQuickStartQuestionIndex(currentIndex, questions.length);
+  const currentQuestion = questions[safeCurrentIndex];
   const formData = initialSetupAnswersToOnboardingFormShape(initialSetupAnswers);
   const readiness = evaluateWeddingProfileReadiness(weddingProfile);
   const onboardingSession = createOnboardingSessionStateFromInitialSetup(initialSetupAnswers, currentQuestion ? [currentQuestion.key] : []);
@@ -229,8 +230,8 @@ export const QuickStart: React.FC = () => {
 
   useEffect(() => {
     if (!hasHydratedDraft || isResettingDraft) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ initialSetupAnswers, currentIndex, followUpAnswers, showFollowUps, clarifyingState, viewState }));
-  }, [initialSetupAnswers, currentIndex, followUpAnswers, showFollowUps, clarifyingState, viewState, hasHydratedDraft, isResettingDraft]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ initialSetupAnswers, currentIndex: safeCurrentIndex, followUpAnswers, showFollowUps, clarifyingState, viewState }));
+  }, [initialSetupAnswers, safeCurrentIndex, followUpAnswers, showFollowUps, clarifyingState, viewState, hasHydratedDraft, isResettingDraft]);
 
   useEffect(() => {
     followUpAnswersRef.current = followUpAnswers;
@@ -292,7 +293,7 @@ export const QuickStart: React.FC = () => {
     // Only reset when the visible question changes, not on every keystroke.
     // Otherwise the controlled input feels like it is deleting what the user types.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentIndex]);
+  }, [safeCurrentIndex]);
 
   const getChoiceLabel = (key: ConciergeQuestion, value: string) => {
     const choice = questions.find((question) => question.key === key)?.choices?.find((item) => item.value === value);
@@ -338,11 +339,11 @@ export const QuickStart: React.FC = () => {
     }
     // Hydration can land after mount. Only patch blank inputs so we do not clobber live typing.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasHydratedDraft, currentIndex, initialSetupAnswers]);
+  }, [hasHydratedDraft, safeCurrentIndex, initialSetupAnswers]);
 
   const previousAnswers = useMemo(
-    () => questions.slice(0, currentIndex).map((q) => ({ ...q, value: getValueForQuestion(q.key, formData) })).filter((entry) => entry.value.trim()),
-    [currentIndex, formData],
+    () => questions.slice(0, safeCurrentIndex).map((q) => ({ ...q, value: getValueForQuestion(q.key, formData) })).filter((entry) => entry.value.trim()),
+    [safeCurrentIndex, formData],
   );
 
   const applyAnswer = (questionKey: ConciergeQuestion, rawValue: string) => {
@@ -363,7 +364,7 @@ export const QuickStart: React.FC = () => {
       if (!user) {
         persistQuickStartDraftSnapshot({
           initialSetupAnswers: answersOverride,
-          currentIndex,
+          currentIndex: safeCurrentIndex,
           followUpAnswers: followUpAnswersRef.current,
           showFollowUps,
           clarifyingState: clarifyingOverride,
@@ -474,7 +475,7 @@ export const QuickStart: React.FC = () => {
     if (!value.trim() && !currentQuestion.optional) return;
 
     const answeredQuestion = currentQuestion;
-    const answeredIndex = currentIndex;
+    const answeredIndex = safeCurrentIndex;
 
     applyAnswer(answeredQuestion.key, value);
     setError('');
@@ -610,7 +611,7 @@ export const QuickStart: React.FC = () => {
                   <div className="flex gap-3">
                     {currentQuestion.optional && <button type="button" onClick={() => void goNext('')} className="rounded-full px-6 py-4" style={{ backgroundColor: SOFT, color: TEXT }}>Skip</button>}
                     <button type="button" onClick={() => void goNext(inputValue)} disabled={loading || (!inputValue.trim() && !currentQuestion.optional)} className="rounded-full px-8 py-4 transition-all duration-200 disabled:opacity-30" style={{ backgroundColor: TEXT, color: '#FFFFFF', fontSize: '15px', fontWeight: 500 }}>
-                      {loading ? 'Building...' : currentIndex === questions.length - 1 && !showFollowUps ? 'Build my draft' : 'Continue'}
+                      {loading ? 'Building...' : safeCurrentIndex === questions.length - 1 && !showFollowUps ? 'Build my draft' : 'Continue'}
                     </button>
                   </div>
                 </div>
@@ -620,7 +621,7 @@ export const QuickStart: React.FC = () => {
                   <div className="flex gap-3">
                     {currentQuestion?.optional && <button type="button" onClick={() => void goNext('')} className="rounded-full px-6 py-4" style={{ backgroundColor: SOFT, color: TEXT }}>Skip</button>}
                     <button type="button" onClick={() => void goNext(inputValue)} disabled={loading || (!inputValue.trim() && !currentQuestion?.optional)} className="rounded-full px-8 py-4 transition-all duration-200 disabled:opacity-30" style={{ backgroundColor: TEXT, color: '#FFFFFF', fontSize: '15px', fontWeight: 500 }}>
-                      {loading ? 'Building...' : currentIndex === questions.length - 1 && !showFollowUps ? 'Build my draft' : 'Continue'}
+                      {loading ? 'Building...' : safeCurrentIndex === questions.length - 1 && !showFollowUps ? 'Build my draft' : 'Continue'}
                     </button>
                   </div>
                 </div>
