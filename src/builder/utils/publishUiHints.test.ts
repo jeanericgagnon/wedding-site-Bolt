@@ -373,6 +373,11 @@ describe('publishUiHints', () => {
     expect(getPublishProgressLabel(Number.NaN, 1)).toBe('1 thing left before guest-facing launch');
   });
 
+  it('treats fractional progress counts as whole checks so the UI never shows impossible decimals', () => {
+    expect(getPublishProgressLabel(1.9, 3)).toBe('2 things left before guest-facing launch');
+    expect(getPublishProgressLabel(2.1, 3.9)).toBe('1 thing left before guest-facing launch');
+  });
+
   it('treats negative infinity totals as no checks yet so progress copy stays grounded', () => {
     expect(getPublishProgressLabel(1, Number.NEGATIVE_INFINITY)).toBe('No checks yet');
   });

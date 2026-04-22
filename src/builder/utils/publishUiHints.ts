@@ -53,9 +53,16 @@ export const getPublishStatusLabel = (isPublished: boolean, hasUnsavedChanges: b
 
 export const getPublishProgressLabel = (done: number, total: number): string => {
   if (!Number.isFinite(total) || total <= 0) return 'No checks yet';
-  const normalizedDone = Number.isFinite(done) ? Math.max(0, done) : 0;
-  if (normalizedDone >= total) return 'Ready to go live';
-  return `${total - normalizedDone} thing${total - normalizedDone === 1 ? '' : 's'} left before guest-facing launch`;
+  const normalizedTotal = Math.max(0, Math.floor(total));
+  if (normalizedTotal <= 0) return 'No checks yet';
+
+  const normalizedDone = Number.isFinite(done)
+    ? Math.min(normalizedTotal, Math.max(0, Math.floor(done)))
+    : 0;
+  if (normalizedDone >= normalizedTotal) return 'Ready to go live';
+
+  const remaining = normalizedTotal - normalizedDone;
+  return `${remaining} thing${remaining === 1 ? '' : 's'} left before guest-facing launch`;
 };
 
 export const shouldAutoPublishFromSearch = (search: string): boolean => {
