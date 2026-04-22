@@ -126,4 +126,34 @@ describe('login quick start state transfer', () => {
     })).toBeNull();
   });
 
+
+  it('drops carried quick start drafts when skipped clarifying history is the only surviving state', () => {
+    expect(normalizeMeaningfulQuickStartDraftSnapshot({
+      currentIndex: 0,
+      initialSetupAnswers: {},
+      followUpAnswers: {},
+      showFollowUps: false,
+      clarifyingState: {
+        clarifying: {
+          mode: 'draft',
+          questions: [],
+          history: [{
+            id: 'lodging',
+            category: 'travel',
+            question: 'Where should guests stay?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.lodging'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'skipped',
+            answer: '',
+          }],
+        },
+        draftOutputs: {},
+      },
+      viewState: 'question',
+    })).toBeNull();
+  });
+
 });

@@ -17,8 +17,8 @@ export const hasMeaningfulQuickStartDraftSnapshot = (snapshot: QuickStartDraftSn
 
   const hasMeaningfulClarifyingState = Boolean(
     snapshot.clarifyingState && (
-      snapshot.clarifyingState.clarifying.questions.length > 0
-      || snapshot.clarifyingState.clarifying.history.length > 0
+      snapshot.clarifyingState.clarifying.questions.some((question) => question.status !== 'skipped')
+      || snapshot.clarifyingState.clarifying.history.some((question) => question.status !== 'skipped')
       || Object.keys(snapshot.clarifyingState.draftOutputs).length > 0
     )
   );

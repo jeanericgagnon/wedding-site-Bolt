@@ -120,6 +120,79 @@ describe('quickStartStateTransfer', () => {
     expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').viewState).toBe('followups');
   });
 
+
+  it('treats skipped-only clarifying snapshots as inert when no review data survived', () => {
+    const persisted = persistQuickStartDraftSnapshot({
+      currentIndex: 0,
+      initialSetupAnswers: {},
+      followUpAnswers: {},
+      showFollowUps: false,
+      clarifyingState: {
+        clarifying: {
+          mode: 'draft',
+          questions: [],
+          history: [{
+            id: 'lodging',
+            category: 'travel',
+            question: 'Where should guests stay?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.lodging'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'skipped',
+            answer: '',
+          }],
+        },
+        draftOutputs: {},
+      },
+      viewState: 'question',
+    });
+
+    expect(persisted).toBeNull();
+    expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
+  });
+
+  it('keeps skipped clarifying snapshots when draft outputs still survive review restore', () => {
+    const persisted = persistQuickStartDraftSnapshot({
+      currentIndex: 0,
+      initialSetupAnswers: {},
+      followUpAnswers: {},
+      showFollowUps: false,
+      clarifyingState: {
+        clarifying: {
+          mode: 'draft',
+          questions: [],
+          history: [{
+            id: 'lodging',
+            category: 'travel',
+            question: 'Where should guests stay?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.lodging'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'skipped',
+            answer: '',
+          }],
+        },
+        draftOutputs: {
+          hero: {
+            headline: 'Welcome to our wedding',
+          },
+        },
+      },
+      viewState: 'question',
+    });
+
+    expect(persisted?.clarifyingState?.draftOutputs).toEqual({
+      hero: { headline: 'Welcome to our wedding' },
+    });
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').clarifyingState.draftOutputs).toEqual({
+      hero: { headline: 'Welcome to our wedding' },
+    });
+  });
+
   it('keeps progressed quick start snapshots when meaningful answers survived', () => {
     const persisted = persistQuickStartDraftSnapshot({
       currentIndex: 7,
@@ -514,9 +587,8 @@ describe('quickStartStateTransfer', () => {
 
     const restored = readQuickStartDraftSnapshot();
 
-    expect(restored?.followUpAnswers).toEqual({});
-    expect(restored?.showFollowUps).toBe(false);
-    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').followUpAnswers).toEqual({});
+    expect(restored).toBeNull();
+    expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
   });
 
   it('keeps answered follow-up answers when older restore payloads only stored answered questions', () => {
