@@ -329,6 +329,7 @@ export default function RSVP() {
   const returnToLoadedRsvp = useCallback(() => {
     invalidateActiveSubmit();
     const notesPayload = (formData.notes || '').trim();
+    const mealChoice = (formData.meal_choice || '').trim();
     const plusOneName = (formData.plus_one_name || '').trim();
     setError('');
     setStep('form');
@@ -338,7 +339,7 @@ export default function RSVP() {
       attending: formData.attending,
       attending_ceremony: formData.attendCeremony,
       attending_reception: formData.attendReception,
-      meal_choice: formData.meal_choice || null,
+      meal_choice: mealChoice || null,
       plus_one_name: plusOneName || null,
       plus_one_count: plusOneName ? 1 : 0,
       children_count: 0,
