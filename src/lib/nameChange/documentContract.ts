@@ -198,6 +198,7 @@ export function buildNameChangeDocumentIntakeSnapshot(
         .filter((field): field is NameChangeExtractionFieldKey => definition.extractionFields.includes(field as NameChangeExtractionFieldKey)))];
     const missingExtractionFields = definition.extractionFields.filter((field) => !capturedExtractionFields.includes(field));
     const extractionChecklistBlocked = contractIntakeStatus === 'not_started' || metadataMissing.length > 0;
+    const visibleCapturedExtractionFields = extractionChecklistBlocked ? [] : capturedExtractionFields;
 
     return {
       kind: definition.kind,
@@ -206,11 +207,11 @@ export function buildNameChangeDocumentIntakeSnapshot(
       preferredForAutofill: definition.preferredForAutofill,
       intakeStatus: contractIntakeStatus,
       storageMode: contractStorageMode,
-      extractionFieldCount: capturedExtractionFields.length,
+      extractionFieldCount: visibleCapturedExtractionFields.length,
       metadataReady: metadataMissing.length === 0 && contractIntakeStatus === 'reviewed' && canonicalConflicts.length === 0 ? 1 : 0,
       metadataMissing,
       expectedExtractionFields: extractionChecklistBlocked ? [] : definition.extractionFields,
-      capturedExtractionFields,
+      capturedExtractionFields: visibleCapturedExtractionFields,
       missingExtractionFields: extractionChecklistBlocked ? [] : missingExtractionFields,
       canonicalConflicts,
     };

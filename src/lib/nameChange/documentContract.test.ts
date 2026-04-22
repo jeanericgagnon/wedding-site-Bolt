@@ -247,7 +247,9 @@ describe('name change document intake contract', () => {
       intakeStatus: 'reviewed',
       metadataMissing: ['issuing authority'],
       metadataReady: 0,
+      extractionFieldCount: 0,
       expectedExtractionFields: [],
+      capturedExtractionFields: [],
       missingExtractionFields: [],
     });
     expect(snapshot.summary.requiredReady).toBe(5);
@@ -277,7 +279,9 @@ describe('name change document intake contract', () => {
     expect(snapshot.documents.find((document) => document.kind === 'current_passport')).toMatchObject({
       intakeStatus: 'reviewed',
       metadataMissing: ['issuing authority'],
+      extractionFieldCount: 0,
       expectedExtractionFields: [],
+      capturedExtractionFields: [],
       missingExtractionFields: [],
     });
     expect(snapshot.summary.extractionGaps).toBe(0);
