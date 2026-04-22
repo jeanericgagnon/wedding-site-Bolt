@@ -564,6 +564,28 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('accepts numeric venue ids from persisted data when venue details are otherwise valid', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
+    const data = createEmptyWeddingData();
+    data.couple.partner1Name = 'Alex';
+    data.couple.partner2Name = 'Jordan';
+    data.event.weddingDateISO = '2027-06-12';
+    data.rsvp.enabled = true;
+    data.venues = [
+      // @ts-expect-error exercising runtime guard for incomplete persisted data
+      { id: 7, name: 'Test Venue', address: '123 Main St' },
+    ];
+
+    expect(getPublishIssue(project, data)).toBeNull();
+    expect(buildPublishReadiness(project, data).find((item) => item.id === 'venue')).toEqual({
+      id: 'venue',
+      label: 'Venue details are set',
+      done: true,
+      detail: 'Venue details are ready.',
+    });
+  });
+
   it('still treats venue data as ready when persisted venues are out of order but a later sorted venue has the usable details', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
@@ -1548,6 +1570,27 @@ describe('publishReadiness', () => {
       label: 'A page exists',
       done: false,
       detail: 'Add a page or apply a starting design.',
+    });
+  });
+
+  it('accepts numeric page ids from persisted data when resolving blocker targets', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages = [
+      {
+        ...project.pages[0],
+        // @ts-expect-error exercising runtime guard for incomplete persisted data
+        id: 42,
+        title: 'Home',
+        orderIndex: 0,
+        sections: [makeSection({ id: 'sec-1', enabled: false })],
+      },
+    ];
+
+    expect(getPublishIssue(project)).toEqual({
+      kind: 'no-enabled-sections',
+      message: 'Turn on at least one section before going live.',
+      firstPageId: '42',
+      firstSectionId: 'sec-1',
     });
   });
 

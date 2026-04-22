@@ -17,12 +17,16 @@ export interface PublishReadinessItem {
 }
 
 const hasNonEmptyString = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
-const getNormalizedId = (value: unknown) => (typeof value === 'string' ? value.trim() : '');
+const getNormalizedId = (value: unknown) => {
+  if (typeof value === 'string') return value.trim();
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  return '';
+};
 const isPageLike = (value: unknown): value is BuilderProject['pages'][number] =>
   typeof value === 'object'
   && value !== null
   && !Array.isArray(value)
-  && hasNonEmptyString((value as { id?: unknown }).id);
+  && getNormalizedId((value as { id?: unknown }).id).length > 0;
 const getComparableOrderIndex = (value: unknown) => {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
   if (typeof value === 'string') {
@@ -48,7 +52,7 @@ const isSectionLike = (value: unknown): value is NonNullable<BuilderProject['pag
   typeof value === 'object'
   && value !== null
   && !Array.isArray(value)
-  && hasNonEmptyString((value as { id?: unknown }).id);
+  && getNormalizedId((value as { id?: unknown }).id).length > 0;
 const getNormalizedSections = (page: BuilderProject['pages'][number] | undefined) =>
   (Array.isArray(page?.sections) ? page.sections.filter(isSectionLike) : []).sort((a, b) => {
     const orderDelta = getComparableOrderIndex(a?.orderIndex) - getComparableOrderIndex(b?.orderIndex);
@@ -59,7 +63,7 @@ const isVenueLike = (value: unknown): value is NonNullable<WeddingDataV1['venues
   typeof value === 'object'
   && value !== null
   && !Array.isArray(value)
-  && hasNonEmptyString((value as { id?: unknown }).id);
+  && getNormalizedId((value as { id?: unknown }).id).length > 0;
 const getVenueTitle = (venue: NonNullable<WeddingDataV1['venues']>[number]) =>
   hasNonEmptyString((venue as { name?: unknown }).name) ? venue.name.trim() : '';
 const getSortedNormalizedVenues = (weddingData?: WeddingDataV1 | null) =>
