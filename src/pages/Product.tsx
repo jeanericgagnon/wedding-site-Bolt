@@ -409,7 +409,7 @@ export const Product: React.FC = () => {
           <SlideReveal from="left" className="mb-6">
             <p className="text-xs uppercase tracking-wide text-brand font-semibold">Ruthless v1 line</p>
             <h2 className="text-2xl md:text-3xl font-serif font-bold text-ink mt-2">What counts as the real launch claim right now</h2>
-            <p className="mt-3 max-w-3xl text-ink/75">DayOf should be judged on whether the core wedding flow is trustworthy where proof exists, with the remaining gaps called out plainly instead of blurred into the v1 line. Some surrounding slices are real product direction, but they should not get to pad the current v1 line.</p>
+            <p className="mt-3 max-w-3xl text-ink/75">DayOf should be judged on whether the core wedding flow is grounded where proof exists, with the remaining gaps called out plainly instead of blurred into the v1 line. Some surrounding slices are real product direction, but they should not get to pad the current v1 line.</p>
           </SlideReveal>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
