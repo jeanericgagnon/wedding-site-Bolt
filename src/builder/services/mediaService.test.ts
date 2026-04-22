@@ -110,4 +110,19 @@ describe('mediaService', () => {
       tags: ['hero', 'floral'],
     }));
   });
+
+  it('defaults missing media tags to an empty list for save consistency', async () => {
+    const file = new File(['img'], 'arch.jpg', { type: 'image/jpeg' });
+    upload.mockResolvedValue({
+      url: 'https://cdn.example.com/arch.jpg',
+      path: 'w1/arch.jpg',
+    });
+    save.mockResolvedValue({ id: 'asset-5' });
+
+    await mediaService.uploadAsset('w1', file);
+
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({
+      tags: [],
+    }));
+  });
 });
