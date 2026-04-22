@@ -224,7 +224,7 @@ function parseEventSelectionsFromNotes(notes: string | null, guest: Guest): { cl
         .map((piece) => piece.trim())
         .filter(Boolean)
         .map((piece) => {
-          const [k, v] = piece.split(':').map((x) => (x || '').trim().toLowerCase());
+          const [k, v] = piece.split(/[:=]/).map((x) => (x || '').trim().toLowerCase());
           return [k, parseLegacyEventAttendanceToken(v)];
         })
     ) as Record<string, boolean>;
