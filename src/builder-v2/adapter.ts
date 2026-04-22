@@ -3,7 +3,7 @@ import type { BuilderV2Block, BuilderV2Document, BuilderV2Section } from './cont
 
 const normalizeBuilderV2SectionType = (type: string) => {
   const normalizedType = type.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-  return normalizedType === 'registrysection' ? 'registry' : type;
+  return normalizedType.startsWith('registrysection') ? 'registry' : type;
 };
 
 const makeDefaultBlocksForType = (type: string): BuilderV2Block[] => {

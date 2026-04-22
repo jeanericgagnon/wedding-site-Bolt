@@ -380,7 +380,7 @@ describe('sections registry resolution', () => {
     expect(guidedBuilderModules).toContain("normalizeModuleSectionType(s.type) === normalizeModuleSectionType(sectionType)");
     expect(guidedBuilderModules).toContain("switch (normalizeModuleSectionType(moduleId)) {");
     expect(builderV2Adapter).toContain("const normalizeBuilderV2SectionType = (type: string) => {");
-    expect(builderV2Adapter).toContain("return normalizedType === 'registrysection' ? 'registry' : type;");
+    expect(builderV2Adapter).toContain("return normalizedType.startsWith('registrysection') ? 'registry' : type;");
   });
 
   it('keeps legacy public registry surfaces from falling back to stale links after live loads', () => {

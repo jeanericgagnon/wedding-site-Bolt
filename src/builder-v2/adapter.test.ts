@@ -53,4 +53,18 @@ describe('toBuilderV2Document', () => {
     expect(section.type).toBe('registry');
     expect(section.blocks[0]?.type).toBe('registryItem');
   });
+
+  it('normalizes extended registrysection drift into registry blocks', () => {
+    const section = toBuilderV2Section({
+      id: 'registry-2',
+      type: 'registry-section-preview' as never,
+      variant: 'default',
+      enabled: true,
+      bindings: {},
+      settings: { title: 'Registry' },
+    });
+
+    expect(section.type).toBe('registry');
+    expect(section.blocks[0]?.type).toBe('registryItem');
+  });
 });
