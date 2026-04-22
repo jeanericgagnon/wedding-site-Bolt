@@ -16,7 +16,6 @@ const NON_BLOCKING_PUBLISH_COPY = new Set([
   'ready to go live',
   'no checks yet',
   'draft only',
-  'draft has unsaved changes',
   'live site unchanged',
   'live site unchanged — you have new draft edits',
   'live site is up to date',
