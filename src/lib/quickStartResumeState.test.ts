@@ -43,6 +43,42 @@ describe('quickStartResumeState', () => {
     expect(resolveQuickStartResumeViewState({ showFollowUps: true, viewState: 'followups', clarifyingState: clarifying })).toBe('question');
   });
 
+  it('falls back to question view when restored follow-ups were only skipped', () => {
+    const clarifying = createEmptyClarifyingPersistence();
+    clarifying.clarifying.questions = [{
+      id: 'q1',
+      category: 'travel',
+      question: 'How should guests get there?',
+      expectedAnswerType: 'short_text',
+      targetFields: ['travel.transport'],
+      affectedSections: ['travel'],
+      skippable: true,
+      round: 1,
+      status: 'skipped',
+      answer: '',
+    }];
+
+    expect(resolveQuickStartResumeViewState({ showFollowUps: true, viewState: 'followups', clarifyingState: clarifying })).toBe('question');
+  });
+
+  it('keeps follow-up view when restored questions remain unresolved', () => {
+    const clarifying = createEmptyClarifyingPersistence();
+    clarifying.clarifying.questions = [{
+      id: 'q1',
+      category: 'travel',
+      question: 'How should guests get there?',
+      expectedAnswerType: 'short_text',
+      targetFields: ['travel.transport'],
+      affectedSections: ['travel'],
+      skippable: true,
+      round: 1,
+      status: 'unresolved',
+      answer: '',
+    }];
+
+    expect(resolveQuickStartResumeViewState({ showFollowUps: true, viewState: 'question', clarifyingState: clarifying })).toBe('followups');
+  });
+
   it('keeps stable question state as-is', () => {
     expect(resolveQuickStartResumeViewState({ showFollowUps: false, viewState: 'question', clarifyingState: null })).toBe('question');
   });
