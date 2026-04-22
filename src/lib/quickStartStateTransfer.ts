@@ -26,7 +26,11 @@ export const readQuickStartDraftSnapshot = (): QuickStartDraftSnapshot | null =>
     }
     return normalized;
   } catch {
-    window.localStorage.removeItem(QUICK_START_STORAGE_KEY);
+    try {
+      window.localStorage.removeItem(QUICK_START_STORAGE_KEY);
+    } catch {
+      // ignore cleanup failures after broken payloads and still treat restore as unavailable
+    }
     return null;
   }
 };

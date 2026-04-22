@@ -78,4 +78,15 @@ describe('quickStartStateTransfer', () => {
 
     setItemSpy.mockRestore();
   });
+
+  it('still clears broken storage when invalid json cleanup cannot remove the payload', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, '{bad json');
+    const removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+      throw new Error('storage locked');
+    });
+
+    expect(readQuickStartDraftSnapshot()).toBeNull();
+
+    removeItemSpy.mockRestore();
+  });
 });
