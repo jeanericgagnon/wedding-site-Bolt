@@ -66,7 +66,7 @@ If the product cannot be shown, shared, and trusted publicly, the v1 claim is de
   - 2026-04-21 automated canonical smoke passed via `npm run proof:v1:canonical-smoke`.
   - `npm run test:e2e:live` passed across Home, Product, Trust, Login, RSVP entry, and collaborator invite route load.
   - Canonical route smoke now also covers signup load, quick-start preview reachability, and login fallback behavior across protected onboarding, setup, and dashboard surfaces when auth is missing.
-  - Protected fallback coverage now explicitly includes `/onboarding`, `/onboarding/status`, `/onboarding/guided`, `/onboarding/celebration`, `/setup`, `/setup/celebration`, `/dashboard`, `/dashboard/overview`, `/dashboard/guests`, `/dashboard/rsvp-board`, `/dashboard/planning`, `/dashboard/settings`, `/dashboard/messages`, `/dashboard/itinerary`, `/dashboard/registry`, `/dashboard/seating`, `/dashboard/seating-lookup`, `/dashboard/vault`, `/dashboard/photos`, `/dashboard/coordinator`, and `/dashboard/audit-logs`.
+  - Protected fallback coverage now explicitly includes `/payment-required`, `/onboarding`, `/onboarding/status`, `/onboarding/guided`, `/onboarding/celebration`, `/setup`, `/setup/celebration`, `/dashboard`, `/dashboard/builder`, `/dashboard/overview`, `/dashboard/guests`, `/dashboard/rsvp-board`, `/dashboard/planning`, `/dashboard/settings`, `/dashboard/messages`, `/dashboard/itinerary`, `/dashboard/registry`, `/dashboard/seating`, `/dashboard/seating-lookup`, `/dashboard/vault`, `/dashboard/photos`, `/dashboard/coordinator`, and `/dashboard/audit-logs`.
   - `npm run smoke:site` passed and resolved a real published slug + site_url (`alex-jordan-demo`) from Supabase.
   - `npm run build` passed in the same proof batch.
 - Blockers:
