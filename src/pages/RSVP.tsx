@@ -232,7 +232,7 @@ function parseEventSelectionsFromNotes(notes: string | null, guest: Guest): { cl
     };
   }
 
-  const legacyMatch = notes.match(/^Attending events:\s*(.+)$/i);
+  const legacyMatch = notes.match(/^Attending events:\s*([^\n]+)(?:\n([\s\S]*))?$/i);
   if (!legacyMatch) return fallback;
 
   const selectedEvents = new Set(
@@ -250,7 +250,7 @@ function parseEventSelectionsFromNotes(notes: string | null, guest: Guest): { cl
     : false;
 
   return {
-    cleanNotes: '',
+    cleanNotes: (legacyMatch[2] || '').trim(),
     attendCeremony,
     attendReception,
   };
