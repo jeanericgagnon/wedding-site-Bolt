@@ -384,7 +384,8 @@ registerDefinition(videoCardDefinition);
 registerDefinition(videoInlineDefinition);
 
 export function getDefinition(type: string, variant: string): SectionDefinition | null {
-  return SECTION_REGISTRY.get(makeKey(normalizeRegistrySectionType(type), resolveRegistryVariant(type, variant))) ?? null;
+  const canonicalSection = resolveCanonicalRegistrySectionInput(type, variant);
+  return SECTION_REGISTRY.get(makeKey(canonicalSection.type, canonicalSection.variant)) ?? null;
 }
 
 export function getDefinitionOrThrow(type: string, variant: string): SectionDefinition {
@@ -409,14 +410,15 @@ export function resolveAndParse(
   options?: { strictVariant?: boolean }
 ): { def: SectionDefinition; parsedData: Record<string, unknown> } | null {
   const strictVariant = options?.strictVariant === true;
-  const normalizedTypeKey = normalizeRegistrySectionType(type);
+  const canonicalSection = resolveCanonicalRegistrySectionInput(type, variant);
+  const normalizedTypeKey = normalizeRegistrySectionType(canonicalSection.type);
   const normalizedType = ({
     'footer-cta': 'footerCta',
     'wedding-party': 'weddingParty',
     'dress-code': 'dressCode',
     'registry-section': 'registry',
   } as Record<string, string>)[normalizedTypeKey] ?? normalizedTypeKey;
-  const normalizedVariant = resolveRegistryVariant(type, variant);
+  const normalizedVariant = canonicalSection.variant;
 
   const def = strictVariant
     ? (
