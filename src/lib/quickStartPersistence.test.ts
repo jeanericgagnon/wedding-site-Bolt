@@ -743,4 +743,34 @@ describe('quickStartPersistence', () => {
     expect(normalized.followUpAnswers).toEqual({ lodging: 'Old hotel block' });
     expect(normalized.showFollowUps).toBe(false);
   });
+
+  it('restores typed text from reopened clarifying questions when follow-up answers are missing', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      showFollowUps: true,
+      viewState: 'followups',
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'lodging',
+            category: 'travel',
+            question: 'Where should guests stay?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.lodging'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 2,
+            status: 'unresolved',
+            answer: 'Need to confirm hotel block',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.followUpAnswers).toEqual({ lodging: 'Need to confirm hotel block' });
+    expect(normalized.showFollowUps).toBe(true);
+    expect(normalized.viewState).toBe('followups');
+  });
 });

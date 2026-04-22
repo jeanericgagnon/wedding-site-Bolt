@@ -377,4 +377,35 @@ describe('quickStartStateTransfer', () => {
       lodging: 'Old hotel block',
     });
   });
+
+  it('rehydrates typed text from reopened clarifying questions when follow-up answers are missing', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      showFollowUps: true,
+      viewState: 'followups',
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'lodging',
+            category: 'travel',
+            question: 'Where should guests stay?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.lodging'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 2,
+            status: 'unresolved',
+            answer: 'Need to confirm hotel block',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    }));
+
+    expect(readQuickStartDraftSnapshot()?.followUpAnswers).toEqual({ lodging: 'Need to confirm hotel block' });
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').followUpAnswers).toEqual({
+      lodging: 'Need to confirm hotel block',
+    });
+  });
 });

@@ -258,9 +258,20 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
           .map((question) => [question.id, question.answer.trim()]),
       )
     : {};
+  const inProgressClarifyingAnswers = clarifyingState
+    ? Object.fromEntries(
+        clarifyingState.clarifying.questions
+          .filter((question) => (
+            (question.status === 'pending' || question.status === 'unresolved')
+            && question.answer.trim().length > 0
+          ))
+          .map((question) => [question.id, question.answer.trim()]),
+      )
+    : {};
   const restoredFollowUpAnswers = {
     ...normalizedFollowUpAnswers,
     ...answeredClarifyingAnswers,
+    ...inProgressClarifyingAnswers,
   };
 
   return {
