@@ -15,6 +15,7 @@ _False-positive avoided:_ a green canonical smoke run no longer reads like publi
 _Externally blocked proof seam:_ `npm run proof:v1:guests-rsvp-ops` is `external_fixture_required` until anon-callable auth exists for `validate-rsvp-token`
 _Launch-critical blocker command:_ `npm run proof:v1:guests-rsvp-ops`
 _Launch decision depends on:_ a logged manual truth pass, not automation alone
+_Machine-readable guardrail:_ canonical smoke JSON now encodes the no-go launch call and the blocked RSVP proof command
 
 ## Purpose
 This is the hard proof artifact for whether DayOf can credibly claim **v1 / done-enough**.
