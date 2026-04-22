@@ -53,7 +53,7 @@ export const getPublishStatusLabel = (isPublished: boolean, hasUnsavedChanges: b
 
 export const getPublishProgressLabel = (done: number, total: number): string => {
   if (total <= 0) return 'No checks yet';
-  const normalizedDone = Math.max(0, done);
+  const normalizedDone = Number.isFinite(done) ? Math.max(0, done) : 0;
   if (normalizedDone >= total) return 'Ready to go live';
   return `${total - normalizedDone} thing${total - normalizedDone === 1 ? '' : 's'} left before guest-facing launch`;
 };

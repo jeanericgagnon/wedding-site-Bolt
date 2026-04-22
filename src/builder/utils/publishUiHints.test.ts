@@ -328,4 +328,8 @@ describe('publishUiHints', () => {
   it('keeps empty progress copy when total is zero even if done is negative', () => {
     expect(getPublishProgressLabel(-3, 0)).toBe('No checks yet');
   });
+
+  it('treats non-finite done counts as zero so progress copy stays truthful', () => {
+    expect(getPublishProgressLabel(Number.NaN, 2)).toBe('2 things left before guest-facing launch');
+  });
 });
