@@ -169,4 +169,30 @@ describe('QuickStart flow guards', () => {
     expect(await screen.findByRole('button', { name: /About how many guests are you inviting: 100–150/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /About how many guests are you inviting: 100-150/i })).not.toBeInTheDocument();
   });
+
+  it('sanitizes malformed onboarding answer seeds loaded from the saved wedding site', async () => {
+    authUser = { id: 'user-1' };
+    weddingSiteRow = {
+      onboarding_answers: {
+        names: ' Alex & Jordan ',
+        guestCountBand: 'tons',
+        plusOnePolicy: ['all'],
+        mealChoice: ' yes ',
+        venueNameOrTbd: ' La Valencia ',
+      },
+    };
+
+    render(<QuickStart />);
+
+    expect(await screen.findByDisplayValue('Alex & Jordan')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Just our names' }));
+    fireEvent.change(screen.getByPlaceholderText('January 17, 2027 — Sayulita, Mexico'), {
+      target: { value: 'January 17, 2027 — Sayulita, Mexico' },
+    });
+    fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
+
+    expect(await screen.findByDisplayValue('La Valencia')).toBeInTheDocument();
+    expect(screen.queryByDisplayValue('tons')).not.toBeInTheDocument();
+  });
 });

@@ -257,7 +257,7 @@ export const QuickStart: React.FC = () => {
         .limit(1)
         .maybeSingle();
       if (data?.onboarding_answers && typeof data.onboarding_answers === 'object') {
-        const restored = data.onboarding_answers as InitialSetupAnswers;
+        const restored = normalizeQuickStartDraftSnapshot({ initialSetupAnswers: data.onboarding_answers }).initialSetupAnswers;
         setInitialSetupAnswers((prev) => {
           const next = hasLocalDraftHydrationRef.current ? mergeQuickStartSeedIntoDraft(prev, restored) : { ...prev, ...restored };
           setWeddingProfile(applyInitialSetupAnswersToWeddingProfile(next));
