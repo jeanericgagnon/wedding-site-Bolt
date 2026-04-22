@@ -57,6 +57,7 @@ describe('sections registry resolution', () => {
     expect(getDefinition(' Hero ' as never, 'fullBleed' as never)?.type).toBe('hero');
     expect(getDefinition('footer-cta' as never, 'rsvpPush' as never)?.type).toBe('footerCta');
     expect(resolveCanonicalRegistrySectionInput('footer-cta', 'Luxury')).toEqual({ type: 'footerCta', variant: 'rsvpPush' });
+    expect(resolveCanonicalRegistrySectionInput(' Hero ', 'FULL.BLEED')).toEqual({ type: 'hero', variant: 'fullBleed' });
     expect(getDefinitionOrThrow('RegistrySection' as never, ' Luxury ' as never).variant).toBe('featured');
     expect(getDefinition('RegistrySection' as never, ' Luxury ' as never)?.variant).toBe('featured');
     expect(resolveAndParse('Registry', 'luxury', {}, { strictVariant: true })?.def.variant).toBe('featured');
@@ -383,9 +384,9 @@ describe('sections registry resolution', () => {
     expect(sectionRegistry).toContain("return normalizedType === 'registry' || normalizedType.startsWith('registrysection');");
     expect(sectionRegistry).toContain("const canonicalSection = resolveCanonicalRegistrySectionInput(type, variant);");
     expect(sectionRegistry).toContain('const directSectionType = getAllDefinitions().find((definition) => normalizeRegistryVariantKey(definition.type) === normalizedTypeKey)?.type;');
-    expect(sectionRegistry).toContain('const directVariant = normalizedVariantKey');
     expect(sectionRegistry).toContain("const normalizedInputType = typeof type === 'string' ? type.trim().toLowerCase() : '';");
-    expect(sectionRegistry).toContain('const aliasVariant = normalizedVariantKey');
+    expect(sectionRegistry).toContain('function resolveCanonicalSectionVariantForType(type: string, inputType: string, variant: unknown): string {');
+    expect(sectionRegistry).toContain('variant: resolveCanonicalSectionVariantForType(normalizedType, normalizedInputType, variant),');
     expect(sectionRegistry).toContain("return SECTION_REGISTRY.get(makeKey(canonicalSection.type, canonicalSection.variant)) ?? null;");
     expect(sectionRegistry).toContain("return typeof variant === 'string'");
     expect(sectionRegistry).toContain("const normalizedType = resolveCanonicalRegistrySectionInput(type, undefined).type || normalizeRegistrySectionType(type);");

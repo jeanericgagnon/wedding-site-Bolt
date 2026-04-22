@@ -310,21 +310,25 @@ export function resolveCanonicalRegistryVariant(variant: unknown): string {
   return resolveRegistryVariant('registry', variant) || 'cards';
 }
 
+function resolveCanonicalSectionVariantForType(type: string, inputType: string, variant: unknown): string {
+  const normalizedVariantKey = normalizeRegistryVariantKey(variant);
+  if (!normalizedVariantKey) return typeof variant === 'string' ? variant : '';
+
+  const directVariant = getVariantsForType(type).find((definition) => normalizeRegistryVariantKey(definition.variant) === normalizedVariantKey)?.variant;
+  if (directVariant) return directVariant;
+
+  return Object.entries(VARIANT_FALLBACKS[type] ?? VARIANT_FALLBACKS[inputType] ?? {}).find(([alias]) => normalizeRegistryVariantKey(alias) === normalizedVariantKey)?.[1]
+    ?? (typeof variant === 'string' ? variant : '');
+}
+
 export function resolveCanonicalRegistrySectionInput(type: unknown, variant: unknown): { type: string; variant: string } {
   const canonicalType = resolveCanonicalRegistrySectionType(type);
   if (canonicalType !== 'registry') {
     const normalizedType = normalizeRegistrySectionType(type);
     const normalizedInputType = typeof type === 'string' ? type.trim().toLowerCase() : '';
-    const normalizedVariantKey = normalizeRegistryVariantKey(variant);
-    const directVariant = normalizedVariantKey
-      ? getVariantsForType(normalizedType).find((definition) => normalizeRegistryVariantKey(definition.variant) === normalizedVariantKey)?.variant
-      : undefined;
-    const aliasVariant = normalizedVariantKey
-      ? Object.entries(VARIANT_FALLBACKS[normalizedType] ?? VARIANT_FALLBACKS[normalizedInputType] ?? {}).find(([alias]) => normalizeRegistryVariantKey(alias) === normalizedVariantKey)?.[1]
-      : undefined;
     return {
       type: normalizedType,
-      variant: directVariant ?? aliasVariant ?? (typeof variant === 'string' ? variant : ''),
+      variant: resolveCanonicalSectionVariantForType(normalizedType, normalizedInputType, variant),
     };
   }
 
