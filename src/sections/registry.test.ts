@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { getAllSectionManifests, getSectionManifest } from '../builder/registry/sectionManifests';
 import { getDefinition, getVariantsForType, resolveAndParse, resolveCanonicalRegistrySectionInput, resolveCanonicalRegistrySectionType, resolveCanonicalRegistryVariant } from './registry';
-import { getAllTemplates, getTemplate, resolveCanonicalTemplateId, TEMPLATE_REGISTRY } from '../templates/registry';
+import { getAllTemplates, getCanonicalTemplateSourceId, getTemplate, resolveCanonicalTemplateId, TEMPLATE_REGISTRY } from '../templates/registry';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { getSectionComponent, getSectionVariants } from './sectionRegistry';
@@ -202,6 +202,8 @@ describe('sections registry resolution', () => {
     expect(resolveCanonicalTemplateId(' Base ')).toBe('timeless-classic');
     expect(resolveCanonicalTemplateId('base')).toBe('timeless-classic');
     expect(resolveCanonicalTemplateId('classic')).toBe('timeless-classic');
+    expect(getCanonicalTemplateSourceId('base')).toBe('timeless-classic');
+    expect(getCanonicalTemplateSourceId('classic')).toBe('timeless-classic');
     expect(resolveCanonicalTemplateId('Playful Celebration')).toBe('playful-celebration');
   });
 
@@ -503,8 +505,10 @@ describe('sections registry resolution', () => {
     expect(templateRegistrySource).toContain('Object.entries(TEMPLATE_ALIAS_TARGETS).map(([aliasId, canonicalId]) => [normalizeTemplateIdKey(aliasId), canonicalId])');
     expect(templateRegistrySource).toContain('normalizeTemplateIdKey(template.name)');
     expect(templateRegistrySource).toContain('export function resolveCanonicalTemplateId(templateId: unknown): string {');
+    expect(templateRegistrySource).toContain('export function getCanonicalTemplateSourceId(templateId: unknown): string {');
     expect(templateRegistrySource).toContain('export function getTemplate(templateId: unknown): TemplateDefinition {');
     expect(templateRegistrySource).toContain("const templateIdValue = typeof templateId === 'string' ? templateId : '';");
+    expect(templateRegistrySource).toContain('const resolvedTemplateId = templateById[templateIdValue]');
     expect(templateRegistrySource).toContain("templateIdAliases.get(normalizeTemplateIdKey(templateId)) ?? 'base'");
     expect(templateRegistrySource).toContain('return TEMPLATE_ALIAS_TARGETS[resolvedTemplateId] ?? resolvedTemplateId;');
     expect(templateRegistrySource).toContain('function getCanonicalTemplateSourceId(templateId: unknown): string {');
@@ -516,7 +520,7 @@ describe('sections registry resolution', () => {
     expect(templateRegistrySource).toContain('function deepFreezeTemplateValue<T>(value: T): T {');
     expect(templateRegistrySource).toContain('function getCanonicalTemplateSource(templateId: string | undefined): TemplateDefinition {');
     expect(templateRegistrySource).toContain('return cloneTemplateDefinition(getCanonicalTemplateSource(getCanonicalTemplateSourceId(templateId)));');
-    expect(templateRegistrySource).toContain("base: cloneTemplateDefinition(getCanonicalTemplateSource(TEMPLATE_ALIAS_TARGETS.base)),");
+    expect(templateRegistrySource).toContain("base: cloneTemplateDefinition(getCanonicalTemplateSource(getCanonicalTemplateSourceId('base'))),");
     expect(templateRegistrySource).toContain("variant: isRegistryTemplateSection");
     expect(templateRegistrySource).toContain("variant: isRegistryTemplateSection");
     expect(templateRegistrySource).toContain('? canonicalRegistrySection.variant');

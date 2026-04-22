@@ -812,18 +812,18 @@ function getCanonicalTemplateSource(templateId: string | undefined): TemplateDef
     || templateRegistry[0];
 }
 
-function getCanonicalTemplateSourceId(templateId: unknown): string {
+export function getCanonicalTemplateSourceId(templateId: unknown): string {
   return TEMPLATE_ALIAS_TARGETS[resolveCanonicalTemplateId(templateId)] ?? resolveCanonicalTemplateId(templateId);
 }
 
 export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = deepFreezeTemplateValue({
   ...templateById,
   // Back-compat aliases used by older flows
-  base: cloneTemplateDefinition(getCanonicalTemplateSource(TEMPLATE_ALIAS_TARGETS.base)),
-  modern: cloneTemplateDefinition(getCanonicalTemplateSource(TEMPLATE_ALIAS_TARGETS.modern)),
-  editorial: cloneTemplateDefinition(getCanonicalTemplateSource(TEMPLATE_ALIAS_TARGETS.editorial)),
-  classic: cloneTemplateDefinition(getCanonicalTemplateSource(TEMPLATE_ALIAS_TARGETS.classic)),
-  rustic: cloneTemplateDefinition(getCanonicalTemplateSource(TEMPLATE_ALIAS_TARGETS.rustic)),
+  base: cloneTemplateDefinition(getCanonicalTemplateSource(getCanonicalTemplateSourceId('base'))),
+  modern: cloneTemplateDefinition(getCanonicalTemplateSource(getCanonicalTemplateSourceId('modern'))),
+  editorial: cloneTemplateDefinition(getCanonicalTemplateSource(getCanonicalTemplateSourceId('editorial'))),
+  classic: cloneTemplateDefinition(getCanonicalTemplateSource(getCanonicalTemplateSourceId('classic'))),
+  rustic: cloneTemplateDefinition(getCanonicalTemplateSource(getCanonicalTemplateSourceId('rustic'))),
 });
 
 const templateIdAliases = new Map<string, string>(
@@ -838,8 +838,10 @@ const templateIdAliases = new Map<string, string>(
 
 export function resolveCanonicalTemplateId(templateId: unknown): string {
   const templateIdValue = typeof templateId === 'string' ? templateId : '';
-  const resolvedTemplateId = TEMPLATE_REGISTRY[templateIdValue]
+  const resolvedTemplateId = templateById[templateIdValue]
     ? templateIdValue
+    : TEMPLATE_ALIAS_TARGETS[templateIdValue]
+      ? templateIdValue
     : templateIdAliases.get(normalizeTemplateIdKey(templateId)) ?? 'base';
   return TEMPLATE_ALIAS_TARGETS[resolvedTemplateId] ?? resolvedTemplateId;
 }
