@@ -75,6 +75,11 @@ const output = {
   ok: failedRequired.length === 0,
   slice: 'registry',
   generatedAt: new Date().toISOString(),
+  launchClaim: {
+    status: 'manual-proof-pending',
+    highestRiskTrustGap: 'runtime_registry_truth_after_real_edits',
+    manualProofRequired: true,
+  },
   summary: {
     total: results.length,
     passed: results.filter((result) => result.ok).length,

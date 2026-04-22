@@ -134,4 +134,11 @@ describe('sections registry resolution', () => {
     expect(siteView).toContain("modern: 'cards'");
     expect(siteView).toContain("const nextVariant = fallbackMap[section.type]?.[section.variant] ?? supported[0] ?? 'default';");
   });
+
+  it('keeps registry proof output explicit about remaining runtime truth work', () => {
+    const registryProof = readFileSync(resolve(__dirname, '../../scripts/v1-proof-registry.mjs'), 'utf8');
+    expect(registryProof).toContain("status: 'manual-proof-pending'");
+    expect(registryProof).toContain("highestRiskTrustGap: 'runtime_registry_truth_after_real_edits'");
+    expect(registryProof).toContain('manualProofRequired: true');
+  });
 });
