@@ -16,6 +16,8 @@ export interface TemplateDefinition {
 }
 
 const REGISTRY_VARIANT_ALIASES: Record<string, string> = {
+  default: 'cards',
+  grid: 'cards',
   fundhighlight: 'featured',
   honeymoon: 'featured',
   tabs: 'cards',

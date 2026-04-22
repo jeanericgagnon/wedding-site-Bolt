@@ -117,6 +117,18 @@ describe('sections registry resolution', () => {
       ?.defaultLayout.sections.find((section) => section.type === 'registry')?.variant).toBe('cards');
   });
 
+  it('keeps legacy registry template variants normalized onto guest-visible cards', () => {
+    const baseRegistrySection = TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry');
+    expect(baseRegistrySection).toBeDefined();
+
+    const originalVariant = baseRegistrySection?.variant;
+    TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry')!.variant = 'grid';
+
+    expect(getTemplate('base').defaultLayout.sections.find((section) => section.type === 'registry')?.variant).toBe('cards');
+
+    TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry')!.variant = originalVariant;
+  });
+
   it('keeps imported registry template bindings and overrides isolated from later edits', () => {
     const importedTemplate = getTemplate('registry-wish-focused');
     const importedRegistrySection = importedTemplate.defaultLayout.sections.find((section) => section.type === 'registry');
@@ -273,6 +285,8 @@ describe('sections registry resolution', () => {
   it('keeps template registry definitions cloned before import/edit flows mutate them', () => {
     const templateRegistrySource = readFileSync(resolve(__dirname, '../templates/registry.ts'), 'utf8');
     expect(templateRegistrySource).toContain('const REGISTRY_VARIANT_ALIASES: Record<string, string> = {');
+    expect(templateRegistrySource).toContain("default: 'cards'");
+    expect(templateRegistrySource).toContain("grid: 'cards'");
     expect(templateRegistrySource).toContain('function cloneTemplateValue<T>(value: T): T {');
     expect(templateRegistrySource).toContain("templateRegistry.map((template) => [template.id, cloneTemplateDefinition(template)])");
     expect(templateRegistrySource).toContain("base: cloneTemplateDefinition(templateById['timeless-classic'] ?? templateRegistry[0]),");
