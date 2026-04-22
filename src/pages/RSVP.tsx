@@ -929,6 +929,9 @@ export default function RSVP() {
   const updateApplyToHousehold = useCallback((nextValue: boolean) => {
     invalidateSubmitFromEdit();
     setApplyToHousehold(nextValue);
+    if (!nextValue) {
+      setSelectedHouseholdGuestIds([]);
+    }
   }, [invalidateSubmitFromEdit]);
 
   const updateSelectedHouseholdGuestIds = useCallback((updater: (current: string[]) => string[]) => {

@@ -2752,7 +2752,7 @@ describe('RSVP stale submit protection', () => {
     expect(screen.queryByDisplayValue('  Play Dancing Queen  ')).not.toBeInTheDocument();
   });
 
-  it('preserves loaded household guest participation truth when existing RSVP includes guest ids', async () => {
+  it('clears hidden loaded household guest participation state when inheritance is turned off', async () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
       json: async () => ({
@@ -2822,6 +2822,13 @@ describe('RSVP stale submit protection', () => {
     expect(screen.getByText('Jordan Rivera')).toBeInTheDocument();
     expect(screen.getByText('Casey Rivera')).toBeInTheDocument();
     expect(screen.getByText('1/2 selected')).toBeInTheDocument();
+
+    const inheritCheckbox = screen.getByRole('checkbox', { name: /Inherit this RSVP to selected household guests/i });
+    fireEvent.click(inheritCheckbox);
+    fireEvent.click(inheritCheckbox);
+    fireEvent.click(screen.getByText('Choose household guests'));
+
+    expect(screen.getByText('0/2 selected')).toBeInTheDocument();
   });
 
   it('normalizes legacy loaded RSVP event notes before opening existing response details', async () => {
