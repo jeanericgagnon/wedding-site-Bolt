@@ -12,7 +12,11 @@ function normalizeDraftText(value: string | null | undefined) {
 }
 
 function normalizeDraftDocumentKind(value: string) {
-  return value.trim().toLowerCase().replace(/[-\s]+/g, '_') as NameChangeDocumentInput['document_kind'];
+  return value
+    .trim()
+    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+    .toLowerCase()
+    .replace(/[-\s]+/g, '_') as NameChangeDocumentInput['document_kind'];
 }
 
 function normalizeDraftFieldKey(value: string) {
