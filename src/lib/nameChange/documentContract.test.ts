@@ -172,6 +172,52 @@ describe('name change document intake contract', () => {
     expect(snapshot.summary.requiredMissing).toBe(1);
   });
 
+  it('keeps uploaded preferred documents out of autofill-ready and extraction-gap summary until review is complete', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase(),
+      [
+        {
+          document_kind: 'marriage_certificate',
+          display_name: 'Certified marriage certificate',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'marriage-certificate-•••.pdf',
+          issuing_authority: 'San Diego County Clerk',
+          issued_on: '2026-04-05',
+          extraction_confidence: 0.97,
+        },
+        {
+          document_kind: 'current_passport',
+          display_name: 'Passport',
+          storage_mode: 'metadata_only',
+          intake_status: 'uploaded',
+          file_name_masked: 'passport-•••.pdf',
+          issuing_authority: 'U.S. Department of State',
+          issued_on: '2024-06-01',
+          expires_on: '2034-06-01',
+          extraction_confidence: 0.92,
+        },
+      ],
+      [
+        {
+          document_id: null,
+          field_key: 'issuance_date',
+          field_label: 'Issue date',
+          field_value_masked: '2024-06-01',
+          source_type: 'manual',
+          is_verified: true,
+        },
+      ],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'current_passport')).toMatchObject({
+      intakeStatus: 'uploaded',
+      capturedExtractionFields: expect.arrayContaining(['issuance_date']),
+    });
+    expect(snapshot.summary.autofillReady).toBe(0);
+    expect(snapshot.summary.extractionGaps).toBe(1);
+  });
+
   it('treats court_order_name_change as the court-order intake contract and exposes case-number extraction gaps', () => {
     const documents: NameChangeDocumentInput[] = [
       {

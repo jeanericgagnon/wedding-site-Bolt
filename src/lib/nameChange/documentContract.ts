@@ -210,8 +210,8 @@ export function buildNameChangeDocumentIntakeSnapshot(
       requiredMissing: statuses.filter((status) => status.required && status.intakeStatus !== 'reviewed').length,
       metadataReady: statuses.filter((status) => status.intakeStatus !== 'not_started' && status.metadataMissing.length === 0).length,
       metadataGaps: statuses.filter((status) => status.intakeStatus !== 'not_started' && status.metadataMissing.length > 0).length,
-      autofillReady: statuses.filter((status) => status.preferredForAutofill && status.missingExtractionFields.length === 0 && status.intakeStatus !== 'not_started').length,
-      extractionGaps: statuses.filter((status) => status.intakeStatus !== 'not_started' && status.missingExtractionFields.length > 0).length,
+      autofillReady: statuses.filter((status) => status.preferredForAutofill && status.missingExtractionFields.length === 0 && status.intakeStatus === 'reviewed').length,
+      extractionGaps: statuses.filter((status) => status.intakeStatus === 'reviewed' && status.missingExtractionFields.length > 0).length,
     },
   };
 }
