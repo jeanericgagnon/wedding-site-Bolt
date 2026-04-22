@@ -993,6 +993,7 @@ describe('EventRSVP token trust continuity', () => {
     fireEvent.click(screen.getByRole('button', { name: 'RSVP for this event' }));
 
     expect(screen.queryByText('Failed to save your RSVP. Please try again.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Loading your invitation')).not.toBeInTheDocument();
   });
 
   it('drops unsaved event RSVP edits when the guest cancels and reopens the same event', async () => {

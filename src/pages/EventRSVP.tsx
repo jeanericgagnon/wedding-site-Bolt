@@ -297,6 +297,7 @@ export default function EventRSVP() {
       window.clearTimeout(postSubmitResetTimeoutRef.current);
       postSubmitResetTimeoutRef.current = null;
     }
+    setLoading(false);
     setSelectedEvent(invitation.id);
     resetEventRsvpModalTransientState(setSubmitting, setSubmitError, setSubmitSuccess, setError);
     if (invitation.rsvp) {
