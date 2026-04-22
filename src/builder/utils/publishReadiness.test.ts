@@ -205,6 +205,22 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('treats whitespace partner-one names as missing for publish truth', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
+    const data = createEmptyWeddingData();
+    data.couple.partner1Name = '   ';
+    data.couple.partner2Name = 'Jordan';
+
+    expect(getPublishIssue(project, data)?.kind).toBe('missing-couple-names');
+    expect(buildPublishReadiness(project, data).find((item) => item.id === 'names')).toEqual({
+      id: 'names',
+      label: 'Couple names are filled in',
+      done: false,
+      detail: 'Add both names exactly how you want them shown.',
+    });
+  });
+
   it('treats whitespace wedding dates as missing for publish truth', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
