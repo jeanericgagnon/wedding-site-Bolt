@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { writeSignupReturnPath, readSignupReturnPath } from './signupContinuation';
+import { clearOnboardingEntryReturnPath } from './onboardingEntryCleanup';
 
 describe('guidedSetup entry cleanup', () => {
   beforeEach(() => {
@@ -8,7 +9,7 @@ describe('guidedSetup entry cleanup', () => {
 
   it('can clear stale signup return state once guided setup has started', () => {
     writeSignupReturnPath('/onboarding/quick-start?bypassPayment=1');
-    writeSignupReturnPath(null);
+    clearOnboardingEntryReturnPath();
     expect(readSignupReturnPath()).toBeNull();
   });
 });

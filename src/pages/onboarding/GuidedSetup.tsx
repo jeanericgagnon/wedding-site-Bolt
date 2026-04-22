@@ -11,7 +11,8 @@ import { GUIDED_SETUP_STORAGE_KEY, normalizeGuidedSetupDraftSnapshot, type Guide
 import { clearAllOnboardingContinuationState } from '../../lib/onboardingContinuationCleanup';
 import * as XLSX from 'xlsx';
 import { resolvePrimaryWeddingSiteId } from '../../lib/guidedSetupSiteResolver';
-import { clearSignupReturnPath, writeSignupReturnPath } from '../../lib/signupContinuation';
+import { writeSignupReturnPath } from '../../lib/signupContinuation';
+import { clearOnboardingEntryReturnPath } from '../../lib/onboardingEntryCleanup';
 import { buildGuidedSetupHydrationErrorMessage, buildGuidedSetupSaveErrorMessage } from '../../lib/guidedSetupErrorCopy';
 
 type Step =
@@ -134,7 +135,7 @@ export const GuidedSetup: React.FC = () => {
   };
 
   useEffect(() => {
-    clearSignupReturnPath();
+    clearOnboardingEntryReturnPath();
   }, []);
 
   useEffect(() => {
