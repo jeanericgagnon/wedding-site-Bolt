@@ -5,7 +5,7 @@ import { Button, Card, Input } from '../components/ui';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { consumeSignupReturnPath, writeSignupReturnPath } from '../lib/signupContinuation';
-import { clearOnboardingEntryReturnPath } from '../lib/onboardingEntryCleanup';
+import { clearAuthEntryReturnPath } from '../lib/authEntryCleanup';
 import { resolveLoginReturnPath } from '../lib/loginReturnResolver';
 import { normalizeMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnapshot } from '../lib/quickStartStateTransfer';
 
@@ -54,7 +54,7 @@ export const Login: React.FC = () => {
 
   useEffect(() => {
     if (!explicitReturnPath && !normalizedQuickStartDraft && !hasInviteContext) {
-      clearOnboardingEntryReturnPath();
+      clearAuthEntryReturnPath();
     }
   }, [explicitReturnPath, normalizedQuickStartDraft, hasInviteContext]);
 
