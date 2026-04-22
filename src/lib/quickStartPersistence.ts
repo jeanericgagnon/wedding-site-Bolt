@@ -1,5 +1,5 @@
 import { createEmptyInitialSetupAnswers, type InitialSetupAnswers } from './initialSetupAnswers';
-import type { ClarifyingPersistenceEnvelope, StoredClarifyingQuestion } from './aiClarifyingPersistence';
+import type { ClarifyingDraftOutputs, ClarifyingPersistenceEnvelope, StoredClarifyingQuestion } from './aiClarifyingPersistence';
 import { normalizeQuickStartClarifyingMode } from './quickStartClarifyingMode';
 import { normalizeQuickStartClarifyingState } from './quickStartClarifyingNormalize';
 
@@ -78,6 +78,93 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
       && (question.status !== 'answered' || question.answer.trim().length > 0);
   };
 
+  const sanitizeTrimmedString = (value: unknown) => {
+    if (typeof value !== 'string') return undefined;
+    const trimmedValue = value.trim();
+    return trimmedValue.length > 0 ? trimmedValue : undefined;
+  };
+
+  const sanitizeDraftOutputs = (value: unknown): ClarifyingDraftOutputs => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+    const draftOutputs = value as ClarifyingDraftOutputs;
+
+    return {
+      ...(draftOutputs.hero && typeof draftOutputs.hero === 'object' && !Array.isArray(draftOutputs.hero)
+        ? {
+            hero: Object.fromEntries(
+              Object.entries({
+                headline: sanitizeTrimmedString(draftOutputs.hero.headline),
+                subheadline: sanitizeTrimmedString(draftOutputs.hero.subheadline),
+                toneNote: sanitizeTrimmedString(draftOutputs.hero.toneNote),
+              }).filter(([, fieldValue]) => fieldValue !== undefined),
+            ),
+          }
+        : {}),
+      ...(draftOutputs.schedule && typeof draftOutputs.schedule === 'object' && !Array.isArray(draftOutputs.schedule)
+        ? {
+            schedule: Object.fromEntries(
+              Object.entries({
+                intro: sanitizeTrimmedString(draftOutputs.schedule.intro),
+                eventSummary: sanitizeTrimmedString(draftOutputs.schedule.eventSummary),
+              }).filter(([, fieldValue]) => fieldValue !== undefined),
+            ),
+          }
+        : {}),
+      ...(draftOutputs.faq && typeof draftOutputs.faq === 'object' && !Array.isArray(draftOutputs.faq)
+        ? {
+            faq: {
+              ...(Array.isArray(draftOutputs.faq.guidance)
+                ? {
+                    guidance: draftOutputs.faq.guidance
+                      .map((item) => sanitizeTrimmedString(item))
+                      .filter((item): item is string => item !== undefined),
+                  }
+                : {}),
+            },
+          }
+        : {}),
+      ...(draftOutputs.travel && typeof draftOutputs.travel === 'object' && !Array.isArray(draftOutputs.travel)
+        ? {
+            travel: Object.fromEntries(
+              Object.entries({
+                intro: sanitizeTrimmedString(draftOutputs.travel.intro),
+              }).filter(([, fieldValue]) => fieldValue !== undefined),
+            ),
+          }
+        : {}),
+      ...(draftOutputs.story && typeof draftOutputs.story === 'object' && !Array.isArray(draftOutputs.story)
+        ? {
+            story: Object.fromEntries(
+              Object.entries({
+                intro: sanitizeTrimmedString(draftOutputs.story.intro),
+              }).filter(([, fieldValue]) => fieldValue !== undefined),
+            ),
+          }
+        : {}),
+      ...(draftOutputs.guestGuidance && typeof draftOutputs.guestGuidance === 'object' && !Array.isArray(draftOutputs.guestGuidance)
+        ? {
+            guestGuidance: Object.fromEntries(
+              Object.entries({
+                dressCode: sanitizeTrimmedString(draftOutputs.guestGuidance.dressCode),
+                children: sanitizeTrimmedString(draftOutputs.guestGuidance.children),
+                lodging: sanitizeTrimmedString(draftOutputs.guestGuidance.lodging),
+                transport: sanitizeTrimmedString(draftOutputs.guestGuidance.transport),
+              }).filter(([, fieldValue]) => fieldValue !== undefined),
+            ),
+          }
+        : {}),
+      ...(draftOutputs.siteTone && typeof draftOutputs.siteTone === 'object' && !Array.isArray(draftOutputs.siteTone)
+        ? {
+            siteTone: Object.fromEntries(
+              Object.entries({
+                summary: sanitizeTrimmedString(draftOutputs.siteTone.summary),
+              }).filter(([, fieldValue]) => fieldValue !== undefined),
+            ),
+          }
+        : {}),
+    };
+  };
+
   const clarifyingState = normalizeQuickStartClarifyingMode(normalizeQuickStartClarifyingState(
     parsed.clarifyingState
       && typeof parsed.clarifyingState === 'object'
@@ -94,6 +181,7 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
       && !Array.isArray(parsed.clarifyingState.draftOutputs)
         ? {
             ...parsed.clarifyingState,
+            draftOutputs: sanitizeDraftOutputs(parsed.clarifyingState.draftOutputs),
             clarifying: {
               ...parsed.clarifyingState.clarifying,
               questions: parsed.clarifyingState.clarifying.questions

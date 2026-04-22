@@ -381,4 +381,41 @@ describe('quickStartPersistence', () => {
     expect(normalized.showFollowUps).toBe(false);
     expect(normalized.viewState).toBe('question');
   });
+
+  it('sanitizes restored clarifying draft outputs to trimmed strings', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      clarifyingState: {
+        clarifying: {
+          mode: 'draft',
+          questions: [],
+          history: [],
+        },
+        draftOutputs: {
+          hero: {
+            headline: ' Welcome to our wedding ',
+            subheadline: 7,
+          },
+          faq: {
+            guidance: [' Bring layers ', 4, ' ', ' RSVP early '],
+          },
+          guestGuidance: {
+            lodging: ' Stay nearby ',
+            children: null,
+          },
+        },
+      },
+    });
+
+    expect(normalized.clarifyingState?.draftOutputs).toEqual({
+      hero: {
+        headline: 'Welcome to our wedding',
+      },
+      faq: {
+        guidance: ['Bring layers', 'RSVP early'],
+      },
+      guestGuidance: {
+        lodging: 'Stay nearby',
+      },
+    });
+  });
 });
