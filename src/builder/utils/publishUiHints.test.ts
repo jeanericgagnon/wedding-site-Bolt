@@ -109,6 +109,7 @@ describe('publishUiHints', () => {
     expect(shouldOpenPhotoTipsFromSearch('?photoTips=true')).toBe(false);
     expect(shouldOpenPhotoTipsFromSearch('?photoTips=01')).toBe(false);
     expect(shouldOpenPhotoTipsFromSearch('?photoTips=1#ignored')).toBe(false);
+    expect(shouldOpenPhotoTipsFromSearch('?photoTips=1&photoTips=0')).toBe(true);
     expect(shouldOpenPhotoTipsFromSearch('')).toBe(false);
   });
 
