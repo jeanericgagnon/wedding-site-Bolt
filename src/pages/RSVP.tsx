@@ -465,7 +465,13 @@ export default function RSVP() {
         return;
       }
 
-      const foundGuest = result.guest!;
+      if (!result.guest) {
+        if (activeLookupRequestRef.current !== requestId) return;
+        setError('Invitation not recognized. Please search by name below.');
+        return;
+      }
+
+      const foundGuest = result.guest;
       if (activeLookupRequestRef.current !== requestId) return;
       selectGuest(foundGuest, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null);
     } catch {

@@ -97,6 +97,34 @@ describe('RSVP stale submit protection', () => {
     });
   });
 
+  it('shows invitation-not-recognized truth instead of crashing on empty lookup results', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        guest: null,
+        existingRsvp: null,
+        guests: null,
+        rsvpDeadline: null,
+        rsvpQuestions: [],
+        rsvpMealConfig: { enabled: true, options: ['Chicken', 'Beef'] },
+        musicPlaylistUrl: null,
+        householdGuests: [],
+      }),
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/rsvp']}>
+        <RSVP />
+      </MemoryRouter>
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('rsvp.search_placeholder'), { target: { value: 'Nobody' } });
+    fireEvent.click(screen.getByText('Find My Invitation'));
+
+    expect(await screen.findByText('Invitation not recognized. Please search by name below.')).toBeInTheDocument();
+    expect(screen.queryByText('An error occurred. Please try again.')).not.toBeInTheDocument();
+  });
+
   it('returns token-linked guests to their loaded RSVP instead of dumping them to generic search after success', async () => {
     fetchMock
       .mockResolvedValueOnce({
