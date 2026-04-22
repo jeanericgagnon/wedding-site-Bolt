@@ -320,4 +320,8 @@ describe('publishUiHints', () => {
   it('keeps singular grammar when one blocker remains even if done exceeds total by one after clamping elsewhere', () => {
     expect(getPublishProgressLabel(0, 1)).toBe('1 thing left before guest-facing launch');
   });
+
+  it('keeps empty progress copy when total is negative even if done is positive', () => {
+    expect(getPublishProgressLabel(3, -1)).toBe('No checks yet');
+  });
 });
