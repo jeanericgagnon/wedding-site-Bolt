@@ -328,9 +328,10 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('Select a section on the canvas');
   });
 
-  it('returns section guidance when blocker copy uses visible-sections readiness detail wording', () => {
-    const hints = getPublishBlockedHints('Details has visible sections.');
-    expect(hints[0]).toContain('Select a section on the canvas');
+  it('does not mistake visible-sections success detail for a blocker', () => {
+    expect(getPublishBlockedHints('Details has visible sections.')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
   });
 
   it('returns section guidance even when blocker copy is lowercased by upstream formatting', () => {

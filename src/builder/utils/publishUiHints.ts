@@ -4,7 +4,7 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
   const normalizedErrorLower = normalizedError.toLowerCase();
   if (
     normalizedErrorLower.includes('current page has visible content')
-    || normalizedErrorLower.includes('current page has visible sections')
+    || normalizedErrorLower.includes('has visible sections')
     || normalizedErrorLower.includes('names are ready for guests')
     || normalizedErrorLower.includes('date is ready')
     || normalizedErrorLower.includes('venue details are ready')
