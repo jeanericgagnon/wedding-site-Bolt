@@ -16,7 +16,7 @@ describe('quickStartStateTransfer', () => {
 
     expect(persisted?.initialSetupAnswers.names).toBe('Alex & Jordan');
     expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').showFollowUps).toBe(false);
-    expect(readQuickStartDraftSnapshot()?.followUpAnswers).toEqual({ 'event-1-time': '6:00 PM' });
+    expect(readQuickStartDraftSnapshot()?.followUpAnswers).toEqual({});
   });
 
   it('survives malformed existing storage by normalizing on read', () => {
