@@ -253,7 +253,7 @@ export const Home: React.FC = () => {
           <div className="rounded-2xl border border-border-subtle bg-surface p-6 md:p-7">
             <p className="text-xs uppercase tracking-wide text-brand font-semibold">Migration proof</p>
             <h2 className="text-2xl md:text-3xl font-serif font-bold text-ink mt-2">Switching is no longer just a promise.</h2>
-            <p className="mt-3 max-w-3xl text-ink/75">DayOf now has a guided migration path with source intake, setup guidance, guest import review, story/event/FAQ recovery helpers, registry-link carryover, and pre-publish review cues.</p>
+            <p className="mt-3 max-w-3xl text-ink/75">DayOf now has a guided migration path with source intake, setup guidance, guest import review, story/event/FAQ recovery helpers, registry-link carryover, and starter-draft review cues before anything gets shared with guests.</p>
             <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="rounded-xl border border-border-subtle bg-white p-4">
                 <p className="text-sm font-medium text-ink">Import with review truth</p>
