@@ -340,7 +340,6 @@ describe('publishReadiness', () => {
     data.couple.partner2Name = 'Jordan';
     data.event.weddingDateISO = '2027-06-12';
     data.rsvp.enabled = true;
-    // @ts-expect-error exercising runtime guard for incomplete persisted data
     data.venues = [{ id: 'v1' }];
 
     expect(getPublishIssue(project, data)?.kind).toBe('missing-venue');
