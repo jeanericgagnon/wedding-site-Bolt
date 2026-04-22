@@ -369,6 +369,7 @@ export default function RSVP() {
     activeLookupRequestRef.current = requestId;
     activeSubmitRequestRef.current += 1;
     submitInFlightRef.current = false;
+    setLoading(false);
     setTokenAutoLoading(true);
     setSubmitting(false);
     setStep('search');
