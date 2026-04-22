@@ -555,7 +555,10 @@ export default function RSVP() {
       }
       const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions?: RSVPQuestion[] | null; rsvpMealConfig?: RSVPMealConfig | null; musicPlaylistUrl?: string | null; householdGuests?: HouseholdGuest[] | null };
       if (activeLookupRequestRef.current !== requestId) return;
-      selectGuest(result.guest ?? result.guests?.[0] ?? picked, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null);
+      const resolvedGuest = result.guest
+        ?? (result.guests && result.guests.length === 1 ? result.guests[0] : null)
+        ?? picked;
+      selectGuest(resolvedGuest, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null);
     } catch {
       if (activeLookupRequestRef.current !== requestId) return;
       selectGuest(picked, null, rsvpDeadline, rsvpQuestions, mealConfig, householdGuests, musicPlaylistUrl);
