@@ -239,6 +239,16 @@ describe('sections registry resolution', () => {
     expect(getTemplate('classic').defaultLayout.sections.find((section) => section.type === 'registry')?.settings).toEqual({});
   });
 
+  it('keeps template catalogs on canonical registry template definitions', () => {
+    const registryTemplateVariants = getAllTemplates()
+      .flatMap((template) => template.defaultLayout.sections)
+      .filter((section) => section.type === 'registry')
+      .map((section) => section.variant);
+
+    expect(registryTemplateVariants.length).toBeGreaterThan(0);
+    expect(registryTemplateVariants.every((variant) => variant === 'cards' || variant === 'featured')).toBe(true);
+  });
+
   it('keeps exported template registry aliases locked to canonical sources', () => {
     expect(Object.isFrozen(TEMPLATE_REGISTRY)).toBe(true);
     expect(Object.isFrozen(TEMPLATE_REGISTRY.base.defaultLayout.sections)).toBe(true);
@@ -547,7 +557,7 @@ describe('sections registry resolution', () => {
     expect(templateRegistrySource).toContain('overrides: cloneTemplateValue(section.overrides ?? undefined),');
     expect(templateRegistrySource).toContain('function cloneTemplateDefinition(template: TemplateDefinition): TemplateDefinition {');
     expect(templateRegistrySource).toContain('return cloneTemplateDefinition(getCanonicalTemplateDefinition(templateId));');
-    expect(templateRegistrySource).toContain('return Object.values(templateById).map(cloneTemplateDefinition);');
+    expect(templateRegistrySource).toContain('return templateRegistry.map((template) => cloneTemplateDefinition(getCanonicalTemplateDefinition(template.id)));');
     expect(sectionRegistrySource).toContain('export function resolveCanonicalRegistrySectionInput(type: unknown, variant: unknown): { type: string; variant: string } {');
     expect(sectionRegistrySource).toContain('export function resolveCanonicalRegistrySectionType(type: unknown): string {');
     expect(sectionRegistrySource).toContain('export function resolveCanonicalRegistryVariant(variant: unknown): string {');
