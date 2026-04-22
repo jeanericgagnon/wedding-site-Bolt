@@ -1023,6 +1023,25 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('treats non-object section entries as absent for publish truth', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    // @ts-expect-error exercising runtime guard for incomplete persisted data
+    project.pages[0].sections = ['broken-section'];
+
+    expect(getPublishIssue(project)).toEqual({
+      kind: 'no-enabled-sections',
+      message: 'Turn on at least one section before going live.',
+      firstSectionId: undefined,
+      firstPageId: undefined,
+    });
+    expect(buildPublishReadiness(project).find((item) => item.id === 'sections')).toEqual({
+      id: 'sections',
+      label: 'At least one section is turned on',
+      done: false,
+      detail: 'Turn on a section before going live.',
+    });
+  });
+
   it('falls back to the first real page when persisted page arrays contain null entries', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages = [
