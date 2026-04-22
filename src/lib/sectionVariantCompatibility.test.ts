@@ -20,4 +20,9 @@ describe('resolveBuilderVariant registry compatibility', () => {
     expect(resolveBuilderVariant('registry', 'fundHighlight')).toBe('fundHighlight');
     expect(resolveBuilderVariant('registry', 'grid')).toBe('grid');
   });
+
+  it('trims persisted registry variants before resolving builder compatibility', () => {
+    expect(resolveBuilderVariant('registry', ' featured ')).toBe('featured');
+    expect(resolveBuilderVariant('registry', ' fundHighlight ')).toBe('fundHighlight');
+  });
 });

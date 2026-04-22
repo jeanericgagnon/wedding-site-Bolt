@@ -143,9 +143,10 @@ const VARIANT_ALIASES: Partial<Record<SectionType, Record<string, string>>> = {
 
 export function resolveBuilderVariant(type: SectionType, variant: string): string {
   const supported = LEGACY_SELECTOR_VARIANTS[type] ?? ['default'];
-  if (supported.includes(variant)) return variant;
+  const normalizedVariant = variant.trim();
+  if (supported.includes(normalizedVariant)) return normalizedVariant;
 
-  const alias = VARIANT_ALIASES[type]?.[variant];
+  const alias = VARIANT_ALIASES[type]?.[normalizedVariant];
   if (alias && supported.includes(alias)) return alias;
 
   return supported[0] ?? 'default';
