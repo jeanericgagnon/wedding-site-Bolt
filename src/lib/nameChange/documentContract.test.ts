@@ -752,5 +752,6 @@ describe('name change document intake contract', () => {
     });
     expect(snapshot.summary.metadataReady).toBe(0);
     expect(snapshot.summary.autofillReady).toBe(0);
+    expect(snapshot.summary.extractionGaps).toBe(0);
   });
 });
