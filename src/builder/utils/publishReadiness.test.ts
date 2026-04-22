@@ -147,6 +147,20 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('marks venue readiness incomplete when venue fields are only whitespace', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
+    const data = createEmptyWeddingData();
+    data.venues = [{ id: 'v1', name: '   ', address: '   ' }];
+
+    expect(buildPublishReadiness(project, data).find((item) => item.id === 'venue')).toEqual({
+      id: 'venue',
+      label: 'Venue details are set',
+      done: false,
+      detail: 'Add at least one venue name or address.',
+    });
+  });
+
   it('shows current-page readiness against the active page, not just the first page', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages = [
