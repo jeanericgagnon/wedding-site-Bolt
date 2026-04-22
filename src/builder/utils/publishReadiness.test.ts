@@ -175,6 +175,17 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('marks saved readiness incomplete when the builder has unsaved changes', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+
+    expect(buildPublishReadiness(project, undefined, { isDirty: true }).find((item) => item.id === 'saved')).toEqual({
+      id: 'saved',
+      label: 'Latest edits are saved',
+      done: false,
+      detail: 'Save your latest draft changes before going live.',
+    });
+  });
+
   it('shows current-page readiness against the active page, not just the first page', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages = [
