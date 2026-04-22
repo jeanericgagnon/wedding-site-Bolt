@@ -96,7 +96,7 @@ export const Home: React.FC = () => {
       title: 'Day-of Coordination',
       icon: Radio,
       href: '/product',
-      bullets: ['Coordinator view', 'Check-in and arrivals focus', 'Timeline + Q&A context', 'Fast guest lookup', 'Alert and issue visibility', 'Built for calmer event-week execution'],
+      bullets: ['Coordinator workspace', 'Check-in and arrivals focus', 'Timeline + Q&A context', 'Fast guest lookup', 'Alert and issue visibility', 'Built for calmer event-week execution'],
     },
     {
       id: 'travel',
