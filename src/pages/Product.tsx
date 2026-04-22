@@ -359,7 +359,7 @@ export const Product: React.FC = () => {
             </div>
             <div className="rounded-xl border border-border-subtle bg-white p-4">
               <p className="text-sm font-medium text-ink">Permissions actually differ</p>
-              <p className="mt-1 text-sm text-ink/70">Budget/vendor editing stays tighter than live coordination work, so collaboration is useful without getting sloppy.</p>
+              <p className="mt-1 text-sm text-ink/70">Budget/vendor editing stays tighter than coordination work, so collaboration is useful without getting sloppy.</p>
             </div>
           </div>
         </div>
