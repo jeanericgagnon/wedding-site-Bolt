@@ -127,7 +127,7 @@ function normalizeCustomAnswers(answers: Record<string, string | string[]>) {
 
 function parseLegacyEventAttendanceToken(value: string | undefined): boolean {
   const normalized = (value || '').trim().toLowerCase();
-  return normalized === 'yes' || normalized === 'true' || normalized === '1';
+  return normalized === 'yes' || normalized === 'y' || normalized === 'true' || normalized === '1';
 }
 
 function normalizeExistingRsvp(existingRsvp: ExistingRSVP): ExistingRSVP {
