@@ -158,6 +158,7 @@ export function mergeRegistrySourceLabels(
   carried: CarryoverRegistryLink[],
   existing: CarryoverRegistryLink[],
 ): CarryoverRegistryLink[] {
+  const mergedByUrl = new Map<string, CarryoverRegistryLink>();
   const merged = carried
     .map((link) => normalizeCarryoverRegistryLink(link))
     .filter((link): link is CarryoverRegistryLink => Boolean(link));
@@ -166,11 +167,32 @@ export function mergeRegistrySourceLabels(
     .filter((link): link is CarryoverRegistryLink => Boolean(link));
   const existingLabelsByUrl = new Map(existingNormalized.map((link) => [link.url, link.sourceLabel]));
   for (const link of merged) {
-    link.sourceLabel = link.sourceLabel ?? existingLabelsByUrl.get(link.url);
+    const sourceLabel = link.sourceLabel ?? existingLabelsByUrl.get(link.url);
+    const nextLink = sourceLabel ? { ...link, sourceLabel } : { url: link.url };
+    const existingMerged = mergedByUrl.get(link.url);
+    if (!existingMerged) {
+      mergedByUrl.set(link.url, nextLink);
+      continue;
+    }
+
+    if (!existingMerged.sourceLabel && nextLink.sourceLabel) {
+      mergedByUrl.set(link.url, nextLink);
+      continue;
+    }
+
+    const inferredMergedLabel = inferSourceLabel(existingMerged.url);
+    if (
+      nextLink.sourceLabel
+      && existingMerged.sourceLabel === inferredMergedLabel
+      && nextLink.sourceLabel !== existingMerged.sourceLabel
+    ) {
+      mergedByUrl.set(link.url, nextLink);
+    }
   }
 
-  const carriedUrls = new Set(merged.map((link) => link.url));
-  return merged.concat(existingNormalized.filter((link) => !carriedUrls.has(link.url)));
+  const dedupedMerged = Array.from(mergedByUrl.values());
+  const carriedUrls = new Set(dedupedMerged.map((link) => link.url));
+  return dedupedMerged.concat(existingNormalized.filter((link) => !carriedUrls.has(link.url)));
 }
 
 function extractRegistryUrlTokens(line: string): CarryoverRegistryToken[] {

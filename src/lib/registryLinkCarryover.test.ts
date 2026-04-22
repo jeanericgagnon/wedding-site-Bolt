@@ -215,4 +215,17 @@ describe('carryOverRegistryLinks', () => {
       { url: 'https://target.com/list', sourceLabel: 'Target' },
     ]);
   });
+
+  it('dedupes normalized carryover merges before preserving unmatched persisted links', () => {
+    expect(mergeRegistrySourceLabels(
+      [
+        { url: 'https://zola.com/registry/jane/' },
+        { url: 'zola.com/registry/jane', sourceLabel: 'Custom Honeymoon Fund purchased by Alex' },
+      ],
+      [{ url: 'https://target.com/list', sourceLabel: 'Target Registry purchased by Jordan' }],
+    )).toEqual([
+      { url: 'https://zola.com/registry/jane', sourceLabel: 'Custom Honeymoon Fund' },
+      { url: 'https://target.com/list', sourceLabel: 'Target' },
+    ]);
+  });
 });
