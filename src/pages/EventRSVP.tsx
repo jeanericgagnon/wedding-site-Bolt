@@ -288,23 +288,7 @@ export default function EventRSVP() {
     setSubmitSuccess(false);
     setError('');
     if (invitation.rsvp) {
-      setRsvpForm({
-        attending: buildInvitationRsvp({
-          attending: invitation.rsvp.attending,
-          dietary_restrictions: invitation.rsvp.dietary_restrictions || '',
-          notes: invitation.rsvp.notes || '',
-        }).attending,
-        dietary_restrictions: buildInvitationRsvp({
-          attending: invitation.rsvp.attending,
-          dietary_restrictions: invitation.rsvp.dietary_restrictions || '',
-          notes: invitation.rsvp.notes || '',
-        }).dietary_restrictions || '',
-        notes: buildInvitationRsvp({
-          attending: invitation.rsvp.attending,
-          dietary_restrictions: invitation.rsvp.dietary_restrictions || '',
-          notes: invitation.rsvp.notes || '',
-        }).notes || '',
-      });
+      setRsvpForm(buildInvitationRsvpFormState(invitation.rsvp));
     } else {
       setRsvpForm({
         attending: true,
@@ -322,6 +306,20 @@ export default function EventRSVP() {
       attending: form.attending,
       dietary_restrictions: dietaryRestrictions || null,
       notes: notes || null,
+    };
+  }
+
+  function buildInvitationRsvpFormState(rsvp: EventInvitation['rsvp'] | null | undefined): EventRsvpFormState {
+    const normalized = buildInvitationRsvp({
+      attending: rsvp?.attending ?? true,
+      dietary_restrictions: rsvp?.dietary_restrictions || '',
+      notes: rsvp?.notes || '',
+    });
+
+    return {
+      attending: normalized.attending,
+      dietary_restrictions: normalized.dietary_restrictions || '',
+      notes: normalized.notes || '',
     };
   }
 
