@@ -401,4 +401,61 @@ describe('EventRSVP token trust continuity', () => {
     });
     expect(screen.queryByText('Event-specific RSVP is temporarily unavailable for this site.')).not.toBeInTheDocument();
   }, 10000);
+
+  it('keeps the no-token reset truth if an event RSVP submit resolves after the token is removed', async () => {
+    currentToken = 'guest-token';
+
+    maybeSingleQueue.push(
+      { data: { id: 'guest-1', name: 'Taylor', email: 'taylor@example.com' }, error: null },
+      { data: null, error: null },
+    );
+
+    selectQueue.push({
+      data: [
+        {
+          id: 'inv-1',
+          event_id: 'event-1',
+          itinerary_events: {
+            id: 'event-1',
+            event_name: 'Welcome Dinner',
+            description: '',
+            event_date: '2026-05-01',
+            start_time: '18:00:00',
+            end_time: null,
+            location_name: 'The Loft',
+            location_address: '',
+            dress_code: null,
+            notes: null,
+          },
+        },
+      ],
+      error: null,
+    });
+
+    let resolveInsert!: (value: { error: any }) => void;
+    insertQueue.push(new Promise((resolve) => {
+      resolveInsert = resolve;
+    }) as unknown as { error: any });
+
+    const view = render(<EventRSVP />);
+
+    expect(await screen.findByText('Hello, Taylor!')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'RSVP for this event' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Submit RSVP' }));
+
+    await screen.findByRole('button', { name: 'Saving…' });
+
+    currentToken = '';
+    view.rerender(<EventRSVP />);
+
+    expect(await screen.findByText('Link Not Recognized')).toBeInTheDocument();
+
+    resolveInsert({ error: null });
+
+    await waitFor(() => {
+      expect(screen.getByText('No invitation link found. Please use the link from your invitation email.')).toBeInTheDocument();
+    });
+    expect(screen.queryByText("You're in!")).not.toBeInTheDocument();
+    expect(screen.queryByText('Hello, Taylor!')).not.toBeInTheDocument();
+  });
 });
