@@ -23,6 +23,7 @@ _Machine-readable flag:_ `starterDraftWordingVerificationMissing: true`
 _Machine-readable requirement:_ `manualProofRequirements.canonicalCouplePath`
 _Machine-readable requirement:_ `manualProofRequirements.runtimeWordingVerification`
 _Machine-readable requirement:_ `manualProofRequirements.onboardingStarterDraftWording`
+_Machine-readable status:_ `manualProofSummary.requiredCount: 3`
 _Machine-readable status:_ `manualProofSummary.missingCount: 3` (`canonicalCouplePath`, `runtimeWordingVerification`, `onboardingStarterDraftWording`)
 _Machine-readable status:_ `manualProofSummary.blockingCount: 3`
 _Machine-readable status:_ `manualProofSummary.blockingKeys: canonicalCouplePath, runtimeWordingVerification, onboardingStarterDraftWording`
