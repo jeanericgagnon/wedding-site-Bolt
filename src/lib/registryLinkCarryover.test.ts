@@ -26,4 +26,10 @@ describe('carryOverRegistryLinks', () => {
       { url: 'https://amazon.com/shop', sourceLabel: 'Amazon' },
     ]);
   });
+
+  it('extracts bracketed registry links without losing purchase annotations', () => {
+    expect(carryOverRegistryLinks('Purchased later <https://target.com/list>.')).toEqual([
+      { url: 'https://target.com/list', sourceLabel: 'Target' },
+    ]);
+  });
 });
