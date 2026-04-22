@@ -1,9 +1,13 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { createEmptyBuilderProject } from '../../types/builder/project';
 import { createEmptyWeddingData } from '../../types/weddingData';
 import { getBuilderRevision, listBuilderRevisions, recordBuilderRevision } from './versionHistory';
 
 describe('versionHistory', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
   it('records and lists revisions in reverse chronological order', () => {
     const weddingId = `w_${Date.now()}_a`;
     const project = createEmptyBuilderProject(weddingId, 'modern-luxe');
@@ -28,5 +32,17 @@ describe('versionHistory', () => {
 
     expect(fetched?.id).toBe(rev.id);
     expect(fetched?.weddingData?.couple.partner1Name).toBe('Alex');
+  });
+
+  it('returns cloned revisions so callers cannot mutate stored history', () => {
+    const weddingId = `w_${Date.now()}_c`;
+    const project = createEmptyBuilderProject(weddingId, 'modern-luxe');
+    const rev = recordBuilderRevision({ weddingId, project, action: 'save', actor: 'tester' });
+
+    const fetched = getBuilderRevision(weddingId, rev.id);
+    if (!fetched) throw new Error('expected revision');
+    fetched.project.pages[0].title = 'Mutated title';
+
+    expect(getBuilderRevision(weddingId, rev.id)?.project.pages[0].title).not.toBe('Mutated title');
   });
 });
