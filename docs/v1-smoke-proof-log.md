@@ -218,6 +218,7 @@ Seating is where guest state must become actionable, fast.
 **Pass / Fail**
 - Status: PENDING
 - Notes:
+  - Protected route smoke now covers `/dashboard/seating` and `/dashboard/seating-lookup` auth fallback as part of canonical live smoke.
 - Blockers:
 
 ---
