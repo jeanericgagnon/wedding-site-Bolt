@@ -253,6 +253,27 @@ describe('name change intake draft helpers', () => {
     ]);
   });
 
+  it('deduplicates camelCase draft field-key rows instead of leaving duplicates behind', () => {
+    const next = upsertDraftNameChangeExtractedField([
+      {
+        document_id: 'draft-current_passport',
+        field_key: 'issuanceDate' as never,
+        field_label: 'Issue date',
+        field_value_masked: '2020-01-01',
+        source_type: 'manual',
+        is_verified: true,
+      },
+    ], 'draft-current_passport', 'issuance_date', 'Issuance date', '2024-06-01');
+
+    expect(next).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-current_passport',
+        field_key: 'issuance_date',
+        field_value_masked: '2024-06-01',
+      }),
+    ]);
+  });
+
   it('replaces legacy messy draft field-key rows instead of leaving duplicates behind', () => {
     const next = upsertDraftNameChangeExtractedField([
       {
