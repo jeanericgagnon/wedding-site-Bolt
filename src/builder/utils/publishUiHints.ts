@@ -2,7 +2,11 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
   if (!publishValidationError) return [];
   const normalizedError = publishValidationError.trim();
   const normalizedErrorLower = normalizedError.toLowerCase();
-  if (normalizedErrorLower.includes('page') || normalizedErrorLower.includes('a page exists')) {
+  if (
+    normalizedErrorLower.includes('page')
+    || normalizedErrorLower.includes('a page exists')
+    || normalizedErrorLower.includes('pages ready')
+  ) {
     return [
       'Open Designs and apply a starting layout.',
       'Or add a page and turn on at least one section.',

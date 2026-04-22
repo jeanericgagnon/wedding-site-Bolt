@@ -259,6 +259,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('Designs');
   });
 
+  it('returns page guidance when blocker copy uses the readiness detail wording', () => {
+    const hints = getPublishBlockedHints('2 pages ready');
+    expect(hints[0]).toContain('Designs');
+  });
+
   it('returns section guidance even when blocker copy is lowercased by upstream formatting', () => {
     const hints = getPublishBlockedHints('turn on at least one section before going live.');
     expect(hints[0]).toContain('Select a section on the canvas');
