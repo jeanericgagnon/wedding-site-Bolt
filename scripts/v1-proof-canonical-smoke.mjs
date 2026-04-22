@@ -186,6 +186,23 @@ const output = {
     blockingKeys: ['canonicalCouplePath', 'runtimeWordingVerification', 'onboardingStarterDraftWording'],
     evidenceLogPath: 'docs/v1-smoke-proof-log.md',
   },
+  manualProofBlockingReasons: [
+    {
+      key: 'canonicalCouplePath',
+      reason: 'No logged human route-note pass yet for the canonical couple path.',
+      nextStep: 'Run and log the Home -> signup/demo/auth -> onboarding/builder -> public site -> RSVP truth pass in docs/v1-smoke-proof-log.md.',
+    },
+    {
+      key: 'runtimeWordingVerification',
+      reason: 'Runtime wording has not been checked against the real privacy/access/publish and marketing/settings/billing behavior.',
+      nextStep: 'Verify those surfaces in runtime and log pass/fail notes in docs/v1-smoke-proof-log.md.',
+    },
+    {
+      key: 'onboardingStarterDraftWording',
+      reason: 'Onboarding and first-run starter-draft wording still lack runtime truth verification.',
+      nextStep: 'Verify onboarding + first-run draft wording in runtime and log pass/fail notes in docs/v1-smoke-proof-log.md.',
+    },
+  ],
   whatMustChangeBeforeGo: [
     'Close the anon-auth RSVP blocker on validate-rsvp-token',
     'Log the canonical couple-path truth pass with runtime wording verification',
