@@ -34,7 +34,7 @@ vi.mock('../../lib/welcomeNoteHelper', () => ({ buildWelcomeNoteDraft: vi.fn(() 
 vi.mock('../../lib/csvHeaderMatcher', () => ({ findCsvHeaderIndex: vi.fn(() => -1), normalizeCsvHeader: vi.fn((v: string) => v) }));
 vi.mock('../../lib/onboardingContinuationCleanup', () => ({ clearAllOnboardingContinuationState: vi.fn() }));
 vi.mock('../../lib/guidedSetupSiteResolver', () => ({ resolvePrimaryWeddingSiteId: vi.fn(async () => null) }));
-vi.mock('../../lib/signupContinuation', () => ({ writeSignupReturnPath: vi.fn() }));
+vi.mock('../../lib/signupContinuation', () => ({ clearSignupReturnPath: vi.fn(), writeSignupReturnPath: vi.fn() }));
 vi.mock('../../lib/guidedSetupErrorCopy', () => ({
   buildGuidedSetupHydrationErrorMessage: vi.fn(() => 'hydrate failed'),
   buildGuidedSetupSaveErrorMessage: vi.fn(() => 'save failed'),

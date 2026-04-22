@@ -22,7 +22,7 @@ import { buildClarifyingAnswerPatchSet } from '../../lib/aiClarifyingFlow';
 import { mapClarifyingPersistenceToTemplateSeed } from '../../lib/aiClarifyingMapper';
 import { buildOnboardingUpdateWithClarifying } from '../../lib/buildOnboardingUpdateWithClarifying';
 import { applyQuickStartAnswer, mergeClarifyingAnswer, type ConciergeQuestion } from '../../lib/quickStartFlow';
-import { writeSignupReturnPath } from '../../lib/signupContinuation';
+import { clearSignupReturnPath, writeSignupReturnPath } from '../../lib/signupContinuation';
 import { normalizeQuickStartDraftSnapshot } from '../../lib/quickStartPersistence';
 import { normalizeMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnapshot, QUICK_START_STORAGE_KEY } from '../../lib/quickStartStateTransfer';
 import { buildQuickStartEntryPath, buildQuickStartGuestsPath } from '../../lib/quickStartContinuation';
@@ -180,7 +180,7 @@ export const QuickStart: React.FC = () => {
   }, [currentIndex, safeCurrentIndex]);
 
   useEffect(() => {
-    writeSignupReturnPath(null);
+    clearSignupReturnPath();
   }, []);
 
   useEffect(() => {
@@ -255,7 +255,7 @@ export const QuickStart: React.FC = () => {
     const fetchWeddingSite = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      writeSignupReturnPath(null);
+      clearSignupReturnPath();
       const { data } = await supabase
         .from('wedding_sites')
         .select('couple_name_1, couple_name_2, wedding_date, venue_name, venue_location, onboarding_answers')
@@ -453,7 +453,7 @@ export const QuickStart: React.FC = () => {
         .eq('id', site.id);
       if (updateError) throw updateError;
       localStorage.removeItem(STORAGE_KEY);
-      writeSignupReturnPath(null);
+      clearSignupReturnPath();
       navigate(buildQuickStartGuestsPath(), {
         state: { showWelcome: true, nextStep: 'guest-import' },
       });
