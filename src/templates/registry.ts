@@ -795,11 +795,11 @@ const templateById: Record<string, TemplateDefinition> = Object.fromEntries(
 export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = {
   ...templateById,
   // Back-compat aliases used by older flows
-  base: templateById['timeless-classic'] ?? templateRegistry[0],
-  modern: templateById['modern-clean'] ?? templateRegistry[0],
-  editorial: templateById['editorial-impact'] ?? templateRegistry[0],
-  classic: templateById['timeless-classic'] ?? templateRegistry[0],
-  rustic: templateById['rustic-barn'] ?? templateById['timeless-classic'] ?? templateRegistry[0],
+  base: cloneTemplateDefinition(templateById['timeless-classic'] ?? templateRegistry[0]),
+  modern: cloneTemplateDefinition(templateById['modern-clean'] ?? templateRegistry[0]),
+  editorial: cloneTemplateDefinition(templateById['editorial-impact'] ?? templateRegistry[0]),
+  classic: cloneTemplateDefinition(templateById['timeless-classic'] ?? templateRegistry[0]),
+  rustic: cloneTemplateDefinition(templateById['rustic-barn'] ?? templateById['timeless-classic'] ?? templateRegistry[0]),
 };
 
 export function getTemplate(templateId: string): TemplateDefinition {

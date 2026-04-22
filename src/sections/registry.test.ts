@@ -133,6 +133,13 @@ describe('sections registry resolution', () => {
     expect(freshRegistrySection?.overrides).toBeUndefined();
   });
 
+  it('keeps template registry aliases isolated from each other during import edits', () => {
+    TEMPLATE_REGISTRY.classic.defaultLayout.sections.find((section) => section.type === 'registry')!.settings = { title: 'Mutated alias' };
+
+    expect(TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry')?.settings).toEqual({});
+    expect(TEMPLATE_REGISTRY['timeless-classic'].defaultLayout.sections.find((section) => section.type === 'registry')?.settings).toEqual({});
+  });
+
   it('keeps every shipped template registry variant renderable in the legacy runtime', () => {
     const templateVariants = Array.from(new Set(
       getAllTemplates()
@@ -256,6 +263,7 @@ describe('sections registry resolution', () => {
     expect(templateRegistrySource).toContain('const REGISTRY_VARIANT_ALIASES: Record<string, string> = {');
     expect(templateRegistrySource).toContain('function cloneTemplateValue<T>(value: T): T {');
     expect(templateRegistrySource).toContain("templateRegistry.map((template) => [template.id, cloneTemplateDefinition(template)])");
+    expect(templateRegistrySource).toContain("base: cloneTemplateDefinition(templateById['timeless-classic'] ?? templateRegistry[0]),");
     expect(templateRegistrySource).toContain("variant: section.type === 'registry' && typeof section.variant === 'string'");
     expect(templateRegistrySource).toContain('bindings: cloneTemplateValue(section.bindings ?? {}),');
     expect(templateRegistrySource).toContain('settings: cloneTemplateValue(section.settings ?? {}),');
