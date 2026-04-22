@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import { Button, Card, Input, AddressInput } from '../../components/ui';
 import { supabase } from '../../lib/supabase';
-import { writeSignupReturnPath } from '../../lib/signupContinuation';
 import { parseExpectedGuestCount } from '../../lib/weddingStatusGuestCount';
+import { clearOnboardingEntryReturnPath } from '../../lib/onboardingEntryCleanup';
 
 type PlanningStatus = 'not_engaged' | 'just_engaged' | 'venue_booked' | 'invitations_sent';
 
@@ -40,7 +40,7 @@ export const WeddingStatus: React.FC = () => {
   const [venueCoordinates, setVenueCoordinates] = useState<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
-    writeSignupReturnPath(null);
+    clearOnboardingEntryReturnPath();
   }, []);
 
   const statusOptions = [
