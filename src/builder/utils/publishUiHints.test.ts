@@ -129,6 +129,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('venue');
   });
 
+  it('returns venue guidance when the shorter blocker copy is whitespace-padded', () => {
+    const hints = getPublishBlockedHints('   Add at least one venue name or address.   ');
+    expect(hints[0]).toContain('venue');
+  });
+
   it('returns partner-name guidance when blocker copy uses the shorter readiness detail wording', () => {
     const hints = getPublishBlockedHints('Add both names exactly how you want them shown.');
     expect(hints[0]).toContain('couple details');
