@@ -344,6 +344,12 @@ export default function RSVP() {
     const plusOneName = (formData.plus_one_name || '').trim();
     const normalizedCustomAnswers = normalizeCustomAnswers(customAnswers);
     setError('');
+    setFormData((current) => ({
+      ...current,
+      meal_choice: mealChoice,
+      plus_one_name: plusOneName,
+      notes: notesPayload,
+    }));
     setCustomAnswers(normalizedCustomAnswers);
     setStep('form');
     setFormStep(1);
