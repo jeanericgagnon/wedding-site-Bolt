@@ -40,6 +40,8 @@ const getNormalizedPages = (project: BuilderProject) =>
     return getNormalizedId(a?.id).localeCompare(getNormalizedId(b?.id));
   });
 const getPageId = (page: BuilderProject['pages'][number] | undefined) => getNormalizedId(page?.id);
+const getPageTitle = (page: BuilderProject['pages'][number] | undefined) =>
+  typeof page?.title === 'string' ? page.title.trim() : '';
 const getSectionId = (section: NonNullable<BuilderProject['pages'][number]>['sections'][number] | undefined) =>
   getNormalizedId(section?.id);
 const isSectionLike = (value: unknown): value is NonNullable<BuilderProject['pages'][number]>['sections'][number] =>
@@ -51,7 +53,7 @@ const getNormalizedSections = (page: BuilderProject['pages'][number] | undefined
   (Array.isArray(page?.sections) ? page.sections.filter(isSectionLike) : []).sort((a, b) => {
     const orderDelta = getComparableOrderIndex(a?.orderIndex) - getComparableOrderIndex(b?.orderIndex);
     if (orderDelta !== 0) return orderDelta;
-    return getNormalizedId(a?.id).localeCompare(getNormalizedId(b?.id));
+    return getPageTitle(a).localeCompare(getPageTitle(b)) || getNormalizedId(a?.id).localeCompare(getNormalizedId(b?.id));
   });
 const isVenueLike = (value: unknown): value is NonNullable<WeddingDataV1['venues']>[number] =>
   typeof value === 'object'

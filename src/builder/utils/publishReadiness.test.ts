@@ -1370,7 +1370,7 @@ describe('publishReadiness', () => {
     });
   });
 
-  it('breaks tied page order indexes by page id so fallback targeting stays deterministic', () => {
+  it('breaks tied page order indexes by page title so fallback targeting stays deterministic', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages = [
       {
@@ -1395,6 +1395,34 @@ describe('publishReadiness', () => {
       label: 'Current page has visible content',
       done: true,
       detail: 'Home has visible sections.',
+    });
+  });
+
+  it('breaks tied page order indexes by page id when titles are also tied', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages = [
+      {
+        ...project.pages[0],
+        id: 'page-zeta',
+        title: 'Same title',
+        orderIndex: 1,
+        sections: [makeSection({ id: 'details-hidden', enabled: false })],
+      },
+      {
+        ...project.pages[0],
+        id: 'page-alpha',
+        title: 'Same title',
+        orderIndex: 1,
+        sections: [makeSection({ id: 'home-live', enabled: true })],
+      },
+    ];
+
+    const readiness = buildPublishReadiness(project, undefined, { activePageId: 'missing-page' });
+    expect(readiness.find((item) => item.id === 'current-page')).toEqual({
+      id: 'current-page',
+      label: 'Current page has visible content',
+      done: true,
+      detail: 'Same title has visible sections.',
     });
   });
 
