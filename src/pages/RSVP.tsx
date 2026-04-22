@@ -704,6 +704,16 @@ export default function RSVP() {
       .slice(0, 6);
   }, [searchValue]);
 
+  const updateFormData = useCallback((updater: (current: typeof formData) => typeof formData) => {
+    setError('');
+    setFormData((current) => updater(current));
+  }, []);
+
+  const updateCustomAnswers = useCallback((updater: (current: Record<string, string | string[]>) => Record<string, string | string[]>) => {
+    setError('');
+    setCustomAnswers((current) => updater(current));
+  }, []);
+
 
   const goToNextFormStep = () => {
     if (formStep === 1) {
@@ -994,7 +1004,7 @@ export default function RSVP() {
                     <label className="block text-base font-semibold mb-2">Will you be attending?</label>
                     <Select
                       value={formData.attending ? 'yes' : 'no'}
-                      onChange={(e) => setFormData({ ...formData, attending: e.target.value === 'yes' })}
+                      onChange={(e) => updateFormData((current) => ({ ...current, attending: e.target.value === 'yes' }))}
                       className="h-12 text-base"
                       required
                       options={[
@@ -1089,7 +1099,7 @@ export default function RSVP() {
                               <input
                                 type="checkbox"
                                 checked={formData.attendCeremony}
-                                onChange={(e) => setFormData({ ...formData, attendCeremony: e.target.checked })}
+                                onChange={(e) => updateFormData((current) => ({ ...current, attendCeremony: e.target.checked }))}
                                 className="w-5 h-5"
                               />
                             </label>
@@ -1100,7 +1110,7 @@ export default function RSVP() {
                               <input
                                 type="checkbox"
                                 checked={formData.attendReception}
-                                onChange={(e) => setFormData({ ...formData, attendReception: e.target.checked })}
+                                onChange={(e) => updateFormData((current) => ({ ...current, attendReception: e.target.checked }))}
                                 className="w-5 h-5"
                               />
                             </label>
@@ -1114,7 +1124,7 @@ export default function RSVP() {
                           <label className="block text-base font-semibold mb-2">Meal choice</label>
                           <Select
                             value={formData.meal_choice}
-                            onChange={(e) => setFormData({ ...formData, meal_choice: e.target.value })}
+                            onChange={(e) => updateFormData((current) => ({ ...current, meal_choice: e.target.value }))}
                             className="h-12 text-base"
                             options={[
                               { value: '', label: 'Select a meal option' },
@@ -1132,7 +1142,7 @@ export default function RSVP() {
                           <Input
                             type="text"
                             value={formData.plus_one_name}
-                            onChange={(e) => setFormData({ ...formData, plus_one_name: e.target.value })}
+                            onChange={(e) => updateFormData((current) => ({ ...current, plus_one_name: e.target.value }))}
                             placeholder="Guest's full name"
                             className="h-12 text-base"
                           />
@@ -1169,7 +1179,7 @@ export default function RSVP() {
                             {q.type === 'long_text' ? (
                               <Textarea
                                 value={customAnswers[q.id] ?? ''}
-                                onChange={(e) => setCustomAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                                onChange={(e) => updateCustomAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
                                 rows={3}
                                 placeholder="Your answer"
                               />
@@ -1187,7 +1197,7 @@ export default function RSVP() {
                                         checked={checked}
                                         onChange={(e) => {
                                           if (q.type === 'multi_choice') {
-                                            setCustomAnswers((prev) => {
+                                            updateCustomAnswers((prev) => {
                                               const curr = Array.isArray(prev[q.id]) ? [...(prev[q.id] as string[])] : [];
                                               if (e.target.checked) {
                                                 if (!curr.includes(opt)) curr.push(opt);
@@ -1199,9 +1209,9 @@ export default function RSVP() {
                                             });
                                           } else {
                                             if (e.target.checked) {
-                                              setCustomAnswers((prev) => ({ ...prev, [q.id]: opt }));
+                                              updateCustomAnswers((prev) => ({ ...prev, [q.id]: opt }));
                                             } else {
-                                              setCustomAnswers((prev) => ({ ...prev, [q.id]: '' }));
+                                              updateCustomAnswers((prev) => ({ ...prev, [q.id]: '' }));
                                             }
                                           }
                                         }}
@@ -1216,7 +1226,7 @@ export default function RSVP() {
                               <Input
                                 type="text"
                                 value={customAnswers[q.id] ?? ''}
-                                onChange={(e) => setCustomAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                                onChange={(e) => updateCustomAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
                                 placeholder="Your answer"
                               />
                             )}
@@ -1231,7 +1241,7 @@ export default function RSVP() {
                     </label>
                     <Textarea
                       value={formData.notes}
-                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                      onChange={(e) => updateFormData((current) => ({ ...current, notes: e.target.value }))}
                       placeholder="Dietary restrictions, accessibility needs, or special requests"
                       rows={3}
                     />
