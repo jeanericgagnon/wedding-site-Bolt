@@ -74,4 +74,9 @@ describe('publishUiHints', () => {
   it('treats over-complete progress as ready to go live', () => {
     expect(getPublishProgressLabel(9, 5)).toBe('Ready to go live');
   });
+
+  it('keeps the fallback blocker copy when the error is blank', () => {
+    expect(getPublishBlockedHints('')).toEqual([]);
+    expect(getPublishBlockedHints(null)).toEqual([]);
+  });
 });
