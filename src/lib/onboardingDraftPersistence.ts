@@ -38,6 +38,15 @@ export const normalizeOnboardingDraftSnapshot = (value: unknown): OnboardingDraf
   if (!value || typeof value !== 'object') return base;
 
   const parsed = value as Partial<OnboardingDraftSnapshot>;
+  const allowedInitialSetupValues: Partial<Record<keyof InitialSetupAnswers, readonly string[]>> = {
+    labelPreference: ['names-only', 'bride-groom', 'bride-bride', 'groom-groom', 'custom'],
+    guestCountBand: ['under-50', '50-100', '100-150', '150-250', '250-plus', ''],
+    plusOnePolicy: ['none', 'some', 'all', ''],
+    childrenAllowed: ['yes', 'no', 'unsure', ''],
+    mealChoice: ['yes', 'no', ''],
+    registryIntent: ['cash', 'gifts', 'both', 'unsure', 'none-for-now', ''],
+  };
+
   const initialSetupFollowUps = parsed.initialSetupFollowUps && typeof parsed.initialSetupFollowUps === 'object'
     ? {
         ...base.initialSetupFollowUps,
@@ -61,8 +70,12 @@ export const normalizeOnboardingDraftSnapshot = (value: unknown): OnboardingDraf
           ...base.initialSetupAnswers,
           ...Object.fromEntries(
             Object.entries(parsed.initialSetupAnswers)
-              .filter(([, value]) => typeof value === 'string')
-              .map(([key, value]) => [key, value.trim()]),
+              .flatMap(([key, value]) => {
+                if (typeof value !== 'string') return [];
+                const trimmedValue = value.trim();
+                const allowedValues = allowedInitialSetupValues[key as keyof InitialSetupAnswers];
+                return !allowedValues || allowedValues.includes(trimmedValue) ? [[key, trimmedValue]] : [];
+              }),
           ),
         }
       : base.initialSetupAnswers,

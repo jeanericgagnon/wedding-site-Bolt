@@ -93,4 +93,24 @@ describe('onboardingDraftPersistence', () => {
     expect(normalized.initialSetupAnswers.venueNameOrTbd).toBe('');
     expect(normalized.initialSetupAnswers.guestFeel).toBe('');
   });
+
+  it('rejects invalid carried initial setup enum answers during handoff restore', () => {
+    const normalized = normalizeOnboardingDraftSnapshot({
+      initialSetupAnswers: {
+        labelPreference: 'wizard-mode',
+        guestCountBand: 'tons',
+        plusOnePolicy: 'vip-only',
+        childrenAllowed: 'maybe',
+        mealChoice: 'sometimes',
+        registryIntent: 'later',
+      },
+    });
+
+    expect(normalized.initialSetupAnswers.labelPreference).toBe('names-only');
+    expect(normalized.initialSetupAnswers.guestCountBand).toBe('');
+    expect(normalized.initialSetupAnswers.plusOnePolicy).toBe('');
+    expect(normalized.initialSetupAnswers.childrenAllowed).toBe('');
+    expect(normalized.initialSetupAnswers.mealChoice).toBe('');
+    expect(normalized.initialSetupAnswers.registryIntent).toBe('');
+  });
 });
