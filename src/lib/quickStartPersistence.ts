@@ -67,6 +67,7 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
       && typeof question.skippable === 'boolean'
       && typeof question.round === 'number'
       && Number.isFinite(question.round)
+      && Number.isInteger(question.round)
       && typeof question.status === 'string'
       && ['pending', 'answered', 'skipped', 'unresolved'].includes(question.status)
       && typeof question.answer === 'string';
