@@ -144,6 +144,42 @@ describe('name change autofill prep snapshot', () => {
     });
   });
 
+  it('keeps uploaded-only extracted values at low confidence until review completes', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-passport',
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+        file_name_masked: 'passport-•••.pdf',
+        issuing_authority: 'U.S. Department of State',
+        issued_on: '2024-06-01',
+        expires_on: '2034-06-01',
+        extraction_confidence: 0.92,
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'doc-passport',
+        field_key: 'issuance_date',
+        field_label: 'Passport issue date',
+        field_value_masked: '2024-06-01',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+
+    const snapshot = buildNameChangeAutofillPrepSnapshot(makeCase(), documents, extractedFields);
+    expect(snapshot.fields.find((field) => field.targetField === 'identity.passport_issue_date')).toMatchObject({
+      value: expect.objectContaining({
+        source: 'extracted_field',
+        value: '2024-06-01',
+        confidence: 'low',
+      }),
+    });
+  });
+
   it('keeps unverified extracted values out of direct autofill lookups', () => {
     const documents: NameChangeDocumentInput[] = [
       {

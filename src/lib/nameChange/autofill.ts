@@ -85,7 +85,7 @@ export function buildNameChangeAutofillPrepSnapshot(
   const isDocumentMetadataReady = (kind: NameChangeDocumentKind | undefined) => {
     if (!kind) return true;
     const contract = intakeSnapshot.documents.find((document) => document.kind === kind);
-    return !contract || contract.metadataMissing.length === 0;
+    return !contract || (contract.intakeStatus === 'reviewed' && contract.metadataMissing.length === 0);
   };
 
   const conflictingExtractionKeys = new Set(
