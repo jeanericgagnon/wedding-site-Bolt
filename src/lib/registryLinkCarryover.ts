@@ -68,6 +68,8 @@ function extractExplicitSourceLabelFragment(text: string): string | undefined {
     .replace(/\b(registry|gift\s*list|wishlist)\b/gi, '')
     .replace(/[|,;:()[\]<>"']/g, ' ')
     .replace(/\s+/g, ' ')
+    .replace(/^(?:and|&)\b\s*/i, '')
+    .replace(/\s*\b(?:and|&)$/i, '')
     .trim();
 
   return /[a-z]/i.test(cleaned) ? cleaned : undefined;
@@ -210,6 +212,7 @@ export function mergeRegistrySourceLabels(
 
 function extractRegistryUrlTokens(line: string): CarryoverRegistryToken[] {
   const tokens = new Map<string, CarryoverRegistryToken>();
+  const lineExplicitLabel = extractExplicitSourceLabelFromTokenText(line);
   const patterns = [
     /\[[^\]]+\]\((https?:\/\/[^)]+|www\.[^)]+)\)/gi,
     /<(https?:\/\/[^>]+|www\.[^>]+)>/gi,
@@ -235,7 +238,16 @@ function extractRegistryUrlTokens(line: string): CarryoverRegistryToken[] {
     }
   }
 
-  if (tokens.size > 0) return Array.from(tokens.values());
+  if (tokens.size > 0) {
+    let lineLabelApplied = false;
+    return Array.from(tokens.values()).map((token) => {
+      const canApplyLineLabel = Boolean(lineExplicitLabel) && !lineLabelApplied && !token.sourceLabel;
+      if (canApplyLineLabel) lineLabelApplied = true;
+      return canApplyLineLabel
+        ? { ...token, sourceLabel: lineExplicitLabel, sourceLabelMode: 'explicit' }
+        : token;
+    });
+  }
 
   return line
     .split(/[|,;]/)
@@ -266,11 +278,16 @@ export function carryOverRegistryLinks(raw: string | null | undefined): Carryove
         .flatMap((part) => {
           const extractedUrls = extractRegistryUrlTokens(part);
           if (extractedUrls.length > 0) {
-            const normalizedTokens = extractedUrls.map((token) => ({
-              ...token,
-              sourceLabel: token.sourceLabel ?? pendingSourceLabel,
-              sourceLabelMode: token.sourceLabelMode ?? (pendingSourceLabel ? 'explicit' : undefined),
-            }));
+            let pendingLabelApplied = false;
+            const normalizedTokens = extractedUrls.map((token) => {
+              const canApplyPendingLabel = Boolean(pendingSourceLabel) && !pendingLabelApplied && !token.sourceLabel;
+              if (canApplyPendingLabel) pendingLabelApplied = true;
+              return {
+                ...token,
+                sourceLabel: token.sourceLabel ?? (canApplyPendingLabel ? pendingSourceLabel : undefined),
+                sourceLabelMode: token.sourceLabelMode ?? (canApplyPendingLabel ? 'explicit' : undefined),
+              };
+            });
             if (pendingSourceLabel && normalizedTokens.some((token) => token.sourceLabel === pendingSourceLabel)) {
               pendingSourceLabel = undefined;
             }
