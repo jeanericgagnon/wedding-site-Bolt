@@ -78,7 +78,9 @@ const output = {
   launchClaim: {
     status: 'manual-proof-pending',
     highestRiskTrustGap: 'runtime_registry_truth_after_real_edits',
+    secondaryTrustGap: 'registry_repair_and_import_persistence_manual_verification_missing',
     manualProofRequired: true,
+    truthGateSummary: 'automation_green_manual_truth_red',
   },
   summary: {
     total: results.length,

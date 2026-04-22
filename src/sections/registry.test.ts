@@ -139,6 +139,8 @@ describe('sections registry resolution', () => {
     const registryProof = readFileSync(resolve(__dirname, '../../scripts/v1-proof-registry.mjs'), 'utf8');
     expect(registryProof).toContain("status: 'manual-proof-pending'");
     expect(registryProof).toContain("highestRiskTrustGap: 'runtime_registry_truth_after_real_edits'");
+    expect(registryProof).toContain("secondaryTrustGap: 'registry_repair_and_import_persistence_manual_verification_missing'");
     expect(registryProof).toContain('manualProofRequired: true');
+    expect(registryProof).toContain("truthGateSummary: 'automation_green_manual_truth_red'");
   });
 });
