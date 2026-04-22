@@ -71,7 +71,7 @@ export const buildPublishReadiness = (
   );
   const hasVenue = Boolean(weddingData?.venues?.some((v) => !!v.name?.trim() || !!v.address?.trim()));
   const hasNames = Boolean(weddingData?.couple?.partner1Name?.trim() && weddingData?.couple?.partner2Name?.trim());
-  const hasWeddingDate = Boolean(weddingData?.event.weddingDateISO?.trim());
+  const hasWeddingDate = Boolean(weddingData?.event?.weddingDateISO?.trim());
   const hasRsvpEnabled = weddingData ? Boolean(weddingData.rsvp?.enabled) : true;
   const hasUnsavedChanges = Boolean(options?.isDirty);
   const activePageHasVisibleSections = Boolean(activePage?.sections.some((section) => section.enabled));

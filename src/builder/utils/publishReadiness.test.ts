@@ -294,6 +294,21 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('marks date readiness incomplete when persisted wedding data is missing the event object entirely', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
+    const data = createEmptyWeddingData();
+    // @ts-expect-error exercising runtime guard for incomplete persisted data
+    delete data.event;
+
+    expect(buildPublishReadiness(project, data).find((item) => item.id === 'date')).toEqual({
+      id: 'date',
+      label: 'Wedding date is set',
+      done: false,
+      detail: 'Add your wedding date.',
+    });
+  });
+
   it('treats whitespace partner-one names as missing for publish truth', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
