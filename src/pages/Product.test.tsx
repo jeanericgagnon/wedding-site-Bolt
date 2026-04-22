@@ -69,4 +69,11 @@ describe('Product starter draft truth', () => {
     expect(screen.getByText((_, node) => node?.textContent === 'Archive mode, photo return paths, and anniversary-style memories are real product direction. They are not the current bar DayOf should ask couples to trust first. The launch story is starter draft + guest ops + calm execution.')).toBeInTheDocument();
     expect(screen.queryByText('The launch story is website + guest ops + calm execution.')).not.toBeInTheDocument();
   });
+
+  it('keeps primary product signup CTAs framed around starting a draft instead of implying a finished site', () => {
+    render(<Product />);
+
+    expect(screen.getAllByRole('button', { name: 'Start your draft' }).length).toBe(2);
+    expect(screen.queryByRole('button', { name: 'Start your site' })).not.toBeInTheDocument();
+  });
 });

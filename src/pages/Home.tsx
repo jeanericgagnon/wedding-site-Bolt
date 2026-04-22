@@ -205,7 +205,7 @@ export const Home: React.FC = () => {
                 onClick={handleSignUp}
                 aria-label="Sign up for your wedding site"
               >
-                Start your site
+                Start your draft
               </button>
               <Link
                 to="/templates"
