@@ -948,7 +948,7 @@ describe('quickStartStateTransfer', () => {
     expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').viewState).toBe('followups');
   });
 
-  it('preserves thinking only when restore generation has not produced questions yet', () => {
+  it('preserves thinking while restore generation has not produced questions yet', () => {
     window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
       showFollowUps: true,
       viewState: 'thinking',
@@ -964,9 +964,9 @@ describe('quickStartStateTransfer', () => {
 
     const restored = readQuickStartDraftSnapshot();
 
-    expect(restored?.showFollowUps).toBe(false);
-    expect(restored?.viewState).toBe('question');
-    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').viewState).toBe('question');
+    expect(restored?.showFollowUps).toBe(true);
+    expect(restored?.viewState).toBe('thinking');
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').viewState).toBe('thinking');
   });
 
   it('rewrites stale thinking restores back to question when follow-up resume is off', () => {

@@ -1357,7 +1357,7 @@ describe('quickStartPersistence', () => {
     expect(normalized.viewState).toBe('question');
   });
 
-  it('preserves thinking view only while clarifying generation has not produced questions yet', () => {
+  it('preserves thinking view while clarifying generation has not produced questions yet', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       showFollowUps: true,
       viewState: 'thinking',
@@ -1371,8 +1371,8 @@ describe('quickStartPersistence', () => {
       },
     });
 
-    expect(normalized.showFollowUps).toBe(false);
-    expect(normalized.viewState).toBe('question');
+    expect(normalized.showFollowUps).toBe(true);
+    expect(normalized.viewState).toBe('thinking');
   });
 
   it('reopens follow-up mode when older snapshots only kept typed clarifying question answers', () => {
