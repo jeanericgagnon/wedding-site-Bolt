@@ -1,6 +1,18 @@
 import { canonicalizeNameChangeDocumentKind } from './documentKinds';
 import type { NameChangeDocumentInput, NameChangeExtractedFieldInput } from './types';
 
+const SUPPORTED_DRAFT_FIELD_KEYS = new Set<NameChangeExtractedFieldInput['field_key']>([
+  'first_name',
+  'middle_name',
+  'last_name',
+  'spouse_last_name',
+  'issuance_date',
+  'certificate_number',
+  'case_number',
+  'county',
+  'court_order_date',
+]);
+
 function humanizeDraftToken(value: string) {
   return value
     .replace(/_/g, ' ')
@@ -64,8 +76,8 @@ function normalizeDraftFieldKey(value: string) {
     issue_date: 'issuance_date',
     issued_date: 'issuance_date',
     date_issued: 'issuance_date',
-    expiration_date: 'expires_on',
-    expiry_date: 'expires_on',
+    county_residence: 'county',
+    county_of_residence: 'county',
     case_no: 'case_number',
     case_num: 'case_number',
     docket_number: 'case_number',
@@ -74,7 +86,8 @@ function normalizeDraftFieldKey(value: string) {
     given_name: 'first_name',
   };
 
-  return (fieldAliases[normalizedFieldKey] ?? normalizedFieldKey) as NameChangeExtractedFieldInput['field_key'];
+  const canonicalFieldKey = (fieldAliases[normalizedFieldKey] ?? normalizedFieldKey) as NameChangeExtractedFieldInput['field_key'];
+  return SUPPORTED_DRAFT_FIELD_KEYS.has(canonicalFieldKey) ? canonicalFieldKey : '' as NameChangeExtractedFieldInput['field_key'];
 }
 
 function buildDraftFieldLabel(fieldKey: NameChangeExtractedFieldInput['field_key'], fieldLabel: string) {

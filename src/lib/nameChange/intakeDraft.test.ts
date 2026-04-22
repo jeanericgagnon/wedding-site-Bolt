@@ -116,6 +116,21 @@ describe('name change intake draft helpers', () => {
     ]);
   });
 
+  it('ignores unsupported draft field aliases instead of inventing non-contract keys', () => {
+    const startingFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'draft-current_passport',
+        field_key: 'issuance_date',
+        field_label: 'Issuance Date',
+        field_value_masked: '2024-06-01',
+        source_type: 'manual',
+        is_verified: true,
+      },
+    ];
+
+    expect(upsertDraftNameChangeExtractedField(startingFields, 'draft-current_passport', 'expiration date' as never, '  ', '2034-06-01')).toEqual(startingFields);
+  });
+
   it('collapses repeated underscores in messy draft document kinds and ids', () => {
     expect(createDraftNameChangeDocument('current__passport' as never, ' Passport ')).toMatchObject({
       id: 'draft-current_passport',
@@ -406,8 +421,8 @@ describe('name change intake draft helpers', () => {
 
     expect(next).toEqual([
       expect.objectContaining({
-        field_key: 'county_residence',
-        field_label: 'County Residence',
+        field_key: 'county',
+        field_label: 'County',
       }),
     ]);
   });
