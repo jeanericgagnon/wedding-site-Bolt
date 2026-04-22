@@ -284,7 +284,7 @@ If that line fails, the rest is noise.
    - output goes into `docs/v1-smoke-proof-log.md`
    - owner: finish lane
    - exit bar: one clean pass log + exact failures called out, not hand-waved
-   - command floor: `npm run test:e2e:live && npm run smoke:site`
+   - command floor: `npm run proof:v1:canonical-smoke`
 2. **Guest-state continuity smoke + fix**
    - prove or fix guest edits, RSVP updates, event-level visibility, downstream reads
    - exit bar: one guest can move through public and dashboard surfaces without trust drift
