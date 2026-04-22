@@ -104,6 +104,7 @@ describe('name change intake draft helpers', () => {
   it('normalizes messy draft prefixes before canonicalizing draft ids', () => {
     expect(normalizeDraftNameChangeDocumentId('draft _ CURRENT PASSPORT')).toBe('draft-current_passport');
     expect(normalizeDraftNameChangeDocumentId('draft - court order name change')).toBe('draft-court_order');
+    expect(normalizeDraftNameChangeDocumentId('draftcurrentPassport')).toBe('draft-current_passport');
   });
 
   it('normalizes legacy draft document ids onto the canonical draft id', () => {
