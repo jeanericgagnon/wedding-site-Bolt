@@ -407,4 +407,37 @@ describe('name change document intake contract', () => {
       capturedExtractionFields: ['case_number', 'court_order_date'],
     });
   });
+
+  it('deduplicates repeated captured extraction field keys in contract output', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase(),
+      [
+        {
+          document_kind: 'current_passport',
+          display_name: 'Passport',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'passport-•••.pdf',
+          issuing_authority: 'U.S. Department of State',
+          issued_on: '2024-06-01',
+          expires_on: '2034-06-01',
+          extraction_confidence: 0.92,
+        },
+      ],
+      [
+        {
+          field_key: 'issuance_date',
+          field_label: 'Issue date',
+          field_value_masked: '2024-06-01',
+          source_type: 'manual',
+          is_verified: true,
+        },
+      ],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'current_passport')).toMatchObject({
+      extractionFieldCount: 1,
+      capturedExtractionFields: ['issuance_date'],
+    });
+  });
 });

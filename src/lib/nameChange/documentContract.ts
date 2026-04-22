@@ -175,8 +175,8 @@ export function buildNameChangeDocumentIntakeSnapshot(
           return getDocumentCapturedFieldKeys(documents, extractedFields, definition.kind);
       }
     })();
-    const capturedExtractionFields = typedCapturedFields
-      .filter((field): field is NameChangeExtractionFieldKey => definition.extractionFields.includes(field as NameChangeExtractionFieldKey));
+    const capturedExtractionFields = [...new Set(typedCapturedFields
+      .filter((field): field is NameChangeExtractionFieldKey => definition.extractionFields.includes(field as NameChangeExtractionFieldKey)))];
     const missingExtractionFields = definition.extractionFields.filter((field) => !capturedExtractionFields.includes(field));
     const required = definition.requiredFor.includes('all') || definition.requiredFor.includes(canonicalCase.legalBasis);
     const metadataMissing = metadataMissingForDocument(canonicalDocument);
