@@ -100,6 +100,10 @@ describe('name change intake draft helpers', () => {
       id: 'draft-marriage_certificate',
       document_kind: 'marriage_certificate',
     });
+    expect(createDraftNameChangeDocument('marriage license # copy' as never, ' Marriage license # copy ')).toMatchObject({
+      id: 'draft-marriage_certificate',
+      document_kind: 'marriage_certificate',
+    });
     expect(createDraftNameChangeDocument('court decree' as never, ' Court decree ')).toMatchObject({
       id: 'draft-court_order',
       document_kind: 'court_order',
@@ -251,6 +255,7 @@ describe('name change intake draft helpers', () => {
         document_id: 'draft-marriage_certificate',
         field_key: 'certificate_number',
         field_label: 'Certificate Number',
+        field_value_masked: 'MC-124',
       }),
     ]);
 
@@ -278,11 +283,20 @@ describe('name change intake draft helpers', () => {
       }),
     ]);
 
+    expect(upsertDraftNameChangeExtractedField([], 'draft-court_order', 'case + docket no' as never, '  ', '24-CV-1188')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-court_order',
+        field_key: 'case_number',
+        field_label: 'Case Number',
+      }),
+    ]);
+
     expect(upsertDraftNameChangeExtractedField([], 'draft-court_order', 'case #' as never, '  ', '24-CV-1189')).toEqual([
       expect.objectContaining({
         document_id: 'draft-court_order',
         field_key: 'case_number',
         field_label: 'Case Number',
+        field_value_masked: '24-CV-1189',
       }),
     ]);
 
@@ -322,6 +336,15 @@ describe('name change intake draft helpers', () => {
     ]);
 
     expect(upsertDraftNameChangeExtractedField([], 'draft-proof_of_address', 'county (residence)' as never, '  ', 'orange')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-proof_of_address',
+        field_key: 'county',
+        field_label: 'County',
+        field_value_masked: 'Orange',
+      }),
+    ]);
+
+    expect(upsertDraftNameChangeExtractedField([], 'draft-proof_of_address', 'county + residence' as never, '  ', 'orange')).toEqual([
       expect.objectContaining({
         document_id: 'draft-proof_of_address',
         field_key: 'county',
@@ -388,6 +411,24 @@ describe('name change intake draft helpers', () => {
         document_id: 'draft-marriage_certificate',
         field_key: 'spouse_last_name',
         field_value_masked: 'Jordan',
+      }),
+    ]);
+  });
+
+  it('uppercases number-like draft field values into stable canonical ids', () => {
+    expect(upsertDraftNameChangeExtractedField([], 'draft-court_order', 'case #' as never, '  ', ' 24-cv-1188 ')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-court_order',
+        field_key: 'case_number',
+        field_value_masked: '24-CV-1188',
+      }),
+    ]);
+
+    expect(upsertDraftNameChangeExtractedField([], 'draft-marriage_certificate', 'cert no' as never, '  ', ' mc-123 ')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-marriage_certificate',
+        field_key: 'certificate_number',
+        field_value_masked: 'MC-123',
       }),
     ]);
   });

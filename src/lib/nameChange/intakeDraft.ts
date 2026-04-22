@@ -182,6 +182,10 @@ function normalizeDraftFieldValue(fieldKey: NameChangeExtractedFieldInput['field
     return humanizeDraftToken(normalizedValue.toLowerCase());
   }
 
+  if (fieldKey === 'case_number' || fieldKey === 'certificate_number') {
+    return normalizedValue.toUpperCase();
+  }
+
   return normalizedValue;
 }
 

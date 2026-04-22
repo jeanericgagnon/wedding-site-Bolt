@@ -860,7 +860,7 @@ describe('name change document intake contract', () => {
     const snapshot = buildNameChangeDocumentIntakeSnapshot(
       makeCase(),
       [
-        createDraftNameChangeDocument('marriage license copy' as never, 'Marriage license copy'),
+        createDraftNameChangeDocument('marriage license # copy' as never, 'Marriage license # copy'),
         createDraftNameChangeDocument('social security + SSA card' as never, 'SSA card'),
         createDraftNameChangeDocument('bank statement' as never, 'Bank statement'),
         createDraftNameChangeDocument('residency document' as never, 'Residency document'),
@@ -929,5 +929,9 @@ describe('name change document intake contract', () => {
       capturedExtractionFields: ['case_number', 'court_order_date'],
       extractionFieldCount: 2,
     });
+    expect(extractedFields).toEqual(expect.arrayContaining([
+      expect.objectContaining({ field_key: 'certificate_number', field_value_masked: 'MC-123' }),
+      expect.objectContaining({ field_key: 'case_number', field_value_masked: '24-CV-1188' }),
+    ]));
   });
 });
