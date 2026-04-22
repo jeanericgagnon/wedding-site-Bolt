@@ -25,6 +25,7 @@ _Machine-readable requirement:_ `manualProofRequirements.runtimeWordingVerificat
 _Machine-readable requirement:_ `manualProofRequirements.onboardingStarterDraftWording`
 _Machine-readable status:_ `manualProofSummary.missingCount: 3` (`canonicalCouplePath`, `runtimeWordingVerification`, `onboardingStarterDraftWording`)
 _Machine-readable status:_ `manualProofSummary.blockingCount: 3`
+_Machine-readable status:_ `manualProofSummary.blockingKeys: canonicalCouplePath, runtimeWordingVerification, onboardingStarterDraftWording`
 _Machine-readable evidence log:_ `manualProofSummary.evidenceLogPath: docs/v1-smoke-proof-log.md`
 
 ## Purpose
