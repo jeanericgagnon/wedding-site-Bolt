@@ -254,6 +254,7 @@ export default function RSVP() {
   const [tokenAutoLoading, setTokenAutoLoading] = useState(false);
   const activeLookupRequestRef = useRef(0);
   const activeSubmitRequestRef = useRef(0);
+  const submitInFlightRef = useRef(false);
   const [activePredictionIndex, setActivePredictionIndex] = useState(-1);
   const [formStep, setFormStep] = useState<1 | 2 | 3>(1);
   const [rsvpQuestions, setRsvpQuestions] = useState<RSVPQuestion[]>([]);
@@ -265,6 +266,7 @@ export default function RSVP() {
 
   const invalidateActiveSubmit = useCallback(() => {
     activeSubmitRequestRef.current += 1;
+    submitInFlightRef.current = false;
     setLoading(false);
     setSubmitting(false);
   }, []);
@@ -576,9 +578,12 @@ export default function RSVP() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitInFlightRef.current) return;
     const requestId = activeSubmitRequestRef.current + 1;
     activeSubmitRequestRef.current = requestId;
+    submitInFlightRef.current = true;
     setLoading(true);
+    setSubmitting(true);
     setError('');
 
     try {
@@ -667,7 +672,9 @@ export default function RSVP() {
       setError('Failed to submit RSVP. Please try again.');
     } finally {
       if (activeSubmitRequestRef.current !== requestId) return;
+      submitInFlightRef.current = false;
       setLoading(false);
+      setSubmitting(false);
     }
   };
 
@@ -1337,7 +1344,7 @@ export default function RSVP() {
                 ) : (
                   <Button
                     type="submit"
-                    disabled={loading || !canSubmit}
+                    disabled={loading || submitting || !canSubmit}
                     className="flex-1 min-h-[48px] text-base"
                   >
                     {loading ? 'Submitting...' : existingRsvp ? 'Update RSVP' : 'Submit RSVP'}

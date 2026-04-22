@@ -844,6 +844,67 @@ describe('RSVP stale submit protection', () => {
     expect(await screen.findByText('Welcome, Taylor Rivera!')).toBeInTheDocument();
   });
 
+  it('ignores a second submit click while the first RSVP submit is still in flight', async () => {
+    const submitRequest = deferred<Response>();
+
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          guest: {
+            id: 'guest-1',
+            first_name: 'Taylor',
+            last_name: 'Rivera',
+            name: 'Taylor Rivera',
+            email: 'taylor@example.com',
+            phone: null,
+            group_name: null,
+            wedding_site_id: 'site-1',
+            plus_one_allowed: false,
+            invited_to_ceremony: true,
+            invited_to_reception: true,
+            invite_token: 'token-1',
+          },
+          existingRsvp: null,
+          guests: null,
+          rsvpDeadline: null,
+          rsvpQuestions: [],
+          rsvpMealConfig: { enabled: true, options: ['Chicken', 'Beef'] },
+          musicPlaylistUrl: null,
+          householdGuests: [],
+        }),
+      })
+      .mockImplementationOnce(() => submitRequest.promise);
+
+    render(
+      <MemoryRouter initialEntries={['/rsvp']}>
+        <RSVP />
+      </MemoryRouter>
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('rsvp.search_placeholder'), { target: { value: 'Taylor Rivera' } });
+    fireEvent.click(screen.getByText('Find My Invitation'));
+
+    await screen.findByText('Welcome, Taylor Rivera!');
+    fireEvent.click(screen.getByText('Continue to details'));
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'Chicken' } });
+    fireEvent.click(screen.getByText('Continue to review'));
+
+    const submitButton = await screen.findByText('Submit RSVP');
+    fireEvent.click(submitButton);
+    fireEvent.click(submitButton);
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(screen.getByText('Submitting...')).toBeDisabled();
+
+    submitRequest.resolve({
+      ok: true,
+      json: async () => ({ success: true, guestName: 'Taylor Rivera', attending: true }),
+    } as Response);
+
+    expect(await screen.findByText("You're confirmed!")).toBeInTheDocument();
+  });
+
   it('drops stale token submit completions after the page unmounts', async () => {
     const submitRequest = deferred<Response>();
 
