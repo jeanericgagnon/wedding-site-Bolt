@@ -13,6 +13,7 @@ Current v1 line for this proof pass:
 - couples can run the core ops layer: guests, RSVP, messages, seating, registry, itinerary, settings
 - planner/collaborator support exists in a real usable form
 - marketing, settings, and billing surfaces describe the product honestly
+- partial features are framed honestly instead of padded into fake completeness
 
 Source of truth: `docs/finish-board-2026-04-19.md`
 Last aligned from source: 2026-04-21

@@ -110,6 +110,7 @@ const output = {
     'couples can run the core ops layer: guests, RSVP, messages, seating, registry, itinerary, settings',
     'planner/collaborator support exists in a real usable form',
     'marketing, settings, and billing surfaces describe the product honestly',
+    'partial features are framed honestly instead of padded into fake completeness',
   ],
   summary: {
     total: results.length,
