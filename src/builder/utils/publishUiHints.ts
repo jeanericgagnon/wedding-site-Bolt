@@ -44,6 +44,7 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
     normalizedErrorLower.includes('wedding date')
     || normalizedErrorLower.includes('event date')
     || normalizedErrorLower.includes('date is set')
+    || normalizedErrorLower.includes('date is ready')
     || normalizedErrorLower.includes('add your date')
   ) {
     return [
