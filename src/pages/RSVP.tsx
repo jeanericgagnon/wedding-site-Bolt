@@ -1574,7 +1574,7 @@ export default function RSVP() {
                       setError('');
                       setFormStep((formStep - 1) as 1 | 2 | 3);
                     } else {
-                      resetToSearch(!!searchParams.get('token'));
+                      resetToSearch(false);
                     }
                   }}
                   className="flex-1 min-h-[48px] text-base"

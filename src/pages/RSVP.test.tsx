@@ -1587,7 +1587,8 @@ describe('RSVP stale submit protection', () => {
     fireEvent.click(screen.getByText('Cancel'));
 
     expect(await screen.findByPlaceholderText('rsvp.search_placeholder')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('token-1')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('')).toBeInTheDocument();
+    expect(window.location.search).toBe('');
     expect(screen.queryByText('Welcome, Taylor Rivera!')).not.toBeInTheDocument();
   });
 
@@ -1759,7 +1760,8 @@ describe('RSVP stale submit protection', () => {
     fireEvent.click(screen.getByText('Cancel'));
 
     expect(await screen.findByPlaceholderText('rsvp.search_placeholder')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('token-1')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('')).toBeInTheDocument();
+    expect(window.location.search).toBe('');
     expect(screen.queryByText('Failed to submit RSVP. Please try again.')).not.toBeInTheDocument();
   });
 
@@ -1827,7 +1829,8 @@ describe('RSVP stale submit protection', () => {
     fireEvent.click(screen.getByText('Cancel'));
 
     expect(await screen.findByPlaceholderText('rsvp.search_placeholder')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('token-1')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('')).toBeInTheDocument();
+    expect(window.location.search).toBe('');
     expect(screen.queryByDisplayValue('Play Dancing Queen')).not.toBeInTheDocument();
     expect(screen.queryByDisplayValue('See you on the dance floor')).not.toBeInTheDocument();
   });
@@ -1882,7 +1885,8 @@ describe('RSVP stale submit protection', () => {
     fireEvent.click(screen.getByText('Cancel'));
 
     expect(await screen.findByPlaceholderText('rsvp.search_placeholder')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('token-1')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('')).toBeInTheDocument();
+    expect(window.location.search).toBe('');
     expect(screen.queryByText("You've already responded. You can update your response below.")).not.toBeInTheDocument();
   });
 
@@ -1936,7 +1940,8 @@ describe('RSVP stale submit protection', () => {
     fireEvent.click(screen.getByText('Cancel'));
 
     expect(await screen.findByPlaceholderText('rsvp.search_placeholder')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('token-1')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('')).toBeInTheDocument();
+    expect(window.location.search).toBe('');
     expect(screen.queryByText('We have your current RSVP on file.')).not.toBeInTheDocument();
   });
 
@@ -2004,7 +2009,8 @@ describe('RSVP stale submit protection', () => {
     fireEvent.click(screen.getByText('Cancel'));
 
     expect(await screen.findByPlaceholderText('rsvp.search_placeholder')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('token-1')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('')).toBeInTheDocument();
+    expect(window.location.search).toBe('');
     expect(screen.queryByDisplayValue('Play Hey Ya!')).not.toBeInTheDocument();
     expect(screen.queryByDisplayValue('Updated note')).not.toBeInTheDocument();
   });
@@ -2118,7 +2124,9 @@ describe('RSVP stale submit protection', () => {
     fireEvent.click(screen.getByText('Back'));
     fireEvent.click(screen.getByText('Cancel'));
 
-    expect(await screen.findByDisplayValue('token-1')).toBeInTheDocument();
+    expect(await screen.findByDisplayValue('')).toBeInTheDocument();
+    expect(window.location.search).toBe('');
+    fireEvent.change(screen.getByPlaceholderText('rsvp.search_placeholder'), { target: { value: 'Taylor Rivera' } });
     fireEvent.click(screen.getByText('Find My Invitation'));
 
     expect(await screen.findByText('Welcome, Taylor Rivera!')).toBeInTheDocument();
@@ -2175,7 +2183,8 @@ describe('RSVP stale submit protection', () => {
     fireEvent.click(screen.getByText('Cancel'));
 
     expect(await screen.findByPlaceholderText('rsvp.search_placeholder')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('token-1')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('')).toBeInTheDocument();
+    expect(window.location.search).toBe('');
     expect(screen.queryByText('Please choose a meal option before review.')).not.toBeInTheDocument();
   });
 
