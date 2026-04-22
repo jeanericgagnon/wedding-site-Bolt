@@ -984,6 +984,50 @@ describe('quickStartPersistence', () => {
     expect(normalized.viewState).toBe('followups');
   });
 
+  it('falls back to follow-up mode when malformed showFollowUps flags survive alongside active draft answers and older history', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      showFollowUps: 'true' as never,
+      viewState: 'question',
+      followUpAnswers: {
+        lodging: 'Need shuttle details',
+      },
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'lodging',
+            category: 'travel',
+            question: 'Where should guests stay?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.lodging'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 2,
+            status: 'pending',
+            answer: '',
+          }],
+          history: [{
+            id: 'lodging',
+            category: 'travel',
+            question: 'Where should guests stay?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.lodging'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'answered',
+            answer: 'Stay at the resort',
+          }],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.showFollowUps).toBe(true);
+    expect(normalized.viewState).toBe('followups');
+    expect(normalized.followUpAnswers).toEqual({ lodging: 'Need shuttle details' });
+  });
+
   it('ignores malformed follow-up opt-out flags when typed clarifying drafts still need resume', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       showFollowUps: 'false' as never,
