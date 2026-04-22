@@ -254,13 +254,13 @@ function normalizeDraftDateValue(value: string) {
     if (month) return normalizeIsoParts(year, String(month), day);
   }
 
-  const compactIsoMatch = normalizedOrdinalValue.match(/^(19\d{2}|20\d{2})(\d{2})(\d{2})$/);
+  const compactIsoMatch = suffixStrippedTimestampValue.match(/^(19\d{2}|20\d{2})(\d{2})(\d{2})$/);
   if (compactIsoMatch) {
     const [, year, month, day] = compactIsoMatch;
     return normalizeIsoParts(year, month, day);
   }
 
-  const compactUsMatch = normalizedOrdinalValue.match(/^(\d{2})(\d{2})(\d{4})$/);
+  const compactUsMatch = suffixStrippedTimestampValue.match(/^(\d{2})(\d{2})(\d{4})$/);
   if (compactUsMatch) {
     const [, month, day, year] = compactUsMatch;
     return normalizeIsoParts(year, month, day);
