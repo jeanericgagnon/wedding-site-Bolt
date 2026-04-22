@@ -247,6 +247,25 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('marks page readiness with plural page copy when multiple pages exist', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages.push({
+      ...project.pages[0],
+      id: 'page-2',
+      title: 'Schedule',
+      slug: 'schedule',
+      orderIndex: 1,
+      sections: [],
+    });
+
+    expect(buildPublishReadiness(project).find((item) => item.id === 'page')).toEqual({
+      id: 'page',
+      label: 'A page exists',
+      done: true,
+      detail: '2 page ready',
+    });
+  });
+
   it('shows current-page readiness against the active page, not just the first page', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages = [
