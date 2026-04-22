@@ -143,6 +143,7 @@ const output = {
     guestsRsvpOps: 'critical',
     canonicalManualTruthPass: 'critical',
   },
+  highestRiskTrustGap: 'Public v1 claim is still blocked by missing canonical couple-path truth notes and unresolved guests/RSVP ops proof auth',
   blockers: blockedRequired.map((result) => ({
     id: result.id,
     label: result.label,
