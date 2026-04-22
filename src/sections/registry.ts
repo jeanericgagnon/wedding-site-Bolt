@@ -465,7 +465,10 @@ export function resolveAndParse(
     : (
       getDefinition(normalizedType, normalizedVariant)
       ?? (fallbackVariant ? getDefinition(normalizedType, fallbackVariant) : null)
-      ?? (getDefaultVariantForType(normalizedType) ? getDefinition(normalizedType, getDefaultVariantForType(normalizedType)) : null)
+      ?? (() => {
+        const defaultVariant = getDefaultVariantForType(normalizedType);
+        return defaultVariant ? getDefinition(normalizedType, defaultVariant) : null;
+      })()
       ?? null
     );
 

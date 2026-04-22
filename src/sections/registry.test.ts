@@ -413,6 +413,7 @@ describe('sections registry resolution', () => {
     expect(sectionRegistry).toContain('function getCanonicalSectionFallbackVariant(type: string, inputType: string, variant: string): string | null {');
     expect(sectionRegistry).toContain('function getDefaultVariantForType(type: string): string | undefined {');
     expect(sectionRegistry).toContain('const defaultVariant = getDefaultVariantForType(type);');
+    expect(sectionRegistry).toContain('const defaultVariant = getDefaultVariantForType(normalizedType);');
     expect(sectionRegistry).toContain("const canonicalVariant = resolveCanonicalSectionVariantForType('registry', 'registry', variant);");
     expect(sectionRegistry).toContain("? canonicalVariant");
     expect(sectionRegistry).toContain('return getCanonicalSectionFallbackVariant(type, inputType, normalizedVariantKey)');
