@@ -280,6 +280,11 @@ function isRegistrySectionType(type: unknown): boolean {
   return normalizedType === 'registry' || normalizedType.startsWith('registrysection');
 }
 
+function normalizeRegistrySectionType(type: unknown): string {
+  if (isRegistrySectionType(type)) return 'registry';
+  return typeof type === 'string' ? type.trim().toLowerCase() : '';
+}
+
 function resolveRegistryVariant(type: string, variant: unknown): string {
   if (!isRegistrySectionType(type)) return typeof variant === 'string' ? variant : '';
 
@@ -380,7 +385,7 @@ export function resolveAndParse(
   options?: { strictVariant?: boolean }
 ): { def: SectionDefinition; parsedData: Record<string, unknown> } | null {
   const strictVariant = options?.strictVariant === true;
-  const normalizedTypeKey = typeof type === 'string' ? type.trim().toLowerCase() : type;
+  const normalizedTypeKey = normalizeRegistrySectionType(type);
   const normalizedType = ({
     'footer-cta': 'footerCta',
     'wedding-party': 'weddingParty',
