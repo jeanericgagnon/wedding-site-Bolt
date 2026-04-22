@@ -110,6 +110,8 @@ export const applyQuickStartAnswer = (
         'none': 'none',
         'no plus ones': 'none',
         'not offering plus ones': 'none',
+        'plus ones by invite only': 'some',
+        'invite only': 'some',
         'limited': 'some',
         'some': 'some',
         'select': 'some',
@@ -127,9 +129,11 @@ export const applyQuickStartAnswer = (
         'kids welcome': 'yes',
         'children welcome': 'yes',
         'family friendly': 'yes',
+        'yes kids': 'yes',
         'no': 'no',
         'adults only': 'no',
         'no kids': 'no',
+        'child free': 'no',
         'not sure': 'unsure',
         'unsure': 'unsure',
         'maybe': 'unsure',
@@ -145,9 +149,12 @@ export const applyQuickStartAnswer = (
         'collect meal choices': 'yes',
         'ask for meal choices': 'yes',
         'need meal choices': 'yes',
+        'dietary selections': 'yes',
+        'dietary restrictions': 'yes',
         'no': 'no',
         'no meal choices': 'no',
         'skip meals': 'no',
+        'buffet only': 'no',
       });
       break;
     case 'registryIntent':

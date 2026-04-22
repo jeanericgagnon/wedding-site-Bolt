@@ -101,4 +101,13 @@ describe('quickStartFlow', () => {
     expect(applyQuickStartAnswer(base, 'guestCount', 'very large celebration').guestCountBand).toBe('150-250');
   });
 
+
+  it('infers sparse policy answers from common invite-language phrasing', () => {
+    const base = createEmptyInitialSetupAnswers();
+
+    expect(applyQuickStartAnswer(base, 'plusOnePolicy', 'plus-ones by invite only').plusOnePolicy).toBe('some');
+    expect(applyQuickStartAnswer(base, 'childrenAllowed', 'child-free ceremony').childrenAllowed).toBe('no');
+    expect(applyQuickStartAnswer(base, 'mealChoice', 'collect dietary restrictions only').mealChoice).toBe('yes');
+  });
+
 });
