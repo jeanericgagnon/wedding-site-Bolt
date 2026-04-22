@@ -108,6 +108,19 @@ describe('publicSiteProject', () => {
     expect(getPublicWeddingData(row)?.couple.displayName).toBe('Draft Names');
   });
 
+  it('prefers site_json weddingDataSnapshot over stale wedding_data when unpublished', () => {
+    const row = {
+      is_published: false,
+      site_json: {
+        ...draftProject,
+        weddingDataSnapshot: publishedWeddingData,
+      },
+      wedding_data: liveWeddingData,
+    };
+
+    expect(getPublicWeddingData(row)?.couple.displayName).toBe('Published Names');
+  });
+
   it('rewrites signed media urls for public builder project parity', () => {
     const row = {
       is_published: true,
