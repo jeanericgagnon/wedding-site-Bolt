@@ -187,4 +187,19 @@ describe('mediaService', () => {
       altText: 'Weekend schedule PDF',
     }));
   });
+
+  it('defaults attached section ids to an empty list when upload is not section-scoped', async () => {
+    const file = new File(['img'], 'centerpiece.jpg', { type: 'image/jpeg' });
+    upload.mockResolvedValue({
+      url: 'https://cdn.example.com/centerpiece.jpg',
+      path: 'w1/centerpiece.jpg',
+    });
+    save.mockResolvedValue({ id: 'asset-10' });
+
+    await mediaService.uploadAsset('w1', file);
+
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({
+      attachedSectionIds: [],
+    }));
+  });
 });
