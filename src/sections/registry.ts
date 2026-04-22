@@ -312,7 +312,9 @@ export function resolveCanonicalRegistryVariant(variant: unknown): string {
 
 function resolveCanonicalSectionVariantForType(type: string, inputType: string, variant: unknown): string {
   const normalizedVariantKey = normalizeRegistryVariantKey(variant);
-  if (!normalizedVariantKey) return typeof variant === 'string' ? variant : '';
+  if (!normalizedVariantKey) {
+    return getAllDefinitions().find((definition) => definition.type === type)?.variant ?? (typeof variant === 'string' ? variant : '');
+  }
 
   const directVariant = getAllDefinitions()
     .filter((definition) => definition.type === type)

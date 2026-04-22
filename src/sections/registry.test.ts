@@ -56,6 +56,7 @@ describe('sections registry resolution', () => {
   it('keeps registry owner and guest renders aligned when persisted registry variants drift in casing or punctuation', () => {
     expect(getDefinition(' Hero ' as never, 'fullBleed' as never)?.type).toBe('hero');
     expect(getDefinition('footer-cta' as never, 'rsvpPush' as never)?.type).toBe('footerCta');
+    expect(resolveCanonicalRegistrySectionInput('Footer Cta', undefined)).toEqual({ type: 'footerCta', variant: 'rsvpPush' });
     expect(resolveCanonicalRegistrySectionInput('footer-cta', 'Luxury')).toEqual({ type: 'footerCta', variant: 'rsvpPush' });
     expect(resolveCanonicalRegistrySectionInput('Footer Cta', 'Luxury')).toEqual({ type: 'footerCta', variant: 'rsvpPush' });
     expect(resolveAndParse('Footer Cta' as never, 'Luxury' as never, {}, { strictVariant: true })?.def.variant).toBe('rsvpPush');
@@ -399,6 +400,7 @@ describe('sections registry resolution', () => {
     expect(sectionRegistry).toContain('const directSectionType = getAllDefinitions().find((definition) => normalizeRegistryVariantKey(definition.type) === normalizedTypeKey)?.type;');
     expect(sectionRegistry).toContain("const normalizedInputType = typeof type === 'string' ? type.trim().toLowerCase() : '';");
     expect(sectionRegistry).toContain('function resolveCanonicalSectionVariantForType(type: string, inputType: string, variant: unknown): string {');
+    expect(sectionRegistry).toContain("return getAllDefinitions().find((definition) => definition.type === type)?.variant ?? (typeof variant === 'string' ? variant : '');");
     expect(sectionRegistry).toContain('const fallbackVariants = VARIANT_FALLBACKS[type]');
     expect(sectionRegistry).toContain('.filter((definition) => definition.type === type)');
     expect(sectionRegistry).toContain('variant: resolveCanonicalSectionVariantForType(normalizedType, normalizedInputType, variant),');
