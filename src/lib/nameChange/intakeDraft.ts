@@ -199,7 +199,7 @@ function normalizeDraftDateValue(value: string) {
   const normalizedOrdinalValue = value.replace(/\b(\d{1,2})(st|nd|rd|th)\b/gi, '$1');
   const sanitizedTimestampValue = normalizedOrdinalValue.replace(/,\s*(\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?)\b/g, ' $1');
   const compactTimestampValue = sanitizedTimestampValue.replace(/\s+/g, ' ').trim();
-  const normalizedTimestampValue = compactTimestampValue.replace(/\s+(am|pm)$/i, (_, meridiem: string) => meridiem.toUpperCase());
+  const normalizedTimestampValue = compactTimestampValue.replace(/\b(am|pm)\b/gi, (_, meridiem: string) => meridiem.toUpperCase());
   const canonicalTimestampValue = normalizedTimestampValue
     .replace(/\bz\b/g, 'Z')
     .replace(/\butc\b/gi, 'UTC')
