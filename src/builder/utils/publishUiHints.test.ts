@@ -131,6 +131,7 @@ describe('publishUiHints', () => {
     expect(getPublishProgressLabel(1, 2)).toBe('1 thing left before guest-facing launch');
     expect(getPublishProgressLabel(2, 2)).toBe('Ready to go live');
     expect(getPublishProgressLabel(6, 6)).toBe('Ready to go live');
+    expect(getPublishProgressLabel(7, 6)).toBe('Ready to go live');
   });
 
   it('treats over-complete progress as ready to go live', () => {
