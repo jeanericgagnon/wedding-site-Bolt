@@ -928,6 +928,19 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('returns no-pages when persisted page arrays contain only null entries', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages = [
+      // @ts-expect-error exercising runtime guard for incomplete persisted data
+      null,
+    ];
+
+    expect(getPublishIssue(project)).toEqual({
+      kind: 'no-pages',
+      message: 'Add at least one page before going live.',
+    });
+  });
+
   it('falls back to generic current-page copy when persisted active page title is not a string', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     // @ts-expect-error exercising runtime guard for incomplete persisted data
