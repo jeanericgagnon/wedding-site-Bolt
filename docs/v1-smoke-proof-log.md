@@ -4,6 +4,7 @@ _Date:_ 2026-04-21
 _Status:_ Canonical smoke automation covers public, setup, onboarding, and dashboard route continuity; manual runtime notes still needed
 _Owner:_ Product finish lane
 _Public v1 claim status:_ Not clear to claim yet
+_Launch call right now:_ NO-GO for public v1 claim
 
 ## Purpose
 This is the hard proof artifact for whether DayOf can credibly claim **v1 / done-enough**.
