@@ -1645,6 +1645,67 @@ describe('RSVP stale submit protection', () => {
     expect(screen.queryByText('Welcome, Taylor Rivera!')).not.toBeInTheDocument();
   });
 
+  it('clears the token session when the guest backs out of ambiguous token matches', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        guest: null,
+        existingRsvp: null,
+        guests: [
+          {
+            id: 'guest-1',
+            first_name: 'Taylor',
+            last_name: 'Rivera',
+            name: 'Taylor Rivera',
+            email: 'taylor@example.com',
+            phone: null,
+            group_name: null,
+            wedding_site_id: 'site-1',
+            plus_one_allowed: false,
+            invited_to_ceremony: true,
+            invited_to_reception: true,
+            invite_token: 'token-1',
+          },
+          {
+            id: 'guest-2',
+            first_name: 'Jordan',
+            last_name: 'Rivera',
+            name: 'Jordan Rivera',
+            email: 'jordan@example.com',
+            phone: null,
+            group_name: null,
+            wedding_site_id: 'site-1',
+            plus_one_allowed: false,
+            invited_to_ceremony: true,
+            invited_to_reception: true,
+            invite_token: 'token-2',
+          },
+        ],
+        rsvpDeadline: null,
+        rsvpQuestions: [],
+        rsvpMealConfig: { enabled: false, options: [] },
+        musicPlaylistUrl: null,
+        householdGuests: [],
+      }),
+    });
+
+    window.history.pushState({}, '', '/rsvp?token=token-1');
+
+    render(
+      <BrowserRouter>
+        <RSVP />
+      </BrowserRouter>
+    );
+
+    expect(await screen.findByText('Multiple matches found')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Search again'));
+
+    expect(await screen.findByPlaceholderText('rsvp.search_placeholder')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('')).toBeInTheDocument();
+    expect(window.location.search).toBe('');
+    expect(screen.queryByText('Multiple matches found')).not.toBeInTheDocument();
+  });
+
   it('clears stale token submit errors when the guest cancels back to search', async () => {
     fetchMock
       .mockResolvedValueOnce({

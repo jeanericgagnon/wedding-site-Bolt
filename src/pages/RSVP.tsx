@@ -1166,7 +1166,7 @@ export default function RSVP() {
             </div>
 
             <button
-              onClick={() => { resetToSearch(true); }}
+              onClick={() => { resetToSearch(false); }}
               className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
             >
               Search again
