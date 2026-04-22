@@ -1,6 +1,8 @@
 import { createEmptyInitialSetupAnswers, type InitialSetupAnswers } from './initialSetupAnswers';
 
-const hasValue = (value: unknown) => typeof value === 'string' ? value.trim().length > 0 : false;
+const trimString = (value: unknown) => typeof value === 'string' ? value.trim() : '';
+
+const hasValue = (value: unknown) => trimString(value).length > 0;
 
 export const hasMeaningfulQuickStartAnswers = (answers: InitialSetupAnswers | null | undefined) => {
   if (!answers) return false;
@@ -21,7 +23,7 @@ export const mergeQuickStartSeedIntoDraft = (
 
   for (const [key, value] of Object.entries(seed) as Array<[keyof InitialSetupAnswers, InitialSetupAnswers[keyof InitialSetupAnswers]]>) {
     if (!hasValue(next[key]) && hasValue(value)) {
-      (next as Record<string, unknown>)[key] = value;
+      (next as Record<string, unknown>)[key] = trimString(value);
     }
   }
 
