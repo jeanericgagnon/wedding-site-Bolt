@@ -1544,6 +1544,75 @@ describe('RSVP stale submit protection', () => {
     expect(screen.queryByText('Failed to submit RSVP. Please try again.')).not.toBeInTheDocument();
   });
 
+  it('clears stale token-loaded RSVP details when the guest cancels back to search', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        guest: {
+          id: 'guest-1',
+          first_name: 'Taylor',
+          last_name: 'Rivera',
+          name: 'Taylor Rivera',
+          email: 'taylor@example.com',
+          phone: null,
+          group_name: null,
+          wedding_site_id: 'site-1',
+          plus_one_allowed: false,
+          invited_to_ceremony: true,
+          invited_to_reception: true,
+          invite_token: 'token-1',
+        },
+        existingRsvp: {
+          id: 'rsvp-1',
+          attending: true,
+          attending_ceremony: true,
+          attending_reception: true,
+          meal_choice: null,
+          plus_one_name: null,
+          notes: 'See you on the dance floor',
+          custom_answers: {
+            'q-1': 'Play Dancing Queen',
+          },
+        },
+        guests: null,
+        rsvpDeadline: null,
+        rsvpQuestions: [
+          {
+            id: 'q-1',
+            label: 'Song request',
+            type: 'short_text',
+            required: false,
+            options: [],
+          },
+        ],
+        rsvpMealConfig: { enabled: false, options: [] },
+        musicPlaylistUrl: null,
+        householdGuests: [],
+      }),
+    });
+
+    window.history.pushState({}, '', '/rsvp?token=token-1');
+
+    render(
+      <BrowserRouter>
+        <RSVP />
+      </BrowserRouter>
+    );
+
+    expect(await screen.findByText('Welcome, Taylor Rivera!')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Continue to details'));
+    expect(screen.getByDisplayValue('Play Dancing Queen')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('See you on the dance floor')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Back'));
+    fireEvent.click(screen.getByText('Cancel'));
+
+    expect(await screen.findByPlaceholderText('rsvp.search_placeholder')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('token-1')).toBeInTheDocument();
+    expect(screen.queryByDisplayValue('Play Dancing Queen')).not.toBeInTheDocument();
+    expect(screen.queryByDisplayValue('See you on the dance floor')).not.toBeInTheDocument();
+  });
+
   it('ignores a second submit click while the first RSVP submit is still in flight', async () => {
     const submitRequest = deferred<Response>();
 
