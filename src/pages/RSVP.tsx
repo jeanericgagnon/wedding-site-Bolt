@@ -328,6 +328,7 @@ export default function RSVP() {
 
   const returnToLoadedRsvp = useCallback(() => {
     invalidateActiveSubmit();
+    const notesPayload = (formData.notes || '').trim();
     setError('');
     setStep('form');
     setFormStep(1);
@@ -340,7 +341,7 @@ export default function RSVP() {
       plus_one_name: formData.plus_one_name || null,
       plus_one_count: formData.plus_one_name.trim() ? 1 : 0,
       children_count: 0,
-      notes: formData.notes || null,
+      notes: notesPayload || null,
       custom_answers: customAnswers,
     });
   }, [customAnswers, formData, invalidateActiveSubmit]);
