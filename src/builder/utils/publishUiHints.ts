@@ -28,8 +28,8 @@ const NON_BLOCKING_PUBLISH_COPY = new Set([
 const isNonBlockingPublishCopy = (normalizedErrorLower: string): boolean => {
   if (NON_BLOCKING_PUBLISH_COPY.has(normalizedErrorLower)) return true;
   if (/^.+ has visible sections\.?$/.test(normalizedErrorLower)) return true;
-  if (/^\d+ sections visible\.?$/.test(normalizedErrorLower)) return true;
-  if (/^\d+ pages ready\.?$/.test(normalizedErrorLower)) return true;
+  if (/^\d+ sections? visible\.?$/.test(normalizedErrorLower)) return true;
+  if (/^\d+ pages? ready\.?$/.test(normalizedErrorLower)) return true;
   if (/^\d+ things? left before guest-facing launch\.?$/.test(normalizedErrorLower)) return true;
   return false;
 };
