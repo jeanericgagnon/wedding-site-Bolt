@@ -29,7 +29,7 @@ const STEPS: Step[] = [
 const FEATURE_AUDIT_GROUPS = [
   {
     title: 'Public experience',
-    items: ['Wedding site templates', 'Public RSVP page', 'Event-specific RSVP', 'Travel + logistics guidance', 'Launch/privacy controls that match the story'],
+    items: ['Wedding site templates', 'Public RSVP page', 'Event-specific RSVP', 'Travel + logistics guidance', 'Privacy + guest-access controls that match the story'],
   },
   {
     title: 'Planning core',

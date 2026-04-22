@@ -55,4 +55,11 @@ describe('Product starter draft truth', () => {
     expect(screen.getByText('Draft prepared for review')).toBeInTheDocument();
     expect(screen.getByText('Keep guests synced with review-before-send drafts instead of duct tape.')).toBeInTheDocument();
   });
+
+  it('keeps public experience controls framed around privacy and guest access instead of launch theater', () => {
+    render(<Product />);
+
+    expect(screen.getByText('Privacy + guest-access controls that match the story')).toBeInTheDocument();
+    expect(screen.queryByText('Launch/privacy controls that match the story')).not.toBeInTheDocument();
+  });
 });
