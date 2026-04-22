@@ -1252,6 +1252,47 @@ describe('quickStartPersistence', () => {
     expect(normalized.viewState).toBe('followups');
   });
 
+  it('keeps the latest pending clarifying round when missing resume flags meet duplicate ids', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      viewState: 'question',
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'transport',
+            category: 'travel',
+            question: 'Old copy',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.transport'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'pending',
+            answer: '',
+          }, {
+            id: ' transport ',
+            category: 'travel',
+            question: 'Updated copy',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.transport'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 2,
+            status: 'pending',
+            answer: '',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.showFollowUps).toBe(true);
+    expect(normalized.viewState).toBe('followups');
+    expect(normalized.clarifyingState?.clarifying.questions).toHaveLength(1);
+    expect(normalized.clarifyingState?.clarifying.questions[0]?.question).toBe('Updated copy');
+  });
+
   it('reopens follow-up mode when older snapshots lost the flag and saved an invalid view state', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       viewState: 42 as never,
@@ -1460,7 +1501,7 @@ describe('quickStartPersistence', () => {
     expect(normalized.viewState).toBe('thinking');
   });
 
-  it('keeps orphaned follow-up answers but closes restore UI when no clarifying records survive', () => {
+  it('drops orphaned follow-up answers when no clarifying records survive', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       showFollowUps: true,
       viewState: 'thinking',
@@ -1479,7 +1520,7 @@ describe('quickStartPersistence', () => {
 
     expect(normalized.showFollowUps).toBe(false);
     expect(normalized.viewState).toBe('question');
-    expect(normalized.followUpAnswers).toEqual({ lodging: 'Need shuttle details' });
+    expect(normalized.followUpAnswers).toEqual({});
   });
 
   it('closes stale thinking restores when the clarifying state is missing entirely', () => {

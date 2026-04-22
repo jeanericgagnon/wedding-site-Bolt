@@ -237,12 +237,8 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     clarifyingState && [...clarifyingState.clarifying.questions, ...clarifyingState.clarifying.history]
       .some((question) => question.status === 'answered' && question.answer.trim().length > 0)
   );
-  const canResumeThinkingState = parsed.viewState === 'thinking' && parsed.showFollowUps !== false && Boolean(clarifyingState) && !hasOpenFollowUps && !hasAnsweredClarifyingHistory && !hasDraftedFollowUpAnswers && (
-    parsed.showFollowUps === true
-    || (!hasExplicitShowFollowUps && !hasDraftedFollowUpAnswers)
-  );
   const hasMissingResumeFlagForOpenClarifyingWork = !hasExplicitShowFollowUps && hasOpenFollowUps && viewState === 'question';
-  const showFollowUps = (hasOpenFollowUps || canResumeThinkingState) && (
+  const showFollowUps = hasOpenFollowUps && (
     parsed.showFollowUps === true
     || hasMissingResumeFlagForOpenClarifyingWork
     || (!hasExplicitShowFollowUps && (
@@ -272,7 +268,9 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     : null;
   const normalizedFollowUpAnswers = activeClarifyingIds && (activeClarifyingIds.size > 0 || hasAnyClarifyingRecords)
     ? Object.fromEntries(Object.entries(followUpAnswers).filter(([key]) => activeClarifyingIds.has(key)))
-    : followUpAnswers;
+    : clarifyingState && !hasAnyClarifyingRecords
+      ? {}
+      : followUpAnswers;
   const reopenedClarifyingIds = clarifyingState
     ? new Set(
         clarifyingState.clarifying.questions
@@ -315,13 +313,6 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     followUpAnswers: restoredFollowUpAnswers,
     showFollowUps,
     clarifyingState,
-    viewState: showFollowUps
-      ? viewState === 'thinking'
-        && !hasTypedClarifyingDraftAnswers
-        && !hasActiveDraftedFollowUpAnswers
-        && !hasOpenFollowUps
-        ? 'thinking'
-        : 'followups'
-      : viewState === 'followups' || viewState === 'thinking' ? 'question' : viewState,
+    viewState: showFollowUps ? 'followups' : viewState === 'followups' || viewState === 'thinking' ? 'question' : viewState,
   };
 };
