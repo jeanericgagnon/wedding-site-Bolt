@@ -355,6 +355,7 @@ export default function EventRSVP() {
 
     setSubmitting(true);
     setSubmitError('');
+    setSubmitSuccess(false);
 
     try {
       const invitation = invitations.find((i) => i.id === selectedEvent);
