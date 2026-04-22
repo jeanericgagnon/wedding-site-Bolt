@@ -31,6 +31,7 @@ describe('name change intake draft helpers', () => {
       extraction_confidence: null,
     });
     expect(buildDraftNameChangeDocumentId('___' as never)).toBe('draft-other');
+    expect(buildDraftNameChangeDocumentId('other')).toBe('draft-other');
   });
 
   it('collapses draft document labels into one clean downstream display name', () => {
