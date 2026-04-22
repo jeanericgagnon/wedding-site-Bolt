@@ -901,7 +901,13 @@ describe('name change document intake contract', () => {
       extraction_confidence: 0.93,
     };
     const extractedFields = upsertDraftNameChangeExtractedField(
-      upsertDraftNameChangeExtractedField([], marriageDraft.id, 'cert no' as never, '  ', 'MC-123'),
+      upsertDraftNameChangeExtractedField(
+        upsertDraftNameChangeExtractedField([], marriageDraft.id, 'cert number' as never, '  ', 'MC-123'),
+        courtOrderDraft.id,
+        'docket no' as never,
+        '  ',
+        '24-CV-1188',
+      ),
       courtOrderDraft.id,
       'signed date' as never,
       '  ',
@@ -919,8 +925,8 @@ describe('name change document intake contract', () => {
       extractionFieldCount: 1,
     });
     expect(snapshot.documents.find((document) => document.kind === 'court_order')).toMatchObject({
-      capturedExtractionFields: ['court_order_date'],
-      extractionFieldCount: 1,
+      capturedExtractionFields: ['case_number', 'court_order_date'],
+      extractionFieldCount: 2,
     });
   });
 });
