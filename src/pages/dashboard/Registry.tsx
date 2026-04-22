@@ -119,8 +119,9 @@ export const DashboardRegistry: React.FC = () => {
   const [registryActionsOpen, setRegistryActionsOpen] = useState(false);
   const normalizedItems = items.map(normalizeOwnerDashboardRegistryItem);
   const duplicateGroups = findDuplicateRegistryGroups(normalizedItems);
+  const actionableBadImportCount = normalizedItems.filter((item) => getRegistryItemMetadataState(item).hasBadImportTitle && !!(item.item_url || item.canonical_url)).length;
   const bulkReviewCounts = {
-    repair: items.filter((item) => getRegistryItemMetadataState(item).hasBadImportTitle && !!(item.item_url || item.canonical_url)).length,
+    repair: actionableBadImportCount,
     duplicates: duplicateGroups.reduce((sum, group) => sum + group.length, 0),
     imageIssues: normalizedItems.filter((item) => !item.image_url || item.image_url.includes('thum.io') || item.image_url.includes('weserv.nl')).length,
   };
@@ -863,8 +864,6 @@ export const DashboardRegistry: React.FC = () => {
     imageIssues: normalizedItems.filter((i) => !i.image_url || i.image_url.includes('thum.io') || i.image_url.includes('weserv.nl')).length,
     badImports: normalizedItems.filter((i) => getRegistryItemMetadataState(i).hasBadImportTitle).length,
   };
-  const actionableBadImportCount = items.filter((item) => getRegistryItemMetadataState(item).hasBadImportTitle && !!(item.item_url || item.canonical_url)).length;
-
 
   const tabCount = (key: RegistryFilter) => {
     if (key === 'all') return counts.total;

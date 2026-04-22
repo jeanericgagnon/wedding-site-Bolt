@@ -304,6 +304,7 @@ describe('sections registry resolution', () => {
     expect(registryDashboard).toContain('const normalizedItems = items.map(normalizeOwnerDashboardRegistryItem);');
     expect(registryDashboard).toContain('function normalizeOwnerDashboardRegistryItem(item: RegistryItem): RegistryItem {');
     expect(registryDashboard).toContain('const duplicateGroups = findDuplicateRegistryGroups(normalizedItems);');
+    expect(registryDashboard).toContain('const actionableBadImportCount = normalizedItems.filter((item) => getRegistryItemMetadataState(item).hasBadImportTitle && !!(item.item_url || item.canonical_url)).length;');
     expect(registryDashboard).toContain('setItems(data.map(normalizeOwnerDashboardRegistryItem));');
     expect(registryDashboard).toContain('normalizeOwnerDashboardRegistryItem({ ...i, ...fields, updated_at: new Date().toISOString() })');
     expect(registryDashboard).toContain('normalizeOwnerDashboardRegistryItem(updated)');
@@ -312,9 +313,9 @@ describe('sections registry resolution', () => {
     expect(registryDashboard).toContain('const hasStale = normalizedItems.some((item) => !item.metadata_last_checked_at || (Date.now() - new Date(item.metadata_last_checked_at).getTime()) > WEEKLY_REFRESH_MS);');
     expect(registryDashboard).toContain('purchaser_name: quantityState.purchaseStatus === \'available\' ? null : item.purchaser_name,');
     expect(registryDashboard).toContain('badImports: normalizedItems.filter((i) => getRegistryItemMetadataState(i).hasBadImportTitle).length,');
-    expect(registryDashboard).toContain('const actionableBadImportCount = items.filter((item) => getRegistryItemMetadataState(item).hasBadImportTitle && !!(item.item_url || item.canonical_url)).length;');
+    expect(registryDashboard).toContain('repair: actionableBadImportCount,');
     expect(registryDashboard).toContain('filter((i) => getRegistryItemMetadataState(i).hasBadImportTitle)');
-    expect(registryDashboard).toContain('repair: items.filter((item) => getRegistryItemMetadataState(item).hasBadImportTitle && !!(item.item_url || item.canonical_url)).length,');
+    expect(registryDashboard).toContain('repair: actionableBadImportCount,');
     expect(registryDashboard).toContain("imageIssues: normalizedItems.filter((item) => !item.image_url || item.image_url.includes('thum.io') || item.image_url.includes('weserv.nl')).length,");
     expect(registryDashboard).toContain('Repair states: {normalizedItems.filter((item) => getRegistryRepairStates(item).length > 0).length}');
     expect(registryDashboard).toContain('Imported gifts to fix: {actionableBadImportCount}');
