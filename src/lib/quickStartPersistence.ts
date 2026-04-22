@@ -100,6 +100,8 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
                   category: question.category.trim(),
                   question: question.question.trim(),
                   expectedAnswerType: question.expectedAnswerType.trim(),
+                  targetFields: question.targetFields.map((field) => field.trim()),
+                  affectedSections: question.affectedSections.map((section) => section.trim()),
                   answer: question.answer.trim(),
                 })),
               history: parsed.clarifyingState.clarifying.history
@@ -110,6 +112,8 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
                   category: question.category.trim(),
                   question: question.question.trim(),
                   expectedAnswerType: question.expectedAnswerType.trim(),
+                  targetFields: question.targetFields.map((field) => field.trim()),
+                  affectedSections: question.affectedSections.map((section) => section.trim()),
                   answer: question.answer.trim(),
                 })),
             },

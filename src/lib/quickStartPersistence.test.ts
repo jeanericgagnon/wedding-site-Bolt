@@ -260,8 +260,8 @@ describe('quickStartPersistence', () => {
             category: ' event_structure ',
             question: ' When is dinner? ',
             expectedAnswerType: ' short_text ',
-            targetFields: ['events.0.time'],
-            affectedSections: ['schedule'],
+            targetFields: [' events.0.time '],
+            affectedSections: [' schedule '],
             skippable: true,
             round: 1,
             status: 'pending',
@@ -278,6 +278,8 @@ describe('quickStartPersistence', () => {
       category: 'event_structure',
       question: 'When is dinner?',
       expectedAnswerType: 'short_text',
+      targetFields: ['events.0.time'],
+      affectedSections: ['schedule'],
       answer: '6:00 PM',
     });
   });
