@@ -133,6 +133,21 @@ describe('publishReadiness', () => {
     expect(getPublishValidationError(project, data)).toBe('Turn RSVP on before going live.');
   });
 
+  it('blocks publish when persisted wedding data is missing the RSVP object entirely', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
+    const data = createEmptyWeddingData();
+    data.couple.partner1Name = 'Alex';
+    data.couple.partner2Name = 'Jordan';
+    data.event.weddingDateISO = '2027-06-12';
+    data.venues = [{ id: 'v1', name: 'Test Venue', address: '123 Main St' }];
+    // @ts-expect-error exercising runtime guard for incomplete persisted data
+    delete data.rsvp;
+
+    expect(getPublishIssue(project, data)?.kind).toBe('rsvp-disabled');
+    expect(getPublishValidationError(project, data)).toBe('Turn RSVP on before going live.');
+  });
+
   it('marks RSVP readiness incomplete when wedding data disables replies', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
@@ -153,6 +168,21 @@ describe('publishReadiness', () => {
     const data = createEmptyWeddingData();
     // @ts-expect-error exercising runtime guard for incomplete persisted data
     delete data.rsvp.enabled;
+
+    expect(buildPublishReadiness(project, data).find((item) => item.id === 'rsvp')).toEqual({
+      id: 'rsvp',
+      label: 'RSVP is turned on',
+      done: false,
+      detail: 'Turn RSVP on or remove RSVP calls to action.',
+    });
+  });
+
+  it('marks RSVP readiness incomplete when wedding data is missing the RSVP object entirely', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
+    const data = createEmptyWeddingData();
+    // @ts-expect-error exercising runtime guard for incomplete persisted data
+    delete data.rsvp;
 
     expect(buildPublishReadiness(project, data).find((item) => item.id === 'rsvp')).toEqual({
       id: 'rsvp',
