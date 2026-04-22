@@ -130,6 +130,13 @@ function parseLegacyEventAttendanceToken(value: string | undefined): boolean {
   return normalized === 'yes' || normalized === 'y' || normalized === 'true' || normalized === '1';
 }
 
+function normalizeLegacyEventKey(value: string | undefined): string {
+  const normalized = (value || '').trim().toLowerCase();
+  if (normalized === 'wedding ceremony') return 'ceremony';
+  if (normalized === 'wedding reception') return 'reception';
+  return normalized;
+}
+
 function normalizeExistingRsvp(existingRsvp: ExistingRSVP): ExistingRSVP {
   const mealChoice = (existingRsvp.meal_choice || '').trim();
   const plusOneName = (existingRsvp.plus_one_name || '').trim();
@@ -225,7 +232,7 @@ function parseEventSelectionsFromNotes(notes: string | null, guest: Guest): { cl
         .filter(Boolean)
         .map((piece) => {
           const [k, v] = piece.split(/[:=]/).map((x) => (x || '').trim().toLowerCase());
-          return [k, parseLegacyEventAttendanceToken(v)];
+          return [normalizeLegacyEventKey(k), parseLegacyEventAttendanceToken(v)];
         })
     ) as Record<string, boolean>;
 
