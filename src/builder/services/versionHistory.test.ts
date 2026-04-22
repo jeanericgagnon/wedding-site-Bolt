@@ -102,4 +102,15 @@ describe('versionHistory', () => {
 
     expect(getBuilderRevision(weddingId, revision.id)?.weddingData?.couple.partner1Name).toBe('Alex');
   });
+
+  it('keeps revision project snapshots isolated from caller mutation after record', () => {
+    const weddingId = `w_${Date.now()}_j`;
+    const project = createEmptyBuilderProject(weddingId, 'modern-luxe');
+    project.pages[0].title = 'Original title';
+
+    const revision = recordBuilderRevision({ weddingId, project, action: 'save', actor: 'tester' });
+    project.pages[0].title = 'Mutated title';
+
+    expect(getBuilderRevision(weddingId, revision.id)?.project.pages[0].title).toBe('Original title');
+  });
 });
