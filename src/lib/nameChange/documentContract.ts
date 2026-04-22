@@ -84,6 +84,7 @@ function isCountableNameChangeContractKind(kind: NameChangeDocumentContractDefin
 
 function metadataMissingForDocument(document: NameChangeDocumentInput | undefined): string[] {
   if (!document || document.intake_status === 'not_started') return [];
+  if (document.document_kind === 'other') return [];
 
   const missing: string[] = [];
   if (!document.file_name_masked?.trim()) missing.push('masked filename');

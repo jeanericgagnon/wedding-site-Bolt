@@ -722,7 +722,7 @@ describe('name change document intake contract', () => {
 
     expect(snapshot.documents.find((document) => document.kind === 'other')).toMatchObject({
       intakeStatus: 'reviewed',
-      metadataMissing: ['masked filename', 'issuing authority', 'issued date', 'extraction confidence'],
+      metadataMissing: [],
     });
     expect(snapshot.summary.metadataGaps).toBe(0);
   });
