@@ -336,6 +336,7 @@ export default function EventRSVP() {
     setSubmitting(false);
     setSubmitError('');
     setSubmitSuccess(false);
+    setRsvpForm({ attending: true, dietary_restrictions: '', notes: '' });
     setSelectedEvent(null);
   }
 
