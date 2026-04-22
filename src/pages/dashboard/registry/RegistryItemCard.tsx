@@ -187,7 +187,7 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
     if (!onMarkPurchased || purchaseBusy) return;
     setPurchaseBusy(true);
     try {
-      await onMarkPurchased(item, qty);
+      await onMarkPurchased(normalizedItem, qty);
       setShowPurchaseConfirm(false);
     } finally {
       setPurchaseBusy(false);
@@ -198,7 +198,7 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
     if (!onRefetchMetadata || refetching) return;
     setRefetching(true);
     try {
-      await onRefetchMetadata(item);
+      await onRefetchMetadata(normalizedItem);
     } finally {
       setRefetching(false);
     }
@@ -251,7 +251,7 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
         )}
         <div className="grid grid-cols-2 gap-2">
           <input type="number" min="0" step="0.01" value={received} onChange={() => {}} readOnly className="hidden" />
-          <button onClick={() => onEdit(item)} className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-text-secondary border border-border rounded-lg hover:border-primary hover:text-primary transition-colors"><Pencil className="w-3.5 h-3.5" />Edit</button>
+          <button onClick={() => onEdit(normalizedItem)} className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-text-secondary border border-border rounded-lg hover:border-primary hover:text-primary transition-colors"><Pencil className="w-3.5 h-3.5" />Edit</button>
           <button onClick={handleDeleteClick} className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium border rounded-lg transition-colors ${confirmDelete ? 'text-error border-error bg-error/5' : 'text-text-secondary border-border hover:border-error hover:text-error'}`}>
             <Trash2 className="w-3.5 h-3.5" />{confirmDelete ? 'Confirm' : 'Delete'}
           </button>
@@ -424,7 +424,7 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
             </a>
           )}
           <button
-            onClick={() => onEdit(item)}
+            onClick={() => onEdit(normalizedItem)}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-text-secondary border border-border rounded-lg hover:border-primary hover:text-primary transition-colors"
           >
             <Pencil className="w-3.5 h-3.5" />

@@ -95,4 +95,21 @@ describe('RegistryItemCard', () => {
       quantity_needed: 1,
     }));
   });
+
+  it('passes normalized purchase truth into owner actions', async () => {
+    const onEdit = vi.fn();
+    const onMarkPurchased = vi.fn(async () => {});
+
+    render(
+      <RegistryItemCard
+        item={makeItem({ purchase_status: 'purchased', quantity_purchased: 0, quantity_needed: 1, purchaser_name: 'Alex' })}
+        onEdit={onEdit}
+        onDelete={vi.fn()}
+        onMarkPurchased={onMarkPurchased}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /edit/i }));
+    expect(onEdit).toHaveBeenCalledWith(expect.objectContaining({ purchase_status: 'available', purchaser_name: null }));
+  });
 });

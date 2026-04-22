@@ -413,6 +413,9 @@ describe('sections registry resolution', () => {
     expect(registryOwnerCard).toContain("export function getOwnerRegistryPurchaserLabel(item: Pick<RegistryItem, 'purchase_status' | 'purchaser_name'>): string | null {");
     expect(registryOwnerCard).toContain('export function normalizeOwnerRegistryItemState(item: RegistryItem): RegistryItem {');
     expect(registryOwnerCard).toContain("? `Purchased by ${item.purchaser_name}`");
+    expect(registryOwnerCard).toContain('await onMarkPurchased(normalizedItem, qty);');
+    expect(registryOwnerCard).toContain('await onRefetchMetadata(normalizedItem);');
+    expect(registryOwnerCard).toContain('onClick={() => onEdit(normalizedItem)}');
     expect(registryItemForm).toContain('canonical_url: nextUrl,');
     expect(registryDashboard).toContain('const normalizedItems = items.map(normalizeOwnerDashboardRegistryItem);');
     expect(registryDashboard).toContain('function normalizeOwnerDashboardRegistryItem(item: RegistryItem): RegistryItem {');
