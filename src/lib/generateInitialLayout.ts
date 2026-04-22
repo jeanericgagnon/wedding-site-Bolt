@@ -124,6 +124,7 @@ export function regenerateLayout(
       preservedSections.push({
         ...newSection,
         id: existing.id,
+        variant: existing.variant,
         enabled: existing.enabled,
         settings: { ...newSection.settings, ...existing.settings },
         bindings: { ...newSection.bindings, ...existing.bindings },

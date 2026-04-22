@@ -320,6 +320,7 @@ describe('sections registry resolution', () => {
     expect(initialLayoutSource).toContain('overrides: sectionDef.overrides ? { ...sectionDef.overrides } : undefined,');
     expect(initialLayoutSource).toContain('locked: sectionDef.locked,');
     expect(initialLayoutSource).toContain('id: existing.id,');
+    expect(initialLayoutSource).toContain('variant: existing.variant,');
     expect(initialLayoutSource).toContain('overrides: existing.overrides ?? newSection.overrides,');
     expect(initialLayoutSource).toContain('locked: existing.locked ?? newSection.locked,');
   });
