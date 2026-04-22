@@ -31,6 +31,7 @@ const checks = [
   { name: 'public registry detail cards expose partial purchase cta truth', ok: registrySectionComponent.includes("return item.purchase_status === 'partial' ? 'Buy remaining' : 'Mark as purchasing';") },
   { name: 'public registry detail sorting keeps partial items ahead of purchased ones', ok: registrySectionComponent.includes("item.purchase_status === 'partial'") && registrySectionComponent.includes('const scoreA = getRegistryDisplayPriority(a);') },
   { name: 'public registry purchase dialog copy matches partial purchase truth', ok: registrySectionComponent.includes("title: 'Buy remaining gift'") && registrySectionComponent.includes("confirmLabel: 'Confirm remaining purchase'") },
+  { name: 'public registry empty state does not overclaim purchased truth under filters', ok: registrySectionComponent.includes("return 'No items match this filter right now.';") },
   { name: 'registry types expose itemNeedsAttention', ok: registryTypes.includes('export function itemNeedsAttention') },
   { name: 'registry types expose blocked retailer messaging', ok: registryTypes.includes('Amazon blocks automated product lookups') },
   { name: 'registry types expose quantity sanitation', ok: registryTypes.includes('export function sanitizeRegistryQuantityState') },

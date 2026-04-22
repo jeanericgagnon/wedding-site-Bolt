@@ -170,6 +170,22 @@ export function getRegistryDisplayPriority(item: Pick<RegistryItem, 'purchase_st
   return purchaseScore + (item.item_type === 'cash_fund' ? 1 : 0);
 }
 
+export function getRegistryEmptyStateMessage(
+  allItems: Array<Pick<RegistryItem, 'purchase_status' | 'hide_when_purchased' | 'item_type'>>,
+  groupMode: 'all' | 'funds' | 'stores',
+): string {
+  const visibleByPurchase = allItems.filter((item) => !item.hide_when_purchased || item.purchase_status !== 'purchased');
+  const visibleForGroup = visibleByPurchase.filter((item) => {
+    if (groupMode === 'funds') return item.item_type === 'cash_fund';
+    if (groupMode === 'stores') return item.item_type !== 'cash_fund';
+    return true;
+  });
+
+  if (visibleForGroup.length > 0) return '';
+  if (groupMode !== 'all' && visibleByPurchase.length > 0) return 'No items match this filter right now.';
+  return 'All items have been purchased. Thank you!';
+}
+
 const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase }) => {
   const isCashFund = item.item_type === 'cash_fund';
   const isPurchased = item.purchase_status === 'purchased';
@@ -404,7 +420,7 @@ function RegistryItemsDisplay({ items, settings, notes, updateItem }: {
       {sortedItems.length === 0 ? (
         <div className="text-center py-12">
           <Gift className="w-10 h-10 text-text-tertiary mx-auto mb-3" />
-          <p className="text-text-secondary">All items have been purchased. Thank you!</p>
+          <p className="text-text-secondary">{getRegistryEmptyStateMessage(items, groupMode)}</p>
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 md:gap-6">

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getRegistryDisplayPriority, getRegistryPurchaseCtaLabel, getRegistryPurchaseDialogCopy } from './RegistrySection';
+import { getRegistryDisplayPriority, getRegistryEmptyStateMessage, getRegistryPurchaseCtaLabel, getRegistryPurchaseDialogCopy } from './RegistrySection';
 
 describe('getRegistryPurchaseCtaLabel', () => {
   it('keeps available items in purchasing state language', () => {
@@ -21,5 +21,11 @@ describe('getRegistryPurchaseCtaLabel', () => {
       confirmLabel: 'Confirm remaining purchase',
       successMessage: 'This gift is now updated with the remaining purchase.',
     });
+  });
+
+  it('does not claim everything is purchased when a registry filter is empty', () => {
+    expect(getRegistryEmptyStateMessage([
+      { purchase_status: 'available', hide_when_purchased: false, item_type: 'physical' },
+    ], 'funds')).toBe('No items match this filter right now.');
   });
 });
