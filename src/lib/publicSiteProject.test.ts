@@ -219,6 +219,17 @@ describe('publicSiteProject', () => {
     expect(getIsPublishedFromSiteRow(row)).toBe(false);
   });
 
+  it('treats whitespace stringified lastPublishedAt metadata as published under current fallback rules', () => {
+    const row = {
+      site_json: JSON.stringify({
+        ...draftProject,
+        lastPublishedAt: '   ',
+      }),
+    };
+
+    expect(getIsPublishedFromSiteRow(row)).toBe(true);
+  });
+
   it('extracts published wedding data snapshot from stringified site rows', () => {
     const row = {
       is_published: true,
