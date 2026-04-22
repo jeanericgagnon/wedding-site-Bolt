@@ -453,6 +453,7 @@ export default function RSVP() {
     invalidateActiveSubmit();
     setTokenAutoLoading(false);
     setLoading(true);
+    setSubmitting(false);
     setError('');
     setStep('search');
     setGuest(null);
