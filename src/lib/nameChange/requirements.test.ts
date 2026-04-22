@@ -319,7 +319,7 @@ describe('name change requirements skeleton', () => {
     });
   });
 
-  it('marks court-order reference extraction satisfied when verified extracted reference fields exist', () => {
+  it('marks court-order reference extraction satisfied when reviewed proof carries verified reference fields', () => {
     const snapshot = evaluateNameChangeRequirements(
       makeCase({ legal_basis: 'court_order' as never }),
       [
@@ -352,6 +352,36 @@ describe('name change requirements skeleton', () => {
     expect(snapshot.results.find((result) => result.key === 'court-order-reference-extraction')).toMatchObject({
       status: 'satisfied',
       reason: 'Court-order reference extraction is present for the modeled review path.',
+    });
+  });
+
+  it('marks court-order reference extraction attention when proof is uploaded but not reviewed yet', () => {
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase({ legal_basis: 'court_order' as never }),
+      [
+        {
+          id: 'doc-court-order',
+          document_kind: 'court_order_name_change',
+          display_name: 'Court order',
+          storage_mode: 'metadata_only',
+          intake_status: 'uploaded',
+        },
+      ],
+      [
+        {
+          document_id: 'doc-court-order',
+          field_key: 'case_number',
+          field_label: 'Case number',
+          field_value_masked: '24-CV-1188',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+      ],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'court-order-reference-extraction')).toMatchObject({
+      status: 'attention',
+      reason: 'Court-order reference extraction exists, but the proof document still needs review before downstream use is grounded.',
     });
   });
 

@@ -101,6 +101,7 @@ export function evaluateNameChangeRequirements(
   const hasVerifiedCourtOrderReferenceExtraction = hasVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'case_number')
     || hasVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'court_order_date');
   const legalBasisLabel = canonicalCase.legalBasis === 'court_order' ? 'court-order proof' : legalProofKind.replace(/_/g, ' ');
+  const hasReviewedCourtOrderProof = legalProof.intakeStatus === 'reviewed';
 
   const results: NameChangeRequirementResult[] = [
     {
@@ -216,7 +217,7 @@ export function evaluateNameChangeRequirements(
         : !hasCourtOrderProof
           ? 'missing'
           : hasVerifiedCourtOrderReferenceExtraction
-            ? 'satisfied'
+            ? hasReviewedCourtOrderProof ? 'satisfied' : 'attention'
             : hasAnyCourtOrderReferenceExtraction
               ? 'attention'
               : 'missing',
@@ -225,7 +226,9 @@ export function evaluateNameChangeRequirements(
         : !hasCourtOrderProof
           ? 'Court-order path is selected, but no court-order proof is represented in intake yet.'
           : hasVerifiedCourtOrderReferenceExtraction
-            ? 'Court-order reference extraction is present for the modeled review path.'
+            ? hasReviewedCourtOrderProof
+              ? 'Court-order reference extraction is present for the modeled review path.'
+              : 'Court-order reference extraction exists, but the proof document still needs review before downstream use is grounded.'
             : hasAnyCourtOrderReferenceExtraction
               ? 'Court-order reference data exists, but it is still unverified so downstream use is not grounded yet.'
               : 'Court-order proof is in intake, but no verified case-number or signed-date extraction is represented yet.',
