@@ -1802,6 +1802,56 @@ describe('RSVP stale submit protection', () => {
     expect(screen.queryByDisplayValue('Updated note')).not.toBeInTheDocument();
   });
 
+  it('clears stale token validation errors when the guest cancels back to search', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        guest: {
+          id: 'guest-1',
+          first_name: 'Taylor',
+          last_name: 'Rivera',
+          name: 'Taylor Rivera',
+          email: 'taylor@example.com',
+          phone: null,
+          group_name: null,
+          wedding_site_id: 'site-1',
+          plus_one_allowed: false,
+          invited_to_ceremony: true,
+          invited_to_reception: true,
+          invite_token: 'token-1',
+        },
+        existingRsvp: null,
+        guests: null,
+        rsvpDeadline: null,
+        rsvpQuestions: [],
+        rsvpMealConfig: { enabled: true, options: ['Chicken', 'Beef'] },
+        musicPlaylistUrl: null,
+        householdGuests: [],
+      }),
+    });
+
+    window.history.pushState({}, '', '/rsvp?token=token-1');
+
+    render(
+      <BrowserRouter>
+        <RSVP />
+      </BrowserRouter>
+    );
+
+    expect(await screen.findByText('Welcome, Taylor Rivera!')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Continue to details'));
+    fireEvent.click(screen.getByText('Continue to review'));
+
+    expect(await screen.findByText('Please choose a meal option before review.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Back'));
+    fireEvent.click(screen.getByText('Cancel'));
+
+    expect(await screen.findByPlaceholderText('rsvp.search_placeholder')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('token-1')).toBeInTheDocument();
+    expect(screen.queryByText('Please choose a meal option before review.')).not.toBeInTheDocument();
+  });
+
   it('ignores a second submit click while the first RSVP submit is still in flight', async () => {
     const submitRequest = deferred<Response>();
 
