@@ -226,6 +226,8 @@ describe('name change document intake contract', () => {
       intakeStatus: 'reviewed',
       metadataMissing: [],
       storageMode: 'uploaded_blob',
+      metadataReady: 1,
     });
+    expect(snapshot.summary.metadataReady).toBeGreaterThanOrEqual(1);
   });
 });

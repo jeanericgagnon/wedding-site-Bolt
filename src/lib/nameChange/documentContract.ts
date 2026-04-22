@@ -182,15 +182,18 @@ export function buildNameChangeDocumentIntakeSnapshot(
     const metadataMissing = metadataMissingForDocument(canonicalDocument);
     const canonicalConflicts = extraction.conflicts.filter((conflict) => conflict.documentKind === definition.kind);
 
+    const contractIntakeStatus = canonicalDocument?.intake_status ?? documentState.intakeStatus;
+    const contractStorageMode = canonicalDocument?.storage_mode ?? documentState.storageMode;
+
     return {
       kind: definition.kind,
       label: definition.label,
       required,
       preferredForAutofill: definition.preferredForAutofill,
-      intakeStatus: canonicalDocument?.intake_status ?? documentState.intakeStatus,
-      storageMode: canonicalDocument?.storage_mode ?? documentState.storageMode,
+      intakeStatus: contractIntakeStatus,
+      storageMode: contractStorageMode,
       extractionFieldCount: documentState.extractionFieldCount,
-      metadataReady: metadataMissing.length === 0 && documentState.intakeStatus !== 'not_started' ? 1 : 0,
+      metadataReady: metadataMissing.length === 0 && contractIntakeStatus !== 'not_started' ? 1 : 0,
       metadataMissing,
       expectedExtractionFields: definition.extractionFields,
       capturedExtractionFields,
