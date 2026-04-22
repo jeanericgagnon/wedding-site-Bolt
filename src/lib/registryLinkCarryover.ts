@@ -63,7 +63,8 @@ function extractExplicitSourceLabelFragment(text: string): string | undefined {
   if (inferred) return inferred;
 
   const cleaned = text
-    .replace(/\b(purchased|already|claimed|done|complete|later)\b/gi, '')
+    .replace(/\b(purchased|purchasing|buying|claimed|claiming|reserved|reserving|booked|booking)\s+by\s+[a-z][^|,;:()[\]<>"']*/gi, '')
+    .replace(/\b(purchased|purchasing|buying|already|claimed|partially|partial|pending|done|complete|later)\b/gi, '')
     .replace(/\b(registry|gift\s*list|wishlist)\b/gi, '')
     .replace(/[|,;:()[\]<>"']/g, ' ')
     .replace(/\s+/g, ' ')

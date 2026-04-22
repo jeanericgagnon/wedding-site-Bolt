@@ -99,6 +99,16 @@ describe('sections registry resolution', () => {
     expect(resolveAndParse('registry', 'legacy-default', {}, { strictVariant: true })?.def.variant).toBe('cards');
     expect(getDefinition('registry', undefined as never)?.variant).toBe('cards');
     expect(getDefinitionOrThrow('registry', undefined as never).variant).toBe('cards');
+    expect(getDefinition(undefined as never, 'cards')).toBeNull();
+  });
+
+  it('clones section definitions before owner edits can mutate shared registry runtime defaults', () => {
+    const firstDefinition = getDefinitionOrThrow('registry', 'cards');
+    (firstDefinition.defaultData as Record<string, unknown>).title = 'Mutated registry defaults';
+
+    expect(getDefinitionOrThrow('registry', 'cards').defaultData).not.toMatchObject({
+      title: 'Mutated registry defaults',
+    });
   });
 
   it('exposes template-backed registry aliases to the builder manifest', () => {
@@ -266,6 +276,13 @@ describe('sections registry resolution', () => {
     expect(getTemplate('classic').id).toBe('timeless-classic');
   });
 
+  it('clones full template definitions before import edits can mutate template metadata', () => {
+    const importedTemplate = getTemplate('base');
+    (importedTemplate.defaultLayout as Record<string, unknown>).title = 'Mutated import layout';
+
+    expect((getTemplate('base').defaultLayout as Record<string, unknown>).title).not.toBe('Mutated import layout');
+  });
+
   it('keeps every shipped template registry variant renderable in the legacy runtime', () => {
     const templateVariants = Array.from(new Set(
       getAllTemplates()
@@ -412,15 +429,20 @@ describe('sections registry resolution', () => {
     expect(sectionRegistry).toContain('function getVariantFallbacksForType(type: string, inputType?: string): Record<string, string> {');
     expect(sectionRegistry).toContain('function getCanonicalSectionFallbackVariant(type: string, inputType: string, variant: string): string | null {');
     expect(sectionRegistry).toContain('function getDefaultVariantForType(type: string): string | undefined {');
+    expect(sectionRegistry).toContain('function getCanonicalSectionDefinition(type: string, variant: string): SectionDefinition | null {');
+    expect(sectionRegistry).toContain('function cloneSectionDefinitionValue<T>(value: T): T {');
     expect(sectionRegistry).toContain('const defaultVariant = getDefaultVariantForType(type);');
     expect(sectionRegistry).toContain('const defaultVariant = getDefaultVariantForType(normalizedType);');
     expect(sectionRegistry).toContain("const canonicalVariant = resolveCanonicalSectionVariantForType('registry', 'registry', variant);");
+    expect(sectionRegistry).toContain('export function getDefinition(type: unknown, variant: unknown): SectionDefinition | null {');
+    expect(sectionRegistry).toContain('if (!canonicalSection.type) return null;');
+    expect(sectionRegistry).toContain('export function getDefinitionOrThrow(type: unknown, variant: unknown): SectionDefinition {');
     expect(sectionRegistry).toContain("? canonicalVariant");
     expect(sectionRegistry).toContain('return getCanonicalSectionFallbackVariant(type, inputType, normalizedVariantKey)');
     expect(sectionRegistry).toContain('const fallbackVariant = getCanonicalSectionFallbackVariant(canonicalSection.type, normalizedType, normalizedVariant);');
     expect(sectionRegistry).toContain('.filter((definition) => definition.type === type)');
     expect(sectionRegistry).toContain('variant: resolveCanonicalSectionVariantForType(normalizedType, normalizedInputType, variant),');
-    expect(sectionRegistry).toContain("return SECTION_REGISTRY.get(makeKey(canonicalSection.type, canonicalSection.variant)) ?? null;");
+    expect(sectionRegistry).toContain('return getCanonicalSectionDefinition(canonicalSection.type, canonicalSection.variant);');
     expect(sectionRegistry).toContain('export function getDefinition(type: string, variant: unknown): SectionDefinition | null {');
     expect(sectionRegistry).toContain('export function getDefinitionOrThrow(type: string, variant: unknown): SectionDefinition {');
     expect(sectionRegistry).toContain("return typeof variant === 'string'");
@@ -449,6 +471,8 @@ describe('sections registry resolution', () => {
     expect(registryLinkCarryover).toContain('interface CarryoverRegistryToken {');
     expect(registryLinkCarryover).toContain('function inferSourceLabelFromText(text: string): string | undefined {');
     expect(registryLinkCarryover).toContain('function extractExplicitSourceLabelFromTokenText(text: string): string | undefined {');
+    expect(registryLinkCarryover).toContain('claimed|claiming|reserved|reserving|booked|booking)\\s+by\\s+[a-z]');
+    expect(registryLinkCarryover).toContain('purchasing|buying|already|claimed|partially|partial|pending|done|complete|later');
     expect(registryLinkCarryover).toContain('const inferredSourceLabel = inferSourceLabel(url);');
     expect(registryLinkCarryover).toContain('sourceLabel: token.sourceLabel ?? inferredSourceLabel');
     expect(registryLinkCarryover).toContain("sourceLabelMode?: 'explicit' | 'inferred';");
@@ -579,6 +603,7 @@ describe('sections registry resolution', () => {
     expect(templateRegistrySource).toContain('settings: cloneTemplateValue(section.settings ?? {}),');
     expect(templateRegistrySource).toContain('overrides: cloneTemplateValue(section.overrides ?? undefined),');
     expect(templateRegistrySource).toContain('function cloneTemplateDefinition(template: TemplateDefinition): TemplateDefinition {');
+    expect(templateRegistrySource).toContain('const clonedTemplate = cloneTemplateValue(template);');
     expect(templateRegistrySource).toContain('return cloneTemplateDefinition(getCanonicalTemplateDefinition(templateId));');
     expect(templateRegistrySource).toContain('return templateRegistry.map((template) => cloneTemplateDefinition(getCanonicalTemplateDefinition(template.id)));');
     expect(sectionRegistrySource).toContain('export function resolveCanonicalRegistrySectionInput(type: unknown, variant: unknown): { type: string; variant: string } {');

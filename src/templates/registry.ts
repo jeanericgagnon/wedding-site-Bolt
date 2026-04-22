@@ -786,10 +786,12 @@ function cloneTemplateSection(section: TemplateSection): TemplateSection {
 }
 
 function cloneTemplateDefinition(template: TemplateDefinition): TemplateDefinition {
+  const clonedTemplate = cloneTemplateValue(template);
   return {
-    ...template,
+    ...clonedTemplate,
     defaultLayout: {
-      sections: template.defaultLayout.sections.map(cloneTemplateSection),
+      ...clonedTemplate.defaultLayout,
+      sections: clonedTemplate.defaultLayout.sections.map(cloneTemplateSection),
     },
   };
 }

@@ -27,6 +27,20 @@ describe('carryOverRegistryLinks', () => {
     ]);
   });
 
+  it('strips in-flight purchase annotations from imported registry labels', () => {
+    expect(carryOverRegistryLinks('Target Registry (Purchasing) https://target.com/list\nAmazon Registry — Partially Claimed https://amazon.com/shop')).toEqual([
+      { url: 'https://target.com/list', sourceLabel: 'Target' },
+      { url: 'https://amazon.com/shop', sourceLabel: 'Amazon' },
+    ]);
+  });
+
+  it('strips purchaser-name annotations from imported registry labels', () => {
+    expect(carryOverRegistryLinks('Target Registry purchased by Alex | https://target.com/list\nCustom Honeymoon Fund claimed by Sam | https://example.com/fund')).toEqual([
+      { url: 'https://target.com/list', sourceLabel: 'Target' },
+      { url: 'https://example.com/fund', sourceLabel: 'Custom Honeymoon Fund' },
+    ]);
+  });
+
   it('extracts bracketed registry links without losing purchase annotations', () => {
     expect(carryOverRegistryLinks('Purchased later <https://target.com/list>.')).toEqual([
       { url: 'https://target.com/list', sourceLabel: 'Target' },
