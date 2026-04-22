@@ -128,6 +128,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('event details');
   });
 
+  it('returns venue guidance even when blocker copy is lowercased by upstream formatting', () => {
+    const hints = getPublishBlockedHints('add at least one venue before going live.');
+    expect(hints[0]).toContain('venue');
+  });
+
   it('returns RSVP guidance even when blocker copy is lowercased by upstream formatting', () => {
     const hints = getPublishBlockedHints('turn rsvp on before going live.');
     expect(hints[0]).toContain('RSVP');
