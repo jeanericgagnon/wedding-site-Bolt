@@ -1128,7 +1128,7 @@ export const Onboarding: React.FC = () => {
         </div>
 
         <h1 className="text-4xl font-bold text-text-primary mb-4">
-          Your website is ready to shape
+          Your starter draft is ready to shape
         </h1>
         <p className="text-lg text-text-secondary mb-4">
           We created a polished starting point from your answers. {SITE_TRUST_COPY.privateEditing}
@@ -1136,7 +1136,7 @@ export const Onboarding: React.FC = () => {
 
         <Card variant="bordered" padding="lg" className="mb-8">
           <div className="text-center">
-            <p className="text-sm text-text-secondary mb-2">Your website can live at:</p>
+            <p className="text-sm text-text-secondary mb-2">When you publish, your site can live at:</p>
             <p className="text-xl font-semibold text-primary break-all">{subdomain}</p>
           </div>
         </Card>
@@ -1160,7 +1160,7 @@ export const Onboarding: React.FC = () => {
             <div className="flex items-start gap-3">
               <Check className="w-5 h-5 text-success mt-1 flex-shrink-0" aria-hidden="true" />
               <div>
-                <p className="font-medium text-text-primary">The guest-facing tone is already anchored</p>
+                <p className="font-medium text-text-primary">The draft tone is already anchored</p>
                 <p className="text-sm text-text-secondary">{formData.guestCount || 'Your guest count'} and {formData.weekendEvents ? 'your weekend plans are already informing the draft.' : 'your weekend flow can be layered in next.'}</p>
               </div>
             </div>
