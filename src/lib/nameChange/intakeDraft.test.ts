@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createDraftNameChangeDocument, upsertDraftNameChangeExtractedField } from './intakeDraft';
+import { createDraftNameChangeDocument, normalizeDraftNameChangeDocumentId, upsertDraftNameChangeExtractedField } from './intakeDraft';
 import type { NameChangeExtractedFieldInput } from './types';
 
 describe('name change intake draft helpers', () => {
@@ -28,6 +28,12 @@ describe('name change intake draft helpers', () => {
       display_name: 'Court order',
       file_name_masked: 'court-order-•••.pdf',
     });
+  });
+
+  it('normalizes legacy draft document ids onto the canonical draft id', () => {
+    expect(normalizeDraftNameChangeDocumentId('draft-court_order_name_change')).toBe('draft-court_order');
+    expect(normalizeDraftNameChangeDocumentId('draft-marriage_certificate')).toBe('draft-marriage_certificate');
+    expect(normalizeDraftNameChangeDocumentId(null)).toBeNull();
   });
 
   it('upserts extracted fields per document instead of globally by field key', () => {

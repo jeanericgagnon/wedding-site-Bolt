@@ -11,6 +11,11 @@ export function buildDraftNameChangeDocumentId(kind: NameChangeDocumentInput['do
   return `draft-${canonicalizeNameChangeDocumentKind(kind)}`;
 }
 
+export function normalizeDraftNameChangeDocumentId(documentId: string | null | undefined) {
+  if (!documentId?.startsWith('draft-')) return documentId ?? null;
+  return buildDraftNameChangeDocumentId(documentId.slice('draft-'.length) as NameChangeDocumentInput['document_kind']);
+}
+
 export function createDraftNameChangeDocument(
   kind: NameChangeDocumentInput['document_kind'],
   label: string,
@@ -40,9 +45,7 @@ export function upsertDraftNameChangeExtractedField(
   fieldLabel: string,
   nextValue: string,
 ): NameChangeExtractedFieldInput[] {
-  const normalizedDocumentId = documentId
-    ? documentId.replace('draft-court_order_name_change', 'draft-court_order')
-    : null;
+  const normalizedDocumentId = normalizeDraftNameChangeDocumentId(documentId);
   const normalizedValue = nextValue.trim();
   const normalizedLabel = fieldLabel.trim() || humanizeDraftToken(fieldKey);
   const rest = extractedFields.filter((field) => !(field.document_id === normalizedDocumentId && field.field_key === fieldKey));
