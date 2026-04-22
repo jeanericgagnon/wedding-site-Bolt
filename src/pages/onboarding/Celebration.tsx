@@ -16,10 +16,11 @@ export const Celebration: React.FC = () => {
   const state = location.state as LocationState;
   const [showConfetti, setShowConfetti] = useState(true);
 
-  const calculateDaysUntil = (weddingDate: string): number => {
+  const calculateDaysUntil = (weddingDate: string): number | null => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const wedding = new Date(weddingDate);
+    if (Number.isNaN(wedding.getTime())) return null;
     wedding.setHours(0, 0, 0, 0);
     const diffTime = wedding.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
