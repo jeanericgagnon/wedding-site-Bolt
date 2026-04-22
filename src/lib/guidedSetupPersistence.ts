@@ -53,11 +53,17 @@ const normalizeGuidedSetupFormData = (
   return next;
 };
 
+const cloneGuidedSetupDefaults = (defaults: GuidedSetupDraftSnapshot): GuidedSetupDraftSnapshot => ({
+  currentStep: defaults.currentStep,
+  coupleNames: { ...defaults.coupleNames },
+  formData: { ...defaults.formData },
+});
+
 export const normalizeGuidedSetupDraftSnapshot = (
   value: unknown,
   defaults: GuidedSetupDraftSnapshot,
 ): GuidedSetupDraftSnapshot => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return defaults;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return cloneGuidedSetupDefaults(defaults);
   const parsed = value as Partial<GuidedSetupDraftSnapshot>;
 
   return {
@@ -67,7 +73,7 @@ export const normalizeGuidedSetupDraftSnapshot = (
           name1: typeof parsed.coupleNames.name1 === 'string' ? parsed.coupleNames.name1 : defaults.coupleNames.name1,
           name2: typeof parsed.coupleNames.name2 === 'string' ? parsed.coupleNames.name2 : defaults.coupleNames.name2,
         }
-      : defaults.coupleNames,
+      : { ...defaults.coupleNames },
     formData: normalizeGuidedSetupFormData(parsed.formData, defaults.formData),
   };
 };

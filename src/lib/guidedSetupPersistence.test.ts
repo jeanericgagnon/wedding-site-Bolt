@@ -74,4 +74,13 @@ describe('guidedSetupPersistence', () => {
   it('falls back to defaults when array-like draft blobs are stored', () => {
     expect(normalizeGuidedSetupDraftSnapshot([], defaults)).toEqual(defaults);
   });
+
+  it('returns cloned defaults so invalid drafts cannot mutate the default object', () => {
+    const normalized = normalizeGuidedSetupDraftSnapshot(null, defaults);
+    normalized.coupleNames.name1 = 'Changed';
+    normalized.formData.city = 'Paris';
+
+    expect(defaults.coupleNames.name1).toBe('');
+    expect(defaults.formData.city).toBe('');
+  });
 });
