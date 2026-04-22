@@ -5,7 +5,9 @@ export const normalizeQuickStartClarifyingMode = (
 ): ClarifyingPersistenceEnvelope | null => {
   if (!clarifyingState) return null;
 
-  const hasUnansweredQuestions = clarifyingState.clarifying.questions.some((question) => question.status !== 'answered');
+  const hasUnansweredQuestions = clarifyingState.clarifying.questions.some((question) => (
+    question.status === 'pending' || question.status === 'unresolved'
+  ));
   const normalizedMode = hasUnansweredQuestions ? 'ask' : 'draft';
 
   return {

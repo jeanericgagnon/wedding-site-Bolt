@@ -47,4 +47,23 @@ describe('quickStartClarifyingMode', () => {
 
     expect(normalizeQuickStartClarifyingMode(clarifying)?.clarifying.mode).toBe('draft');
   });
+
+  it('forces draft mode when restored clarifying questions were only skipped', () => {
+    const clarifying = createEmptyClarifyingPersistence();
+    clarifying.clarifying.mode = 'ask';
+    clarifying.clarifying.questions = [{
+      id: 'q1',
+      category: 'travel',
+      question: 'How should guests get there?',
+      expectedAnswerType: 'short_text',
+      targetFields: ['travel.transport'],
+      affectedSections: ['travel'],
+      skippable: true,
+      round: 1,
+      status: 'skipped',
+      answer: '',
+    }];
+
+    expect(normalizeQuickStartClarifyingMode(clarifying)?.clarifying.mode).toBe('draft');
+  });
 });

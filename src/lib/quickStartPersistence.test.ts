@@ -552,6 +552,7 @@ describe('quickStartPersistence', () => {
 
     expect(normalized.showFollowUps).toBe(false);
     expect(normalized.viewState).toBe('question');
+    expect(normalized.clarifyingState?.clarifying.mode).toBe('draft');
     expect(normalized.followUpAnswers).toEqual({ transport: 'Shuttle leaves at 4 PM' });
   });
 
