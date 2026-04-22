@@ -150,6 +150,7 @@ const output = {
   truthGateSummary: 'Automation is green, but launch truth is still red until the canonical manual proof and guests/RSVP proof gaps are closed',
   launchDecisionDependsOnManualTruthPass: true,
   manualTruthPassMissing: true,
+  runtimeWordingVerificationMissing: true,
   whatMustChangeBeforeGo: [
     'Close the anon-auth RSVP blocker on validate-rsvp-token',
     'Log the canonical couple-path truth pass with runtime wording verification',
