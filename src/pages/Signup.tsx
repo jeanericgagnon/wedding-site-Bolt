@@ -300,10 +300,10 @@ export const Signup: React.FC = () => {
                   hasInviteContext
                     ? `/login?${createSearchParams({ inviteToken: inviteToken || '', inviteEmail: inviteEmail || '', inviteRole: inviteRole || '', inviteSite: inviteSite || '' }).toString()}`
                     : '/login',
-                  explicitReturnPath || quickStartDraft ? {
+                  explicitReturnPath || normalizedQuickStartDraft ? {
                     state: {
                       returnTo: explicitReturnPath,
-                      quickStartDraft,
+                      quickStartDraft: normalizedQuickStartDraft,
                     },
                   } : undefined,
                 )}
