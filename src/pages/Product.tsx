@@ -248,14 +248,23 @@ export const Product: React.FC = () => {
 
       <section className="py-3 border-b border-border-subtle bg-brand text-paper">
         <div className="container-custom max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-2 text-sm">
-          <p className="font-medium">Want to see the full flow in action?</p>
-          <button
-            onClick={handleDemoLogin}
-            disabled={demoLoading}
-            className="px-4 py-1.5 rounded-lg bg-white text-brand font-semibold hover:bg-white/90 disabled:opacity-60"
-          >
-            {demoLoading ? 'Opening demo...' : 'Try product demo'}
-          </button>
+          <p className="font-medium">{user ? 'Ready to keep shaping your draft?' : 'Want to see the full flow in action?'}</p>
+          {user ? (
+            <button
+              onClick={() => navigate('/dashboard/overview')}
+              className="px-4 py-1.5 rounded-lg bg-white text-brand font-semibold hover:bg-white/90"
+            >
+              Open your dashboard
+            </button>
+          ) : (
+            <button
+              onClick={handleDemoLogin}
+              disabled={demoLoading}
+              className="px-4 py-1.5 rounded-lg bg-white text-brand font-semibold hover:bg-white/90 disabled:opacity-60"
+            >
+              {demoLoading ? 'Opening demo...' : 'Try product demo'}
+            </button>
+          )}
         </div>
       </section>
 

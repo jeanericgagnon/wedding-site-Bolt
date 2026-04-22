@@ -108,12 +108,22 @@ describe('Product starter draft truth', () => {
 
     expect(screen.getAllByRole('button', { name: 'Review your draft' }).length).toBe(2);
     expect(screen.queryByRole('button', { name: 'Start your draft' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Open your dashboard' })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Open your dashboard' }).length).toBe(2);
+    expect(screen.getByText('Ready to keep shaping your draft?')).toBeInTheDocument();
+    expect(screen.queryByText('Want to see the full flow in action?')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Review your draft' })[0]);
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open your dashboard' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Open your dashboard' })[0]);
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/overview');
+  });
+
+  it('keeps the product demo banner in demo mode for signed-out visitors', () => {
+    render(<Product />);
+
+    expect(screen.getByText('Want to see the full flow in action?')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Try product demo' }).length).toBe(2);
+    expect(screen.queryByRole('button', { name: 'Open your dashboard' })).not.toBeInTheDocument();
   });
 });
