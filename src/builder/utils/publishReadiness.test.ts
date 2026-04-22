@@ -426,6 +426,20 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('marks venue readiness complete when venue name has surrounding whitespace but real content', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
+    const data = createEmptyWeddingData();
+    data.venues = [{ id: 'v1', name: ' Sunset Cliffs ', address: '   ' }];
+
+    expect(buildPublishReadiness(project, data).find((item) => item.id === 'venue')).toEqual({
+      id: 'venue',
+      label: 'Venue details are set',
+      done: true,
+      detail: 'Venue details are ready.',
+    });
+  });
+
   it('marks page readiness with plural page copy when multiple pages exist', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages.push({
