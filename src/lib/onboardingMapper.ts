@@ -65,7 +65,9 @@ export function buildOnboardingUpdateData(input: OnboardingMapperInput): Record<
     `Will there be parking?::${normalizedParking}`,
     ...useCaseFaqs,
   ].join('\n');
-  const normalizedRegistryLinks = carryOverRegistryLinks(input.registryLinks).map((link) => link.url).join('\n');
+  const normalizedRegistryLinks = carryOverRegistryLinks(input.registryLinks)
+    .map((link) => link.sourceLabel ? `${link.sourceLabel} | ${link.url}` : link.url)
+    .join('\n');
 
   const weddingData = fromOnboarding({
     partner1Name: input.coupleNames.name1,
