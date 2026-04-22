@@ -5,7 +5,7 @@ export type RegistryRepairState = 'broken-import' | 'partial-import' | 'stale-de
 export function getRegistryRepairStates(item: RegistryItem): RegistryRepairState[] {
   const states: RegistryRepairState[] = [];
   const confidence = item.metadata_confidence_score ?? null;
-  const badTitle = /^(page not found|gift from\s.+)$/i.test((item.item_name || '').trim());
+  const badTitle = /^(page not found|product unavailable|gift from\s.+)$/i.test((item.item_name || '').trim());
 
   if (badTitle || item.metadata_fetch_status === 'error' || item.metadata_fetch_status === 'blocked') states.push('broken-import');
   if ((item.metadata_fetch_status === 'success' && confidence !== null && confidence < 0.7) || (!item.image_url || (!item.price_label && item.price_amount == null))) states.push('partial-import');
