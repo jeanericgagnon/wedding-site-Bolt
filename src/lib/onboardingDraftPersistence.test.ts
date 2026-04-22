@@ -113,4 +113,29 @@ describe('onboardingDraftPersistence', () => {
     expect(normalized.initialSetupAnswers.mealChoice).toBe('');
     expect(normalized.initialSetupAnswers.registryIntent).toBe('');
   });
+
+  it('clears follow-up review mode when restored handoff has no surviving follow-up data', () => {
+    const normalized = normalizeOnboardingDraftSnapshot({
+      step: 'quick-3',
+      showFollowUpReview: true,
+      followUpAnswers: {
+        lodging: '   ',
+      },
+      initialSetupFollowUps: {
+        venueClarification: '   ',
+        eventLocations: {
+          friday: '   ',
+        },
+        eventTimes: {
+          friday: '   ',
+        },
+      },
+    });
+
+    expect(normalized.showFollowUpReview).toBe(false);
+    expect(normalized.followUpAnswers).toEqual({});
+    expect(normalized.initialSetupFollowUps.venueClarification).toBe('');
+    expect(normalized.initialSetupFollowUps.eventLocations).toEqual({});
+    expect(normalized.initialSetupFollowUps.eventTimes).toEqual({});
+  });
 });

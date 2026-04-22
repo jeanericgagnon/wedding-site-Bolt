@@ -59,6 +59,14 @@ export const normalizeOnboardingDraftSnapshot = (value: unknown): OnboardingDraf
       }
     : base.initialSetupFollowUps;
 
+  const followUpAnswers = sanitizeStringRecord(parsed.followUpAnswers);
+  const hasFollowUpReviewData = Boolean(
+    Object.keys(followUpAnswers).length > 0
+    || initialSetupFollowUps.venueClarification.trim().length > 0
+    || Object.keys(initialSetupFollowUps.eventLocations).length > 0
+    || Object.keys(initialSetupFollowUps.eventTimes).length > 0
+  );
+
   return {
     step: parsed.step === 'quick-1' || parsed.step === 'quick-2' || parsed.step === 'quick-3' || parsed.step === 'complete' ? parsed.step : 'choice',
     conversationIndex: typeof parsed.conversationIndex === 'number' && Number.isFinite(parsed.conversationIndex) && Number.isInteger(parsed.conversationIndex) && parsed.conversationIndex >= 0
@@ -80,7 +88,7 @@ export const normalizeOnboardingDraftSnapshot = (value: unknown): OnboardingDraf
         }
       : base.initialSetupAnswers,
     initialSetupFollowUps,
-    followUpAnswers: sanitizeStringRecord(parsed.followUpAnswers),
-    showFollowUpReview: parsed.showFollowUpReview === true,
+    followUpAnswers,
+    showFollowUpReview: parsed.showFollowUpReview === true && hasFollowUpReviewData,
   };
 };
