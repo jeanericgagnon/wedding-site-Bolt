@@ -147,6 +147,17 @@ describe('name change autofill prep snapshot', () => {
   it('keeps unverified extracted values out of direct autofill lookups', () => {
     const documents: NameChangeDocumentInput[] = [
       {
+        id: 'doc-marriage',
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'San Diego County Clerk',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
+      },
+      {
         id: 'doc-passport',
         document_kind: 'current_passport',
         display_name: 'Passport',
@@ -168,6 +179,30 @@ describe('name change autofill prep snapshot', () => {
         source_type: 'document_extract',
         is_verified: false,
       },
+      {
+        document_id: 'doc-marriage',
+        field_key: 'spouse_last_name',
+        field_label: 'Spouse last name',
+        field_value_masked: 'Jordan-Extracted',
+        source_type: 'document_extract',
+        is_verified: false,
+      },
+      {
+        document_id: 'doc-marriage',
+        field_key: 'county',
+        field_label: 'County',
+        field_value_masked: 'Orange County',
+        source_type: 'document_extract',
+        is_verified: false,
+      },
+      {
+        document_id: 'doc-passport',
+        field_key: 'issuance_date',
+        field_label: 'Passport issue date',
+        field_value_masked: '2024-06-01',
+        source_type: 'document_extract',
+        is_verified: false,
+      },
     ];
 
     const snapshot = buildNameChangeAutofillPrepSnapshot(makeCase(), documents, extractedFields);
@@ -176,6 +211,27 @@ describe('name change autofill prep snapshot', () => {
         source: 'canonical_case',
         value: 'Alex',
         confidence: 'high',
+      }),
+    });
+    expect(snapshot.fields.find((field) => field.targetField === 'applicant.target_last_name')).toMatchObject({
+      value: expect.objectContaining({
+        source: 'canonical_case',
+        value: 'Jordan',
+        confidence: 'high',
+      }),
+    });
+    expect(snapshot.fields.find((field) => field.targetField === 'applicant.county')).toMatchObject({
+      value: expect.objectContaining({
+        source: 'canonical_case',
+        value: 'San Diego',
+        confidence: 'high',
+      }),
+    });
+    expect(snapshot.fields.find((field) => field.targetField === 'identity.passport_issue_date')).toMatchObject({
+      value: expect.objectContaining({
+        source: 'canonical_case',
+        value: null,
+        confidence: 'low',
       }),
     });
   });
