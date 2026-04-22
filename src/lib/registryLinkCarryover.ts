@@ -165,13 +165,22 @@ export function mergeRegistrySourceLabels(
   const existingNormalized = existing
     .map((link) => normalizeCarryoverRegistryLink(link))
     .filter((link): link is CarryoverRegistryLink => Boolean(link));
-  const existingLabelsByUrl = new Map(existingNormalized.map((link) => [link.url, link.sourceLabel]));
+  const existingByUrl = new Map(existingNormalized.map((link) => [link.url, link]));
   for (const link of merged) {
-    const sourceLabel = link.sourceLabel ?? existingLabelsByUrl.get(link.url);
+    const existingLink = existingByUrl.get(link.url);
+    const sourceLabel = link.sourceLabel ?? existingLink?.sourceLabel;
     const nextLink = sourceLabel ? { ...link, sourceLabel } : { url: link.url };
     const existingMerged = mergedByUrl.get(link.url);
     if (!existingMerged) {
-      mergedByUrl.set(link.url, nextLink);
+      if (
+        existingLink?.sourceLabel
+        && nextLink.sourceLabel === inferSourceLabel(nextLink.url)
+        && existingLink.sourceLabel !== nextLink.sourceLabel
+      ) {
+        mergedByUrl.set(link.url, existingLink);
+      } else {
+        mergedByUrl.set(link.url, nextLink);
+      }
       continue;
     }
 

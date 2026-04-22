@@ -228,4 +228,13 @@ describe('carryOverRegistryLinks', () => {
       { url: 'https://target.com/list', sourceLabel: 'Target' },
     ]);
   });
+
+  it('preserves stronger persisted labels when carried links only infer the registry domain label', () => {
+    expect(mergeRegistrySourceLabels(
+      [{ url: 'https://zola.com/registry/jane' }],
+      [{ url: 'https://zola.com/registry/jane', sourceLabel: 'Custom Honeymoon Fund reserved by Sam' }],
+    )).toEqual([
+      { url: 'https://zola.com/registry/jane', sourceLabel: 'Custom Honeymoon Fund' },
+    ]);
+  });
 });
