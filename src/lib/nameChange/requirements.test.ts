@@ -390,6 +390,36 @@ describe('name change requirements skeleton', () => {
     });
   });
 
+  it('does not escalate canonical extraction alignment from unverified extracted values alone', () => {
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase(),
+      [
+        {
+          id: 'doc-passport',
+          document_kind: 'current_passport',
+          display_name: 'Passport',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+        },
+      ],
+      [
+        {
+          document_id: 'doc-passport',
+          field_key: 'first_name',
+          field_label: 'First name',
+          field_value_masked: 'Alicia',
+          source_type: 'document_extract',
+          is_verified: false,
+        },
+      ],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'canonical-extraction-alignment')).toMatchObject({
+      status: 'satisfied',
+      reason: 'Structured case truth and extracted document values are aligned across the currently modeled fields.',
+    });
+  });
+
   it('marks court-order reference extraction attention when linked reference data exists but is still unverified', () => {
     const snapshot = evaluateNameChangeRequirements(
       makeCase({ legal_basis: 'court_order' as never }),

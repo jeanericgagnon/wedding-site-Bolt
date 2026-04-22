@@ -29,11 +29,14 @@ function getLinkedFieldValue(
   extractedFields: NameChangeExtractedFieldInput[],
   kind: NameChangeDocumentKind,
   fieldKey: NameChangeExtractionFieldKey,
+  requireVerified = false,
 ): string | null {
   const document = getDocumentByKind(documents, kind);
   if (!document?.id) return null;
 
-  const field = extractedFields.find((item) => item.document_id === document.id && item.field_key === fieldKey);
+  const field = extractedFields.find((item) => item.document_id === document.id
+    && item.field_key === fieldKey
+    && (!requireVerified || item.is_verified));
   return normalizeValue(field?.field_value_masked);
 }
 
@@ -47,8 +50,13 @@ function getManualFallbackField(
 function getManualFallbackValue(
   extractedFields: NameChangeExtractedFieldInput[],
   fieldKey: NameChangeExtractionFieldKey,
+  requireVerified = false,
 ): string | null {
-  return normalizeValue(getManualFallbackField(extractedFields, fieldKey)?.field_value_masked);
+  const field = getManualFallbackField(extractedFields, fieldKey);
+  if (!field) return null;
+  if (requireVerified && !field.is_verified) return null;
+  if (requireVerified && field.source_type !== 'manual') return null;
+  return normalizeValue(field.field_value_masked);
 }
 
 export function getDocumentLinkedFieldValue(
@@ -58,6 +66,15 @@ export function getDocumentLinkedFieldValue(
   fieldKey: NameChangeExtractionFieldKey,
 ): string | null {
   return getLinkedFieldValue(documents, extractedFields, kind, fieldKey) ?? getManualFallbackValue(extractedFields, fieldKey);
+}
+
+export function getVerifiedDocumentLinkedFieldValue(
+  documents: NameChangeDocumentInput[],
+  extractedFields: NameChangeExtractedFieldInput[],
+  kind: NameChangeDocumentKind,
+  fieldKey: NameChangeExtractionFieldKey,
+): string | null {
+  return getLinkedFieldValue(documents, extractedFields, kind, fieldKey, true) ?? getManualFallbackValue(extractedFields, fieldKey, true);
 }
 
 export function hasAnyDocumentLinkedFieldValue(
@@ -190,7 +207,7 @@ function buildCanonicalFieldConflicts(
       documentKind: 'current_passport',
       fieldKey: 'first_name',
       canonicalValue: canonicalCase.currentName.first,
-      extractedValue: getDocumentLinkedFieldValue(documents, extractedFields, 'current_passport', 'first_name'),
+      extractedValue: getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'current_passport', 'first_name'),
     },
     {
       key: 'current-last-name-passport',
@@ -198,7 +215,7 @@ function buildCanonicalFieldConflicts(
       documentKind: 'current_passport',
       fieldKey: 'last_name',
       canonicalValue: canonicalCase.currentName.last,
-      extractedValue: getDocumentLinkedFieldValue(documents, extractedFields, 'current_passport', 'last_name'),
+      extractedValue: getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'current_passport', 'last_name'),
     },
     {
       key: 'current-first-name-license',
@@ -206,7 +223,7 @@ function buildCanonicalFieldConflicts(
       documentKind: 'current_drivers_license',
       fieldKey: 'first_name',
       canonicalValue: canonicalCase.currentName.first,
-      extractedValue: getDocumentLinkedFieldValue(documents, extractedFields, 'current_drivers_license', 'first_name'),
+      extractedValue: getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'current_drivers_license', 'first_name'),
     },
     {
       key: 'current-last-name-license',
@@ -214,7 +231,7 @@ function buildCanonicalFieldConflicts(
       documentKind: 'current_drivers_license',
       fieldKey: 'last_name',
       canonicalValue: canonicalCase.currentName.last,
-      extractedValue: getDocumentLinkedFieldValue(documents, extractedFields, 'current_drivers_license', 'last_name'),
+      extractedValue: getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'current_drivers_license', 'last_name'),
     },
     {
       key: 'target-last-name-marriage',
@@ -222,7 +239,7 @@ function buildCanonicalFieldConflicts(
       documentKind: 'marriage_certificate',
       fieldKey: 'spouse_last_name',
       canonicalValue: canonicalCase.targetName.last,
-      extractedValue: getDocumentLinkedFieldValue(documents, extractedFields, 'marriage_certificate', 'spouse_last_name'),
+      extractedValue: getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'marriage_certificate', 'spouse_last_name'),
     },
     {
       key: 'county-marriage',
@@ -230,7 +247,7 @@ function buildCanonicalFieldConflicts(
       documentKind: 'marriage_certificate',
       fieldKey: 'county',
       canonicalValue: canonicalCase.countyResidence,
-      extractedValue: getDocumentLinkedFieldValue(documents, extractedFields, 'marriage_certificate', 'county'),
+      extractedValue: getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'marriage_certificate', 'county'),
     },
     {
       key: 'target-first-name-court-order',
@@ -239,7 +256,7 @@ function buildCanonicalFieldConflicts(
       fieldKey: 'first_name',
       canonicalValue: canonicalCase.legalBasis === 'court_order' ? canonicalCase.targetName.first : null,
       extractedValue: canonicalCase.legalBasis === 'court_order'
-        ? getDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'first_name')
+        ? getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'first_name')
         : null,
     },
     {
@@ -249,7 +266,7 @@ function buildCanonicalFieldConflicts(
       fieldKey: 'last_name',
       canonicalValue: canonicalCase.legalBasis === 'court_order' ? canonicalCase.targetName.last : null,
       extractedValue: canonicalCase.legalBasis === 'court_order'
-        ? getDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'last_name')
+        ? getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'last_name')
         : null,
     },
     {
@@ -260,7 +277,7 @@ function buildCanonicalFieldConflicts(
       canonicalValue: canonicalCase.legalBasis === 'court_order' ? null : canonicalCase.legalContext.marriageDate,
       extractedValue: canonicalCase.legalBasis === 'court_order'
         ? null
-        : getDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'court_order_date'),
+        : getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'court_order_date'),
     },
   ];
 

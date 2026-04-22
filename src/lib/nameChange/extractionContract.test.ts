@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildNameChangeExtractionContractSnapshot, hasAnyDocumentLinkedFieldValue, hasVerifiedDocumentLinkedFieldValue } from './extractionContract';
+import { buildNameChangeExtractionContractSnapshot, getVerifiedDocumentLinkedFieldValue, hasAnyDocumentLinkedFieldValue, hasVerifiedDocumentLinkedFieldValue } from './extractionContract';
 import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput } from './types';
 
 function makeCase(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseInput {
@@ -190,6 +190,25 @@ describe('name change extraction contract', () => {
       expect.objectContaining({ key: 'target-first-name-court-order', documentKind: 'court_order', canonicalValue: 'Alex', extractedValue: 'Avery' }),
       expect.objectContaining({ key: 'target-last-name-court-order', documentKind: 'court_order', canonicalValue: 'Jordan', extractedValue: 'Jordan-Smith' }),
     ]));
+  });
+
+  it('ignores unverified extracted values when building canonical conflict signals', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-passport',
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      { document_id: 'doc-passport', field_key: 'first_name', field_label: 'First name', field_value_masked: 'Alicia', source_type: 'document_extract', is_verified: false },
+    ];
+
+    const snapshot = buildNameChangeExtractionContractSnapshot(makeCase(), documents, extractedFields);
+    expect(snapshot.conflicts).toEqual([]);
+    expect(getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'current_passport', 'first_name')).toBeNull();
   });
 
   it('only treats linked or manual verified court-order reference fields as grounded', () => {
