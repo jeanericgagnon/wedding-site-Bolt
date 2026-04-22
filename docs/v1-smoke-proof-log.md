@@ -64,8 +64,8 @@ If the product cannot be shown, shared, and trusted publicly, the v1 claim is de
 - Status: AUTOMATED_PASS / MANUAL_NOTES_PENDING
 - Notes:
   - 2026-04-21 automated canonical smoke passed via `npm run proof:v1:canonical-smoke`.
-  - `npm run test:e2e:live` passed across Home, Product, Trust, Login, and collaborator invite route load.
-  - Canonical route smoke now also covers signup load, quick-start preview reachability, protected onboarding/builder fallback to login when auth is missing, and RSVP entry guidance.
+  - `npm run test:e2e:live` passed across Home, Product, Trust, Login, RSVP entry, and collaborator invite route load.
+  - Canonical route smoke now also covers signup load, quick-start preview reachability, and login fallback behavior across protected onboarding, setup, and dashboard surfaces when auth is missing.
   - `npm run smoke:site` passed and resolved a real published slug + site_url (`alex-jordan-demo`) from Supabase.
   - `npm run build` passed in the same proof batch.
 - Blockers:
