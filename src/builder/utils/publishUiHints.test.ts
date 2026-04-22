@@ -214,6 +214,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('Select a section on the canvas');
   });
 
+  it('returns section guidance when blocker copy keeps the real message but drops punctuation', () => {
+    const hints = getPublishBlockedHints('Turn on at least one section before going live');
+    expect(hints[0]).toContain('Select a section on the canvas');
+  });
+
   it('returns partner guidance even when blocker copy is lowercased by upstream formatting', () => {
     const hints = getPublishBlockedHints('add both partner names before going live.');
     expect(hints[0]).toContain('couple details');
