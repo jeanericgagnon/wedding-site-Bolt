@@ -567,12 +567,12 @@ export default function RSVP() {
         attendCeremony,
         attendReception,
         meal_choice: (() => {
-          const current = foundRsvp.meal_choice || '';
+          const current = (foundRsvp.meal_choice || '').trim();
           if (!current) return '';
           const match = meal.options.find((opt) => opt.toLowerCase() === current.toLowerCase());
           return match ?? current;
         })(),
-        plus_one_name: foundRsvp.plus_one_name || '',
+        plus_one_name: (foundRsvp.plus_one_name || '').trim(),
         notes: parsed.cleanNotes,
       });
       setCustomAnswers(
