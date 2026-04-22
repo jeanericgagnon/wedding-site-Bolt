@@ -145,6 +145,7 @@ const output = {
   },
   highestRiskTrustGap: 'Public v1 claim is still blocked by missing canonical couple-path truth notes and unresolved guests/RSVP ops proof auth',
   trustLieClosedInThisGate: 'Canonical smoke output now explicitly says public v1 is a no-go instead of implying launch-clear status from automation alone',
+  automationCaveat: 'Passing canonical smoke is evidence of route continuity and build health, not launch clearance on its own',
   blockers: blockedRequired.map((result) => ({
     id: result.id,
     label: result.label,
