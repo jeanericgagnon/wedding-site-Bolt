@@ -99,6 +99,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('event details');
   });
 
+  it('returns wedding-date guidance when the shorter blocker copy is whitespace-padded', () => {
+    const hints = getPublishBlockedHints('   Add your wedding date.   ');
+    expect(hints[0]).toContain('event details');
+  });
+
   it('returns venue guidance', () => {
     const hints = getPublishBlockedHints('Add at least one venue before publishing.');
     expect(hints[0]).toContain('venue');
