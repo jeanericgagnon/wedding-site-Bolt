@@ -125,4 +125,11 @@ describe('versionHistory', () => {
 
     expect(listBuilderRevisions(weddingId)[0]?.project.pages[0].title).not.toBe('Mutated title');
   });
+
+  it('returns cloned empty revision lists on repeated reads', () => {
+    const weddingId = `w_${Date.now()}_l`;
+
+    expect(listBuilderRevisions(weddingId)).toEqual([]);
+    expect(listBuilderRevisions(weddingId)).not.toBe(listBuilderRevisions(weddingId));
+  });
 });
