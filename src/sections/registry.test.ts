@@ -228,6 +228,7 @@ describe('sections registry resolution', () => {
 
     expect(TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry')?.settings).toEqual({});
     expect(TEMPLATE_REGISTRY['timeless-classic'].defaultLayout.sections.find((section) => section.type === 'registry')?.settings).toEqual({});
+    expect(getTemplate('classic').defaultLayout.sections.find((section) => section.type === 'registry')?.settings).toEqual({});
   });
 
   it('keeps every shipped template registry variant renderable in the legacy runtime', () => {
@@ -499,7 +500,8 @@ describe('sections registry resolution', () => {
     expect(templateRegistrySource).toContain("templateIdAliases.get(normalizeTemplateIdKey(templateId)) ?? 'base'");
     expect(templateRegistrySource).toContain('function cloneTemplateValue<T>(value: T): T {');
     expect(templateRegistrySource).toContain("templateRegistry.map((template) => [template.id, cloneTemplateDefinition(template)])");
-    expect(templateRegistrySource).toContain("base: cloneTemplateDefinition(templateById['timeless-classic'] ?? templateRegistry[0]),");
+    expect(templateRegistrySource).toContain('const TEMPLATE_ALIAS_TARGETS: Record<string, string> = {');
+    expect(templateRegistrySource).toContain("base: cloneTemplateDefinition(templateById[TEMPLATE_ALIAS_TARGETS.base] ?? templateRegistry[0]),");
     expect(templateRegistrySource).toContain("variant: isRegistryTemplateSection");
     expect(templateRegistrySource).toContain("variant: isRegistryTemplateSection");
     expect(templateRegistrySource).toContain('? canonicalRegistrySection.variant');
@@ -511,7 +513,8 @@ describe('sections registry resolution', () => {
     expect(templateRegistrySource).toContain('settings: cloneTemplateValue(section.settings ?? {}),');
     expect(templateRegistrySource).toContain('overrides: cloneTemplateValue(section.overrides ?? undefined),');
     expect(templateRegistrySource).toContain('function cloneTemplateDefinition(template: TemplateDefinition): TemplateDefinition {');
-    expect(templateRegistrySource).toContain('return cloneTemplateDefinition(TEMPLATE_REGISTRY[canonicalTemplateId] || TEMPLATE_REGISTRY.base || templateRegistry[0]);');
+    expect(templateRegistrySource).toContain('const sourceTemplateId = TEMPLATE_ALIAS_TARGETS[canonicalTemplateId] ?? canonicalTemplateId;');
+    expect(templateRegistrySource).toContain('return cloneTemplateDefinition(templateById[sourceTemplateId] || templateById[TEMPLATE_ALIAS_TARGETS.base] || templateRegistry[0]);');
     expect(templateRegistrySource).toContain('return templateRegistry.map(cloneTemplateDefinition);');
     expect(sectionRegistrySource).toContain('export function resolveCanonicalRegistrySectionInput(type: unknown, variant: unknown): { type: string; variant: string } {');
     expect(sectionRegistrySource).toContain('export function resolveCanonicalRegistrySectionType(type: unknown): string {');

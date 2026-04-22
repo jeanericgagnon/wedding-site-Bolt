@@ -786,14 +786,22 @@ const templateById: Record<string, TemplateDefinition> = Object.fromEntries(
   templateRegistry.map((template) => [template.id, cloneTemplateDefinition(template)])
 ) as Record<string, TemplateDefinition>;
 
+const TEMPLATE_ALIAS_TARGETS: Record<string, string> = {
+  base: 'timeless-classic',
+  modern: 'modern-clean',
+  editorial: 'editorial-impact',
+  classic: 'timeless-classic',
+  rustic: 'rustic-barn',
+};
+
 export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = {
   ...templateById,
   // Back-compat aliases used by older flows
-  base: cloneTemplateDefinition(templateById['timeless-classic'] ?? templateRegistry[0]),
-  modern: cloneTemplateDefinition(templateById['modern-clean'] ?? templateRegistry[0]),
-  editorial: cloneTemplateDefinition(templateById['editorial-impact'] ?? templateRegistry[0]),
-  classic: cloneTemplateDefinition(templateById['timeless-classic'] ?? templateRegistry[0]),
-  rustic: cloneTemplateDefinition(templateById['rustic-barn'] ?? templateById['timeless-classic'] ?? templateRegistry[0]),
+  base: cloneTemplateDefinition(templateById[TEMPLATE_ALIAS_TARGETS.base] ?? templateRegistry[0]),
+  modern: cloneTemplateDefinition(templateById[TEMPLATE_ALIAS_TARGETS.modern] ?? templateRegistry[0]),
+  editorial: cloneTemplateDefinition(templateById[TEMPLATE_ALIAS_TARGETS.editorial] ?? templateRegistry[0]),
+  classic: cloneTemplateDefinition(templateById[TEMPLATE_ALIAS_TARGETS.classic] ?? templateRegistry[0]),
+  rustic: cloneTemplateDefinition(templateById[TEMPLATE_ALIAS_TARGETS.rustic] ?? templateById[TEMPLATE_ALIAS_TARGETS.classic] ?? templateRegistry[0]),
 };
 
 const templateIdAliases = new Map<string, string>(
@@ -808,7 +816,8 @@ export function getTemplate(templateId: unknown): TemplateDefinition {
   const canonicalTemplateId = TEMPLATE_REGISTRY[templateIdValue]
     ? templateIdValue
     : templateIdAliases.get(normalizeTemplateIdKey(templateId)) ?? 'base';
-  return cloneTemplateDefinition(TEMPLATE_REGISTRY[canonicalTemplateId] || TEMPLATE_REGISTRY.base || templateRegistry[0]);
+  const sourceTemplateId = TEMPLATE_ALIAS_TARGETS[canonicalTemplateId] ?? canonicalTemplateId;
+  return cloneTemplateDefinition(templateById[sourceTemplateId] || templateById[TEMPLATE_ALIAS_TARGETS.base] || templateRegistry[0]);
 }
 
 export function getAllTemplates(): TemplateDefinition[] {
