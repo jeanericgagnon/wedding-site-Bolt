@@ -302,6 +302,7 @@ If that line fails, the rest is noise.
    - operator audit shortcut: compare this slice against `publicV1ClaimStatus`, `publicV1ClaimBlockers`, and `manualProofSummary` before changing any launch-facing wording
    - operator mismatch rule: if this board and the proof log disagree, trust the proof log first and update this board second
    - operator evidence freshness rule: verify the latest `npm run proof:v1:canonical-smoke` result before changing this slice's launch posture language
+   - operator status mirror: this slice should keep matching `launchCallRightNow` from canonical smoke until the proof log says otherwise
    - operator read rule: treat green automation here as route continuity only, not public-v1 launch clearance
 2. **Guest-state continuity smoke + fix**
    - prove or fix guest edits, RSVP updates, event-level visibility, downstream reads
