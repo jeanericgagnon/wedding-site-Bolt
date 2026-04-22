@@ -237,6 +237,7 @@ export const Home: React.FC = () => {
             <HeroReveal delay={0.38}>
               <div className="mt-4 inline-flex flex-wrap justify-center gap-2">
                 <span className="text-[11px] px-2.5 py-1 rounded-full border border-brand/20 bg-brand/5 text-brand">Beautiful site + RSVP + guest tools</span>
+                <span className="text-[11px] px-2.5 py-1 rounded-full border border-border bg-surface text-ink/80">Planner + coordinator support still depends on proof-backed boundaries</span>
                 <span className="text-[11px] px-2.5 py-1 rounded-full border border-border bg-surface text-ink/80">No forced upsells</span>
                 <span className="text-[11px] px-2.5 py-1 rounded-full border border-border bg-surface text-ink/80">Built for guests of all ages</span>
                 <span className="text-[11px] px-2.5 py-1 rounded-full border border-border bg-surface text-ink/80">Easy if you're moving off Zola, Joy, or The Knot</span>
