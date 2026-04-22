@@ -282,7 +282,11 @@ function isRegistrySectionType(type: unknown): boolean {
 
 function normalizeRegistrySectionType(type: unknown): string {
   if (isRegistrySectionType(type)) return 'registry';
-  return typeof type === 'string' ? type.trim().toLowerCase() : '';
+  const normalizedTypeKey = normalizeRegistryVariantKey(type);
+  if (!normalizedTypeKey) return '';
+
+  const directSectionType = getAllDefinitions().find((definition) => normalizeRegistryVariantKey(definition.type) === normalizedTypeKey)?.type;
+  return directSectionType ?? (typeof type === 'string' ? type.trim().toLowerCase() : '');
 }
 
 export function resolveCanonicalRegistrySectionType(type: unknown): string {
