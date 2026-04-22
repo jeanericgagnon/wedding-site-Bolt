@@ -800,7 +800,7 @@ function getCanonicalTemplateSource(templateId: string | undefined): TemplateDef
     || templateRegistry[0];
 }
 
-export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = {
+export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = Object.freeze({
   ...templateById,
   // Back-compat aliases used by older flows
   base: cloneTemplateDefinition(getCanonicalTemplateSource(TEMPLATE_ALIAS_TARGETS.base)),
@@ -808,7 +808,7 @@ export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = {
   editorial: cloneTemplateDefinition(getCanonicalTemplateSource(TEMPLATE_ALIAS_TARGETS.editorial)),
   classic: cloneTemplateDefinition(getCanonicalTemplateSource(TEMPLATE_ALIAS_TARGETS.classic)),
   rustic: cloneTemplateDefinition(getCanonicalTemplateSource(TEMPLATE_ALIAS_TARGETS.rustic)),
-};
+});
 
 const templateIdAliases = new Map<string, string>(
   [

@@ -233,6 +233,12 @@ describe('sections registry resolution', () => {
     expect(getTemplate('classic').defaultLayout.sections.find((section) => section.type === 'registry')?.settings).toEqual({});
   });
 
+  it('keeps exported template registry aliases locked to canonical sources', () => {
+    expect(Object.isFrozen(TEMPLATE_REGISTRY)).toBe(true);
+    expect(getTemplate('base').id).toBe('timeless-classic');
+    expect(getTemplate('classic').id).toBe('timeless-classic');
+  });
+
   it('keeps every shipped template registry variant renderable in the legacy runtime', () => {
     const templateVariants = Array.from(new Set(
       getAllTemplates()
@@ -504,6 +510,7 @@ describe('sections registry resolution', () => {
     expect(templateRegistrySource).toContain('function cloneTemplateValue<T>(value: T): T {');
     expect(templateRegistrySource).toContain("templateRegistry.map((template) => [template.id, cloneTemplateDefinition(template)])");
     expect(templateRegistrySource).toContain('const TEMPLATE_ALIAS_TARGETS: Record<string, string> = {');
+    expect(templateRegistrySource).toContain('export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = Object.freeze({');
     expect(templateRegistrySource).toContain('function getCanonicalTemplateSource(templateId: string | undefined): TemplateDefinition {');
     expect(templateRegistrySource).toContain("base: cloneTemplateDefinition(getCanonicalTemplateSource(TEMPLATE_ALIAS_TARGETS.base)),");
     expect(templateRegistrySource).toContain("variant: isRegistryTemplateSection");
