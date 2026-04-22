@@ -82,7 +82,7 @@ describe('RSVP stale submit protection', () => {
     fireEvent.click(screen.getByText('Continue to review'));
 
     await screen.findByText(/Final review & submit/);
-    fireEvent.click(screen.getByText('Submit RSVP'));
+    fireEvent.click(screen.getByText('Update RSVP'));
 
     await screen.findByText('Submitting...');
     expect(screen.getByText('Back')).toBeDisabled();
@@ -517,7 +517,7 @@ describe('RSVP stale submit protection', () => {
     fireEvent.click(screen.getByText('Continue to details'));
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'Chicken' } });
     fireEvent.click(screen.getByText('Continue to review'));
-    fireEvent.click(screen.getByText('Submit RSVP'));
+    fireEvent.click(screen.getByText('Update RSVP'));
 
     await screen.findByText("You're confirmed!");
     fireEvent.click(screen.getByText('Done'));
@@ -1280,7 +1280,7 @@ describe('RSVP stale submit protection', () => {
     await screen.findByText('Welcome, Taylor Rivera!');
     fireEvent.click(screen.getByText('Continue to details'));
     fireEvent.click(screen.getByText('Continue to review'));
-    fireEvent.click(screen.getByText('Submit RSVP'));
+    fireEvent.click(screen.getByText('Update RSVP'));
 
     await screen.findByText('Submitting...');
 
@@ -1307,7 +1307,7 @@ describe('RSVP stale submit protection', () => {
     await screen.findByText('Welcome, Jordan Lee!');
     fireEvent.click(screen.getByText('Continue to details'));
     fireEvent.click(screen.getByText('Continue to review'));
-    fireEvent.click(screen.getByText('Submit RSVP'));
+    fireEvent.click(screen.getByText('Update RSVP'));
 
     expect(await screen.findByText("You're confirmed!")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledTimes(4);
@@ -5457,6 +5457,87 @@ describe('RSVP stale submit protection', () => {
 
     expect(screen.getByText('Jordan Rivera')).toBeInTheDocument();
     expect(screen.getByText('1/1 selected')).toBeInTheDocument();
+  });
+
+  it('dedupes primary guest ids before submitting household RSVP updates', async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          guest: {
+            id: 'guest-1',
+            first_name: 'Taylor',
+            last_name: 'Rivera',
+            name: 'Taylor Rivera',
+            email: 'taylor@example.com',
+            phone: null,
+            group_name: null,
+            wedding_site_id: 'site-1',
+            plus_one_allowed: false,
+            invited_to_ceremony: true,
+            invited_to_reception: true,
+            invite_token: 'token-1',
+          },
+          existingRsvp: {
+            id: 'rsvp-1',
+            attending: true,
+            guest_ids: ['guest-1', 'guest-2'],
+            meal_choice: null,
+            plus_one_name: null,
+            notes: null,
+            custom_answers: {},
+          },
+          guests: null,
+          rsvpDeadline: null,
+          rsvpQuestions: [],
+          rsvpMealConfig: { enabled: false, options: [] },
+          musicPlaylistUrl: null,
+          householdGuests: [
+            {
+              id: 'guest-1',
+              first_name: 'Taylor',
+              last_name: 'Rivera',
+              name: 'Taylor Rivera',
+              invited_to_ceremony: true,
+              invited_to_reception: true,
+              invite_token: 'token-1',
+            },
+            {
+              id: 'guest-2',
+              first_name: 'Jordan',
+              last_name: 'Rivera',
+              name: 'Jordan Rivera',
+              invited_to_ceremony: true,
+              invited_to_reception: true,
+              invite_token: 'token-2',
+            },
+          ],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true, guestName: 'Taylor Rivera', attending: true }),
+      });
+
+    window.history.pushState({}, '', '/rsvp?token=token-1');
+
+    render(
+      <BrowserRouter>
+        <RSVP />
+      </BrowserRouter>
+    );
+
+    await screen.findByText('Welcome, Taylor Rivera!');
+    fireEvent.click(screen.getByText('Continue to details'));
+    fireEvent.click(screen.getByText('Continue to review'));
+    fireEvent.click(screen.getByText('Update RSVP'));
+
+    expect(await screen.findByText("You're confirmed!")).toBeInTheDocument();
+
+    const submitRequest = fetchMock.mock.calls[1]?.[1];
+    expect(submitRequest).toBeDefined();
+    const submitBody = JSON.parse(String(submitRequest?.body));
+    expect(submitBody.targetGuestIds).toEqual(['guest-1', 'guest-2']);
   });
 
   it('does not auto-reenable household inheritance when loaded RSVP only covers the primary guest', async () => {

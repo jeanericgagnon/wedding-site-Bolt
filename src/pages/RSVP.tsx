@@ -186,6 +186,10 @@ function buildNormalizedExistingRsvp(formData: {
   });
 }
 
+function dedupeGuestIds(guestIds: string[]): string[] {
+  return Array.from(new Set(guestIds.filter(Boolean)));
+}
+
 function deriveSelectedHouseholdGuestIds(existingRsvp: ExistingRSVP | null, household: HouseholdGuest[]): string[] {
   if (household.length === 0) return [];
 
@@ -478,7 +482,7 @@ export default function RSVP() {
   const returnToLoadedRsvp = useCallback(() => {
     invalidateActiveSubmit();
     const selectedGuestIds = applyToHousehold && guest
-      ? [guest.id, ...selectedHouseholdGuestIds]
+      ? dedupeGuestIds([guest.id, ...selectedHouseholdGuestIds])
       : guest
         ? [guest.id]
         : [];
@@ -818,7 +822,7 @@ export default function RSVP() {
 
       if (DEMO_MODE) {
         const stored = getDemoStoredResponses();
-        const targetIds = applyToHousehold ? [guest.id, ...selectedHouseholdGuestIds] : [guest.id];
+        const targetIds = applyToHousehold ? dedupeGuestIds([guest.id, ...selectedHouseholdGuestIds]) : [guest.id];
         const payload = buildNormalizedExistingRsvp(formData, customAnswers, `demo-rsvp-${guest.id}`, targetIds);
         targetIds.forEach((id) => { stored[id] = { ...payload, id: `demo-rsvp-${id}` }; });
         localStorage.setItem(DEMO_RSVP_RESPONSES_KEY, JSON.stringify(stored));
@@ -831,7 +835,7 @@ export default function RSVP() {
       }
 
       const targetGuestIds = applyToHousehold
-        ? [guest.id, ...selectedHouseholdGuestIds]
+        ? dedupeGuestIds([guest.id, ...selectedHouseholdGuestIds])
         : [guest.id];
 
       const { data, error: err } = await rsvpCall({
