@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   getPublishBlockedHints,
+  getPublishCtaLabel,
   getPublishProgressLabel,
   getPublishStatusLabel,
   shouldAutoPublishFromSearch,
@@ -226,6 +227,11 @@ describe('publishUiHints', () => {
     expect(shouldOpenPhotoTipsFromSearch('?photoTips=1#ignored')).toBe(false);
     expect(shouldOpenPhotoTipsFromSearch('?photoTips=1&photoTips=0')).toBe(true);
     expect(shouldOpenPhotoTipsFromSearch('')).toBe(false);
+  });
+
+  it('labels publish CTA across draft and live states', () => {
+    expect(getPublishCtaLabel(false)).toBe('Go live');
+    expect(getPublishCtaLabel(true)).toBe('Update guest-facing site');
   });
 
   it('labels publish status across draft and live states', () => {
