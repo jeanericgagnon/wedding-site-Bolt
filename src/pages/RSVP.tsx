@@ -573,6 +573,7 @@ export default function RSVP() {
     invalidateActiveSubmit();
     setLoading(true);
     setError('');
+    setAmbiguousGuests([]);
     setGuest(null);
     setExistingRsvp(null);
     try {

@@ -754,7 +754,7 @@ describe('RSVP stale submit protection', () => {
     fireEvent.click(screen.getByText('Taylor Rivera'));
 
     await waitFor(() => {
-      expect(screen.getByText('Taylor Rivera').closest('button')).toBeDisabled();
+      expect(screen.queryByText('Taylor Rivera')).not.toBeInTheDocument();
     });
 
     await act(async () => {
@@ -864,7 +864,7 @@ describe('RSVP stale submit protection', () => {
     fireEvent.click(screen.getByText('Taylor Rivera'));
 
     await waitFor(() => {
-      expect(screen.getByText('Taylor Rivera').closest('button')).toBeDisabled();
+      expect(screen.queryByText('Taylor Rivera')).not.toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByText('Search again'));
@@ -966,7 +966,7 @@ describe('RSVP stale submit protection', () => {
     fireEvent.click(screen.getByText('Taylor Rivera'));
 
     await waitFor(() => {
-      expect(screen.getByText('Taylor Rivera').closest('button')).toBeDisabled();
+      expect(screen.queryByText('Taylor Rivera')).not.toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByText('Search again'));
@@ -1101,7 +1101,7 @@ describe('RSVP stale submit protection', () => {
     fireEvent.click(screen.getByText('Taylor Rivera'));
 
     await waitFor(() => {
-      expect(screen.getByText('Taylor Rivera').closest('button')).toBeDisabled();
+      expect(screen.queryByText('Taylor Rivera')).not.toBeInTheDocument();
     });
     expect(screen.queryByText('Welcome, Alex Morgan!')).not.toBeInTheDocument();
 
