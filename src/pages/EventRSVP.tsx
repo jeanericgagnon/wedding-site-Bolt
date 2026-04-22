@@ -685,7 +685,12 @@ export default function EventRSVP() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => updateRsvpForm((current) => ({ ...current, attending: false }))}
+                        onClick={() => updateRsvpForm((current) => ({
+                          ...current,
+                          attending: false,
+                          dietary_restrictions: '',
+                          notes: '',
+                        }))}
                         className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium transition-all ${
                           !rsvpForm.attending
                             ? 'bg-neutral-700 text-white shadow-sm'
