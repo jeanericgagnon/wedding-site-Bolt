@@ -1,6 +1,18 @@
 import { canonicalizeNameChangeDocumentKind } from './documentKinds';
 import type { NameChangeDocumentInput, NameChangeExtractedFieldInput } from './types';
 
+const SUPPORTED_DRAFT_DOCUMENT_KINDS = new Set<NameChangeDocumentInput['document_kind']>([
+  'marriage_certificate',
+  'court_order',
+  'court_order_name_change',
+  'current_drivers_license',
+  'current_passport',
+  'social_security_card',
+  'birth_certificate',
+  'proof_of_address',
+  'other',
+]);
+
 const SUPPORTED_DRAFT_FIELD_KEYS = new Set<NameChangeExtractedFieldInput['field_key']>([
   'first_name',
   'middle_name',
@@ -64,7 +76,8 @@ function normalizeDraftDocumentKind(value: string) {
     social_security_card_copy: 'social_security_card',
   };
 
-  return (kindAliases[normalizedKind] ?? normalizedKind) as NameChangeDocumentInput['document_kind'];
+  const canonicalKind = (kindAliases[normalizedKind] ?? normalizedKind) as NameChangeDocumentInput['document_kind'];
+  return SUPPORTED_DRAFT_DOCUMENT_KINDS.has(canonicalKind) ? canonicalKind : 'other';
 }
 
 function normalizeDraftFieldKey(value: string) {

@@ -105,6 +105,16 @@ describe('name change intake draft helpers', () => {
     expect(normalizeDraftNameChangeDocumentId('draft-social-security-card-copy')).toBe('draft-social_security_card');
   });
 
+  it('falls back unknown draft document aliases to other instead of inventing unsupported kinds', () => {
+    expect(createDraftNameChangeDocument('temporary visa card' as never, ' Temporary visa card ')).toMatchObject({
+      id: null,
+      document_kind: 'other',
+      display_name: 'Other',
+      intake_status: 'not_started',
+    });
+    expect(normalizeDraftNameChangeDocumentId('draft-temporary-visa-card')).toBeNull();
+  });
+
   it('maps common human draft field aliases onto canonical supported keys', () => {
     expect(upsertDraftNameChangeExtractedField([], 'draft-current_passport', 'issue date' as never, '  ', '2024-06-01')).toEqual([
       expect.objectContaining({
