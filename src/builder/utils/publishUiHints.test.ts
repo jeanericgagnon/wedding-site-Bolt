@@ -80,4 +80,8 @@ describe('publishUiHints', () => {
     expect(getPublishBlockedHints(null)).toEqual([]);
     expect(getPublishBlockedHints(undefined)).toEqual([]);
   });
+
+  it('keeps singular grammar when one blocker remains even if done exceeds total by one after clamping elsewhere', () => {
+    expect(getPublishProgressLabel(0, 1)).toBe('1 thing left before guest-facing launch');
+  });
 });
