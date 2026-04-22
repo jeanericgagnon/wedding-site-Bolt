@@ -784,6 +784,66 @@ describe('RSVP stale submit protection', () => {
     });
   });
 
+  it('clears stale error truth before resolving a replacement token lookup', async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({ error: 'Invitation not recognized. Please search by name below.' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          guest: {
+            id: 'guest-1',
+            first_name: 'Taylor',
+            last_name: 'Rivera',
+            name: 'Taylor Rivera',
+            email: 'taylor@example.com',
+            phone: null,
+            group_name: null,
+            wedding_site_id: 'site-1',
+            plus_one_allowed: false,
+            invited_to_ceremony: true,
+            invited_to_reception: true,
+            invite_token: 'token-1',
+          },
+          existingRsvp: null,
+          guests: null,
+          rsvpDeadline: null,
+          rsvpQuestions: [],
+          rsvpMealConfig: { enabled: true, options: ['Chicken', 'Beef'] },
+          musicPlaylistUrl: null,
+          householdGuests: [],
+        }),
+      });
+
+    window.history.pushState({}, '', '/rsvp');
+
+    const view = render(
+      <BrowserRouter>
+        <RSVP />
+      </BrowserRouter>
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('rsvp.search_placeholder'), { target: { value: 'nobody' } });
+    fireEvent.click(screen.getByText('Find My Invitation'));
+
+    expect(await screen.findByText('Invitation not recognized. Please search by name below.')).toBeInTheDocument();
+
+    await act(async () => {
+      window.history.pushState({}, '', '/rsvp?token=token-1');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+    view.rerender(
+      <BrowserRouter>
+        <RSVP />
+      </BrowserRouter>
+    );
+
+    expect(screen.queryByText('Invitation not recognized. Please search by name below.')).not.toBeInTheDocument();
+    expect(await screen.findByText('Welcome, Taylor Rivera!')).toBeInTheDocument();
+  });
+
   it('drops stale token submit completions after the page unmounts', async () => {
     const submitRequest = deferred<Response>();
 

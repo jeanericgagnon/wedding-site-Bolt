@@ -367,6 +367,7 @@ export default function RSVP() {
     setTokenAutoLoading(true);
     setSubmitting(false);
     setStep('search');
+    setError('');
     setSearchValue(token);
     setGuest(null);
     setExistingRsvp(null);
