@@ -26,22 +26,35 @@ function inferSourceLabel(url: string): string | undefined {
   return undefined;
 }
 
-function extractRegistryUrlToken(line: string): string | null {
-  const markdownHref = line.match(/\[[^\]]+\]\((https?:\/\/[^)]+|www\.[^)]+)\)/i)?.[1] ?? null;
-  if (markdownHref) return markdownHref.replace(/[),.;:!?]+$/, '');
-  const bracketedHref = line.match(/<(https?:\/\/[^>]+|www\.[^>]+)>/i)?.[1] ?? null;
-  if (bracketedHref) return bracketedHref.replace(/[),.;:!?]+$/, '');
-  const quotedHref = line.match(/["'](https?:\/\/[^"']+|www\.[^"']+)["']/i)?.[1] ?? null;
-  if (quotedHref) return quotedHref.replace(/[),.;:!?]+$/, '');
-  const markdownBareHref = line.match(/\[[^\]]+\]\(((?:[a-z0-9-]+\.)+[a-z]{2,}[^)]*)\)/i)?.[1] ?? null;
-  if (markdownBareHref) return markdownBareHref.replace(/[),.;:!?]+$/, '');
-  const bareDomainMatch = line.match(/(?:^|\s)((?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s]*)?)/i)?.[1] ?? null;
-  if (bareDomainMatch) return bareDomainMatch.replace(/[),.;:!?]+$/, '');
-  const directMatch = line.match(/https?:\/\/\S+/i)?.[0] ?? line.match(/www\.\S+/i)?.[0] ?? null;
-  if (directMatch) return directMatch.replace(/[),.;:!?]+$/, '');
-  const parts = line.split(/[|,;]/).map((part) => part.trim()).filter(Boolean);
-  const candidate = parts.find((part) => /\.[a-z]{2,}(?:\/|$)/i.test(part)) ?? null;
-  return candidate ? candidate.replace(/[),.;:!?]+$/, '') : null;
+function cleanRegistryUrlToken(token: string): string {
+  return token.replace(/[>"'),.;:!?]+$/, '');
+}
+
+function extractRegistryUrlTokens(line: string): string[] {
+  const tokens = new Set<string>();
+  const patterns = [
+    /\[[^\]]+\]\((https?:\/\/[^)]+|www\.[^)]+)\)/gi,
+    /<(https?:\/\/[^>]+|www\.[^>]+)>/gi,
+    /["'](https?:\/\/[^"']+|www\.[^"']+)["']/gi,
+    /\[[^\]]+\]\(((?:[a-z0-9-]+\.)+[a-z]{2,}[^)]*)\)/gi,
+    /(?:^|\s)((?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s]*)?)/gi,
+    /(https?:\/\/\S+|www\.\S+)/gi,
+  ];
+
+  for (const pattern of patterns) {
+    for (const match of line.matchAll(pattern)) {
+      const token = match[1] ?? match[0];
+      if (token) tokens.add(cleanRegistryUrlToken(token));
+    }
+  }
+
+  if (tokens.size > 0) return Array.from(tokens);
+
+  return line
+    .split(/[|,;]/)
+    .map((part) => part.trim())
+    .filter((part) => /\.[a-z]{2,}(?:\/|$)/i.test(part))
+    .map(cleanRegistryUrlToken);
 }
 
 export function carryOverRegistryLinks(raw: string | null | undefined): CarryoverRegistryLink[] {
@@ -50,14 +63,10 @@ export function carryOverRegistryLinks(raw: string | null | undefined): Carryove
   return raw
     .split('\n')
     .flatMap((line) => {
-      const extractedUrl = extractRegistryUrlToken(line);
-      if (!extractedUrl) return [line.trim()].filter(Boolean);
-      return line
-        .split(/[|,;]/)
-        .map((part) => part.trim())
-        .filter((part) => part.toLowerCase().includes(extractedUrl.toLowerCase()) || /\.[a-z]{2,}/i.test(part));
+      const extractedUrls = extractRegistryUrlTokens(line);
+      return extractedUrls.length > 0 ? extractedUrls : [line.trim()].filter(Boolean);
     })
-    .map((line) => normalizeUrl(extractRegistryUrlToken(line) ?? line))
+    .map((line) => normalizeUrl(line))
     .filter((url): url is string => Boolean(url))
     .filter((url) => {
       if (seen.has(url)) return false;

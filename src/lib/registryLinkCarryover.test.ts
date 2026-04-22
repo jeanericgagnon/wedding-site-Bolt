@@ -63,4 +63,11 @@ describe('carryOverRegistryLinks', () => {
       { url: 'https://amazon.com/shop', sourceLabel: 'Amazon' },
     ]);
   });
+
+  it('preserves multiple markdown registry links that share one line', () => {
+    expect(carryOverRegistryLinks('[Amazon](https://amazon.com/shop) and [Target](https://target.com/list)')).toEqual([
+      { url: 'https://amazon.com/shop', sourceLabel: 'Amazon' },
+      { url: 'https://target.com/list', sourceLabel: 'Target' },
+    ]);
+  });
 });
