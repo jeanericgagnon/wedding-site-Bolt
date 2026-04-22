@@ -50,4 +50,8 @@ describe('publishNowFlow', () => {
 
     expect(getPublishNowAction(true, project, weddingData)).toBe('publish');
   });
+
+  it('keeps returning skip when both intent and project are missing', () => {
+    expect(getPublishNowAction(false, null)).toBe('skip');
+  });
 });
