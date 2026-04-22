@@ -29,6 +29,7 @@ Last canonical smoke confirmation: 2026-04-21 via `npm run proof:v1:canonical-sm
 Latest published-site lookup confirmation: `alex-jordan-demo`
 Latest live smoke breadth: 31 Playwright checks passing
 Latest canonical smoke result: `ok: true`, `blocked: false`
+Latest site lookup statuses: list 200, bySlug 200, byUrl 200
 
 This is **not** a generic QA checklist.
 This is the must-ship truth gate.
