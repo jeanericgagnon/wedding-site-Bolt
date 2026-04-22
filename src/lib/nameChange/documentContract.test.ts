@@ -191,4 +191,41 @@ describe('name change document intake contract', () => {
       metadataMissing: [],
     });
   });
+
+  it('prefers the canonical document kind when duplicate alias rows are otherwise tied', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase({ legal_basis: 'court_order', marriage_state: null, marriage_date: null }),
+      [
+        {
+          id: 'doc-alias',
+          document_kind: 'court_order_name_change',
+          display_name: 'Court order alias',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'court-order-•••.pdf',
+          issuing_authority: 'San Diego Superior Court',
+          issued_on: '2026-04-05',
+          extraction_confidence: 0.93,
+        },
+        {
+          id: 'doc-canonical',
+          document_kind: 'court_order',
+          display_name: 'Court order',
+          storage_mode: 'uploaded_blob',
+          intake_status: 'reviewed',
+          file_name_masked: 'court-order-•••.pdf',
+          issuing_authority: 'San Diego Superior Court',
+          issued_on: '2026-04-05',
+          extraction_confidence: 0.93,
+        },
+      ],
+      [],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'court_order')).toMatchObject({
+      intakeStatus: 'reviewed',
+      metadataMissing: [],
+      storageMode: 'uploaded_blob',
+    });
+  });
 });

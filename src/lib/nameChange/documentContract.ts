@@ -1,5 +1,5 @@
 import { buildNameChangeCanonicalCase } from './canonical';
-import { matchesNameChangeDocumentKind } from './documentKinds';
+import { canonicalizeNameChangeDocumentKind, matchesNameChangeDocumentKind } from './documentKinds';
 import { buildNameChangeExtractionContractSnapshot, getDocumentCapturedFieldKeys } from './extractionContract';
 import type {
   NameChangeCaseInput,
@@ -94,13 +94,17 @@ function metadataMissingForDocument(document: NameChangeDocumentInput | undefine
   return missing;
 }
 
-function getDocumentContractPriority(document: NameChangeDocumentInput) {
+function getDocumentContractPriority(
+  document: NameChangeDocumentInput,
+  kind: NameChangeDocumentInput['document_kind'],
+) {
   const intakeWeight = document.intake_status === 'reviewed'
     ? 2
     : document.intake_status === 'uploaded'
       ? 1
       : 0;
-  return (intakeWeight * 100) - metadataMissingForDocument(document).length;
+  const canonicalKindWeight = document.document_kind === canonicalizeNameChangeDocumentKind(kind) ? 1 : 0;
+  return (intakeWeight * 1000) + (canonicalKindWeight * 100) - metadataMissingForDocument(document).length;
 }
 
 function findBestContractDocument(
@@ -109,7 +113,7 @@ function findBestContractDocument(
 ) {
   return documents
     .filter((document) => matchesNameChangeDocumentKind(document.document_kind, kind))
-    .sort((left, right) => getDocumentContractPriority(right) - getDocumentContractPriority(left))[0];
+    .sort((left, right) => getDocumentContractPriority(right, kind) - getDocumentContractPriority(left, kind))[0];
 }
 
 export function buildNameChangeDocumentIntakeSnapshot(
