@@ -153,4 +153,13 @@ describe('versionHistory', () => {
       saved.id,
     ]);
   });
+
+  it('returns the newest revision from getBuilderRevision after multiple records', () => {
+    const weddingId = `w_${Date.now()}_o`;
+    const project = createEmptyBuilderProject(weddingId, 'modern-luxe');
+    recordBuilderRevision({ weddingId, project, action: 'save', actor: 'tester-1' });
+    const newest = recordBuilderRevision({ weddingId, project, action: 'publish', actor: 'tester-2' });
+
+    expect(getBuilderRevision(weddingId, newest.id)?.id).toBe(newest.id);
+  });
 });
