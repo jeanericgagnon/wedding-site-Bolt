@@ -51,7 +51,7 @@ const V1_STATUS_GROUPS = [
     tone: 'must',
     intro: 'This is the product line DayOf should actually be judged on right now.',
     items: [
-      'Launch a polished wedding site with honest privacy + access controls',
+      'Work toward launching a polished wedding site with honest privacy + access controls',
       'Run guest list, households, RSVP, meals, and event invites in one place',
       'Handle core wedding messaging without spreadsheet-to-email-tool chaos',
       'Use seating, itinerary, and coordination views to run the event week calmly',
