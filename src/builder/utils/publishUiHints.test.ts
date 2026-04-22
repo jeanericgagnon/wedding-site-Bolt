@@ -190,9 +190,22 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('venue');
   });
 
+  it('does not mistake unrelated generic location copy for a venue blocker', () => {
+    expect(getPublishBlockedHints('Location services unavailable.')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
+  });
+
   it('does not mistake the venue readiness label for a blocker', () => {
     expect(getPublishBlockedHints('Venue details are set')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
+  });
+
+  it('still routes real venue detail blockers after tightening generic venue matching', () => {
+    expect(getPublishBlockedHints('Venue details missing before going live.')).toEqual([
+      'Add at least one venue name or address.',
+      'Make sure guests can tell where they are meant to go.',
     ]);
   });
 
