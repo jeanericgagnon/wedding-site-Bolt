@@ -3,9 +3,19 @@ import { clearQuickStartDraftSnapshot } from './quickStartStateTransfer';
 
 export const ONBOARDING_DRAFT_STORAGE_KEY = 'dayoflove:onboarding-draft';
 
+const clearStorageKeyIfPresent = (key: string) => {
+  try {
+    if (window.localStorage.getItem(key) !== null) {
+      window.localStorage.removeItem(key);
+    }
+  } catch {
+    // ignore cleanup failures so other onboarding draft keys can still clear
+  }
+};
+
 export const clearAllOnboardingDraftStorage = () => {
   if (typeof window === 'undefined') return;
-  window.localStorage.removeItem(ONBOARDING_DRAFT_STORAGE_KEY);
+  clearStorageKeyIfPresent(ONBOARDING_DRAFT_STORAGE_KEY);
   clearQuickStartDraftSnapshot();
-  window.localStorage.removeItem(GUIDED_SETUP_STORAGE_KEY);
+  clearStorageKeyIfPresent(GUIDED_SETUP_STORAGE_KEY);
 };
