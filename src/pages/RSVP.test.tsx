@@ -1397,6 +1397,51 @@ describe('RSVP stale submit protection', () => {
     expect(screen.queryByText('Welcome, Taylor Rivera!')).not.toBeInTheDocument();
   });
 
+  it('clears stale loaded guest truth when the guest cancels back to search', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        guest: {
+          id: 'guest-1',
+          first_name: 'Taylor',
+          last_name: 'Rivera',
+          name: 'Taylor Rivera',
+          email: 'taylor@example.com',
+          phone: null,
+          group_name: null,
+          wedding_site_id: 'site-1',
+          plus_one_allowed: false,
+          invited_to_ceremony: true,
+          invited_to_reception: true,
+          invite_token: 'token-1',
+        },
+        existingRsvp: null,
+        guests: null,
+        rsvpDeadline: null,
+        rsvpQuestions: [],
+        rsvpMealConfig: { enabled: false, options: [] },
+        musicPlaylistUrl: null,
+        householdGuests: [],
+      }),
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/rsvp']}>
+        <RSVP />
+      </MemoryRouter>
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('rsvp.search_placeholder'), { target: { value: 'Taylor Rivera' } });
+    fireEvent.click(screen.getByText('Find My Invitation'));
+
+    expect(await screen.findByText('Welcome, Taylor Rivera!')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Cancel'));
+
+    expect(await screen.findByPlaceholderText('rsvp.search_placeholder')).toBeInTheDocument();
+    expect(screen.queryByText('Welcome, Taylor Rivera!')).not.toBeInTheDocument();
+  });
+
   it('ignores a second submit click while the first RSVP submit is still in flight', async () => {
     const submitRequest = deferred<Response>();
 

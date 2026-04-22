@@ -1381,8 +1381,7 @@ export default function RSVP() {
                       setError('');
                       setFormStep((formStep - 1) as 1 | 2 | 3);
                     } else {
-                      setStep('search');
-                      setError('');
+                      resetToSearch(!!searchParams.get('token'));
                     }
                   }}
                   className="flex-1 min-h-[48px] text-base"
