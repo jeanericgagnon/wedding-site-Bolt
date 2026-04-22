@@ -1375,6 +1375,17 @@ describe('quickStartPersistence', () => {
     expect(normalized.viewState).toBe('thinking');
   });
 
+  it('closes stale thinking restores when the clarifying state is missing entirely', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      showFollowUps: true,
+      viewState: 'thinking',
+      clarifyingState: null,
+    });
+
+    expect(normalized.showFollowUps).toBe(false);
+    expect(normalized.viewState).toBe('question');
+  });
+
   it('closes stale thinking restores when no open clarifying work remains', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       viewState: 'thinking',
