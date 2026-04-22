@@ -151,6 +151,12 @@ const output = {
     'Close the anon-auth RSVP blocker on validate-rsvp-token',
     'Log the canonical couple-path truth pass with runtime wording verification',
   ],
+  externalBlockedProof: {
+    command: 'npm run proof:v1:guests-rsvp-ops',
+    blockerType: 'external_fixture_required',
+    message: 'validate-rsvp-token function is not callable with current anon credentials (401)',
+    recommendation: 'Provide anon-callable function auth in this environment or run with credentials that can invoke the function.',
+  },
   blockers: blockedRequired.map((result) => ({
     id: result.id,
     label: result.label,
