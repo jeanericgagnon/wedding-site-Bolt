@@ -121,7 +121,7 @@ describe('sections registry resolution', () => {
     const baseRegistrySection = TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry');
     expect(baseRegistrySection).toBeDefined();
 
-    const originalVariant = baseRegistrySection?.variant;
+    const originalVariant = baseRegistrySection?.variant ?? 'cards';
     TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry')!.variant = 'grid';
 
     expect(getTemplate('base').defaultLayout.sections.find((section) => section.type === 'registry')?.variant).toBe('cards');
@@ -268,6 +268,9 @@ describe('sections registry resolution', () => {
     const registrySectionComponent = readFileSync(resolve(__dirname, './components/RegistrySection.tsx'), 'utf8');
     expect(registrySectionComponent).toContain('export function shouldUseLiveRegistryItems(items: RegistryItem[] | null): items is RegistryItem[] {');
     expect(registrySectionComponent).toContain('if (shouldUseLiveRegistryItems(items)) {');
+    expect(registrySectionComponent).toContain('export function normalizePublicRegistryItemState(item: RegistryItem): RegistryItem {');
+    expect(registrySectionComponent).toContain('purchase_status: quantityState.purchaseStatus,');
+    expect(registrySectionComponent).toContain("purchaser_name: quantityState.purchaseStatus === 'available' ? null : item.purchaser_name,");
   });
 
   it('keeps public purchaser status aligned with owner purchase state truth', () => {

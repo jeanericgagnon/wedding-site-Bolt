@@ -5,6 +5,7 @@ import { ExternalLink, Gift, Package, CheckCircle2, Loader2, X, ShoppingBag } fr
 import { useSiteView } from '../../contexts/SiteViewContext';
 import { publicFetchRegistryItems, publicIncrementPurchase } from '../../pages/dashboard/registry/registryService';
 import type { RegistryItem } from '../../pages/dashboard/registry/registryTypes';
+import { sanitizeRegistryQuantityState } from '../../pages/dashboard/registry/registryTypes';
 import { readBuilderValue } from '../../lib/weddingProfile';
 
 interface Props {
@@ -34,6 +35,17 @@ function usePublicRegistryItems(weddingSiteId: string | null) {
 
 export function shouldUseLiveRegistryItems(items: RegistryItem[] | null): items is RegistryItem[] {
   return items !== null;
+}
+
+export function normalizePublicRegistryItemState(item: RegistryItem): RegistryItem {
+  const quantityState = sanitizeRegistryQuantityState(item.quantity_purchased, item.quantity_needed);
+  return {
+    ...item,
+    quantity_needed: quantityState.quantityNeeded,
+    quantity_purchased: quantityState.quantityPurchased,
+    purchase_status: quantityState.purchaseStatus,
+    purchaser_name: quantityState.purchaseStatus === 'available' ? null : item.purchaser_name,
+  };
 }
 
 interface PurchaseModalProps {
@@ -342,12 +354,13 @@ function RegistryItemsDisplay({ items, settings, notes, updateItem }: {
   notes?: string;
   updateItem: (item: RegistryItem) => void;
 }) {
+  const normalizedItems = items.map(normalizePublicRegistryItemState);
   const [purchasingItem, setPurchasingItem] = useState<RegistryItem | null>(null);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
   const [sortMode, setSortMode] = useState<'recommended' | 'price-low' | 'price-high'>('recommended');
   const [groupMode, setGroupMode] = useState<'all' | 'funds' | 'stores'>('all');
 
-  const visibleItems = items.filter(item => {
+  const visibleItems = normalizedItems.filter(item => {
     if (item.hide_when_purchased && item.purchase_status === 'purchased') return false;
     if (groupMode === 'funds') return item.item_type === 'cash_fund';
     if (groupMode === 'stores') return item.item_type !== 'cash_fund';
@@ -369,7 +382,7 @@ function RegistryItemsDisplay({ items, settings, notes, updateItem }: {
     setPurchaseError(null);
     try {
       const updated = await publicIncrementPurchase(purchasingItem.id, purchaserName || undefined);
-      updateItem(updated);
+      updateItem(normalizePublicRegistryItemState(updated));
     } catch (err: unknown) {
       setPurchaseError(err instanceof Error ? err.message : 'Could not save that purchase right now. Try again.');
       throw err;
