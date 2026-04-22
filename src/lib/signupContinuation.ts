@@ -17,11 +17,18 @@ export const writeSignupReturnPath = (path: string | null | undefined) => {
   if (!canUseStorage()) return;
   try {
     const trimmedPath = path?.trim();
+    const existingPath = window.localStorage.getItem(SIGNUP_RETURN_PATH_KEY);
+
     if (trimmedPath && isSafeReturnPath(trimmedPath)) {
-      window.localStorage.setItem(SIGNUP_RETURN_PATH_KEY, trimmedPath);
+      if (existingPath !== trimmedPath) {
+        window.localStorage.setItem(SIGNUP_RETURN_PATH_KEY, trimmedPath);
+      }
       return;
     }
-    window.localStorage.removeItem(SIGNUP_RETURN_PATH_KEY);
+
+    if (existingPath !== null) {
+      window.localStorage.removeItem(SIGNUP_RETURN_PATH_KEY);
+    }
   } catch {
     // ignore
   }
@@ -31,7 +38,9 @@ export const consumeSignupReturnPath = (): string | null => {
   const path = readSignupReturnPath();
   if (!canUseStorage()) return path;
   try {
-    window.localStorage.removeItem(SIGNUP_RETURN_PATH_KEY);
+    if (window.localStorage.getItem(SIGNUP_RETURN_PATH_KEY) !== null) {
+      window.localStorage.removeItem(SIGNUP_RETURN_PATH_KEY);
+    }
   } catch {
     // ignore
   }
