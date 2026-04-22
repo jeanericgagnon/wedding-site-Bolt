@@ -125,6 +125,11 @@ function normalizeCustomAnswers(answers: Record<string, string | string[]>) {
   );
 }
 
+function parseLegacyEventAttendanceToken(value: string | undefined): boolean {
+  const normalized = (value || '').trim().toLowerCase();
+  return normalized === 'yes' || normalized === 'true' || normalized === '1';
+}
+
 function normalizeExistingRsvp(existingRsvp: ExistingRSVP): ExistingRSVP {
   const mealChoice = (existingRsvp.meal_choice || '').trim();
   const plusOneName = (existingRsvp.plus_one_name || '').trim();
@@ -220,7 +225,7 @@ function parseEventSelectionsFromNotes(notes: string | null, guest: Guest): { cl
         .filter(Boolean)
         .map((piece) => {
           const [k, v] = piece.split(':').map((x) => (x || '').trim().toLowerCase());
-          return [k, v === 'yes'];
+          return [k, parseLegacyEventAttendanceToken(v)];
         })
     ) as Record<string, boolean>;
 
