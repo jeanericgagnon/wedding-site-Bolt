@@ -661,9 +661,11 @@ export default function RSVP() {
         targetGuestIds,
       });
 
-      if (err) {
+      const submitSucceeded = !!(data && typeof data === 'object' && 'success' in data && (data as { success?: boolean }).success);
+
+      if (err || !submitSucceeded) {
         if (activeSubmitRequestRef.current !== requestId) return;
-        setError(err);
+        setError(err || 'Failed to submit RSVP. Please try again.');
         return;
       }
 
