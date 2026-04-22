@@ -24,6 +24,7 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
   if (
     normalizedErrorLower.includes('partner names')
     || normalizedErrorLower.includes('couple names')
+    || normalizedErrorLower.includes('couple names are filled in')
     || normalizedErrorLower.includes('both names')
     || normalizedErrorLower.includes('both partners')
   ) {
