@@ -53,4 +53,19 @@ describe('signupContinuation', () => {
   it('rejects unsafe fallback paths when resolving post-signup continuation', () => {
     expect(resolvePostSignupPath('https://evil.example/steal')).toBe('/');
   });
+
+
+  it('clears unsafe stored signup return paths when reading continuation state', () => {
+    window.localStorage.setItem('dayoflove:signup-return-path', 'https://evil.example/steal');
+
+    expect(readSignupReturnPath()).toBeNull();
+    expect(window.localStorage.getItem('dayoflove:signup-return-path')).toBeNull();
+  });
+
+  it('rewrites trimmed signup return paths back to storage on read', () => {
+    window.localStorage.setItem('dayoflove:signup-return-path', '  /onboarding/quick-start  ');
+
+    expect(readSignupReturnPath()).toBe('/onboarding/quick-start');
+    expect(window.localStorage.getItem('dayoflove:signup-return-path')).toBe('/onboarding/quick-start');
+  });
 });

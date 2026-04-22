@@ -6,8 +6,20 @@ const isSafeReturnPath = (path: string) => path.startsWith('/') && !path.startsW
 export const readSignupReturnPath = (): string | null => {
   if (!canUseStorage()) return null;
   try {
-    const raw = window.localStorage.getItem(SIGNUP_RETURN_PATH_KEY)?.trim();
-    return raw && isSafeReturnPath(raw) ? raw : null;
+    const raw = window.localStorage.getItem(SIGNUP_RETURN_PATH_KEY);
+    const trimmed = raw?.trim() ?? null;
+
+    if (trimmed && isSafeReturnPath(trimmed)) {
+      if (trimmed !== raw) {
+        window.localStorage.setItem(SIGNUP_RETURN_PATH_KEY, trimmed);
+      }
+      return trimmed;
+    }
+
+    if (raw !== null) {
+      window.localStorage.removeItem(SIGNUP_RETURN_PATH_KEY);
+    }
+    return null;
   } catch {
     return null;
   }
