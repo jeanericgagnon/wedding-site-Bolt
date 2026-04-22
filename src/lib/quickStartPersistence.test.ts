@@ -77,4 +77,15 @@ describe('quickStartPersistence', () => {
 
     expect(normalized.followUpAnswers).toEqual({ 'event-1-time': '6:00 PM' });
   });
+
+  it('clears follow-up mode when no clarifying state survived restore', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      showFollowUps: true,
+      viewState: 'followups',
+      clarifyingState: { clarifying: [] },
+    });
+
+    expect(normalized.showFollowUps).toBe(false);
+    expect(normalized.viewState).toBe('question');
+  });
 });
