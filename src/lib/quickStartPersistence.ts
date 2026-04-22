@@ -221,6 +221,12 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
   )) || false);
   const hasExplicitShowFollowUps = parsed.showFollowUps === true || parsed.showFollowUps === false;
   const hasDraftedFollowUpAnswers = Object.keys(followUpAnswers).length > 0;
+  const hasTypedClarifyingDraftAnswers = Boolean(
+    clarifyingState?.clarifying.questions.some((question) => (
+      (question.status === 'pending' || question.status === 'unresolved')
+      && question.answer.trim().length > 0
+    ))
+  );
   const hasAnsweredClarifyingHistory = Boolean(
     clarifyingState?.clarifying.history.some((question) => question.status === 'answered' && question.answer.trim().length > 0)
   );
@@ -228,7 +234,7 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     parsed.showFollowUps === true
     || (!hasExplicitShowFollowUps && (
       parsed.viewState === 'followups'
-      || (hasDraftedFollowUpAnswers && !hasAnsweredClarifyingHistory)
+      || ((hasDraftedFollowUpAnswers || hasTypedClarifyingDraftAnswers) && !hasAnsweredClarifyingHistory)
     ))
   );
   const hasAnyClarifyingRecords = Boolean(
