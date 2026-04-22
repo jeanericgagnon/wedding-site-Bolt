@@ -52,7 +52,7 @@ const V1_HOME_GROUPS = [
 
 export const Home: React.FC = () => {
   const navigate = useNavigate();
-  const { signIn } = useAuth();
+  const { signIn, user } = useAuth();
   const { toast } = useToast();
   const [expandedFaq, setExpandedFaq] = useState<number | null>(0);
   const [demoLoading, setDemoLoading] = useState(false);
@@ -122,6 +122,11 @@ export const Home: React.FC = () => {
   ] as const;
 
   const handleSignUp = async () => {
+    if (user) {
+      navigate('/dashboard/builder');
+      return;
+    }
+
     navigate('/signup');
   };
 
