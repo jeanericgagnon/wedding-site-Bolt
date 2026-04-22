@@ -38,6 +38,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('venue');
   });
 
+  it('returns venue guidance for whitespace-padded venue message', () => {
+    const hints = getPublishBlockedHints('   Add at least one venue before publishing.   ');
+    expect(hints[0]).toContain('venue');
+  });
+
   it('returns RSVP guidance', () => {
     const hints = getPublishBlockedHints('Enable RSVP before publishing.');
     expect(hints[0]).toContain('RSVP');
