@@ -30,6 +30,7 @@ const proofBoard = {
     ],
     secondaryTrustGap: 'Canonical couple-path truth notes and runtime wording verification are still missing',
     secondaryTrustGapKey: 'canonical_couple_path_and_runtime_wording_verification_missing',
+    starterDraftWordingVerificationMissing: true,
   },
   ruthlessNextThree: [
     {
@@ -44,11 +45,13 @@ const proofBoard = {
       manualProof: [
         'Home -> signup/demo/auth -> onboarding/builder -> public site -> RSVP route notes',
         'Verify privacy/access/publish plus marketing/settings/billing wording against live runtime behavior',
+        'Verify onboarding and first-run starter-draft wording against live runtime behavior',
         'Capture exact pass/fail points in docs/v1-smoke-proof-log.md',
       ],
       exitBar: 'Automated canonical smoke stays green and one logged canonical route-note + runtime wording pass is captured in docs/v1-smoke-proof-log.md.',
       status: 'AUTOMATED_PASS_MANUAL_NOTES_PENDING',
       runtimeWordingVerificationMissing: true,
+      starterDraftWordingVerificationMissing: true,
       secondaryTrustGapKey: 'canonical_couple_path_and_runtime_wording_verification_missing',
     },
     {
@@ -101,8 +104,10 @@ const proofBoard = {
         'Home -> signup/demo/auth -> onboarding/builder -> public site route notes',
         'Verify privacy/access/publish wording against live behavior',
         'Verify marketing/settings/billing wording against live behavior',
+        'Verify onboarding and first-run starter-draft wording against live behavior',
       ],
       runtimeWordingVerificationMissing: true,
+      starterDraftWordingVerificationMissing: true,
       secondaryTrustGapKey: 'canonical_couple_path_and_runtime_wording_verification_missing',
       evidenceTarget: 'docs/v1-smoke-proof-log.md',
     },
