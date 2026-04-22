@@ -49,6 +49,10 @@ function buildDraftFieldLabel(fieldKey: NameChangeExtractedFieldInput['field_key
   return normalizeDraftText(fieldLabel) || humanizeDraftToken(fieldKey);
 }
 
+function shouldCreateDraftNameChangeDocumentMaskedFile(kind: NameChangeDocumentInput['document_kind']) {
+  return kind !== 'other';
+}
+
 export function buildDraftNameChangeDocumentId(kind: NameChangeDocumentInput['document_kind']) {
   const normalizedKind = normalizeDraftDocumentKind(kind) || 'other';
   return normalizedKind === 'other'
@@ -75,7 +79,7 @@ export function createDraftNameChangeDocument(
 ): NameChangeDocumentInput {
   const normalizedKind = normalizeDraftDocumentKind(kind) || 'other';
   const canonicalKind = canonicalizeNameChangeDocumentKind(normalizedKind as NameChangeDocumentInput['document_kind']);
-  const shouldUseMaskedFileName = canonicalKind !== 'other';
+  const shouldUseMaskedFileName = shouldCreateDraftNameChangeDocumentMaskedFile(canonicalKind);
   const defaultExtractionConfidence = canonicalKind !== 'other' ? 0.92 : null;
   const defaultIntakeStatus = canonicalKind !== 'other' ? 'uploaded' : 'not_started';
   const normalizedLabel = canonicalKind === 'other'
