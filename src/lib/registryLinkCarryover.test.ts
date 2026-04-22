@@ -90,6 +90,14 @@ describe('carryOverRegistryLinks', () => {
     ]);
   });
 
+  it('infers pottery family registry source labels from carryover text and urls', () => {
+    expect(carryOverRegistryLinks('CB2 Registry | cb2.com/registry/jane\nPottery Barn Registry | potterybarn.com/registry/jane\nWilliams Sonoma Registry | williams-sonoma.com/registry/jane')).toEqual([
+      { url: 'https://cb2.com/registry/jane', sourceLabel: 'CB2' },
+      { url: 'https://potterybarn.com/registry/jane', sourceLabel: 'Pottery Barn' },
+      { url: 'https://williams-sonoma.com/registry/jane', sourceLabel: 'Williams Sonoma' },
+    ]);
+  });
+
   it('does not leak one source label across multiple carryover links on the same line', () => {
     expect(carryOverRegistryLinks('Amazon Registry | amazon.com/shop; target.com/list')).toEqual([
       { url: 'https://amazon.com/shop', sourceLabel: 'Amazon' },

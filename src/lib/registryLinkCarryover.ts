@@ -25,7 +25,10 @@ function normalizeUrl(raw: string): string | null {
 function inferSourceLabel(url: string): string | undefined {
   const lower = url.toLowerCase();
   if (lower.includes('crateandbarrel.com')) return 'Crate & Barrel';
+  if (lower.includes('cb2.com')) return 'CB2';
+  if (lower.includes('potterybarn.com')) return 'Pottery Barn';
   if (lower.includes('westelm.com')) return 'West Elm';
+  if (lower.includes('williams-sonoma.com')) return 'Williams Sonoma';
   if (lower.includes('zola.com')) return 'Zola';
   if (lower.includes('withjoy.com')) return 'Joy';
   if (lower.includes('theknot.com')) return 'The Knot';
@@ -38,8 +41,11 @@ function inferSourceLabelFromText(text: string): string | undefined {
   const normalized = text.trim().toLowerCase();
   if (!normalized) return undefined;
   if (normalized.includes('crate') && normalized.includes('barrel')) return 'Crate & Barrel';
+  if (normalized.includes('cb2')) return 'CB2';
+  if (normalized.includes('pottery') && normalized.includes('barn')) return 'Pottery Barn';
   if (normalized.includes('amazon')) return 'Amazon';
   if (normalized.includes('target')) return 'Target';
+  if (normalized.includes('williams') && normalized.includes('sonoma')) return 'Williams Sonoma';
   if (normalized.includes('zola')) return 'Zola';
   if (normalized.includes('joy')) return 'Joy';
   if (normalized.includes('the knot') || normalized.includes('theknot')) return 'The Knot';

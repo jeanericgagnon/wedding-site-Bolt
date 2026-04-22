@@ -395,7 +395,10 @@ describe('sections registry resolution', () => {
     expect(registryLinkCarryover).toContain('export function parsePersistedRegistryLinks(raw: string | null | undefined): CarryoverRegistryLink[] {');
     expect(registryLinkCarryover).toContain('export function mergeRegistrySourceLabels(');
     expect(registryLinkCarryover).toContain("if (lower.includes('crateandbarrel.com')) return 'Crate & Barrel';");
+    expect(registryLinkCarryover).toContain("if (lower.includes('cb2.com')) return 'CB2';");
+    expect(registryLinkCarryover).toContain("if (lower.includes('potterybarn.com')) return 'Pottery Barn';");
     expect(registryLinkCarryover).toContain("if (lower.includes('westelm.com')) return 'West Elm';");
+    expect(registryLinkCarryover).toContain("if (lower.includes('williams-sonoma.com')) return 'Williams Sonoma';");
     expect(registryLinkCarryover).toContain("if (lower.includes('zola.com')) return 'Zola';");
     expect(registryLinkCarryover).toContain("const existingMode = (existing as CarryoverRegistryLink & { sourceLabelMode?: 'explicit' | 'inferred' }).sourceLabelMode;");
     expect(registryLinkCarryover).toContain('(!existing.sourceLabel && token.sourceLabel)');
