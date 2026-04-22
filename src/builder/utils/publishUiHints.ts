@@ -14,7 +14,7 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
       'Turn it on in the right panel, then save and go live again.',
     ];
   }
-  if (normalizedErrorLower.includes('partner names')) {
+  if (normalizedErrorLower.includes('partner names') || normalizedErrorLower.includes('both names')) {
     return [
       'Open your couple details.',
       'Add both names exactly how you want guests to see them.',

@@ -48,6 +48,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('couple details');
   });
 
+  it('returns partner-name guidance when blocker copy says both names instead of partner names', () => {
+    const hints = getPublishBlockedHints('Add both names exactly how you want them shown.');
+    expect(hints[0]).toContain('couple details');
+  });
+
   it('returns wedding-date guidance', () => {
     const hints = getPublishBlockedHints('Add your wedding date before publishing.');
     expect(hints[0]).toContain('event details');
