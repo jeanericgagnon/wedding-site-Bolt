@@ -59,6 +59,10 @@ test.describe('public route smoke basics', () => {
     await gotoDom(page, '/onboarding/quick-start?bypassPayment=1');
     await expect(page.getByRole('heading', { name: /who’s getting married\?/i })).toBeVisible();
     await expect(page.getByText(/use the names exactly how you want guests to see them on the site/i)).toBeVisible();
+    await page.getByPlaceholder(/alex & jordan/i).fill('Alex & Jordan');
+    await page.getByRole('button', { name: /^continue$/i }).click();
+    await expect(page.getByRole('heading', { name: /how should we refer to each of you on the site\?/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /just our names/i })).toBeVisible();
   });
 
   test('protected onboarding route falls back to login when auth is missing', async ({ page }) => {
