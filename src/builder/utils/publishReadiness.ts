@@ -39,7 +39,7 @@ export const getPublishIssue = (project: BuilderProject, weddingData?: WeddingDa
       return { kind: 'missing-couple-names', message: 'Add both partner names before going live.' };
     }
 
-    if (!weddingData.event.weddingDateISO) {
+    if (!weddingData.event.weddingDateISO?.trim()) {
       return { kind: 'missing-event-date', message: 'Add your wedding date before going live.' };
     }
 
@@ -71,7 +71,7 @@ export const buildPublishReadiness = (
   );
   const hasVenue = Boolean(weddingData?.venues.some((v) => !!v.name?.trim() || !!v.address?.trim()));
   const hasNames = Boolean(weddingData?.couple.partner1Name?.trim() && weddingData?.couple.partner2Name?.trim());
-  const hasWeddingDate = Boolean(weddingData?.event.weddingDateISO);
+  const hasWeddingDate = Boolean(weddingData?.event.weddingDateISO?.trim());
   const hasRsvpEnabled = weddingData ? weddingData.rsvp.enabled : true;
   const hasUnsavedChanges = Boolean(options?.isDirty);
   const activePageHasVisibleSections = Boolean(activePage?.sections.some((section) => section.enabled));
