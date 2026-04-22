@@ -45,12 +45,15 @@ export function isDraftNameChangeMaskedFileName(fileName: string | null | undefi
   return typeof fileName === 'string' && /-draft\.pdf$/i.test(fileName.trim());
 }
 
+function isRequestedDraftDocumentId(documentId: string | null | undefined) {
+  return typeof documentId === 'string' && documentId.trim().toLowerCase().startsWith('draft');
+}
+
 function shouldBlockDraftDocumentFieldWrite(documentId: string | null | undefined, normalizedDocumentId: string | null) {
   const trimmedDocumentId = typeof documentId === 'string' ? documentId.trim() : '';
-  const requestedDraftDocumentId = trimmedDocumentId.toLowerCase().startsWith('draft');
   const requestedBareDraftDocumentId = /^draft$/i.test(trimmedDocumentId);
-  const requestedFallbackOtherDraftDocumentId = requestedDraftDocumentId && !normalizedDocumentId;
-  return requestedDraftDocumentId && (requestedBareDraftDocumentId || requestedFallbackOtherDraftDocumentId);
+  const requestedFallbackOtherDraftDocumentId = isRequestedDraftDocumentId(documentId) && !normalizedDocumentId;
+  return isRequestedDraftDocumentId(documentId) && (requestedBareDraftDocumentId || requestedFallbackOtherDraftDocumentId);
 }
 
 function normalizeDraftDocumentKind(value: string) {
@@ -192,8 +195,7 @@ export function normalizeDraftNameChangeDocumentId(documentId: string | null | u
 }
 
 export function isDraftNameChangeDocumentId(documentId: string | null | undefined) {
-  return typeof documentId === 'string'
-    && documentId.trim().toLowerCase().startsWith('draft')
+  return isRequestedDraftDocumentId(documentId)
     && normalizeDraftNameChangeDocumentId(documentId) != null;
 }
 
