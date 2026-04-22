@@ -7,6 +7,7 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
     || normalizedErrorLower.includes('add a page')
     || normalizedErrorLower.includes('apply a starting design')
     || normalizedErrorLower.includes('a page exists')
+    || normalizedErrorLower.includes('page ready')
     || normalizedErrorLower.includes('pages ready')
   ) {
     return [

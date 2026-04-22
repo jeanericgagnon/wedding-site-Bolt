@@ -284,6 +284,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('Designs');
   });
 
+  it('returns page guidance when blocker copy uses singular readiness detail wording', () => {
+    const hints = getPublishBlockedHints('1 page ready');
+    expect(hints[0]).toContain('Designs');
+  });
+
   it('does not mistake the current-page readiness label for a page blocker', () => {
     expect(getPublishBlockedHints('Current page has visible content')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
