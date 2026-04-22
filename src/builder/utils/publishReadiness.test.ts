@@ -1066,6 +1066,34 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('matches persisted active pages even when stored page ids include harmless whitespace padding', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages = [
+      {
+        ...project.pages[0],
+        id: ' page-1 ',
+        title: 'Home',
+        orderIndex: 0,
+        sections: [makeSection({ id: 'home-live', enabled: true })],
+      },
+      {
+        ...project.pages[0],
+        id: ' page-2 ',
+        title: 'Details',
+        orderIndex: 1,
+        sections: [makeSection({ id: 'details-hidden', enabled: false })],
+      },
+    ];
+
+    const readiness = buildPublishReadiness(project, undefined, { activePageId: 'page-2' });
+    expect(readiness.find((item) => item.id === 'current-page')).toEqual({
+      id: 'current-page',
+      label: 'Current page has visible content',
+      done: false,
+      detail: 'Turn on content for Details.',
+    });
+  });
+
   it('falls back to the first page when activePageId is only whitespace', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages = [

@@ -17,6 +17,7 @@ export interface PublishReadinessItem {
 }
 
 const hasNonEmptyString = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
+const getNormalizedId = (value: unknown) => (typeof value === 'string' ? value.trim() : '');
 const isPageLike = (value: unknown): value is BuilderProject['pages'][number] =>
   typeof value === 'object'
   && value !== null
@@ -110,7 +111,7 @@ export const buildPublishReadiness = (
     ? options.activePageId.trim() || null
     : options?.activePageId;
   const normalizedPages = getNormalizedPages(project);
-  const activePage = normalizedPages.find((page) => page?.id === normalizedActivePageId) ?? normalizedPages[0];
+  const activePage = normalizedPages.find((page) => getNormalizedId(page?.id) === normalizedActivePageId) ?? normalizedPages[0];
   const enabledSectionCount = normalizedPages.reduce(
     (count, page) => count + getNormalizedSections(page).filter((section) => section?.enabled === true).length,
     0
