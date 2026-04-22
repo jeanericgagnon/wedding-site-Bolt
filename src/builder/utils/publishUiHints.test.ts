@@ -127,6 +127,17 @@ describe('publishUiHints', () => {
     ]);
   });
 
+  it('still routes real date blockers after tightening generic date matching', () => {
+    expect(getPublishBlockedHints('Add your wedding date before going live.')).toEqual([
+      'Open event details.',
+      'Add your wedding date before going live.',
+    ]);
+    expect(getPublishBlockedHints('Add your event date before going live.')).toEqual([
+      'Open event details.',
+      'Add your wedding date before going live.',
+    ]);
+  });
+
   it('does not mistake the date success detail for a blocker', () => {
     expect(getPublishBlockedHints('Date is ready.')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',

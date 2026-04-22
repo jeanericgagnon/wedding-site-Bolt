@@ -78,9 +78,11 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
     ];
   }
   if (
-    normalizedErrorLower.includes('wedding date')
-    || normalizedErrorLower.includes('event date')
+    normalizedErrorLower.includes('add your wedding date')
+    || normalizedErrorLower.includes('add your event date')
     || normalizedErrorLower.includes('add your date')
+    || normalizedErrorLower.includes('wedding date before going live')
+    || normalizedErrorLower.includes('event date before going live')
   ) {
     return [
       'Open event details.',
