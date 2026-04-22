@@ -24,7 +24,7 @@ const TRUST_PILLARS = [
 
 const SAFETY_NOTES = [
   `${SITE_TRUST_COPY.customWeddingUrlExplainer} External custom-domain mapping is not something we claim unless it is actually live.`,
-  'Message history should reflect real states like draft, scheduled, sent, partial, or failed instead of vague fake success language.',
+  SITE_TRUST_COPY.reviewBeforeSendMessaging,
   'Registry repair and cleanup are guided workflows with human review, not a guaranteed one-click fix for every merchant.',
   'Planner collaboration is intentionally couple-led, with clearer boundaries instead of pretending this is enterprise workflow software.',
 ];

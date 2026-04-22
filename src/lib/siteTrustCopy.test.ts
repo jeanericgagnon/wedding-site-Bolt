@@ -26,6 +26,11 @@ describe('SITE_TRUST_COPY starter draft truth', () => {
     expect(SITE_TRUST_COPY.guestAccessTruth.toLowerCase()).not.toContain('launch state');
   });
 
+  it('keeps messaging trust framed around review-before-send states instead of fake success claims', () => {
+    expect(SITE_TRUST_COPY.reviewBeforeSendMessaging).toBe('Review-before-send messaging should stay honest about drafts, scheduled sends, and delivery states before broader launch claims.');
+    expect(SITE_TRUST_COPY.reviewBeforeSendMessaging.toLowerCase()).not.toContain('ready-to-send');
+  });
+
   it('keeps custom URL copy framed around sharing a DayOf link instead of implying a separate domain product', () => {
     expect(SITE_TRUST_COPY.customWeddingUrl).toBe('Share-ready DayOf URL. No separate-domain upsell.');
     expect(SITE_TRUST_COPY.customWeddingUrlExplainer).toBe('Every site includes a personalized DayOf URL, so you can share a polished DayOf link with guests without a separate domain upsell.');
