@@ -2,9 +2,13 @@ import { normalizeQuickStartDraftSnapshot, type QuickStartDraftSnapshot } from '
 
 export const QUICK_START_STORAGE_KEY = 'dayoflove:quickstart-shell';
 
+export const createQuickStartDraftSnapshot = (value: unknown): QuickStartDraftSnapshot => (
+  normalizeQuickStartDraftSnapshot(value)
+);
+
 export const persistQuickStartDraftSnapshot = (value: unknown) => {
   if (typeof window === 'undefined') return null;
-  const normalized = normalizeQuickStartDraftSnapshot(value);
+  const normalized = createQuickStartDraftSnapshot(value);
   try {
     window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify(normalized));
   } catch {
@@ -25,7 +29,7 @@ export const readQuickStartDraftSnapshot = (): QuickStartDraftSnapshot | null =>
 
   if (!raw) return null;
   try {
-    const normalized = normalizeQuickStartDraftSnapshot(JSON.parse(raw));
+    const normalized = createQuickStartDraftSnapshot(JSON.parse(raw));
     try {
       window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify(normalized));
     } catch {

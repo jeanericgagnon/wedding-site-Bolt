@@ -24,7 +24,7 @@ import { buildOnboardingUpdateWithClarifying } from '../../lib/buildOnboardingUp
 import { applyQuickStartAnswer, mergeClarifyingAnswer, type ConciergeQuestion } from '../../lib/quickStartFlow';
 import { writeSignupReturnPath } from '../../lib/signupContinuation';
 import { normalizeQuickStartDraftSnapshot } from '../../lib/quickStartPersistence';
-import { persistQuickStartDraftSnapshot, QUICK_START_STORAGE_KEY } from '../../lib/quickStartStateTransfer';
+import { createQuickStartDraftSnapshot, persistQuickStartDraftSnapshot, QUICK_START_STORAGE_KEY } from '../../lib/quickStartStateTransfer';
 import { buildQuickStartEntryPath, buildQuickStartGuestsPath } from '../../lib/quickStartContinuation';
 import { clearAllOnboardingContinuationState } from '../../lib/onboardingContinuationCleanup';
 import { hasMeaningfulQuickStartAnswers, mergeQuickStartSeedIntoDraft } from '../../lib/quickStartHydration';
@@ -368,7 +368,7 @@ export const QuickStart: React.FC = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        persistQuickStartDraftSnapshot({
+        const carriedQuickStartDraft = createQuickStartDraftSnapshot({
           initialSetupAnswers: answersOverride,
           currentIndex: safeCurrentIndex,
           followUpAnswers: followUpAnswersRef.current,
@@ -376,13 +376,14 @@ export const QuickStart: React.FC = () => {
           clarifyingState: clarifyingOverride,
           viewState,
         });
+        persistQuickStartDraftSnapshot(carriedQuickStartDraft);
         writeSignupReturnPath(buildQuickStartEntryPath());
         setLoading(false);
         setIsThinking(false);
         navigate('/signup?bypassPayment=1', {
           replace: true,
           state: {
-            quickStartDraft: { initialSetupAnswers: answersOverride, followUpAnswers: followUpAnswersRef.current, clarifyingState: clarifyingOverride },
+            quickStartDraft: carriedQuickStartDraft,
             returnTo: buildQuickStartEntryPath(),
           },
         });
