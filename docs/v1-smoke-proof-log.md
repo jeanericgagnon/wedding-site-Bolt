@@ -195,6 +195,7 @@ If this is weak, couples bounce back to external tools and the ops story collaps
 **Pass / Fail**
 - Status: PENDING
 - Notes:
+  - Protected route smoke now covers `/dashboard/messages` auth fallback as part of canonical live smoke.
 - Blockers:
 
 ---
