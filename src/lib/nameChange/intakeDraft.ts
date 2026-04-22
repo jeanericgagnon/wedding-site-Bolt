@@ -53,6 +53,10 @@ function shouldCreateDraftNameChangeDocumentMaskedFile(kind: NameChangeDocumentI
   return kind !== 'other';
 }
 
+function getDraftNameChangeDocumentIntakeStatus(kind: NameChangeDocumentInput['document_kind']) {
+  return kind !== 'other' ? 'uploaded' : 'not_started';
+}
+
 export function buildDraftNameChangeDocumentId(kind: NameChangeDocumentInput['document_kind']) {
   const normalizedKind = normalizeDraftDocumentKind(kind) || 'other';
   return normalizedKind === 'other'
@@ -81,7 +85,7 @@ export function createDraftNameChangeDocument(
   const canonicalKind = canonicalizeNameChangeDocumentKind(normalizedKind as NameChangeDocumentInput['document_kind']);
   const shouldUseMaskedFileName = shouldCreateDraftNameChangeDocumentMaskedFile(canonicalKind);
   const defaultExtractionConfidence = canonicalKind !== 'other' ? 0.92 : null;
-  const defaultIntakeStatus = canonicalKind !== 'other' ? 'uploaded' : 'not_started';
+  const defaultIntakeStatus = getDraftNameChangeDocumentIntakeStatus(canonicalKind);
   const normalizedLabel = canonicalKind === 'other'
     ? humanizeDraftToken(canonicalKind)
     : normalizeDraftText(label) || humanizeDraftToken(canonicalKind);
