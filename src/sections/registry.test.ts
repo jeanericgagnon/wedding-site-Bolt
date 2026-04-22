@@ -299,8 +299,8 @@ describe('sections registry resolution', () => {
     expect(sectionRegistry).toContain("const normalizedVariant = resolveRegistryVariant(type, variant);");
     expect(sectionRegistry).toContain("default: 'cards'");
     expect(sectionRegistry).toContain("grid: 'cards'");
-    expect(sectionRegistry).toContain("return registryAlias ?? 'cards';");
-    expect(sectionRegistry).toContain("normalizeRegistryVariantKey(aliasVariant) === normalizedVariantKey");
+    expect(sectionRegistry).toContain("return registryAliasTarget ?? 'cards';");
+    expect(sectionRegistry).toContain("normalizeRegistryVariantKey(aliasVariant) === normalizedVariantKey)?.[1]");
   });
 
   it('keeps legacy public registry surfaces from falling back to stale links after live loads', () => {

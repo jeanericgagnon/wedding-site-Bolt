@@ -283,8 +283,8 @@ function resolveRegistryVariant(type: string, variant: unknown): string {
   const directRegistryVariant = getVariantsForType('registry').find((definition) => normalizeRegistryVariantKey(definition.variant) === normalizedVariantKey)?.variant;
   if (directRegistryVariant) return directRegistryVariant;
 
-  const registryAlias = Object.entries(VARIANT_FALLBACKS.registry ?? {}).find(([aliasVariant]) => normalizeRegistryVariantKey(aliasVariant) === normalizedVariantKey)?.[0];
-  return registryAlias ?? 'cards';
+  const registryAliasTarget = Object.entries(VARIANT_FALLBACKS.registry ?? {}).find(([aliasVariant]) => normalizeRegistryVariantKey(aliasVariant) === normalizedVariantKey)?.[1];
+  return registryAliasTarget ?? 'cards';
 }
 
 function registerDefinition<T>(def: SectionDefinition<T>): void {
