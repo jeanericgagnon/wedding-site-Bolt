@@ -153,5 +153,7 @@ describe('sections registry resolution', () => {
     expect(compatibility).toContain("Object.entries(aliases).find(([aliasVariant]) => aliasVariant.toLowerCase() === normalizedVariantKey)?.[1]");
     expect(compatibilityTest).toContain("expect(resolveBuilderVariant('registry', '   ')).toBe('default');");
     expect(compatibilityTest).toContain("expect(resolveBuilderVariant('registry', 'not-a-real-variant')).toBe('default');");
+    expect(compatibilityTest).toContain("expect(resolveBuilderVariant('registry', ' FEATURED ')).toBe('featured');");
+    expect(compatibilityTest).toContain("expect(resolveBuilderVariant('registry', 'Experiences')).toBe('experiences');");
   });
 });

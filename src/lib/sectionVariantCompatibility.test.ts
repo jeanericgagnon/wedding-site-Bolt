@@ -46,4 +46,11 @@ describe('resolveBuilderVariant registry compatibility', () => {
     expect(resolveBuilderVariant('registry', undefined as never)).toBe('default');
     expect(resolveBuilderVariant('registry', null as never)).toBe('default');
   });
+
+  it('keeps persisted registry aliases on builder-native variants after trim and casing normalization', () => {
+    expect(resolveBuilderVariant('registry', ' FEATURED ')).toBe('featured');
+    expect(resolveBuilderVariant('registry', 'Tabs')).toBe('tabs');
+    expect(resolveBuilderVariant('registry', 'Classic')).toBe('classic');
+    expect(resolveBuilderVariant('registry', 'Experiences')).toBe('experiences');
+  });
 });
