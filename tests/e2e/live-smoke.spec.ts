@@ -55,6 +55,12 @@ test.describe('public route smoke basics', () => {
     await expect(page.getByRole('button', { name: /sign in/i })).toBeVisible();
   });
 
+  test('payment-required route falls back to login when auth is missing', async ({ page }) => {
+    await gotoDom(page, '/payment-required');
+    await expect(page).toHaveURL(/\/login$/);
+    await expect(page.getByRole('heading', { name: /welcome back/i })).toBeVisible();
+  });
+
   test('quick-start preview stays reachable without auth when bypass preview is explicit', async ({ page }) => {
     await gotoDom(page, '/onboarding/quick-start?bypassPayment=1');
     await expect(page.getByRole('heading', { name: /who’s getting married\?/i })).toBeVisible();
