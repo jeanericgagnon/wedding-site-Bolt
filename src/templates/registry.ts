@@ -37,6 +37,12 @@ function normalizeRegistryTemplateVariant(variant: string): string {
   return REGISTRY_VARIANT_ALIASES[normalizedVariant] ?? variant;
 }
 
+function normalizeTemplateIdKey(templateId: unknown): string {
+  return typeof templateId === 'string'
+    ? templateId.trim().toLowerCase().replace(/[^a-z0-9]/g, '')
+    : '';
+}
+
 function cloneTemplateValue<T>(value: T): T {
   if (Array.isArray(value)) return value.map((entry) => cloneTemplateValue(entry)) as T;
   if (value && typeof value === 'object') {
@@ -804,8 +810,18 @@ export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = {
   rustic: cloneTemplateDefinition(templateById['rustic-barn'] ?? templateById['timeless-classic'] ?? templateRegistry[0]),
 };
 
+const templateIdAliases = new Map<string, string>(
+  Object.entries(TEMPLATE_REGISTRY).flatMap(([templateId, template]) => {
+    const keys = new Set([normalizeTemplateIdKey(templateId), normalizeTemplateIdKey(template.name)]);
+    return Array.from(keys).filter(Boolean).map((key) => [key, templateId]);
+  }),
+);
+
 export function getTemplate(templateId: string): TemplateDefinition {
-  return cloneTemplateDefinition(TEMPLATE_REGISTRY[templateId] || TEMPLATE_REGISTRY.base || templateRegistry[0]);
+  const canonicalTemplateId = TEMPLATE_REGISTRY[templateId]
+    ? templateId
+    : templateIdAliases.get(normalizeTemplateIdKey(templateId)) ?? 'base';
+  return cloneTemplateDefinition(TEMPLATE_REGISTRY[canonicalTemplateId] || TEMPLATE_REGISTRY.base || templateRegistry[0]);
 }
 
 export function getAllTemplates(): TemplateDefinition[] {

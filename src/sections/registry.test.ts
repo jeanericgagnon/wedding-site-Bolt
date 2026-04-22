@@ -129,6 +129,13 @@ describe('sections registry resolution', () => {
     TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry')!.variant = originalVariant;
   });
 
+  it('keeps persisted template ids resolving cleanly through import edits', () => {
+    expect(getTemplate(' Base ').id).toBe('timeless-classic');
+    expect(getTemplate('TIMELESS_CLASSIC').id).toBe('timeless-classic');
+    expect(getTemplate('Playful Celebration').id).toBe('playful-celebration');
+    expect(getTemplate('EDITORIAL').id).toBe('editorial-impact');
+  });
+
   it('keeps imported registry template bindings and overrides isolated from later edits', () => {
     const importedTemplate = getTemplate('registry-wish-focused');
     const importedRegistrySection = importedTemplate.defaultLayout.sections.find((section) => section.type === 'registry');
@@ -290,6 +297,11 @@ describe('sections registry resolution', () => {
     expect(templateRegistrySource).toContain('const REGISTRY_VARIANT_ALIASES: Record<string, string> = {');
     expect(templateRegistrySource).toContain("default: 'cards'");
     expect(templateRegistrySource).toContain("grid: 'cards'");
+    expect(templateRegistrySource).toContain('function normalizeTemplateIdKey(templateId: unknown): string {');
+    expect(templateRegistrySource).toContain('const templateIdAliases = new Map<string, string>(');
+    expect(templateRegistrySource).toContain('Object.entries(TEMPLATE_REGISTRY).flatMap(([templateId, template]) => {');
+    expect(templateRegistrySource).toContain('normalizeTemplateIdKey(template.name)');
+    expect(templateRegistrySource).toContain("templateIdAliases.get(normalizeTemplateIdKey(templateId)) ?? 'base'");
     expect(templateRegistrySource).toContain('function cloneTemplateValue<T>(value: T): T {');
     expect(templateRegistrySource).toContain("templateRegistry.map((template) => [template.id, cloneTemplateDefinition(template)])");
     expect(templateRegistrySource).toContain("base: cloneTemplateDefinition(templateById['timeless-classic'] ?? templateRegistry[0]),");
@@ -298,7 +310,7 @@ describe('sections registry resolution', () => {
     expect(templateRegistrySource).toContain('settings: cloneTemplateValue(section.settings ?? {}),');
     expect(templateRegistrySource).toContain('overrides: cloneTemplateValue(section.overrides ?? undefined),');
     expect(templateRegistrySource).toContain('function cloneTemplateDefinition(template: TemplateDefinition): TemplateDefinition {');
-    expect(templateRegistrySource).toContain('return cloneTemplateDefinition(TEMPLATE_REGISTRY[templateId] || TEMPLATE_REGISTRY.base || templateRegistry[0]);');
+    expect(templateRegistrySource).toContain('return cloneTemplateDefinition(TEMPLATE_REGISTRY[canonicalTemplateId] || TEMPLATE_REGISTRY.base || templateRegistry[0]);');
     expect(templateRegistrySource).toContain('return templateRegistry.map(cloneTemplateDefinition);');
   });
 });
