@@ -240,4 +240,23 @@ describe('mediaService', () => {
       caption: 'Ceremony aisle',
     }));
   });
+
+  it('keeps alt text truth alongside section attachment when both are provided', async () => {
+    const file = new File(['img'], 'seating-chart.jpg', { type: 'image/jpeg' });
+    upload.mockResolvedValue({
+      url: 'https://cdn.example.com/seating-chart.jpg',
+      path: 'w1/seating-chart.jpg',
+    });
+    save.mockResolvedValue({ id: 'asset-13' });
+
+    await mediaService.uploadAsset('w1', file, {
+      attachToSectionId: 'section-details',
+      altText: 'Seating chart display',
+    });
+
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({
+      attachedSectionIds: ['section-details'],
+      altText: 'Seating chart display',
+    }));
+  });
 });
