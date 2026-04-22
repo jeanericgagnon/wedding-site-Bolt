@@ -209,6 +209,18 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('marks sections readiness complete with singular visible-section copy', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
+
+    expect(buildPublishReadiness(project).find((item) => item.id === 'sections')).toEqual({
+      id: 'sections',
+      label: 'At least one section is turned on',
+      done: true,
+      detail: '1 section visible',
+    });
+  });
+
   it('shows current-page readiness against the active page, not just the first page', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages = [
