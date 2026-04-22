@@ -38,6 +38,16 @@ describe('mediaService', () => {
     );
   });
 
+  it('surfaces storage upload failures before any media row is saved', async () => {
+    const file = new File(['img'], 'photo.jpg', { type: 'image/jpeg' });
+    upload.mockRejectedValue(new Error('bucket offline'));
+
+    await expect(mediaService.uploadAsset('w1', file)).rejects.toThrow(
+      'Upload to storage failed: bucket offline',
+    );
+    expect(save).not.toHaveBeenCalled();
+  });
+
   it('stores image uploads with image asset metadata', async () => {
     const file = new File(['img'], 'photo.jpg', { type: 'image/jpeg' });
     upload.mockResolvedValue({
