@@ -23,6 +23,10 @@ function normalizeSectionTypeKey(type: unknown): string {
     : '';
 }
 
+function isRegistrySectionType(type: unknown): boolean {
+  return normalizeSectionTypeKey(type).startsWith('registry');
+}
+
 export function generateInitialLayout(
   templateId: string,
   data: WeddingDataV1
@@ -48,7 +52,7 @@ export function generateInitialLayout(
   const hasInterfaithPack = useCasePacks.includes('interfaith');
 
   const shouldDisableEmptySection = (type: SectionInstance['type']) => {
-    if (type === 'registry') return !hasRealRegistryContent;
+    if (isRegistrySectionType(type)) return !hasRealRegistryContent;
     if (type === 'faq') return !hasSubstantiveFaqContent && !hasBilingualPack && !hasInterfaithPack;
     if (type === 'travel') return !hasRealTravelContent && !hasMultipleScheduleItems && !hasDestinationPack;
     if (type === 'story') return !hasRealStoryContent;
@@ -76,7 +80,7 @@ export function generateInitialLayout(
       section.bindings.scheduleItemIds = data.schedule.map(s => s.id);
     }
 
-    if (sectionDef.type === 'registry' && hasRealRegistryContent) {
+    if (isRegistrySectionType(sectionDef.type) && hasRealRegistryContent) {
       section.bindings.linkIds = data.registry.links.filter((link) => link.url?.trim()).map(l => l.id);
     }
 

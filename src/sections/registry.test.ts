@@ -426,10 +426,13 @@ describe('sections registry resolution', () => {
     expect(initialLayoutSource).toContain('overrides: sectionDef.overrides ? { ...sectionDef.overrides } : undefined,');
     expect(initialLayoutSource).toContain('locked: sectionDef.locked,');
     expect(initialLayoutSource).toContain('function normalizeSectionTypeKey(type: unknown): string {');
+    expect(initialLayoutSource).toContain('function isRegistrySectionType(type: unknown): boolean {');
+    expect(initialLayoutSource).toContain('if (isRegistrySectionType(type)) return !hasRealRegistryContent;');
     expect(initialLayoutSource).toContain('currentSectionsByType.set(normalizeSectionTypeKey(section.type), section);');
     expect(initialLayoutSource).toContain('id: existing.id,');
     expect(initialLayoutSource).toContain('variant: existing.variant,');
     expect(initialLayoutSource).toContain('const existing = currentSectionsByType.get(normalizeSectionTypeKey(newSection.type));');
+    expect(initialLayoutSource).toContain('if (isRegistrySectionType(sectionDef.type) && hasRealRegistryContent) {');
     expect(initialLayoutSource).toContain('overrides: existing.overrides ?? newSection.overrides,');
     expect(initialLayoutSource).toContain('locked: existing.locked ?? newSection.locked,');
     expect(siteGeneratorSource).toContain("import { getTemplate } from '../templates/registry';");
