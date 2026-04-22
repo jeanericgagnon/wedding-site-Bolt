@@ -411,6 +411,26 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('blocks publish and marks date incomplete when persisted event data contains a null wedding date', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
+    const data = createEmptyWeddingData();
+    data.couple.partner1Name = 'Alex';
+    data.couple.partner2Name = 'Jordan';
+    data.venues = [{ id: 'v1', name: 'Test Venue', address: '123 Main St' }];
+    data.rsvp.enabled = true;
+    // @ts-expect-error exercising runtime guard for incomplete persisted data
+    data.event.weddingDateISO = null;
+
+    expect(getPublishIssue(project, data)?.kind).toBe('missing-event-date');
+    expect(buildPublishReadiness(project, data).find((item) => item.id === 'date')).toEqual({
+      id: 'date',
+      label: 'Wedding date is set',
+      done: false,
+      detail: 'Add your wedding date.',
+    });
+  });
+
   it('treats whitespace partner-one names as missing for publish truth', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
