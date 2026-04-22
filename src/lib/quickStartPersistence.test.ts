@@ -33,7 +33,7 @@ describe('quickStartPersistence', () => {
 
   it('drops malformed quick start records safely', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
-      currentIndex: -5,
+      currentIndex: 2.5,
       followUpAnswers: ['bad'],
       viewState: 'bogus',
       clarifyingState: [],

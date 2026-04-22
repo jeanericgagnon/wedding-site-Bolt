@@ -50,7 +50,7 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
 
   return {
     initialSetupAnswers: { ...base.initialSetupAnswers, ...initialSetupAnswers },
-    currentIndex: typeof parsed.currentIndex === 'number' && Number.isFinite(parsed.currentIndex) && parsed.currentIndex >= 0
+    currentIndex: typeof parsed.currentIndex === 'number' && Number.isFinite(parsed.currentIndex) && Number.isInteger(parsed.currentIndex) && parsed.currentIndex >= 0
       ? parsed.currentIndex
       : 0,
     followUpAnswers,
