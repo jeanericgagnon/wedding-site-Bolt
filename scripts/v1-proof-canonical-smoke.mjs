@@ -113,7 +113,7 @@ const output = {
   automatedCoverage: [
     'Build integrity for the current public/onboarding path',
     'Public v1 trust story smoke across Home, Product, and Trust via Playwright live smoke',
-    'Canonical entry-route continuity across signup, quick-start preview, RSVP entry, collaborator invite load, and login fallback for protected onboarding, setup, and dashboard surfaces',
+    'Canonical entry-route continuity across signup, payment gating, quick-start preview, RSVP entry, collaborator invite load, and login fallback for protected onboarding, setup, and dashboard surfaces',
     'Published site slug/site_url lookup truth through Supabase site lookup smoke',
   ],
   stillManualProofNeeded: [
