@@ -115,6 +115,7 @@ import { buildCoordinatorAlertActivityBoard } from '../../lib/coordinatorAlertAc
 import { buildCoordinatorPrimaryActionBoard } from '../../lib/coordinatorPrimaryActionBoard';
 import { buildCoordinatorExecutionBoard } from '../../lib/coordinatorExecutionBoard';
 import { buildCoordinatorAlertLogView } from '../../lib/coordinatorAlertLogView';
+import { buildCoordinatorNavigationBoard } from '../../lib/coordinatorNavigationBoard';
 
 
 type AudienceOption = { value: string; label: string; count: number };
@@ -884,6 +885,17 @@ export const DashboardCoordinatorMode: React.FC = () => {
     target: primaryActionTarget,
     canAutoRunTimeline: Boolean(upNextEventId && canEditTimeline),
   }), [primaryAction, primaryActionTarget, upNextEventId, canEditTimeline]);
+  const navigationBoard = useMemo(() => buildCoordinatorNavigationBoard({
+    panelFocus,
+    boardTargetName: panelFocus === 'check-in'
+      ? checkInTargetGuest?.name ?? null
+      : panelFocus === 'timeline'
+        ? timelineTargetEvent?.event_name ?? null
+        : panelFocus === 'qna'
+          ? qnaTargetItem?.question ?? null
+          : null,
+    reviewOnly: panelFocus === 'check-in' ? checkInReviewOnly : false,
+  }), [panelFocus, checkInTargetGuest?.name, timelineTargetEvent?.event_name, qnaTargetItem?.question, checkInReviewOnly]);
   const secondaryCommandLabel = useMemo(
     () => commandSummaryItems.find((item) => item.label !== priorityCommandLabel)?.label ?? null,
     [commandSummaryItems, priorityCommandLabel],
@@ -1899,6 +1911,22 @@ export const DashboardCoordinatorMode: React.FC = () => {
             <div className="mt-3 rounded-md border border-border/50 bg-white px-2.5 py-2">
               <p className="text-[10px] uppercase tracking-wide text-text-tertiary">Effect</p>
               <p className="mt-1 text-[11px] text-text-primary">{executionBoard.effectLabel}</p>
+            </div>
+          </div>
+          <div className="mb-3 rounded-lg border border-border/50 bg-surface-subtle/25 px-3 py-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-medium text-text-primary">Navigation path</p>
+                <p className="mt-1 text-[11px] text-text-secondary">Destination · {navigationBoard.destinationLabel}</p>
+                <p className="text-[11px] text-text-secondary">Board target · {navigationBoard.boardTargetLabel}</p>
+              </div>
+              <span className={`rounded-full border px-2 py-1 text-[10px] font-medium ${navigationBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : navigationBoard.tone === 'warning' ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-border bg-white text-text-tertiary'}`}>
+                {navigationBoard.statusLabel}
+              </span>
+            </div>
+            <div className="mt-3 rounded-md border border-border/50 bg-white px-2.5 py-2">
+              <p className="text-[10px] uppercase tracking-wide text-text-tertiary">Route mode</p>
+              <p className="mt-1 text-[11px] text-text-primary">{navigationBoard.modeLabel}</p>
             </div>
           </div>
           <div className="mb-3 rounded-lg border border-border/50 bg-surface-subtle/25 px-3 py-3">
