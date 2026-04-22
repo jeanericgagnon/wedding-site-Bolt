@@ -228,6 +228,7 @@ function normalizeDraftDateValue(value: string) {
     .replace(/\bz\b/g, 'Z')
     .replace(/\butc\b/gi, 'UTC')
     .replace(/\bgmt\b/gi, 'GMT')
+    .replace(/\b(UTC|GMT)\s+([+-])\s*(\d{1,4}|\d{1,2}:\d{2})\b/g, '$1$2$3')
     .replace(/\b(UTC|GMT)\s+([+-](?:\d{1,2}|\d{3,4}|\d{1,2}:\d{2}))\b/g, '$1$2');
   const suffixStrippedTimestampValue = canonicalTimestampValue.replace(
     new RegExp(`(?:,?\\s+\\d{1,2}:\\d{2}(?::\\d{2})?(?:\\.\\d+)?(?:\\s*[AP]M)?(?:\\s+${zoneTokenPattern})?|\\s+${zoneTokenPattern})$`),
