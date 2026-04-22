@@ -138,6 +138,10 @@ const output = {
     'Guests / RSVP ops proof remains blocked outside this canonical smoke gate because validate-rsvp-token is not callable with current anon credentials (401)',
     'Canonical smoke covers route continuity; it does not replace the remaining manual couple-path and wording-truth pass',
   ],
+  launchTruthGapSeverity: {
+    guestsRsvpOps: 'critical',
+    canonicalManualTruthPass: 'critical',
+  },
   blockers: blockedRequired.map((result) => ({
     id: result.id,
     label: result.label,
