@@ -813,7 +813,8 @@ function getCanonicalTemplateSource(templateId: string | undefined): TemplateDef
 }
 
 export function getCanonicalTemplateSourceId(templateId: unknown): string {
-  return TEMPLATE_ALIAS_TARGETS[resolveCanonicalTemplateId(templateId)] ?? resolveCanonicalTemplateId(templateId);
+  const canonicalTemplateId = resolveCanonicalTemplateId(templateId);
+  return TEMPLATE_ALIAS_TARGETS[canonicalTemplateId] ?? canonicalTemplateId;
 }
 
 export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = deepFreezeTemplateValue({

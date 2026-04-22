@@ -205,6 +205,7 @@ describe('sections registry resolution', () => {
     expect(resolveCanonicalTemplateId('classic')).toBe('timeless-classic');
     expect(getCanonicalTemplateSourceId('base')).toBe('timeless-classic');
     expect(getCanonicalTemplateSourceId('classic')).toBe('timeless-classic');
+    expect(getCanonicalTemplateSourceId('Playful Celebration')).toBe('playful-celebration');
     expect(resolveCanonicalTemplateId('Playful Celebration')).toBe('playful-celebration');
   });
 
@@ -513,7 +514,8 @@ describe('sections registry resolution', () => {
     expect(templateRegistrySource).toContain("templateIdAliases.get(normalizeTemplateIdKey(templateId)) ?? 'base'");
     expect(templateRegistrySource).toContain('return TEMPLATE_ALIAS_TARGETS[resolvedTemplateId] ?? resolvedTemplateId;');
     expect(templateRegistrySource).toContain('function getCanonicalTemplateSourceId(templateId: unknown): string {');
-    expect(templateRegistrySource).toContain('return TEMPLATE_ALIAS_TARGETS[resolveCanonicalTemplateId(templateId)] ?? resolveCanonicalTemplateId(templateId);');
+    expect(templateRegistrySource).toContain('const canonicalTemplateId = resolveCanonicalTemplateId(templateId);');
+    expect(templateRegistrySource).toContain('return TEMPLATE_ALIAS_TARGETS[canonicalTemplateId] ?? canonicalTemplateId;');
     expect(templateRegistrySource).toContain('function cloneTemplateValue<T>(value: T): T {');
     expect(templateRegistrySource).toContain("templateRegistry.map((template) => [template.id, cloneTemplateDefinition(template)])");
     expect(templateRegistrySource).toContain('const TEMPLATE_ALIAS_TARGETS: Record<string, string> = {');
