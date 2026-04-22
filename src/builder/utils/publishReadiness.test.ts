@@ -221,6 +221,21 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('marks sections readiness complete with plural visible-section copy', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [
+      makeSection({ id: 'sec-a', enabled: true }),
+      makeSection({ id: 'sec-b', enabled: true, orderIndex: 1 }),
+    ];
+
+    expect(buildPublishReadiness(project).find((item) => item.id === 'sections')).toEqual({
+      id: 'sections',
+      label: 'At least one section is turned on',
+      done: true,
+      detail: '2 sections visible',
+    });
+  });
+
   it('shows current-page readiness against the active page, not just the first page', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages = [
