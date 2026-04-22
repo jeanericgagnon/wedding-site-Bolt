@@ -565,7 +565,10 @@ export const DashboardRegistry: React.FC = () => {
         }
         if (preview.image_url) fields.image_url = preview.image_url;
         if (preview.canonical_url) fields.canonical_url = preview.canonical_url;
-        if (preview.merchant ?? preview.brand) fields.merchant = (preview.merchant ?? preview.brand)!;
+        if (preview.merchant ?? preview.brand) {
+          fields.merchant = (preview.merchant ?? preview.brand)!;
+          fields.store_name = (preview.merchant ?? preview.brand)!;
+        }
 
         const updated = await updateRegistryItem(item.id, fields);
         setItems(prev => prev.map(i => (i.id === updated.id ? updated : i)));
