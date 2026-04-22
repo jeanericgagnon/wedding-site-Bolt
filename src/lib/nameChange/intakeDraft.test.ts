@@ -13,6 +13,14 @@ describe('name change intake draft helpers', () => {
     });
   });
 
+  it('falls back to human-readable draft labels when intake starts from a canonical kind only', () => {
+    expect(createDraftNameChangeDocument('marriage_certificate', '   ')).toMatchObject({
+      id: 'draft-marriage_certificate',
+      document_kind: 'marriage_certificate',
+      display_name: 'Marriage Certificate',
+    });
+  });
+
   it('canonicalizes legacy court-order aliases into one stable draft document identity', () => {
     expect(createDraftNameChangeDocument('court_order_name_change', ' Court order ')).toMatchObject({
       id: 'draft-court_order',
@@ -99,7 +107,7 @@ describe('name change intake draft helpers', () => {
       expect.objectContaining({
         document_id: 'draft-marriage_certificate',
         field_key: 'county',
-        field_label: 'county',
+        field_label: 'County',
         field_value_masked: 'San Diego',
       }),
     ]);
