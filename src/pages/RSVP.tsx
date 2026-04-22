@@ -253,12 +253,12 @@ function parseEventSelectionsFromNotes(notes: string | null, guest: Guest): { cl
   const selectedEvents = new Set(
     legacyMatch[1]
       .split(/[,;+/&|]|\band\b|\bor\b/)
-      .map((piece) => piece.trim().toLowerCase())
+      .map((piece) => normalizeLegacyEventKey(piece))
       .filter(Boolean),
   );
 
   const attendCeremony = guest.invited_to_ceremony
-    ? selectedEvents.has('ceremony') || selectedEvents.has('wedding ceremony')
+    ? selectedEvents.has('ceremony')
     : false;
   const attendReception = guest.invited_to_reception
     ? selectedEvents.has('reception')
