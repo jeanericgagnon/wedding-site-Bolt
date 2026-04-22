@@ -161,6 +161,20 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('marks date readiness incomplete when the wedding date is an empty string', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
+    const data = createEmptyWeddingData();
+    data.event.weddingDateISO = '';
+
+    expect(buildPublishReadiness(project, data).find((item) => item.id === 'date')).toEqual({
+      id: 'date',
+      label: 'Wedding date is set',
+      done: false,
+      detail: 'Add your wedding date.',
+    });
+  });
+
   it('shows current-page readiness against the active page, not just the first page', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages = [
