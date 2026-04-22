@@ -42,15 +42,20 @@ export const defaultRegistryCardsData: RegistryCardsData = {
   cashFundDescription: 'Help us create lifelong memories on our honeymoon to Italy.',
 };
 
-function groupByStore(items: RegistryItem[]): Array<{ store: string; count: number; available: number; url: string | null }> {
+export function getRegistryItemPublicUrl(item: Pick<RegistryItem, 'item_url' | 'canonical_url'>): string | null {
+  return item.item_url ?? item.canonical_url ?? null;
+}
+
+export function groupByStore(items: RegistryItem[]): Array<{ store: string; count: number; available: number; url: string | null }> {
   const map = new Map<string, { count: number; available: number; url: string | null }>();
   for (const item of items) {
     const store = item.store_name ?? item.merchant ?? 'Other';
-    const existing = map.get(store) ?? { count: 0, available: 0, url: item.item_url };
+    const publicUrl = getRegistryItemPublicUrl(item);
+    const existing = map.get(store) ?? { count: 0, available: 0, url: publicUrl };
     map.set(store, {
       count: existing.count + 1,
       available: existing.available + (item.purchase_status === 'available' ? 1 : 0),
-      url: existing.url ?? item.item_url,
+      url: existing.url ?? publicUrl,
     });
   }
   return Array.from(map.entries()).map(([store, v]) => ({ store, ...v }));
