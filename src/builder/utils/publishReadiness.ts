@@ -34,18 +34,22 @@ const getComparableOrderIndex = (value: unknown) => {
   return Number.MAX_SAFE_INTEGER;
 };
 const getNormalizedPages = (project: BuilderProject) =>
-  (Array.isArray(project.pages) ? project.pages.filter(isPageLike) : []).sort((a, b) =>
-    getComparableOrderIndex(a?.orderIndex) - getComparableOrderIndex(b?.orderIndex)
-  );
+  (Array.isArray(project.pages) ? project.pages.filter(isPageLike) : []).sort((a, b) => {
+    const orderDelta = getComparableOrderIndex(a?.orderIndex) - getComparableOrderIndex(b?.orderIndex);
+    if (orderDelta !== 0) return orderDelta;
+    return getNormalizedId(a?.id).localeCompare(getNormalizedId(b?.id));
+  });
 const isSectionLike = (value: unknown): value is NonNullable<BuilderProject['pages'][number]>['sections'][number] =>
   typeof value === 'object'
   && value !== null
   && !Array.isArray(value)
   && hasNonEmptyString((value as { id?: unknown }).id);
 const getNormalizedSections = (page: BuilderProject['pages'][number] | undefined) =>
-  (Array.isArray(page?.sections) ? page.sections.filter(isSectionLike) : []).sort((a, b) =>
-    getComparableOrderIndex(a?.orderIndex) - getComparableOrderIndex(b?.orderIndex)
-  );
+  (Array.isArray(page?.sections) ? page.sections.filter(isSectionLike) : []).sort((a, b) => {
+    const orderDelta = getComparableOrderIndex(a?.orderIndex) - getComparableOrderIndex(b?.orderIndex);
+    if (orderDelta !== 0) return orderDelta;
+    return getNormalizedId(a?.id).localeCompare(getNormalizedId(b?.id));
+  });
 const isVenueLike = (value: unknown): value is NonNullable<WeddingDataV1['venues']>[number] =>
   typeof value === 'object'
   && value !== null

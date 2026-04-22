@@ -107,6 +107,22 @@ describe('publishReadiness', () => {
     }
   });
 
+  it('breaks tied section order indexes by section id so blocker targeting stays deterministic', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    const pageId = project.pages[0].id;
+    project.pages[0].sections = [
+      makeSection({ id: 'sec-zeta', enabled: false, orderIndex: 1 }),
+      makeSection({ id: 'sec-alpha', enabled: false, orderIndex: 1 }),
+    ];
+
+    const issue = getPublishIssue(project);
+    expect(issue?.kind).toBe('no-enabled-sections');
+    if (issue?.kind === 'no-enabled-sections') {
+      expect(issue.firstPageId).toBe(pageId);
+      expect(issue.firstSectionId).toBe('sec-alpha');
+    }
+  });
+
   it('returns null when publish requirements are met', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
@@ -1299,6 +1315,34 @@ describe('publishReadiness', () => {
         title: 'Home',
         // @ts-expect-error exercising runtime guard for incomplete persisted data
         orderIndex: '0',
+        sections: [makeSection({ id: 'home-live', enabled: true })],
+      },
+    ];
+
+    const readiness = buildPublishReadiness(project, undefined, { activePageId: 'missing-page' });
+    expect(readiness.find((item) => item.id === 'current-page')).toEqual({
+      id: 'current-page',
+      label: 'Current page has visible content',
+      done: true,
+      detail: 'Home has visible sections.',
+    });
+  });
+
+  it('breaks tied page order indexes by page id so fallback targeting stays deterministic', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages = [
+      {
+        ...project.pages[0],
+        id: 'page-zeta',
+        title: 'Details',
+        orderIndex: 1,
+        sections: [makeSection({ id: 'details-hidden', enabled: false })],
+      },
+      {
+        ...project.pages[0],
+        id: 'page-alpha',
+        title: 'Home',
+        orderIndex: 1,
         sections: [makeSection({ id: 'home-live', enabled: true })],
       },
     ];
