@@ -71,6 +71,7 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
     || normalizedErrorLower.includes('add both couple names')
     || normalizedErrorLower.includes('add both names')
     || normalizedErrorLower.includes('add both partners')
+    || normalizedErrorLower.includes('both partner names exactly how you want')
     || normalizedErrorLower.includes('both names exactly how you want')
     || normalizedErrorLower.includes('add both names exactly how you want')
   ) {
