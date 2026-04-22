@@ -12,7 +12,7 @@ vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
   return {
     ...actual,
-    Link: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    Link: ({ children, to, state, ...props }: any) => <a href={typeof to === 'string' ? to : `${to.pathname || ''}${to.search || ''}`} data-nav-state={state ? JSON.stringify(state) : ''} {...props}>{children}</a>,
     useNavigate: () => navigateMock,
     useLocation: () => useLocationMock(),
     useSearchParams: () => useSearchParamsMock(),
@@ -100,5 +100,20 @@ describe('Login quick start handoff', () => {
       expect(stored.showFollowUps).toBe(false);
       expect(stored.viewState).toBe('question');
     });
+  });
+
+
+  it('passes normalized onboarding drafts when switching from login to signup', async () => {
+    render(<Login />);
+
+    const link = screen.getByRole('link', { name: 'Get started — $49' });
+    const state = JSON.parse(link.getAttribute('data-nav-state') || '{}');
+
+    expect(state.quickStartDraft).toEqual(expect.objectContaining({
+      currentIndex: 0,
+      followUpAnswers: {},
+      showFollowUps: false,
+      viewState: 'question',
+    }));
   });
 });

@@ -403,7 +403,19 @@ export const Login: React.FC = () => {
           <div className="mt-6 text-center">
             <p className="text-sm text-text-secondary">
               Don't have an account?{' '}
-              <Link to={hasInviteContext ? `/signup?${createSearchParams({ inviteToken: inviteToken || '', inviteEmail: inviteEmail || '', inviteRole: inviteRole || '', inviteSite: inviteSite || '' }).toString()}` : '/signup'} className="text-primary hover:text-primary-hover font-medium transition-colors">
+              <Link
+                to={hasInviteContext
+                  ? {
+                      pathname: '/signup',
+                      search: `?${createSearchParams({ inviteToken: inviteToken || '', inviteEmail: inviteEmail || '', inviteRole: inviteRole || '', inviteSite: inviteSite || '' }).toString()}`,
+                    }
+                  : { pathname: '/signup' }}
+                state={explicitReturnPath || normalizedQuickStartDraft ? {
+                  returnTo: explicitReturnPath,
+                  quickStartDraft: normalizedQuickStartDraft,
+                } : undefined}
+                className="text-primary hover:text-primary-hover font-medium transition-colors"
+              >
                 {hasInviteContext ? 'Create collaborator account' : 'Get started — $49'}
               </Link>
             </p>
