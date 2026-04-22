@@ -192,7 +192,7 @@ export function buildNameChangeDocumentIntakeSnapshot(
       preferredForAutofill: definition.preferredForAutofill,
       intakeStatus: contractIntakeStatus,
       storageMode: contractStorageMode,
-      extractionFieldCount: documentState.extractionFieldCount,
+      extractionFieldCount: capturedExtractionFields.length,
       metadataReady: metadataMissing.length === 0 && contractIntakeStatus === 'reviewed' ? 1 : 0,
       metadataMissing,
       expectedExtractionFields: definition.extractionFields,
