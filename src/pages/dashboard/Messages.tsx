@@ -1381,6 +1381,7 @@ export const DashboardMessages: React.FC = () => {
 
     const refreshGuestMessageContinuity = () => {
       void fetchGuests();
+      void fetchMessages();
     };
 
     const handleRsvpContinuityUpdate = () => {
@@ -1408,7 +1409,7 @@ export const DashboardMessages: React.FC = () => {
       window.removeEventListener('storage', handleStorage);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [weddingSite, isDemoMode, fetchGuests]);
+  }, [weddingSite, isDemoMode, fetchGuests, fetchMessages]);
 
   useEffect(() => {
     if (weddingSite && messages.length > 0) {
