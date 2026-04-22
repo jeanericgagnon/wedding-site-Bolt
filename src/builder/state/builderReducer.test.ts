@@ -308,6 +308,21 @@ describe('builderReducer — MEDIA actions', () => {
     expect(next.mediaLibraryOpen).toBe(false);
     expect(next.mediaPickerTargetSettingKey).toBeNull();
   });
+
+  it('replaces existing upload queue entries for the same asset id', () => {
+    const s = makeState();
+    const first = builderReducer(s, {
+      type: 'UPDATE_UPLOAD_QUEUE',
+      payload: { assetId: 'asset-1', progress: 20, status: 'uploading' },
+    });
+    const next = builderReducer(first, {
+      type: 'UPDATE_UPLOAD_QUEUE',
+      payload: { assetId: 'asset-1', progress: 100, status: 'processing' },
+    });
+
+    expect(next.uploadQueue).toHaveLength(1);
+    expect(next.uploadQueue[0]).toEqual({ assetId: 'asset-1', progress: 100, status: 'processing' });
+  });
 });
 
 describe('builderReducer — default', () => {
