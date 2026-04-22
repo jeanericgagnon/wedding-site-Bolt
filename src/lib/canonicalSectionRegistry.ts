@@ -17,7 +17,20 @@ const LEGACY_VARIANT_ALIASES: Record<string, Record<string, string>> = {
   schedule: { default: 'timeline', classic: 'timeline', cards: 'agendaCards' },
   gallery: { default: 'masonry', grid: 'masonry' },
   travel: { cards: 'list', default: 'list' },
-  registry: { grid: 'cards', default: 'cards' },
+  registry: {
+    grid: 'cards',
+    default: 'cards',
+    fundHighlight: 'featured',
+    honeymoon: 'featured',
+    tabs: 'cards',
+    illustrated: 'cards',
+    minimal: 'cards',
+    classic: 'cards',
+    luxury: 'featured',
+    experiences: 'featured',
+    modern: 'cards',
+    playful: 'cards',
+  },
 };
 
 export type BuilderManifestLike = {

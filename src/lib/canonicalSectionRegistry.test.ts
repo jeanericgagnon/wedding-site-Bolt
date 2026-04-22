@@ -41,4 +41,22 @@ describe('manifestToCanonicalSectionDefinition', () => {
       },
     });
   });
+
+  it('preserves registry template aliases in canonical section validation', () => {
+    const canonical = manifestToCanonicalSectionDefinition({
+      type: 'registry',
+      defaultVariant: 'cards',
+      supportedVariants: ['cards', 'featured'],
+      variantMeta: [
+        { id: 'cards', label: 'Store Links', description: 'Cards' },
+        { id: 'featured', label: 'Featured Gifts', description: 'Featured' },
+      ],
+      settingsSchema: { fields: [{ key: 'showTitle', defaultValue: true }] },
+    });
+
+    expect(canonical.variants.classic).toEqual(canonical.variants.cards);
+    expect(canonical.variants.luxury).toEqual(canonical.variants.featured);
+    expect(canonical.variants.experiences).toEqual(canonical.variants.featured);
+    expect(canonical.variants.honeymoon).toEqual(canonical.variants.featured);
+  });
 });
