@@ -23,6 +23,7 @@ _Machine-readable flag:_ `starterDraftWordingVerificationMissing: true`
 _Machine-readable requirement:_ `manualProofRequirements.canonicalCouplePath`
 _Machine-readable requirement:_ `manualProofRequirements.runtimeWordingVerification`
 _Machine-readable requirement:_ `manualProofRequirements.onboardingStarterDraftWording`
+_Machine-readable status:_ `manualProofSummary.missingCount: 3` (`canonicalCouplePath`, `runtimeWordingVerification`, `onboardingStarterDraftWording`)
 
 ## Purpose
 This is the hard proof artifact for whether DayOf can credibly claim **v1 / done-enough**.
