@@ -55,7 +55,8 @@ describe('sections registry resolution', () => {
 
   it('exposes template-backed registry aliases to the builder manifest', () => {
     const registryManifest = getSectionManifest('registry');
-    expect(registryManifest?.supportedVariants).toEqual(expect.arrayContaining(['classic', 'luxury', 'experiences', 'modern', 'playful']));
+    expect(registryManifest?.supportedVariants).toEqual(expect.arrayContaining(['default', 'grid', 'classic', 'luxury', 'experiences', 'modern', 'playful']));
+    expect(registryManifest?.variantMeta.map((variant) => variant.id)).toEqual(expect.arrayContaining(['default', 'grid']));
   });
 
   it('supports every registry variant used by shipped templates', () => {

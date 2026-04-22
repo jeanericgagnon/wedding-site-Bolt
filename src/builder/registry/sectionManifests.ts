@@ -177,9 +177,11 @@ export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinit
     label: 'Registry',
     icon: 'Gift',
     defaultVariant: 'cards',
-    supportedVariants: ['cards', 'fundHighlight', 'featured', 'minimal', 'honeymoon', 'tabs', 'illustrated', 'classic', 'luxury', 'experiences', 'modern', 'playful'],
+    supportedVariants: ['default', 'cards', 'grid', 'fundHighlight', 'featured', 'minimal', 'honeymoon', 'tabs', 'illustrated', 'classic', 'luxury', 'experiences', 'modern', 'playful'],
     variantMeta: [
+      { id: 'default', label: 'Default', description: 'Legacy registry links layout kept compatible with builder-owned registry state' },
       { id: 'cards', label: 'Store Links', description: 'Registry links as clickable store cards' },
+      { id: 'grid', label: 'Grid', description: 'Legacy grid alias kept compatible with builder-owned registry state' },
       { id: 'fundHighlight', label: 'Fund Highlight', description: 'Highlights one featured fund/link first, then secondary registry links' },
       { id: 'featured', label: 'Featured Gifts', description: 'Showcase specific gift items with photos, prices, and store links' },
       { id: 'minimal', label: 'Minimal', description: 'Heartfelt note with understated registry links' },
