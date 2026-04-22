@@ -215,7 +215,7 @@ function parseEventSelectionsFromNotes(notes: string | null, guest: Guest): { cl
     const eventPart = bracketMatch[1] || '';
     const map = Object.fromEntries(
       eventPart
-        .split(/[;,/&|]|\band\b/)
+        .split(/[;,/&|]|\band\b|\bor\b/)
         .map((piece) => piece.trim())
         .filter(Boolean)
         .map((piece) => {
