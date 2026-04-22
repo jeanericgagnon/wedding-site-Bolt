@@ -93,7 +93,10 @@ export const mergeClarifyingAnswer = (
 
   const updatedQuestion = questions.find((question) => question.id === questionId);
   const history: StoredClarifyingQuestion[] = updatedQuestion
-    ? [...persistence.clarifying.history, updatedQuestion]
+    ? [
+        ...persistence.clarifying.history.filter((question) => question.id !== questionId),
+        updatedQuestion,
+      ]
     : persistence.clarifying.history;
 
   return {

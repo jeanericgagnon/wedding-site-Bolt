@@ -35,4 +35,34 @@ describe('quickStartFlow', () => {
     expect(updated?.clarifying.questions[0].status).toBe('answered');
     expect(updated?.clarifying.history[updated.clarifying.history.length - 1]?.answer).toBe('6:30 PM');
   });
+
+  it('replaces prior history for the same follow-up instead of stacking stale answers', () => {
+    const base = createEmptyClarifyingPersistence();
+    base.clarifying.questions = [
+      {
+        id: 'event-1-time',
+        category: 'event_structure',
+        question: 'Friday welcome drinks: what time is it?',
+        expectedAnswerType: 'short_text',
+        targetFields: ['events.0.time'],
+        affectedSections: ['schedule'],
+        skippable: true,
+        round: 1,
+        status: 'pending',
+        answer: '',
+      },
+    ];
+    base.clarifying.history = [
+      {
+        ...base.clarifying.questions[0],
+        status: 'answered',
+        answer: '5:00 PM',
+      },
+    ];
+
+    const updated = mergeClarifyingAnswer(base, 'event-1-time', '6:30 PM');
+
+    expect(updated?.clarifying.history).toHaveLength(1);
+    expect(updated?.clarifying.history[0]?.answer).toBe('6:30 PM');
+  });
 });
