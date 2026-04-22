@@ -674,4 +674,32 @@ describe('quickStartPersistence', () => {
 
     expect(normalized.followUpAnswers).toEqual({ lodging: 'Stay at the resort' });
   });
+
+  it('prefers restored answered clarifying values over stale follow-up answers', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      followUpAnswers: {
+        lodging: 'Old hotel block',
+      },
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'lodging',
+            category: 'travel',
+            question: 'Where should guests stay?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.lodging'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'answered',
+            answer: 'Stay at the resort',
+          }],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.followUpAnswers).toEqual({ lodging: 'Stay at the resort' });
+  });
 });

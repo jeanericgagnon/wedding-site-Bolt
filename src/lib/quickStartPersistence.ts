@@ -240,13 +240,24 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
   const normalizedFollowUpAnswers = activeClarifyingIds && (activeClarifyingIds.size > 0 || hasAnyClarifyingRecords)
     ? Object.fromEntries(Object.entries(followUpAnswers).filter(([key]) => activeClarifyingIds.has(key)))
     : followUpAnswers;
+  const answeredClarifyingAnswers = clarifyingState
+    ? Object.fromEntries(
+        [...clarifyingState.clarifying.questions, ...clarifyingState.clarifying.history]
+          .filter((question) => question.status === 'answered' && question.answer.trim().length > 0)
+          .map((question) => [question.id, question.answer.trim()]),
+      )
+    : {};
+  const restoredFollowUpAnswers = {
+    ...normalizedFollowUpAnswers,
+    ...answeredClarifyingAnswers,
+  };
 
   return {
     initialSetupAnswers: { ...base.initialSetupAnswers, ...initialSetupAnswers },
     currentIndex: typeof parsed.currentIndex === 'number' && Number.isFinite(parsed.currentIndex) && Number.isInteger(parsed.currentIndex) && parsed.currentIndex >= 0
       ? parsed.currentIndex
       : 0,
-    followUpAnswers: normalizedFollowUpAnswers,
+    followUpAnswers: restoredFollowUpAnswers,
     showFollowUps,
     clarifyingState,
     viewState: viewState === 'followups' && !hasOpenFollowUps ? 'question' : viewState,

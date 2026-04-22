@@ -301,4 +301,35 @@ describe('quickStartStateTransfer', () => {
       lodging: 'Stay at the resort',
     });
   });
+
+  it('rewrites stale answered follow-up values to the restored clarifying truth', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      followUpAnswers: {
+        lodging: 'Old hotel block',
+      },
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'lodging',
+            category: 'travel',
+            question: 'Where should guests stay?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.lodging'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'answered',
+            answer: 'Stay at the resort',
+          }],
+        },
+        draftOutputs: {},
+      },
+    }));
+
+    expect(readQuickStartDraftSnapshot()?.followUpAnswers).toEqual({ lodging: 'Stay at the resort' });
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').followUpAnswers).toEqual({
+      lodging: 'Stay at the resort',
+    });
+  });
 });
