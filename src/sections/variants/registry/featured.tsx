@@ -17,6 +17,7 @@ const FeaturedGiftSchema = z.object({
   category: z.string().default(''),
   isPriority: z.boolean().default(false),
   isClaimed: z.boolean().default(false),
+  isPartiallyClaimed: z.boolean().default(false),
 });
 
 const RegistryStoreLinkSchema = z.object({
@@ -181,6 +182,11 @@ const GiftCard: React.FC<{ gift: z.infer<typeof FeaturedGiftSchema>; compact?: b
               Claimed
             </span>
           )}
+          {gift.isPartiallyClaimed && !gift.isClaimed && (
+            <span className="text-[10px] px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-100 rounded-full font-medium uppercase tracking-wide">
+              Partially claimed
+            </span>
+          )}
           {gift.isPriority && !gift.isClaimed && (
             <Heart size={12} className="text-rose-400 fill-rose-400" />
           )}
@@ -197,7 +203,7 @@ const GiftCard: React.FC<{ gift: z.infer<typeof FeaturedGiftSchema>; compact?: b
         {!gift.isClaimed && gift.url && (
           <span className="text-[10px] text-stone-400 group-hover:text-stone-700 transition-colors uppercase tracking-wide font-medium flex items-center gap-1">
             <ShoppingBag size={10} />
-            Gift this
+            {gift.isPartiallyClaimed ? 'Gift remaining' : 'Gift this'}
           </span>
         )}
       </div>
@@ -247,6 +253,7 @@ function registryItemToGift(item: RegistryItem): z.infer<typeof FeaturedGiftSche
     category: '',
     isPriority: item.priority === 'high',
     isClaimed: item.purchase_status === 'purchased',
+    isPartiallyClaimed: item.purchase_status === 'partial',
   };
 }
 

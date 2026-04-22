@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getRegistryItemPublicUrl, groupRegistryStoreLinks } from './featured';
+import { getRegistryItemPublicUrl, groupRegistryStoreLinks, registryFeaturedSchema } from './featured';
 import type { RegistryItem } from '../../../pages/dashboard/registry/registryTypes';
 
 const makeItem = (overrides: Partial<RegistryItem>): RegistryItem => ({
@@ -48,5 +48,20 @@ describe('registry featured public parity helpers', () => {
       { id: '1', store: 'Crate & Barrel', url: 'https://example.com/cb', description: '' },
       { id: '3', store: 'Target', url: 'https://example.com/target', description: '' },
     ]);
+  });
+
+  it('maps partial purchase state into public featured gift truth', () => {
+    const parsed = registryFeaturedSchema.parse({
+      featuredGifts: [
+        {
+          id: 'gift-1',
+          name: 'Mixer',
+          isPartiallyClaimed: true,
+        },
+      ],
+    });
+
+    expect(parsed.featuredGifts[0]?.isPartiallyClaimed).toBe(true);
+    expect(parsed.featuredGifts[0]?.isClaimed).toBe(false);
   });
 });

@@ -24,6 +24,7 @@ const checks = [
   { name: 'canonical registry validation accepts template-backed registry aliases', ok: canonicalSectionRegistry.includes("luxury: 'featured'") && canonicalSectionRegistry.includes("experiences: 'featured'") && canonicalSectionRegistry.includes("classic: 'cards'") },
   { name: 'public registry cards keep canonical-only store links usable', ok: registryCardsSection.includes("return item.item_url ?? item.canonical_url ?? null;") && registryCardsSection.includes('url: existing.url ?? publicUrl') },
   { name: 'public registry featured links derive live store urls from canonical items', ok: registryFeaturedSection.includes("return item.item_url ?? item.canonical_url ?? '';") && registryFeaturedSection.includes('const displayStoreLinks = liveItems ? groupRegistryStoreLinks(liveItems) : safeStoreLinks;') },
+  { name: 'public registry featured cards expose partial purchase truth', ok: registryFeaturedSection.includes("isPartiallyClaimed: item.purchase_status === 'partial'") && registryFeaturedSection.includes("{gift.isPartiallyClaimed ? 'Gift remaining' : 'Gift this'}") },
   { name: 'registry types expose itemNeedsAttention', ok: registryTypes.includes('export function itemNeedsAttention') },
   { name: 'registry types expose blocked retailer messaging', ok: registryTypes.includes('Amazon blocks automated product lookups') },
   { name: 'registry types expose quantity sanitation', ok: registryTypes.includes('export function sanitizeRegistryQuantityState') },
