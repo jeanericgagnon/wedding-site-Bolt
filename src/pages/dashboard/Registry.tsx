@@ -306,7 +306,7 @@ export const DashboardRegistry: React.FC = () => {
 
     if (isDemoMode) {
       if (editItem) {
-        setItems(prev => prev.map(i => (i.id === editItem.id ? { ...i, ...fields, updated_at: new Date().toISOString() } : i)));
+        setItems(prev => prev.map(i => (i.id === editItem.id ? normalizeOwnerDashboardRegistryItem({ ...i, ...fields, updated_at: new Date().toISOString() }) : i)));
         toast('Item updated');
       } else {
         const created: RegistryItem = {
@@ -351,7 +351,7 @@ export const DashboardRegistry: React.FC = () => {
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
-        setItems(prev => [...prev, created]);
+        setItems(prev => [...prev, normalizeOwnerDashboardRegistryItem(created)]);
         toast('Item added to registry');
       }
       setShowForm(false);
@@ -361,11 +361,11 @@ export const DashboardRegistry: React.FC = () => {
 
     if (editItem) {
       const updated = await updateRegistryItem(editItem.id, fields);
-      setItems(prev => prev.map(i => (i.id === updated.id ? updated : i)));
+      setItems(prev => prev.map(i => (i.id === updated.id ? normalizeOwnerDashboardRegistryItem(updated) : i)));
       toast('Item updated');
     } else {
       const created = await createRegistryItem(weddingSiteId, fields);
-      setItems(prev => [...prev, created]);
+      setItems(prev => [...prev, normalizeOwnerDashboardRegistryItem(created)]);
       toast('Item added to registry');
     }
 
@@ -400,7 +400,7 @@ export const DashboardRegistry: React.FC = () => {
           })()
         : await ownerMarkPurchased(item.id, qty);
 
-      setItems(prev => prev.map(i => (i.id === updated.id ? updated : i)));
+      setItems(prev => prev.map(i => (i.id === updated.id ? normalizeOwnerDashboardRegistryItem(updated) : i)));
       toast(
         updated.purchase_status === 'purchased'
           ? `"${item.item_name}" marked as fully purchased`
@@ -446,7 +446,7 @@ export const DashboardRegistry: React.FC = () => {
       if (preview.canonical_url) fields.canonical_url = preview.canonical_url;
       if (Object.keys(fields).length > 0) {
         const updated = await updateRegistryItem(item.id, fields);
-        setItems(prev => prev.map(i => (i.id === updated.id ? updated : i)));
+        setItems(prev => prev.map(i => (i.id === updated.id ? normalizeOwnerDashboardRegistryItem(updated) : i)));
         if (!silent) toast(replaceExisting ? 'Item re-imported from source link' : 'Product details refreshed');
       } else if (!silent) {
         toast('No new details found — details are up to date');
@@ -583,7 +583,7 @@ export const DashboardRegistry: React.FC = () => {
         }
 
         const updated = await updateRegistryItem(item.id, fields);
-        setItems(prev => prev.map(i => (i.id === updated.id ? updated : i)));
+        setItems(prev => prev.map(i => (i.id === updated.id ? normalizeOwnerDashboardRegistryItem(updated) : i)));
         updatedCount += 1;
       } catch {
         const nextFail = (item.refresh_fail_count ?? 0) + 1;
@@ -596,7 +596,7 @@ export const DashboardRegistry: React.FC = () => {
             last_auto_refreshed_at: new Date().toISOString(),
             next_refresh_at: retryAt,
           });
-          setItems(prev => prev.map(i => (i.id === updated.id ? updated : i)));
+          setItems(prev => prev.map(i => (i.id === updated.id ? normalizeOwnerDashboardRegistryItem(updated) : i)));
         } catch {
           // ignore secondary update errors
         }
@@ -665,7 +665,7 @@ export const DashboardRegistry: React.FC = () => {
           availability: preview.availability ?? null,
         };
         const created = await createRegistryItem(weddingSiteId, fields);
-        setItems(prev => [...prev, created]);
+        setItems(prev => [...prev, normalizeOwnerDashboardRegistryItem(created)]);
         createdCount += 1;
       } catch {
         failedCount += 1;

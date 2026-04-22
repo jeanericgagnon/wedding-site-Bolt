@@ -305,6 +305,9 @@ describe('sections registry resolution', () => {
     expect(registryDashboard).toContain('function normalizeOwnerDashboardRegistryItem(item: RegistryItem): RegistryItem {');
     expect(registryDashboard).toContain('const duplicateGroups = findDuplicateRegistryGroups(normalizedItems);');
     expect(registryDashboard).toContain('setItems(data.map(normalizeOwnerDashboardRegistryItem));');
+    expect(registryDashboard).toContain('normalizeOwnerDashboardRegistryItem({ ...i, ...fields, updated_at: new Date().toISOString() })');
+    expect(registryDashboard).toContain('normalizeOwnerDashboardRegistryItem(updated)');
+    expect(registryDashboard).toContain('normalizeOwnerDashboardRegistryItem(created)');
     expect(registryDashboard).toContain('const filtered = normalizedItems.filter(item => {');
     expect(registryDashboard).toContain('purchaser_name: quantityState.purchaseStatus === \'available\' ? null : item.purchaser_name,');
     expect(registryDashboard).toContain('badImports: normalizedItems.filter((i) => getRegistryItemMetadataState(i).hasBadImportTitle).length,');
