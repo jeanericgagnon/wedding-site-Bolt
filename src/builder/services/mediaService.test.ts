@@ -125,4 +125,19 @@ describe('mediaService', () => {
       tags: [],
     }));
   });
+
+  it('stores provided captions without dropping them during save', async () => {
+    const file = new File(['img'], 'vows.jpg', { type: 'image/jpeg' });
+    upload.mockResolvedValue({
+      url: 'https://cdn.example.com/vows.jpg',
+      path: 'w1/vows.jpg',
+    });
+    save.mockResolvedValue({ id: 'asset-6' });
+
+    await mediaService.uploadAsset('w1', file, { caption: 'Private vows under the trees' });
+
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({
+      caption: 'Private vows under the trees',
+    }));
+  });
 });
