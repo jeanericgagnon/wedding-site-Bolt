@@ -69,7 +69,7 @@ const V1_SLICE_STATUS = [
     status: 'Proof needed',
     tone: 'proof',
     done: 'Invite flow, shell framing, and permission truth are much more believable.',
-    missing: 'Still needs executed role-boundary proof with a real forbidden-action check before this slice reads launch-ready.',
+    missing: 'Still needs executed role-boundary proof with a real forbidden-action check before this slice reads fully proven.',
   },
   {
     name: 'Coordinator / day-of',
