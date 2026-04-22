@@ -206,6 +206,8 @@ const VARIANT_FALLBACKS: Record<string, Record<string, string>> = {
     fromHotel: 'pin',
   },
   registry: {
+    default: 'cards',
+    grid: 'cards',
     fundHighlight: 'featured',
     honeymoon: 'featured',
     tabs: 'cards',

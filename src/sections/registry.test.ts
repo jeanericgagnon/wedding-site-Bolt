@@ -54,6 +54,8 @@ describe('sections registry resolution', () => {
   });
 
   it('keeps registry owner and guest renders aligned when persisted registry variants drift in casing or punctuation', () => {
+    expect(resolveAndParse('registry', 'default', {}, { strictVariant: true })?.def.variant).toBe('cards');
+    expect(resolveAndParse('registry', 'grid', {}, { strictVariant: true })?.def.variant).toBe('cards');
     expect(resolveAndParse('registry', ' Luxury ', {}, { strictVariant: true })?.def.variant).toBe('featured');
     expect(resolveAndParse('registry', 'fund-highlight', {}, { strictVariant: true })?.def.variant).toBe('featured');
     expect(resolveAndParse('registry', 'FUND.HIGHLIGHT', {}, { strictVariant: true })?.def.variant).toBe('featured');
@@ -270,6 +272,8 @@ describe('sections registry resolution', () => {
     expect(sectionRegistry).toContain("function normalizeRegistryVariantKey(variant: unknown): string {");
     expect(sectionRegistry).toContain("return typeof variant === 'string'");
     expect(sectionRegistry).toContain("const normalizedVariant = resolveRegistryVariant(type, variant);");
+    expect(sectionRegistry).toContain("default: 'cards'");
+    expect(sectionRegistry).toContain("grid: 'cards'");
     expect(sectionRegistry).toContain("normalizeRegistryVariantKey(aliasVariant) === normalizedVariantKey");
   });
 
