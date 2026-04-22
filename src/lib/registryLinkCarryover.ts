@@ -212,7 +212,7 @@ export function mergeRegistrySourceLabels(
 
 function extractRegistryUrlTokens(line: string): CarryoverRegistryToken[] {
   const tokens = new Map<string, CarryoverRegistryToken>();
-  const lineExplicitLabel = extractExplicitSourceLabelFromTokenText(line);
+  let firstUrlIndex: number | null = null;
   const patterns = [
     /\[[^\]]+\]\((https?:\/\/[^)]+|www\.[^)]+)\)/gi,
     /<(https?:\/\/[^>]+|www\.[^>]+)>/gi,
@@ -226,6 +226,9 @@ function extractRegistryUrlTokens(line: string): CarryoverRegistryToken[] {
     for (const match of line.matchAll(pattern)) {
       const token = match[1] ?? match[0];
       if (!token) continue;
+      if (typeof match.index === 'number') {
+        firstUrlIndex = firstUrlIndex === null ? match.index : Math.min(firstUrlIndex, match.index);
+      }
       const cleanedToken = cleanRegistryUrlToken(token);
       const explicitTokenLabel = extractExplicitSourceLabelFromTokenText(match[0]);
       const existingToken = tokens.get(cleanedToken);
@@ -239,6 +242,9 @@ function extractRegistryUrlTokens(line: string): CarryoverRegistryToken[] {
   }
 
   if (tokens.size > 0) {
+    const lineExplicitLabel = extractExplicitSourceLabelFromTokenText(
+      firstUrlIndex === null ? line : line.slice(0, firstUrlIndex),
+    );
     let lineLabelApplied = false;
     return Array.from(tokens.values()).map((token) => {
       const canApplyLineLabel = Boolean(lineExplicitLabel) && !lineLabelApplied && !token.sourceLabel;

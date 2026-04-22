@@ -153,6 +153,13 @@ describe('carryOverRegistryLinks', () => {
     ]);
   });
 
+  it('does not let later labeled links overwrite the first imported custom label on the same line', () => {
+    expect(carryOverRegistryLinks('Custom Boutique https://example.com/list and Target Registry https://target.com/list')).toEqual([
+      { url: 'https://example.com/list', sourceLabel: 'Custom Boutique' },
+      { url: 'https://target.com/list', sourceLabel: 'Target' },
+    ]);
+  });
+
   it('upgrades duplicate carryover links when a later import includes a source label', () => {
     expect(carryOverRegistryLinks('https://crateandbarrel.com/gift-registry/jane\nCrate & Barrel Registry | crateandbarrel.com/gift-registry/jane')).toEqual([
       { url: 'https://crateandbarrel.com/gift-registry/jane', sourceLabel: 'Crate & Barrel' },
