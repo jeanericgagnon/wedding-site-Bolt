@@ -64,6 +64,7 @@ export function normalizeDraftNameChangeDocumentId(documentId: string | null | u
   if (!normalizedDraftPrefix?.startsWith('draft-')) return normalizedDocumentId;
   const normalizedKind = normalizeDraftDocumentKind(normalizedDraftPrefix.slice('draft-'.length));
   if (!normalizedKind) return null;
+  if (normalizedKind === 'other') return null;
   return buildDraftNameChangeDocumentId(normalizedKind as NameChangeDocumentInput['document_kind']);
 }
 
