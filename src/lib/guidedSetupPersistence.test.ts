@@ -83,4 +83,11 @@ describe('guidedSetupPersistence', () => {
     expect(defaults.coupleNames.name1).toBe('');
     expect(defaults.formData.city).toBe('');
   });
+
+  it('clones default form data when malformed form blobs are stored', () => {
+    const normalized = normalizeGuidedSetupDraftSnapshot({ formData: null }, defaults);
+    normalized.formData.city = 'Rome';
+
+    expect(defaults.formData.city).toBe('');
+  });
 });

@@ -41,7 +41,7 @@ const normalizeGuidedSetupFormData = (
   value: unknown,
   defaults: GuidedSetupFormData,
 ): GuidedSetupFormData => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return defaults;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return { ...defaults };
 
   const next = { ...defaults };
   for (const [key, fieldValue] of Object.entries(value)) {
