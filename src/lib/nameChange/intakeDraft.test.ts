@@ -209,6 +209,19 @@ describe('name change intake draft helpers', () => {
     ]);
   });
 
+  it('normalizes camelCase draft field keys before storing manual extraction rows', () => {
+    const next = upsertDraftNameChangeExtractedField([], 'draft-current_passport', 'issuanceDate' as never, '  ', ' 2024-06-01 ');
+
+    expect(next).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-current_passport',
+        field_key: 'issuance_date',
+        field_label: 'Issuance Date',
+        field_value_masked: '2024-06-01',
+      }),
+    ]);
+  });
+
   it('replaces legacy messy draft field-key rows instead of leaving duplicates behind', () => {
     const next = upsertDraftNameChangeExtractedField([
       {

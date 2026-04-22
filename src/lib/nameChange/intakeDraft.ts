@@ -16,7 +16,11 @@ function normalizeDraftDocumentKind(value: string) {
 }
 
 function normalizeDraftFieldKey(value: string) {
-  return value.trim().toLowerCase().replace(/[-\s]+/g, '_') as NameChangeExtractedFieldInput['field_key'];
+  return value
+    .trim()
+    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+    .toLowerCase()
+    .replace(/[-\s]+/g, '_') as NameChangeExtractedFieldInput['field_key'];
 }
 
 export function buildDraftNameChangeDocumentId(kind: NameChangeDocumentInput['document_kind']) {
