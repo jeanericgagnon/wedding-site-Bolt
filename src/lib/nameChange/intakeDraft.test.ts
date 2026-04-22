@@ -274,6 +274,35 @@ describe('name change intake draft helpers', () => {
     ]);
   });
 
+  it('clears camelCase draft document-id rows when the canonical field is emptied', () => {
+    const next = upsertDraftNameChangeExtractedField([
+      {
+        document_id: 'draft-currentPassport' as never,
+        field_key: 'issuance_date',
+        field_label: 'Issue date',
+        field_value_masked: '2020-01-01',
+        source_type: 'manual',
+        is_verified: true,
+      },
+      {
+        document_id: null,
+        field_key: 'issuance_date',
+        field_label: 'Issue date',
+        field_value_masked: 'manual fallback',
+        source_type: 'manual',
+        is_verified: true,
+      },
+    ], 'draft-current_passport', 'issuance_date', 'Issuance date', '   ');
+
+    expect(next).toEqual([
+      expect.objectContaining({
+        document_id: null,
+        field_key: 'issuance_date',
+        field_value_masked: 'manual fallback',
+      }),
+    ]);
+  });
+
   it('replaces legacy messy draft field-key rows instead of leaving duplicates behind', () => {
     const next = upsertDraftNameChangeExtractedField([
       {
