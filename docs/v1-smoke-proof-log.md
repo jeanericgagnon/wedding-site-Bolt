@@ -140,6 +140,7 @@ This is a major differentiator. If it feels fake or sloppy, the product looks ha
 - Status: PENDING
 - Notes:
   - `npm run test:e2e:live` now covers collaborator invite route load with token param as part of canonical smoke.
+  - Accept-path proof is still route-load only; role-aware landing behavior still needs a dedicated finish pass.
 - Blockers:
 
 ---
