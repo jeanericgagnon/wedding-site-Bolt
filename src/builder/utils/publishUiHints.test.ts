@@ -255,6 +255,12 @@ describe('publishUiHints', () => {
     ]);
   });
 
+  it('does not mistake draft-only status copy for a blocker', () => {
+    expect(getPublishBlockedHints('Draft only')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
+  });
+
   it('returns fallback guidance for unknown message', () => {
     const hints = getPublishBlockedHints('Something else');
     expect(hints).toEqual(['Use Fix next to move through the last blockers before the guest-facing launch.']);
