@@ -941,6 +941,21 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('shows zero page readiness when persisted page arrays contain only null entries', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages = [
+      // @ts-expect-error exercising runtime guard for incomplete persisted data
+      null,
+    ];
+
+    expect(buildPublishReadiness(project).find((item) => item.id === 'page')).toEqual({
+      id: 'page',
+      label: 'A page exists',
+      done: false,
+      detail: 'Add a page or apply a starting design.',
+    });
+  });
+
   it('falls back to generic current-page copy when persisted active page title is not a string', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     // @ts-expect-error exercising runtime guard for incomplete persisted data
