@@ -33,8 +33,8 @@ export const getPublishIssue = (project: BuilderProject, weddingData?: WeddingDa
   }
 
   if (weddingData) {
-    const hasPartner1 = !!weddingData.couple.partner1Name?.trim();
-    const hasPartner2 = !!weddingData.couple.partner2Name?.trim();
+    const hasPartner1 = !!weddingData.couple?.partner1Name?.trim();
+    const hasPartner2 = !!weddingData.couple?.partner2Name?.trim();
     if (!hasPartner1 || !hasPartner2) {
       return { kind: 'missing-couple-names', message: 'Add both partner names before going live.' };
     }
