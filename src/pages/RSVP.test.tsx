@@ -737,6 +737,117 @@ describe('RSVP stale submit protection', () => {
     expect(screen.queryByText('Welcome, Taylor Rivera!')).not.toBeInTheDocument();
   });
 
+  it('allows a new token-linked RSVP submit after a prior token submit is invalidated by reset', async () => {
+    const firstSubmitRequest = deferred<Response>();
+
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          guest: {
+            id: 'guest-1',
+            first_name: 'Taylor',
+            last_name: 'Rivera',
+            name: 'Taylor Rivera',
+            email: 'taylor@example.com',
+            phone: null,
+            group_name: null,
+            wedding_site_id: 'site-1',
+            plus_one_allowed: false,
+            invited_to_ceremony: true,
+            invited_to_reception: true,
+            invite_token: 'token-1',
+          },
+          existingRsvp: null,
+          guests: null,
+          rsvpDeadline: null,
+          rsvpQuestions: [],
+          rsvpMealConfig: { enabled: false, options: [] },
+          musicPlaylistUrl: null,
+          householdGuests: [],
+        }),
+      })
+      .mockImplementationOnce(() => firstSubmitRequest.promise)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          guest: {
+            id: 'guest-2',
+            first_name: 'Jordan',
+            last_name: 'Lee',
+            name: 'Jordan Lee',
+            email: 'jordan@example.com',
+            phone: null,
+            group_name: null,
+            wedding_site_id: 'site-1',
+            plus_one_allowed: false,
+            invited_to_ceremony: true,
+            invited_to_reception: true,
+            invite_token: 'token-2',
+          },
+          existingRsvp: null,
+          guests: null,
+          rsvpDeadline: null,
+          rsvpQuestions: [],
+          rsvpMealConfig: { enabled: false, options: [] },
+          musicPlaylistUrl: null,
+          householdGuests: [],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true, guestName: 'Jordan Lee', attending: true }),
+      });
+
+    window.history.pushState({}, '', '/rsvp?token=token-1');
+
+    const view = render(
+      <BrowserRouter>
+        <RSVP />
+      </BrowserRouter>
+    );
+
+    await screen.findByText('Welcome, Taylor Rivera!');
+    fireEvent.click(screen.getByText('Continue to details'));
+    fireEvent.click(screen.getByText('Continue to review'));
+    fireEvent.click(screen.getByText('Submit RSVP'));
+
+    await screen.findByText('Submitting...');
+
+    await act(async () => {
+      window.history.pushState({}, '', '/rsvp');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+    view.rerender(
+      <BrowserRouter>
+        <RSVP />
+      </BrowserRouter>
+    );
+
+    await act(async () => {
+      window.history.pushState({}, '', '/rsvp?token=token-2');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+    view.rerender(
+      <BrowserRouter>
+        <RSVP />
+      </BrowserRouter>
+    );
+
+    await screen.findByText('Welcome, Jordan Lee!');
+    fireEvent.click(screen.getByText('Continue to details'));
+    fireEvent.click(screen.getByText('Continue to review'));
+    fireEvent.click(screen.getByText('Submit RSVP'));
+
+    expect(await screen.findByText("You're confirmed!")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+
+    firstSubmitRequest.resolve({
+      ok: true,
+      json: async () => ({ success: true, guestName: 'Taylor Rivera', attending: true }),
+    } as Response);
+  });
+
   it('drops stale token lookup completions after the page unmounts', async () => {
     const tokenLookup = deferred<Response>();
 

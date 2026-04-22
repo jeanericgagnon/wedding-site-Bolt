@@ -334,6 +334,7 @@ export default function RSVP() {
     if (!token) {
       activeLookupRequestRef.current += 1;
       activeSubmitRequestRef.current += 1;
+      submitInFlightRef.current = false;
       setLoading(false);
       setTokenAutoLoading(false);
       setSubmitting(false);
@@ -366,6 +367,7 @@ export default function RSVP() {
     const requestId = activeLookupRequestRef.current + 1;
     activeLookupRequestRef.current = requestId;
     activeSubmitRequestRef.current += 1;
+    submitInFlightRef.current = false;
     setTokenAutoLoading(true);
     setSubmitting(false);
     setStep('search');
