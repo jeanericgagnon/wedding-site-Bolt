@@ -295,15 +295,10 @@ export function resolveCanonicalRegistrySectionType(type: unknown): string {
 
 function resolveRegistryVariant(type: string, variant: unknown): string {
   if (!isRegistrySectionType(type)) return typeof variant === 'string' ? variant : '';
-
-  const normalizedVariantKey = normalizeRegistryVariantKey(variant);
-  if (!normalizedVariantKey) return 'cards';
-
-  const directRegistryVariant = getVariantsForType('registry').find((definition) => normalizeRegistryVariantKey(definition.variant) === normalizedVariantKey)?.variant;
-  if (directRegistryVariant) return directRegistryVariant;
-
-  const registryAliasTarget = Object.entries(getVariantFallbacksForType('registry')).find(([aliasVariant]) => normalizeRegistryVariantKey(aliasVariant) === normalizedVariantKey)?.[1];
-  return registryAliasTarget ?? 'cards';
+  const canonicalVariant = resolveCanonicalSectionVariantForType('registry', 'registry', variant);
+  return getAllDefinitions().some((definition) => definition.type === 'registry' && definition.variant === canonicalVariant)
+    ? canonicalVariant
+    : 'cards';
 }
 
 export function resolveCanonicalRegistryVariant(variant: unknown): string {

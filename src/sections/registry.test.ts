@@ -80,6 +80,7 @@ describe('sections registry resolution', () => {
     expect(resolveAndParse('registry', 'Playful', {}, { strictVariant: true })?.def.variant).toBe('cards');
     expect(resolveAndParse('RegistrySection' as never, 'Luxury' as never, {}, { strictVariant: true })?.def.variant).toBe('featured');
     expect(resolveCanonicalRegistryVariant('Experiences')).toBe('featured');
+    expect(resolveCanonicalRegistryVariant(undefined)).toBe('cards');
     expect(resolveCanonicalRegistryVariant(' Luxury ')).toBe('featured');
     expect(resolveCanonicalRegistryVariant('fund-highlight')).toBe('featured');
     expect(resolveCanonicalRegistryVariant('legacy-default')).toBe('cards');
@@ -406,7 +407,8 @@ describe('sections registry resolution', () => {
     expect(sectionRegistry).toContain("return getAllDefinitions().find((definition) => definition.type === type)?.variant ?? (typeof variant === 'string' ? variant : '');");
     expect(sectionRegistry).toContain('function getVariantFallbacksForType(type: string, inputType?: string): Record<string, string> {');
     expect(sectionRegistry).toContain('function getCanonicalSectionFallbackVariant(type: string, inputType: string, variant: string): string | null {');
-    expect(sectionRegistry).toContain("Object.entries(getVariantFallbacksForType('registry'))");
+    expect(sectionRegistry).toContain("const canonicalVariant = resolveCanonicalSectionVariantForType('registry', 'registry', variant);");
+    expect(sectionRegistry).toContain("? canonicalVariant");
     expect(sectionRegistry).toContain('return getCanonicalSectionFallbackVariant(type, inputType, normalizedVariantKey)');
     expect(sectionRegistry).toContain('const fallbackVariant = getCanonicalSectionFallbackVariant(canonicalSection.type, normalizedType, normalizedVariant);');
     expect(sectionRegistry).toContain('.filter((definition) => definition.type === type)');
@@ -419,8 +421,9 @@ describe('sections registry resolution', () => {
     expect(sectionRegistry).toContain("'registry-section': 'registry',");
     expect(sectionRegistry).toContain("default: 'cards'");
     expect(sectionRegistry).toContain("grid: 'cards'");
-    expect(sectionRegistry).toContain("return registryAliasTarget ?? 'cards';");
-    expect(sectionRegistry).toContain("normalizeRegistryVariantKey(aliasVariant) === normalizedVariantKey)?.[1]");
+    expect(sectionRegistry).toContain("const canonicalVariant = resolveCanonicalSectionVariantForType('registry', 'registry', variant);");
+    expect(sectionRegistry).toContain("? canonicalVariant");
+    expect(sectionRegistry).toContain('return Object.entries(getVariantFallbacksForType(type, inputType)).find(([alias]) => normalizeRegistryVariantKey(alias) === normalizeRegistryVariantKey(variant))?.[1] ?? null;');
     expect(previewSource).toContain('function isRegistryPreviewSectionType(type: string): boolean {');
     expect(previewSource).toContain("return normalizedType === 'registry' || normalizedType.startsWith('registrysection');");
     expect(weddingDataAdapter).toContain("function normalizeBuilderBindingSectionType(type: BuilderSectionInstance['type']): BuilderSectionInstance['type'] {");
