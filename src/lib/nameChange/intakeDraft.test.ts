@@ -13,6 +13,15 @@ describe('name change intake draft helpers', () => {
     });
   });
 
+  it('canonicalizes legacy court-order aliases into one stable draft document identity', () => {
+    expect(createDraftNameChangeDocument('court_order_name_change', 'Court order')).toMatchObject({
+      id: 'draft-court_order',
+      document_kind: 'court_order',
+      display_name: 'Court order',
+      file_name_masked: 'court-order-•••.pdf',
+    });
+  });
+
   it('upserts extracted fields per document instead of globally by field key', () => {
     const startingFields: NameChangeExtractedFieldInput[] = [
       {
@@ -72,6 +81,14 @@ describe('name change intake draft helpers', () => {
 
     expect(next).toEqual([
       expect.objectContaining({ document_id: null, field_key: 'county', field_value_masked: 'Orange' }),
+    ]);
+  });
+
+  it('upserts legacy court-order draft fields onto the canonical court-order draft id', () => {
+    const next = upsertDraftNameChangeExtractedField([], 'draft-court_order_name_change', 'case_number', 'Case number', '24-CV-1188');
+
+    expect(next).toEqual([
+      expect.objectContaining({ document_id: 'draft-court_order', field_key: 'case_number', field_value_masked: '24-CV-1188' }),
     ]);
   });
 });
