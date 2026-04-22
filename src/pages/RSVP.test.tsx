@@ -396,6 +396,82 @@ describe('RSVP stale submit protection', () => {
     expect(screen.queryByText('Welcome, Taylor Rivera!')).not.toBeInTheDocument();
   });
 
+  it('does not leak stale household inheritance when picked-guest lookup falls back', async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          guest: null,
+          existingRsvp: null,
+          guests: [
+            {
+              id: 'guest-1',
+              first_name: 'Taylor',
+              last_name: 'Rivera',
+              name: 'Taylor Rivera',
+              email: 'taylor@example.com',
+              phone: null,
+              group_name: null,
+              wedding_site_id: 'site-1',
+              plus_one_allowed: false,
+              invited_to_ceremony: true,
+              invited_to_reception: true,
+              invite_token: 'token-1',
+            },
+            {
+              id: 'guest-2',
+              first_name: 'Taylor',
+              last_name: 'Stone',
+              name: 'Taylor Stone',
+              email: 'stone@example.com',
+              phone: null,
+              group_name: null,
+              wedding_site_id: 'site-1',
+              plus_one_allowed: false,
+              invited_to_ceremony: true,
+              invited_to_reception: false,
+              invite_token: 'token-2',
+            },
+          ],
+          rsvpDeadline: null,
+          rsvpQuestions: [],
+          rsvpMealConfig: { enabled: true, options: ['Chicken', 'Beef'] },
+          musicPlaylistUrl: null,
+          householdGuests: [
+            {
+              id: 'household-1',
+              first_name: 'Jamie',
+              last_name: 'Rivera',
+              name: 'Jamie Rivera',
+              invite_token: 'household-token',
+              invited_to_ceremony: true,
+              invited_to_reception: true,
+            },
+          ],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({ error: 'Lookup failed' }),
+      });
+
+    render(
+      <MemoryRouter initialEntries={['/rsvp']}>
+        <RSVP />
+      </MemoryRouter>
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('rsvp.search_placeholder'), { target: { value: 'Taylor' } });
+    fireEvent.click(screen.getByText('Find My Invitation'));
+
+    expect(await screen.findByText('Multiple matches found')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Taylor Stone/i }));
+
+    expect(await screen.findByText('Welcome, Taylor Stone!')).toBeInTheDocument();
+    expect(screen.queryByText(/Jamie Rivera/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/This RSVP will also apply to:/)).not.toBeInTheDocument();
+  });
+
   it('returns token-linked guests to their loaded RSVP instead of dumping them to generic search after success', async () => {
     fetchMock
       .mockResolvedValueOnce({
