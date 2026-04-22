@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { SectionInstance } from '../types/layoutConfig';
-import { toBuilderV2Document } from './adapter';
+import { toBuilderV2Document, toBuilderV2Section } from './adapter';
 
 describe('toBuilderV2Document', () => {
   it('maps section instances into a v2 document with defaults', () => {
@@ -38,5 +38,19 @@ describe('toBuilderV2Document', () => {
     expect(out.sections[0].blocks[0]?.type).toBe('title');
     expect(out.sections[1].blocks[0]?.type).toBe('text');
     expect(typeof out.updatedAtISO).toBe('string');
+  });
+
+  it('normalizes drifted registry section types into registry blocks', () => {
+    const section = toBuilderV2Section({
+      id: 'registry-1',
+      type: 'registry-section' as never,
+      variant: 'default',
+      enabled: true,
+      bindings: {},
+      settings: { title: 'Registry' },
+    });
+
+    expect(section.type).toBe('registry');
+    expect(section.blocks[0]?.type).toBe('registryItem');
   });
 });

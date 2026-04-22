@@ -1,8 +1,13 @@
 import type { SectionInstance } from '../types/layoutConfig';
 import type { BuilderV2Block, BuilderV2Document, BuilderV2Section } from './contracts';
 
+const normalizeBuilderV2SectionType = (type: string) => {
+  const normalizedType = type.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+  return normalizedType === 'registrysection' ? 'registry' : type;
+};
+
 const makeDefaultBlocksForType = (type: string): BuilderV2Block[] => {
-  switch (type) {
+  switch (normalizeBuilderV2SectionType(type)) {
     case 'hero':
       return [
         { id: 'b-title', type: 'title', data: { text: 'Welcome to our wedding' } },
@@ -24,14 +29,15 @@ const makeDefaultBlocksForType = (type: string): BuilderV2Block[] => {
 };
 
 export const toBuilderV2Section = (instance: SectionInstance): BuilderV2Section => {
+  const normalizedType = normalizeBuilderV2SectionType(instance.type);
   return {
     id: instance.id,
-    type: instance.type,
+    type: normalizedType,
     variant: instance.variant,
     enabled: instance.enabled,
     title: instance.settings?.title,
     subtitle: instance.settings?.subtitle,
-    blocks: makeDefaultBlocksForType(instance.type),
+    blocks: makeDefaultBlocksForType(normalizedType),
   };
 };
 
