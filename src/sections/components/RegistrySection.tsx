@@ -13,7 +13,7 @@ interface Props {
 }
 
 function usePublicRegistryItems(weddingSiteId: string | null) {
-  const [items, setItems] = useState<RegistryItem[]>([]);
+  const [items, setItems] = useState<RegistryItem[] | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -26,10 +26,14 @@ function usePublicRegistryItems(weddingSiteId: string | null) {
   }, [weddingSiteId]);
 
   function updateItem(updated: RegistryItem) {
-    setItems(prev => prev.map(i => (i.id === updated.id ? updated : i)));
+    setItems(prev => prev?.map(i => (i.id === updated.id ? updated : i)) ?? prev);
   }
 
   return { items, loading, updateItem };
+}
+
+export function shouldUseLiveRegistryItems(items: RegistryItem[] | null): items is RegistryItem[] {
+  return items !== null;
 }
 
 interface PurchaseModalProps {
@@ -462,7 +466,7 @@ export const RegistrySection: React.FC<Props> = ({ data, instance }) => {
     );
   }
 
-  if (items.length > 0) {
+  if (shouldUseLiveRegistryItems(items)) {
     return (
       <section className="py-16 px-4 bg-surface">
         <div className="max-w-6xl mx-auto">
@@ -532,7 +536,7 @@ export const RegistryGrid: React.FC<Props> = ({ data, instance }) => {
     );
   }
 
-  if (items.length > 0) {
+  if (shouldUseLiveRegistryItems(items)) {
     return (
       <section className="py-20 px-4 bg-surface-subtle">
         <div className="max-w-6xl mx-auto">
@@ -612,7 +616,7 @@ export const RegistryFundHighlight: React.FC<Props> = ({ data, instance }) => {
     );
   }
 
-  if (items.length > 0) {
+  if (shouldUseLiveRegistryItems(items)) {
     return (
       <section className="py-20 px-4 bg-surface">
         <div className="max-w-6xl mx-auto">

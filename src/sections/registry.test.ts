@@ -180,4 +180,10 @@ describe('sections registry resolution', () => {
     expect(sectionRegistry).toContain("const normalizedVariant = resolveRegistryVariant(type, variant);");
     expect(sectionRegistry).toContain("normalizeRegistryVariantKey(aliasVariant) === normalizedVariantKey");
   });
+
+  it('keeps legacy public registry surfaces from falling back to stale links after live loads', () => {
+    const registrySectionComponent = readFileSync(resolve(__dirname, './components/RegistrySection.tsx'), 'utf8');
+    expect(registrySectionComponent).toContain('export function shouldUseLiveRegistryItems(items: RegistryItem[] | null): items is RegistryItem[] {');
+    expect(registrySectionComponent).toContain('if (shouldUseLiveRegistryItems(items)) {');
+  });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getRegistryDisplayPriority, getRegistryEmptyStateMessage, getRegistryPurchaseCtaLabel, getRegistryPurchaseDialogCopy } from './RegistrySection';
+import { getRegistryDisplayPriority, getRegistryEmptyStateMessage, getRegistryPurchaseCtaLabel, getRegistryPurchaseDialogCopy, shouldUseLiveRegistryItems } from './RegistrySection';
 
 describe('getRegistryPurchaseCtaLabel', () => {
   it('keeps available items in purchasing state language', () => {
@@ -27,5 +27,10 @@ describe('getRegistryPurchaseCtaLabel', () => {
     expect(getRegistryEmptyStateMessage([
       { purchase_status: 'available', hide_when_purchased: false, item_type: 'physical' },
     ], 'funds')).toBe('No items match this filter right now.');
+  });
+
+  it('keeps empty live registry loads from falling back to stale carryover links', () => {
+    expect(shouldUseLiveRegistryItems([])).toBe(true);
+    expect(shouldUseLiveRegistryItems(null)).toBe(false);
   });
 });
