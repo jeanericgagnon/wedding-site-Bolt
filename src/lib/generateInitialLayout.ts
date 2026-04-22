@@ -123,6 +123,7 @@ export function regenerateLayout(
     if (existing) {
       preservedSections.push({
         ...newSection,
+        id: existing.id,
         enabled: existing.enabled,
         settings: { ...newSection.settings, ...existing.settings },
         bindings: { ...newSection.bindings, ...existing.bindings },
