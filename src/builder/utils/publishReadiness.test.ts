@@ -132,6 +132,21 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('marks RSVP readiness incomplete when wedding data is missing an explicit RSVP flag', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
+    const data = createEmptyWeddingData();
+    // @ts-expect-error exercising runtime guard for incomplete persisted data
+    delete data.rsvp.enabled;
+
+    expect(buildPublishReadiness(project, data).find((item) => item.id === 'rsvp')).toEqual({
+      id: 'rsvp',
+      label: 'RSVP is turned on',
+      done: false,
+      detail: 'Turn RSVP on or remove RSVP calls to action.',
+    });
+  });
+
   it('marks names readiness incomplete when either partner name is blank whitespace', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
