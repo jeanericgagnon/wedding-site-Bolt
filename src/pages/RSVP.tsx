@@ -585,6 +585,9 @@ export default function RSVP() {
     setAmbiguousGuests([]);
     setGuest(null);
     setExistingRsvp(null);
+    setHouseholdGuests([]);
+    setApplyToHousehold(true);
+    setSelectedHouseholdGuestIds([]);
     try {
       const lookupResp: { data?: unknown; error?: string } = DEMO_MODE
         ? { data: demoLookup(picked.invite_token ?? picked.id) as unknown }
