@@ -98,6 +98,14 @@ describe('carryOverRegistryLinks', () => {
     ]);
   });
 
+  it('infers department-store registry source labels from carryover text and urls', () => {
+    expect(carryOverRegistryLinks("Anthropologie Registry | anthropologie.com/registry/jane\nBloomingdale's Registry | bloomingdales.com/registry/jane\nMacy's Registry | macys.com/registry/jane")).toEqual([
+      { url: 'https://anthropologie.com/registry/jane', sourceLabel: 'Anthropologie' },
+      { url: 'https://bloomingdales.com/registry/jane', sourceLabel: "Bloomingdale's" },
+      { url: 'https://macys.com/registry/jane', sourceLabel: "Macy's" },
+    ]);
+  });
+
   it('does not leak one source label across multiple carryover links on the same line', () => {
     expect(carryOverRegistryLinks('Amazon Registry | amazon.com/shop; target.com/list')).toEqual([
       { url: 'https://amazon.com/shop', sourceLabel: 'Amazon' },

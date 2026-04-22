@@ -24,6 +24,9 @@ function normalizeUrl(raw: string): string | null {
 
 function inferSourceLabel(url: string): string | undefined {
   const lower = url.toLowerCase();
+  if (lower.includes('anthropologie.com')) return 'Anthropologie';
+  if (lower.includes('bloomingdales.com')) return "Bloomingdale's";
+  if (lower.includes('macys.com')) return "Macy's";
   if (lower.includes('crateandbarrel.com')) return 'Crate & Barrel';
   if (lower.includes('cb2.com')) return 'CB2';
   if (lower.includes('potterybarn.com')) return 'Pottery Barn';
@@ -40,6 +43,9 @@ function inferSourceLabel(url: string): string | undefined {
 function inferSourceLabelFromText(text: string): string | undefined {
   const normalized = text.trim().toLowerCase();
   if (!normalized) return undefined;
+  if (normalized.includes('anthropologie')) return 'Anthropologie';
+  if (normalized.includes('bloomingdale')) return "Bloomingdale's";
+  if (normalized.includes('macy')) return "Macy's";
   if (normalized.includes('crate') && normalized.includes('barrel')) return 'Crate & Barrel';
   if (normalized.includes('cb2')) return 'CB2';
   if (normalized.includes('pottery') && normalized.includes('barn')) return 'Pottery Barn';

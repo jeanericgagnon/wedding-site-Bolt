@@ -398,6 +398,9 @@ describe('sections registry resolution', () => {
     expect(registryLinkCarryover).toContain('sourceLabel: index === 0 ? (explicitSourceLabel ?? parsedLink.sourceLabel) : parsedLink.sourceLabel,');
     expect(registryLinkCarryover).toContain('const deduped = new Map<string, CarryoverRegistryLink>();');
     expect(registryLinkCarryover).toContain('const existingInferredLabel = inferSourceLabel(existing.url);');
+    expect(registryLinkCarryover).toContain("if (lower.includes('anthropologie.com')) return 'Anthropologie';");
+    expect(registryLinkCarryover).toContain("if (lower.includes('bloomingdales.com')) return \"Bloomingdale's\";");
+    expect(registryLinkCarryover).toContain("if (lower.includes('macys.com')) return \"Macy's\";");
     expect(registryLinkCarryover).toContain("if (lower.includes('crateandbarrel.com')) return 'Crate & Barrel';");
     expect(registryLinkCarryover).toContain("if (lower.includes('cb2.com')) return 'CB2';");
     expect(registryLinkCarryover).toContain("if (lower.includes('potterybarn.com')) return 'Pottery Barn';");
