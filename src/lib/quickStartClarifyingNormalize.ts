@@ -1,8 +1,8 @@
 import type { ClarifyingPersistenceEnvelope, StoredClarifyingQuestion } from './aiClarifyingPersistence';
 
-const dedupeQuestionHistory = (history: StoredClarifyingQuestion[]) => {
+const dedupeQuestionsById = (questions: StoredClarifyingQuestion[]) => {
   const byId = new Map<string, StoredClarifyingQuestion>();
-  history.forEach((item) => {
+  questions.forEach((item) => {
     byId.set(item.id, item);
   });
   return Array.from(byId.values());
@@ -17,7 +17,8 @@ export const normalizeQuickStartClarifyingState = (
     ...clarifyingState,
     clarifying: {
       ...clarifyingState.clarifying,
-      history: dedupeQuestionHistory(clarifyingState.clarifying.history),
+      questions: dedupeQuestionsById(clarifyingState.clarifying.questions),
+      history: dedupeQuestionsById(clarifyingState.clarifying.history),
     },
   };
 };

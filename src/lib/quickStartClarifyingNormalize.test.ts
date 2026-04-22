@@ -38,6 +38,42 @@ describe('quickStartClarifyingNormalize', () => {
     expect(normalized?.clarifying.history[0].answer).toBe('6:00 PM');
   });
 
+  it('dedupes active clarifying questions by id, keeping the latest question state', () => {
+    const clarifying = createEmptyClarifyingPersistence();
+    clarifying.clarifying.questions = [
+      {
+        id: 'lodging',
+        category: 'travel',
+        question: 'Where should guests stay?',
+        expectedAnswerType: 'short_text',
+        targetFields: ['travel.lodging'],
+        affectedSections: ['travel'],
+        skippable: true,
+        round: 1,
+        status: 'pending',
+        answer: '',
+      },
+      {
+        id: 'lodging',
+        category: 'travel',
+        question: 'Where should guests stay?',
+        expectedAnswerType: 'short_text',
+        targetFields: ['travel.lodging'],
+        affectedSections: ['travel'],
+        skippable: true,
+        round: 2,
+        status: 'answered',
+        answer: 'Use the hotel block.',
+      },
+    ];
+
+    const normalized = normalizeQuickStartClarifyingState(clarifying);
+
+    expect(normalized?.clarifying.questions).toHaveLength(1);
+    expect(normalized?.clarifying.questions[0].round).toBe(2);
+    expect(normalized?.clarifying.questions[0].answer).toBe('Use the hotel block.');
+  });
+
   it('keeps null clarifying state unchanged', () => {
     expect(normalizeQuickStartClarifyingState(null)).toBeNull();
   });
