@@ -333,19 +333,22 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('Designs');
   });
 
-  it('returns page guidance when blocker copy uses the readiness label wording', () => {
-    const hints = getPublishBlockedHints('A page exists');
-    expect(hints[0]).toContain('Designs');
+  it('does not mistake the page readiness label for a blocker', () => {
+    expect(getPublishBlockedHints('A page exists')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
   });
 
-  it('returns page guidance when blocker copy uses the readiness detail wording', () => {
-    const hints = getPublishBlockedHints('2 pages ready');
-    expect(hints[0]).toContain('Designs');
+  it('does not mistake plural page-count readiness detail for a blocker', () => {
+    expect(getPublishBlockedHints('2 pages ready')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
   });
 
-  it('returns page guidance when blocker copy uses singular readiness detail wording', () => {
-    const hints = getPublishBlockedHints('1 page ready');
-    expect(hints[0]).toContain('Designs');
+  it('does not mistake singular page-count readiness detail for a blocker', () => {
+    expect(getPublishBlockedHints('1 page ready')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
   });
 
   it('does not mistake the current-page readiness label for a page blocker', () => {
