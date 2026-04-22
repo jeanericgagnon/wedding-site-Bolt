@@ -194,6 +194,11 @@ describe('publishUiHints', () => {
     expect(hints).toEqual(['Use Fix next to move through the last blockers before the guest-facing launch.']);
   });
 
+  it('returns fallback guidance when blocker copy is newline-padded punctuation-only noise', () => {
+    const hints = getPublishBlockedHints('\n ... \n');
+    expect(hints).toEqual(['Use Fix next to move through the last blockers before the guest-facing launch.']);
+  });
+
   it('returns page guidance even when blocker copy is lowercased by upstream formatting', () => {
     const hints = getPublishBlockedHints('add at least one page before going live.');
     expect(hints[0]).toContain('Designs');
