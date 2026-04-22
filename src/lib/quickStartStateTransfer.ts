@@ -24,12 +24,17 @@ export const hasMeaningfulQuickStartDraftSnapshot = (snapshot: QuickStartDraftSn
   );
 
   const hasMeaningfulSetupAnswers = hasMeaningfulQuickStartAnswers(snapshot.initialSetupAnswers);
+  const hasMeaningfulProgress = snapshot.currentIndex > 0 && hasMeaningfulSetupAnswers;
+  const hasMeaningfulFollowUps = Object.keys(snapshot.followUpAnswers).length > 0;
+  const hasThinkingContinuation = snapshot.showFollowUps
+    && snapshot.viewState === 'thinking';
 
   return hasMeaningfulSetupAnswers
-    || (snapshot.currentIndex > 0 && hasMeaningfulSetupAnswers)
-    || Object.keys(snapshot.followUpAnswers).length > 0
-    || snapshot.showFollowUps
-    || snapshot.viewState !== 'question'
+    || hasMeaningfulProgress
+    || hasMeaningfulFollowUps
+    || hasThinkingContinuation
+    || (snapshot.showFollowUps && (hasMeaningfulFollowUps || hasMeaningfulClarifyingState))
+    || (snapshot.viewState !== 'question' && (hasMeaningfulFollowUps || hasMeaningfulClarifyingState || hasThinkingContinuation))
     || hasMeaningfulClarifyingState;
 };
 
