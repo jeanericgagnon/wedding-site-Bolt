@@ -63,6 +63,7 @@ export const getRecommendedTemplates = (
   templates: TemplateCatalogItem[],
   limit = 3,
 ): TemplateCatalogItem[] => {
+  if (limit <= 0) return [];
   if (draft.stylePreferences.length === 0) return templates.slice(0, limit);
 
   const scored = [...templates]

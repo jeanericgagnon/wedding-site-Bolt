@@ -95,6 +95,15 @@ describe('setupDraftRecommendations', () => {
     }, templates, 3).map((template) => template.id)).toEqual(['b', 'a', 'c']);
   });
 
+  it('returns no recommendations when the requested limit is zero', () => {
+    const templates = [
+      makeTemplate({ id: 'a', name: 'A' }),
+      makeTemplate({ id: 'b', name: 'B' }),
+    ];
+
+    expect(getRecommendedTemplates(emptySetupDraft, templates, 0)).toEqual([]);
+  });
+
   it('falls back to the first templates when no setup preferences exist', () => {
     const templates = [
       makeTemplate({ id: 'a', name: 'A' }),
