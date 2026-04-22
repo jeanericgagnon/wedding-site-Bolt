@@ -83,7 +83,7 @@ const V1_SLICE_STATUS = [
     status: 'Must prove',
     tone: 'risk',
     done: 'Draft/schedule/history surface exists with tighter permission truth.',
-    missing: 'Still needs proof that send-state and history are trustworthy enough to promise.',
+    missing: 'Still needs proof that send-state and history are solid enough for broader launch claims.',
   },
   {
     name: 'Seating',
