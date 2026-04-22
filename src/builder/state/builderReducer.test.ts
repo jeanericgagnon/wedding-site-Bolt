@@ -306,6 +306,8 @@ describe('builderReducer — MEDIA actions', () => {
     });
     const next = builderReducer(opened, { type: 'CLOSE_MEDIA_LIBRARY' });
     expect(next.mediaLibraryOpen).toBe(false);
+    expect(next.mediaPickerTargetSectionId).toBeNull();
+    expect(next.mediaPickerTargetField).toBeNull();
     expect(next.mediaPickerTargetSettingKey).toBeNull();
   });
 
