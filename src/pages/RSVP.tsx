@@ -324,6 +324,7 @@ export default function RSVP() {
     const token = searchParams.get('token');
     if (!token) {
       activeLookupRequestRef.current += 1;
+      activeSubmitRequestRef.current += 1;
       setLoading(false);
       setTokenAutoLoading(false);
       setSubmitting(false);
