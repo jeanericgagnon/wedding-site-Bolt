@@ -53,6 +53,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('couple details');
   });
 
+  it('returns partner-name guidance when both-names blocker copy is lowercased by upstream formatting', () => {
+    const hints = getPublishBlockedHints('add both names exactly how you want them shown.');
+    expect(hints[0]).toContain('couple details');
+  });
+
   it('returns wedding-date guidance', () => {
     const hints = getPublishBlockedHints('Add your wedding date before publishing.');
     expect(hints[0]).toContain('event details');
