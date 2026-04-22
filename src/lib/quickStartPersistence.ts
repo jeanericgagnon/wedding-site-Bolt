@@ -2,6 +2,7 @@ import { createEmptyInitialSetupAnswers, type InitialSetupAnswers } from './init
 import type { ClarifyingDraftOutputs, ClarifyingPersistenceEnvelope, StoredClarifyingQuestion } from './aiClarifyingPersistence';
 import { normalizeQuickStartClarifyingMode } from './quickStartClarifyingMode';
 import { normalizeQuickStartClarifyingState } from './quickStartClarifyingNormalize';
+import { hasMeaningfulQuickStartAnswers } from './quickStartHydration';
 
 export type QuickStartDraftSnapshot = {
   initialSetupAnswers: InitialSetupAnswers;
@@ -411,15 +412,19 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
       }
     : clarifyingState;
 
+  const normalizedInitialSetupAnswers = { ...base.initialSetupAnswers, ...initialSetupAnswers };
+  const normalizedCurrentIndex = typeof parsed.currentIndex === 'number'
+    && Number.isFinite(parsed.currentIndex)
+    && Number.isInteger(parsed.currentIndex)
+    && Number.isSafeInteger(parsed.currentIndex)
+    && parsed.currentIndex >= 0
+    && hasMeaningfulQuickStartAnswers(normalizedInitialSetupAnswers)
+    ? parsed.currentIndex
+    : 0;
+
   return {
-    initialSetupAnswers: { ...base.initialSetupAnswers, ...initialSetupAnswers },
-    currentIndex: typeof parsed.currentIndex === 'number'
-      && Number.isFinite(parsed.currentIndex)
-      && Number.isInteger(parsed.currentIndex)
-      && Number.isSafeInteger(parsed.currentIndex)
-      && parsed.currentIndex >= 0
-      ? parsed.currentIndex
-      : 0,
+    initialSetupAnswers: normalizedInitialSetupAnswers,
+    currentIndex: normalizedCurrentIndex,
     followUpAnswers: restoredFollowUpAnswers,
     showFollowUps,
     clarifyingState: normalizedClarifyingState,

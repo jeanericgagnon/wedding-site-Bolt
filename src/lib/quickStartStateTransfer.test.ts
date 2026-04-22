@@ -193,6 +193,20 @@ describe('quickStartStateTransfer', () => {
     });
   });
 
+  it('rewrites completed onboarding step progress back to zero when setup answers do not survive restore', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      currentIndex: 5,
+      initialSetupAnswers: {
+        names: '   ',
+      },
+    }));
+
+    const restored = readQuickStartDraftSnapshot();
+
+    expect(restored).toBeNull();
+    expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
+  });
+
   it('keeps progressed quick start snapshots when meaningful answers survived', () => {
     const persisted = persistQuickStartDraftSnapshot({
       currentIndex: 7,

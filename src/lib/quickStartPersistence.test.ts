@@ -64,6 +64,17 @@ describe('quickStartPersistence', () => {
     expect(normalized.currentIndex).toBe(0);
   });
 
+  it('resets completed onboarding step progress when setup answers no longer survive restore', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      currentIndex: 5,
+      initialSetupAnswers: {
+        names: '   ',
+      },
+    });
+
+    expect(normalized.currentIndex).toBe(0);
+  });
+
   it('drops malformed follow-up answers with blank keys', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       followUpAnswers: {
