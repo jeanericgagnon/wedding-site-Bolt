@@ -163,6 +163,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('venue');
   });
 
+  it('returns venue guidance when blocker copy focuses on venue name or address wording', () => {
+    const hints = getPublishBlockedHints('Venue name or address is still missing.');
+    expect(hints[0]).toContain('venue');
+  });
+
   it('returns venue guidance for whitespace-padded venue message', () => {
     const hints = getPublishBlockedHints('   Add at least one venue before publishing.   ');
     expect(hints[0]).toContain('venue');
