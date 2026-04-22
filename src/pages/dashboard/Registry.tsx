@@ -485,7 +485,7 @@ export const DashboardRegistry: React.FC = () => {
   async function handleRepairBadImports() {
     if (isDemoMode || repairingBadImports) return;
     const candidates = items
-      .filter((i) => /^(page not found|gift from\s.+)$/i.test((i.item_name || '').trim()))
+      .filter((i) => /^(page not found|product unavailable|gift from\s.+)$/i.test((i.item_name || '').trim()))
       .filter((i) => !!(i.item_url || i.canonical_url))
       .slice(0, 20);
 
