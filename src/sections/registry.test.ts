@@ -55,7 +55,7 @@ describe('sections registry resolution', () => {
 
   it('keeps registry owner and guest renders aligned when persisted registry variants drift in casing or punctuation', () => {
     expect(resolveAndParse('Registry', 'luxury', {}, { strictVariant: true })?.def.variant).toBe('featured');
-    expect(resolveAndParse('registry-section' as never, 'default', {}, { strictVariant: true })).toBeNull();
+    expect(resolveAndParse('registry-section' as never, 'default', {}, { strictVariant: true })?.def.variant).toBe('cards');
     expect(resolveAndParse('registry', 'default', {}, { strictVariant: true })?.def.variant).toBe('cards');
     expect(resolveAndParse('registry', 'grid', {}, { strictVariant: true })?.def.variant).toBe('cards');
     expect(resolveAndParse('registry', ' Luxury ', {}, { strictVariant: true })?.def.variant).toBe('featured');
@@ -327,8 +327,10 @@ describe('sections registry resolution', () => {
     expect(sectionRegistry).toContain("function normalizeRegistryVariantKey(variant: unknown): string {");
     expect(sectionRegistry).toContain("function isRegistrySectionType(type: unknown): boolean {");
     expect(sectionRegistry).toContain("const normalizedTypeKey = typeof type === 'string' ? type.trim().toLowerCase() : type;");
+    expect(sectionRegistry).toContain("return normalizedType === 'registry' || normalizedType.startsWith('registrysection');");
     expect(sectionRegistry).toContain("return typeof variant === 'string'");
     expect(sectionRegistry).toContain("const normalizedVariant = resolveRegistryVariant(type, variant);");
+    expect(sectionRegistry).toContain("'registry-section': 'registry',");
     expect(sectionRegistry).toContain("default: 'cards'");
     expect(sectionRegistry).toContain("grid: 'cards'");
     expect(sectionRegistry).toContain("return registryAliasTarget ?? 'cards';");

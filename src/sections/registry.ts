@@ -275,7 +275,9 @@ function normalizeRegistryVariantKey(variant: unknown): string {
 }
 
 function isRegistrySectionType(type: unknown): boolean {
-  return typeof type === 'string' && normalizeRegistryVariantKey(type) === 'registry';
+  if (typeof type !== 'string') return false;
+  const normalizedType = normalizeRegistryVariantKey(type);
+  return normalizedType === 'registry' || normalizedType.startsWith('registrysection');
 }
 
 function resolveRegistryVariant(type: string, variant: unknown): string {
@@ -383,6 +385,7 @@ export function resolveAndParse(
     'footer-cta': 'footerCta',
     'wedding-party': 'weddingParty',
     'dress-code': 'dressCode',
+    'registry-section': 'registry',
   } as Record<string, string>)[normalizedTypeKey] ?? normalizedTypeKey;
   const normalizedVariant = resolveRegistryVariant(type, variant);
 
