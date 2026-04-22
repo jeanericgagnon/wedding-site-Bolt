@@ -283,6 +283,23 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('blocks publish and marks names incomplete when persisted couple data contains a null partner entry', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
+    const data = createEmptyWeddingData();
+    // @ts-expect-error exercising runtime guard for incomplete persisted data
+    data.couple.partner1Name = null;
+    data.couple.partner2Name = 'Jordan';
+
+    expect(getPublishIssue(project, data)?.kind).toBe('missing-couple-names');
+    expect(buildPublishReadiness(project, data).find((item) => item.id === 'names')).toEqual({
+      id: 'names',
+      label: 'Couple names are filled in',
+      done: false,
+      detail: 'Add both names exactly how you want them shown.',
+    });
+  });
+
   it('marks venue readiness incomplete when venue fields are only whitespace', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
