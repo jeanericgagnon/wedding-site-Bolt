@@ -225,6 +225,12 @@ describe('sections registry resolution', () => {
     expect(registrySectionComponent).toContain('if (shouldUseLiveRegistryItems(items)) {');
   });
 
+  it('keeps public purchaser status aligned with owner purchase state truth', () => {
+    const registrySectionComponent = readFileSync(resolve(__dirname, './components/RegistrySection.tsx'), 'utf8');
+    expect(registrySectionComponent).toContain("export function getRegistryPurchaserStatusLabel(item: Pick<RegistryItem, 'purchase_status' | 'purchaser_name'>): string | null {");
+    expect(registrySectionComponent).toContain("if (!item.purchaser_name || item.purchase_status === 'available') return null;");
+  });
+
   it('keeps template registry definitions cloned before import/edit flows mutate them', () => {
     const templateRegistrySource = readFileSync(resolve(__dirname, '../templates/registry.ts'), 'utf8');
     expect(templateRegistrySource).toContain('const REGISTRY_VARIANT_ALIASES: Record<string, string> = {');

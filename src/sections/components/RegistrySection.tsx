@@ -164,6 +164,11 @@ export function getRegistryPurchaseDialogCopy(item: Pick<RegistryItem, 'purchase
   };
 }
 
+export function getRegistryPurchaserStatusLabel(item: Pick<RegistryItem, 'purchase_status' | 'purchaser_name'>): string | null {
+  if (!item.purchaser_name || item.purchase_status === 'available') return null;
+  return `Purchasing: ${item.purchaser_name}`;
+}
+
 export function getRegistryDisplayPriority(item: Pick<RegistryItem, 'purchase_status' | 'item_type'>): number {
   const purchaseScore = item.purchase_status === 'available'
     ? 2
@@ -292,8 +297,8 @@ const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase }) => {
           </p>
         )}
 
-        {item.purchaser_name && !isPurchased && (
-          <p className="text-xs text-text-tertiary">Purchasing: {item.purchaser_name}</p>
+        {getRegistryPurchaserStatusLabel(item) && (
+          <p className="text-xs text-text-tertiary">{getRegistryPurchaserStatusLabel(item)}</p>
         )}
 
         <div className="flex gap-2 pt-1">
