@@ -220,7 +220,7 @@ describe('sections registry resolution', () => {
     const compatibility = readFileSync(resolve(__dirname, '../lib/sectionVariantCompatibility.ts'), 'utf8');
     const compatibilityTest = readFileSync(resolve(__dirname, '../lib/sectionVariantCompatibility.test.ts'), 'utf8');
     expect(compatibility).toContain('export function resolveBuilderVariant(type: SectionType, variant: unknown): string {');
-    expect(compatibility).toContain("const normalizeVariantKey = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '');");
+    expect(compatibility).toContain("const normalizeVariantKey = (value: unknown) => typeof value === 'string'");
     expect(compatibility).toContain("const normalizedVariant = typeof variant === 'string' ? variant.trim() : '';");
     expect(compatibility).toContain('const supportedByKey = new Map');
     expect(compatibility).toContain('const canonicalVariant = supportedByKey.get(normalizedVariantKey) ?? normalizedVariant;');
@@ -230,6 +230,7 @@ describe('sections registry resolution', () => {
     expect(compatibilityTest).toContain("expect(resolveBuilderVariant('registry', '   ')).toBe('cards');");
     expect(compatibilityTest).toContain("expect(resolveBuilderVariant('registry', 'not-a-real-variant')).toBe('cards');");
     expect(compatibilityTest).toContain("expect(resolveBuilderVariant('registry', undefined as never)).toBe('cards');");
+    expect(compatibilityTest).toContain("expect(resolveBuilderVariant('registry', ['featured'] as never)).toBe('cards');");
     expect(compatibilityTest).toContain("expect(resolveBuilderVariant('travel', { variant: 'localGuide' } as never)).toBe('default');");
     expect(compatibilityTest).toContain("expect(resolveBuilderVariant('registry', ' FEATURED ')).toBe('featured');");
     expect(compatibilityTest).toContain("expect(resolveBuilderVariant('registry', 'Experiences')).toBe('experiences');");

@@ -86,4 +86,9 @@ describe('resolveBuilderVariant onboarding handoff compatibility', () => {
     expect(resolveBuilderVariant('schedule', 'Day.Tabs')).toBe('dayTabs');
     expect(resolveBuilderVariant('registry', 'FUND_HIGHLIGHT')).toBe('fundHighlight');
   });
+
+  it('tolerates malformed alias values while normalizing registry builder variants', () => {
+    expect(resolveBuilderVariant('registry', ['featured'] as never)).toBe('cards');
+    expect(resolveBuilderVariant('registry', true as never)).toBe('cards');
+  });
 });

@@ -141,7 +141,9 @@ const VARIANT_ALIASES: Partial<Record<SectionType, Record<string, string>>> = {
   },
 };
 
-const normalizeVariantKey = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '');
+const normalizeVariantKey = (value: unknown) => typeof value === 'string'
+  ? value.toLowerCase().replace(/[^a-z0-9]/g, '')
+  : '';
 
 function getPreferredBuilderFallbackVariant(type: SectionType, supported: string[]): string {
   if (type === 'registry') return supported.includes('cards') ? 'cards' : supported[0] ?? 'default';
