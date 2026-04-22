@@ -253,6 +253,33 @@ describe('name change document intake contract', () => {
     expect(snapshot.summary.autofillReady).toBe(0);
   });
 
+  it('keeps metadata-incomplete reviewed documents out of extraction-gap summary', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase(),
+      [
+        {
+          document_kind: 'current_passport',
+          display_name: 'Passport',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'passport-•••.pdf',
+          issuing_authority: null,
+          issued_on: '2024-06-01',
+          expires_on: '2034-06-01',
+          extraction_confidence: 0.92,
+        },
+      ],
+      [],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'current_passport')).toMatchObject({
+      intakeStatus: 'reviewed',
+      metadataMissing: ['issuing authority'],
+      missingExtractionFields: expect.arrayContaining(['first_name', 'middle_name', 'last_name', 'issuance_date']),
+    });
+    expect(snapshot.summary.extractionGaps).toBe(0);
+  });
+
   it('keeps uploaded preferred documents out of reviewed-ready summary counters until review is complete', () => {
     const snapshot = buildNameChangeDocumentIntakeSnapshot(
       makeCase(),

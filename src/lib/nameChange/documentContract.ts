@@ -224,7 +224,7 @@ export function buildNameChangeDocumentIntakeSnapshot(
       metadataReady: statuses.filter((status) => status.intakeStatus === 'reviewed' && status.metadataMissing.length === 0 && status.canonicalConflicts.length === 0).length,
       metadataGaps: statuses.filter((status) => status.intakeStatus !== 'not_started' && (status.metadataMissing.length > 0 || status.canonicalConflicts.length > 0)).length,
       autofillReady: statuses.filter((status) => status.preferredForAutofill && status.missingExtractionFields.length === 0 && status.canonicalConflicts.length === 0 && status.metadataMissing.length === 0 && status.intakeStatus === 'reviewed').length,
-      extractionGaps: statuses.filter((status) => status.intakeStatus === 'reviewed' && (status.missingExtractionFields.length > 0 || status.canonicalConflicts.length > 0)).length,
+      extractionGaps: statuses.filter((status) => status.intakeStatus === 'reviewed' && status.metadataMissing.length === 0 && (status.missingExtractionFields.length > 0 || status.canonicalConflicts.length > 0)).length,
     },
   };
 }
