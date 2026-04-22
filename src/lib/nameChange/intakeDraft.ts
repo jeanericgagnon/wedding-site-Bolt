@@ -55,6 +55,7 @@ export function createDraftNameChangeDocument(
   const canonicalKind = canonicalizeNameChangeDocumentKind(normalizedKind as NameChangeDocumentInput['document_kind']);
   const normalizedLabel = normalizeDraftText(label) || humanizeDraftToken(canonicalKind);
   const shouldUseMaskedFileName = canonicalKind !== 'other';
+  const defaultExtractionConfidence = canonicalKind !== 'other' ? 0.92 : null;
 
   return {
     id: buildDraftNameChangeDocumentId(canonicalKind),
@@ -66,7 +67,7 @@ export function createDraftNameChangeDocument(
     issuing_authority: null,
     issued_on: null,
     expires_on: null,
-    extraction_confidence: 0.92,
+    extraction_confidence: defaultExtractionConfidence,
     extracted_snapshot: null,
   };
 }
