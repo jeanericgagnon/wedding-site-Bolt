@@ -6,7 +6,7 @@ const LEGACY_SELECTOR_VARIANTS: Record<SectionType, string[]> = {
   venue: ['default', 'card'],
   schedule: ['default', 'timeline', 'dayTabs'],
   travel: ['default', 'cards', 'localGuide'],
-  registry: ['default', 'grid', 'fundHighlight', 'classic', 'luxury', 'experiences', 'modern', 'playful'],
+  registry: ['default', 'cards', 'grid', 'fundHighlight', 'featured', 'minimal', 'honeymoon', 'tabs', 'illustrated', 'classic', 'luxury', 'experiences', 'modern', 'playful'],
   rsvp: ['default', 'inline'],
   faq: ['default', 'accordion', 'iconGrid'],
   gallery: ['default', 'masonry'],
