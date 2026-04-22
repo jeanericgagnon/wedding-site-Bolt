@@ -114,4 +114,15 @@ describe('versionHistory', () => {
 
     expect(getBuilderRevision(weddingId, revision.id)?.project.pages[0].title).toBe('Original title');
   });
+
+  it('returns cloned revision lists so callers cannot mutate subsequent reads', () => {
+    const weddingId = `w_${Date.now()}_k`;
+    const project = createEmptyBuilderProject(weddingId, 'modern-luxe');
+    recordBuilderRevision({ weddingId, project, action: 'save', actor: 'tester' });
+
+    const listed = listBuilderRevisions(weddingId);
+    listed[0].project.pages[0].title = 'Mutated title';
+
+    expect(listBuilderRevisions(weddingId)[0]?.project.pages[0].title).not.toBe('Mutated title');
+  });
 });
