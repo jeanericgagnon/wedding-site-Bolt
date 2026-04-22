@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { getAllSectionManifests, getSectionManifest } from '../builder/registry/sectionManifests';
-import { getDefinition, getVariantsForType, resolveAndParse, resolveCanonicalRegistrySectionInput, resolveCanonicalRegistrySectionType, resolveCanonicalRegistryVariant } from './registry';
+import { getDefinition, getDefinitionOrThrow, getVariantsForType, resolveAndParse, resolveCanonicalRegistrySectionInput, resolveCanonicalRegistrySectionType, resolveCanonicalRegistryVariant } from './registry';
 import { getAllTemplates, getCanonicalTemplateSourceId, getTemplate, resolveCanonicalTemplateId, TEMPLATE_REGISTRY } from '../templates/registry';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -55,6 +55,7 @@ describe('sections registry resolution', () => {
 
   it('keeps registry owner and guest renders aligned when persisted registry variants drift in casing or punctuation', () => {
     expect(getDefinition(' Hero ' as never, 'fullBleed' as never)?.type).toBe('hero');
+    expect(getDefinitionOrThrow('RegistrySection' as never, ' Luxury ' as never).variant).toBe('featured');
     expect(getDefinition('RegistrySection' as never, ' Luxury ' as never)?.variant).toBe('featured');
     expect(resolveAndParse('Registry', 'luxury', {}, { strictVariant: true })?.def.variant).toBe('featured');
     expect(resolveAndParse('registry-section' as never, 'default', {}, { strictVariant: true })?.def.variant).toBe('cards');
@@ -538,6 +539,7 @@ describe('sections registry resolution', () => {
     expect(sectionRegistrySource).toContain('export function resolveCanonicalRegistrySectionType(type: unknown): string {');
     expect(sectionRegistrySource).toContain('export function resolveCanonicalRegistryVariant(variant: unknown): string {');
     expect(sectionRegistrySource).toContain('const canonicalSection = resolveCanonicalRegistrySectionInput(type, variant);');
+    expect(sectionRegistrySource).toContain('throw new Error(`No section definition for ${canonicalSection.type}::${canonicalSection.variant}`);');
     expect(sectionRegistrySource).toContain("VARIANT_FALLBACKS[canonicalSection.type]?.[normalizedVariant]");
     expect(initialLayoutSource).toContain('overrides: sectionDef.overrides ? { ...sectionDef.overrides } : undefined,');
     expect(initialLayoutSource).toContain('locked: sectionDef.locked,');

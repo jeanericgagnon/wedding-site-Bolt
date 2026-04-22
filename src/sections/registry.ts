@@ -389,8 +389,9 @@ export function getDefinition(type: string, variant: string): SectionDefinition 
 }
 
 export function getDefinitionOrThrow(type: string, variant: string): SectionDefinition {
+  const canonicalSection = resolveCanonicalRegistrySectionInput(type, variant);
   const def = getDefinition(type, variant);
-  if (!def) throw new Error(`No section definition for ${type}::${variant}`);
+  if (!def) throw new Error(`No section definition for ${canonicalSection.type}::${canonicalSection.variant}`);
   return def;
 }
 
