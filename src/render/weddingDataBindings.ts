@@ -16,7 +16,19 @@ interface BindableSection {
 
 function normalizeBindableSectionType(type: string): string {
   const normalizedType = type.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-  return normalizedType === 'registrysection' ? 'registry' : type;
+
+  switch (normalizedType) {
+    case 'registrysection':
+      return 'registry';
+    case 'venuesection':
+      return 'venue';
+    case 'schedulesection':
+      return 'schedule';
+    case 'faqsection':
+      return 'faq';
+    default:
+      return normalizedType;
+  }
 }
 
 const DEFAULT_TIME_FORMATTER = new Intl.DateTimeFormat('en-US', {
@@ -155,6 +167,28 @@ function bindSchedule(section: BindableSection, weddingData: WeddingDataV1): Rec
   };
 }
 
+function bindFaq(section: BindableSection, weddingData: WeddingDataV1): Record<string, unknown> {
+  const faqItems = Array.isArray((weddingData as Partial<WeddingDataV1>).faq)
+    ? (weddingData as Partial<WeddingDataV1>).faq!
+    : [];
+
+  const selectedItems = pickByIds(faqItems, section.bindings?.faqIds)
+    .filter((item) => !!item.q || !!item.a);
+  const fallbackItems = faqItems.filter((item) => !!item.q || !!item.a);
+  const itemsToUse = selectedItems.length > 0 ? selectedItems : fallbackItems;
+
+  if (itemsToUse.length === 0) return section.data;
+
+  return {
+    ...section.data,
+    items: itemsToUse.map((item) => ({
+      id: item.id,
+      question: item.q,
+      answer: item.a,
+    })),
+  };
+}
+
 function bindRegistry(section: BindableSection, weddingData: WeddingDataV1): Record<string, unknown> {
   const registryLinks = Array.isArray((weddingData as Partial<WeddingDataV1>).registry?.links)
     ? (weddingData as Partial<WeddingDataV1>).registry!.links
@@ -278,6 +312,8 @@ export function applyWeddingDataBindings(section: BindableSection, weddingData?:
       return bindVenue(withCommon, weddingData);
     case 'schedule':
       return bindSchedule(withCommon, weddingData);
+    case 'faq':
+      return bindFaq(withCommon, weddingData);
     case 'registry':
       return bindRegistry(withCommon, weddingData);
     case 'rsvp':

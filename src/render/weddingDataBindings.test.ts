@@ -76,6 +76,97 @@ describe('applyWeddingDataBindings', () => {
     expect(links[0].url).toBe('https://amazon.com/registry');
   });
 
+  it('binds faq items from wedding data', () => {
+    const data = createEmptyWeddingData();
+    data.faq = [
+      { id: 'f1', q: 'Can I bring kids?', a: 'Adults only, please.' },
+      { id: 'f2', q: 'Is parking available?', a: 'Yes, valet is available.' },
+    ];
+
+    const result = applyWeddingDataBindings({
+      type: 'faq',
+      variant: 'accordion',
+      data: { items: [{ id: 'demo', question: 'Demo?', answer: 'Demo.' }] },
+      bindings: { faqIds: ['f2'] },
+    }, data);
+
+    const items = result.items as Array<Record<string, unknown>>;
+    expect(items).toHaveLength(1);
+    expect(items[0].question).toBe('Is parking available?');
+    expect(items[0].answer).toBe('Yes, valet is available.');
+  });
+
+  it('falls back to live faq items when bound faq ids are stale', () => {
+    const data = createEmptyWeddingData();
+    data.faq = [
+      { id: 'f1', q: 'What should I wear?', a: 'Cocktail attire.' },
+    ];
+
+    const result = applyWeddingDataBindings({
+      type: 'faq',
+      variant: 'accordion',
+      data: { items: [{ id: 'demo', question: 'Demo?', answer: 'Demo.' }] },
+      bindings: { faqIds: ['missing-id'] },
+    }, data);
+
+    const items = result.items as Array<Record<string, unknown>>;
+    expect(items).toHaveLength(1);
+    expect(items[0].question).toBe('What should I wear?');
+    expect(items[0].answer).toBe('Cocktail attire.');
+  });
+
+  it('binds faq items from drifted faq section types', () => {
+    const data = createEmptyWeddingData();
+    data.faq = [
+      { id: 'f1', q: 'Are plus ones included?', a: 'Only if listed on your invite.' },
+    ];
+
+    const result = applyWeddingDataBindings({
+      type: 'FAQ Section',
+      variant: 'accordion',
+      data: { items: [] },
+      bindings: { faqIds: ['f1'] },
+    }, data);
+
+    const items = result.items as Array<Record<string, unknown>>;
+    expect(items).toHaveLength(1);
+    expect(items[0].question).toBe('Are plus ones included?');
+  });
+
+  it('binds schedule items from drifted schedule section types', () => {
+    const data = createEmptyWeddingData();
+    data.schedule = [
+      { id: 's1', label: 'Ceremony', startTimeISO: '2026-05-09T16:00:00.000Z' },
+    ];
+
+    const result = applyWeddingDataBindings({
+      type: 'Schedule Section',
+      variant: 'agendaCards',
+      data: { events: [] },
+      bindings: { scheduleItemIds: ['s1'] },
+    }, data);
+
+    const events = result.events as Array<Record<string, unknown>>;
+    expect(events).toHaveLength(1);
+    expect(events[0].label).toBe('Ceremony');
+  });
+
+  it('binds venue entries from drifted venue section types', () => {
+    const data = createEmptyWeddingData();
+    data.venues = [{ id: 'v1', name: 'The Grand Pavilion', address: '450 Park Ave' }];
+
+    const result = applyWeddingDataBindings({
+      type: 'Venue Section',
+      variant: 'mapFirst',
+      data: { venues: [] },
+      bindings: { venueIds: ['v1'] },
+    }, data);
+
+    const venues = result.venues as Array<Record<string, unknown>>;
+    expect(venues).toHaveLength(1);
+    expect(venues[0].name).toBe('The Grand Pavilion');
+  });
+
   it('binds venue entries from wedding data', () => {
     const data = createEmptyWeddingData();
     data.venues = [{ id: 'v1', name: 'The Grand Pavilion', address: '450 Park Ave' }];
