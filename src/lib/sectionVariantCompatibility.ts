@@ -141,19 +141,21 @@ const VARIANT_ALIASES: Partial<Record<SectionType, Record<string, string>>> = {
   },
 };
 
+const normalizeVariantKey = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '');
+
 export function resolveBuilderVariant(type: SectionType, variant: unknown): string {
   const supported = LEGACY_SELECTOR_VARIANTS[type] ?? ['default'];
   const normalizedVariant = typeof variant === 'string' ? variant.trim() : '';
-  const normalizedVariantKey = normalizedVariant.toLowerCase();
-  const supportedByLowercase = new Map(supported.map((supportedVariant) => [supportedVariant.toLowerCase(), supportedVariant]));
-  const canonicalVariant = supportedByLowercase.get(normalizedVariantKey) ?? normalizedVariant;
+  const normalizedVariantKey = normalizeVariantKey(normalizedVariant);
+  const supportedByKey = new Map(supported.map((supportedVariant) => [normalizeVariantKey(supportedVariant), supportedVariant]));
+  const canonicalVariant = supportedByKey.get(normalizedVariantKey) ?? normalizedVariant;
   if (supported.includes(canonicalVariant)) return canonicalVariant;
 
   const aliases = VARIANT_ALIASES[type] ?? {};
   const alias = aliases[canonicalVariant]
     ?? aliases[normalizedVariant]
-    ?? Object.entries(aliases).find(([aliasVariant]) => aliasVariant.toLowerCase() === normalizedVariantKey)?.[1];
+    ?? Object.entries(aliases).find(([aliasVariant]) => normalizeVariantKey(aliasVariant) === normalizedVariantKey)?.[1];
   if (!alias) return supported[0] ?? 'default';
 
-  return supportedByLowercase.get(alias.toLowerCase()) ?? (supported.includes(alias) ? alias : supported[0] ?? 'default');
+  return supportedByKey.get(normalizeVariantKey(alias)) ?? (supported.includes(alias) ? alias : supported[0] ?? 'default');
 }

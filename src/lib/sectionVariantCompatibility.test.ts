@@ -66,4 +66,12 @@ describe('resolveBuilderVariant onboarding handoff compatibility', () => {
     expect(resolveBuilderVariant('schedule', 'DAYTABS')).toBe('dayTabs');
     expect(resolveBuilderVariant('faq', ' icongrid ')).toBe('iconGrid');
   });
+
+  it('accepts separator-heavy ai handoff variants that describe the same builder section', () => {
+    expect(resolveBuilderVariant('travel', 'local-guide')).toBe('localGuide');
+    expect(resolveBuilderVariant('travel', 'local guide')).toBe('localGuide');
+    expect(resolveBuilderVariant('schedule', 'day_tabs')).toBe('dayTabs');
+    expect(resolveBuilderVariant('faq', 'icon-grid')).toBe('iconGrid');
+    expect(resolveBuilderVariant('registry', 'fund-highlight')).toBe('fundHighlight');
+  });
 });
