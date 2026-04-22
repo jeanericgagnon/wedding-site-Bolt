@@ -1437,6 +1437,33 @@ describe('quickStartStateTransfer', () => {
     expect(stored.viewState).toBe('thinking');
   });
 
+  it('keeps thinking restores meaningful after normalization rewrites empty clarifying shells to draft mode', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      showFollowUps: true,
+      viewState: 'thinking',
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    }));
+
+    const firstRestore = readQuickStartDraftSnapshot();
+    const rewritten = JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}');
+    const secondRestore = readQuickStartDraftSnapshot();
+
+    expect(firstRestore?.showFollowUps).toBe(true);
+    expect(firstRestore?.viewState).toBe('thinking');
+    expect(rewritten.showFollowUps).toBe(true);
+    expect(rewritten.viewState).toBe('thinking');
+    expect(rewritten.clarifyingState?.clarifying?.mode).toBe('draft');
+    expect(secondRestore?.showFollowUps).toBe(true);
+    expect(secondRestore?.viewState).toBe('thinking');
+  });
+
 
 
   it('treats question-view ask-mode shells as inert when generation never started', () => {

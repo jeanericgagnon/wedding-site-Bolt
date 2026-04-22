@@ -1677,6 +1677,25 @@ describe('quickStartPersistence', () => {
     expect(normalized.viewState).toBe('thinking');
   });
 
+  it('preserves thinking view after pending clarifying generation rewrites the empty shell to draft mode', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      showFollowUps: true,
+      viewState: 'thinking',
+      clarifyingState: {
+        clarifying: {
+          mode: 'draft',
+          questions: [],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.showFollowUps).toBe(true);
+    expect(normalized.viewState).toBe('thinking');
+    expect(normalized.clarifyingState?.clarifying.mode).toBe('draft');
+  });
+
 
 
   it('closes thinking view when draft outputs already survived restore', () => {
