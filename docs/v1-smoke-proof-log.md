@@ -19,6 +19,7 @@ _Machine-readable guardrail:_ canonical smoke JSON now encodes the no-go launch 
 _Highest-risk trust gap key:_ `guests_rsvp_ops_and_manual_truth_pass`
 _Secondary trust gap key:_ `canonical_couple_path_and_runtime_wording_verification_missing`
 _Machine-readable flag:_ `runtimeWordingVerificationMissing: true`
+_Machine-readable flag:_ `starterDraftWordingVerificationMissing: true`
 
 ## Purpose
 This is the hard proof artifact for whether DayOf can credibly claim **v1 / done-enough**.
@@ -48,6 +49,7 @@ Latest live smoke breadth: 31 Playwright checks passing
 Latest canonical smoke result: `ok: true`, `blocked: false`
 Latest site lookup statuses: list 200, bySlug 200, byUrl 200
 Canonical manual-proof scope: route-note pass plus privacy/access/publish and marketing/settings/billing wording verification
+Starter-draft wording proof scope: onboarding plus first-run dashboard/site draft wording still needs explicit runtime-truth verification
 
 This is **not** a generic QA checklist.
 This is the must-ship truth gate.
@@ -115,6 +117,7 @@ If the product cannot be shown, shared, and trusted publicly, the v1 claim is de
   - Still need one logged human route-note pass for Home -> signup/demo/auth -> onboarding/builder -> public site -> RSVP, focused on UX quality rather than route availability.
   - Still need explicit manual verification that privacy/access/publish wording matches live runtime behavior in the canonical couple path.
   - Still need explicit manual verification that marketing, settings, and billing wording stays honest against the live runtime behavior.
+  - Still need explicit manual verification that onboarding and the first-run dashboard/site draft wording stay honest against the live starter-draft runtime behavior.
 
 ---
 
