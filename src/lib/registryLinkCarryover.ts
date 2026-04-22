@@ -102,9 +102,9 @@ export function parsePersistedRegistryLinks(raw: string | null | undefined): Car
       const candidateUrl = rest.length > 0 ? rest.join(' | ') : line;
       const parsedLinks = carryOverRegistryLinks(candidateUrl);
       if (parsedLinks.length > 0) {
-        return parsedLinks.map((parsedLink) => ({
+        return parsedLinks.map((parsedLink, index) => ({
           url: parsedLink.url,
-          sourceLabel: explicitSourceLabel ?? parsedLink.sourceLabel,
+          sourceLabel: index === 0 ? (explicitSourceLabel ?? parsedLink.sourceLabel) : parsedLink.sourceLabel,
         }));
       }
 

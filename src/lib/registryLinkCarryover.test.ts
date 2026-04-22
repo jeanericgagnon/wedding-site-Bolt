@@ -151,6 +151,13 @@ describe('carryOverRegistryLinks', () => {
     ]);
   });
 
+  it('does not leak one persisted registry label across multiple saved links on the same line', () => {
+    expect(parsePersistedRegistryLinks('Custom Boutique | example.com/list | target.com/list')).toEqual([
+      { url: 'https://example.com/list', sourceLabel: 'Custom Boutique' },
+      { url: 'https://target.com/list', sourceLabel: 'Target' },
+    ]);
+  });
+
   it('merges stronger carryover labels without dropping unmatched persisted registry links', () => {
     expect(mergeRegistrySourceLabels(
       [{ url: 'https://zola.com/registry/jane', sourceLabel: 'Custom Honeymoon Fund' }],
