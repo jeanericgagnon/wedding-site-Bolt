@@ -55,6 +55,15 @@ describe('quickStartPersistence', () => {
     expect(normalized.initialSetupAnswers.plusOnePolicy).toBe('');
   });
 
+
+  it('drops unsafe quick start step indexes safely', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      currentIndex: Number.MAX_SAFE_INTEGER + 1,
+    });
+
+    expect(normalized.currentIndex).toBe(0);
+  });
+
   it('drops malformed follow-up answers with blank keys', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       followUpAnswers: {

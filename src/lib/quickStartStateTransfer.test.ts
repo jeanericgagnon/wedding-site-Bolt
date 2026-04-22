@@ -51,6 +51,18 @@ describe('quickStartStateTransfer', () => {
   });
 
 
+  it('rewrites unsafe quick start step indexes back to zero on read', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      currentIndex: Number.MAX_SAFE_INTEGER + 1,
+    }));
+
+    const restored = readQuickStartDraftSnapshot();
+
+    expect(restored?.currentIndex).toBe(0);
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').currentIndex).toBe(0);
+  });
+
+
   it('drops follow-up answers when a malformed clarifying envelope survives storage restore', () => {
     window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
       followUpAnswers: {
