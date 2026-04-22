@@ -49,5 +49,6 @@ describe('Trust page draft-first CTA', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Review your draft' }));
 
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
+    expect(screen.getByRole('link', { name: 'Open your builder' })).toHaveAttribute('href', '/dashboard/builder');
   });
 });
