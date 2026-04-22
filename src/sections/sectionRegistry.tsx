@@ -88,9 +88,9 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDefinition> = {
     supportedSettings: ['showTitle', 'title', 'subtitle'],
   },
   registry: {
-    component: RegistrySection,
+    component: RegistryGrid,
     variants: {
-      default: RegistrySection,
+      default: RegistryGrid,
       grid: RegistryGrid,
       fundHighlight: RegistryFundHighlight,
       cards: RegistryGrid,
