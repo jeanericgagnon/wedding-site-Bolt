@@ -27,14 +27,21 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     ? Object.fromEntries(Object.entries(parsed.followUpAnswers).filter(([, val]) => typeof val === 'string'))
     : {};
 
+  const allowedInitialSetupValues: Partial<Record<keyof InitialSetupAnswers, readonly string[]>> = {
+    labelPreference: ['names-only', 'bride-groom', 'bride-bride', 'groom-groom', 'custom'],
+    guestCountBand: ['under-50', '50-100', '100-150', '150-250', '250-plus', ''],
+    plusOnePolicy: ['none', 'some', 'all', ''],
+    childrenAllowed: ['yes', 'no', 'unsure', ''],
+    mealChoice: ['yes', 'no', ''],
+    registryIntent: ['cash', 'gifts', 'both', 'unsure', 'none-for-now', ''],
+  };
+
   const initialSetupAnswers = parsed.initialSetupAnswers && typeof parsed.initialSetupAnswers === 'object' && !Array.isArray(parsed.initialSetupAnswers)
     ? Object.fromEntries(
         Object.entries(parsed.initialSetupAnswers).filter(([key, val]) => {
           if (typeof val !== 'string') return false;
-          if (key === 'labelPreference') {
-            return ['names-only', 'bride-groom', 'bride-bride', 'groom-groom', 'custom'].includes(val);
-          }
-          return true;
+          const allowedValues = allowedInitialSetupValues[key as keyof InitialSetupAnswers];
+          return !allowedValues || allowedValues.includes(val);
         }),
       ) as Partial<InitialSetupAnswers>
     : {};

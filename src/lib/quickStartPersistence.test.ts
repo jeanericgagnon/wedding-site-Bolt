@@ -40,6 +40,8 @@ describe('quickStartPersistence', () => {
       initialSetupAnswers: {
         names: 'Alex & Jordan',
         labelPreference: 'wizard-mode',
+        guestCountBand: 'tons',
+        plusOnePolicy: 'vip-only',
       },
     });
 
@@ -49,5 +51,7 @@ describe('quickStartPersistence', () => {
     expect(normalized.clarifyingState).toBeNull();
     expect(normalized.initialSetupAnswers.names).toBe('Alex & Jordan');
     expect(normalized.initialSetupAnswers.labelPreference).toBe('names-only');
+    expect(normalized.initialSetupAnswers.guestCountBand).toBe('');
+    expect(normalized.initialSetupAnswers.plusOnePolicy).toBe('');
   });
 });
