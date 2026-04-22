@@ -36,6 +36,18 @@ function cloneTemplateValue<T>(value: T): T {
   return value;
 }
 
+function deepFreezeTemplateValue<T>(value: T): T {
+  if (Array.isArray(value)) {
+    value.forEach((entry) => deepFreezeTemplateValue(entry));
+    return Object.freeze(value) as T;
+  }
+  if (value && typeof value === 'object') {
+    Object.values(value as Record<string, unknown>).forEach((entry) => deepFreezeTemplateValue(entry));
+    return Object.freeze(value);
+  }
+  return value;
+}
+
 const templateRegistry: TemplateDefinition[] = [
   // 1. HERO-FOCUSED: Editorial Impact (Large, dramatic photography)
   {
@@ -800,7 +812,7 @@ function getCanonicalTemplateSource(templateId: string | undefined): TemplateDef
     || templateRegistry[0];
 }
 
-export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = Object.freeze({
+export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = deepFreezeTemplateValue({
   ...templateById,
   // Back-compat aliases used by older flows
   base: cloneTemplateDefinition(getCanonicalTemplateSource(TEMPLATE_ALIAS_TARGETS.base)),

@@ -137,67 +137,57 @@ describe('sections registry resolution', () => {
   });
 
   it('keeps malformed imported registry template variants from leaking past cards fallback', () => {
-    const baseRegistrySection = TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry');
+    const importedTemplate = getTemplate('base');
+    const baseRegistrySection = importedTemplate.defaultLayout.sections.find((section) => section.type === 'registry');
     expect(baseRegistrySection).toBeDefined();
 
-    const originalVariant = baseRegistrySection?.variant;
-    TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry')!.variant = undefined as never;
+    baseRegistrySection!.variant = undefined as never;
 
     expect(getTemplate('base').defaultLayout.sections.find((section) => section.type === 'registry')?.variant).toBe('cards');
-
-    TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry')!.variant = originalVariant;
   });
 
   it('keeps unknown imported registry template variants from leaking past cards fallback', () => {
-    const baseRegistrySection = TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry');
+    const importedTemplate = getTemplate('base');
+    const baseRegistrySection = importedTemplate.defaultLayout.sections.find((section) => section.type === 'registry');
     expect(baseRegistrySection).toBeDefined();
 
-    const originalVariant = baseRegistrySection?.variant;
-    TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry')!.variant = 'legacy-default';
+    baseRegistrySection!.variant = 'legacy-default';
 
     expect(getTemplate('base').defaultLayout.sections.find((section) => section.type === 'registry')?.variant).toBe('cards');
-
-    TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry')!.variant = originalVariant;
   });
 
   it('keeps drifted registry template section types normalized for guest-visible imports', () => {
-    const baseRegistrySection = TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry');
+    const importedTemplate = getTemplate('base');
+    const baseRegistrySection = importedTemplate.defaultLayout.sections.find((section) => section.type === 'registry');
     expect(baseRegistrySection).toBeDefined();
 
-    const originalType = baseRegistrySection?.type;
-    TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry')!.type = 'Registry' as never;
+    baseRegistrySection!.type = 'Registry' as never;
 
     const importedRegistrySection = getTemplate('base').defaultLayout.sections.find((section) => section.type === 'registry');
     expect(importedRegistrySection?.type).toBe('registry');
     expect(importedRegistrySection?.variant).toBe('cards');
-
-    TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'Registry')!.type = originalType as never;
   });
 
   it('keeps drifted registry-section template types normalized for guest-visible imports', () => {
-    const baseRegistrySection = TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry');
+    const importedTemplate = getTemplate('base');
+    const baseRegistrySection = importedTemplate.defaultLayout.sections.find((section) => section.type === 'registry');
     expect(baseRegistrySection).toBeDefined();
 
-    const originalType = baseRegistrySection?.type;
-    TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry')!.type = 'registry-section' as never;
+    baseRegistrySection!.type = 'registry-section' as never;
 
     const importedRegistrySection = getTemplate('base').defaultLayout.sections.find((section) => section.type === 'registry');
     expect(importedRegistrySection?.type).toBe('registry');
     expect(importedRegistrySection?.variant).toBe('cards');
-
-    TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry-section')!.type = originalType as never;
   });
 
   it('keeps legacy registry template variants normalized onto guest-visible cards', () => {
-    const baseRegistrySection = TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry');
+    const importedTemplate = getTemplate('base');
+    const baseRegistrySection = importedTemplate.defaultLayout.sections.find((section) => section.type === 'registry');
     expect(baseRegistrySection).toBeDefined();
 
-    const originalVariant = baseRegistrySection?.variant ?? 'cards';
-    TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry')!.variant = 'grid';
+    baseRegistrySection!.variant = 'grid';
 
     expect(getTemplate('base').defaultLayout.sections.find((section) => section.type === 'registry')?.variant).toBe('cards');
-
-    TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry')!.variant = originalVariant;
   });
 
   it('keeps persisted template ids resolving cleanly through import edits', () => {
@@ -228,7 +218,8 @@ describe('sections registry resolution', () => {
   });
 
   it('keeps template registry aliases isolated from each other during import edits', () => {
-    TEMPLATE_REGISTRY.classic.defaultLayout.sections.find((section) => section.type === 'registry')!.settings = { title: 'Mutated alias' };
+    const importedClassicTemplate = getTemplate('classic');
+    importedClassicTemplate.defaultLayout.sections.find((section) => section.type === 'registry')!.settings = { title: 'Mutated alias' };
 
     expect(TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry')?.settings).toEqual({});
     expect(TEMPLATE_REGISTRY['timeless-classic'].defaultLayout.sections.find((section) => section.type === 'registry')?.settings).toEqual({});
@@ -237,6 +228,7 @@ describe('sections registry resolution', () => {
 
   it('keeps exported template registry aliases locked to canonical sources', () => {
     expect(Object.isFrozen(TEMPLATE_REGISTRY)).toBe(true);
+    expect(Object.isFrozen(TEMPLATE_REGISTRY.base.defaultLayout.sections)).toBe(true);
     expect(getTemplate('base').id).toBe('timeless-classic');
     expect(getTemplate('classic').id).toBe('timeless-classic');
   });
@@ -514,7 +506,8 @@ describe('sections registry resolution', () => {
     expect(templateRegistrySource).toContain('function cloneTemplateValue<T>(value: T): T {');
     expect(templateRegistrySource).toContain("templateRegistry.map((template) => [template.id, cloneTemplateDefinition(template)])");
     expect(templateRegistrySource).toContain('const TEMPLATE_ALIAS_TARGETS: Record<string, string> = {');
-    expect(templateRegistrySource).toContain('export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = Object.freeze({');
+    expect(templateRegistrySource).toContain('export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = deepFreezeTemplateValue({');
+    expect(templateRegistrySource).toContain('function deepFreezeTemplateValue<T>(value: T): T {');
     expect(templateRegistrySource).toContain('function getCanonicalTemplateSource(templateId: string | undefined): TemplateDefinition {');
     expect(templateRegistrySource).toContain("base: cloneTemplateDefinition(getCanonicalTemplateSource(TEMPLATE_ALIAS_TARGETS.base)),");
     expect(templateRegistrySource).toContain("variant: isRegistryTemplateSection");
