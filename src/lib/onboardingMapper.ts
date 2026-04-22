@@ -3,7 +3,7 @@ import { generateInitialLayout } from './generateInitialLayout';
 import { generateWeddingSlug } from './slugify';
 import { buildMigrationRecoveryDefaults } from './migrationRecovery';
 import { serializeImportedFaqLines, shapeImportedFaqLines } from './faqMigration';
-import { CarryoverRegistryLink, carryOverRegistryLinks } from './registryLinkCarryover';
+import { carryOverRegistryLinks, parsePersistedRegistryLinks } from './registryLinkCarryover';
 import { assertCanonicalTemplateLayout } from './canonicalTemplateRuntime';
 
 interface CoupleNames {
@@ -32,19 +32,6 @@ interface OnboardingMapperInput {
   registryLinksRaw?: string;
   customFaqs?: string;
 }
-
-const parseSerializedRegistryLinks = (raw?: string): CarryoverRegistryLink[] => {
-  if (!raw?.trim()) return [];
-  return raw
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => {
-      const [label, ...rest] = line.split('|').map((part) => part.trim()).filter(Boolean);
-      if (rest.length === 0) return { url: label };
-      return { url: rest.join(' | '), sourceLabel: label };
-    });
-};
 
 const mergeRegistrySourceLabels = (carried: Array<{ url: string; sourceLabel?: string }>, existing: Array<{ url: string; sourceLabel?: string }>) => {
   const merged = carried.map((link) => ({ ...link }));
@@ -92,7 +79,7 @@ export function buildOnboardingUpdateData(input: OnboardingMapperInput): Record<
     ...useCaseFaqs,
   ].join('\n');
   const carriedRegistryLinks = carryOverRegistryLinks(input.registryLinksRaw ?? input.registryLinks);
-  const normalizedRegistryLinks = mergeRegistrySourceLabels(carriedRegistryLinks, parseSerializedRegistryLinks(input.registryLinks ?? ''))
+  const normalizedRegistryLinks = mergeRegistrySourceLabels(carriedRegistryLinks, parsePersistedRegistryLinks(input.registryLinks ?? ''))
     .map((link) => link.sourceLabel ? `${link.sourceLabel} | ${link.url}` : link.url)
     .join('\n');
 

@@ -1,7 +1,7 @@
 import { WeddingDataV1 } from '../types/weddingData';
 import { buildMigrationRecoveryDefaults } from './migrationRecovery';
 import { shapeImportedFaqLines } from './faqMigration';
-import { CarryoverRegistryLink, carryOverRegistryLinks } from './registryLinkCarryover';
+import { CarryoverRegistryLink, carryOverRegistryLinks, parsePersistedRegistryLinks } from './registryLinkCarryover';
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -80,19 +80,6 @@ function dedupeFaqs(faqs: WeddingDataV1['faq']): WeddingDataV1['faq'] {
 function hasSubstantiveAnswer(answer?: string): boolean {
   if (!answer?.trim()) return false;
   return !PLACEHOLDER_ANSWERS.includes(answer.trim().toLowerCase());
-}
-
-function parseSerializedRegistryLinks(raw?: string): CarryoverRegistryLink[] {
-  if (!raw?.trim()) return [];
-  return raw
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => {
-      const [label, ...rest] = line.split('|').map((part) => part.trim()).filter(Boolean);
-      if (rest.length === 0) return { url: label };
-      return { url: rest.join(' | '), sourceLabel: label };
-    });
 }
 
 function mergeRegistrySourceLabels(
@@ -189,7 +176,7 @@ export function fromOnboarding(formData: OnboardingFormData): WeddingDataV1 {
 
   const migratedRegistryLinks = mergeRegistrySourceLabels(
     carryOverRegistryLinks(formData.registryLinksRaw || formData.registryLinks || formData.registryLink),
-    parseSerializedRegistryLinks(formData.registryLinks || formData.registryLink),
+    parsePersistedRegistryLinks(formData.registryLinks || formData.registryLink),
   );
   migratedRegistryLinks.forEach((link) => {
     registry.links.push({

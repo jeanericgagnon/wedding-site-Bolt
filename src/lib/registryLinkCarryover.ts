@@ -81,6 +81,27 @@ function finalizeCarryoverRegistryLink(
   return link.sourceLabel ? { url: link.url, sourceLabel: link.sourceLabel } : { url: link.url };
 }
 
+export function parsePersistedRegistryLinks(raw: string | null | undefined): CarryoverRegistryLink[] {
+  if (!raw?.trim()) return [];
+
+  return raw
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [label, ...rest] = line.split('|').map((part) => part.trim()).filter(Boolean);
+      if (!label) return null;
+
+      const candidateUrl = rest.length > 0 ? rest.join(' | ') : label;
+      const normalizedUrl = normalizeUrl(cleanRegistryUrlToken(candidateUrl));
+      if (!normalizedUrl) return null;
+
+      const sourceLabel = rest.length > 0 ? label : inferSourceLabel(normalizedUrl);
+      return sourceLabel ? { url: normalizedUrl, sourceLabel } : { url: normalizedUrl };
+    })
+    .filter((link): link is CarryoverRegistryLink => Boolean(link));
+}
+
 function extractRegistryUrlTokens(line: string): CarryoverRegistryToken[] {
   const tokens = new Map<string, CarryoverRegistryToken>();
   const patterns = [
