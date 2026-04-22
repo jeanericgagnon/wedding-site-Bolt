@@ -114,6 +114,17 @@ function getRequiredQuestionValidationLabel(question: RSVPQuestion): string {
   return label === 'Question' ? 'this question' : label;
 }
 
+function normalizeCustomAnswers(answers: Record<string, string | string[]>) {
+  return Object.fromEntries(
+    Object.entries(answers).map(([questionId, value]) => [
+      questionId,
+      Array.isArray(value)
+        ? value.map((entry) => String(entry).trim()).filter((entry) => entry.length > 0)
+        : String(value ?? '').trim(),
+    ]),
+  );
+}
+
 
 function parseEventSelectionsFromNotes(notes: string | null, guest: Guest): { cleanNotes: string; attendCeremony: boolean; attendReception: boolean } {
   const fallback = {
@@ -331,6 +342,7 @@ export default function RSVP() {
     const notesPayload = (formData.notes || '').trim();
     const mealChoice = (formData.meal_choice || '').trim();
     const plusOneName = (formData.plus_one_name || '').trim();
+    const normalizedCustomAnswers = normalizeCustomAnswers(customAnswers);
     setError('');
     setStep('form');
     setFormStep(1);
@@ -344,7 +356,7 @@ export default function RSVP() {
       plus_one_count: plusOneName ? 1 : 0,
       children_count: 0,
       notes: notesPayload || null,
-      custom_answers: customAnswers,
+      custom_answers: normalizedCustomAnswers,
     });
   }, [customAnswers, formData, invalidateActiveSubmit]);
 
@@ -664,14 +676,7 @@ export default function RSVP() {
       const notesPayload = (formData.notes || '').trim();
       const mealChoice = (formData.meal_choice || '').trim();
       const plusOneName = (formData.plus_one_name || '').trim();
-      const normalizedCustomAnswers = Object.fromEntries(
-        Object.entries(customAnswers).map(([questionId, value]) => [
-          questionId,
-          Array.isArray(value)
-            ? value.map((entry) => String(entry).trim()).filter((entry) => entry.length > 0)
-            : String(value ?? '').trim(),
-        ]),
-      );
+      const normalizedCustomAnswers = normalizeCustomAnswers(customAnswers);
 
       if (applyToHousehold && householdGuests.length > 0 && selectedHouseholdGuestIds.length === 0) {
         if (activeSubmitRequestRef.current !== requestId) return;
