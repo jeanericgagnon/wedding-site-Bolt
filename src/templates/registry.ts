@@ -44,7 +44,9 @@ function normalizeTemplateIdKey(templateId: unknown): string {
 }
 
 function isRegistryTemplateSectionType(type: unknown): boolean {
-  return typeof type === 'string' && normalizeTemplateIdKey(type) === 'registry';
+  if (typeof type !== 'string') return false;
+  const normalizedType = normalizeTemplateIdKey(type);
+  return normalizedType === 'registry' || normalizedType.startsWith('registrysection');
 }
 
 function cloneTemplateValue<T>(value: T): T {
