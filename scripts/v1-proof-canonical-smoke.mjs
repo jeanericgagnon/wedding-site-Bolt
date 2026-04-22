@@ -119,6 +119,10 @@ const output = {
     blocked: blockedRequired.length,
   },
   publicV1ClaimStatus: 'not_clear_to_claim_yet',
+  publicV1ClaimBlockers: [
+    'Canonical couple-path still lacks one logged human route-note pass from Home through public RSVP entry',
+    'Privacy/access/publish and marketing/settings/billing wording still lack runtime-truth verification',
+  ],
   automatedCoverage: [
     'Build integrity for the current public/onboarding path',
     'Public v1 trust story smoke across Home, Product, and Trust via Playwright live smoke',
