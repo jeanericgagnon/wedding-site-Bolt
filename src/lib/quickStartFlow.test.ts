@@ -82,4 +82,15 @@ describe('quickStartFlow', () => {
     expect(applyQuickStartAnswer(base, 'mealChoice', ' YES ').mealChoice).toBe('yes');
     expect(applyQuickStartAnswer(base, 'registryIntent', ' BOTH ').registryIntent).toBe('both');
   });
+
+  it('infers sparse freeform quick start enum answers from partial phrasing', () => {
+    const base = createEmptyInitialSetupAnswers();
+
+    expect(applyQuickStartAnswer(base, 'guestCount', 'around 120 guests').guestCountBand).toBe('100-150');
+    expect(applyQuickStartAnswer(base, 'plusOnePolicy', 'close friends and family only').plusOnePolicy).toBe('some');
+    expect(applyQuickStartAnswer(base, 'childrenAllowed', 'adults only please').childrenAllowed).toBe('no');
+    expect(applyQuickStartAnswer(base, 'mealChoice', 'ask for meal choices').mealChoice).toBe('yes');
+    expect(applyQuickStartAnswer(base, 'registryIntent', 'honeymoon fund and gifts').registryIntent).toBe('both');
+  });
+
 });
