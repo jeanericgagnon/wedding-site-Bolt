@@ -573,6 +573,7 @@ export default function RSVP() {
     activeLookupRequestRef.current = requestId;
     invalidateActiveSubmit();
     setLoading(true);
+    setSubmitting(false);
     setError('');
     setAmbiguousGuests([]);
     setGuest(null);
