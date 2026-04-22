@@ -4,15 +4,15 @@ const NON_BLOCKING_PUBLISH_COPY = new Set([
   'at least one section is turned on',
   'a page exists',
   'couple names are filled in',
-  'names are ready for guests.',
+  'names are ready for guests',
   'wedding date is set',
-  'date is ready.',
+  'date is ready',
   'venue details are set',
-  'venue details are ready.',
+  'venue details are ready',
   'rsvp is turned on',
-  'guests can reply.',
+  'guests can reply',
   'latest edits are saved',
-  'everything is saved.',
+  'everything is saved',
   'ready to go live',
   'no checks yet',
   'draft only',
@@ -26,7 +26,8 @@ const NON_BLOCKING_PUBLISH_COPY = new Set([
 ]);
 
 const isNonBlockingPublishCopy = (normalizedErrorLower: string): boolean => {
-  if (NON_BLOCKING_PUBLISH_COPY.has(normalizedErrorLower)) return true;
+  const normalizedStatusCopy = normalizedErrorLower.replace(/[.!?]+$/g, '');
+  if (NON_BLOCKING_PUBLISH_COPY.has(normalizedStatusCopy)) return true;
   if (/^.+ has visible sections\.?$/.test(normalizedErrorLower)) return true;
   if (/^\d+ sections? visible\.?$/.test(normalizedErrorLower)) return true;
   if (/^\d+ pages? ready\.?$/.test(normalizedErrorLower)) return true;
