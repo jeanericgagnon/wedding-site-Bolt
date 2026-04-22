@@ -250,6 +250,7 @@ describe('name change document intake contract', () => {
     });
     expect(snapshot.summary.requiredReady).toBe(5);
     expect(snapshot.summary.requiredMissing).toBe(1);
+    expect(snapshot.summary.autofillReady).toBe(0);
   });
 
   it('keeps uploaded preferred documents out of reviewed-ready summary counters until review is complete', () => {
