@@ -13,6 +13,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('Designs');
   });
 
+  it('returns page guidance for the real publish readiness blocker copy', () => {
+    const hints = getPublishBlockedHints('Add at least one page before going live.');
+    expect(hints[0]).toContain('Designs');
+  });
+
   it('returns section guidance for no-enabled-sections message', () => {
     const hints = getPublishBlockedHints('Turn on at least one section before publishing.');
     expect(hints[0]).toContain('Select a section on the canvas');
