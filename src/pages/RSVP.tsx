@@ -215,7 +215,7 @@ function parseEventSelectionsFromNotes(notes: string | null, guest: Guest): { cl
     const eventPart = bracketMatch[1] || '';
     const map = Object.fromEntries(
       eventPart
-        .split(/[;,/&|]/)
+        .split(/[;,/&|]|\band\b/)
         .map((piece) => piece.trim())
         .filter(Boolean)
         .map((piece) => {
@@ -238,7 +238,7 @@ function parseEventSelectionsFromNotes(notes: string | null, guest: Guest): { cl
 
   const selectedEvents = new Set(
     legacyMatch[1]
-      .split(/[;+/,&|]|\band\b/)
+      .split(/[;+/,&|]|\band\b|\bor\b/)
       .map((piece) => piece.trim().toLowerCase())
       .filter(Boolean),
   );
