@@ -174,6 +174,12 @@ export const QuickStart: React.FC = () => {
   const activeClarifyingQuestions = clarifyingState?.clarifying.questions ?? [];
 
   useEffect(() => {
+    if (currentIndex !== safeCurrentIndex) {
+      setCurrentIndex(safeCurrentIndex);
+    }
+  }, [currentIndex, safeCurrentIndex]);
+
+  useEffect(() => {
     writeSignupReturnPath(null);
   }, []);
 

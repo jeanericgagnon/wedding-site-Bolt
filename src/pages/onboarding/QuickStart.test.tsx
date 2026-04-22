@@ -202,6 +202,7 @@ describe('QuickStart flow guards', () => {
     render(<QuickStart />);
 
     expect(await screen.findByText('Want to add your story? (totally optional)')).toBeInTheDocument();
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').currentIndex).toBe(13);
   });
 
   it('sanitizes malformed onboarding answer seeds loaded from the saved wedding site', async () => {
