@@ -95,5 +95,6 @@ describe('resolveBuilderVariant onboarding handoff compatibility', () => {
   it('tolerates drifted registry section types while normalizing builder variants', () => {
     expect(resolveBuilderVariant('registry-section' as never, 'luxury')).toBe('luxury');
     expect(resolveBuilderVariant('RegistrySection' as never, 'default')).toBe('default');
+    expect(resolveBuilderVariant('registry-section' as never, 'not-a-real-variant')).toBe('cards');
   });
 });

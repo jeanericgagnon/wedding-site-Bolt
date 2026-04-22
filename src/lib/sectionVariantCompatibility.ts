@@ -150,7 +150,8 @@ function normalizeBuilderSectionType(type: SectionType): SectionType {
 }
 
 function getPreferredBuilderFallbackVariant(type: SectionType, supported: string[]): string {
-  if (type === 'registry') return supported.includes('cards') ? 'cards' : supported[0] ?? 'default';
+  const normalizedType = normalizeBuilderSectionType(type);
+  if (normalizedType === 'registry') return supported.includes('cards') ? 'cards' : supported[0] ?? 'default';
   return supported[0] ?? 'default';
 }
 
