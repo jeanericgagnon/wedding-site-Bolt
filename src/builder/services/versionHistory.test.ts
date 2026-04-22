@@ -132,4 +132,13 @@ describe('versionHistory', () => {
     expect(listBuilderRevisions(weddingId)).toEqual([]);
     expect(listBuilderRevisions(weddingId)).not.toBe(listBuilderRevisions(weddingId));
   });
+
+  it('returns null for a missing revision even after multiple records exist', () => {
+    const weddingId = `w_${Date.now()}_m`;
+    const project = createEmptyBuilderProject(weddingId, 'modern-luxe');
+    recordBuilderRevision({ weddingId, project, action: 'save', actor: 'tester-1' });
+    recordBuilderRevision({ weddingId, project, action: 'publish', actor: 'tester-2' });
+
+    expect(getBuilderRevision(weddingId, 'still-missing')).toBeNull();
+  });
 });
