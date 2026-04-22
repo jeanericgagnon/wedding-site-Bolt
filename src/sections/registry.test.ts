@@ -72,12 +72,12 @@ describe('sections registry resolution', () => {
 
   it('keeps the builder lab registry variant picker aligned with shipped template aliases', () => {
     const builderLab = readFileSync(resolve(__dirname, '../pages/BuilderV2Lab.tsx'), 'utf8');
-    expect(builderLab).toContain("registry: ['default', 'fundHighlight', 'classic', 'luxury', 'experiences', 'modern', 'playful']");
+    expect(builderLab).toContain("registry: ['default', 'cards', 'grid', 'fundHighlight', 'featured', 'minimal', 'honeymoon', 'tabs', 'illustrated', 'classic', 'luxury', 'experiences', 'modern', 'playful']");
   });
 
   it('keeps the builder lab variant commands aligned with shipped registry aliases', () => {
     const builderLab = readFileSync(resolve(__dirname, '../pages/BuilderV2Lab.tsx'), 'utf8');
-    expect(builderLab).toContain("['default', 'countdown', 'timeline', 'dayTabs', 'localGuide', 'iconGrid', 'fundHighlight', 'classic', 'luxury', 'experiences', 'modern', 'playful']");
+    expect(builderLab).toContain("['default', 'countdown', 'timeline', 'dayTabs', 'localGuide', 'iconGrid', 'cards', 'grid', 'fundHighlight', 'featured', 'minimal', 'honeymoon', 'tabs', 'illustrated', 'classic', 'luxury', 'experiences', 'modern', 'playful']");
   });
 
   it('keeps legacy section registry aligned with public registry aliases', () => {
