@@ -179,6 +179,10 @@ describe('publishUiHints', () => {
       'Open event details.',
       'Add your wedding date before going live.',
     ]);
+    expect(getPublishBlockedHints('Set your wedding date before going live.')).toEqual([
+      'Open event details.',
+      'Add your wedding date before going live.',
+    ]);
   });
 
   it('does not mistake the date success detail for a blocker', () => {
