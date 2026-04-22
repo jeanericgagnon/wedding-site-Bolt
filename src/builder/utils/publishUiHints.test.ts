@@ -38,6 +38,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('event details');
   });
 
+  it('returns wedding-date guidance for whitespace-padded date message', () => {
+    const hints = getPublishBlockedHints('   Add your wedding date before publishing.   ');
+    expect(hints[0]).toContain('event details');
+  });
+
   it('returns venue guidance', () => {
     const hints = getPublishBlockedHints('Add at least one venue before publishing.');
     expect(hints[0]).toContain('venue');
