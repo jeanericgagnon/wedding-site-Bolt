@@ -378,6 +378,57 @@ describe('EventRSVP token trust continuity', () => {
     ]);
   });
 
+  it('drops stale event RSVP notes when updating an existing RSVP to not attending', async () => {
+    currentToken = 'guest-token';
+
+    maybeSingleQueue.push(
+      { data: { id: 'guest-1', name: 'Taylor', email: 'taylor@example.com' }, error: null },
+      { data: { attending: true, dietary_restrictions: 'Vegetarian', notes: 'See you there' }, error: null },
+    );
+
+    selectQueue.push({
+      data: [
+        {
+          id: 'inv-1',
+          event_id: 'event-1',
+          itinerary_events: {
+            id: 'event-1',
+            event_name: 'Welcome Dinner',
+            description: '',
+            event_date: '2026-05-01',
+            start_time: '18:00:00',
+            end_time: null,
+            location_name: 'The Loft',
+            location_address: '',
+            dress_code: null,
+            notes: null,
+          },
+        },
+      ],
+      error: null,
+    });
+
+    updateQueue.push({ error: null });
+
+    render(<EventRSVP />);
+
+    expect(await screen.findByText('Hello, Taylor!')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Update my RSVP' }));
+    fireEvent.click(screen.getByRole('button', { name: "Can't make it" }));
+    fireEvent.click(screen.getByRole('button', { name: 'Update RSVP' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Response saved')).toBeInTheDocument();
+    });
+
+    expect(updatedPayloads).toHaveLength(1);
+    expect(updatedPayloads[0]).toEqual(expect.objectContaining({
+      attending: false,
+      dietary_restrictions: null,
+      notes: null,
+    }));
+  });
+
   it('clears hidden event RSVP note state when the guest switches back from not attending', async () => {
     currentToken = 'guest-token';
 
