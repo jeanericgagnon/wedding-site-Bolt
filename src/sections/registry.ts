@@ -274,8 +274,12 @@ function normalizeRegistryVariantKey(variant: unknown): string {
     : '';
 }
 
+function isRegistrySectionType(type: unknown): boolean {
+  return typeof type === 'string' && normalizeRegistryVariantKey(type) === 'registry';
+}
+
 function resolveRegistryVariant(type: string, variant: unknown): string {
-  if (type !== 'registry') return typeof variant === 'string' ? variant : '';
+  if (!isRegistrySectionType(type)) return typeof variant === 'string' ? variant : '';
 
   const normalizedVariantKey = normalizeRegistryVariantKey(variant);
   if (!normalizedVariantKey) return 'cards';
@@ -374,11 +378,12 @@ export function resolveAndParse(
   options?: { strictVariant?: boolean }
 ): { def: SectionDefinition; parsedData: Record<string, unknown> } | null {
   const strictVariant = options?.strictVariant === true;
+  const normalizedTypeKey = typeof type === 'string' ? type.trim().toLowerCase() : type;
   const normalizedType = ({
     'footer-cta': 'footerCta',
     'wedding-party': 'weddingParty',
     'dress-code': 'dressCode',
-  } as Record<string, string>)[type] ?? type;
+  } as Record<string, string>)[normalizedTypeKey] ?? normalizedTypeKey;
   const normalizedVariant = resolveRegistryVariant(type, variant);
 
   const def = strictVariant
