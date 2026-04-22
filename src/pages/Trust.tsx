@@ -34,7 +34,7 @@ const V1_TRUST_LINE = [
     title: 'Core v1 claim',
     badge: 'Must ship',
     tone: 'must',
-    body: 'DayOf should be judged on whether couples can build a polished wedding site draft before sharing it with guests, collect RSVPs, manage guests, send core updates, run seating, and coordinate the event week from one grounded product story, with any remaining proof gaps called out plainly instead of marketed away.',
+    body: `DayOf should be judged on whether couples can build a polished wedding site draft before sharing it with guests, collect RSVPs, manage guests, send core updates, run seating, and coordinate the event week from one grounded product story. The hard launch line is ${SITE_TRUST_COPY.launchStoryCore}, with any remaining proof gaps called out plainly instead of marketed away.`,
   },
   {
     title: 'Real product direction',
