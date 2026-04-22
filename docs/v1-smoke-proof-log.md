@@ -1,7 +1,7 @@
 # V1 Smoke Proof Log
 
 _Date:_ 2026-04-21
-_Status:_ Canonical smoke automation landed; manual runtime notes still needed
+_Status:_ Canonical smoke automation covers public, setup, onboarding, and dashboard route continuity; manual runtime notes still needed
 _Owner:_ Product finish lane
 
 ## Purpose
