@@ -1,6 +1,7 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Footer, Header } from '../components/layout';
+import { useAuth } from '../hooks/useAuth';
 import { SITE_TRUST_COPY } from '../lib/siteTrustCopy';
 
 const TRUST_PILLARS = [
@@ -110,6 +111,18 @@ const V1_SLICE_STATUS = [
 ] as const;
 
 export const Trust: React.FC = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const handleStartDraft = () => {
+    if (user) {
+      navigate('/dashboard/builder');
+      return;
+    }
+
+    navigate('/signup');
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background text-text-primary">
       <Header />
@@ -202,6 +215,19 @@ export const Trust: React.FC = () => {
                   </div>
                 );
               })}
+            </div>
+
+            <div className="mt-8 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={handleStartDraft}
+                className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary/90"
+              >
+                Start your draft
+              </button>
+              <Link to="/product" className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary">
+                See product tour
+              </Link>
             </div>
 
             <div className="mt-10 max-w-3xl">
