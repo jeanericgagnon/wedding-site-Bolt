@@ -74,4 +74,10 @@ describe('resolveBuilderVariant onboarding handoff compatibility', () => {
     expect(resolveBuilderVariant('faq', 'icon-grid')).toBe('iconGrid');
     expect(resolveBuilderVariant('registry', 'fund-highlight')).toBe('fundHighlight');
   });
+
+  it('accepts punctuation-heavy ai handoff variants from generated setup text', () => {
+    expect(resolveBuilderVariant('travel', 'local/guide')).toBe('localGuide');
+    expect(resolveBuilderVariant('schedule', 'day.tabs')).toBe('dayTabs');
+    expect(resolveBuilderVariant('registry', 'fund.highlight')).toBe('fundHighlight');
+  });
 });
