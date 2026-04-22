@@ -110,7 +110,7 @@ This is the operational spine. If guest state is weak, messages, seating, and fi
   - Current automated target remains `npm run proof:v1:guests-rsvp-ops`.
   - The known blocker in this pass is environment auth on the RSVP validation seam, not a newly observed product-flow regression.
 - Blockers:
-  - `validate-rsvp-token` anon auth returns 401 in this environment, blocking the strict RSVP smoke needed for guest -> RSVP -> downstream ops proof.
+  - `npm run proof:v1:guests-rsvp-ops` is currently blocked because `validate-rsvp-token` is not callable with anon auth in this environment (401), so guest -> RSVP -> downstream ops proof cannot complete.
 
 ---
 
