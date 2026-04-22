@@ -285,7 +285,11 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     && (viewState === 'thinking' || parsed.showFollowUps === true)
   ) || (
     hasStoredClarifyingState
-    && (viewState === 'thinking' || viewState === 'followups')
+    && (
+      viewState === 'thinking'
+      || viewState === 'followups'
+      || parsed.showFollowUps === false
+    )
     && rawClarifyingState !== null
     && rawClarifyingState.clarifying.questions.length === 0
     && rawClarifyingState.clarifying.history.length === 0
