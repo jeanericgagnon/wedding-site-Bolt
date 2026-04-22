@@ -241,8 +241,10 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     parsed.showFollowUps === true
     || (!hasExplicitShowFollowUps && !hasDraftedFollowUpAnswers)
   );
+  const hasMissingResumeFlagForOpenClarifyingWork = !hasExplicitShowFollowUps && parsed.viewState === 'question' && hasOpenFollowUps;
   const showFollowUps = (hasOpenFollowUps || canResumeThinkingState) && (
     parsed.showFollowUps === true
+    || hasMissingResumeFlagForOpenClarifyingWork
     || (!hasExplicitShowFollowUps && (
       parsed.viewState === 'followups'
       || parsed.viewState === 'thinking'
