@@ -797,7 +797,7 @@ export const DashboardOverview: React.FC = () => {
                             type="button"
                             onClick={() => {
                               if (typeof window !== 'undefined') {
-                                writeOnboardingResumeHint(item.questionKey);
+                                writeOnboardingResumeTarget(item.questionKey);
                               }
                               navigate('/onboarding');
                             }}
@@ -815,7 +815,7 @@ export const DashboardOverview: React.FC = () => {
                       size="sm"
                       onClick={() => {
                         if (typeof window !== 'undefined') {
-                          writeOnboardingResumeHint('first-incomplete');
+                          writeOnboardingResumeTarget('first-incomplete');
                         }
                         navigate('/onboarding');
                       }}

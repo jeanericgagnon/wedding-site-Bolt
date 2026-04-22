@@ -64,6 +64,12 @@ export const readOnboardingResumeState = (): { hint: string | null; index: numbe
   }
 };
 
+
+export const writeOnboardingResumeTarget = (hint: string | null | undefined) => {
+  writeOnboardingResumeHint(hint);
+  clearResumeStorageKey(ONBOARDING_RESUME_INDEX_STORAGE_KEY);
+};
+
 const clearResumeStorageKey = (key: string) => {
   try {
     if (window.localStorage.getItem(key) !== null) {

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { clearOnboardingResumeStorage, ONBOARDING_RESUME_HINT_STORAGE_KEY, ONBOARDING_RESUME_INDEX_STORAGE_KEY, readOnboardingResumeState, writeOnboardingResumeHint } from './onboardingResumeStorage';
+import { clearOnboardingResumeStorage, ONBOARDING_RESUME_HINT_STORAGE_KEY, ONBOARDING_RESUME_INDEX_STORAGE_KEY, readOnboardingResumeState, writeOnboardingResumeHint, writeOnboardingResumeTarget } from './onboardingResumeStorage';
 
 describe('onboardingResumeStorage', () => {
   beforeEach(() => {
@@ -55,6 +55,16 @@ describe('onboardingResumeStorage', () => {
     window.localStorage.setItem(ONBOARDING_RESUME_INDEX_STORAGE_KEY, '9.5');
 
     expect(readOnboardingResumeState()).toEqual({ hint: 'question', index: null });
+    expect(window.localStorage.getItem(ONBOARDING_RESUME_INDEX_STORAGE_KEY)).toBeNull();
+  });
+
+
+  it('clears stale onboarding resume indexes when writing a resume target hint', () => {
+    window.localStorage.setItem(ONBOARDING_RESUME_INDEX_STORAGE_KEY, '9');
+
+    writeOnboardingResumeTarget('first-incomplete');
+
+    expect(window.localStorage.getItem(ONBOARDING_RESUME_HINT_STORAGE_KEY)).toBe('first-incomplete');
     expect(window.localStorage.getItem(ONBOARDING_RESUME_INDEX_STORAGE_KEY)).toBeNull();
   });
 
