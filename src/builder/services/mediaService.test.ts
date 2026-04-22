@@ -80,4 +80,19 @@ describe('mediaService', () => {
       thumbnailUrl: undefined,
     }));
   });
+
+  it('persists the target section link when an upload starts from a section picker', async () => {
+    const file = new File(['img'], 'flowers.jpg', { type: 'image/jpeg' });
+    upload.mockResolvedValue({
+      url: 'https://cdn.example.com/flowers.jpg',
+      path: 'w1/flowers.jpg',
+    });
+    save.mockResolvedValue({ id: 'asset-3' });
+
+    await mediaService.uploadAsset('w1', file, { attachToSectionId: 'section-hero' });
+
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({
+      attachedSectionIds: ['section-hero'],
+    }));
+  });
 });
