@@ -109,6 +109,7 @@ import { buildCoordinatorAlertBoard } from '../../lib/coordinatorAlertBoard';
 import { buildCoordinatorTimelineBoard } from '../../lib/coordinatorTimelineBoard';
 import { buildCoordinatorQnaBoard } from '../../lib/coordinatorQnaBoard';
 import { buildCoordinatorCheckInBoard } from '../../lib/coordinatorCheckInBoard';
+import { buildCoordinatorCommandBoard } from '../../lib/coordinatorCommandBoard';
 
 
 type AudienceOption = { value: string; label: string; count: number };
@@ -866,6 +867,18 @@ export const DashboardCoordinatorMode: React.FC = () => {
     events,
     timelineState,
   }), [guests, qnaItems, events, timelineState]);
+  const secondaryCommandLabel = useMemo(
+    () => commandSummaryItems.find((item) => item.label !== priorityCommandLabel)?.label ?? null,
+    [commandSummaryItems, priorityCommandLabel],
+  );
+  const commandBoard = useMemo(() => buildCoordinatorCommandBoard({
+    priority: priorityCommandLabel,
+    reason: priorityCommandReason,
+    targetReason: priorityCommandTargetReason,
+    cta: priorityCommandCta,
+    secondary: secondaryCommandLabel,
+    primaryActionTitle: primaryAction.title,
+  }), [priorityCommandLabel, priorityCommandReason, priorityCommandTargetReason, priorityCommandCta, secondaryCommandLabel, primaryAction.title]);
   const commandModeLabel = useMemo(() => getCoordinatorCommandModeLabel(commandSource), [commandSource]);
   const commandModeGuidance = useMemo(() => getCoordinatorCommandModeGuidance(commandSource), [commandSource]);
   const correctionCues = useMemo(() => buildCoordinatorCorrectionCues({
@@ -1813,6 +1826,28 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     Revisit board focus
                   </button>
                 )}
+              </div>
+            </div>
+          </div>
+          <div className="mb-3 rounded-lg border border-border/50 bg-surface-subtle/25 px-3 py-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-medium text-text-primary">Command board</p>
+                <p className="mt-1 text-[11px] text-text-secondary">First · {commandBoard.firstActionLabel}</p>
+                <p className="text-[11px] text-text-secondary">Then · {commandBoard.secondActionLabel}</p>
+              </div>
+              <span className={`rounded-full border px-2 py-1 text-[10px] font-medium ${commandBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : commandBoard.tone === 'warning' ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-border bg-white text-text-tertiary'}`}>
+                {commandBoard.statusLabel}
+              </span>
+            </div>
+            <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+              <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
+                <p className="text-[10px] uppercase tracking-wide text-text-tertiary">Primary target</p>
+                <p className="mt-1 text-[11px] text-text-primary">{commandBoard.firstTargetLabel}</p>
+              </div>
+              <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
+                <p className="text-[10px] uppercase tracking-wide text-text-tertiary">Why now</p>
+                <p className="mt-1 text-[11px] text-text-primary">{commandBoard.reasonLabel}</p>
               </div>
             </div>
           </div>
