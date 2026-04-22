@@ -15,6 +15,26 @@ export interface TemplateDefinition {
   };
 }
 
+const REGISTRY_VARIANT_ALIASES: Record<string, string> = {
+  fundhighlight: 'featured',
+  honeymoon: 'featured',
+  tabs: 'cards',
+  illustrated: 'cards',
+  minimal: 'cards',
+  classic: 'cards',
+  luxury: 'featured',
+  experiences: 'featured',
+  modern: 'cards',
+  playful: 'cards',
+  featured: 'featured',
+  cards: 'cards',
+};
+
+function normalizeRegistryTemplateVariant(variant: string): string {
+  const normalizedVariant = variant.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+  return REGISTRY_VARIANT_ALIASES[normalizedVariant] ?? variant;
+}
+
 const templateRegistry: TemplateDefinition[] = [
   // 1. HERO-FOCUSED: Editorial Impact (Large, dramatic photography)
   {
@@ -754,6 +774,9 @@ export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = {
 function cloneTemplateSection(section: TemplateSection): TemplateSection {
   return {
     ...section,
+    variant: section.type === 'registry' && typeof section.variant === 'string'
+      ? normalizeRegistryTemplateVariant(section.variant)
+      : section.variant,
     bindings: { ...(section.bindings ?? {}) },
     settings: { ...(section.settings ?? {}) },
   };

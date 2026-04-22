@@ -100,10 +100,20 @@ describe('sections registry resolution', () => {
     importedRegistrySection!.variant = 'featured';
     importedRegistrySection!.settings = { title: 'Edited after import' };
 
-    expect(getTemplate('timeless-classic').defaultLayout.sections.find((section) => section.type === 'registry')?.variant).toBe('classic');
+    expect(getTemplate('timeless-classic').defaultLayout.sections.find((section) => section.type === 'registry')?.variant).toBe('cards');
     expect(getAllTemplates()
       .find((template) => template.id === 'timeless-classic')
       ?.defaultLayout.sections.find((section) => section.type === 'registry')?.settings).toEqual({});
+  });
+
+  it('keeps imported registry template variants normalized onto guest-visible layouts', () => {
+    const importedTemplate = getTemplate('luxury-opulent');
+    const importedRegistrySection = importedTemplate.defaultLayout.sections.find((section) => section.type === 'registry');
+
+    expect(importedRegistrySection?.variant).toBe('featured');
+    expect(getAllTemplates()
+      .find((template) => template.id === 'timeless-classic')
+      ?.defaultLayout.sections.find((section) => section.type === 'registry')?.variant).toBe('cards');
   });
 
   it('keeps every shipped template registry variant renderable in the legacy runtime', () => {
@@ -217,6 +227,8 @@ describe('sections registry resolution', () => {
 
   it('keeps template registry definitions cloned before import/edit flows mutate them', () => {
     const templateRegistrySource = readFileSync(resolve(__dirname, '../templates/registry.ts'), 'utf8');
+    expect(templateRegistrySource).toContain('const REGISTRY_VARIANT_ALIASES: Record<string, string> = {');
+    expect(templateRegistrySource).toContain("variant: section.type === 'registry' && typeof section.variant === 'string'");
     expect(templateRegistrySource).toContain('function cloneTemplateDefinition(template: TemplateDefinition): TemplateDefinition {');
     expect(templateRegistrySource).toContain('return cloneTemplateDefinition(TEMPLATE_REGISTRY[templateId] || TEMPLATE_REGISTRY.base || templateRegistry[0]);');
     expect(templateRegistrySource).toContain('return templateRegistry.map(cloneTemplateDefinition);');
