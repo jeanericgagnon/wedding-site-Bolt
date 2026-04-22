@@ -33,6 +33,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('Select a section on the canvas');
   });
 
+  it('returns section guidance when blocker copy uses the shorter readiness detail wording', () => {
+    const hints = getPublishBlockedHints('Turn on a section before going live.');
+    expect(hints[0]).toContain('Select a section on the canvas');
+  });
+
   it('returns partner-name guidance', () => {
     const hints = getPublishBlockedHints('Add both partner names before publishing.');
     expect(hints[0]).toContain('couple details');
