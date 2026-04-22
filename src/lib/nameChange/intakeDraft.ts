@@ -99,7 +99,7 @@ export function createDraftNameChangeDocument(
     : normalizeDraftText(label) || humanizeDraftToken(canonicalKind);
 
   return {
-    id: buildDraftNameChangeDocumentId(canonicalKind),
+    id: canonicalKind === 'other' ? null : buildDraftNameChangeDocumentId(canonicalKind),
     document_kind: canonicalKind,
     display_name: normalizedLabel,
     storage_mode: 'metadata_only',

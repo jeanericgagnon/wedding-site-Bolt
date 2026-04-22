@@ -24,7 +24,7 @@ describe('name change intake draft helpers', () => {
 
   it('falls back to other when a draft document kind normalizes empty', () => {
     expect(createDraftNameChangeDocument('___' as never, ' Weird custom label ')).toMatchObject({
-      id: 'draft-other',
+      id: null,
       document_kind: 'other',
       display_name: 'Other',
       intake_status: 'not_started',
