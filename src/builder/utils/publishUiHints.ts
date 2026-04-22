@@ -5,6 +5,8 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
   if (
     normalizedErrorLower.includes('current page has visible content')
     || normalizedErrorLower.includes('has visible sections')
+    || normalizedErrorLower.includes('section visible')
+    || normalizedErrorLower.includes('sections visible')
     || normalizedErrorLower.includes('names are ready for guests')
     || normalizedErrorLower.includes('date is ready')
     || normalizedErrorLower.includes('venue details are ready')
@@ -36,11 +38,8 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
     || normalizedErrorLower.includes('turn on section')
     || normalizedErrorLower.includes('turn on sections')
     || normalizedErrorLower.includes('turn on content for')
-    || normalizedErrorLower.includes('visible sections')
     || normalizedErrorLower.includes('section is turned on')
     || normalizedErrorLower.includes('sections are turned on')
-    || normalizedErrorLower.includes('section visible')
-    || normalizedErrorLower.includes('sections visible')
   ) {
     return [
       'Select a section on the canvas.',

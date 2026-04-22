@@ -343,6 +343,15 @@ describe('publishUiHints', () => {
     ]);
   });
 
+  it('does not mistake section-count success details for blockers', () => {
+    expect(getPublishBlockedHints('1 section visible')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
+    expect(getPublishBlockedHints('2 sections visible')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
+  });
+
   it('returns section guidance even when blocker copy is lowercased by upstream formatting', () => {
     const hints = getPublishBlockedHints('turn on at least one section before going live.');
     expect(hints[0]).toContain('Select a section on the canvas');
@@ -368,9 +377,10 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('Select a section on the canvas');
   });
 
-  it('returns section guidance when blocker copy uses the readiness detail wording', () => {
-    const hints = getPublishBlockedHints('2 sections visible');
-    expect(hints[0]).toContain('Select a section on the canvas');
+  it('does not mistake plural section-count readiness detail for a blocker', () => {
+    expect(getPublishBlockedHints('2 sections visible')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
   });
 
   it('returns partner guidance even when blocker copy is lowercased by upstream formatting', () => {
