@@ -570,6 +570,8 @@ export default function RSVP() {
     invalidateActiveSubmit();
     setLoading(true);
     setError('');
+    setGuest(null);
+    setExistingRsvp(null);
     try {
       const lookupResp: { data?: unknown; error?: string } = DEMO_MODE
         ? { data: demoLookup(picked.invite_token ?? picked.id) as unknown }
