@@ -256,6 +256,7 @@ Helpful and credible if used, but should not be carrying the v1 claim.
 **Pass / Fail**
 - Status: OPTIONAL
 - Notes:
+  - Canonical smoke already covers `/dashboard/photos` auth fallback, so this slice is explicitly outside the current v1 claim rather than unguarded.
 - Blockers:
 
 ### 9) Name-change planner
