@@ -1375,6 +1375,27 @@ export const DashboardMessages: React.FC = () => {
   }, [weddingSite, fetchMessages, fetchGuests, fetchSmsExpiryPreview, fetchItinerarySegments]);
 
   useEffect(() => {
+    if (!weddingSite || isDemoMode) return;
+
+    const refreshGuestMessageContinuity = () => {
+      void fetchGuests();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') return;
+      refreshGuestMessageContinuity();
+    };
+
+    window.addEventListener('focus', refreshGuestMessageContinuity);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', refreshGuestMessageContinuity);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [weddingSite, isDemoMode, fetchGuests]);
+
+  useEffect(() => {
     if (weddingSite && messages.length > 0) {
       fetchDeliveries();
     }
