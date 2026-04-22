@@ -511,6 +511,38 @@ describe('quickStartStateTransfer', () => {
     expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').showFollowUps).toBe(false);
   });
 
+  it('keeps explicit follow-up opt-out closed even when stale thinking view survives restore', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      showFollowUps: false,
+      viewState: 'thinking',
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'transport',
+            category: 'travel',
+            question: 'How should guests get there?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.transport'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'pending',
+            answer: '',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    }));
+
+    const restored = readQuickStartDraftSnapshot();
+
+    expect(restored?.showFollowUps).toBe(false);
+    expect(restored?.viewState).toBe('question');
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').viewState).toBe('question');
+  });
+
   it('keeps explicit follow-up opt-out closed when malformed view state survives typed clarifying drafts', () => {
     window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
       showFollowUps: false,
@@ -969,7 +1001,7 @@ describe('quickStartStateTransfer', () => {
     expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').viewState).toBe('thinking');
   });
 
-  it('rewrites stale thinking restores back to question when only orphaned follow-up answers remain', () => {
+  it('keeps orphaned follow-up answers but closes restore UI when no clarifying records survive', () => {
     window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
       showFollowUps: true,
       viewState: 'thinking',
@@ -991,7 +1023,9 @@ describe('quickStartStateTransfer', () => {
     expect(restored?.showFollowUps).toBe(false);
     expect(restored?.viewState).toBe('question');
     expect(restored?.followUpAnswers).toEqual({ lodging: 'Need shuttle details' });
-    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').viewState).toBe('question');
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').followUpAnswers).toEqual({
+      lodging: 'Need shuttle details',
+    });
   });
 
   it('rewrites stale thinking restores back to question when the clarifying state is missing entirely', () => {

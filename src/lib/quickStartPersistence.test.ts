@@ -956,6 +956,35 @@ describe('quickStartPersistence', () => {
     expect(normalized.followUpAnswers).toEqual({ transport: 'Need shuttle details' });
   });
 
+  it('keeps explicit follow-up opt-out closed even when stale thinking view survives restore', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      showFollowUps: false,
+      viewState: 'thinking',
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'transport',
+            category: 'travel',
+            question: 'How should guests get there?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.transport'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'pending',
+            answer: '',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.showFollowUps).toBe(false);
+    expect(normalized.viewState).toBe('question');
+  });
+
   it('keeps explicit follow-up opt-out closed when malformed view state survives typed clarifying drafts', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       showFollowUps: false,
@@ -1375,7 +1404,7 @@ describe('quickStartPersistence', () => {
     expect(normalized.viewState).toBe('thinking');
   });
 
-  it('closes stale thinking restores when only orphaned follow-up answers remain', () => {
+  it('keeps orphaned follow-up answers but closes restore UI when no clarifying records survive', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       showFollowUps: true,
       viewState: 'thinking',
