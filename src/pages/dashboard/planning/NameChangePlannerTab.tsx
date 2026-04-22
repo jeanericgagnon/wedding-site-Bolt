@@ -5,7 +5,7 @@ import { Button } from '../../../components/ui/Button';
 import { buildNameChangeBankExecutionSnapshot } from '../../../lib/nameChange/bankFlow';
 import { buildNameChangeAutofillPrepSnapshot } from '../../../lib/nameChange/autofill';
 import { buildNameChangeActionFeed } from '../../../lib/nameChange/actionFeed';
-import { createDraftNameChangeDocument, upsertDraftNameChangeExtractedField } from '../../../lib/nameChange/intakeDraft';
+import { createDraftNameChangeDocument, normalizeDraftNameChangeDocumentId, upsertDraftNameChangeExtractedField } from '../../../lib/nameChange/intakeDraft';
 import { buildNameChangeCourtesyExecutionSnapshot } from '../../../lib/nameChange/courtesyFlow';
 import { NAME_CHANGE_DOCUMENT_CONTRACTS } from '../../../lib/nameChange/documentContract';
 import { buildNameChangeDocumentIntakeSnapshot } from '../../../lib/nameChange/documentContract';
@@ -215,8 +215,13 @@ function findContractExtractedField(
   documentId: string | null | undefined,
   fieldKey: NameChangeExtractedFieldInput['field_key'],
 ) {
-  if (documentId) {
-    const linkedField = extractedFields.find((field) => field.document_id === documentId && field.field_key === fieldKey);
+  const normalizedDocumentId = normalizeDraftNameChangeDocumentId(documentId);
+
+  if (normalizedDocumentId) {
+    const linkedField = extractedFields.find((field) => (
+      normalizeDraftNameChangeDocumentId(field.document_id) === normalizedDocumentId
+      && field.field_key === fieldKey
+    ));
     if (linkedField) return linkedField;
   }
 
