@@ -237,7 +237,10 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     clarifyingState && [...clarifyingState.clarifying.questions, ...clarifyingState.clarifying.history]
       .some((question) => question.status === 'answered' && question.answer.trim().length > 0)
   );
-  const hasMissingResumeFlagForOpenClarifyingWork = !hasExplicitShowFollowUps && hasOpenFollowUps && viewState === 'question';
+  const hasMissingResumeFlagForOpenClarifyingWork = !hasExplicitShowFollowUps
+    && hasOpenFollowUps
+    && viewState === 'question'
+    && clarifyingState?.clarifying.mode === 'ask';
   const showFollowUps = hasOpenFollowUps && (
     parsed.showFollowUps === true
     || hasMissingResumeFlagForOpenClarifyingWork
