@@ -59,6 +59,21 @@ describe('setupDraftRecommendations', () => {
     expect(first?.id).toBe('destination-adventure');
   });
 
+  it('fills sparse recommendation sets with stable fallback templates', () => {
+    const templates = [
+      makeTemplate({ id: 'a', name: 'A', styleTags: ['Classic'] }),
+      makeTemplate({ id: 'b', name: 'B', styleTags: ['Destination'], description: 'Travel-first hotel itinerary' }),
+      makeTemplate({ id: 'c', name: 'C', styleTags: ['Floral'] }),
+      makeTemplate({ id: 'd', name: 'D', styleTags: ['Bold'] }),
+    ];
+
+    expect(getRecommendedTemplates({
+      ...emptySetupDraft,
+      stylePreferences: ['Destination'],
+      guestEstimateBand: '',
+    }, templates, 3).map((template) => template.id)).toEqual(['b', 'a', 'c']);
+  });
+
   it('falls back to the first templates when no setup preferences exist', () => {
     const templates = [
       makeTemplate({ id: 'a', name: 'A' }),

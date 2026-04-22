@@ -54,10 +54,18 @@ export const getRecommendedTemplates = (
 ): TemplateCatalogItem[] => {
   if (draft.stylePreferences.length === 0) return templates.slice(0, limit);
 
-  return [...templates]
+  const scored = [...templates]
     .map((template) => ({ template, score: scoreTemplateForSetup(template, draft) }))
     .filter((entry) => entry.score > 0)
     .sort((a, b) => b.score - a.score || a.template.name.localeCompare(b.template.name))
-    .slice(0, limit)
     .map((entry) => entry.template);
+
+  if (scored.length >= limit) return scored.slice(0, limit);
+
+  const used = new Set(scored.map((template) => template.id));
+  const fallbacks = templates
+    .filter((template) => !used.has(template.id))
+    .slice(0, Math.max(limit - scored.length, 0));
+
+  return [...scored, ...fallbacks].slice(0, limit);
 };
