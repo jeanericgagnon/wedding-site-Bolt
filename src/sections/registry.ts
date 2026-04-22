@@ -302,7 +302,7 @@ function resolveRegistryVariant(type: string, variant: unknown): string {
   const directRegistryVariant = getVariantsForType('registry').find((definition) => normalizeRegistryVariantKey(definition.variant) === normalizedVariantKey)?.variant;
   if (directRegistryVariant) return directRegistryVariant;
 
-  const registryAliasTarget = Object.entries(VARIANT_FALLBACKS.registry ?? {}).find(([aliasVariant]) => normalizeRegistryVariantKey(aliasVariant) === normalizedVariantKey)?.[1];
+  const registryAliasTarget = Object.entries(getVariantFallbacksForType('registry')).find(([aliasVariant]) => normalizeRegistryVariantKey(aliasVariant) === normalizedVariantKey)?.[1];
   return registryAliasTarget ?? 'cards';
 }
 

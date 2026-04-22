@@ -78,6 +78,7 @@ describe('sections registry resolution', () => {
     expect(resolveAndParse('registry', 'FUND.HIGHLIGHT', {}, { strictVariant: true })?.def.variant).toBe('featured');
     expect(resolveAndParse('registry', 'Playful', {}, { strictVariant: true })?.def.variant).toBe('cards');
     expect(resolveAndParse('RegistrySection' as never, 'Luxury' as never, {}, { strictVariant: true })?.def.variant).toBe('featured');
+    expect(resolveCanonicalRegistryVariant('Experiences')).toBe('featured');
     expect(resolveCanonicalRegistryVariant(' Luxury ')).toBe('featured');
     expect(resolveCanonicalRegistryVariant('fund-highlight')).toBe('featured');
     expect(resolveCanonicalRegistryVariant('legacy-default')).toBe('cards');
@@ -403,6 +404,7 @@ describe('sections registry resolution', () => {
     expect(sectionRegistry).toContain('function resolveCanonicalSectionVariantForType(type: string, inputType: string, variant: unknown): string {');
     expect(sectionRegistry).toContain("return getAllDefinitions().find((definition) => definition.type === type)?.variant ?? (typeof variant === 'string' ? variant : '');");
     expect(sectionRegistry).toContain('function getVariantFallbacksForType(type: string, inputType?: string): Record<string, string> {');
+    expect(sectionRegistry).toContain("Object.entries(getVariantFallbacksForType('registry'))");
     expect(sectionRegistry).toContain('const fallbackVariants = getVariantFallbacksForType(type, inputType);');
     expect(sectionRegistry).toContain('.filter((definition) => definition.type === type)');
     expect(sectionRegistry).toContain('variant: resolveCanonicalSectionVariantForType(normalizedType, normalizedInputType, variant),');
