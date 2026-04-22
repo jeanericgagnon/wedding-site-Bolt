@@ -72,6 +72,20 @@ describe('sections registry resolution', () => {
     expect(registryManifest?.supportedVariants).toEqual(expect.arrayContaining(templateVariants));
   });
 
+  it('keeps every shipped template registry variant renderable in the legacy runtime', () => {
+    const templateVariants = Array.from(new Set(
+      getAllTemplates()
+        .flatMap((template) => template.defaultLayout.sections)
+        .filter((section) => section.type === 'registry')
+        .map((section) => section.variant)
+    ));
+
+    for (const variant of templateVariants) {
+      expect(getSectionVariants('registry')).toContain(variant);
+      expect(getSectionComponent('registry', variant)).toBeTypeOf('function');
+    }
+  });
+
   it('keeps the builder lab registry variant picker aligned with shipped template aliases', () => {
     const builderLab = readFileSync(resolve(__dirname, '../pages/BuilderV2Lab.tsx'), 'utf8');
     expect(builderLab).toContain("registry: ['default', 'cards', 'grid', 'fundHighlight', 'featured', 'minimal', 'honeymoon', 'tabs', 'illustrated', 'classic', 'luxury', 'experiences', 'modern', 'playful']");
