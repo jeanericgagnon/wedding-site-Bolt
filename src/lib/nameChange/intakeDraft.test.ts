@@ -26,6 +26,7 @@ describe('name change intake draft helpers', () => {
       id: 'draft-other',
       document_kind: 'other',
       display_name: 'Other',
+      intake_status: 'not_started',
       file_name_masked: null,
       extraction_confidence: null,
     });

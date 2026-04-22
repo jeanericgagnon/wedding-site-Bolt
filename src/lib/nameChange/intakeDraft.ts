@@ -56,13 +56,14 @@ export function createDraftNameChangeDocument(
   const normalizedLabel = normalizeDraftText(label) || humanizeDraftToken(canonicalKind);
   const shouldUseMaskedFileName = canonicalKind !== 'other';
   const defaultExtractionConfidence = canonicalKind !== 'other' ? 0.92 : null;
+  const defaultIntakeStatus = canonicalKind !== 'other' ? 'uploaded' : 'not_started';
 
   return {
     id: buildDraftNameChangeDocumentId(canonicalKind),
     document_kind: canonicalKind,
     display_name: normalizedLabel,
     storage_mode: 'metadata_only',
-    intake_status: 'uploaded',
+    intake_status: defaultIntakeStatus,
     file_name_masked: shouldUseMaskedFileName ? `${canonicalKind.replace(/_/g, '-')}-•••.pdf` : null,
     issuing_authority: null,
     issued_on: null,
