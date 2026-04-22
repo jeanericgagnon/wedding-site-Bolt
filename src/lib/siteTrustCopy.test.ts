@@ -15,4 +15,9 @@ describe('SITE_TRUST_COPY starter draft truth', () => {
     expect(SITE_TRUST_COPY.privateEditing.toLowerCase()).not.toContain('live');
     expect(SITE_TRUST_COPY.draftToLaunch).toContain('sharing it with guests');
   });
+
+  it('keeps hidden-from-search copy framed around review and guest sharing instead of a live-state claim', () => {
+    expect(SITE_TRUST_COPY.hiddenFromSearchExplainer).toBe('You can keep search indexing off while you review access settings and decide when to share the site with guests.');
+    expect(SITE_TRUST_COPY.hiddenFromSearchExplainer.toLowerCase()).not.toContain('live for guests');
+  });
 });

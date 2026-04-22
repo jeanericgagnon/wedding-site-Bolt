@@ -594,7 +594,7 @@ export const Home: React.FC = () => {
                 },
                 {
                   q: 'What about privacy and search engines?',
-                  a: 'Your site is hidden from search by default. Guest access controls and launch state are managed separately, so you can keep search indexing off without pretending the whole site is invisible under every circumstance.',
+                  a: SITE_TRUST_COPY.hiddenFromSearchExplainer,
                 },
                 {
                   q: 'How do SMS credits work?',
