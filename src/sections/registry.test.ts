@@ -66,6 +66,7 @@ describe('sections registry resolution', () => {
     expect(resolveAndParse('registry', undefined as never, {}, { strictVariant: true })?.def.variant).toBe('cards');
     expect(resolveAndParse('registry', null as never, {}, { strictVariant: true })?.def.variant).toBe('cards');
     expect(resolveAndParse('registry', { variant: 'featured' } as never, {}, { strictVariant: true })?.def.variant).toBe('cards');
+    expect(resolveAndParse('registry', 'legacy-default', {}, { strictVariant: true })?.def.variant).toBe('cards');
   });
 
   it('exposes template-backed registry aliases to the builder manifest', () => {
@@ -298,6 +299,7 @@ describe('sections registry resolution', () => {
     expect(sectionRegistry).toContain("const normalizedVariant = resolveRegistryVariant(type, variant);");
     expect(sectionRegistry).toContain("default: 'cards'");
     expect(sectionRegistry).toContain("grid: 'cards'");
+    expect(sectionRegistry).toContain("return registryAlias ?? 'cards';");
     expect(sectionRegistry).toContain("normalizeRegistryVariantKey(aliasVariant) === normalizedVariantKey");
   });
 
