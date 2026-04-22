@@ -383,8 +383,8 @@ export const QuickStart: React.FC = () => {
         navigate('/signup?bypassPayment=1', {
           replace: true,
           state: {
-            quickStartDraft: carriedQuickStartDraft,
             returnTo: buildQuickStartEntryPath(),
+            ...(carriedQuickStartDraft ? { quickStartDraft: carriedQuickStartDraft } : {}),
           },
         });
         return;
