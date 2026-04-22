@@ -197,7 +197,7 @@ function parseDraftMonthName(monthName: string) {
 function normalizeDraftDateValue(value: string) {
   const normalizeIsoParts = (year: string, month: string, day: string) => `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
   const normalizedOrdinalValue = value.replace(/\b(\d{1,2})(st|nd|rd|th)\b/gi, '$1');
-  const isoTimestampMatch = normalizedOrdinalValue.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s].*|[+-]\d{2}:?\d{2}|Z|\s+[A-Za-z]{2,5}|\(.*\)|\s+\[[^\]]+\])?$/);
+  const isoTimestampMatch = normalizedOrdinalValue.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s].*|[+-]\d{2}:?\d{2}|Z|\s+[A-Za-z]{2,5}|\(.*\)|\s+\[[^\]]+\]|\s+[A-Za-z]{3,9}\/[A-Za-z_]+)?$/);
   if (isoTimestampMatch) {
     const [, year, month, day] = isoTimestampMatch;
     return normalizeIsoParts(year, month, day);
@@ -260,7 +260,7 @@ function normalizeDraftDateValue(value: string) {
     return normalizeIsoParts(year, month, day);
   }
 
-  const timestampSlashMatch = normalizedOrdinalValue.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})(?:[T\s].*|[+-]\d{2}:?\d{2}|Z|\s+[A-Za-z]{2,5}|\(.*\)|\s+\[[^\]]+\])?$/);
+  const timestampSlashMatch = normalizedOrdinalValue.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})(?:[T\s].*|[+-]\d{2}:?\d{2}|Z|\s+[A-Za-z]{2,5}|\(.*\)|\s+\[[^\]]+\]|\s+[A-Za-z]{3,9}\/[A-Za-z_]+)?$/);
   if (timestampSlashMatch) {
     const [, year, month, day] = timestampSlashMatch;
     return normalizeIsoParts(year, month, day);
