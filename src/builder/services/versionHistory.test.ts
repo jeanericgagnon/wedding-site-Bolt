@@ -70,4 +70,12 @@ describe('versionHistory', () => {
 
     expect(listBuilderRevisions(weddingId)[0]?.id).toBe(newestId);
   });
+
+  it('returns null when a builder revision id does not exist', () => {
+    const weddingId = `w_${Date.now()}_f`;
+    const project = createEmptyBuilderProject(weddingId, 'modern-luxe');
+    recordBuilderRevision({ weddingId, project, action: 'save', actor: 'tester' });
+
+    expect(getBuilderRevision(weddingId, 'missing-revision')).toBeNull();
+  });
 });
