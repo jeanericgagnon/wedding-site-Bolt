@@ -206,4 +206,45 @@ describe('quickStartPersistence', () => {
     expect(normalized.clarifyingState?.clarifying.questions).toEqual([]);
     expect(normalized.showFollowUps).toBe(false);
   });
+
+  it('drops duplicate clarifying questions after trimming ids during restore', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      showFollowUps: true,
+      viewState: 'followups',
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'event-1-time',
+            category: 'event_structure',
+            question: 'When is dinner?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['events.0.time'],
+            affectedSections: ['schedule'],
+            skippable: true,
+            round: 1,
+            status: 'pending',
+            answer: '',
+          }, {
+            id: ' event-1-time ',
+            category: 'event_structure',
+            question: 'When is dinner exactly?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['events.0.time'],
+            affectedSections: ['schedule'],
+            skippable: true,
+            round: 2,
+            status: 'answered',
+            answer: '6:00 PM',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.clarifyingState?.clarifying.questions).toHaveLength(1);
+    expect(normalized.clarifyingState?.clarifying.questions[0]?.id).toBe('event-1-time');
+    expect(normalized.clarifyingState?.clarifying.questions[0]?.answer).toBe('6:00 PM');
+  });
 });

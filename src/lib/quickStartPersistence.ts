@@ -1,6 +1,7 @@
 import { createEmptyInitialSetupAnswers, type InitialSetupAnswers } from './initialSetupAnswers';
 import type { ClarifyingPersistenceEnvelope, StoredClarifyingQuestion } from './aiClarifyingPersistence';
 import { normalizeQuickStartClarifyingMode } from './quickStartClarifyingMode';
+import { normalizeQuickStartClarifyingState } from './quickStartClarifyingNormalize';
 
 export type QuickStartDraftSnapshot = {
   initialSetupAnswers: InitialSetupAnswers;
@@ -73,7 +74,7 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
       && typeof question.answer === 'string';
   };
 
-  const clarifyingState = normalizeQuickStartClarifyingMode(
+  const clarifyingState = normalizeQuickStartClarifyingMode(normalizeQuickStartClarifyingState(
     parsed.clarifyingState
       && typeof parsed.clarifyingState === 'object'
       && !Array.isArray(parsed.clarifyingState)
@@ -91,12 +92,16 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
             ...parsed.clarifyingState,
             clarifying: {
               ...parsed.clarifyingState.clarifying,
-              questions: parsed.clarifyingState.clarifying.questions.filter(isStoredClarifyingQuestion),
-              history: parsed.clarifyingState.clarifying.history.filter(isStoredClarifyingQuestion),
+              questions: parsed.clarifyingState.clarifying.questions
+                .filter(isStoredClarifyingQuestion)
+                .map((question) => ({ ...question, id: question.id.trim(), answer: question.answer.trim() })),
+              history: parsed.clarifyingState.clarifying.history
+                .filter(isStoredClarifyingQuestion)
+                .map((question) => ({ ...question, id: question.id.trim(), answer: question.answer.trim() })),
             },
           } as ClarifyingPersistenceEnvelope
         : null,
-  );
+  ));
 
   const viewState = parsed.viewState === 'thinking' || parsed.viewState === 'followups' ? parsed.viewState : 'question';
   const hasOpenFollowUps = (clarifyingState?.clarifying.questions.some((question) => question.status !== 'answered') || false);
