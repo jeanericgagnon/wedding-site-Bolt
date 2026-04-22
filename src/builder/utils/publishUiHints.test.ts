@@ -139,6 +139,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('RSVP');
   });
 
+  it('returns RSVP guidance when blocker copy uses the shorter readiness detail wording', () => {
+    const hints = getPublishBlockedHints('Turn RSVP on or remove RSVP calls to action.');
+    expect(hints[0]).toContain('RSVP');
+  });
+
   it('returns fallback guidance for unknown message', () => {
     const hints = getPublishBlockedHints('Something else');
     expect(hints).toEqual(['Use Fix next to move through the last blockers before the guest-facing launch.']);
