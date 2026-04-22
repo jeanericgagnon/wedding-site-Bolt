@@ -751,5 +751,6 @@ describe('name change document intake contract', () => {
       metadataMissing: [],
     });
     expect(snapshot.summary.metadataReady).toBe(0);
+    expect(snapshot.summary.autofillReady).toBe(0);
   });
 });
