@@ -323,6 +323,7 @@ export default function EventRSVP() {
 
   function updateRsvpForm(updater: (current: EventRsvpFormState) => EventRsvpFormState) {
     setSubmitError('');
+    setSubmitSuccess(false);
     setRsvpForm((current) => updater(current));
   }
 
