@@ -327,6 +327,17 @@ describe('name change intake draft helpers', () => {
     ]);
   });
 
+  it('collapses repeated whitespace in fallback humanized draft labels', () => {
+    const next = upsertDraftNameChangeExtractedField([], 'draft-marriage_certificate', 'county__residence' as never, '   ', 'San Diego');
+
+    expect(next).toEqual([
+      expect.objectContaining({
+        field_key: 'county_residence',
+        field_label: 'County Residence',
+      }),
+    ]);
+  });
+
   it('normalizes messy draft field keys before storing manual extraction rows', () => {
     const next = upsertDraftNameChangeExtractedField([], 'draft-current_passport', ' Issuance Date ' as never, '  ', ' 2024-06-01 ');
 

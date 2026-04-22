@@ -4,6 +4,8 @@ import type { NameChangeDocumentInput, NameChangeExtractedFieldInput } from './t
 function humanizeDraftToken(value: string) {
   return value
     .replace(/_/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
     .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
