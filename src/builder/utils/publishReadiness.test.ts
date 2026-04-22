@@ -320,6 +320,33 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('marks current-page readiness incomplete when the requested active page exists but all of its sections are disabled', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages = [
+      {
+        ...project.pages[0],
+        id: 'page-1',
+        title: 'Home',
+        orderIndex: 0,
+        sections: [makeSection({ id: 'home-live', enabled: true })],
+      },
+      {
+        ...project.pages[0],
+        id: 'page-2',
+        title: 'Details',
+        orderIndex: 1,
+        sections: [makeSection({ id: 'details-hidden', enabled: false })],
+      },
+    ];
+
+    expect(buildPublishReadiness(project, undefined, { activePageId: 'page-2' }).find((item) => item.id === 'current-page')).toEqual({
+      id: 'current-page',
+      label: 'Current page has visible content',
+      done: false,
+      detail: 'Turn on content for Details.',
+    });
+  });
+
   it('marks sections readiness complete with singular visible-section copy', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
