@@ -19,9 +19,31 @@ function normalizeValue(value: string | null | undefined) {
   return normalized || null;
 }
 
-function getDocumentByKind(documents: NameChangeDocumentInput[], kind: NameChangeDocumentKind) {
+function getDocumentExtractionPriority(
+  document: NameChangeDocumentInput,
+  canonicalKind: NameChangeDocumentKind,
+  extractedFields: NameChangeExtractedFieldInput[],
+) {
+  const verifiedLinkedFieldCount = document.id
+    ? extractedFields.filter((field) => field.document_id === document.id && field.is_verified).length
+    : 0;
+
+  return (
+    (verifiedLinkedFieldCount * 100)
+    + (document.intake_status === 'reviewed' ? 10 : document.intake_status === 'uploaded' ? 5 : 0)
+    + (document.document_kind === canonicalKind ? 1 : 0)
+  );
+}
+
+function getDocumentByKind(
+  documents: NameChangeDocumentInput[],
+  extractedFields: NameChangeExtractedFieldInput[],
+  kind: NameChangeDocumentKind,
+) {
   const kinds = getNameChangeDocumentKindAliases(kind);
-  return documents.find((document) => kinds.includes(document.document_kind));
+  return documents
+    .filter((document) => kinds.includes(document.document_kind))
+    .sort((left, right) => getDocumentExtractionPriority(right, kind, extractedFields) - getDocumentExtractionPriority(left, kind, extractedFields))[0];
 }
 
 function getLinkedFieldValue(
@@ -31,7 +53,7 @@ function getLinkedFieldValue(
   fieldKey: NameChangeExtractionFieldKey,
   requireVerified = false,
 ): string | null {
-  const document = getDocumentByKind(documents, kind);
+  const document = getDocumentByKind(documents, extractedFields, kind);
   if (!document?.id) return null;
 
   const field = extractedFields.find((item) => item.document_id === document.id
@@ -83,7 +105,7 @@ export function hasAnyDocumentLinkedFieldValue(
   kind: NameChangeDocumentKind,
   fieldKey: NameChangeExtractionFieldKey,
 ): boolean {
-  const document = getDocumentByKind(documents, kind);
+  const document = getDocumentByKind(documents, extractedFields, kind);
   const linkedField = document?.id
     ? extractedFields.find((item) => item.document_id === document.id && item.field_key === fieldKey)
     : null;
@@ -100,7 +122,7 @@ export function hasVerifiedDocumentLinkedFieldValue(
   kind: NameChangeDocumentKind,
   fieldKey: NameChangeExtractionFieldKey,
 ): boolean {
-  const document = getDocumentByKind(documents, kind);
+  const document = getDocumentByKind(documents, extractedFields, kind);
   const linkedField = document?.id
     ? extractedFields.find((item) => item.document_id === document.id && item.field_key === fieldKey && item.is_verified)
     : null;
@@ -116,7 +138,7 @@ export function getDocumentCapturedFieldKeys(
   extractedFields: NameChangeExtractedFieldInput[],
   kind: NameChangeDocumentKind,
 ): NameChangeExtractionFieldKey[] {
-  const document = getDocumentByKind(documents, kind);
+  const document = getDocumentByKind(documents, extractedFields, kind);
   if (!document) return [];
 
   const linkedKeys = document.id

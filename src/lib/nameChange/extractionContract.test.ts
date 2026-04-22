@@ -259,6 +259,38 @@ describe('name change extraction contract', () => {
     ], 'court_order')).toEqual(['court_order_date']);
   });
 
+  it('prefers the strongest alias-matched document when verified extraction lives on the canonical row', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-court-order-legacy',
+        document_kind: 'court_order_name_change',
+        display_name: 'Court order name change',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+      {
+        id: 'doc-court-order-canonical',
+        document_kind: 'court_order',
+        display_name: 'Court order',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'doc-court-order-canonical',
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: '24-CV-1188',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+
+    expect(getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'case_number')).toBe('24-CV-1188');
+    expect(getDocumentCapturedFieldKeys(documents, extractedFields, 'court_order')).toEqual(['case_number']);
+  });
+
   it('only treats linked or manual verified court-order reference fields as grounded', () => {
     const documents: NameChangeDocumentInput[] = [
       {
