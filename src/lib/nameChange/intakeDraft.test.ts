@@ -45,6 +45,14 @@ describe('name change intake draft helpers', () => {
     expect(normalizeDraftNameChangeDocumentId('draft- court_order_name_change ')).toBe('draft-court_order');
   });
 
+  it('normalizes spaced draft document kinds into canonical underscore ids', () => {
+    expect(createDraftNameChangeDocument(' court order name change ' as never, ' Court order ')).toMatchObject({
+      id: 'draft-court_order',
+      document_kind: 'court_order',
+    });
+    expect(normalizeDraftNameChangeDocumentId('draft- court order name change ')).toBe('draft-court_order');
+  });
+
   it('normalizes legacy draft document ids onto the canonical draft id', () => {
     expect(normalizeDraftNameChangeDocumentId('draft-court_order_name_change')).toBe('draft-court_order');
     expect(normalizeDraftNameChangeDocumentId(' draft-marriage_certificate ')).toBe('draft-marriage_certificate');
