@@ -295,6 +295,11 @@ describe('publishUiHints', () => {
     ]);
   });
 
+  it('returns section guidance when blocker copy comes from current-page readiness detail', () => {
+    const hints = getPublishBlockedHints('Turn on content for Details.');
+    expect(hints[0]).toContain('Select a section on the canvas');
+  });
+
   it('returns section guidance even when blocker copy is lowercased by upstream formatting', () => {
     const hints = getPublishBlockedHints('turn on at least one section before going live.');
     expect(hints[0]).toContain('Select a section on the canvas');

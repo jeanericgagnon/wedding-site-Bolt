@@ -20,6 +20,7 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
     || normalizedErrorLower.includes('turn on a section')
     || normalizedErrorLower.includes('turn on section')
     || normalizedErrorLower.includes('turn on sections')
+    || normalizedErrorLower.includes('turn on content for')
     || normalizedErrorLower.includes('section is turned on')
     || normalizedErrorLower.includes('sections are turned on')
     || normalizedErrorLower.includes('section visible')
