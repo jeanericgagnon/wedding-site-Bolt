@@ -70,6 +70,9 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
         : null,
   );
 
+  const viewState = parsed.viewState === 'thinking' || parsed.viewState === 'followups' ? parsed.viewState : 'question';
+  const hasOpenFollowUps = (clarifyingState?.clarifying.questions.some((question) => question.status !== 'answered') || false);
+
   return {
     initialSetupAnswers: { ...base.initialSetupAnswers, ...initialSetupAnswers },
     currentIndex: typeof parsed.currentIndex === 'number' && Number.isFinite(parsed.currentIndex) && Number.isInteger(parsed.currentIndex) && parsed.currentIndex >= 0
@@ -78,6 +81,6 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     followUpAnswers,
     showFollowUps: parsed.showFollowUps === true,
     clarifyingState,
-    viewState: parsed.viewState === 'thinking' || parsed.viewState === 'followups' ? parsed.viewState : 'question',
+    viewState: viewState === 'followups' && !hasOpenFollowUps ? 'question' : viewState,
   };
 };
