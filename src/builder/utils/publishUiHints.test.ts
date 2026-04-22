@@ -74,6 +74,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('couple details');
   });
 
+  it('returns partner-name guidance when blocker copy says couple names instead of partner names', () => {
+    const hints = getPublishBlockedHints('Add both couple names before going live.');
+    expect(hints[0]).toContain('couple details');
+  });
+
   it('returns partner-name guidance when both-names blocker copy is lowercased by upstream formatting', () => {
     const hints = getPublishBlockedHints('add both names exactly how you want them shown.');
     expect(hints[0]).toContain('couple details');
