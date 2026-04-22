@@ -1506,4 +1506,57 @@ describe('EventRSVP token trust continuity', () => {
     expect(screen.queryByText('Failed to save your RSVP. Please try again.')).not.toBeInTheDocument();
   });
 
+  it('does not show stale submit success after the guest edits before an old submit resolves', async () => {
+    currentToken = 'guest-token';
+
+    maybeSingleQueue.push(
+      { data: { id: 'guest-1', name: 'Jordan', email: 'jordan@example.com' }, error: null },
+      { data: null, error: null },
+    );
+
+    selectQueue.push({
+      data: [
+        {
+          id: 'inv-1',
+          event_id: 'event-1',
+          itinerary_events: {
+            id: 'event-1',
+            event_name: 'Ceremony',
+            description: '',
+            event_date: '2026-05-02',
+            start_time: '16:00:00',
+            end_time: null,
+            location_name: 'Garden',
+            location_address: '',
+            dress_code: null,
+            notes: null,
+          },
+        },
+      ],
+      error: null,
+    });
+
+    const submitRequest = createDeferredMutation();
+    insertQueue.push(submitRequest.promise);
+
+    render(<EventRSVP />);
+
+    expect(await screen.findByText('Hello, Jordan!')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'RSVP for this event' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Submit RSVP' }));
+
+    await screen.findByRole('button', { name: 'Saving…' });
+
+    fireEvent.change(screen.getByPlaceholderText('Any special requests or messages for the couple'), {
+      target: { value: 'Updated note' },
+    });
+
+    submitRequest.resolve({ error: null });
+
+    await waitFor(() => {
+      expect(screen.queryByText("You're in!")).not.toBeInTheDocument();
+    });
+    expect(screen.getByDisplayValue('Updated note')).toBeInTheDocument();
+  });
+
 });

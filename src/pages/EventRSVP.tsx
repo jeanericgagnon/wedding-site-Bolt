@@ -96,6 +96,14 @@ function invalidateEventRsvpAsyncState(
   submitInFlightRef.current = false;
 }
 
+function invalidateEventRsvpSubmitState(
+  activeSubmitRequestRef: React.MutableRefObject<number>,
+  submitInFlightRef: React.MutableRefObject<boolean>,
+) {
+  activeSubmitRequestRef.current += 1;
+  submitInFlightRef.current = false;
+}
+
 export default function EventRSVP() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
@@ -364,8 +372,7 @@ export default function EventRSVP() {
       window.clearTimeout(postSubmitResetTimeoutRef.current);
       postSubmitResetTimeoutRef.current = null;
     }
-    activeSubmitRequestRef.current += 1;
-    submitInFlightRef.current = false;
+    invalidateEventRsvpSubmitState(activeSubmitRequestRef, submitInFlightRef);
     setSubmitting(false);
     setRsvpForm((current) => updater(current));
   }
