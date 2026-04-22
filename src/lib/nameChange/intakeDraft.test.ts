@@ -303,6 +303,27 @@ describe('name change intake draft helpers', () => {
     ]);
   });
 
+  it('deduplicates combined camelCase draft ids and field keys in one upsert', () => {
+    const next = upsertDraftNameChangeExtractedField([
+      {
+        document_id: 'draft-courtOrderNameChange' as never,
+        field_key: 'caseNumber' as never,
+        field_label: 'Case number',
+        field_value_masked: '24-CV-1000',
+        source_type: 'manual',
+        is_verified: true,
+      },
+    ], 'draft-court_order', 'case_number', 'Case number', '24-CV-1188');
+
+    expect(next).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-court_order',
+        field_key: 'case_number',
+        field_value_masked: '24-CV-1188',
+      }),
+    ]);
+  });
+
   it('replaces legacy messy draft field-key rows instead of leaving duplicates behind', () => {
     const next = upsertDraftNameChangeExtractedField([
       {
