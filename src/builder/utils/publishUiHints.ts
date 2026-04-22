@@ -82,6 +82,7 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
     normalizedErrorLower.includes('add at least one venue name or address')
     || normalizedErrorLower.includes('add at least one venue')
     || normalizedErrorLower.includes('venue name or address')
+    || normalizedErrorLower.includes('venue address')
     || normalizedErrorLower.includes('venue')
     || normalizedErrorLower.includes('location')
   ) {
