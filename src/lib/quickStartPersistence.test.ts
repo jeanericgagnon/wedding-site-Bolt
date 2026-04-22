@@ -36,10 +36,12 @@ describe('quickStartPersistence', () => {
       currentIndex: -5,
       followUpAnswers: ['bad'],
       viewState: 'bogus',
+      clarifyingState: [],
     });
 
     expect(normalized.currentIndex).toBe(0);
     expect(normalized.followUpAnswers).toEqual({});
     expect(normalized.viewState).toBe('question');
+    expect(normalized.clarifyingState).toBeNull();
   });
 });

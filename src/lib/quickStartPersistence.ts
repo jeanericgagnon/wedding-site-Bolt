@@ -36,7 +36,7 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
       : 0,
     followUpAnswers,
     showFollowUps: parsed.showFollowUps === true,
-    clarifyingState: parsed.clarifyingState && typeof parsed.clarifyingState === 'object'
+    clarifyingState: parsed.clarifyingState && typeof parsed.clarifyingState === 'object' && !Array.isArray(parsed.clarifyingState)
       ? parsed.clarifyingState as ClarifyingPersistenceEnvelope
       : null,
     viewState: parsed.viewState === 'thinking' || parsed.viewState === 'followups' ? parsed.viewState : 'question',
