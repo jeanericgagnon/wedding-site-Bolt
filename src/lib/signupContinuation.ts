@@ -38,4 +38,7 @@ export const consumeSignupReturnPath = (): string | null => {
   return path;
 };
 
-export const resolvePostSignupPath = (fallbackPath: string) => readSignupReturnPath() || fallbackPath;
+export const resolvePostSignupPath = (fallbackPath: string) => {
+  const safeFallbackPath = isSafeReturnPath(fallbackPath) ? fallbackPath : '/';
+  return readSignupReturnPath() || safeFallbackPath;
+};

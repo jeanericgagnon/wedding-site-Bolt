@@ -28,4 +28,8 @@ describe('signupContinuation', () => {
 
     expect(readSignupReturnPath()).toBeNull();
   });
+
+  it('rejects unsafe fallback paths when resolving post-signup continuation', () => {
+    expect(resolvePostSignupPath('https://evil.example/steal')).toBe('/');
+  });
 });
