@@ -717,6 +717,16 @@ export default function RSVP() {
       }
 
       if (activeSubmitRequestRef.current !== requestId) return;
+      setExistingRsvp({
+        id: existingRsvp?.id ?? 'submitted-rsvp',
+        attending: formData.attending,
+        attending_ceremony: formData.attendCeremony,
+        attending_reception: formData.attendReception,
+        meal_choice: formData.meal_choice || null,
+        plus_one_name: formData.plus_one_name || null,
+        notes: notesPayload || null,
+        custom_answers: customAnswers,
+      });
       setStep('success');
     } catch {
       if (activeSubmitRequestRef.current !== requestId) return;
