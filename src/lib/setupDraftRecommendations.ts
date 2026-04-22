@@ -42,11 +42,15 @@ export const deriveSetupMode = (draft: Pick<SetupDraft, 'stylePreferences' | 'gu
 const scoreTemplateForSetup = (template: TemplateCatalogItem, draft: Pick<SetupDraft, 'stylePreferences' | 'guestEstimateBand'>): number => {
   const prefs = buildPreferenceSet(draft.stylePreferences);
   let score = template.styleTags.filter((tag) => hasPreference(prefs, tag)).length;
+  if (hasPreference(prefs, 'Weekend') && hasPreference(prefs, 'Destination')) {
+    score -= 1;
+  }
   const source = `${template.id} ${template.name} ${template.description} ${template.bestFor.join(' ')} ${template.defaultSectionOrder.join(' ')}`.toLowerCase();
   const setupMode = deriveSetupMode(draft);
 
-  if (setupMode.destination && /destination|travel|coastal|weekend|itinerary|hotel/.test(source)) score += 2;
+  if (setupMode.destination && /destination|travel|coastal|itinerary|hotel/.test(source)) score += 2;
   if (setupMode.weekend && /timeline|experience|weekend|guest|travel/.test(source)) score += 1;
+  if (setupMode.destination && setupMode.weekend && /weekend|getaway|multi-day/.test(source)) score += 1;
   if (setupMode.bilingual && /faq|schedule|guide|details|guest/.test(source)) score += 1;
   if (setupMode.interfaith && /story|schedule|faq|details|ceremony/.test(source)) score += 1;
   if (setupMode.interfaith && /family|tradition|multi-tradition|cultural/.test(source)) score += 2;

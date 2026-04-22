@@ -45,7 +45,7 @@ describe('setupDraftRecommendations', () => {
         id: 'destination-adventure',
         name: 'Destination Adventure',
         styleTags: ['Destination', 'Modern'],
-        description: 'Travel-first weekend itinerary with hotel details',
+        description: 'Travel-first getaway with hotel details',
         defaultSectionOrder: ['Hero', 'Travel', 'Schedule'],
       }),
     ];
@@ -119,5 +119,30 @@ describe('setupDraftRecommendations', () => {
     }, templates, 1);
 
     expect(first?.id).toBe('trip');
+  });
+
+  it('rewards multi-day destination copy when both destination and weekend are selected', () => {
+    const templates = [
+      makeTemplate({
+        id: 'destination-weekend',
+        name: 'Destination Weekend',
+        styleTags: ['Destination'],
+        description: 'Multi-day getaway with hotel details and travel notes',
+      }),
+      makeTemplate({
+        id: 'destination-basic',
+        name: 'Destination Basic',
+        styleTags: ['Destination'],
+        description: 'Travel-first hotel itinerary',
+      }),
+    ];
+
+    const [first] = getRecommendedTemplates({
+      ...emptySetupDraft,
+      stylePreferences: ['Destination', 'Weekend'],
+      guestEstimateBand: '200plus',
+    }, templates, 1);
+
+    expect(first?.id).toBe('destination-weekend');
   });
 });
