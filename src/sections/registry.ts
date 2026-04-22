@@ -310,7 +310,7 @@ export function resolveCanonicalRegistrySectionInput(type: unknown, variant: unk
   const canonicalType = resolveCanonicalRegistrySectionType(type);
   if (canonicalType !== 'registry') {
     return {
-      type: typeof type === 'string' ? type : '',
+      type: normalizeRegistrySectionType(type),
       variant: typeof variant === 'string' ? variant : '',
     };
   }

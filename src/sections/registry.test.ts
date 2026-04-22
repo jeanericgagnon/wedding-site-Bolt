@@ -54,6 +54,7 @@ describe('sections registry resolution', () => {
   });
 
   it('keeps registry owner and guest renders aligned when persisted registry variants drift in casing or punctuation', () => {
+    expect(getDefinition(' Hero ' as never, 'fullBleed' as never)?.type).toBe('hero');
     expect(getDefinition('RegistrySection' as never, ' Luxury ' as never)?.variant).toBe('featured');
     expect(resolveAndParse('Registry', 'luxury', {}, { strictVariant: true })?.def.variant).toBe('featured');
     expect(resolveAndParse('registry-section' as never, 'default', {}, { strictVariant: true })?.def.variant).toBe('cards');
@@ -74,6 +75,7 @@ describe('sections registry resolution', () => {
     expect(resolveCanonicalRegistrySectionType('RegistrySection')).toBe('registry');
     expect(resolveCanonicalRegistrySectionType('registry-section')).toBe('registry');
     expect(resolveCanonicalRegistrySectionInput('RegistrySection', ' Luxury ')).toEqual({ type: 'registry', variant: 'featured' });
+    expect(resolveCanonicalRegistrySectionInput(' Hero ', 'fullBleed')).toEqual({ type: 'hero', variant: 'fullBleed' });
   });
 
   it('keeps registry runtime resolution from crashing on malformed persisted variants', () => {
