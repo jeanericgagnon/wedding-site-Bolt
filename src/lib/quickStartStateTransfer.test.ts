@@ -15,7 +15,7 @@ describe('quickStartStateTransfer', () => {
     });
 
     expect(persisted?.initialSetupAnswers.names).toBe('Alex & Jordan');
-    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').showFollowUps).toBe(true);
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').showFollowUps).toBe(false);
     expect(readQuickStartDraftSnapshot()?.followUpAnswers['event-1-time']).toBe('6:00 PM');
   });
 
