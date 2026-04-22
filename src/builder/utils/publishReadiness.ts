@@ -67,7 +67,7 @@ export const buildPublishReadiness = (
   const normalizedActivePageId = typeof options?.activePageId === 'string' ? options.activePageId.trim() : options?.activePageId;
   const activePage = project.pages.find((page) => page.id === normalizedActivePageId) ?? project.pages[0];
   const enabledSectionCount = project.pages.reduce(
-    (count, page) => count + page.sections.filter((section) => section.enabled).length,
+    (count, page) => count + (page.sections?.filter((section) => section.enabled).length ?? 0),
     0
   );
   const hasVenue = Boolean(weddingData?.venues?.some((v) => !!v?.name?.trim() || !!v?.address?.trim()));
@@ -75,7 +75,7 @@ export const buildPublishReadiness = (
   const hasWeddingDate = Boolean(weddingData?.event?.weddingDateISO?.trim());
   const hasRsvpEnabled = weddingData ? Boolean(weddingData.rsvp?.enabled) : true;
   const hasUnsavedChanges = options?.isDirty === true;
-  const activePageHasVisibleSections = Boolean(activePage?.sections.some((section) => section.enabled));
+  const activePageHasVisibleSections = Boolean(activePage?.sections?.some((section) => section.enabled));
   const activePageTitle = activePage?.title?.trim() || 'the current page';
 
   return [

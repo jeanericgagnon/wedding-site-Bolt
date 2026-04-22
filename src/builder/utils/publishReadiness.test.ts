@@ -848,4 +848,18 @@ describe('publishReadiness', () => {
       detail: 'Turn on content for Details.',
     });
   });
+
+  it('falls back to no visible current-page content when persisted active page sections are missing entirely', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    // @ts-expect-error exercising runtime guard for incomplete persisted data
+    delete project.pages[0].sections;
+
+    const readiness = buildPublishReadiness(project, undefined, { activePageId: project.pages[0].id });
+    expect(readiness.find((item) => item.id === 'current-page')).toEqual({
+      id: 'current-page',
+      label: 'Current page has visible content',
+      done: false,
+      detail: 'Turn on content for Home.',
+    });
+  });
 });
