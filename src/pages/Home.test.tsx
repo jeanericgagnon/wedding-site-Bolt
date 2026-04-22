@@ -62,5 +62,7 @@ describe('Home draft-first CTAs', () => {
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
     expect(screen.getAllByRole('button', { name: 'Review your wedding site draft' }).length).toBeGreaterThan(0);
     expect(screen.getByRole('link', { name: 'Open your builder' })).toHaveAttribute('href', '/dashboard/builder');
+    fireEvent.click(screen.getAllByRole('button', { name: 'Open your dashboard' })[0]);
+    expect(navigateMock).toHaveBeenCalledWith('/dashboard/overview');
   });
 });
