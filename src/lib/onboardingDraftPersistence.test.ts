@@ -49,4 +49,32 @@ describe('onboardingDraftPersistence', () => {
     expect(normalized.initialSetupFollowUps.eventLocations).toEqual({});
     expect(normalized.initialSetupFollowUps.eventTimes).toEqual({});
   });
+
+  it('trims and filters handoff answers before restoring review state', () => {
+    const normalized = normalizeOnboardingDraftSnapshot({
+      step: 'quick-3',
+      showFollowUpReview: true,
+      followUpAnswers: {
+        ' venue-clarity ': ' At the bluff overlooking the ocean. ',
+        lodging: '   ',
+      },
+      initialSetupFollowUps: {
+        venueClarification: '  Ocean bluff ceremony  ',
+        eventLocations: {
+          friday: ' Pool terrace ',
+          saturday: 7,
+        },
+        eventTimes: {
+          friday: ' 6:00 PM ',
+          sunday: null,
+        },
+      },
+    });
+
+    expect(normalized.showFollowUpReview).toBe(true);
+    expect(normalized.followUpAnswers).toEqual({ 'venue-clarity': 'At the bluff overlooking the ocean.' });
+    expect(normalized.initialSetupFollowUps.venueClarification).toBe('Ocean bluff ceremony');
+    expect(normalized.initialSetupFollowUps.eventLocations).toEqual({ friday: 'Pool terrace' });
+    expect(normalized.initialSetupFollowUps.eventTimes).toEqual({ friday: '6:00 PM' });
+  });
 });

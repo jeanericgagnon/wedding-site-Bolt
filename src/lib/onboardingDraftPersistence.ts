@@ -24,9 +24,13 @@ export const createEmptyOnboardingDraftSnapshot = (): OnboardingDraftSnapshot =>
   showFollowUpReview: false,
 });
 
-const isStringRecord = (value: unknown): value is Record<string, string> => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
-  return Object.values(value).every((entry) => typeof entry === 'string');
+const sanitizeStringRecord = (value: unknown): Record<string, string> => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([key, entry]) => key.trim().length > 0 && typeof entry === 'string' && entry.trim().length > 0)
+      .map(([key, entry]) => [key.trim(), entry.trim()]),
+  );
 };
 
 export const normalizeOnboardingDraftSnapshot = (value: unknown): OnboardingDraftSnapshot => {
@@ -38,20 +42,25 @@ export const normalizeOnboardingDraftSnapshot = (value: unknown): OnboardingDraf
     ? {
         ...base.initialSetupFollowUps,
         ...parsed.initialSetupFollowUps,
-        eventLocations: isStringRecord(parsed.initialSetupFollowUps.eventLocations) ? parsed.initialSetupFollowUps.eventLocations : {},
-        eventTimes: isStringRecord(parsed.initialSetupFollowUps.eventTimes) ? parsed.initialSetupFollowUps.eventTimes : {},
+        venueClarification: typeof parsed.initialSetupFollowUps.venueClarification === 'string'
+          ? parsed.initialSetupFollowUps.venueClarification.trim()
+          : base.initialSetupFollowUps.venueClarification,
+        eventLocations: sanitizeStringRecord(parsed.initialSetupFollowUps.eventLocations),
+        eventTimes: sanitizeStringRecord(parsed.initialSetupFollowUps.eventTimes),
       }
     : base.initialSetupFollowUps;
 
   return {
     step: parsed.step === 'quick-1' || parsed.step === 'quick-2' || parsed.step === 'quick-3' || parsed.step === 'complete' ? parsed.step : 'choice',
-    conversationIndex: typeof parsed.conversationIndex === 'number' && Number.isFinite(parsed.conversationIndex) ? parsed.conversationIndex : 0,
+    conversationIndex: typeof parsed.conversationIndex === 'number' && Number.isFinite(parsed.conversationIndex) && Number.isInteger(parsed.conversationIndex) && parsed.conversationIndex >= 0
+      ? parsed.conversationIndex
+      : 0,
     weddingProfile: isWeddingProfile(parsed.weddingProfile) ? parsed.weddingProfile : base.weddingProfile,
     initialSetupAnswers: parsed.initialSetupAnswers && typeof parsed.initialSetupAnswers === 'object'
       ? { ...base.initialSetupAnswers, ...parsed.initialSetupAnswers }
       : base.initialSetupAnswers,
     initialSetupFollowUps,
-    followUpAnswers: isStringRecord(parsed.followUpAnswers) ? parsed.followUpAnswers : {},
+    followUpAnswers: sanitizeStringRecord(parsed.followUpAnswers),
     showFollowUpReview: parsed.showFollowUpReview === true,
   };
 };
