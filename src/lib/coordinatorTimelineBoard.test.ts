@@ -37,4 +37,19 @@ describe('coordinatorTimelineBoard', () => {
       tone: 'warning',
     });
   });
+
+  it('shows a complete run-of-show when every event is done', () => {
+    expect(buildCoordinatorTimelineBoard({
+      events,
+      timelineState: { e1: 'done', e2: 'done', e3: 'done' },
+      liveEventId: null,
+      upNextEventId: null,
+    })).toEqual({
+      liveLabel: 'No event is live yet',
+      upNextLabel: 'No up-next event queued',
+      progressLabel: '3/3 complete',
+      stateLabel: 'Run-of-show is complete',
+      tone: 'ready',
+    });
+  });
 });

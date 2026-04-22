@@ -23,6 +23,7 @@ export const buildCoordinatorTimelineBoard = ({
   const liveEvent = events.find((event) => event.id === liveEventId) ?? null;
   const upNextEvent = events.find((event) => event.id === upNextEventId) ?? null;
   const doneCount = events.filter((event) => (timelineState[event.id] || 'up-next') === 'done').length;
+  const isComplete = events.length > 0 && doneCount === events.length;
 
   return {
     liveLabel: liveEvent ? liveEvent.event_name : 'No event is live yet',
@@ -30,9 +31,11 @@ export const buildCoordinatorTimelineBoard = ({
     progressLabel: `${doneCount}/${events.length} complete`,
     stateLabel: liveEvent
       ? 'Run-of-show is active'
+      : isComplete
+        ? 'Run-of-show is complete'
       : upNextEvent
         ? 'Room is waiting on the next event to go live'
         : 'Timeline needs setup',
-    tone: liveEvent ? 'ready' : upNextEvent ? 'warning' : 'neutral',
+    tone: liveEvent ? 'ready' : isComplete ? 'ready' : upNextEvent ? 'warning' : 'neutral',
   };
 };
