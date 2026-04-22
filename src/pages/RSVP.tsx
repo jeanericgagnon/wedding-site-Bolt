@@ -393,6 +393,8 @@ export default function RSVP() {
         const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions?: RSVPQuestion[] | null; rsvpMealConfig?: RSVPMealConfig | null; musicPlaylistUrl?: string | null; householdGuests?: HouseholdGuest[] | null };
         if (result.guest) {
           selectGuest(result.guest, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null);
+        } else if (result.guests && result.guests.length === 1) {
+          selectGuest(result.guests[0], result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null);
         } else if (result.guests && result.guests.length > 1) {
           setAmbiguousGuests(result.guests);
           setRsvpDeadline(result.rsvpDeadline);
@@ -462,6 +464,12 @@ export default function RSVP() {
         setApplyToHousehold(hh.length > 0);
         setSelectedHouseholdGuestIds(hh.map((h) => h.id));
         setStep('pick');
+        return;
+      }
+
+      if (result.guests && result.guests.length === 1) {
+        if (activeLookupRequestRef.current !== requestId) return;
+        selectGuest(result.guests[0], result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null);
         return;
       }
 

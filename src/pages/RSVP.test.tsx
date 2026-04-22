@@ -125,6 +125,48 @@ describe('RSVP stale submit protection', () => {
     expect(screen.queryByText('An error occurred. Please try again.')).not.toBeInTheDocument();
   });
 
+  it('accepts a single fallback guest result from token lookup', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        guest: null,
+        existingRsvp: null,
+        guests: [
+          {
+            id: 'guest-1',
+            first_name: 'Taylor',
+            last_name: 'Rivera',
+            name: 'Taylor Rivera',
+            email: 'taylor@example.com',
+            phone: null,
+            group_name: null,
+            wedding_site_id: 'site-1',
+            plus_one_allowed: false,
+            invited_to_ceremony: true,
+            invited_to_reception: true,
+            invite_token: 'token-1',
+          },
+        ],
+        rsvpDeadline: null,
+        rsvpQuestions: [],
+        rsvpMealConfig: { enabled: true, options: ['Chicken', 'Beef'] },
+        musicPlaylistUrl: null,
+        householdGuests: [],
+      }),
+    });
+
+    window.history.pushState({}, '', '/rsvp?token=token-1');
+
+    render(
+      <BrowserRouter>
+        <RSVP />
+      </BrowserRouter>
+    );
+
+    expect(await screen.findByText('Welcome, Taylor Rivera!')).toBeInTheDocument();
+    expect(screen.queryByText('Invitation not recognized. Please search by name below.')).not.toBeInTheDocument();
+  });
+
   it('returns token-linked guests to their loaded RSVP instead of dumping them to generic search after success', async () => {
     fetchMock
       .mockResolvedValueOnce({
