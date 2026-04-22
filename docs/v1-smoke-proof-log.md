@@ -24,6 +24,7 @@ Known blocker message: `validate-rsvp-token function is not callable with curren
 Blocked proof owner action: provide anon-callable function auth in this environment or run with credentials that can invoke the function.
 Remaining manual proof: one human canonical couple-path route-note pass plus runtime wording verification.
 Protected route smoke inventory is automated; remaining proof work is now manual truth validation, not route reachability.
+Last canonical smoke confirmation: 2026-04-21 via `npm run proof:v1:canonical-smoke`
 
 This is **not** a generic QA checklist.
 This is the must-ship truth gate.
