@@ -336,4 +336,8 @@ describe('publishUiHints', () => {
   it('treats non-finite totals as no checks yet so progress copy never shows impossible counts', () => {
     expect(getPublishProgressLabel(1, Number.POSITIVE_INFINITY)).toBe('No checks yet');
   });
+
+  it('treats negative infinity done counts as zero so progress copy never goes past total', () => {
+    expect(getPublishProgressLabel(Number.NEGATIVE_INFINITY, 2)).toBe('2 things left before guest-facing launch');
+  });
 });
