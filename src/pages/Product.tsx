@@ -101,7 +101,7 @@ const V1_SLICE_STATUS = [
     status: 'Proof needed',
     tone: 'proof',
     done: 'Invite + role-aware shell are far more honest now.',
-    missing: 'Still needs role-boundary smoke with a real restricted-action failure before this slice reads launch-ready.',
+    missing: 'Still needs role-boundary smoke with a real restricted-action failure before this slice reads fully proven.',
   },
   {
     name: 'Coordinator / day-of',
