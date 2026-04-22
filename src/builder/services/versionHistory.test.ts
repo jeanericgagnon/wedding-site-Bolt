@@ -141,4 +141,16 @@ describe('versionHistory', () => {
 
     expect(getBuilderRevision(weddingId, 'still-missing')).toBeNull();
   });
+
+  it('keeps newest revision first after a publish follows a save', () => {
+    const weddingId = `w_${Date.now()}_n`;
+    const project = createEmptyBuilderProject(weddingId, 'modern-luxe');
+    const saved = recordBuilderRevision({ weddingId, project, action: 'save', actor: 'tester-1' });
+    const published = recordBuilderRevision({ weddingId, project, action: 'publish', actor: 'tester-2' });
+
+    expect(listBuilderRevisions(weddingId).map((revision) => revision.id).slice(0, 2)).toEqual([
+      published.id,
+      saved.id,
+    ]);
+  });
 });
