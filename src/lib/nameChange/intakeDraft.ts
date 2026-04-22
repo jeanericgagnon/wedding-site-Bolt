@@ -278,7 +278,7 @@ function normalizeDraftDateValue(value: string) {
     return normalizeIsoParts(year, month, day);
   }
 
-  return normalizedOrdinalValue;
+  return suffixStrippedTimestampValue;
 }
 
 function normalizeDraftFieldValue(fieldKey: NameChangeExtractedFieldInput['field_key'], value: string) {
