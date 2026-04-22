@@ -159,6 +159,7 @@ describe('name change intake draft helpers', () => {
 
   it('normalizes legacy draft document ids onto the canonical draft id', () => {
     expect(normalizeDraftNameChangeDocumentId('draft-court_order_name_change')).toBe('draft-court_order');
+    expect(normalizeDraftNameChangeDocumentId('draft')).toBe('draft-other');
     expect(normalizeDraftNameChangeDocumentId(' draft-marriage_certificate ')).toBe('draft-marriage_certificate');
     expect(normalizeDraftNameChangeDocumentId(' external-doc-id ')).toBe('external-doc-id');
     expect(normalizeDraftNameChangeDocumentId('draft-___')).toBeNull();

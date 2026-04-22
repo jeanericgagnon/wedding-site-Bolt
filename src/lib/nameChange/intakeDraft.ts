@@ -38,6 +38,8 @@ export function buildDraftNameChangeDocumentId(kind: NameChangeDocumentInput['do
 
 export function normalizeDraftNameChangeDocumentId(documentId: string | null | undefined) {
   const normalizedDocumentId = documentId?.trim() || null;
+  if (!normalizedDocumentId) return null;
+  if (/^draft$/i.test(normalizedDocumentId)) return 'draft-other';
   const normalizedDraftPrefix = normalizedDocumentId?.replace(/^draft(?:\s*[\\/_-]?\s*)/i, 'draft-') ?? null;
   if (!normalizedDraftPrefix?.startsWith('draft-')) return normalizedDocumentId;
   const normalizedKind = normalizeDraftDocumentKind(normalizedDraftPrefix.slice('draft-'.length));
