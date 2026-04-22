@@ -58,6 +58,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('RSVP');
   });
 
+  it('returns RSVP guidance for the real publish readiness blocker copy', () => {
+    const hints = getPublishBlockedHints('Turn RSVP on before going live.');
+    expect(hints[0]).toContain('RSVP');
+  });
+
   it('returns RSVP guidance for whitespace-padded RSVP message', () => {
     const hints = getPublishBlockedHints('   Enable RSVP before publishing.   ');
     expect(hints[0]).toContain('RSVP');
