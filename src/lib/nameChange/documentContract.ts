@@ -197,6 +197,7 @@ export function buildNameChangeDocumentIntakeSnapshot(
       : [...new Set(typedCapturedFields
         .filter((field): field is NameChangeExtractionFieldKey => definition.extractionFields.includes(field as NameChangeExtractionFieldKey)))];
     const missingExtractionFields = definition.extractionFields.filter((field) => !capturedExtractionFields.includes(field));
+    const extractionChecklistBlocked = contractIntakeStatus === 'not_started' || metadataMissing.length > 0;
 
     return {
       kind: definition.kind,
@@ -208,9 +209,9 @@ export function buildNameChangeDocumentIntakeSnapshot(
       extractionFieldCount: capturedExtractionFields.length,
       metadataReady: metadataMissing.length === 0 && contractIntakeStatus === 'reviewed' && canonicalConflicts.length === 0 ? 1 : 0,
       metadataMissing,
-      expectedExtractionFields: contractIntakeStatus === 'not_started' ? [] : definition.extractionFields,
+      expectedExtractionFields: extractionChecklistBlocked ? [] : definition.extractionFields,
       capturedExtractionFields,
-      missingExtractionFields: contractIntakeStatus === 'not_started' ? [] : missingExtractionFields,
+      missingExtractionFields: extractionChecklistBlocked ? [] : missingExtractionFields,
       canonicalConflicts,
     };
   });
