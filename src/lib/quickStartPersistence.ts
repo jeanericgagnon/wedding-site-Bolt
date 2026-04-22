@@ -219,10 +219,10 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
   const hasOpenFollowUps = (clarifyingState?.clarifying.questions.some((question) => (
     question.status === 'pending' || question.status === 'unresolved'
   )) || false);
-  const hasStoredShowFollowUps = Object.prototype.hasOwnProperty.call(parsed, 'showFollowUps');
+  const hasExplicitShowFollowUps = parsed.showFollowUps === true || parsed.showFollowUps === false;
   const showFollowUps = hasOpenFollowUps && (
     parsed.showFollowUps === true
-    || (!hasStoredShowFollowUps && parsed.viewState === 'followups')
+    || (!hasExplicitShowFollowUps && parsed.viewState === 'followups')
   );
   const hasAnyClarifyingRecords = Boolean(
     clarifyingState && (clarifyingState.clarifying.questions.length > 0 || clarifyingState.clarifying.history.length > 0)
