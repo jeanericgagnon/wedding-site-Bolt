@@ -10,11 +10,12 @@ export function createDraftNameChangeDocument(
   label: string,
 ): NameChangeDocumentInput {
   const canonicalKind = canonicalizeNameChangeDocumentKind(kind);
+  const normalizedLabel = label.trim() || canonicalKind.replace(/_/g, ' ');
 
   return {
     id: buildDraftNameChangeDocumentId(canonicalKind),
     document_kind: canonicalKind,
-    display_name: label,
+    display_name: normalizedLabel,
     storage_mode: 'metadata_only',
     intake_status: 'uploaded',
     file_name_masked: `${canonicalKind.replace(/_/g, '-')}-•••.pdf`,
@@ -36,16 +37,18 @@ export function upsertDraftNameChangeExtractedField(
   const normalizedDocumentId = documentId
     ? documentId.replace('draft-court_order_name_change', 'draft-court_order')
     : null;
+  const normalizedValue = nextValue.trim();
+  const normalizedLabel = fieldLabel.trim() || fieldKey.replace(/_/g, ' ');
   const rest = extractedFields.filter((field) => !(field.document_id === normalizedDocumentId && field.field_key === fieldKey));
-  if (!nextValue.trim()) return rest;
+  if (!normalizedValue) return rest;
 
   return [
     ...rest,
     {
       document_id: normalizedDocumentId,
       field_key: fieldKey,
-      field_label: fieldLabel,
-      field_value_masked: nextValue,
+      field_label: normalizedLabel,
+      field_value_masked: normalizedValue,
       source_type: 'manual',
       is_verified: true,
     },

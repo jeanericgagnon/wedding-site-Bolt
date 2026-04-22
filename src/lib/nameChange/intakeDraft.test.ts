@@ -14,7 +14,7 @@ describe('name change intake draft helpers', () => {
   });
 
   it('canonicalizes legacy court-order aliases into one stable draft document identity', () => {
-    expect(createDraftNameChangeDocument('court_order_name_change', 'Court order')).toMatchObject({
+    expect(createDraftNameChangeDocument('court_order_name_change', ' Court order ')).toMatchObject({
       id: 'draft-court_order',
       document_kind: 'court_order',
       display_name: 'Court order',
@@ -89,6 +89,19 @@ describe('name change intake draft helpers', () => {
 
     expect(next).toEqual([
       expect.objectContaining({ document_id: 'draft-court_order', field_key: 'case_number', field_value_masked: '24-CV-1188' }),
+    ]);
+  });
+
+  it('normalizes draft field labels and values before downstream document truth reads them', () => {
+    const next = upsertDraftNameChangeExtractedField([], 'draft-marriage_certificate', 'county', '  ', '  San Diego  ');
+
+    expect(next).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-marriage_certificate',
+        field_key: 'county',
+        field_label: 'county',
+        field_value_masked: 'San Diego',
+      }),
     ]);
   });
 });
