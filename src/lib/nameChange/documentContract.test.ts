@@ -318,6 +318,45 @@ describe('name change document intake contract', () => {
     });
   });
 
+  it('prefers reviewed metadata-ready documents over uploaded metadata-light duplicates', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase(),
+      [
+        {
+          id: 'doc-uploaded',
+          document_kind: 'current_passport',
+          display_name: 'Passport upload',
+          storage_mode: 'metadata_only',
+          intake_status: 'uploaded',
+          file_name_masked: 'passport-•••.pdf',
+          issuing_authority: 'U.S. Department of State',
+          issued_on: '2024-06-01',
+          expires_on: '2034-06-01',
+          extraction_confidence: 0.92,
+        },
+        {
+          id: 'doc-reviewed',
+          document_kind: 'current_passport',
+          display_name: 'Passport reviewed',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'passport-reviewed-•••.pdf',
+          issuing_authority: 'U.S. Department of State',
+          issued_on: '2024-06-01',
+          expires_on: '2034-06-01',
+          extraction_confidence: 0.92,
+        },
+      ],
+      [],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'current_passport')).toMatchObject({
+      intakeStatus: 'reviewed',
+      metadataMissing: [],
+      metadataReady: 1,
+    });
+  });
+
   it('prefers the canonical document kind when duplicate alias rows are otherwise tied', () => {
     const snapshot = buildNameChangeDocumentIntakeSnapshot(
       makeCase({ legal_basis: 'court_order', marriage_state: null, marriage_date: null }),

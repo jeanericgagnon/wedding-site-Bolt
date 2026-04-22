@@ -98,13 +98,14 @@ function getDocumentContractPriority(
   document: NameChangeDocumentInput,
   kind: NameChangeDocumentInput['document_kind'],
 ) {
+  const reviewedMetadataReadyWeight = document.intake_status === 'reviewed' && metadataMissingForDocument(document).length === 0 ? 1 : 0;
   const intakeWeight = document.intake_status === 'reviewed'
     ? 2
     : document.intake_status === 'uploaded'
       ? 1
       : 0;
   const canonicalKindWeight = document.document_kind === canonicalizeNameChangeDocumentKind(kind) ? 1 : 0;
-  return (intakeWeight * 1000) + (canonicalKindWeight * 100) - metadataMissingForDocument(document).length;
+  return (reviewedMetadataReadyWeight * 10000) + (intakeWeight * 1000) + (canonicalKindWeight * 100) - metadataMissingForDocument(document).length;
 }
 
 function findBestContractDocument(
