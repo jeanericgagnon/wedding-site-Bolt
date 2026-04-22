@@ -361,7 +361,7 @@ registerDefinition(videoCardDefinition);
 registerDefinition(videoInlineDefinition);
 
 export function getDefinition(type: string, variant: string): SectionDefinition | null {
-  return SECTION_REGISTRY.get(makeKey(type, variant)) ?? null;
+  return SECTION_REGISTRY.get(makeKey(normalizeRegistrySectionType(type), variant)) ?? null;
 }
 
 export function getDefinitionOrThrow(type: string, variant: string): SectionDefinition {
@@ -375,7 +375,8 @@ export function getAllDefinitions(): SectionDefinition[] {
 }
 
 export function getVariantsForType(type: string): SectionDefinition[] {
-  return getAllDefinitions().filter(d => d.type === type);
+  const normalizedType = normalizeRegistrySectionType(type);
+  return getAllDefinitions().filter(d => d.type === normalizedType);
 }
 
 export function resolveAndParse(
