@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { getAllSectionManifests, getSectionManifest } from '../builder/registry/sectionManifests';
 import { resolveAndParse } from './registry';
-import { getAllTemplates } from '../templates/registry';
+import { getAllTemplates, getTemplate } from '../templates/registry';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { getSectionComponent, getSectionVariants } from './sectionRegistry';
@@ -77,6 +77,27 @@ describe('sections registry resolution', () => {
     ));
 
     expect(registryManifest?.supportedVariants).toEqual(expect.arrayContaining(templateVariants));
+  });
+
+  it('keeps template registry imports isolated from later owner edits', () => {
+    const importedTemplate = getTemplate('timeless-classic');
+    const allTemplates = getAllTemplates();
+    const importedRegistrySection = importedTemplate.defaultLayout.sections.find((section) => section.type === 'registry');
+    const listedRegistrySection = allTemplates
+      .find((template) => template.id === 'timeless-classic')
+      ?.defaultLayout.sections.find((section) => section.type === 'registry');
+
+    expect(importedRegistrySection).toBeDefined();
+    expect(listedRegistrySection).toBeDefined();
+    expect(importedRegistrySection).not.toBe(listedRegistrySection);
+
+    importedRegistrySection!.variant = 'featured';
+    importedRegistrySection!.settings = { title: 'Edited after import' };
+
+    expect(getTemplate('timeless-classic').defaultLayout.sections.find((section) => section.type === 'registry')?.variant).toBe('classic');
+    expect(getAllTemplates()
+      .find((template) => template.id === 'timeless-classic')
+      ?.defaultLayout.sections.find((section) => section.type === 'registry')?.settings).toEqual({});
   });
 
   it('keeps every shipped template registry variant renderable in the legacy runtime', () => {
@@ -185,5 +206,12 @@ describe('sections registry resolution', () => {
     const registrySectionComponent = readFileSync(resolve(__dirname, './components/RegistrySection.tsx'), 'utf8');
     expect(registrySectionComponent).toContain('export function shouldUseLiveRegistryItems(items: RegistryItem[] | null): items is RegistryItem[] {');
     expect(registrySectionComponent).toContain('if (shouldUseLiveRegistryItems(items)) {');
+  });
+
+  it('keeps template registry definitions cloned before import/edit flows mutate them', () => {
+    const templateRegistrySource = readFileSync(resolve(__dirname, '../templates/registry.ts'), 'utf8');
+    expect(templateRegistrySource).toContain('function cloneTemplateDefinition(template: TemplateDefinition): TemplateDefinition {');
+    expect(templateRegistrySource).toContain('return cloneTemplateDefinition(TEMPLATE_REGISTRY[templateId] || TEMPLATE_REGISTRY.base || templateRegistry[0]);');
+    expect(templateRegistrySource).toContain('return templateRegistry.map(cloneTemplateDefinition);');
   });
 });

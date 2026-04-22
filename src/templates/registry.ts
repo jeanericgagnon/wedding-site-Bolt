@@ -15,7 +15,7 @@ export interface TemplateDefinition {
   };
 }
 
-const templateRegistry: TemplateDefinition[] = [] = [
+const templateRegistry: TemplateDefinition[] = [
   // 1. HERO-FOCUSED: Editorial Impact (Large, dramatic photography)
   {
     id: 'editorial-impact',
@@ -751,10 +751,27 @@ export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = {
   rustic: templateById['rustic-barn'] ?? templateById['timeless-classic'] ?? templateRegistry[0],
 };
 
+function cloneTemplateSection(section: TemplateSection): TemplateSection {
+  return {
+    ...section,
+    bindings: { ...(section.bindings ?? {}) },
+    settings: { ...(section.settings ?? {}) },
+  };
+}
+
+function cloneTemplateDefinition(template: TemplateDefinition): TemplateDefinition {
+  return {
+    ...template,
+    defaultLayout: {
+      sections: template.defaultLayout.sections.map(cloneTemplateSection),
+    },
+  };
+}
+
 export function getTemplate(templateId: string): TemplateDefinition {
-  return TEMPLATE_REGISTRY[templateId] || TEMPLATE_REGISTRY.base || templateRegistry[0];
+  return cloneTemplateDefinition(TEMPLATE_REGISTRY[templateId] || TEMPLATE_REGISTRY.base || templateRegistry[0]);
 }
 
 export function getAllTemplates(): TemplateDefinition[] {
-  return templateRegistry;
+  return templateRegistry.map(cloneTemplateDefinition);
 }
