@@ -172,4 +172,19 @@ describe('mediaService', () => {
       thumbnailUrl: undefined,
     }));
   });
+
+  it('keeps document alt text when provided for accessibility truth', async () => {
+    const file = new File(['doc'], 'schedule.pdf', { type: 'application/pdf' });
+    upload.mockResolvedValue({
+      url: 'https://cdn.example.com/schedule.pdf',
+      path: 'w1/schedule.pdf',
+    });
+    save.mockResolvedValue({ id: 'asset-9' });
+
+    await mediaService.uploadAsset('w1', file, { altText: 'Weekend schedule PDF' });
+
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({
+      altText: 'Weekend schedule PDF',
+    }));
+  });
 });
