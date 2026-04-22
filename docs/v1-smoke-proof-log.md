@@ -23,6 +23,7 @@ Current automated proof status: canonical smoke passing, guests/RSVP ops environ
 Known blocker message: `validate-rsvp-token function is not callable with current anon credentials (401).`
 Blocked proof owner action: provide anon-callable function auth in this environment or run with credentials that can invoke the function.
 Remaining manual proof: one human canonical couple-path route-note pass plus runtime wording verification.
+Protected route smoke inventory is automated; remaining proof work is now manual truth validation, not route reachability.
 
 This is **not** a generic QA checklist.
 This is the must-ship truth gate.
