@@ -82,6 +82,22 @@ describe('name change intake draft helpers', () => {
     expect(normalizeDraftNameChangeDocumentId('draft-current-passport')).toBe('draft-current_passport');
   });
 
+  it('maps common human draft document aliases onto canonical supported kinds', () => {
+    expect(createDraftNameChangeDocument('passport' as never, ' Passport ')).toMatchObject({
+      id: 'draft-current_passport',
+      document_kind: 'current_passport',
+    });
+    expect(createDraftNameChangeDocument('drivers_license' as never, ' Driver license ')).toMatchObject({
+      id: 'draft-current_drivers_license',
+      document_kind: 'current_drivers_license',
+    });
+    expect(createDraftNameChangeDocument('state identification card' as never, ' State ID ')).toMatchObject({
+      id: 'draft-current_drivers_license',
+      document_kind: 'current_drivers_license',
+    });
+    expect(normalizeDraftNameChangeDocumentId('draft-social-security-card-copy')).toBe('draft-social_security_card');
+  });
+
   it('collapses repeated underscores in messy draft document kinds and ids', () => {
     expect(createDraftNameChangeDocument('current__passport' as never, ' Passport ')).toMatchObject({
       id: 'draft-current_passport',

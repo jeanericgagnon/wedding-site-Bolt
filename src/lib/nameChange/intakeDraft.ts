@@ -26,13 +26,29 @@ function shouldBlockDraftDocumentFieldWrite(documentId: string | null | undefine
 }
 
 function normalizeDraftDocumentKind(value: string) {
-  return value
+  const normalizedKind = value
     .trim()
     .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
     .toLowerCase()
     .replace(/[\\/.:\-\s]+/g, '_')
     .replace(/_+/g, '_')
-    .replace(/^_+|_+$/g, '') as NameChangeDocumentInput['document_kind'];
+    .replace(/^_+|_+$/g, '');
+
+  const kindAliases: Record<string, NameChangeDocumentInput['document_kind']> = {
+    passport: 'current_passport',
+    passport_book: 'current_passport',
+    driver_license: 'current_drivers_license',
+    drivers_license: 'current_drivers_license',
+    driver_licence: 'current_drivers_license',
+    drivers_licence: 'current_drivers_license',
+    state_id: 'current_drivers_license',
+    state_identification: 'current_drivers_license',
+    state_identification_card: 'current_drivers_license',
+    social_security: 'social_security_card',
+    social_security_card_copy: 'social_security_card',
+  };
+
+  return (kindAliases[normalizedKind] ?? normalizedKind) as NameChangeDocumentInput['document_kind'];
 }
 
 function normalizeDraftFieldKey(value: string) {
