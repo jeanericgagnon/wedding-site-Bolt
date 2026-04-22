@@ -200,7 +200,11 @@ function normalizeDraftDateValue(value: string) {
   const sanitizedTimestampValue = normalizedOrdinalValue.replace(/,\s*(\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?)\b/g, ' $1');
   const compactTimestampValue = sanitizedTimestampValue.replace(/\s+/g, ' ').trim();
   const normalizedTimestampValue = compactTimestampValue.replace(/\s+(am|pm)$/i, (_, meridiem: string) => meridiem.toUpperCase());
-  const canonicalTimestampValue = normalizedTimestampValue.replace(/\bz\b/g, 'Z').replace(/\butc\b/gi, 'UTC').replace(/\bgmt\b/gi, 'GMT');
+  const canonicalTimestampValue = normalizedTimestampValue
+    .replace(/\bz\b/g, 'Z')
+    .replace(/\butc\b/gi, 'UTC')
+    .replace(/\bgmt\b/gi, 'GMT')
+    .replace(/\b(UTC|GMT)\s+([+-]\d{1,2})\b/g, '$1$2');
   const isoTimestampMatch = canonicalTimestampValue.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s].*|[+-]\d{2}:?\d{2}|Z|\s+[A-Za-z]{2,5}|\(.*\)|\s+\[[^\]]+\]|\s+[A-Za-z]{3,9}\/[A-Za-z_]+|\s+GMT[+-]\d{1,2}|\s+UTC[+-]\d{1,2}|\s+\d{1,2}:\d{2}\s*[AP]M)?$/);
   if (isoTimestampMatch) {
     const [, year, month, day] = isoTimestampMatch;
