@@ -411,7 +411,7 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
             <Pencil className="w-3.5 h-3.5" />
             Edit
           </button>
-          {onRefetchMetadata && item.item_url && (
+          {onRefetchMetadata && pagePreviewSourceUrl && (
             <>
             <button
               onClick={handleRefetch}
