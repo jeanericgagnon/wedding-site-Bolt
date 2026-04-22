@@ -17,6 +17,7 @@ _Launch-critical blocker command:_ `npm run proof:v1:guests-rsvp-ops`
 _Launch decision depends on:_ a logged manual truth pass, not automation alone
 _Machine-readable guardrail:_ canonical smoke JSON now encodes the no-go launch call and the blocked RSVP proof command
 _Highest-risk trust gap key:_ `guests_rsvp_ops_and_manual_truth_pass`
+_Missing machine-readable flag:_ `runtimeWordingVerificationMissing: true`
 
 ## Purpose
 This is the hard proof artifact for whether DayOf can credibly claim **v1 / done-enough**.
