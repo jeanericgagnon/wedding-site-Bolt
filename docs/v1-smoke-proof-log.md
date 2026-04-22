@@ -7,7 +7,7 @@ _Public v1 claim status:_ Not clear to claim yet
 _Launch call right now:_ NO-GO for public v1 claim
 _Why no-go:_ critical trust proof is still missing on the canonical couple path and runtime wording truth
 _Highest-risk trust gap:_ guests / RSVP ops proof is still blocked by anon-auth 401 on `validate-rsvp-token`
-_Secondary trust gap:_ canonical couple-path truth notes and wording verification are still missing
+_Secondary trust gap:_ canonical couple-path truth notes, runtime wording verification, and starter-draft wording verification are still missing
 _Automation caveat:_ passing canonical smoke is not launch clearance by itself
 _Truth gate summary:_ automation is green, launch truth is still red
 _What must change before GO:_ close the anon-auth RSVP blocker and log the canonical couple-path truth pass
@@ -49,6 +49,7 @@ Latest live smoke breadth: 31 Playwright checks passing
 Latest canonical smoke result: `ok: true`, `blocked: false`
 Latest site lookup statuses: list 200, bySlug 200, byUrl 200
 Canonical manual-proof scope: route-note pass plus privacy/access/publish and marketing/settings/billing wording verification
+Starter-draft manual-proof scope: onboarding and first-run dashboard/site draft wording verification
 Starter-draft wording proof scope: onboarding plus first-run dashboard/site draft wording still needs explicit runtime-truth verification
 
 This is **not** a generic QA checklist.

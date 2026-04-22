@@ -124,6 +124,7 @@ const output = {
   publicV1ClaimBlockers: [
     'Canonical couple-path still lacks one logged human route-note pass from Home through public RSVP entry',
     'Privacy/access/publish and marketing/settings/billing wording still lack runtime-truth verification',
+    'Onboarding and first-run starter-draft wording still lack runtime-truth verification',
   ],
   automatedCoverage: [
     'Build integrity for the current public/onboarding path',
@@ -134,6 +135,7 @@ const output = {
   stillManualProofNeeded: [
     'One logged human route-note pass for Home -> signup/demo/auth -> onboarding/builder -> public site -> RSVP, focused on UX quality instead of basic route reachability',
     'Verify privacy/access/publish plus marketing/settings/billing wording against the actual runtime behavior',
+    'Verify onboarding and first-run starter-draft wording against the actual runtime behavior',
     'Log exact pass/fail or blocker details in docs/v1-smoke-proof-log.md, including the current v1 line and any environment blockers',
   ],
   launchTruthGaps: [
@@ -145,7 +147,7 @@ const output = {
     canonicalManualTruthPass: 'critical',
   },
   highestRiskTrustGap: 'Public v1 claim is still blocked by missing canonical couple-path truth notes and unresolved guests/RSVP ops proof auth',
-  secondaryTrustGap: 'Canonical couple-path truth notes and runtime wording verification are still missing',
+  secondaryTrustGap: 'Canonical couple-path truth notes, runtime wording verification, and starter-draft wording verification are still missing',
   trustLieClosedInThisGate: 'Canonical smoke output now explicitly says public v1 is a no-go instead of implying launch-clear status from automation alone',
   automationCaveat: 'Passing canonical smoke is evidence of route continuity and build health, not launch clearance on its own',
   truthGateSummary: 'Automation is green, but launch truth is still red until the canonical manual proof and guests/RSVP proof gaps are closed',
@@ -174,6 +176,7 @@ const output = {
   whatMustChangeBeforeGo: [
     'Close the anon-auth RSVP blocker on validate-rsvp-token',
     'Log the canonical couple-path truth pass with runtime wording verification',
+    'Log onboarding and first-run starter-draft wording verification',
   ],
   externalBlockedProof: {
     command: 'npm run proof:v1:guests-rsvp-ops',
