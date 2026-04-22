@@ -104,6 +104,13 @@ describe('sections registry resolution', () => {
     }
   });
 
+  it('keeps legacy registry variant ordering aligned with builder-first public layouts', () => {
+    const registryManifest = getSectionManifest('registry');
+    const publicVariantOrder = (registryManifest?.variantMeta ?? []).map((variant) => variant.id);
+
+    expect(getSectionVariants('registry').slice(0, publicVariantOrder.length)).toEqual(publicVariantOrder);
+  });
+
   it('keeps site view registry fallback normalization aligned with public cards first', () => {
     const siteView = readFileSync(resolve(__dirname, '../pages/SiteView.tsx'), 'utf8');
     expect(siteView).toContain("const supported = getSectionVariants(section.type);");
