@@ -197,6 +197,18 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('marks current-page readiness incomplete when there is no page yet', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages = [];
+
+    expect(buildPublishReadiness(project).find((item) => item.id === 'current-page')).toEqual({
+      id: 'current-page',
+      label: 'Current page has visible content',
+      done: false,
+      detail: 'Turn on content for the current page.',
+    });
+  });
+
   it('shows current-page readiness against the active page, not just the first page', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages = [
