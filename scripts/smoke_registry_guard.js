@@ -14,6 +14,7 @@ const registryCardsSection = readFileSync(resolve(process.cwd(), 'src/sections/v
 const registryFeaturedSection = readFileSync(resolve(process.cwd(), 'src/sections/variants/registry/featured.tsx'), 'utf8');
 const registrySectionComponent = readFileSync(resolve(process.cwd(), 'src/sections/components/RegistrySection.tsx'), 'utf8');
 const sectionManifests = readFileSync(resolve(process.cwd(), 'src/builder/registry/sectionManifests.ts'), 'utf8');
+const templateRegistry = readFileSync(resolve(process.cwd(), 'src/templates/registry.ts'), 'utf8');
 
 const checks = [
   { name: 'dashboard uses sanitizeRegistryQuantityState', ok: registryPage.includes('sanitizeRegistryQuantityState') },
@@ -24,6 +25,7 @@ const checks = [
   { name: 'dashboard auto-refresh syncs merchant into store_name', ok: registryPage.includes('if (preview.merchant ?? preview.brand) {\n          fields.merchant = (preview.merchant ?? preview.brand)!;\n          fields.store_name = (preview.merchant ?? preview.brand)!;\n        }') },
   { name: 'section registry keeps strict alias fallbacks for template-backed registry variants', ok: sectionRegistry.includes('const def = strictVariant') && sectionRegistry.includes('VARIANT_FALLBACKS[type]?.[variant] ? getDefinition(normalizedType, VARIANT_FALLBACKS[type][variant]) : null') },
   { name: 'builder registry manifest exposes template-backed registry aliases', ok: sectionManifests.includes("'classic'") && sectionManifests.includes("'luxury'") && sectionManifests.includes("'experiences'") && sectionManifests.includes("'modern'") && sectionManifests.includes("'playful'") },
+  { name: 'shipped templates only use builder-supported registry variants', ok: templateRegistry.includes("variant: 'classic'") && templateRegistry.includes("variant: 'luxury'") && templateRegistry.includes("variant: 'experiences'") && sectionManifests.includes("'classic'") && sectionManifests.includes("'luxury'") && sectionManifests.includes("'experiences'") },
   { name: 'canonical registry validation accepts template-backed registry aliases', ok: canonicalSectionRegistry.includes("luxury: 'featured'") && canonicalSectionRegistry.includes("experiences: 'featured'") && canonicalSectionRegistry.includes("classic: 'cards'") },
   { name: 'public registry cards keep canonical-only store links usable', ok: registryCardsSection.includes("return item.item_url ?? item.canonical_url ?? null;") && registryCardsSection.includes('url: existing.url ?? publicUrl') },
   { name: 'public registry cards separate partial and claimed store counts', ok: registryCardsSection.includes("partial: existing.partial + (item.purchase_status === 'partial' ? 1 : 0)") && registryCardsSection.includes("group.purchased > 0 ? ` · ${group.purchased} claimed` : ''") },

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { getAllSectionManifests, getSectionManifest } from '../builder/registry/sectionManifests';
 import { resolveAndParse } from './registry';
+import { getAllTemplates } from '../templates/registry';
 
 const EXPECTED_ALIAS_TARGETS: Array<{ type: string; variant: string; expectedResolvedVariant: string }> = [
   { type: 'venue', variant: 'banner', expectedResolvedVariant: 'splitMap' },
@@ -51,5 +52,17 @@ describe('sections registry resolution', () => {
   it('exposes template-backed registry aliases to the builder manifest', () => {
     const registryManifest = getSectionManifest('registry');
     expect(registryManifest?.supportedVariants).toEqual(expect.arrayContaining(['classic', 'luxury', 'experiences', 'modern', 'playful']));
+  });
+
+  it('supports every registry variant used by shipped templates', () => {
+    const registryManifest = getSectionManifest('registry');
+    const templateVariants = Array.from(new Set(
+      getAllTemplates()
+        .flatMap((template) => template.defaultLayout.sections)
+        .filter((section) => section.type === 'registry')
+        .map((section) => section.variant)
+    ));
+
+    expect(registryManifest?.supportedVariants).toEqual(expect.arrayContaining(templateVariants));
   });
 });
