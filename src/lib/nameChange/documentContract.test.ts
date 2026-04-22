@@ -903,9 +903,9 @@ describe('name change document intake contract', () => {
     };
     const extractedFields = upsertDraftNameChangeExtractedField(
       upsertDraftNameChangeExtractedField(
-        upsertDraftNameChangeExtractedField([], marriageDraft.id, 'cert number' as never, '  ', 'MC-123'),
+        upsertDraftNameChangeExtractedField([], marriageDraft.id, 'cert #' as never, '  ', 'MC-123'),
         courtOrderDraft.id,
-        'docket no' as never,
+        'case #' as never,
         '  ',
         '24-CV-1188',
       ),

@@ -61,7 +61,7 @@ function normalizeDraftDocumentKind(value: string) {
     .trim()
     .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
     .toLowerCase()
-    .replace(/[+,&()\\/.:\-'’\s]+/g, '_')
+    .replace(/[+#,&()\\/.:\-'’\s]+/g, '_')
     .replace(/_+/g, '_')
     .replace(/^_+|_+$/g, '');
 
@@ -124,16 +124,18 @@ function normalizeDraftFieldKey(value: string) {
     .trim()
     .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
     .toLowerCase()
-    .replace(/[+,&()\\/.:\-'’\s]+/g, '_')
+    .replace(/[+#,&()\\/.:\-'’\s]+/g, '_')
     .replace(/_+/g, '_')
     .replace(/^_+|_+$/g, '');
 
   const fieldAliases: Record<string, NameChangeExtractedFieldInput['field_key']> = {
+    cert: 'certificate_number',
     issue_date: 'issuance_date',
     issued_date: 'issuance_date',
     date_issued: 'issuance_date',
     issue_dt: 'issuance_date',
     cert_no: 'certificate_number',
+    cert_num: 'certificate_number',
     certificate_no: 'certificate_number',
     record_number: 'certificate_number',
     cert_number: 'certificate_number',
@@ -144,7 +146,9 @@ function normalizeDraftFieldKey(value: string) {
     county_lived_in: 'county',
     residence_county: 'county',
     county_residence_name: 'county',
+    case: 'case_number',
     case_no: 'case_number',
+    case_num_no: 'case_number',
     case_num: 'case_number',
     docket_number: 'case_number',
     docket_no: 'case_number',
