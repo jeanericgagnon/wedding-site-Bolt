@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { ExternalLink, Pencil, Trash2, GripVertical, Package, CheckCircle2, ShoppingBag, RefreshCw } from 'lucide-react';
 import { Badge } from '../../../components/ui';
-import { getRegistryItemMetadataState, type RegistryItem, type PurchaseStatus } from './registryTypes';
+import { getRegistryItemMetadataState, sanitizeRegistryQuantityState, type RegistryItem, type PurchaseStatus } from './registryTypes';
 
 interface Props {
   item: RegistryItem;
@@ -34,6 +34,17 @@ export function getOwnerRegistryPurchaserLabel(item: Pick<RegistryItem, 'purchas
   return item.purchase_status === 'purchased'
     ? `Purchased by ${item.purchaser_name}`
     : `by ${item.purchaser_name}`;
+}
+
+export function normalizeOwnerRegistryItemState(item: RegistryItem): RegistryItem {
+  const quantityState = sanitizeRegistryQuantityState(item.quantity_purchased, item.quantity_needed);
+  return {
+    ...item,
+    quantity_needed: quantityState.quantityNeeded,
+    quantity_purchased: quantityState.quantityPurchased,
+    purchase_status: quantityState.purchaseStatus,
+    purchaser_name: quantityState.purchaseStatus === 'available' ? null : item.purchaser_name,
+  };
 }
 
 interface PurchaseConfirmProps {
@@ -93,6 +104,7 @@ const PurchaseConfirmPanel: React.FC<PurchaseConfirmProps> = ({ item, onConfirm,
 };
 
 export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMarkPurchased, onRefetchMetadata }) => {
+  const normalizedItem = normalizeOwnerRegistryItemState(item);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showPurchaseConfirm, setShowPurchaseConfirm] = useState(false);
   const [purchaseBusy, setPurchaseBusy] = useState(false);
@@ -102,7 +114,7 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
   const [imgSrc, setImgSrc] = useState<string | null>(item.image_url ?? null);
   const [imgTriedProxy, setImgTriedProxy] = useState(false);
   const [imgTriedPagePreview, setImgTriedPagePreview] = useState(false);
-  const pagePreviewSourceUrl = item.item_url ?? item.canonical_url ?? null;
+  const pagePreviewSourceUrl = normalizedItem.item_url ?? normalizedItem.canonical_url ?? null;
 
   const buildPagePreviewUrl = (url?: string | null) => {
     const v = (url || '').trim();
@@ -111,21 +123,21 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
   };
   const cooldownRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const isCashFund = item.item_type === 'cash_fund';
-  const displayPrice = item.price_amount != null
-    ? `$${item.price_amount.toFixed(2)}`
-    : item.price_label
-    ? item.price_label
+  const isCashFund = normalizedItem.item_type === 'cash_fund';
+  const displayPrice = normalizedItem.price_amount != null
+    ? `$${normalizedItem.price_amount.toFixed(2)}`
+    : normalizedItem.price_label
+    ? normalizedItem.price_label
     : null;
 
-  const displayUrl = item.item_url ?? item.canonical_url;
-  const merchant = item.merchant ?? item.store_name ?? null;
-  const isPurchased = item.purchase_status === 'purchased';
+  const displayUrl = normalizedItem.item_url ?? normalizedItem.canonical_url;
+  const merchant = normalizedItem.merchant ?? normalizedItem.store_name ?? null;
+  const isPurchased = normalizedItem.purchase_status === 'purchased';
   const canMarkPurchased = !isPurchased && !!onMarkPurchased;
-  const stale = !item.metadata_last_checked_at || (Date.now() - new Date(item.metadata_last_checked_at).getTime()) > 1000 * 60 * 60 * 24 * 7;
-  const priceChanged = item.previous_price_amount != null && item.price_amount != null && item.previous_price_amount !== item.price_amount;
-  const outOfStock = (item.availability || '').toLowerCase().includes('out');
-  const metadataState = getRegistryItemMetadataState(item);
+  const stale = !normalizedItem.metadata_last_checked_at || (Date.now() - new Date(normalizedItem.metadata_last_checked_at).getTime()) > 1000 * 60 * 60 * 24 * 7;
+  const priceChanged = normalizedItem.previous_price_amount != null && normalizedItem.price_amount != null && normalizedItem.previous_price_amount !== normalizedItem.price_amount;
+  const outOfStock = (normalizedItem.availability || '').toLowerCase().includes('out');
+  const metadataState = getRegistryItemMetadataState(normalizedItem);
   const extractionConfidence = metadataState.confidence;
   const blockedMessage = metadataState.blockedMessage;
   const missingSummary = metadataState.missingSummary;
@@ -133,23 +145,23 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
   const repairStates = metadataState.repairStates ?? [];
 
   const imageSource = (() => {
-    const src = (item.image_url || '').toLowerCase();
+    const src = (normalizedItem.image_url || '').toLowerCase();
     if (src.includes('thum.io') || src.includes('weserv.nl')) return { label: 'Image: Fallback', tone: 'neutral' as const, hint: 'Using a screenshot/proxy fallback image.' };
-    if (item.image_url) return { label: 'Image: Direct', tone: 'success' as const, hint: 'Using a direct product image URL.' };
-    if (item.item_url || item.canonical_url) return { label: 'Image: Auto', tone: 'warning' as const, hint: 'Using auto-fetched image metadata from product URL.' };
+    if (normalizedItem.image_url) return { label: 'Image: Direct', tone: 'success' as const, hint: 'Using a direct product image URL.' };
+    if (normalizedItem.item_url || normalizedItem.canonical_url) return { label: 'Image: Auto', tone: 'warning' as const, hint: 'Using auto-fetched image metadata from product URL.' };
     return { label: 'Image: Missing', tone: 'error' as const, hint: 'No image source available yet.' };
   })();
-  const asOfLabel = item.metadata_last_checked_at
-    ? new Date(item.metadata_last_checked_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  const asOfLabel = normalizedItem.metadata_last_checked_at
+    ? new Date(normalizedItem.metadata_last_checked_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : null;
-  const nextCheckLabel = item.next_refresh_at
-    ? new Date(item.next_refresh_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  const nextCheckLabel = normalizedItem.next_refresh_at
+    ? new Date(normalizedItem.next_refresh_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     : null;
-  const failCount = item.refresh_fail_count ?? 0;
-  const sourceLabel = item.metadata_source_method ? `Source: ${item.metadata_source_method}` : null;
-  const retailerLabel = item.metadata_retailer ? `Retailer: ${item.metadata_retailer}` : null;
+  const failCount = normalizedItem.refresh_fail_count ?? 0;
+  const sourceLabel = normalizedItem.metadata_source_method ? `Source: ${normalizedItem.metadata_source_method}` : null;
+  const retailerLabel = normalizedItem.metadata_retailer ? `Retailer: ${normalizedItem.metadata_retailer}` : null;
   const repairGuidance = (() => {
-    const retailer = (item.metadata_retailer || item.merchant || item.store_name || '').toLowerCase();
+    const retailer = (normalizedItem.metadata_retailer || normalizedItem.merchant || normalizedItem.store_name || '').toLowerCase();
     if (retailer.includes('amazon')) return 'Amazon often needs manual title or price cleanup after import.';
     if (retailer.includes('target')) return 'Target imports can drift; re-import first, then confirm title and price.';
     if (retailer.includes('walmart')) return 'Walmart usually benefits from a quick image and price check.';
@@ -157,8 +169,8 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
     if (retailer.includes('crate') || retailer.includes('cb2')) return 'Crate & Barrel / CB2 may still need manual cleanup today.';
     return null;
   })();
-  const goal = item.fund_goal_amount ?? 0;
-  const received = item.fund_received_amount ?? 0;
+  const goal = normalizedItem.fund_goal_amount ?? 0;
+  const received = normalizedItem.fund_received_amount ?? 0;
   const fundPct = goal > 0 ? Math.min(100, Math.round((received / goal) * 100)) : null;
 
   function handleDeleteClick() {
@@ -208,8 +220,8 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
     setImgFailed(false);
     setImgTriedProxy(false);
     setImgTriedPagePreview(false);
-    setImgSrc(item.image_url ?? buildPagePreviewUrl(pagePreviewSourceUrl) ?? null);
-  }, [item.id, item.image_url, pagePreviewSourceUrl]);
+    setImgSrc(normalizedItem.image_url ?? buildPagePreviewUrl(pagePreviewSourceUrl) ?? null);
+  }, [normalizedItem.id, normalizedItem.image_url, pagePreviewSourceUrl]);
 
   if (isCashFund) {
     return (
@@ -287,9 +299,9 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
             alt={item.item_name}
             className={`w-full h-full object-cover transition-opacity ${isPurchased ? 'opacity-40' : ''}`}
             onError={() => {
-              if (!imgTriedProxy && item.image_url) {
+              if (!imgTriedProxy && normalizedItem.image_url) {
                 setImgTriedProxy(true);
-                setImgSrc(`https://images.weserv.nl/?url=${encodeURIComponent(item.image_url.replace(/^https?:\/\//, ''))}&w=1200&fit=inside`);
+                setImgSrc(`https://images.weserv.nl/?url=${encodeURIComponent(normalizedItem.image_url.replace(/^https?:\/\//, ''))}&w=1200&fit=inside`);
                 return;
               }
               const pagePreview = buildPagePreviewUrl(pagePreviewSourceUrl);
@@ -314,7 +326,7 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
             </div>
           </div>
         )}
-        {item.hide_when_purchased && isPurchased && (
+        {normalizedItem.hide_when_purchased && isPurchased && (
           <div className="absolute top-2 right-2 bg-surface/90 text-text-tertiary text-xs px-2 py-0.5 rounded border border-border">
             Hidden on site
           </div>
@@ -329,7 +341,7 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
 
       <div className="p-4 flex flex-col gap-2 flex-1">
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-text-primary leading-snug line-clamp-2">{item.item_name}</h3>
+          <h3 className="font-semibold text-text-primary leading-snug line-clamp-2">{normalizedItem.item_name}</h3>
           {merchant && (
             <p className="text-xs text-text-tertiary mt-0.5">{merchant}</p>
           )}
@@ -340,10 +352,10 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
         )}
 
         <div className="flex items-center justify-between">
-          {statusBadge(item.purchase_status, item.quantity_purchased, item.quantity_needed)}
-          {item.quantity_needed > 1 && (
+          {statusBadge(normalizedItem.purchase_status, normalizedItem.quantity_purchased, normalizedItem.quantity_needed)}
+          {normalizedItem.quantity_needed > 1 && (
             <span className="text-xs text-text-tertiary">
-              Want {item.quantity_needed}
+              Want {normalizedItem.quantity_needed}
             </span>
           )}
         </div>
@@ -357,10 +369,10 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
           {repairStates.includes('partial-import') && <Badge variant="warning">Partial import</Badge>}
           {repairStates.includes('stale-details') && <Badge variant="neutral">Stale details</Badge>}
           {repairStates.includes('manual-review') && <Badge variant="warning">Manual review</Badge>}
-          {item.metadata_fetch_status === 'blocked' && <Badge variant="error">Couldn’t pull everything</Badge>}
-          {item.metadata_fetch_status === 'error' && <Badge variant="error">Import problem</Badge>}
-          {item.metadata_fetch_status === 'timeout' && <Badge variant="warning">Import timeout</Badge>}
-          {item.metadata_fetch_status === 'parse_failure' && <Badge variant="warning">Couldn’t read details</Badge>}
+          {normalizedItem.metadata_fetch_status === 'blocked' && <Badge variant="error">Couldn’t pull everything</Badge>}
+          {normalizedItem.metadata_fetch_status === 'error' && <Badge variant="error">Import problem</Badge>}
+          {normalizedItem.metadata_fetch_status === 'timeout' && <Badge variant="warning">Import timeout</Badge>}
+          {normalizedItem.metadata_fetch_status === 'parse_failure' && <Badge variant="warning">Couldn’t read details</Badge>}
           {hasBadImportTitle && <Badge variant="error">Bad import title</Badge>}
           {extractionConfidence === 'full' && <Badge variant="success">Imported well</Badge>}
           {extractionConfidence === 'partial' && <Badge variant="warning">Needs a quick check</Badge>}
@@ -385,8 +397,8 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
           </div>
         )}
 
-        {getOwnerRegistryPurchaserLabel(item) && (
-          <p className="text-xs text-text-secondary">{getOwnerRegistryPurchaserLabel(item)}</p>
+        {getOwnerRegistryPurchaserLabel(normalizedItem) && (
+          <p className="text-xs text-text-secondary">{getOwnerRegistryPurchaserLabel(normalizedItem)}</p>
         )}
 
         {canMarkPurchased && (

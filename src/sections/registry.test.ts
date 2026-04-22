@@ -297,6 +297,7 @@ describe('sections registry resolution', () => {
     expect(registrySectionComponent).toContain("if (!item.purchaser_name || item.purchase_status === 'available') return null;");
     expect(registrySectionComponent).toContain("? `Purchased by ${item.purchaser_name}`");
     expect(registryOwnerCard).toContain("export function getOwnerRegistryPurchaserLabel(item: Pick<RegistryItem, 'purchase_status' | 'purchaser_name'>): string | null {");
+    expect(registryOwnerCard).toContain('export function normalizeOwnerRegistryItemState(item: RegistryItem): RegistryItem {');
     expect(registryOwnerCard).toContain("? `Purchased by ${item.purchaser_name}`");
     expect(registryItemForm).toContain('canonical_url: nextUrl,');
   });

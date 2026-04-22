@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { getOwnerRegistryPurchaserLabel, RegistryItemCard } from './RegistryItemCard';
+import { getOwnerRegistryPurchaserLabel, normalizeOwnerRegistryItemState, RegistryItemCard } from './RegistryItemCard';
 import type { RegistryItem } from './registryTypes';
 
 function makeItem(overrides: Partial<RegistryItem> = {}): RegistryItem {
@@ -80,5 +80,19 @@ describe('RegistryItemCard', () => {
     expect(getOwnerRegistryPurchaserLabel(makeItem({ purchase_status: 'available', purchaser_name: 'Alex' }))).toBeNull();
     expect(getOwnerRegistryPurchaserLabel(makeItem({ purchase_status: 'partial', purchaser_name: 'Alex' }))).toBe('by Alex');
     expect(getOwnerRegistryPurchaserLabel(makeItem({ purchase_status: 'purchased', purchaser_name: 'Alex' }))).toBe('Purchased by Alex');
+  });
+
+  it('normalizes contradictory owner purchase state before rendering card truth', () => {
+    expect(normalizeOwnerRegistryItemState(makeItem({
+      purchase_status: 'purchased',
+      quantity_purchased: 0,
+      quantity_needed: 1,
+      purchaser_name: 'Alex',
+    }))).toEqual(expect.objectContaining({
+      purchase_status: 'available',
+      purchaser_name: null,
+      quantity_purchased: 0,
+      quantity_needed: 1,
+    }));
   });
 });
