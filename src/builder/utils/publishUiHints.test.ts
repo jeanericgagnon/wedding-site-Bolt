@@ -224,6 +224,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('couple details');
   });
 
+  it('returns partner guidance when blocker copy keeps the real message but drops punctuation', () => {
+    const hints = getPublishBlockedHints('Add both partner names before going live');
+    expect(hints[0]).toContain('couple details');
+  });
+
   it('returns date guidance even when blocker copy is lowercased by upstream formatting', () => {
     const hints = getPublishBlockedHints('add your wedding date before going live.');
     expect(hints[0]).toContain('event details');
