@@ -295,6 +295,7 @@ export default function RSVP() {
     setSubmitting(false);
     setTokenAutoLoading(false);
     setStep('search');
+    setActivePredictionIndex(-1);
     setError('');
     setGuest(null);
     setExistingRsvp(null);
