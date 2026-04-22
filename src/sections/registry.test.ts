@@ -142,6 +142,10 @@ describe('sections registry resolution', () => {
     expect(registryProof).toContain("secondaryTrustGap: 'registry_repair_and_import_persistence_manual_verification_missing'");
     expect(registryProof).toContain('manualProofRequired: true');
     expect(registryProof).toContain("truthGateSummary: 'automation_green_manual_truth_red'");
+    expect(registryProof).toContain('manualProofRequirements: [');
+    expect(registryProof).toContain("'owner_manage_import_persistence_runtime_pass'");
+    expect(registryProof).toContain("'owner_repair_cleanup_runtime_pass'");
+    expect(registryProof).toContain("'guest_visible_purchase_truth_runtime_pass'");
   });
 
   it('keeps builder registry compatibility tolerant of persisted trim casing and punctuation drift', () => {
