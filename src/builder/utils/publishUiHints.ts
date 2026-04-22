@@ -11,6 +11,7 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
     || normalizedErrorLower.includes('date is ready')
     || normalizedErrorLower.includes('venue details are ready')
     || normalizedErrorLower.includes('guests can reply')
+    || normalizedErrorLower.includes('latest edits are saved')
     || normalizedErrorLower.includes('everything is saved')
     || normalizedErrorLower.includes('draft only')
     || normalizedErrorLower.includes('draft has unsaved changes')

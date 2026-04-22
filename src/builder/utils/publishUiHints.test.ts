@@ -249,6 +249,12 @@ describe('publishUiHints', () => {
     ]);
   });
 
+  it('does not mistake the saved readiness label for a blocker', () => {
+    expect(getPublishBlockedHints('Latest edits are saved')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
+  });
+
   it('returns save guidance when blocker copy comes from the unsaved readiness detail', () => {
     expect(getPublishBlockedHints('Save your latest draft changes before going live.')).toEqual([
       'Save your draft before trying again.',
