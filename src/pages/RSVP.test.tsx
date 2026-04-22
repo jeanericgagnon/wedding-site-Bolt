@@ -1547,9 +1547,13 @@ describe('RSVP stale submit protection', () => {
 
     await screen.findByText('Welcome, Taylor Rivera!');
     fireEvent.click(screen.getByText('Continue to details'));
+
+    expect(screen.getByText('Share your shuttle plan *')).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText('Your answer'), { target: { value: 'Need the 3 PM shuttle' } });
     fireEvent.click(screen.getByText('Continue to review'));
 
-    expect(await screen.findByText('Please answer: Share your shuttle plan')).toBeInTheDocument();
+    expect(screen.getByText('Share your shuttle plan')).toBeInTheDocument();
+    expect(screen.getByText('Need the 3 PM shuttle')).toBeInTheDocument();
   });
 
   it('drops stale token submit completions after the page unmounts', async () => {

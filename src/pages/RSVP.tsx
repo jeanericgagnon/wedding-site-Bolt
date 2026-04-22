@@ -79,6 +79,7 @@ interface RSVPMealConfig {
 interface RSVPQuestion {
   id: string;
   label: string;
+  question_text?: string;
   type: 'short_text' | 'long_text' | 'single_choice' | 'multi_choice';
   required?: boolean;
   options?: string[];
@@ -96,6 +97,10 @@ function maskEmail(email: string | null): string {
 function guestLabel(g: Guest): string {
   if (g.first_name && g.last_name) return `${g.first_name} ${g.last_name}`;
   return g.name || 'Guest';
+}
+
+function getRsvpQuestionLabel(question: RSVPQuestion): string {
+  return question.label || question.question_text || 'Question';
 }
 
 
@@ -1200,7 +1205,7 @@ export default function RSVP() {
                         .filter((q) => (q.appliesTo ?? 'all') === 'all' || ((q.appliesTo === 'ceremony' && formData.attendCeremony) || (q.appliesTo === 'reception' && formData.attendReception)))
                         .map((q) => (
                           <div key={q.id} className="space-y-2">
-                            <label className="block text-base font-medium text-gray-900">{q.label}{q.required ? ' *' : ''}</label>
+                            <label className="block text-base font-medium text-gray-900">{getRsvpQuestionLabel(q)}{q.required ? ' *' : ''}</label>
                             {q.type === 'long_text' ? (
                               <Textarea
                                 value={customAnswers[q.id] ?? ''}
@@ -1327,7 +1332,7 @@ export default function RSVP() {
                       <p className="text-xs uppercase updates-wide text-gray-500">Custom answers</p>
                       {rsvpQuestions.filter((q) => { const v = customAnswers[q.id]; return Array.isArray(v) ? v.length > 0 : String(v ?? '').trim().length > 0; }).map((q) => (
                         <div key={q.id} className="flex items-start justify-between text-sm gap-4 rounded-xl bg-white px-4 py-3 border border-gray-200">
-                          <span className="text-gray-700 font-semibold flex-shrink-0">{q.label}</span>
+                          <span className="text-gray-700 font-semibold flex-shrink-0">{getRsvpQuestionLabel(q)}</span>
                           <span className="text-gray-900 text-right">{Array.isArray(customAnswers[q.id]) ? (customAnswers[q.id] as string[]).join(', ') : String(customAnswers[q.id] ?? '')}</span>
                         </div>
                       ))}
