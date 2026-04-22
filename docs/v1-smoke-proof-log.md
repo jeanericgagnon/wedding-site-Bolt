@@ -20,6 +20,7 @@ _Highest-risk trust gap key:_ `guests_rsvp_ops_and_manual_truth_pass`
 _Secondary trust gap key:_ `canonical_couple_path_runtime_wording_and_starter_draft_verification_missing`
 _Machine-readable flag:_ `runtimeWordingVerificationMissing: true`
 _Machine-readable flag:_ `starterDraftWordingVerificationMissing: true`
+_Machine-readable requirement:_ `manualProofRequirements.onboardingStarterDraftWording`
 
 ## Purpose
 This is the hard proof artifact for whether DayOf can credibly claim **v1 / done-enough**.
