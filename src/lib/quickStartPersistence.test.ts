@@ -984,6 +984,36 @@ describe('quickStartPersistence', () => {
     expect(normalized.viewState).toBe('followups');
   });
 
+  it('falls back to follow-up mode when malformed showFollowUps flags survive with typed clarifying drafts', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      showFollowUps: 'true' as never,
+      viewState: 'question',
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'transport',
+            category: 'travel',
+            question: 'How should guests get there?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.transport'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'unresolved',
+            answer: 'Need shuttle details',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.showFollowUps).toBe(true);
+    expect(normalized.viewState).toBe('followups');
+    expect(normalized.followUpAnswers).toEqual({ transport: 'Need shuttle details' });
+  });
+
   it('falls back to follow-up mode when malformed showFollowUps flags survive alongside active draft answers and older history', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       showFollowUps: 'true' as never,
