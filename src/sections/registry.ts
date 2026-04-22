@@ -399,7 +399,7 @@ export function getAllDefinitions(): SectionDefinition[] {
 }
 
 export function getVariantsForType(type: string): SectionDefinition[] {
-  const normalizedType = normalizeRegistrySectionType(type);
+  const normalizedType = resolveCanonicalRegistrySectionInput(type, undefined).type || normalizeRegistrySectionType(type);
   return getAllDefinitions().filter(d => d.type === normalizedType);
 }
 

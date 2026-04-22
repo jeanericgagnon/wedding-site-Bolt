@@ -371,7 +371,7 @@ describe('sections registry resolution', () => {
     expect(sectionRegistry).toContain("const canonicalSection = resolveCanonicalRegistrySectionInput(type, variant);");
     expect(sectionRegistry).toContain("return SECTION_REGISTRY.get(makeKey(canonicalSection.type, canonicalSection.variant)) ?? null;");
     expect(sectionRegistry).toContain("return typeof variant === 'string'");
-    expect(sectionRegistry).toContain("const normalizedType = normalizeRegistrySectionType(type);");
+    expect(sectionRegistry).toContain("const normalizedType = resolveCanonicalRegistrySectionInput(type, undefined).type || normalizeRegistrySectionType(type);");
     expect(sectionRegistry).toContain("const normalizedTypeKey = normalizeRegistrySectionType(canonicalSection.type);");
     expect(sectionRegistry).toContain("const normalizedVariant = canonicalSection.variant;");
     expect(sectionRegistry).toContain("'registry-section': 'registry',");
