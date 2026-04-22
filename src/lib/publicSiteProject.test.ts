@@ -370,4 +370,20 @@ describe('publicSiteProject', () => {
 
     expect(getPublicWeddingData(row)?.couple.displayName).toBe('Published Names');
   });
+
+  it('falls back to stringified site_json wedding snapshot when published_json is partial', () => {
+    const row = {
+      is_published: true,
+      site_json: JSON.stringify({
+        ...draftProject,
+        weddingDataSnapshot: JSON.stringify(publishedWeddingData),
+      }),
+      published_json: JSON.stringify({
+        publishStatus: 'published',
+      }),
+      wedding_data: JSON.stringify(liveWeddingData),
+    };
+
+    expect(getPublicWeddingData(row)?.couple.displayName).toBe('Published Names');
+  });
 });
