@@ -64,6 +64,7 @@ describe('sections registry resolution', () => {
     expect(resolveAndParse('Footer Cta' as never, 'Luxury' as never, {}, { strictVariant: false })?.def.variant).toBe('rsvpPush');
     expect(resolveAndParse('Footer Cta' as never, 'luxury' as never, {}, { strictVariant: true })?.def.variant).toBe('rsvpPush');
     expect(resolveCanonicalRegistrySectionInput(' Hero ', 'FULL.BLEED')).toEqual({ type: 'hero', variant: 'fullBleed' });
+    expect(resolveAndParse('Hero' as never, 'legacy-default' as never, {}, { strictVariant: false })?.def.variant).toBe('fullBleed');
     expect(getDefinitionOrThrow('RegistrySection' as never, ' Luxury ' as never).variant).toBe('featured');
     expect(getDefinition('RegistrySection' as never, ' Luxury ' as never)?.variant).toBe('featured');
     expect(resolveAndParse('Registry', 'luxury', {}, { strictVariant: true })?.def.variant).toBe('featured');
@@ -410,7 +411,8 @@ describe('sections registry resolution', () => {
     expect(sectionRegistry).toContain("return defaultVariant ?? (typeof variant === 'string' ? variant : '');");
     expect(sectionRegistry).toContain('function getVariantFallbacksForType(type: string, inputType?: string): Record<string, string> {');
     expect(sectionRegistry).toContain('function getCanonicalSectionFallbackVariant(type: string, inputType: string, variant: string): string | null {');
-    expect(sectionRegistry).toContain('const defaultVariant = getAllDefinitions().find((definition) => definition.type === type)?.variant;');
+    expect(sectionRegistry).toContain('function getDefaultVariantForType(type: string): string | undefined {');
+    expect(sectionRegistry).toContain('const defaultVariant = getDefaultVariantForType(type);');
     expect(sectionRegistry).toContain("const canonicalVariant = resolveCanonicalSectionVariantForType('registry', 'registry', variant);");
     expect(sectionRegistry).toContain("? canonicalVariant");
     expect(sectionRegistry).toContain('return getCanonicalSectionFallbackVariant(type, inputType, normalizedVariantKey)');

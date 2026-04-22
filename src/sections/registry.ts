@@ -316,9 +316,14 @@ function getCanonicalSectionFallbackVariant(type: string, inputType: string, var
   return Object.entries(getVariantFallbacksForType(type, inputType)).find(([alias]) => normalizeRegistryVariantKey(alias) === normalizeRegistryVariantKey(variant))?.[1] ?? null;
 }
 
+function getDefaultVariantForType(type: string): string | undefined {
+  const definitionsForType = getAllDefinitions().filter((definition) => definition.type === type);
+  return definitionsForType.find((definition) => definition.variant === 'default')?.variant ?? definitionsForType[0]?.variant;
+}
+
 function resolveCanonicalSectionVariantForType(type: string, inputType: string, variant: unknown): string {
   const normalizedVariantKey = normalizeRegistryVariantKey(variant);
-  const defaultVariant = getAllDefinitions().find((definition) => definition.type === type)?.variant;
+  const defaultVariant = getDefaultVariantForType(type);
   if (!normalizedVariantKey) {
     return defaultVariant ?? (typeof variant === 'string' ? variant : '');
   }
@@ -460,8 +465,7 @@ export function resolveAndParse(
     : (
       getDefinition(normalizedType, normalizedVariant)
       ?? (fallbackVariant ? getDefinition(normalizedType, fallbackVariant) : null)
-      ?? getDefinition(normalizedType, 'default')
-      ?? getVariantsForType(normalizedType)[0]
+      ?? (getDefaultVariantForType(normalizedType) ? getDefinition(normalizedType, getDefaultVariantForType(normalizedType)) : null)
       ?? null
     );
 
