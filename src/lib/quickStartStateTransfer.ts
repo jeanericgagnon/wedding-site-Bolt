@@ -63,9 +63,12 @@ export const readQuickStartDraftSnapshot = (): QuickStartDraftSnapshot | null =>
   try {
     const normalized = createQuickStartDraftSnapshot(JSON.parse(raw));
     const hasMeaningfulDraft = hasMeaningfulQuickStartDraftSnapshot(normalized);
+    const normalizedRaw = JSON.stringify(normalized);
     try {
       if (hasMeaningfulDraft) {
-        window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify(normalized));
+        if (raw !== normalizedRaw) {
+          window.localStorage.setItem(QUICK_START_STORAGE_KEY, normalizedRaw);
+        }
       } else {
         window.localStorage.removeItem(QUICK_START_STORAGE_KEY);
       }
