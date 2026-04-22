@@ -152,6 +152,7 @@ const output = {
   launchDecisionDependsOnManualTruthPass: true,
   manualTruthPassMissing: true,
   runtimeWordingVerificationMissing: true,
+  starterDraftWordingVerificationMissing: true,
   manualProofRequirements: {
     canonicalCouplePath: {
       required: true,
@@ -163,6 +164,11 @@ const output = {
       required: true,
       status: 'missing',
       surfaces: ['privacy/access/publish', 'marketing/settings/billing'],
+    },
+    onboardingStarterDraftWording: {
+      required: true,
+      status: 'missing',
+      surfaces: ['onboarding', 'first-run dashboard/site draft'],
     },
   },
   whatMustChangeBeforeGo: [
