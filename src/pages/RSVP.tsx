@@ -100,7 +100,13 @@ function guestLabel(g: Guest): string {
 }
 
 function getRsvpQuestionLabel(question: RSVPQuestion): string {
-  return question.label || question.question_text || 'Question';
+  const label = question.label?.trim();
+  if (label) return label;
+
+  const questionText = question.question_text?.trim();
+  if (questionText) return questionText;
+
+  return 'Question';
 }
 
 

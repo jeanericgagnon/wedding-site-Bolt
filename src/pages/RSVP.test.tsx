@@ -1556,6 +1556,63 @@ describe('RSVP stale submit protection', () => {
     expect(screen.getByText('Need the 3 PM shuttle')).toBeInTheDocument();
   });
 
+  it('falls back to trimmed question text when an RSVP question label is blank whitespace', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        guest: {
+          id: 'guest-1',
+          first_name: 'Taylor',
+          last_name: 'Rivera',
+          name: 'Taylor Rivera',
+          email: 'taylor@example.com',
+          phone: null,
+          group_name: null,
+          wedding_site_id: 'site-1',
+          plus_one_allowed: false,
+          invited_to_ceremony: true,
+          invited_to_reception: true,
+          invite_token: 'token-1',
+        },
+        existingRsvp: null,
+        guests: null,
+        rsvpDeadline: null,
+        rsvpQuestions: [
+          {
+            id: 'q-1',
+            label: '   ',
+            question_text: '  Share your shuttle plan  ',
+            type: 'text',
+            required: true,
+            options: [],
+          },
+        ],
+        rsvpMealConfig: { enabled: false, options: [] },
+        musicPlaylistUrl: null,
+        householdGuests: [],
+      }),
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/rsvp']}>
+        <RSVP />
+      </MemoryRouter>
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('rsvp.search_placeholder'), { target: { value: 'Taylor Rivera' } });
+    fireEvent.click(screen.getByText('Find My Invitation'));
+
+    await screen.findByText('Welcome, Taylor Rivera!');
+    fireEvent.click(screen.getByText('Continue to details'));
+
+    expect(screen.getByText('Share your shuttle plan *')).toBeInTheDocument();
+    fireEvent.change(screen.getByPlaceholderText('Your answer'), { target: { value: 'Need the 3 PM shuttle' } });
+    fireEvent.click(screen.getByText('Continue to review'));
+
+    expect(screen.getByText('Share your shuttle plan')).toBeInTheDocument();
+    expect(screen.getByText('Need the 3 PM shuttle')).toBeInTheDocument();
+  });
+
   it('drops stale token submit completions after the page unmounts', async () => {
     const submitRequest = deferred<Response>();
 
