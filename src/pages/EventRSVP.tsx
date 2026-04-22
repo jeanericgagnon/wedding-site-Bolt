@@ -344,6 +344,7 @@ export default function EventRSVP() {
       }
 
       if (activeSubmitRequestRef.current !== requestId) return;
+      setHasEventRsvpSupport(true);
       applyInvitationRsvp(selectedEvent, rsvpForm);
       setSubmitSuccess(true);
       if (postSubmitResetTimeoutRef.current !== null) {
