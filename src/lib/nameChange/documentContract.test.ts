@@ -515,6 +515,7 @@ describe('name change document intake contract', () => {
     expect(snapshot.summary.requiredReady).toBe(0);
     expect(snapshot.summary.requiredMissing).toBe(6);
     expect(snapshot.summary.autofillReady).toBe(0);
+    expect(snapshot.summary.extractionGaps).toBe(1);
   });
 
   it('does not surface extraction expectations for documents that are not started', () => {
