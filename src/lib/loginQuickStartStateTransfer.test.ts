@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { createQuickStartDraftSnapshot, persistQuickStartDraftSnapshot, readQuickStartDraftSnapshot } from './quickStartStateTransfer';
+import { createQuickStartDraftSnapshot, normalizeMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnapshot, readQuickStartDraftSnapshot } from './quickStartStateTransfer';
 
 describe('login quick start state transfer', () => {
   beforeEach(() => {
@@ -102,4 +102,16 @@ describe('login quick start state transfer', () => {
 
     expect(persisted).toBeNull();
   });
+
+  it('returns null from meaningful draft normalization when auth handoff payloads are empty', () => {
+    expect(normalizeMeaningfulQuickStartDraftSnapshot({
+      currentIndex: 0,
+      initialSetupAnswers: {},
+      followUpAnswers: {},
+      showFollowUps: false,
+      clarifyingState: null,
+      viewState: 'question',
+    })).toBeNull();
+  });
+
 });

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { createQuickStartDraftSnapshot, persistQuickStartDraftSnapshot, readQuickStartDraftSnapshot } from './quickStartStateTransfer';
+import { createQuickStartDraftSnapshot, normalizeMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnapshot, readQuickStartDraftSnapshot } from './quickStartStateTransfer';
 import { writeSignupReturnPath, readSignupReturnPath } from './signupContinuation';
 import { buildQuickStartEntryPath } from './quickStartContinuation';
 
@@ -78,4 +78,16 @@ describe('quick start oauth continuation', () => {
     expect(readQuickStartDraftSnapshot()?.viewState).toBe('followups');
     expect(readSignupReturnPath()).toBe(buildQuickStartEntryPath());
   });
+
+  it('returns null from meaningful draft normalization when oauth handoff payloads are empty', () => {
+    expect(normalizeMeaningfulQuickStartDraftSnapshot({
+      currentIndex: 0,
+      initialSetupAnswers: {},
+      followUpAnswers: {},
+      showFollowUps: false,
+      clarifyingState: null,
+      viewState: 'question',
+    })).toBeNull();
+  });
+
 });

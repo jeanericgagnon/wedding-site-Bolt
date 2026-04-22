@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
 import { consumeSignupReturnPath, writeSignupReturnPath } from '../lib/signupContinuation';
 import { resolveLoginReturnPath } from '../lib/loginReturnResolver';
-import { createQuickStartDraftSnapshot, hasMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnapshot } from '../lib/quickStartStateTransfer';
+import { normalizeMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnapshot } from '../lib/quickStartStateTransfer';
 
 type AuthView = 'login' | 'forgot-password' | 'forgot-sent';
 
@@ -30,11 +30,10 @@ export const Login: React.FC = () => {
 
   const explicitReturnPath = (location.state as { returnTo?: string } | null)?.returnTo || null;
   const quickStartDraft = (location.state as { quickStartDraft?: unknown } | null)?.quickStartDraft;
-  const normalizedQuickStartDraft = useMemo(() => {
-    if (!quickStartDraft) return null;
-    const normalized = createQuickStartDraftSnapshot(quickStartDraft);
-    return hasMeaningfulQuickStartDraftSnapshot(normalized) ? normalized : null;
-  }, [quickStartDraft]);
+  const normalizedQuickStartDraft = useMemo(
+    () => normalizeMeaningfulQuickStartDraftSnapshot(quickStartDraft),
+    [quickStartDraft],
+  );
 
   const inviteToken = searchParams.get('inviteToken');
   const inviteEmail = searchParams.get('inviteEmail');

@@ -7,6 +7,10 @@ export const createQuickStartDraftSnapshot = (value: unknown): QuickStartDraftSn
   normalizeQuickStartDraftSnapshot(value)
 );
 
+export const normalizeMeaningfulQuickStartDraftSnapshot = (value: unknown): QuickStartDraftSnapshot | null => {
+  const normalized = createQuickStartDraftSnapshot(value);
+  return hasMeaningfulQuickStartDraftSnapshot(normalized) ? normalized : null;
+};
 
 export const hasMeaningfulQuickStartDraftSnapshot = (snapshot: QuickStartDraftSnapshot | null | undefined) => {
   if (!snapshot) return false;
