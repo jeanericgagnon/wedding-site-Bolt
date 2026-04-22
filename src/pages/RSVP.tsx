@@ -835,6 +835,10 @@ export default function RSVP() {
                   type="text"
                   value={searchValue}
                   onChange={(e) => {
+                    if (loading) {
+                      activeLookupRequestRef.current += 1;
+                      setLoading(false);
+                    }
                     setError('');
                     setSearchValue(e.target.value);
                   }}

@@ -1116,6 +1116,59 @@ describe('RSVP stale submit protection', () => {
     expect(screen.queryByText('Invitation not recognized. Please search by name below.')).not.toBeInTheDocument();
   });
 
+  it('drops stale search results when the guest edits the search input before the lookup resolves', async () => {
+    const searchRequest = deferred<Response>();
+
+    fetchMock.mockImplementationOnce(() => searchRequest.promise);
+
+    render(
+      <MemoryRouter initialEntries={['/rsvp']}>
+        <RSVP />
+      </MemoryRouter>
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('rsvp.search_placeholder'), { target: { value: 'Taylor Rivera' } });
+    fireEvent.click(screen.getByText('Find My Invitation'));
+
+    await screen.findByText('Searching…');
+
+    fireEvent.change(screen.getByPlaceholderText('rsvp.search_placeholder'), { target: { value: 'Jordan Lee' } });
+
+    expect(screen.queryByText('Searching…')).not.toBeInTheDocument();
+
+    searchRequest.resolve({
+      ok: true,
+      json: async () => ({
+        guest: {
+          id: 'guest-1',
+          first_name: 'Taylor',
+          last_name: 'Rivera',
+          name: 'Taylor Rivera',
+          email: 'taylor@example.com',
+          phone: null,
+          group_name: null,
+          wedding_site_id: 'site-1',
+          plus_one_allowed: false,
+          invited_to_ceremony: true,
+          invited_to_reception: true,
+          invite_token: 'token-1',
+        },
+        existingRsvp: null,
+        guests: null,
+        rsvpDeadline: null,
+        rsvpQuestions: [],
+        rsvpMealConfig: { enabled: true, options: ['Chicken', 'Beef'] },
+        musicPlaylistUrl: null,
+        householdGuests: [],
+      }),
+    } as Response);
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('Jordan Lee')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Welcome, Taylor Rivera!')).not.toBeInTheDocument();
+  });
+
   it('ignores a second submit click while the first RSVP submit is still in flight', async () => {
     const submitRequest = deferred<Response>();
 
