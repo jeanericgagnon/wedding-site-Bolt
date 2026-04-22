@@ -991,7 +991,7 @@ export default function RSVP() {
           <p className="text-gray-500 text-sm">Loading your invitation…</p>
           <button
             type="button"
-            onClick={() => resetToSearch(true)}
+            onClick={() => resetToSearch(false)}
             className="text-sm text-gray-500 hover:text-gray-700"
           >
             Search by name instead

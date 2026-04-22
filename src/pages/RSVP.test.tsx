@@ -1608,8 +1608,9 @@ describe('RSVP stale submit protection', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Search by name instead' }));
 
     expect(await screen.findByPlaceholderText('rsvp.search_placeholder')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('token-1')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('')).toBeInTheDocument();
     expect(screen.queryByText(/Loading your invitation/)).not.toBeInTheDocument();
+    expect(window.location.search).toBe('');
 
     tokenLookup.resolve({
       ok: true,
