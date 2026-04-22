@@ -792,7 +792,7 @@ describe('quickStartPersistence', () => {
     expect(normalized.followUpAnswers).toEqual({ lodging: 'Stay at the resort' });
   });
 
-  it('does not resurrect stale answered history when the question was reopened', () => {
+  it('prefers active draft answers over stale answered history when the question was reopened', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       followUpAnswers: {
         lodging: 'Old hotel block',
@@ -830,7 +830,8 @@ describe('quickStartPersistence', () => {
     });
 
     expect(normalized.followUpAnswers).toEqual({ lodging: 'Old hotel block' });
-    expect(normalized.showFollowUps).toBe(false);
+    expect(normalized.showFollowUps).toBe(true);
+    expect(normalized.viewState).toBe('followups');
   });
 
   it('restores typed text from reopened clarifying questions when follow-up answers are missing', () => {
@@ -1043,6 +1044,49 @@ describe('quickStartPersistence', () => {
     expect(normalized.showFollowUps).toBe(true);
     expect(normalized.viewState).toBe('followups');
     expect(normalized.followUpAnswers).toEqual({ transport: 'Need shuttle details' });
+  });
+
+  it('reopens follow-up mode when active draft answers survive alongside older answered history', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      viewState: 'question',
+      followUpAnswers: {
+        lodging: 'Need shuttle details',
+      },
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'lodging',
+            category: 'travel',
+            question: 'Where should guests stay?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.lodging'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 2,
+            status: 'pending',
+            answer: '',
+          }],
+          history: [{
+            id: 'lodging',
+            category: 'travel',
+            question: 'Where should guests stay?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.lodging'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'answered',
+            answer: 'Stay at the resort',
+          }],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.showFollowUps).toBe(true);
+    expect(normalized.viewState).toBe('followups');
+    expect(normalized.followUpAnswers).toEqual({ lodging: 'Need shuttle details' });
   });
 
   it('reopens follow-up mode when older snapshots only kept typed clarifying question answers', () => {
