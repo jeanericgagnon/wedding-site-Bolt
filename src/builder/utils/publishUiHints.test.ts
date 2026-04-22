@@ -348,4 +348,8 @@ describe('publishUiHints', () => {
   it('treats NaN totals as no checks yet so progress copy never shows impossible remaining counts', () => {
     expect(getPublishProgressLabel(1, Number.NaN)).toBe('No checks yet');
   });
+
+  it('treats NaN done counts with a finite total as zero remaining progress input', () => {
+    expect(getPublishProgressLabel(Number.NaN, 1)).toBe('1 thing left before guest-facing launch');
+  });
 });
