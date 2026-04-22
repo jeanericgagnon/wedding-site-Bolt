@@ -1238,6 +1238,35 @@ describe('quickStartPersistence', () => {
     expect(normalized.followUpAnswers).toEqual({ lodging: 'Need shuttle details' });
   });
 
+  it('preserves thinking view when resumable onboarding work was still generating on restore', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      showFollowUps: true,
+      viewState: 'thinking',
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'lodging',
+            category: 'travel',
+            question: 'Where should guests stay?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.lodging'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 2,
+            status: 'pending',
+            answer: '',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.showFollowUps).toBe(true);
+    expect(normalized.viewState).toBe('thinking');
+  });
+
   it('reopens follow-up mode when older snapshots only kept typed clarifying question answers', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       viewState: 'question',

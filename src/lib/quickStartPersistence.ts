@@ -308,6 +308,8 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     followUpAnswers: restoredFollowUpAnswers,
     showFollowUps,
     clarifyingState,
-    viewState: showFollowUps ? 'followups' : viewState === 'followups' ? 'question' : viewState,
+    viewState: showFollowUps
+      ? viewState === 'thinking' ? 'thinking' : 'followups'
+      : viewState === 'followups' ? 'question' : viewState,
   };
 };
