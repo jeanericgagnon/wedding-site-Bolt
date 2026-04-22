@@ -19,6 +19,8 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
     || normalizedErrorLower.includes('turn on sections')
     || normalizedErrorLower.includes('section is turned on')
     || normalizedErrorLower.includes('sections are turned on')
+    || normalizedErrorLower.includes('section visible')
+    || normalizedErrorLower.includes('sections visible')
   ) {
     return [
       'Select a section on the canvas.',
