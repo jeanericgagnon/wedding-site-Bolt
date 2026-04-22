@@ -337,6 +337,34 @@ describe('name change document intake contract', () => {
     expect(snapshot.summary.extractionGaps).toBe(1);
   });
 
+  it('treats draft uploaded documents as missing extraction confidence until real review data exists', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase(),
+      [
+        {
+          id: 'draft-current_passport',
+          document_kind: 'current_passport',
+          display_name: 'Passport draft',
+          storage_mode: 'metadata_only',
+          intake_status: 'uploaded',
+          file_name_masked: 'current-passport-draft.pdf',
+          issuing_authority: null,
+          issued_on: null,
+          expires_on: null,
+          extraction_confidence: null,
+        },
+      ],
+      [],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'current_passport')).toMatchObject({
+      intakeStatus: 'uploaded',
+      metadataMissing: expect.arrayContaining(['issuing authority', 'issued date', 'expiration date', 'extraction confidence']),
+      metadataReady: 0,
+    });
+    expect(snapshot.summary.metadataGaps).toBe(1);
+  });
+
   it('treats court_order_name_change as the court-order intake contract and exposes case-number extraction gaps', () => {
     const documents: NameChangeDocumentInput[] = [
       {

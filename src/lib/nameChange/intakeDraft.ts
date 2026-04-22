@@ -58,7 +58,7 @@ function getDraftNameChangeDocumentIntakeStatus(kind: NameChangeDocumentInput['d
 }
 
 function getDraftNameChangeExtractionConfidence(kind: NameChangeDocumentInput['document_kind']) {
-  return kind !== 'other' ? 0.92 : null;
+  return null;
 }
 
 export function buildDraftNameChangeDocumentId(kind: NameChangeDocumentInput['document_kind']) {

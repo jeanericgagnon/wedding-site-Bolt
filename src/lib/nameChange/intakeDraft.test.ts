@@ -10,6 +10,7 @@ describe('name change intake draft helpers', () => {
       display_name: 'Certified marriage certificate',
       storage_mode: 'metadata_only',
       intake_status: 'uploaded',
+      extraction_confidence: null,
     });
   });
 
