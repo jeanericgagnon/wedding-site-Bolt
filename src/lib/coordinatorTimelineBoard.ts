@@ -20,6 +20,16 @@ export const buildCoordinatorTimelineBoard = ({
   liveEventId: string | null;
   upNextEventId: string | null;
 }): CoordinatorTimelineBoard => {
+  if (events.length === 0) {
+    return {
+      liveLabel: 'No event is live yet',
+      upNextLabel: 'No up-next event queued',
+      progressLabel: 'No events scheduled',
+      stateLabel: 'Timeline needs itinerary events',
+      tone: 'neutral',
+    };
+  }
+
   const liveEvent = events.find((event) => event.id === liveEventId) ?? null;
   const upNextEvent = events.find((event) => event.id === upNextEventId) ?? null;
   const doneCount = events.filter((event) => (timelineState[event.id] || 'up-next') === 'done').length;

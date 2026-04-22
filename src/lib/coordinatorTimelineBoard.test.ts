@@ -52,4 +52,19 @@ describe('coordinatorTimelineBoard', () => {
       tone: 'ready',
     });
   });
+
+  it('shows setup truth when no itinerary events exist yet', () => {
+    expect(buildCoordinatorTimelineBoard({
+      events: [],
+      timelineState: {},
+      liveEventId: null,
+      upNextEventId: null,
+    })).toEqual({
+      liveLabel: 'No event is live yet',
+      upNextLabel: 'No up-next event queued',
+      progressLabel: 'No events scheduled',
+      stateLabel: 'Timeline needs itinerary events',
+      tone: 'neutral',
+    });
+  });
 });
