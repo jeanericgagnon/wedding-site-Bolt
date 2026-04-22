@@ -20,19 +20,22 @@ export const hasMeaningfulQuickStartDraftSnapshot = (snapshot: QuickStartDraftSn
       snapshot.clarifyingState.clarifying.questions.some((question) => question.status !== 'skipped')
       || snapshot.clarifyingState.clarifying.history.some((question) => question.status !== 'skipped')
       || Object.keys(snapshot.clarifyingState.draftOutputs).length > 0
-      || (
-        snapshot.clarifyingState.clarifying.mode === 'ask'
-        && snapshot.clarifyingState.clarifying.questions.length === 0
-        && snapshot.clarifyingState.clarifying.history.length === 0
-      )
     )
+  );
+  const hasPendingClarifyingGeneration = Boolean(
+    snapshot.clarifyingState
+    && snapshot.viewState === 'thinking'
+    && snapshot.clarifyingState.clarifying.questions.length === 0
+    && snapshot.clarifyingState.clarifying.history.length === 0
+    && Object.keys(snapshot.clarifyingState.draftOutputs).length === 0
   );
 
   const hasMeaningfulSetupAnswers = hasMeaningfulQuickStartAnswers(snapshot.initialSetupAnswers);
   const hasMeaningfulProgress = snapshot.currentIndex > 0 && hasMeaningfulSetupAnswers;
   const hasMeaningfulFollowUps = Object.keys(snapshot.followUpAnswers).length > 0;
   const hasThinkingContinuation = snapshot.showFollowUps
-    && snapshot.viewState === 'thinking';
+    && snapshot.viewState === 'thinking'
+    && (hasPendingClarifyingGeneration || hasMeaningfulClarifyingState || hasMeaningfulFollowUps);
 
   return hasMeaningfulSetupAnswers
     || hasMeaningfulProgress
@@ -40,7 +43,8 @@ export const hasMeaningfulQuickStartDraftSnapshot = (snapshot: QuickStartDraftSn
     || hasThinkingContinuation
     || (snapshot.showFollowUps && (hasMeaningfulFollowUps || hasMeaningfulClarifyingState))
     || (snapshot.viewState !== 'question' && (hasMeaningfulFollowUps || hasMeaningfulClarifyingState || hasThinkingContinuation))
-    || hasMeaningfulClarifyingState;
+    || hasMeaningfulClarifyingState
+    || hasPendingClarifyingGeneration;
 };
 
 
