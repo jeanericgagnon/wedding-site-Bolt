@@ -1,0 +1,43 @@
+import { describe, expect, it } from 'vitest';
+import { buildCoordinatorAlertActivityBoard } from './coordinatorAlertActivityBoard';
+
+describe('coordinatorAlertActivityBoard', () => {
+  it('shows latest live send and next scheduled follow-up', () => {
+    expect(buildCoordinatorAlertActivityBoard([
+      {
+        id: 'a1',
+        subject: 'Ceremony is starting',
+        audience: 'all',
+        channel: 'sms',
+        queuedAt: '2026-04-22T14:00:00.000Z',
+        sendAt: null,
+      },
+      {
+        id: 'a2',
+        subject: 'Reception reminder',
+        audience: 'checked-in',
+        channel: 'email',
+        queuedAt: '2026-04-22T14:05:00.000Z',
+        sendAt: '2026-04-22T16:00:00.000Z',
+      },
+    ])).toEqual({
+      statusLabel: 'Scheduled follow-up is armed',
+      tone: 'warning',
+      latestLiveLabel: 'Ceremony is starting · SMS',
+      nextScheduledLabel: 'Reception reminder · 4/22/2026, 9:00:00 AM',
+      channelLabel: '1 SMS · 1 email',
+      pacingLabel: 'Live send pace is leading',
+    });
+  });
+
+  it('shows neutral state before any alert activity exists', () => {
+    expect(buildCoordinatorAlertActivityBoard([])).toEqual({
+      statusLabel: 'No alert activity yet',
+      tone: 'neutral',
+      latestLiveLabel: 'No live send yet',
+      nextScheduledLabel: 'No scheduled send queued',
+      channelLabel: '0 SMS · 0 email',
+      pacingLabel: 'No pacing signal yet',
+    });
+  });
+});

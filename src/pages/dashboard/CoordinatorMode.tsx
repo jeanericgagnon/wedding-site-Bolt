@@ -111,6 +111,7 @@ import { buildCoordinatorQnaBoard } from '../../lib/coordinatorQnaBoard';
 import { buildCoordinatorCheckInBoard } from '../../lib/coordinatorCheckInBoard';
 import { buildCoordinatorCommandBoard } from '../../lib/coordinatorCommandBoard';
 import { buildCoordinatorRoleBoard } from '../../lib/coordinatorRoleBoard';
+import { buildCoordinatorAlertActivityBoard } from '../../lib/coordinatorAlertActivityBoard';
 
 
 type AudienceOption = { value: string; label: string; count: number };
@@ -703,6 +704,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
     alertForm.body,
     alertLog,
   ]);
+  const alertActivityBoard = useMemo(() => buildCoordinatorAlertActivityBoard(alertLog), [alertLog]);
 
 
   const nextArrivals = useMemo(
@@ -2319,6 +2321,28 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
                     <p className="text-[10px] uppercase tracking-wide text-text-tertiary">Latest activity</p>
                     <p className="mt-1 text-[11px] text-text-primary">{alertBoard.latestActivityLabel}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="mb-3 rounded-lg border border-border/50 bg-surface-subtle/25 px-3 py-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-medium text-text-primary">Alert activity</p>
+                    <p className="mt-1 text-[11px] text-text-secondary">Latest live · {alertActivityBoard.latestLiveLabel}</p>
+                    <p className="text-[11px] text-text-secondary">Next scheduled · {alertActivityBoard.nextScheduledLabel}</p>
+                  </div>
+                  <span className={`rounded-full border px-2 py-1 text-[10px] font-medium ${alertActivityBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : alertActivityBoard.tone === 'warning' ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-border bg-white text-text-tertiary'}`}>
+                    {alertActivityBoard.statusLabel}
+                  </span>
+                </div>
+                <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+                  <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
+                    <p className="text-[10px] uppercase tracking-wide text-text-tertiary">Channel mix</p>
+                    <p className="mt-1 text-[11px] text-text-primary">{alertActivityBoard.channelLabel}</p>
+                  </div>
+                  <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
+                    <p className="text-[10px] uppercase tracking-wide text-text-tertiary">Pacing</p>
+                    <p className="mt-1 text-[11px] text-text-primary">{alertActivityBoard.pacingLabel}</p>
                   </div>
                 </div>
               </div>
