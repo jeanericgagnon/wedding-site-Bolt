@@ -31,7 +31,7 @@ export const getPublishIssue = (project: BuilderProject, weddingData?: WeddingDa
   }
 
   const firstSection = normalizedPages.flatMap((p) => getNormalizedSections(p).map((s) => ({ pageId: p.id, sectionId: s.id })))[0];
-  const hasEnabledSection = normalizedPages.some((page) => getNormalizedSections(page).some((section) => section?.enabled));
+  const hasEnabledSection = normalizedPages.some((page) => getNormalizedSections(page).some((section) => section?.enabled === true));
   if (!hasEnabledSection) {
     return {
       kind: 'no-enabled-sections',
@@ -79,7 +79,7 @@ export const buildPublishReadiness = (
   const normalizedPages = getNormalizedPages(project);
   const activePage = normalizedPages.find((page) => page?.id === normalizedActivePageId) ?? normalizedPages[0];
   const enabledSectionCount = normalizedPages.reduce(
-    (count, page) => count + getNormalizedSections(page).filter((section) => section?.enabled).length,
+    (count, page) => count + getNormalizedSections(page).filter((section) => section?.enabled === true).length,
     0
   );
   const hasVenue = getNormalizedVenues(weddingData).some((v) => hasNonEmptyString(v?.name) || hasNonEmptyString(v?.address));
@@ -87,7 +87,7 @@ export const buildPublishReadiness = (
   const hasWeddingDate = hasNonEmptyString(weddingData?.event?.weddingDateISO);
   const hasRsvpEnabled = weddingData ? weddingData.rsvp?.enabled === true : true;
   const hasUnsavedChanges = options?.isDirty === true;
-  const activePageHasVisibleSections = getNormalizedSections(activePage).some((section) => section?.enabled);
+  const activePageHasVisibleSections = getNormalizedSections(activePage).some((section) => section?.enabled === true);
   const activePageTitle = typeof activePage?.title === 'string' ? activePage.title.trim() || 'the current page' : 'the current page';
 
   return [

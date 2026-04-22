@@ -46,6 +46,33 @@ describe('publishReadiness', () => {
     expect(getPublishValidationError(project)).toBe('Turn on at least one section before going live.');
   });
 
+  it('treats non-boolean enabled section flags as disabled for publish truth', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    const pageId = project.pages[0].id;
+    // @ts-expect-error exercising runtime guard for incomplete persisted data
+    const section = makeSection({ id: 'sec-string-enabled', enabled: 'true' });
+    project.pages[0].sections = [section];
+
+    const issue = getPublishIssue(project);
+    expect(issue?.kind).toBe('no-enabled-sections');
+    if (issue?.kind === 'no-enabled-sections') {
+      expect(issue.firstPageId).toBe(pageId);
+      expect(issue.firstSectionId).toBe('sec-string-enabled');
+    }
+    expect(buildPublishReadiness(project).find((item) => item.id === 'sections')).toEqual({
+      id: 'sections',
+      label: 'At least one section is turned on',
+      done: false,
+      detail: 'Turn on a section before going live.',
+    });
+    expect(buildPublishReadiness(project).find((item) => item.id === 'current-page')).toEqual({
+      id: 'current-page',
+      label: 'Current page has visible content',
+      done: false,
+      detail: 'Turn on content for Home.',
+    });
+  });
+
   it('returns null when publish requirements are met', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
