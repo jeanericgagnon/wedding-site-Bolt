@@ -103,4 +103,10 @@ describe('sections registry resolution', () => {
       expect(getSectionComponent('registry', variant)).toBeTypeOf('function');
     }
   });
+
+  it('keeps site view registry fallback normalization aligned with public cards first', () => {
+    const siteView = readFileSync(resolve(__dirname, '../pages/SiteView.tsx'), 'utf8');
+    expect(siteView).toContain("const supported = getSectionVariants(section.type);");
+    expect(siteView).toContain("const nextVariant = fallbackMap[section.type]?.[section.variant] ?? supported[0] ?? 'default';");
+  });
 });
