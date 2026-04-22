@@ -148,6 +148,10 @@ describe('name change intake draft helpers', () => {
       id: 'draft-social_security_card',
       document_kind: 'social_security_card',
     });
+    expect(createDraftNameChangeDocument('social security + SSA card' as never, ' Social security + SSA card ')).toMatchObject({
+      id: 'draft-social_security_card',
+      document_kind: 'social_security_card',
+    });
     expect(createDraftNameChangeDocument('soc sec card' as never, ' Soc sec card ')).toMatchObject({
       id: 'draft-social_security_card',
       document_kind: 'social_security_card',
@@ -302,6 +306,15 @@ describe('name change intake draft helpers', () => {
     ]);
 
     expect(upsertDraftNameChangeExtractedField([], 'draft-proof_of_address', 'county (residence)' as never, '  ', 'orange')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-proof_of_address',
+        field_key: 'county',
+        field_label: 'County',
+        field_value_masked: 'Orange',
+      }),
+    ]);
+
+    expect(upsertDraftNameChangeExtractedField([], 'draft-proof_of_address', 'county, residence' as never, '  ', 'orange')).toEqual([
       expect.objectContaining({
         document_id: 'draft-proof_of_address',
         field_key: 'county',

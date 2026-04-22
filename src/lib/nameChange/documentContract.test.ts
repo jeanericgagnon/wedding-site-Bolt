@@ -861,7 +861,7 @@ describe('name change document intake contract', () => {
       makeCase(),
       [
         createDraftNameChangeDocument('marriage license copy' as never, 'Marriage license copy'),
-        createDraftNameChangeDocument('social security & SSA card' as never, 'SSA card'),
+        createDraftNameChangeDocument('social security + SSA card' as never, 'SSA card'),
         createDraftNameChangeDocument('bank statement' as never, 'Bank statement'),
         createDraftNameChangeDocument('residency document' as never, 'Residency document'),
       ],
