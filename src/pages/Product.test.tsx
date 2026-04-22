@@ -108,8 +108,12 @@ describe('Product starter draft truth', () => {
 
     expect(screen.getAllByRole('button', { name: 'Review your draft' }).length).toBe(2);
     expect(screen.queryByRole('button', { name: 'Start your draft' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open your dashboard' })).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Review your draft' })[0]);
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open your dashboard' }));
+    expect(navigateMock).toHaveBeenCalledWith('/dashboard/overview');
   });
 });

@@ -213,10 +213,10 @@ export const Home: React.FC = () => {
                 {user ? 'Review your draft' : 'Start your draft'}
               </button>
               <Link
-                to="/templates"
+                to={user ? '/dashboard/builder' : '/templates'}
                 className="group inline-flex w-full sm:w-auto min-h-[52px] items-center justify-center gap-2 px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 hover:border-brand transition-all active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2"
               >
-                Browse templates
+                {user ? 'Open your builder' : 'Browse templates'}
                 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <button
