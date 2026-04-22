@@ -849,6 +849,34 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('falls back to the first page when activePageId is only whitespace', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages = [
+      {
+        ...project.pages[0],
+        id: 'page-1',
+        title: 'Home',
+        orderIndex: 0,
+        sections: [makeSection({ id: 'home-live', enabled: true })],
+      },
+      {
+        ...project.pages[0],
+        id: 'page-2',
+        title: 'Details',
+        orderIndex: 1,
+        sections: [makeSection({ id: 'details-hidden', enabled: false })],
+      },
+    ];
+
+    const readiness = buildPublishReadiness(project, undefined, { activePageId: '   ' });
+    expect(readiness.find((item) => item.id === 'current-page')).toEqual({
+      id: 'current-page',
+      label: 'Current page has visible content',
+      done: true,
+      detail: 'Home has visible sections.',
+    });
+  });
+
   it('falls back to no visible current-page content when persisted active page sections are missing entirely', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     // @ts-expect-error exercising runtime guard for incomplete persisted data

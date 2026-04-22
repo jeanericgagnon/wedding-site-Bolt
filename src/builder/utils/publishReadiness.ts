@@ -64,7 +64,9 @@ export const buildPublishReadiness = (
   weddingData?: WeddingDataV1 | null,
   options?: { isDirty?: boolean; activePageId?: string | null }
 ): PublishReadinessItem[] => {
-  const normalizedActivePageId = typeof options?.activePageId === 'string' ? options.activePageId.trim() : options?.activePageId;
+  const normalizedActivePageId = typeof options?.activePageId === 'string'
+    ? options.activePageId.trim() || null
+    : options?.activePageId;
   const activePage = project.pages.find((page) => page.id === normalizedActivePageId) ?? project.pages[0];
   const enabledSectionCount = project.pages.reduce(
     (count, page) => count + (page.sections?.filter((section) => section.enabled).length ?? 0),
