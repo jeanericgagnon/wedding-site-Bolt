@@ -143,4 +143,11 @@ describe('sections registry resolution', () => {
     expect(registryProof).toContain('manualProofRequired: true');
     expect(registryProof).toContain("truthGateSummary: 'automation_green_manual_truth_red'");
   });
+
+  it('keeps builder registry compatibility tolerant of persisted trim and casing drift', () => {
+    const compatibility = readFileSync(resolve(__dirname, '../lib/sectionVariantCompatibility.ts'), 'utf8');
+    expect(compatibility).toContain('const supportedByLowercase = new Map');
+    expect(compatibility).toContain('const canonicalVariant = supportedByLowercase.get(normalizedVariant.toLowerCase()) ?? normalizedVariant;');
+    expect(compatibility).toContain("Object.entries(aliases).find(([aliasVariant]) => aliasVariant.toLowerCase() === normalizedVariant.toLowerCase())?.[1]");
+  });
 });

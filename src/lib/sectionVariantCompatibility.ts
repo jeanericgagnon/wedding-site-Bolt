@@ -143,10 +143,15 @@ const VARIANT_ALIASES: Partial<Record<SectionType, Record<string, string>>> = {
 
 export function resolveBuilderVariant(type: SectionType, variant: string): string {
   const supported = LEGACY_SELECTOR_VARIANTS[type] ?? ['default'];
+  const supportedByLowercase = new Map(supported.map((supportedVariant) => [supportedVariant.toLowerCase(), supportedVariant]));
   const normalizedVariant = variant.trim();
-  if (supported.includes(normalizedVariant)) return normalizedVariant;
+  const canonicalVariant = supportedByLowercase.get(normalizedVariant.toLowerCase()) ?? normalizedVariant;
+  if (supported.includes(canonicalVariant)) return canonicalVariant;
 
-  const alias = VARIANT_ALIASES[type]?.[normalizedVariant];
+  const aliases = VARIANT_ALIASES[type] ?? {};
+  const alias = aliases[canonicalVariant]
+    ?? aliases[normalizedVariant]
+    ?? Object.entries(aliases).find(([aliasVariant]) => aliasVariant.toLowerCase() === normalizedVariant.toLowerCase())?.[1];
   if (alias && supported.includes(alias)) return alias;
 
   return supported[0] ?? 'default';
