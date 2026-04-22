@@ -196,7 +196,8 @@ function parseDraftMonthName(monthName: string) {
 
 function normalizeDraftDateValue(value: string) {
   const rawOffsetPattern = '[+-](?:\\d{1,2}|\\d{3,4}|\\d{1,2}:\\d{2})';
-  const zoneTokenPattern = `(?:Z|${rawOffsetPattern}|UTC[+-]?\\d{0,2}(?::?\\d{2})?|GMT[+-]?\\d{0,2}(?::?\\d{2})?|[A-Za-z]{2,5}|[A-Za-z_-]+(?:\\/[A-Za-z_-]+)+|\\([^)]*\\)|\\[[^\\]]+\\])`;
+  const namedOffsetPattern = '(?:UTC|GMT)[+-]?(?:\\d{1,2}|\\d{3,4}|\\d{1,2}:\\d{2})?';
+  const zoneTokenPattern = `(?:Z|${rawOffsetPattern}|${namedOffsetPattern}|[A-Za-z]{2,5}|[A-Za-z_-]+(?:\\/[A-Za-z_-]+)+|\\([^)]*\\)|\\[[^\\]]+\\])`;
   const normalizeIsoParts = (year: string, month: string, day: string) => {
     const normalizedYear = year.padStart(4, '0');
     const normalizedMonth = month.padStart(2, '0');
@@ -227,12 +228,12 @@ function normalizeDraftDateValue(value: string) {
     .replace(/\bz\b/g, 'Z')
     .replace(/\butc\b/gi, 'UTC')
     .replace(/\bgmt\b/gi, 'GMT')
-    .replace(/\b(UTC|GMT)\s+([+-]\d{1,2}(?::?\d{2})?)\b/g, '$1$2');
+    .replace(/\b(UTC|GMT)\s+([+-](?:\d{1,2}|\d{3,4}|\d{1,2}:\d{2}))\b/g, '$1$2');
   const suffixStrippedTimestampValue = canonicalTimestampValue.replace(
     new RegExp(`(?:,?\\s+\\d{1,2}:\\d{2}(?::\\d{2})?(?:\\.\\d+)?(?:\\s*[AP]M)?(?:\\s+${zoneTokenPattern})?|\\s+${zoneTokenPattern})$`),
     '',
   );
-  const isoTimestampMatch = canonicalTimestampValue.match(new RegExp(`^(\\d{4})-(\\d{2})-(\\d{2})(?:[T\\s].*|${rawOffsetPattern}|Z|\\s+[A-Za-z]{2,5}|\\(.*\\)|\\s+\\[[^\\]]+\\]|\\s+[A-Za-z_-]+(?:\\/[A-Za-z_-]+)+|\\s+GMT[+-]\\d{1,2}(?::?\\d{2})?|\\s+UTC[+-]\\d{1,2}(?::?\\d{2})?|\\s+\\d{1,2}:\\d{2}\\s*[AP]M)?$`));
+  const isoTimestampMatch = canonicalTimestampValue.match(new RegExp(`^(\\d{4})-(\\d{2})-(\\d{2})(?:[T\\s].*|${rawOffsetPattern}|Z|\\s+[A-Za-z]{2,5}|\\(.*\\)|\\s+\\[[^\\]]+\\]|\\s+[A-Za-z_-]+(?:\\/[A-Za-z_-]+)+|\\s+(?:UTC|GMT)[+-]?(?:\\d{1,2}|\\d{3,4}|\\d{1,2}:\\d{2})?|\\s+\\d{1,2}:\\d{2}\\s*[AP]M)?$`));
   if (isoTimestampMatch) {
     const [, year, month, day] = isoTimestampMatch;
     return normalizeIsoParts(year, month, day);
@@ -310,7 +311,7 @@ function normalizeDraftDateValue(value: string) {
     if (normalizedValue) return normalizedValue;
   }
 
-  const timestampSlashMatch = canonicalTimestampValue.match(new RegExp(`^(\\d{4})\\/(\\d{1,2})\\/(\\d{1,2})(?:[T\\s].*|${rawOffsetPattern}|Z|\\s+[A-Za-z]{2,5}|\\(.*\\)|\\s+\\[[^\\]]+\\]|\\s+[A-Za-z_-]+(?:\\/[A-Za-z_-]+)+|\\s+GMT[+-]\\d{1,2}(?::?\\d{2})?|\\s+UTC[+-]\\d{1,2}(?::?\\d{2})?|\\s+\\d{1,2}:\\d{2}\\s*[AP]M)?$`));
+  const timestampSlashMatch = canonicalTimestampValue.match(new RegExp(`^(\\d{4})\\/(\\d{1,2})\\/(\\d{1,2})(?:[T\\s].*|${rawOffsetPattern}|Z|\\s+[A-Za-z]{2,5}|\\(.*\\)|\\s+\\[[^\\]]+\\]|\\s+[A-Za-z_-]+(?:\\/[A-Za-z_-]+)+|\\s+(?:UTC|GMT)[+-]?(?:\\d{1,2}|\\d{3,4}|\\d{1,2}:\\d{2})?|\\s+\\d{1,2}:\\d{2}\\s*[AP]M)?$`));
   if (timestampSlashMatch) {
     const [, year, month, day] = timestampSlashMatch;
     const normalizedValue = normalizeIsoParts(year, month, day);
