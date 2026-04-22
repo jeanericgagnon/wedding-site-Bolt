@@ -187,6 +187,19 @@ describe('publicSiteProject', () => {
     expect(getPublicBuilderProject(row)?.pages[0].sections[0].settings.headline).toBe('Draft headline');
   });
 
+  it('falls back to site_json builder pages when stringified published_json is partial', () => {
+    const row = {
+      is_published: true,
+      site_json: JSON.stringify(draftProject),
+      published_json: JSON.stringify({
+        publishStatus: 'published',
+        weddingDataSnapshot: publishedWeddingData,
+      }),
+    };
+
+    expect(getPublicBuilderProject(row)?.pages[0].sections[0].settings.headline).toBe('Draft headline');
+  });
+
   it('merges partial published sections with site_json to preserve published truth', () => {
     const row = {
       is_published: true,
