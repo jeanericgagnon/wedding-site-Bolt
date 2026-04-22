@@ -192,12 +192,15 @@ describe('sections registry resolution', () => {
 
   it('keeps persisted template ids resolving cleanly through import edits', () => {
     expect(getTemplate(' Base ').id).toBe('timeless-classic');
+    expect(getTemplate('base').id).toBe('timeless-classic');
     expect(getTemplate('TIMELESS_CLASSIC').id).toBe('timeless-classic');
     expect(getTemplate('Playful Celebration').id).toBe('playful-celebration');
     expect(getTemplate('EDITORIAL').id).toBe('editorial-impact');
     expect(getTemplate(undefined as never).id).toBe('timeless-classic');
     expect(getTemplate({ templateId: 'base' } as never).id).toBe('timeless-classic');
     expect(resolveCanonicalTemplateId(' Base ')).toBe('timeless-classic');
+    expect(resolveCanonicalTemplateId('base')).toBe('timeless-classic');
+    expect(resolveCanonicalTemplateId('classic')).toBe('timeless-classic');
     expect(resolveCanonicalTemplateId('Playful Celebration')).toBe('playful-celebration');
   });
 
@@ -502,6 +505,7 @@ describe('sections registry resolution', () => {
     expect(templateRegistrySource).toContain('export function getTemplate(templateId: unknown): TemplateDefinition {');
     expect(templateRegistrySource).toContain("const templateIdValue = typeof templateId === 'string' ? templateId : '';");
     expect(templateRegistrySource).toContain("templateIdAliases.get(normalizeTemplateIdKey(templateId)) ?? 'base'");
+    expect(templateRegistrySource).toContain('return TEMPLATE_ALIAS_TARGETS[resolvedTemplateId] ?? resolvedTemplateId;');
     expect(templateRegistrySource).toContain('const canonicalTemplateId = resolveCanonicalTemplateId(templateId);');
     expect(templateRegistrySource).toContain('function cloneTemplateValue<T>(value: T): T {');
     expect(templateRegistrySource).toContain("templateRegistry.map((template) => [template.id, cloneTemplateDefinition(template)])");
@@ -521,8 +525,7 @@ describe('sections registry resolution', () => {
     expect(templateRegistrySource).toContain('settings: cloneTemplateValue(section.settings ?? {}),');
     expect(templateRegistrySource).toContain('overrides: cloneTemplateValue(section.overrides ?? undefined),');
     expect(templateRegistrySource).toContain('function cloneTemplateDefinition(template: TemplateDefinition): TemplateDefinition {');
-    expect(templateRegistrySource).toContain('const sourceTemplateId = TEMPLATE_ALIAS_TARGETS[canonicalTemplateId] ?? canonicalTemplateId;');
-    expect(templateRegistrySource).toContain('return cloneTemplateDefinition(getCanonicalTemplateSource(sourceTemplateId));');
+    expect(templateRegistrySource).toContain('return cloneTemplateDefinition(getCanonicalTemplateSource(canonicalTemplateId));');
     expect(templateRegistrySource).toContain('return Object.values(templateById).map(cloneTemplateDefinition);');
     expect(sectionRegistrySource).toContain('export function resolveCanonicalRegistrySectionInput(type: unknown, variant: unknown): { type: string; variant: string } {');
     expect(sectionRegistrySource).toContain('export function resolveCanonicalRegistrySectionType(type: unknown): string {');

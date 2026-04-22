@@ -834,15 +834,15 @@ const templateIdAliases = new Map<string, string>(
 
 export function resolveCanonicalTemplateId(templateId: unknown): string {
   const templateIdValue = typeof templateId === 'string' ? templateId : '';
-  return TEMPLATE_REGISTRY[templateIdValue]
+  const resolvedTemplateId = TEMPLATE_REGISTRY[templateIdValue]
     ? templateIdValue
     : templateIdAliases.get(normalizeTemplateIdKey(templateId)) ?? 'base';
+  return TEMPLATE_ALIAS_TARGETS[resolvedTemplateId] ?? resolvedTemplateId;
 }
 
 export function getTemplate(templateId: unknown): TemplateDefinition {
   const canonicalTemplateId = resolveCanonicalTemplateId(templateId);
-  const sourceTemplateId = TEMPLATE_ALIAS_TARGETS[canonicalTemplateId] ?? canonicalTemplateId;
-  return cloneTemplateDefinition(getCanonicalTemplateSource(sourceTemplateId));
+  return cloneTemplateDefinition(getCanonicalTemplateSource(canonicalTemplateId));
 }
 
 export function getAllTemplates(): TemplateDefinition[] {
