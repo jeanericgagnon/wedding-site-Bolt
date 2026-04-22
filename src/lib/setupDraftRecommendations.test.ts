@@ -104,6 +104,17 @@ describe('setupDraftRecommendations', () => {
     expect(getRecommendedTemplates(emptySetupDraft, templates, 0)).toEqual([]);
   });
 
+  it('normalizes fractional and invalid limits before slicing recommendations', () => {
+    const templates = [
+      makeTemplate({ id: 'a', name: 'A' }),
+      makeTemplate({ id: 'b', name: 'B' }),
+      makeTemplate({ id: 'c', name: 'C' }),
+    ];
+
+    expect(getRecommendedTemplates(emptySetupDraft, templates, 1.9).map((template) => template.id)).toEqual(['a']);
+    expect(getRecommendedTemplates(emptySetupDraft, templates, Number.NaN)).toEqual([]);
+  });
+
   it('falls back to the first templates when no setup preferences exist', () => {
     const templates = [
       makeTemplate({ id: 'a', name: 'A' }),

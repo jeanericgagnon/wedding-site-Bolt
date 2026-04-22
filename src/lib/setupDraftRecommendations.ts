@@ -63,8 +63,9 @@ export const getRecommendedTemplates = (
   templates: TemplateCatalogItem[],
   limit = 3,
 ): TemplateCatalogItem[] => {
-  if (limit <= 0) return [];
-  if (draft.stylePreferences.length === 0) return templates.slice(0, limit);
+  const normalizedLimit = Number.isFinite(limit) ? Math.max(0, Math.floor(limit)) : 0;
+  if (normalizedLimit <= 0) return [];
+  if (draft.stylePreferences.length === 0) return templates.slice(0, normalizedLimit);
 
   const scored = [...templates]
     .map((template) => ({ template, score: scoreTemplateForSetup(template, draft) }))
@@ -72,12 +73,12 @@ export const getRecommendedTemplates = (
     .sort((a, b) => b.score - a.score || a.template.name.localeCompare(b.template.name))
     .map((entry) => entry.template);
 
-  if (scored.length >= limit) return scored.slice(0, limit);
+  if (scored.length >= normalizedLimit) return scored.slice(0, normalizedLimit);
 
   const used = new Set(scored.map((template) => template.id));
   const fallbacks = templates
     .filter((template) => !used.has(template.id))
-    .slice(0, Math.max(limit - scored.length, 0));
+    .slice(0, Math.max(normalizedLimit - scored.length, 0));
 
-  return [...scored, ...fallbacks].slice(0, limit);
+  return [...scored, ...fallbacks].slice(0, normalizedLimit);
 };
