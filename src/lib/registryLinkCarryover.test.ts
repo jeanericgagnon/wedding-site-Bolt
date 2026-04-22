@@ -202,4 +202,17 @@ describe('carryOverRegistryLinks', () => {
       { url: 'https://target.com/list', sourceLabel: 'Target' },
     ]);
   });
+
+  it('sanitizes merged registry labels and urls before preserving unmatched persisted links', () => {
+    expect(mergeRegistrySourceLabels(
+      [{ url: 'example.com/fund/', sourceLabel: 'Custom Honeymoon Fund claimed by Sam' }],
+      [
+        { url: 'https://example.com/fund', sourceLabel: 'Custom Honeymoon Fund purchased by Alex' },
+        { url: 'target.com/list/', sourceLabel: 'Target Registry purchased by Jordan' },
+      ],
+    )).toEqual([
+      { url: 'https://example.com/fund', sourceLabel: 'Custom Honeymoon Fund' },
+      { url: 'https://target.com/list', sourceLabel: 'Target' },
+    ]);
+  });
 });

@@ -77,6 +77,14 @@ function normalizeExplicitSourceLabel(label: string | undefined): string | undef
   return label ? extractExplicitSourceLabelFragment(label) : undefined;
 }
 
+function normalizeCarryoverRegistryLink(link: CarryoverRegistryLink): CarryoverRegistryLink | null {
+  const normalizedUrl = normalizeUrl(cleanRegistryUrlToken(link.url));
+  if (!normalizedUrl) return null;
+
+  const sourceLabel = normalizeExplicitSourceLabel(link.sourceLabel) ?? inferSourceLabel(normalizedUrl);
+  return sourceLabel ? { url: normalizedUrl, sourceLabel } : { url: normalizedUrl };
+}
+
 function extractExplicitSourceLabelFromTokenText(text: string): string | undefined {
   const withoutUrls = text
     .replace(/\((https?:\/\/[^)]+|www\.[^)]+|(?:[a-z0-9-]+\.)+[a-z]{2,}[^)]*)\)/gi, ' ')
@@ -150,14 +158,19 @@ export function mergeRegistrySourceLabels(
   carried: CarryoverRegistryLink[],
   existing: CarryoverRegistryLink[],
 ): CarryoverRegistryLink[] {
-  const merged = carried.map((link) => ({ ...link }));
-  const existingLabelsByUrl = new Map(existing.map((link) => [link.url, link.sourceLabel]));
+  const merged = carried
+    .map((link) => normalizeCarryoverRegistryLink(link))
+    .filter((link): link is CarryoverRegistryLink => Boolean(link));
+  const existingNormalized = existing
+    .map((link) => normalizeCarryoverRegistryLink(link))
+    .filter((link): link is CarryoverRegistryLink => Boolean(link));
+  const existingLabelsByUrl = new Map(existingNormalized.map((link) => [link.url, link.sourceLabel]));
   for (const link of merged) {
     link.sourceLabel = link.sourceLabel ?? existingLabelsByUrl.get(link.url);
   }
 
   const carriedUrls = new Set(merged.map((link) => link.url));
-  return merged.concat(existing.filter((link) => !carriedUrls.has(link.url)));
+  return merged.concat(existingNormalized.filter((link) => !carriedUrls.has(link.url)));
 }
 
 function extractRegistryUrlTokens(line: string): CarryoverRegistryToken[] {
