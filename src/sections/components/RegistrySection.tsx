@@ -166,7 +166,9 @@ export function getRegistryPurchaseDialogCopy(item: Pick<RegistryItem, 'purchase
 
 export function getRegistryPurchaserStatusLabel(item: Pick<RegistryItem, 'purchase_status' | 'purchaser_name'>): string | null {
   if (!item.purchaser_name || item.purchase_status === 'available') return null;
-  return `Purchasing: ${item.purchaser_name}`;
+  return item.purchase_status === 'purchased'
+    ? `Purchased by ${item.purchaser_name}`
+    : `Purchasing: ${item.purchaser_name}`;
 }
 
 export function getRegistryDisplayPriority(item: Pick<RegistryItem, 'purchase_status' | 'item_type'>): number {

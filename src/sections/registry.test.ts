@@ -248,6 +248,7 @@ describe('sections registry resolution', () => {
     const registrySectionComponent = readFileSync(resolve(__dirname, './components/RegistrySection.tsx'), 'utf8');
     expect(registrySectionComponent).toContain("export function getRegistryPurchaserStatusLabel(item: Pick<RegistryItem, 'purchase_status' | 'purchaser_name'>): string | null {");
     expect(registrySectionComponent).toContain("if (!item.purchaser_name || item.purchase_status === 'available') return null;");
+    expect(registrySectionComponent).toContain("? `Purchased by ${item.purchaser_name}`");
   });
 
   it('keeps template registry definitions cloned before import/edit flows mutate them', () => {

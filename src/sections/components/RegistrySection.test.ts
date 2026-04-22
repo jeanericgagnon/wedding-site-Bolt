@@ -26,6 +26,7 @@ describe('getRegistryPurchaseCtaLabel', () => {
   it('only shows purchaser status after public purchase state leaves available', () => {
     expect(getRegistryPurchaserStatusLabel({ purchase_status: 'available', purchaser_name: 'Alex' })).toBeNull();
     expect(getRegistryPurchaserStatusLabel({ purchase_status: 'partial', purchaser_name: 'Alex' })).toBe('Purchasing: Alex');
+    expect(getRegistryPurchaserStatusLabel({ purchase_status: 'purchased', purchaser_name: 'Alex' })).toBe('Purchased by Alex');
   });
 
   it('does not claim everything is purchased when a registry filter is empty', () => {
