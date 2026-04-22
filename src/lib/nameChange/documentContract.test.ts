@@ -912,7 +912,7 @@ describe('name change document intake contract', () => {
       courtOrderDraft.id,
       'signed date' as never,
       '  ',
-      '2026/13/05 UTC+05:30',
+      'April 31, 2026 1:30 pm PST',
     );
 
     const snapshot = buildNameChangeDocumentIntakeSnapshot(
@@ -932,7 +932,7 @@ describe('name change document intake contract', () => {
     expect(extractedFields).toEqual(expect.arrayContaining([
       expect.objectContaining({ field_key: 'certificate_number', field_value_masked: 'MC-123' }),
       expect.objectContaining({ field_key: 'case_number', field_value_masked: '24-CV-1188' }),
-      expect.objectContaining({ field_key: 'court_order_date', field_value_masked: '2026-13-05' }),
+      expect.objectContaining({ field_key: 'court_order_date', field_value_masked: 'April 31, 2026' }),
     ]));
   });
 });

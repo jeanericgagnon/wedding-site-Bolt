@@ -195,7 +195,28 @@ function parseDraftMonthName(monthName: string) {
 }
 
 function normalizeDraftDateValue(value: string) {
-  const normalizeIsoParts = (year: string, month: string, day: string) => `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  const normalizeIsoParts = (year: string, month: string, day: string) => {
+    const normalizedYear = year.padStart(4, '0');
+    const normalizedMonth = month.padStart(2, '0');
+    const normalizedDay = day.padStart(2, '0');
+    const parsedMonth = Number.parseInt(normalizedMonth, 10);
+    const parsedDay = Number.parseInt(normalizedDay, 10);
+    if (!Number.isInteger(parsedMonth) || !Number.isInteger(parsedDay) || parsedMonth < 1 || parsedMonth > 12 || parsedDay < 1) {
+      return null;
+    }
+
+    const candidate = new Date(Date.UTC(Number.parseInt(normalizedYear, 10), parsedMonth - 1, parsedDay));
+    if (
+      Number.isNaN(candidate.getTime())
+      || candidate.getUTCFullYear() !== Number.parseInt(normalizedYear, 10)
+      || candidate.getUTCMonth() !== parsedMonth - 1
+      || candidate.getUTCDate() !== parsedDay
+    ) {
+      return null;
+    }
+
+    return `${normalizedYear}-${normalizedMonth}-${normalizedDay}`;
+  };
   const normalizedOrdinalValue = value.replace(/\b(\d{1,2})(st|nd|rd|th)\b/gi, '$1');
   const sanitizedTimestampValue = normalizedOrdinalValue.replace(/,\s*(\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?)\b/g, ' $1');
   const compactTimestampValue = sanitizedTimestampValue.replace(/\s+/g, ' ').trim();
@@ -218,64 +239,80 @@ function normalizeDraftDateValue(value: string) {
   const monthFirstNumericMatch = suffixStrippedTimestampValue.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
   if (monthFirstNumericMatch) {
     const [, month, day, year] = monthFirstNumericMatch;
-    return normalizeIsoParts(year, month, day);
+    const normalizedValue = normalizeIsoParts(year, month, day);
+    if (normalizedValue) return normalizedValue;
   }
 
   const yearFirstNumericMatch = suffixStrippedTimestampValue.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/);
   if (yearFirstNumericMatch) {
     const [, year, month, day] = yearFirstNumericMatch;
-    return normalizeIsoParts(year, month, day);
+    const normalizedValue = normalizeIsoParts(year, month, day);
+    if (normalizedValue) return normalizedValue;
   }
 
   const yearFirstSpacedMatch = suffixStrippedTimestampValue.match(/^(\d{4})\s+(\d{1,2})\s+(\d{1,2})$/);
   if (yearFirstSpacedMatch) {
     const [, year, month, day] = yearFirstSpacedMatch;
-    return normalizeIsoParts(year, month, day);
+    const normalizedValue = normalizeIsoParts(year, month, day);
+    if (normalizedValue) return normalizedValue;
   }
 
   const monthFirstWrittenMatch = suffixStrippedTimestampValue.match(/^([A-Za-z]+\.?)[\s]+(\d{1,2})(?:,)?\s*(\d{4})$/);
   if (monthFirstWrittenMatch) {
     const [, monthName, day, year] = monthFirstWrittenMatch;
     const month = parseDraftMonthName(monthName);
-    if (month) return normalizeIsoParts(year, String(month), day);
+    if (month) {
+      const normalizedValue = normalizeIsoParts(year, String(month), day);
+      if (normalizedValue) return normalizedValue;
+    }
   }
 
   const dayFirstWrittenMatch = suffixStrippedTimestampValue.match(/^(\d{1,2})\s+([A-Za-z]+\.?)[\s,]+(\d{4})$/);
   if (dayFirstWrittenMatch) {
     const [, day, monthName, year] = dayFirstWrittenMatch;
     const month = parseDraftMonthName(monthName);
-    if (month) return normalizeIsoParts(year, String(month), day);
+    if (month) {
+      const normalizedValue = normalizeIsoParts(year, String(month), day);
+      if (normalizedValue) return normalizedValue;
+    }
   }
 
   const hyphenatedWrittenMatch = suffixStrippedTimestampValue.match(/^(\d{1,2})-([A-Za-z]+\.?)-(\d{4})$/);
   if (hyphenatedWrittenMatch) {
     const [, day, monthName, year] = hyphenatedWrittenMatch;
     const month = parseDraftMonthName(monthName);
-    if (month) return normalizeIsoParts(year, String(month), day);
+    if (month) {
+      const normalizedValue = normalizeIsoParts(year, String(month), day);
+      if (normalizedValue) return normalizedValue;
+    }
   }
 
   const compactIsoMatch = suffixStrippedTimestampValue.match(/^(19\d{2}|20\d{2})(\d{2})(\d{2})$/);
   if (compactIsoMatch) {
     const [, year, month, day] = compactIsoMatch;
-    return normalizeIsoParts(year, month, day);
+    const normalizedValue = normalizeIsoParts(year, month, day);
+    if (normalizedValue) return normalizedValue;
   }
 
   const compactUsMatch = suffixStrippedTimestampValue.match(/^(\d{2})(\d{2})(\d{4})$/);
   if (compactUsMatch) {
     const [, month, day, year] = compactUsMatch;
-    return normalizeIsoParts(year, month, day);
+    const normalizedValue = normalizeIsoParts(year, month, day);
+    if (normalizedValue) return normalizedValue;
   }
 
   const dottedYearFirstMatch = suffixStrippedTimestampValue.match(/^(\d{4})\.(\d{1,2})\.(\d{1,2})$/);
   if (dottedYearFirstMatch) {
     const [, year, month, day] = dottedYearFirstMatch;
-    return normalizeIsoParts(year, month, day);
+    const normalizedValue = normalizeIsoParts(year, month, day);
+    if (normalizedValue) return normalizedValue;
   }
 
   const timestampSlashMatch = canonicalTimestampValue.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})(?:[T\s].*|[+-]\d{2}:?\d{2}|Z|\s+[A-Za-z]{2,5}|\(.*\)|\s+\[[^\]]+\]|\s+[A-Za-z]{3,9}\/[A-Za-z_]+|\s+GMT[+-]\d{1,2}(?::?\d{2})?|\s+UTC[+-]\d{1,2}(?::?\d{2})?|\s+\d{1,2}:\d{2}\s*[AP]M)?$/);
   if (timestampSlashMatch) {
     const [, year, month, day] = timestampSlashMatch;
-    return normalizeIsoParts(year, month, day);
+    const normalizedValue = normalizeIsoParts(year, month, day);
+    if (normalizedValue) return normalizedValue;
   }
 
   return suffixStrippedTimestampValue;
