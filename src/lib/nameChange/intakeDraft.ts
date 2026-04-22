@@ -15,6 +15,10 @@ function normalizeDraftDocumentKind(value: string) {
   return value.trim().toLowerCase().replace(/[-\s]+/g, '_') as NameChangeDocumentInput['document_kind'];
 }
 
+function normalizeDraftFieldKey(value: string) {
+  return value.trim().toLowerCase().replace(/[-\s]+/g, '_') as NameChangeExtractedFieldInput['field_key'];
+}
+
 export function buildDraftNameChangeDocumentId(kind: NameChangeDocumentInput['document_kind']) {
   return `draft-${canonicalizeNameChangeDocumentKind(normalizeDraftDocumentKind(kind))}`;
 }
@@ -56,11 +60,12 @@ export function upsertDraftNameChangeExtractedField(
   nextValue: string,
 ): NameChangeExtractedFieldInput[] {
   const normalizedDocumentId = normalizeDraftNameChangeDocumentId(documentId);
+  const normalizedFieldKey = normalizeDraftFieldKey(fieldKey);
   const normalizedValue = normalizeDraftText(nextValue);
-  const normalizedLabel = normalizeDraftText(fieldLabel) || humanizeDraftToken(fieldKey);
+  const normalizedLabel = normalizeDraftText(fieldLabel) || humanizeDraftToken(normalizedFieldKey);
   const rest = extractedFields.filter((field) => !(
     normalizeDraftNameChangeDocumentId(field.document_id) === normalizedDocumentId
-    && field.field_key === fieldKey
+    && field.field_key === normalizedFieldKey
   ));
   if (!normalizedValue) return rest;
 
@@ -68,7 +73,7 @@ export function upsertDraftNameChangeExtractedField(
     ...rest,
     {
       document_id: normalizedDocumentId,
-      field_key: fieldKey,
+      field_key: normalizedFieldKey,
       field_label: normalizedLabel,
       field_value_masked: normalizedValue,
       source_type: 'manual',
