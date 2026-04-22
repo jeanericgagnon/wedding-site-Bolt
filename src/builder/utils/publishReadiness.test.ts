@@ -304,6 +304,22 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('marks current-page readiness complete when the active page has one enabled section among disabled siblings', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].title = 'Home';
+    project.pages[0].sections = [
+      makeSection({ id: 'sec-disabled', enabled: false }),
+      makeSection({ id: 'sec-enabled', enabled: true, orderIndex: 1 }),
+    ];
+
+    expect(buildPublishReadiness(project, undefined, { activePageId: project.pages[0].id }).find((item) => item.id === 'current-page')).toEqual({
+      id: 'current-page',
+      label: 'Current page has visible content',
+      done: true,
+      detail: 'Home has visible sections.',
+    });
+  });
+
   it('marks sections readiness complete with singular visible-section copy', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
