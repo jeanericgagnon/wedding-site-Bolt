@@ -290,6 +290,7 @@ If that line fails, the rest is noise.
    - operator warning: do not read this slice as launch-clear until `docs/v1-smoke-proof-log.md` contains the missing manual truth notes
    - evidence source of truth: `docs/v1-smoke-proof-log.md` (see `manualProofSummary` + `publicV1ClaimBlockers`)
    - current launch-critical blocker command: `npm run proof:v1:guests-rsvp-ops` remains env-blocked until anon-callable auth exists for `validate-rsvp-token`
+   - operator read rule: treat green automation here as route continuity only, not public-v1 launch clearance
 2. **Guest-state continuity smoke + fix**
    - prove or fix guest edits, RSVP updates, event-level visibility, downstream reads
    - exit bar: one guest can move through public and dashboard surfaces without trust drift
