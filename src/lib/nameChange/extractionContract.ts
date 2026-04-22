@@ -121,11 +121,11 @@ export function getDocumentCapturedFieldKeys(
 
   const linkedKeys = document.id
     ? extractedFields
-        .filter((field) => field.document_id === document.id)
+        .filter((field) => field.document_id === document.id && field.is_verified)
         .map((field) => field.field_key)
     : [];
   const manualFallbackKeys = extractedFields
-    .filter((field) => !field.document_id)
+    .filter((field) => !field.document_id && field.source_type === 'manual' && field.is_verified)
     .map((field) => field.field_key);
 
   return [...new Set([...linkedKeys, ...manualFallbackKeys])];

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildNameChangeExtractionContractSnapshot, getVerifiedDocumentLinkedFieldValue, hasAnyDocumentLinkedFieldValue, hasVerifiedDocumentLinkedFieldValue } from './extractionContract';
+import { buildNameChangeExtractionContractSnapshot, getDocumentCapturedFieldKeys, getVerifiedDocumentLinkedFieldValue, hasAnyDocumentLinkedFieldValue, hasVerifiedDocumentLinkedFieldValue } from './extractionContract';
 import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput } from './types';
 
 function makeCase(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseInput {
@@ -209,6 +209,36 @@ describe('name change extraction contract', () => {
     const snapshot = buildNameChangeExtractionContractSnapshot(makeCase(), documents, extractedFields);
     expect(snapshot.conflicts).toEqual([]);
     expect(getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'current_passport', 'first_name')).toBeNull();
+  });
+
+  it('only counts verified linked or manual fields as captured document truth', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-court-order',
+        document_kind: 'court_order_name_change',
+        display_name: 'Court order name change',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+
+    expect(getDocumentCapturedFieldKeys(documents, [
+      {
+        document_id: 'doc-court-order',
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: '24-CV-1188',
+        source_type: 'document_extract',
+        is_verified: false,
+      },
+      {
+        field_key: 'court_order_date',
+        field_label: 'Court order date',
+        field_value_masked: '2026-04-05',
+        source_type: 'manual',
+        is_verified: true,
+      },
+    ], 'court_order')).toEqual(['court_order_date']);
   });
 
   it('only treats linked or manual verified court-order reference fields as grounded', () => {
