@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createEmptyBuilderProject } from '../../types/builder/project';
 import { createDefaultSectionInstance } from '../../types/builder/section';
+import { createEmptyWeddingData } from '../../types/weddingData';
 import { getPublishNowAction } from './publishNowFlow';
 
 describe('publishNowFlow', () => {
@@ -25,5 +26,14 @@ describe('publishNowFlow', () => {
     project.pages[0].sections = [createDefaultSectionInstance('hero', 'default', 0)];
     project.pages[0].sections[0].enabled = true;
     expect(getPublishNowAction(true, project)).toBe('publish');
+  });
+
+  it('returns fix-blockers when publish intent includes incomplete wedding data', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [createDefaultSectionInstance('hero', 'default', 0)];
+    project.pages[0].sections[0].enabled = true;
+    const weddingData = createEmptyWeddingData();
+
+    expect(getPublishNowAction(true, project, weddingData)).toBe('fix-blockers');
   });
 });
