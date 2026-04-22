@@ -17,7 +17,10 @@ export interface PublishReadinessItem {
 }
 
 const hasNonEmptyString = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
-const getNormalizedPages = (project: BuilderProject) => (Array.isArray(project.pages) ? project.pages.filter(Boolean) : []);
+const isPageLike = (value: unknown): value is BuilderProject['pages'][number] =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+const getNormalizedPages = (project: BuilderProject) =>
+  (Array.isArray(project.pages) ? project.pages.filter(isPageLike) : []);
 const getNormalizedSections = (page: BuilderProject['pages'][number] | undefined) =>
   (Array.isArray(page?.sections) ? page.sections.filter(Boolean) : []);
 const getNormalizedVenues = (weddingData?: WeddingDataV1 | null) =>
