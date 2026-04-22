@@ -13,6 +13,7 @@ _Truth gate summary:_ automation is green, launch truth is still red
 _What must change before GO:_ close the anon-auth RSVP blocker and log the canonical couple-path truth pass
 _False-positive avoided:_ a green canonical smoke run no longer reads like public launch approval
 _Externally blocked proof seam:_ `npm run proof:v1:guests-rsvp-ops` is `external_fixture_required` until anon-callable auth exists for `validate-rsvp-token`
+_Launch-critical blocker command:_ `npm run proof:v1:guests-rsvp-ops`
 
 ## Purpose
 This is the hard proof artifact for whether DayOf can credibly claim **v1 / done-enough**.
