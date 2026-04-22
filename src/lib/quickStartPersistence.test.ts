@@ -646,4 +646,32 @@ describe('quickStartPersistence', () => {
     expect(normalized.viewState).toBe('followups');
     expect(normalized.followUpAnswers).toEqual({ transport: 'Need shuttle details' });
   });
+
+  it('keeps answered follow-up answers when older restores still store them on questions without history', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      followUpAnswers: {
+        lodging: 'Stay at the resort',
+      },
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'lodging',
+            category: 'travel',
+            question: 'Where should guests stay?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.lodging'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'answered',
+            answer: 'Stay at the resort',
+          }],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.followUpAnswers).toEqual({ lodging: 'Stay at the resort' });
+  });
 });

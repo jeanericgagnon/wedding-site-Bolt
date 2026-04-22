@@ -226,7 +226,11 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
   const activeClarifyingIds = clarifyingState
     ? new Set([
         ...clarifyingState.clarifying.questions
-          .filter((question) => question.status === 'pending' || question.status === 'unresolved')
+          .filter((question) => (
+            question.status === 'pending'
+            || question.status === 'unresolved'
+            || (question.status === 'answered' && question.answer.trim().length > 0)
+          ))
           .map((question) => question.id),
         ...clarifyingState.clarifying.history
           .filter((question) => question.status === 'answered' && question.answer.trim().length > 0)

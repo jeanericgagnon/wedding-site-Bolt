@@ -270,4 +270,35 @@ describe('quickStartStateTransfer', () => {
     expect(restored?.showFollowUps).toBe(false);
     expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').followUpAnswers).toEqual({});
   });
+
+  it('keeps answered follow-up answers when older restore payloads only stored answered questions', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      followUpAnswers: {
+        lodging: 'Stay at the resort',
+      },
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'lodging',
+            category: 'travel',
+            question: 'Where should guests stay?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.lodging'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'answered',
+            answer: 'Stay at the resort',
+          }],
+        },
+        draftOutputs: {},
+      },
+    }));
+
+    expect(readQuickStartDraftSnapshot()?.followUpAnswers).toEqual({ lodging: 'Stay at the resort' });
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').followUpAnswers).toEqual({
+      lodging: 'Stay at the resort',
+    });
+  });
 });
