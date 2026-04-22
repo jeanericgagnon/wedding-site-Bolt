@@ -114,6 +114,22 @@ describe('name change intake draft helpers', () => {
         field_label: 'Case Number',
       }),
     ]);
+
+    expect(upsertDraftNameChangeExtractedField([], 'draft-current_passport', 'middle initial' as never, '  ', 'Q')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-current_passport',
+        field_key: 'middle_name',
+        field_label: 'Middle Name',
+      }),
+    ]);
+
+    expect(upsertDraftNameChangeExtractedField([], 'draft-marriage_certificate', 'spouse family name' as never, '  ', 'Jordan')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-marriage_certificate',
+        field_key: 'spouse_last_name',
+        field_label: 'Spouse Last Name',
+      }),
+    ]);
   });
 
   it('ignores unsupported draft field aliases instead of inventing non-contract keys', () => {

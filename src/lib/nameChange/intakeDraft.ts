@@ -82,8 +82,11 @@ function normalizeDraftFieldKey(value: string) {
     case_num: 'case_number',
     docket_number: 'case_number',
     spouse_surname: 'spouse_last_name',
+    spouse_family_name: 'spouse_last_name',
     surname: 'last_name',
+    family_name: 'last_name',
     given_name: 'first_name',
+    middle_initial: 'middle_name',
   };
 
   const canonicalFieldKey = (fieldAliases[normalizedFieldKey] ?? normalizedFieldKey) as NameChangeExtractedFieldInput['field_key'];
