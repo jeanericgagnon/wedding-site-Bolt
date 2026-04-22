@@ -550,6 +550,9 @@ describe('publishUiHints', () => {
     expect(getPublishBlockedHints('Update guest-facing site')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
     ]);
+    expect(getPublishBlockedHints('Guest-facing site')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
   });
 
   it('labels publish status across draft and live states', () => {
