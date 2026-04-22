@@ -85,6 +85,10 @@ describe('sections registry resolution', () => {
     expect(getSectionVariants('registry')).toEqual(expect.arrayContaining(['cards', 'featured', 'minimal', 'honeymoon', 'tabs', 'illustrated', 'classic', 'luxury', 'experiences', 'modern', 'playful']));
     expect(getSectionComponent('registry', 'classic')).toBe(RegistryGrid);
     expect(getSectionComponent('registry', 'luxury')).toBe(RegistryFundHighlight);
-    expect(getSectionComponent('registry', 'cards')).toBe(RegistrySection);
+    expect(getSectionComponent('registry', 'cards')).toBe(RegistryGrid);
+    expect(getSectionComponent('registry', 'minimal')).toBe(RegistryGrid);
+    expect(getSectionComponent('registry', 'tabs')).toBe(RegistryGrid);
+    expect(getSectionComponent('registry', 'illustrated')).toBe(RegistryGrid);
+    expect(getSectionComponent('registry', 'featured')).toBe(RegistryFundHighlight);
   });
 });
