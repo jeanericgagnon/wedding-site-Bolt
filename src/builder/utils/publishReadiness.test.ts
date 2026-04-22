@@ -119,4 +119,18 @@ describe('publishReadiness', () => {
       detail: 'Home has visible sections.',
     });
   });
+
+  it('shows a current-page blocker when the fallback page has no visible sections', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].title = 'Home';
+    project.pages[0].sections = [makeSection({ id: 'home-hidden', enabled: false })];
+
+    const readiness = buildPublishReadiness(project, undefined, { activePageId: 'missing-page' });
+    expect(readiness.find((item) => item.id === 'current-page')).toEqual({
+      id: 'current-page',
+      label: 'Current page has visible content',
+      done: false,
+      detail: 'Turn on content for Home.',
+    });
+  });
 });
