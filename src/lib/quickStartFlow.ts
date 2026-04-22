@@ -77,12 +77,31 @@ export const applyQuickStartAnswer = (
     case 'partnerNames':
       next.names = value;
       break;
-    case 'partnerLabels':
-      if (normalizedDelimitedValue === 'bride|groom') next.labelPreference = 'bride-groom';
-      else if (normalizedDelimitedValue === 'bride|bride') next.labelPreference = 'bride-bride';
-      else if (normalizedDelimitedValue === 'groom|groom') next.labelPreference = 'groom-groom';
-      else next.labelPreference = 'names-only';
+    case 'partnerLabels': {
+      const normalizedPartnerLabel = normalizedDelimitedValue.replace(/[^a-z|]+/g, '');
+      if (
+        normalizedPartnerLabel === 'bride|groom'
+        || normalizedLowerValue.includes('bride and groom')
+        || normalizedLowerValue.includes('groom and bride')
+      ) {
+        next.labelPreference = 'bride-groom';
+      } else if (
+        normalizedPartnerLabel === 'bride|bride'
+        || normalizedLowerValue.includes('bride and bride')
+        || normalizedLowerValue.includes('two brides')
+      ) {
+        next.labelPreference = 'bride-bride';
+      } else if (
+        normalizedPartnerLabel === 'groom|groom'
+        || normalizedLowerValue.includes('groom and groom')
+        || normalizedLowerValue.includes('two grooms')
+      ) {
+        next.labelPreference = 'groom-groom';
+      } else {
+        next.labelPreference = 'names-only';
+      }
       break;
+    }
     case 'venueLocation':
       next.whenWhere = value;
       break;
