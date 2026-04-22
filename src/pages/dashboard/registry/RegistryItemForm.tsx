@@ -20,7 +20,7 @@ function itemToDraft(item: RegistryItem): RegistryItemDraft {
     price_label: item.price_label ?? '',
     price_amount: item.price_amount != null ? String(item.price_amount) : '',
     merchant: item.merchant ?? item.store_name ?? '',
-    item_url: item.item_url ?? '',
+    item_url: item.item_url ?? item.canonical_url ?? '',
     image_url: item.image_url ?? '',
     notes: item.notes ?? item.description ?? '',
     desired_quantity: String(item.quantity_needed ?? 1),
@@ -72,7 +72,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
     }
   );
 
-  const [urlInput, setUrlInput] = useState(initial?.item_url ?? '');
+  const [urlInput, setUrlInput] = useState(initial?.item_url ?? initial?.canonical_url ?? '');
   const [fetching, setFetching] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const autoFetchTimerRef = useRef<number | null>(null);
