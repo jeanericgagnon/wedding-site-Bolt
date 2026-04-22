@@ -150,6 +150,18 @@ describe('publicSiteProject', () => {
     expect(getPublicBuilderProject(row)?.pages[0].sections[0].settings.headline).toBe('Published headline');
   });
 
+  it('recognizes published state from stringified site_json metadata when no published snapshot exists', () => {
+    const row = {
+      site_json: JSON.stringify({
+        ...draftProject,
+        publishStatus: 'published',
+        publishedVersion: 3,
+      }),
+    };
+
+    expect(getIsPublishedFromSiteRow(row)).toBe(true);
+  });
+
   it('extracts published wedding data snapshot from stringified site rows', () => {
     const row = {
       is_published: true,
