@@ -317,6 +317,10 @@ function getVariantFallbacksForType(type: string, inputType?: string): Record<st
     ?? {};
 }
 
+function getCanonicalSectionFallbackVariant(type: string, inputType: string, variant: string): string | null {
+  return Object.entries(getVariantFallbacksForType(type, inputType)).find(([alias]) => normalizeRegistryVariantKey(alias) === normalizeRegistryVariantKey(variant))?.[1] ?? null;
+}
+
 function resolveCanonicalSectionVariantForType(type: string, inputType: string, variant: unknown): string {
   const normalizedVariantKey = normalizeRegistryVariantKey(variant);
   if (!normalizedVariantKey) {
@@ -328,9 +332,7 @@ function resolveCanonicalSectionVariantForType(type: string, inputType: string, 
     .find((definition) => normalizeRegistryVariantKey(definition.variant) === normalizedVariantKey)?.variant;
   if (directVariant) return directVariant;
 
-  const fallbackVariants = getVariantFallbacksForType(type, inputType);
-
-  return Object.entries(fallbackVariants).find(([alias]) => normalizeRegistryVariantKey(alias) === normalizedVariantKey)?.[1]
+  return getCanonicalSectionFallbackVariant(type, inputType, normalizedVariantKey)
     ?? (typeof variant === 'string' ? variant : '');
 }
 
@@ -450,16 +452,17 @@ export function resolveAndParse(
     'registry-section': 'registry',
   } as Record<string, string>)[normalizedTypeKey] ?? normalizedTypeKey;
   const normalizedVariant = canonicalSection.variant;
+  const fallbackVariant = getCanonicalSectionFallbackVariant(canonicalSection.type, normalizedType, normalizedVariant);
 
   const def = strictVariant
     ? (
       getDefinition(normalizedType, normalizedVariant)
-      ?? (getVariantFallbacksForType(canonicalSection.type, normalizedType)[normalizedVariant] ? getDefinition(normalizedType, getVariantFallbacksForType(canonicalSection.type, normalizedType)[normalizedVariant]) : null)
+      ?? (fallbackVariant ? getDefinition(normalizedType, fallbackVariant) : null)
       ?? null
     )
     : (
       getDefinition(normalizedType, normalizedVariant)
-      ?? (getVariantFallbacksForType(canonicalSection.type, normalizedType)[normalizedVariant] ? getDefinition(normalizedType, getVariantFallbacksForType(canonicalSection.type, normalizedType)[normalizedVariant]) : null)
+      ?? (fallbackVariant ? getDefinition(normalizedType, fallbackVariant) : null)
       ?? getDefinition(normalizedType, 'default')
       ?? getVariantsForType(normalizedType)[0]
       ?? null
