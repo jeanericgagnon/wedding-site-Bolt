@@ -317,7 +317,12 @@ function resolveCanonicalSectionVariantForType(type: string, inputType: string, 
   const directVariant = getVariantsForType(type).find((definition) => normalizeRegistryVariantKey(definition.variant) === normalizedVariantKey)?.variant;
   if (directVariant) return directVariant;
 
-  return Object.entries(VARIANT_FALLBACKS[type] ?? VARIANT_FALLBACKS[inputType] ?? {}).find(([alias]) => normalizeRegistryVariantKey(alias) === normalizedVariantKey)?.[1]
+  const fallbackVariants = VARIANT_FALLBACKS[type]
+    ?? VARIANT_FALLBACKS[inputType]
+    ?? Object.entries(VARIANT_FALLBACKS).find(([candidateType]) => normalizeRegistryVariantKey(candidateType) === normalizeRegistryVariantKey(inputType))?.[1]
+    ?? {};
+
+  return Object.entries(fallbackVariants).find(([alias]) => normalizeRegistryVariantKey(alias) === normalizedVariantKey)?.[1]
     ?? (typeof variant === 'string' ? variant : '');
 }
 
