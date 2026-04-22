@@ -118,6 +118,7 @@ const output = {
     failed: results.filter((result) => !result.ok).length,
     blocked: blockedRequired.length,
   },
+  publicV1ClaimStatus: 'not_clear_to_claim_yet',
   automatedCoverage: [
     'Build integrity for the current public/onboarding path',
     'Public v1 trust story smoke across Home, Product, and Trust via Playwright live smoke',
