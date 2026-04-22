@@ -862,4 +862,19 @@ describe('publishReadiness', () => {
       detail: 'Turn on content for Home.',
     });
   });
+
+  it('falls back to generic current-page copy when persisted active page title is not a string', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    // @ts-expect-error exercising runtime guard for incomplete persisted data
+    project.pages[0].title = { text: 'Home' };
+    project.pages[0].sections = [makeSection({ id: 'home-hidden', enabled: false })];
+
+    const readiness = buildPublishReadiness(project, undefined, { activePageId: project.pages[0].id });
+    expect(readiness.find((item) => item.id === 'current-page')).toEqual({
+      id: 'current-page',
+      label: 'Current page has visible content',
+      done: false,
+      detail: 'Turn on content for the current page.',
+    });
+  });
 });

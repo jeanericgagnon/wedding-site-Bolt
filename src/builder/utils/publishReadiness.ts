@@ -76,7 +76,7 @@ export const buildPublishReadiness = (
   const hasRsvpEnabled = weddingData ? Boolean(weddingData.rsvp?.enabled) : true;
   const hasUnsavedChanges = options?.isDirty === true;
   const activePageHasVisibleSections = Boolean(activePage?.sections?.some((section) => section.enabled));
-  const activePageTitle = activePage?.title?.trim() || 'the current page';
+  const activePageTitle = typeof activePage?.title === 'string' ? activePage.title.trim() || 'the current page' : 'the current page';
 
   return [
     {
