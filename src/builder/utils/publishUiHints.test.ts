@@ -357,6 +357,12 @@ describe('publishUiHints', () => {
     ]);
   });
 
+  it('does not mistake generic current-page copy for a blocker', () => {
+    expect(getPublishBlockedHints('Current page')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
+  });
+
   it('does not mistake the current-page success detail for a page blocker', () => {
     expect(getPublishBlockedHints('Current page has visible sections.')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
