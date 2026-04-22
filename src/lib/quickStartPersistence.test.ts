@@ -980,4 +980,44 @@ describe('quickStartPersistence', () => {
     expect(normalized.viewState).toBe('followups');
     expect(normalized.followUpAnswers).toEqual({ lodging: 'Need to confirm hotel block' });
   });
+
+  it('reopens follow-up mode for typed reopened clarifying drafts even when older answered history exists', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      viewState: 'question',
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'lodging',
+            category: 'travel',
+            question: 'Where should guests stay?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.lodging'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 2,
+            status: 'unresolved',
+            answer: 'Need to confirm hotel block',
+          }],
+          history: [{
+            id: 'lodging',
+            category: 'travel',
+            question: 'Where should guests stay?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.lodging'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'answered',
+            answer: 'Stay at the resort',
+          }],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.showFollowUps).toBe(true);
+    expect(normalized.viewState).toBe('followups');
+    expect(normalized.followUpAnswers).toEqual({ lodging: 'Need to confirm hotel block' });
+  });
 });

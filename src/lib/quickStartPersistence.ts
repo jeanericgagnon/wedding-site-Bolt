@@ -234,7 +234,8 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     parsed.showFollowUps === true
     || (!hasExplicitShowFollowUps && (
       parsed.viewState === 'followups'
-      || ((hasDraftedFollowUpAnswers || hasTypedClarifyingDraftAnswers) && !hasAnsweredClarifyingHistory)
+      || hasTypedClarifyingDraftAnswers
+      || (hasDraftedFollowUpAnswers && !hasAnsweredClarifyingHistory)
     ))
   );
   const hasAnyClarifyingRecords = Boolean(
