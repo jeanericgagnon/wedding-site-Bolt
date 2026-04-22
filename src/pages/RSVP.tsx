@@ -195,6 +195,12 @@ function deriveSelectedHouseholdGuestIds(existingRsvp: ExistingRSVP | null, hous
   return selectedFromRsvp.length > 0 ? selectedFromRsvp : household.map((member) => member.id);
 }
 
+function shouldApplyToHousehold(existingRsvp: ExistingRSVP | null, household: HouseholdGuest[], primaryGuestId?: string | null): boolean {
+  if (household.length === 0) return false;
+  const invitedIds = new Set(household.map((member) => member.id));
+  return (existingRsvp?.guest_ids ?? []).some((guestId) => guestId !== primaryGuestId && invitedIds.has(guestId));
+}
+
 function buildNormalizedRsvpFormData(
   guest: Guest,
   existingRsvp: ExistingRSVP,
@@ -689,8 +695,9 @@ export default function RSVP() {
     setMealConfig(meal);
     setMusicPlaylistUrl(playlistUrl);
     const selectedGuestIds = deriveSelectedHouseholdGuestIds(normalizedRsvp, household);
+    const applyToSelectedHousehold = shouldApplyToHousehold(normalizedRsvp, household, foundGuest.id);
     setHouseholdGuests(household);
-    setApplyToHousehold(household.length > 0);
+    setApplyToHousehold(applyToSelectedHousehold);
     setSelectedHouseholdGuestIds(selectedGuestIds);
     if (normalizedRsvp) {
       setExistingRsvp(normalizedRsvp);
