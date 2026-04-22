@@ -84,84 +84,83 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     return trimmedValue.length > 0 ? trimmedValue : undefined;
   };
 
+  const withEntries = <T extends Record<string, unknown>>(section: T) => (
+    Object.keys(section).length > 0 ? section : undefined
+  );
+
   const sanitizeDraftOutputs = (value: unknown): ClarifyingDraftOutputs => {
     if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
     const draftOutputs = value as ClarifyingDraftOutputs;
 
+    const hero = draftOutputs.hero && typeof draftOutputs.hero === 'object' && !Array.isArray(draftOutputs.hero)
+      ? withEntries(Object.fromEntries(
+          Object.entries({
+            headline: sanitizeTrimmedString(draftOutputs.hero.headline),
+            subheadline: sanitizeTrimmedString(draftOutputs.hero.subheadline),
+            toneNote: sanitizeTrimmedString(draftOutputs.hero.toneNote),
+          }).filter(([, fieldValue]) => fieldValue !== undefined),
+        ))
+      : undefined;
+
+    const schedule = draftOutputs.schedule && typeof draftOutputs.schedule === 'object' && !Array.isArray(draftOutputs.schedule)
+      ? withEntries(Object.fromEntries(
+          Object.entries({
+            intro: sanitizeTrimmedString(draftOutputs.schedule.intro),
+            eventSummary: sanitizeTrimmedString(draftOutputs.schedule.eventSummary),
+          }).filter(([, fieldValue]) => fieldValue !== undefined),
+        ))
+      : undefined;
+
+    const faqGuidance = draftOutputs.faq && typeof draftOutputs.faq === 'object' && !Array.isArray(draftOutputs.faq) && Array.isArray(draftOutputs.faq.guidance)
+      ? draftOutputs.faq.guidance
+          .map((item) => sanitizeTrimmedString(item))
+          .filter((item): item is string => item !== undefined)
+      : undefined;
+    const faq = faqGuidance && faqGuidance.length > 0 ? { guidance: faqGuidance } : undefined;
+
+    const travel = draftOutputs.travel && typeof draftOutputs.travel === 'object' && !Array.isArray(draftOutputs.travel)
+      ? withEntries(Object.fromEntries(
+          Object.entries({
+            intro: sanitizeTrimmedString(draftOutputs.travel.intro),
+          }).filter(([, fieldValue]) => fieldValue !== undefined),
+        ))
+      : undefined;
+
+    const story = draftOutputs.story && typeof draftOutputs.story === 'object' && !Array.isArray(draftOutputs.story)
+      ? withEntries(Object.fromEntries(
+          Object.entries({
+            intro: sanitizeTrimmedString(draftOutputs.story.intro),
+          }).filter(([, fieldValue]) => fieldValue !== undefined),
+        ))
+      : undefined;
+
+    const guestGuidance = draftOutputs.guestGuidance && typeof draftOutputs.guestGuidance === 'object' && !Array.isArray(draftOutputs.guestGuidance)
+      ? withEntries(Object.fromEntries(
+          Object.entries({
+            dressCode: sanitizeTrimmedString(draftOutputs.guestGuidance.dressCode),
+            children: sanitizeTrimmedString(draftOutputs.guestGuidance.children),
+            lodging: sanitizeTrimmedString(draftOutputs.guestGuidance.lodging),
+            transport: sanitizeTrimmedString(draftOutputs.guestGuidance.transport),
+          }).filter(([, fieldValue]) => fieldValue !== undefined),
+        ))
+      : undefined;
+
+    const siteTone = draftOutputs.siteTone && typeof draftOutputs.siteTone === 'object' && !Array.isArray(draftOutputs.siteTone)
+      ? withEntries(Object.fromEntries(
+          Object.entries({
+            summary: sanitizeTrimmedString(draftOutputs.siteTone.summary),
+          }).filter(([, fieldValue]) => fieldValue !== undefined),
+        ))
+      : undefined;
+
     return {
-      ...(draftOutputs.hero && typeof draftOutputs.hero === 'object' && !Array.isArray(draftOutputs.hero)
-        ? {
-            hero: Object.fromEntries(
-              Object.entries({
-                headline: sanitizeTrimmedString(draftOutputs.hero.headline),
-                subheadline: sanitizeTrimmedString(draftOutputs.hero.subheadline),
-                toneNote: sanitizeTrimmedString(draftOutputs.hero.toneNote),
-              }).filter(([, fieldValue]) => fieldValue !== undefined),
-            ),
-          }
-        : {}),
-      ...(draftOutputs.schedule && typeof draftOutputs.schedule === 'object' && !Array.isArray(draftOutputs.schedule)
-        ? {
-            schedule: Object.fromEntries(
-              Object.entries({
-                intro: sanitizeTrimmedString(draftOutputs.schedule.intro),
-                eventSummary: sanitizeTrimmedString(draftOutputs.schedule.eventSummary),
-              }).filter(([, fieldValue]) => fieldValue !== undefined),
-            ),
-          }
-        : {}),
-      ...(draftOutputs.faq && typeof draftOutputs.faq === 'object' && !Array.isArray(draftOutputs.faq)
-        ? {
-            faq: {
-              ...(Array.isArray(draftOutputs.faq.guidance)
-                ? {
-                    guidance: draftOutputs.faq.guidance
-                      .map((item) => sanitizeTrimmedString(item))
-                      .filter((item): item is string => item !== undefined),
-                  }
-                : {}),
-            },
-          }
-        : {}),
-      ...(draftOutputs.travel && typeof draftOutputs.travel === 'object' && !Array.isArray(draftOutputs.travel)
-        ? {
-            travel: Object.fromEntries(
-              Object.entries({
-                intro: sanitizeTrimmedString(draftOutputs.travel.intro),
-              }).filter(([, fieldValue]) => fieldValue !== undefined),
-            ),
-          }
-        : {}),
-      ...(draftOutputs.story && typeof draftOutputs.story === 'object' && !Array.isArray(draftOutputs.story)
-        ? {
-            story: Object.fromEntries(
-              Object.entries({
-                intro: sanitizeTrimmedString(draftOutputs.story.intro),
-              }).filter(([, fieldValue]) => fieldValue !== undefined),
-            ),
-          }
-        : {}),
-      ...(draftOutputs.guestGuidance && typeof draftOutputs.guestGuidance === 'object' && !Array.isArray(draftOutputs.guestGuidance)
-        ? {
-            guestGuidance: Object.fromEntries(
-              Object.entries({
-                dressCode: sanitizeTrimmedString(draftOutputs.guestGuidance.dressCode),
-                children: sanitizeTrimmedString(draftOutputs.guestGuidance.children),
-                lodging: sanitizeTrimmedString(draftOutputs.guestGuidance.lodging),
-                transport: sanitizeTrimmedString(draftOutputs.guestGuidance.transport),
-              }).filter(([, fieldValue]) => fieldValue !== undefined),
-            ),
-          }
-        : {}),
-      ...(draftOutputs.siteTone && typeof draftOutputs.siteTone === 'object' && !Array.isArray(draftOutputs.siteTone)
-        ? {
-            siteTone: Object.fromEntries(
-              Object.entries({
-                summary: sanitizeTrimmedString(draftOutputs.siteTone.summary),
-              }).filter(([, fieldValue]) => fieldValue !== undefined),
-            ),
-          }
-        : {}),
+      ...(hero ? { hero } : {}),
+      ...(schedule ? { schedule } : {}),
+      ...(faq ? { faq } : {}),
+      ...(travel ? { travel } : {}),
+      ...(story ? { story } : {}),
+      ...(guestGuidance ? { guestGuidance } : {}),
+      ...(siteTone ? { siteTone } : {}),
     };
   };
 

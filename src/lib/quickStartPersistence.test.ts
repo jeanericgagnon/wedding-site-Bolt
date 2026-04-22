@@ -418,4 +418,36 @@ describe('quickStartPersistence', () => {
       },
     });
   });
+
+  it('drops empty clarifying draft output sections after sanitizing', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      clarifyingState: {
+        clarifying: {
+          mode: 'draft',
+          questions: [],
+          history: [],
+        },
+        draftOutputs: {
+          hero: {
+            headline: '   ',
+          },
+          faq: {
+            guidance: ['   ', 4],
+          },
+          guestGuidance: {
+            children: null,
+          },
+          siteTone: {
+            summary: '  airy and warm  ',
+          },
+        },
+      },
+    });
+
+    expect(normalized.clarifyingState?.draftOutputs).toEqual({
+      siteTone: {
+        summary: 'airy and warm',
+      },
+    });
+  });
 });
