@@ -98,6 +98,16 @@ describe('publicSiteProject', () => {
     expect(getPublicWeddingData(row)?.couple.displayName).toBe('Draft Names');
   });
 
+  it('falls back to stringified live wedding_data when no published snapshot exists', () => {
+    const row = {
+      is_published: false,
+      site_json: JSON.stringify(draftProject),
+      wedding_data: JSON.stringify(liveWeddingData),
+    };
+
+    expect(getPublicWeddingData(row)?.couple.displayName).toBe('Draft Names');
+  });
+
   it('rewrites signed media urls for public builder project parity', () => {
     const row = {
       is_published: true,
