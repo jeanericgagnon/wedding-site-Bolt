@@ -82,7 +82,8 @@ export function upsertDraftNameChangeExtractedField(
 ): NameChangeExtractedFieldInput[] {
   const normalizedDocumentId = normalizeDraftNameChangeDocumentId(documentId);
   const requestedDraftDocumentId = typeof documentId === 'string' && documentId.trim().toLowerCase().startsWith('draft');
-  if (requestedDraftDocumentId && !normalizedDocumentId) {
+  const requestedBareDraftDocumentId = typeof documentId === 'string' && /^draft$/i.test(documentId.trim());
+  if (requestedDraftDocumentId && (!normalizedDocumentId || requestedBareDraftDocumentId)) {
     return extractedFields;
   }
   const normalizedFieldKey = normalizeDraftFieldKey(fieldKey);

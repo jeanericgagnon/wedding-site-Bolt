@@ -184,6 +184,21 @@ describe('name change intake draft helpers', () => {
     expect(upsertDraftNameChangeExtractedField(startingFields, 'draft-___', 'case_number', 'Case number', '24-CV-1188')).toEqual(startingFields);
   });
 
+  it('ignores bare draft document ids instead of attaching fields to fallback other drafts', () => {
+    const startingFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: null,
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: 'manual fallback',
+        source_type: 'manual',
+        is_verified: true,
+      },
+    ];
+
+    expect(upsertDraftNameChangeExtractedField(startingFields, 'draft', 'case_number', 'Case number', '24-CV-1188')).toEqual(startingFields);
+  });
+
   it('upserts extracted fields per document instead of globally by field key', () => {
     const startingFields: NameChangeExtractedFieldInput[] = [
       {
