@@ -28,7 +28,7 @@ describe('quickStartPersistence', () => {
     expect(normalized.viewState).toBe('followups');
     expect(normalized.followUpAnswers['event-1-time']).toBe('6:00 PM');
     expect(normalized.initialSetupAnswers.names).toBe('Alex & Jordan');
-    expect(normalized.clarifyingState?.clarifying.mode).toBe('ask');
+    expect(normalized.clarifyingState?.clarifying.mode).toBe('draft');
   });
 
   it('drops malformed quick start records safely', () => {

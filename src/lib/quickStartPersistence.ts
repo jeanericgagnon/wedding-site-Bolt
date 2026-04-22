@@ -1,5 +1,6 @@
 import { createEmptyInitialSetupAnswers, type InitialSetupAnswers } from './initialSetupAnswers';
 import type { ClarifyingPersistenceEnvelope } from './aiClarifyingPersistence';
+import { normalizeQuickStartClarifyingMode } from './quickStartClarifyingMode';
 
 export type QuickStartDraftSnapshot = {
   initialSetupAnswers: InitialSetupAnswers;
@@ -51,21 +52,23 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
       ) as Partial<InitialSetupAnswers>
     : {};
 
-  const clarifyingState = parsed.clarifyingState
-    && typeof parsed.clarifyingState === 'object'
-    && !Array.isArray(parsed.clarifyingState)
-    && 'clarifying' in parsed.clarifyingState
-    && parsed.clarifyingState.clarifying
-    && typeof parsed.clarifyingState.clarifying === 'object'
-    && !Array.isArray(parsed.clarifyingState.clarifying)
-    && Array.isArray(parsed.clarifyingState.clarifying.questions)
-    && Array.isArray(parsed.clarifyingState.clarifying.history)
-    && 'draftOutputs' in parsed.clarifyingState
-    && parsed.clarifyingState.draftOutputs
-    && typeof parsed.clarifyingState.draftOutputs === 'object'
-    && !Array.isArray(parsed.clarifyingState.draftOutputs)
-      ? parsed.clarifyingState as ClarifyingPersistenceEnvelope
-      : null;
+  const clarifyingState = normalizeQuickStartClarifyingMode(
+    parsed.clarifyingState
+      && typeof parsed.clarifyingState === 'object'
+      && !Array.isArray(parsed.clarifyingState)
+      && 'clarifying' in parsed.clarifyingState
+      && parsed.clarifyingState.clarifying
+      && typeof parsed.clarifyingState.clarifying === 'object'
+      && !Array.isArray(parsed.clarifyingState.clarifying)
+      && Array.isArray(parsed.clarifyingState.clarifying.questions)
+      && Array.isArray(parsed.clarifyingState.clarifying.history)
+      && 'draftOutputs' in parsed.clarifyingState
+      && parsed.clarifyingState.draftOutputs
+      && typeof parsed.clarifyingState.draftOutputs === 'object'
+      && !Array.isArray(parsed.clarifyingState.draftOutputs)
+        ? parsed.clarifyingState as ClarifyingPersistenceEnvelope
+        : null,
+  );
 
   return {
     initialSetupAnswers: { ...base.initialSetupAnswers, ...initialSetupAnswers },
