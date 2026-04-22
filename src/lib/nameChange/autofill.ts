@@ -109,10 +109,10 @@ export function buildNameChangeAutofillPrepSnapshot(
   );
 
   const targetFirstNameExtraction = canonicalCase.legalBasis === 'court_order'
-    ? { value: extraction.courtOrder.firstName, sourceDocumentKind: 'court_order' as const, sourceFieldKey: 'first_name' as const }
+    ? lookup('first_name', ['court_order'])
     : lookup('first_name', ['marriage_certificate', 'court_order']);
   const targetLastNameExtraction = canonicalCase.legalBasis === 'court_order'
-    ? { value: extraction.courtOrder.lastName, sourceDocumentKind: 'court_order' as const, sourceFieldKey: 'last_name' as const }
+    ? lookup('last_name', ['court_order'])
     : { value: extraction.marriageCertificate.spouseLastName, sourceDocumentKind: 'marriage_certificate' as const, sourceFieldKey: 'spouse_last_name' as const };
 
   const fields: NameChangeAutofillFieldMapping[] = [
@@ -123,8 +123,8 @@ export function buildNameChangeAutofillPrepSnapshot(
     directField('applicant.target_last_name', 'Target last name', canonicalCase.targetName.last, targetLastNameExtraction),
     directField('applicant.county', 'County', canonicalCase.countyResidence, { value: extraction.marriageCertificate.county, sourceDocumentKind: 'marriage_certificate', sourceFieldKey: 'county' }),
     directField('legal.marriage_date', 'Marriage date', canonicalCase.legalContext.marriageDate, { value: extraction.marriageCertificate.issuanceDate, sourceDocumentKind: 'marriage_certificate', sourceFieldKey: 'issuance_date' }),
-    directField('legal.court_order_case_number', 'Court-order case number', null, { value: extraction.courtOrder.caseNumber, sourceDocumentKind: 'court_order', sourceFieldKey: 'case_number' }),
-    directField('legal.court_order_date', 'Court order date', null, { value: extraction.courtOrder.courtOrderDate, sourceDocumentKind: 'court_order', sourceFieldKey: 'court_order_date' }),
+    directField('legal.court_order_case_number', 'Court-order case number', null, lookup('case_number', ['court_order'])),
+    directField('legal.court_order_date', 'Court order date', null, lookup('court_order_date', ['court_order'])),
     directField('identity.passport_issue_date', 'Passport issue date', null, { value: extraction.currentPassport.issuanceDate, sourceDocumentKind: 'current_passport', sourceFieldKey: 'issuance_date' }),
   ];
 

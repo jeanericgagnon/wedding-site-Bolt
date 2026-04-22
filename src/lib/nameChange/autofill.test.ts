@@ -359,4 +359,62 @@ describe('name change autofill prep snapshot', () => {
       }),
     });
   });
+
+  it('keeps unverified court-order autofill values out of the packet draft', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-court-order',
+        document_kind: 'court_order',
+        display_name: 'Court order',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'doc-court-order',
+        field_key: 'first_name',
+        field_label: 'First name',
+        field_value_masked: 'Avery',
+        source_type: 'document_extract',
+        is_verified: false,
+      },
+      {
+        document_id: 'doc-court-order',
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: '24-CV-1188',
+        source_type: 'document_extract',
+        is_verified: false,
+      },
+    ];
+
+    const snapshot = buildNameChangeAutofillPrepSnapshot(
+      makeCase({
+        legal_basis: 'court_order',
+        target_first_name: 'Alex',
+        target_last_name: 'Jordan',
+        marriage_state: null,
+        marriage_date: null,
+        structured_intake: { spouseLastName: null, travelBookedSoon: true, wantsDocumentIntakeHelp: true },
+      }),
+      documents,
+      extractedFields,
+    );
+
+    expect(snapshot.fields.find((field) => field.targetField === 'applicant.target_first_name')).toMatchObject({
+      value: expect.objectContaining({
+        source: 'canonical_case',
+        value: 'Alex',
+        confidence: 'high',
+      }),
+    });
+    expect(snapshot.fields.find((field) => field.targetField === 'legal.court_order_case_number')).toMatchObject({
+      value: expect.objectContaining({
+        source: 'canonical_case',
+        value: null,
+        confidence: 'low',
+      }),
+    });
+  });
 });
