@@ -15,7 +15,14 @@ export const persistQuickStartDraftSnapshot = (value: unknown) => {
 
 export const readQuickStartDraftSnapshot = (): QuickStartDraftSnapshot | null => {
   if (typeof window === 'undefined') return null;
-  const raw = window.localStorage.getItem(QUICK_START_STORAGE_KEY);
+
+  let raw: string | null = null;
+  try {
+    raw = window.localStorage.getItem(QUICK_START_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+
   if (!raw) return null;
   try {
     const normalized = normalizeQuickStartDraftSnapshot(JSON.parse(raw));

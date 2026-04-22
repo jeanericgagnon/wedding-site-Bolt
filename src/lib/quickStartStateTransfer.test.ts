@@ -89,4 +89,14 @@ describe('quickStartStateTransfer', () => {
 
     removeItemSpy.mockRestore();
   });
+
+  it('treats storage read failures as unavailable restore state', () => {
+    const getItemSpy = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('storage locked');
+    });
+
+    expect(readQuickStartDraftSnapshot()).toBeNull();
+
+    getItemSpy.mockRestore();
+  });
 });
