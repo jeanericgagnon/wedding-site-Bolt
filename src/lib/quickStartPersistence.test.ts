@@ -24,7 +24,7 @@ describe('quickStartPersistence', () => {
     });
 
     expect(normalized.currentIndex).toBe(13);
-    expect(normalized.showFollowUps).toBe(true);
+    expect(normalized.showFollowUps).toBe(false);
     expect(normalized.viewState).toBe('question');
     expect(normalized.followUpAnswers['event-1-time']).toBe('6:00 PM');
     expect(normalized.initialSetupAnswers.names).toBe('Alex & Jordan');

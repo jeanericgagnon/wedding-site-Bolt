@@ -72,6 +72,7 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
 
   const viewState = parsed.viewState === 'thinking' || parsed.viewState === 'followups' ? parsed.viewState : 'question';
   const hasOpenFollowUps = (clarifyingState?.clarifying.questions.some((question) => question.status !== 'answered') || false);
+  const showFollowUps = parsed.showFollowUps === true && hasOpenFollowUps;
 
   return {
     initialSetupAnswers: { ...base.initialSetupAnswers, ...initialSetupAnswers },
@@ -79,7 +80,7 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
       ? parsed.currentIndex
       : 0,
     followUpAnswers,
-    showFollowUps: parsed.showFollowUps === true,
+    showFollowUps,
     clarifyingState,
     viewState: viewState === 'followups' && !hasOpenFollowUps ? 'question' : viewState,
   };
