@@ -166,6 +166,7 @@ const output = {
   highestRiskTrustGapKey: 'guests_rsvp_ops_and_manual_truth_pass',
   publicV1ClaimBlockedByCriticalTrustGaps: true,
   externalFixtureStillRequired: true,
+  canonicalSmokeGreenButLaunchRed: true,
   blockers: blockedRequired.map((result) => ({
     id: result.id,
     label: result.label,
