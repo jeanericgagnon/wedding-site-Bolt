@@ -187,7 +187,7 @@ const output = {
   },
   launchCriticalBlockerCommand: 'npm run proof:v1:guests-rsvp-ops',
   highestRiskTrustGapKey: 'guests_rsvp_ops_and_manual_truth_pass',
-  secondaryTrustGapKey: 'canonical_couple_path_and_runtime_wording_verification_missing',
+  secondaryTrustGapKey: 'canonical_couple_path_runtime_wording_and_starter_draft_verification_missing',
   publicV1ClaimBlockedByCriticalTrustGaps: true,
   externalFixtureStillRequired: true,
   canonicalSmokeGreenButLaunchRed: true,

@@ -17,7 +17,7 @@ _Launch-critical blocker command:_ `npm run proof:v1:guests-rsvp-ops`
 _Launch decision depends on:_ a logged manual truth pass, not automation alone
 _Machine-readable guardrail:_ canonical smoke JSON now encodes the no-go launch call and the blocked RSVP proof command
 _Highest-risk trust gap key:_ `guests_rsvp_ops_and_manual_truth_pass`
-_Secondary trust gap key:_ `canonical_couple_path_and_runtime_wording_verification_missing`
+_Secondary trust gap key:_ `canonical_couple_path_runtime_wording_and_starter_draft_verification_missing`
 _Machine-readable flag:_ `runtimeWordingVerificationMissing: true`
 _Machine-readable flag:_ `starterDraftWordingVerificationMissing: true`
 
