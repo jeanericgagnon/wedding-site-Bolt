@@ -9,7 +9,7 @@ import type {
   RsvpContent,
   GalleryContent,
 } from '../types/siteConfig';
-import { TEMPLATE_REGISTRY } from '../templates/registry';
+import { getTemplate } from '../templates/registry';
 
 export interface OnboardingData {
   couple_name_1: string;
@@ -77,7 +77,7 @@ function buildFaqEntry(id: string, question: string, answer: string) {
 }
 
 function generateSiteConfig(data: OnboardingData): SiteConfig {
-  const template = TEMPLATE_REGISTRY[data.template || 'base'] || TEMPLATE_REGISTRY.base;
+  const template = getTemplate(data.template);
   const now = new Date().toISOString();
 
   const displayName = data.couple_last_name

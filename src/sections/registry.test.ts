@@ -355,6 +355,7 @@ describe('sections registry resolution', () => {
   it('keeps template registry definitions cloned before import/edit flows mutate them', () => {
     const templateRegistrySource = readFileSync(resolve(__dirname, '../templates/registry.ts'), 'utf8');
     const initialLayoutSource = readFileSync(resolve(__dirname, '../lib/generateInitialLayout.ts'), 'utf8');
+    const siteGeneratorSource = readFileSync(resolve(__dirname, '../lib/siteGenerator.ts'), 'utf8');
     expect(templateRegistrySource).toContain('const REGISTRY_VARIANT_ALIASES: Record<string, string> = {');
     expect(templateRegistrySource).toContain("default: 'cards'");
     expect(templateRegistrySource).toContain("grid: 'cards'");
@@ -383,5 +384,7 @@ describe('sections registry resolution', () => {
     expect(initialLayoutSource).toContain('variant: existing.variant,');
     expect(initialLayoutSource).toContain('overrides: existing.overrides ?? newSection.overrides,');
     expect(initialLayoutSource).toContain('locked: existing.locked ?? newSection.locked,');
+    expect(siteGeneratorSource).toContain("import { getTemplate } from '../templates/registry';");
+    expect(siteGeneratorSource).toContain('const template = getTemplate(data.template);');
   });
 });
