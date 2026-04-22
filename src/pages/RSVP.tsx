@@ -125,9 +125,16 @@ function normalizeCustomAnswers(answers: Record<string, string | string[]>) {
   );
 }
 
-function parseLegacyEventAttendanceToken(value: string | undefined): boolean {
+function parseLegacyEventAttendanceToken(value: string | undefined): boolean | undefined {
   const normalized = (value || '').trim().toLowerCase();
-  return normalized === 'yes' || normalized === 'y' || normalized === 'true' || normalized === '1' || normalized === 'on' || normalized === 'enabled' || normalized === 'attending' || normalized === 'going' || normalized === 'included' || normalized === 'in' || normalized === 'confirmed' || normalized === 'accepted' || normalized === 'participating' || normalized === 'joining' || normalized === 'coming' || normalized === 'present';
+  if (!normalized) return undefined;
+  if (normalized === 'yes' || normalized === 'y' || normalized === 'true' || normalized === '1' || normalized === 'on' || normalized === 'enabled' || normalized === 'attending' || normalized === 'going' || normalized === 'included' || normalized === 'in' || normalized === 'confirmed' || normalized === 'accepted' || normalized === 'participating' || normalized === 'joining' || normalized === 'coming' || normalized === 'present') {
+    return true;
+  }
+  if (normalized === 'no' || normalized === 'n' || normalized === 'false' || normalized === '0' || normalized === 'off' || normalized === 'disabled' || normalized === 'excluded' || normalized === 'out' || normalized === 'declined' || normalized === 'skipping' || normalized === 'absent') {
+    return false;
+  }
+  return undefined;
 }
 
 function normalizeLegacyEventKey(value: string | undefined): string {
@@ -246,7 +253,7 @@ function parseEventSelectionsFromNotes(notes: string | null, guest: Guest): { cl
           const [k, v] = piece.split(/[:=]/).map((x) => (x || '').trim().toLowerCase());
           return [normalizeLegacyEventKey(k), parseLegacyEventAttendanceToken(v)];
         })
-    ) as Record<string, boolean>;
+    ) as Record<string, boolean | undefined>;
 
     const cleanNotes = notes.replace(bracketMatch[0], '').trim();
 
