@@ -159,19 +159,32 @@ const output = {
     canonicalCouplePath: {
       required: true,
       status: 'missing',
+      blocking: true,
       route: 'Home -> signup/demo/auth -> onboarding/builder -> public site -> RSVP',
       focus: 'UX quality and runtime truth, not just route reachability',
+      evidenceLogPath: 'docs/v1-smoke-proof-log.md',
     },
     runtimeWordingVerification: {
       required: true,
       status: 'missing',
+      blocking: true,
       surfaces: ['privacy/access/publish', 'marketing/settings/billing'],
+      evidenceLogPath: 'docs/v1-smoke-proof-log.md',
     },
     onboardingStarterDraftWording: {
       required: true,
       status: 'missing',
+      blocking: true,
       surfaces: ['onboarding', 'first-run dashboard/site draft'],
+      evidenceLogPath: 'docs/v1-smoke-proof-log.md',
     },
+  },
+  manualProofSummary: {
+    requiredCount: 3,
+    missingCount: 3,
+    blockingCount: 3,
+    blockingKeys: ['canonicalCouplePath', 'runtimeWordingVerification', 'onboardingStarterDraftWording'],
+    evidenceLogPath: 'docs/v1-smoke-proof-log.md',
   },
   whatMustChangeBeforeGo: [
     'Close the anon-auth RSVP blocker on validate-rsvp-token',
