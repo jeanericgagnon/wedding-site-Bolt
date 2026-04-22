@@ -1610,6 +1610,28 @@ describe('quickStartPersistence', () => {
     expect(normalized.followUpAnswers).toEqual({});
   });
 
+
+  it('drops orphaned follow-up answers in question view when empty clarifying records survive', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      viewState: 'question',
+      followUpAnswers: {
+        lodging: 'Need shuttle details',
+      },
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.showFollowUps).toBe(false);
+    expect(normalized.viewState).toBe('question');
+    expect(normalized.followUpAnswers).toEqual({});
+  });
+
   it('closes stale thinking restores when the clarifying state is missing entirely', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       showFollowUps: true,
