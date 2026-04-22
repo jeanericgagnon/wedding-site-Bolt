@@ -126,6 +126,8 @@ export function regenerateLayout(
         enabled: existing.enabled,
         settings: { ...newSection.settings, ...existing.settings },
         bindings: { ...newSection.bindings, ...existing.bindings },
+        overrides: existing.overrides ?? newSection.overrides,
+        locked: existing.locked ?? newSection.locked,
       });
     } else {
       preservedSections.push(newSection);
