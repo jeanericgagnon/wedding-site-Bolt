@@ -114,6 +114,10 @@ describe('publishUiHints', () => {
       'Open your couple details.',
       'Add both names exactly how you want guests to see them.',
     ]);
+    expect(getPublishBlockedHints('Both couple names exactly how you want them shown.')).toEqual([
+      'Open your couple details.',
+      'Add both names exactly how you want guests to see them.',
+    ]);
   });
 
   it('does not mistake the names success detail for a blocker', () => {
