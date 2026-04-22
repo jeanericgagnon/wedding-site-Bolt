@@ -218,6 +218,14 @@ describe('name change intake draft helpers', () => {
       }),
     ]);
 
+    expect(upsertDraftNameChangeExtractedField([], 'draft-current_passport', 'issued dt' as never, '  ', '2024-06-01')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-current_passport',
+        field_key: 'issuance_date',
+        field_label: 'Issuance Date',
+      }),
+    ]);
+
     expect(upsertDraftNameChangeExtractedField([], 'draft-court_order', 'case no' as never, '  ', '24-CV-1188')).toEqual([
       expect.objectContaining({
         document_id: 'draft-court_order',
@@ -275,6 +283,22 @@ describe('name change intake draft helpers', () => {
     ]);
 
     expect(upsertDraftNameChangeExtractedField([], 'draft-court_order', 'date of signature' as never, '  ', '2026-04-05')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-court_order',
+        field_key: 'court_order_date',
+        field_label: 'Court Order Date',
+      }),
+    ]);
+
+    expect(upsertDraftNameChangeExtractedField([], 'draft-court_order', 'signature date' as never, '  ', '2026-04-05')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-court_order',
+        field_key: 'court_order_date',
+        field_label: 'Court Order Date',
+      }),
+    ]);
+
+    expect(upsertDraftNameChangeExtractedField([], 'draft-court_order', 'filing date' as never, '  ', '2026-04-05')).toEqual([
       expect.objectContaining({
         document_id: 'draft-court_order',
         field_key: 'court_order_date',
