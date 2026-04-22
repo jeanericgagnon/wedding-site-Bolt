@@ -292,6 +292,7 @@ export default function RSVP() {
     activeLookupRequestRef.current += 1;
     invalidateActiveSubmit();
     setLoading(false);
+    setSubmitting(false);
     setTokenAutoLoading(false);
     setStep('search');
     setError('');
