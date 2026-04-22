@@ -276,6 +276,7 @@ export default function EventRSVP() {
   }
 
   function openRsvpForm(invitation: EventInvitation) {
+    activeLoadRequestRef.current += 1;
     activeSubmitRequestRef.current += 1;
     submitInFlightRef.current = false;
     if (postSubmitResetTimeoutRef.current !== null) {
