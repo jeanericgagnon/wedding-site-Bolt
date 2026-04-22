@@ -347,6 +347,19 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('falls back to generic current-page copy when the active page title is blank', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].title = '';
+    project.pages[0].sections = [makeSection({ id: 'home-hidden', enabled: false })];
+
+    expect(buildPublishReadiness(project, undefined, { activePageId: project.pages[0].id }).find((item) => item.id === 'current-page')).toEqual({
+      id: 'current-page',
+      label: 'Current page has visible content',
+      done: false,
+      detail: 'Turn on content for the current page.',
+    });
+  });
+
   it('marks sections readiness complete with singular visible-section copy', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];

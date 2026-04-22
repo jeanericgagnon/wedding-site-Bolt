@@ -75,6 +75,7 @@ export const buildPublishReadiness = (
   const hasRsvpEnabled = weddingData ? Boolean(weddingData.rsvp?.enabled) : true;
   const hasUnsavedChanges = Boolean(options?.isDirty);
   const activePageHasVisibleSections = Boolean(activePage?.sections.some((section) => section.enabled));
+  const activePageTitle = activePage?.title?.trim() || 'the current page';
 
   return [
     {
@@ -126,8 +127,8 @@ export const buildPublishReadiness = (
       label: 'Current page has visible content',
       done: activePageHasVisibleSections,
       detail: activePageHasVisibleSections
-        ? `${activePage?.title ?? 'Current page'} has visible sections.`
-        : `Turn on content for ${activePage?.title ?? 'the current page'}.`,
+        ? `${activePageTitle === 'the current page' ? 'Current page' : activePageTitle} has visible sections.`
+        : `Turn on content for ${activePageTitle}.`,
     },
   ];
 };
