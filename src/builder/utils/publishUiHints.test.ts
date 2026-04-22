@@ -420,9 +420,10 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('Select a section on the canvas');
   });
 
-  it('returns section guidance when blocker copy uses the readiness label wording', () => {
-    const hints = getPublishBlockedHints('At least one section is turned on');
-    expect(hints[0]).toContain('Select a section on the canvas');
+  it('does not mistake the sections readiness label for a blocker', () => {
+    expect(getPublishBlockedHints('At least one section is turned on')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
   });
 
   it('does not mistake plural section-count readiness detail for a blocker', () => {
