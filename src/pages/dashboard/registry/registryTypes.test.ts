@@ -106,6 +106,20 @@ describe('registry metadata confidence + attention state', () => {
     expect(itemNeedsAttention(item)).toBe(true);
   });
 
+  it('treats product unavailable titles as bad imports that need repair', () => {
+    const item = makeItem({
+      item_name: 'Product unavailable',
+      metadata_fetch_status: 'success',
+      metadata_confidence_score: 0.92,
+    });
+
+    const state = getRegistryItemMetadataState(item);
+
+    expect(state.hasBadImportTitle).toBe(true);
+    expect(state.repairStates).toEqual(expect.arrayContaining(['broken-import']));
+    expect(itemNeedsAttention(item)).toBe(true);
+  });
+
   it('builds preview data from stored registry item fields', () => {
     const item = makeItem();
     expect(buildRegistryPreviewFromItem(item)).toMatchObject({

@@ -137,7 +137,7 @@ export function getRegistryItemMetadataState(item: RegistryItem): RegistryItemMe
   const missingSummary = preview.missing_fields && preview.missing_fields.length > 0
     ? `Missing: ${preview.missing_fields.join(', ')}`
     : null;
-  const hasBadImportTitle = /^(page not found|gift from\s.+)$/i.test((item.item_name || '').trim());
+  const hasBadImportTitle = /^(page not found|product unavailable|gift from\s.+)$/i.test((item.item_name || '').trim());
 
   return {
     preview,
