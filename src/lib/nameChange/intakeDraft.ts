@@ -51,8 +51,10 @@ export function createDraftNameChangeDocument(
   kind: NameChangeDocumentInput['document_kind'],
   label: string,
 ): NameChangeDocumentInput {
-  const canonicalKind = canonicalizeNameChangeDocumentKind((normalizeDraftDocumentKind(kind) || 'other') as NameChangeDocumentInput['document_kind']);
+  const normalizedKind = normalizeDraftDocumentKind(kind) || 'other';
+  const canonicalKind = canonicalizeNameChangeDocumentKind(normalizedKind as NameChangeDocumentInput['document_kind']);
   const normalizedLabel = normalizeDraftText(label) || humanizeDraftToken(canonicalKind);
+  const shouldUseMaskedFileName = canonicalKind !== 'other';
 
   return {
     id: buildDraftNameChangeDocumentId(canonicalKind),
@@ -60,7 +62,7 @@ export function createDraftNameChangeDocument(
     display_name: normalizedLabel,
     storage_mode: 'metadata_only',
     intake_status: 'uploaded',
-    file_name_masked: `${canonicalKind.replace(/_/g, '-')}-•••.pdf`,
+    file_name_masked: shouldUseMaskedFileName ? `${canonicalKind.replace(/_/g, '-')}-•••.pdf` : null,
     issuing_authority: null,
     issued_on: null,
     expires_on: null,

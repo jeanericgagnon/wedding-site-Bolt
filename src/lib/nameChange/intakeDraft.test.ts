@@ -26,6 +26,7 @@ describe('name change intake draft helpers', () => {
       id: 'draft-other',
       document_kind: 'other',
       display_name: 'Other',
+      file_name_masked: null,
     });
     expect(buildDraftNameChangeDocumentId('___' as never)).toBe('draft-other');
   });
