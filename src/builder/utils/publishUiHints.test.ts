@@ -53,6 +53,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('venue');
   });
 
+  it('returns venue guidance for the real publish readiness blocker copy', () => {
+    const hints = getPublishBlockedHints('Add at least one venue before going live.');
+    expect(hints[0]).toContain('venue');
+  });
+
   it('returns venue guidance for whitespace-padded venue message', () => {
     const hints = getPublishBlockedHints('   Add at least one venue before publishing.   ');
     expect(hints[0]).toContain('venue');
