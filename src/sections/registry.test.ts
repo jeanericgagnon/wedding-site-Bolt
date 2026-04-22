@@ -400,8 +400,11 @@ describe('sections registry resolution', () => {
     expect(templateRegistrySource).toContain('return templateRegistry.map(cloneTemplateDefinition);');
     expect(initialLayoutSource).toContain('overrides: sectionDef.overrides ? { ...sectionDef.overrides } : undefined,');
     expect(initialLayoutSource).toContain('locked: sectionDef.locked,');
+    expect(initialLayoutSource).toContain('function normalizeSectionTypeKey(type: unknown): string {');
+    expect(initialLayoutSource).toContain('currentSectionsByType.set(normalizeSectionTypeKey(section.type), section);');
     expect(initialLayoutSource).toContain('id: existing.id,');
     expect(initialLayoutSource).toContain('variant: existing.variant,');
+    expect(initialLayoutSource).toContain('const existing = currentSectionsByType.get(normalizeSectionTypeKey(newSection.type));');
     expect(initialLayoutSource).toContain('overrides: existing.overrides ?? newSection.overrides,');
     expect(initialLayoutSource).toContain('locked: existing.locked ?? newSection.locked,');
     expect(siteGeneratorSource).toContain("import { getTemplate } from '../templates/registry';");

@@ -17,6 +17,12 @@ function isPlaceholderCopy(value?: string): boolean {
     || normalized.includes('recommendations will be shared soon');
 }
 
+function normalizeSectionTypeKey(type: unknown): string {
+  return typeof type === 'string'
+    ? type.trim().toLowerCase().replace(/[^a-z0-9]/g, '')
+    : '';
+}
+
 export function generateInitialLayout(
   templateId: string,
   data: WeddingDataV1
@@ -113,13 +119,13 @@ export function regenerateLayout(
 
   const currentSectionsByType = new Map<string, SectionInstance>();
   currentLayout.pages[0]?.sections.forEach(section => {
-    currentSectionsByType.set(section.type, section);
+    currentSectionsByType.set(normalizeSectionTypeKey(section.type), section);
   });
 
   const preservedSections: SectionInstance[] = [];
 
   newLayout.pages[0].sections.forEach(newSection => {
-    const existing = currentSectionsByType.get(newSection.type);
+    const existing = currentSectionsByType.get(normalizeSectionTypeKey(newSection.type));
     if (existing) {
       preservedSections.push({
         ...newSection,
