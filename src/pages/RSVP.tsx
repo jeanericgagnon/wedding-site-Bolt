@@ -471,7 +471,12 @@ export default function RSVP() {
 
   const returnToLoadedRsvp = useCallback(() => {
     invalidateActiveSubmit();
-    const normalizedExistingRsvp = buildNormalizedExistingRsvp(formData, customAnswers, 'local-rsvp-confirmation');
+    const selectedGuestIds = applyToHousehold && guest
+      ? [guest.id, ...selectedHouseholdGuestIds]
+      : guest
+        ? [guest.id]
+        : [];
+    const normalizedExistingRsvp = buildNormalizedExistingRsvp(formData, customAnswers, 'local-rsvp-confirmation', selectedGuestIds);
     setError('');
     setFormData((current) => ({
       ...current,
@@ -480,10 +485,12 @@ export default function RSVP() {
       notes: normalizedExistingRsvp.notes || '',
     }));
     setCustomAnswers(normalizedExistingRsvp.custom_answers || {});
+    setApplyToHousehold(applyToHousehold && selectedHouseholdGuestIds.length > 0);
+    setSelectedHouseholdGuestIds(applyToHousehold ? [...selectedHouseholdGuestIds] : []);
     setStep('form');
     setFormStep(1);
     setExistingRsvp(normalizedExistingRsvp);
-  }, [customAnswers, formData, invalidateActiveSubmit]);
+  }, [applyToHousehold, customAnswers, formData, guest, invalidateActiveSubmit, selectedHouseholdGuestIds]);
 
   useEffect(() => {
     return () => {

@@ -5211,6 +5211,75 @@ describe('RSVP stale submit protection', () => {
     expect(screen.getByText('1/1 selected')).toBeInTheDocument();
   });
 
+  it('returns token-linked guests to their submitted household selection truth after success', async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          guest: {
+            id: 'guest-1',
+            first_name: 'Taylor',
+            last_name: 'Rivera',
+            name: 'Taylor Rivera',
+            email: 'taylor@example.com',
+            phone: null,
+            group_name: null,
+            wedding_site_id: 'site-1',
+            plus_one_allowed: false,
+            invited_to_ceremony: true,
+            invited_to_reception: true,
+            invite_token: 'token-1',
+          },
+          existingRsvp: null,
+          guests: null,
+          rsvpDeadline: null,
+          rsvpQuestions: [],
+          rsvpMealConfig: { enabled: false, options: [] },
+          musicPlaylistUrl: null,
+          householdGuests: [
+            {
+              id: 'guest-2',
+              first_name: 'Jordan',
+              last_name: 'Rivera',
+              name: 'Jordan Rivera',
+              invited_to_ceremony: true,
+              invited_to_reception: true,
+              invite_token: 'token-2',
+            },
+          ],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true, guestName: 'Taylor Rivera', attending: true }),
+      });
+
+    window.history.pushState({}, '', '/rsvp?token=token-1');
+
+    render(
+      <BrowserRouter>
+        <RSVP />
+      </BrowserRouter>
+    );
+
+    await screen.findByText('Welcome, Taylor Rivera!');
+    fireEvent.click(screen.getByText('Choose household guests'));
+    fireEvent.click(screen.getByText('Clear'));
+    fireEvent.click(screen.getByText('Jordan Rivera'));
+    fireEvent.click(screen.getByText('Continue to details'));
+    fireEvent.click(screen.getByText('Continue to review'));
+    fireEvent.click(screen.getByText('Submit RSVP'));
+
+    expect(await screen.findByText("You're confirmed!")).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Done'));
+
+    await screen.findByText('Welcome, Taylor Rivera!');
+    fireEvent.click(screen.getByText('Choose household guests'));
+
+    expect(screen.getByText('Jordan Rivera')).toBeInTheDocument();
+    expect(screen.getByText('1/1 selected')).toBeInTheDocument();
+  });
+
   it('normalizes the live RSVP form state immediately after submit success', async () => {
     fetchMock
       .mockResolvedValueOnce({
