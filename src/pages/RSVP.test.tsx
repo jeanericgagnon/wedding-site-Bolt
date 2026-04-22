@@ -125,6 +125,25 @@ describe('RSVP stale submit protection', () => {
     expect(screen.queryByText('An error occurred. Please try again.')).not.toBeInTheDocument();
   });
 
+  it('shows invitation-not-recognized truth when search lookup returns no payload', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => null,
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/rsvp']}>
+        <RSVP />
+      </MemoryRouter>
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('rsvp.search_placeholder'), { target: { value: 'Nobody' } });
+    fireEvent.click(screen.getByText('Find My Invitation'));
+
+    expect(await screen.findByText('Invitation not recognized. Please search by name below.')).toBeInTheDocument();
+    expect(screen.queryByText('An error occurred. Please try again.')).not.toBeInTheDocument();
+  });
+
   it('accepts a single fallback guest result from token lookup', async () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,

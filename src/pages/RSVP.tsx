@@ -449,6 +449,11 @@ export default function RSVP() {
         setError(err);
         return;
       }
+      if (!data) {
+        if (activeLookupRequestRef.current !== requestId) return;
+        setError('Invitation not recognized. Please search by name below.');
+        return;
+      }
 
       const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions?: RSVPQuestion[] | null; rsvpMealConfig?: RSVPMealConfig | null; musicPlaylistUrl?: string | null; householdGuests?: HouseholdGuest[] | null };
 
