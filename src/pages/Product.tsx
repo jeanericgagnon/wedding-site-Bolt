@@ -91,10 +91,10 @@ const V1_SLICE_STATUS = [
   },
   {
     name: 'Guests + RSVP',
-    status: 'Mostly done',
-    tone: 'done',
+    status: 'Proof needed',
+    tone: 'proof',
     done: 'Core guest/RSVP breadth exists and recent trust seams were fixed.',
-    missing: 'Need one clear guest -> RSVP -> dashboard continuity proof.',
+    missing: 'Still needs one guest -> RSVP -> dashboard continuity proof, and the strict RSVP ops proof is currently env-blocked.',
   },
   {
     name: 'Planner access',
