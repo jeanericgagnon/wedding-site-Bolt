@@ -1,3 +1,4 @@
+import { matchesNameChangeDocumentKind } from './documentKinds';
 import { NAME_CHANGE_ENGINE_VERSION, NAME_CHANGE_FORM_REGISTRY, NAME_CHANGE_INSTITUTION_LIBRARY } from './registry';
 import type {
   NameChangeEligibilityDecision,
@@ -65,7 +66,7 @@ export function evaluateCaliforniaNameChangeEligibility(input: NameChangeEngineI
 }
 
 function hasDocument(input: NameChangeEngineInput, kind: string) {
-  return input.documents.some((document) => document.document_kind === kind && document.intake_status !== 'not_started');
+  return input.documents.some((document) => matchesNameChangeDocumentKind(document.document_kind, kind as never) && document.intake_status !== 'not_started');
 }
 
 function hasMeaningfulValue(value: string | null | undefined) {

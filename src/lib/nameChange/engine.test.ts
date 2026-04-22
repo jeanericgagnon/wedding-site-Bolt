@@ -91,4 +91,28 @@ describe('name change engine', () => {
     expect(plan.steps.some((step) => step.id === 'institution-irs-employer')).toBe(false);
     expect(plan.steps.some((step) => step.id === 'institution-professional-licenses')).toBe(false);
   });
+
+  it('treats legacy court-order proof aliases as real legal proof for guided execution', () => {
+    const plan = buildNameChangePlan({
+      ...makeInput({ legal_basis: 'court_order' }),
+      documents: [
+        {
+          document_kind: 'court_order_name_change',
+          display_name: 'Court order',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+        },
+      ],
+    });
+
+    expect(plan.summary.blockers).toEqual([]);
+    expect(plan.steps.find((step) => step.id === 'eligibility-proof')).toMatchObject({
+      status: 'ready',
+      blockers: [],
+    });
+    expect(plan.steps.find((step) => step.id === 'federal-ssa')).toMatchObject({
+      status: 'ready',
+      blockers: [],
+    });
+  });
 });
