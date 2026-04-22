@@ -120,6 +120,7 @@ const output = {
   },
   publicV1ClaimStatus: 'not_clear_to_claim_yet',
   launchCallRightNow: 'no_go_for_public_v1_claim',
+  automationDoesNotClearLaunch: true,
   publicV1ClaimBlockers: [
     'Canonical couple-path still lacks one logged human route-note pass from Home through public RSVP entry',
     'Privacy/access/publish and marketing/settings/billing wording still lack runtime-truth verification',
