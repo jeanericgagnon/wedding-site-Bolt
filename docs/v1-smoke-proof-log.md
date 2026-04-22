@@ -7,6 +7,13 @@ _Owner:_ Product finish lane
 ## Purpose
 This is the hard proof artifact for whether DayOf can credibly claim **v1 / done-enough**.
 
+Current v1 line for this proof pass:
+- couples can create and launch a polished wedding site
+- guests can use the public site and RSVP flows reliably
+- couples can run the core ops layer: guests, RSVP, messages, seating, registry, itinerary, settings
+- planner/collaborator support exists in a real usable form
+- marketing, settings, and billing surfaces describe the product honestly
+
 This is **not** a generic QA checklist.
 This is the must-ship truth gate.
 
