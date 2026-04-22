@@ -490,6 +490,50 @@ describe('EventRSVP token trust continuity', () => {
     expect(screen.queryByText('Event-specific RSVP is temporarily unavailable for this site.')).not.toBeInTheDocument();
   });
 
+  it('shows event RSVP unavailable truth immediately on missing support submit errors', async () => {
+    currentToken = 'guest-token';
+
+    maybeSingleQueue.push(
+      { data: { id: 'guest-1', name: 'Jordan', email: 'jordan@example.com' }, error: null },
+      { data: null, error: null },
+    );
+
+    selectQueue.push({
+      data: [
+        {
+          id: 'inv-1',
+          event_id: 'event-1',
+          itinerary_events: {
+            id: 'event-1',
+            event_name: 'Ceremony',
+            description: '',
+            event_date: '2026-05-02',
+            start_time: '16:00:00',
+            end_time: null,
+            location_name: 'Garden',
+            location_address: '',
+            dress_code: null,
+            notes: null,
+          },
+        },
+      ],
+      error: null,
+    });
+
+    insertQueue.push({ error: { message: 'relation "event_rsvps" does not exist' } });
+
+    render(<EventRSVP />);
+
+    expect(await screen.findByText('Hello, Jordan!')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'RSVP for this event' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Submit RSVP' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Event-specific RSVP is temporarily unavailable for this site.')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Failed to save your RSVP. Please try again.')).not.toBeInTheDocument();
+  });
+
   it('keeps the no-token reset truth if an event RSVP submit resolves after the token is removed', async () => {
     currentToken = 'guest-token';
 

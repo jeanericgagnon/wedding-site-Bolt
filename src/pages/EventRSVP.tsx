@@ -329,7 +329,9 @@ export default function EventRSVP() {
           if (isMissingEventRsvpSupportError(msg)) {
             if (activeSubmitRequestRef.current === requestId) {
               setHasEventRsvpSupport(false);
+              setSubmitError('Event-specific RSVP is temporarily unavailable for this site.');
             }
+            return;
           }
           throw error;
         }
@@ -349,7 +351,9 @@ export default function EventRSVP() {
           if (isMissingEventRsvpSupportError(msg)) {
             if (activeSubmitRequestRef.current === requestId) {
               setHasEventRsvpSupport(false);
+              setSubmitError('Event-specific RSVP is temporarily unavailable for this site.');
             }
+            return;
           }
           throw error;
         }
