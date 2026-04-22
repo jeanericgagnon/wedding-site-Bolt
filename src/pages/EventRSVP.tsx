@@ -326,6 +326,19 @@ export default function EventRSVP() {
     setRsvpForm((current) => updater(current));
   }
 
+  function closeRsvpForm() {
+    activeSubmitRequestRef.current += 1;
+    submitInFlightRef.current = false;
+    if (postSubmitResetTimeoutRef.current !== null) {
+      window.clearTimeout(postSubmitResetTimeoutRef.current);
+      postSubmitResetTimeoutRef.current = null;
+    }
+    setSubmitting(false);
+    setSubmitError('');
+    setSubmitSuccess(false);
+    setSelectedEvent(null);
+  }
+
   async function handleSubmitRsvp(e: React.FormEvent) {
     e.preventDefault();
     if (!selectedEvent || submitting || submitInFlightRef.current) return;
@@ -676,11 +689,7 @@ export default function EventRSVP() {
                       variant="outline"
                       onClick={() => {
                         if (!submitting) {
-                          activeSubmitRequestRef.current += 1;
-                          submitInFlightRef.current = false;
-                          setSubmitError('');
-                          setSubmitSuccess(false);
-                          setSelectedEvent(null);
+                          closeRsvpForm();
                         }
                       }}
                       className="flex-1"
