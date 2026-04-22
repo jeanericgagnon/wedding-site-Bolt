@@ -22,7 +22,9 @@ const isPageLike = (value: unknown): value is BuilderProject['pages'][number] =>
 const getComparableOrderIndex = (value: unknown) => {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
   if (typeof value === 'string') {
-    const parsed = Number(value.trim());
+    const trimmed = value.trim();
+    if (!trimmed) return Number.MAX_SAFE_INTEGER;
+    const parsed = Number(trimmed);
     if (Number.isFinite(parsed)) return parsed;
   }
   return Number.MAX_SAFE_INTEGER;

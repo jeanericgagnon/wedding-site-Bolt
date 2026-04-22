@@ -1222,6 +1222,45 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('ignores whitespace-only string order indexes when picking fallback pages and sections', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages = [
+      {
+        ...project.pages[0],
+        id: 'page-2',
+        title: 'Details',
+        // @ts-expect-error exercising runtime guard for incomplete persisted data
+        orderIndex: '   ',
+        sections: [
+          // @ts-expect-error exercising runtime guard for incomplete persisted data
+          makeSection({ id: 'details-late', enabled: false, orderIndex: '   ' }),
+        ],
+      },
+      {
+        ...project.pages[0],
+        id: 'page-1',
+        title: 'Home',
+        orderIndex: 0,
+        sections: [makeSection({ id: 'home-early', enabled: false, orderIndex: 0 })],
+      },
+    ];
+
+    const issue = getPublishIssue(project);
+    expect(issue?.kind).toBe('no-enabled-sections');
+    if (issue?.kind === 'no-enabled-sections') {
+      expect(issue.firstPageId).toBe('page-1');
+      expect(issue.firstSectionId).toBe('home-early');
+    }
+
+    const readiness = buildPublishReadiness(project, undefined, { activePageId: 'missing-page' });
+    expect(readiness.find((item) => item.id === 'current-page')).toEqual({
+      id: 'current-page',
+      label: 'Current page has visible content',
+      done: false,
+      detail: 'Turn on content for Home.',
+    });
+  });
+
   it('returns no-pages when persisted page arrays contain only null entries', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages = [
