@@ -148,6 +148,21 @@ describe('publishReadiness', () => {
     expect(getPublishValidationError(project, data)).toBe('Turn RSVP on before going live.');
   });
 
+  it('blocks publish when persisted wedding data is missing the venues array entirely', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
+    const data = createEmptyWeddingData();
+    data.couple.partner1Name = 'Alex';
+    data.couple.partner2Name = 'Jordan';
+    data.event.weddingDateISO = '2027-06-12';
+    data.rsvp.enabled = true;
+    // @ts-expect-error exercising runtime guard for incomplete persisted data
+    delete data.venues;
+
+    expect(getPublishIssue(project, data)?.kind).toBe('missing-venue');
+    expect(getPublishValidationError(project, data)).toBe('Add at least one venue before going live.');
+  });
+
   it('marks RSVP readiness incomplete when wedding data disables replies', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
@@ -212,6 +227,21 @@ describe('publishReadiness', () => {
     project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
     const data = createEmptyWeddingData();
     data.venues = [{ id: 'v1', name: '   ', address: '   ' }];
+
+    expect(buildPublishReadiness(project, data).find((item) => item.id === 'venue')).toEqual({
+      id: 'venue',
+      label: 'Venue details are set',
+      done: false,
+      detail: 'Add at least one venue name or address.',
+    });
+  });
+
+  it('marks venue readiness incomplete when persisted wedding data is missing the venues array entirely', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
+    const data = createEmptyWeddingData();
+    // @ts-expect-error exercising runtime guard for incomplete persisted data
+    delete data.venues;
 
     expect(buildPublishReadiness(project, data).find((item) => item.id === 'venue')).toEqual({
       id: 'venue',
