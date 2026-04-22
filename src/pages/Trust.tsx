@@ -9,7 +9,7 @@ const TRUST_PILLARS = [
   },
   {
     title: 'Beautiful site plus real operations',
-    body: 'DayOf is not just a brochure page. The product is meant to carry the wedding website, RSVPs, guest management, messaging, seating, travel details, and day-of coordination together.',
+    body: 'DayOf is not just a brochure page. The product is meant to carry the wedding website, RSVPs, guest management, messaging, seating, travel details, and day-of coordination together, with any still-open proof gaps called out plainly instead of marketed away.',
   },
   {
     title: 'Guest access handled carefully',
