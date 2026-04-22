@@ -28,6 +28,7 @@ Protected route smoke inventory is automated; remaining proof work is now manual
 Last canonical smoke confirmation: 2026-04-21 via `npm run proof:v1:canonical-smoke`
 Latest published-site lookup confirmation: `alex-jordan-demo`
 Latest live smoke breadth: 31 Playwright checks passing
+Latest canonical smoke result: `ok: true`, `blocked: false`
 
 This is **not** a generic QA checklist.
 This is the must-ship truth gate.
