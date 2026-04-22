@@ -789,7 +789,17 @@ export const DashboardRegistry: React.FC = () => {
   const refreshBudgetRemaining = Math.max(0, monthlyRefreshCap - monthlyRefreshCount);
   const budgetUtilization = monthlyRefreshCap > 0 ? monthlyRefreshCount / monthlyRefreshCap : 0;
   const nearBudgetCap = budgetUtilization >= 0.8;
-  const eligibleItemCount = items.filter((item) => refreshIncludePurchased || (item.purchase_status !== 'purchased' && !item.hide_when_purchased)).length;
+  const normalizedItems = items.map((item) => {
+    const quantityState = sanitizeRegistryQuantityState(item.quantity_purchased ?? 0, item.quantity_needed ?? 1);
+    return {
+      ...item,
+      quantity_needed: quantityState.quantityNeeded,
+      quantity_purchased: quantityState.quantityPurchased,
+      purchase_status: quantityState.purchaseStatus,
+      purchaser_name: quantityState.purchaseStatus === 'available' ? null : item.purchaser_name,
+    };
+  });
+  const eligibleItemCount = normalizedItems.filter((item) => refreshIncludePurchased || (item.purchase_status !== 'purchased' && !item.hide_when_purchased)).length;
   const projectedMonthlyCalls = Math.min(eligibleItemCount, monthlyRefreshCap);
   const projectedRefreshCoverage = eligibleItemCount > 0 ? Math.round((projectedMonthlyCalls / eligibleItemCount) * 100) : 100;
   const daysUntilRefreshWindowEnd = refreshWindowUntil ? Math.ceil((refreshWindowUntil.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
@@ -816,14 +826,14 @@ export const DashboardRegistry: React.FC = () => {
   const recommendedPreset: 'lean' | 'balanced' | 'aggressive' = (daysUntilRefreshWindowEnd != null && daysUntilRefreshWindowEnd <= 14) ? 'lean' : baseRecommendedPreset;
 
   const counts = {
-    total: items.length,
-    purchased: items.filter(i => i.purchase_status === 'purchased').length,
-    partial: items.filter(i => i.purchase_status === 'partial').length,
-    available: items.filter(i => i.purchase_status === 'available').length,
-    totalValue: items.reduce((s, i) => s + (i.price_amount ?? 0), 0),
+    total: normalizedItems.length,
+    purchased: normalizedItems.filter(i => i.purchase_status === 'purchased').length,
+    partial: normalizedItems.filter(i => i.purchase_status === 'partial').length,
+    available: normalizedItems.filter(i => i.purchase_status === 'available').length,
+    totalValue: normalizedItems.reduce((s, i) => s + (i.price_amount ?? 0), 0),
   };
 
-  const fundStats = items.reduce((acc, item) => {
+  const fundStats = normalizedItems.reduce((acc, item) => {
     if (item.item_type !== 'cash_fund') return acc;
     acc.count += 1;
     acc.goal += item.fund_goal_amount ?? 0;
@@ -832,11 +842,11 @@ export const DashboardRegistry: React.FC = () => {
   }, { count: 0, goal: 0, received: 0 });
 
   const fulfillmentRate = counts.total > 0 ? Math.round((counts.purchased / counts.total) * 100) : 0;
-  const recentActivity = [...items]
+  const recentActivity = [...normalizedItems]
     .filter((item) => item.updated_at || item.created_at)
     .sort((a, b) => new Date(b.updated_at ?? b.created_at ?? 0).getTime() - new Date(a.updated_at ?? a.created_at ?? 0).getTime())
     .slice(0, 6);
-  const topRegistryItems = [...items]
+  const topRegistryItems = [...normalizedItems]
     .sort((a, b) => {
       const aProgress = (a.quantity_purchased ?? 0) / Math.max(a.quantity_needed ?? 1, 1);
       const bProgress = (b.quantity_purchased ?? 0) / Math.max(b.quantity_needed ?? 1, 1);
@@ -845,11 +855,11 @@ export const DashboardRegistry: React.FC = () => {
     .slice(0, 5);
 
   const alertCounts = {
-    stale: items.filter((i) => !i.metadata_last_checked_at || (Date.now() - new Date(i.metadata_last_checked_at).getTime()) > 1000 * 60 * 60 * 24).length,
-    priceChanged: items.filter((i) => i.previous_price_amount != null && i.price_amount != null && i.previous_price_amount !== i.price_amount).length,
-    outOfStock: items.filter((i) => (i.availability || '').toLowerCase().includes('out')).length,
-    imageIssues: items.filter((i) => !i.image_url || i.image_url.includes('thum.io') || i.image_url.includes('weserv.nl')).length,
-    badImports: items.filter((i) => /^(page not found|gift from\s.+)$/i.test((i.item_name || '').trim())).length,
+    stale: normalizedItems.filter((i) => !i.metadata_last_checked_at || (Date.now() - new Date(i.metadata_last_checked_at).getTime()) > 1000 * 60 * 60 * 24).length,
+    priceChanged: normalizedItems.filter((i) => i.previous_price_amount != null && i.price_amount != null && i.previous_price_amount !== i.price_amount).length,
+    outOfStock: normalizedItems.filter((i) => (i.availability || '').toLowerCase().includes('out')).length,
+    imageIssues: normalizedItems.filter((i) => !i.image_url || i.image_url.includes('thum.io') || i.image_url.includes('weserv.nl')).length,
+    badImports: normalizedItems.filter((i) => /^(page not found|gift from\s.+)$/i.test((i.item_name || '').trim())).length,
   };
 
 
