@@ -4,7 +4,7 @@ import { Heart, Chrome, ArrowLeft, Mail, AlertCircle } from 'lucide-react';
 import { Button, Card, Input } from '../components/ui';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
-import { consumeSignupReturnPath, writeSignupReturnPath } from '../lib/signupContinuation';
+import { clearSignupReturnPath, consumeSignupReturnPath, writeSignupReturnPath } from '../lib/signupContinuation';
 import { resolveLoginReturnPath } from '../lib/loginReturnResolver';
 import { normalizeMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnapshot } from '../lib/quickStartStateTransfer';
 
@@ -53,7 +53,7 @@ export const Login: React.FC = () => {
 
   useEffect(() => {
     if (!explicitReturnPath && !normalizedQuickStartDraft && !hasInviteContext) {
-      writeSignupReturnPath(null);
+      clearSignupReturnPath();
     }
   }, [explicitReturnPath, normalizedQuickStartDraft, hasInviteContext]);
 
