@@ -583,6 +583,7 @@ export default function RSVP() {
     setActivePredictionIndex(-1);
     setError('');
     setStep('search');
+    setSearchValue(picked.invite_token ?? picked.id);
     setAmbiguousGuests([]);
     setGuest(null);
     setExistingRsvp(null);
