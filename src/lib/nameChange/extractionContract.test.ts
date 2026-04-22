@@ -91,6 +91,24 @@ describe('name change extraction contract', () => {
     expect(snapshot.marriageCertificate.spouseLastName).toBe('Jordan');
   });
 
+  it('ignores unscoped non-manual extraction rows when resolving manual fallback truth', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-marriage',
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      { field_key: 'spouse_last_name', field_label: 'Spouse last name', field_value_masked: 'Jordan-Extracted', source_type: 'document_extract', is_verified: true },
+    ];
+
+    const snapshot = buildNameChangeExtractionContractSnapshot(makeCase(), documents, extractedFields);
+    expect(snapshot.marriageCertificate.spouseLastName).toBeNull();
+  });
+
   it('keeps missing typed extraction fields null', () => {
     const snapshot = buildNameChangeExtractionContractSnapshot(makeCase(), [], []);
     expect(snapshot.courtOrder).toMatchObject({

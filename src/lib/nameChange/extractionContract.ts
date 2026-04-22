@@ -44,7 +44,7 @@ function getManualFallbackField(
   extractedFields: NameChangeExtractedFieldInput[],
   fieldKey: NameChangeExtractionFieldKey,
 ): NameChangeExtractedFieldInput | null {
-  return extractedFields.find((item) => !item.document_id && item.field_key === fieldKey) ?? null;
+  return extractedFields.find((item) => !item.document_id && item.field_key === fieldKey && item.source_type === 'manual') ?? null;
 }
 
 function getManualFallbackValue(
