@@ -26,6 +26,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
 import { getAllSectionManifests, BuilderSectionDefinitionWithMeta, VariantMeta, getSectionManifest } from '../registry/sectionManifests';
+import { getVariantPreviewSource } from '../registry/variantPreviewSource';
 import { BuilderSectionType, BuilderSectionInstance, createDefaultSectionInstance } from '../../types/builder/section';
 import { createEmptyWeddingData, WeddingDataV1 } from '../../types/weddingData';
 import { SectionRenderer } from './SectionRenderer';
@@ -97,10 +98,11 @@ function hasLivePreviewSupport(sectionType: BuilderSectionType, variantId: strin
 }
 
 function buildPreviewSettings(sectionType: BuilderSectionType, variantId: string): Record<string, unknown> {
+  const previewVariantId = getVariantPreviewSource(sectionType, variantId);
   return {
     showTitle: true,
     ...(PREVIEW_FIXTURES_BY_TYPE[sectionType] ?? {}),
-    ...(PREVIEW_FIXTURES_BY_VARIANT[`${sectionType}:${variantId}`] ?? {}),
+    ...(PREVIEW_FIXTURES_BY_VARIANT[`${sectionType}:${previewVariantId}`] ?? {}),
   };
 }
 

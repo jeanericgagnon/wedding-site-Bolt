@@ -14,4 +14,13 @@ describe('getVariantPreviewSource', () => {
   it('leaves non-registry previews untouched', () => {
     expect(getVariantPreviewSource('hero', 'countdown')).toBe('countdown');
   });
+
+  it('maps legacy registry aliases onto canonical public preview fixtures', () => {
+    expect(getVariantPreviewSource('registry', 'default')).toBe('cards');
+    expect(getVariantPreviewSource('registry', 'grid')).toBe('cards');
+    expect(getVariantPreviewSource('registry', 'tabs')).toBe('cards');
+    expect(getVariantPreviewSource('registry', 'illustrated')).toBe('cards');
+    expect(getVariantPreviewSource('registry', 'featured')).toBe('featured');
+    expect(getVariantPreviewSource('registry', 'honeymoon')).toBe('featured');
+  });
 });
