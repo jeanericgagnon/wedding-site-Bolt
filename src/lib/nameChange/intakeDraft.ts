@@ -16,7 +16,7 @@ function normalizeDraftDocumentKind(value: string) {
     .trim()
     .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
     .toLowerCase()
-    .replace(/[\/\-\s]+/g, '_')
+    .replace(/[\\/\-\s]+/g, '_')
     .replace(/_+/g, '_')
     .replace(/^_+|_+$/g, '') as NameChangeDocumentInput['document_kind'];
 }
@@ -26,7 +26,7 @@ function normalizeDraftFieldKey(value: string) {
     .trim()
     .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
     .toLowerCase()
-    .replace(/[\/\-\s]+/g, '_')
+    .replace(/[\\/\-\s]+/g, '_')
     .replace(/_+/g, '_')
     .replace(/^_+|_+$/g, '') as NameChangeExtractedFieldInput['field_key'];
 }
@@ -37,7 +37,7 @@ export function buildDraftNameChangeDocumentId(kind: NameChangeDocumentInput['do
 
 export function normalizeDraftNameChangeDocumentId(documentId: string | null | undefined) {
   const normalizedDocumentId = documentId?.trim() || null;
-  const normalizedDraftPrefix = normalizedDocumentId?.replace(/^draft(?:\s*[\/_-]?\s*)/i, 'draft-') ?? null;
+  const normalizedDraftPrefix = normalizedDocumentId?.replace(/^draft(?:\s*[\\/_-]?\s*)/i, 'draft-') ?? null;
   if (!normalizedDraftPrefix?.startsWith('draft-')) return normalizedDocumentId;
   return buildDraftNameChangeDocumentId(normalizedDraftPrefix.slice('draft-'.length) as NameChangeDocumentInput['document_kind']);
 }
