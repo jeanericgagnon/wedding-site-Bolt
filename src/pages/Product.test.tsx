@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-router-dom', async () => {
@@ -43,5 +43,15 @@ describe('Product starter draft truth', () => {
     expect(screen.getByText('Template: Modern Luxe • Website: starter draft is ready to review before sharing it with guests')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Review draft privacy + share settings' })).toBeInTheDocument();
     expect(screen.queryByText(/launch settings/i)).not.toBeInTheDocument();
+  });
+
+  it('keeps messaging framed as a review-before-send step instead of a fire-and-forget claim', () => {
+    render(<Product />);
+
+    fireEvent.click(screen.getByRole('button', { name: /message everyone/i }));
+
+    expect(screen.getByText('Review the right update before sending it to the right group.')).toBeInTheDocument();
+    expect(screen.getByText('Stop copy/pasting from spreadsheets to email tools while keeping send decisions in your hands.')).toBeInTheDocument();
+    expect(screen.getByText('Draft prepared for review')).toBeInTheDocument();
   });
 });

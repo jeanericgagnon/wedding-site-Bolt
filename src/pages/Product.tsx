@@ -21,7 +21,7 @@ const STEPS: Step[] = [
   { id: 'launch', title: 'Build a site draft you’ll be proud to share', kicker: 'Step 1', outcome: SITE_TRUST_COPY.privateEditing, detail: `Start with a strong template, clear setup, and ${SITE_TRUST_COPY.draftToLaunch.toLowerCase()}` },
   { id: 'guests', title: 'Organize guests + households', kicker: 'Step 2', outcome: 'Know who is invited and where they belong.', detail: 'Households, plus-ones, and statuses in one place.' },
   { id: 'rsvp', title: 'Collect RSVPs cleanly', kicker: 'Step 3', outcome: 'Get responses without confusion.', detail: 'Event-level RSVP and meal tracking without hacks.' },
-  { id: 'message', title: 'Message everyone', kicker: 'Step 4', outcome: 'Send the right update to the right group.', detail: 'Stop copy/pasting from spreadsheets to email tools.' },
+  { id: 'message', title: 'Message everyone', kicker: 'Step 4', outcome: 'Review the right update before sending it to the right group.', detail: 'Stop copy/pasting from spreadsheets to email tools while keeping send decisions in your hands.' },
   { id: 'seating', title: 'Run seating + timeline', kicker: 'Step 5', outcome: 'Plan execution without doc chaos.', detail: 'Keep tables and event flow aligned in one view.' },
   { id: 'dayof', title: 'Execute day-of', kicker: 'Step 6', outcome: 'Fewer surprises on event day.', detail: 'Use one calmer coordination view instead of juggling a pile of tabs.' },
 ];

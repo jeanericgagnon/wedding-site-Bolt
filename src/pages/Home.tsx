@@ -82,7 +82,7 @@ export const Home: React.FC = () => {
       title: 'Messaging',
       icon: Mail,
       href: '/features/messaging',
-      bullets: ['Email included (fair-use)', 'Guest segmentation', 'Schedule sends', 'Delivery status updates', 'Draft + scheduled send flow', 'Ready-to-send templates'],
+      bullets: ['Email included (fair-use)', 'Guest segmentation', 'Schedule sends', 'Delivery status updates', 'Draft + scheduled send flow', 'Review-before-send templates'],
     },
     {
       id: 'planner',
