@@ -109,6 +109,11 @@ function getRsvpQuestionLabel(question: RSVPQuestion): string {
   return 'Question';
 }
 
+function getRequiredQuestionValidationLabel(question: RSVPQuestion): string {
+  const label = getRsvpQuestionLabel(question);
+  return label === 'Question' ? 'this question' : label;
+}
+
 
 function parseEventSelectionsFromNotes(notes: string | null, guest: Guest): { cleanNotes: string; attendCeremony: boolean; attendReception: boolean } {
   const fallback = {
@@ -773,7 +778,7 @@ export default function RSVP() {
         });
 
       if (requiredMissing) {
-        setError(`Please answer: ${getRsvpQuestionLabel(requiredMissing).toLowerCase() === 'question' ? 'this question' : getRsvpQuestionLabel(requiredMissing)}`);
+        setError(`Please answer: ${getRequiredQuestionValidationLabel(requiredMissing)}`);
         return;
       }
       setError('');
