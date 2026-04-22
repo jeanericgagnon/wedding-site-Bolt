@@ -65,10 +65,7 @@ function fromSectionInstanceToBuilderSection(
     settings: { ...sec.settings },
     bindings: { ...sec.bindings },
     styleOverrides: sec.overrides
-      ? {
-          backgroundColor: sec.overrides.backgroundColor as string | undefined,
-          textColor: sec.overrides.textColor as string | undefined,
-        }
+      ? { ...sec.overrides } as BuilderSectionInstance['styleOverrides']
       : {},
     meta: { createdAtISO: now, updatedAtISO: now },
   };

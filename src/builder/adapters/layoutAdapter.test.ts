@@ -61,6 +61,50 @@ describe('fromExistingLayoutToBuilderProject', () => {
     const project = fromExistingLayoutToBuilderProject('w1', makeLayout());
     expect(project.meta.createdAtISO).toBe('2026-01-01T00:00:00Z');
   });
+
+  it('preserves full section style overrides when rebuilding builder project state from layout truth', () => {
+    const project = fromExistingLayoutToBuilderProject('w1', makeLayout({
+      pages: [
+        {
+          id: 'page-1',
+          title: 'Main',
+          sections: [
+            {
+              id: 's1',
+              type: 'hero',
+              variant: 'default',
+              enabled: true,
+              bindings: {},
+              settings: { title: 'Hello' },
+              overrides: {
+                backgroundColor: '#ffffff',
+                textColor: '#111827',
+                paddingTop: '96px',
+                paddingBottom: '48px',
+                sideImage: 'https://example.com/hero.jpg',
+                sideImagePosition: 'left',
+                sideImageSize: 'lg',
+                sideImageFit: 'contain',
+                animationPreset: 'fade-up',
+              },
+            },
+          ],
+        },
+      ],
+    }));
+
+    expect(project.pages[0].sections[0].styleOverrides).toMatchObject({
+      backgroundColor: '#ffffff',
+      textColor: '#111827',
+      paddingTop: '96px',
+      paddingBottom: '48px',
+      sideImage: 'https://example.com/hero.jpg',
+      sideImagePosition: 'left',
+      sideImageSize: 'lg',
+      sideImageFit: 'contain',
+      animationPreset: 'fade-up',
+    });
+  });
 });
 
 describe('fromBuilderProjectToExistingLayout', () => {
