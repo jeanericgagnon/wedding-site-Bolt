@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { normalizeGuidedSetupDraftSnapshot } from './guidedSetupPersistence';
+import { describe, expect, it, vi } from 'vitest';
+import { clearGuidedSetupDraftSnapshot, GUIDED_SETUP_STORAGE_KEY, normalizeGuidedSetupDraftSnapshot } from './guidedSetupPersistence';
 
 const defaults = {
   currentStep: 'welcome' as const,
@@ -90,4 +90,24 @@ describe('guidedSetupPersistence', () => {
 
     expect(defaults.formData.city).toBe('');
   });
+
+  it('skips guided setup cleanup deletes when draft storage is already clear', () => {
+    const removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem');
+
+    clearGuidedSetupDraftSnapshot();
+
+    expect(removeItemSpy).not.toHaveBeenCalled();
+    removeItemSpy.mockRestore();
+  });
+
+  it('tolerates guided setup cleanup failures', () => {
+    window.localStorage.setItem(GUIDED_SETUP_STORAGE_KEY, 'stale');
+    const removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+      throw new Error('blocked');
+    });
+
+    expect(() => clearGuidedSetupDraftSnapshot()).not.toThrow();
+    removeItemSpy.mockRestore();
+  });
+
 });

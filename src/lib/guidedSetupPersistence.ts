@@ -77,3 +77,16 @@ export const normalizeGuidedSetupDraftSnapshot = (
     formData: normalizeGuidedSetupFormData(parsed.formData, defaults.formData),
   };
 };
+
+
+export const clearGuidedSetupDraftSnapshot = () => {
+  if (typeof window === 'undefined') return;
+
+  try {
+    if (window.localStorage.getItem(GUIDED_SETUP_STORAGE_KEY) !== null) {
+      window.localStorage.removeItem(GUIDED_SETUP_STORAGE_KEY);
+    }
+  } catch {
+    // ignore cleanup failures so other onboarding draft cleanup can continue
+  }
+};
