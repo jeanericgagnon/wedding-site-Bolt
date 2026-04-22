@@ -61,8 +61,8 @@ describe('registry cards public parity helpers', () => {
   it('tracks partial and purchased registry truth separately in store summaries', () => {
     const groups = groupByStore([
       makeItem({ id: 'available', store_name: 'Target', purchase_status: 'available' }),
-      makeItem({ id: 'partial', store_name: 'Target', purchase_status: 'partial' }),
-      makeItem({ id: 'purchased', store_name: 'Target', purchase_status: 'purchased' }),
+      makeItem({ id: 'partial', store_name: 'Target', purchase_status: 'partial', quantity_purchased: 1, quantity_needed: 2 }),
+      makeItem({ id: 'purchased', store_name: 'Target', purchase_status: 'purchased', quantity_purchased: 1, quantity_needed: 1 }),
     ]);
 
     expect(groups).toEqual([

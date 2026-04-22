@@ -39,8 +39,8 @@ describe('registry featured public parity helpers', () => {
   it('derives live store links from canonical-only imported registry items', () => {
     expect(groupRegistryStoreLinks([
       makeItem({ id: '1', store_name: 'Crate & Barrel', item_url: null, canonical_url: 'https://example.com/cb' }),
-      makeItem({ id: '2', store_name: 'Crate & Barrel', item_url: 'https://example.com/direct', canonical_url: null }),
-      makeItem({ id: '3', store_name: 'Target', item_url: null, canonical_url: 'https://example.com/target' }),
+      makeItem({ id: '2', store_name: 'Crate & Barrel', item_url: 'https://example.com/direct', canonical_url: null, quantity_purchased: 1, quantity_needed: 2, purchase_status: 'partial' }),
+      makeItem({ id: '3', store_name: 'Target', item_url: null, canonical_url: 'https://example.com/target', quantity_purchased: 1, quantity_needed: 1, purchase_status: 'purchased' }),
     ])).toEqual([
       { id: '1', store: 'Crate & Barrel', url: 'https://example.com/cb', description: '' },
       { id: '3', store: 'Target', url: 'https://example.com/target', description: '' },

@@ -65,7 +65,7 @@ export function normalizeRegistryStoreGroupItems(items: RegistryItem[]): Registr
 
 export function groupByStore(items: RegistryItem[]): Array<{ store: string; count: number; available: number; partial: number; purchased: number; url: string | null }> {
   const map = new Map<string, { count: number; available: number; partial: number; purchased: number; url: string | null }>();
-  for (const item of items) {
+  for (const item of normalizeRegistryStoreGroupItems(items)) {
     const store = item.store_name ?? item.merchant ?? 'Other';
     const publicUrl = getRegistryItemPublicUrl(item);
     const existing = map.get(store) ?? { count: 0, available: 0, partial: 0, purchased: 0, url: publicUrl };

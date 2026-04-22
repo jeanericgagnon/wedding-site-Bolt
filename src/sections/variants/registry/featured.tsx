@@ -239,7 +239,7 @@ export function normalizeRegistryFeaturedItems(items: RegistryItem[]): RegistryI
 export function groupRegistryStoreLinks(items: RegistryItem[]): z.infer<typeof RegistryStoreLinkSchema>[] {
   const grouped = new Map<string, z.infer<typeof RegistryStoreLinkSchema>>();
 
-  for (const item of items) {
+  for (const item of normalizeRegistryFeaturedItems(items)) {
     const store = item.store_name ?? item.merchant ?? 'Registry';
     const publicUrl = getRegistryItemPublicUrl(item);
     const existing = grouped.get(store);
@@ -263,18 +263,19 @@ export function groupRegistryStoreLinks(items: RegistryItem[]): z.infer<typeof R
 }
 
 function registryItemToGift(item: RegistryItem): z.infer<typeof FeaturedGiftSchema> {
+  const normalizedItem = normalizeRegistryFeaturedItems([item])[0] ?? item;
   return {
-    id: item.id,
-    name: cleanGiftTitle(item.item_name),
-    store: item.store_name ?? item.merchant ?? '',
-    price: normalizePriceLabel(item.price_label, item.price_amount),
-    description: item.description ?? item.notes ?? '',
-    image: item.image_url ?? '',
-    url: item.item_url ?? item.canonical_url ?? '',
+    id: normalizedItem.id,
+    name: cleanGiftTitle(normalizedItem.item_name),
+    store: normalizedItem.store_name ?? normalizedItem.merchant ?? '',
+    price: normalizePriceLabel(normalizedItem.price_label, normalizedItem.price_amount),
+    description: normalizedItem.description ?? normalizedItem.notes ?? '',
+    image: normalizedItem.image_url ?? '',
+    url: normalizedItem.item_url ?? normalizedItem.canonical_url ?? '',
     category: '',
-    isPriority: item.priority === 'high',
-    isClaimed: item.purchase_status === 'purchased',
-    isPartiallyClaimed: item.purchase_status === 'partial',
+    isPriority: normalizedItem.priority === 'high',
+    isClaimed: normalizedItem.purchase_status === 'purchased',
+    isPartiallyClaimed: normalizedItem.purchase_status === 'partial',
   };
 }
 

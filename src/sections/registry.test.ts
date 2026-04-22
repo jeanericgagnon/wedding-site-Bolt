@@ -284,6 +284,8 @@ describe('sections registry resolution', () => {
     expect(registrySectionComponent).toContain("purchaser_name: quantityState.purchaseStatus === 'available' ? null : item.purchaser_name,");
     expect(registryCards).toContain('export function normalizeRegistryStoreGroupItems(items: RegistryItem[]): RegistryItem[] {');
     expect(registryFeatured).toContain('export function normalizeRegistryFeaturedItems(items: RegistryItem[]): RegistryItem[] {');
+    expect(registryFeatured).toContain('for (const item of normalizeRegistryFeaturedItems(items)) {');
+    expect(registryCards).toContain('for (const item of normalizeRegistryStoreGroupItems(items)) {');
   });
 
   it('keeps public purchaser status aligned with owner purchase state truth', () => {
