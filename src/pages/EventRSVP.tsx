@@ -327,8 +327,8 @@ export default function EventRSVP() {
 
     return {
       attending: form.attending,
-      dietary_restrictions: dietaryRestrictions || null,
-      notes: notes || null,
+      dietary_restrictions: form.attending ? (dietaryRestrictions || null) : null,
+      notes: form.attending ? (notes || null) : null,
     };
   }
 

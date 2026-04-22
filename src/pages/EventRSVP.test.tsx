@@ -318,6 +318,66 @@ describe('EventRSVP token trust continuity', () => {
     ]);
   });
 
+  it('drops stale event RSVP notes when the guest switches to not attending before submit', async () => {
+    currentToken = 'guest-token';
+
+    maybeSingleQueue.push(
+      { data: { id: 'guest-1', name: 'Taylor', email: 'taylor@example.com' }, error: null },
+      { data: null, error: null },
+    );
+
+    selectQueue.push({
+      data: [
+        {
+          id: 'inv-1',
+          event_id: 'event-1',
+          itinerary_events: {
+            id: 'event-1',
+            event_name: 'Welcome Dinner',
+            description: '',
+            event_date: '2026-05-01',
+            start_time: '18:00:00',
+            end_time: null,
+            location_name: 'The Loft',
+            location_address: '',
+            dress_code: null,
+            notes: null,
+          },
+        },
+      ],
+      error: null,
+    });
+
+    insertQueue.push({ error: null });
+
+    render(<EventRSVP />);
+
+    expect(await screen.findByText('Hello, Taylor!')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'RSVP for this event' }));
+    fireEvent.change(screen.getByPlaceholderText('e.g., Vegetarian, Gluten-free, Nut allergy'), {
+      target: { value: 'Vegetarian' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Any special requests or messages for the couple'), {
+      target: { value: 'See you there' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: "Can't make it" }));
+    fireEvent.click(screen.getByRole('button', { name: 'Submit RSVP' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Response saved')).toBeInTheDocument();
+    });
+
+    expect(insertedPayloads).toHaveLength(1);
+    expect(insertedPayloads[0]).toEqual([
+      expect.objectContaining({
+        event_invitation_id: 'inv-1',
+        attending: false,
+        dietary_restrictions: null,
+        notes: null,
+      }),
+    ]);
+  });
+
   it('normalizes loaded event RSVP truth before reopening an existing response', async () => {
     currentToken = 'guest-token';
 
