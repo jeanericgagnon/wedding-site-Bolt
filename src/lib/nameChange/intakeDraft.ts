@@ -227,6 +227,30 @@ function normalizeDraftFieldValue(fieldKey: NameChangeExtractedFieldInput['field
         return `${year}-${String(monthMap[normalizedMonthName as keyof typeof monthMap]).padStart(2, '0')}-${day.padStart(2, '0')}`;
       }
     }
+
+    const dayFirstWrittenDateMatch = normalizedValue.match(/^(\d{1,2})\s+([A-Za-z]+\.?)[\s,]+(\d{4})$/);
+    if (dayFirstWrittenDateMatch) {
+      const [, day, monthName, year] = dayFirstWrittenDateMatch;
+      const normalizedMonthName = monthName.toLowerCase().replace(/\.$/, '');
+      const monthMap = {
+        january: 1, jan: 1,
+        february: 2, feb: 2,
+        march: 3, mar: 3,
+        april: 4, apr: 4,
+        may: 5,
+        june: 6, jun: 6,
+        july: 7, jul: 7,
+        august: 8, aug: 8,
+        september: 9, sep: 9, sept: 9,
+        october: 10, oct: 10,
+        november: 11, nov: 11,
+        december: 12, dec: 12,
+      } as const;
+      const month = monthMap[normalizedMonthName as keyof typeof monthMap];
+      if (month) {
+        return `${year}-${String(month).padStart(2, '0')}-${day.padStart(2, '0')}`;
+      }
+    }
   }
 
   return normalizedValue;
