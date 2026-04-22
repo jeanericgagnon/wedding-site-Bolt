@@ -10,6 +10,7 @@ _Highest-risk trust gap:_ guests / RSVP ops proof is still blocked by anon-auth 
 _Secondary trust gap:_ canonical couple-path truth notes and wording verification are still missing
 _Automation caveat:_ passing canonical smoke is not launch clearance by itself
 _Truth gate summary:_ automation is green, launch truth is still red
+_What must change before GO:_ close the anon-auth RSVP blocker and log the canonical couple-path truth pass
 
 ## Purpose
 This is the hard proof artifact for whether DayOf can credibly claim **v1 / done-enough**.
