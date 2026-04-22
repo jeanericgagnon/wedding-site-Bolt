@@ -199,6 +199,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('Designs');
   });
 
+  it('returns page guidance when short page blocker copy is lowercased by upstream formatting', () => {
+    const hints = getPublishBlockedHints('add a page or apply a starting design.');
+    expect(hints[0]).toContain('Designs');
+  });
+
   it('detects publishNow from querystring', () => {
     expect(shouldAutoPublishFromSearch('?publishNow=1')).toBe(true);
     expect(shouldAutoPublishFromSearch('?foo=bar&publishNow=1')).toBe(true);
