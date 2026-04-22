@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { getAllSectionManifests, getSectionManifest } from '../builder/registry/sectionManifests';
 import { getDefinition, getVariantsForType, resolveAndParse, resolveCanonicalRegistrySectionInput, resolveCanonicalRegistrySectionType, resolveCanonicalRegistryVariant } from './registry';
-import { getAllTemplates, getTemplate, TEMPLATE_REGISTRY } from '../templates/registry';
+import { getAllTemplates, getTemplate, resolveCanonicalTemplateId, TEMPLATE_REGISTRY } from '../templates/registry';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { getSectionComponent, getSectionVariants } from './sectionRegistry';
@@ -207,6 +207,8 @@ describe('sections registry resolution', () => {
     expect(getTemplate('EDITORIAL').id).toBe('editorial-impact');
     expect(getTemplate(undefined as never).id).toBe('timeless-classic');
     expect(getTemplate({ templateId: 'base' } as never).id).toBe('timeless-classic');
+    expect(resolveCanonicalTemplateId(' Base ')).toBe('timeless-classic');
+    expect(resolveCanonicalTemplateId('Playful Celebration')).toBe('playful-celebration');
   });
 
   it('keeps imported registry template bindings and overrides isolated from later edits', () => {
@@ -504,9 +506,11 @@ describe('sections registry resolution', () => {
     expect(templateRegistrySource).toContain('Object.entries(templateById).flatMap(([templateId, template]) => {');
     expect(templateRegistrySource).toContain('Object.entries(TEMPLATE_ALIAS_TARGETS).map(([aliasId, canonicalId]) => [normalizeTemplateIdKey(aliasId), canonicalId])');
     expect(templateRegistrySource).toContain('normalizeTemplateIdKey(template.name)');
+    expect(templateRegistrySource).toContain('export function resolveCanonicalTemplateId(templateId: unknown): string {');
     expect(templateRegistrySource).toContain('export function getTemplate(templateId: unknown): TemplateDefinition {');
     expect(templateRegistrySource).toContain("const templateIdValue = typeof templateId === 'string' ? templateId : '';");
     expect(templateRegistrySource).toContain("templateIdAliases.get(normalizeTemplateIdKey(templateId)) ?? 'base'");
+    expect(templateRegistrySource).toContain('const canonicalTemplateId = resolveCanonicalTemplateId(templateId);');
     expect(templateRegistrySource).toContain('function cloneTemplateValue<T>(value: T): T {');
     expect(templateRegistrySource).toContain("templateRegistry.map((template) => [template.id, cloneTemplateDefinition(template)])");
     expect(templateRegistrySource).toContain('const TEMPLATE_ALIAS_TARGETS: Record<string, string> = {');
