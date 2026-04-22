@@ -559,6 +559,9 @@ describe('publishUiHints', () => {
     expect(getPublishBlockedHints('2 things left before guest-facing launch')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
     ]);
+    expect(getPublishBlockedHints('2 things left before guest-facing launch.')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
     expect(getPublishBlockedHints('Live site unchanged — you have new draft edits')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
     ]);
