@@ -396,6 +396,7 @@ export default function EventRSVP() {
     activeSubmitRequestRef.current = requestId;
     submitInFlightRef.current = true;
     let submittedSuccessfully = false;
+    const normalizedForm = normalizeEventRsvpFormState(rsvpForm);
 
     setSubmitting(true);
     setSubmitError('');
@@ -415,7 +416,7 @@ export default function EventRSVP() {
         const { error } = await supabase
           .from('event_rsvps')
           .update({
-            ...buildInvitationRsvp(rsvpForm),
+            ...buildInvitationRsvp(normalizedForm),
             responded_at: new Date().toISOString(),
           })
           .eq('event_invitation_id', selectedEvent);
@@ -437,7 +438,7 @@ export default function EventRSVP() {
           .insert([
             {
               event_invitation_id: selectedEvent,
-              ...buildInvitationRsvp(rsvpForm),
+              ...buildInvitationRsvp(normalizedForm),
               responded_at: new Date().toISOString(),
             },
           ]);
@@ -456,7 +457,6 @@ export default function EventRSVP() {
       }
 
       if (activeSubmitRequestRef.current !== requestId) return;
-      const normalizedForm = normalizeEventRsvpFormState(rsvpForm);
       setHasEventRsvpSupport(true);
       setRsvpForm(normalizedForm);
       applyInvitationRsvp(selectedEvent, normalizedForm);
