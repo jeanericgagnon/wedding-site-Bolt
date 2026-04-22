@@ -48,6 +48,11 @@ describe('publishUiHints', () => {
     expect(hints).toEqual(['Use Fix next to move through the last blockers before the guest-facing launch.']);
   });
 
+  it('returns page guidance for whitespace-padded no-page message', () => {
+    const hints = getPublishBlockedHints('   Add at least one page before publishing.   ');
+    expect(hints[0]).toContain('Designs');
+  });
+
   it('detects publishNow from querystring', () => {
     expect(shouldAutoPublishFromSearch('?publishNow=1')).toBe(true);
     expect(shouldAutoPublishFromSearch('?foo=bar&publishNow=1')).toBe(true);
