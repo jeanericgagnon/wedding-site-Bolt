@@ -291,6 +291,7 @@ export default function RSVP() {
   const resetToSearch = useCallback((preserveToken = false) => {
     activeLookupRequestRef.current += 1;
     invalidateActiveSubmit();
+    setLoading(false);
     setStep('search');
     setError('');
     setGuest(null);
@@ -815,6 +816,13 @@ export default function RSVP() {
         <div className="text-center space-y-3">
           <div className="w-12 h-12 border-4 border-rose-200 border-t-rose-500 rounded-full animate-spin mx-auto" />
           <p className="text-gray-500 text-sm">Loading your invitation…</p>
+          <button
+            type="button"
+            onClick={() => resetToSearch(true)}
+            className="text-sm text-gray-500 hover:text-gray-700"
+          >
+            Search by name instead
+          </button>
         </div>
       </div>
     );
