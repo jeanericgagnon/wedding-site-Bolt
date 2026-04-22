@@ -58,6 +58,8 @@ export function generateInitialLayout(
       enabled: shouldDisableEmptySection(sectionDef.type as SectionInstance['type']) ? false : sectionDef.enabled,
       bindings: { ...sectionDef.bindings },
       settings: { ...sectionDef.settings },
+      overrides: sectionDef.overrides ? { ...sectionDef.overrides } : undefined,
+      locked: sectionDef.locked,
     };
 
     if (sectionDef.type === 'venue' && data.venues.length > 0) {
