@@ -319,6 +319,49 @@ describe('nameChangeService normalization', () => {
     ]);
   });
 
+  it('matches source documents by id when remapping extracted fields', () => {
+    const sourceDocuments: NameChangeDocumentInput[] = [
+      {
+        id: 'temp-license',
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const persistedDocuments: NameChangeDocumentRecord[] = [
+      {
+        id: 'db-license',
+        name_change_case_id: 'case-1',
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: null,
+        issuing_authority: null,
+        issued_on: null,
+        expires_on: null,
+        extraction_confidence: null,
+        extracted_snapshot: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+    ];
+
+    expect(remapNameChangeExtractedFieldsToPersistedDocuments(sourceDocuments, persistedDocuments, [
+      {
+        document_id: 'temp-license',
+        field_key: 'issuance_date',
+        field_label: 'Issue date',
+        field_value_masked: '2024-06-01',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ])).toEqual([
+      expect.objectContaining({ document_id: 'db-license', field_key: 'issuance_date' }),
+    ]);
+  });
+
   it('hydrates loaded workspace through the same normalization path used for saves', () => {
     const caseRecord: NameChangeCaseRecord = {
       id: 'case-1',

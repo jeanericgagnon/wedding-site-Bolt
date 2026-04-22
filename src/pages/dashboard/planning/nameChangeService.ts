@@ -839,7 +839,7 @@ export function remapNameChangeExtractedFieldsToPersistedDocuments(
     if (!field.document_id) return { ...field, document_id: null };
 
     const sourceKind = sourceDocumentKindById.get(field.document_id)
-      ?? sourceDocuments.find((document) => document.document_kind === field.document_id)?.document_kind
+      ?? sourceDocuments.find((document) => document.id === field.document_id)?.document_kind
       ?? null;
     if (!sourceKind) return { ...field, document_id: null };
 
