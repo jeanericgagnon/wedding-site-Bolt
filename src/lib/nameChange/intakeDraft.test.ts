@@ -80,6 +80,27 @@ describe('name change intake draft helpers', () => {
     expect(normalizeDraftNameChangeDocumentId('draft-courtOrderNameChange')).toBe('draft-court_order');
   });
 
+  it('deduplicates camelCase draft document ids during extracted-field upserts', () => {
+    const next = upsertDraftNameChangeExtractedField([
+      {
+        document_id: 'draft-currentPassport' as never,
+        field_key: 'issuance_date',
+        field_label: 'Issuance date',
+        field_value_masked: '2020-01-01',
+        source_type: 'manual',
+        is_verified: true,
+      },
+    ], 'draft-current_passport', 'issuance_date', 'Issuance date', '2024-06-01');
+
+    expect(next).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-current_passport',
+        field_key: 'issuance_date',
+        field_value_masked: '2024-06-01',
+      }),
+    ]);
+  });
+
   it('normalizes messy draft prefixes before canonicalizing draft ids', () => {
     expect(normalizeDraftNameChangeDocumentId('draft _ CURRENT PASSPORT')).toBe('draft-current_passport');
     expect(normalizeDraftNameChangeDocumentId('draft - court order name change')).toBe('draft-court_order');
