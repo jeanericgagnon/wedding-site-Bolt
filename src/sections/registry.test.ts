@@ -393,6 +393,7 @@ describe('sections registry resolution', () => {
     expect(registryLinkCarryover).toContain("token.sourceLabelMode === 'explicit'");
     expect(registryLinkCarryover).toContain('function finalizeCarryoverRegistryLink(');
     expect(registryLinkCarryover).toContain('export function parsePersistedRegistryLinks(raw: string | null | undefined): CarryoverRegistryLink[] {');
+    expect(registryLinkCarryover).toContain('export function mergeRegistrySourceLabels(');
     expect(registryLinkCarryover).toContain("if (lower.includes('crateandbarrel.com')) return 'Crate & Barrel';");
     expect(registryLinkCarryover).toContain("if (lower.includes('westelm.com')) return 'West Elm';");
     expect(registryLinkCarryover).toContain("if (lower.includes('zola.com')) return 'Zola';");
@@ -400,8 +401,9 @@ describe('sections registry resolution', () => {
     expect(registryLinkCarryover).toContain('(!existing.sourceLabel && token.sourceLabel)');
     expect(registryLinkCarryover).toContain('.map((token) => {');
     expect(registryLinkCarryover).toContain("function cleanRegistryUrlToken(token: string): string {");
-    expect(onboardingMapper).toContain('parsePersistedRegistryLinks(input.registryLinks ?? \'\')');
+    expect(onboardingMapper).toContain('mergeRegistrySourceLabels(carriedRegistryLinks, parsePersistedRegistryLinks(input.registryLinks ?? \'\'))');
     expect(onboardingMapper).toContain(".map((link) => link.sourceLabel ? `${link.sourceLabel} | ${link.url}` : link.url)");
+    expect(generateWeddingData).toContain('mergeRegistrySourceLabels(');
     expect(generateWeddingData).toContain('parsePersistedRegistryLinks(formData.registryLinks || formData.registryLink)');
     expect(weddingDataBindings).toContain('function normalizeBindableSectionType(type: string): string {');
     expect(weddingDataBindings).toContain("return normalizedType === 'registrysection' ? 'registry' : type;");

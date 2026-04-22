@@ -3,7 +3,7 @@ import { generateInitialLayout } from './generateInitialLayout';
 import { generateWeddingSlug } from './slugify';
 import { buildMigrationRecoveryDefaults } from './migrationRecovery';
 import { serializeImportedFaqLines, shapeImportedFaqLines } from './faqMigration';
-import { carryOverRegistryLinks, parsePersistedRegistryLinks } from './registryLinkCarryover';
+import { carryOverRegistryLinks, mergeRegistrySourceLabels, parsePersistedRegistryLinks } from './registryLinkCarryover';
 import { assertCanonicalTemplateLayout } from './canonicalTemplateRuntime';
 
 interface CoupleNames {
@@ -32,18 +32,6 @@ interface OnboardingMapperInput {
   registryLinksRaw?: string;
   customFaqs?: string;
 }
-
-const mergeRegistrySourceLabels = (carried: Array<{ url: string; sourceLabel?: string }>, existing: Array<{ url: string; sourceLabel?: string }>) => {
-  const merged = carried.map((link) => ({ ...link }));
-  const mergedByUrl = new Map(merged.map((link) => [link.url, link]));
-  const existingLabelsByUrl = new Map(existing.map((link) => [link.url, link.sourceLabel]));
-  for (const link of merged) {
-    link.sourceLabel = link.sourceLabel ?? existingLabelsByUrl.get(link.url);
-  }
-
-  const carriedUrls = new Set(merged.map((link) => link.url));
-  return merged.concat(existing.filter((link) => !carriedUrls.has(link.url)));
-};
 
 export function buildOnboardingUpdateData(input: OnboardingMapperInput): Record<string, unknown> {
   const recovered = buildMigrationRecoveryDefaults({

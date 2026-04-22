@@ -1,7 +1,7 @@
 import { WeddingDataV1 } from '../types/weddingData';
 import { buildMigrationRecoveryDefaults } from './migrationRecovery';
 import { shapeImportedFaqLines } from './faqMigration';
-import { CarryoverRegistryLink, carryOverRegistryLinks, parsePersistedRegistryLinks } from './registryLinkCarryover';
+import { carryOverRegistryLinks, mergeRegistrySourceLabels, parsePersistedRegistryLinks } from './registryLinkCarryover';
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -80,22 +80,6 @@ function dedupeFaqs(faqs: WeddingDataV1['faq']): WeddingDataV1['faq'] {
 function hasSubstantiveAnswer(answer?: string): boolean {
   if (!answer?.trim()) return false;
   return !PLACEHOLDER_ANSWERS.includes(answer.trim().toLowerCase());
-}
-
-function mergeRegistrySourceLabels(
-  carried: CarryoverRegistryLink[],
-  existing: CarryoverRegistryLink[],
-): CarryoverRegistryLink[] {
-  const merged = carried.map((link) => ({
-    ...link,
-  }));
-  const existingLabelsByUrl = new Map(existing.map((link) => [link.url, link.sourceLabel]));
-  for (const link of merged) {
-    link.sourceLabel = link.sourceLabel ?? existingLabelsByUrl.get(link.url);
-  }
-
-  const carriedUrls = new Set(merged.map((link) => link.url));
-  return merged.concat(existing.filter((link) => !carriedUrls.has(link.url)));
 }
 
 export function fromOnboarding(formData: OnboardingFormData): WeddingDataV1 {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { carryOverRegistryLinks, parsePersistedRegistryLinks } from './registryLinkCarryover';
+import { carryOverRegistryLinks, mergeRegistrySourceLabels, parsePersistedRegistryLinks } from './registryLinkCarryover';
 
 describe('carryOverRegistryLinks', () => {
   it('extracts registry urls from labeled imported lines', () => {
@@ -132,6 +132,16 @@ describe('carryOverRegistryLinks', () => {
   it('normalizes persisted registry links before onboarding merges labels', () => {
     expect(parsePersistedRegistryLinks('Zola | https://zola.com/registry/jane/\nTarget | target.com/list).')).toEqual([
       { url: 'https://zola.com/registry/jane', sourceLabel: 'Zola' },
+      { url: 'https://target.com/list', sourceLabel: 'Target' },
+    ]);
+  });
+
+  it('merges stronger carryover labels without dropping unmatched persisted registry links', () => {
+    expect(mergeRegistrySourceLabels(
+      [{ url: 'https://zola.com/registry/jane', sourceLabel: 'Custom Honeymoon Fund' }],
+      parsePersistedRegistryLinks('Zola | https://zola.com/registry/jane\nTarget | https://target.com/list'),
+    )).toEqual([
+      { url: 'https://zola.com/registry/jane', sourceLabel: 'Custom Honeymoon Fund' },
       { url: 'https://target.com/list', sourceLabel: 'Target' },
     ]);
   });

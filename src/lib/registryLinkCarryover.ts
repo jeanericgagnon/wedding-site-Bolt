@@ -102,6 +102,20 @@ export function parsePersistedRegistryLinks(raw: string | null | undefined): Car
     .filter((link): link is CarryoverRegistryLink => Boolean(link));
 }
 
+export function mergeRegistrySourceLabels(
+  carried: CarryoverRegistryLink[],
+  existing: CarryoverRegistryLink[],
+): CarryoverRegistryLink[] {
+  const merged = carried.map((link) => ({ ...link }));
+  const existingLabelsByUrl = new Map(existing.map((link) => [link.url, link.sourceLabel]));
+  for (const link of merged) {
+    link.sourceLabel = link.sourceLabel ?? existingLabelsByUrl.get(link.url);
+  }
+
+  const carriedUrls = new Set(merged.map((link) => link.url));
+  return merged.concat(existing.filter((link) => !carriedUrls.has(link.url)));
+}
+
 function extractRegistryUrlTokens(line: string): CarryoverRegistryToken[] {
   const tokens = new Map<string, CarryoverRegistryToken>();
   const patterns = [
