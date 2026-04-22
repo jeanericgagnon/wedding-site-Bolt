@@ -1,5 +1,5 @@
 import { SectionInstance, SectionType } from '../types/layoutConfig';
-import { resolveCanonicalRegistrySectionType, resolveCanonicalRegistryVariant } from '../sections/registry';
+import { resolveCanonicalRegistrySectionInput } from '../sections/registry';
 
 type TemplateSection = Omit<SectionInstance, 'id' | 'type'> & {
   // Keep compatibility with imported template artifacts while preserving known section keys.
@@ -17,7 +17,7 @@ export interface TemplateDefinition {
 }
 
 function normalizeRegistryTemplateVariant(variant: string): string {
-  return resolveCanonicalRegistryVariant(variant);
+  return resolveCanonicalRegistrySectionInput('registry', variant).variant;
 }
 
 function normalizeTemplateIdKey(templateId: unknown): string {
@@ -759,13 +759,13 @@ const templateRegistry: TemplateDefinition[] = [
 ];
 
 function cloneTemplateSection(section: TemplateSection): TemplateSection {
-  const canonicalType = resolveCanonicalRegistrySectionType(section.type);
-  const isRegistryTemplateSection = canonicalType === 'registry';
+  const canonicalRegistrySection = resolveCanonicalRegistrySectionInput(section.type, section.variant);
+  const isRegistryTemplateSection = canonicalRegistrySection.type === 'registry';
   return {
     ...section,
-    type: isRegistryTemplateSection ? canonicalType : section.type,
+    type: isRegistryTemplateSection ? canonicalRegistrySection.type : section.type,
     variant: isRegistryTemplateSection
-      ? (typeof section.variant === 'string' ? normalizeRegistryTemplateVariant(section.variant) : 'cards')
+      ? canonicalRegistrySection.variant
       : section.variant,
     bindings: cloneTemplateValue(section.bindings ?? {}),
     settings: cloneTemplateValue(section.settings ?? {}),

@@ -306,6 +306,21 @@ export function resolveCanonicalRegistryVariant(variant: unknown): string {
   return resolveRegistryVariant('registry', variant) || 'cards';
 }
 
+export function resolveCanonicalRegistrySectionInput(type: unknown, variant: unknown): { type: string; variant: string } {
+  const canonicalType = resolveCanonicalRegistrySectionType(type);
+  if (canonicalType !== 'registry') {
+    return {
+      type: typeof type === 'string' ? type : '',
+      variant: typeof variant === 'string' ? variant : '',
+    };
+  }
+
+  return {
+    type: canonicalType,
+    variant: resolveCanonicalRegistryVariant(variant),
+  };
+}
+
 function registerDefinition<T>(def: SectionDefinition<T>): void {
   SECTION_REGISTRY.set(makeKey(def.type, def.variant), def as SectionDefinition<any>);
 }
