@@ -448,13 +448,22 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     : clarifyingState;
 
   const normalizedInitialSetupAnswers = { ...base.initialSetupAnswers, ...initialSetupAnswers };
+  const hasMeaningfulRestoreState = Object.keys(restoredFollowUpAnswers).length > 0
+    || Boolean(normalizedClarifyingState && (
+      normalizedClarifyingState.clarifying.questions.some((question) => question.status !== 'skipped')
+      || normalizedClarifyingState.clarifying.history.some((question) => question.status !== 'skipped')
+      || Object.keys(normalizedClarifyingState.draftOutputs).length > 0
+    ));
   const normalizedCurrentIndex = typeof parsed.currentIndex === 'number'
     && Number.isFinite(parsed.currentIndex)
     && Number.isInteger(parsed.currentIndex)
     && Number.isSafeInteger(parsed.currentIndex)
     && parsed.currentIndex >= 0
-    && hasMeaningfulQuickStartAnswers(normalizedInitialSetupAnswers)
-    ? resolveRestorableCurrentIndex(parsed.currentIndex, normalizedInitialSetupAnswers)
+    ? hasMeaningfulRestoreState && (showFollowUps || normalizedViewState !== 'question')
+      ? parsed.currentIndex
+      : hasMeaningfulQuickStartAnswers(normalizedInitialSetupAnswers)
+        ? resolveRestorableCurrentIndex(parsed.currentIndex, normalizedInitialSetupAnswers)
+        : 0
     : 0;
 
   return {

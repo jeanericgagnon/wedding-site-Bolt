@@ -89,6 +89,40 @@ describe('quickStartPersistence', () => {
     expect(normalized.currentIndex).toBe(5);
   });
 
+  it('keeps completed onboarding step progress when follow-up restore state survives sparse setup answers', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      currentIndex: 13,
+      initialSetupAnswers: {
+        names: 'Alex & Jordan',
+      },
+      showFollowUps: true,
+      viewState: 'followups',
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'lodging',
+            category: 'travel',
+            question: 'Where should guests stay?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.lodging'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'pending',
+            answer: '',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.currentIndex).toBe(13);
+    expect(normalized.showFollowUps).toBe(true);
+    expect(normalized.viewState).toBe('followups');
+  });
+
   it('drops malformed follow-up answers with blank keys', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       followUpAnswers: {
