@@ -125,9 +125,10 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('event details');
   });
 
-  it('returns wedding-date guidance when blocker copy uses the readiness detail wording', () => {
-    const hints = getPublishBlockedHints('Date is ready.');
-    expect(hints[0]).toContain('event details');
+  it('does not mistake the date success detail for a blocker', () => {
+    expect(getPublishBlockedHints('Date is ready.')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
   });
 
   it('returns wedding-date guidance when blocker copy shortens to add your date', () => {
