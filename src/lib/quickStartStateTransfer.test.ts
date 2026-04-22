@@ -681,4 +681,36 @@ describe('quickStartStateTransfer', () => {
     expect(restored?.followUpAnswers).toEqual({ lodging: 'Need to confirm hotel block' });
     expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').showFollowUps).toBe(true);
   });
+
+  it('rewrites malformed view-state restores back into follow-up mode when typed clarifying drafts survive', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      viewState: 42,
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'transport',
+            category: 'travel',
+            question: 'How should guests get there?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.transport'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'unresolved',
+            answer: 'Need shuttle details',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    }));
+
+    const restored = readQuickStartDraftSnapshot();
+
+    expect(restored?.showFollowUps).toBe(true);
+    expect(restored?.viewState).toBe('followups');
+    expect(restored?.followUpAnswers).toEqual({ transport: 'Need shuttle details' });
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').viewState).toBe('followups');
+  });
 });

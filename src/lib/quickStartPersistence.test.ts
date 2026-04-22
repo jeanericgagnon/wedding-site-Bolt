@@ -1053,4 +1053,33 @@ describe('quickStartPersistence', () => {
     expect(normalized.viewState).toBe('followups');
     expect(normalized.followUpAnswers).toEqual({ lodging: 'Need to confirm hotel block' });
   });
+
+  it('reopens follow-up mode when malformed view state survives alongside typed clarifying drafts', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      viewState: 42 as never,
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'transport',
+            category: 'travel',
+            question: 'How should guests get there?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.transport'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'unresolved',
+            answer: 'Need shuttle details',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.showFollowUps).toBe(true);
+    expect(normalized.viewState).toBe('followups');
+    expect(normalized.followUpAnswers).toEqual({ transport: 'Need shuttle details' });
+  });
 });
