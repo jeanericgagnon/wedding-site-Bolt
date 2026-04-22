@@ -108,6 +108,11 @@ describe('publishUiHints', () => {
     expect(hints).toEqual(['Use Fix next to move through the last blockers before the guest-facing launch.']);
   });
 
+  it('returns page guidance even when blocker copy is lowercased by upstream formatting', () => {
+    const hints = getPublishBlockedHints('add at least one page before going live.');
+    expect(hints[0]).toContain('Designs');
+  });
+
   it('returns RSVP guidance even when blocker copy is lowercased by upstream formatting', () => {
     const hints = getPublishBlockedHints('turn rsvp on before going live.');
     expect(hints[0]).toContain('RSVP');
