@@ -223,7 +223,7 @@ export const Trust: React.FC = () => {
                 onClick={handleStartDraft}
                 className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary/90"
               >
-                Start your draft
+                {user ? 'Review your draft' : 'Start your draft'}
               </button>
               <Link to="/product" className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary">
                 See product tour

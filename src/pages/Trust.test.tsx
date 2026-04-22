@@ -46,7 +46,7 @@ describe('Trust page draft-first CTA', () => {
     authState.user = { id: 'user-1' };
     render(<Trust />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Start your draft' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Review your draft' }));
 
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
   });
