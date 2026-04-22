@@ -23,6 +23,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('Select a section on the canvas');
   });
 
+  it('returns section guidance for the real publish readiness blocker copy', () => {
+    const hints = getPublishBlockedHints('Turn on at least one section before going live.');
+    expect(hints[0]).toContain('Select a section on the canvas');
+  });
+
   it('returns section guidance for whitespace-padded no-enabled-sections message', () => {
     const hints = getPublishBlockedHints('   Turn on at least one section before publishing.   ');
     expect(hints[0]).toContain('Select a section on the canvas');
