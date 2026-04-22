@@ -252,6 +252,9 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     && (rawClarifyingState.clarifying.questions.length === 0)
     && (rawClarifyingState.clarifying.history.length === 0)
     && Object.keys(followUpAnswers).length === 0;
+  const isEmptyClarifyingDraftState = rawClarifyingState?.clarifying.mode === 'draft'
+    && rawClarifyingState.clarifying.questions.length === 0
+    && rawClarifyingState.clarifying.history.length === 0;
   const showFollowUps = isThinkingGenerationInFlight || (hasOpenFollowUps && (
     parsed.showFollowUps === true
     || hasMissingResumeFlagForOpenClarifyingWork
@@ -264,7 +267,11 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     ))
   ));
   const hasAnyClarifyingRecords = Boolean(
-    clarifyingState && (clarifyingState.clarifying.questions.length > 0 || clarifyingState.clarifying.history.length > 0)
+    clarifyingState && (
+      clarifyingState.clarifying.questions.length > 0
+      || clarifyingState.clarifying.history.length > 0
+      || Object.keys(clarifyingState.draftOutputs).length > 0
+    )
   );
   const activeClarifyingIds = clarifyingState
     ? new Set([
