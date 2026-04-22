@@ -293,6 +293,9 @@ describe('publishUiHints', () => {
     expect(getPublishBlockedHints('Live site unchanged — you have new draft edits')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
     ]);
+    expect(getPublishBlockedHints('Live site unchanged')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
   });
 
   it('returns fallback guidance for unknown message', () => {
