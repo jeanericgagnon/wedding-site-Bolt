@@ -230,6 +230,9 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
   const hasMalformedClarifyingEnvelope = parsed.clarifyingState !== undefined
     && parsed.clarifyingState !== null
     && rawClarifyingState === null;
+  const hasClarifyingDraftOutputs = Boolean(
+    clarifyingState && Object.keys(clarifyingState.draftOutputs).length > 0
+  );
   const viewState = parsed.viewState === 'thinking' || parsed.viewState === 'followups' ? parsed.viewState : 'question';
   const hasOpenFollowUps = (clarifyingState?.clarifying.questions.some((question) => (
     question.status === 'pending' || question.status === 'unresolved'
@@ -308,6 +311,7 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     )
   ) || (
     hasStoredClarifyingState
+    && !hasClarifyingDraftOutputs
     && (
       viewState === 'thinking'
       || viewState === 'followups'
