@@ -1,37 +1,38 @@
 export const getPublishBlockedHints = (publishValidationError?: string | null): string[] => {
   if (!publishValidationError) return [];
   const normalizedError = publishValidationError.trim();
-  if (normalizedError.includes('page')) {
+  const normalizedErrorLower = normalizedError.toLowerCase();
+  if (normalizedErrorLower.includes('page')) {
     return [
       'Open Designs and apply a starting layout.',
       'Or add a page and turn on at least one section.',
     ];
   }
-  if (normalizedError.includes('Turn on at least one section')) {
+  if (normalizedErrorLower.includes('turn on at least one section')) {
     return [
       'Select a section on the canvas.',
       'Turn it on in the right panel, then save and go live again.',
     ];
   }
-  if (normalizedError.includes('partner names')) {
+  if (normalizedErrorLower.includes('partner names')) {
     return [
       'Open your couple details.',
       'Add both names exactly how you want guests to see them.',
     ];
   }
-  if (normalizedError.includes('wedding date')) {
+  if (normalizedErrorLower.includes('wedding date')) {
     return [
       'Open event details.',
       'Add your wedding date before going live.',
     ];
   }
-  if (normalizedError.includes('venue')) {
+  if (normalizedErrorLower.includes('venue')) {
     return [
       'Add at least one venue name or address.',
       'Make sure guests can tell where they are meant to go.',
     ];
   }
-  if (normalizedError.includes('RSVP') || normalizedError.includes('Turn RSVP on')) {
+  if (normalizedErrorLower.includes('rsvp') || normalizedErrorLower.includes('turn rsvp on')) {
     return [
       'Turn RSVP back on before going live.',
       'If you are not collecting replies yet, remove RSVP calls to action first.',
