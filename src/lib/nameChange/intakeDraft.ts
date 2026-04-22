@@ -221,13 +221,13 @@ function normalizeDraftDateValue(value: string) {
     return normalizeIsoParts(year, month, day);
   }
 
-  const yearFirstNumericMatch = normalizedOrdinalValue.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/);
+  const yearFirstNumericMatch = suffixStrippedTimestampValue.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/);
   if (yearFirstNumericMatch) {
     const [, year, month, day] = yearFirstNumericMatch;
     return normalizeIsoParts(year, month, day);
   }
 
-  const yearFirstSpacedMatch = normalizedOrdinalValue.match(/^(\d{4})\s+(\d{1,2})\s+(\d{1,2})$/);
+  const yearFirstSpacedMatch = suffixStrippedTimestampValue.match(/^(\d{4})\s+(\d{1,2})\s+(\d{1,2})$/);
   if (yearFirstSpacedMatch) {
     const [, year, month, day] = yearFirstSpacedMatch;
     return normalizeIsoParts(year, month, day);
@@ -247,7 +247,7 @@ function normalizeDraftDateValue(value: string) {
     if (month) return normalizeIsoParts(year, String(month), day);
   }
 
-  const hyphenatedWrittenMatch = normalizedOrdinalValue.match(/^(\d{1,2})-([A-Za-z]+\.?)-(\d{4})$/);
+  const hyphenatedWrittenMatch = suffixStrippedTimestampValue.match(/^(\d{1,2})-([A-Za-z]+\.?)-(\d{4})$/);
   if (hyphenatedWrittenMatch) {
     const [, day, monthName, year] = hyphenatedWrittenMatch;
     const month = parseDraftMonthName(monthName);
