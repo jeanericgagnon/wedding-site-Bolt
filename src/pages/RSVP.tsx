@@ -670,14 +670,15 @@ export default function RSVP() {
 
       if (DEMO_MODE) {
         const stored = getDemoStoredResponses();
+        const plusOneName = (formData.plus_one_name || '').trim();
         const payload: ExistingRSVP = {
           id: `demo-rsvp-${guest.id}`,
           attending: formData.attending,
           attending_ceremony: formData.attendCeremony,
           attending_reception: formData.attendReception,
           meal_choice: formData.meal_choice || null,
-          plus_one_name: formData.plus_one_name || null,
-          plus_one_count: formData.plus_one_name.trim() ? 1 : 0,
+          plus_one_name: plusOneName || null,
+          plus_one_count: plusOneName ? 1 : 0,
           children_count: 0,
           notes: notesPayload || null,
           custom_answers: customAnswers,
