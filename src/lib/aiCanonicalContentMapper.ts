@@ -4,7 +4,9 @@ export const mapCanonicalContentToSectionSettings = (
   type: string,
   canonical: AiCanonicalSectionContent
 ): Record<string, string> | null => {
-  switch (type) {
+  const normalizedType = type.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+
+  switch (normalizedType) {
     case 'hero':
       return {
         title: canonical.hero.title,
@@ -43,6 +45,7 @@ export const mapCanonicalContentToSectionSettings = (
         buttonLabel: canonical.rsvp.callToAction,
       };
     case 'registry':
+    case 'registrysection':
       return {
         title: canonical.registry.title,
         message: canonical.registry.intro,

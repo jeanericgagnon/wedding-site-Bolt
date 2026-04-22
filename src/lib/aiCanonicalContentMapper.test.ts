@@ -47,6 +47,13 @@ describe('aiCanonicalContentMapper', () => {
     });
   });
 
+  it('maps drifted registry section types to builder registry settings', () => {
+    expect(mapCanonicalContentToSectionSettings('RegistrySection', canonical)).toEqual({
+      title: 'Registry',
+      message: 'Your presence is gift enough.',
+    });
+  });
+
   it('maps canonical FAQ content to builder faq settings', () => {
     expect(mapCanonicalContentToSectionSettings('faq', canonical)).toEqual({
       headline: 'FAQ',
