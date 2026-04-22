@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { resolveBuilderVariant } from './sectionVariantCompatibility';
 
-describe('resolveBuilderVariant registry compatibility', () => {
+describe('resolveBuilderVariant onboarding handoff compatibility', () => {
   it('keeps shipped registry template aliases on stable builder variants', () => {
     expect(resolveBuilderVariant('registry', 'cards')).toBe('cards');
     expect(resolveBuilderVariant('registry', 'featured')).toBe('featured');
@@ -30,5 +30,12 @@ describe('resolveBuilderVariant registry compatibility', () => {
     expect(resolveBuilderVariant('registry', 'FEATURED')).toBe('featured');
     expect(resolveBuilderVariant('registry', 'FundHighlight')).toBe('fundHighlight');
     expect(resolveBuilderVariant('registry', 'Modern')).toBe('modern');
+  });
+
+  it('normalizes ai-assisted onboarding handoff aliases before builder fallback', () => {
+    expect(resolveBuilderVariant('travel', ' LocalGuide ')).toBe('localGuide');
+    expect(resolveBuilderVariant('travel', 'MAPPINS')).toBe('localGuide');
+    expect(resolveBuilderVariant('schedule', ' agendacards ')).toBe('dayTabs');
+    expect(resolveBuilderVariant('faq', ' Compact ')).toBe('accordion');
   });
 });
