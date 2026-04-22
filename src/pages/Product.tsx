@@ -220,7 +220,7 @@ export const Product: React.FC = () => {
 
     return (
       <div className="space-y-4">
-        <p className="text-sm text-ink/70">Planner command view: checklist live, timeline synced, messaging armed.</p>
+        <p className="text-sm text-ink/70">Planner command view: checklist ready, timeline in view, messaging draft prepared.</p>
         <button className="px-4 py-2 rounded-lg border border-brand/40 hover:bg-brand/5">Invite planner</button>
       </div>
     );
