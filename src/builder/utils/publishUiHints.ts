@@ -82,6 +82,12 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
       'Make sure guests can tell where they are meant to go.',
     ];
   }
+  if (normalizedErrorLower.includes('save your latest draft changes before going live')) {
+    return [
+      'Save your draft before trying again.',
+      'Then re-open publish and review the remaining checks.',
+    ];
+  }
   if (
     normalizedErrorLower.includes('rsvp')
     || normalizedErrorLower.includes('turn rsvp on')

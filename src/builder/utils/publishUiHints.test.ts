@@ -249,6 +249,13 @@ describe('publishUiHints', () => {
     ]);
   });
 
+  it('returns save guidance when blocker copy comes from the unsaved readiness detail', () => {
+    expect(getPublishBlockedHints('Save your latest draft changes before going live.')).toEqual([
+      'Save your draft before trying again.',
+      'Then re-open publish and review the remaining checks.',
+    ]);
+  });
+
   it('does not mistake the live-up-to-date status copy for a blocker', () => {
     expect(getPublishBlockedHints('Live site is up to date')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
