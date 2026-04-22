@@ -146,8 +146,12 @@ describe('sections registry resolution', () => {
 
   it('keeps builder registry compatibility tolerant of persisted trim and casing drift', () => {
     const compatibility = readFileSync(resolve(__dirname, '../lib/sectionVariantCompatibility.ts'), 'utf8');
+    const compatibilityTest = readFileSync(resolve(__dirname, '../lib/sectionVariantCompatibility.test.ts'), 'utf8');
     expect(compatibility).toContain('const supportedByLowercase = new Map');
-    expect(compatibility).toContain('const canonicalVariant = supportedByLowercase.get(normalizedVariant.toLowerCase()) ?? normalizedVariant;');
-    expect(compatibility).toContain("Object.entries(aliases).find(([aliasVariant]) => aliasVariant.toLowerCase() === normalizedVariant.toLowerCase())?.[1]");
+    expect(compatibility).toContain("const normalizedVariant = typeof variant === 'string' ? variant.trim() : '';");
+    expect(compatibility).toContain('const canonicalVariant = supportedByLowercase.get(normalizedVariantKey) ?? normalizedVariant;');
+    expect(compatibility).toContain("Object.entries(aliases).find(([aliasVariant]) => aliasVariant.toLowerCase() === normalizedVariantKey)?.[1]");
+    expect(compatibilityTest).toContain("expect(resolveBuilderVariant('registry', '   ')).toBe('default');");
+    expect(compatibilityTest).toContain("expect(resolveBuilderVariant('registry', 'not-a-real-variant')).toBe('default');");
   });
 });
