@@ -528,6 +528,26 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('blocks publish and marks venue incomplete when venue objects are missing string ids', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
+    const data = createEmptyWeddingData();
+    data.couple.partner1Name = 'Alex';
+    data.couple.partner2Name = 'Jordan';
+    data.event.weddingDateISO = '2027-06-12';
+    data.rsvp.enabled = true;
+    // @ts-expect-error exercising runtime guard for incomplete persisted data
+    data.venues = [{ name: 'Test Venue', address: '123 Main St' }];
+
+    expect(getPublishIssue(project, data)?.kind).toBe('missing-venue');
+    expect(buildPublishReadiness(project, data).find((item) => item.id === 'venue')).toEqual({
+      id: 'venue',
+      label: 'Venue details are set',
+      done: false,
+      detail: 'Add at least one venue name or address.',
+    });
+  });
+
   it('marks date readiness incomplete when the wedding date is an empty string', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];

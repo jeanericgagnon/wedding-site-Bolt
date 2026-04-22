@@ -46,7 +46,10 @@ const getNormalizedSections = (page: BuilderProject['pages'][number] | undefined
     getComparableOrderIndex(a?.orderIndex) - getComparableOrderIndex(b?.orderIndex)
   );
 const isVenueLike = (value: unknown): value is NonNullable<WeddingDataV1['venues']>[number] =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
+  typeof value === 'object'
+  && value !== null
+  && !Array.isArray(value)
+  && hasNonEmptyString((value as { id?: unknown }).id);
 const getNormalizedVenues = (weddingData?: WeddingDataV1 | null) =>
   (Array.isArray(weddingData?.venues) ? weddingData.venues.filter(isVenueLike) : []);
 
