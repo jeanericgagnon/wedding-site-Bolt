@@ -20,6 +20,7 @@ Alignment scope: current v1 line bullets only
 Verification gate for this log: `npm run proof:v1:canonical-smoke`
 Environment-specific blocker gate: `npm run proof:v1:guests-rsvp-ops`
 Current automated proof status: canonical smoke passing, guests/RSVP ops environment-blocked
+Known blocker message: `validate-rsvp-token function is not callable with current anon credentials (401).`
 
 This is **not** a generic QA checklist.
 This is the must-ship truth gate.
