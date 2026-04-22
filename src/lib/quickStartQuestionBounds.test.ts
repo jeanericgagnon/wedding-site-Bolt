@@ -7,6 +7,11 @@ describe('quickStartQuestionBounds', () => {
     expect(clampQuickStartQuestionIndex(Number.NaN, 14)).toBe(0);
   });
 
+  it('clamps fractional and unsafe indexes to zero', () => {
+    expect(clampQuickStartQuestionIndex(2.5, 14)).toBe(0);
+    expect(clampQuickStartQuestionIndex(Number.MAX_SAFE_INTEGER + 1, 14)).toBe(0);
+  });
+
   it('clamps oversized indexes to the last valid question', () => {
     expect(clampQuickStartQuestionIndex(99, 14)).toBe(13);
   });
