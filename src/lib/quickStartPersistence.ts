@@ -218,7 +218,9 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
   const activeClarifyingIds = clarifyingState
     ? new Set([
         ...clarifyingState.clarifying.questions.map((question) => question.id),
-        ...clarifyingState.clarifying.history.map((question) => question.id),
+        ...clarifyingState.clarifying.history
+          .filter((question) => question.status === 'answered' && question.answer.trim().length > 0)
+          .map((question) => question.id),
       ])
     : null;
   const normalizedFollowUpAnswers = activeClarifyingIds && activeClarifyingIds.size > 0

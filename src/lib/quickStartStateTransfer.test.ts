@@ -135,4 +135,48 @@ describe('quickStartStateTransfer', () => {
 
     setItemSpy.mockRestore();
   });
+
+  it('drops skipped-history follow-up answers during restore rewrites', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      followUpAnswers: {
+        transport: 'Shuttle leaves at 4 PM',
+        lodging: 'Stay at the resort',
+      },
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [],
+          history: [{
+            id: 'transport',
+            category: 'travel',
+            question: 'How should guests get there?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.transport'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'skipped',
+            answer: '',
+          }, {
+            id: 'lodging',
+            category: 'travel',
+            question: 'Where should guests stay?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.lodging'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'answered',
+            answer: 'Stay at the resort',
+          }],
+        },
+        draftOutputs: {},
+      },
+    }));
+
+    expect(readQuickStartDraftSnapshot()?.followUpAnswers).toEqual({ lodging: 'Stay at the resort' });
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').followUpAnswers).toEqual({
+      lodging: 'Stay at the resort',
+    });
+  });
 });

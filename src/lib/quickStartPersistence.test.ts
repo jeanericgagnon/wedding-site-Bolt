@@ -480,4 +480,45 @@ describe('quickStartPersistence', () => {
 
     expect(normalized.followUpAnswers).toEqual({ lodging: 'Stay at the resort' });
   });
+
+  it('drops follow-up answers tied only to skipped clarifying history entries', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      followUpAnswers: {
+        transport: 'Shuttle leaves at 4 PM',
+        lodging: 'Stay at the resort',
+      },
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [],
+          history: [{
+            id: 'transport',
+            category: 'travel',
+            question: 'How should guests get there?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.transport'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'skipped',
+            answer: '',
+          }, {
+            id: 'lodging',
+            category: 'travel',
+            question: 'Where should guests stay?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.lodging'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'answered',
+            answer: 'Stay at the resort',
+          }],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.followUpAnswers).toEqual({ lodging: 'Stay at the resort' });
+  });
 });
