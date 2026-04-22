@@ -585,6 +585,11 @@ export default function RSVP() {
     setAmbiguousGuests([]);
     setGuest(null);
     setExistingRsvp(null);
+    setFormData({ attending: true, attendCeremony: false, attendReception: false, meal_choice: '', plus_one_name: '', notes: '' });
+    setCustomAnswers({});
+    setRsvpQuestions([]);
+    setMealConfig(DEFAULT_MEAL_CONFIG);
+    setFormStep(1);
     setHouseholdGuests([]);
     setApplyToHousehold(true);
     setSelectedHouseholdGuestIds([]);
