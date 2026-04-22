@@ -60,6 +60,7 @@ describe('quickStartPersistence', () => {
       followUpAnswers: {
         '': 'should disappear',
         'event-1-time': '6:00 PM',
+        'lodging': '   ',
       },
     });
 
