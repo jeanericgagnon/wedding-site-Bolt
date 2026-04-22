@@ -201,7 +201,7 @@ export function buildNameChangeDocumentIntakeSnapshot(
       : [...new Set(typedCapturedFields
         .filter((field): field is NameChangeExtractionFieldKey => definition.extractionFields.includes(field as NameChangeExtractionFieldKey)))];
     const missingExtractionFields = definition.extractionFields.filter((field) => !capturedExtractionFields.includes(field));
-    const extractionChecklistBlocked = contractIntakeStatus === 'not_started' || metadataMissing.length > 0;
+    const extractionChecklistBlocked = definition.kind === 'other' || contractIntakeStatus === 'not_started' || metadataMissing.length > 0;
     const visibleCapturedExtractionFields = extractionChecklistBlocked ? [] : capturedExtractionFields;
     const visibleCanonicalConflicts = extractionChecklistBlocked ? [] : canonicalConflicts;
 

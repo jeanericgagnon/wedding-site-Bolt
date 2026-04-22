@@ -749,6 +749,9 @@ describe('name change document intake contract', () => {
       intakeStatus: 'reviewed',
       metadataReady: 0,
       metadataMissing: [],
+      expectedExtractionFields: [],
+      capturedExtractionFields: [],
+      missingExtractionFields: [],
     });
     expect(snapshot.summary.metadataReady).toBe(0);
     expect(snapshot.summary.autofillReady).toBe(0);
