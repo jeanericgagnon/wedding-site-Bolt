@@ -176,9 +176,10 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('venue');
   });
 
-  it('returns venue guidance when blocker copy uses the readiness detail wording', () => {
-    const hints = getPublishBlockedHints('Venue details are ready.');
-    expect(hints[0]).toContain('venue');
+  it('does not mistake the venue success detail for a blocker', () => {
+    expect(getPublishBlockedHints('Venue details are ready.')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
   });
 
   it('returns venue guidance when short venue blocker copy is lowercased by upstream formatting', () => {

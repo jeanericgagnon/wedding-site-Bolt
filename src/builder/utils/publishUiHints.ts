@@ -7,6 +7,7 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
     || normalizedErrorLower.includes('current page has visible sections')
     || normalizedErrorLower.includes('names are ready for guests')
     || normalizedErrorLower.includes('date is ready')
+    || normalizedErrorLower.includes('venue details are ready')
   ) {
     return ['Use Fix next to move through the last blockers before the guest-facing launch.'];
   }
