@@ -237,7 +237,7 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     clarifyingState && [...clarifyingState.clarifying.questions, ...clarifyingState.clarifying.history]
       .some((question) => question.status === 'answered' && question.answer.trim().length > 0)
   );
-  const canResumeThinkingState = parsed.viewState === 'thinking' && Boolean(clarifyingState) && !hasOpenFollowUps && !hasAnsweredClarifyingHistory && (
+  const canResumeThinkingState = parsed.viewState === 'thinking' && Boolean(clarifyingState) && !hasOpenFollowUps && !hasAnsweredClarifyingHistory && !hasDraftedFollowUpAnswers && (
     parsed.showFollowUps === true
     || (!hasExplicitShowFollowUps && !hasDraftedFollowUpAnswers)
   );
