@@ -26,4 +26,16 @@ describe('quickStartHydration', () => {
     expect(merged.whenWhere).toBe('2027-06-12 — San Diego');
     expect(merged.venueNameOrTbd).toBe('La Valencia');
   });
+
+  it('ignores non-string quick start seed values from sparse server hydration', () => {
+    const merged = mergeQuickStartSeedIntoDraft(createEmptyInitialSetupAnswers(), {
+      names: ['Alex & Jordan'] as never,
+      whenWhere: '2027-06-12 — San Diego',
+      guestCountBand: 120 as never,
+    });
+
+    expect(merged.names).toBe('');
+    expect(merged.whenWhere).toBe('2027-06-12 — San Diego');
+    expect(merged.guestCountBand).toBe('');
+  });
 });

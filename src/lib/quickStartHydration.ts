@@ -1,6 +1,6 @@
 import { createEmptyInitialSetupAnswers, type InitialSetupAnswers } from './initialSetupAnswers';
 
-const hasValue = (value: unknown) => typeof value === 'string' ? value.trim().length > 0 : Boolean(value);
+const hasValue = (value: unknown) => typeof value === 'string' ? value.trim().length > 0 : false;
 
 export const hasMeaningfulQuickStartAnswers = (answers: InitialSetupAnswers | null | undefined) => {
   if (!answers) return false;
