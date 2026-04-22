@@ -1252,6 +1252,34 @@ describe('quickStartPersistence', () => {
     expect(normalized.viewState).toBe('followups');
   });
 
+  it('reopens follow-up mode when older snapshots lost the flag and saved an invalid view state', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      viewState: 42 as never,
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'transport',
+            category: 'travel',
+            question: 'How should guests get there?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.transport'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'pending',
+            answer: '',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.showFollowUps).toBe(true);
+    expect(normalized.viewState).toBe('followups');
+  });
+
   it('reopens follow-up mode when active draft answers survive alongside older answered history', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       viewState: 'question',
