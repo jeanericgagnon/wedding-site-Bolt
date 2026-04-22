@@ -521,4 +521,37 @@ describe('quickStartPersistence', () => {
 
     expect(normalized.followUpAnswers).toEqual({ lodging: 'Stay at the resort' });
   });
+
+  it('reopens the question view when restored follow-ups only contain skipped questions', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      showFollowUps: true,
+      viewState: 'followups',
+      followUpAnswers: {
+        transport: 'Shuttle leaves at 4 PM',
+      },
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'transport',
+            category: 'travel',
+            question: 'How should guests get there?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.transport'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'skipped',
+            answer: '',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.showFollowUps).toBe(false);
+    expect(normalized.viewState).toBe('question');
+    expect(normalized.followUpAnswers).toEqual({ transport: 'Shuttle leaves at 4 PM' });
+  });
 });

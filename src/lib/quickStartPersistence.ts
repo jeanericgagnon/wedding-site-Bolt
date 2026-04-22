@@ -213,7 +213,7 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
   ));
 
   const viewState = parsed.viewState === 'thinking' || parsed.viewState === 'followups' ? parsed.viewState : 'question';
-  const hasOpenFollowUps = (clarifyingState?.clarifying.questions.some((question) => question.status !== 'answered') || false);
+  const hasOpenFollowUps = (clarifyingState?.clarifying.questions.some((question) => question.status === 'pending') || false);
   const showFollowUps = parsed.showFollowUps === true && hasOpenFollowUps;
   const activeClarifyingIds = clarifyingState
     ? new Set([
