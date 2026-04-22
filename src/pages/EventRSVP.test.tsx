@@ -1005,6 +1005,88 @@ describe('EventRSVP token trust continuity', () => {
     firstSubmitRequest.resolve({ error: null });
   });
 
+  it('allows a new event RSVP submit after a prior submit is invalidated by token change', async () => {
+    currentToken = 'guest-token';
+
+    maybeSingleQueue.push(
+      { data: { id: 'guest-1', name: 'Jordan', email: 'jordan@example.com' }, error: null },
+      { data: null, error: null },
+    );
+
+    selectQueue.push({
+      data: [
+        {
+          id: 'inv-1',
+          event_id: 'event-1',
+          itinerary_events: {
+            id: 'event-1',
+            event_name: 'Ceremony',
+            description: '',
+            event_date: '2026-05-02',
+            start_time: '16:00:00',
+            end_time: null,
+            location_name: 'Garden',
+            location_address: '',
+            dress_code: null,
+            notes: null,
+          },
+        },
+      ],
+      error: null,
+    });
+
+    const firstSubmitRequest = createDeferredMutation();
+    insertQueue.push(firstSubmitRequest.promise);
+
+    const view = render(<EventRSVP />);
+
+    expect(await screen.findByText('Hello, Jordan!')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'RSVP for this event' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Submit RSVP' }));
+
+    await screen.findByRole('button', { name: 'Saving…' });
+
+    currentToken = 'guest-token-2';
+    maybeSingleQueue.push(
+      { data: { id: 'guest-2', name: 'Taylor', email: 'taylor@example.com' }, error: null },
+      { data: null, error: null },
+    );
+    selectQueue.push({
+      data: [
+        {
+          id: 'inv-2',
+          event_id: 'event-2',
+          itinerary_events: {
+            id: 'event-2',
+            event_name: 'Reception',
+            description: '',
+            event_date: '2026-05-02',
+            start_time: '18:00:00',
+            end_time: null,
+            location_name: 'Ballroom',
+            location_address: '',
+            dress_code: null,
+            notes: null,
+          },
+        },
+      ],
+      error: null,
+    });
+    insertQueue.push({ error: null });
+
+    view.rerender(<EventRSVP />);
+
+    expect(await screen.findByText('Hello, Taylor!')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'RSVP for this event' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Submit RSVP' }));
+
+    await waitFor(() => {
+      expect(screen.getByText("You're in!")).toBeInTheDocument();
+    });
+
+    firstSubmitRequest.resolve({ error: null });
+  });
+
   it('clears stale submit errors when the guest edits the event RSVP before retrying', async () => {
     currentToken = 'guest-token';
 

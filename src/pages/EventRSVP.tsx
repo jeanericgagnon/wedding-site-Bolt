@@ -130,6 +130,7 @@ export default function EventRSVP() {
     const requestId = activeLoadRequestRef.current + 1;
     activeLoadRequestRef.current = requestId;
     activeSubmitRequestRef.current += 1;
+    submitInFlightRef.current = false;
     let eventRsvpSupportKnown: boolean | null = null;
     let eventRsvpSupportAvailable = true;
 
