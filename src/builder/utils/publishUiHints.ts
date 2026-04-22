@@ -67,10 +67,10 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
     ];
   }
   if (
-    normalizedErrorLower.includes('partner names')
-    || normalizedErrorLower.includes('couple names')
-    || normalizedErrorLower.includes('both names')
-    || normalizedErrorLower.includes('both partners')
+    normalizedErrorLower.includes('add both partner names')
+    || normalizedErrorLower.includes('add both couple names')
+    || normalizedErrorLower.includes('add both names')
+    || normalizedErrorLower.includes('add both partners')
   ) {
     return [
       'Open your couple details.',

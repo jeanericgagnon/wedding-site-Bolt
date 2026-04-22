@@ -85,6 +85,17 @@ describe('publishUiHints', () => {
     ]);
   });
 
+  it('still routes real names blockers after tightening generic names matching', () => {
+    expect(getPublishBlockedHints('Add both partner names before going live.')).toEqual([
+      'Open your couple details.',
+      'Add both names exactly how you want guests to see them.',
+    ]);
+    expect(getPublishBlockedHints('Add both couple names before going live.')).toEqual([
+      'Open your couple details.',
+      'Add both names exactly how you want guests to see them.',
+    ]);
+  });
+
   it('does not mistake the names success detail for a blocker', () => {
     expect(getPublishBlockedHints('Names are ready for guests.')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
