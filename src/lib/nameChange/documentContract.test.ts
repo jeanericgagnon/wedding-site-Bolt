@@ -172,7 +172,7 @@ describe('name change document intake contract', () => {
     expect(snapshot.summary.requiredMissing).toBe(1);
   });
 
-  it('keeps uploaded preferred documents out of autofill-ready and extraction-gap summary until review is complete', () => {
+  it('keeps uploaded preferred documents out of reviewed-ready summary counters until review is complete', () => {
     const snapshot = buildNameChangeDocumentIntakeSnapshot(
       makeCase(),
       [
@@ -212,8 +212,10 @@ describe('name change document intake contract', () => {
 
     expect(snapshot.documents.find((document) => document.kind === 'current_passport')).toMatchObject({
       intakeStatus: 'uploaded',
+      metadataReady: 0,
       capturedExtractionFields: expect.arrayContaining(['issuance_date']),
     });
+    expect(snapshot.summary.metadataReady).toBe(1);
     expect(snapshot.summary.autofillReady).toBe(0);
     expect(snapshot.summary.extractionGaps).toBe(1);
   });
