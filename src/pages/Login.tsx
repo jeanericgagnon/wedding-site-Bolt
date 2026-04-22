@@ -155,8 +155,8 @@ export const Login: React.FC = () => {
       if (!hasInviteContext && savedReturnPath) {
         writeSignupReturnPath(savedReturnPath);
       }
-      if (quickStartDraft) {
-        persistQuickStartDraftSnapshot(quickStartDraft);
+      if (normalizedQuickStartDraft) {
+        persistQuickStartDraftSnapshot(normalizedQuickStartDraft);
       }
 
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
