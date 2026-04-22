@@ -206,9 +206,9 @@ export function buildNameChangeDocumentIntakeSnapshot(
       extractionFieldCount: capturedExtractionFields.length,
       metadataReady: metadataMissing.length === 0 && contractIntakeStatus === 'reviewed' ? 1 : 0,
       metadataMissing,
-      expectedExtractionFields: definition.extractionFields,
+      expectedExtractionFields: contractIntakeStatus === 'not_started' ? [] : definition.extractionFields,
       capturedExtractionFields,
-      missingExtractionFields,
+      missingExtractionFields: contractIntakeStatus === 'not_started' ? [] : missingExtractionFields,
       canonicalConflicts,
     };
   });

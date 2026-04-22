@@ -440,7 +440,7 @@ describe('name change document intake contract', () => {
     });
   });
 
-  it('does not surface captured extraction fields for documents that are not started', () => {
+  it('does not surface extraction expectations for documents that are not started', () => {
     const snapshot = buildNameChangeDocumentIntakeSnapshot(
       makeCase(),
       [],
@@ -458,7 +458,9 @@ describe('name change document intake contract', () => {
     expect(snapshot.documents.find((document) => document.kind === 'current_passport')).toMatchObject({
       intakeStatus: 'not_started',
       extractionFieldCount: 0,
+      expectedExtractionFields: [],
       capturedExtractionFields: [],
+      missingExtractionFields: [],
     });
   });
 });
