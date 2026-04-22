@@ -431,6 +431,22 @@ describe('name change intake draft helpers', () => {
         field_value_masked: 'MC-123',
       }),
     ]);
+
+    expect(upsertDraftNameChangeExtractedField([], 'draft-court_order', 'case #' as never, '  ', ' 24 cv / 1188 ')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-court_order',
+        field_key: 'case_number',
+        field_value_masked: '24 CV/1188',
+      }),
+    ]);
+
+    expect(upsertDraftNameChangeExtractedField([], 'draft-marriage_certificate', 'cert #' as never, '  ', ' mc - 123 ')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-marriage_certificate',
+        field_key: 'certificate_number',
+        field_value_masked: 'MC-123',
+      }),
+    ]);
   });
 
   it('normalizes slash-formatted draft dates into iso yyyy-mm-dd values', () => {

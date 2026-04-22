@@ -183,7 +183,11 @@ function normalizeDraftFieldValue(fieldKey: NameChangeExtractedFieldInput['field
   }
 
   if (fieldKey === 'case_number' || fieldKey === 'certificate_number') {
-    return normalizedValue.toUpperCase();
+    return normalizedValue
+      .toUpperCase()
+      .replace(/\s*([\-/#])\s*/g, '$1')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   if (fieldKey === 'court_order_date' || fieldKey === 'issuance_date') {
