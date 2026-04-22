@@ -302,6 +302,40 @@ describe('quickStartStateTransfer', () => {
     });
   });
 
+  it('does not rewrite historyless answered restores back into follow-up mode', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      viewState: 'question',
+      followUpAnswers: {
+        lodging: 'Stay at the resort',
+      },
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'lodging',
+            category: 'travel',
+            question: 'Where should guests stay?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.lodging'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'answered',
+            answer: 'Stay at the resort',
+          }],
+        },
+        draftOutputs: {},
+      },
+    }));
+
+    const restored = readQuickStartDraftSnapshot();
+
+    expect(restored?.showFollowUps).toBe(false);
+    expect(restored?.viewState).toBe('question');
+    expect(restored?.followUpAnswers).toEqual({ lodging: 'Stay at the resort' });
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').showFollowUps).toBe(false);
+  });
+
   it('rewrites stale answered follow-up values to the restored clarifying truth', () => {
     window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
       followUpAnswers: {

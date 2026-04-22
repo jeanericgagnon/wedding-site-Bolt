@@ -234,7 +234,8 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     ))
   );
   const hasAnsweredClarifyingHistory = Boolean(
-    clarifyingState?.clarifying.history.some((question) => question.status === 'answered' && question.answer.trim().length > 0)
+    clarifyingState && [...clarifyingState.clarifying.questions, ...clarifyingState.clarifying.history]
+      .some((question) => question.status === 'answered' && question.answer.trim().length > 0)
   );
   const showFollowUps = hasOpenFollowUps && (
     parsed.showFollowUps === true
