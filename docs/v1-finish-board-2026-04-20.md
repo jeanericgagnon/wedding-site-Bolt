@@ -294,6 +294,7 @@ If that line fails, the rest is noise.
    - current blocking proof gaps: `canonicalCouplePath`, `runtimeWordingVerification`, `onboardingStarterDraftWording`
    - current proof order mirrors canonical smoke: canonical couple-path truth pass -> runtime wording verification -> onboarding + first-run starter-draft wording verification
    - operator evidence handoff: record those notes in `docs/v1-smoke-proof-log.md` before re-reading this board for launch posture
+   - operator re-read trigger: only revisit launch posture here after `manualProofSummary.missingCount` drops below `3` or the blocker command status changes
    - operator read rule: treat green automation here as route continuity only, not public-v1 launch clearance
 2. **Guest-state continuity smoke + fix**
    - prove or fix guest edits, RSVP updates, event-level visibility, downstream reads
