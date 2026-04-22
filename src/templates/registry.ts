@@ -778,8 +778,8 @@ const templateRegistry: TemplateDefinition[] = [
 function cloneTemplateSection(section: TemplateSection): TemplateSection {
   return {
     ...section,
-    variant: section.type === 'registry' && typeof section.variant === 'string'
-      ? normalizeRegistryTemplateVariant(section.variant)
+    variant: section.type === 'registry'
+      ? (typeof section.variant === 'string' ? normalizeRegistryTemplateVariant(section.variant) : 'cards')
       : section.variant,
     bindings: cloneTemplateValue(section.bindings ?? {}),
     settings: cloneTemplateValue(section.settings ?? {}),
