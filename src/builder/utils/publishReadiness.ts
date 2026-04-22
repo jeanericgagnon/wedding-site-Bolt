@@ -67,9 +67,9 @@ export const buildPublishReadiness = (
   const normalizedActivePageId = typeof options?.activePageId === 'string'
     ? options.activePageId.trim() || null
     : options?.activePageId;
-  const activePage = project.pages.find((page) => page.id === normalizedActivePageId) ?? project.pages[0];
+  const activePage = project.pages.find((page) => page?.id === normalizedActivePageId) ?? project.pages.find(Boolean);
   const enabledSectionCount = project.pages.reduce(
-    (count, page) => count + (page.sections?.filter((section) => section?.enabled).length ?? 0),
+    (count, page) => count + (page?.sections?.filter((section) => section?.enabled).length ?? 0),
     0
   );
   const hasVenue = Boolean(weddingData?.venues?.some((v) => !!v?.name?.trim() || !!v?.address?.trim()));

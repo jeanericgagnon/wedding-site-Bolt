@@ -905,6 +905,29 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('falls back to the first real page when persisted page arrays contain null entries', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages = [
+      // @ts-expect-error exercising runtime guard for incomplete persisted data
+      null,
+      {
+        ...project.pages[0],
+        id: 'page-1',
+        title: 'Home',
+        orderIndex: 0,
+        sections: [makeSection({ id: 'home-live', enabled: true })],
+      },
+    ];
+
+    const readiness = buildPublishReadiness(project, undefined, { activePageId: 'missing-page' });
+    expect(readiness.find((item) => item.id === 'current-page')).toEqual({
+      id: 'current-page',
+      label: 'Current page has visible content',
+      done: true,
+      detail: 'Home has visible sections.',
+    });
+  });
+
   it('falls back to generic current-page copy when persisted active page title is not a string', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     // @ts-expect-error exercising runtime guard for incomplete persisted data
