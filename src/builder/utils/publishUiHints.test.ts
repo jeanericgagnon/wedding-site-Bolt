@@ -43,6 +43,11 @@ describe('publishUiHints', () => {
     expect(hints).toEqual(['Use Fix next to move through the last blockers before the guest-facing launch.']);
   });
 
+  it('returns fallback guidance for unknown whitespace-padded message', () => {
+    const hints = getPublishBlockedHints('   Something else   ');
+    expect(hints).toEqual(['Use Fix next to move through the last blockers before the guest-facing launch.']);
+  });
+
   it('detects publishNow from querystring', () => {
     expect(shouldAutoPublishFromSearch('?publishNow=1')).toBe(true);
     expect(shouldAutoPublishFromSearch('?foo=bar&publishNow=1')).toBe(true);
