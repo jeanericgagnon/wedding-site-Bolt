@@ -93,4 +93,12 @@ describe('quickStartFlow', () => {
     expect(applyQuickStartAnswer(base, 'registryIntent', 'honeymoon fund and gifts').registryIntent).toBe('both');
   });
 
+
+  it('infers sparse guest count bands even when the answer is descriptive instead of numeric', () => {
+    const base = createEmptyInitialSetupAnswers();
+
+    expect(applyQuickStartAnswer(base, 'guestCount', 'intimate dinner party vibe').guestCountBand).toBe('under-50');
+    expect(applyQuickStartAnswer(base, 'guestCount', 'very large celebration').guestCountBand).toBe('150-250');
+  });
+
 });

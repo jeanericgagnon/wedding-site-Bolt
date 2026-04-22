@@ -29,6 +29,12 @@ const normalizeSparseGuestCountBand = (rawValue: string): InitialSetupAnswers['g
     return normalized as InitialSetupAnswers['guestCountBand'];
   }
 
+  if (/(tiny|small|intimate|few|micro wedding)/.test(normalized)) return 'under-50';
+  if (/(very large|huge|two hundred|200)/.test(normalized)) return '150-250';
+  if (/(medium|moderate|around one hundred|about one hundred)/.test(normalized)) return '50-100';
+  if (/(large|big crowd|one hundred and fifty|around 150)/.test(normalized)) return '100-150';
+  if (/(massive|300|three hundred|250\+)/.test(normalized)) return '250-plus';
+
   const numericMatch = normalized.match(/\d+/g);
   if (!numericMatch || numericMatch.length === 0) return '';
   const numbers = numericMatch.map(Number).filter((value) => Number.isFinite(value));
