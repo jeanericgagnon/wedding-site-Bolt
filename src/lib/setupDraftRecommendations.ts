@@ -22,10 +22,16 @@ export type SetupMode = {
   weekend: boolean;
 };
 
-const hasPreference = (prefs: Set<string>, value: string) => prefs.has(value);
+const normalizeSetupPreference = (value: string) => value.trim().toLowerCase();
+
+const buildPreferenceSet = (preferences: readonly string[]) => (
+  new Set(preferences.map(normalizeSetupPreference).filter(Boolean))
+);
+
+const hasPreference = (prefs: Set<string>, value: string) => prefs.has(normalizeSetupPreference(value));
 
 export const deriveSetupMode = (draft: Pick<SetupDraft, 'stylePreferences' | 'guestEstimateBand'>): SetupMode => {
-  const prefs = new Set(draft.stylePreferences);
+  const prefs = buildPreferenceSet(draft.stylePreferences);
   const destination = hasPreference(prefs, 'Destination');
   const bilingual = hasPreference(prefs, 'Bilingual');
   const interfaith = hasPreference(prefs, 'Interfaith');
@@ -34,8 +40,8 @@ export const deriveSetupMode = (draft: Pick<SetupDraft, 'stylePreferences' | 'gu
 };
 
 const scoreTemplateForSetup = (template: TemplateCatalogItem, draft: Pick<SetupDraft, 'stylePreferences' | 'guestEstimateBand'>): number => {
-  const prefs = new Set(draft.stylePreferences);
-  let score = template.styleTags.filter((tag) => prefs.has(tag)).length;
+  const prefs = buildPreferenceSet(draft.stylePreferences);
+  let score = template.styleTags.filter((tag) => hasPreference(prefs, tag)).length;
   const source = `${template.id} ${template.name} ${template.description} ${template.bestFor.join(' ')} ${template.defaultSectionOrder.join(' ')}`.toLowerCase();
   const setupMode = deriveSetupMode(draft);
 

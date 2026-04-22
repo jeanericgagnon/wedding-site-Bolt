@@ -84,4 +84,19 @@ describe('setupDraftRecommendations', () => {
 
     expect(getRecommendedTemplates(emptySetupDraft, templates, 3).map((template) => template.id)).toEqual(['a', 'b', 'c']);
   });
+
+  it('matches setup preferences case-insensitively and ignores whitespace noise', () => {
+    const templates = [
+      makeTemplate({ id: 'clean', name: 'Clean', styleTags: ['Modern'] }),
+      makeTemplate({ id: 'trip', name: 'Trip', styleTags: ['Destination'], description: 'Travel-first hotel itinerary' }),
+    ];
+
+    const [first] = getRecommendedTemplates({
+      ...emptySetupDraft,
+      stylePreferences: ['  destination  ', 'modern'],
+      guestEstimateBand: '',
+    }, templates, 1);
+
+    expect(first?.id).toBe('trip');
+  });
 });
