@@ -340,4 +340,8 @@ describe('publishUiHints', () => {
   it('treats negative infinity done counts as zero so progress copy never goes past total', () => {
     expect(getPublishProgressLabel(Number.NEGATIVE_INFINITY, 2)).toBe('2 things left before guest-facing launch');
   });
+
+  it('treats positive infinity done counts as zero so progress copy never claims impossible readiness', () => {
+    expect(getPublishProgressLabel(Number.POSITIVE_INFINITY, 2)).toBe('2 things left before guest-facing launch');
+  });
 });
