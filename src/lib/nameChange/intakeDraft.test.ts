@@ -94,7 +94,15 @@ describe('name change intake draft helpers', () => {
       id: 'draft-current_passport',
       document_kind: 'current_passport',
     });
+    expect(createDraftNameChangeDocument('passport card' as never, ' Passport card ')).toMatchObject({
+      id: 'draft-current_passport',
+      document_kind: 'current_passport',
+    });
     expect(createDraftNameChangeDocument('drivers_license' as never, ' Driver license ')).toMatchObject({
+      id: 'draft-current_drivers_license',
+      document_kind: 'current_drivers_license',
+    });
+    expect(createDraftNameChangeDocument('dmv id' as never, ' DMV ID ')).toMatchObject({
       id: 'draft-current_drivers_license',
       document_kind: 'current_drivers_license',
     });
@@ -111,6 +119,10 @@ describe('name change intake draft helpers', () => {
       document_kind: 'birth_certificate',
     });
     expect(createDraftNameChangeDocument('utility bill' as never, ' Utility bill ')).toMatchObject({
+      id: 'draft-proof_of_address',
+      document_kind: 'proof_of_address',
+    });
+    expect(createDraftNameChangeDocument('proof of residence' as never, ' Proof of residence ')).toMatchObject({
       id: 'draft-proof_of_address',
       document_kind: 'proof_of_address',
     });
@@ -141,6 +153,15 @@ describe('name change intake draft helpers', () => {
         document_id: 'draft-court_order',
         field_key: 'case_number',
         field_label: 'Case Number',
+      }),
+    ]);
+
+    expect(upsertDraftNameChangeExtractedField([], 'draft-proof_of_address', 'resident county' as never, '  ', 'san diego')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-proof_of_address',
+        field_key: 'county',
+        field_label: 'County',
+        field_value_masked: 'San Diego',
       }),
     ]);
 

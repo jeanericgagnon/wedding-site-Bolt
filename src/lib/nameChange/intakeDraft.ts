@@ -65,10 +65,12 @@ function normalizeDraftDocumentKind(value: string) {
   const kindAliases: Record<string, NameChangeDocumentInput['document_kind']> = {
     passport: 'current_passport',
     passport_book: 'current_passport',
+    passport_card: 'current_passport',
     driver_license: 'current_drivers_license',
     drivers_license: 'current_drivers_license',
     driver_licence: 'current_drivers_license',
     drivers_licence: 'current_drivers_license',
+    dmv_id: 'current_drivers_license',
     state_id: 'current_drivers_license',
     state_identification: 'current_drivers_license',
     state_identification_card: 'current_drivers_license',
@@ -79,7 +81,11 @@ function normalizeDraftDocumentKind(value: string) {
     birth_cert: 'birth_certificate',
     birth_record: 'birth_certificate',
     utility_bill: 'proof_of_address',
+    utility_statement: 'proof_of_address',
     residence_proof: 'proof_of_address',
+    proof_of_residence: 'proof_of_address',
+    residency_proof: 'proof_of_address',
+    address_verification: 'proof_of_address',
     proof_address: 'proof_of_address',
   };
 
@@ -102,6 +108,8 @@ function normalizeDraftFieldKey(value: string) {
     date_issued: 'issuance_date',
     county_residence: 'county',
     county_of_residence: 'county',
+    resident_county: 'county',
+    county_lived_in: 'county',
     case_no: 'case_number',
     case_num: 'case_number',
     docket_number: 'case_number',
