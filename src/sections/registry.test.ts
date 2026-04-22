@@ -504,7 +504,8 @@ describe('sections registry resolution', () => {
     expect(templateRegistrySource).toContain('function cloneTemplateValue<T>(value: T): T {');
     expect(templateRegistrySource).toContain("templateRegistry.map((template) => [template.id, cloneTemplateDefinition(template)])");
     expect(templateRegistrySource).toContain('const TEMPLATE_ALIAS_TARGETS: Record<string, string> = {');
-    expect(templateRegistrySource).toContain("base: cloneTemplateDefinition(templateById[TEMPLATE_ALIAS_TARGETS.base] ?? templateRegistry[0]),");
+    expect(templateRegistrySource).toContain('function getCanonicalTemplateSource(templateId: string | undefined): TemplateDefinition {');
+    expect(templateRegistrySource).toContain("base: cloneTemplateDefinition(getCanonicalTemplateSource(TEMPLATE_ALIAS_TARGETS.base)),");
     expect(templateRegistrySource).toContain("variant: isRegistryTemplateSection");
     expect(templateRegistrySource).toContain("variant: isRegistryTemplateSection");
     expect(templateRegistrySource).toContain('? canonicalRegistrySection.variant');
@@ -517,7 +518,7 @@ describe('sections registry resolution', () => {
     expect(templateRegistrySource).toContain('overrides: cloneTemplateValue(section.overrides ?? undefined),');
     expect(templateRegistrySource).toContain('function cloneTemplateDefinition(template: TemplateDefinition): TemplateDefinition {');
     expect(templateRegistrySource).toContain('const sourceTemplateId = TEMPLATE_ALIAS_TARGETS[canonicalTemplateId] ?? canonicalTemplateId;');
-    expect(templateRegistrySource).toContain('return cloneTemplateDefinition(templateById[sourceTemplateId] || templateById[TEMPLATE_ALIAS_TARGETS.base] || templateRegistry[0]);');
+    expect(templateRegistrySource).toContain('return cloneTemplateDefinition(getCanonicalTemplateSource(sourceTemplateId));');
     expect(templateRegistrySource).toContain('return Object.values(templateById).map(cloneTemplateDefinition);');
     expect(sectionRegistrySource).toContain('export function resolveCanonicalRegistrySectionInput(type: unknown, variant: unknown): { type: string; variant: string } {');
     expect(sectionRegistrySource).toContain('export function resolveCanonicalRegistrySectionType(type: unknown): string {');

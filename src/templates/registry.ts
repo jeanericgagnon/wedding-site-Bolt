@@ -794,14 +794,20 @@ const TEMPLATE_ALIAS_TARGETS: Record<string, string> = {
   rustic: 'rustic-barn',
 };
 
+function getCanonicalTemplateSource(templateId: string | undefined): TemplateDefinition {
+  return templateById[templateId ?? '']
+    || templateById[TEMPLATE_ALIAS_TARGETS.base]
+    || templateRegistry[0];
+}
+
 export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = {
   ...templateById,
   // Back-compat aliases used by older flows
-  base: cloneTemplateDefinition(templateById[TEMPLATE_ALIAS_TARGETS.base] ?? templateRegistry[0]),
-  modern: cloneTemplateDefinition(templateById[TEMPLATE_ALIAS_TARGETS.modern] ?? templateRegistry[0]),
-  editorial: cloneTemplateDefinition(templateById[TEMPLATE_ALIAS_TARGETS.editorial] ?? templateRegistry[0]),
-  classic: cloneTemplateDefinition(templateById[TEMPLATE_ALIAS_TARGETS.classic] ?? templateRegistry[0]),
-  rustic: cloneTemplateDefinition(templateById[TEMPLATE_ALIAS_TARGETS.rustic] ?? templateById[TEMPLATE_ALIAS_TARGETS.classic] ?? templateRegistry[0]),
+  base: cloneTemplateDefinition(getCanonicalTemplateSource(TEMPLATE_ALIAS_TARGETS.base)),
+  modern: cloneTemplateDefinition(getCanonicalTemplateSource(TEMPLATE_ALIAS_TARGETS.modern)),
+  editorial: cloneTemplateDefinition(getCanonicalTemplateSource(TEMPLATE_ALIAS_TARGETS.editorial)),
+  classic: cloneTemplateDefinition(getCanonicalTemplateSource(TEMPLATE_ALIAS_TARGETS.classic)),
+  rustic: cloneTemplateDefinition(getCanonicalTemplateSource(TEMPLATE_ALIAS_TARGETS.rustic)),
 };
 
 const templateIdAliases = new Map<string, string>(
@@ -820,7 +826,7 @@ export function getTemplate(templateId: unknown): TemplateDefinition {
     ? templateIdValue
     : templateIdAliases.get(normalizeTemplateIdKey(templateId)) ?? 'base';
   const sourceTemplateId = TEMPLATE_ALIAS_TARGETS[canonicalTemplateId] ?? canonicalTemplateId;
-  return cloneTemplateDefinition(templateById[sourceTemplateId] || templateById[TEMPLATE_ALIAS_TARGETS.base] || templateRegistry[0]);
+  return cloneTemplateDefinition(getCanonicalTemplateSource(sourceTemplateId));
 }
 
 export function getAllTemplates(): TemplateDefinition[] {
