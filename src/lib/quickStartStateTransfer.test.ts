@@ -73,6 +73,53 @@ describe('quickStartStateTransfer', () => {
     expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
   });
 
+
+  it('treats follow-up-view-only quick start snapshots as inert when no follow-up work survived', () => {
+    const persisted = persistQuickStartDraftSnapshot({
+      currentIndex: 0,
+      initialSetupAnswers: {},
+      followUpAnswers: {},
+      showFollowUps: false,
+      clarifyingState: null,
+      viewState: 'followups',
+    });
+
+    expect(persisted).toBeNull();
+    expect(window.localStorage.getItem(QUICK_START_STORAGE_KEY)).toBeNull();
+  });
+
+  it('keeps follow-up-view quick start snapshots when clarifying work survived', () => {
+    const persisted = persistQuickStartDraftSnapshot({
+      currentIndex: 0,
+      initialSetupAnswers: {},
+      followUpAnswers: {},
+      showFollowUps: true,
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'lodging',
+            category: 'travel',
+            question: 'Where should guests stay?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.lodging'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'pending',
+            answer: '',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+      viewState: 'followups',
+    });
+
+    expect(persisted?.viewState).toBe('followups');
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').viewState).toBe('followups');
+  });
+
   it('keeps progressed quick start snapshots when meaningful answers survived', () => {
     const persisted = persistQuickStartDraftSnapshot({
       currentIndex: 7,

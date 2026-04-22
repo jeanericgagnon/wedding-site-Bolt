@@ -1784,6 +1784,36 @@ describe('quickStartPersistence', () => {
   });
 
 
+  it('keeps review answers when follow-up resume is explicitly off but draft outputs still survive', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      showFollowUps: false,
+      viewState: 'question',
+      followUpAnswers: {
+        lodging: 'Need shuttle details',
+      },
+      clarifyingState: {
+        clarifying: {
+          mode: 'draft',
+          questions: [],
+          history: [],
+        },
+        draftOutputs: {
+          hero: {
+            headline: 'Welcome to our wedding',
+          },
+        },
+      },
+    });
+
+    expect(normalized.showFollowUps).toBe(false);
+    expect(normalized.viewState).toBe('question');
+    expect(normalized.followUpAnswers).toEqual({ lodging: 'Need shuttle details' });
+    expect(normalized.clarifyingState?.draftOutputs).toEqual({
+      hero: { headline: 'Welcome to our wedding' },
+    });
+  });
+
+
   it('drops orphaned follow-up answers in question view when empty clarifying records survive', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       viewState: 'question',

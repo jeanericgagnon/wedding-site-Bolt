@@ -343,12 +343,14 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     && clarifyingState.clarifying.history.length === 0
     && Object.keys(clarifyingState.draftOutputs).length > 0
   );
-  const hasSkippedClarifyingQuestions = Boolean(
-    clarifyingState?.clarifying.questions.some((question) => question.status === 'skipped')
+  const hasSkippedClarifyingRecords = Boolean(
+    clarifyingState
+    && [...clarifyingState.clarifying.questions, ...clarifyingState.clarifying.history]
+      .some((question) => question.status === 'skipped')
   );
   const normalizedFollowUpAnswers = activeClarifyingIds && activeClarifyingIds.size > 0
     ? Object.fromEntries(Object.entries(followUpAnswers).filter(([key]) => activeClarifyingIds.has(key)))
-    : hasSkippedClarifyingQuestions
+    : hasSkippedClarifyingRecords
       ? {}
       : hasOnlyDraftOutputs && !shouldDropOrphanedFollowUpAnswers
         ? followUpAnswers
