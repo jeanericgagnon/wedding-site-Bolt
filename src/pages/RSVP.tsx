@@ -662,6 +662,7 @@ export default function RSVP() {
 
       const notesPayload = (formData.notes || '').trim();
       const mealChoice = (formData.meal_choice || '').trim();
+      const plusOneName = (formData.plus_one_name || '').trim();
 
       if (applyToHousehold && householdGuests.length > 0 && selectedHouseholdGuestIds.length === 0) {
         if (activeSubmitRequestRef.current !== requestId) return;
@@ -671,7 +672,6 @@ export default function RSVP() {
 
       if (DEMO_MODE) {
         const stored = getDemoStoredResponses();
-        const plusOneName = (formData.plus_one_name || '').trim();
         const payload: ExistingRSVP = {
           id: `demo-rsvp-${guest.id}`,
           attending: formData.attending,
@@ -705,8 +705,8 @@ export default function RSVP() {
         attendCeremony: formData.attendCeremony,
         attendReception: formData.attendReception,
         mealChoice: mealChoice || null,
-        plusOneName: formData.plus_one_name || null,
-        plusOneCount: formData.plus_one_name.trim() ? 1 : 0,
+        plusOneName: plusOneName || null,
+        plusOneCount: plusOneName ? 1 : 0,
         childrenCount: 0,
         notes: notesPayload || null,
         customAnswers,
@@ -723,7 +723,6 @@ export default function RSVP() {
       }
 
       if (activeSubmitRequestRef.current !== requestId) return;
-      const plusOneName = (formData.plus_one_name || '').trim();
       setExistingRsvp({
         id: existingRsvp?.id ?? 'submitted-rsvp',
         attending: formData.attending,
