@@ -369,7 +369,7 @@ export const Product: React.FC = () => {
           {[
             { icon: Shield, title: 'Beautiful by default', text: 'Starts polished without endless tweaking.' },
             { icon: Wallet, title: 'Clear pricing', text: 'No hidden tiers. No renewal gotchas.' },
-            { icon: Mail, title: 'Built-in comms', text: 'Keep guests synced without duct tape.' },
+            { icon: Mail, title: 'Built-in comms', text: 'Keep guests synced with review-before-send drafts instead of duct tape.' },
             { icon: Users, title: 'Guest logic that scales', text: 'Households and plus-ones stay sane.' },
             { icon: Calendar, title: 'Day-of readiness', text: 'Timeline and execution stay aligned.' },
             { icon: CheckCircle2, title: 'Clear path to review', text: 'Less friction between signup and a reviewable draft you can tighten before sharing.' },

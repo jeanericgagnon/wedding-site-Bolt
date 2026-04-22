@@ -53,5 +53,6 @@ describe('Product starter draft truth', () => {
     expect(screen.getByText('Review the right update before sending it to the right group.')).toBeInTheDocument();
     expect(screen.getByText('Stop copy/pasting from spreadsheets to email tools while keeping send decisions in your hands.')).toBeInTheDocument();
     expect(screen.getByText('Draft prepared for review')).toBeInTheDocument();
+    expect(screen.getByText('Keep guests synced with review-before-send drafts instead of duct tape.')).toBeInTheDocument();
   });
 });
