@@ -60,6 +60,7 @@ describe('sections registry resolution', () => {
     expect(resolveCanonicalRegistrySectionInput('footer-cta', 'Luxury')).toEqual({ type: 'footerCta', variant: 'rsvpPush' });
     expect(resolveCanonicalRegistrySectionInput('Footer Cta', 'Luxury')).toEqual({ type: 'footerCta', variant: 'rsvpPush' });
     expect(resolveAndParse('Footer Cta' as never, 'Luxury' as never, {}, { strictVariant: true })?.def.variant).toBe('rsvpPush');
+    expect(resolveAndParse('Footer Cta' as never, 'Luxury' as never, {}, { strictVariant: false })?.def.variant).toBe('rsvpPush');
     expect(resolveCanonicalRegistrySectionInput(' Hero ', 'FULL.BLEED')).toEqual({ type: 'hero', variant: 'fullBleed' });
     expect(getDefinitionOrThrow('RegistrySection' as never, ' Luxury ' as never).variant).toBe('featured');
     expect(getDefinition('RegistrySection' as never, ' Luxury ' as never)?.variant).toBe('featured');
@@ -401,7 +402,8 @@ describe('sections registry resolution', () => {
     expect(sectionRegistry).toContain("const normalizedInputType = typeof type === 'string' ? type.trim().toLowerCase() : '';");
     expect(sectionRegistry).toContain('function resolveCanonicalSectionVariantForType(type: string, inputType: string, variant: unknown): string {');
     expect(sectionRegistry).toContain("return getAllDefinitions().find((definition) => definition.type === type)?.variant ?? (typeof variant === 'string' ? variant : '');");
-    expect(sectionRegistry).toContain('const fallbackVariants = VARIANT_FALLBACKS[type]');
+    expect(sectionRegistry).toContain('function getVariantFallbacksForType(type: string, inputType?: string): Record<string, string> {');
+    expect(sectionRegistry).toContain('const fallbackVariants = getVariantFallbacksForType(type, inputType);');
     expect(sectionRegistry).toContain('.filter((definition) => definition.type === type)');
     expect(sectionRegistry).toContain('variant: resolveCanonicalSectionVariantForType(normalizedType, normalizedInputType, variant),');
     expect(sectionRegistry).toContain("return SECTION_REGISTRY.get(makeKey(canonicalSection.type, canonicalSection.variant)) ?? null;");
@@ -567,7 +569,7 @@ describe('sections registry resolution', () => {
     expect(sectionRegistrySource).toContain('export function resolveCanonicalRegistryVariant(variant: unknown): string {');
     expect(sectionRegistrySource).toContain('const canonicalSection = resolveCanonicalRegistrySectionInput(type, variant);');
     expect(sectionRegistrySource).toContain('throw new Error(`No section definition for ${canonicalSection.type}::${canonicalSection.variant}`);');
-    expect(sectionRegistrySource).toContain("VARIANT_FALLBACKS[canonicalSection.type]?.[normalizedVariant]");
+    expect(sectionRegistrySource).toContain("getVariantFallbacksForType(canonicalSection.type, normalizedType)[normalizedVariant]");
     expect(initialLayoutSource).toContain('overrides: sectionDef.overrides ? { ...sectionDef.overrides } : undefined,');
     expect(initialLayoutSource).toContain('locked: sectionDef.locked,');
     expect(initialLayoutSource).toContain('function normalizeSectionTypeKey(type: unknown): string {');
