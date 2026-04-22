@@ -140,4 +140,20 @@ describe('mediaService', () => {
       caption: 'Private vows under the trees',
     }));
   });
+
+  it('preserves the original filename even when storage renames the uploaded asset', async () => {
+    const file = new File(['img'], 'original-name.jpg', { type: 'image/jpeg' });
+    upload.mockResolvedValue({
+      url: 'https://cdn.example.com/renamed.jpg',
+      path: 'w1/renamed.jpg',
+    });
+    save.mockResolvedValue({ id: 'asset-7' });
+
+    await mediaService.uploadAsset('w1', file);
+
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({
+      filename: 'renamed.jpg',
+      originalFilename: 'original-name.jpg',
+    }));
+  });
 });
