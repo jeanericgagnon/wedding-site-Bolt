@@ -132,6 +132,21 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('marks names readiness incomplete when either partner name is blank whitespace', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
+    const data = createEmptyWeddingData();
+    data.couple.partner1Name = 'Alex';
+    data.couple.partner2Name = '   ';
+
+    expect(buildPublishReadiness(project, data).find((item) => item.id === 'names')).toEqual({
+      id: 'names',
+      label: 'Couple names are filled in',
+      done: false,
+      detail: 'Add both names exactly how you want them shown.',
+    });
+  });
+
   it('shows current-page readiness against the active page, not just the first page', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages = [
