@@ -283,4 +283,33 @@ describe('quickStartPersistence', () => {
       answer: '6:00 PM',
     });
   });
+
+  it('drops clarifying questions whose field paths become blank after trimming', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      showFollowUps: true,
+      viewState: 'followups',
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'event-1-time',
+            category: 'event_structure',
+            question: 'When is dinner?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['   '],
+            affectedSections: ['schedule'],
+            skippable: true,
+            round: 1,
+            status: 'pending',
+            answer: '',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.clarifyingState?.clarifying.questions).toEqual([]);
+    expect(normalized.showFollowUps).toBe(false);
+  });
 });

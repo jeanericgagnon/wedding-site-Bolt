@@ -59,12 +59,15 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     return typeof question.id === 'string'
       && question.id.trim().length > 0
       && typeof question.category === 'string'
+      && question.category.trim().length > 0
       && typeof question.question === 'string'
+      && question.question.trim().length > 0
       && typeof question.expectedAnswerType === 'string'
+      && question.expectedAnswerType.trim().length > 0
       && Array.isArray(question.targetFields)
-      && question.targetFields.every((field) => typeof field === 'string')
+      && question.targetFields.every((field) => typeof field === 'string' && field.trim().length > 0)
       && Array.isArray(question.affectedSections)
-      && question.affectedSections.every((section) => typeof section === 'string')
+      && question.affectedSections.every((section) => typeof section === 'string' && section.trim().length > 0)
       && typeof question.skippable === 'boolean'
       && typeof question.round === 'number'
       && Number.isFinite(question.round)
