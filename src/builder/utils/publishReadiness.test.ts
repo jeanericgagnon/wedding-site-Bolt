@@ -247,7 +247,7 @@ describe('publishReadiness', () => {
     });
   });
 
-  it('marks page readiness with current multi-page copy when multiple pages exist', () => {
+  it('marks page readiness with plural page copy when multiple pages exist', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages.push({
       ...project.pages[0],
@@ -262,7 +262,7 @@ describe('publishReadiness', () => {
       id: 'page',
       label: 'A page exists',
       done: true,
-      detail: '2 page ready',
+      detail: '2 pages ready',
     });
   });
 

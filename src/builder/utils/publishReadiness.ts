@@ -81,7 +81,9 @@ export const buildPublishReadiness = (
       id: 'page',
       label: 'A page exists',
       done: project.pages.length > 0,
-      detail: project.pages.length > 0 ? `${project.pages.length} page ready` : 'Add a page or apply a starting design.',
+      detail: project.pages.length > 0
+        ? `${project.pages.length} page${project.pages.length === 1 ? '' : 's'} ready`
+        : 'Add a page or apply a starting design.',
     },
     {
       id: 'sections',
