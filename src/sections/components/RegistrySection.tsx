@@ -139,6 +139,16 @@ export function getRegistryPurchaseCtaLabel(item: Pick<RegistryItem, 'purchase_s
   return item.purchase_status === 'partial' ? 'Buy remaining' : 'Mark as purchasing';
 }
 
+export function getRegistryDisplayPriority(item: Pick<RegistryItem, 'purchase_status' | 'item_type'>): number {
+  const purchaseScore = item.purchase_status === 'available'
+    ? 2
+    : item.purchase_status === 'partial'
+      ? 1
+      : 0;
+
+  return purchaseScore + (item.item_type === 'cash_fund' ? 1 : 0);
+}
+
 const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase }) => {
   const isCashFund = item.item_type === 'cash_fund';
   const isPurchased = item.purchase_status === 'purchased';
@@ -301,8 +311,8 @@ function RegistryItemsDisplay({ items, settings, notes, updateItem }: {
     const priceB = b.price_amount ?? 0;
     if (sortMode === 'price-low') return priceA - priceB;
     if (sortMode === 'price-high') return priceB - priceA;
-    const scoreA = (a.purchase_status === 'available' ? 2 : 0) + (a.item_type === 'cash_fund' ? 1 : 0);
-    const scoreB = (b.purchase_status === 'available' ? 2 : 0) + (b.item_type === 'cash_fund' ? 1 : 0);
+    const scoreA = getRegistryDisplayPriority(a);
+    const scoreB = getRegistryDisplayPriority(b);
     return scoreB - scoreA;
   });
 
