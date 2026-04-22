@@ -205,7 +205,7 @@ const output = {
   ],
   whatMustChangeBeforeGo: [
     'Close the anon-auth RSVP blocker on validate-rsvp-token',
-    'Log the canonical couple-path truth pass with runtime wording verification',
+    'Log the canonical couple-path truth pass and verify privacy/access/publish plus marketing/settings/billing runtime wording',
     'Log onboarding and first-run starter-draft wording verification',
   ],
   externalBlockedProof: {
