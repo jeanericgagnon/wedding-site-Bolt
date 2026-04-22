@@ -179,9 +179,7 @@ export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinit
     defaultVariant: 'cards',
     supportedVariants: ['default', 'cards', 'grid', 'fundHighlight', 'featured', 'minimal', 'honeymoon', 'tabs', 'illustrated', 'classic', 'luxury', 'experiences', 'modern', 'playful'],
     variantMeta: [
-      { id: 'default', label: 'Default', description: 'Legacy registry links layout kept compatible with builder-owned registry state' },
       { id: 'cards', label: 'Store Links', description: 'Registry links as clickable store cards' },
-      { id: 'grid', label: 'Grid', description: 'Legacy grid alias kept compatible with builder-owned registry state' },
       { id: 'fundHighlight', label: 'Fund Highlight', description: 'Highlights one featured fund/link first, then secondary registry links' },
       { id: 'featured', label: 'Featured Gifts', description: 'Showcase specific gift items with photos, prices, and store links' },
       { id: 'minimal', label: 'Minimal', description: 'Heartfelt note with understated registry links' },
@@ -193,6 +191,8 @@ export const SECTION_MANIFESTS: Record<BuilderSectionType, BuilderSectionDefinit
       { id: 'experiences', label: 'Experiences', description: 'Experience-first featured registry layout used by published templates' },
       { id: 'modern', label: 'Modern', description: 'Modern registry cards used by published templates' },
       { id: 'playful', label: 'Playful', description: 'Playful registry cards used by published templates' },
+      { id: 'default', label: 'Default', description: 'Legacy registry links layout kept compatible with builder-owned registry state' },
+      { id: 'grid', label: 'Grid', description: 'Legacy grid alias kept compatible with builder-owned registry state' },
     ],
     capabilities: { ...defaultCapabilities, hasBindings: true },
     settingsSchema: {

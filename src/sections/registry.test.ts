@@ -57,6 +57,7 @@ describe('sections registry resolution', () => {
     const registryManifest = getSectionManifest('registry');
     expect(registryManifest?.supportedVariants).toEqual(expect.arrayContaining(['default', 'grid', 'classic', 'luxury', 'experiences', 'modern', 'playful']));
     expect(registryManifest?.variantMeta.map((variant) => variant.id)).toEqual(expect.arrayContaining(['default', 'grid']));
+    expect(registryManifest?.variantMeta[0]?.id).toBe('cards');
   });
 
   it('supports every registry variant used by shipped templates', () => {
