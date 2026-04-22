@@ -199,6 +199,7 @@ export function buildNameChangeDocumentIntakeSnapshot(
     const missingExtractionFields = definition.extractionFields.filter((field) => !capturedExtractionFields.includes(field));
     const extractionChecklistBlocked = contractIntakeStatus === 'not_started' || metadataMissing.length > 0;
     const visibleCapturedExtractionFields = extractionChecklistBlocked ? [] : capturedExtractionFields;
+    const visibleCanonicalConflicts = extractionChecklistBlocked ? [] : canonicalConflicts;
 
     return {
       kind: definition.kind,
@@ -213,7 +214,7 @@ export function buildNameChangeDocumentIntakeSnapshot(
       expectedExtractionFields: extractionChecklistBlocked ? [] : definition.extractionFields,
       capturedExtractionFields: visibleCapturedExtractionFields,
       missingExtractionFields: extractionChecklistBlocked ? [] : missingExtractionFields,
-      canonicalConflicts,
+      canonicalConflicts: visibleCanonicalConflicts,
     };
   });
 

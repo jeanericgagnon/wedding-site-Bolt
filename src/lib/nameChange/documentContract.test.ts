@@ -251,6 +251,7 @@ describe('name change document intake contract', () => {
       expectedExtractionFields: [],
       capturedExtractionFields: [],
       missingExtractionFields: [],
+      canonicalConflicts: [],
     });
     expect(snapshot.summary.requiredReady).toBe(5);
     expect(snapshot.summary.requiredMissing).toBe(1);
@@ -283,6 +284,7 @@ describe('name change document intake contract', () => {
       expectedExtractionFields: [],
       capturedExtractionFields: [],
       missingExtractionFields: [],
+      canonicalConflicts: [],
     });
     expect(snapshot.summary.extractionGaps).toBe(0);
   });
