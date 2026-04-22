@@ -108,6 +108,7 @@ import { buildCoordinatorCommandDeck } from '../../lib/coordinatorCommandDeck';
 import { buildCoordinatorAlertBoard } from '../../lib/coordinatorAlertBoard';
 import { buildCoordinatorTimelineBoard } from '../../lib/coordinatorTimelineBoard';
 import { buildCoordinatorQnaBoard } from '../../lib/coordinatorQnaBoard';
+import { buildCoordinatorCheckInBoard } from '../../lib/coordinatorCheckInBoard';
 
 
 type AudienceOption = { value: string; label: string; count: number };
@@ -740,6 +741,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const qnaBoardTargetId = useMemo(() => getFirstOpenCoordinatorQnaId(qnaItems), [qnaItems]);
   const qnaTargetState = useMemo(() => getCoordinatorQnaTargetState({ boardTargetId: qnaBoardTargetId, activeQnaId }), [qnaBoardTargetId, activeQnaId]);
   const checkInTargetGuest = useMemo(() => sortedGuests.find((guest) => guest.id === checkInBoardTargetId) ?? null, [sortedGuests, checkInBoardTargetId]);
+  const activeCheckInGuest = useMemo(() => sortedGuests.find((guest) => guest.id === activeGuestId) ?? null, [sortedGuests, activeGuestId]);
+  const checkInBoard = useMemo(() => buildCoordinatorCheckInBoard({
+    guests: sortedGuests,
+    activeGuest: activeCheckInGuest,
+  }), [sortedGuests, activeCheckInGuest]);
   const timelineTargetEvent = useMemo(() => events.find((event) => event.id === timelineBoardTargetId) ?? null, [events, timelineBoardTargetId]);
   const qnaTargetItem = useMemo(() => qnaItems.find((item) => item.id === qnaBoardTargetId) ?? null, [qnaItems, qnaBoardTargetId]);
   const commandSummaryItems = useMemo(() => buildCoordinatorCommandSummary({
@@ -1895,6 +1901,28 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   <p className="text-[11px] text-text-tertiary">Search arrivals fast and keep the live line moving.</p>
                 </div>
                 <p className="text-[11px] text-text-tertiary">{checkInQueue.length} shown · {checkInWatchCount} need review{checkInReviewOnly ? ' · review mode' : ''}{activeGuestId ? ` · ${getCoordinatorActiveTargetLabel('guest')}` : ''}{checkInTargetState.label ? ` · ${checkInTargetState.label}` : ''}</p>
+              </div>
+              <div className="rounded-lg border border-border/50 bg-surface-subtle/25 px-3 py-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-medium text-text-primary">Door board</p>
+                    <p className="mt-1 text-[11px] text-text-secondary">Active · {checkInBoard.activeLabel}</p>
+                    <p className="text-[11px] text-text-secondary">Next ready · {checkInBoard.nextReadyLabel}</p>
+                  </div>
+                  <span className={`rounded-full border px-2 py-1 text-[10px] font-medium ${checkInBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : checkInBoard.tone === 'warning' ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-border bg-white text-text-tertiary'}`}>
+                    {checkInBoard.statusLabel}
+                  </span>
+                </div>
+                <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+                  <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
+                    <p className="text-[10px] uppercase tracking-wide text-text-tertiary">Queue mix</p>
+                    <p className="mt-1 text-[11px] text-text-primary">{checkInBoard.queueLabel}</p>
+                  </div>
+                  <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
+                    <p className="text-[10px] uppercase tracking-wide text-text-tertiary">Review pressure</p>
+                    <p className="mt-1 text-[11px] text-text-primary">{checkInBoard.reviewLabel}</p>
+                  </div>
+                </div>
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
                 <Input
