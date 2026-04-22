@@ -282,6 +282,7 @@ Useful if stable, but should not distort the wedding-core launch decision.
 - P1: role-aware collaborator/coordinator proof still missing
 - P1: guests / RSVP ops proof remains environment-blocked by `validate-rsvp-token` anon auth 401
 - P2: optional memories and name-change slices are now explicitly scoped outside the current wedding-core v1 claim
+- P2: marketing/settings/billing honesty is narrowed in copy, but still awaiting one logged runtime wording pass
 - P1: guest-state continuity across RSVP -> messages -> seating still unproven in one run
 
 ## Proof notes from current inspection
