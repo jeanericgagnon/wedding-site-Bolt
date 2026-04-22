@@ -107,6 +107,7 @@ import { buildCoordinatorRoleCapabilities } from '../../lib/coordinatorRoleCapab
 import { buildCoordinatorCommandDeck } from '../../lib/coordinatorCommandDeck';
 import { buildCoordinatorAlertBoard } from '../../lib/coordinatorAlertBoard';
 import { buildCoordinatorTimelineBoard } from '../../lib/coordinatorTimelineBoard';
+import { buildCoordinatorQnaBoard } from '../../lib/coordinatorQnaBoard';
 
 
 type AudienceOption = { value: string; label: string; count: number };
@@ -519,6 +520,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
     () => getCoordinatorQnaDraftStateLabel({ draftAnswer: activeQnaDraftValue, savedAnswer: activeQnaItem?.answer }),
     [activeQnaDraftValue, activeQnaItem?.answer],
   );
+  const qnaBoard = useMemo(() => buildCoordinatorQnaBoard({
+    items: qnaItems,
+    activeItem: activeQnaItem,
+    activeDraftStateLabel: activeQnaDraftStateLabel,
+  }), [qnaItems, activeQnaItem, activeQnaDraftStateLabel]);
 
   useEffect(() => {
     setActiveQnaId((prev) => resolveCoordinatorQnaFocusAfterItemsChange(qnaItems, prev));
@@ -2418,6 +2424,28 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 <p className="text-[11px] text-text-tertiary">{qnaCounts.open} open · {qnaCounts.answered} answered</p>
               </div>
               <fieldset disabled={!canEditQna}>
+              <div className="mb-2 rounded-lg border border-border/50 bg-surface-subtle/25 px-3 py-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-medium text-text-primary">Q&A board</p>
+                    <p className="mt-1 text-[11px] text-text-secondary">Focused · {qnaBoard.activeLabel}</p>
+                    <p className="text-[11px] text-text-secondary">Next up · {qnaBoard.nextLabel}</p>
+                  </div>
+                  <span className={`rounded-full border px-2 py-1 text-[10px] font-medium ${qnaBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : qnaBoard.tone === 'warning' ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-border bg-white text-text-tertiary'}`}>
+                    {qnaBoard.statusLabel}
+                  </span>
+                </div>
+                <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+                  <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
+                    <p className="text-[10px] uppercase tracking-wide text-text-tertiary">Backlog</p>
+                    <p className="mt-1 text-[11px] text-text-primary">{qnaBoard.backlogLabel}</p>
+                  </div>
+                  <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
+                    <p className="text-[10px] uppercase tracking-wide text-text-tertiary">Focused draft</p>
+                    <p className="mt-1 text-[11px] text-text-primary">{qnaBoard.draftLabel}</p>
+                  </div>
+                </div>
+              </div>
               {activeQnaItem && (
                 <div className="mb-2 rounded-lg border border-border/50 bg-surface-subtle/30 px-3 py-2">
                   <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
