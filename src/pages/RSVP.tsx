@@ -321,6 +321,13 @@ export default function RSVP() {
   }, [customAnswers, formData, invalidateActiveSubmit]);
 
   useEffect(() => {
+    return () => {
+      activeLookupRequestRef.current += 1;
+      activeSubmitRequestRef.current += 1;
+    };
+  }, []);
+
+  useEffect(() => {
     const token = searchParams.get('token');
     if (!token) {
       activeLookupRequestRef.current += 1;

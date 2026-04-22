@@ -361,4 +361,51 @@ describe('RSVP stale submit protection', () => {
     expect(screen.queryByText("You're confirmed!")).not.toBeInTheDocument();
     expect(screen.queryByText('Welcome, Taylor Rivera!')).not.toBeInTheDocument();
   });
+
+  it('drops stale token lookup completions after the page unmounts', async () => {
+    const tokenLookup = deferred<Response>();
+
+    fetchMock.mockImplementationOnce(() => tokenLookup.promise);
+    window.history.pushState({}, '', '/rsvp?token=token-1');
+
+    const view = render(
+      <BrowserRouter>
+        <RSVP />
+      </BrowserRouter>
+    );
+
+    expect(await screen.findByText(/Loading your invitation/)).toBeInTheDocument();
+    view.unmount();
+
+    tokenLookup.resolve({
+      ok: true,
+      json: async () => ({
+        guest: {
+          id: 'guest-1',
+          first_name: 'Taylor',
+          last_name: 'Rivera',
+          name: 'Taylor Rivera',
+          email: 'taylor@example.com',
+          phone: null,
+          group_name: null,
+          wedding_site_id: 'site-1',
+          plus_one_allowed: false,
+          invited_to_ceremony: true,
+          invited_to_reception: true,
+          invite_token: 'token-1',
+        },
+        existingRsvp: null,
+        guests: null,
+        rsvpDeadline: null,
+        rsvpQuestions: [],
+        rsvpMealConfig: { enabled: true, options: ['Chicken', 'Beef'] },
+        musicPlaylistUrl: null,
+        householdGuests: [],
+      }),
+    } as Response);
+
+    await waitFor(() => {
+      expect(screen.queryByText('Welcome, Taylor Rivera!')).not.toBeInTheDocument();
+    });
+  });
 });
