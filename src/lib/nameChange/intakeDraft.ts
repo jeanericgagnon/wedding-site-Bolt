@@ -203,7 +203,7 @@ function normalizeDraftFieldValue(fieldKey: NameChangeExtractedFieldInput['field
       return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
     }
 
-    const writtenDateMatch = normalizedValue.match(/^([A-Za-z]+\.?)[\s]+(\d{1,2}),\s*(\d{4})$/);
+    const writtenDateMatch = normalizedValue.match(/^([A-Za-z]+\.?)[\s]+(\d{1,2})(?:,)?\s*(\d{4})$/);
     if (writtenDateMatch) {
       const [, monthName, day, year] = writtenDateMatch;
       const normalizedMonthName = monthName.toLowerCase().replace(/\.$/, '');
