@@ -101,4 +101,15 @@ describe('Product starter draft truth', () => {
 
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
   });
+
+  it('personalizes product draft-start CTAs for signed-in users', () => {
+    authState.user = { id: 'user-1' };
+    render(<Product />);
+
+    expect(screen.getAllByRole('button', { name: 'Review your draft' }).length).toBe(2);
+    expect(screen.queryByRole('button', { name: 'Start your draft' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Review your draft' })[0]);
+    expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
+  });
 });
