@@ -21,6 +21,11 @@ describe('SITE_TRUST_COPY starter draft truth', () => {
     expect(SITE_TRUST_COPY.hiddenFromSearchExplainer.toLowerCase()).not.toContain('live for guests');
   });
 
+  it('keeps guest-access truth framed around review-only and ready-to-share states', () => {
+    expect(SITE_TRUST_COPY.guestAccessTruth).toBe('Privacy + guest-access controls should stay honest about what is review-only, hidden from search, or ready to share with guests.');
+    expect(SITE_TRUST_COPY.guestAccessTruth.toLowerCase()).not.toContain('launch state');
+  });
+
   it('keeps custom URL copy framed around sharing a DayOf link instead of implying a separate domain product', () => {
     expect(SITE_TRUST_COPY.customWeddingUrl).toBe('Share-ready DayOf URL. No separate-domain upsell.');
     expect(SITE_TRUST_COPY.customWeddingUrlExplainer).toBe('Every site includes a personalized DayOf URL, so you can share a polished DayOf link with guests without a separate domain upsell.');

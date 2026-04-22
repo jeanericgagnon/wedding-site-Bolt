@@ -25,7 +25,7 @@ const V1_HOME_GROUPS = [
     items: [
       'Wedding site, RSVP, guests, messaging, seating, registry, itinerary, and day-of coordination in one coherent flow',
       'Planner/coordinator access that stays couple-led and role-aware',
-      'Privacy + guest-access controls that are honest about what is review-only, hidden from search, or ready to share with guests',
+      SITE_TRUST_COPY.guestAccessTruth,
     ],
   },
   {

@@ -14,7 +14,7 @@ const TRUST_PILLARS = [
   },
   {
     title: 'Guest access handled carefully',
-    body: 'Search visibility and guest access are not the same thing. Couples can keep search indexing off while they review access settings and decide when to share the site with guests, without us pretending that means a whole separate unpublished product exists when it does not.',
+    body: `${SITE_TRUST_COPY.guestAccessTruth} Search visibility and guest access are not the same thing, and we should not pretend that means a whole separate unpublished product exists when it does not.`,
   },
   {
     title: 'AI helps draft, not secretly operate',
