@@ -394,6 +394,23 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     ...inProgressClarifyingAnswers,
   };
 
+  const normalizedViewState = showFollowUps
+    ? viewState === 'thinking' && isThinkingGenerationInFlight
+      ? 'thinking'
+      : 'followups'
+    : viewState === 'followups' || viewState === 'thinking'
+      ? 'question'
+      : viewState;
+  const normalizedClarifyingState = clarifyingState && !showFollowUps && normalizedViewState === 'question'
+    ? {
+        ...clarifyingState,
+        clarifying: {
+          ...clarifyingState.clarifying,
+          mode: 'draft',
+        },
+      }
+    : clarifyingState;
+
   return {
     initialSetupAnswers: { ...base.initialSetupAnswers, ...initialSetupAnswers },
     currentIndex: typeof parsed.currentIndex === 'number'
@@ -405,13 +422,7 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
       : 0,
     followUpAnswers: restoredFollowUpAnswers,
     showFollowUps,
-    clarifyingState,
-    viewState: showFollowUps
-      ? viewState === 'thinking' && isThinkingGenerationInFlight
-        ? 'thinking'
-        : 'followups'
-      : viewState === 'followups' || viewState === 'thinking'
-        ? 'question'
-        : viewState,
+    clarifyingState: normalizedClarifyingState,
+    viewState: normalizedViewState,
   };
 };

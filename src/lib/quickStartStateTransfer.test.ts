@@ -792,7 +792,10 @@ describe('quickStartStateTransfer', () => {
 
     expect(restored?.showFollowUps).toBe(false);
     expect(restored?.viewState).toBe('question');
-    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').viewState).toBe('question');
+    expect(restored?.clarifyingState?.clarifying.mode).toBe('draft');
+    const stored = JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}');
+    expect(stored.viewState).toBe('question');
+    expect(stored.clarifyingState?.clarifying?.mode).toBe('draft');
   });
 
   it('keeps explicit follow-up opt-out closed even when typed draft answers survive restore', () => {
