@@ -147,6 +147,10 @@ const output = {
   trustLieClosedInThisGate: 'Canonical smoke output now explicitly says public v1 is a no-go instead of implying launch-clear status from automation alone',
   automationCaveat: 'Passing canonical smoke is evidence of route continuity and build health, not launch clearance on its own',
   truthGateSummary: 'Automation is green, but launch truth is still red until the canonical manual proof and guests/RSVP proof gaps are closed',
+  whatMustChangeBeforeGo: [
+    'Close the anon-auth RSVP blocker on validate-rsvp-token',
+    'Log the canonical couple-path truth pass with runtime wording verification',
+  ],
   blockers: blockedRequired.map((result) => ({
     id: result.id,
     label: result.label,
