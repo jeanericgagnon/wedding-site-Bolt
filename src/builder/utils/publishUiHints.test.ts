@@ -134,6 +134,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('venue');
   });
 
+  it('returns venue guidance when blocker copy says location instead of venue', () => {
+    const hints = getPublishBlockedHints('Add at least one location before going live.');
+    expect(hints[0]).toContain('venue');
+  });
+
   it('returns venue guidance when short venue blocker copy is lowercased by upstream formatting', () => {
     const hints = getPublishBlockedHints('add at least one venue name or address.');
     expect(hints[0]).toContain('venue');

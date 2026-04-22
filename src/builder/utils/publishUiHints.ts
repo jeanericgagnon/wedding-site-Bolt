@@ -35,7 +35,7 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
       'Add your wedding date before going live.',
     ];
   }
-  if (normalizedErrorLower.includes('venue')) {
+  if (normalizedErrorLower.includes('venue') || normalizedErrorLower.includes('location')) {
     return [
       'Add at least one venue name or address.',
       'Make sure guests can tell where they are meant to go.',
