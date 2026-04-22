@@ -228,18 +228,46 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDefinition> = {
   },
 };
 
+function normalizeLegacySectionType(type: SectionType): SectionType {
+  const normalizedType = typeof type === 'string' ? type.trim().toLowerCase().replace(/[^a-z0-9]/g, '') : type;
+  return (normalizedType === 'registrysection' ? 'registry' : normalizedType) as SectionType;
+}
+
+function normalizeLegacyRegistryVariant(variant: string): string {
+  const normalizedVariant = variant.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+  const aliases: Record<string, string> = {
+    default: 'cards',
+    grid: 'cards',
+    fundhighlight: 'fundHighlight',
+    featured: 'featured',
+    honeymoon: 'honeymoon',
+    luxury: 'luxury',
+    experiences: 'experiences',
+    classic: 'classic',
+    minimal: 'minimal',
+    tabs: 'tabs',
+    illustrated: 'illustrated',
+    modern: 'modern',
+    playful: 'playful',
+    cards: 'cards',
+  };
+  return aliases[normalizedVariant] ?? 'cards';
+}
+
 export function getSectionComponent(
   type: SectionType,
   variant: string = 'default'
 ): SectionComponent {
-  const definition = SECTION_REGISTRY[type];
+  const normalizedType = normalizeLegacySectionType(type);
+  const definition = SECTION_REGISTRY[normalizedType];
   if (!definition) {
     throw new Error('Unknown section type: ' + type);
   }
-  return definition.variants[variant] || definition.component;
+  const normalizedVariant = normalizedType === 'registry' ? normalizeLegacyRegistryVariant(variant) : variant;
+  return definition.variants[normalizedVariant] || definition.component;
 }
 
 export function getSectionVariants(type: SectionType): string[] {
-  const definition = SECTION_REGISTRY[type];
+  const definition = SECTION_REGISTRY[normalizeLegacySectionType(type)];
   return definition ? Object.keys(definition.variants) : ['default'];
 }

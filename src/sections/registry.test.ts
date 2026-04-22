@@ -253,7 +253,11 @@ describe('sections registry resolution', () => {
   it('keeps legacy section registry aligned with public registry aliases', () => {
     expect(getSectionVariants('registry')).toEqual(expect.arrayContaining(['cards', 'featured', 'minimal', 'honeymoon', 'tabs', 'illustrated', 'classic', 'luxury', 'experiences', 'modern', 'playful', 'default', 'grid', 'fundHighlight']));
     expect(getSectionVariants('registry')[0]).toBe('cards');
+    expect(getSectionVariants('registry-section' as never)).toContain('featured');
     expect(getSectionComponent('registry', 'default')).toBe(RegistryGrid);
+    expect(getSectionComponent('registry-section' as never, 'default')).toBe(RegistryGrid);
+    expect(getSectionComponent('registry-section' as never, 'fund-highlight' as never)).toBe(RegistryFundHighlight);
+    expect(getSectionComponent('RegistrySection' as never, 'Luxury' as never)).toBe(RegistryFundHighlight);
     expect(getSectionComponent('registry', 'classic')).toBe(RegistryGrid);
     expect(getSectionComponent('registry', 'luxury')).toBe(RegistryFundHighlight);
     expect(getSectionComponent('registry', 'cards')).toBe(RegistryGrid);
@@ -287,6 +291,14 @@ describe('sections registry resolution', () => {
     expect(siteView).toContain("luxury: 'featured'");
     expect(siteView).toContain("modern: 'cards'");
     expect(siteView).toContain("const nextVariant = fallbackMap[section.type]?.[section.variant] ?? supported[0] ?? 'default';");
+  });
+
+  it('keeps legacy section registry runtime tolerant of registrysection type drift', () => {
+    const legacyRegistry = readFileSync(resolve(__dirname, './sectionRegistry.tsx'), 'utf8');
+    expect(legacyRegistry).toContain("function normalizeLegacySectionType(type: SectionType): SectionType {");
+    expect(legacyRegistry).toContain("return (normalizedType === 'registrysection' ? 'registry' : normalizedType) as SectionType;");
+    expect(legacyRegistry).toContain("function normalizeLegacyRegistryVariant(variant: string): string {");
+    expect(legacyRegistry).toContain("const normalizedVariant = normalizedType === 'registry' ? normalizeLegacyRegistryVariant(variant) : variant;");
   });
 
   it('keeps registry proof output explicit about remaining runtime truth work', () => {
