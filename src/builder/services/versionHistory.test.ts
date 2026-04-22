@@ -45,4 +45,16 @@ describe('versionHistory', () => {
 
     expect(getBuilderRevision(weddingId, rev.id)?.project.pages[0].title).not.toBe('Mutated title');
   });
+
+  it('caps listed builder revisions at the five newest entries', () => {
+    const weddingId = `w_${Date.now()}_d`;
+    const project = createEmptyBuilderProject(weddingId, 'modern-luxe');
+
+    for (let index = 0; index < 7; index += 1) {
+      recordBuilderRevision({ weddingId, project, action: 'save', actor: `tester-${index}` });
+    }
+
+    const listed = listBuilderRevisions(weddingId);
+    expect(listed).toHaveLength(5);
+  });
 });
