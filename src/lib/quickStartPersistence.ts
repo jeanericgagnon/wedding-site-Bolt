@@ -94,10 +94,24 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
               ...parsed.clarifyingState.clarifying,
               questions: parsed.clarifyingState.clarifying.questions
                 .filter(isStoredClarifyingQuestion)
-                .map((question) => ({ ...question, id: question.id.trim(), answer: question.answer.trim() })),
+                .map((question) => ({
+                  ...question,
+                  id: question.id.trim(),
+                  category: question.category.trim(),
+                  question: question.question.trim(),
+                  expectedAnswerType: question.expectedAnswerType.trim(),
+                  answer: question.answer.trim(),
+                })),
               history: parsed.clarifyingState.clarifying.history
                 .filter(isStoredClarifyingQuestion)
-                .map((question) => ({ ...question, id: question.id.trim(), answer: question.answer.trim() })),
+                .map((question) => ({
+                  ...question,
+                  id: question.id.trim(),
+                  category: question.category.trim(),
+                  question: question.question.trim(),
+                  expectedAnswerType: question.expectedAnswerType.trim(),
+                  answer: question.answer.trim(),
+                })),
             },
           } as ClarifyingPersistenceEnvelope
         : null,
