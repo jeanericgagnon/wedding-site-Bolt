@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getRegistryItemPublicUrl, groupByStore } from './cards';
+import { getRegistryItemPublicUrl, groupByStore, shouldUseLiveRegistryStoreGroups } from './cards';
 import type { RegistryItem } from '../../../pages/dashboard/registry/registryTypes';
 
 const makeItem = (overrides: Partial<RegistryItem>): RegistryItem => ({
@@ -78,5 +78,10 @@ describe('registry cards public parity helpers', () => {
         url: null,
       },
     ]);
+  });
+
+  it('does not fall back to template links once live registry data has loaded empty', () => {
+    expect(shouldUseLiveRegistryStoreGroups([])).toBe(true);
+    expect(shouldUseLiveRegistryStoreGroups(null)).toBe(false);
   });
 });

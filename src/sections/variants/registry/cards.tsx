@@ -46,6 +46,10 @@ export function getRegistryItemPublicUrl(item: Pick<RegistryItem, 'item_url' | '
   return item.item_url ?? item.canonical_url ?? null;
 }
 
+export function shouldUseLiveRegistryStoreGroups(liveItems: RegistryItem[] | null): boolean {
+  return liveItems !== null;
+}
+
 export function groupByStore(items: RegistryItem[]): Array<{ store: string; count: number; available: number; partial: number; purchased: number; url: string | null }> {
   const map = new Map<string, { count: number; available: number; partial: number; purchased: number; url: string | null }>();
   for (const item of items) {
@@ -79,6 +83,7 @@ const RegistryCards: React.FC<SectionComponentProps<RegistryCardsData>> = ({ dat
 
   const safeLinks = Array.isArray(data.links) ? data.links : [];
   const storeGroups = liveItems ? groupByStore(liveItems) : null;
+  const shouldUseLiveStoreGroups = shouldUseLiveRegistryStoreGroups(liveItems);
 
   return (
     <section className="py-32 md:py-40 bg-white" id="registry">
@@ -93,9 +98,9 @@ const RegistryCards: React.FC<SectionComponentProps<RegistryCardsData>> = ({ dat
           )}
         </div>
 
-        {storeGroups && storeGroups.length > 0 ? (
+        {shouldUseLiveStoreGroups ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-            {storeGroups.map(group => (
+            {storeGroups?.map(group => (
               <a
                 key={group.store}
                 href={group.url || '#'}
