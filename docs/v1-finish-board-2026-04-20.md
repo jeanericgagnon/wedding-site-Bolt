@@ -52,19 +52,20 @@ If that line fails, the rest is noise.
 - SiteView stale-state and privacy gating are materially tighter
 
 **Still missing**
-- one hard captured canonical smoke across the full path
-- proof that the final public-facing product story is narrower than product ambition everywhere that matters
+- one logged human route-note pass across the full canonical couple path
+- proof that the final public-facing product story is narrower than product ambition everywhere that matters in the real route flow, not just automated checks
 
 **Proof needed**
 - route-by-route smoke log with failure notes or pass notes
 
 **Launch read**
 - **Done:** launch/privacy mechanics are mostly there
-- **Missing:** one canonical proof run and final claim discipline across public pages
-- **Proof-needed:** end-to-end route smoke with screenshots/log notes
+- **Done:** automated canonical smoke now passes via `npm run proof:v1:canonical-smoke`
+- **Missing:** one logged human route-note pass and final claim discipline across public pages
+- **Proof-needed:** end-to-end route notes focused on UX/trust quality, not just route availability
 
 **Status**
-- `PROOF-NEEDED`
+- `AUTOMATED-PASS / MANUAL-NOTES-PENDING`
 
 ### 2) Guests / RSVP ops
 **Must be true**
