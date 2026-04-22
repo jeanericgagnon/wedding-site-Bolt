@@ -27,10 +27,14 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     ? Object.fromEntries(Object.entries(parsed.followUpAnswers).filter(([, val]) => typeof val === 'string'))
     : {};
 
+  const initialSetupAnswers = parsed.initialSetupAnswers && typeof parsed.initialSetupAnswers === 'object' && !Array.isArray(parsed.initialSetupAnswers)
+    ? Object.fromEntries(
+        Object.entries(parsed.initialSetupAnswers).filter(([, val]) => typeof val === 'string'),
+      ) as Partial<InitialSetupAnswers>
+    : {};
+
   return {
-    initialSetupAnswers: parsed.initialSetupAnswers && typeof parsed.initialSetupAnswers === 'object'
-      ? { ...base.initialSetupAnswers, ...parsed.initialSetupAnswers }
-      : base.initialSetupAnswers,
+    initialSetupAnswers: { ...base.initialSetupAnswers, ...initialSetupAnswers },
     currentIndex: typeof parsed.currentIndex === 'number' && Number.isFinite(parsed.currentIndex) && parsed.currentIndex >= 0
       ? parsed.currentIndex
       : 0,

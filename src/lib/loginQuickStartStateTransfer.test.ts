@@ -17,4 +17,13 @@ describe('login quick start state transfer', () => {
     expect(readQuickStartDraftSnapshot()?.initialSetupAnswers.names).toBe('Alex & Jordan');
     expect(readQuickStartDraftSnapshot()?.followUpAnswers['event-1-time']).toBe('6:00 PM');
   });
+
+  it('drops malformed carried quick start answers before auth continuation', () => {
+    persistQuickStartDraftSnapshot({
+      initialSetupAnswers: { names: ['Alex & Jordan'], venueNameOrTbd: 'La Valencia' },
+    });
+
+    expect(readQuickStartDraftSnapshot()?.initialSetupAnswers.names).toBe('');
+    expect(readQuickStartDraftSnapshot()?.initialSetupAnswers.venueNameOrTbd).toBe('La Valencia');
+  });
 });
