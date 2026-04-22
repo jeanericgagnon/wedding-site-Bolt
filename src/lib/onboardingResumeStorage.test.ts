@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { clearOnboardingResumeStorage, ONBOARDING_RESUME_HINT_STORAGE_KEY, ONBOARDING_RESUME_INDEX_STORAGE_KEY, writeOnboardingResumeHint } from './onboardingResumeStorage';
+import { clearOnboardingResumeStorage, ONBOARDING_RESUME_HINT_STORAGE_KEY, ONBOARDING_RESUME_INDEX_STORAGE_KEY, readOnboardingResumeState, writeOnboardingResumeHint } from './onboardingResumeStorage';
 
 describe('onboardingResumeStorage', () => {
   beforeEach(() => {
@@ -38,6 +38,24 @@ describe('onboardingResumeStorage', () => {
     writeOnboardingResumeHint('   ');
 
     expect(window.localStorage.getItem(ONBOARDING_RESUME_HINT_STORAGE_KEY)).toBeNull();
+  });
+
+
+  it('trims and sanitizes onboarding resume state on read', () => {
+    window.localStorage.setItem(ONBOARDING_RESUME_HINT_STORAGE_KEY, '  question  ');
+    window.localStorage.setItem(ONBOARDING_RESUME_INDEX_STORAGE_KEY, ' 9 ');
+
+    expect(readOnboardingResumeState()).toEqual({ hint: 'question', index: 9 });
+    expect(window.localStorage.getItem(ONBOARDING_RESUME_HINT_STORAGE_KEY)).toBe('question');
+    expect(window.localStorage.getItem(ONBOARDING_RESUME_INDEX_STORAGE_KEY)).toBe('9');
+  });
+
+  it('drops invalid onboarding resume indexes on read', () => {
+    window.localStorage.setItem(ONBOARDING_RESUME_HINT_STORAGE_KEY, 'question');
+    window.localStorage.setItem(ONBOARDING_RESUME_INDEX_STORAGE_KEY, '9.5');
+
+    expect(readOnboardingResumeState()).toEqual({ hint: 'question', index: null });
+    expect(window.localStorage.getItem(ONBOARDING_RESUME_INDEX_STORAGE_KEY)).toBeNull();
   });
 
 });

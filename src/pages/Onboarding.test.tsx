@@ -54,6 +54,21 @@ describe('Onboarding starter draft wording truth', () => {
     });
   });
 
+
+
+  it('ignores malformed onboarding resume indexes while keeping the chooser stable', async () => {
+    window.localStorage.setItem('dayoflove:onboarding-draft', JSON.stringify({ step: 'choice', conversationIndex: 0 }));
+    window.localStorage.setItem('dayoflove:onboarding-resume-hint', 'question');
+    window.localStorage.setItem('dayoflove:onboarding-resume-index', '9.5');
+
+    render(<Onboarding />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Start with the essentials')).toBeInTheDocument();
+      expect(window.localStorage.getItem('dayoflove:onboarding-resume-index')).toBeNull();
+    });
+  });
+
   it('frames quick setup as a starter draft that still needs dashboard refinement before publish', () => {
     render(<Onboarding />);
 

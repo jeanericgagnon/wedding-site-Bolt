@@ -18,7 +18,7 @@ import { filterMissingOnboardingEventSeeds } from '../lib/onboardingEventSync';
 import { normalizeOnboardingDraftSnapshot, type OnboardingStep } from '../lib/onboardingDraftPersistence';
 import { mergeOnboardingFollowUpAnswers } from '../lib/onboardingFollowUpMerge';
 import { resolveOnboardingResumeIndex } from '../lib/onboardingResumeIndex';
-import { clearOnboardingResumeStorage, ONBOARDING_RESUME_HINT_STORAGE_KEY as ONBOARDING_RESUME_HINT_KEY, ONBOARDING_RESUME_INDEX_STORAGE_KEY as ONBOARDING_RESUME_INDEX_KEY } from '../lib/onboardingResumeStorage';
+import { clearOnboardingResumeStorage, readOnboardingResumeState } from '../lib/onboardingResumeStorage';
 import { writeSignupReturnPath } from '../lib/signupContinuation';
 import { clearAllOnboardingDraftStorage, ONBOARDING_DRAFT_STORAGE_KEY as ONBOARDING_STORAGE_KEY } from '../lib/onboardingDraftCleanup';
 import { clearAllOnboardingContinuationState } from '../lib/onboardingContinuationCleanup';
@@ -216,23 +216,19 @@ export const Onboarding: React.FC = () => {
       setFollowUpAnswers(parsed.followUpAnswers);
       setShowFollowUpReview(parsed.showFollowUpReview);
       setWeddingProfile(isWeddingProfile(parsed.weddingProfile) ? parsed.weddingProfile : applyInitialSetupAnswersToWeddingProfile(hydratedAnswers));
-      const resumeHint = window.localStorage.getItem(ONBOARDING_RESUME_HINT_KEY);
-      const resumeIndexValue = window.localStorage.getItem(ONBOARDING_RESUME_INDEX_KEY);
+      const { hint: resumeHint, index: resumeIndex } = readOnboardingResumeState();
       if (forceShowChooser) {
         setConversationIndex(0);
         setStep('choice');
         clearOnboardingResumeStorage();
-      } else if (resumeHint === 'question' && resumeIndexValue) {
-        const hintedIndex = Number(resumeIndexValue);
-        if (!Number.isNaN(hintedIndex)) {
-          const resumeIndex = resolveOnboardingResumeIndex({
-            savedIndex: hintedIndex,
-            firstIncompleteIndex: getFirstIncompleteQuestionIndex(),
-            questionCount: conciergeQuestions.length,
-          });
-          setConversationIndex(resumeIndex);
-          setStep(getStepForIndex(resumeIndex));
-        }
+      } else if (resumeHint === 'question' && resumeIndex !== null) {
+        const nextResumeIndex = resolveOnboardingResumeIndex({
+          savedIndex: resumeIndex,
+          firstIncompleteIndex: getFirstIncompleteQuestionIndex(),
+          questionCount: conciergeQuestions.length,
+        });
+        setConversationIndex(nextResumeIndex);
+        setStep(getStepForIndex(nextResumeIndex));
         clearOnboardingResumeStorage();
       } else if (resumeHint === 'first-incomplete') {
         const firstIncompleteIndex = getFirstIncompleteQuestionIndex();
