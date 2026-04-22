@@ -726,4 +726,30 @@ describe('name change document intake contract', () => {
     });
     expect(snapshot.summary.metadataGaps).toBe(0);
   });
+
+  it('keeps optional other documents out of metadata-ready summary counts', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase(),
+      [
+        {
+          document_kind: 'other',
+          display_name: 'Other supporting document',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'supporting-doc-•••.pdf',
+          issuing_authority: 'Manual upload',
+          issued_on: '2026-04-01',
+          extraction_confidence: 0.88,
+        },
+      ],
+      [],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'other')).toMatchObject({
+      intakeStatus: 'reviewed',
+      metadataReady: 1,
+      metadataMissing: [],
+    });
+    expect(snapshot.summary.metadataReady).toBe(0);
+  });
 });
