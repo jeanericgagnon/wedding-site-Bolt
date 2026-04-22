@@ -786,11 +786,11 @@ export const DashboardRegistry: React.FC = () => {
 
   useEffect(() => {
     if (loading || isDemoMode || items.length === 0) return;
-    const hasStale = items.some((item) => !item.metadata_last_checked_at || (Date.now() - new Date(item.metadata_last_checked_at).getTime()) > WEEKLY_REFRESH_MS);
+    const hasStale = normalizedItems.some((item) => !item.metadata_last_checked_at || (Date.now() - new Date(item.metadata_last_checked_at).getTime()) > WEEKLY_REFRESH_MS);
     if (!hasStale) return;
     handleAutoRefreshStale(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, isDemoMode, items.length]);
+  }, [loading, isDemoMode, items.length, normalizedItems]);
 
 
   const todayMonthKey = getCurrentMonthKey();

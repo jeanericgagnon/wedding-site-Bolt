@@ -309,6 +309,7 @@ describe('sections registry resolution', () => {
     expect(registryDashboard).toContain('normalizeOwnerDashboardRegistryItem(updated)');
     expect(registryDashboard).toContain('normalizeOwnerDashboardRegistryItem(created)');
     expect(registryDashboard).toContain('const filtered = normalizedItems.filter(item => {');
+    expect(registryDashboard).toContain('const hasStale = normalizedItems.some((item) => !item.metadata_last_checked_at || (Date.now() - new Date(item.metadata_last_checked_at).getTime()) > WEEKLY_REFRESH_MS);');
     expect(registryDashboard).toContain('purchaser_name: quantityState.purchaseStatus === \'available\' ? null : item.purchaser_name,');
     expect(registryDashboard).toContain('badImports: normalizedItems.filter((i) => getRegistryItemMetadataState(i).hasBadImportTitle).length,');
     expect(registryDashboard).toContain('const actionableBadImportCount = items.filter((item) => getRegistryItemMetadataState(item).hasBadImportTitle && !!(item.item_url || item.canonical_url)).length;');
