@@ -13,6 +13,8 @@ describe('quickStartQuestionBounds', () => {
   });
 
   it('clamps invalid question counts to zero', () => {
+    expect(clampQuickStartQuestionIndex(2, -1)).toBe(0);
+    expect(clampQuickStartQuestionIndex(2, 0)).toBe(0);
     expect(clampQuickStartQuestionIndex(2, 2.5)).toBe(0);
     expect(clampQuickStartQuestionIndex(2, Number.MAX_SAFE_INTEGER + 1)).toBe(0);
     expect(clampQuickStartQuestionIndex(2, Number.NaN)).toBe(0);
