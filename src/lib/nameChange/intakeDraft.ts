@@ -11,8 +11,12 @@ function normalizeDraftText(value: string | null | undefined) {
   return (value ?? '').trim().replace(/\s+/g, ' ');
 }
 
+function normalizeDraftDocumentKind(value: string) {
+  return value.trim() as NameChangeDocumentInput['document_kind'];
+}
+
 export function buildDraftNameChangeDocumentId(kind: NameChangeDocumentInput['document_kind']) {
-  return `draft-${canonicalizeNameChangeDocumentKind(kind)}`;
+  return `draft-${canonicalizeNameChangeDocumentKind(normalizeDraftDocumentKind(kind))}`;
 }
 
 export function normalizeDraftNameChangeDocumentId(documentId: string | null | undefined) {
@@ -25,7 +29,7 @@ export function createDraftNameChangeDocument(
   kind: NameChangeDocumentInput['document_kind'],
   label: string,
 ): NameChangeDocumentInput {
-  const canonicalKind = canonicalizeNameChangeDocumentKind(kind);
+  const canonicalKind = canonicalizeNameChangeDocumentKind(normalizeDraftDocumentKind(kind));
   const normalizedLabel = normalizeDraftText(label) || humanizeDraftToken(canonicalKind);
 
   return {
