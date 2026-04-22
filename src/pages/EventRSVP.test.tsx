@@ -25,6 +25,14 @@ function createDeferredMaybeSingle() {
   return { promise, resolve };
 }
 
+function createDeferredMutation() {
+  let resolve!: (value: { error: any }) => void;
+  const promise = new Promise<{ error: any }>((res) => {
+    resolve = res;
+  });
+  return { promise, resolve };
+}
+
 vi.mock('../lib/supabase', () => ({
   supabase: {
     from: (table: string) => ({
@@ -856,6 +864,58 @@ describe('EventRSVP token trust continuity', () => {
 
     await waitFor(() => {
       expect(screen.queryByText('Hello, Taylor!')).not.toBeInTheDocument();
+    });
+  });
+
+  it('ignores a second event RSVP submit while the first submit is still in flight', async () => {
+    currentToken = 'guest-token';
+
+    maybeSingleQueue.push(
+      { data: { id: 'guest-1', name: 'Jordan', email: 'jordan@example.com' }, error: null },
+      { data: null, error: null },
+    );
+
+    selectQueue.push({
+      data: [
+        {
+          id: 'inv-1',
+          event_id: 'event-1',
+          itinerary_events: {
+            id: 'event-1',
+            event_name: 'Ceremony',
+            description: '',
+            event_date: '2026-05-02',
+            start_time: '16:00:00',
+            end_time: null,
+            location_name: 'Garden',
+            location_address: '',
+            dress_code: null,
+            notes: null,
+          },
+        },
+      ],
+      error: null,
+    });
+
+    const submitRequest = createDeferredMutation();
+    insertQueue.push(submitRequest.promise);
+
+    render(<EventRSVP />);
+
+    expect(await screen.findByText('Hello, Jordan!')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'RSVP for this event' }));
+
+    const submitButton = screen.getByRole('button', { name: 'Submit RSVP' });
+    fireEvent.click(submitButton);
+    fireEvent.click(submitButton);
+
+    expect(insertQueue).toHaveLength(0);
+    expect(screen.getByRole('button', { name: 'Saving…' })).toBeDisabled();
+
+    submitRequest.resolve({ error: null });
+
+    await waitFor(() => {
+      expect(screen.getByText("You're in!")).toBeInTheDocument();
     });
   });
 });

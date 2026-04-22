@@ -72,6 +72,7 @@ export default function EventRSVP() {
   const postSubmitResetTimeoutRef = useRef<number | null>(null);
   const activeLoadRequestRef = useRef(0);
   const activeSubmitRequestRef = useRef(0);
+  const submitInFlightRef = useRef(false);
 
   useEffect(() => {
     if (token) {
@@ -79,6 +80,7 @@ export default function EventRSVP() {
     } else {
       activeLoadRequestRef.current += 1;
       activeSubmitRequestRef.current += 1;
+      submitInFlightRef.current = false;
       if (postSubmitResetTimeoutRef.current !== null) {
         window.clearTimeout(postSubmitResetTimeoutRef.current);
         postSubmitResetTimeoutRef.current = null;
@@ -101,6 +103,7 @@ export default function EventRSVP() {
     return () => {
       activeLoadRequestRef.current += 1;
       activeSubmitRequestRef.current += 1;
+      submitInFlightRef.current = false;
       if (postSubmitResetTimeoutRef.current !== null) {
         window.clearTimeout(postSubmitResetTimeoutRef.current);
         postSubmitResetTimeoutRef.current = null;
@@ -258,6 +261,7 @@ export default function EventRSVP() {
 
   function openRsvpForm(invitation: EventInvitation) {
     activeSubmitRequestRef.current += 1;
+    submitInFlightRef.current = false;
     if (postSubmitResetTimeoutRef.current !== null) {
       window.clearTimeout(postSubmitResetTimeoutRef.current);
       postSubmitResetTimeoutRef.current = null;
@@ -303,9 +307,11 @@ export default function EventRSVP() {
 
   async function handleSubmitRsvp(e: React.FormEvent) {
     e.preventDefault();
-    if (!selectedEvent || submitting) return;
+    if (!selectedEvent || submitting || submitInFlightRef.current) return;
     const requestId = activeSubmitRequestRef.current + 1;
     activeSubmitRequestRef.current = requestId;
+    submitInFlightRef.current = true;
+    let submittedSuccessfully = false;
 
     setSubmitting(true);
     setSubmitError('');
@@ -368,11 +374,13 @@ export default function EventRSVP() {
       setHasEventRsvpSupport(true);
       applyInvitationRsvp(selectedEvent, rsvpForm);
       setSubmitSuccess(true);
+      submittedSuccessfully = true;
       if (postSubmitResetTimeoutRef.current !== null) {
         window.clearTimeout(postSubmitResetTimeoutRef.current);
       }
       postSubmitResetTimeoutRef.current = window.setTimeout(() => {
         if (activeSubmitRequestRef.current !== requestId) return;
+        submitInFlightRef.current = false;
         setSelectedEvent(null);
         setSubmitSuccess(false);
         postSubmitResetTimeoutRef.current = null;
@@ -382,6 +390,9 @@ export default function EventRSVP() {
       setSubmitError('Failed to save your RSVP. Please try again.');
     } finally {
       if (activeSubmitRequestRef.current !== requestId) return;
+      if (!submittedSuccessfully) {
+        submitInFlightRef.current = false;
+      }
       setSubmitting(false);
     }
   }
