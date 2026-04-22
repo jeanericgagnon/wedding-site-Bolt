@@ -18,7 +18,10 @@ export interface PublishReadinessItem {
 
 const hasNonEmptyString = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
 const isPageLike = (value: unknown): value is BuilderProject['pages'][number] =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
+  typeof value === 'object'
+  && value !== null
+  && !Array.isArray(value)
+  && hasNonEmptyString((value as { id?: unknown }).id);
 const getComparableOrderIndex = (value: unknown) => {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
   if (typeof value === 'string') {
@@ -34,7 +37,10 @@ const getNormalizedPages = (project: BuilderProject) =>
     getComparableOrderIndex(a?.orderIndex) - getComparableOrderIndex(b?.orderIndex)
   );
 const isSectionLike = (value: unknown): value is NonNullable<BuilderProject['pages'][number]>['sections'][number] =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
+  typeof value === 'object'
+  && value !== null
+  && !Array.isArray(value)
+  && hasNonEmptyString((value as { id?: unknown }).id);
 const getNormalizedSections = (page: BuilderProject['pages'][number] | undefined) =>
   (Array.isArray(page?.sections) ? page.sections.filter(isSectionLike) : []).sort((a, b) =>
     getComparableOrderIndex(a?.orderIndex) - getComparableOrderIndex(b?.orderIndex)
