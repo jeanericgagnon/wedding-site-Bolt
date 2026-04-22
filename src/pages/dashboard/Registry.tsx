@@ -110,7 +110,7 @@ export const DashboardRegistry: React.FC = () => {
   const bulkReviewCounts = {
     repair: items.filter((item) => getRegistryItemMetadataState(item).hasBadImportTitle && !!(item.item_url || item.canonical_url)).length,
     duplicates: duplicateGroups.reduce((sum, group) => sum + group.length, 0),
-    imageIssues: items.filter((item) => !item.image_url).length,
+    imageIssues: normalizedItems.filter((item) => !item.image_url || item.image_url.includes('thum.io') || item.image_url.includes('weserv.nl')).length,
   };
   const registryActionsRef = useRef<HTMLDivElement | null>(null);
 

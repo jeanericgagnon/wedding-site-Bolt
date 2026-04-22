@@ -307,6 +307,7 @@ describe('sections registry resolution', () => {
     expect(registryDashboard).toContain('const actionableBadImportCount = items.filter((item) => getRegistryItemMetadataState(item).hasBadImportTitle && !!(item.item_url || item.canonical_url)).length;');
     expect(registryDashboard).toContain('filter((i) => getRegistryItemMetadataState(i).hasBadImportTitle)');
     expect(registryDashboard).toContain('repair: items.filter((item) => getRegistryItemMetadataState(item).hasBadImportTitle && !!(item.item_url || item.canonical_url)).length,');
+    expect(registryDashboard).toContain("imageIssues: normalizedItems.filter((item) => !item.image_url || item.image_url.includes('thum.io') || item.image_url.includes('weserv.nl')).length,");
     expect(registryDashboard).toContain('Repair states: {normalizedItems.filter((item) => getRegistryRepairStates(item).length > 0).length}');
     expect(registryDashboard).toContain('Imported gifts to fix: {actionableBadImportCount}');
     expect(registryDashboard).toContain('{actionableBadImportCount > 0 && (');
