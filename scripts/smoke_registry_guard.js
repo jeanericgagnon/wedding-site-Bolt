@@ -12,6 +12,7 @@ const registryItemForm = readFileSync(resolve(process.cwd(), 'src/pages/dashboar
 const checks = [
   { name: 'dashboard uses sanitizeRegistryQuantityState', ok: registryPage.includes('sanitizeRegistryQuantityState') },
   { name: 'dashboard loads duplicate registry groups', ok: registryPage.includes('findDuplicateRegistryGroups') },
+  { name: 'dashboard demo creates preserve canonical registry metadata', ok: registryPage.includes('canonical_url: fields.canonical_url ?? null') && registryPage.includes('metadata_fetch_status: fields.metadata_fetch_status ?? \'manual\'') },
   { name: 'registry types expose itemNeedsAttention', ok: registryTypes.includes('export function itemNeedsAttention') },
   { name: 'registry types expose blocked retailer messaging', ok: registryTypes.includes('Amazon blocks automated product lookups') },
   { name: 'registry types expose quantity sanitation', ok: registryTypes.includes('export function sanitizeRegistryQuantityState') },
