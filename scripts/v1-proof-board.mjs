@@ -28,6 +28,8 @@ const proofBoard = {
       'fully-automated-migration-reminders-merchant-sync',
       'enterprise-governance-claims',
     ],
+    secondaryTrustGap: 'Canonical couple-path truth notes and runtime wording verification are still missing',
+    secondaryTrustGapKey: 'canonical_couple_path_and_runtime_wording_verification_missing',
   },
   ruthlessNextThree: [
     {
@@ -47,6 +49,7 @@ const proofBoard = {
       exitBar: 'Automated canonical smoke stays green and one logged canonical route-note + runtime wording pass is captured in docs/v1-smoke-proof-log.md.',
       status: 'AUTOMATED_PASS_MANUAL_NOTES_PENDING',
       runtimeWordingVerificationMissing: true,
+      secondaryTrustGapKey: 'canonical_couple_path_and_runtime_wording_verification_missing',
     },
     {
       id: 'guest-rsvp-continuity-proof',
@@ -100,6 +103,7 @@ const proofBoard = {
         'Verify marketing/settings/billing wording against live behavior',
       ],
       runtimeWordingVerificationMissing: true,
+      secondaryTrustGapKey: 'canonical_couple_path_and_runtime_wording_verification_missing',
       evidenceTarget: 'docs/v1-smoke-proof-log.md',
     },
     {
