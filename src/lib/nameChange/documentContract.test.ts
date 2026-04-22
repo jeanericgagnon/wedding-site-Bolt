@@ -440,7 +440,7 @@ describe('name change document intake contract', () => {
     });
   });
 
-  it('does not count conflict-heavy documents as autofill-ready even when fields are present', () => {
+  it('does not count conflict-heavy documents as ready when fields are present', () => {
     const snapshot = buildNameChangeDocumentIntakeSnapshot(
       makeCase(),
       [
@@ -512,6 +512,8 @@ describe('name change document intake contract', () => {
       missingExtractionFields: [],
       canonicalConflicts: [expect.objectContaining({ key: 'target-last-name-marriage' })],
     });
+    expect(snapshot.summary.requiredReady).toBe(0);
+    expect(snapshot.summary.requiredMissing).toBe(6);
     expect(snapshot.summary.autofillReady).toBe(0);
   });
 
