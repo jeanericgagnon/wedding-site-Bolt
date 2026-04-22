@@ -7,6 +7,10 @@ function humanizeDraftToken(value: string) {
     .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
+function normalizeDraftText(value: string | null | undefined) {
+  return (value ?? '').trim().replace(/\s+/g, ' ');
+}
+
 export function buildDraftNameChangeDocumentId(kind: NameChangeDocumentInput['document_kind']) {
   return `draft-${canonicalizeNameChangeDocumentKind(kind)}`;
 }
@@ -22,7 +26,7 @@ export function createDraftNameChangeDocument(
   label: string,
 ): NameChangeDocumentInput {
   const canonicalKind = canonicalizeNameChangeDocumentKind(kind);
-  const normalizedLabel = label.trim() || humanizeDraftToken(canonicalKind);
+  const normalizedLabel = normalizeDraftText(label) || humanizeDraftToken(canonicalKind);
 
   return {
     id: buildDraftNameChangeDocumentId(canonicalKind),
@@ -47,8 +51,8 @@ export function upsertDraftNameChangeExtractedField(
   nextValue: string,
 ): NameChangeExtractedFieldInput[] {
   const normalizedDocumentId = normalizeDraftNameChangeDocumentId(documentId);
-  const normalizedValue = nextValue.trim();
-  const normalizedLabel = fieldLabel.trim() || humanizeDraftToken(fieldKey);
+  const normalizedValue = normalizeDraftText(nextValue);
+  const normalizedLabel = normalizeDraftText(fieldLabel) || humanizeDraftToken(fieldKey);
   const rest = extractedFields.filter((field) => !(
     normalizeDraftNameChangeDocumentId(field.document_id) === normalizedDocumentId
     && field.field_key === fieldKey

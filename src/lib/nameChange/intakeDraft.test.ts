@@ -21,6 +21,12 @@ describe('name change intake draft helpers', () => {
     });
   });
 
+  it('collapses draft document labels into one clean downstream display name', () => {
+    expect(createDraftNameChangeDocument('marriage_certificate', '  Certified   marriage   certificate  ')).toMatchObject({
+      display_name: 'Certified marriage certificate',
+    });
+  });
+
   it('canonicalizes legacy court-order aliases into one stable draft document identity', () => {
     expect(createDraftNameChangeDocument('court_order_name_change', ' Court order ')).toMatchObject({
       id: 'draft-court_order',
@@ -132,6 +138,19 @@ describe('name change intake draft helpers', () => {
         document_id: 'draft-marriage_certificate',
         field_key: 'county',
         field_label: 'County',
+        field_value_masked: 'San Diego',
+      }),
+    ]);
+  });
+
+  it('collapses repeated whitespace in draft field labels and values', () => {
+    const next = upsertDraftNameChangeExtractedField([], 'draft-marriage_certificate', 'county', '  County   of   residence  ', '  San   Diego  ');
+
+    expect(next).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-marriage_certificate',
+        field_key: 'county',
+        field_label: 'County of residence',
         field_value_masked: 'San Diego',
       }),
     ]);
