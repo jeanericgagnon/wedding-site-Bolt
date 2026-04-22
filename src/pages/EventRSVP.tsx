@@ -258,6 +258,10 @@ export default function EventRSVP() {
 
   function openRsvpForm(invitation: EventInvitation) {
     activeSubmitRequestRef.current += 1;
+    if (postSubmitResetTimeoutRef.current !== null) {
+      window.clearTimeout(postSubmitResetTimeoutRef.current);
+      postSubmitResetTimeoutRef.current = null;
+    }
     setSelectedEvent(invitation.id);
     setSubmitError('');
     setSubmitSuccess(false);

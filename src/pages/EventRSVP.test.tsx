@@ -599,6 +599,73 @@ describe('EventRSVP token trust continuity', () => {
     expect(screen.queryByText('Event-specific RSVP is temporarily unavailable for this site.')).not.toBeInTheDocument();
   });
 
+  it('does not let a prior success timeout close a newly opened event form', async () => {
+    currentToken = 'guest-token';
+
+    maybeSingleQueue.push(
+      { data: { id: 'guest-1', name: 'Jordan', email: 'jordan@example.com' }, error: null },
+      { data: null, error: null },
+      { data: null, error: null },
+    );
+
+    selectQueue.push({
+      data: [
+        {
+          id: 'inv-1',
+          event_id: 'event-1',
+          itinerary_events: {
+            id: 'event-1',
+            event_name: 'Ceremony',
+            description: '',
+            event_date: '2026-05-02',
+            start_time: '16:00:00',
+            end_time: null,
+            location_name: 'Garden',
+            location_address: '',
+            dress_code: null,
+            notes: null,
+          },
+        },
+        {
+          id: 'inv-2',
+          event_id: 'event-2',
+          itinerary_events: {
+            id: 'event-2',
+            event_name: 'Reception',
+            description: '',
+            event_date: '2026-05-02',
+            start_time: '18:00:00',
+            end_time: null,
+            location_name: 'Hall',
+            location_address: '',
+            dress_code: null,
+            notes: null,
+          },
+        },
+      ],
+      error: null,
+    });
+
+    insertQueue.push({ error: null });
+
+    render(<EventRSVP />);
+
+    expect(await screen.findByText('Hello, Jordan!')).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole('button', { name: 'RSVP for this event' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Submit RSVP' }));
+
+    await waitFor(() => {
+      expect(screen.getByText("You're in!")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getAllByRole('button', { name: /RSVP for this event|Update my RSVP/ })[1]);
+    expect(screen.getByRole('heading', { name: 'Reception', level: 3 })).toBeInTheDocument();
+
+    await new Promise((resolve) => window.setTimeout(resolve, 2100));
+
+    expect(screen.getByRole('heading', { name: 'Reception', level: 3 })).toBeInTheDocument();
+  }, 10000);
+
   it('keeps the no-token reset truth if an event RSVP submit resolves after the token is removed', async () => {
     currentToken = 'guest-token';
 
