@@ -90,9 +90,6 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDefinition> = {
   registry: {
     component: RegistryGrid,
     variants: {
-      default: RegistryGrid,
-      grid: RegistryGrid,
-      fundHighlight: RegistryFundHighlight,
       cards: RegistryGrid,
       featured: RegistryFundHighlight,
       minimal: RegistryGrid,
@@ -104,6 +101,9 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDefinition> = {
       experiences: RegistryFundHighlight,
       modern: RegistryGrid,
       playful: RegistryGrid,
+      default: RegistryGrid,
+      grid: RegistryGrid,
+      fundHighlight: RegistryFundHighlight,
     },
     supportedBindings: ['linkIds'],
     supportedSettings: ['showTitle', 'title', 'subtitle'],

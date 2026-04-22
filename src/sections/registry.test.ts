@@ -83,7 +83,8 @@ describe('sections registry resolution', () => {
   });
 
   it('keeps legacy section registry aligned with public registry aliases', () => {
-    expect(getSectionVariants('registry')).toEqual(expect.arrayContaining(['cards', 'featured', 'minimal', 'honeymoon', 'tabs', 'illustrated', 'classic', 'luxury', 'experiences', 'modern', 'playful']));
+    expect(getSectionVariants('registry')).toEqual(expect.arrayContaining(['cards', 'featured', 'minimal', 'honeymoon', 'tabs', 'illustrated', 'classic', 'luxury', 'experiences', 'modern', 'playful', 'default', 'grid', 'fundHighlight']));
+    expect(getSectionVariants('registry')[0]).toBe('cards');
     expect(getSectionComponent('registry', 'default')).toBe(RegistryGrid);
     expect(getSectionComponent('registry', 'classic')).toBe(RegistryGrid);
     expect(getSectionComponent('registry', 'luxury')).toBe(RegistryFundHighlight);
