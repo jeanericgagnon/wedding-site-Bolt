@@ -113,6 +113,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('venue');
   });
 
+  it('returns venue guidance when short venue blocker copy is lowercased by upstream formatting', () => {
+    const hints = getPublishBlockedHints('add at least one venue name or address.');
+    expect(hints[0]).toContain('venue');
+  });
+
   it('returns partner-name guidance when blocker copy uses the shorter readiness detail wording', () => {
     const hints = getPublishBlockedHints('Add both names exactly how you want them shown.');
     expect(hints[0]).toContain('couple details');
