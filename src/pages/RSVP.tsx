@@ -454,6 +454,7 @@ export default function RSVP() {
     setTokenAutoLoading(false);
     setLoading(true);
     setSubmitting(false);
+    setActivePredictionIndex(-1);
     setError('');
     setStep('search');
     setGuest(null);
@@ -574,6 +575,7 @@ export default function RSVP() {
     invalidateActiveSubmit();
     setLoading(true);
     setSubmitting(false);
+    setActivePredictionIndex(-1);
     setError('');
     setAmbiguousGuests([]);
     setGuest(null);
