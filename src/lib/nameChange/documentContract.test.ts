@@ -701,4 +701,29 @@ describe('name change document intake contract', () => {
       canonicalConflicts: [],
     });
   });
+
+  it('keeps optional other documents out of metadata-gap summary counts', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase(),
+      [
+        {
+          document_kind: 'other',
+          display_name: 'Other supporting document',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: null,
+          issuing_authority: null,
+          issued_on: null,
+          extraction_confidence: null,
+        },
+      ],
+      [],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'other')).toMatchObject({
+      intakeStatus: 'reviewed',
+      metadataMissing: ['masked filename', 'issuing authority', 'issued date', 'extraction confidence'],
+    });
+    expect(snapshot.summary.metadataGaps).toBe(0);
+  });
 });

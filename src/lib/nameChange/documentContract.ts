@@ -225,7 +225,7 @@ export function buildNameChangeDocumentIntakeSnapshot(
       requiredReady: statuses.filter((status) => status.required && status.intakeStatus === 'reviewed' && status.canonicalConflicts.length === 0 && status.metadataMissing.length === 0).length,
       requiredMissing: statuses.filter((status) => status.required && (status.intakeStatus !== 'reviewed' || status.canonicalConflicts.length > 0 || status.metadataMissing.length > 0)).length,
       metadataReady: statuses.filter((status) => status.intakeStatus === 'reviewed' && status.metadataMissing.length === 0 && status.canonicalConflicts.length === 0).length,
-      metadataGaps: statuses.filter((status) => status.intakeStatus !== 'not_started' && (status.metadataMissing.length > 0 || (status.metadataMissing.length === 0 && status.canonicalConflicts.length > 0))).length,
+      metadataGaps: statuses.filter((status) => status.kind !== 'other' && status.intakeStatus !== 'not_started' && (status.metadataMissing.length > 0 || (status.metadataMissing.length === 0 && status.canonicalConflicts.length > 0))).length,
       autofillReady: statuses.filter((status) => status.preferredForAutofill && status.missingExtractionFields.length === 0 && status.canonicalConflicts.length === 0 && status.metadataMissing.length === 0 && status.intakeStatus === 'reviewed').length,
       extractionGaps: statuses.filter((status) => status.intakeStatus === 'reviewed' && status.metadataMissing.length === 0 && (status.missingExtractionFields.length > 0 || status.canonicalConflicts.length > 0)).length,
     },
