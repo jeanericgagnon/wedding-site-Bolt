@@ -98,6 +98,24 @@ describe('name change intake draft helpers', () => {
     expect(normalizeDraftNameChangeDocumentId('draft-social-security-card-copy')).toBe('draft-social_security_card');
   });
 
+  it('maps common human draft field aliases onto canonical supported keys', () => {
+    expect(upsertDraftNameChangeExtractedField([], 'draft-current_passport', 'issue date' as never, '  ', '2024-06-01')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-current_passport',
+        field_key: 'issuance_date',
+        field_label: 'Issuance Date',
+      }),
+    ]);
+
+    expect(upsertDraftNameChangeExtractedField([], 'draft-court_order', 'case no' as never, '  ', '24-CV-1188')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-court_order',
+        field_key: 'case_number',
+        field_label: 'Case Number',
+      }),
+    ]);
+  });
+
   it('collapses repeated underscores in messy draft document kinds and ids', () => {
     expect(createDraftNameChangeDocument('current__passport' as never, ' Passport ')).toMatchObject({
       id: 'draft-current_passport',

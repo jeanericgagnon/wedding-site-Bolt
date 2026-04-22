@@ -52,13 +52,29 @@ function normalizeDraftDocumentKind(value: string) {
 }
 
 function normalizeDraftFieldKey(value: string) {
-  return value
+  const normalizedFieldKey = value
     .trim()
     .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
     .toLowerCase()
     .replace(/[\\/.:\-\s]+/g, '_')
     .replace(/_+/g, '_')
-    .replace(/^_+|_+$/g, '') as NameChangeExtractedFieldInput['field_key'];
+    .replace(/^_+|_+$/g, '');
+
+  const fieldAliases: Record<string, NameChangeExtractedFieldInput['field_key']> = {
+    issue_date: 'issuance_date',
+    issued_date: 'issuance_date',
+    date_issued: 'issuance_date',
+    expiration_date: 'expires_on',
+    expiry_date: 'expires_on',
+    case_no: 'case_number',
+    case_num: 'case_number',
+    docket_number: 'case_number',
+    spouse_surname: 'spouse_last_name',
+    surname: 'last_name',
+    given_name: 'first_name',
+  };
+
+  return (fieldAliases[normalizedFieldKey] ?? normalizedFieldKey) as NameChangeExtractedFieldInput['field_key'];
 }
 
 function buildDraftFieldLabel(fieldKey: NameChangeExtractedFieldInput['field_key'], fieldLabel: string) {
