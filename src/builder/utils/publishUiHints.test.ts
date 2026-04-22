@@ -555,6 +555,19 @@ describe('publishUiHints', () => {
     ]);
   });
 
+  it('treats exact non-blocking progress and status copy as safe while keeping blocker routing for real publish errors', () => {
+    expect(getPublishBlockedHints('2 things left before guest-facing launch')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
+    expect(getPublishBlockedHints('Live site unchanged — you have new draft edits')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
+    expect(getPublishBlockedHints('Add at least one venue before going live.')).toEqual([
+      'Add at least one venue name or address.',
+      'Make sure guests can tell where they are meant to go.',
+    ]);
+  });
+
   it('still returns venue guidance for publishing-era venue blockers after CTA guard tightening', () => {
     expect(getPublishBlockedHints('Add at least one venue before publishing.')[0]).toContain('venue');
   });

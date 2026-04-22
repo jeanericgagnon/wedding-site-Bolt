@@ -1,39 +1,44 @@
+const NON_BLOCKING_PUBLISH_COPY = new Set([
+  'current page',
+  'current page has visible content',
+  'at least one section is turned on',
+  'a page exists',
+  'couple names are filled in',
+  'names are ready for guests.',
+  'wedding date is set',
+  'date is ready.',
+  'venue details are set',
+  'venue details are ready.',
+  'rsvp is turned on',
+  'guests can reply.',
+  'latest edits are saved',
+  'everything is saved.',
+  'ready to go live',
+  'no checks yet',
+  'draft only',
+  'draft has unsaved changes',
+  'live site unchanged',
+  'live site unchanged — you have new draft edits',
+  'live site is up to date',
+  'guest-facing site',
+  'go live',
+  'update guest-facing site',
+]);
+
+const isNonBlockingPublishCopy = (normalizedErrorLower: string): boolean => {
+  if (NON_BLOCKING_PUBLISH_COPY.has(normalizedErrorLower)) return true;
+  if (/^.+ has visible sections\.?$/.test(normalizedErrorLower)) return true;
+  if (/^\d+ sections visible$/.test(normalizedErrorLower)) return true;
+  if (/^\d+ pages ready$/.test(normalizedErrorLower)) return true;
+  if (/^\d+ things? left before guest-facing launch$/.test(normalizedErrorLower)) return true;
+  return false;
+};
+
 export const getPublishBlockedHints = (publishValidationError?: string | null): string[] => {
   if (!publishValidationError) return [];
   const normalizedError = publishValidationError.trim();
   const normalizedErrorLower = normalizedError.toLowerCase();
-  if (
-    normalizedErrorLower === 'current page'
-    || normalizedErrorLower.includes('current page has visible content')
-    || normalizedErrorLower.includes('has visible sections')
-    || normalizedErrorLower.includes('section visible')
-    || normalizedErrorLower.includes('sections visible')
-    || normalizedErrorLower.includes('at least one section is turned on')
-    || normalizedErrorLower.includes('a page exists')
-    || normalizedErrorLower.includes('page ready')
-    || normalizedErrorLower.includes('pages ready')
-    || normalizedErrorLower.includes('couple names are filled in')
-    || normalizedErrorLower.includes('names are ready for guests')
-    || normalizedErrorLower.includes('wedding date is set')
-    || normalizedErrorLower.includes('date is ready')
-    || normalizedErrorLower.includes('venue details are set')
-    || normalizedErrorLower.includes('venue details are ready')
-    || normalizedErrorLower.includes('rsvp is turned on')
-    || normalizedErrorLower.includes('guests can reply')
-    || normalizedErrorLower.includes('latest edits are saved')
-    || normalizedErrorLower.includes('everything is saved')
-    || normalizedErrorLower.includes('ready to go live')
-    || normalizedErrorLower.includes('no checks yet')
-    || normalizedErrorLower.includes('thing left before guest-facing launch')
-    || normalizedErrorLower.includes('things left before guest-facing launch')
-    || normalizedErrorLower.includes('draft only')
-    || normalizedErrorLower.includes('draft has unsaved changes')
-    || normalizedErrorLower.includes('live site unchanged')
-    || normalizedErrorLower.includes('live site is up to date')
-    || normalizedErrorLower === 'guest-facing site'
-    || normalizedErrorLower.includes('go live')
-    || normalizedErrorLower.includes('update guest-facing site')
-  ) {
+  if (isNonBlockingPublishCopy(normalizedErrorLower)) {
     return ['Use Fix next to move through the last blockers before the guest-facing launch.'];
   }
   if (
