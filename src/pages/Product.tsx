@@ -51,7 +51,7 @@ const V1_STATUS_GROUPS = [
     tone: 'must',
     intro: 'This is the product line DayOf should actually be judged on right now.',
     items: [
-      'Build a polished wedding site draft with honest privacy + access controls',
+      'Build a polished wedding site draft with honest privacy + access controls before sharing it with guests',
       'Run guest list, households, RSVP, meals, and event invites in one place',
       'Handle core wedding messaging without spreadsheet-to-email-tool chaos',
       'Use seating, itinerary, and coordination views to run the event week calmly',
@@ -174,8 +174,8 @@ export const Product: React.FC = () => {
     if (activeStep === 'launch') {
       return (
         <div className="space-y-4">
-          <p className="text-sm text-ink/70">Template: Modern Luxe • Website: starter draft is ready to review before sharing with guests</p>
-          <button className="px-5 py-2.5 rounded-xl bg-brand text-paper font-semibold">Review launch settings</button>
+          <p className="text-sm text-ink/70">Template: Modern Luxe • Website: starter draft is ready to review before sharing it with guests</p>
+          <button className="px-5 py-2.5 rounded-xl bg-brand text-paper font-semibold">Review draft privacy + launch settings</button>
         </div>
       );
     }

@@ -105,7 +105,7 @@ const output = {
   slice: 'canonical-v1-smoke',
   generatedAt: new Date().toISOString(),
   currentV1Line: [
-    'couples can create and work toward launching a polished wedding site',
+    'couples can build a polished wedding site draft before sharing it with guests',
     'guests can use the public site and RSVP flows reliably',
     'couples can run the core ops layer: guests, RSVP, messages, seating, registry, itinerary, settings',
     'planner/collaborator support exists in a real usable form',
