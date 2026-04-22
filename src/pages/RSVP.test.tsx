@@ -5533,6 +5533,10 @@ describe('RSVP stale submit protection', () => {
     fireEvent.click(screen.getByText('Update RSVP'));
 
     expect(await screen.findByText("You're confirmed!")).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Done'));
+    fireEvent.click(screen.getByText('Choose household guests'));
+
+    expect(screen.getByText('1/2 selected')).toBeInTheDocument();
 
     const submitRequest = fetchMock.mock.calls[1]?.[1];
     expect(submitRequest).toBeDefined();
