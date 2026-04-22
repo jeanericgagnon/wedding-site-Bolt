@@ -86,6 +86,16 @@ function resetEventRsvpModalTransientState(
   setError('');
 }
 
+function invalidateEventRsvpAsyncState(
+  activeLoadRequestRef: React.MutableRefObject<number>,
+  activeSubmitRequestRef: React.MutableRefObject<number>,
+  submitInFlightRef: React.MutableRefObject<boolean>,
+) {
+  activeLoadRequestRef.current += 1;
+  activeSubmitRequestRef.current += 1;
+  submitInFlightRef.current = false;
+}
+
 export default function EventRSVP() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
@@ -132,9 +142,7 @@ export default function EventRSVP() {
 
   useEffect(() => {
     return () => {
-      activeLoadRequestRef.current += 1;
-      activeSubmitRequestRef.current += 1;
-      submitInFlightRef.current = false;
+      invalidateEventRsvpAsyncState(activeLoadRequestRef, activeSubmitRequestRef, submitInFlightRef);
       if (postSubmitResetTimeoutRef.current !== null) {
         window.clearTimeout(postSubmitResetTimeoutRef.current);
         postSubmitResetTimeoutRef.current = null;
@@ -290,9 +298,7 @@ export default function EventRSVP() {
   }
 
   function openRsvpForm(invitation: EventInvitation) {
-    activeLoadRequestRef.current += 1;
-    activeSubmitRequestRef.current += 1;
-    submitInFlightRef.current = false;
+    invalidateEventRsvpAsyncState(activeLoadRequestRef, activeSubmitRequestRef, submitInFlightRef);
     if (postSubmitResetTimeoutRef.current !== null) {
       window.clearTimeout(postSubmitResetTimeoutRef.current);
       postSubmitResetTimeoutRef.current = null;
@@ -365,9 +371,7 @@ export default function EventRSVP() {
   }
 
   function closeRsvpForm() {
-    activeSubmitRequestRef.current += 1;
-    activeLoadRequestRef.current += 1;
-    submitInFlightRef.current = false;
+    invalidateEventRsvpAsyncState(activeLoadRequestRef, activeSubmitRequestRef, submitInFlightRef);
     if (postSubmitResetTimeoutRef.current !== null) {
       window.clearTimeout(postSubmitResetTimeoutRef.current);
       postSubmitResetTimeoutRef.current = null;

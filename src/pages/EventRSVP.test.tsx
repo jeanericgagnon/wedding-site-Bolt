@@ -901,6 +901,75 @@ describe('EventRSVP token trust continuity', () => {
     resolveFirstInsert({ error: null });
   });
 
+  it('keeps a reopened event form open when an older event load is invalidated on close', async () => {
+    currentToken = 'guest-token';
+
+    maybeSingleQueue.push(
+      { data: { id: 'guest-1', name: 'Jordan', email: 'jordan@example.com' }, error: null },
+      { data: null, error: null },
+      { data: null, error: null },
+    );
+
+    selectQueue.push({
+      data: [
+        {
+          id: 'inv-1',
+          event_id: 'event-1',
+          itinerary_events: {
+            id: 'event-1',
+            event_name: 'Ceremony',
+            description: '',
+            event_date: '2026-05-02',
+            start_time: '16:00:00',
+            end_time: null,
+            location_name: 'Garden',
+            location_address: '',
+            dress_code: null,
+            notes: null,
+          },
+        },
+        {
+          id: 'inv-2',
+          event_id: 'event-2',
+          itinerary_events: {
+            id: 'event-2',
+            event_name: 'Reception',
+            description: '',
+            event_date: '2026-05-02',
+            start_time: '18:00:00',
+            end_time: null,
+            location_name: 'Ballroom',
+            location_address: '',
+            dress_code: null,
+            notes: null,
+          },
+        },
+      ],
+      error: null,
+    });
+
+    const firstSubmitRequest = createDeferredMutation();
+    insertQueue.push(firstSubmitRequest.promise, { error: null });
+
+    render(<EventRSVP />);
+
+    expect(await screen.findByText('Hello, Jordan!')).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole('button', { name: 'RSVP for this event' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Submit RSVP' }));
+
+    await screen.findByRole('button', { name: 'Saving…' });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'RSVP for this event' })[1]);
+    fireEvent.click(screen.getByRole('button', { name: 'Submit RSVP' }));
+
+    await waitFor(() => {
+      expect(screen.getByText("You're in!")).toBeInTheDocument();
+    });
+
+    firstSubmitRequest.resolve({ error: null });
+  });
+
   it('clears event RSVP errors when the guest closes the form', async () => {
     currentToken = 'guest-token';
 
