@@ -50,6 +50,34 @@ describe('quickStartStateTransfer', () => {
     }));
   });
 
+  it('rehydrates older clarifying snapshots that were missing draft outputs', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      showFollowUps: true,
+      viewState: 'followups',
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'event-1-time',
+            category: 'event_structure',
+            question: 'When is dinner?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['events.0.time'],
+            affectedSections: ['schedule'],
+            skippable: true,
+            round: 1,
+            status: 'pending',
+            answer: '',
+          }],
+          history: [],
+        },
+      },
+    }));
+
+    expect(readQuickStartDraftSnapshot()?.clarifyingState?.draftOutputs).toEqual({});
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').clarifyingState?.draftOutputs).toEqual({});
+  });
+
   it('drops malformed existing storage completely when the payload is invalid json', () => {
     window.localStorage.setItem(QUICK_START_STORAGE_KEY, '{bad json');
 

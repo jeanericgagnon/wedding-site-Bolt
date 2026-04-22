@@ -119,6 +119,35 @@ describe('quickStartPersistence', () => {
     expect(normalized.viewState).toBe('followups');
   });
 
+  it('restores clarifying state even when older snapshots omitted draft outputs', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      showFollowUps: true,
+      viewState: 'followups',
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'event-1-time',
+            category: 'event_structure',
+            question: 'When is dinner?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['events.0.time'],
+            affectedSections: ['schedule'],
+            skippable: true,
+            round: 1,
+            status: 'pending',
+            answer: '',
+          }],
+          history: [],
+        },
+      },
+    });
+
+    expect(normalized.clarifyingState?.clarifying.questions).toHaveLength(1);
+    expect(normalized.clarifyingState?.draftOutputs).toEqual({});
+    expect(normalized.showFollowUps).toBe(true);
+  });
+
   it('drops clarifying questions with non-string target fields during restore', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       showFollowUps: true,
