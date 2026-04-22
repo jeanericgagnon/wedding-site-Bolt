@@ -574,7 +574,11 @@ export default function RSVP() {
         plus_one_name: foundRsvp.plus_one_name || '',
         notes: parsed.cleanNotes,
       });
-      setCustomAnswers((foundRsvp.custom_answers && typeof foundRsvp.custom_answers === 'object') ? foundRsvp.custom_answers : {});
+      setCustomAnswers(
+        foundRsvp.custom_answers && typeof foundRsvp.custom_answers === 'object'
+          ? normalizeCustomAnswers(foundRsvp.custom_answers as Record<string, string | string[]>)
+          : {},
+      );
     }
     if (!foundRsvp) {
       setExistingRsvp(null);
