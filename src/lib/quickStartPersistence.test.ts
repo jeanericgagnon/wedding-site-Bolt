@@ -1267,6 +1267,39 @@ describe('quickStartPersistence', () => {
     expect(normalized.viewState).toBe('thinking');
   });
 
+  it('reopens follow-up view instead of stale thinking when active draft answers survived restore', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      showFollowUps: true,
+      viewState: 'thinking',
+      followUpAnswers: {
+        lodging: 'Need shuttle details',
+      },
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'lodging',
+            category: 'travel',
+            question: 'Where should guests stay?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.lodging'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 2,
+            status: 'pending',
+            answer: '',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.showFollowUps).toBe(true);
+    expect(normalized.viewState).toBe('followups');
+    expect(normalized.followUpAnswers).toEqual({ lodging: 'Need shuttle details' });
+  });
+
   it('preserves thinking view when older restores lost the follow-up flag during generation', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       viewState: 'thinking',
