@@ -26,4 +26,14 @@ describe('login quick start state transfer', () => {
     expect(readQuickStartDraftSnapshot()?.initialSetupAnswers.names).toBe('');
     expect(readQuickStartDraftSnapshot()?.initialSetupAnswers.venueNameOrTbd).toBe('La Valencia');
   });
+
+  it('rewrites malformed carried quick start payloads to normalized storage before auth continuation', () => {
+    persistQuickStartDraftSnapshot({
+      followUpAnswers: { '': 'bad', 'event-1-time': '6:00 PM', lodging: '   ' },
+    });
+
+    expect(window.localStorage.getItem('dayoflove:quickstart-shell')).toContain('event-1-time');
+    expect(window.localStorage.getItem('dayoflove:quickstart-shell')).not.toContain('lodging');
+    expect(window.localStorage.getItem('dayoflove:quickstart-shell')).not.toContain('"":"bad"');
+  });
 });
