@@ -95,6 +95,7 @@ describe('publishUiHints', () => {
     expect(shouldAutoPublishFromSearch('?publishNow=0')).toBe(false);
     expect(shouldAutoPublishFromSearch('?publishNow=1&foo=bar')).toBe(true);
     expect(shouldAutoPublishFromSearch('?publishNow=true')).toBe(false);
+    expect(shouldAutoPublishFromSearch('?publishNow=01')).toBe(false);
     expect(shouldAutoPublishFromSearch('')).toBe(false);
   });
 
