@@ -324,4 +324,8 @@ describe('publishUiHints', () => {
   it('keeps empty progress copy when total is negative even if done is positive', () => {
     expect(getPublishProgressLabel(3, -1)).toBe('No checks yet');
   });
+
+  it('keeps empty progress copy when total is zero even if done is negative', () => {
+    expect(getPublishProgressLabel(-3, 0)).toBe('No checks yet');
+  });
 });
