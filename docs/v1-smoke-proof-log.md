@@ -30,6 +30,7 @@ _Machine-readable status:_ `manualProofSummary.missingCount: 3` (`canonicalCoupl
 _Machine-readable status:_ all three missing manual-proof requirements are currently blocking, so `manualProofSummary.missingCount` still matches `manualProofSummary.blockingCount`
 _Machine-readable status:_ `manualProofSummary.blockingCount: 3`
 _Machine-readable status:_ `manualProofSummary.blockingKeys: canonicalCouplePath, runtimeWordingVerification, onboardingStarterDraftWording`
+_Grounded status line:_ every current `manualProofSummary.blockingKey` is still represented in `publicV1ClaimBlockers`, so the no-go call remains fully backed by named proof gaps
 _Machine-readable status:_ `manualProofSummary.blockingNextSteps` mirrors the remaining runtime-proof actions in order
 _Machine-readable next-step order:_ `manualProofSummary.blockingNextSteps[0]` = canonical couple-path truth pass
 _Machine-readable next-step order:_ `manualProofSummary.blockingNextSteps[1]` = privacy/access/publish plus marketing/settings/billing runtime wording verification
