@@ -568,6 +568,9 @@ describe('publishUiHints', () => {
     expect(getPublishBlockedHints('Guest-facing site')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
     ]);
+    expect(getPublishBlockedHints('Guest-facing site.')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
   });
 
   it('treats exact non-blocking progress and status copy as safe while keeping blocker routing for real publish errors', () => {

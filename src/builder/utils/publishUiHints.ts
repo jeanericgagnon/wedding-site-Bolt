@@ -33,6 +33,7 @@ const isNonBlockingPublishCopy = (normalizedErrorLower: string): boolean => {
   if (/^\d+ things? left before guest-facing launch\.?$/.test(normalizedErrorLower)) return true;
   if (/^draft has unsaved changes[.!?]*$/.test(normalizedErrorLower)) return true;
   if (/^live site unchanged(?: — you have new draft edits)?[.!?]*$/.test(normalizedErrorLower)) return true;
+  if (/^guest-facing site[.!?]*$/.test(normalizedErrorLower)) return true;
   return false;
 };
 
