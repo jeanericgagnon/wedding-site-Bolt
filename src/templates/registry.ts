@@ -817,14 +817,18 @@ export function getCanonicalTemplateSourceId(templateId: unknown): string {
   return TEMPLATE_ALIAS_TARGETS[canonicalTemplateId] ?? canonicalTemplateId;
 }
 
+function getCanonicalTemplateDefinition(templateId: unknown): TemplateDefinition {
+  return getCanonicalTemplateSource(getCanonicalTemplateSourceId(templateId));
+}
+
 export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = deepFreezeTemplateValue({
   ...templateById,
   // Back-compat aliases used by older flows
-  base: cloneTemplateDefinition(getCanonicalTemplateSource(getCanonicalTemplateSourceId('base'))),
-  modern: cloneTemplateDefinition(getCanonicalTemplateSource(getCanonicalTemplateSourceId('modern'))),
-  editorial: cloneTemplateDefinition(getCanonicalTemplateSource(getCanonicalTemplateSourceId('editorial'))),
-  classic: cloneTemplateDefinition(getCanonicalTemplateSource(getCanonicalTemplateSourceId('classic'))),
-  rustic: cloneTemplateDefinition(getCanonicalTemplateSource(getCanonicalTemplateSourceId('rustic'))),
+  base: cloneTemplateDefinition(getCanonicalTemplateDefinition('base')),
+  modern: cloneTemplateDefinition(getCanonicalTemplateDefinition('modern')),
+  editorial: cloneTemplateDefinition(getCanonicalTemplateDefinition('editorial')),
+  classic: cloneTemplateDefinition(getCanonicalTemplateDefinition('classic')),
+  rustic: cloneTemplateDefinition(getCanonicalTemplateDefinition('rustic')),
 });
 
 const templateIdAliases = new Map<string, string>(
@@ -848,7 +852,7 @@ export function resolveCanonicalTemplateId(templateId: unknown): string {
 }
 
 export function getTemplate(templateId: unknown): TemplateDefinition {
-  return cloneTemplateDefinition(getCanonicalTemplateSource(getCanonicalTemplateSourceId(templateId)));
+  return cloneTemplateDefinition(getCanonicalTemplateDefinition(templateId));
 }
 
 export function getAllTemplates(): TemplateDefinition[] {

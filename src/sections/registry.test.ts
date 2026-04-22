@@ -210,6 +210,7 @@ describe('sections registry resolution', () => {
     expect(getCanonicalTemplateSourceId('classic')).toBe('timeless-classic');
     expect(getCanonicalTemplateSourceId('Playful Celebration')).toBe('playful-celebration');
     expect(resolveCanonicalTemplateId('Playful Celebration')).toBe('playful-celebration');
+    expect(getTemplate('modern').id).toBe('modern-clean');
   });
 
   it('keeps imported registry template bindings and overrides isolated from later edits', () => {
@@ -529,8 +530,9 @@ describe('sections registry resolution', () => {
     expect(templateRegistrySource).toContain('export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = deepFreezeTemplateValue({');
     expect(templateRegistrySource).toContain('function deepFreezeTemplateValue<T>(value: T): T {');
     expect(templateRegistrySource).toContain('function getCanonicalTemplateSource(templateId: string | undefined): TemplateDefinition {');
-    expect(templateRegistrySource).toContain('return cloneTemplateDefinition(getCanonicalTemplateSource(getCanonicalTemplateSourceId(templateId)));');
-    expect(templateRegistrySource).toContain("base: cloneTemplateDefinition(getCanonicalTemplateSource(getCanonicalTemplateSourceId('base'))),");
+    expect(templateRegistrySource).toContain('function getCanonicalTemplateDefinition(templateId: unknown): TemplateDefinition {');
+    expect(templateRegistrySource).toContain('return getCanonicalTemplateSource(getCanonicalTemplateSourceId(templateId));');
+    expect(templateRegistrySource).toContain("base: cloneTemplateDefinition(getCanonicalTemplateDefinition('base')),");
     expect(templateRegistrySource).toContain("variant: isRegistryTemplateSection");
     expect(templateRegistrySource).toContain("variant: isRegistryTemplateSection");
     expect(templateRegistrySource).toContain('? canonicalRegistrySection.variant');
@@ -542,7 +544,7 @@ describe('sections registry resolution', () => {
     expect(templateRegistrySource).toContain('settings: cloneTemplateValue(section.settings ?? {}),');
     expect(templateRegistrySource).toContain('overrides: cloneTemplateValue(section.overrides ?? undefined),');
     expect(templateRegistrySource).toContain('function cloneTemplateDefinition(template: TemplateDefinition): TemplateDefinition {');
-    expect(templateRegistrySource).toContain('return cloneTemplateDefinition(getCanonicalTemplateSource(getCanonicalTemplateSourceId(templateId)));');
+    expect(templateRegistrySource).toContain('return cloneTemplateDefinition(getCanonicalTemplateDefinition(templateId));');
     expect(templateRegistrySource).toContain('return Object.values(templateById).map(cloneTemplateDefinition);');
     expect(sectionRegistrySource).toContain('export function resolveCanonicalRegistrySectionInput(type: unknown, variant: unknown): { type: string; variant: string } {');
     expect(sectionRegistrySource).toContain('export function resolveCanonicalRegistrySectionType(type: unknown): string {');
