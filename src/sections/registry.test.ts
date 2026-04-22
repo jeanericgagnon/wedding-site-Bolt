@@ -337,6 +337,7 @@ describe('sections registry resolution', () => {
     const previewSource = readFileSync(resolve(__dirname, '../builder/registry/variantPreviewSource.ts'), 'utf8');
     const weddingDataAdapter = readFileSync(resolve(__dirname, '../builder/adapters/weddingDataAdapter.ts'), 'utf8');
     const canonicalMapper = readFileSync(resolve(__dirname, '../lib/aiCanonicalContentMapper.ts'), 'utf8');
+    const weddingDataBindings = readFileSync(resolve(__dirname, '../render/weddingDataBindings.ts'), 'utf8');
     expect(sectionRegistry).toContain("function normalizeRegistryVariantKey(variant: unknown): string {");
     expect(sectionRegistry).toContain("function isRegistrySectionType(type: unknown): boolean {");
     expect(sectionRegistry).toContain("function normalizeRegistrySectionType(type: unknown): string {");
@@ -357,6 +358,8 @@ describe('sections registry resolution', () => {
     expect(weddingDataAdapter).toContain("return (normalizedType === 'registrysection' ? 'registry' : type) as BuilderSectionInstance['type'];");
     expect(canonicalMapper).toContain("const normalizedType = type.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');");
     expect(canonicalMapper).toContain("case 'registrysection':");
+    expect(weddingDataBindings).toContain('function normalizeBindableSectionType(type: string): string {');
+    expect(weddingDataBindings).toContain("return normalizedType === 'registrysection' ? 'registry' : type;");
   });
 
   it('keeps legacy public registry surfaces from falling back to stale links after live loads', () => {

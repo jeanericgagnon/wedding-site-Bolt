@@ -59,6 +59,23 @@ describe('applyWeddingDataBindings', () => {
     expect(links[0].url).toBe('https://amazon.com/registry');
   });
 
+  it('binds registry links from drifted registry section types', () => {
+    const data = createEmptyWeddingData();
+    data.registry.links = [{ id: 'r1', label: 'Amazon', url: 'https://amazon.com/registry' }];
+
+    const result = applyWeddingDataBindings({
+      type: 'registry-section',
+      variant: 'cards',
+      data: { links: [{ id: 'x', store: 'Demo', url: '#' }] },
+      bindings: { linkIds: ['r1'] },
+    }, data);
+
+    const links = result.links as Array<Record<string, unknown>>;
+    expect(links).toHaveLength(1);
+    expect(links[0].store).toBe('Amazon');
+    expect(links[0].url).toBe('https://amazon.com/registry');
+  });
+
   it('binds venue entries from wedding data', () => {
     const data = createEmptyWeddingData();
     data.venues = [{ id: 'v1', name: 'The Grand Pavilion', address: '450 Park Ave' }];

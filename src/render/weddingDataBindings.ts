@@ -14,6 +14,11 @@ interface BindableSection {
   bindings?: SectionBindings;
 }
 
+function normalizeBindableSectionType(type: string): string {
+  const normalizedType = type.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+  return normalizedType === 'registrysection' ? 'registry' : type;
+}
+
 const DEFAULT_TIME_FORMATTER = new Intl.DateTimeFormat('en-US', {
   hour: 'numeric',
   minute: '2-digit',
@@ -265,9 +270,10 @@ function bindCommon(section: BindableSection, weddingData: WeddingDataV1): Recor
 export function applyWeddingDataBindings(section: BindableSection, weddingData?: WeddingDataV1 | null): Record<string, unknown> {
   if (!weddingData) return section.data;
 
-  const withCommon = { ...section, data: bindCommon(section, weddingData) };
+  const normalizedSection = { ...section, type: normalizeBindableSectionType(section.type) };
+  const withCommon = { ...normalizedSection, data: bindCommon(normalizedSection, weddingData) };
 
-  switch (section.type) {
+  switch (normalizedSection.type) {
     case 'venue':
       return bindVenue(withCommon, weddingData);
     case 'schedule':
