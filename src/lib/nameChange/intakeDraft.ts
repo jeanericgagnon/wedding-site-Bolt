@@ -12,7 +12,7 @@ function normalizeDraftText(value: string | null | undefined) {
 }
 
 function normalizeDraftDocumentKind(value: string) {
-  return value.trim().replace(/[-\s]+/g, '_') as NameChangeDocumentInput['document_kind'];
+  return value.trim().toLowerCase().replace(/[-\s]+/g, '_') as NameChangeDocumentInput['document_kind'];
 }
 
 export function buildDraftNameChangeDocumentId(kind: NameChangeDocumentInput['document_kind']) {
