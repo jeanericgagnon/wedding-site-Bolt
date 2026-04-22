@@ -437,5 +437,8 @@ describe('sections registry resolution', () => {
     expect(initialLayoutSource).toContain('locked: existing.locked ?? newSection.locked,');
     expect(siteGeneratorSource).toContain("import { getTemplate } from '../templates/registry';");
     expect(siteGeneratorSource).toContain('const template = getTemplate(data.template);');
+    const aiBuilderPatchSource = readFileSync(resolve(__dirname, '../lib/aiBuilderProjectPatch.ts'), 'utf8');
+    expect(aiBuilderPatchSource).toContain('const normalizeBuilderSectionTypeKey = (type: unknown) => {');
+    expect(aiBuilderPatchSource).toContain("if (normalizeBuilderSectionTypeKey(type) === 'registry') {");
   });
 });

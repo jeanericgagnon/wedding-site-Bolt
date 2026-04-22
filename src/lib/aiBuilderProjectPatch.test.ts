@@ -58,6 +58,25 @@ describe('aiBuilderProjectPatch', () => {
     expect(directionsTitle.value).toBe('Location & Directions');
     expect(weddingPartyIntro.value).toContain('part of our story');
   });
+
+  it('patches drifted registry section types with generated registry copy', async () => {
+    const generated = await generateDraftFromWeddingProfile(profile);
+    const driftedProject = {
+      pages: [
+        {
+          id: 'home',
+          sections: [
+            { type: 'Registry', settings: {} },
+          ],
+        },
+      ],
+    };
+
+    const next = mergeGeneratedDraftIntoBuilderProject(driftedProject, generated) as { pages: Array<{ sections: Array<{ settings: Record<string, unknown> }> }> };
+    const registryMessage = next.pages[0].sections[0].settings.message as { value: string; source: string };
+    expect(registryMessage.value).toContain('presence is gift enough');
+    expect(registryMessage.source).toBe('concierge-brief');
+  });
 });
 
 

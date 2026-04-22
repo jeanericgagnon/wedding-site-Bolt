@@ -23,6 +23,12 @@ const mergeGeneratedSetting = (current: unknown, nextValue: string) => {
   return toGeneratedSetting(nextValue);
 };
 
+const normalizeBuilderSectionTypeKey = (type: unknown) => {
+  return typeof type === 'string'
+    ? type.trim().toLowerCase().replace(/[^a-z0-9]/g, '')
+    : '';
+};
+
 
 export const mergeGeneratedDraftIntoBuilderProject = (
   existingSiteJson: Record<string, unknown> | null,
@@ -151,7 +157,7 @@ export const mergeGeneratedDraftIntoBuilderProject = (
         };
       }
 
-      if (type === 'registry') {
+      if (normalizeBuilderSectionTypeKey(type) === 'registry') {
         return {
           ...section,
           settings: {
