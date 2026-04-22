@@ -10,6 +10,13 @@ export interface BuilderContentBindings {
   galleryAssetUrls: string[];
 }
 
+function normalizeBuilderBindingSectionType(type: BuilderSectionInstance['type']): BuilderSectionInstance['type'] {
+  const normalizedType = typeof type === 'string'
+    ? type.trim().toLowerCase().replace(/[^a-z0-9]/g, '')
+    : '';
+  return (normalizedType === 'registrysection' ? 'registry' : type) as BuilderSectionInstance['type'];
+}
+
 export function fromWeddingDataToBuilderBindings(data: WeddingDataV1): BuilderContentBindings {
   return {
     venueIds: data.venues.map(v => v.id),
@@ -28,7 +35,7 @@ export function applyWeddingDataBindingsToSections(
   const bindings = fromWeddingDataToBuilderBindings(data);
 
   return sections.map(section => {
-    switch (section.type) {
+    switch (normalizeBuilderBindingSectionType(section.type)) {
       case 'venue':
         return { ...section, bindings: { ...section.bindings, venueIds: bindings.venueIds } };
       case 'schedule':

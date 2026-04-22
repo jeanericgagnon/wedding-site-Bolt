@@ -84,4 +84,13 @@ describe('applyWeddingDataBindingsToSections', () => {
     const result = applyWeddingDataBindingsToSections(sections, data);
     expect(result[0].bindings.linkIds).toEqual(['r1']);
   });
+
+  it('applies registry link ids to drifted registry section types', () => {
+    const data = createEmptyWeddingData();
+    data.registry.links.push({ id: 'r1', url: 'https://amazon.com' });
+    const sections = [makeSection('registry' as never)];
+    sections[0].type = 'registry-section' as never;
+    const result = applyWeddingDataBindingsToSections(sections, data);
+    expect(result[0].bindings.linkIds).toEqual(['r1']);
+  });
 });
