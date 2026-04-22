@@ -94,6 +94,8 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
   const [imgFailed, setImgFailed] = useState(false);
   const [imgSrc, setImgSrc] = useState<string | null>(item.image_url ?? null);
   const [imgTriedProxy, setImgTriedProxy] = useState(false);
+  const [imgTriedPagePreview, setImgTriedPagePreview] = useState(false);
+  const pagePreviewSourceUrl = item.item_url ?? item.canonical_url ?? null;
 
   const buildPagePreviewUrl = (url?: string | null) => {
     const v = (url || '').trim();
@@ -198,8 +200,9 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
   useEffect(() => {
     setImgFailed(false);
     setImgTriedProxy(false);
-    setImgSrc(item.image_url ?? buildPagePreviewUrl(item.item_url) ?? null);
-  }, [item.id, item.image_url, item.item_url]);
+    setImgTriedPagePreview(false);
+    setImgSrc(item.image_url ?? buildPagePreviewUrl(pagePreviewSourceUrl) ?? null);
+  }, [item.id, item.image_url, pagePreviewSourceUrl]);
 
   if (isCashFund) {
     return (
@@ -282,9 +285,9 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
                 setImgSrc(`https://images.weserv.nl/?url=${encodeURIComponent(item.image_url.replace(/^https?:\/\//, ''))}&w=1200&fit=inside`);
                 return;
               }
-              const pagePreview = buildPagePreviewUrl(item.item_url);
-              if (!imgTriedProxy && pagePreview && imgSrc !== pagePreview) {
-                setImgTriedProxy(true);
+              const pagePreview = buildPagePreviewUrl(pagePreviewSourceUrl);
+              if (!imgTriedPagePreview && pagePreview && imgSrc !== pagePreview) {
+                setImgTriedPagePreview(true);
                 setImgSrc(pagePreview);
                 return;
               }
