@@ -24,7 +24,7 @@ import { buildOnboardingUpdateWithClarifying } from '../../lib/buildOnboardingUp
 import { applyQuickStartAnswer, mergeClarifyingAnswer, type ConciergeQuestion } from '../../lib/quickStartFlow';
 import { writeSignupReturnPath } from '../../lib/signupContinuation';
 import { normalizeQuickStartDraftSnapshot } from '../../lib/quickStartPersistence';
-import { createQuickStartDraftSnapshot, persistQuickStartDraftSnapshot, QUICK_START_STORAGE_KEY } from '../../lib/quickStartStateTransfer';
+import { normalizeMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnapshot, QUICK_START_STORAGE_KEY } from '../../lib/quickStartStateTransfer';
 import { buildQuickStartEntryPath, buildQuickStartGuestsPath } from '../../lib/quickStartContinuation';
 import { clearAllOnboardingContinuationState } from '../../lib/onboardingContinuationCleanup';
 import { hasMeaningfulQuickStartAnswers, mergeQuickStartSeedIntoDraft } from '../../lib/quickStartHydration';
@@ -368,7 +368,7 @@ export const QuickStart: React.FC = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        const carriedQuickStartDraft = createQuickStartDraftSnapshot({
+        const carriedQuickStartDraft = normalizeMeaningfulQuickStartDraftSnapshot({
           initialSetupAnswers: answersOverride,
           currentIndex: safeCurrentIndex,
           followUpAnswers: followUpAnswersRef.current,
