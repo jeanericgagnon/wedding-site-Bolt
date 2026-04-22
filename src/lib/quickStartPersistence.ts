@@ -1,5 +1,5 @@
 import { createEmptyInitialSetupAnswers, type InitialSetupAnswers } from './initialSetupAnswers';
-import type { ClarifyingPersistenceEnvelope } from './aiClarifyingPersistence';
+import type { ClarifyingPersistenceEnvelope, StoredClarifyingQuestion } from './aiClarifyingPersistence';
 import { normalizeQuickStartClarifyingMode } from './quickStartClarifyingMode';
 
 export type QuickStartDraftSnapshot = {
@@ -52,6 +52,24 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
       ) as Partial<InitialSetupAnswers>
     : {};
 
+  const isStoredClarifyingQuestion = (value: unknown): value is StoredClarifyingQuestion => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+    const question = value as Record<string, unknown>;
+    return typeof question.id === 'string'
+      && question.id.trim().length > 0
+      && typeof question.category === 'string'
+      && typeof question.question === 'string'
+      && typeof question.expectedAnswerType === 'string'
+      && Array.isArray(question.targetFields)
+      && Array.isArray(question.affectedSections)
+      && typeof question.skippable === 'boolean'
+      && typeof question.round === 'number'
+      && Number.isFinite(question.round)
+      && typeof question.status === 'string'
+      && ['pending', 'answered', 'skipped', 'unresolved'].includes(question.status)
+      && typeof question.answer === 'string';
+  };
+
   const clarifyingState = normalizeQuickStartClarifyingMode(
     parsed.clarifyingState
       && typeof parsed.clarifyingState === 'object'
@@ -66,7 +84,14 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
       && parsed.clarifyingState.draftOutputs
       && typeof parsed.clarifyingState.draftOutputs === 'object'
       && !Array.isArray(parsed.clarifyingState.draftOutputs)
-        ? parsed.clarifyingState as ClarifyingPersistenceEnvelope
+        ? {
+            ...parsed.clarifyingState,
+            clarifying: {
+              ...parsed.clarifyingState.clarifying,
+              questions: parsed.clarifyingState.clarifying.questions.filter(isStoredClarifyingQuestion),
+              history: parsed.clarifyingState.clarifying.history.filter(isStoredClarifyingQuestion),
+            },
+          } as ClarifyingPersistenceEnvelope
         : null,
   );
 
