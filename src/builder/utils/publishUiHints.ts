@@ -73,6 +73,8 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
     || normalizedErrorLower.includes('add both partners')
     || normalizedErrorLower.includes('partner names exactly how you want')
     || normalizedErrorLower.includes('couple names exactly how you want')
+    || normalizedErrorLower.includes('names exactly how you want')
+    || normalizedErrorLower.includes('names exactly as you want')
     || normalizedErrorLower.includes('partner names exactly how you want them shown')
     || normalizedErrorLower.includes('couple names exactly how you want them shown')
     || normalizedErrorLower.includes('both partner names exactly how you want')
@@ -89,6 +91,11 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
     normalizedErrorLower.includes('add your wedding date')
     || normalizedErrorLower.includes('add your event date')
     || normalizedErrorLower.includes('add your date')
+    || normalizedErrorLower.includes('set your wedding date')
+    || normalizedErrorLower.includes('set your event date')
+    || normalizedErrorLower.includes('set your date')
+    || normalizedErrorLower.includes('choose your wedding date')
+    || normalizedErrorLower.includes('choose your event date')
     || normalizedErrorLower.includes('wedding date before going live')
     || normalizedErrorLower.includes('event date before going live')
   ) {
@@ -99,8 +106,10 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
   }
   if (
     normalizedErrorLower.includes('add at least one venue name or address')
+    || normalizedErrorLower.includes('set at least one venue name or address')
     || normalizedErrorLower.includes('add at least one venue')
     || normalizedErrorLower.includes('venue name or address')
+    || normalizedErrorLower.includes('venue name is still missing')
     || normalizedErrorLower.includes('venue address')
     || normalizedErrorLower.includes('venue details missing')
     || normalizedErrorLower.includes('add at least one location')

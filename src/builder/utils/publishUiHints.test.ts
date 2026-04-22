@@ -122,6 +122,14 @@ describe('publishUiHints', () => {
       'Open your couple details.',
       'Add both names exactly how you want guests to see them.',
     ]);
+    expect(getPublishBlockedHints('Names exactly how you want them shown.')).toEqual([
+      'Open your couple details.',
+      'Add both names exactly how you want guests to see them.',
+    ]);
+    expect(getPublishBlockedHints('Names exactly as you want them shown.')).toEqual([
+      'Open your couple details.',
+      'Add both names exactly how you want guests to see them.',
+    ]);
   });
 
   it('does not mistake the names success detail for a blocker', () => {
@@ -183,6 +191,14 @@ describe('publishUiHints', () => {
       'Open event details.',
       'Add your wedding date before going live.',
     ]);
+    expect(getPublishBlockedHints('Set your date before going live.')).toEqual([
+      'Open event details.',
+      'Add your wedding date before going live.',
+    ]);
+    expect(getPublishBlockedHints('Choose your wedding date before going live.')).toEqual([
+      'Open event details.',
+      'Add your wedding date before going live.',
+    ]);
   });
 
   it('does not mistake the date success detail for a blocker', () => {
@@ -226,6 +242,11 @@ describe('publishUiHints', () => {
     expect(hints[0]).toContain('venue');
   });
 
+  it('returns venue guidance when blocker copy focuses on venue name wording', () => {
+    const hints = getPublishBlockedHints('Venue name is still missing.');
+    expect(hints[0]).toContain('venue');
+  });
+
   it('returns venue guidance when blocker copy focuses on venue address wording', () => {
     const hints = getPublishBlockedHints('Venue address is still missing.');
     expect(hints[0]).toContain('venue');
@@ -238,6 +259,10 @@ describe('publishUiHints', () => {
 
   it('returns venue guidance when blocker copy uses the venue readiness detail prompt', () => {
     expect(getPublishBlockedHints('Add at least one venue name or address.')).toEqual([
+      'Add at least one venue name or address.',
+      'Make sure guests can tell where they are meant to go.',
+    ]);
+    expect(getPublishBlockedHints('Set at least one venue name or address.')).toEqual([
       'Add at least one venue name or address.',
       'Make sure guests can tell where they are meant to go.',
     ]);
@@ -379,6 +404,10 @@ describe('publishUiHints', () => {
 
   it('returns save guidance when blocker copy comes from the unsaved readiness detail', () => {
     expect(getPublishBlockedHints('Save your latest draft changes before going live.')).toEqual([
+      'Save your draft before trying again.',
+      'Then re-open publish and review the remaining checks.',
+    ]);
+    expect(getPublishBlockedHints('Save your latest draft changes before going live!!!')).toEqual([
       'Save your draft before trying again.',
       'Then re-open publish and review the remaining checks.',
     ]);
