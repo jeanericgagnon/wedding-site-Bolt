@@ -220,9 +220,16 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     question.status === 'pending' || question.status === 'unresolved'
   )) || false);
   const hasExplicitShowFollowUps = parsed.showFollowUps === true || parsed.showFollowUps === false;
+  const hasDraftedFollowUpAnswers = Object.keys(followUpAnswers).length > 0;
+  const hasAnsweredClarifyingHistory = Boolean(
+    clarifyingState?.clarifying.history.some((question) => question.status === 'answered' && question.answer.trim().length > 0)
+  );
   const showFollowUps = hasOpenFollowUps && (
     parsed.showFollowUps === true
-    || (!hasExplicitShowFollowUps && parsed.viewState === 'followups')
+    || (!hasExplicitShowFollowUps && (
+      parsed.viewState === 'followups'
+      || (hasDraftedFollowUpAnswers && !hasAnsweredClarifyingHistory)
+    ))
   );
   const hasAnyClarifyingRecords = Boolean(
     clarifyingState && (clarifyingState.clarifying.questions.length > 0 || clarifyingState.clarifying.history.length > 0)

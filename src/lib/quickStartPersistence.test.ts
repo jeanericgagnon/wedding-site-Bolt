@@ -919,4 +919,36 @@ describe('quickStartPersistence', () => {
     expect(normalized.showFollowUps).toBe(true);
     expect(normalized.viewState).toBe('followups');
   });
+
+  it('reopens follow-up mode when older snapshots lost the flag but kept in-progress answers', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      viewState: 'question',
+      followUpAnswers: {
+        transport: 'Need shuttle details',
+      },
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'transport',
+            category: 'travel',
+            question: 'How should guests get there?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.transport'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'pending',
+            answer: '',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.showFollowUps).toBe(true);
+    expect(normalized.viewState).toBe('followups');
+    expect(normalized.followUpAnswers).toEqual({ transport: 'Need shuttle details' });
+  });
 });
