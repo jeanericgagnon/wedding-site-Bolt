@@ -586,6 +586,8 @@ export default function RSVP() {
     setAmbiguousGuests([]);
     setGuest(null);
     setExistingRsvp(null);
+    setRsvpDeadline(null);
+    setMusicPlaylistUrl(null);
     setFormData({ attending: true, attendCeremony: false, attendReception: false, meal_choice: '', plus_one_name: '', notes: '' });
     setCustomAnswers({});
     setRsvpQuestions([]);
