@@ -39,6 +39,9 @@ const getNormalizedPages = (project: BuilderProject) =>
     if (orderDelta !== 0) return orderDelta;
     return getNormalizedId(a?.id).localeCompare(getNormalizedId(b?.id));
   });
+const getPageId = (page: BuilderProject['pages'][number] | undefined) => getNormalizedId(page?.id);
+const getSectionId = (section: NonNullable<BuilderProject['pages'][number]>['sections'][number] | undefined) =>
+  getNormalizedId(section?.id);
 const isSectionLike = (value: unknown): value is NonNullable<BuilderProject['pages'][number]>['sections'][number] =>
   typeof value === 'object'
   && value !== null
@@ -72,7 +75,9 @@ export const getPublishIssue = (project: BuilderProject, weddingData?: WeddingDa
     return { kind: 'no-pages', message: 'Add at least one page before going live.' };
   }
 
-  const firstSection = normalizedPages.flatMap((p) => getNormalizedSections(p).map((s) => ({ pageId: p.id, sectionId: s.id })))[0];
+  const firstSection = normalizedPages.flatMap((p) =>
+    getNormalizedSections(p).map((s) => ({ pageId: getPageId(p), sectionId: getSectionId(s) }))
+  )[0];
   const hasEnabledSection = normalizedPages.some((page) => getNormalizedSections(page).some((section) => section?.enabled === true));
   if (!hasEnabledSection) {
     return {
@@ -122,7 +127,7 @@ export const buildPublishReadiness = (
     ? options.activePageId.trim() || null
     : options?.activePageId;
   const normalizedPages = getNormalizedPages(project);
-  const activePage = normalizedPages.find((page) => getNormalizedId(page?.id) === normalizedActivePageId) ?? normalizedPages[0];
+  const activePage = normalizedPages.find((page) => getPageId(page) === normalizedActivePageId) ?? normalizedPages[0];
   const enabledSectionCount = normalizedPages.reduce(
     (count, page) => count + getNormalizedSections(page).filter((section) => section?.enabled === true).length,
     0

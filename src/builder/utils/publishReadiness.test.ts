@@ -1155,6 +1155,26 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('trims blocker target ids when persisted page and section ids include harmless whitespace', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages = [
+      {
+        ...project.pages[0],
+        id: ' page-1 ',
+        title: 'Home',
+        orderIndex: 0,
+        sections: [makeSection({ id: ' sec-1 ', enabled: false })],
+      },
+    ];
+
+    expect(getPublishIssue(project)).toEqual({
+      kind: 'no-enabled-sections',
+      message: 'Turn on at least one section before going live.',
+      firstPageId: 'page-1',
+      firstSectionId: 'sec-1',
+    });
+  });
+
   it('falls back to the first page when activePageId is only whitespace', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages = [
