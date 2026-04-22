@@ -1186,4 +1186,47 @@ describe('quickStartPersistence', () => {
     expect(normalized.viewState).toBe('followups');
     expect(normalized.followUpAnswers).toEqual({ transport: 'Need shuttle details' });
   });
+
+  it('reopens follow-up mode when malformed view state survives alongside active draft answers and older answered history', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      viewState: 42 as never,
+      followUpAnswers: {
+        lodging: 'Need shuttle details',
+      },
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'lodging',
+            category: 'travel',
+            question: 'Where should guests stay?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.lodging'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 2,
+            status: 'pending',
+            answer: '',
+          }],
+          history: [{
+            id: 'lodging',
+            category: 'travel',
+            question: 'Where should guests stay?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.lodging'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'answered',
+            answer: 'Stay at the resort',
+          }],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.showFollowUps).toBe(true);
+    expect(normalized.viewState).toBe('followups');
+    expect(normalized.followUpAnswers).toEqual({ lodging: 'Need shuttle details' });
+  });
 });
