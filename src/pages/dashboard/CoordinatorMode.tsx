@@ -114,6 +114,7 @@ import { buildCoordinatorRoleBoard } from '../../lib/coordinatorRoleBoard';
 import { buildCoordinatorAlertActivityBoard } from '../../lib/coordinatorAlertActivityBoard';
 import { buildCoordinatorPrimaryActionBoard } from '../../lib/coordinatorPrimaryActionBoard';
 import { buildCoordinatorExecutionBoard } from '../../lib/coordinatorExecutionBoard';
+import { buildCoordinatorAlertLogView } from '../../lib/coordinatorAlertLogView';
 
 
 type AudienceOption = { value: string; label: string; count: number };
@@ -964,6 +965,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
     }),
     [alertLog, alertChannelFilter, alertTimingFilter],
   );
+  const filteredAlertLogView = useMemo(() => buildCoordinatorAlertLogView(filteredAlertLog), [filteredAlertLog]);
 
   const clearCoordinatorTransientState = () => {
     setNeutralFocusReason(null);
@@ -2566,9 +2568,13 @@ export const DashboardCoordinatorMode: React.FC = () => {
                       <button type="button" onClick={() => { focusCoordinatorAlertLane(); setAlertTimingFilter('now'); }} className={`text-[11px] px-2 py-0.5 rounded-full border ${alertTimingFilter === 'now' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>Send now</button>
                       <button type="button" onClick={() => { focusCoordinatorAlertLane(); setAlertTimingFilter('scheduled'); }} className={`text-[11px] px-2 py-0.5 rounded-full border ${alertTimingFilter === 'scheduled' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>Scheduled</button>
                     </div>
-                    {filteredAlertLog.slice(0, 4).map((item) => (
-                      <div key={item.id} className="text-[11px] text-text-tertiary border border-border/50 rounded-md px-2 py-1.5">
-                        {item.subject} · {item.channel.toUpperCase()} · {item.audience}{item.sendAt ? ` · Scheduled ${new Date(item.sendAt).toLocaleString()}` : ''}
+                    {filteredAlertLogView.slice(0, 4).map((item) => (
+                      <div key={item.id} className={`border rounded-md px-2.5 py-2 ${item.tone === 'ready' ? 'border-primary/20 bg-primary/[0.03]' : 'border-amber-200 bg-amber-50/50'}`}>
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-[11px] font-medium text-text-primary">{item.title}</p>
+                          <p className="text-[10px] text-text-tertiary">{item.meta}</p>
+                        </div>
+                        <p className="mt-1 text-[11px] text-text-secondary">{item.detail}</p>
                       </div>
                     ))}
                     {filteredAlertLog.length === 0 && (
