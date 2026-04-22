@@ -247,7 +247,7 @@ describe('publishReadiness', () => {
     });
   });
 
-  it('marks page readiness with plural page copy when multiple pages exist', () => {
+  it('marks page readiness with current multi-page copy when multiple pages exist', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages.push({
       ...project.pages[0],
@@ -263,6 +263,33 @@ describe('publishReadiness', () => {
       label: 'A page exists',
       done: true,
       detail: '2 page ready',
+    });
+  });
+
+  it('keeps current-page readiness tied to the requested active page even when another page is empty', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages = [
+      {
+        ...project.pages[0],
+        id: 'page-1',
+        title: 'Home',
+        orderIndex: 0,
+        sections: [makeSection({ id: 'home-live', enabled: true })],
+      },
+      {
+        ...project.pages[0],
+        id: 'page-2',
+        title: 'Travel',
+        orderIndex: 1,
+        sections: [],
+      },
+    ];
+
+    expect(buildPublishReadiness(project, undefined, { activePageId: 'page-2' }).find((item) => item.id === 'current-page')).toEqual({
+      id: 'current-page',
+      label: 'Current page has visible content',
+      done: false,
+      detail: 'Turn on content for Travel.',
     });
   });
 
