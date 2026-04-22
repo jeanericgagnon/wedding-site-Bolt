@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { getAllSectionManifests, getSectionManifest } from '../builder/registry/sectionManifests';
 import { resolveAndParse } from './registry';
-import { getAllTemplates, getTemplate } from '../templates/registry';
+import { getAllTemplates, getTemplate, TEMPLATE_REGISTRY } from '../templates/registry';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { getSectionComponent, getSectionVariants } from './sectionRegistry';
@@ -111,6 +111,7 @@ describe('sections registry resolution', () => {
     const importedRegistrySection = importedTemplate.defaultLayout.sections.find((section) => section.type === 'registry');
 
     expect(importedRegistrySection?.variant).toBe('featured');
+    expect(TEMPLATE_REGISTRY['luxury-opulent']?.defaultLayout.sections.find((section) => section.type === 'registry')?.variant).toBe('featured');
     expect(getAllTemplates()
       .find((template) => template.id === 'timeless-classic')
       ?.defaultLayout.sections.find((section) => section.type === 'registry')?.variant).toBe('cards');
@@ -253,6 +254,7 @@ describe('sections registry resolution', () => {
     const templateRegistrySource = readFileSync(resolve(__dirname, '../templates/registry.ts'), 'utf8');
     expect(templateRegistrySource).toContain('const REGISTRY_VARIANT_ALIASES: Record<string, string> = {');
     expect(templateRegistrySource).toContain('function cloneTemplateValue<T>(value: T): T {');
+    expect(templateRegistrySource).toContain("templateRegistry.map((template) => [template.id, cloneTemplateDefinition(template)])");
     expect(templateRegistrySource).toContain("variant: section.type === 'registry' && typeof section.variant === 'string'");
     expect(templateRegistrySource).toContain('bindings: cloneTemplateValue(section.bindings ?? {}),');
     expect(templateRegistrySource).toContain('settings: cloneTemplateValue(section.settings ?? {}),');

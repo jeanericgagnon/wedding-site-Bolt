@@ -767,20 +767,6 @@ const templateRegistry: TemplateDefinition[] = [
   },
 ];
 
-const templateById: Record<string, TemplateDefinition> = Object.fromEntries(
-  templateRegistry.map((template) => [template.id, template])
-) as Record<string, TemplateDefinition>;
-
-export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = {
-  ...templateById,
-  // Back-compat aliases used by older flows
-  base: templateById['timeless-classic'] ?? templateRegistry[0],
-  modern: templateById['modern-clean'] ?? templateRegistry[0],
-  editorial: templateById['editorial-impact'] ?? templateRegistry[0],
-  classic: templateById['timeless-classic'] ?? templateRegistry[0],
-  rustic: templateById['rustic-barn'] ?? templateById['timeless-classic'] ?? templateRegistry[0],
-};
-
 function cloneTemplateSection(section: TemplateSection): TemplateSection {
   return {
     ...section,
@@ -801,6 +787,20 @@ function cloneTemplateDefinition(template: TemplateDefinition): TemplateDefiniti
     },
   };
 }
+
+const templateById: Record<string, TemplateDefinition> = Object.fromEntries(
+  templateRegistry.map((template) => [template.id, cloneTemplateDefinition(template)])
+) as Record<string, TemplateDefinition>;
+
+export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = {
+  ...templateById,
+  // Back-compat aliases used by older flows
+  base: templateById['timeless-classic'] ?? templateRegistry[0],
+  modern: templateById['modern-clean'] ?? templateRegistry[0],
+  editorial: templateById['editorial-impact'] ?? templateRegistry[0],
+  classic: templateById['timeless-classic'] ?? templateRegistry[0],
+  rustic: templateById['rustic-barn'] ?? templateById['timeless-classic'] ?? templateRegistry[0],
+};
 
 export function getTemplate(templateId: string): TemplateDefinition {
   return cloneTemplateDefinition(TEMPLATE_REGISTRY[templateId] || TEMPLATE_REGISTRY.base || templateRegistry[0]);
