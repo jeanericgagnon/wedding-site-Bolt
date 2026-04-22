@@ -263,6 +263,7 @@ export default function EventRSVP() {
       postSubmitResetTimeoutRef.current = null;
     }
     setSelectedEvent(invitation.id);
+    setSubmitting(false);
     setSubmitError('');
     setSubmitSuccess(false);
     if (invitation.rsvp) {
