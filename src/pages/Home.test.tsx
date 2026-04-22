@@ -47,17 +47,19 @@ describe('Home draft-first CTAs', () => {
   it('sends anonymous visitors to signup when they start their draft', () => {
     render(<Home />);
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Sign up for your wedding site' })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Start your wedding site draft' })[0]);
 
     expect(navigateMock).toHaveBeenCalledWith('/signup');
+    expect(screen.getAllByRole('button', { name: 'Start your wedding site draft' }).length).toBeGreaterThan(0);
   });
 
   it('sends signed-in users straight to the builder when they start their draft', () => {
     authState.user = { id: 'user-1' };
     render(<Home />);
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Sign up for your wedding site' })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Review your wedding site draft' })[0]);
 
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
+    expect(screen.getAllByRole('button', { name: 'Review your wedding site draft' }).length).toBeGreaterThan(0);
   });
 });

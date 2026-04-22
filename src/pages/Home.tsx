@@ -208,9 +208,9 @@ export const Home: React.FC = () => {
                 <button
                 className="w-full sm:w-auto min-h-[52px] px-7 py-3.5 bg-brand text-paper font-semibold rounded-2xl hover:bg-brand/90 transition-all shadow-sm hover:shadow-md active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2"
                 onClick={handleSignUp}
-                aria-label="Sign up for your wedding site"
+                aria-label={user ? 'Review your wedding site draft' : 'Start your wedding site draft'}
               >
-                Start your draft
+                {user ? 'Review your draft' : 'Start your draft'}
               </button>
               <Link
                 to="/templates"
@@ -559,9 +559,9 @@ export const Home: React.FC = () => {
                 <button
                   className="w-full px-6 py-4 text-[1.0625rem] bg-brand text-paper font-semibold rounded-xl hover:bg-brand/90 transition-all shadow-sm hover:shadow-md active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2"
                   onClick={handleSignUp}
-                  aria-label="Sign up for your wedding site"
+                  aria-label={user ? 'Review your wedding site draft' : 'Start your wedding site draft'}
                 >
-                  Start free
+                  {user ? 'Review your draft' : 'Start your draft'}
                 </button>
                 <button
                   onClick={handleDemoLogin}
