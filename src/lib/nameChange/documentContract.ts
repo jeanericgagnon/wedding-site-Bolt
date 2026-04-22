@@ -111,9 +111,18 @@ function findBestContractDocument(
   documents: NameChangeDocumentInput[],
   kind: NameChangeDocumentInput['document_kind'],
 ) {
-  return documents
-    .filter((document) => matchesNameChangeDocumentKind(document.document_kind, kind))
-    .sort((left, right) => getDocumentContractPriority(right, kind) - getDocumentContractPriority(left, kind))[0];
+  const canonicalKind = canonicalizeNameChangeDocumentKind(kind);
+  const matchingDocuments = documents.filter((document) => matchesNameChangeDocumentKind(document.document_kind, kind));
+  const preferredDocuments = matchingDocuments.some((document) => document.document_kind === canonicalKind)
+    ? matchingDocuments.filter((document) => document.document_kind === canonicalKind)
+    : matchingDocuments;
+
+  return preferredDocuments
+    .sort((left, right) => {
+      const priorityDelta = getDocumentContractPriority(right, kind) - getDocumentContractPriority(left, kind);
+      if (priorityDelta !== 0) return priorityDelta;
+      return (right.id ?? '').localeCompare(left.id ?? '');
+    })[0];
 }
 
 export function buildNameChangeDocumentIntakeSnapshot(
@@ -175,15 +184,17 @@ export function buildNameChangeDocumentIntakeSnapshot(
           return getDocumentCapturedFieldKeys(documents, extractedFields, definition.kind);
       }
     })();
-    const capturedExtractionFields = [...new Set(typedCapturedFields
-      .filter((field): field is NameChangeExtractionFieldKey => definition.extractionFields.includes(field as NameChangeExtractionFieldKey)))];
-    const missingExtractionFields = definition.extractionFields.filter((field) => !capturedExtractionFields.includes(field));
     const required = definition.requiredFor.includes('all') || definition.requiredFor.includes(canonicalCase.legalBasis);
     const metadataMissing = metadataMissingForDocument(canonicalDocument);
     const canonicalConflicts = extraction.conflicts.filter((conflict) => conflict.documentKind === definition.kind);
 
     const contractIntakeStatus = canonicalDocument?.intake_status ?? documentState.intakeStatus;
     const contractStorageMode = canonicalDocument?.storage_mode ?? documentState.storageMode;
+    const capturedExtractionFields = contractIntakeStatus === 'not_started'
+      ? []
+      : [...new Set(typedCapturedFields
+        .filter((field): field is NameChangeExtractionFieldKey => definition.extractionFields.includes(field as NameChangeExtractionFieldKey)))];
+    const missingExtractionFields = definition.extractionFields.filter((field) => !capturedExtractionFields.includes(field));
 
     return {
       kind: definition.kind,

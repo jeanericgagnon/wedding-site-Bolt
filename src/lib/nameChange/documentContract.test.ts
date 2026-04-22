@@ -337,7 +337,7 @@ describe('name change document intake contract', () => {
           id: 'doc-canonical',
           document_kind: 'court_order',
           display_name: 'Court order',
-          storage_mode: 'uploaded_blob',
+          storage_mode: 'metadata_only',
           intake_status: 'reviewed',
           file_name_masked: 'court-order-•••.pdf',
           issuing_authority: 'San Diego Superior Court',
@@ -351,7 +351,6 @@ describe('name change document intake contract', () => {
     expect(snapshot.documents.find((document) => document.kind === 'court_order')).toMatchObject({
       intakeStatus: 'reviewed',
       metadataMissing: [],
-      storageMode: 'uploaded_blob',
       metadataReady: 1,
     });
     expect(snapshot.summary.metadataReady).toBeGreaterThanOrEqual(1);
@@ -438,6 +437,28 @@ describe('name change document intake contract', () => {
     expect(snapshot.documents.find((document) => document.kind === 'current_passport')).toMatchObject({
       extractionFieldCount: 1,
       capturedExtractionFields: ['issuance_date'],
+    });
+  });
+
+  it('does not surface captured extraction fields for documents that are not started', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase(),
+      [],
+      [
+        {
+          field_key: 'issuance_date',
+          field_label: 'Issue date',
+          field_value_masked: '2024-06-01',
+          source_type: 'manual',
+          is_verified: true,
+        },
+      ],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'current_passport')).toMatchObject({
+      intakeStatus: 'not_started',
+      extractionFieldCount: 0,
+      capturedExtractionFields: [],
     });
   });
 });
