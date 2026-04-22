@@ -38,4 +38,9 @@ describe('resolveBuilderVariant onboarding handoff compatibility', () => {
     expect(resolveBuilderVariant('schedule', ' agendacards ')).toBe('dayTabs');
     expect(resolveBuilderVariant('faq', ' Compact ')).toBe('accordion');
   });
+
+  it('falls back to the stable builder default when onboarding hands off a blank or unknown variant', () => {
+    expect(resolveBuilderVariant('travel', '   ')).toBe('default');
+    expect(resolveBuilderVariant('schedule', 'not-a-real-variant')).toBe('default');
+  });
 });
