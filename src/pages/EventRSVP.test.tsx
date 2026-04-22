@@ -14,8 +14,8 @@ vi.mock('react-router-dom', async () => {
 
 const maybeSingleQueue: Array<{ data: any; error: any } | Promise<{ data: any; error: any }>> = [];
 const selectQueue: Array<{ data: any; error: any }> = [];
-const insertQueue: Array<{ error: any }> = [];
-const updateQueue: Array<{ error: any }> = [];
+const insertQueue: Array<{ error: any } | Promise<{ error: any }>> = [];
+const updateQueue: Array<{ error: any } | Promise<{ error: any }>> = [];
 
 function createDeferredMaybeSingle() {
   let resolve!: (value: { data: any; error: any }) => void;
@@ -232,5 +232,88 @@ describe('EventRSVP token trust continuity', () => {
     }, { timeout: 4000 });
     expect(screen.getByRole('button', { name: 'Update my RSVP' })).toBeInTheDocument();
     expect(selectQueue).toHaveLength(0);
+  }, 10000);
+
+  it('does not let a stale prior submit disable event RSVP support for a new token', async () => {
+    currentToken = 'old-token';
+
+    maybeSingleQueue.push(
+      { data: { id: 'guest-1', name: 'Old Guest', email: 'old@example.com' }, error: null },
+      { data: null, error: null },
+      { data: { id: 'guest-2', name: 'New Guest', email: 'new@example.com' }, error: null },
+      { data: null, error: null },
+    );
+
+    selectQueue.push(
+      {
+        data: [
+          {
+            id: 'inv-1',
+            event_id: 'event-1',
+            itinerary_events: {
+              id: 'event-1',
+              event_name: 'Welcome Dinner',
+              description: '',
+              event_date: '2026-05-01',
+              start_time: '18:00:00',
+              end_time: null,
+              location_name: 'Old Place',
+              location_address: '',
+              dress_code: null,
+              notes: null,
+            },
+          },
+        ],
+        error: null,
+      },
+      {
+        data: [
+          {
+            id: 'inv-2',
+            event_id: 'event-2',
+            itinerary_events: {
+              id: 'event-2',
+              event_name: 'Ceremony',
+              description: '',
+              event_date: '2026-05-02',
+              start_time: '16:00:00',
+              end_time: null,
+              location_name: 'New Place',
+              location_address: '',
+              dress_code: null,
+              notes: null,
+            },
+          },
+        ],
+        error: null,
+      },
+    );
+
+    let resolveOldInsert!: (value: { error: any }) => void;
+    insertQueue.push(new Promise((resolve) => {
+      resolveOldInsert = resolve;
+    }) as unknown as { error: any });
+    insertQueue.push({ error: null });
+
+    const view = render(<EventRSVP />);
+
+    expect(await screen.findByText('Hello, Old Guest!')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'RSVP for this event' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Submit RSVP' }));
+
+    currentToken = 'new-token';
+    view.rerender(<EventRSVP />);
+
+    expect(await screen.findByText('Hello, New Guest!')).toBeInTheDocument();
+
+    resolveOldInsert({ error: { message: 'relation "event_rsvps" does not exist' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'RSVP for this event' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Submit RSVP' }));
+
+    await waitFor(() => {
+      expect(screen.getByText("You're in!")).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Event-specific RSVP is temporarily unavailable for this site.')).not.toBeInTheDocument();
   }, 10000);
 });

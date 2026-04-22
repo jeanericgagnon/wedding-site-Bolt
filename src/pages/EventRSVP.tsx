@@ -315,7 +315,9 @@ export default function EventRSVP() {
         if (error) {
           const msg = (error.message || '').toLowerCase();
           if (msg.includes('event_rsvps') || msg.includes('does not exist') || msg.includes('404')) {
-            setHasEventRsvpSupport(false);
+            if (activeSubmitRequestRef.current === requestId) {
+              setHasEventRsvpSupport(false);
+            }
           }
           throw error;
         }
@@ -333,7 +335,9 @@ export default function EventRSVP() {
         if (error) {
           const msg = (error.message || '').toLowerCase();
           if (msg.includes('event_rsvps') || msg.includes('does not exist') || msg.includes('404')) {
-            setHasEventRsvpSupport(false);
+            if (activeSubmitRequestRef.current === requestId) {
+              setHasEventRsvpSupport(false);
+            }
           }
           throw error;
         }
