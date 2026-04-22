@@ -59,6 +59,27 @@ describe('setupDraftRecommendations', () => {
     expect(first?.id).toBe('destination-adventure');
   });
 
+  it('boosts ceremony-and-guidance templates for interfaith setups', () => {
+    const templates = [
+      makeTemplate({ id: 'modern-clean', name: 'Modern Clean', styleTags: ['Modern'] }),
+      makeTemplate({
+        id: 'refined-elegance',
+        name: 'Refined Elegance',
+        styleTags: ['Classic'],
+        description: 'Ceremony details with family guidance and schedule context',
+        defaultSectionOrder: ['Hero', 'Story', 'Schedule', 'FAQ'],
+      }),
+    ];
+
+    const [first] = getRecommendedTemplates({
+      ...emptySetupDraft,
+      stylePreferences: ['Interfaith'],
+      guestEstimateBand: '',
+    }, templates, 2);
+
+    expect(first?.id).toBe('refined-elegance');
+  });
+
   it('fills sparse recommendation sets with stable fallback templates', () => {
     const templates = [
       makeTemplate({ id: 'a', name: 'A', styleTags: ['Classic'] }),

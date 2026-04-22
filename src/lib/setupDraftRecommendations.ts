@@ -49,6 +49,7 @@ const scoreTemplateForSetup = (template: TemplateCatalogItem, draft: Pick<SetupD
   if (setupMode.weekend && /timeline|experience|weekend|guest|travel/.test(source)) score += 1;
   if (setupMode.bilingual && /faq|schedule|guide|details|guest/.test(source)) score += 1;
   if (setupMode.interfaith && /story|schedule|faq|details|ceremony/.test(source)) score += 1;
+  if (setupMode.interfaith && /family|tradition|multi-tradition|cultural/.test(source)) score += 2;
 
   return score;
 };
