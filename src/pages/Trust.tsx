@@ -33,7 +33,7 @@ const V1_TRUST_LINE = [
     title: 'Core v1 claim',
     badge: 'Must ship',
     tone: 'must',
-    body: 'DayOf should be judged on whether couples can launch a polished wedding site, collect RSVPs, manage guests, send core updates, run seating, and coordinate the event week from one trustworthy product.',
+    body: 'DayOf should be judged on whether couples can launch a polished wedding site, collect RSVPs, manage guests, send core updates, run seating, and coordinate the event week from one trustworthy product, with any remaining proof gaps called out plainly instead of glossed over.',
   },
   {
     title: 'Real product direction',
