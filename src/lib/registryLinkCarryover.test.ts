@@ -44,4 +44,10 @@ describe('carryOverRegistryLinks', () => {
       { url: 'https://target.com/list-2', sourceLabel: 'Target' },
     ]);
   });
+
+  it('extracts quoted registry links from purchase-annotated notes', () => {
+    expect(carryOverRegistryLinks('Purchased already: "https://amazon.com/shop/list-3"')).toEqual([
+      { url: 'https://amazon.com/shop/list-3', sourceLabel: 'Amazon' },
+    ]);
+  });
 });

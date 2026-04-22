@@ -378,6 +378,7 @@ describe('sections registry resolution', () => {
     expect(registryLinkCarryover).toContain('function extractRegistryUrlToken(line: string): string | null {');
     expect(registryLinkCarryover).toContain("const markdownHref = line.match(/\\[[^\\]]+\\]\\((https?:\\/\\/[^)]+|www\\.[^)]+)\\)/i)?.[1] ?? null;");
     expect(registryLinkCarryover).toContain("const bracketedHref = line.match(/<(https?:\\/\\/[^>]+|www\\.[^>]+)>/i)?.[1] ?? null;");
+    expect(registryLinkCarryover).toContain("const quotedHref = line.match(/[\"'](https?:\\/\\/[^\"']+|www\\.[^\"']+)[\"']/i)?.[1] ?? null;");
     expect(registryLinkCarryover).toContain("const markdownBareHref = line.match(/\\[[^\\]]+\\]\\(((?:[a-z0-9-]+\\.)+[a-z]{2,}[^)]*)\\)/i)?.[1] ?? null;");
     expect(registryLinkCarryover).toContain("const bareDomainMatch = line.match(/(?:^|\\s)((?:[a-z0-9-]+\\.)+[a-z]{2,}(?:\\/[^\\s]*)?)/i)?.[1] ?? null;");
     expect(registryLinkCarryover).toContain(".map((line) => normalizeUrl(extractRegistryUrlToken(line) ?? line))");
