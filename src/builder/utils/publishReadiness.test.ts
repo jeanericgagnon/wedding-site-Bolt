@@ -209,6 +209,26 @@ describe('publishReadiness', () => {
     expect(getPublishValidationError(project, data)).toBe('Turn RSVP on before going live.');
   });
 
+  it('blocks publish when persisted wedding data has a non-object RSVP shape', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
+    const data = createEmptyWeddingData();
+    data.couple.partner1Name = 'Alex';
+    data.couple.partner2Name = 'Jordan';
+    data.event.weddingDateISO = '2027-06-12';
+    data.venues = [{ id: 'v1', name: 'Test Venue', address: '123 Main St' }];
+    // @ts-expect-error exercising runtime guard for incomplete persisted data
+    data.rsvp = 'broken';
+
+    expect(getPublishIssue(project, data)?.kind).toBe('rsvp-disabled');
+    expect(buildPublishReadiness(project, data).find((item) => item.id === 'rsvp')).toEqual({
+      id: 'rsvp',
+      label: 'RSVP is turned on',
+      done: false,
+      detail: 'Turn RSVP on or remove RSVP calls to action.',
+    });
+  });
+
   it('blocks publish when persisted wedding data is missing the venues array entirely', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
@@ -238,6 +258,25 @@ describe('publishReadiness', () => {
     expect(getPublishValidationError(project, data)).toBe('Add both partner names before going live.');
   });
 
+  it('blocks publish when persisted wedding data has a non-object couple shape', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
+    const data = createEmptyWeddingData();
+    data.event.weddingDateISO = '2027-06-12';
+    data.venues = [{ id: 'v1', name: 'Test Venue', address: '123 Main St' }];
+    data.rsvp.enabled = true;
+    // @ts-expect-error exercising runtime guard for incomplete persisted data
+    data.couple = 'broken';
+
+    expect(getPublishIssue(project, data)?.kind).toBe('missing-couple-names');
+    expect(buildPublishReadiness(project, data).find((item) => item.id === 'names')).toEqual({
+      id: 'names',
+      label: 'Couple names are filled in',
+      done: false,
+      detail: 'Add both names exactly how you want them shown.',
+    });
+  });
+
   it('blocks publish when persisted wedding data is missing the event object entirely', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
@@ -251,6 +290,26 @@ describe('publishReadiness', () => {
 
     expect(getPublishIssue(project, data)?.kind).toBe('missing-event-date');
     expect(getPublishValidationError(project, data)).toBe('Add your wedding date before going live.');
+  });
+
+  it('blocks publish when persisted wedding data has a non-object event shape', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
+    const data = createEmptyWeddingData();
+    data.couple.partner1Name = 'Alex';
+    data.couple.partner2Name = 'Jordan';
+    data.venues = [{ id: 'v1', name: 'Test Venue', address: '123 Main St' }];
+    data.rsvp.enabled = true;
+    // @ts-expect-error exercising runtime guard for incomplete persisted data
+    data.event = 'broken';
+
+    expect(getPublishIssue(project, data)?.kind).toBe('missing-event-date');
+    expect(buildPublishReadiness(project, data).find((item) => item.id === 'date')).toEqual({
+      id: 'date',
+      label: 'Wedding date is set',
+      done: false,
+      detail: 'Add your wedding date.',
+    });
   });
 
   it('marks RSVP readiness incomplete when wedding data disables replies', () => {

@@ -61,13 +61,16 @@ export const getPublishIssue = (project: BuilderProject, weddingData?: WeddingDa
   }
 
   if (weddingData) {
-    const hasPartner1 = hasNonEmptyString(weddingData.couple?.partner1Name);
-    const hasPartner2 = hasNonEmptyString(weddingData.couple?.partner2Name);
+    const couple = typeof weddingData.couple === 'object' && weddingData.couple !== null ? weddingData.couple : undefined;
+    const event = typeof weddingData.event === 'object' && weddingData.event !== null ? weddingData.event : undefined;
+    const rsvp = typeof weddingData.rsvp === 'object' && weddingData.rsvp !== null ? weddingData.rsvp : undefined;
+    const hasPartner1 = hasNonEmptyString(couple?.partner1Name);
+    const hasPartner2 = hasNonEmptyString(couple?.partner2Name);
     if (!hasPartner1 || !hasPartner2) {
       return { kind: 'missing-couple-names', message: 'Add both partner names before going live.' };
     }
 
-    if (!hasNonEmptyString(weddingData.event?.weddingDateISO)) {
+    if (!hasNonEmptyString(event?.weddingDateISO)) {
       return { kind: 'missing-event-date', message: 'Add your wedding date before going live.' };
     }
 
@@ -76,7 +79,7 @@ export const getPublishIssue = (project: BuilderProject, weddingData?: WeddingDa
       return { kind: 'missing-venue', message: 'Add at least one venue before going live.' };
     }
 
-    if (weddingData.rsvp?.enabled !== true) {
+    if (rsvp?.enabled !== true) {
       return { kind: 'rsvp-disabled', message: 'Turn RSVP on before going live.' };
     }
   }
@@ -101,10 +104,13 @@ export const buildPublishReadiness = (
     (count, page) => count + getNormalizedSections(page).filter((section) => section?.enabled === true).length,
     0
   );
+  const couple = typeof weddingData?.couple === 'object' && weddingData.couple !== null ? weddingData.couple : undefined;
+  const event = typeof weddingData?.event === 'object' && weddingData.event !== null ? weddingData.event : undefined;
+  const rsvp = typeof weddingData?.rsvp === 'object' && weddingData.rsvp !== null ? weddingData.rsvp : undefined;
   const hasVenue = getNormalizedVenues(weddingData).some((v) => hasNonEmptyString(v?.name) || hasNonEmptyString(v?.address));
-  const hasNames = hasNonEmptyString(weddingData?.couple?.partner1Name) && hasNonEmptyString(weddingData?.couple?.partner2Name);
-  const hasWeddingDate = hasNonEmptyString(weddingData?.event?.weddingDateISO);
-  const hasRsvpEnabled = weddingData ? weddingData.rsvp?.enabled === true : true;
+  const hasNames = hasNonEmptyString(couple?.partner1Name) && hasNonEmptyString(couple?.partner2Name);
+  const hasWeddingDate = hasNonEmptyString(event?.weddingDateISO);
+  const hasRsvpEnabled = weddingData ? rsvp?.enabled === true : true;
   const hasUnsavedChanges = options?.isDirty === true;
   const activePageHasVisibleSections = getNormalizedSections(activePage).some((section) => section?.enabled === true);
   const activePageTitle = typeof activePage?.title === 'string' ? activePage.title.trim() || 'the current page' : 'the current page';
