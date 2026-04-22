@@ -27,6 +27,7 @@ _Machine-readable status:_ `manualProofSummary.requiredCount: 3`
 _Machine-readable status:_ `manualProofSummary.missingCount: 3` (`canonicalCouplePath`, `runtimeWordingVerification`, `onboardingStarterDraftWording`)
 _Machine-readable status:_ `manualProofSummary.blockingCount: 3`
 _Machine-readable status:_ `manualProofSummary.blockingKeys: canonicalCouplePath, runtimeWordingVerification, onboardingStarterDraftWording`
+_Machine-readable status:_ `manualProofSummary.blockingNextSteps` mirrors the remaining runtime-proof actions in order
 _Machine-readable evidence log:_ `manualProofSummary.evidenceLogPath: docs/v1-smoke-proof-log.md`
 _Machine-readable blocker:_ `manualProofBlockingReasons[canonicalCouplePath]` = no logged human route-note pass yet
 _Machine-readable next step:_ `manualProofBlockingReasons[canonicalCouplePath].nextStep` = run and log the Home -> signup/demo/auth -> onboarding/builder -> public site -> RSVP truth pass here
