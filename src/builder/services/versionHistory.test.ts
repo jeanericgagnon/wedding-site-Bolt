@@ -181,6 +181,7 @@ describe('versionHistory', () => {
     }
 
     expect(listBuilderRevisions(weddingId)).toHaveLength(5);
+    expect(listBuilderRevisions(weddingId).every((revision) => revision.weddingId === weddingId)).toBe(true);
   });
 
   it('keeps direct lookup access to older builder revisions after overflow trimming', () => {
