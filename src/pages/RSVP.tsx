@@ -134,6 +134,8 @@ function normalizeLegacyEventKey(value: string | undefined): string {
   const normalized = (value || '').trim().toLowerCase();
   if (normalized === 'wedding ceremony') return 'ceremony';
   if (normalized === 'wedding reception') return 'reception';
+  if (normalized === 'ceremony attendance') return 'ceremony';
+  if (normalized === 'reception attendance') return 'reception';
   return normalized;
 }
 
