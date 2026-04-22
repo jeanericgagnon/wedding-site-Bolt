@@ -29,7 +29,7 @@ const proofBoard = {
       'enterprise-governance-claims',
     ],
     secondaryTrustGap: 'Canonical couple-path truth notes and runtime wording verification are still missing',
-    secondaryTrustGapKey: 'canonical_couple_path_and_runtime_wording_verification_missing',
+    secondaryTrustGapKey: 'canonical_couple_path_runtime_wording_and_starter_draft_verification_missing',
     starterDraftWordingVerificationMissing: true,
   },
   ruthlessNextThree: [
@@ -52,7 +52,7 @@ const proofBoard = {
       status: 'AUTOMATED_PASS_MANUAL_NOTES_PENDING',
       runtimeWordingVerificationMissing: true,
       starterDraftWordingVerificationMissing: true,
-      secondaryTrustGapKey: 'canonical_couple_path_and_runtime_wording_verification_missing',
+      secondaryTrustGapKey: 'canonical_couple_path_runtime_wording_and_starter_draft_verification_missing',
     },
     {
       id: 'guest-rsvp-continuity-proof',
@@ -108,7 +108,7 @@ const proofBoard = {
       ],
       runtimeWordingVerificationMissing: true,
       starterDraftWordingVerificationMissing: true,
-      secondaryTrustGapKey: 'canonical_couple_path_and_runtime_wording_verification_missing',
+      secondaryTrustGapKey: 'canonical_couple_path_runtime_wording_and_starter_draft_verification_missing',
       evidenceTarget: 'docs/v1-smoke-proof-log.md',
     },
     {
@@ -220,7 +220,7 @@ const proofBoard = {
       ],
       runtimeWordingVerificationMissing: true,
       starterDraftWordingVerificationMissing: true,
-      secondaryTrustGapKey: 'canonical_couple_path_and_runtime_wording_verification_missing',
+      secondaryTrustGapKey: 'canonical_couple_path_runtime_wording_and_starter_draft_verification_missing',
       evidenceTarget: 'docs/v1-smoke-proof-log.md',
     },
   ],
