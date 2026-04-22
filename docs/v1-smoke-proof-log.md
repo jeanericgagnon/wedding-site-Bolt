@@ -266,6 +266,7 @@ Useful if stable, but should not distort the wedding-core launch decision.
 **Pass / Fail**
 - Status: OPTIONAL
 - Notes:
+  - The planner alias fix is covered by `src/lib/nameChange/documentKinds.test.ts`, but this slice remains explicitly outside the current wedding-core v1 claim.
 - Blockers:
 
 ---
