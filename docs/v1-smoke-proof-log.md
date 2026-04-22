@@ -169,6 +169,7 @@ This is where the product either reduces event-day chaos or gets exposed as pret
 **Pass / Fail**
 - Status: PENDING
 - Notes:
+  - Protected route smoke now covers `/dashboard/coordinator` auth fallback as part of canonical live smoke.
 - Blockers:
 
 ---
