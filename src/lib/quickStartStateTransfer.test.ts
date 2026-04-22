@@ -1162,6 +1162,39 @@ describe('quickStartStateTransfer', () => {
     expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').viewState).toBe('question');
   });
 
+
+  it('drops stale follow-up answers on read when draft outputs survived a stale follow-up restore', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      showFollowUps: true,
+      viewState: 'followups',
+      followUpAnswers: {
+        lodging: 'Need shuttle details',
+      },
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [],
+          history: [],
+        },
+        draftOutputs: {
+          hero: {
+            headline: 'Welcome to our wedding',
+          },
+        },
+      },
+    }));
+
+    const restored = readQuickStartDraftSnapshot();
+
+    expect(restored?.showFollowUps).toBe(false);
+    expect(restored?.viewState).toBe('question');
+    expect(restored?.followUpAnswers).toEqual({});
+    expect(restored?.clarifyingState?.draftOutputs).toEqual({
+      hero: { headline: 'Welcome to our wedding' },
+    });
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').followUpAnswers).toEqual({});
+  });
+
   it('drops orphaned follow-up answers when no clarifying records survive', () => {
     window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
       showFollowUps: true,

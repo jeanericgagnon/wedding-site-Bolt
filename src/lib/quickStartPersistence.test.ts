@@ -1646,6 +1646,36 @@ describe('quickStartPersistence', () => {
     });
   });
 
+
+  it('drops stale follow-up answers when draft outputs survived a stale follow-up restore', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      showFollowUps: true,
+      viewState: 'followups',
+      followUpAnswers: {
+        lodging: 'Need shuttle details',
+      },
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [],
+          history: [],
+        },
+        draftOutputs: {
+          hero: {
+            headline: 'Welcome to our wedding',
+          },
+        },
+      },
+    });
+
+    expect(normalized.showFollowUps).toBe(false);
+    expect(normalized.viewState).toBe('question');
+    expect(normalized.followUpAnswers).toEqual({});
+    expect(normalized.clarifyingState?.draftOutputs).toEqual({
+      hero: { headline: 'Welcome to our wedding' },
+    });
+  });
+
   it('drops orphaned follow-up answers when no clarifying records survive', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       showFollowUps: true,
