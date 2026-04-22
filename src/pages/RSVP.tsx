@@ -576,6 +576,7 @@ export default function RSVP() {
   };
 
   const handlePickGuest = async (picked: Guest) => {
+    const pickedLookupValue = picked.invite_token ?? picked.id;
     const requestId = activeLookupRequestRef.current + 1;
     activeLookupRequestRef.current = requestId;
     invalidateActiveSubmit();
@@ -584,7 +585,7 @@ export default function RSVP() {
     setActivePredictionIndex(-1);
     setError('');
     setStep('search');
-    setSearchValue(picked.invite_token ?? picked.id);
+    setSearchValue(picked.invite_token ?? guestLabel(picked));
     setAmbiguousGuests([]);
     setGuest(null);
     setExistingRsvp(null);
@@ -600,8 +601,8 @@ export default function RSVP() {
     setSelectedHouseholdGuestIds([]);
     try {
       const lookupResp: { data?: unknown; error?: string } = DEMO_MODE
-        ? { data: demoLookup(picked.invite_token ?? picked.id) as unknown }
-        : await rsvpCall({ action: 'lookup', searchValue: picked.invite_token ?? picked.id });
+        ? { data: demoLookup(pickedLookupValue) as unknown }
+        : await rsvpCall({ action: 'lookup', searchValue: pickedLookupValue });
       const data = lookupResp.data;
       const err = lookupResp.error;
       if (err || !data) {
