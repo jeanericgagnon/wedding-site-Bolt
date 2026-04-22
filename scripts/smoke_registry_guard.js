@@ -12,6 +12,7 @@ const sectionRegistry = readFileSync(resolve(process.cwd(), 'src/sections/regist
 const canonicalSectionRegistry = readFileSync(resolve(process.cwd(), 'src/lib/canonicalSectionRegistry.ts'), 'utf8');
 const registryCardsSection = readFileSync(resolve(process.cwd(), 'src/sections/variants/registry/cards.tsx'), 'utf8');
 const registryFeaturedSection = readFileSync(resolve(process.cwd(), 'src/sections/variants/registry/featured.tsx'), 'utf8');
+const registrySectionComponent = readFileSync(resolve(process.cwd(), 'src/sections/components/RegistrySection.tsx'), 'utf8');
 
 const checks = [
   { name: 'dashboard uses sanitizeRegistryQuantityState', ok: registryPage.includes('sanitizeRegistryQuantityState') },
@@ -26,6 +27,7 @@ const checks = [
   { name: 'public registry featured links derive live store urls from canonical items', ok: registryFeaturedSection.includes("return item.item_url ?? item.canonical_url ?? '';") && registryFeaturedSection.includes('const displayStoreLinks = liveItems ? groupRegistryStoreLinks(liveItems) : safeStoreLinks;') },
   { name: 'public registry featured cards expose partial purchase truth', ok: registryFeaturedSection.includes("isPartiallyClaimed: item.purchase_status === 'partial'") && registryFeaturedSection.includes("{gift.isPartiallyClaimed ? 'Gift remaining' : 'Gift this'}") },
   { name: 'public registry hero featured cards expose partial purchase truth', ok: registryFeaturedSection.includes('heroGift.isPartiallyClaimed && !heroGift.isClaimed') && registryFeaturedSection.includes("heroGift.isPartiallyClaimed ? 'View remaining gift' : 'View gift'") },
+  { name: 'public registry detail cards expose partial purchase cta truth', ok: registrySectionComponent.includes("return item.purchase_status === 'partial' ? 'Buy remaining' : 'Mark as purchasing';") },
   { name: 'registry types expose itemNeedsAttention', ok: registryTypes.includes('export function itemNeedsAttention') },
   { name: 'registry types expose blocked retailer messaging', ok: registryTypes.includes('Amazon blocks automated product lookups') },
   { name: 'registry types expose quantity sanitation', ok: registryTypes.includes('export function sanitizeRegistryQuantityState') },

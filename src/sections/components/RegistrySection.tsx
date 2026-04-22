@@ -135,6 +135,10 @@ interface RegistryCardProps {
   onPurchase: (item: RegistryItem) => void;
 }
 
+export function getRegistryPurchaseCtaLabel(item: Pick<RegistryItem, 'purchase_status'>): string {
+  return item.purchase_status === 'partial' ? 'Buy remaining' : 'Mark as purchasing';
+}
+
 const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase }) => {
   const isCashFund = item.item_type === 'cash_fund';
   const isPurchased = item.purchase_status === 'purchased';
@@ -253,7 +257,7 @@ const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase }) => {
               className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-primary text-text-inverse text-xs font-medium rounded-xl hover:bg-primary-hover transition-colors"
             >
               <ShoppingBag className="w-3.5 h-3.5" />
-              Mark as purchasing
+              {getRegistryPurchaseCtaLabel(item)}
             </button>
           )}
 
