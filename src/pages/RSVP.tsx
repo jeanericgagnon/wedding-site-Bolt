@@ -210,26 +210,49 @@ function parseEventSelectionsFromNotes(notes: string | null, guest: Guest): { cl
 
   if (!notes) return fallback;
 
-  const match = notes.match(/\[Events\s+([^\]]+)\]/i);
-  if (!match) return fallback;
+  const bracketMatch = notes.match(/\[Events\s+([^\]]+)\]/i);
+  if (bracketMatch) {
+    const eventPart = bracketMatch[1] || '';
+    const map = Object.fromEntries(
+      eventPart
+        .split(',')
+        .map((piece) => piece.trim())
+        .map((piece) => {
+          const [k, v] = piece.split(':').map((x) => (x || '').trim().toLowerCase());
+          return [k, v === 'yes'];
+        })
+    ) as Record<string, boolean>;
 
-  const eventPart = match[1] || '';
-  const map = Object.fromEntries(
-    eventPart
+    const cleanNotes = notes.replace(bracketMatch[0], '').trim();
+
+    return {
+      cleanNotes,
+      attendCeremony: guest.invited_to_ceremony ? (map['ceremony'] ?? true) : false,
+      attendReception: guest.invited_to_reception ? (map['reception'] ?? true) : false,
+    };
+  }
+
+  const legacyMatch = notes.match(/^Attending events:\s*(.+)$/i);
+  if (!legacyMatch) return fallback;
+
+  const selectedEvents = new Set(
+    legacyMatch[1]
       .split(',')
-      .map((piece) => piece.trim())
-      .map((piece) => {
-        const [k, v] = piece.split(':').map((x) => (x || '').trim().toLowerCase());
-        return [k, v === 'yes'];
-      })
-  ) as Record<string, boolean>;
+      .map((piece) => piece.trim().toLowerCase())
+      .filter(Boolean),
+  );
 
-  const cleanNotes = notes.replace(match[0], '').trim();
+  const attendCeremony = guest.invited_to_ceremony
+    ? selectedEvents.has('ceremony') || selectedEvents.has('wedding ceremony')
+    : false;
+  const attendReception = guest.invited_to_reception
+    ? selectedEvents.has('reception')
+    : false;
 
   return {
-    cleanNotes,
-    attendCeremony: guest.invited_to_ceremony ? (map['ceremony'] ?? true) : false,
-    attendReception: guest.invited_to_reception ? (map['reception'] ?? true) : false,
+    cleanNotes: '',
+    attendCeremony,
+    attendReception,
   };
 }
 
