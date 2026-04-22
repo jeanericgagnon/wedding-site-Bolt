@@ -842,6 +842,7 @@ export default function RSVP() {
                     }
                     if (e.key === 'Enter' && activePredictionIndex >= 0) {
                       e.preventDefault();
+                      setError('');
                       setSearchValue(guestPredictions[activePredictionIndex]);
                     }
                   }}
@@ -858,7 +859,10 @@ export default function RSVP() {
                       <button
                         key={name}
                         type="button"
-                        onClick={() => setSearchValue(name)}
+                        onClick={() => {
+                          setError('');
+                          setSearchValue(name);
+                        }}
                         onMouseEnter={() => setActivePredictionIndex(guestPredictions.indexOf(name))}
                         className={`w-full text-left px-3 py-2 text-sm ${guestPredictions[activePredictionIndex] === name ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
                       >
