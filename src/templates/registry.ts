@@ -43,6 +43,10 @@ function normalizeTemplateIdKey(templateId: unknown): string {
     : '';
 }
 
+function isRegistryTemplateSectionType(type: unknown): boolean {
+  return typeof type === 'string' && normalizeTemplateIdKey(type) === 'registry';
+}
+
 function cloneTemplateValue<T>(value: T): T {
   if (Array.isArray(value)) return value.map((entry) => cloneTemplateValue(entry)) as T;
   if (value && typeof value === 'object') {
@@ -778,7 +782,8 @@ const templateRegistry: TemplateDefinition[] = [
 function cloneTemplateSection(section: TemplateSection): TemplateSection {
   return {
     ...section,
-    variant: section.type === 'registry'
+    type: isRegistryTemplateSectionType(section.type) ? 'registry' : section.type,
+    variant: isRegistryTemplateSectionType(section.type)
       ? (typeof section.variant === 'string' ? normalizeRegistryTemplateVariant(section.variant) : 'cards')
       : section.variant,
     bindings: cloneTemplateValue(section.bindings ?? {}),

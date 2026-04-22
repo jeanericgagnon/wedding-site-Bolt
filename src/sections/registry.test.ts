@@ -146,6 +146,20 @@ describe('sections registry resolution', () => {
     TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry')!.variant = originalVariant;
   });
 
+  it('keeps drifted registry template section types normalized for guest-visible imports', () => {
+    const baseRegistrySection = TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry');
+    expect(baseRegistrySection).toBeDefined();
+
+    const originalType = baseRegistrySection?.type;
+    TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry')!.type = 'Registry' as never;
+
+    const importedRegistrySection = getTemplate('base').defaultLayout.sections.find((section) => section.type === 'registry');
+    expect(importedRegistrySection?.type).toBe('registry');
+    expect(importedRegistrySection?.variant).toBe('cards');
+
+    TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'Registry')!.type = originalType as never;
+  });
+
   it('keeps legacy registry template variants normalized onto guest-visible cards', () => {
     const baseRegistrySection = TEMPLATE_REGISTRY.base.defaultLayout.sections.find((section) => section.type === 'registry');
     expect(baseRegistrySection).toBeDefined();
@@ -373,9 +387,11 @@ describe('sections registry resolution', () => {
     expect(templateRegistrySource).toContain('function cloneTemplateValue<T>(value: T): T {');
     expect(templateRegistrySource).toContain("templateRegistry.map((template) => [template.id, cloneTemplateDefinition(template)])");
     expect(templateRegistrySource).toContain("base: cloneTemplateDefinition(templateById['timeless-classic'] ?? templateRegistry[0]),");
-    expect(templateRegistrySource).toContain("variant: section.type === 'registry'");
+    expect(templateRegistrySource).toContain("variant: isRegistryTemplateSectionType(section.type)");
     expect(templateRegistrySource).toContain("? (typeof section.variant === 'string' ? normalizeRegistryTemplateVariant(section.variant) : 'cards')");
     expect(templateRegistrySource).toContain("return REGISTRY_VARIANT_ALIASES[normalizedVariant] ?? 'cards';");
+    expect(templateRegistrySource).toContain("function isRegistryTemplateSectionType(type: unknown): boolean {");
+    expect(templateRegistrySource).toContain("type: isRegistryTemplateSectionType(section.type) ? 'registry' : section.type,");
     expect(templateRegistrySource).toContain('bindings: cloneTemplateValue(section.bindings ?? {}),');
     expect(templateRegistrySource).toContain('settings: cloneTemplateValue(section.settings ?? {}),');
     expect(templateRegistrySource).toContain('overrides: cloneTemplateValue(section.overrides ?? undefined),');
