@@ -229,6 +229,12 @@ describe('EventRSVP token trust continuity', () => {
 
     expect(await screen.findByText('Hello, Taylor!')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'RSVP for this event' }));
+    fireEvent.change(screen.getByPlaceholderText('e.g., Vegetarian, Gluten-free, Nut allergy'), {
+      target: { value: '  Vegetarian  ' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Any special requests or messages for the couple'), {
+      target: { value: '  See you there  ' },
+    });
     fireEvent.click(screen.getByRole('button', { name: 'Submit RSVP' }));
 
     await waitFor(() => {
@@ -239,6 +245,11 @@ describe('EventRSVP token trust continuity', () => {
       expect(screen.getByText('Attending')).toBeInTheDocument();
     }, { timeout: 4000 });
     expect(screen.getByRole('button', { name: 'Update my RSVP' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Update my RSVP' }));
+    expect(screen.getByDisplayValue('Vegetarian')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('See you there')).toBeInTheDocument();
+    expect(screen.queryByDisplayValue('  Vegetarian  ')).not.toBeInTheDocument();
+    expect(screen.queryByDisplayValue('  See you there  ')).not.toBeInTheDocument();
     expect(selectQueue).toHaveLength(0);
   }, 10000);
 

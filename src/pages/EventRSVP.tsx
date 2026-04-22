@@ -324,8 +324,12 @@ export default function EventRSVP() {
     };
   }
 
+  function normalizeEventRsvpFormState(form: EventRsvpFormState): EventRsvpFormState {
+    return buildInvitationRsvpFormState(buildInvitationRsvp(form));
+  }
+
   function applyInvitationRsvp(invitationId: string, form: EventRsvpFormState) {
-    const nextRsvp = buildInvitationRsvp(form);
+    const nextRsvp = buildInvitationRsvp(normalizeEventRsvpFormState(form));
     setInvitations((current) => current.map((invitation) => (
       invitation.id === invitationId
         ? {
@@ -434,8 +438,10 @@ export default function EventRSVP() {
       }
 
       if (activeSubmitRequestRef.current !== requestId) return;
+      const normalizedForm = normalizeEventRsvpFormState(rsvpForm);
       setHasEventRsvpSupport(true);
-      applyInvitationRsvp(selectedEvent, rsvpForm);
+      setRsvpForm(normalizedForm);
+      applyInvitationRsvp(selectedEvent, normalizedForm);
       notifyRsvpContinuityUpdate();
       setSubmitSuccess(true);
       submittedSuccessfully = true;
