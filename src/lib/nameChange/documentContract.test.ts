@@ -539,6 +539,7 @@ describe('name change document intake contract', () => {
       expectedExtractionFields: [],
       capturedExtractionFields: [],
       missingExtractionFields: [],
+      canonicalConflicts: [],
     });
   });
 });

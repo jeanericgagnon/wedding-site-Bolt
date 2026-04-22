@@ -186,10 +186,11 @@ export function buildNameChangeDocumentIntakeSnapshot(
     })();
     const required = definition.requiredFor.includes('all') || definition.requiredFor.includes(canonicalCase.legalBasis);
     const metadataMissing = metadataMissingForDocument(canonicalDocument);
-    const canonicalConflicts = extraction.conflicts.filter((conflict) => conflict.documentKind === definition.kind);
-
     const contractIntakeStatus = canonicalDocument?.intake_status ?? documentState.intakeStatus;
     const contractStorageMode = canonicalDocument?.storage_mode ?? documentState.storageMode;
+    const canonicalConflicts = contractIntakeStatus === 'not_started'
+      ? []
+      : extraction.conflicts.filter((conflict) => conflict.documentKind === definition.kind);
     const capturedExtractionFields = contractIntakeStatus === 'not_started'
       ? []
       : [...new Set(typedCapturedFields
