@@ -305,6 +305,11 @@ export default function EventRSVP() {
     )));
   }
 
+  function updateRsvpForm(updater: (current: EventRsvpFormState) => EventRsvpFormState) {
+    setSubmitError('');
+    setRsvpForm((current) => updater(current));
+  }
+
   async function handleSubmitRsvp(e: React.FormEvent) {
     e.preventDefault();
     if (!selectedEvent || submitting || submitInFlightRef.current) return;
@@ -587,7 +592,7 @@ export default function EventRSVP() {
                     <div className="grid grid-cols-2 gap-3">
                       <button
                         type="button"
-                        onClick={() => setRsvpForm({ ...rsvpForm, attending: true })}
+                        onClick={() => updateRsvpForm((current) => ({ ...current, attending: true }))}
                         className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium transition-all ${
                           rsvpForm.attending
                             ? 'bg-green-600 text-white shadow-sm'
@@ -599,7 +604,7 @@ export default function EventRSVP() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => setRsvpForm({ ...rsvpForm, attending: false })}
+                        onClick={() => updateRsvpForm((current) => ({ ...current, attending: false }))}
                         className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium transition-all ${
                           !rsvpForm.attending
                             ? 'bg-neutral-700 text-white shadow-sm'
@@ -621,7 +626,7 @@ export default function EventRSVP() {
                         <Input
                           value={rsvpForm.dietary_restrictions}
                           onChange={(e) =>
-                            setRsvpForm({ ...rsvpForm, dietary_restrictions: e.target.value })
+                            updateRsvpForm((current) => ({ ...current, dietary_restrictions: e.target.value }))
                           }
                           placeholder="e.g., Vegetarian, Gluten-free, Nut allergy"
                         />
@@ -633,7 +638,7 @@ export default function EventRSVP() {
                         </label>
                         <Textarea
                           value={rsvpForm.notes}
-                          onChange={(e) => setRsvpForm({ ...rsvpForm, notes: e.target.value })}
+                          onChange={(e) => updateRsvpForm((current) => ({ ...current, notes: e.target.value }))}
                           placeholder="Any special requests or messages for the couple"
                           rows={3}
                         />
