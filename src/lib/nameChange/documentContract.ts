@@ -205,7 +205,7 @@ export function buildNameChangeDocumentIntakeSnapshot(
       intakeStatus: contractIntakeStatus,
       storageMode: contractStorageMode,
       extractionFieldCount: capturedExtractionFields.length,
-      metadataReady: metadataMissing.length === 0 && contractIntakeStatus === 'reviewed' ? 1 : 0,
+      metadataReady: metadataMissing.length === 0 && contractIntakeStatus === 'reviewed' && canonicalConflicts.length === 0 ? 1 : 0,
       metadataMissing,
       expectedExtractionFields: contractIntakeStatus === 'not_started' ? [] : definition.extractionFields,
       capturedExtractionFields,

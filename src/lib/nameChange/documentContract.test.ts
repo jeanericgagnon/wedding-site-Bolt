@@ -509,6 +509,7 @@ describe('name change document intake contract', () => {
     );
 
     expect(snapshot.documents.find((document) => document.kind === 'marriage_certificate')).toMatchObject({
+      metadataReady: 0,
       missingExtractionFields: [],
       canonicalConflicts: [expect.objectContaining({ key: 'target-last-name-marriage' })],
     });
