@@ -139,6 +139,7 @@ This is a major differentiator. If it feels fake or sloppy, the product looks ha
 **Pass / Fail**
 - Status: PENDING
 - Notes:
+  - `npm run test:e2e:live` now covers collaborator invite route load with token param as part of canonical smoke.
 - Blockers:
 
 ---
