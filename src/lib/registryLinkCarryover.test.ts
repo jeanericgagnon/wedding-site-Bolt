@@ -237,4 +237,17 @@ describe('carryOverRegistryLinks', () => {
       { url: 'https://zola.com/registry/jane', sourceLabel: 'Custom Honeymoon Fund' },
     ]);
   });
+
+  it('dedupes normalized persisted links before preserving unmatched existing registry links', () => {
+    expect(mergeRegistrySourceLabels(
+      [{ url: 'https://target.com/list', sourceLabel: 'Target Registry purchased by Jordan' }],
+      [
+        { url: 'https://zola.com/registry/jane/', sourceLabel: 'Zola' },
+        { url: 'zola.com/registry/jane', sourceLabel: 'Custom Honeymoon Fund purchased by Sam' },
+      ],
+    )).toEqual([
+      { url: 'https://target.com/list', sourceLabel: 'Target' },
+      { url: 'https://zola.com/registry/jane', sourceLabel: 'Custom Honeymoon Fund' },
+    ]);
+  });
 });

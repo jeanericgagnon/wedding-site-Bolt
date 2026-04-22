@@ -106,6 +106,26 @@ function finalizeCarryoverRegistryLink(
   return link.sourceLabel ? { url: link.url, sourceLabel: link.sourceLabel } : { url: link.url };
 }
 
+function dedupeNormalizedRegistryLinks(links: CarryoverRegistryLink[]): CarryoverRegistryLink[] {
+  const deduped = new Map<string, CarryoverRegistryLink>();
+  for (const link of links) {
+    const existing = deduped.get(link.url);
+    if (!existing) {
+      deduped.set(link.url, link);
+      continue;
+    }
+
+    const existingInferredLabel = inferSourceLabel(existing.url);
+    if (!existing.sourceLabel && link.sourceLabel) {
+      deduped.set(link.url, link);
+    } else if (link.sourceLabel && existing.sourceLabel === existingInferredLabel && link.sourceLabel !== existing.sourceLabel) {
+      deduped.set(link.url, link);
+    }
+  }
+
+  return Array.from(deduped.values());
+}
+
 export function parsePersistedRegistryLinks(raw: string | null | undefined): CarryoverRegistryLink[] {
   if (!raw?.trim()) return [];
 
@@ -135,23 +155,7 @@ export function parsePersistedRegistryLinks(raw: string | null | undefined): Car
     })
     .filter((link): link is CarryoverRegistryLink => Boolean(link));
 
-  const deduped = new Map<string, CarryoverRegistryLink>();
-  for (const link of persisted) {
-    const existing = deduped.get(link.url);
-    if (!existing) {
-      deduped.set(link.url, link);
-      continue;
-    }
-
-    const existingInferredLabel = inferSourceLabel(existing.url);
-    if (!existing.sourceLabel && link.sourceLabel) {
-      deduped.set(link.url, link);
-    } else if (link.sourceLabel && existing.sourceLabel === existingInferredLabel && link.sourceLabel !== existing.sourceLabel) {
-      deduped.set(link.url, link);
-    }
-  }
-
-  return Array.from(deduped.values());
+  return dedupeNormalizedRegistryLinks(persisted);
 }
 
 export function mergeRegistrySourceLabels(
@@ -162,9 +166,9 @@ export function mergeRegistrySourceLabels(
   const merged = carried
     .map((link) => normalizeCarryoverRegistryLink(link))
     .filter((link): link is CarryoverRegistryLink => Boolean(link));
-  const existingNormalized = existing
+  const existingNormalized = dedupeNormalizedRegistryLinks(existing
     .map((link) => normalizeCarryoverRegistryLink(link))
-    .filter((link): link is CarryoverRegistryLink => Boolean(link));
+    .filter((link): link is CarryoverRegistryLink => Boolean(link)));
   const existingByUrl = new Map(existingNormalized.map((link) => [link.url, link]));
   for (const link of merged) {
     const existingLink = existingByUrl.get(link.url);
