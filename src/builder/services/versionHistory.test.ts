@@ -90,4 +90,16 @@ describe('versionHistory', () => {
 
     expect(getBuilderRevision(weddingId, 'missing-revision')).toBeNull();
   });
+
+  it('keeps revision wedding data snapshots isolated from caller mutation after record', () => {
+    const weddingId = `w_${Date.now()}_i`;
+    const project = createEmptyBuilderProject(weddingId, 'modern-luxe');
+    const data = createEmptyWeddingData();
+    data.couple.partner1Name = 'Alex';
+
+    const revision = recordBuilderRevision({ weddingId, project, weddingData: data, action: 'save', actor: 'tester' });
+    data.couple.partner1Name = 'Jordan';
+
+    expect(getBuilderRevision(weddingId, revision.id)?.weddingData?.couple.partner1Name).toBe('Alex');
+  });
 });
