@@ -1038,7 +1038,7 @@ export const GuidedSetup: React.FC = () => {
               Your starter draft is ready to review
             </h2>
             <p className="text-text-secondary max-w-md mx-auto mb-6">
-              We drafted the core pages from what you shared. Review the starter draft in your dashboard, tighten the details, and only publish once it feels launch-ready.
+              We drafted the core pages from what you shared. Review the starter draft in your dashboard, tighten the details, and only publish once you're ready to share it with guests.
             </p>
 
             <div className="bg-surface-subtle rounded-lg p-6 text-left">

@@ -78,7 +78,7 @@ describe('GuidedSetup starter draft wording truth', () => {
       expect(screen.getByText('Your starter draft is ready to review')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('We drafted the core pages from what you shared. Review the starter draft in your dashboard, tighten the details, and only publish once it feels launch-ready.')).toBeInTheDocument();
+    expect(screen.getByText("We drafted the core pages from what you shared. Review the starter draft in your dashboard, tighten the details, and only publish once you're ready to share it with guests.")).toBeInTheDocument();
     expect(screen.queryByText(/you'?re all set/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/starter wedding site is ready/i)).not.toBeInTheDocument();
   });
