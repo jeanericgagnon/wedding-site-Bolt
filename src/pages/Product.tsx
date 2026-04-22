@@ -308,7 +308,7 @@ export const Product: React.FC = () => {
               <p className="mt-3 text-ink/75">This is not a promise that every edge case migrates itself. The credible move today is the important stuff: a better wedding site, cleaner guest operations, and calmer execution in one place.</p>
             </div>
             <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
-              {['Move your guest list and essential wedding details', 'Keep the website polished and guest-facing', 'Upgrade into RSVP, seating, messaging, and day-of ops'].map((item) => (
+              {['Move your guest list and essential wedding details', 'Keep the website polished and launch-ready', 'Upgrade into RSVP, seating, messaging, and day-of ops'].map((item) => (
                 <div key={item} className="rounded-xl border border-border bg-white p-4 text-sm text-ink/75">• {item}</div>
               ))}
             </div>
