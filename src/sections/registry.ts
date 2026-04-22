@@ -313,9 +313,18 @@ export function resolveCanonicalRegistryVariant(variant: unknown): string {
 export function resolveCanonicalRegistrySectionInput(type: unknown, variant: unknown): { type: string; variant: string } {
   const canonicalType = resolveCanonicalRegistrySectionType(type);
   if (canonicalType !== 'registry') {
+    const normalizedType = normalizeRegistrySectionType(type);
+    const normalizedInputType = typeof type === 'string' ? type.trim().toLowerCase() : '';
+    const normalizedVariantKey = normalizeRegistryVariantKey(variant);
+    const directVariant = normalizedVariantKey
+      ? getVariantsForType(normalizedType).find((definition) => normalizeRegistryVariantKey(definition.variant) === normalizedVariantKey)?.variant
+      : undefined;
+    const aliasVariant = normalizedVariantKey
+      ? Object.entries(VARIANT_FALLBACKS[normalizedType] ?? VARIANT_FALLBACKS[normalizedInputType] ?? {}).find(([alias]) => normalizeRegistryVariantKey(alias) === normalizedVariantKey)?.[1]
+      : undefined;
     return {
-      type: normalizeRegistrySectionType(type),
-      variant: typeof variant === 'string' ? variant : '',
+      type: normalizedType,
+      variant: directVariant ?? aliasVariant ?? (typeof variant === 'string' ? variant : ''),
     };
   }
 
