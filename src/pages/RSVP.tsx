@@ -237,7 +237,7 @@ function parseEventSelectionsFromNotes(notes: string | null, guest: Guest): { cl
 
   const selectedEvents = new Set(
     legacyMatch[1]
-      .split(',')
+      .split(/[;,]/)
       .map((piece) => piece.trim().toLowerCase())
       .filter(Boolean),
   );
