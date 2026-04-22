@@ -217,9 +217,11 @@ describe('sections registry resolution', () => {
     expect(compatibility).toContain('const supportedByKey = new Map');
     expect(compatibility).toContain('const canonicalVariant = supportedByKey.get(normalizedVariantKey) ?? normalizedVariant;');
     expect(compatibility).toContain("Object.entries(aliases).find(([aliasVariant]) => normalizeVariantKey(aliasVariant) === normalizedVariantKey)?.[1]");
-    expect(compatibilityTest).toContain("expect(resolveBuilderVariant('registry', '   ')).toBe('default');");
-    expect(compatibilityTest).toContain("expect(resolveBuilderVariant('registry', 'not-a-real-variant')).toBe('default');");
-    expect(compatibilityTest).toContain("expect(resolveBuilderVariant('registry', undefined as never)).toBe('default');");
+    expect(compatibility).toContain("function getPreferredBuilderFallbackVariant(type: SectionType, supported: string[]): string {");
+    expect(compatibility).toContain("if (type === 'registry') return supported.includes('cards') ? 'cards' : supported[0] ?? 'default';");
+    expect(compatibilityTest).toContain("expect(resolveBuilderVariant('registry', '   ')).toBe('cards');");
+    expect(compatibilityTest).toContain("expect(resolveBuilderVariant('registry', 'not-a-real-variant')).toBe('cards');");
+    expect(compatibilityTest).toContain("expect(resolveBuilderVariant('registry', undefined as never)).toBe('cards');");
     expect(compatibilityTest).toContain("expect(resolveBuilderVariant('travel', { variant: 'localGuide' } as never)).toBe('default');");
     expect(compatibilityTest).toContain("expect(resolveBuilderVariant('registry', ' FEATURED ')).toBe('featured');");
     expect(compatibilityTest).toContain("expect(resolveBuilderVariant('registry', 'Experiences')).toBe('experiences');");

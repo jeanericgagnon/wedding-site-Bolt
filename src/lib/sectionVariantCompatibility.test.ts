@@ -37,14 +37,14 @@ describe('resolveBuilderVariant onboarding handoff compatibility', () => {
     expect(resolveBuilderVariant('registry', 'ILLUSTRATED')).toBe('illustrated');
   });
 
-  it('falls back to the stable registry default when persisted variants are blank or unknown', () => {
-    expect(resolveBuilderVariant('registry', '   ')).toBe('default');
-    expect(resolveBuilderVariant('registry', 'not-a-real-variant')).toBe('default');
+  it('falls back to the public-first registry cards layout when persisted variants are blank or unknown', () => {
+    expect(resolveBuilderVariant('registry', '   ')).toBe('cards');
+    expect(resolveBuilderVariant('registry', 'not-a-real-variant')).toBe('cards');
   });
 
   it('tolerates missing or malformed onboarding handoff variants without crashing', () => {
-    expect(resolveBuilderVariant('registry', undefined as never)).toBe('default');
-    expect(resolveBuilderVariant('registry', null as never)).toBe('default');
+    expect(resolveBuilderVariant('registry', undefined as never)).toBe('cards');
+    expect(resolveBuilderVariant('registry', null as never)).toBe('cards');
     expect(resolveBuilderVariant('travel', { variant: 'localGuide' } as never)).toBe('default');
     expect(resolveBuilderVariant('faq', 42 as never)).toBe('default');
   });

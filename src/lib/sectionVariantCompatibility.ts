@@ -143,8 +143,14 @@ const VARIANT_ALIASES: Partial<Record<SectionType, Record<string, string>>> = {
 
 const normalizeVariantKey = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, '');
 
+function getPreferredBuilderFallbackVariant(type: SectionType, supported: string[]): string {
+  if (type === 'registry') return supported.includes('cards') ? 'cards' : supported[0] ?? 'default';
+  return supported[0] ?? 'default';
+}
+
 export function resolveBuilderVariant(type: SectionType, variant: unknown): string {
   const supported = LEGACY_SELECTOR_VARIANTS[type] ?? ['default'];
+  const fallbackVariant = getPreferredBuilderFallbackVariant(type, supported);
   const normalizedVariant = typeof variant === 'string' ? variant.trim() : '';
   const normalizedVariantKey = normalizeVariantKey(normalizedVariant);
   const supportedByKey = new Map(supported.map((supportedVariant) => [normalizeVariantKey(supportedVariant), supportedVariant]));
@@ -155,7 +161,7 @@ export function resolveBuilderVariant(type: SectionType, variant: unknown): stri
   const alias = aliases[canonicalVariant]
     ?? aliases[normalizedVariant]
     ?? Object.entries(aliases).find(([aliasVariant]) => normalizeVariantKey(aliasVariant) === normalizedVariantKey)?.[1];
-  if (!alias) return supported[0] ?? 'default';
+  if (!alias) return fallbackVariant;
 
-  return supportedByKey.get(normalizeVariantKey(alias)) ?? (supported.includes(alias) ? alias : supported[0] ?? 'default');
+  return supportedByKey.get(normalizeVariantKey(alias)) ?? (supported.includes(alias) ? alias : fallbackVariant);
 }
