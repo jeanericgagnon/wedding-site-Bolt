@@ -161,6 +161,12 @@ test.describe('public route smoke basics', () => {
     await expect(page.getByRole('heading', { name: /welcome back/i })).toBeVisible();
   });
 
+  test('protected dashboard coordinator route falls back to login when auth is missing', async ({ page }) => {
+    await gotoDom(page, '/dashboard/coordinator');
+    await expect(page).toHaveURL(/\/login$/);
+    await expect(page.getByRole('heading', { name: /welcome back/i })).toBeVisible();
+  });
+
   test('protected setup route falls back to login when auth is missing', async ({ page }) => {
     await gotoDom(page, '/setup');
     await expect(page).toHaveURL(/\/login$/);
