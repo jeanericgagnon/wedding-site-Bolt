@@ -664,6 +664,14 @@ export default function RSVP() {
       const notesPayload = (formData.notes || '').trim();
       const mealChoice = (formData.meal_choice || '').trim();
       const plusOneName = (formData.plus_one_name || '').trim();
+      const normalizedCustomAnswers = Object.fromEntries(
+        Object.entries(customAnswers).map(([questionId, value]) => [
+          questionId,
+          Array.isArray(value)
+            ? value.map((entry) => String(entry).trim()).filter((entry) => entry.length > 0)
+            : String(value ?? '').trim(),
+        ]),
+      );
 
       if (applyToHousehold && householdGuests.length > 0 && selectedHouseholdGuestIds.length === 0) {
         if (activeSubmitRequestRef.current !== requestId) return;
@@ -683,7 +691,7 @@ export default function RSVP() {
           plus_one_count: plusOneName ? 1 : 0,
           children_count: 0,
           notes: notesPayload || null,
-          custom_answers: customAnswers,
+          custom_answers: normalizedCustomAnswers,
         };
         const targetIds = applyToHousehold ? [guest.id, ...selectedHouseholdGuestIds] : [guest.id];
         targetIds.forEach((id) => { stored[id] = { ...payload, id: `demo-rsvp-${id}` }; });
@@ -710,7 +718,7 @@ export default function RSVP() {
         plusOneCount: plusOneName ? 1 : 0,
         childrenCount: 0,
         notes: notesPayload || null,
-        customAnswers,
+        customAnswers: normalizedCustomAnswers,
         applyToHousehold,
         targetGuestIds,
       });
@@ -734,7 +742,7 @@ export default function RSVP() {
         plus_one_count: plusOneName ? 1 : 0,
         children_count: 0,
         notes: notesPayload || null,
-        custom_answers: customAnswers,
+        custom_answers: normalizedCustomAnswers,
       });
       setStep('success');
     } catch {
