@@ -125,5 +125,15 @@ describe('Product starter draft truth', () => {
     expect(screen.getByText('Want to see the full flow in action?')).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Try product demo' }).length).toBe(2);
     expect(screen.queryByRole('button', { name: 'Open your dashboard' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'See collaboration trust notes' })).toHaveAttribute('href', '/trust');
+  });
+
+  it('gives signed-in couples a direct collaboration settings shortcut', () => {
+    authState.user = { id: 'user-1' };
+    render(<Product />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open collaboration settings' }));
+
+    expect(navigateMock).toHaveBeenCalledWith('/settings');
   });
 });

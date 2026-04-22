@@ -372,6 +372,21 @@ export const Product: React.FC = () => {
             <p className="text-xs uppercase tracking-wide text-brand font-semibold">Couple-led collaboration</p>
             <h2 className="text-2xl md:text-3xl font-serif font-bold text-ink mt-2">Invite your planner gracefully, without turning your wedding into a back office.</h2>
             <p className="mt-3 max-w-3xl text-ink/75">DayOf should let the couple bring in a planner or coordinator from a calm, tasteful settings flow, share the right operational surfaces, and keep ownership where it belongs.</p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              {user ? (
+                <button
+                  type="button"
+                  onClick={() => navigate('/settings')}
+                  className="rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-paper transition hover:bg-brand/90"
+                >
+                  Open collaboration settings
+                </button>
+              ) : (
+                <Link to="/trust" className="rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-medium text-ink transition hover:border-brand/30 hover:text-brand">
+                  See collaboration trust notes
+                </Link>
+              )}
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="rounded-xl border border-border-subtle bg-white p-4">
