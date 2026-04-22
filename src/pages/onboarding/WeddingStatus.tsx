@@ -4,6 +4,7 @@ import { Heart } from 'lucide-react';
 import { Button, Card, Input, AddressInput } from '../../components/ui';
 import { supabase } from '../../lib/supabase';
 import { writeSignupReturnPath } from '../../lib/signupContinuation';
+import { parseExpectedGuestCount } from '../../lib/weddingStatusGuestCount';
 
 type PlanningStatus = 'not_engaged' | 'just_engaged' | 'venue_booked' | 'invitations_sent';
 
@@ -60,16 +61,16 @@ export const WeddingStatus: React.FC = () => {
 
     if (selectedStatus === 'venue_booked') {
       const d = details.venue_booked;
-      if (!d?.venueName?.trim() || !d?.venueAddress?.trim() || !d?.venueDate || !d?.expectedGuestCount) {
-        setError('Please complete venue name, address, date, and guest count.');
+      if (!d?.venueName?.trim() || !d?.venueAddress?.trim() || !d?.venueDate || parseExpectedGuestCount(d?.expectedGuestCount || '') === null) {
+        setError('Please complete venue name, address, date, and a valid guest count.');
         return;
       }
     }
 
     if (selectedStatus === 'invitations_sent') {
       const d = details.invitations_sent;
-      if (!d?.venueName?.trim() || !d?.venueAddress?.trim() || !d?.venueDate || !d?.expectedGuestCount || !d?.invitationsSentDate) {
-        setError('Please complete venue details, guest count, and invitations sent date.');
+      if (!d?.venueName?.trim() || !d?.venueAddress?.trim() || !d?.venueDate || parseExpectedGuestCount(d?.expectedGuestCount || '') === null || !d?.invitationsSentDate) {
+        setError('Please complete venue details, a valid guest count, and invitations sent date.');
         return;
       }
     }
@@ -89,7 +90,7 @@ export const WeddingStatus: React.FC = () => {
         updateData.venue_address = details.venue_booked.venueAddress;
         updateData.wedding_date = details.venue_booked.venueDate;
         updateData.venue_date = details.venue_booked.venueDate;
-        updateData.expected_guest_count = parseInt(details.venue_booked.expectedGuestCount) || null;
+        updateData.expected_guest_count = parseExpectedGuestCount(details.venue_booked.expectedGuestCount);
         updateData.is_destination_wedding = isDestinationWedding;
         if (venueCoordinates) {
           updateData.venue_latitude = venueCoordinates.lat;
@@ -100,7 +101,7 @@ export const WeddingStatus: React.FC = () => {
         updateData.venue_address = details.invitations_sent.venueAddress;
         updateData.wedding_date = details.invitations_sent.venueDate;
         updateData.venue_date = details.invitations_sent.venueDate;
-        updateData.expected_guest_count = parseInt(details.invitations_sent.expectedGuestCount) || null;
+        updateData.expected_guest_count = parseExpectedGuestCount(details.invitations_sent.expectedGuestCount);
         updateData.invitations_sent_date = details.invitations_sent.invitationsSentDate;
         updateData.is_destination_wedding = isDestinationWedding;
         if (venueCoordinates) {
