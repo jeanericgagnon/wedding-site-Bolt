@@ -61,7 +61,7 @@ function normalizeDraftDocumentKind(value: string) {
     .trim()
     .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
     .toLowerCase()
-    .replace(/[\\/.:\-'’\s]+/g, '_')
+    .replace(/[&()\\/.:\-'’\s]+/g, '_')
     .replace(/_+/g, '_')
     .replace(/^_+|_+$/g, '');
 
@@ -76,6 +76,7 @@ function normalizeDraftDocumentKind(value: string) {
     passport_book: 'current_passport',
     passport_card: 'current_passport',
     driver_license: 'current_drivers_license',
+    driver_license_state_id: 'current_drivers_license',
     drivers_license: 'current_drivers_license',
     driver_s_license: 'current_drivers_license',
     driver_licence: 'current_drivers_license',
@@ -87,6 +88,7 @@ function normalizeDraftDocumentKind(value: string) {
     state_identification_card: 'current_drivers_license',
     social_security: 'social_security_card',
     social_security_card: 'social_security_card',
+    social_security_ssa_card: 'social_security_card',
     social_security_number_card: 'social_security_card',
     ssa_card: 'social_security_card',
     ss_card: 'social_security_card',
@@ -116,7 +118,7 @@ function normalizeDraftFieldKey(value: string) {
     .trim()
     .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
     .toLowerCase()
-    .replace(/[\\/.:\-'’\s]+/g, '_')
+    .replace(/[&()\\/.:\-'’\s]+/g, '_')
     .replace(/_+/g, '_')
     .replace(/^_+|_+$/g, '');
 
