@@ -285,6 +285,10 @@ function normalizeRegistrySectionType(type: unknown): string {
   return typeof type === 'string' ? type.trim().toLowerCase() : '';
 }
 
+export function resolveCanonicalRegistrySectionType(type: unknown): string {
+  return normalizeRegistrySectionType(type);
+}
+
 function resolveRegistryVariant(type: string, variant: unknown): string {
   if (!isRegistrySectionType(type)) return typeof variant === 'string' ? variant : '';
 

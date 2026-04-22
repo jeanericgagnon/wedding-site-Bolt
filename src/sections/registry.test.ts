@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { getAllSectionManifests, getSectionManifest } from '../builder/registry/sectionManifests';
-import { getDefinition, getVariantsForType, resolveAndParse, resolveCanonicalRegistryVariant } from './registry';
+import { getDefinition, getVariantsForType, resolveAndParse, resolveCanonicalRegistrySectionType, resolveCanonicalRegistryVariant } from './registry';
 import { getAllTemplates, getTemplate, TEMPLATE_REGISTRY } from '../templates/registry';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -70,6 +70,8 @@ describe('sections registry resolution', () => {
     expect(resolveCanonicalRegistryVariant(' Luxury ')).toBe('featured');
     expect(resolveCanonicalRegistryVariant('fund-highlight')).toBe('featured');
     expect(resolveCanonicalRegistryVariant('legacy-default')).toBe('cards');
+    expect(resolveCanonicalRegistrySectionType('RegistrySection')).toBe('registry');
+    expect(resolveCanonicalRegistrySectionType('registry-section')).toBe('registry');
   });
 
   it('keeps registry runtime resolution from crashing on malformed persisted variants', () => {
@@ -484,7 +486,7 @@ describe('sections registry resolution', () => {
     const templateRegistrySource = readFileSync(resolve(__dirname, '../templates/registry.ts'), 'utf8');
     const initialLayoutSource = readFileSync(resolve(__dirname, '../lib/generateInitialLayout.ts'), 'utf8');
     const siteGeneratorSource = readFileSync(resolve(__dirname, '../lib/siteGenerator.ts'), 'utf8');
-    expect(templateRegistrySource).toContain("import { resolveCanonicalRegistryVariant } from '../sections/registry';");
+    expect(templateRegistrySource).toContain("import { resolveCanonicalRegistrySectionType, resolveCanonicalRegistryVariant } from '../sections/registry';");
     expect(templateRegistrySource).toContain('function normalizeTemplateIdKey(templateId: unknown): string {');
     expect(templateRegistrySource).toContain('const templateIdAliases = new Map<string, string>(');
     expect(templateRegistrySource).toContain('Object.entries(TEMPLATE_REGISTRY).flatMap(([templateId, template]) => {');
@@ -495,18 +497,19 @@ describe('sections registry resolution', () => {
     expect(templateRegistrySource).toContain('function cloneTemplateValue<T>(value: T): T {');
     expect(templateRegistrySource).toContain("templateRegistry.map((template) => [template.id, cloneTemplateDefinition(template)])");
     expect(templateRegistrySource).toContain("base: cloneTemplateDefinition(templateById['timeless-classic'] ?? templateRegistry[0]),");
-    expect(templateRegistrySource).toContain("variant: isRegistryTemplateSectionType(section.type)");
+    expect(templateRegistrySource).toContain("variant: isRegistryTemplateSection");
     expect(templateRegistrySource).toContain("? (typeof section.variant === 'string' ? normalizeRegistryTemplateVariant(section.variant) : 'cards')");
     expect(templateRegistrySource).toContain('return resolveCanonicalRegistryVariant(variant);');
-    expect(templateRegistrySource).toContain("function isRegistryTemplateSectionType(type: unknown): boolean {");
-    expect(templateRegistrySource).toContain("return normalizedType === 'registry' || normalizedType.startsWith('registrysection');");
-    expect(templateRegistrySource).toContain("type: isRegistryTemplateSectionType(section.type) ? 'registry' : section.type,");
+    expect(templateRegistrySource).toContain('const canonicalType = resolveCanonicalRegistrySectionType(section.type);');
+    expect(templateRegistrySource).toContain("const isRegistryTemplateSection = canonicalType === 'registry';");
+    expect(templateRegistrySource).toContain("type: isRegistryTemplateSection ? canonicalType : section.type,");
     expect(templateRegistrySource).toContain('bindings: cloneTemplateValue(section.bindings ?? {}),');
     expect(templateRegistrySource).toContain('settings: cloneTemplateValue(section.settings ?? {}),');
     expect(templateRegistrySource).toContain('overrides: cloneTemplateValue(section.overrides ?? undefined),');
     expect(templateRegistrySource).toContain('function cloneTemplateDefinition(template: TemplateDefinition): TemplateDefinition {');
     expect(templateRegistrySource).toContain('return cloneTemplateDefinition(TEMPLATE_REGISTRY[canonicalTemplateId] || TEMPLATE_REGISTRY.base || templateRegistry[0]);');
     expect(templateRegistrySource).toContain('return templateRegistry.map(cloneTemplateDefinition);');
+    expect(sectionRegistrySource).toContain('export function resolveCanonicalRegistrySectionType(type: unknown): string {');
     expect(sectionRegistrySource).toContain('export function resolveCanonicalRegistryVariant(variant: unknown): string {');
     expect(initialLayoutSource).toContain('overrides: sectionDef.overrides ? { ...sectionDef.overrides } : undefined,');
     expect(initialLayoutSource).toContain('locked: sectionDef.locked,');
