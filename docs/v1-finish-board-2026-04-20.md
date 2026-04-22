@@ -288,6 +288,7 @@ If that line fails, the rest is noise.
    - current grounded status: canonical smoke is green, but `manualProofSummary` is still `requiredCount: 3`, `missingCount: 3`, `blockingCount: 3`
    - current operator next steps: canonical couple-path truth pass -> runtime wording verification -> starter-draft wording verification
    - operator warning: do not read this slice as launch-clear until `docs/v1-smoke-proof-log.md` contains the missing manual truth notes
+   - evidence source of truth: `docs/v1-smoke-proof-log.md` (see `manualProofSummary` + `publicV1ClaimBlockers`)
 2. **Guest-state continuity smoke + fix**
    - prove or fix guest edits, RSVP updates, event-level visibility, downstream reads
    - exit bar: one guest can move through public and dashboard surfaces without trust drift
