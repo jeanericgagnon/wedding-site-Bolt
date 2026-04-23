@@ -37,4 +37,21 @@ describe('buildOnboardingUpdateData registry carryover', () => {
       ]),
     );
   });
+
+  it('preserves raw imported custom labels when markdown link text only mirrors the domain', () => {
+    const result = buildOnboardingUpdateData({
+      coupleNames: { name1: 'Alex', name2: 'Sam' },
+      planningStatus: 'guided_setup_complete',
+      template: 'base',
+      registryLinksRaw: 'Custom Boutique | [Example](example.com/list) and <https://target.com/gift-registry/list>',
+    });
+
+    const weddingData = result.wedding_data as { registry?: { links?: Array<{ url: string; label?: string }> } };
+    expect(weddingData.registry?.links).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ url: 'https://example.com/list', label: 'Custom Boutique' }),
+        expect.objectContaining({ url: 'https://target.com/gift-registry/list', label: 'Target' }),
+      ]),
+    );
+  });
 });

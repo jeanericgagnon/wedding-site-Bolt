@@ -33,4 +33,19 @@ describe('fromOnboarding registry carryover', () => {
       ]),
     );
   });
+
+  it('preserves raw imported custom labels when markdown link text only mirrors the domain', () => {
+    const weddingData = fromOnboarding({
+      partner1Name: 'Alex',
+      partner2Name: 'Sam',
+      registryLinksRaw: 'Custom Boutique | [Example](example.com/list) and <https://target.com/gift-registry/list>',
+    });
+
+    expect(weddingData.registry.links).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ url: 'https://example.com/list', label: 'Custom Boutique' }),
+        expect.objectContaining({ url: 'https://target.com/gift-registry/list', label: 'Target' }),
+      ]),
+    );
+  });
 });

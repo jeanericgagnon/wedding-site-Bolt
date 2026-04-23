@@ -41,6 +41,31 @@ function inferSourceLabel(url: string): string | undefined {
   return undefined;
 }
 
+function inferDomainSourceLabel(url: string): string | undefined {
+  try {
+    const hostname = new URL(url).hostname.replace(/^www\./i, '');
+    const [domain] = hostname.split('.');
+    if (!domain) return undefined;
+    const normalized = domain.replace(/[-_]+/g, ' ').trim();
+    if (!normalized) return undefined;
+    return normalized
+      .split(/\s+/)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
+  } catch {
+    return undefined;
+  }
+}
+
+function isWeakExplicitTokenLabel(url: string, label: string | undefined): boolean {
+  if (!label) return false;
+  const normalizedUrl = normalizeUrl(url) ?? url;
+  const inferredMerchant = inferSourceLabel(normalizedUrl);
+  if (inferredMerchant) return label === inferredMerchant;
+  const inferredDomain = inferDomainSourceLabel(normalizedUrl);
+  return Boolean(inferredDomain) && label === inferredDomain;
+}
+
 function inferSourceLabelFromText(text: string): string | undefined {
   const normalized = text.trim().toLowerCase();
   if (!normalized) return undefined;
@@ -251,7 +276,9 @@ function extractRegistryUrlTokens(line: string): CarryoverRegistryToken[] {
     return Array.from(tokens.values())
       .sort((left, right) => (left.index ?? Number.MAX_SAFE_INTEGER) - (right.index ?? Number.MAX_SAFE_INTEGER))
       .map((token) => {
-      const canApplyLineLabel = Boolean(lineExplicitLabel) && !lineLabelApplied && !token.sourceLabel;
+      const canApplyLineLabel = Boolean(lineExplicitLabel)
+        && !lineLabelApplied
+        && (!token.sourceLabel || isWeakExplicitTokenLabel(token.raw, token.sourceLabel));
       if (canApplyLineLabel) lineLabelApplied = true;
       return canApplyLineLabel
         ? { ...token, sourceLabel: lineExplicitLabel, sourceLabelMode: 'explicit' }
@@ -290,12 +317,14 @@ export function carryOverRegistryLinks(raw: string | null | undefined): Carryove
           if (extractedUrls.length > 0) {
             let pendingLabelApplied = false;
             const normalizedTokens = extractedUrls.map((token) => {
-              const canApplyPendingLabel = Boolean(pendingSourceLabel) && !pendingLabelApplied && !token.sourceLabel;
+              const canApplyPendingLabel = Boolean(pendingSourceLabel)
+                && !pendingLabelApplied
+                && (!token.sourceLabel || isWeakExplicitTokenLabel(token.raw, token.sourceLabel));
               if (canApplyPendingLabel) pendingLabelApplied = true;
               return {
                 ...token,
-                sourceLabel: token.sourceLabel ?? (canApplyPendingLabel ? pendingSourceLabel : undefined),
-                sourceLabelMode: token.sourceLabelMode ?? (canApplyPendingLabel ? 'explicit' : undefined),
+                sourceLabel: canApplyPendingLabel ? pendingSourceLabel : token.sourceLabel,
+                sourceLabelMode: canApplyPendingLabel ? 'explicit' : token.sourceLabelMode,
               };
             });
             if (pendingSourceLabel && normalizedTokens.some((token) => token.sourceLabel === pendingSourceLabel)) {

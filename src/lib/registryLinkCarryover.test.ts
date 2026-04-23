@@ -171,6 +171,20 @@ describe('carryOverRegistryLinks', () => {
     ]);
   });
 
+  it('prefers imported custom labels over weak markdown domain labels on the first carried link', () => {
+    expect(carryOverRegistryLinks('Custom Boutique [Example](example.com/list) and <https://target.com/list>')).toEqual([
+      { url: 'https://example.com/list', sourceLabel: 'Custom Boutique' },
+      { url: 'https://target.com/list', sourceLabel: 'Target' },
+    ]);
+  });
+
+  it('prefers pending custom labels over weak markdown domain labels after registry separators', () => {
+    expect(carryOverRegistryLinks('Custom Boutique | [Example](example.com/list) and <https://target.com/list>')).toEqual([
+      { url: 'https://example.com/list', sourceLabel: 'Custom Boutique' },
+      { url: 'https://target.com/list', sourceLabel: 'Target' },
+    ]);
+  });
+
   it('upgrades duplicate carryover links when a later import includes a source label', () => {
     expect(carryOverRegistryLinks('https://crateandbarrel.com/gift-registry/jane\nCrate & Barrel Registry | crateandbarrel.com/gift-registry/jane')).toEqual([
       { url: 'https://crateandbarrel.com/gift-registry/jane', sourceLabel: 'Crate & Barrel' },
