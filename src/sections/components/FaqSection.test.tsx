@@ -5,35 +5,31 @@ import { FaqAccordion, FaqIconGrid, FaqSection } from './FaqSection';
 import type { SectionInstance } from '../../types/layoutConfig';
 import type { WeddingDataV1 } from '../../types/weddingData';
 
-function createWeddingData(): WeddingDataV1 {
+function createWeddingData(faq: WeddingDataV1['faq'] = [{ id: 'faq-1', q: 'Where do we park?', a: 'Use the lot across the street.' }]): WeddingDataV1 {
   return {
-    couple: { partner1: '', partner2: '', displayName: '' },
-    event: { date: '', venue: '', location: '' },
-    story: { proposalStory: '', howWeMet: '' },
+    version: '1',
+    couple: { partner1Name: '', partner2Name: '', displayName: '' },
+    event: {},
+    venues: [],
     schedule: [],
-    travel: { accommodations: [], transportation: [], airports: [] },
-    faq: [{ id: 'faq-1', q: 'Where do we park?', a: 'Use the lot across the street.' }],
+    travel: {},
+    faq,
     weddingParty: [],
-    gallery: [],
     registry: [],
-    rsvp: { enabled: true, deadline: '', maxGuests: 0 },
-    contact: { email: '', phone: '', address: '' },
-    theme: { primaryColor: '#000000', secondaryColor: '#ffffff', fontFamily: 'Inter' },
-    navigation: { showGallery: true, showRegistry: true, showWeddingParty: true, showTravel: true, showFAQ: true },
-    design: { template: 'classic-romance', colorScheme: 'soft-blush', fontPairing: 'elegant-serif' },
-    customSections: [],
+    rsvp: { enabled: true },
+    theme: {},
     media: { gallery: [] },
   };
 }
 
-function makeInstance(settings: SectionInstance['settings']): SectionInstance {
+function makeInstance(settings: SectionInstance['settings'], bindings?: SectionInstance['bindings']): SectionInstance {
   return {
     id: 'faq-1',
     type: 'faq',
     enabled: true,
     variant: 'default',
     settings,
-    bindings: {},
+    bindings,
   };
 }
 
@@ -71,5 +67,36 @@ describe('FaqSection', () => {
     );
 
     expect(screen.getByText('Before you arrive')).toBeInTheDocument();
+  });
+
+  it('keeps default titles visible and does not crash when bindings are missing', () => {
+    const emptyData = createWeddingData([]);
+
+    const { rerender } = render(
+      <FaqSection
+        data={emptyData}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(screen.getByText('FAQ')).toBeInTheDocument();
+
+    rerender(
+      <FaqAccordion
+        data={emptyData}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(screen.getByText('FAQ')).toBeInTheDocument();
+
+    rerender(
+      <FaqIconGrid
+        data={emptyData}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(screen.getByText('FAQ')).toBeInTheDocument();
   });
 });

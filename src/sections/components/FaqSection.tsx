@@ -13,7 +13,7 @@ export const FaqSection: React.FC<Props> = ({ data, instance }) => {
   const { faq } = data;
   const { settings, bindings } = instance;
   const title = readBuilderValue(settings.title as string | { value: string } | undefined, 'FAQ');
-  const faqsToShow = bindings.faqIds && bindings.faqIds.length > 0
+  const faqsToShow = bindings?.faqIds && bindings.faqIds.length > 0
     ? faq.filter(f => bindings.faqIds!.includes(f.id))
     : faq;
 
@@ -21,7 +21,7 @@ export const FaqSection: React.FC<Props> = ({ data, instance }) => {
     return (
       <section className="py-16 px-4 bg-surface">
         <div className="max-w-4xl mx-auto text-center">
-          {settings.showTitle && (
+          {settings.showTitle !== false && (
             <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary mb-6">{title}</h2>
           )}
           <p className="text-text-secondary">Helpful guest questions and answers will appear here once they’re added.</p>
@@ -33,7 +33,7 @@ export const FaqSection: React.FC<Props> = ({ data, instance }) => {
   return (
     <section className="py-16 md:py-20 px-4 bg-surface">
       <div className="max-w-4xl mx-auto">
-        {settings.showTitle && (
+        {settings.showTitle !== false && (
           <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary text-center mb-10 md:mb-12">{title}</h2>
         )}
         <div className="space-y-7">
@@ -53,7 +53,7 @@ export const FaqAccordion: React.FC<Props> = ({ data, instance }) => {
   const { faq } = data;
   const { settings, bindings } = instance;
   const title = readBuilderValue(settings.title as string | { value: string } | undefined, 'FAQ');
-  const faqsToShow = bindings.faqIds && bindings.faqIds.length > 0
+  const faqsToShow = bindings?.faqIds && bindings.faqIds.length > 0
     ? faq.filter(f => bindings.faqIds!.includes(f.id))
     : faq;
   const [openId, setOpenId] = useState<string | null>(null);
@@ -81,7 +81,7 @@ export const FaqAccordion: React.FC<Props> = ({ data, instance }) => {
     return (
       <section className="py-16 md:py-20 px-4 bg-surface-subtle">
         <div className="max-w-3xl mx-auto text-center">
-          {settings.showTitle && (
+          {settings.showTitle !== false && (
             <h2 className="text-3xl md:text-4xl font-light text-text-primary mb-8 leading-tight">{title}</h2>
           )}
           <p className="text-text-secondary">Helpful guest questions and answers will appear here once they’re added.</p>
@@ -93,7 +93,7 @@ export const FaqAccordion: React.FC<Props> = ({ data, instance }) => {
   return (
     <section className="py-16 md:py-20 px-4 bg-surface-subtle">
       <div className="max-w-3xl mx-auto">
-        {settings.showTitle && (
+        {settings.showTitle !== false && (
           <div className="text-center mb-12">
             <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Guest questions</p>
             <h2 className="text-3xl md:text-4xl font-light tracking-tight text-text-primary leading-tight">{title}</h2>
@@ -163,7 +163,7 @@ export const FaqIconGrid: React.FC<Props> = ({ data, instance }) => {
   const { faq } = data;
   const { settings, bindings } = instance;
   const title = readBuilderValue(settings.title as string | { value: string } | undefined, 'FAQ');
-  const faqsToShow = bindings.faqIds && bindings.faqIds.length > 0
+  const faqsToShow = bindings?.faqIds && bindings.faqIds.length > 0
     ? faq.filter(f => bindings.faqIds!.includes(f.id))
     : faq;
 
@@ -173,7 +173,7 @@ export const FaqIconGrid: React.FC<Props> = ({ data, instance }) => {
     return (
       <section className="py-16 md:py-20 px-4 bg-surface-subtle">
         <div className="max-w-3xl mx-auto text-center">
-          {settings.showTitle && <h2 className="text-3xl md:text-4xl font-light text-text-primary mb-8 leading-tight">{title}</h2>}
+          {settings.showTitle !== false && <h2 className="text-3xl md:text-4xl font-light text-text-primary mb-8 leading-tight">{title}</h2>}
           <p className="text-text-secondary">Helpful guest questions and answers will appear here once they’re added.</p>
         </div>
       </section>
@@ -183,7 +183,7 @@ export const FaqIconGrid: React.FC<Props> = ({ data, instance }) => {
   return (
     <section className="py-16 md:py-20 px-4 bg-surface-subtle">
       <div className="max-w-5xl mx-auto">
-        {settings.showTitle && (
+        {settings.showTitle !== false && (
           <div className="text-center mb-12">
             <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Guest questions</p>
             <h2 className="text-3xl md:text-4xl font-light tracking-tight text-text-primary leading-tight">{title}</h2>
