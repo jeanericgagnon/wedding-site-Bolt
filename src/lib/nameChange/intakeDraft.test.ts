@@ -567,6 +567,14 @@ describe('name change intake draft helpers', () => {
         field_value_masked: 'Smith',
       }),
     ]);
+
+    expect(upsertDraftNameChangeExtractedField([], 'draft-current_passport', 'middle_name', 'Middle name', 'Middle initial: q.')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-current_passport',
+        field_key: 'middle_name',
+        field_value_masked: 'Q',
+      }),
+    ]);
   });
 
   it('uppercases number-like draft field values into stable canonical ids', () => {

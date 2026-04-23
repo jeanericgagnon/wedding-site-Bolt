@@ -389,7 +389,14 @@ function normalizeDraftPersonNameValue(
     spouse_last_name: /^(?:spouse(?:'s)?\s+(?:(?:last|family)\s+name|surname))\s*[:#-]?\s*/i,
   };
 
-  return humanizeDraftToken(normalizedValue.replace(labelPatterns[fieldKey], '').toLowerCase());
+  const unlabeledValue = normalizedValue.replace(labelPatterns[fieldKey], '').trim();
+  if (!unlabeledValue) return '';
+
+  if (fieldKey === 'middle_name' && /^[A-Za-z]\.?$/.test(unlabeledValue)) {
+    return unlabeledValue.charAt(0).toUpperCase();
+  }
+
+  return humanizeDraftToken(unlabeledValue.toLowerCase());
 }
 
 function normalizeDraftReferenceNumberValue(value: string) {

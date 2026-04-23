@@ -1201,23 +1201,23 @@ describe('name change document intake contract', () => {
 
   it('treats labeled person-name values as canonical document truth', () => {
     const snapshot = buildNameChangeDocumentIntakeSnapshot(
-      makeCase({ legal_basis: 'marriage', target_first_name: 'Alicia', target_last_name: 'Smith', county_residence: 'Orange' }),
+      makeCase({ legal_basis: 'court_order', target_first_name: 'Alicia', target_last_name: 'Smith' }),
       [
         {
-          id: 'doc-marriage',
-          document_kind: 'marriage_certificate',
-          display_name: 'Certified marriage certificate',
+          id: 'doc-court-order',
+          document_kind: 'court_order',
+          display_name: 'Filed court order',
           storage_mode: 'metadata_only',
           intake_status: 'reviewed',
-          file_name_masked: 'marriage-certificate-•••.pdf',
-          issuing_authority: 'Orange County Clerk',
+          file_name_masked: 'court-order-•••.pdf',
+          issuing_authority: 'Superior Court of California',
           issued_on: '2026-04-05',
           extraction_confidence: 0.95,
         },
       ],
       [
         {
-          document_id: 'doc-marriage',
+          document_id: 'doc-court-order',
           field_key: 'first_name',
           field_label: 'First name',
           field_value_masked: 'First name: alicia',
@@ -1225,7 +1225,7 @@ describe('name change document intake contract', () => {
           is_verified: true,
         },
         {
-          document_id: 'doc-marriage',
+          document_id: 'doc-court-order',
           field_key: 'last_name',
           field_label: 'Last name',
           field_value_masked: 'New legal name - smith',
@@ -1233,42 +1233,26 @@ describe('name change document intake contract', () => {
           is_verified: true,
         },
         {
-          document_id: 'doc-marriage',
-          field_key: 'spouse_last_name',
-          field_label: 'Spouse last name',
-          field_value_masked: "Spouse's surname: smith",
+          document_id: 'doc-court-order',
+          field_key: 'case_number',
+          field_label: 'Case number',
+          field_value_masked: '24-CV-1188',
           source_type: 'document_extract',
           is_verified: true,
         },
         {
-          document_id: 'doc-marriage',
-          field_key: 'certificate_number',
-          field_label: 'Certificate number',
-          field_value_masked: 'MC-123',
-          source_type: 'document_extract',
-          is_verified: true,
-        },
-        {
-          document_id: 'doc-marriage',
-          field_key: 'issuance_date',
-          field_label: 'Issue date',
+          document_id: 'doc-court-order',
+          field_key: 'court_order_date',
+          field_label: 'Court order date',
           field_value_masked: '2026-04-05',
-          source_type: 'document_extract',
-          is_verified: true,
-        },
-        {
-          document_id: 'doc-marriage',
-          field_key: 'county',
-          field_label: 'County',
-          field_value_masked: 'Orange County',
           source_type: 'document_extract',
           is_verified: true,
         },
       ],
     );
 
-    expect(snapshot.documents.find((document) => document.kind === 'marriage_certificate')).toMatchObject({
-      capturedExtractionFields: expect.arrayContaining(['first_name', 'last_name', 'spouse_last_name']),
+    expect(snapshot.documents.find((document) => document.kind === 'court_order')).toMatchObject({
+      capturedExtractionFields: expect.arrayContaining(['first_name', 'last_name', 'case_number', 'court_order_date']),
       missingExtractionFields: [],
       canonicalConflicts: [],
     });
