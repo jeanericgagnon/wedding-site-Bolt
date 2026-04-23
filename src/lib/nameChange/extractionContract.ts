@@ -24,14 +24,26 @@ function normalizeFieldKey(fieldKey: string) {
   return normalizeDraftFieldKey(fieldKey) as NameChangeExtractionFieldKey;
 }
 
+function getVerifiedLinkedCanonicalFieldKeys(
+  documentId: string | null | undefined,
+  extractedFields: NameChangeExtractedFieldInput[],
+): NameChangeExtractionFieldKey[] {
+  if (!documentId) return [];
+
+  return [...new Set(
+    extractedFields
+      .filter((field) => field.document_id === documentId && field.is_verified)
+      .map((field) => normalizeFieldKey(field.field_key))
+      .filter((fieldKey): fieldKey is NameChangeExtractionFieldKey => Boolean(fieldKey)),
+  )];
+}
+
 function getDocumentExtractionPriority(
   document: NameChangeDocumentInput,
   canonicalKind: NameChangeDocumentKind,
   extractedFields: NameChangeExtractedFieldInput[],
 ) {
-  const verifiedLinkedFieldCount = document.id
-    ? extractedFields.filter((field) => field.document_id === document.id && field.is_verified).length
-    : 0;
+  const verifiedLinkedFieldCount = getVerifiedLinkedCanonicalFieldKeys(document.id, extractedFields).length;
 
   return (
     (verifiedLinkedFieldCount * 100)
@@ -147,9 +159,7 @@ export function getDocumentCapturedFieldKeys(
   if (!document) return [];
 
   const linkedKeys = document.id
-    ? extractedFields
-        .filter((field) => field.document_id === document.id && field.is_verified)
-        .map((field) => normalizeFieldKey(field.field_key))
+    ? getVerifiedLinkedCanonicalFieldKeys(document.id, extractedFields)
     : [];
   const manualFallbackKeys = extractedFields
     .filter((field) => !field.document_id && field.source_type === 'manual' && field.is_verified)

@@ -315,6 +315,54 @@ describe('name change extraction contract', () => {
     expect(getDocumentCapturedFieldKeys(documents, extractedFields, 'court_order')).toEqual(['case_number']);
   });
 
+  it('ranks documents by unique canonical verified fields instead of duplicate raw alias rows', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-court-order-duplicate-aliases',
+        document_kind: 'court_order_name_change',
+        display_name: 'Court order duplicate aliases',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+      {
+        id: 'doc-court-order-stronger',
+        document_kind: 'court_order',
+        display_name: 'Court order stronger',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'doc-court-order-duplicate-aliases',
+        field_key: 'signed dt',
+        field_label: 'Signed dt',
+        field_value_masked: 'Executed on Friday, April 5, 2026 1:30 PM PST',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'doc-court-order-duplicate-aliases',
+        field_key: 'date of signature',
+        field_label: 'Date of signature',
+        field_value_masked: 'Friday, April 5, 2026 1:30 PM PST',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'doc-court-order-stronger',
+        field_key: 'case no.',
+        field_label: 'Case no.',
+        field_value_masked: '24-cv - 1188',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+
+    expect(getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'case_number')).toBe('24-CV-1188');
+    expect(getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'court_order_date')).toBeNull();
+  });
+
   it('only treats linked or manual verified court-order reference fields as grounded', () => {
     const documents: NameChangeDocumentInput[] = [
       {

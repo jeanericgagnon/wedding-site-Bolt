@@ -569,6 +569,68 @@ describe('name change document intake contract', () => {
     });
   });
 
+  it('does not let duplicate alias rows on a weaker document outrank the stronger court-order truth source', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase({ legal_basis: 'court_order', marriage_state: null, marriage_date: null }),
+      [
+        {
+          id: 'doc-court-order-duplicate-aliases',
+          document_kind: 'court_order_name_change',
+          display_name: 'Court order duplicate aliases',
+          storage_mode: 'metadata_only',
+          intake_status: 'uploaded',
+          file_name_masked: 'court-order-duplicate-•••.pdf',
+          issuing_authority: 'San Diego Superior Court',
+          issued_on: '2026-04-05',
+          extraction_confidence: 0.7,
+        },
+        {
+          id: 'doc-court-order-stronger',
+          document_kind: 'court_order',
+          display_name: 'Court order stronger',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'court-order-stronger-•••.pdf',
+          issuing_authority: 'San Diego Superior Court',
+          issued_on: '2026-04-05',
+          extraction_confidence: 0.93,
+        },
+      ],
+      [
+        {
+          document_id: 'doc-court-order-duplicate-aliases',
+          field_key: 'signed dt',
+          field_label: 'Signed dt',
+          field_value_masked: 'Executed on Friday, April 5, 2026 1:30 PM PST',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-court-order-duplicate-aliases',
+          field_key: 'date of signature',
+          field_label: 'Date of signature',
+          field_value_masked: 'Friday, April 5, 2026 1:30 PM PST',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-court-order-stronger',
+          field_key: 'case no.',
+          field_label: 'Case no.',
+          field_value_masked: '24-cv - 1188',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+      ],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'court_order')).toMatchObject({
+      intakeStatus: 'reviewed',
+      capturedExtractionFields: ['case_number'],
+      missingExtractionFields: ['first_name', 'last_name', 'court_order_date'],
+    });
+  });
+
   it('prefers reviewed metadata-ready documents over uploaded metadata-light duplicates', () => {
     const snapshot = buildNameChangeDocumentIntakeSnapshot(
       makeCase(),
