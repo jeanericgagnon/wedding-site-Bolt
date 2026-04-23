@@ -67,6 +67,11 @@ export function buildNameChangeTargetExecutionSnapshot(
   const firstBlockingAttentionChecklistItem = checklist.find((item) => item.status === 'attention' && item.blocksReady);
   const primaryCanonicalConflict = extraction.conflicts[0] ?? null;
   const firstAttentionChecklistItem = checklist.find((item) => item.status === 'attention');
+  const checklistSpecByKey = new Map(target.checklistSpecs.map((spec) => [spec.key, spec]));
+  const getChecklistDocumentKind = (item: typeof checklist[number]) => {
+    const documentKinds = checklistSpecByKey.get(item.key)?.documentKinds ?? [];
+    return item.kind === 'document_support' && documentKinds.length === 1 ? documentKinds[0] : undefined;
+  };
   const buildCourtOrderNextAction = () => {
     const hasVerifiedCourtOrderTargetFirstName = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'first_name');
     const hasVerifiedCourtOrderTargetLastName = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'last_name');
@@ -237,6 +242,7 @@ export function buildNameChangeTargetExecutionSnapshot(
         category: 'document' as const,
         label: `Resolve ${blockingFieldConflict.documentKind.replace(/_/g, ' ')} conflict`,
         detail: blockingFieldConflict.reason,
+        documentKind: blockingFieldConflict.documentKind,
       }
     : courtOrderNextAction
       ? courtOrderNextAction
@@ -259,6 +265,9 @@ export function buildNameChangeTargetExecutionSnapshot(
             category: getChecklistCategory(firstMissingChecklistItem),
             label: getMissingChecklistLabel(firstMissingChecklistItem),
             detail: firstMissingChecklistItem.reason,
+            documentKind: getChecklistCategory(firstMissingChecklistItem) === 'document'
+              ? getChecklistDocumentKind(firstMissingChecklistItem)
+              : undefined,
           }
         : firstBlockingAttentionChecklistItem
           ? {
@@ -269,12 +278,18 @@ export function buildNameChangeTargetExecutionSnapshot(
               detail: primaryCanonicalConflict
                 ? primaryCanonicalConflict.reason
                 : firstBlockingAttentionChecklistItem.reason,
+              documentKind: primaryCanonicalConflict
+                ? primaryCanonicalConflict.documentKind
+                : getAttentionChecklistCategory(firstBlockingAttentionChecklistItem) === 'document'
+                  ? getChecklistDocumentKind(firstBlockingAttentionChecklistItem)
+                  : undefined,
             }
           : firstMissingFieldRisk
           ? {
               category: firstMissingFieldRisk.sourceDocumentKind ? 'document' as const : 'packet' as const,
               label: `Fill ${firstMissingFieldRisk.label}`,
               detail: firstMissingFieldRisk.reason,
+              documentKind: firstMissingFieldRisk.sourceDocumentKind,
             }
           : firstAttentionDependency
             ? {
@@ -287,6 +302,9 @@ export function buildNameChangeTargetExecutionSnapshot(
                   category: getAttentionChecklistCategory(firstAttentionChecklistItem),
                   label: getAttentionChecklistLabel(firstAttentionChecklistItem),
                   detail: firstAttentionChecklistItem.reason,
+                  documentKind: getAttentionChecklistCategory(firstAttentionChecklistItem) === 'document'
+                    ? getChecklistDocumentKind(firstAttentionChecklistItem)
+                    : undefined,
                 }
               : {
                   category: 'review' as const,

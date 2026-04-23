@@ -308,6 +308,72 @@ describe('name change target execution snapshot', () => {
     });
   });
 
+  it('tags document-support checklist actions with their document kind', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'passport-•••.pdf',
+        issuing_authority: 'U.S. Department of State',
+        issued_on: '2024-06-01',
+        expires_on: '2034-06-01',
+        extraction_confidence: 0.92,
+      },
+    ];
+    const basePlan = buildNameChangePlan({ profile: makeCase({ marriage_state: 'Nevada' }), documents, extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-ssa'
+        ? { ...step, executionStatus: 'complete' as const }
+        : step),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('passport', makeCase({ marriage_state: 'Nevada' }), documents, [], plan);
+
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'document',
+      label: expect.stringContaining('marriage certificate'),
+      documentKind: 'marriage_certificate',
+    });
+  });
+
+  it('tags document-sourced packet repair actions with their source document kind', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'San Diego County Clerk',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'doc-marriage',
+        field_key: 'spouse_last_name',
+        field_label: 'Spouse last name',
+        field_value_masked: 'Jordan',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('ssa', makeCase({ target_last_name: 'Jordan-Smith' }), [
+      { id: 'doc-marriage', ...documents[0] },
+    ], extractedFields);
+
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'document',
+      label: expect.stringContaining('marriage certificate'),
+      documentKind: 'marriage_certificate',
+    });
+  });
+
   it('builds shared passport execution snapshots with dynamic form selection', () => {
     const documents: NameChangeDocumentInput[] = [
       {
