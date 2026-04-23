@@ -225,8 +225,8 @@ export const Trust: React.FC = () => {
               >
                 {user ? 'Review your draft' : 'Start your draft'}
               </button>
-              <Link to={user ? '/dashboard/builder' : '/product'} className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary">
-                {user ? 'Open your builder' : 'See product tour'}
+              <Link to={user ? '/dashboard/planning' : '/product'} className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary">
+                {user ? 'Open planner workspace' : 'See product tour'}
               </Link>
             </div>
 

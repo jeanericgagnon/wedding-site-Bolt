@@ -44,20 +44,20 @@ describe('Trust page draft-first CTA', () => {
     expect(navigateMock).toHaveBeenCalledWith('/signup');
   });
 
-  it('sends signed-in visitors to the builder from the trust CTA', () => {
+  it('sends signed-in visitors to live trust workspaces from the trust CTA', () => {
     authState.user = { id: 'user-1' };
     render(<Trust />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Review your draft' }));
 
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
-    expect(screen.getByRole('link', { name: 'Open your builder' })).toHaveAttribute('href', '/dashboard/builder');
+    expect(screen.getByRole('link', { name: 'Open planner workspace' })).toHaveAttribute('href', '/dashboard/planning');
     fireEvent.click(screen.getByRole('button', { name: 'Open your builder' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
-    fireEvent.click(screen.getByRole('button', { name: 'Open account settings' }));
-    expect(navigateMock).toHaveBeenCalledWith('/settings');
     fireEvent.click(screen.getByRole('button', { name: 'Open planner workspace' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/planning');
+    fireEvent.click(screen.getByRole('button', { name: 'Open account settings' }));
+    expect(navigateMock).toHaveBeenCalledWith('/settings');
     fireEvent.click(screen.getByRole('button', { name: 'Open coordinator workspace' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/coordinator');
     fireEvent.click(screen.getByRole('button', { name: 'Open guest list' }));
