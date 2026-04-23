@@ -48,4 +48,19 @@ describe('setupDraftHydration', () => {
     expect(result.couple.story).toBe('Custom story');
     expect(result.travel.notes).toBe('Custom travel');
   });
+
+  it('skips invalid setup draft wedding dates instead of crashing hydration', () => {
+    const source = createEmptyWeddingData();
+
+    const result = applySetupDraftToWeddingData(
+      source,
+      draft({
+        partnerOneFirstName: 'Eric',
+        weddingDate: 'not-a-date',
+        dateKnown: true,
+      })
+    );
+
+    expect(result.event.weddingDateISO).toBeUndefined();
+  });
 });

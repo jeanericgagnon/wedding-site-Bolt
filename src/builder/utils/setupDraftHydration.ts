@@ -2,6 +2,12 @@ import type { SetupDraft } from '../../lib/setupDraft';
 import { unwrapGeneratedFieldValue } from '../../lib/weddingProfile';
 import type { WeddingDataV1 } from '../../types/weddingData';
 
+const toIsoDateOrUndefined = (value?: string | null): string | undefined => {
+  if (!value?.trim()) return undefined;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+};
+
 export const hasMeaningfulSetupDraft = (draft: SetupDraft): boolean => {
   return Boolean(
     draft.partnerOneFirstName?.trim() ||
@@ -28,7 +34,7 @@ export const applySetupDraftToWeddingData = (source: WeddingDataV1, draft: Setup
   }
 
   if (draft.dateKnown && draft.weddingDate) {
-    next.event.weddingDateISO = new Date(draft.weddingDate).toISOString();
+    next.event.weddingDateISO = toIsoDateOrUndefined(draft.weddingDate);
   }
 
   if (draft.weddingCity || draft.weddingRegion) {
