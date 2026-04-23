@@ -458,6 +458,7 @@ export default function RSVP() {
   const submitInFlightRef = useRef(false);
   const pendingContinuityRefreshRef = useRef(false);
   const ignoreNextLocalContinuityEventRef = useRef(false);
+  const tokenLinkedSessionRef = useRef(false);
   const [activePredictionIndex, setActivePredictionIndex] = useState(-1);
   const [formStep, setFormStep] = useState<1 | 2 | 3>(1);
   const [rsvpQuestions, setRsvpQuestions] = useState<RSVPQuestion[]>([]);
@@ -501,6 +502,7 @@ export default function RSVP() {
     setSelectedHouseholdGuestIds([]);
     setFormStep(1);
     setActivePredictionIndex(-1);
+    tokenLinkedSessionRef.current = false;
     setSearchValue(preserveToken ? (searchParams.get('token') ?? '') : '');
     if (!preserveToken && searchParams.get('token')) {
       navigate('/rsvp', { replace: true });
@@ -600,6 +602,7 @@ export default function RSVP() {
       submitInFlightRef.current = false;
       pendingContinuityRefreshRef.current = false;
       ignoreNextLocalContinuityEventRef.current = false;
+      tokenLinkedSessionRef.current = false;
       setLoading(false);
       setTokenAutoLoading(false);
       setSubmitting(false);
@@ -659,16 +662,18 @@ export default function RSVP() {
       .then(({ data, error: err }) => {
         if (activeLookupRequestRef.current !== requestId) return;
         if (err || !data) {
+          tokenLinkedSessionRef.current = false;
           setError(err ?? 'Invitation not recognized. Please search by name below.');
           setTokenAutoLoading(false);
           return;
         }
         const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions?: RSVPQuestion[] | null; rsvpMealConfig?: RSVPMealConfig | null; musicPlaylistUrl?: string | null; householdGuests?: HouseholdGuest[] | null };
         if (result.guest) {
-          selectGuest(result.guest, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null);
+          selectGuest(result.guest, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null, 'token');
         } else if (result.guests && result.guests.length === 1) {
-          selectGuest(result.guests[0], result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null);
+          selectGuest(result.guests[0], result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null, 'token');
         } else if (result.guests && result.guests.length > 1) {
+          tokenLinkedSessionRef.current = false;
           setAmbiguousGuests(result.guests);
           setRsvpDeadline(result.rsvpDeadline);
           setRsvpQuestions(result.rsvpQuestions ?? []);
@@ -680,11 +685,13 @@ export default function RSVP() {
           setSelectedHouseholdGuestIds(hh.map((h) => h.id));
           setStep('pick');
         } else {
+          tokenLinkedSessionRef.current = false;
           setError('Invitation not recognized. Please search by name below.');
         }
       })
       .catch(() => {
         if (activeLookupRequestRef.current !== requestId) return;
+        tokenLinkedSessionRef.current = false;
         setError('Failed to load invitation. Please search by name below.');
       })
       .finally(() => {
@@ -694,7 +701,7 @@ export default function RSVP() {
   }, []);
 
   const refreshTokenLinkedRsvpForContinuity = useCallback(() => {
-    if (!activeToken) return;
+    if (!activeToken || !tokenLinkedSessionRef.current) return;
     if (loading || tokenAutoLoading || submitting || submitInFlightRef.current || hasPendingLocalRsvpEdits) {
       pendingContinuityRefreshRef.current = true;
       return;
@@ -743,7 +750,7 @@ export default function RSVP() {
   }, [activeToken, refreshTokenLinkedRsvpForContinuity]);
 
   useEffect(() => {
-    if (!pendingContinuityRefreshRef.current || !activeToken) return;
+    if (!pendingContinuityRefreshRef.current || !activeToken || !tokenLinkedSessionRef.current) return;
     if (loading || tokenAutoLoading || submitting || submitInFlightRef.current || hasPendingLocalRsvpEdits) return;
 
     pendingContinuityRefreshRef.current = false;
@@ -755,6 +762,9 @@ export default function RSVP() {
     const requestId = activeLookupRequestRef.current + 1;
     activeLookupRequestRef.current = requestId;
     invalidateActiveSubmit();
+    pendingContinuityRefreshRef.current = false;
+    ignoreNextLocalContinuityEventRef.current = false;
+    tokenLinkedSessionRef.current = false;
     setTokenAutoLoading(false);
     setLoading(true);
     setSubmitting(false);
@@ -833,8 +843,9 @@ export default function RSVP() {
     }
   };
 
-  function selectGuest(foundGuest: Guest, foundRsvp: ExistingRSVP | null, deadline: string | null = null, questions: RSVPQuestion[] = [], meal: RSVPMealConfig = { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, household: HouseholdGuest[] = [], playlistUrl: string | null = null) {
+  function selectGuest(foundGuest: Guest, foundRsvp: ExistingRSVP | null, deadline: string | null = null, questions: RSVPQuestion[] = [], meal: RSVPMealConfig = { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, household: HouseholdGuest[] = [], playlistUrl: string | null = null, source: 'manual' | 'token' = 'manual') {
     const normalizedRsvp = foundRsvp ? normalizeExistingRsvp(foundRsvp) : null;
+    tokenLinkedSessionRef.current = source === 'token';
     setGuest(foundGuest);
     setFormStep(1);
     setActivePredictionIndex(-1);

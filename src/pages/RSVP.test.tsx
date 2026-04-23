@@ -312,6 +312,87 @@ describe('RSVP stale submit protection', () => {
     expect(await screen.findByText('We have your current RSVP on file.')).toBeInTheDocument();
   });
 
+  it('does not let a stale token continuity refresh override a manual RSVP search', async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          guest: null,
+          existingRsvp: null,
+          guests: null,
+          rsvpDeadline: null,
+          rsvpQuestions: [],
+          rsvpMealConfig: { enabled: true, options: ['Chicken', 'Beef'] },
+          musicPlaylistUrl: null,
+          householdGuests: [],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          guest: {
+            id: 'guest-manual',
+            first_name: 'Jordan',
+            last_name: 'Rivera',
+            name: 'Jordan Rivera',
+            email: 'jordan@example.com',
+            phone: null,
+            group_name: null,
+            wedding_site_id: 'site-1',
+            plus_one_allowed: false,
+            invited_to_ceremony: true,
+            invited_to_reception: true,
+            invite_token: 'manual-token',
+          },
+          existingRsvp: null,
+          guests: null,
+          rsvpDeadline: null,
+          rsvpQuestions: [],
+          rsvpMealConfig: { enabled: true, options: ['Chicken', 'Beef'] },
+          musicPlaylistUrl: null,
+          householdGuests: [],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          guest: null,
+          existingRsvp: null,
+          guests: null,
+          rsvpDeadline: null,
+          rsvpQuestions: [],
+          rsvpMealConfig: { enabled: true, options: ['Chicken', 'Beef'] },
+          musicPlaylistUrl: null,
+          householdGuests: [],
+        }),
+      });
+
+    window.history.pushState({}, '', '/rsvp?token=stale-token');
+
+    render(
+      <BrowserRouter>
+        <RSVP />
+      </BrowserRouter>
+    );
+
+    expect(await screen.findByText('Invitation not recognized. Please search by name below.')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByPlaceholderText('rsvp.search_placeholder'), { target: { value: 'Jordan Rivera' } });
+    fireEvent.click(screen.getByText('Find My Invitation'));
+
+    expect(await screen.findByText('Welcome, Jordan Rivera!')).toBeInTheDocument();
+
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('dayof:rsvp-updated', { detail: { updatedAt: String(Date.now()) } }));
+    });
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+    expect(screen.getByText('Welcome, Jordan Rivera!')).toBeInTheDocument();
+    expect(screen.queryByText('Invitation not recognized. Please search by name below.')).not.toBeInTheDocument();
+  });
+
   it('does not let a manual-search submit swallow the next token-linked continuity refresh', async () => {
     window.history.pushState({}, '', '/rsvp');
 
