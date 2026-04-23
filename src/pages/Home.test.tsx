@@ -51,6 +51,8 @@ describe('Home draft-first CTAs', () => {
 
     expect(navigateMock).toHaveBeenCalledWith('/signup');
     expect(screen.getAllByRole('button', { name: 'Start your wedding site draft' }).length).toBeGreaterThan(0);
+    const anonymousFeatureLinks = screen.getAllByRole('link', { name: 'Explore this feature' }).filter((link) => link.getAttribute('href') === '/product');
+    expect(anonymousFeatureLinks.length).toBe(2);
   });
 
   it('sends signed-in users straight to the builder when they start their draft', () => {
@@ -68,5 +70,7 @@ describe('Home draft-first CTAs', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'Open your builder' })[1]);
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
     expect(screen.getAllByRole('link', { name: 'Open your builder' })[1]).toHaveAttribute('href', '/dashboard/builder');
+    const signedInFeatureLinks = screen.getAllByRole('link', { name: 'Explore this feature' }).filter((link) => link.getAttribute('href') === '/dashboard/overview');
+    expect(signedInFeatureLinks.length).toBe(2);
   });
 });
