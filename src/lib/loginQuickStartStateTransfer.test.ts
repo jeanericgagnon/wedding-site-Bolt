@@ -54,6 +54,26 @@ describe('login quick start state transfer', () => {
     expect(carriedDraft.followUpAnswers).toEqual({});
   });
 
+  it('keeps decimal-zero legacy carried quick start indexes truthful before auth continuation', () => {
+    const carriedDraft = createQuickStartDraftSnapshot({
+      currentIndex: '2.0',
+      initialSetupAnswers: {
+        names: 'Alex & Jordan',
+        labelPreference: 'names-only',
+        whenWhere: 'January 17, 2027 — Sayulita, Mexico',
+        style: 'Tropical, relaxed',
+      },
+      followUpAnswers: {},
+      showFollowUps: false,
+      viewState: 'question',
+      clarifyingState: null,
+    });
+
+    expect(carriedDraft.currentIndex).toBe(2);
+    expect(carriedDraft.showFollowUps).toBe(false);
+    expect(carriedDraft.viewState).toBe('question');
+  });
+
   it('drops malformed carried quick start answers before auth continuation', () => {
     persistQuickStartDraftSnapshot({
       initialSetupAnswers: { names: ['Alex & Jordan'], venueNameOrTbd: 'La Valencia' },

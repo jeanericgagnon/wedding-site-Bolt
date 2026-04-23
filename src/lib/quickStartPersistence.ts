@@ -34,6 +34,25 @@ const clampRestorableCurrentIndex = (currentIndex: number): number => (
   Math.min(currentIndex, RESTORABLE_SETUP_STEPS.length)
 );
 
+const parseRecoverableClosedCurrentIndex = (currentIndex: unknown): number | null => {
+  if (typeof currentIndex === 'number') {
+    return Number.isFinite(currentIndex)
+      && Number.isInteger(currentIndex)
+      && Number.isSafeInteger(currentIndex)
+      && currentIndex >= 0
+      ? currentIndex
+      : null;
+  }
+
+  if (typeof currentIndex !== 'string') return null;
+
+  const trimmed = currentIndex.trim();
+  if (!/^\d+(?:\.0+)?$/.test(trimmed)) return null;
+
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) && Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : null;
+};
+
 const resolveRestorableCurrentIndex = (currentIndex: number, answers: InitialSetupAnswers): number => {
   let maxIndex = 0;
 
@@ -464,10 +483,7 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     && Number.isInteger(parsed.currentIndex)
     && Number.isSafeInteger(parsed.currentIndex)
     && parsed.currentIndex >= 0;
-  const recoverableClosedCurrentIndex = typeof parsed.currentIndex === 'string'
-    && /^\d+$/.test(parsed.currentIndex.trim())
-    ? Number.parseInt(parsed.currentIndex.trim(), 10)
-    : null;
+  const recoverableClosedCurrentIndex = parseRecoverableClosedCurrentIndex(parsed.currentIndex);
   const recoveredClosedCurrentIndex = hasMeaningfulQuickStartAnswers(normalizedInitialSetupAnswers)
     ? resolveRestorableCurrentIndex(RESTORABLE_SETUP_STEPS.length, normalizedInitialSetupAnswers)
     : 0;
