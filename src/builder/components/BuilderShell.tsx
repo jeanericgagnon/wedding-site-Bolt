@@ -27,6 +27,61 @@ interface BuilderShellProps {
   onPublish?: (projectId: string) => Promise<{ version: number; publishedAt: string }>;
 }
 
+export const getPublishGuidance = (issue: ReturnType<typeof getPublishIssue>): { notice: string; error: string } | null => {
+  if (!issue) return null;
+
+  if (issue.kind === 'no-pages') {
+    return {
+      notice: 'Opened designs so you can add a starting point before going live.',
+      error: `${issue.message} Choose a starting design or add a page first.`,
+    };
+  }
+
+  if (issue.kind === 'no-enabled-sections') {
+    return {
+      notice: 'Selected the first section. Turn it on, then try again.',
+      error: `${issue.message} Select a section and turn it on in the inspector.`,
+    };
+  }
+
+  if (issue.kind === 'missing-couple-names') {
+    return {
+      notice: 'Open couple details in settings and add both names.',
+      error: issue.message,
+    };
+  }
+
+  if (issue.kind === 'missing-event-date') {
+    return {
+      notice: 'Add your wedding date in event settings.',
+      error: issue.message,
+    };
+  }
+
+  if (issue.kind === 'missing-venue') {
+    return {
+      notice: 'Add at least one venue before going live.',
+      error: issue.message,
+    };
+  }
+
+  if (issue.kind === 'rsvp-disabled') {
+    return {
+      notice: 'Turn RSVP on in settings or remove the RSVP button before going live.',
+      error: issue.message,
+    };
+  }
+
+  if (issue.kind === 'unsaved-changes') {
+    return {
+      notice: 'Save your latest draft changes, then try publish again.',
+      error: issue.message,
+    };
+  }
+
+  return null;
+};
+
 export const BuilderShell: React.FC<BuilderShellProps> = ({ 
   initialProject,
   initialWeddingData,
@@ -143,7 +198,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
   const handleFixPublishBlockers = useCallback(() => {
     const project = stateRef.current.project;
     if (!project) return;
-    const issue = getPublishIssue(project, stateRef.current.weddingData);
+    const issue = getPublishIssue(project, stateRef.current.weddingData, { isDirty: stateRef.current.isDirty });
     if (!issue) return;
 
     dispatch(builderActions.setMode('edit'));
@@ -169,28 +224,10 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
       return;
     }
 
-    if (issue.kind === 'missing-couple-names') {
-      setPublishNotice('Open couple details in settings and add both names.');
-      setPublishError(issue.message);
-      return;
-    }
-
-    if (issue.kind === 'missing-event-date') {
-      setPublishNotice('Add your wedding date in event settings.');
-      setPublishError(issue.message);
-      return;
-    }
-
-    if (issue.kind === 'missing-venue') {
-      setPublishNotice('Add at least one venue before going live.');
-      setPublishError(issue.message);
-      return;
-    }
-
-    if (issue.kind === 'rsvp-disabled') {
-      setPublishNotice('Turn RSVP on in settings or remove the RSVP button before going live.');
-      setPublishError(issue.message);
-    }
+    const guidance = getPublishGuidance(issue);
+    if (!guidance) return;
+    setPublishNotice(guidance.notice);
+    setPublishError(guidance.error);
   }, []);
 
   const handlePublish = useCallback(async () => {
@@ -201,7 +238,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     setPublishNotice(null);
     setPublishAttemptedAt(new Date().toISOString());
 
-    const publishValidationError = getPublishValidationError(currentState.project, currentState.weddingData);
+    const publishValidationError = getPublishValidationError(currentState.project, currentState.weddingData, { isDirty: currentState.isDirty });
     if (publishValidationError) {
       setPublishError(publishValidationError);
       return;
