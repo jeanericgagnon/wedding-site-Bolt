@@ -25,6 +25,8 @@ const SUPPORTED_DRAFT_FIELD_KEYS = new Set<NameChangeExtractedFieldInput['field_
   'court_order_date',
 ]);
 
+const DRAFT_LABEL_SEPARATOR_PATTERN = '[:#=\\-–—]';
+
 function humanizeDraftToken(value: string) {
   return value
     .replace(/_/g, ' ')
@@ -231,7 +233,10 @@ function normalizeDraftDateValue(value: string) {
   const namedOffsetPattern = '(?:UTC|GMT)[+-]?(?:\\d{1,2}|\\d{3,4}|\\d{1,2}:\\d{2})?';
   const zoneTokenPattern = `(?:Z|${rawOffsetPattern}|${namedOffsetPattern}|[A-Za-z]{2,5}|[A-Za-z_-]+(?:\\/[A-Za-z_-]+)+|\\([^)]*\\)|\\[[^\\]]+\\])`;
   const weekdayPrefixPattern = /^(?:(?:mon|tues|wednes|thurs|fri|satur|sun)day|(?:mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun))\b[,.\s-]*/i;
-  const dateLabelPrefixPattern = /^(?:(?:date of signature|date of issuance|date of issue|date of order|date of filing|issuance date|issue date|issued date|signed date|order date|filed date|date issued|date signed|date filed|dated|date)(?:\s*[:#=-]\s*|\s+)|(?:issued|signed|filed|dated)\s+(?:on(?:\s*[:#=-]\s*|\s+))?|(?:executed|entered)\s+(?:on(?:\s*[:#=-]\s*|\s+))?)/i;
+  const dateLabelPrefixPattern = new RegExp(
+    `^(?:(?:date of signature|date of issuance|date of issue|date of order|date of filing|issuance date|issue date|issued date|signed date|order date|filed date|date issued|date signed|date filed|dated|date)(?:\\s*${DRAFT_LABEL_SEPARATOR_PATTERN}\\s*|\\s+)|(?:issued|signed|filed|dated)\\s+(?:on(?:\\s*${DRAFT_LABEL_SEPARATOR_PATTERN}\\s*|\\s+))?|(?:executed|entered)\\s+(?:on(?:\\s*${DRAFT_LABEL_SEPARATOR_PATTERN}\\s*|\\s+))?)`,
+    'i',
+  );
   const normalizeIsoParts = (year: string, month: string, day: string) => {
     const normalizedYear = year.padStart(4, '0');
     const normalizedMonth = month.padStart(2, '0');
@@ -365,7 +370,7 @@ function normalizeDraftCountyValue(value: string) {
   if (!normalizedValue) return '';
 
   const countyWithoutLabels = normalizedValue.replace(
-    /^(?:(?:county\s+of|residence\s+county|resident\s+county|county\s+residence|county))\s*[:#=-]?\s*/i,
+    new RegExp(`^(?:(?:county\\s+of|residence\\s+county|resident\\s+county|county\\s+residence|county))\\s*${DRAFT_LABEL_SEPARATOR_PATTERN}?\\s*`, 'i'),
     '',
   );
   const countyWithoutTrailingPunctuation = countyWithoutLabels.replace(/[.,;:]+$/g, '').trim();
@@ -387,10 +392,10 @@ function normalizeDraftPersonNameValue(
   if (!normalizedValue) return '';
 
   const labelPatterns: Record<typeof fieldKey, RegExp> = {
-    first_name: /^(?:(?:first|given)(?:\s+legal)?\s+name|name\s*[:#=-]?\s*first)\s*[:#=-]?\s*/i,
-    middle_name: /^(?:middle(?:\s+legal)?\s+name|middle\s+initial)\s*[:#=-]?\s*/i,
-    last_name: /^(?:(?:last|family|surname)(?:\s+legal)?\s+name|new\s+legal\s+name)\s*[:#=-]?\s*/i,
-    spouse_last_name: /^(?:spouse(?:'s)?\s+(?:(?:last|family)\s+name|surname))\s*[:#=-]?\s*/i,
+    first_name: new RegExp(`^(?:(?:first|given)(?:\\s+legal)?\\s+name|name\\s*${DRAFT_LABEL_SEPARATOR_PATTERN}?\\s*first)\\s*${DRAFT_LABEL_SEPARATOR_PATTERN}?\\s*`, 'i'),
+    middle_name: new RegExp(`^(?:middle(?:\\s+legal)?\\s+name|middle\\s+initial)\\s*${DRAFT_LABEL_SEPARATOR_PATTERN}?\\s*`, 'i'),
+    last_name: new RegExp(`^(?:(?:last|family|surname)(?:\\s+legal)?\\s+name|new\\s+legal\\s+name)\\s*${DRAFT_LABEL_SEPARATOR_PATTERN}?\\s*`, 'i'),
+    spouse_last_name: new RegExp(`^(?:spouse(?:'s)?\\s+(?:(?:last|family)\\s+name|surname))\\s*${DRAFT_LABEL_SEPARATOR_PATTERN}?\\s*`, 'i'),
   };
 
   const unlabeledValue = normalizedValue.replace(labelPatterns[fieldKey], '').trim();
@@ -412,7 +417,7 @@ function normalizeDraftReferenceNumberValue(value: string) {
   if (!normalizedValue) return '';
 
   return normalizedValue
-    .replace(/^(?:(?:case|docket|certificate|cert|record)\s*(?:number|no\.?|#)?\s*[:#=-]\s*|(?:case|docket|certificate|cert|record)\s+(?:number|no\.?|#)\s*)/i, '')
+    .replace(new RegExp(`^(?:(?:case|docket|certificate|cert|record)\\s*(?:number|no\\.?|#)?\\s*${DRAFT_LABEL_SEPARATOR_PATTERN}\\s*|(?:case|docket|certificate|cert|record)\\s+(?:number|no\\.?|#)\\s*)`, 'i'), '')
     .trim()
     .replace(/[.,;:]+$/g, '')
     .replace(/^["'([{]+|["')\]}]+$/g, '')
