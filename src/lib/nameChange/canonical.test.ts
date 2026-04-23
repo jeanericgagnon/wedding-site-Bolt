@@ -95,6 +95,14 @@ describe('name change canonical case', () => {
     ];
     const extractedFields: NameChangeExtractedFieldInput[] = [
       {
+        document_id: 'draft-court-order',
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: '24-CV-0001',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
         document_id: 'doc-court-order',
         field_key: 'first_name',
         field_label: 'First name',
@@ -127,6 +135,61 @@ describe('name change canonical case', () => {
       storageMode: 'metadata_only',
       extractionFieldCount: 3,
       extractedFieldKeys: expect.arrayContaining(['first_name', 'last_name', 'case_number']),
+    });
+    expect(canonical.documents.court_order.extractedFieldKeys).not.toContain('court_order_date');
+  });
+
+  it('does not mix verified extracted keys from a lower-priority alias document into the canonical slot', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'placeholder-court-order',
+        document_kind: 'court_order_name_change',
+        display_name: 'Placeholder court order',
+        file_name_masked: 'document-placeholder.pdf',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+      {
+        id: 'reviewed-court-order',
+        document_kind: 'court_order',
+        display_name: 'Reviewed court order',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'placeholder-court-order',
+        field_key: 'court_order_date',
+        field_label: 'Court order date',
+        field_value_masked: '2026-04-01',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'reviewed-court-order',
+        field_key: 'first_name',
+        field_label: 'First name',
+        field_value_masked: 'Alex',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'reviewed-court-order',
+        field_key: 'last_name',
+        field_label: 'Last name',
+        field_value_masked: 'Jordan',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+
+    const canonical = buildNameChangeCanonicalCase(makeCase(), documents, extractedFields);
+
+    expect(canonical.documents.court_order).toMatchObject({
+      intakeStatus: 'reviewed',
+      extractionFieldCount: 2,
+      extractedFieldKeys: ['first_name', 'last_name'],
     });
   });
 });

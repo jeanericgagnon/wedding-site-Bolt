@@ -1,6 +1,5 @@
 import { canonicalizeNameChangeDocumentKind, getNameChangeDocumentKindAliases } from './documentKinds';
-import { getDocumentLinkedCapturedFieldKeys } from './extractionContract';
-import { isDraftNameChangePlaceholderDocument } from './intakeDraft';
+import { isDraftNameChangePlaceholderDocument, normalizeDraftFieldKey } from './intakeDraft';
 import type {
   NameChangeCanonicalCase,
   NameChangeCanonicalPersonName,
@@ -8,6 +7,7 @@ import type {
   NameChangeDocumentInput,
   NameChangeDocumentKind,
   NameChangeExtractedFieldInput,
+  NameChangeExtractionFieldKey,
 } from './types';
 
 function buildPersonName(first: string, middle: string | null | undefined, last: string): NameChangeCanonicalPersonName {
@@ -31,14 +31,26 @@ const DOCUMENT_KINDS: NameChangeDocumentKind[] = [
   'other',
 ];
 
+function getCanonicalDocumentFieldKeys(
+  document: NameChangeDocumentInput | undefined,
+  extractedFields: NameChangeExtractedFieldInput[],
+): NameChangeExtractionFieldKey[] {
+  if (!document?.id) return [];
+
+  return [...new Set(
+    extractedFields
+      .filter((field) => field.document_id === document.id && field.is_verified)
+      .map((field) => normalizeDraftFieldKey(field.field_key) as NameChangeExtractionFieldKey)
+      .filter((fieldKey): fieldKey is NameChangeExtractionFieldKey => Boolean(fieldKey)),
+  )];
+}
+
 function getCanonicalDocumentPriority(
   document: NameChangeDocumentInput,
   kind: NameChangeDocumentKind,
   extractedFields: NameChangeExtractedFieldInput[],
 ) {
-  const linkedFieldCount = document.id
-    ? getDocumentLinkedCapturedFieldKeys([document], extractedFields, kind).length
-    : 0;
+  const linkedFieldCount = getCanonicalDocumentFieldKeys(document, extractedFields).length;
   const realDocumentWeight = isDraftNameChangePlaceholderDocument(document) ? 0 : 1;
   const intakeWeight = document.intake_status === 'reviewed'
     ? 2
@@ -72,7 +84,7 @@ export function buildNameChangeCanonicalCase(
 ): NameChangeCanonicalCase {
   const canonicalDocuments = DOCUMENT_KINDS.reduce<NameChangeCanonicalCase['documents']>((acc, kind) => {
     const document = findCanonicalDocument(documents, extractedFields, kind);
-    const extractedFieldKeys = getDocumentLinkedCapturedFieldKeys(documents, extractedFields, kind);
+    const extractedFieldKeys = getCanonicalDocumentFieldKeys(document, extractedFields);
     acc[kind] = {
       intakeStatus: document?.intake_status ?? 'not_started',
       storageMode: document?.storage_mode ?? 'none',
