@@ -10,6 +10,7 @@ import { WeddingDataV1, createEmptyWeddingData } from '../types/weddingData';
 import { createDefaultSectionInstance } from '../types/builder/section';
 import { supabase } from '../lib/supabase';
 import { demoWeddingSite } from '../lib/demoData';
+import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
 import { getTemplatePack } from './constants/builderTemplatePacks';
 import { readSetupDraft } from '../lib/setupDraft';
 import { applySetupDraftToWeddingData, hasMeaningfulSetupDraft } from './utils/setupDraftHydration';
@@ -77,7 +78,7 @@ function createDemoWeddingDataFromSite(): WeddingDataV1 {
 
   data.couple.partner1Name = demoWeddingSite.couple_name_1;
   data.couple.partner2Name = demoWeddingSite.couple_name_2;
-  data.couple.displayName = `${demoWeddingSite.couple_name_1} & ${demoWeddingSite.couple_name_2}`;
+  data.couple.displayName = buildCoupleDisplayName(demoWeddingSite.couple_name_1, demoWeddingSite.couple_name_2, 'The couple');
   data.couple.story = 'We met on a rainy Tuesday in Seattle and spent our first date talking for six hours in a tiny coffee shop. Years later, after moving cities, building a home, and collecting too many plants, we got engaged at sunset with our families nearby. We cannot wait to celebrate with everyone we love.';
   data.event.weddingDateISO = weddingDate.toISOString();
   data.event.timezone = 'America/Los_Angeles';

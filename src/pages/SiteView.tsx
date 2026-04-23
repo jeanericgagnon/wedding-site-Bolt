@@ -22,6 +22,7 @@ import { demoWeddingSite } from '../lib/demoData';
 import { rewriteSignedMediaUrlsToPublicDeep } from '../lib/mediaUrl';
 import { getArchiveModeDescriptor } from '../lib/archiveMode';
 import { getSiteVisibilityState } from '../lib/siteVisibilityState';
+import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
 import { getIsPublishedFromSiteRow, getPublicBuilderProject, getPublicWeddingData } from '../lib/publicSiteProject';
 
 interface PublicItineraryRow {
@@ -169,7 +170,7 @@ function createAlexJordanDemoWeddingData(): WeddingDataV1 {
   const data = createEmptyWeddingData();
   data.couple.partner1Name = demoWeddingSite.couple_name_1;
   data.couple.partner2Name = demoWeddingSite.couple_name_2;
-  data.couple.displayName = `${demoWeddingSite.couple_name_1} & ${demoWeddingSite.couple_name_2}`;
+  data.couple.displayName = buildCoupleDisplayName(demoWeddingSite.couple_name_1, demoWeddingSite.couple_name_2, 'The couple');
   data.event.weddingDateISO = new Date(demoWeddingSite.wedding_date).toISOString();
   data.venues = [{ id: 'demo-venue-1', name: demoWeddingSite.venue_name, address: demoWeddingSite.venue_location }];
   data.media.heroImageUrl = demoWeddingSite.hero_image_url;
