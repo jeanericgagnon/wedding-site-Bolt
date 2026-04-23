@@ -479,6 +479,8 @@ export default function RSVP() {
   const resetToSearch = useCallback((preserveToken = false) => {
     activeLookupRequestRef.current += 1;
     invalidateActiveSubmit();
+    pendingContinuityRefreshRef.current = false;
+    ignoreNextLocalContinuityEventRef.current = false;
     setLoading(false);
     setSubmitting(false);
     setTokenAutoLoading(false);
@@ -596,6 +598,8 @@ export default function RSVP() {
       activeLookupRequestRef.current += 1;
       activeSubmitRequestRef.current += 1;
       submitInFlightRef.current = false;
+      pendingContinuityRefreshRef.current = false;
+      ignoreNextLocalContinuityEventRef.current = false;
       setLoading(false);
       setTokenAutoLoading(false);
       setSubmitting(false);
@@ -629,6 +633,8 @@ export default function RSVP() {
     activeLookupRequestRef.current = requestId;
     activeSubmitRequestRef.current += 1;
     submitInFlightRef.current = false;
+    pendingContinuityRefreshRef.current = false;
+    ignoreNextLocalContinuityEventRef.current = false;
     setLoading(false);
     setTokenAutoLoading(true);
     setSubmitting(false);
