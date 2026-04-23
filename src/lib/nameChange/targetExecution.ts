@@ -61,7 +61,7 @@ export function buildNameChangeTargetExecutionSnapshot(
   ]).size;
   const firstBlockingFieldRisk = fieldRisks.find((risk) => risk.severity === 'blocking');
   const firstMissingFieldRisk = fieldRisks.find((risk) => risk.severity === 'attention');
-  const firstMissingDependency = sequence.dependencies.find((dependency) => dependency.required && dependency.status === 'missing');
+  const firstBlockingDependency = sequence.dependencies.find((dependency) => dependency.blocksReady ?? (dependency.required && dependency.status === 'missing'));
   const firstAttentionDependency = sequence.dependencies.find((dependency) => dependency.status === 'attention');
   const firstMissingChecklistItem = checklist.find((item) => item.status === 'missing');
   const blockingAttentionChecklistKeys = new Set(['canonical-extraction-alignment']);
@@ -147,11 +147,11 @@ export function buildNameChangeTargetExecutionSnapshot(
           label: `Repair ${firstBlockingFieldRisk.label}`,
           detail: firstBlockingFieldRisk.reason,
         }
-    : firstMissingDependency
+    : firstBlockingDependency
       ? {
-          category: firstMissingDependency.key.includes('support') || firstMissingDependency.key.includes('document') ? 'document' as const : 'dependency' as const,
-          label: `Unblock ${firstMissingDependency.label}`,
-          detail: firstMissingDependency.reason,
+          category: firstBlockingDependency.key.includes('support') || firstBlockingDependency.key.includes('document') ? 'document' as const : 'dependency' as const,
+          label: `Unblock ${firstBlockingDependency.label}`,
+          detail: firstBlockingDependency.reason,
         }
       : firstMissingChecklistItem
         ? {

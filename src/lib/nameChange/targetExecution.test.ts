@@ -158,8 +158,9 @@ describe('name change target execution snapshot', () => {
     ], []);
 
     expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'identity-document-coverage')).toMatchObject({
-      status: 'missing',
+      status: 'attention',
       required: true,
+      blocksReady: true,
     });
     expect(snapshot.ready).toBe(false);
     expect(snapshot.blockers).toContain('Identity documents exist in intake, but metadata is still too thin for confident downstream use.');
@@ -640,7 +641,10 @@ describe('name change target execution snapshot', () => {
     const snapshot = buildNameChangeTargetExecutionSnapshot('courtOrder', profile, documents, extractedFields);
     expect(snapshot.targetLabel).toContain('Court-order');
     expect(snapshot.recommendedFormCode).toBe('COURT-ORDER-PATH-REVIEW');
-    expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'court-order-path-readiness')).toMatchObject({ status: 'missing' });
+    expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'court-order-path-readiness')).toMatchObject({
+      status: 'attention',
+      blocksReady: true,
+    });
     expect(snapshot.checklist.find((item) => item.key === 'court-order-path-readiness')).toMatchObject({ status: 'attention' });
     expect(snapshot.autofillFields.find((field) => field.targetField === 'applicant.target_first_name')).toMatchObject({
       value: expect.objectContaining({
