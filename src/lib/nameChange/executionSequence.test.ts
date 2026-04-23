@@ -581,6 +581,7 @@ describe('name change execution sequence snapshot', () => {
     expect(snapshot.dependencies.find((dependency) => dependency.key === 'identity-document-coverage')).toMatchObject({
       status: 'attention',
       required: true,
+      nextActionCategory: 'document',
       blocksReady: true,
       reason: 'Identity documents exist in intake, but metadata is still too thin for confident downstream use.',
     });

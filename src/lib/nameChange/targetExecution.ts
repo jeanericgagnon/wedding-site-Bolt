@@ -169,6 +169,17 @@ export function buildNameChangeTargetExecutionSnapshot(
 
     return `Review ${item.label}`;
   };
+  const getDependencyCategory = (dependency: typeof dependencies[number], fallback: 'dependency' | 'review') => {
+    if (dependency.nextActionCategory === 'document') {
+      return 'document' as const;
+    }
+
+    if (dependency.nextActionCategory === 'review') {
+      return 'review' as const;
+    }
+
+    return fallback;
+  };
   const nextAction = blockingFieldConflict
     ? {
         category: 'document' as const,
@@ -185,7 +196,7 @@ export function buildNameChangeTargetExecutionSnapshot(
         }
     : firstBlockingDependency
       ? {
-          category: firstBlockingDependency.key.includes('support') || firstBlockingDependency.key.includes('document') ? 'document' as const : 'dependency' as const,
+          category: getDependencyCategory(firstBlockingDependency, 'dependency'),
           label: `Unblock ${firstBlockingDependency.label}`,
           detail: firstBlockingDependency.reason,
         }
@@ -213,7 +224,7 @@ export function buildNameChangeTargetExecutionSnapshot(
             }
           : firstAttentionDependency
             ? {
-                category: 'review' as const,
+                category: getDependencyCategory(firstAttentionDependency, 'review'),
                 label: `Review ${firstAttentionDependency.label}`,
                 detail: firstAttentionDependency.reason,
               }

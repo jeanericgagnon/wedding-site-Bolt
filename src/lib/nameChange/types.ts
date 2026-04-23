@@ -393,6 +393,7 @@ export interface NameChangeExecutionDependency {
   required: boolean;
   status: 'satisfied' | 'missing' | 'attention';
   reason: string;
+  nextActionCategory?: 'document' | 'dependency' | 'review';
   blocksReady?: boolean;
 }
 

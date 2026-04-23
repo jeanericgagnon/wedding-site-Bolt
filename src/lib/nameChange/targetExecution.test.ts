@@ -154,12 +154,13 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'identity-document-coverage')).toMatchObject({
       status: 'attention',
       required: true,
+      nextActionCategory: 'document',
       blocksReady: true,
     });
     expect(snapshot.ready).toBe(false);
     expect(snapshot.blockers).toContain('Identity documents exist in intake, but metadata is still too thin for confident downstream use.');
     expect(snapshot.nextAction).toMatchObject({
-      category: expect.stringMatching(/dependency|document/),
+      category: 'document',
       label: expect.stringContaining('Unblock'),
     });
   });
@@ -237,6 +238,37 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.targetLabel).toContain('DMV');
     expect(snapshot.recommendedFormCode).toBe('CA-DL-44');
     expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'federal-ssa-progress')).toMatchObject({ status: 'satisfied' });
+  });
+
+  it('keeps county-context dependency blockers routed as dependency work', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'San Diego County Clerk',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
+      },
+    ];
+    const basePlan = buildNameChangePlan({ profile: makeCase({ county_residence: null }), documents, extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-ssa' ? { ...step, executionStatus: 'complete' as const } : step),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('dmv', makeCase({ county_residence: null }), documents, [], plan);
+    expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'county-context')).toMatchObject({
+      nextActionCategory: 'dependency',
+      status: 'missing',
+      blocksReady: true,
+    });
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'dependency',
+      label: 'Unblock County / jurisdiction context',
+    });
   });
 
   it('routes missing field-presence checklist work into packet preparation actions', () => {

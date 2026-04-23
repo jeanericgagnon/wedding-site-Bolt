@@ -38,6 +38,7 @@ function buildRequirementDependency(
   required = true,
   fallbackReason: string,
   blockOnAttention = false,
+  nextActionCategory: NameChangeExecutionDependency['nextActionCategory'] = 'dependency',
 ): NameChangeExecutionDependency {
   const status = result?.status ?? 'missing';
   return {
@@ -46,6 +47,7 @@ function buildRequirementDependency(
     required,
     status,
     reason: result?.reason ?? fallbackReason,
+    nextActionCategory,
     blocksReady: required && (status === 'missing' || (status === 'attention' && blockOnAttention)),
   };
 }
@@ -71,6 +73,7 @@ function buildDocumentSupportDependency(
     required,
     status,
     reason: matched ? config.satisfiedReason : config.missingReason,
+    nextActionCategory: 'document',
     blocksReady: required && status !== 'satisfied',
   };
 }
@@ -85,24 +88,25 @@ function buildEmploymentContextDependency(profile: NameChangeCaseInput, label: s
     required: true,
     status,
     reason: activeEmployment ? satisfiedReason : missingReason,
+    nextActionCategory: 'dependency',
     blocksReady: status !== 'satisfied',
   };
 }
 
 const buildLegalAndIdentityDependencies: NameChangeDependencyRecipe = ({ requirements }) => [
-  buildRequirementDependency(requirements.legalProof, 'legal-proof-document', 'Legal proof document ready', true, 'Legal proof requirement not evaluated.'),
-  buildRequirementDependency(requirements.identityCoverage, 'identity-document-coverage', 'Identity document coverage', true, 'Identity coverage requirement not evaluated.'),
+  buildRequirementDependency(requirements.legalProof, 'legal-proof-document', 'Legal proof document ready', true, 'Legal proof requirement not evaluated.', false, 'document'),
+  buildRequirementDependency(requirements.identityCoverage, 'identity-document-coverage', 'Identity document coverage', true, 'Identity coverage requirement not evaluated.', false, 'document'),
 ];
 
 const buildStrictLegalAndIdentityDependencies: NameChangeDependencyRecipe = ({ requirements }) => [
-  buildRequirementDependency(requirements.legalProof, 'legal-proof-document', 'Legal proof document ready', true, 'Legal proof requirement not evaluated.', true),
-  buildRequirementDependency(requirements.identityCoverage, 'identity-document-coverage', 'Identity document coverage', true, 'Identity coverage requirement not evaluated.', true),
+  buildRequirementDependency(requirements.legalProof, 'legal-proof-document', 'Legal proof document ready', true, 'Legal proof requirement not evaluated.', true, 'document'),
+  buildRequirementDependency(requirements.identityCoverage, 'identity-document-coverage', 'Identity document coverage', true, 'Identity coverage requirement not evaluated.', true, 'document'),
 ];
 
 const buildDmvDependencies: NameChangeDependencyRecipe = ({ intake, requirements, prerequisiteDependencies }) => [
-  buildRequirementDependency(requirements.legalProof, 'legal-proof-document', 'Legal proof document ready', true, 'Legal proof requirement not evaluated.', true),
-  buildRequirementDependency(requirements.launchStateAlignment, 'launch-state-alignment', 'California launch-state alignment', true, 'California launch-state alignment has not been evaluated.', true),
-  buildRequirementDependency(requirements.countyContext, 'county-context', 'County / jurisdiction context', true, 'County context requirement not evaluated.', true),
+  buildRequirementDependency(requirements.legalProof, 'legal-proof-document', 'Legal proof document ready', true, 'Legal proof requirement not evaluated.', true, 'document'),
+  buildRequirementDependency(requirements.launchStateAlignment, 'launch-state-alignment', 'California launch-state alignment', true, 'California launch-state alignment has not been evaluated.', true, 'dependency'),
+  buildRequirementDependency(requirements.countyContext, 'county-context', 'County / jurisdiction context', true, 'County context requirement not evaluated.', true, 'dependency'),
   buildDocumentSupportDependency(intake, {
     key: 'identity-document-coverage',
     label: 'California-facing identity/address support',
@@ -114,17 +118,17 @@ const buildDmvDependencies: NameChangeDependencyRecipe = ({ intake, requirements
 ];
 
 const buildCourtOrderDependencies: NameChangeDependencyRecipe = ({ requirements }) => [
-  buildRequirementDependency(requirements.launchStateAlignment, 'launch-state-alignment', 'California launch-state alignment', true, 'California launch-state alignment has not been evaluated.', true),
-  buildRequirementDependency(requirements.courtOrderPathReadiness, 'court-order-path-readiness', 'Court-order path readiness', true, 'Court-order path readiness has not been evaluated.', true),
-  buildRequirementDependency(requirements.courtOrderJurisdictionContext, 'court-order-jurisdiction-context', 'Court-order jurisdiction context', true, 'Court-order jurisdiction context has not been evaluated.', true),
-  buildRequirementDependency(requirements.courtOrderReferenceExtraction, 'court-order-reference-extraction', 'Court-order reference extraction', true, 'Court-order reference extraction has not been evaluated.', true),
-  buildRequirementDependency(requirements.identityCoverage, 'identity-document-coverage', 'Identity document coverage', true, 'Identity coverage requirement not evaluated.', true),
+  buildRequirementDependency(requirements.launchStateAlignment, 'launch-state-alignment', 'California launch-state alignment', true, 'California launch-state alignment has not been evaluated.', true, 'dependency'),
+  buildRequirementDependency(requirements.courtOrderPathReadiness, 'court-order-path-readiness', 'Court-order path readiness', true, 'Court-order path readiness has not been evaluated.', true, 'dependency'),
+  buildRequirementDependency(requirements.courtOrderJurisdictionContext, 'court-order-jurisdiction-context', 'Court-order jurisdiction context', true, 'Court-order jurisdiction context has not been evaluated.', true, 'dependency'),
+  buildRequirementDependency(requirements.courtOrderReferenceExtraction, 'court-order-reference-extraction', 'Court-order reference extraction', true, 'Court-order reference extraction has not been evaluated.', true, 'document'),
+  buildRequirementDependency(requirements.identityCoverage, 'identity-document-coverage', 'Identity document coverage', true, 'Identity coverage requirement not evaluated.', true, 'document'),
 ];
 
 const buildPassportDependencies: NameChangeDependencyRecipe = ({ profile, requirements, prerequisiteDependencies }) => [
   ...buildStrictLegalAndIdentityDependencies({ profile, intake: null as never, requirements, prerequisiteDependencies }),
-  buildRequirementDependency(requirements.marriageJurisdictionAlignment, 'marriage-jurisdiction-alignment', 'Marriage jurisdiction alignment', true, 'Marriage jurisdiction alignment has not been evaluated.', true),
-  buildRequirementDependency(requirements.outOfStateMarriageCertificateGrounding, 'out-of-state-marriage-certificate-grounding', 'Out-of-state marriage certificate grounding', true, 'Out-of-state marriage certificate grounding has not been evaluated.', true),
+  buildRequirementDependency(requirements.marriageJurisdictionAlignment, 'marriage-jurisdiction-alignment', 'Marriage jurisdiction alignment', true, 'Marriage jurisdiction alignment has not been evaluated.', true, 'document'),
+  buildRequirementDependency(requirements.outOfStateMarriageCertificateGrounding, 'out-of-state-marriage-certificate-grounding', 'Out-of-state marriage certificate grounding', true, 'Out-of-state marriage certificate grounding has not been evaluated.', true, 'document'),
   {
     key: 'citizenship-eligibility',
     label: 'Citizenship eligible for passport path',
@@ -134,8 +138,8 @@ const buildPassportDependencies: NameChangeDependencyRecipe = ({ profile, requir
       ? 'Citizenship context supports the modeled U.S. passport path.'
       : 'Current modeled passport flow assumes U.S. citizenship eligibility.',
   },
-  buildRequirementDependency(requirements.passportTimingRisk, 'passport-timing-risk', 'Passport timing risk reviewed', false, 'Passport timing risk has not been evaluated.'),
-  buildRequirementDependency(requirements.expeditedTravelSequencing, 'expedited-travel-sequencing', 'Expedited travel sequencing ready', false, 'Expedited travel sequencing has not been evaluated.'),
+  buildRequirementDependency(requirements.passportTimingRisk, 'passport-timing-risk', 'Passport timing risk reviewed', false, 'Passport timing risk has not been evaluated.', false, 'review'),
+  buildRequirementDependency(requirements.expeditedTravelSequencing, 'expedited-travel-sequencing', 'Expedited travel sequencing ready', false, 'Expedited travel sequencing has not been evaluated.', false, 'review'),
   buildRequirementDependency(requirements.passportEligibilityPath, 'passport-eligibility-path', 'Passport eligibility path is clear', true, 'Passport eligibility path has not been evaluated.', true),
   ...prerequisiteDependencies,
 ];
@@ -151,7 +155,7 @@ function buildEmploymentTargetDependencies(config: {
   supportMissingReason: string;
 }): NameChangeDependencyRecipe {
   return ({ profile, intake, requirements, prerequisiteDependencies }) => [
-    buildRequirementDependency(requirements.identityCoverage, 'identity-document-coverage', 'Identity document coverage', true, 'Identity coverage requirement not evaluated.'),
+    buildRequirementDependency(requirements.identityCoverage, 'identity-document-coverage', 'Identity document coverage', true, 'Identity coverage requirement not evaluated.', false, 'document'),
     buildEmploymentContextDependency(profile, config.label, config.satisfiedReason, config.missingReason),
     buildDocumentSupportDependency(intake, {
       key: config.supportKey,
@@ -185,8 +189,8 @@ function buildPhotoIdPacketDependencies(config: {
 }
 
 const buildVoterDependencies: NameChangeDependencyRecipe = ({ intake, requirements, prerequisiteDependencies }) => [
-  buildRequirementDependency(requirements.launchStateAlignment, 'launch-state-alignment', 'California launch-state alignment', true, 'California launch-state alignment has not been evaluated.'),
-  buildRequirementDependency(requirements.countyContext, 'county-context', 'County / jurisdiction context', true, 'County context requirement not evaluated.'),
+  buildRequirementDependency(requirements.launchStateAlignment, 'launch-state-alignment', 'California launch-state alignment', true, 'California launch-state alignment has not been evaluated.', false, 'dependency'),
+  buildRequirementDependency(requirements.countyContext, 'county-context', 'County / jurisdiction context', true, 'County context requirement not evaluated.', false, 'dependency'),
   buildDocumentSupportDependency(intake, {
     key: 'california-voter-support',
     label: 'California voter-supporting identity/address support',
@@ -198,11 +202,11 @@ const buildVoterDependencies: NameChangeDependencyRecipe = ({ intake, requiremen
 ];
 
 const buildTsaDependencies: NameChangeDependencyRecipe = ({ intake, requirements, prerequisiteDependencies }) => [
-  buildRequirementDependency(requirements.marriageJurisdictionAlignment, 'marriage-jurisdiction-alignment', 'Marriage jurisdiction alignment', true, 'Marriage jurisdiction alignment has not been evaluated.', true),
-  buildRequirementDependency(requirements.outOfStateMarriageCertificateGrounding, 'out-of-state-marriage-certificate-grounding', 'Out-of-state marriage certificate grounding', true, 'Out-of-state marriage certificate grounding has not been evaluated.', true),
-  buildRequirementDependency(requirements.identityCoverage, 'identity-document-coverage', 'Identity document coverage', true, 'Identity coverage requirement not evaluated.'),
-  buildRequirementDependency(requirements.passportTimingRisk, 'passport-timing-risk', 'Passport timing risk reviewed', false, 'Passport timing risk has not been evaluated.'),
-  buildRequirementDependency(requirements.expeditedTravelSequencing, 'expedited-travel-sequencing', 'Expedited travel sequencing ready', false, 'Expedited travel sequencing has not been evaluated.'),
+  buildRequirementDependency(requirements.marriageJurisdictionAlignment, 'marriage-jurisdiction-alignment', 'Marriage jurisdiction alignment', true, 'Marriage jurisdiction alignment has not been evaluated.', true, 'document'),
+  buildRequirementDependency(requirements.outOfStateMarriageCertificateGrounding, 'out-of-state-marriage-certificate-grounding', 'Out-of-state marriage certificate grounding', true, 'Out-of-state marriage certificate grounding has not been evaluated.', true, 'document'),
+  buildRequirementDependency(requirements.identityCoverage, 'identity-document-coverage', 'Identity document coverage', true, 'Identity coverage requirement not evaluated.', false, 'document'),
+  buildRequirementDependency(requirements.passportTimingRisk, 'passport-timing-risk', 'Passport timing risk reviewed', false, 'Passport timing risk has not been evaluated.', false, 'review'),
+  buildRequirementDependency(requirements.expeditedTravelSequencing, 'expedited-travel-sequencing', 'Expedited travel sequencing ready', false, 'Expedited travel sequencing has not been evaluated.', false, 'review'),
   buildRequirementDependency(requirements.passportEligibilityPath, 'passport-eligibility-path', 'Passport eligibility path is clear', true, 'Passport eligibility path has not been evaluated.', true),
   buildDocumentSupportDependency(intake, {
     key: 'travel-profile-support',
