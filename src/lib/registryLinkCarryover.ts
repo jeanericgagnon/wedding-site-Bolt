@@ -69,7 +69,7 @@ function isWeakExplicitTokenLabel(url: string, label: string | undefined): boole
 function isWeakInferredSourceLabel(url: string, label: string | undefined): boolean {
   if (!label) return false;
   const normalizedUrl = normalizeUrl(url) ?? url;
-  return isWeakExplicitTokenLabel(normalizedUrl, label);
+  return isWeakExplicitTokenLabel(normalizedUrl, label) || isGenericRegistryLabelText(label);
 }
 
 function inferSourceLabelFromText(text: string): string | undefined {
@@ -90,9 +90,25 @@ function inferSourceLabelFromText(text: string): string | undefined {
   return undefined;
 }
 
+function isGenericRegistryLabelText(text: string): boolean {
+  const normalized = text
+    .trim()
+    .toLowerCase()
+    .replace(/[|,;:()[\]<>"']/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!normalized) return false;
+
+  if (/^(?:our|the|wedding|gift|baby|bridal|honeymoon)$/.test(normalized)) return true;
+
+  return /^(?:(?:our|the|wedding|gift|baby|bridal|honeymoon)\s+)*(?:registry|gift\s*list|wishlist)$/i.test(normalized)
+    || /^(?:registry|gift\s*list|wishlist)(?:\s+(?:our|the|wedding|gift|baby|bridal|honeymoon))*$/i.test(normalized);
+}
+
 function extractExplicitSourceLabelFragment(text: string): string | undefined {
   const inferred = inferSourceLabelFromText(text);
   if (inferred) return inferred;
+  if (isGenericRegistryLabelText(text)) return undefined;
 
   const cleaned = text
     .replace(/\b(purchased|purchasing|buying|claimed|claiming|reserved|reserving|booked|booking)\s+by\s+[a-z][^|,;:()[\]<>"']*/gi, '')

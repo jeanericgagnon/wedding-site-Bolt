@@ -63,4 +63,19 @@ describe('fromOnboarding registry carryover', () => {
       ]),
     );
   });
+
+  it('ignores generic markdown registry text when imported custom labels merge into generated wedding data', () => {
+    const weddingData = fromOnboarding({
+      partner1Name: 'Alex',
+      partner2Name: 'Sam',
+      registryLinksRaw: 'Custom Honeymoon Fund | [Gift Registry](example.com/list) and https://target.com/list',
+    });
+
+    expect(weddingData.registry.links).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ url: 'https://example.com/list', label: 'Custom Honeymoon Fund' }),
+        expect.objectContaining({ url: 'https://target.com/list', label: 'Target' }),
+      ]),
+    );
+  });
 });
