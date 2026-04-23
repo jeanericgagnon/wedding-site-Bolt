@@ -29,7 +29,7 @@ const normalizePublishCopyForMatch = (value: string) =>
     .replace(/[–—]/g, '-')
     .replace(/\s+/g, ' ')
     .trim()
-    .replace(/[.!?]+$/g, '');
+    .replace(/[.,:;!?]+$/g, '');
 
 const normalizePublishErrorForMatch = (value: string) =>
   value
