@@ -113,10 +113,19 @@ export function getVerifiedDocumentLinkedFieldValue(
   kind: NameChangeDocumentKind,
   fieldKey: NameChangeExtractionFieldKey,
 ): string | null {
-  return getLinkedFieldValue(documents, extractedFields, kind, fieldKey, true) ?? getManualFallbackValue(extractedFields, fieldKey, true);
+  return getLinkedFieldValue(documents, extractedFields, kind, fieldKey, true);
 }
 
-export function hasAnyDocumentLinkedFieldValue(
+export function getVerifiedDocumentFieldValue(
+  documents: NameChangeDocumentInput[],
+  extractedFields: NameChangeExtractedFieldInput[],
+  kind: NameChangeDocumentKind,
+  fieldKey: NameChangeExtractionFieldKey,
+): string | null {
+  return getVerifiedDocumentLinkedFieldValue(documents, extractedFields, kind, fieldKey) ?? getManualFallbackValue(extractedFields, fieldKey, true);
+}
+
+export function hasAnyLinkedDocumentFieldValue(
   documents: NameChangeDocumentInput[],
   extractedFields: NameChangeExtractedFieldInput[],
   kind: NameChangeDocumentKind,
@@ -127,7 +136,30 @@ export function hasAnyDocumentLinkedFieldValue(
     ? extractedFields.find((item) => item.document_id === document.id && normalizeFieldKey(item.field_key) === fieldKey)
     : null;
 
-  if (normalizeValue(fieldKey, linkedField?.field_value_masked)) return true;
+  return Boolean(normalizeValue(fieldKey, linkedField?.field_value_masked));
+}
+
+export function hasVerifiedLinkedDocumentFieldValue(
+  documents: NameChangeDocumentInput[],
+  extractedFields: NameChangeExtractedFieldInput[],
+  kind: NameChangeDocumentKind,
+  fieldKey: NameChangeExtractionFieldKey,
+): boolean {
+  const document = getDocumentByKind(documents, extractedFields, kind);
+  const linkedField = document?.id
+    ? extractedFields.find((item) => item.document_id === document.id && normalizeFieldKey(item.field_key) === fieldKey && item.is_verified)
+    : null;
+
+  return Boolean(normalizeValue(fieldKey, linkedField?.field_value_masked));
+}
+
+export function hasAnyDocumentLinkedFieldValue(
+  documents: NameChangeDocumentInput[],
+  extractedFields: NameChangeExtractedFieldInput[],
+  kind: NameChangeDocumentKind,
+  fieldKey: NameChangeExtractionFieldKey,
+): boolean {
+  if (hasAnyLinkedDocumentFieldValue(documents, extractedFields, kind, fieldKey)) return true;
 
   const manualField = getManualFallbackField(extractedFields, fieldKey);
   return Boolean(manualField && manualField.source_type === 'manual' && normalizeValue(fieldKey, manualField.field_value_masked));
@@ -139,12 +171,7 @@ export function hasVerifiedDocumentLinkedFieldValue(
   kind: NameChangeDocumentKind,
   fieldKey: NameChangeExtractionFieldKey,
 ): boolean {
-  const document = getDocumentByKind(documents, extractedFields, kind);
-  const linkedField = document?.id
-    ? extractedFields.find((item) => item.document_id === document.id && normalizeFieldKey(item.field_key) === fieldKey && item.is_verified)
-    : null;
-
-  if (normalizeValue(fieldKey, linkedField?.field_value_masked)) return true;
+  if (hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, kind, fieldKey)) return true;
 
   const manualField = getManualFallbackField(extractedFields, fieldKey);
   return Boolean(manualField && manualField.source_type === 'manual' && manualField.is_verified && normalizeValue(fieldKey, manualField.field_value_masked));
@@ -259,7 +286,7 @@ function buildCanonicalFieldConflicts(
       documentKind: 'current_passport',
       fieldKey: 'first_name',
       canonicalValue: canonicalCase.currentName.first,
-      extractedValue: getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'current_passport', 'first_name'),
+      extractedValue: getVerifiedDocumentFieldValue(documents, extractedFields, 'current_passport', 'first_name'),
     },
     {
       key: 'current-last-name-passport',
@@ -267,7 +294,7 @@ function buildCanonicalFieldConflicts(
       documentKind: 'current_passport',
       fieldKey: 'last_name',
       canonicalValue: canonicalCase.currentName.last,
-      extractedValue: getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'current_passport', 'last_name'),
+      extractedValue: getVerifiedDocumentFieldValue(documents, extractedFields, 'current_passport', 'last_name'),
     },
     {
       key: 'current-first-name-license',
@@ -275,7 +302,7 @@ function buildCanonicalFieldConflicts(
       documentKind: 'current_drivers_license',
       fieldKey: 'first_name',
       canonicalValue: canonicalCase.currentName.first,
-      extractedValue: getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'current_drivers_license', 'first_name'),
+      extractedValue: getVerifiedDocumentFieldValue(documents, extractedFields, 'current_drivers_license', 'first_name'),
     },
     {
       key: 'current-last-name-license',
@@ -283,7 +310,7 @@ function buildCanonicalFieldConflicts(
       documentKind: 'current_drivers_license',
       fieldKey: 'last_name',
       canonicalValue: canonicalCase.currentName.last,
-      extractedValue: getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'current_drivers_license', 'last_name'),
+      extractedValue: getVerifiedDocumentFieldValue(documents, extractedFields, 'current_drivers_license', 'last_name'),
     },
     {
       key: 'target-last-name-marriage',
@@ -291,7 +318,7 @@ function buildCanonicalFieldConflicts(
       documentKind: 'marriage_certificate',
       fieldKey: 'spouse_last_name',
       canonicalValue: canonicalCase.targetName.last,
-      extractedValue: getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'marriage_certificate', 'spouse_last_name'),
+      extractedValue: getVerifiedDocumentFieldValue(documents, extractedFields, 'marriage_certificate', 'spouse_last_name'),
     },
     {
       key: 'county-marriage',
@@ -299,7 +326,7 @@ function buildCanonicalFieldConflicts(
       documentKind: 'marriage_certificate',
       fieldKey: 'county',
       canonicalValue: canonicalCase.countyResidence,
-      extractedValue: getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'marriage_certificate', 'county'),
+      extractedValue: getVerifiedDocumentFieldValue(documents, extractedFields, 'marriage_certificate', 'county'),
     },
     {
       key: 'target-first-name-court-order',
@@ -308,7 +335,7 @@ function buildCanonicalFieldConflicts(
       fieldKey: 'first_name',
       canonicalValue: canonicalCase.legalBasis === 'court_order' ? canonicalCase.targetName.first : null,
       extractedValue: canonicalCase.legalBasis === 'court_order'
-        ? getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'first_name')
+        ? getVerifiedDocumentFieldValue(documents, extractedFields, 'court_order', 'first_name')
         : null,
     },
     {
@@ -318,7 +345,7 @@ function buildCanonicalFieldConflicts(
       fieldKey: 'last_name',
       canonicalValue: canonicalCase.legalBasis === 'court_order' ? canonicalCase.targetName.last : null,
       extractedValue: canonicalCase.legalBasis === 'court_order'
-        ? getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'last_name')
+        ? getVerifiedDocumentFieldValue(documents, extractedFields, 'court_order', 'last_name')
         : null,
     },
     {
@@ -329,7 +356,7 @@ function buildCanonicalFieldConflicts(
       canonicalValue: canonicalCase.legalBasis === 'court_order' ? null : canonicalCase.legalContext.marriageDate,
       extractedValue: canonicalCase.legalBasis === 'court_order'
         ? null
-        : getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'court_order_date'),
+        : getVerifiedDocumentFieldValue(documents, extractedFields, 'court_order', 'court_order_date'),
     },
   ];
 

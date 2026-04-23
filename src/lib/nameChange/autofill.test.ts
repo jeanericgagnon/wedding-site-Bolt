@@ -328,7 +328,7 @@ describe('name change autofill prep snapshot', () => {
     });
   });
 
-  it('downgrades extracted confidence when the source document metadata is too thin', () => {
+  it('does not attribute manual fallback values to a document source in autofill prep', () => {
     const documents: NameChangeDocumentInput[] = [
       {
         document_kind: 'marriage_certificate',
@@ -347,13 +347,17 @@ describe('name change autofill prep snapshot', () => {
       },
     ];
 
-    const snapshot = buildNameChangeAutofillPrepSnapshot(makeCase(), documents, extractedFields);
+    const snapshot = buildNameChangeAutofillPrepSnapshot(
+      makeCase({ target_last_name: 'Jordan-Smith' }),
+      documents,
+      extractedFields,
+    );
     expect(snapshot.fields.find((field) => field.targetField === 'applicant.target_last_name')).toMatchObject({
       value: expect.objectContaining({
-        source: 'extracted_field',
+        source: 'canonical_case',
         value: 'Jordan-Smith',
-        confidence: 'low',
-        sourceDocumentKind: 'marriage_certificate',
+        confidence: 'high',
+        sourceDocumentKind: undefined,
       }),
     });
   });

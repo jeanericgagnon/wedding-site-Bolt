@@ -496,6 +496,42 @@ describe('name change requirements skeleton', () => {
     });
   });
 
+  it('keeps court-order reference extraction missing when only manual fallback reference values exist', () => {
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase({ legal_basis: 'court_order' as never }),
+      [
+        {
+          id: 'doc-court-order',
+          document_kind: 'court_order_name_change',
+          display_name: 'Court order',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+        },
+      ],
+      [
+        {
+          field_key: 'case #',
+          field_label: 'Case #',
+          field_value_masked: '24-cv - 1188',
+          source_type: 'manual',
+          is_verified: true,
+        },
+        {
+          field_key: 'signed dt',
+          field_label: 'Signed dt',
+          field_value_masked: 'Executed on Friday, April 5, 2026 1:30 PM PST',
+          source_type: 'manual',
+          is_verified: true,
+        },
+      ],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'court-order-reference-extraction')).toMatchObject({
+      status: 'missing',
+      reason: 'Court-order proof is in intake, but no verified case-number or signed-date extraction is represented yet.',
+    });
+  });
+
   it('does not escalate canonical extraction alignment from unverified extracted values alone', () => {
     const snapshot = evaluateNameChangeRequirements(
       makeCase(),

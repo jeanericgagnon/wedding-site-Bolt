@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildNameChangeExtractionContractSnapshot, getDocumentCapturedFieldKeys, getDocumentLinkedCapturedFieldKeys, getVerifiedDocumentLinkedFieldValue, hasAnyDocumentLinkedFieldValue, hasVerifiedDocumentLinkedFieldValue } from './extractionContract';
+import { buildNameChangeExtractionContractSnapshot, getDocumentCapturedFieldKeys, getDocumentLinkedCapturedFieldKeys, getVerifiedDocumentFieldValue, getVerifiedDocumentLinkedFieldValue, hasAnyDocumentLinkedFieldValue, hasAnyLinkedDocumentFieldValue, hasVerifiedDocumentLinkedFieldValue, hasVerifiedLinkedDocumentFieldValue } from './extractionContract';
 import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput } from './types';
 
 function makeCase(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseInput {
@@ -234,7 +234,7 @@ describe('name change extraction contract', () => {
 
     expect(getDocumentCapturedFieldKeys(documents, extractedFields, 'court_order')).toEqual(['case_number']);
     expect(getDocumentLinkedCapturedFieldKeys(documents, extractedFields, 'court_order')).toEqual([]);
-    expect(getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'case_number')).toBe('24-CV-1188');
+    expect(getVerifiedDocumentFieldValue(documents, extractedFields, 'court_order', 'case_number')).toBe('24-CV-1188');
   });
 
   it('flags court-order target-name conflicts against canonical case truth', () => {
@@ -400,7 +400,7 @@ describe('name change extraction contract', () => {
     expect(getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'court_order_date')).toBeNull();
   });
 
-  it('only treats linked or manual verified court-order reference fields as grounded', () => {
+  it('distinguishes linked court-order grounding from manual fallback truth', () => {
     const documents: NameChangeDocumentInput[] = [
       {
         id: 'doc-court-order',
@@ -411,7 +411,7 @@ describe('name change extraction contract', () => {
       },
     ];
 
-    expect(hasAnyDocumentLinkedFieldValue(documents, [
+    expect(hasAnyLinkedDocumentFieldValue(documents, [
       {
         document_id: 'doc-court-order',
         field_key: 'case_number',
@@ -422,12 +422,22 @@ describe('name change extraction contract', () => {
       },
     ], 'court_order', 'case_number')).toBe(true);
 
-    expect(hasVerifiedDocumentLinkedFieldValue(documents, [
+    expect(hasVerifiedLinkedDocumentFieldValue(documents, [
       {
         field_key: 'case_number',
         field_label: 'Case number',
         field_value_masked: '24-CV-1188',
         source_type: 'document_extract',
+        is_verified: true,
+      },
+    ], 'court_order', 'case_number')).toBe(false);
+
+    expect(hasVerifiedLinkedDocumentFieldValue(documents, [
+      {
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: '24-CV-1188',
+        source_type: 'manual',
         is_verified: true,
       },
     ], 'court_order', 'case_number')).toBe(false);
@@ -441,5 +451,25 @@ describe('name change extraction contract', () => {
         is_verified: true,
       },
     ], 'court_order', 'case_number')).toBe(true);
+
+    expect(getVerifiedDocumentLinkedFieldValue(documents, [
+      {
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: '24-CV-1188',
+        source_type: 'manual',
+        is_verified: true,
+      },
+    ], 'court_order', 'case_number')).toBeNull();
+
+    expect(getVerifiedDocumentFieldValue(documents, [
+      {
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: '24-CV-1188',
+        source_type: 'manual',
+        is_verified: true,
+      },
+    ], 'court_order', 'case_number')).toBe('24-CV-1188');
   });
 });

@@ -1,6 +1,6 @@
 import { buildNameChangeCanonicalCase } from './canonical';
 import { buildNameChangeDocumentIntakeSnapshot } from './documentContract';
-import { buildNameChangeExtractionContractSnapshot, hasAnyDocumentLinkedFieldValue, hasVerifiedDocumentLinkedFieldValue } from './extractionContract';
+import { buildNameChangeExtractionContractSnapshot, hasAnyLinkedDocumentFieldValue, hasVerifiedLinkedDocumentFieldValue } from './extractionContract';
 import type {
   NameChangeCaseInput,
   NameChangeDocumentInput,
@@ -96,10 +96,10 @@ export function evaluateNameChangeRequirements(
   const hasIdentityMetadataReady = intakeSnapshot.documents.some((document) => identityCoverageKinds.includes(document.kind) && document.metadataMissing.length === 0 && document.intakeStatus !== 'not_started');
   const hasTravelIdentitySupport = ['current_passport', 'current_drivers_license'].some((kind) => canonicalCase.documents[kind as NameChangeDocumentKind].intakeStatus !== 'not_started');
   const hasCourtOrderProof = canonicalCase.documents.court_order.intakeStatus !== 'not_started';
-  const hasAnyCourtOrderReferenceExtraction = hasAnyDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'case_number')
-    || hasAnyDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'court_order_date');
-  const hasVerifiedCourtOrderCaseNumber = hasVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'case_number');
-  const hasVerifiedCourtOrderSignedDate = hasVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'court_order_date');
+  const hasAnyCourtOrderReferenceExtraction = hasAnyLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'case_number')
+    || hasAnyLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'court_order_date');
+  const hasVerifiedCourtOrderCaseNumber = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'case_number');
+  const hasVerifiedCourtOrderSignedDate = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'court_order_date');
   const hasVerifiedCourtOrderReferenceExtraction = hasVerifiedCourtOrderCaseNumber || hasVerifiedCourtOrderSignedDate;
   const legalBasisLabel = canonicalCase.legalBasis === 'court_order' ? 'court-order proof' : legalProofKind.replace(/_/g, ' ');
   const hasReviewedCourtOrderProof = legalProof.intakeStatus === 'reviewed';
