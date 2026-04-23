@@ -247,6 +247,11 @@ describe('name change document repair queue', () => {
         detail: 'Out-of-state marriage follow-through needs grounded county and certificate-number extraction from the marriage certificate.',
       }),
     ]));
+    expect(marriageCertificateItem?.nextActions[0]).toMatchObject({
+      category: 'document',
+      label: 'Capture county + certificate number for certified marriage certificate',
+      documentKind: 'marriage_certificate',
+    });
   });
 
   it('narrows marriage certificate repair action when only one out-of-state reference field is missing', () => {
@@ -293,5 +298,10 @@ describe('name change document repair queue', () => {
         detail: 'Out-of-state marriage follow-through still needs grounded county extraction from the marriage certificate.',
       }),
     ]));
+    expect(marriageCertificateItem?.nextActions[0]).toMatchObject({
+      category: 'document',
+      label: 'Capture county for certified marriage certificate',
+      documentKind: 'marriage_certificate',
+    });
   });
 });

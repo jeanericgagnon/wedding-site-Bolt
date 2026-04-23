@@ -32,6 +32,22 @@ export interface NameChangeDocumentRepairQueueItem {
   required: boolean;
 }
 
+function getDocumentRepairActionPriority(action: NameChangeGuidedAction) {
+  const categoryWeight = getNameChangeGuidedActionWeight(action.category) * 100;
+
+  if (action.category === 'document') {
+    if (action.label.startsWith('Capture ')) return categoryWeight + 30;
+    if (action.label.startsWith('Resolve ')) return categoryWeight + 20;
+    if (action.label.startsWith('Fill ')) return categoryWeight + 10;
+  }
+
+  return categoryWeight;
+}
+
+function prioritizeDocumentRepairActions(actions: NameChangeGuidedAction[]) {
+  return [...actions].sort((left, right) => getDocumentRepairActionPriority(right) - getDocumentRepairActionPriority(left));
+}
+
 function buildExtractionRepairAction(
   document: Pick<NameChangeDocumentRepairQueueItem, 'kind' | 'label'>,
   actionableMissingExtractionFields: NameChangeExtractionFieldKey[],
@@ -45,6 +61,7 @@ function buildExtractionRepairAction(
         category: 'document',
         label: 'Capture county + certificate number for certified marriage certificate',
         detail: 'Out-of-state marriage follow-through needs grounded county and certificate-number extraction from the marriage certificate.',
+        documentKind: 'marriage_certificate',
       };
     }
 
@@ -53,6 +70,7 @@ function buildExtractionRepairAction(
         category: 'document',
         label: 'Capture county for certified marriage certificate',
         detail: 'Out-of-state marriage follow-through still needs grounded county extraction from the marriage certificate.',
+        documentKind: 'marriage_certificate',
       };
     }
 
@@ -61,6 +79,7 @@ function buildExtractionRepairAction(
         category: 'document',
         label: 'Capture certificate number for certified marriage certificate',
         detail: 'Out-of-state marriage follow-through still needs grounded certificate-number extraction from the marriage certificate.',
+        documentKind: 'marriage_certificate',
       };
     }
   }
@@ -69,6 +88,7 @@ function buildExtractionRepairAction(
     category: 'document',
     label: `Capture extraction fields for ${document.label.toLowerCase()}`,
     detail: `Missing extraction fields: ${actionableMissingExtractionFields.join(', ')}.`,
+    documentKind: document.kind,
   };
 }
 
@@ -143,6 +163,7 @@ export function buildNameChangeDocumentRepairQueue(
           category: 'document',
           label: `Add ${document.label.toLowerCase()} to intake`,
           detail: 'Capture baseline metadata so this document can support downstream packets.',
+          documentKind: document.kind,
         });
       }
       if (document.metadataMissing.length > 0) {
@@ -150,6 +171,7 @@ export function buildNameChangeDocumentRepairQueue(
           category: 'document',
           label: `Fill metadata for ${document.label.toLowerCase()}`,
           detail: `Missing metadata: ${document.metadataMissing.join(', ')}.`,
+          documentKind: document.kind,
         });
       }
       if (actionableMissingExtractionFields.length > 0) {
@@ -161,6 +183,7 @@ export function buildNameChangeDocumentRepairQueue(
           category: 'document',
           label: `Resolve canonical conflicts for ${document.label.toLowerCase()}`,
           detail: `${preview}${document.canonicalConflicts.length > 2 ? ', …' : ''}.`,
+          documentKind: document.kind,
         });
       }
       if (blockingRiskCount > 0 && impactedTargets.size > 0) {
@@ -179,6 +202,8 @@ export function buildNameChangeDocumentRepairQueue(
         });
       }
 
+      const prioritizedNextActions = prioritizeDocumentRepairActions(nextActions);
+
       const score =
         (severity === 'blocking' ? 100 : 0) +
         (document.required ? 30 : 0) +
@@ -189,7 +214,7 @@ export function buildNameChangeDocumentRepairQueue(
         (actionableMissingExtractionFields.length * 2) +
         (document.intakeStatus === 'not_started' ? 15 : 0) +
         (impactedTargets.size * 8) +
-        (nextActions.length > 0 ? getNameChangeGuidedActionWeight(nextActions[0].category) * 2 : 0);
+        (prioritizedNextActions.length > 0 ? getNameChangeGuidedActionWeight(prioritizedNextActions[0].category) * 2 : 0);
 
       const payoffBits: string[] = [];
       const documentGapCount = document.metadataMissing.length + actionableMissingExtractionFields.length;
@@ -209,7 +234,7 @@ export function buildNameChangeDocumentRepairQueue(
         score,
         impactSummary: issueBits.join(' · '),
         payoffSummary: payoffBits.join(' · '),
-        nextActions,
+        nextActions: prioritizedNextActions,
         impactedTargets: [...impactedTargets],
         canonicalConflictCount,
         impactedFields: [...impactedFields.values()],
