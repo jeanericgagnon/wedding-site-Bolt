@@ -1,6 +1,7 @@
 import { supabase } from '../../../lib/supabase';
 import { buildNameChangePlan } from '../../../lib/nameChange/engine';
 import { canonicalizeNameChangeDocumentKind } from '../../../lib/nameChange/documentKinds';
+import { normalizeDraftFieldKey, normalizeDraftFieldValue } from '../../../lib/nameChange/intakeDraft';
 import { NAME_CHANGE_ENGINE_VERSION } from '../../../lib/nameChange/registry';
 import { buildNameChangeReminderSuggestions, mapReminderSuggestionsToInputs } from '../../../lib/nameChange/reminders';
 import type {
@@ -123,14 +124,17 @@ export function normalizeNameChangeExtractedFields(fields: NameChangeExtractedFi
   const deduped = new Map<string, NameChangeExtractedFieldInput>();
 
   fields.forEach((field) => {
-    const normalizedValue = normalizeText(field.field_value_masked);
+    const normalizedFieldKey = normalizeDraftFieldKey(field.field_key) as NameChangeExtractedFieldInput['field_key'];
+    const normalizedFieldLabel = normalizeText(field.field_label) || normalizedFieldKey.replace(/_/g, ' ');
+    const normalizedValue = normalizeDraftFieldValue(normalizedFieldKey, normalizeText(field.field_value_masked));
     if (!normalizedValue) return;
 
-    const key = `${field.document_id ?? 'manual'}:${field.field_key}`;
+    const key = `${field.document_id ?? 'manual'}:${normalizedFieldKey}`;
     deduped.set(key, {
       ...field,
       document_id: field.document_id ?? null,
-      field_label: normalizeText(field.field_label) || field.field_key.replace(/_/g, ' '),
+      field_key: normalizedFieldKey,
+      field_label: normalizedFieldLabel,
       field_value_masked: normalizedValue,
       is_verified: Boolean(field.is_verified),
     });

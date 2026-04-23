@@ -178,6 +178,54 @@ describe('nameChangeService normalization', () => {
     ]);
   });
 
+  it('canonicalizes extracted field aliases and normalized date-like values before save', () => {
+    const fields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'doc-marriage',
+        field_key: 'certificate no.',
+        field_label: ' Certificate no. ',
+        field_value_masked: ' 2026-04-05 1:30 PM PST ',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'doc-marriage',
+        field_key: 'certificate_number',
+        field_label: 'Certificate number',
+        field_value_masked: ' NV-22 ',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'doc-order',
+        field_key: 'signed dt',
+        field_label: ' Signed dt ',
+        field_value_masked: ' Signed date: Friday, April 5, 2026 1:30 PM PST ',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+
+    expect(normalizeNameChangeExtractedFields(fields)).toEqual([
+      {
+        document_id: 'doc-marriage',
+        field_key: 'certificate_number',
+        field_label: 'Certificate number',
+        field_value_masked: 'NV-22',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'doc-order',
+        field_key: 'court_order_date',
+        field_label: 'Signed dt',
+        field_value_masked: '2026-04-05',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ]);
+  });
+
   it('remaps extracted field document links onto freshly persisted documents', () => {
     const sourceDocuments: NameChangeDocumentInput[] = [
       {
@@ -387,7 +435,7 @@ describe('nameChangeService normalization', () => {
           document_kind: 'marriage_certificate',
           display_name: '  Marriage cert  ',
           storage_mode: 'metadata_only',
-          intake_status: 'uploaded',
+          intake_status: 'reviewed',
           file_name_masked: ' cert.pdf ',
           issuing_authority: ' San Diego County ',
           issued_on: null,
