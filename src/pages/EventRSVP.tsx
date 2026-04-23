@@ -124,6 +124,7 @@ export default function EventRSVP() {
   const submitInFlightRef = useRef(false);
   const pendingContinuityRefreshRef = useRef(false);
   const ignoreNextLocalContinuityEventRef = useRef(false);
+  const tokenLinkedSessionRef = useRef(false);
 
   useEffect(() => {
     if (token) {
@@ -134,6 +135,7 @@ export default function EventRSVP() {
       submitInFlightRef.current = false;
       pendingContinuityRefreshRef.current = false;
       ignoreNextLocalContinuityEventRef.current = false;
+      tokenLinkedSessionRef.current = false;
       if (postSubmitResetTimeoutRef.current !== null) {
         window.clearTimeout(postSubmitResetTimeoutRef.current);
         postSubmitResetTimeoutRef.current = null;
@@ -169,6 +171,7 @@ export default function EventRSVP() {
     submitInFlightRef.current = false;
     pendingContinuityRefreshRef.current = false;
     ignoreNextLocalContinuityEventRef.current = false;
+    tokenLinkedSessionRef.current = false;
     let eventRsvpSupportKnown: boolean | null = null;
     let eventRsvpSupportAvailable = true;
     const shouldPreserveVisibleState = preserveVisibleState && !selectedEvent && guest !== null;
@@ -200,6 +203,7 @@ export default function EventRSVP() {
       if (guestError) throw guestError;
       if (!guestData) {
         if (activeLoadRequestRef.current !== requestId) return;
+        tokenLinkedSessionRef.current = false;
         setGuest(null);
         setInvitations([]);
         setSelectedEvent(null);
@@ -211,6 +215,7 @@ export default function EventRSVP() {
       }
 
       if (activeLoadRequestRef.current !== requestId) return;
+      tokenLinkedSessionRef.current = true;
       setGuest(guestData);
 
       const { data: invitationsData, error: invitationsError } = await supabase
@@ -291,6 +296,7 @@ export default function EventRSVP() {
       setHasEventRsvpSupport(eventRsvpSupportKnown);
     } catch {
       if (activeLoadRequestRef.current !== requestId) return;
+      tokenLinkedSessionRef.current = false;
       if (!shouldPreserveVisibleState) {
         setError('Failed to load your event invitations. Please try again or contact the couple.');
       }
@@ -301,7 +307,7 @@ export default function EventRSVP() {
   }, [guest, selectedEvent, token]);
 
   const refreshGuestAndEventsForContinuity = useCallback(() => {
-    if (!token) return;
+    if (!token || !tokenLinkedSessionRef.current) return;
     if (selectedEvent || submitting || submitInFlightRef.current) {
       pendingContinuityRefreshRef.current = true;
       return;
@@ -347,7 +353,7 @@ export default function EventRSVP() {
 
   useEffect(() => {
     if (!pendingContinuityRefreshRef.current) return;
-    if (!token || selectedEvent || submitting || submitInFlightRef.current) return;
+    if (!token || !tokenLinkedSessionRef.current || selectedEvent || submitting || submitInFlightRef.current) return;
 
     pendingContinuityRefreshRef.current = false;
     loadGuestAndEvents({ preserveVisibleState: true });

@@ -199,6 +199,29 @@ describe('EventRSVP token trust continuity', () => {
     expect(screen.queryByText('Hello, Late Guest!')).not.toBeInTheDocument();
   });
 
+  it('does not let an invalid token keep reloading event RSVP continuity state', async () => {
+    currentToken = 'bad-token';
+
+    const deferredGuestLookup = createDeferredMaybeSingle();
+    maybeSingleQueue.push(
+      { data: null, error: null },
+      deferredGuestLookup.promise,
+    );
+
+    render(<EventRSVP />);
+
+    expect(await screen.findByText("This invitation link isn't valid. Please use the link from your invitation email, or ask the couple for a new one.")).toBeInTheDocument();
+    expect(maybeSingleQueue).toHaveLength(1);
+
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('dayof:rsvp-updated', { detail: { updatedAt: String(Date.now()) } }));
+      await Promise.resolve();
+    });
+
+    expect(maybeSingleQueue).toHaveLength(1);
+    expect(screen.getByText("This invitation link isn't valid. Please use the link from your invitation email, or ask the couple for a new one.")).toBeInTheDocument();
+  });
+
   it('keeps the saved event RSVP visible locally after submit without depending on a refetch', async () => {
     currentToken = 'guest-token';
 
