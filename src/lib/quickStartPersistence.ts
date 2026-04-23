@@ -481,7 +481,7 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
       ? RESTORABLE_SETUP_STEPS.length
       : recoverableClosedCurrentIndex !== null && hasMeaningfulQuickStartAnswers(normalizedInitialSetupAnswers)
         ? resolveRestorableCurrentIndex(recoverableClosedCurrentIndex, normalizedInitialSetupAnswers)
-      : recoveredClosedCurrentIndex > 2
+      : hasMeaningfulQuickStartAnswers(normalizedInitialSetupAnswers)
         ? recoveredClosedCurrentIndex
         : 0;
 

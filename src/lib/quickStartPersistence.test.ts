@@ -45,7 +45,7 @@ describe('quickStartPersistence', () => {
       },
     });
 
-    expect(normalized.currentIndex).toBe(0);
+    expect(normalized.currentIndex).toBe(2);
     expect(normalized.followUpAnswers).toEqual({});
     expect(normalized.viewState).toBe('question');
     expect(normalized.clarifyingState).toBeNull();
@@ -142,6 +142,25 @@ describe('quickStartPersistence', () => {
     });
 
     expect(normalized.currentIndex).toBe(0);
+    expect(normalized.showFollowUps).toBe(false);
+    expect(normalized.viewState).toBe('question');
+  });
+
+  it('keeps partial closed legacy string indexes truthful when the setup boundary survives', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      currentIndex: '2',
+      initialSetupAnswers: {
+        names: 'Alex & Jordan',
+        labelPreference: 'names-only',
+        whenWhere: 'January 17, 2027 — Sayulita, Mexico',
+        style: 'Tropical, relaxed',
+      },
+      showFollowUps: false,
+      viewState: 'question',
+      clarifyingState: null,
+    });
+
+    expect(normalized.currentIndex).toBe(2);
     expect(normalized.showFollowUps).toBe(false);
     expect(normalized.viewState).toBe('question');
   });

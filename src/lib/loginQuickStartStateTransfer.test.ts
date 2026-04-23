@@ -48,7 +48,7 @@ describe('login quick start state transfer', () => {
       clarifyingState: { clarifying: [] },
     });
 
-    expect(carriedDraft.currentIndex).toBe(0);
+    expect(carriedDraft.currentIndex).toBe(2);
     expect(carriedDraft.showFollowUps).toBe(false);
     expect(carriedDraft.viewState).toBe('question');
     expect(carriedDraft.followUpAnswers).toEqual({});
@@ -149,6 +149,55 @@ describe('login quick start state transfer', () => {
             status: 'skipped',
             answer: '',
           }],
+        },
+        draftOutputs: {},
+      },
+      viewState: 'question',
+    })).toBeNull();
+  });
+
+
+  it('drops carried quick start drafts when stale thinking survives with only skipped clarifying history', () => {
+    expect(normalizeMeaningfulQuickStartDraftSnapshot({
+      currentIndex: 0,
+      initialSetupAnswers: {},
+      followUpAnswers: {},
+      showFollowUps: true,
+      clarifyingState: {
+        clarifying: {
+          mode: 'draft',
+          questions: [],
+          history: [{
+            id: 'lodging',
+            category: 'travel',
+            question: 'Where should guests stay?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.lodging'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'skipped',
+            answer: '',
+          }],
+        },
+        draftOutputs: {},
+      },
+      viewState: 'thinking',
+    })).toBeNull();
+  });
+
+
+  it('drops carried quick start drafts when only an empty ask-mode shell survived outside thinking state', () => {
+    expect(normalizeMeaningfulQuickStartDraftSnapshot({
+      currentIndex: 0,
+      initialSetupAnswers: {},
+      followUpAnswers: {},
+      showFollowUps: false,
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [],
+          history: [],
         },
         draftOutputs: {},
       },
