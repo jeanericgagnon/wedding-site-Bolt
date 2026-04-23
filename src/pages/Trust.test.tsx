@@ -58,6 +58,8 @@ describe('Trust page draft-first CTA', () => {
     expect(navigateMock).toHaveBeenCalledWith('/settings');
     fireEvent.click(screen.getByRole('button', { name: 'Open planner workspace' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/planning');
+    fireEvent.click(screen.getByRole('button', { name: 'Open coordinator workspace' }));
+    expect(navigateMock).toHaveBeenCalledWith('/dashboard/coordinator');
     fireEvent.click(screen.getByRole('button', { name: 'Open your dashboard' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/overview');
   });
