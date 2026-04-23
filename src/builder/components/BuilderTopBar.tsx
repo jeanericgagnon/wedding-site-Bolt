@@ -48,6 +48,22 @@ interface BuilderTopBarProps {
   onToggleInspector?: () => void;
 }
 
+export const getPublishBlockerUiState = ({
+  publishValidationError,
+  publishIssueKind,
+}: {
+  publishValidationError?: string | null;
+  publishIssueKind?: string | null;
+}) => {
+  const hasHardPublishBlocker = Boolean(publishValidationError) && publishIssueKind !== 'unsaved-changes';
+
+  return {
+    hasHardPublishBlocker,
+    effectivePublishValidationError: hasHardPublishBlocker ? publishValidationError ?? null : null,
+    canAutoSaveBeforePublish: Boolean(publishValidationError) && publishIssueKind === 'unsaved-changes',
+  };
+};
+
 function slugifyPage(input: string): string {
   return input
     .toLowerCase()
@@ -104,14 +120,19 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
   const isPublished = publishStatus === 'published';
   const projectPages = state.project?.pages ?? [];
   const activePage = projectPages.find((p) => p.id === state.activePageId) ?? null;
-  const isPublishDisabled = state.isPublishing || state.isSaving || !!publishValidationError;
-  const showPublishReady = !publishValidationError && !state.isPublishing && !state.isSaving;
+  const {
+    hasHardPublishBlocker,
+    effectivePublishValidationError,
+    canAutoSaveBeforePublish,
+  } = getPublishBlockerUiState({ publishValidationError, publishIssueKind });
+  const isPublishDisabled = state.isPublishing || state.isSaving || hasHardPublishBlocker;
+  const showPublishReady = !hasHardPublishBlocker && !state.isPublishing && !state.isSaving;
   const [showLeaveConfirm, setShowLeaveConfirm] = React.useState(false);
   const [showBlockedDetails, setShowBlockedDetails] = React.useState(false);
   const [showPageManager, setShowPageManager] = React.useState(false);
   const [newPageTitle, setNewPageTitle] = React.useState('');
   const [showPhotoTips, setShowPhotoTips] = React.useState(() => shouldOpenPhotoTipsFromSearch(location.search));
-  const blockedHints = React.useMemo(() => getPublishBlockedHints(publishValidationError), [publishValidationError]);
+  const blockedHints = React.useMemo(() => getPublishBlockedHints(effectivePublishValidationError), [effectivePublishValidationError]);
   const [showPublishChecklist, setShowPublishChecklist] = React.useState(false);
 
   const checklistItems = React.useMemo(() => {
@@ -124,16 +145,16 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         ? `${activePage?.sections?.length ?? 0} section(s) on ${activePage?.title ?? 'current page'}`
         : `No sections on ${activePage?.title ?? 'current page'} — add one from the right panel.`,
     });
-    items.push({ label: 'No active go-live blockers', done: !publishValidationError, detail: publishValidationError ?? 'Ready to go live.' });
+    items.push({ label: 'No active go-live blockers', done: !hasHardPublishBlocker, detail: effectivePublishValidationError ?? 'Ready to go live.' });
     items.push({ label: 'Latest edits are saved', done: !isDirty, detail: isDirty ? 'Save your latest changes before going live.' : 'All changes saved.' });
     return items;
-  }, [projectPages.length, activePage?.sections?.length, activePage?.title, publishValidationError, isDirty]);
+  }, [projectPages.length, activePage?.sections?.length, activePage?.title, hasHardPublishBlocker, effectivePublishValidationError, isDirty]);
   const checklistDoneCount = checklistItems.filter((i) => i.done).length;
   const publishState = getPublishStateDescriptor({
     isPublished,
     isPublishing: state.isPublishing,
     hasUnsavedChanges: isDirty,
-    error: publishError || publishValidationError || null,
+    error: publishError || effectivePublishValidationError || null,
   });
   const publishToneClass = publishState.tone === 'success'
     ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
@@ -233,7 +254,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         )}
         <button
           onClick={() => {
-            if (publishValidationError) {
+            if (hasHardPublishBlocker) {
               setShowPublishChecklist(true);
               setShowBlockedDetails(true);
               return;
@@ -357,9 +378,9 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
           </div>
         )}
 
-        {publishValidationError && !state.isPublishing && (
+        {hasHardPublishBlocker && effectivePublishValidationError && !state.isPublishing && (
           <div className="items-center gap-1.5 hidden sm:flex">
-            <span className="text-xs text-amber-700 items-center gap-1.5 bg-amber-50 border border-amber-200 px-2 py-1 rounded-md inline-flex" title={publishValidationError}>
+            <span className="text-xs text-amber-700 items-center gap-1.5 bg-amber-50 border border-amber-200 px-2 py-1 rounded-md inline-flex" title={effectivePublishValidationError}>
               <AlertCircle size={12} />
               {SITE_VISIBILITY_COPY.draftBadge} still needs a few things
             </span>
@@ -382,9 +403,9 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
           </div>
         )}
 
-        {publishValidationError && !state.isPublishing && (
+        {hasHardPublishBlocker && effectivePublishValidationError && !state.isPublishing && (
           <div className="sm:hidden w-full flex items-center justify-between rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] text-amber-800">
-            <span className="truncate pr-2">{publishValidationError}</span>
+            <span className="truncate pr-2">{effectivePublishValidationError}</span>
             <button type="button" onClick={() => setShowBlockedDetails((v) => !v)} className="shrink-0 rounded border border-amber-300 bg-white px-1.5 py-0.5 font-medium">
               Left?
             </button>
@@ -396,9 +417,9 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
           </div>
         )}
 
-        {showBlockedDetails && publishValidationError && (
+        {showBlockedDetails && effectivePublishValidationError && (
           <div className="w-full rounded border border-amber-200 bg-amber-50 px-2 py-2 text-xs text-amber-900">
-            <p className="font-medium">{publishValidationError}</p>
+            <p className="font-medium">{effectivePublishValidationError}</p>
             <ul className="list-disc ml-4 mt-1 space-y-0.5">
               {blockedHints.map((hint) => (
                 <li key={hint}>{hint}</li>
@@ -570,7 +591,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
           </button>
           <button
             onClick={() => {
-              if (publishValidationError) {
+              if (hasHardPublishBlocker) {
                 setShowPublishChecklist(true);
                 setShowBlockedDetails(true);
                 return;
@@ -578,8 +599,8 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
               onPublish();
             }}
             disabled={isPublishDisabled}
-            aria-label={publishValidationError ? `Go live blocked: ${publishValidationError}` : 'Go live'}
-              title={publishValidationError ? `${publishValidationError} (⌘⇧P)` : 'Go live (⌘⇧P)'}
+            aria-label={hasHardPublishBlocker && effectivePublishValidationError ? `Go live blocked: ${effectivePublishValidationError}` : canAutoSaveBeforePublish ? 'Save changes and go live' : 'Go live'}
+              title={hasHardPublishBlocker && effectivePublishValidationError ? `${effectivePublishValidationError} (⌘⇧P)` : canAutoSaveBeforePublish ? 'Save your latest changes, then go live (⌘⇧P)' : 'Go live (⌘⇧P)'}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {state.isPublishing || state.isSaving ? (
@@ -596,9 +617,11 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
                   : 'Go live'}
           </button>
           <div className="absolute top-full right-0 mt-1.5 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 max-w-[260px] text-center">
-            {publishValidationError
-              ? publishValidationError
-              : isPublished
+            {hasHardPublishBlocker && effectivePublishValidationError
+              ? effectivePublishValidationError
+              : canAutoSaveBeforePublish
+                ? 'Save your latest changes, then go live (⌘⇧P)'
+                : isPublished
                 ? 'Updates the live version guests can already see (⌘⇧P)'
                 : 'Going live makes your site visible at your guest-facing DayOf URL (⌘⇧P)'}
           </div>
