@@ -321,6 +321,38 @@ describe('quickStartStateTransfer', () => {
     expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').currentIndex).toBe(14);
   });
 
+  it('rewrites invalid active restore indexes to the completed setup boundary', () => {
+    const persisted = persistQuickStartDraftSnapshot({
+      currentIndex: 2.5,
+      initialSetupAnswers: { names: 'Alex & Jordan' },
+      followUpAnswers: {},
+      showFollowUps: true,
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'lodging',
+            category: 'travel',
+            question: 'Where should guests stay?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.lodging'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'pending',
+            answer: '',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+      viewState: 'followups',
+    });
+
+    expect(persisted?.currentIndex).toBe(14);
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').currentIndex).toBe(14);
+  });
+
 
   it('rewrites unsafe quick start step indexes back to zero on read', () => {
     window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
