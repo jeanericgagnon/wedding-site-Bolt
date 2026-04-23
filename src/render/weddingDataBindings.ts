@@ -14,6 +14,18 @@ interface BindableSection {
   bindings?: SectionBindings;
 }
 
+function hasMeaningfulString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function preferMeaningfulString(value: unknown, fallback: string): string {
+  return hasMeaningfulString(value) ? value : fallback;
+}
+
+function preferMeaningfulArray<T>(value: unknown, fallback: T[]): T[] {
+  return Array.isArray(value) && value.length > 0 ? value as T[] : fallback;
+}
+
 function normalizeBindableSectionType(type: string): string {
   const normalizedType = type.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
 
@@ -271,33 +283,36 @@ function bindCommon(section: BindableSection, weddingData: WeddingDataV1): Recor
   return {
     ...section.data,
     // Core names/text
-    headline: section.data.headline ?? coupleName,
-    title: section.data.title ?? coupleName,
-    coupleName: section.data.coupleName ?? coupleName,
-    names: section.data.names ?? coupleName,
-    subheadline: section.data.subheadline ?? (weddingDate || section.data.subheadline),
+    headline: preferMeaningfulString(section.data.headline, coupleName),
+    title: preferMeaningfulString(section.data.title, coupleName),
+    coupleName: preferMeaningfulString(section.data.coupleName, coupleName),
+    names: preferMeaningfulString(section.data.names, coupleName),
+    subheadline: preferMeaningfulString(section.data.subheadline, weddingDate || ''),
 
     // Date/time/location
-    weddingDate: section.data.weddingDate ?? weddingDate,
-    date: section.data.date ?? weddingDate,
-    eventDate: section.data.eventDate ?? weddingDate,
-    location: section.data.location ?? locationLine,
-    venueName: section.data.venueName ?? venueName,
-    venueAddress: section.data.venueAddress ?? venueAddress,
-    address: section.data.address ?? venueAddress,
+    weddingDate: preferMeaningfulString(section.data.weddingDate, weddingDate),
+    date: preferMeaningfulString(section.data.date, weddingDate),
+    eventDate: preferMeaningfulString(section.data.eventDate, weddingDate),
+    location: preferMeaningfulString(section.data.location, locationLine),
+    venueName: preferMeaningfulString(section.data.venueName, venueName),
+    venueAddress: preferMeaningfulString(section.data.venueAddress, venueAddress),
+    address: preferMeaningfulString(section.data.address, venueAddress),
 
     // Images/media (content only, no style changes)
-    heroImage: section.data.heroImage ?? hero,
-    heroImageUrl: section.data.heroImageUrl ?? hero,
-    backgroundImage: section.data.backgroundImage ?? hero,
-    image: section.data.image ?? hero,
-    coverImage: section.data.coverImage ?? hero,
-    images: Array.isArray(section.data.images) && section.data.images.length ? section.data.images : galleryObjects,
-    photos: Array.isArray(section.data.photos) && section.data.photos.length ? section.data.photos : galleryUrls,
-    galleryImages: Array.isArray(section.data.galleryImages) && section.data.galleryImages.length ? section.data.galleryImages : galleryObjects,
+    heroImage: preferMeaningfulString(section.data.heroImage, hero),
+    heroImageUrl: preferMeaningfulString(section.data.heroImageUrl, hero),
+    backgroundImage: preferMeaningfulString(section.data.backgroundImage, hero),
+    image: preferMeaningfulString(section.data.image, hero),
+    coverImage: preferMeaningfulString(section.data.coverImage, hero),
+    images: preferMeaningfulArray(section.data.images, galleryObjects),
+    photos: preferMeaningfulArray(section.data.photos, galleryUrls),
+    galleryImages: preferMeaningfulArray(section.data.galleryImages, galleryObjects),
 
     // Footer defaults
-    copyrightText: section.data.copyrightText ?? (coupleName && weddingDate ? `${coupleName} · ${weddingDate}` : section.data.copyrightText),
+    copyrightText: preferMeaningfulString(
+      section.data.copyrightText,
+      coupleName && weddingDate ? `${coupleName} · ${weddingDate}` : '',
+    ),
   };
 }
 

@@ -183,4 +183,78 @@ describe('applyWeddingDataBindings', () => {
     expect(venues[0].name).toBe('The Grand Pavilion');
     expect(venues[0].address).toBe('450 Park Ave');
   });
+
+  it('falls back to wedding data when common text fields are blank strings', () => {
+    const data = createEmptyWeddingData();
+    data.couple.partner1Name = 'Avery';
+    data.couple.partner2Name = 'Jordan';
+    data.event.weddingDateISO = '2026-06-20T00:00:00.000Z';
+    data.venues = [{ id: 'v1', name: 'The Grand Pavilion', address: '450 Park Ave' }];
+
+    const result = applyWeddingDataBindings({
+      type: 'hero',
+      variant: 'fullbleed',
+      data: {
+        headline: '',
+        title: '   ',
+        subheadline: '',
+        weddingDate: ' ',
+        date: '',
+        location: '   ',
+        venueName: '',
+        venueAddress: ' ',
+      },
+    }, data);
+
+    expect(result.headline).toBe('Avery & Jordan');
+    expect(result.title).toBe('Avery & Jordan');
+    expect(result.subheadline).toBe('Friday, June 19, 2026');
+    expect(result.weddingDate).toBe('Friday, June 19, 2026');
+    expect(result.date).toBe('Friday, June 19, 2026');
+    expect(result.location).toBe('The Grand Pavilion · 450 Park Ave');
+    expect(result.venueName).toBe('The Grand Pavilion');
+    expect(result.venueAddress).toBe('450 Park Ave');
+  });
+
+  it('falls back to wedding media when common image fields are blank or empty', () => {
+    const data = createEmptyWeddingData();
+    data.media.heroImageUrl = 'https://example.com/hero.jpg';
+    data.media.gallery = [
+      { id: 'g1', url: 'https://example.com/gallery-1.jpg', caption: 'First' },
+      { id: 'g2', url: 'https://example.com/gallery-2.jpg', caption: 'Second' },
+    ];
+
+    const result = applyWeddingDataBindings({
+      type: 'gallery',
+      variant: 'grid',
+      data: {
+        heroImage: '',
+        heroImageUrl: ' ',
+        backgroundImage: '',
+        image: '   ',
+        coverImage: '',
+        images: [],
+        photos: [],
+        galleryImages: [],
+      },
+    }, data);
+
+    expect(result.heroImage).toBe('https://example.com/hero.jpg');
+    expect(result.heroImageUrl).toBe('https://example.com/hero.jpg');
+    expect(result.backgroundImage).toBe('https://example.com/hero.jpg');
+    expect(result.image).toBe('https://example.com/hero.jpg');
+    expect(result.coverImage).toBe('https://example.com/hero.jpg');
+    expect(result.photos).toEqual([
+      'https://example.com/gallery-1.jpg',
+      'https://example.com/gallery-2.jpg',
+    ]);
+    expect(result.images).toEqual([
+      { id: 'g1', url: 'https://example.com/gallery-1.jpg', caption: 'First', alt: 'First' },
+      { id: 'g2', url: 'https://example.com/gallery-2.jpg', caption: 'Second', alt: 'Second' },
+    ]);
+    expect(result.galleryImages).toEqual([
+      { id: 'g1', url: 'https://example.com/gallery-1.jpg', caption: 'First', alt: 'First' },
+      { id: 'g2', url: 'https://example.com/gallery-2.jpg', caption: 'Second', alt: 'Second' },
+    ]);
+  });
 });
