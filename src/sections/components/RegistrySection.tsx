@@ -471,7 +471,7 @@ export const RegistrySection: React.FC<Props> = ({ data, instance }) => {
   const { weddingSiteId } = useSiteView();
   const { items, loading, updateItem } = usePublicRegistryItems(weddingSiteId);
 
-  const linksToShow = bindings.linkIds && bindings.linkIds.length > 0
+  const linksToShow = bindings?.linkIds && bindings.linkIds.length > 0
     ? registry.links.filter(l => bindings.linkIds!.includes(l.id))
     : registry.links;
 
@@ -541,7 +541,7 @@ export const RegistryGrid: React.FC<Props> = ({ data, instance }) => {
   const { weddingSiteId } = useSiteView();
   const { items, loading, updateItem } = usePublicRegistryItems(weddingSiteId);
 
-  const linksToShow = bindings.linkIds && bindings.linkIds.length > 0
+  const linksToShow = bindings?.linkIds && bindings.linkIds.length > 0
     ? registry.links.filter(l => bindings.linkIds!.includes(l.id))
     : registry.links;
 
@@ -621,7 +621,7 @@ export const RegistryFundHighlight: React.FC<Props> = ({ data, instance }) => {
   const { weddingSiteId } = useSiteView();
   const { items, loading, updateItem } = usePublicRegistryItems(weddingSiteId);
 
-  const linksToShow = bindings.linkIds && bindings.linkIds.length > 0
+  const linksToShow = bindings?.linkIds && bindings.linkIds.length > 0
     ? registry.links.filter(l => bindings.linkIds!.includes(l.id))
     : registry.links;
 
