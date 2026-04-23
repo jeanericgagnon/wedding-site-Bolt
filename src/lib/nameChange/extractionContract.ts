@@ -1,6 +1,6 @@
 import { buildNameChangeCanonicalCase } from './canonical';
-import { getNameChangeDocumentKindAliases } from './documentKinds';
-import { normalizeDraftFieldKey, normalizeDraftFieldValue } from './intakeDraft';
+import { canonicalizeNameChangeDocumentKind, getNameChangeDocumentKindAliases } from './documentKinds';
+import { isDraftNameChangePlaceholderDocument, normalizeDraftFieldKey, normalizeDraftFieldValue } from './intakeDraft';
 import type {
   NameChangeCanonicalFieldConflict,
   NameChangeCaseInput,
@@ -44,11 +44,19 @@ function getDocumentExtractionPriority(
   extractedFields: NameChangeExtractedFieldInput[],
 ) {
   const verifiedLinkedFieldCount = getVerifiedLinkedCanonicalFieldKeys(document.id, extractedFields).length;
+  const realDocumentWeight = isDraftNameChangePlaceholderDocument(document) ? 0 : 1;
+  const intakeWeight = document.intake_status === 'reviewed'
+    ? 2
+    : document.intake_status === 'uploaded'
+      ? 1
+      : 0;
+  const canonicalKindWeight = document.document_kind === canonicalizeNameChangeDocumentKind(canonicalKind) ? 1 : 0;
 
   return (
-    (verifiedLinkedFieldCount * 100)
-    + (document.intake_status === 'reviewed' ? 10 : document.intake_status === 'uploaded' ? 5 : 0)
-    + (document.document_kind === canonicalKind ? 1 : 0)
+    (verifiedLinkedFieldCount * 1000)
+    + (realDocumentWeight * 100)
+    + (intakeWeight * 10)
+    + canonicalKindWeight
   );
 }
 
@@ -60,7 +68,11 @@ function getDocumentByKind(
   const kinds = getNameChangeDocumentKindAliases(kind);
   return documents
     .filter((document) => kinds.includes(document.document_kind))
-    .sort((left, right) => getDocumentExtractionPriority(right, kind, extractedFields) - getDocumentExtractionPriority(left, kind, extractedFields))[0];
+    .sort((left, right) => {
+      const priorityDelta = getDocumentExtractionPriority(right, kind, extractedFields) - getDocumentExtractionPriority(left, kind, extractedFields);
+      if (priorityDelta !== 0) return priorityDelta;
+      return (right.id ?? '').localeCompare(left.id ?? '');
+    })[0];
 }
 
 function getLinkedFieldValue(

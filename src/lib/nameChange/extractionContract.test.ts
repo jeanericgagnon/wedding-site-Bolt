@@ -400,6 +400,47 @@ describe('name change extraction contract', () => {
     expect(getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'court_order_date')).toBeNull();
   });
 
+  it('prefers a real reviewed court-order document over a placeholder alias with the same extracted coverage', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'draft:court_order',
+        document_kind: 'court_order_name_change',
+        display_name: 'Court order placeholder',
+        file_name_masked: 'court_order.pdf',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+      {
+        id: 'doc-court-order-reviewed',
+        document_kind: 'court_order',
+        display_name: 'Court order reviewed',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'draft:court_order',
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: '24-CV-0001',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'doc-court-order-reviewed',
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: '24-CV-1188',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+
+    expect(getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'case_number')).toBe('24-CV-1188');
+    expect(getDocumentLinkedCapturedFieldKeys(documents, extractedFields, 'court_order')).toEqual(['case_number']);
+  });
+
   it('distinguishes linked court-order grounding from manual fallback truth', () => {
     const documents: NameChangeDocumentInput[] = [
       {

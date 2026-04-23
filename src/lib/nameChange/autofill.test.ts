@@ -456,6 +456,64 @@ describe('name change autofill prep snapshot', () => {
     });
   });
 
+  it('prefers real reviewed court-order extraction over placeholder alias values in autofill', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'draft:court_order',
+        document_kind: 'court_order_name_change',
+        display_name: 'Court order placeholder',
+        file_name_masked: 'court_order.pdf',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+      {
+        id: 'doc-court-order-reviewed',
+        document_kind: 'court_order',
+        display_name: 'Court order reviewed',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'draft:court_order',
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: '24-CV-0001',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'doc-court-order-reviewed',
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: '24-CV-1188',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+
+    const snapshot = buildNameChangeAutofillPrepSnapshot(
+      makeCase({
+        legal_basis: 'court_order',
+        marriage_state: null,
+        marriage_date: null,
+        structured_intake: { spouseLastName: null, travelBookedSoon: true, wantsDocumentIntakeHelp: true },
+      }),
+      documents,
+      extractedFields,
+    );
+
+    expect(snapshot.fields.find((field) => field.targetField === 'legal.court_order_case_number')).toMatchObject({
+      value: expect.objectContaining({
+        source: 'extracted_field',
+        value: '24-CV-1188',
+        sourceDocumentKind: 'court_order',
+        sourceFieldKey: 'case_number',
+      }),
+    });
+  });
+
   it('keeps unverified court-order autofill values out of the packet draft', () => {
     const documents: NameChangeDocumentInput[] = [
       {
