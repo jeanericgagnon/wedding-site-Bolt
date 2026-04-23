@@ -119,7 +119,7 @@ const buildDmvDependencies: NameChangeDependencyRecipe = ({ intake, requirements
 
 const buildCourtOrderDependencies: NameChangeDependencyRecipe = ({ requirements }) => [
   buildRequirementDependency(requirements.launchStateAlignment, 'launch-state-alignment', 'California launch-state alignment', true, 'California launch-state alignment has not been evaluated.', true, 'dependency'),
-  buildRequirementDependency(requirements.courtOrderPathReadiness, 'court-order-path-readiness', 'Court-order path readiness', true, 'Court-order path readiness has not been evaluated.', true, 'dependency'),
+  buildRequirementDependency(requirements.courtOrderPathReadiness, 'court-order-path-readiness', 'Court-order path readiness', true, 'Court-order path readiness has not been evaluated.', true, 'review'),
   buildRequirementDependency(requirements.courtOrderJurisdictionContext, 'court-order-jurisdiction-context', 'Court-order jurisdiction context', true, 'Court-order jurisdiction context has not been evaluated.', true, 'dependency'),
   buildRequirementDependency(requirements.courtOrderReferenceExtraction, 'court-order-reference-extraction', 'Court-order reference extraction', true, 'Court-order reference extraction has not been evaluated.', true, 'document'),
   buildRequirementDependency(requirements.identityCoverage, 'identity-document-coverage', 'Identity document coverage', true, 'Identity coverage requirement not evaluated.', true, 'document'),

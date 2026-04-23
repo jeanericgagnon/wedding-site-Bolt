@@ -136,6 +136,7 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'courtOrder' | 'ssa' | 'dmv' 
         key: 'court-order-path-readiness',
         label: 'Court-order path readiness',
         kind: 'requirement',
+        nextActionCategory: 'review',
         requirementKey: 'court-order-path-readiness',
         missingReason: 'Court-order path readiness has not been evaluated yet.',
         satisfiedReason: 'Court-order path readiness is clear for this modeled review slice.',

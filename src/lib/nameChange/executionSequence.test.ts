@@ -139,6 +139,9 @@ describe('name change execution sequence snapshot', () => {
       blocksReady: true,
       reason: 'Court-order target legal name and case number are verified, but the signed date still needs grounded extraction before downstream use is fully trusted.',
     });
+    expect(snapshot.dependencies.find((dependency) => dependency.key === 'court-order-path-readiness')).toMatchObject({
+      nextActionCategory: 'review',
+    });
   });
 
   it('marks DMV sequencing dependency satisfied when the SSA step is complete', () => {

@@ -122,6 +122,69 @@ describe('name change target checklist', () => {
       blocksReady: true,
       status: 'attention',
     });
+
+    const courtOrderChecklist = buildNameChangeTargetChecklist(
+      NAME_CHANGE_EXECUTION_TARGETS.courtOrder,
+      makeCase({
+        legal_basis: 'court_order',
+        marriage_state: null,
+        marriage_date: null,
+        structured_intake: {
+          spouseLastName: null,
+          travelBookedSoon: false,
+          wantsDocumentIntakeHelp: true,
+        },
+        change_reasons: ['court_order'],
+      }),
+      [
+        {
+          id: 'court-order-doc',
+          document_kind: 'court_order_name_change',
+          display_name: 'Court order',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+        },
+      ],
+      [
+        {
+          document_id: 'court-order-doc',
+          field_key: 'first_name',
+          field_label: 'Target first name',
+          field_value_masked: 'Alex',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'court-order-doc',
+          field_key: 'last_name',
+          field_label: 'Target last name',
+          field_value_masked: 'Jordan',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'court-order-doc',
+          field_key: 'case_number',
+          field_label: 'Case number',
+          field_value_masked: '24-CV-1188',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'court-order-doc',
+          field_key: 'court_order_date',
+          field_label: 'Court order date',
+          field_value_masked: '2026-04-05',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+      ],
+    );
+    expect(courtOrderChecklist.find((item) => item.key === 'court-order-path-readiness')).toMatchObject({
+      kind: 'requirement',
+      nextActionCategory: 'review',
+      status: 'missing',
+    });
   });
 
   it('marks field-presence checklist items as attention when values exist but only from low-confidence sources', () => {

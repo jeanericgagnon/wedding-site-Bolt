@@ -115,15 +115,6 @@ export function buildNameChangeTargetExecutionSnapshot(
       };
     }
 
-    const readinessChecklistItem = checklist.find((item) => item.key === 'court-order-path-readiness' && item.status === 'attention');
-    if (readinessChecklistItem) {
-      return {
-        category: 'review' as const,
-        label: 'Review court-order path readiness',
-        detail: readinessChecklistItem.reason,
-      };
-    }
-
     return null;
   };
   const courtOrderNextAction = targetKey === 'courtOrder' ? buildCourtOrderNextAction() : null;
@@ -203,6 +194,10 @@ export function buildNameChangeTargetExecutionSnapshot(
 
     return fallback;
   };
+  const getBlockingDependencyLabel = (dependency: typeof dependencies[number]) => {
+    const category = getDependencyCategory(dependency, 'dependency');
+    return `${category === 'review' ? 'Review' : 'Unblock'} ${dependency.label}`;
+  };
   const nextAction = blockingFieldConflict
     ? {
         category: 'document' as const,
@@ -220,7 +215,7 @@ export function buildNameChangeTargetExecutionSnapshot(
     : firstBlockingDependency
       ? {
           category: getDependencyCategory(firstBlockingDependency, 'dependency'),
-          label: `Unblock ${firstBlockingDependency.label}`,
+          label: getBlockingDependencyLabel(firstBlockingDependency),
           detail: firstBlockingDependency.reason,
         }
       : firstMissingChecklistItem

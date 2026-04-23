@@ -712,8 +712,12 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'court-order-path-readiness')).toMatchObject({
       status: 'attention',
       blocksReady: true,
+      nextActionCategory: 'review',
     });
-    expect(snapshot.checklist.find((item) => item.key === 'court-order-path-readiness')).toMatchObject({ status: 'attention' });
+    expect(snapshot.checklist.find((item) => item.key === 'court-order-path-readiness')).toMatchObject({
+      status: 'attention',
+      nextActionCategory: 'review',
+    });
     expect(snapshot.autofillFields.find((field) => field.targetField === 'applicant.target_first_name')).toMatchObject({
       value: expect.objectContaining({
         source: 'extracted_field',
@@ -748,9 +752,13 @@ describe('name change target execution snapshot', () => {
       sourceFieldKey: 'first_name',
     });
     expect(snapshot.checklist.find((item) => item.key === 'target-legal-name')).toMatchObject({ status: 'ready' });
+    expect(snapshot.checklist.find((item) => item.key === 'court-order-path-readiness')).toMatchObject({
+      status: 'attention',
+      nextActionCategory: 'review',
+    });
     expect(snapshot.nextAction).toMatchObject({
       category: 'review',
-      label: 'Review court-order path readiness',
+      label: 'Review Court-order path readiness',
     });
   });
 
