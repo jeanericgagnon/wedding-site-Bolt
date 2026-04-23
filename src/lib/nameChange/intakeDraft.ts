@@ -369,6 +369,23 @@ function normalizeDraftCountyValue(value: string) {
   return humanizeDraftToken(countyWithoutAffixes.toLowerCase());
 }
 
+function normalizeDraftPersonNameValue(
+  value: string,
+  fieldKey: 'first_name' | 'middle_name' | 'last_name' | 'spouse_last_name',
+) {
+  const normalizedValue = normalizeDraftText(value);
+  if (!normalizedValue) return '';
+
+  const labelPatterns: Record<typeof fieldKey, RegExp> = {
+    first_name: /^(?:(?:first|given)(?:\s+legal)?\s+name|name\s*[:#-]?\s*first)\s*[:#-]?\s*/i,
+    middle_name: /^(?:middle(?:\s+legal)?\s+name|middle\s+initial)\s*[:#-]?\s*/i,
+    last_name: /^(?:(?:last|family|surname)(?:\s+legal)?\s+name|new\s+legal\s+name)\s*[:#-]?\s*/i,
+    spouse_last_name: /^(?:spouse(?:'s)?\s+(?:(?:last|family)\s+name|surname))\s*[:#-]?\s*/i,
+  };
+
+  return humanizeDraftToken(normalizedValue.replace(labelPatterns[fieldKey], '').toLowerCase());
+}
+
 function normalizeDraftReferenceNumberValue(value: string) {
   const normalizedValue = normalizeDraftText(value);
   if (!normalizedValue) return '';
@@ -392,7 +409,7 @@ export function normalizeDraftFieldValue(fieldKey: NameChangeExtractedFieldInput
   }
 
   if (fieldKey === 'first_name' || fieldKey === 'middle_name' || fieldKey === 'last_name' || fieldKey === 'spouse_last_name') {
-    return humanizeDraftToken(normalizedValue.toLowerCase());
+    return normalizeDraftPersonNameValue(normalizedValue, fieldKey);
   }
 
   if (fieldKey === 'case_number' || fieldKey === 'certificate_number') {

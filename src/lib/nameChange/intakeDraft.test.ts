@@ -543,6 +543,32 @@ describe('name change intake draft helpers', () => {
     ]);
   });
 
+  it('strips person-name labels out of draft field values before canonicalizing them', () => {
+    expect(upsertDraftNameChangeExtractedField([], 'draft-current_passport', 'first_name', 'First name', 'First name: aLIcia')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-current_passport',
+        field_key: 'first_name',
+        field_value_masked: 'Alicia',
+      }),
+    ]);
+
+    expect(upsertDraftNameChangeExtractedField([], 'draft-court_order', 'last_name', 'Last name', 'New legal name - joNES')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-court_order',
+        field_key: 'last_name',
+        field_value_masked: 'Jones',
+      }),
+    ]);
+
+    expect(upsertDraftNameChangeExtractedField([], 'draft-marriage_certificate', 'spouse_last_name', 'Spouse last name', "Spouse's surname: SMITh")).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-marriage_certificate',
+        field_key: 'spouse_last_name',
+        field_value_masked: 'Smith',
+      }),
+    ]);
+  });
+
   it('uppercases number-like draft field values into stable canonical ids', () => {
     expect(upsertDraftNameChangeExtractedField([], 'draft-court_order', 'case #' as never, '  ', ' 24-cv-1188 ')).toEqual([
       expect.objectContaining({
