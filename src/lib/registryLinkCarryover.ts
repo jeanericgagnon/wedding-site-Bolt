@@ -66,6 +66,12 @@ function isWeakExplicitTokenLabel(url: string, label: string | undefined): boole
   return Boolean(inferredDomain) && label === inferredDomain;
 }
 
+function isWeakInferredSourceLabel(url: string, label: string | undefined): boolean {
+  if (!label) return false;
+  const normalizedUrl = normalizeUrl(url) ?? url;
+  return isWeakExplicitTokenLabel(normalizedUrl, label);
+}
+
 function inferSourceLabelFromText(text: string): string | undefined {
   const normalized = text.trim().toLowerCase();
   if (!normalized) return undefined;
@@ -146,7 +152,7 @@ function dedupeNormalizedRegistryLinks(links: CarryoverRegistryLink[]): Carryove
     const existingInferredLabel = inferSourceLabel(existing.url);
     if (!existing.sourceLabel && link.sourceLabel) {
       deduped.set(link.url, link);
-    } else if (link.sourceLabel && existing.sourceLabel === existingInferredLabel && link.sourceLabel !== existing.sourceLabel) {
+    } else if (link.sourceLabel && isWeakInferredSourceLabel(existing.url, existing.sourceLabel) && link.sourceLabel !== existing.sourceLabel) {
       deduped.set(link.url, link);
     }
   }
@@ -206,7 +212,7 @@ export function mergeRegistrySourceLabels(
     if (!existingMerged) {
       if (
         existingLink?.sourceLabel
-        && nextLink.sourceLabel === inferSourceLabel(nextLink.url)
+        && isWeakInferredSourceLabel(nextLink.url, nextLink.sourceLabel)
         && existingLink.sourceLabel !== nextLink.sourceLabel
       ) {
         mergedByUrl.set(link.url, existingLink);
@@ -224,7 +230,7 @@ export function mergeRegistrySourceLabels(
     const inferredMergedLabel = inferSourceLabel(existingMerged.url);
     if (
       nextLink.sourceLabel
-      && existingMerged.sourceLabel === inferredMergedLabel
+      && isWeakInferredSourceLabel(existingMerged.url, existingMerged.sourceLabel)
       && nextLink.sourceLabel !== existingMerged.sourceLabel
     ) {
       mergedByUrl.set(link.url, nextLink);
@@ -358,7 +364,7 @@ export function carryOverRegistryLinks(raw: string | null | undefined): Carryove
       const existingInferredLabel = inferSourceLabel(existing.url);
       if (
         (!existing.sourceLabel && token.sourceLabel)
-        || (token.sourceLabel && existing.sourceLabel === existingInferredLabel && token.sourceLabel !== existing.sourceLabel)
+        || (token.sourceLabel && isWeakInferredSourceLabel(existing.url, existing.sourceLabel) && token.sourceLabel !== existing.sourceLabel)
         || (existingMode !== 'explicit' && token.sourceLabelMode === 'explicit' && token.sourceLabel)
       ) {
         carried.set(token.url, { ...existing, sourceLabel: token.sourceLabel });

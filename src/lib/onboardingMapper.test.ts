@@ -54,4 +54,21 @@ describe('buildOnboardingUpdateData registry carryover', () => {
       ]),
     );
   });
+
+  it('preserves stronger imported custom labels when a saved markdown domain label already exists', () => {
+    const result = buildOnboardingUpdateData({
+      coupleNames: { name1: 'Alex', name2: 'Sam' },
+      planningStatus: 'guided_setup_complete',
+      template: 'base',
+      registryLinks: '[Example](example.com/list)',
+      registryLinksRaw: 'Custom Boutique | https://example.com/list',
+    });
+
+    const weddingData = result.wedding_data as { registry?: { links?: Array<{ url: string; label?: string }> } };
+    expect(weddingData.registry?.links).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ url: 'https://example.com/list', label: 'Custom Boutique' }),
+      ]),
+    );
+  });
 });

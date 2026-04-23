@@ -203,6 +203,12 @@ describe('carryOverRegistryLinks', () => {
     ]);
   });
 
+  it('upgrades domain-labeled duplicate registry links when a later explicit label is stronger', () => {
+    expect(carryOverRegistryLinks('[Example](example.com/list)\nCustom Boutique | https://example.com/list')).toEqual([
+      { url: 'https://example.com/list', sourceLabel: 'Custom Boutique' },
+    ]);
+  });
+
   it('does not leak internal carryover label metadata to callers', () => {
     expect(carryOverRegistryLinks('https://zola.com/registry/jane')).toEqual([
       { url: 'https://zola.com/registry/jane', sourceLabel: 'Zola' },
@@ -234,6 +240,12 @@ describe('carryOverRegistryLinks', () => {
   it('dedupes persisted registry links after normalization and keeps the stronger label', () => {
     expect(parsePersistedRegistryLinks('https://zola.com/registry/jane/\nCustom Honeymoon Fund | https://zola.com/registry/jane')).toEqual([
       { url: 'https://zola.com/registry/jane', sourceLabel: 'Custom Honeymoon Fund' },
+    ]);
+  });
+
+  it('dedupes persisted domain-labeled registry links after normalization and keeps the stronger label', () => {
+    expect(parsePersistedRegistryLinks('[Example](example.com/list)\nCustom Boutique | https://example.com/list')).toEqual([
+      { url: 'https://example.com/list', sourceLabel: 'Custom Boutique' },
     ]);
   });
 
@@ -286,6 +298,15 @@ describe('carryOverRegistryLinks', () => {
       [{ url: 'https://zola.com/registry/jane', sourceLabel: 'Custom Honeymoon Fund reserved by Sam' }],
     )).toEqual([
       { url: 'https://zola.com/registry/jane', sourceLabel: 'Custom Honeymoon Fund' },
+    ]);
+  });
+
+  it('preserves stronger persisted labels when carried links only infer a weak domain label', () => {
+    expect(mergeRegistrySourceLabels(
+      [{ url: 'https://example.com/list', sourceLabel: 'Example' }],
+      [{ url: 'https://example.com/list', sourceLabel: 'Custom Boutique reserved by Sam' }],
+    )).toEqual([
+      { url: 'https://example.com/list', sourceLabel: 'Custom Boutique' },
     ]);
   });
 
