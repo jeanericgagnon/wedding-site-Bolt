@@ -303,10 +303,17 @@ export const Product: React.FC = () => {
 
               <div className="flex flex-wrap gap-3">
                 <button onClick={handleSignUp} className="px-5 py-2.5 bg-brand text-paper rounded-xl font-semibold">{user ? 'Review your draft' : 'Start your draft'}</button>
-                <button onClick={handleDemoLogin} disabled={demoLoading} className="group px-5 py-2.5 border-2 border-brand text-brand rounded-xl font-semibold inline-flex items-center gap-2 disabled:opacity-60">
-                  {demoLoading ? 'Opening demo...' : 'Try full demo'}
-                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-                </button>
+                {user ? (
+                  <button onClick={() => navigate('/dashboard/overview')} className="group px-5 py-2.5 border-2 border-brand text-brand rounded-xl font-semibold inline-flex items-center gap-2">
+                    Open your dashboard
+                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                  </button>
+                ) : (
+                  <button onClick={handleDemoLogin} disabled={demoLoading} className="group px-5 py-2.5 border-2 border-brand text-brand rounded-xl font-semibold inline-flex items-center gap-2 disabled:opacity-60">
+                    {demoLoading ? 'Opening demo...' : 'Try full demo'}
+                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                  </button>
+                )}
               </div>
             </div>
 
