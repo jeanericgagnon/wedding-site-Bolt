@@ -1579,6 +1579,82 @@ describe('EventRSVP token trust continuity', () => {
     });
   });
 
+  it('keeps the current event invitations visible while continuity refresh reloads in the background', async () => {
+    currentToken = 'guest-token';
+
+    const deferredRefreshGuestLookup = createDeferredMaybeSingle();
+
+    maybeSingleQueue.push(
+      { data: { id: 'guest-1', name: 'Alex Guest', email: 'alex@example.com' }, error: null },
+      { data: null, error: null },
+      deferredRefreshGuestLookup.promise,
+      { data: { attending: true, dietary_restrictions: 'Vegan', notes: 'See you there' }, error: null },
+    );
+
+    selectQueue.push(
+      {
+        data: [{
+          id: 'inv-1',
+          event_id: 'event-1',
+          itinerary_events: {
+            id: 'event-1',
+            event_name: 'Welcome Party',
+            description: 'Kickoff dinner',
+            event_date: '2026-09-18',
+            start_time: '18:00:00',
+            end_time: null,
+            location_name: 'Beach Club',
+            location_address: '123 Shoreline Dr',
+            dress_code: null,
+            notes: null,
+          },
+        }],
+        error: null,
+      },
+      {
+        data: [{
+          id: 'inv-1',
+          event_id: 'event-1',
+          itinerary_events: {
+            id: 'event-1',
+            event_name: 'Welcome Party',
+            description: 'Kickoff dinner',
+            event_date: '2026-09-18',
+            start_time: '18:00:00',
+            end_time: null,
+            location_name: 'Beach Club',
+            location_address: '123 Shoreline Dr',
+            dress_code: null,
+            notes: null,
+          },
+        }],
+        error: null,
+      },
+    );
+
+    render(<EventRSVP />);
+
+    await screen.findByText('Welcome Party');
+    expect(screen.getByRole('button', { name: 'RSVP for this event' })).toBeInTheDocument();
+
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('dayof:rsvp-updated', { detail: { updatedAt: String(Date.now()) } }));
+    });
+
+    expect(screen.getByText('Welcome Party')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'RSVP for this event' })).toBeInTheDocument();
+    expect(screen.queryByText('Hello, Alex Guest!')).toBeInTheDocument();
+
+    deferredRefreshGuestLookup.resolve({
+      data: { id: 'guest-1', name: 'Alex Guest', email: 'alex@example.com' },
+      error: null,
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Update my RSVP' })).toBeInTheDocument();
+    });
+  });
+
   it('defers continuity refresh while the RSVP form is open so active edits do not get reset', async () => {
     maybeSingleQueue.push(
       { data: { id: 'guest-1', name: 'Alex Guest', email: 'alex@example.com' }, error: null },

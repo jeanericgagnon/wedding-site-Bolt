@@ -160,26 +160,31 @@ export default function EventRSVP() {
     };
   }, []);
 
-  const loadGuestAndEvents = useCallback(async () => {
+  const loadGuestAndEvents = useCallback(async ({ preserveVisibleState = false }: { preserveVisibleState?: boolean } = {}) => {
     const requestId = activeLoadRequestRef.current + 1;
     activeLoadRequestRef.current = requestId;
     activeSubmitRequestRef.current += 1;
     submitInFlightRef.current = false;
     let eventRsvpSupportKnown: boolean | null = null;
     let eventRsvpSupportAvailable = true;
+    const shouldPreserveVisibleState = preserveVisibleState && !selectedEvent && guest !== null;
 
     if (postSubmitResetTimeoutRef.current !== null) {
       window.clearTimeout(postSubmitResetTimeoutRef.current);
       postSubmitResetTimeoutRef.current = null;
     }
-    setLoading(true);
+    setLoading(shouldPreserveVisibleState ? false : true);
     setError('');
-    setGuest(null);
-    setInvitations([]);
-    setSelectedEvent(null);
-    setRsvpForm(buildDefaultEventRsvpFormState());
+    if (!shouldPreserveVisibleState) {
+      setGuest(null);
+      setInvitations([]);
+      setSelectedEvent(null);
+      setRsvpForm(buildDefaultEventRsvpFormState());
+    }
     resetEventRsvpModalTransientState(setSubmitting, setSubmitError, setSubmitSuccess, setError);
-    setHasEventRsvpSupport(null);
+    if (!shouldPreserveVisibleState) {
+      setHasEventRsvpSupport(null);
+    }
 
     try {
       const { data: guestData, error: guestError } = await supabase
@@ -277,12 +282,14 @@ export default function EventRSVP() {
       setHasEventRsvpSupport(eventRsvpSupportKnown);
     } catch {
       if (activeLoadRequestRef.current !== requestId) return;
-      setError('Failed to load your event invitations. Please try again or contact the couple.');
+      if (!shouldPreserveVisibleState) {
+        setError('Failed to load your event invitations. Please try again or contact the couple.');
+      }
     } finally {
       if (activeLoadRequestRef.current !== requestId) return;
       setLoading(false);
     }
-  }, [token]);
+  }, [guest, selectedEvent, token]);
 
   const refreshGuestAndEventsForContinuity = useCallback(() => {
     if (!token) return;
@@ -292,7 +299,7 @@ export default function EventRSVP() {
     }
 
     pendingContinuityRefreshRef.current = false;
-    loadGuestAndEvents();
+    loadGuestAndEvents({ preserveVisibleState: true });
   }, [loadGuestAndEvents, selectedEvent, submitting, token]);
 
   useEffect(() => {
@@ -334,7 +341,7 @@ export default function EventRSVP() {
     if (!token || selectedEvent || submitting || submitInFlightRef.current) return;
 
     pendingContinuityRefreshRef.current = false;
-    loadGuestAndEvents();
+    loadGuestAndEvents({ preserveVisibleState: true });
   }, [loadGuestAndEvents, selectedEvent, submitting, token]);
 
   function formatDate(dateString: string) {
