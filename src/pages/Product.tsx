@@ -251,10 +251,10 @@ export const Product: React.FC = () => {
           <p className="font-medium">{user ? 'Ready to keep shaping your draft?' : 'Want to see the full flow in action?'}</p>
           {user ? (
             <button
-              onClick={() => navigate('/dashboard/overview')}
+              onClick={() => navigate('/dashboard/builder')}
               className="px-4 py-1.5 rounded-lg bg-white text-brand font-semibold hover:bg-white/90"
             >
-              Open your dashboard
+              Open your builder
             </button>
           ) : (
             <button
@@ -304,8 +304,8 @@ export const Product: React.FC = () => {
               <div className="flex flex-wrap gap-3">
                 <button onClick={handleSignUp} className="px-5 py-2.5 bg-brand text-paper rounded-xl font-semibold">{user ? 'Review your draft' : 'Start your draft'}</button>
                 {user ? (
-                  <button onClick={() => navigate('/dashboard/overview')} className="group px-5 py-2.5 border-2 border-brand text-brand rounded-xl font-semibold inline-flex items-center gap-2">
-                    Open your dashboard
+                  <button onClick={() => navigate('/dashboard/builder')} className="group px-5 py-2.5 border-2 border-brand text-brand rounded-xl font-semibold inline-flex items-center gap-2">
+                    Open your builder
                     <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                   </button>
                 ) : (
@@ -529,8 +529,8 @@ export const Product: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-3 justify-center mb-4 w-full max-w-xl mx-auto">
             <button onClick={handleSignUp} className="w-full sm:w-auto px-7 py-3.5 bg-brand text-paper font-semibold rounded-2xl hover:bg-brand/90 transition-all">{user ? 'Review your draft' : 'Start your draft'}</button>
             {user ? (
-              <button onClick={() => navigate('/dashboard/overview')} className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
-                Open your dashboard
+              <button onClick={() => navigate('/dashboard/builder')} className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
+                Open your builder
                 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
               </button>
             ) : (
