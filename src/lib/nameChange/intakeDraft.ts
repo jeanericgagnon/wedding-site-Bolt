@@ -120,7 +120,7 @@ function normalizeDraftDocumentKind(value: string) {
   return SUPPORTED_DRAFT_DOCUMENT_KINDS.has(canonicalKind) ? canonicalKind : 'other';
 }
 
-function normalizeDraftFieldKey(value: string) {
+export function normalizeDraftFieldKey(value: string) {
   const normalizedFieldKey = value
     .trim()
     .replace(/([a-z0-9])([A-Z])/g, '$1_$2')

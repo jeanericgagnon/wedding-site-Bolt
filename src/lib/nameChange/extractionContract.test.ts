@@ -176,6 +176,30 @@ describe('name change extraction contract', () => {
     });
   });
 
+  it('canonically resolves aliased field keys and date values even when raw extraction rows bypass intake upsert', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-court-order',
+        document_kind: 'court_order_name_change',
+        display_name: 'Court order name change',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      { document_id: 'doc-court-order', field_key: 'signed dt', field_label: 'Signed dt', field_value_masked: 'Executed on Friday, April 5, 2026 1:30 PM PST', source_type: 'document_extract', is_verified: true },
+      { document_id: 'doc-court-order', field_key: 'case no.', field_label: 'Case no.', field_value_masked: '24-cv - 1188', source_type: 'document_extract', is_verified: true },
+    ];
+
+    const snapshot = buildNameChangeExtractionContractSnapshot(makeCase({ legal_basis: 'court_order', marriage_state: null, marriage_date: null }), documents, extractedFields);
+    expect(snapshot.courtOrder).toMatchObject({
+      caseNumber: '24-CV-1188',
+      courtOrderDate: '2026-04-05',
+    });
+    expect(getDocumentCapturedFieldKeys(documents, extractedFields, 'court_order')).toEqual(expect.arrayContaining(['case_number', 'court_order_date']));
+    expect(getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'court_order_date')).toBe('2026-04-05');
+  });
+
   it('flags court-order target-name conflicts against canonical case truth', () => {
     const documents: NameChangeDocumentInput[] = [
       {

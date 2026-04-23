@@ -1,6 +1,6 @@
 import { buildNameChangeCanonicalCase } from './canonical';
 import { getNameChangeDocumentKindAliases } from './documentKinds';
-import { normalizeDraftFieldValue } from './intakeDraft';
+import { normalizeDraftFieldKey, normalizeDraftFieldValue } from './intakeDraft';
 import type {
   NameChangeCanonicalFieldConflict,
   NameChangeCaseInput,
@@ -18,6 +18,10 @@ import type {
 function normalizeValue(fieldKey: NameChangeExtractionFieldKey, value: string | null | undefined) {
   const normalized = normalizeDraftFieldValue(fieldKey, value ?? '');
   return normalized || null;
+}
+
+function normalizeFieldKey(fieldKey: string) {
+  return normalizeDraftFieldKey(fieldKey) as NameChangeExtractionFieldKey;
 }
 
 function getDocumentExtractionPriority(
@@ -58,7 +62,7 @@ function getLinkedFieldValue(
   if (!document?.id) return null;
 
   const field = extractedFields.find((item) => item.document_id === document.id
-    && item.field_key === fieldKey
+    && normalizeFieldKey(item.field_key) === fieldKey
     && (!requireVerified || item.is_verified));
   return normalizeValue(fieldKey, field?.field_value_masked);
 }
@@ -67,7 +71,7 @@ function getManualFallbackField(
   extractedFields: NameChangeExtractedFieldInput[],
   fieldKey: NameChangeExtractionFieldKey,
 ): NameChangeExtractedFieldInput | null {
-  return extractedFields.find((item) => !item.document_id && item.field_key === fieldKey && item.source_type === 'manual') ?? null;
+  return extractedFields.find((item) => !item.document_id && normalizeFieldKey(item.field_key) === fieldKey && item.source_type === 'manual') ?? null;
 }
 
 function getManualFallbackValue(
@@ -108,7 +112,7 @@ export function hasAnyDocumentLinkedFieldValue(
 ): boolean {
   const document = getDocumentByKind(documents, extractedFields, kind);
   const linkedField = document?.id
-    ? extractedFields.find((item) => item.document_id === document.id && item.field_key === fieldKey)
+    ? extractedFields.find((item) => item.document_id === document.id && normalizeFieldKey(item.field_key) === fieldKey)
     : null;
 
   if (normalizeValue(fieldKey, linkedField?.field_value_masked)) return true;
@@ -125,7 +129,7 @@ export function hasVerifiedDocumentLinkedFieldValue(
 ): boolean {
   const document = getDocumentByKind(documents, extractedFields, kind);
   const linkedField = document?.id
-    ? extractedFields.find((item) => item.document_id === document.id && item.field_key === fieldKey && item.is_verified)
+    ? extractedFields.find((item) => item.document_id === document.id && normalizeFieldKey(item.field_key) === fieldKey && item.is_verified)
     : null;
 
   if (normalizeValue(fieldKey, linkedField?.field_value_masked)) return true;
@@ -145,11 +149,11 @@ export function getDocumentCapturedFieldKeys(
   const linkedKeys = document.id
     ? extractedFields
         .filter((field) => field.document_id === document.id && field.is_verified)
-        .map((field) => field.field_key)
+        .map((field) => normalizeFieldKey(field.field_key))
     : [];
   const manualFallbackKeys = extractedFields
     .filter((field) => !field.document_id && field.source_type === 'manual' && field.is_verified)
-    .map((field) => field.field_key);
+    .map((field) => normalizeFieldKey(field.field_key));
 
   return [...new Set([...linkedKeys, ...manualFallbackKeys])];
 }

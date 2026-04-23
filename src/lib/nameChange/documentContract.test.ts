@@ -527,6 +527,48 @@ describe('name change document intake contract', () => {
     });
   });
 
+  it('treats aliased raw extraction field keys as canonical captured contract truth', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase({ legal_basis: 'court_order', marriage_state: null, marriage_date: null }),
+      [
+        {
+          id: 'doc-court-order',
+          document_kind: 'court_order_name_change',
+          display_name: 'Court order',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'court-order-•••.pdf',
+          issuing_authority: 'San Diego Superior Court',
+          issued_on: '2026-04-05',
+          extraction_confidence: 0.93,
+        },
+      ],
+      [
+        {
+          document_id: 'doc-court-order',
+          field_key: 'signed dt',
+          field_label: 'Signed dt',
+          field_value_masked: 'Executed on Friday, April 5, 2026 1:30 PM PST',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-court-order',
+          field_key: 'case no.',
+          field_label: 'Case no.',
+          field_value_masked: '24-cv - 1188',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+      ],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'court_order')).toMatchObject({
+      capturedExtractionFields: ['case_number', 'court_order_date'],
+      missingExtractionFields: ['first_name', 'last_name'],
+    });
+  });
+
   it('prefers reviewed metadata-ready documents over uploaded metadata-light duplicates', () => {
     const snapshot = buildNameChangeDocumentIntakeSnapshot(
       makeCase(),
