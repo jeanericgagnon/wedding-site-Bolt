@@ -162,4 +162,13 @@ describe('Product starter draft truth', () => {
 
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/planning');
   });
+
+  it('gives signed-in couples a direct coordinator workspace shortcut', () => {
+    authState.user = { id: 'user-1' };
+    render(<Product />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open coordinator workspace' }));
+
+    expect(navigateMock).toHaveBeenCalledWith('/dashboard/coordinator');
+  });
 });

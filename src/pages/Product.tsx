@@ -401,6 +401,13 @@ export const Product: React.FC = () => {
                   >
                     Open planner workspace
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/dashboard/coordinator')}
+                    className="rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-medium text-ink transition hover:border-brand/30 hover:text-brand"
+                  >
+                    Open coordinator workspace
+                  </button>
                 </>
               ) : (
                 <Link to="/trust" className="rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-medium text-ink transition hover:border-brand/30 hover:text-brand">
