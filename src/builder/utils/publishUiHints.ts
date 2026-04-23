@@ -13,6 +13,7 @@ const NON_BLOCKING_PUBLISH_COPY = new Set([
   'guests can reply',
   'latest edits are saved',
   'everything is saved',
+  'all changes saved',
   'ready to go live',
   'no checks yet',
   'draft only',
@@ -134,7 +135,10 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
       'Make sure guests can tell where they are meant to go.',
     ];
   }
-  if (normalizedErrorLower.includes('save your latest draft changes before going live')) {
+  if (
+    normalizedErrorLower.includes('save your latest draft changes before going live')
+    || normalizedErrorLower.includes('save your latest changes before going live')
+  ) {
     return [
       'Save your draft before trying again.',
       'Then re-open publish and review the remaining checks.',

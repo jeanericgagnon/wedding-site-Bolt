@@ -394,6 +394,9 @@ describe('publishUiHints', () => {
     expect(getPublishBlockedHints('Everything is saved.')).toEqual([
       'Use Fix next to move through the last blockers before the guest-facing launch.',
     ]);
+    expect(getPublishBlockedHints('All changes saved.')).toEqual([
+      'Use Fix next to move through the last blockers before the guest-facing launch.',
+    ]);
   });
 
   it('does not mistake the saved readiness label for a blocker', () => {
@@ -432,6 +435,10 @@ describe('publishUiHints', () => {
       'Then re-open publish and review the remaining checks.',
     ]);
     expect(getPublishBlockedHints('Save your latest draft changes before going live!!!')).toEqual([
+      'Save your draft before trying again.',
+      'Then re-open publish and review the remaining checks.',
+    ]);
+    expect(getPublishBlockedHints('Save your latest changes before going live.')).toEqual([
       'Save your draft before trying again.',
       'Then re-open publish and review the remaining checks.',
     ]);
