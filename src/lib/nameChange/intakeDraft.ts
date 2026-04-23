@@ -175,6 +175,8 @@ function normalizeDraftFieldKey(value: string) {
     signed_on: 'court_order_date',
     order_date: 'court_order_date',
     order_signed_on: 'court_order_date',
+    order_entered_on: 'court_order_date',
+    order_filed_on: 'court_order_date',
     filed_date: 'court_order_date',
     filed_on: 'court_order_date',
     date_signed: 'court_order_date',
