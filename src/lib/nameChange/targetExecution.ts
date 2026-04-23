@@ -117,7 +117,39 @@ export function buildNameChangeTargetExecutionSnapshot(
 
     return null;
   };
+  const buildMarriageCertificateGroundingNextAction = () => {
+    const groundingDependency = sequence.dependencies.find((dependency) => dependency.key === 'out-of-state-marriage-certificate-grounding');
+    if (!groundingDependency) return null;
+
+    const marriageCertificateKinds = new Set(getNameChangeDocumentKindAliases('marriage_certificate'));
+    const marriageCertificateDocuments = documents.filter((document) => marriageCertificateKinds.has(document.document_kind));
+    const hasMarriageCertificate = marriageCertificateDocuments.length > 0;
+    const hasReviewedMarriageCertificate = marriageCertificateDocuments.some((document) => document.intake_status === 'reviewed');
+    const hasVerifiedMarriageCertificateCounty = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'marriage_certificate', 'county');
+    const hasVerifiedMarriageCertificateNumber = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'marriage_certificate', 'certificate_number');
+
+    if (groundingDependency.status !== 'missing' && groundingDependency.status !== 'attention') return null;
+
+    const label = !hasMarriageCertificate
+      ? 'Upload marriage certificate'
+      : !hasReviewedMarriageCertificate
+        ? 'Review marriage certificate'
+        : !hasVerifiedMarriageCertificateCounty && !hasVerifiedMarriageCertificateNumber
+          ? 'Capture marriage-certificate county + certificate number'
+          : !hasVerifiedMarriageCertificateCounty
+            ? 'Capture marriage-certificate county'
+            : !hasVerifiedMarriageCertificateNumber
+              ? 'Capture marriage-certificate certificate number'
+              : 'Review marriage-certificate grounding';
+
+    return {
+      category: 'document' as const,
+      label,
+      detail: groundingDependency.reason,
+    };
+  };
   const courtOrderNextAction = targetKey === 'courtOrder' ? buildCourtOrderNextAction() : null;
+  const marriageCertificateGroundingNextAction = buildMarriageCertificateGroundingNextAction();
   const blockingFieldConflict = primaryCanonicalConflict && firstBlockingFieldRisk
     && primaryCanonicalConflict.documentKind === firstBlockingFieldRisk.sourceDocumentKind
     && primaryCanonicalConflict.fieldKey === firstBlockingFieldRisk.sourceFieldKey
@@ -206,6 +238,8 @@ export function buildNameChangeTargetExecutionSnapshot(
       }
     : courtOrderNextAction
       ? courtOrderNextAction
+    : marriageCertificateGroundingNextAction
+      ? marriageCertificateGroundingNextAction
     : firstBlockingFieldRisk
       ? {
           category: 'packet' as const,

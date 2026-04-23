@@ -917,6 +917,76 @@ describe('name change target execution snapshot', () => {
     });
   });
 
+  it('gives a concrete marriage-certificate grounding next action when out-of-state passport follow-through is missing both reference fields', () => {
+    const profile = makeCase({ marriage_state: 'Nevada' });
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-marriage',
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+    const basePlan = buildNameChangePlan({ profile, documents, extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-ssa'
+        ? { ...step, executionStatus: 'in_progress' as const }
+        : step),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('passport', profile, documents, [], plan);
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'document',
+      label: 'Capture marriage-certificate county + certificate number',
+      detail: 'Marriage certificate is present, but no grounded county or certificate-number extraction is represented yet for out-of-state follow-through.',
+    });
+  });
+
+  it('gives a concrete marriage-certificate grounding next action when county is the last missing out-of-state field', () => {
+    const profile = makeCase({ marriage_state: 'Nevada' });
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-marriage',
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'doc-marriage',
+        field_key: 'certificate_number',
+        field_label: 'Certificate number',
+        field_value_masked: 'MC-123',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+    const basePlan = buildNameChangePlan({ profile, documents, extractedFields });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-passport'
+        ? { ...step, executionStatus: 'in_progress' as const }
+        : step),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('tsa', profile, documents, extractedFields, plan);
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'document',
+      label: 'Capture marriage-certificate county',
+      detail: 'Marriage certificate is present, but verified county and certificate-number extraction are still incomplete for out-of-state follow-through.',
+    });
+  });
+
   it('blocks packet readiness when canonical truth conflicts with extracted values', () => {
     const documents: NameChangeDocumentInput[] = [
       {
