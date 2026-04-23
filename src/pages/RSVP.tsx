@@ -53,6 +53,7 @@ interface ExistingRSVP {
   attending: boolean;
   attending_ceremony?: boolean | null;
   attending_reception?: boolean | null;
+  guest_ids?: string[] | null;
   meal_choice: string | null;
   plus_one_name: string | null;
   plus_one_count?: number | null;
@@ -208,7 +209,7 @@ function deriveSelectedHouseholdGuestIds(existingRsvp: ExistingRSVP | null, hous
 function shouldApplyToHousehold(existingRsvp: ExistingRSVP | null, household: HouseholdGuest[], primaryGuestId?: string | null): boolean {
   if (household.length === 0) return false;
   const invitedIds = new Set(household.map((member) => member.id));
-  return (existingRsvp?.guest_ids ?? []).some((guestId) => guestId !== primaryGuestId && invitedIds.has(guestId));
+  return (existingRsvp?.guest_ids ?? []).some((guestId: string) => guestId !== primaryGuestId && invitedIds.has(guestId));
 }
 
 function buildNormalizedRsvpFormData(
@@ -487,28 +488,27 @@ export default function RSVP() {
 
   const returnToLoadedRsvp = useCallback(() => {
     invalidateActiveSubmit();
-    const selectedGuestIds = applyToHousehold && guest
+    if (!guest) {
+      resetToSearch(true);
+      return;
+    }
+
+    const selectedGuestIds = applyToHousehold
       ? dedupeGuestIds([guest.id, ...selectedHouseholdGuestIds])
-      : guest
-        ? [guest.id]
-        : [];
+      : [guest.id];
     const normalizedExistingRsvp = buildNormalizedExistingRsvp(formData, customAnswers, 'local-rsvp-confirmation', selectedGuestIds);
     const normalizedSelectedHouseholdGuestIds = normalizeSelectedHouseholdGuestIds(selectedHouseholdGuestIds, householdGuests);
     const shouldKeepHouseholdSelection = applyToHousehold && normalizedSelectedHouseholdGuestIds.length > 0;
+
     setError('');
-    setFormData((current) => ({
-      ...current,
-      meal_choice: normalizedExistingRsvp.meal_choice || '',
-      plus_one_name: normalizedExistingRsvp.plus_one_name || '',
-      notes: normalizedExistingRsvp.notes || '',
-    }));
+    setFormData(buildNormalizedRsvpFormData(guest, normalizedExistingRsvp, mealConfig));
     setCustomAnswers(normalizedExistingRsvp.custom_answers || {});
     setApplyToHousehold(shouldKeepHouseholdSelection);
     setSelectedHouseholdGuestIds(shouldKeepHouseholdSelection ? normalizedSelectedHouseholdGuestIds : []);
     setStep('form');
     setFormStep(1);
     setExistingRsvp(normalizedExistingRsvp);
-  }, [applyToHousehold, customAnswers, formData, guest, householdGuests, invalidateActiveSubmit, selectedHouseholdGuestIds]);
+  }, [applyToHousehold, customAnswers, formData, guest, householdGuests, invalidateActiveSubmit, mealConfig, resetToSearch, selectedHouseholdGuestIds]);
 
   useEffect(() => {
     return () => {
@@ -707,7 +707,9 @@ export default function RSVP() {
     setMealConfig(meal);
     setMusicPlaylistUrl(playlistUrl);
     const selectedGuestIds = deriveSelectedHouseholdGuestIds(normalizedRsvp, household);
-    const applyToSelectedHousehold = shouldApplyToHousehold(normalizedRsvp, household, foundGuest.id);
+    const applyToSelectedHousehold = normalizedRsvp
+      ? shouldApplyToHousehold(normalizedRsvp, household, foundGuest.id)
+      : household.length > 0;
     setHouseholdGuests(household);
     setApplyToHousehold(applyToSelectedHousehold);
     setSelectedHouseholdGuestIds(applyToSelectedHousehold ? selectedGuestIds : []);
@@ -1400,7 +1402,7 @@ export default function RSVP() {
                             type="text"
                             value={formData.plus_one_name}
                             onChange={(e) => updateFormData((current) => ({ ...current, plus_one_name: e.target.value }))}
-                            placeholder="Guest's full name"
+                            placeholder="Plus-one full name"
                             className="h-12 text-base"
                           />
                           <p className="text-sm text-gray-600 mt-2">You're welcome to bring a guest.</p>
