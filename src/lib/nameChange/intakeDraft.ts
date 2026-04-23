@@ -260,7 +260,8 @@ function normalizeDraftDateValue(value: string) {
   const sanitizedTimestampValue = deweekdayValue.replace(/,\s*(\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?)\b/g, ' $1');
   const compactTimestampValue = sanitizedTimestampValue.replace(/\s+/g, ' ').trim();
   const depunctuatedTimestampValue = compactTimestampValue.replace(/[.,;:]+$/g, '').trim();
-  const normalizedTimestampValue = depunctuatedTimestampValue.replace(/\b(am|pm)\b/gi, (_, meridiem: string) => meridiem.toUpperCase());
+  const unwrappedTimestampValue = depunctuatedTimestampValue.replace(/^["'([{]+|["')\]}]+$/g, '').trim();
+  const normalizedTimestampValue = unwrappedTimestampValue.replace(/\b(am|pm)\b/gi, (_, meridiem: string) => meridiem.toUpperCase());
   const canonicalTimestampValue = normalizedTimestampValue
     .replace(/\bz\b/g, 'Z')
     .replace(/\butc\b/gi, 'UTC')
