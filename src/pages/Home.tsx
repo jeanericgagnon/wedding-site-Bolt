@@ -503,10 +503,10 @@ export const Home: React.FC = () => {
 
           <SlideReveal from="right" className="text-center">
             <Link
-              to={user ? '/dashboard/overview' : '/product'}
+              to={user ? '/dashboard/builder' : '/product'}
               className="group inline-flex items-center justify-center gap-2 px-6 py-3 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 transition-all active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
             >
-              {user ? 'Open your dashboard' : 'See full product tour'}
+              {user ? 'Open your builder' : 'See full product tour'}
               <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
             </Link>
           </SlideReveal>
