@@ -225,7 +225,7 @@ export const Home: React.FC = () => {
                 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <button
-                onClick={user ? () => navigate('/dashboard/builder') : handleDemoLogin}
+                onClick={user ? () => navigate('/dashboard/guests') : handleDemoLogin}
                 disabled={demoLoading}
                 className="inline-flex w-full sm:w-auto min-h-[52px] items-center justify-center gap-2 px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 hover:border-brand transition-all active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-wait"
               >
@@ -235,7 +235,7 @@ export const Home: React.FC = () => {
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                   </svg>
                 )}
-                {user ? 'Open your builder' : demoLoading ? 'Opening demo...' : 'Try demo'}
+                {user ? 'Open your guest list' : demoLoading ? 'Opening demo...' : 'Try demo'}
               </button>
               </div>
             </HeroReveal>
@@ -569,7 +569,7 @@ export const Home: React.FC = () => {
                   {user ? 'Review your draft' : 'Start your draft'}
                 </button>
                 <button
-                  onClick={user ? () => navigate('/dashboard/builder') : handleDemoLogin}
+                  onClick={user ? () => navigate('/dashboard/messages') : handleDemoLogin}
                   disabled={demoLoading}
                   className="inline-flex items-center justify-center gap-2 w-full px-6 py-3 text-center border-2 border-brand/40 text-brand font-medium rounded-xl hover:bg-brand/5 hover:border-brand transition-all active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-wait"
                 >
@@ -579,7 +579,7 @@ export const Home: React.FC = () => {
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                     </svg>
                   )}
-                  {user ? 'Open your builder' : demoLoading ? 'Opening demo...' : 'Try demo'}
+                  {user ? 'Open message drafts' : demoLoading ? 'Opening demo...' : 'Try demo'}
                 </button>
               </div>
 
