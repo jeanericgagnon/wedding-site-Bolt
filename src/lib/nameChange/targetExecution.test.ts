@@ -682,6 +682,63 @@ describe('name change target execution snapshot', () => {
     });
   });
 
+  it('tells the user to upload court-order proof before asking for extraction fields', () => {
+    const profile = makeCase({
+      legal_basis: 'court_order' as never,
+      marriage_state: null,
+      marriage_date: null,
+      structured_intake: {
+        spouseLastName: null,
+        travelBookedSoon: false,
+        wantsDocumentIntakeHelp: true,
+      },
+      change_reasons: ['court_order'],
+    });
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('courtOrder', profile, [], []);
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'document',
+      label: 'Upload court-order proof',
+      detail: 'Court-order path is selected, but no court-order proof is represented in intake yet.',
+    });
+  });
+
+  it('tells the user to review court-order proof before asking for extraction fields', () => {
+    const profile = makeCase({
+      legal_basis: 'court_order' as never,
+      marriage_state: null,
+      marriage_date: null,
+      structured_intake: {
+        spouseLastName: null,
+        travelBookedSoon: false,
+        wantsDocumentIntakeHelp: true,
+      },
+      change_reasons: ['court_order'],
+    });
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'court-order-doc',
+        document_kind: 'court_order_name_change',
+        display_name: 'Court order',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+      {
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('courtOrder', profile, documents, []);
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'document',
+      label: 'Review court-order proof',
+      detail: 'Court-order proof is in intake, but no verified target-name or case-reference extraction is represented yet.',
+    });
+  });
+
   it('gives a concrete court-order extraction next action when target legal name + case reference fields are still missing', () => {
     const profile = makeCase({
       legal_basis: 'court_order' as never,

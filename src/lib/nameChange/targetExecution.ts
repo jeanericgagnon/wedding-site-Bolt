@@ -1,4 +1,5 @@
 import { buildNameChangeAutofillPrepSnapshot } from './autofill';
+import { getNameChangeDocumentKindAliases } from './documentKinds';
 import { evaluateNameChangeExecutionGates } from './executionGates';
 import { buildNameChangeExecutionSequenceSnapshot } from './executionSequence';
 import {
@@ -72,6 +73,10 @@ export function buildNameChangeTargetExecutionSnapshot(
     const hasVerifiedCourtOrderTargetLastName = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'last_name');
     const hasVerifiedCourtOrderCaseNumber = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'case_number');
     const hasVerifiedCourtOrderSignedDate = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'court_order_date');
+    const courtOrderKinds = new Set(getNameChangeDocumentKindAliases('court_order'));
+    const courtOrderDocuments = documents.filter((document) => courtOrderKinds.has(document.document_kind));
+    const hasCourtOrderProof = courtOrderDocuments.length > 0;
+    const hasReviewedCourtOrderProof = courtOrderDocuments.some((document) => document.intake_status === 'reviewed');
     const referenceExtractionDependency = sequence.dependencies.find((dependency) => dependency.key === 'court-order-reference-extraction');
     const hasCompleteCourtOrderGrounding = hasVerifiedCourtOrderTargetFirstName
       && hasVerifiedCourtOrderTargetLastName
@@ -79,17 +84,21 @@ export function buildNameChangeTargetExecutionSnapshot(
       && hasVerifiedCourtOrderSignedDate;
 
     if (referenceExtractionDependency && !hasCompleteCourtOrderGrounding) {
-      const label = !hasVerifiedCourtOrderTargetFirstName && !hasVerifiedCourtOrderTargetLastName
-        ? 'Capture court-order target legal name + case reference fields'
-        : !hasVerifiedCourtOrderTargetFirstName
-          ? 'Capture court-order target first name'
-          : !hasVerifiedCourtOrderTargetLastName
-            ? 'Capture court-order target last name'
-            : !hasVerifiedCourtOrderCaseNumber
-              ? 'Capture court-order case number'
-              : !hasVerifiedCourtOrderSignedDate
-                ? 'Capture court-order signed date'
-                : 'Review court-order extraction grounding';
+      const label = !hasCourtOrderProof
+        ? 'Upload court-order proof'
+        : !hasReviewedCourtOrderProof
+          ? 'Review court-order proof'
+          : !hasVerifiedCourtOrderTargetFirstName && !hasVerifiedCourtOrderTargetLastName
+            ? 'Capture court-order target legal name + case reference fields'
+            : !hasVerifiedCourtOrderTargetFirstName
+              ? 'Capture court-order target first name'
+              : !hasVerifiedCourtOrderTargetLastName
+                ? 'Capture court-order target last name'
+                : !hasVerifiedCourtOrderCaseNumber
+                  ? 'Capture court-order case number'
+                  : !hasVerifiedCourtOrderSignedDate
+                    ? 'Capture court-order signed date'
+                    : 'Review court-order extraction grounding';
 
       return {
         category: 'document' as const,

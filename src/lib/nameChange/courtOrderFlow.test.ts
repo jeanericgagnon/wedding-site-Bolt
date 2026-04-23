@@ -70,6 +70,11 @@ describe('court-order path review execution snapshot', () => {
     const snapshot = buildNameChangeCourtOrderExecutionSnapshot(makeCase(), [], []);
     expect(snapshot.ready).toBe(false);
     expect(snapshot.blockers).toContain('Court-order path is selected, but no court-order proof is represented in intake yet.');
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'document',
+      label: 'Upload court-order proof',
+      detail: 'Court-order path is selected, but no court-order proof is represented in intake yet.',
+    });
   });
 
   it('blocks when county context is missing for court-order jurisdiction review', () => {
