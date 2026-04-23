@@ -108,6 +108,40 @@ describe('publicSiteProject', () => {
     expect(getPublicWeddingData(row)?.couple.displayName).toBe('Draft Names');
   });
 
+  it('rebuilds a truthful public couple displayName from partner names when the snapshot is blank', () => {
+    const row = {
+      is_published: false,
+      site_json: draftProject,
+      wedding_data: {
+        ...liveWeddingData,
+        couple: {
+          partner1Name: 'Alex',
+          partner2Name: 'Jordan',
+          displayName: '',
+        },
+      },
+    };
+
+    expect(getPublicWeddingData(row)?.couple.displayName).toBe('Alex & Jordan');
+  });
+
+  it('keeps a single public partner name truthful when the other name is missing', () => {
+    const row = {
+      is_published: false,
+      site_json: draftProject,
+      wedding_data: {
+        ...liveWeddingData,
+        couple: {
+          partner1Name: 'Alex',
+          partner2Name: '',
+          displayName: '',
+        },
+      },
+    };
+
+    expect(getPublicWeddingData(row)?.couple.displayName).toBe('Alex');
+  });
+
   it('prefers site_json weddingDataSnapshot over stale wedding_data when unpublished', () => {
     const row = {
       is_published: false,

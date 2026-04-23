@@ -13,6 +13,21 @@ const asRecord = (value: unknown): Record<string, unknown> | null => {
   return null;
 };
 
+const withTruthfulCoupleDisplayName = (data: WeddingDataV1): WeddingDataV1 => {
+  const displayName = data.couple.displayName
+    || [data.couple.partner1Name, data.couple.partner2Name].filter(Boolean).join(' & ');
+
+  if (displayName === data.couple.displayName) return data;
+
+  return {
+    ...data,
+    couple: {
+      ...data.couple,
+      displayName,
+    },
+  };
+};
+
 export const getIsPublishedFromSiteRow = (row: Record<string, unknown>): boolean => {
   const siteJsonMeta = asRecord(row.site_json);
   const publishedJsonMeta = asRecord(row.published_json);
@@ -154,5 +169,5 @@ export const getPublicWeddingData = (row: Record<string, unknown>): WeddingDataV
     ?? fallbackSource?.weddingData
     ?? row.wedding_data;
   const parsed = safeJsonParse<WeddingDataV1 | null>(snapshot, null);
-  return parsed ? rewriteSignedMediaUrlsToPublicDeep(parsed) : null;
+  return parsed ? rewriteSignedMediaUrlsToPublicDeep(withTruthfulCoupleDisplayName(parsed)) : null;
 };
