@@ -118,7 +118,7 @@ describe('quickStartPersistence', () => {
       },
     });
 
-    expect(normalized.currentIndex).toBe(13);
+    expect(normalized.currentIndex).toBe(14);
     expect(normalized.showFollowUps).toBe(true);
     expect(normalized.viewState).toBe('followups');
   });
@@ -155,6 +155,28 @@ describe('quickStartPersistence', () => {
     expect(normalized.currentIndex).toBe(14);
     expect(normalized.showFollowUps).toBe(true);
     expect(normalized.viewState).toBe('followups');
+  });
+
+  it('bumps thinking restores to the completed setup boundary when clarifying generation is still pending', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      currentIndex: 0,
+      initialSetupAnswers: {
+        names: 'Alex & Jordan',
+      },
+      viewState: 'thinking',
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.currentIndex).toBe(14);
+    expect(normalized.showFollowUps).toBe(true);
+    expect(normalized.viewState).toBe('thinking');
   });
 
   it('drops malformed follow-up answers with blank keys', () => {

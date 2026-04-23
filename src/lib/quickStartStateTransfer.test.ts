@@ -267,8 +267,8 @@ describe('quickStartStateTransfer', () => {
       viewState: 'followups',
     });
 
-    expect(persisted?.currentIndex).toBe(13);
-    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').currentIndex).toBe(13);
+    expect(persisted?.currentIndex).toBe(14);
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').currentIndex).toBe(14);
   });
   it('rewrites follow-up restore progress back to the setup question count when stale indexes overshoot', () => {
     const persisted = persistQuickStartDraftSnapshot({
@@ -296,6 +296,25 @@ describe('quickStartStateTransfer', () => {
         draftOutputs: {},
       },
       viewState: 'followups',
+    });
+
+    expect(persisted?.currentIndex).toBe(14);
+    expect(JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}').currentIndex).toBe(14);
+  });
+  it('rewrites pending thinking restores to the completed setup boundary', () => {
+    const persisted = persistQuickStartDraftSnapshot({
+      currentIndex: 0,
+      initialSetupAnswers: { names: 'Alex & Jordan' },
+      followUpAnswers: {},
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+      viewState: 'thinking',
     });
 
     expect(persisted?.currentIndex).toBe(14);

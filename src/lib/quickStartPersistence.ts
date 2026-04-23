@@ -452,7 +452,8 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     : clarifyingState;
 
   const normalizedInitialSetupAnswers = { ...base.initialSetupAnswers, ...initialSetupAnswers };
-  const hasMeaningfulRestoreState = Object.keys(restoredFollowUpAnswers).length > 0
+  const hasMeaningfulRestoreState = isThinkingGenerationInFlight
+    || Object.keys(restoredFollowUpAnswers).length > 0
     || Boolean(normalizedClarifyingState && (
       normalizedClarifyingState.clarifying.questions.some((question) => question.status !== 'skipped')
       || normalizedClarifyingState.clarifying.history.some((question) => question.status !== 'skipped')
@@ -464,7 +465,7 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     && Number.isSafeInteger(parsed.currentIndex)
     && parsed.currentIndex >= 0
     ? hasMeaningfulRestoreState && (showFollowUps || normalizedViewState !== 'question')
-      ? clampRestorableCurrentIndex(parsed.currentIndex)
+      ? clampRestorableCurrentIndex(Math.max(parsed.currentIndex, RESTORABLE_SETUP_STEPS.length))
       : hasMeaningfulQuickStartAnswers(normalizedInitialSetupAnswers)
         ? resolveRestorableCurrentIndex(parsed.currentIndex, normalizedInitialSetupAnswers)
         : 0
