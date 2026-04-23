@@ -471,6 +471,12 @@ export const readBuilderValue = <T>(value: T | ProvenanceValue<T> | undefined | 
   return (value ?? fallback) as T;
 };
 
+const toIsoDateOrEmpty = (value?: string | null): string => {
+  if (!value?.trim()) return '';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '' : date.toISOString();
+};
+
 
 export const buildWeddingDataPatchFromProfile = (profile: WeddingProfile) => ({
   couple: {
@@ -480,7 +486,7 @@ export const buildWeddingDataPatchFromProfile = (profile: WeddingProfile) => ({
     story: profile.story.summary || '',
   },
   event: {
-    weddingDateISO: profile.event.date ? new Date(profile.event.date).toISOString() : '',
+    weddingDateISO: toIsoDateOrEmpty(profile.event.date),
   },
   venues: profile.event.venueName || profile.event.venueLocation
     ? [{ id: 'primary', name: profile.event.venueName || 'Main Venue', address: profile.event.venueLocation || undefined }]
