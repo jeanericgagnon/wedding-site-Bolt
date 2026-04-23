@@ -19,10 +19,20 @@ function formatDate(iso: string | undefined): string {
   });
 }
 
+function getHeroDisplayName(
+  headline: string | { value: string } | undefined,
+  couple: WeddingDataV1['couple']
+): string {
+  return readBuilderValue(headline, '')
+    || couple.displayName
+    || [couple.partner1Name, couple.partner2Name].filter(Boolean).join(' & ')
+    || 'The couple';
+}
+
 export const HeroSection: React.FC<Props> = ({ data, instance }) => {
   const { couple, event, media } = data;
   const { settings } = instance;
-  const displayName = readBuilderValue(settings.headline as string | { value: string } | undefined, '') || couple.displayName || couple.partner1Name + ' & ' + couple.partner2Name;
+  const displayName = getHeroDisplayName(settings.headline as string | { value: string } | undefined, couple);
   const date = formatDate(event.weddingDateISO);
   const bgImage = getSectionPrimaryImage(settings as Record<string, unknown>, media.heroImageUrl || '');
   const opacity = typeof settings.overlayOpacity === 'number' ? settings.overlayOpacity / 100 : 0.3;
@@ -56,7 +66,7 @@ export const HeroSection: React.FC<Props> = ({ data, instance }) => {
 export const HeroMinimal: React.FC<Props> = ({ data, instance }) => {
   const { couple, event, media } = data;
   const { settings } = instance;
-  const displayName = readBuilderValue(settings.headline as string | { value: string } | undefined, '') || couple.displayName || couple.partner1Name + ' & ' + couple.partner2Name;
+  const displayName = getHeroDisplayName(settings.headline as string | { value: string } | undefined, couple);
   const date = formatDate(event.weddingDateISO);
   const bgImage = getSectionPrimaryImage(settings as Record<string, unknown>, media.heroImageUrl || '');
   const hasImage = !!bgImage;
@@ -91,7 +101,7 @@ export const HeroMinimal: React.FC<Props> = ({ data, instance }) => {
 export const HeroFullbleed: React.FC<Props> = ({ data, instance }) => {
   const { couple, event, media } = data;
   const { settings } = instance;
-  const displayName = readBuilderValue(settings.headline as string | { value: string } | undefined, '') || couple.displayName || couple.partner1Name + ' & ' + couple.partner2Name;
+  const displayName = getHeroDisplayName(settings.headline as string | { value: string } | undefined, couple);
   const date = formatDate(event.weddingDateISO);
   const bgImage = getSectionPrimaryImage(settings as Record<string, unknown>, media.heroImageUrl || '');
 
@@ -142,7 +152,7 @@ function getCountdownParts(weddingDateISO?: string) {
 export const HeroCountdown: React.FC<Props> = ({ data, instance }) => {
   const { couple, event, media } = data;
   const { settings } = instance;
-  const displayName = readBuilderValue(settings.headline as string | { value: string } | undefined, '') || couple.displayName || `${couple.partner1Name} & ${couple.partner2Name}`;
+  const displayName = getHeroDisplayName(settings.headline as string | { value: string } | undefined, couple);
   const date = formatDate(event.weddingDateISO);
   const bgImage = getSectionPrimaryImage(settings as Record<string, unknown>, media.heroImageUrl || '');
   const countdown = getCountdownParts(event.weddingDateISO);

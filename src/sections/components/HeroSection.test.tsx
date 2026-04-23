@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { HeroSection } from './HeroSection';
+import { HeroCountdown, HeroFullbleed, HeroMinimal, HeroSection } from './HeroSection';
 import { createEmptyWeddingData } from '../../types/weddingData';
 import type { SectionInstance } from '../../types/layoutConfig';
 
@@ -54,5 +54,46 @@ describe('HeroSection', () => {
 
     const image = screen.getByAltText('Hero') as HTMLImageElement;
     expect(image.src).toContain('https://example.com/fallback-hero.jpg');
+  });
+
+  it('falls back to a truthful hero display name when couple names are missing', () => {
+    const data = createEmptyWeddingData();
+
+    const { rerender } = render(
+      <HeroSection
+        data={data}
+        instance={makeInstance({})}
+      />
+    );
+
+    expect(screen.getByText('The couple')).toBeInTheDocument();
+    expect(screen.queryByText(' & ')).not.toBeInTheDocument();
+
+    rerender(
+      <HeroMinimal
+        data={data}
+        instance={makeInstance({})}
+      />
+    );
+
+    expect(screen.getByText('The couple')).toBeInTheDocument();
+
+    rerender(
+      <HeroFullbleed
+        data={data}
+        instance={makeInstance({})}
+      />
+    );
+
+    expect(screen.getByText('The couple')).toBeInTheDocument();
+
+    rerender(
+      <HeroCountdown
+        data={data}
+        instance={makeInstance({})}
+      />
+    );
+
+    expect(screen.getByText('The couple')).toBeInTheDocument();
   });
 });
