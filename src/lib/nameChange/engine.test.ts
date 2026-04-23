@@ -80,6 +80,31 @@ describe('name change engine', () => {
     expect(plan.steps.find((step) => step.id === 'federal-ssa')?.status).toBe('blocked');
   });
 
+  it('keeps legal-proof steps blocked until intake proof is reviewed', () => {
+    const plan = buildNameChangePlan({
+      ...makeInput(),
+      documents: [
+        {
+          document_kind: 'marriage_certificate',
+          display_name: 'Certified marriage certificate',
+          storage_mode: 'metadata_only',
+          intake_status: 'uploaded',
+        },
+      ],
+    });
+
+    expect(plan.summary.blockers).toContain('Certified marriage certificate is in intake but still needs review.');
+    expect(plan.summary.missingInputs).toContain('Certified marriage certificate review');
+    expect(plan.steps.find((step) => step.id === 'eligibility-proof')).toMatchObject({
+      status: 'blocked',
+      blockers: ['Certified marriage certificate is in intake but still needs review.'],
+    });
+    expect(plan.steps.find((step) => step.id === 'federal-ssa')).toMatchObject({
+      status: 'blocked',
+      blockers: ['Legal proof needs to be ready before SSA.'],
+    });
+  });
+
   it('pushes travel-sensitive caution notes when upcoming travel is flagged', () => {
     const plan = buildNameChangePlan(makeInput({ structured_intake: { spouseLastName: 'Jordan', travelBookedSoon: true, wantsDocumentIntakeHelp: true } }));
     expect(plan.summary.cautionNotes.some((note) => note.includes('Upcoming travel'))).toBe(true);
@@ -113,6 +138,27 @@ describe('name change engine', () => {
     expect(plan.steps.find((step) => step.id === 'federal-ssa')).toMatchObject({
       status: 'ready',
       blockers: [],
+    });
+  });
+
+  it('keeps court-order plans blocked until alias proof is reviewed', () => {
+    const plan = buildNameChangePlan({
+      ...makeInput({ legal_basis: 'court_order' }),
+      documents: [
+        {
+          document_kind: 'court_order_name_change',
+          display_name: 'Court order',
+          storage_mode: 'metadata_only',
+          intake_status: 'uploaded',
+        },
+      ],
+    });
+
+    expect(plan.summary.blockers).toContain('Court order packet or signed order is in intake but still needs review.');
+    expect(plan.summary.missingInputs).toContain('Court order packet or signed order review');
+    expect(plan.steps.find((step) => step.id === 'eligibility-proof')).toMatchObject({
+      status: 'blocked',
+      blockers: ['Court order packet or signed order is in intake but still needs review.'],
     });
   });
 });
