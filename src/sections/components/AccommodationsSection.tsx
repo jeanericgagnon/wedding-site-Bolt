@@ -60,7 +60,7 @@ export const AccommodationsSection: React.FC<Props> = ({ data, instance }) => {
           <div className="flex flex-col items-center gap-3 py-12 text-text-tertiary">
             <Hotel className="w-8 h-8" />
             <p className="text-sm">Hotel suggestions and booking details will appear here once they’re added.</p>
-            {generalNote && !settings.showTitle && (
+            {generalNote && settings.showTitle === false && (
               <p className="text-text-secondary text-sm max-w-md text-center mt-2">{generalNote}</p>
             )}
           </div>

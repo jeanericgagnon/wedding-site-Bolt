@@ -7,22 +7,19 @@ import type { WeddingDataV1 } from '../../types/weddingData';
 
 function createEmptyWeddingData(): WeddingDataV1 {
   return {
-    couple: { partner1: '', partner2: '', displayName: '' },
-    event: { date: '', venue: '', location: '' },
-    story: { proposalStory: '', howWeMet: '' },
+    version: '1',
+    couple: { partner1Name: '', partner2Name: '', displayName: '' },
+    event: {},
+    venues: [],
     schedule: [],
-    travel: { accommodations: [], transportation: [], airports: [], hotelInfo: '' },
+    travel: { hotelInfo: '' },
     faq: [],
     weddingParty: [],
-    gallery: [],
-    registry: [],
-    rsvp: { enabled: true, deadline: '', maxGuests: 0 },
-    contact: { email: '', phone: '', address: '' },
-    theme: { primaryColor: '#000000', secondaryColor: '#ffffff', fontFamily: 'Inter' },
-    navigation: { showGallery: true, showRegistry: true, showWeddingParty: true, showTravel: true, showFAQ: true },
-    design: { template: 'classic-romance', colorScheme: 'soft-blush', fontPairing: 'elegant-serif' },
-    customSections: [],
+    registry: { links: [] },
+    rsvp: { enabled: true },
+    theme: {},
     media: { gallery: [] },
+    meta: { createdAtISO: '', updatedAtISO: '' },
   };
 }
 
@@ -73,5 +70,36 @@ describe('AccommodationsSection', () => {
     expect(screen.getByText('Book early')).toBeInTheDocument();
     expect(screen.getByText('Places to stay')).toBeInTheDocument();
     expect(screen.getByText('More hotel details coming soon.')).toBeInTheDocument();
+  });
+
+  it('does not duplicate the general note when showTitle is unset in the empty state', () => {
+    render(
+      <AccommodationsSection
+        data={createEmptyWeddingData()}
+        instance={makeInstance({
+          generalNote: { value: 'We reserved a small room block.' },
+          hotels: [],
+        })}
+      />
+    );
+
+    expect(screen.getByText('Accommodations')).toBeInTheDocument();
+    expect(screen.getAllByText('We reserved a small room block.')).toHaveLength(1);
+  });
+
+  it('shows the general note in the empty state when the title is explicitly hidden', () => {
+    render(
+      <AccommodationsSection
+        data={createEmptyWeddingData()}
+        instance={makeInstance({
+          showTitle: false,
+          generalNote: { value: 'We reserved a small room block.' },
+          hotels: [],
+        })}
+      />
+    );
+
+    expect(screen.queryByText('Accommodations')).not.toBeInTheDocument();
+    expect(screen.getByText('We reserved a small room block.')).toBeInTheDocument();
   });
 });
