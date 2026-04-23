@@ -21,6 +21,31 @@ function getActionDocumentKind(item: NameChangeActionFeedItem) {
   return item.action.category === 'document' ? item.action.documentKind : undefined;
 }
 
+function dedupeDocumentRoutedExecutionItems(items: NameChangeActionFeedItem[]) {
+  const retainedByDocumentKind = new Map<string, NameChangeActionFeedItem>();
+  const passthrough: NameChangeActionFeedItem[] = [];
+
+  items.forEach((item) => {
+    if (item.plannerIntent !== 'open_document_repair') {
+      passthrough.push(item);
+      return;
+    }
+
+    const documentKind = getActionDocumentKind(item);
+    if (!documentKind) {
+      passthrough.push(item);
+      return;
+    }
+
+    const retained = retainedByDocumentKind.get(documentKind);
+    if (!retained || item.score > retained.score || (item.score === retained.score && item.title.localeCompare(retained.title) < 0)) {
+      retainedByDocumentKind.set(documentKind, item);
+    }
+  });
+
+  return [...passthrough, ...retainedByDocumentKind.values()];
+}
+
 function getSeverityWeight(severity: NameChangeActionFeedItem['severity']) {
   switch (severity) {
     case 'blocking':
@@ -117,8 +142,9 @@ export function buildNameChangeActionFeed(
       action: item.nextActions[0],
     }));
 
+  const routedExecutionItems = dedupeDocumentRoutedExecutionItems(executionItems);
   const queuedDocumentKinds = new Set(documentItems.map((item) => getActionDocumentKind(item)).filter(Boolean));
-  const dedupedExecutionItems = executionItems.filter((item) => {
+  const dedupedExecutionItems = routedExecutionItems.filter((item) => {
     if (item.plannerIntent !== 'open_document_repair') return true;
     const documentKind = getActionDocumentKind(item);
     return !documentKind || !queuedDocumentKinds.has(documentKind);

@@ -248,6 +248,44 @@ describe('name change action feed', () => {
     });
   });
 
+  it('dedupes multiple execution lanes that all route to the same document repair target', () => {
+    const feed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'passport',
+        targetLabel: 'U.S. Passport',
+        blockers: ['Missing grounded county + certificate number'],
+        nextAction: {
+          category: 'document',
+          label: 'Capture county + certificate number for certified marriage certificate',
+          detail: 'Ground the certificate for passport follow-through.',
+          documentKind: 'marriage_certificate',
+        },
+      }),
+      makeExecutionSnapshot({
+        targetKey: 'tsa',
+        targetLabel: 'TSA PreCheck / travel profiles',
+        blockers: ['Missing grounded county + certificate number'],
+        nextAction: {
+          category: 'document',
+          label: 'Capture county + certificate number for certified marriage certificate',
+          detail: 'Ground the certificate for travel follow-through.',
+          documentKind: 'marriage_certificate',
+        },
+      }),
+    ], []);
+
+    expect(feed).toHaveLength(1);
+    expect(feed[0]).toMatchObject({
+      origin: 'execution',
+      title: 'TSA PreCheck / travel profiles',
+      plannerIntent: 'open_document_repair',
+      focusTargetId: 'document-marriage_certificate',
+      action: expect.objectContaining({
+        documentKind: 'marriage_certificate',
+      }),
+    });
+  });
+
   it('collapses multi-target document repair lane labels into a compact summary', () => {
     const feed = buildNameChangeActionFeed([], [
       makeRepairItem({
