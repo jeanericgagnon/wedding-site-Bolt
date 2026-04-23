@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { GallerySection } from './GallerySection';
+import { GalleryMasonry, GallerySection } from './GallerySection';
 import { createEmptyWeddingData } from '../../types/weddingData';
 import type { SectionInstance } from '../../types/layoutConfig';
 
@@ -95,5 +95,27 @@ describe('GallerySection', () => {
 
     const image = screen.getByAltText('Fallback photo') as HTMLImageElement;
     expect(image.src).toContain('https://example.com/fallback.jpg');
+  });
+
+  it('shows default titles when showTitle is unset across gallery variants', () => {
+    const data = createEmptyWeddingData();
+
+    const { rerender } = render(
+      <GallerySection
+        data={data}
+        instance={makeInstance({})}
+      />
+    );
+
+    expect(screen.getByText('Photos')).toBeInTheDocument();
+
+    rerender(
+      <GalleryMasonry
+        data={data}
+        instance={makeInstance({})}
+      />
+    );
+
+    expect(screen.getByText('Photos')).toBeInTheDocument();
   });
 });

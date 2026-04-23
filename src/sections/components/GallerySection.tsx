@@ -79,7 +79,7 @@ export const GallerySection: React.FC<Props> = ({ data, instance }) => {
     return (
       <section className="py-16 md:py-20 px-4 bg-surface-subtle">
         <div className="max-w-4xl mx-auto text-center">
-          {settings.showTitle && (
+          {settings.showTitle !== false && (
             <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary mb-6">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Photos')}</h2>
           )}
           <p className="text-text-secondary">Photos will appear here once they’re added.</p>
@@ -91,7 +91,7 @@ export const GallerySection: React.FC<Props> = ({ data, instance }) => {
   return (
     <section className="py-16 md:py-20 px-4 bg-surface-subtle">
       <div className="max-w-6xl mx-auto">
-        {settings.showTitle && (
+        {settings.showTitle !== false && (
           <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary text-center mb-10 md:mb-12">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Photos')}</h2>
         )}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
@@ -118,7 +118,7 @@ export const GalleryMasonry: React.FC<Props> = ({ data, instance }) => {
     return (
       <section className="py-16 md:py-20 px-4 bg-background">
         <div className="max-w-4xl mx-auto text-center">
-          {settings.showTitle && (
+          {settings.showTitle !== false && (
             <h2 className="text-3xl md:text-4xl font-light text-text-primary mb-8 leading-tight">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Photos')}</h2>
           )}
           <p className="text-text-secondary">Photos will appear here once they’re added.</p>
@@ -133,7 +133,7 @@ export const GalleryMasonry: React.FC<Props> = ({ data, instance }) => {
   return (
     <section className="py-16 md:py-20 px-4 bg-background">
       <div className="max-w-6xl mx-auto">
-        {settings.showTitle && (
+        {settings.showTitle !== false && (
           <div className="text-center mb-10 md:mb-14">
             <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Memories</p>
             <h2 className="text-3xl md:text-4xl font-light tracking-tight text-text-primary leading-tight">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Photos')}</h2>
