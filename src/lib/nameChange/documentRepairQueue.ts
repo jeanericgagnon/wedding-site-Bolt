@@ -48,9 +48,17 @@ export function buildNameChangeDocumentRepairQueue(
       let blockingRiskCount = 0;
       let attentionRiskCount = 0;
 
+      const canonicalConflictCount = document.canonicalConflicts.length;
+      const actionableMissingExtractionFields = document.missingExtractionFields.length > 0
+        ? document.missingExtractionFields
+        : document.latentMissingExtractionFields;
+
       executionSnapshots.forEach((snapshot) => {
         snapshot.fieldRisks.forEach((risk) => {
-          if (risk.sourceDocumentKind !== document.kind) return;
+          const matchesDocument = risk.sourceDocumentKind === document.kind
+            || (!risk.sourceDocumentKind && Boolean(risk.sourceFieldKey)
+              && actionableMissingExtractionFields.includes(risk.sourceFieldKey as NameChangeExtractionFieldKey));
+          if (!matchesDocument) return;
           impactedTargets.add(snapshot.targetLabel);
           impactedFields.set(`${snapshot.targetKey}:${risk.fieldKey}`, {
             fieldKey: risk.fieldKey,
@@ -62,11 +70,9 @@ export function buildNameChangeDocumentRepairQueue(
           else attentionRiskCount += 1;
         });
       });
-
-      const canonicalConflictCount = document.canonicalConflicts.length;
       const hasRepairNeed = document.intakeStatus === 'not_started'
         ? document.required
-        : document.metadataMissing.length > 0 || document.missingExtractionFields.length > 0 || canonicalConflictCount > 0;
+        : document.metadataMissing.length > 0 || actionableMissingExtractionFields.length > 0 || canonicalConflictCount > 0;
 
       if (!hasRepairNeed && blockingRiskCount === 0 && attentionRiskCount === 0) return null;
 
@@ -83,7 +89,7 @@ export function buildNameChangeDocumentRepairQueue(
       const nextActions: NameChangeGuidedAction[] = [];
       if (document.intakeStatus === 'not_started') issueBits.push('not started');
       if (document.metadataMissing.length > 0) issueBits.push(`${document.metadataMissing.length} metadata gaps`);
-      if (document.missingExtractionFields.length > 0) issueBits.push(`${document.missingExtractionFields.length} extraction gaps`);
+      if (actionableMissingExtractionFields.length > 0) issueBits.push(`${actionableMissingExtractionFields.length} extraction gaps`);
       if (canonicalConflictCount > 0) issueBits.push(`${canonicalConflictCount} canonical conflict${canonicalConflictCount === 1 ? '' : 's'}`);
       if (blockingRiskCount > 0) issueBits.push(`${blockingRiskCount} blocking field risks`);
       if (attentionRiskCount > 0) issueBits.push(`${attentionRiskCount} attention field risks`);
@@ -102,11 +108,11 @@ export function buildNameChangeDocumentRepairQueue(
           detail: `Missing metadata: ${document.metadataMissing.join(', ')}.`,
         });
       }
-      if (document.missingExtractionFields.length > 0) {
+      if (actionableMissingExtractionFields.length > 0) {
         nextActions.push({
           category: 'document',
           label: `Capture extraction fields for ${document.label.toLowerCase()}`,
-          detail: `Missing extraction fields: ${document.missingExtractionFields.join(', ')}.`,
+          detail: `Missing extraction fields: ${actionableMissingExtractionFields.join(', ')}.`,
         });
       }
       if (canonicalConflictCount > 0) {
@@ -136,20 +142,23 @@ export function buildNameChangeDocumentRepairQueue(
       const score =
         (severity === 'blocking' ? 100 : 0) +
         (document.required ? 30 : 0) +
-        (blockingRiskCount * 10) +
-        (attentionRiskCount * 4) +
+        (blockingRiskCount * 18) +
+        (attentionRiskCount * 6) +
         (canonicalConflictCount * 12) +
         (document.metadataMissing.length * 3) +
-        (document.missingExtractionFields.length * 2) +
+        (actionableMissingExtractionFields.length * 2) +
         (document.intakeStatus === 'not_started' ? 15 : 0) +
+        (impactedTargets.size * 8) +
         (nextActions.length > 0 ? getNameChangeGuidedActionWeight(nextActions[0].category) * 2 : 0);
 
       const payoffBits: string[] = [];
+      const documentGapCount = document.metadataMissing.length + actionableMissingExtractionFields.length;
       if (canonicalConflictCount > 0) payoffBits.push(`resolves ${canonicalConflictCount} canonical conflict${canonicalConflictCount === 1 ? '' : 's'}`);
       if (blockingRiskCount > 0) payoffBits.push(`removes ${blockingRiskCount} blocking field risk${blockingRiskCount === 1 ? '' : 's'}`);
+      else if (document.intakeStatus !== 'not_started' && documentGapCount > 0) payoffBits.push(`removes ${documentGapCount} document gap${documentGapCount === 1 ? '' : 's'}`);
       if (attentionRiskCount > 0) payoffBits.push(`clears ${attentionRiskCount} attention field risk${attentionRiskCount === 1 ? '' : 's'}`);
       if (impactedTargets.size > 0) payoffBits.push(`helps ${impactedTargets.size} target${impactedTargets.size === 1 ? '' : 's'}`);
-      if (payoffBits.length === 0 && document.required && document.intakeStatus === 'not_started') {
+      if (document.required && document.intakeStatus === 'not_started') {
         payoffBits.push('restores a missing required artifact');
       }
 
@@ -167,7 +176,7 @@ export function buildNameChangeDocumentRepairQueue(
         blockingRiskCount,
         attentionRiskCount,
         metadataMissing: document.metadataMissing,
-        missingExtractionFields: document.missingExtractionFields as NameChangeExtractionFieldKey[],
+        missingExtractionFields: actionableMissingExtractionFields as NameChangeExtractionFieldKey[],
         intakeStatus: document.intakeStatus,
         required: document.required,
       };

@@ -323,6 +323,7 @@ export interface NameChangeDocumentContractStatus {
   expectedExtractionFields: NameChangeExtractionFieldKey[];
   capturedExtractionFields: NameChangeExtractionFieldKey[];
   missingExtractionFields: NameChangeExtractionFieldKey[];
+  latentMissingExtractionFields: NameChangeExtractionFieldKey[];
   canonicalConflicts: NameChangeCanonicalFieldConflict[];
 }
 

@@ -189,6 +189,7 @@ export function buildNameChangeDocumentIntakeSnapshot(
       expectedExtractionFields: extractionChecklistBlocked ? [] : definition.extractionFields,
       capturedExtractionFields: visibleCapturedExtractionFields,
       missingExtractionFields: extractionChecklistBlocked ? [] : missingExtractionFields,
+      latentMissingExtractionFields: missingExtractionFields,
       canonicalConflicts: visibleCanonicalConflicts,
     };
   });
