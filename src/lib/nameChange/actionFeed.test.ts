@@ -189,6 +189,45 @@ describe('name change action feed', () => {
     });
   });
 
+  it('dedupes document-routed execution work when a matching document repair card already exists', () => {
+    const feed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'passport',
+        targetLabel: 'U.S. Passport',
+        nextAction: {
+          category: 'document',
+          label: 'Capture county + certificate number for certified marriage certificate',
+          detail: 'Ground the certificate for passport follow-through.',
+          documentKind: 'marriage_certificate',
+        },
+      }),
+    ], [
+      {
+        kind: 'marriage_certificate',
+        label: 'Certified marriage certificate',
+        severity: 'blocking',
+        score: 320,
+        impactedTargets: ['U.S. Passport'],
+        payoffSummary: ['U.S. Passport'],
+        nextActions: [{
+          category: 'document',
+          label: 'Capture county + certificate number for certified marriage certificate',
+          detail: 'Ground the certificate for passport follow-through.',
+          documentKind: 'marriage_certificate',
+        }],
+        missingMetadata: [],
+        missingExtractionFields: ['county', 'certificate_number'],
+      },
+    ]);
+
+    expect(feed).toHaveLength(1);
+    expect(feed[0]).toMatchObject({
+      origin: 'document_repair',
+      plannerIntent: 'open_document_repair',
+      focusTargetId: 'document-marriage_certificate',
+    });
+  });
+
   it('keeps non-document execution actions routed to the execution card', () => {
     const feed = buildNameChangeActionFeed([
       makeExecutionSnapshot({

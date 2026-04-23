@@ -17,6 +17,10 @@ export interface NameChangeActionFeedItem {
   action: NameChangeGuidedAction;
 }
 
+function getActionDocumentKind(item: NameChangeActionFeedItem) {
+  return item.action.category === 'document' ? item.action.documentKind : undefined;
+}
+
 function getSeverityWeight(severity: NameChangeActionFeedItem['severity']) {
   switch (severity) {
     case 'blocking':
@@ -113,6 +117,13 @@ export function buildNameChangeActionFeed(
       action: item.nextActions[0],
     }));
 
-  return [...executionItems, ...documentItems]
+  const queuedDocumentKinds = new Set(documentItems.map((item) => getActionDocumentKind(item)).filter(Boolean));
+  const dedupedExecutionItems = executionItems.filter((item) => {
+    if (item.plannerIntent !== 'open_document_repair') return true;
+    const documentKind = getActionDocumentKind(item);
+    return !documentKind || !queuedDocumentKinds.has(documentKind);
+  });
+
+  return [...dedupedExecutionItems, ...documentItems]
     .sort((left, right) => right.score - left.score || left.title.localeCompare(right.title));
 }
