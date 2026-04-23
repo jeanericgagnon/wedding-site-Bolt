@@ -64,6 +64,18 @@ describe('Product starter draft truth', () => {
     expect(screen.getByText('Keep guests synced with review-before-send drafts instead of duct tape.')).toBeInTheDocument();
   });
 
+  it('replaces the fake planner invite button with a real collaboration settings path', () => {
+    authState.user = { id: 'user-1' };
+    render(<Product />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Step 6 Execute day-of' }));
+    expect(screen.getAllByRole('button', { name: 'Open collaboration settings' }).length).toBe(2);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Open collaboration settings' })[0]);
+
+    expect(navigateMock).toHaveBeenCalledWith('/settings');
+    expect(screen.queryByRole('button', { name: 'Invite planner' })).not.toBeInTheDocument();
+  });
+
   it('keeps public experience controls framed around privacy and guest access instead of launch theater', () => {
     render(<Product />);
 
