@@ -15,7 +15,7 @@ export function evaluateNameChangeExecutionGates(
   const lowConfidenceFields = (formPayload?.fields ?? []).filter((field) => field.value && field.confidence === 'low');
   const blockingAttentionChecklistKeys = new Set(['canonical-extraction-alignment']);
   const blockers = [
-    ...dependencies.filter((dependency) => dependency.required && dependency.status === 'missing').map((dependency) => dependency.reason),
+    ...dependencies.filter((dependency) => dependency.blocksReady ?? (dependency.required && dependency.status === 'missing')).map((dependency) => dependency.reason),
     ...checklist.filter((item) => item.status === 'missing').map((item) => item.reason),
     ...checklist
       .filter((item) => item.status === 'attention' && blockingAttentionChecklistKeys.has(item.key))

@@ -392,6 +392,7 @@ export interface NameChangeExecutionDependency {
   required: boolean;
   status: 'satisfied' | 'missing' | 'attention';
   reason: string;
+  blocksReady?: boolean;
 }
 
 export interface NameChangeExecutionSequenceSnapshot {

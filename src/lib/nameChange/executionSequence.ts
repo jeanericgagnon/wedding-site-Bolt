@@ -44,7 +44,7 @@ export function buildNameChangeExecutionSequenceSnapshot(
     prerequisiteDependencies,
   });
 
-  const blockers = dependencies.filter((dependency) => dependency.required && dependency.status === 'missing').map((dependency) => dependency.reason);
+  const blockers = dependencies.filter((dependency) => dependency.blocksReady ?? (dependency.required && dependency.status === 'missing')).map((dependency) => dependency.reason);
 
   return {
     target: targetKey,

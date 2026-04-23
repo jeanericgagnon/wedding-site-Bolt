@@ -76,6 +76,71 @@ describe('name change execution sequence snapshot', () => {
     expect(snapshot.dependencies.find((dependency) => dependency.key === 'federal-ssa-progress')).toMatchObject({ status: 'missing' });
   });
 
+  it('preserves blocking attention for partial court-order extraction instead of flattening it to missing', () => {
+    const profile = makeCase({
+      legal_basis: 'court_order' as never,
+      marriage_state: null,
+      marriage_date: null,
+      county_residence: 'San Diego',
+      structured_intake: {
+        spouseLastName: null,
+        travelBookedSoon: false,
+        wantsDocumentIntakeHelp: true,
+      },
+      change_reasons: ['court_order'],
+    });
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'court-order-doc',
+        document_kind: 'court_order_name_change',
+        display_name: 'Court order',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'court-order-doc',
+        field_key: 'first_name',
+        field_label: 'Target first name',
+        field_value_masked: 'Alex',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'court-order-doc',
+        field_key: 'last_name',
+        field_label: 'Target last name',
+        field_value_masked: 'Jordan',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'court-order-doc',
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: '24-CV-1188',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+
+    const snapshot = buildNameChangeExecutionSequenceSnapshot('courtOrder', profile, documents, extractedFields);
+    expect(snapshot.ready).toBe(false);
+    expect(snapshot.blockers).toContain('Court-order target legal name and case number are verified, but the signed date still needs grounded extraction before downstream use is fully trusted.');
+    expect(snapshot.dependencies.find((dependency) => dependency.key === 'court-order-reference-extraction')).toMatchObject({
+      status: 'attention',
+      blocksReady: true,
+      reason: 'Court-order target legal name and case number are verified, but the signed date still needs grounded extraction before downstream use is fully trusted.',
+    });
+  });
+
   it('marks DMV sequencing dependency satisfied when the SSA step is complete', () => {
     const documents: NameChangeDocumentInput[] = [
       {
@@ -495,7 +560,7 @@ describe('name change execution sequence snapshot', () => {
     expect(snapshot.dependencies.find((dependency) => dependency.key === 'banks-or-utilities-progress')).toMatchObject({ status: 'missing' });
   });
 
-  it('downgrades required requirement attention to not-ready dependencies', () => {
+  it('preserves required requirement attention while still marking the sequence not ready', () => {
     const documents: NameChangeDocumentInput[] = [
       {
         document_kind: 'marriage_certificate',
@@ -514,8 +579,9 @@ describe('name change execution sequence snapshot', () => {
 
     const snapshot = buildNameChangeExecutionSequenceSnapshot('ssa', makeCase(), documents, []);
     expect(snapshot.dependencies.find((dependency) => dependency.key === 'identity-document-coverage')).toMatchObject({
-      status: 'missing',
+      status: 'attention',
       required: true,
+      blocksReady: true,
       reason: 'Identity documents exist in intake, but metadata is still too thin for confident downstream use.',
     });
     expect(snapshot.ready).toBe(false);

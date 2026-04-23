@@ -35,6 +35,7 @@ describe('name change execution gates', () => {
         required: false,
         status: 'attention',
         reason: 'Dependency attention',
+        blocksReady: false,
       },
     ];
     const checklist: NameChangeTargetExecutionSnapshot['checklist'] = [
@@ -50,6 +51,24 @@ describe('name change execution gates', () => {
     expect(result.ready).toBe(true);
     expect(result.blockers).toEqual([]);
     expect(result.attentionItems).toEqual(['Dependency attention', 'Checklist attention']);
+  });
+
+  it('treats blocking dependency attention as a blocker while preserving the attention signal', () => {
+    const dependencies: NameChangeExecutionDependency[] = [
+      {
+        key: 'dep-1',
+        label: 'Dependency 1',
+        required: true,
+        status: 'attention',
+        reason: 'Dependency attention blocker',
+        blocksReady: true,
+      },
+    ];
+
+    const result = evaluateNameChangeExecutionGates(dependencies, []);
+    expect(result.ready).toBe(false);
+    expect(result.blockers).toEqual(['Dependency attention blocker']);
+    expect(result.attentionItems).toEqual(['Dependency attention blocker']);
   });
 
   it('treats canonical extraction alignment drift as a blocker', () => {

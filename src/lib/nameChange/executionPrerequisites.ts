@@ -19,6 +19,7 @@ export function evaluateNameChangeExecutionPrerequisites(
         required: rule.required,
         status: 'satisfied',
         reason: rule.satisfiedReason,
+        blocksReady: false,
       } satisfies NameChangeExecutionDependency;
     }
 
@@ -29,6 +30,7 @@ export function evaluateNameChangeExecutionPrerequisites(
         required: rule.required,
         status: 'attention',
         reason: rule.attentionReason,
+        blocksReady: rule.required,
       } satisfies NameChangeExecutionDependency;
     }
 
@@ -38,6 +40,7 @@ export function evaluateNameChangeExecutionPrerequisites(
       required: rule.required,
       status: 'missing',
       reason: rule.missingReason,
+      blocksReady: rule.required,
     } satisfies NameChangeExecutionDependency;
   });
 }

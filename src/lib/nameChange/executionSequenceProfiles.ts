@@ -31,15 +31,6 @@ export type NameChangeSequenceContext = {
 
 export type NameChangeDependencyRecipe = (context: NameChangeSequenceContext) => NameChangeExecutionDependency[];
 
-function requirementStatusToDependencyStatus(
-  status: 'satisfied' | 'missing' | 'attention',
-  required: boolean,
-  blockOnAttention: boolean,
-): NameChangeExecutionDependency['status'] {
-  if (required && blockOnAttention && status === 'attention') return 'missing';
-  return status;
-}
-
 function buildRequirementDependency(
   result: NameChangeRequirementResult | undefined,
   key: string,
@@ -48,12 +39,14 @@ function buildRequirementDependency(
   fallbackReason: string,
   blockOnAttention = false,
 ): NameChangeExecutionDependency {
+  const status = result?.status ?? 'missing';
   return {
     key,
     label,
     required,
-    status: requirementStatusToDependencyStatus(result?.status ?? 'missing', required, blockOnAttention),
+    status,
     reason: result?.reason ?? fallbackReason,
+    blocksReady: required && (status === 'missing' || (status === 'attention' && blockOnAttention)),
   };
 }
 
@@ -69,23 +62,30 @@ function buildDocumentSupportDependency(
   },
 ): NameChangeExecutionDependency {
   const matched = intake.documents.some((document) => config.documentKinds.includes(document.kind) && document.intakeStatus !== 'not_started');
+  const required = config.required ?? false;
+  const status: NameChangeExecutionDependency['status'] = matched ? 'satisfied' : 'attention';
+
   return {
     key: config.key,
     label: config.label,
-    required: config.required ?? false,
-    status: matched ? 'satisfied' : 'attention',
+    required,
+    status,
     reason: matched ? config.satisfiedReason : config.missingReason,
+    blocksReady: required && status !== 'satisfied',
   };
 }
 
 function buildEmploymentContextDependency(profile: NameChangeCaseInput, label: string, satisfiedReason: string, missingReason: string): NameChangeExecutionDependency {
   const activeEmployment = profile.employment_status === 'employed' || profile.employment_status === 'self_employed';
+  const status: NameChangeExecutionDependency['status'] = activeEmployment ? 'satisfied' : 'missing';
+
   return {
     key: 'employment-context',
     label,
     required: true,
-    status: activeEmployment ? 'satisfied' : 'missing',
+    status,
     reason: activeEmployment ? satisfiedReason : missingReason,
+    blocksReady: status !== 'satisfied',
   };
 }
 
