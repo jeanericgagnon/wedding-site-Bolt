@@ -89,6 +89,25 @@ describe('quickStartPersistence', () => {
     expect(normalized.currentIndex).toBe(5);
   });
 
+  it('recovers closed restore progress from surviving setup answers when the stored index is invalid', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      currentIndex: 2.5,
+      initialSetupAnswers: {
+        names: 'Alex & Jordan',
+        labelPreference: 'names-only',
+        whenWhere: 'January 17, 2027 — Sayulita, Mexico',
+        style: 'Tropical, relaxed',
+      },
+      showFollowUps: false,
+      viewState: 'question',
+      clarifyingState: null,
+    });
+
+    expect(normalized.currentIndex).toBe(5);
+    expect(normalized.showFollowUps).toBe(false);
+    expect(normalized.viewState).toBe('question');
+  });
+
   it('keeps completed onboarding step progress when follow-up restore state survives sparse setup answers', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       currentIndex: 13,

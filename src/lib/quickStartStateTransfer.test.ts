@@ -225,6 +225,27 @@ describe('quickStartStateTransfer', () => {
     expect(stored.currentIndex).toBe(5);
   });
 
+  it('rewrites invalid closed restore indexes back to the surviving setup boundary', () => {
+    window.localStorage.setItem(QUICK_START_STORAGE_KEY, JSON.stringify({
+      currentIndex: 2.5,
+      initialSetupAnswers: {
+        names: 'Alex & Jordan',
+        labelPreference: 'names-only',
+        whenWhere: 'January 17, 2027 — Sayulita, Mexico',
+        style: 'Tropical, relaxed',
+      },
+      showFollowUps: false,
+      viewState: 'question',
+      clarifyingState: null,
+    }));
+
+    const restored = readQuickStartDraftSnapshot();
+    const stored = JSON.parse(window.localStorage.getItem(QUICK_START_STORAGE_KEY) || '{}');
+
+    expect(restored?.currentIndex).toBe(5);
+    expect(stored.currentIndex).toBe(5);
+  });
+
   it('clamps progressed quick start snapshots to the surviving completed setup steps', () => {
     const persisted = persistQuickStartDraftSnapshot({
       currentIndex: 7,
