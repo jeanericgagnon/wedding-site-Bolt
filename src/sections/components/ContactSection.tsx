@@ -2,6 +2,7 @@ import React from 'react';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { SectionInstance } from '../../types/layoutConfig';
 import { Mail, Phone, MessageCircle } from 'lucide-react';
+import { readBuilderValue } from '../../lib/weddingProfile';
 
 interface Props {
   data: WeddingDataV1;
@@ -25,8 +26,14 @@ function getContacts(settings: SectionInstance['settings']): ContactPerson[] {
 export const ContactSection: React.FC<Props> = ({ data: _data, instance }) => {
   const { settings } = instance;
   const contacts = getContacts(settings);
-  const introText = settings.introText as string;
-  const emailSubject = encodeURIComponent((settings.emailSubject as string) || 'Wedding Question');
+  const eyebrow = readBuilderValue(settings.eyebrow as string | { value: string } | undefined, 'Need help?');
+  const title = readBuilderValue(settings.title as string | { value: string } | undefined, 'Questions?');
+  const subtitle = readBuilderValue(settings.subtitle as string | { value: string } | undefined, '');
+  const introText = readBuilderValue(settings.introText as string | { value: string } | undefined, '');
+  const closingNote = readBuilderValue(settings.closingNote as string | { value: string } | undefined, '');
+  const emailSubject = encodeURIComponent(
+    readBuilderValue(settings.emailSubject as string | { value: string } | undefined, 'Wedding Question')
+  );
 
   return (
     <section className="py-16 md:py-20 px-4 bg-surface-subtle">
@@ -34,13 +41,13 @@ export const ContactSection: React.FC<Props> = ({ data: _data, instance }) => {
         {settings.showTitle !== false && (
           <div className="mb-8 md:mb-10">
             <p className="text-xs uppercase tracking-[0.3em] text-primary mb-3 font-medium">
-              {settings.eyebrow as string || 'Need help?'}
+              {eyebrow}
             </p>
             <h2 className="text-3xl md:text-4xl font-light text-text-primary leading-tight">
-              {settings.title as string || 'Questions?'}
+              {title}
             </h2>
-            {settings.subtitle && (
-              <p className="mt-4 text-text-secondary max-w-xl mx-auto">{settings.subtitle as string}</p>
+            {subtitle && (
+              <p className="mt-4 text-text-secondary max-w-xl mx-auto">{subtitle}</p>
             )}
             <div className="w-10 h-px bg-primary mx-auto mt-5" />
           </div>
@@ -94,8 +101,8 @@ export const ContactSection: React.FC<Props> = ({ data: _data, instance }) => {
           </div>
         )}
 
-        {settings.closingNote && (
-          <p className="mt-10 text-sm text-text-tertiary italic">{settings.closingNote as string}</p>
+        {closingNote && (
+          <p className="mt-10 text-sm text-text-tertiary italic">{closingNote}</p>
         )}
       </div>
     </section>
@@ -105,7 +112,11 @@ export const ContactSection: React.FC<Props> = ({ data: _data, instance }) => {
 export const ContactMinimal: React.FC<Props> = ({ data: _data, instance }) => {
   const { settings } = instance;
   const contacts = getContacts(settings);
-  const emailSubject = encodeURIComponent((settings.emailSubject as string) || 'Wedding Question');
+  const title = readBuilderValue(settings.title as string | { value: string } | undefined, 'Have questions?');
+  const subtitle = readBuilderValue(settings.subtitle as string | { value: string } | undefined, '');
+  const emailSubject = encodeURIComponent(
+    readBuilderValue(settings.emailSubject as string | { value: string } | undefined, 'Wedding Question')
+  );
 
   return (
     <section className="py-14 md:py-16 px-4 bg-surface border-y border-border">
@@ -113,10 +124,10 @@ export const ContactMinimal: React.FC<Props> = ({ data: _data, instance }) => {
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="text-center md:text-left">
             <h2 className="text-2xl font-light text-text-primary">
-              {settings.title as string || 'Have questions?'}
+              {title}
             </h2>
-            {settings.subtitle && (
-              <p className="text-text-secondary text-sm mt-1">{settings.subtitle as string}</p>
+            {subtitle && (
+              <p className="text-text-secondary text-sm mt-1">{subtitle}</p>
             )}
           </div>
           <div className="flex flex-wrap items-center gap-4 justify-center">
