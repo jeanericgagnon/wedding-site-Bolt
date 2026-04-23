@@ -201,7 +201,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     setPublishNotice(null);
     setPublishAttemptedAt(new Date().toISOString());
 
-    const publishValidationError = getPublishValidationError(currentState.project, currentState.weddingData);
+    const publishValidationError = getPublishValidationError(currentState.project, currentState.weddingData, { isDirty: currentState.isDirty });
     if (publishValidationError) {
       setPublishError(publishValidationError);
       return;
@@ -328,8 +328,8 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
           saveError={saveError}
           publishError={publishError}
           publishAttemptedAt={publishAttemptedAt}
-          publishValidationError={state.project ? getPublishValidationError(state.project, state.weddingData) : null}
-          publishIssueKind={state.project ? getPublishIssue(state.project, state.weddingData)?.kind ?? null : null}
+          publishValidationError={state.project ? getPublishValidationError(state.project, state.weddingData, { isDirty: state.isDirty }) : null}
+          publishIssueKind={state.project ? getPublishIssue(state.project, state.weddingData, { isDirty: state.isDirty })?.kind ?? null : null}
           inspectorHidden={inspectorHidden}
           onToggleInspector={() => setInspectorHidden((v) => !v)}
         />

@@ -139,8 +139,12 @@ export const getPublishIssue = (
   return null;
 };
 
-export const getPublishValidationError = (project: BuilderProject, weddingData?: WeddingDataV1 | null): string | null =>
-  getPublishIssue(project, weddingData)?.message ?? null;
+export const getPublishValidationError = (
+  project: BuilderProject,
+  weddingData?: WeddingDataV1 | null,
+  options?: PublishIssueOptions,
+): string | null =>
+  getPublishIssue(project, weddingData, options)?.message ?? null;
 
 export const buildPublishReadiness = (
   project: BuilderProject,

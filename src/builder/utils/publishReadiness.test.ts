@@ -183,6 +183,8 @@ describe('publishReadiness', () => {
 
     expect(getPublishIssue(project, data, { isDirty: true })?.kind).toBe('unsaved-changes');
     expect(getPublishIssue(project, data, { isDirty: false })).toBeNull();
+    expect(getPublishValidationError(project, data, { isDirty: true })).toBe('Save your latest draft changes before going live.');
+    expect(getPublishValidationError(project, data, { isDirty: false })).toBeNull();
     expect(buildPublishReadiness(project, data, { isDirty: true }).find((item) => item.id === 'saved')).toEqual({
       id: 'saved',
       label: 'Latest edits are saved',
