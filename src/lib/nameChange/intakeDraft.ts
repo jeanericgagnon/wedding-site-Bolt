@@ -367,8 +367,9 @@ function normalizeDraftCountyValue(value: string) {
     /^(?:(?:county\s+of|residence\s+county|resident\s+county|county\s+residence|county))\s*[:#-]?\s*/i,
     '',
   );
+  const countyWithoutTrailingPunctuation = countyWithoutLabels.replace(/[.,;:]+$/g, '').trim();
 
-  const countyWithoutAffixes = countyWithoutLabels
+  const countyWithoutAffixes = countyWithoutTrailingPunctuation
     .replace(/^county\s+of\s+/i, '')
     .replace(/\s+(?:county|co\.?)$/i, '')
     .trim();
@@ -391,13 +392,14 @@ function normalizeDraftPersonNameValue(
   };
 
   const unlabeledValue = normalizedValue.replace(labelPatterns[fieldKey], '').trim();
-  if (!unlabeledValue) return '';
+  const depunctuatedValue = unlabeledValue.replace(/[.,;:]+$/g, '').trim();
+  if (!depunctuatedValue) return '';
 
-  if (fieldKey === 'middle_name' && /^[A-Za-z]\.?$/.test(unlabeledValue)) {
-    return unlabeledValue.charAt(0).toUpperCase();
+  if (fieldKey === 'middle_name' && /^[A-Za-z]\.?$/.test(depunctuatedValue)) {
+    return depunctuatedValue.charAt(0).toUpperCase();
   }
 
-  return humanizeDraftToken(unlabeledValue.toLowerCase());
+  return humanizeDraftToken(depunctuatedValue.toLowerCase());
 }
 
 function normalizeDraftReferenceNumberValue(value: string) {
@@ -407,6 +409,7 @@ function normalizeDraftReferenceNumberValue(value: string) {
   return normalizedValue
     .replace(/^(?:(?:case|docket|certificate|cert|record)\s*(?:number|no\.?|#)?\s*[:#-]\s*|(?:case|docket|certificate|cert|record)\s+(?:number|no\.?|#)\s*)/i, '')
     .trim()
+    .replace(/[.,;:]+$/g, '')
     .toUpperCase()
     .replace(/[–—−]/g, '-')
     .replace(/\s*([\-/#])\s*/g, '$1')
