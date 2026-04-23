@@ -47,6 +47,10 @@ const getNormalizedPages = (project: BuilderProject) =>
 const getPageId = (page: BuilderProject['pages'][number] | undefined) => getNormalizedId(page?.id);
 const getPageTitle = (page: BuilderProject['pages'][number] | undefined) =>
   typeof page?.title === 'string' ? page.title.trim() : '';
+const getPageTitleForSentence = (page: BuilderProject['pages'][number] | undefined) => {
+  const title = getPageTitle(page).replace(/[.,:;!?]+$/g, '').trim();
+  return title || 'the current page';
+};
 const getSectionId = (section: NonNullable<BuilderProject['pages'][number]>['sections'][number] | undefined) =>
   getNormalizedId(section?.id);
 const getSectionTitle = (section: NonNullable<BuilderProject['pages'][number]>['sections'][number] | undefined) =>
@@ -159,7 +163,7 @@ export const buildPublishReadiness = (
   const hasRsvpEnabled = weddingData ? rsvp?.enabled === true : true;
   const hasUnsavedChanges = options?.isDirty === true;
   const activePageHasVisibleSections = getNormalizedSections(activePage).some((section) => section?.enabled === true);
-  const activePageTitle = typeof activePage?.title === 'string' ? activePage.title.trim() || 'the current page' : 'the current page';
+  const activePageTitle = getPageTitleForSentence(activePage);
 
   return [
     {

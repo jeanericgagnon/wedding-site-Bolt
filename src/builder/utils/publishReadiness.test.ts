@@ -921,6 +921,32 @@ describe('publishReadiness', () => {
     });
   });
 
+  it('strips trailing punctuation from current-page blocker titles before building the sentence', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].title = 'Details...';
+    project.pages[0].sections = [makeSection({ id: 'details-hidden', enabled: false })];
+
+    expect(buildPublishReadiness(project, undefined, { activePageId: project.pages[0].id }).find((item) => item.id === 'current-page')).toEqual({
+      id: 'current-page',
+      label: 'Current page has visible content',
+      done: false,
+      detail: 'Turn on content for Details.',
+    });
+  });
+
+  it('strips trailing punctuation from current-page success titles before building the sentence', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].title = 'Schedule:';
+    project.pages[0].sections = [makeSection({ id: 'schedule-live', enabled: true })];
+
+    expect(buildPublishReadiness(project, undefined, { activePageId: project.pages[0].id }).find((item) => item.id === 'current-page')).toEqual({
+      id: 'current-page',
+      label: 'Current page has visible content',
+      done: true,
+      detail: 'Schedule has visible sections.',
+    });
+  });
+
   it('falls back to generic current-page copy when the active page title is blank', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages[0].title = '';
