@@ -123,6 +123,40 @@ describe('quickStartPersistence', () => {
     expect(normalized.viewState).toBe('followups');
   });
 
+  it('clamps follow-up restore progress to the setup question count when stale indexes overshoot', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      currentIndex: 99,
+      initialSetupAnswers: {
+        names: 'Alex & Jordan',
+      },
+      showFollowUps: true,
+      viewState: 'followups',
+      clarifyingState: {
+        clarifying: {
+          mode: 'ask',
+          questions: [{
+            id: 'lodging',
+            category: 'travel',
+            question: 'Where should guests stay?',
+            expectedAnswerType: 'short_text',
+            targetFields: ['travel.lodging'],
+            affectedSections: ['travel'],
+            skippable: true,
+            round: 1,
+            status: 'pending',
+            answer: '',
+          }],
+          history: [],
+        },
+        draftOutputs: {},
+      },
+    });
+
+    expect(normalized.currentIndex).toBe(14);
+    expect(normalized.showFollowUps).toBe(true);
+    expect(normalized.viewState).toBe('followups');
+  });
+
   it('drops malformed follow-up answers with blank keys', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       followUpAnswers: {

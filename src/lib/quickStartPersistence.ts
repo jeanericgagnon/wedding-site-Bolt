@@ -30,6 +30,10 @@ const RESTORABLE_SETUP_STEPS: Array<{ key: keyof InitialSetupAnswers; optional?:
   { key: 'optionalStory', optional: true },
 ];
 
+const clampRestorableCurrentIndex = (currentIndex: number): number => (
+  Math.min(currentIndex, RESTORABLE_SETUP_STEPS.length)
+);
+
 const resolveRestorableCurrentIndex = (currentIndex: number, answers: InitialSetupAnswers): number => {
   let maxIndex = 0;
 
@@ -45,7 +49,7 @@ const resolveRestorableCurrentIndex = (currentIndex: number, answers: InitialSet
     maxIndex = index + 1;
   }
 
-  return Math.min(currentIndex, maxIndex);
+  return Math.min(clampRestorableCurrentIndex(currentIndex), maxIndex);
 };
 
 export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraftSnapshot => {
@@ -460,7 +464,7 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     && Number.isSafeInteger(parsed.currentIndex)
     && parsed.currentIndex >= 0
     ? hasMeaningfulRestoreState && (showFollowUps || normalizedViewState !== 'question')
-      ? parsed.currentIndex
+      ? clampRestorableCurrentIndex(parsed.currentIndex)
       : hasMeaningfulQuickStartAnswers(normalizedInitialSetupAnswers)
         ? resolveRestorableCurrentIndex(parsed.currentIndex, normalizedInitialSetupAnswers)
         : 0
