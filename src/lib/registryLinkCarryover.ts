@@ -7,6 +7,7 @@ interface CarryoverRegistryToken {
   raw: string;
   sourceLabel?: string;
   sourceLabelMode?: 'explicit' | 'inferred';
+  index?: number;
 }
 
 function normalizeUrl(raw: string): string | null {
@@ -237,6 +238,7 @@ function extractRegistryUrlTokens(line: string): CarryoverRegistryToken[] {
         raw: cleanedToken,
         sourceLabel: explicitTokenLabel,
         sourceLabelMode: explicitTokenLabel ? 'explicit' : undefined,
+        index: typeof match.index === 'number' ? match.index : undefined,
       });
     }
   }
@@ -246,13 +248,15 @@ function extractRegistryUrlTokens(line: string): CarryoverRegistryToken[] {
       firstUrlIndex === null ? line : line.slice(0, firstUrlIndex),
     );
     let lineLabelApplied = false;
-    return Array.from(tokens.values()).map((token) => {
+    return Array.from(tokens.values())
+      .sort((left, right) => (left.index ?? Number.MAX_SAFE_INTEGER) - (right.index ?? Number.MAX_SAFE_INTEGER))
+      .map((token) => {
       const canApplyLineLabel = Boolean(lineExplicitLabel) && !lineLabelApplied && !token.sourceLabel;
       if (canApplyLineLabel) lineLabelApplied = true;
       return canApplyLineLabel
         ? { ...token, sourceLabel: lineExplicitLabel, sourceLabelMode: 'explicit' }
         : token;
-    });
+      });
   }
 
   return line
