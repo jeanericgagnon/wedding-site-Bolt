@@ -208,8 +208,14 @@ function deriveSelectedHouseholdGuestIds(existingRsvp: ExistingRSVP | null, hous
 
 function shouldApplyToHousehold(existingRsvp: ExistingRSVP | null, household: HouseholdGuest[], primaryGuestId?: string | null): boolean {
   if (household.length === 0) return false;
+  if (!existingRsvp) return true;
+
+  if (!Array.isArray(existingRsvp.guest_ids)) {
+    return true;
+  }
+
   const invitedIds = new Set(household.map((member) => member.id));
-  return (existingRsvp?.guest_ids ?? []).some((guestId: string) => guestId !== primaryGuestId && invitedIds.has(guestId));
+  return existingRsvp.guest_ids.some((guestId: string) => guestId !== primaryGuestId && invitedIds.has(guestId));
 }
 
 function buildNormalizedRsvpFormData(
