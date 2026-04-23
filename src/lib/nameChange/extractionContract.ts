@@ -1,5 +1,6 @@
 import { buildNameChangeCanonicalCase } from './canonical';
 import { getNameChangeDocumentKindAliases } from './documentKinds';
+import { normalizeDraftFieldValue } from './intakeDraft';
 import type {
   NameChangeCanonicalFieldConflict,
   NameChangeCaseInput,
@@ -14,8 +15,8 @@ import type {
   NameChangePassportExtraction,
 } from './types';
 
-function normalizeValue(value: string | null | undefined) {
-  const normalized = (value ?? '').trim();
+function normalizeValue(fieldKey: NameChangeExtractionFieldKey, value: string | null | undefined) {
+  const normalized = normalizeDraftFieldValue(fieldKey, value ?? '');
   return normalized || null;
 }
 
@@ -59,7 +60,7 @@ function getLinkedFieldValue(
   const field = extractedFields.find((item) => item.document_id === document.id
     && item.field_key === fieldKey
     && (!requireVerified || item.is_verified));
-  return normalizeValue(field?.field_value_masked);
+  return normalizeValue(fieldKey, field?.field_value_masked);
 }
 
 function getManualFallbackField(
@@ -78,7 +79,7 @@ function getManualFallbackValue(
   if (!field) return null;
   if (requireVerified && !field.is_verified) return null;
   if (requireVerified && field.source_type !== 'manual') return null;
-  return normalizeValue(field.field_value_masked);
+  return normalizeValue(fieldKey, field.field_value_masked);
 }
 
 export function getDocumentLinkedFieldValue(
@@ -110,10 +111,10 @@ export function hasAnyDocumentLinkedFieldValue(
     ? extractedFields.find((item) => item.document_id === document.id && item.field_key === fieldKey)
     : null;
 
-  if (normalizeValue(linkedField?.field_value_masked)) return true;
+  if (normalizeValue(fieldKey, linkedField?.field_value_masked)) return true;
 
   const manualField = getManualFallbackField(extractedFields, fieldKey);
-  return Boolean(manualField && manualField.source_type === 'manual' && normalizeValue(manualField.field_value_masked));
+  return Boolean(manualField && manualField.source_type === 'manual' && normalizeValue(fieldKey, manualField.field_value_masked));
 }
 
 export function hasVerifiedDocumentLinkedFieldValue(
@@ -127,10 +128,10 @@ export function hasVerifiedDocumentLinkedFieldValue(
     ? extractedFields.find((item) => item.document_id === document.id && item.field_key === fieldKey && item.is_verified)
     : null;
 
-  if (normalizeValue(linkedField?.field_value_masked)) return true;
+  if (normalizeValue(fieldKey, linkedField?.field_value_masked)) return true;
 
   const manualField = getManualFallbackField(extractedFields, fieldKey);
-  return Boolean(manualField && manualField.source_type === 'manual' && manualField.is_verified && normalizeValue(manualField.field_value_masked));
+  return Boolean(manualField && manualField.source_type === 'manual' && manualField.is_verified && normalizeValue(fieldKey, manualField.field_value_masked));
 }
 
 export function getDocumentCapturedFieldKeys(
@@ -203,9 +204,13 @@ function buildDriversLicenseExtraction(
   };
 }
 
-function valuesConflict(canonicalValue: string | null | undefined, extractedValue: string | null | undefined) {
-  const canonical = normalizeValue(canonicalValue);
-  const extracted = normalizeValue(extractedValue);
+function valuesConflict(
+  fieldKey: NameChangeExtractionFieldKey,
+  canonicalValue: string | null | undefined,
+  extractedValue: string | null | undefined,
+) {
+  const canonical = normalizeValue(fieldKey, canonicalValue);
+  const extracted = normalizeValue(fieldKey, extractedValue);
   return Boolean(canonical && extracted && canonical !== extracted);
 }
 
@@ -304,15 +309,15 @@ function buildCanonicalFieldConflicts(
   ];
 
   return candidates
-    .filter((candidate) => valuesConflict(candidate.canonicalValue, candidate.extractedValue))
+    .filter((candidate) => valuesConflict(candidate.fieldKey, candidate.canonicalValue, candidate.extractedValue))
     .map((candidate) => ({
       key: candidate.key,
       label: candidate.label,
       documentKind: candidate.documentKind,
       fieldKey: candidate.fieldKey,
-      canonicalValue: normalizeValue(candidate.canonicalValue),
-      extractedValue: normalizeValue(candidate.extractedValue) as string,
-      reason: `${candidate.label} disagree. Structured case says ${normalizeValue(candidate.canonicalValue)}, but extracted document value says ${normalizeValue(candidate.extractedValue)}.`,
+      canonicalValue: normalizeValue(candidate.fieldKey, candidate.canonicalValue),
+      extractedValue: normalizeValue(candidate.fieldKey, candidate.extractedValue) as string,
+      reason: `${candidate.label} disagree. Structured case says ${normalizeValue(candidate.fieldKey, candidate.canonicalValue)}, but extracted document value says ${normalizeValue(candidate.fieldKey, candidate.extractedValue)}.`,
     }));
 }
 

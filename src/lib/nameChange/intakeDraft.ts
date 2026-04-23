@@ -357,7 +357,7 @@ function normalizeDraftDateValue(value: string) {
   return suffixStrippedTimestampValue;
 }
 
-function normalizeDraftFieldValue(fieldKey: NameChangeExtractedFieldInput['field_key'], value: string) {
+export function normalizeDraftFieldValue(fieldKey: NameChangeExtractedFieldInput['field_key'], value: string) {
   const normalizedValue = normalizeDraftText(value);
   if (!normalizedValue) return '';
 

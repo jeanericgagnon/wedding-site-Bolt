@@ -493,6 +493,40 @@ describe('name change document intake contract', () => {
     });
   });
 
+  it('treats raw linked court-order date values as captured after contract-level normalization', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase({ legal_basis: 'court_order', marriage_state: null, marriage_date: null }),
+      [
+        {
+          id: 'doc-court-order',
+          document_kind: 'court_order',
+          display_name: 'Court order',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'court-order-•••.pdf',
+          issuing_authority: 'San Diego Superior Court',
+          issued_on: '2026-04-05',
+          extraction_confidence: 0.93,
+        },
+      ],
+      [
+        {
+          document_id: 'doc-court-order',
+          field_key: 'court_order_date',
+          field_label: 'Court order date',
+          field_value_masked: 'Executed on Friday, April 5, 2026 1:30 PM PST',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+      ],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'court_order')).toMatchObject({
+      capturedExtractionFields: ['court_order_date'],
+      missingExtractionFields: expect.arrayContaining(['case_number']),
+    });
+  });
+
   it('prefers reviewed metadata-ready documents over uploaded metadata-light duplicates', () => {
     const snapshot = buildNameChangeDocumentIntakeSnapshot(
       makeCase(),
