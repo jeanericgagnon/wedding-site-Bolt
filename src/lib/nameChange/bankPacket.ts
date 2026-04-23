@@ -12,6 +12,7 @@ export const NAME_CHANGE_BANK_PACKET_CONTRACT: NameChangeFormContractDefinition 
   fieldSpecs: [
     { fieldKey: 'accountHolder.currentFirstName', label: 'Current first name', sourceTargetField: 'applicant.current_first_name' },
     { fieldKey: 'accountHolder.currentLastName', label: 'Current last name', sourceTargetField: 'applicant.current_last_name' },
+    { fieldKey: 'accountHolder.newFirstName', label: 'New first name', sourceTargetField: 'applicant.target_first_name' },
     { fieldKey: 'accountHolder.newLastName', label: 'New last name', sourceTargetField: 'applicant.target_last_name' },
     { fieldKey: 'legal.marriageDate', label: 'Marriage date', sourceTargetField: 'legal.marriage_date', required: false },
     { fieldKey: 'residence.county', label: 'County', sourceTargetField: 'applicant.county', required: false },

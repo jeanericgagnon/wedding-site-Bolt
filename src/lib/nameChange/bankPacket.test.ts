@@ -39,6 +39,7 @@ describe('name change bank packet snapshot', () => {
   it('builds a structured bank update packet payload', () => {
     const snapshot = buildNameChangeBankPacketSnapshot(makeCase(), [], []);
     expect(snapshot.formCode).toBe('BANK-ACCOUNT-UPDATE-PACKET');
+    expect(snapshot.fields.find((field) => field.fieldKey === 'accountHolder.newFirstName')).toMatchObject({ value: 'Alex' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'accountHolder.newLastName')).toMatchObject({ value: 'Jordan' });
   });
 });

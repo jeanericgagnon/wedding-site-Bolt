@@ -1051,4 +1051,105 @@ describe('name change target execution snapshot', () => {
       detail: 'Current first name vs passport extraction disagree. Structured case says Alex, but extracted document value says Alicia.',
     });
   });
+
+  it('carries court-order target first name through shared institution execution', () => {
+    const profile = makeCase({
+      legal_basis: 'court_order' as never,
+      marriage_state: null,
+      marriage_date: null,
+      target_first_name: '',
+      target_last_name: '',
+      change_reasons: ['court_order'],
+      structured_intake: {
+        spouseLastName: null,
+        travelBookedSoon: false,
+        wantsDocumentIntakeHelp: true,
+      },
+    });
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'court-order-doc',
+        document_kind: 'court_order_name_change',
+        display_name: 'Court order',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'court-order-•••.pdf',
+        issuing_authority: 'San Diego Superior Court',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.98,
+      },
+      {
+        id: 'passport-doc',
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'passport-•••.pdf',
+        issuing_authority: 'U.S. Department of State',
+        issued_on: '2024-06-01',
+        expires_on: '2034-06-01',
+        extraction_confidence: 0.94,
+      },
+      {
+        id: 'bank-support-doc',
+        document_kind: 'bank_statement',
+        display_name: 'Bank statement',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'bank-statement-•••.pdf',
+        issuing_authority: 'First Federal',
+        issued_on: '2026-04-08',
+        extraction_confidence: 0.91,
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'court-order-doc',
+        field_key: 'first_name',
+        field_label: 'Target first name',
+        field_value_masked: 'Alicia',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'court-order-doc',
+        field_key: 'last_name',
+        field_label: 'Target last name',
+        field_value_masked: 'Jordan',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'court-order-doc',
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: '24-CV-1188',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'court-order-doc',
+        field_key: 'court_order_date',
+        field_label: 'Court order date',
+        field_value_masked: '2026-04-05',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('banks', profile, documents, extractedFields);
+    expect(snapshot.autofillFields.find((field) => field.targetField === 'applicant.target_first_name')).toMatchObject({
+      value: expect.objectContaining({
+        source: 'extracted_field',
+        value: 'Alicia',
+        sourceFieldKey: 'first_name',
+      }),
+    });
+    expect(snapshot.formPayload.fields.find((field) => field.fieldKey === 'accountHolder.newFirstName')).toMatchObject({
+      value: 'Alicia',
+      source: 'extracted_field',
+      sourceFieldKey: 'first_name',
+    });
+    expect(snapshot.checklist.find((item) => item.key === 'target-legal-name')).toMatchObject({ status: 'ready' });
+  });
 });

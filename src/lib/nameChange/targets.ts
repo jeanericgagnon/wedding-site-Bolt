@@ -44,13 +44,13 @@ function buildSharedIdentityChecklist(targetNoun: string, supportKey: string, su
       satisfiedReason: `Current legal first and last name are available for ${targetNoun}.`,
     },
     {
-      key: 'target-surname',
-      label: `Target surname available for ${targetNoun}`,
+      key: 'target-legal-name',
+      label: `Target legal name available for ${targetNoun}`,
       kind: 'field_presence',
-      targetField: 'applicant.target_last_name',
-      missingReason: `Target last name is still missing for ${targetNoun}.`,
-      attentionReason: `Target last name is populated for ${targetNoun}, but it still needs stronger document support.`,
-      satisfiedReason: `Target last name is available for ${targetNoun}.`,
+      targetFields: ['applicant.target_first_name', 'applicant.target_last_name'],
+      missingReason: `Target legal name fields are still incomplete for ${targetNoun}.`,
+      attentionReason: `Target legal name is populated for ${targetNoun}, but at least one field still needs stronger document support.`,
+      satisfiedReason: `Target legal first and last name are available for ${targetNoun}.`,
     },
     {
       key: supportKey,
@@ -88,6 +88,7 @@ function buildPhotoIdInstitutionTarget(config: {
     autofillTargetFields: [
       'applicant.current_first_name',
       'applicant.current_last_name',
+      'applicant.target_first_name',
       'applicant.target_last_name',
       'legal.marriage_date',
       'applicant.county',

@@ -39,6 +39,7 @@ describe('name change insurance packet snapshot', () => {
   it('builds a structured insurance update packet payload', () => {
     const snapshot = buildNameChangeInsurancePacketSnapshot(makeCase(), [], []);
     expect(snapshot.formCode).toBe('INSURANCE-POLICY-UPDATE-PACKET');
+    expect(snapshot.fields.find((field) => field.fieldKey === 'policyHolder.newFirstName')).toMatchObject({ value: 'Alex' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'policyHolder.newLastName')).toMatchObject({ value: 'Jordan' });
   });
 });
