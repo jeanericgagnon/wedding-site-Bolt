@@ -32,12 +32,15 @@ export const getIsPublishedFromSiteRow = (row: Record<string, unknown>): boolean
   const siteJsonMeta = asRecord(row.site_json);
   const publishedJsonMeta = asRecord(row.published_json);
   const publishMeta = publishedJsonMeta ?? siteJsonMeta;
+  const lastPublishedAt = typeof publishMeta?.lastPublishedAt === 'string'
+    ? (publishMeta.lastPublishedAt as string).trim()
+    : '';
 
   return Boolean(
     row.is_published === true ||
     publishMeta?.publishStatus === 'published' ||
     (typeof publishMeta?.publishedVersion === 'number' && (publishMeta.publishedVersion as number) > 0) ||
-    (typeof publishMeta?.lastPublishedAt === 'string' && (publishMeta.lastPublishedAt as string).length > 0)
+    lastPublishedAt.length > 0
   );
 };
 

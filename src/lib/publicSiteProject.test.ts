@@ -253,7 +253,7 @@ describe('publicSiteProject', () => {
     expect(getIsPublishedFromSiteRow(row)).toBe(false);
   });
 
-  it('treats whitespace stringified lastPublishedAt metadata as published under current fallback rules', () => {
+  it('does not treat whitespace stringified lastPublishedAt metadata as published', () => {
     const row = {
       site_json: JSON.stringify({
         ...draftProject,
@@ -261,7 +261,21 @@ describe('publicSiteProject', () => {
       }),
     };
 
-    expect(getIsPublishedFromSiteRow(row)).toBe(true);
+    expect(getIsPublishedFromSiteRow(row)).toBe(false);
+  });
+
+  it('does not treat whitespace published_json lastPublishedAt metadata as published', () => {
+    const row = {
+      site_json: draftProject,
+      published_json: {
+        ...publishedProject,
+        publishStatus: 'draft',
+        publishedVersion: null,
+        lastPublishedAt: '   ',
+      },
+    };
+
+    expect(getIsPublishedFromSiteRow(row)).toBe(false);
   });
 
   it('extracts published wedding data snapshot from stringified site rows', () => {
