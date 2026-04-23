@@ -16,6 +16,12 @@ interface TimeLeft {
   seconds: number;
 }
 
+function getCountdownDisplayName(couple: WeddingDataV1['couple']): string {
+  return couple.displayName
+    || [couple.partner1Name, couple.partner2Name].filter(Boolean).join(' & ')
+    || 'The couple';
+}
+
 function getTimeLeft(dateISO: string | undefined): TimeLeft | null {
   if (!dateISO) return null;
   const target = new Date(dateISO.includes('T') ? dateISO : dateISO + 'T12:00:00').getTime();
@@ -41,7 +47,7 @@ export const CountdownSection: React.FC<Props> = ({ data, instance }) => {
     return () => clearInterval(interval);
   }, [data.event.weddingDateISO]);
 
-  const displayName = data.couple.displayName || `${data.couple.partner1Name} & ${data.couple.partner2Name}`;
+  const displayName = getCountdownDisplayName(data.couple);
 
   return (
     <section className="py-16 md:py-20 px-4 bg-surface">
