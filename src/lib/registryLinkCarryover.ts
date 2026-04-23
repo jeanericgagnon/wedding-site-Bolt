@@ -99,10 +99,33 @@ function isGenericRegistryLabelText(text: string): boolean {
     .trim();
   if (!normalized) return false;
 
-  if (/^(?:our|the|wedding|gift|baby|bridal|honeymoon)$/.test(normalized)) return true;
+  const words = normalized.split(' ').filter(Boolean);
+  if (words.length === 0) return false;
+  if (words.length === 1) return ['our', 'the', 'wedding', 'gift', 'gifts', 'baby', 'bridal', 'honeymoon'].includes(words[0]);
 
-  return /^(?:(?:our|the|wedding|gift|baby|bridal|honeymoon)\s+)*(?:registry|gift\s*list|wishlist)$/i.test(normalized)
-    || /^(?:registry|gift\s*list|wishlist)(?:\s+(?:our|the|wedding|gift|baby|bridal|honeymoon))*$/i.test(normalized);
+  const genericWords = new Set([
+    'our',
+    'the',
+    'wedding',
+    'gift',
+    'gifts',
+    'baby',
+    'bridal',
+    'honeymoon',
+    'registry',
+    'list',
+    'wishlist',
+    'wishlists',
+    'link',
+    'links',
+    'idea',
+    'ideas',
+    'shopping',
+    'shop',
+  ]);
+  const coreWords = new Set(['registry', 'list', 'wishlist', 'wishlists', 'link', 'links', 'idea', 'ideas']);
+
+  return words.some((word) => coreWords.has(word)) && words.every((word) => genericWords.has(word));
 }
 
 function extractExplicitSourceLabelFragment(text: string): string | undefined {

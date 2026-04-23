@@ -88,4 +88,21 @@ describe('buildOnboardingUpdateData registry carryover', () => {
       ]),
     );
   });
+
+  it('ignores generic markdown registry link text when imported custom labels merge into onboarding data', () => {
+    const result = buildOnboardingUpdateData({
+      coupleNames: { name1: 'Alex', name2: 'Sam' },
+      planningStatus: 'guided_setup_complete',
+      template: 'base',
+      registryLinksRaw: 'Custom Honeymoon Fund | [Registry Link](example.com/list) and https://target.com/list',
+    });
+
+    const weddingData = result.wedding_data as { registry?: { links?: Array<{ url: string; label?: string }> } };
+    expect(weddingData.registry?.links).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ url: 'https://example.com/list', label: 'Custom Honeymoon Fund' }),
+        expect.objectContaining({ url: 'https://target.com/list', label: 'Target' }),
+      ]),
+    );
+  });
 });

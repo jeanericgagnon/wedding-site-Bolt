@@ -192,6 +192,13 @@ describe('carryOverRegistryLinks', () => {
     ]);
   });
 
+  it('ignores generic markdown registry link text so custom carryover labels stay on the first imported link', () => {
+    expect(carryOverRegistryLinks('Custom Honeymoon Fund | [Registry Link](example.com/list) and https://target.com/list')).toEqual([
+      { url: 'https://example.com/list', sourceLabel: 'Custom Honeymoon Fund' },
+      { url: 'https://target.com/list', sourceLabel: 'Target' },
+    ]);
+  });
+
   it('upgrades duplicate carryover links when a later import includes a source label', () => {
     expect(carryOverRegistryLinks('https://crateandbarrel.com/gift-registry/jane\nCrate & Barrel Registry | crateandbarrel.com/gift-registry/jane')).toEqual([
       { url: 'https://crateandbarrel.com/gift-registry/jane', sourceLabel: 'Crate & Barrel' },
@@ -262,6 +269,12 @@ describe('carryOverRegistryLinks', () => {
     ]);
   });
 
+  it('ignores generic markdown registry link text in persisted imports so custom labels survive normalization', () => {
+    expect(parsePersistedRegistryLinks('[Registry Link](example.com/list)\nCustom Honeymoon Fund | https://example.com/list')).toEqual([
+      { url: 'https://example.com/list', sourceLabel: 'Custom Honeymoon Fund' },
+    ]);
+  });
+
   it('strips purchaser-name annotations from persisted registry labels before merges', () => {
     expect(parsePersistedRegistryLinks('Target Registry purchased by Alex | target.com/list\nCustom Honeymoon Fund claimed by Sam | https://example.com/fund')).toEqual([
       { url: 'https://target.com/list', sourceLabel: 'Target' },
@@ -326,6 +339,15 @@ describe('carryOverRegistryLinks', () => {
   it('preserves stronger persisted labels when carried links only keep generic registry text', () => {
     expect(mergeRegistrySourceLabels(
       [{ url: 'https://example.com/list', sourceLabel: 'Gift' }],
+      [{ url: 'https://example.com/list', sourceLabel: 'Custom Honeymoon Fund reserved by Sam' }],
+    )).toEqual([
+      { url: 'https://example.com/list', sourceLabel: 'Custom Honeymoon Fund' },
+    ]);
+  });
+
+  it('preserves stronger persisted labels when carried links only keep generic registry link text', () => {
+    expect(mergeRegistrySourceLabels(
+      [{ url: 'https://example.com/list', sourceLabel: 'Registry Link' }],
       [{ url: 'https://example.com/list', sourceLabel: 'Custom Honeymoon Fund reserved by Sam' }],
     )).toEqual([
       { url: 'https://example.com/list', sourceLabel: 'Custom Honeymoon Fund' },
