@@ -358,11 +358,26 @@ function normalizeDraftDateValue(value: string) {
   return suffixStrippedTimestampValue;
 }
 
+function normalizeDraftCountyValue(value: string) {
+  const normalizedValue = normalizeDraftText(value);
+  if (!normalizedValue) return '';
+
+  const countyWithoutAffixes = normalizedValue
+    .replace(/^county\s+of\s+/i, '')
+    .replace(/\s+county$/i, '');
+
+  return humanizeDraftToken(countyWithoutAffixes.toLowerCase());
+}
+
 export function normalizeDraftFieldValue(fieldKey: NameChangeExtractedFieldInput['field_key'], value: string) {
   const normalizedValue = normalizeDraftText(value);
   if (!normalizedValue) return '';
 
-  if (fieldKey === 'first_name' || fieldKey === 'middle_name' || fieldKey === 'last_name' || fieldKey === 'spouse_last_name' || fieldKey === 'county') {
+  if (fieldKey === 'county') {
+    return normalizeDraftCountyValue(normalizedValue);
+  }
+
+  if (fieldKey === 'first_name' || fieldKey === 'middle_name' || fieldKey === 'last_name' || fieldKey === 'spouse_last_name') {
     return humanizeDraftToken(normalizedValue.toLowerCase());
   }
 

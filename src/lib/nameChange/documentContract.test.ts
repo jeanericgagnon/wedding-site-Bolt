@@ -1054,6 +1054,57 @@ describe('name change document intake contract', () => {
     });
   });
 
+  it('treats county values with county affixes as canonical document truth', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase({ county_residence: 'Orange' }),
+      [
+        {
+          id: 'doc-marriage',
+          document_kind: 'marriage_certificate',
+          display_name: 'Certified marriage certificate',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'marriage-certificate-•••.pdf',
+          issuing_authority: 'Orange County Clerk',
+          issued_on: '2026-04-05',
+          extraction_confidence: 0.95,
+        },
+      ],
+      [
+        {
+          document_id: 'doc-marriage',
+          field_key: 'county',
+          field_label: 'County',
+          field_value_masked: 'County of Orange',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-marriage',
+          field_key: 'certificate_number',
+          field_label: 'Certificate number',
+          field_value_masked: 'MC-123',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-marriage',
+          field_key: 'issuance_date',
+          field_label: 'Issue date',
+          field_value_masked: '2026-04-05',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+      ],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'marriage_certificate')).toMatchObject({
+      capturedExtractionFields: expect.arrayContaining(['county', 'certificate_number', 'issuance_date']),
+      missingExtractionFields: expect.not.arrayContaining(['county']),
+      canonicalConflicts: [],
+    });
+  });
+
   it('keeps optional other documents out of metadata-gap summary counts', () => {
     const snapshot = buildNameChangeDocumentIntakeSnapshot(
       makeCase(),

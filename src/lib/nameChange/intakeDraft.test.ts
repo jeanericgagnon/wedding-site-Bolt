@@ -1487,6 +1487,26 @@ describe('name change intake draft helpers', () => {
     ]);
   });
 
+  it('canonicalizes county values that include common county affixes', () => {
+    expect(upsertDraftNameChangeExtractedField([], 'draft-marriage_certificate', 'county', 'County', 'Orange County')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-marriage_certificate',
+        field_key: 'county',
+        field_label: 'County',
+        field_value_masked: 'Orange',
+      }),
+    ]);
+
+    expect(upsertDraftNameChangeExtractedField([], 'draft-marriage_certificate', 'county', 'County', 'County of Los Angeles')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-marriage_certificate',
+        field_key: 'county',
+        field_label: 'County',
+        field_value_masked: 'Los Angeles',
+      }),
+    ]);
+  });
+
   it('collapses repeated whitespace in fallback humanized draft labels', () => {
     const next = upsertDraftNameChangeExtractedField([], 'draft-marriage_certificate', 'county__residence' as never, '   ', 'San Diego');
 
