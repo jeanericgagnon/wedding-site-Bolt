@@ -132,6 +132,8 @@ export default function EventRSVP() {
       activeLoadRequestRef.current += 1;
       activeSubmitRequestRef.current += 1;
       submitInFlightRef.current = false;
+      pendingContinuityRefreshRef.current = false;
+      ignoreNextLocalContinuityEventRef.current = false;
       if (postSubmitResetTimeoutRef.current !== null) {
         window.clearTimeout(postSubmitResetTimeoutRef.current);
         postSubmitResetTimeoutRef.current = null;
@@ -165,6 +167,8 @@ export default function EventRSVP() {
     activeLoadRequestRef.current = requestId;
     activeSubmitRequestRef.current += 1;
     submitInFlightRef.current = false;
+    pendingContinuityRefreshRef.current = false;
+    ignoreNextLocalContinuityEventRef.current = false;
     let eventRsvpSupportKnown: boolean | null = null;
     let eventRsvpSupportAvailable = true;
     const shouldPreserveVisibleState = preserveVisibleState && !selectedEvent && guest !== null;

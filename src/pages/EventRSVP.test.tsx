@@ -364,7 +364,7 @@ describe('EventRSVP token trust continuity', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Submit RSVP' }));
 
     await waitFor(() => {
-      expect(screen.getByText('Response saved')).toBeInTheDocument();
+      expect(screen.getByText("You're in!")).toBeInTheDocument();
     });
 
     expect(insertedPayloads).toHaveLength(1);
@@ -418,7 +418,7 @@ describe('EventRSVP token trust continuity', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Update RSVP' }));
 
     await waitFor(() => {
-      expect(screen.getByText('Response saved')).toBeInTheDocument();
+      expect(screen.getByText("You're in!")).toBeInTheDocument();
     });
 
     expect(updatedPayloads).toHaveLength(1);
@@ -1852,6 +1852,111 @@ describe('EventRSVP token trust continuity', () => {
     expect(maybeSingleQueue).toHaveLength(2);
     expect(selectQueue).toHaveLength(1);
   }, 10000);
+
+  it('does not let a prior token submit swallow the next token continuity refresh', async () => {
+    currentToken = 'old-token';
+
+    maybeSingleQueue.push(
+      { data: { id: 'guest-1', name: 'Taylor', email: 'taylor@example.com' }, error: null },
+      { data: null, error: null },
+      { data: { id: 'guest-2', name: 'Jordan', email: 'jordan@example.com' }, error: null },
+      { data: null, error: null },
+      { data: { id: 'guest-2', name: 'Jordan', email: 'jordan@example.com' }, error: null },
+      { data: { attending: true, dietary_restrictions: 'Vegan', notes: 'Updated elsewhere' }, error: null },
+    );
+
+    selectQueue.push(
+      {
+        data: [
+          {
+            id: 'inv-1',
+            event_id: 'event-1',
+            itinerary_events: {
+              id: 'event-1',
+              event_name: 'Welcome Dinner',
+              description: '',
+              event_date: '2026-05-01',
+              start_time: '18:00:00',
+              end_time: null,
+              location_name: 'The Loft',
+              location_address: '',
+              dress_code: null,
+              notes: null,
+            },
+          },
+        ],
+        error: null,
+      },
+      {
+        data: [
+          {
+            id: 'inv-2',
+            event_id: 'event-2',
+            itinerary_events: {
+              id: 'event-2',
+              event_name: 'Ceremony',
+              description: '',
+              event_date: '2026-05-02',
+              start_time: '16:00:00',
+              end_time: null,
+              location_name: 'Garden',
+              location_address: '',
+              dress_code: null,
+              notes: null,
+            },
+          },
+        ],
+        error: null,
+      },
+      {
+        data: [
+          {
+            id: 'inv-2',
+            event_id: 'event-2',
+            itinerary_events: {
+              id: 'event-2',
+              event_name: 'Ceremony',
+              description: '',
+              event_date: '2026-05-02',
+              start_time: '16:00:00',
+              end_time: null,
+              location_name: 'Garden',
+              location_address: '',
+              dress_code: null,
+              notes: null,
+            },
+          },
+        ],
+        error: null,
+      },
+    );
+
+    insertQueue.push({ error: null });
+
+    const view = render(<EventRSVP />);
+
+    expect(await screen.findByText('Hello, Taylor!')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'RSVP for this event' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Submit RSVP' }));
+
+    await waitFor(() => {
+      expect(screen.getByText("You're in!")).toBeInTheDocument();
+    });
+
+    currentToken = 'new-token';
+    view.rerender(<EventRSVP />);
+
+    expect(await screen.findByText('Hello, Jordan!')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Update my RSVP' })).not.toBeInTheDocument();
+
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('dayof:rsvp-updated', { detail: { updatedAt: String(Date.now()) } }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Update my RSVP' })).toBeInTheDocument();
+    });
+  });
 
   it('ignores a second event RSVP submit while the first submit is still in flight', async () => {
     currentToken = 'guest-token';
