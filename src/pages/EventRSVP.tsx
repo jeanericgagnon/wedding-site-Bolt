@@ -203,6 +203,10 @@ export default function EventRSVP() {
       if (guestError) throw guestError;
       if (!guestData) {
         if (activeLoadRequestRef.current !== requestId) return;
+        if (shouldPreserveVisibleState) {
+          tokenLinkedSessionRef.current = true;
+          return;
+        }
         tokenLinkedSessionRef.current = false;
         setGuest(null);
         setInvitations([]);
@@ -296,7 +300,7 @@ export default function EventRSVP() {
       setHasEventRsvpSupport(eventRsvpSupportKnown);
     } catch {
       if (activeLoadRequestRef.current !== requestId) return;
-      tokenLinkedSessionRef.current = false;
+      tokenLinkedSessionRef.current = shouldPreserveVisibleState;
       if (!shouldPreserveVisibleState) {
         setError('Failed to load your event invitations. Please try again or contact the couple.');
       }
