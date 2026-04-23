@@ -1565,6 +1565,14 @@ describe('name change intake draft helpers', () => {
         field_value_masked: 'San Diego',
       }),
     ]);
+
+    expect(upsertDraftNameChangeExtractedField([], 'draft-marriage_certificate', 'county', 'County', 'Orange Co.')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-marriage_certificate',
+        field_key: 'county',
+        field_value_masked: 'Orange',
+      }),
+    ]);
   });
 
   it('collapses repeated whitespace in fallback humanized draft labels', () => {

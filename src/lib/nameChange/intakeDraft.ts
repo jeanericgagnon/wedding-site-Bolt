@@ -369,7 +369,7 @@ function normalizeDraftCountyValue(value: string) {
 
   const countyWithoutAffixes = countyWithoutLabels
     .replace(/^county\s+of\s+/i, '')
-    .replace(/\s+county$/i, '')
+    .replace(/\s+(?:county|co\.?)$/i, '')
     .trim();
 
   return humanizeDraftToken(countyWithoutAffixes.toLowerCase());
