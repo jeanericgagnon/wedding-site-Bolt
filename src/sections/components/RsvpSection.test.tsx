@@ -1,0 +1,64 @@
+import { render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+
+import { RsvpInline, RsvpSection } from './RsvpSection';
+import type { SectionInstance } from '../../types/layoutConfig';
+import type { WeddingDataV1 } from '../../types/weddingData';
+
+vi.mock('../../lib/supabase', () => ({
+  supabase: {},
+}));
+
+function createWeddingData(): WeddingDataV1 {
+  return {
+    version: '1',
+    couple: { partner1Name: 'Alex', partner2Name: 'Jordan', displayName: '' },
+    event: {},
+    venues: [],
+    schedule: [],
+    travel: {},
+    faq: [],
+    weddingParty: [],
+    registry: [],
+    rsvp: { enabled: true },
+    theme: {},
+    media: { gallery: [] },
+  };
+}
+
+function makeInstance(settings: SectionInstance['settings']): SectionInstance {
+  return {
+    id: 'rsvp-1',
+    type: 'rsvp',
+    enabled: true,
+    variant: 'default',
+    settings,
+  };
+}
+
+describe('RsvpSection', () => {
+  it('shows default RSVP titles when showTitle is unset in both variants', () => {
+    const data = createWeddingData();
+
+    const { rerender } = render(
+      <RsvpSection
+        data={data}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(screen.getByText('Kindly reply')).toBeInTheDocument();
+    expect(screen.getByText('RSVP')).toBeInTheDocument();
+
+    rerender(
+      <RsvpInline
+        data={data}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(screen.getByText('You’re invited')).toBeInTheDocument();
+    expect(screen.getByText('RSVP')).toBeInTheDocument();
+    expect(screen.getByText('Join Alex & Jordan in celebrating their wedding')).toBeInTheDocument();
+  });
+});

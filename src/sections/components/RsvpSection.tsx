@@ -162,7 +162,7 @@ export const RsvpSection: React.FC<Props> = ({ data, instance }) => {
   return (
     <section className="py-16 md:py-20 px-4 bg-surface-subtle">
       <div className="max-w-lg mx-auto text-center">
-        {settings.showTitle && (
+        {settings.showTitle !== false && (
           <>
             <p className="text-xs uppercase tracking-[0.3em] text-primary/80 mb-3 font-medium">Kindly reply</p>
             <h2 className="text-3xl md:text-5xl font-light text-text-primary mb-4 leading-tight">{readBuilderValue(settings.title as string | { value: string } | undefined, 'RSVP')}</h2>
@@ -201,7 +201,7 @@ export const RsvpInline: React.FC<Props> = ({ data, instance }) => {
   const { rsvp, couple } = data;
   const { settings } = instance;
   const deadline = formatDeadline(rsvp.deadlineISO);
-  const displayName = couple.displayName || couple.partner1Name + ' & ' + couple.partner2Name;
+  const displayName = couple.displayName || [couple.partner1Name, couple.partner2Name].filter(Boolean).join(' & ') || 'the couple';
   const [submitted, setSubmitted] = useState(false);
   const [attending, setAttending] = useState(false);
 
@@ -213,7 +213,7 @@ export const RsvpInline: React.FC<Props> = ({ data, instance }) => {
   return (
     <section className="py-16 md:py-20 px-4 bg-primary">
       <div className="max-w-2xl mx-auto text-center">
-        {settings.showTitle && (
+        {settings.showTitle !== false && (
           <>
             <p className="text-xs uppercase tracking-[0.3em] text-white/60 mb-4 font-medium">You’re invited</p>
             <h2 className="text-3xl md:text-5xl font-light text-white mb-3 leading-tight">{readBuilderValue(settings.title as string | { value: string } | undefined, 'RSVP')}</h2>
