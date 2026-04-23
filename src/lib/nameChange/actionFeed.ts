@@ -72,6 +72,7 @@ export function buildNameChangeActionFeed(
 ): NameChangeActionFeedItem[] {
   const executionItems: NameChangeActionFeedItem[] = executionSnapshots.map((snapshot) => {
     const severity = getExecutionSeverity(snapshot);
+    const routesToDocumentRepair = snapshot.nextAction.category === 'document' && Boolean(snapshot.nextAction.documentKind);
     const score =
       (getSeverityWeight(severity) * 100) +
       (snapshot.blockers.length * 10) +
@@ -86,8 +87,10 @@ export function buildNameChangeActionFeed(
       severity,
       urgencyTier: getActionFeedUrgencyTier(score, severity),
       urgencyReason: getActionFeedUrgencyReason(snapshot.nextAction, severity),
-      plannerIntent: 'open_execution_card',
-      focusTargetId: `execution-card-${snapshot.targetKey}`,
+      plannerIntent: routesToDocumentRepair ? 'open_document_repair' : 'open_execution_card',
+      focusTargetId: routesToDocumentRepair
+        ? `document-${snapshot.nextAction.documentKind}`
+        : `execution-card-${snapshot.targetKey}`,
       score,
       action: snapshot.nextAction,
     };

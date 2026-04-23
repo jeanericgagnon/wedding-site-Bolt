@@ -165,6 +165,50 @@ describe('name change action feed', () => {
     });
   });
 
+  it('routes document-driven execution actions into the matching document repair card', () => {
+    const feed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'passport',
+        targetLabel: 'U.S. Passport',
+        nextAction: {
+          category: 'document',
+          label: 'Capture county + certificate number for certified marriage certificate',
+          detail: 'Ground the certificate for passport follow-through.',
+          documentKind: 'marriage_certificate',
+        },
+      }),
+    ], []);
+
+    expect(feed[0]).toMatchObject({
+      origin: 'execution',
+      plannerIntent: 'open_document_repair',
+      focusTargetId: 'document-marriage_certificate',
+      action: expect.objectContaining({
+        documentKind: 'marriage_certificate',
+      }),
+    });
+  });
+
+  it('keeps non-document execution actions routed to the execution card', () => {
+    const feed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'dmv',
+        targetLabel: 'California DMV',
+        nextAction: {
+          category: 'dependency',
+          label: 'Unblock County / jurisdiction context',
+          detail: 'County residence is still missing.',
+        },
+      }),
+    ], []);
+
+    expect(feed[0]).toMatchObject({
+      origin: 'execution',
+      plannerIntent: 'open_execution_card',
+      focusTargetId: 'execution-card-dmv',
+    });
+  });
+
   it('collapses multi-target document repair lane labels into a compact summary', () => {
     const feed = buildNameChangeActionFeed([], [
       makeRepairItem({
