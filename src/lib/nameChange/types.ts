@@ -434,6 +434,7 @@ export interface NameChangeExecutionTargetDefinition {
     label: string;
     kind: 'requirement' | 'field_presence' | 'document_support';
     nextActionCategory?: 'packet' | 'checklist' | 'document' | 'review';
+    blocksReady?: boolean;
     requirementKey?: string;
     targetField?: string;
     targetFields?: string[];
@@ -484,6 +485,7 @@ export interface NameChangeTargetExecutionSnapshot {
     label: string;
     kind: 'requirement' | 'field_presence' | 'document_support';
     nextActionCategory?: 'packet' | 'checklist' | 'document' | 'review';
+    blocksReady?: boolean;
     status: 'ready' | 'missing' | 'attention';
     reason: string;
   }>;

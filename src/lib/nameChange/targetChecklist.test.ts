@@ -119,6 +119,7 @@ describe('name change target checklist', () => {
     expect(checklist.find((item) => item.key === 'canonical-extraction-alignment')).toMatchObject({
       kind: 'requirement',
       nextActionCategory: 'document',
+      blocksReady: true,
       status: 'attention',
     });
   });

@@ -64,7 +64,7 @@ export function buildNameChangeTargetExecutionSnapshot(
   const firstBlockingDependency = sequence.dependencies.find((dependency) => dependency.blocksReady ?? (dependency.required && dependency.status === 'missing'));
   const firstAttentionDependency = sequence.dependencies.find((dependency) => dependency.status === 'attention');
   const firstMissingChecklistItem = checklist.find((item) => item.status === 'missing');
-  const firstBlockingAttentionChecklistItem = checklist.find((item) => item.status === 'attention' && item.nextActionCategory === 'document');
+  const firstBlockingAttentionChecklistItem = checklist.find((item) => item.status === 'attention' && item.blocksReady);
   const primaryCanonicalConflict = extraction.conflicts[0] ?? null;
   const firstAttentionChecklistItem = checklist.find((item) => item.status === 'attention');
   const buildCourtOrderNextAction = () => {

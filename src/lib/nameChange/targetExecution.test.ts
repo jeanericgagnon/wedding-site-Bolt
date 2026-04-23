@@ -967,6 +967,7 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.checklist.find((item) => item.key === 'canonical-extraction-alignment')).toMatchObject({
       status: 'attention',
       nextActionCategory: 'document',
+      blocksReady: true,
     });
     expect(snapshot.blockers).toContain('Structured case truth conflicts with extracted document values in 2 places: Current first name vs passport extraction, Target last name vs marriage certificate spouse surname.');
     expect(snapshot.nextAction).toMatchObject({

@@ -13,6 +13,7 @@ export type NameChangeTargetChecklistItem = {
   label: string;
   kind: 'requirement' | 'field_presence' | 'document_support';
   nextActionCategory?: 'packet' | 'checklist' | 'document' | 'review';
+  blocksReady?: boolean;
   status: 'ready' | 'missing' | 'attention';
   reason: string;
 };
@@ -35,6 +36,7 @@ export function buildNameChangeTargetChecklist(
         label: spec.label,
         kind: spec.kind,
         nextActionCategory: spec.nextActionCategory,
+        blocksReady: spec.blocksReady,
         status: requirement?.status === 'satisfied' ? 'ready' : requirement?.status === 'attention' ? 'attention' : 'missing',
         reason: requirement?.reason ?? spec.missingReason,
       } satisfies NameChangeTargetChecklistItem;
@@ -55,6 +57,7 @@ export function buildNameChangeTargetChecklist(
         label: spec.label,
         kind: spec.kind,
         nextActionCategory: spec.nextActionCategory,
+        blocksReady: spec.blocksReady,
         status: !allPresent ? 'missing' : allTrusted ? 'ready' : 'attention',
         reason: !allPresent
           ? spec.missingReason
@@ -70,6 +73,7 @@ export function buildNameChangeTargetChecklist(
       label: spec.label,
       kind: spec.kind,
       nextActionCategory: spec.nextActionCategory,
+      blocksReady: spec.blocksReady,
       status: supported ? 'ready' : 'attention',
       reason: supported ? spec.satisfiedReason : spec.missingReason,
     } satisfies NameChangeTargetChecklistItem;
