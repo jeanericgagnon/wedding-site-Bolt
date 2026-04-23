@@ -323,6 +323,13 @@ export const Trust: React.FC = () => {
                   </button>
                   <button
                     type="button"
+                    onClick={() => navigate('/dashboard/rsvp-board')}
+                    className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
+                  >
+                    Open RSVP board
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => navigate('/dashboard/overview')}
                     className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
                   >

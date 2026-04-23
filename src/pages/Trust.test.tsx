@@ -64,6 +64,8 @@ describe('Trust page draft-first CTA', () => {
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/guests');
     fireEvent.click(screen.getByRole('button', { name: 'Open message drafts' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/messages');
+    fireEvent.click(screen.getByRole('button', { name: 'Open RSVP board' }));
+    expect(navigateMock).toHaveBeenCalledWith('/dashboard/rsvp-board');
     fireEvent.click(screen.getByRole('button', { name: 'Open your dashboard' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/overview');
   });
