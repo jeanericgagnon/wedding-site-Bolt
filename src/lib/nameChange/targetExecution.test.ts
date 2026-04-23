@@ -239,6 +239,43 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'federal-ssa-progress')).toMatchObject({ status: 'satisfied' });
   });
 
+  it('routes missing field-presence checklist work into packet preparation actions', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'San Diego County Clerk',
+        issued_on: '2026-04-10',
+        extraction_confidence: 0.95,
+      },
+      {
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'passport-•••.pdf',
+        issuing_authority: 'U.S. Department of State',
+        issued_on: '2024-06-01',
+        expires_on: '2034-06-01',
+        extraction_confidence: 0.92,
+      },
+    ];
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('ssa', makeCase({ current_last_name: '' }), documents, []);
+    expect(snapshot.checklist.find((item) => item.key === 'current-legal-name')).toMatchObject({
+      kind: 'field_presence',
+      status: 'missing',
+    });
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'packet',
+      label: 'Fill Current legal name available for SS-5',
+      detail: 'Current legal name fields are still incomplete for SS-5 preparation.',
+    });
+  });
+
   it('builds shared passport execution snapshots with dynamic form selection', () => {
     const documents: NameChangeDocumentInput[] = [
       {

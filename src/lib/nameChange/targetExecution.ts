@@ -133,6 +133,42 @@ export function buildNameChangeTargetExecutionSnapshot(
     && primaryCanonicalConflict.fieldKey === firstBlockingFieldRisk.sourceFieldKey
       ? primaryCanonicalConflict
       : null;
+  const getChecklistCategory = (kind: 'requirement' | 'field_presence' | 'document_support') => {
+    if (kind === 'document_support') {
+      return 'document' as const;
+    }
+
+    if (kind === 'field_presence') {
+      return 'packet' as const;
+    }
+
+    return 'checklist' as const;
+  };
+  const getMissingChecklistLabel = (item: typeof checklist[number]) => {
+    if (item.kind === 'field_presence') {
+      return `Fill ${item.label}`;
+    }
+
+    return `Complete ${item.label}`;
+  };
+  const getAttentionChecklistCategory = (kind: 'requirement' | 'field_presence' | 'document_support') => {
+    if (kind === 'document_support') {
+      return 'document' as const;
+    }
+
+    if (kind === 'field_presence') {
+      return 'packet' as const;
+    }
+
+    return 'review' as const;
+  };
+  const getAttentionChecklistLabel = (item: typeof checklist[number]) => {
+    if (item.kind === 'field_presence') {
+      return `Repair ${item.label}`;
+    }
+
+    return `Review ${item.label}`;
+  };
   const nextAction = blockingFieldConflict
     ? {
         category: 'document' as const,
@@ -155,8 +191,8 @@ export function buildNameChangeTargetExecutionSnapshot(
         }
       : firstMissingChecklistItem
         ? {
-            category: firstMissingChecklistItem.key.includes('support') || firstMissingChecklistItem.key.includes('document') ? 'document' as const : 'checklist' as const,
-            label: `Complete ${firstMissingChecklistItem.label}`,
+            category: getChecklistCategory(firstMissingChecklistItem.kind),
+            label: getMissingChecklistLabel(firstMissingChecklistItem),
             detail: firstMissingChecklistItem.reason,
           }
         : firstBlockingAttentionChecklistItem
@@ -183,8 +219,8 @@ export function buildNameChangeTargetExecutionSnapshot(
               }
             : firstAttentionChecklistItem
               ? {
-                  category: firstAttentionChecklistItem.key.includes('support') || firstAttentionChecklistItem.key.includes('document') ? 'document' as const : 'review' as const,
-                  label: `Review ${firstAttentionChecklistItem.label}`,
+                  category: getAttentionChecklistCategory(firstAttentionChecklistItem.kind),
+                  label: getAttentionChecklistLabel(firstAttentionChecklistItem),
                   detail: firstAttentionChecklistItem.reason,
                 }
               : {

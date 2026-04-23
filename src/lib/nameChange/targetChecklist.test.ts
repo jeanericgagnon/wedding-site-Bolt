@@ -40,6 +40,7 @@ describe('name change target checklist', () => {
   it('requires both current first and last name when a checklist item declares multiple target fields', () => {
     const checklist = buildNameChangeTargetChecklist(NAME_CHANGE_EXECUTION_TARGETS.ssa, makeCase({ current_last_name: '' }), [], []);
     expect(checklist.find((item) => item.key === 'current-legal-name')).toMatchObject({
+      kind: 'field_presence',
       status: 'missing',
     });
   });
@@ -129,6 +130,7 @@ describe('name change target checklist', () => {
       extractedFields,
     );
     expect(checklist.find((item) => item.key === 'target-legal-name')).toMatchObject({
+      kind: 'field_presence',
       status: 'attention',
       reason: 'Target legal name is populated for the court-order path, but at least one field still needs stronger document support.',
     });

@@ -11,6 +11,7 @@ import type {
 export type NameChangeTargetChecklistItem = {
   key: string;
   label: string;
+  kind: 'requirement' | 'field_presence' | 'document_support';
   status: 'ready' | 'missing' | 'attention';
   reason: string;
 };
@@ -31,6 +32,7 @@ export function buildNameChangeTargetChecklist(
       return {
         key: spec.key,
         label: spec.label,
+        kind: spec.kind,
         status: requirement?.status === 'satisfied' ? 'ready' : requirement?.status === 'attention' ? 'attention' : 'missing',
         reason: requirement?.reason ?? spec.missingReason,
       } satisfies NameChangeTargetChecklistItem;
@@ -49,6 +51,7 @@ export function buildNameChangeTargetChecklist(
       return {
         key: spec.key,
         label: spec.label,
+        kind: spec.kind,
         status: !allPresent ? 'missing' : allTrusted ? 'ready' : 'attention',
         reason: !allPresent
           ? spec.missingReason
@@ -62,6 +65,7 @@ export function buildNameChangeTargetChecklist(
     return {
       key: spec.key,
       label: spec.label,
+      kind: spec.kind,
       status: supported ? 'ready' : 'attention',
       reason: supported ? spec.satisfiedReason : spec.missingReason,
     } satisfies NameChangeTargetChecklistItem;

@@ -480,6 +480,7 @@ export interface NameChangeTargetExecutionSnapshot {
   checklist: Array<{
     key: string;
     label: string;
+    kind: 'requirement' | 'field_presence' | 'document_support';
     status: 'ready' | 'missing' | 'attention';
     reason: string;
   }>;
