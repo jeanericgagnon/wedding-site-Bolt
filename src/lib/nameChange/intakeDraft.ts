@@ -25,7 +25,7 @@ const SUPPORTED_DRAFT_FIELD_KEYS = new Set<NameChangeExtractedFieldInput['field_
   'court_order_date',
 ]);
 
-const DRAFT_LABEL_SEPARATOR_PATTERN = '[:#=\\-–—]';
+const DRAFT_LABEL_SEPARATOR_PATTERN = '[:#=.\\-–—]';
 
 function humanizeDraftToken(value: string) {
   return value
