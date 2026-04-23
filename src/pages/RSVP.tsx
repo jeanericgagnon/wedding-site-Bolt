@@ -456,6 +456,8 @@ export default function RSVP() {
   const activeLookupRequestRef = useRef(0);
   const activeSubmitRequestRef = useRef(0);
   const submitInFlightRef = useRef(false);
+  const pendingContinuityRefreshRef = useRef(false);
+  const ignoreNextLocalContinuityEventRef = useRef(false);
   const [activePredictionIndex, setActivePredictionIndex] = useState(-1);
   const [formStep, setFormStep] = useState<1 | 2 | 3>(1);
   const [rsvpQuestions, setRsvpQuestions] = useState<RSVPQuestion[]>([]);
@@ -512,6 +514,52 @@ export default function RSVP() {
     notes: '',
   });
 
+  const activeToken = searchParams.get('token');
+
+  const normalizedCurrentRsvpSnapshot = useMemo(() => {
+    if (!guest) return null;
+    const targetGuestIds = applyToHousehold
+      ? dedupeGuestIds([guest.id, ...selectedHouseholdGuestIds])
+      : [guest.id];
+
+    return buildNormalizedExistingRsvp(formData, customAnswers, 'continuity', targetGuestIds);
+  }, [applyToHousehold, customAnswers, formData, guest, selectedHouseholdGuestIds]);
+
+  const normalizedBaselineRsvpSnapshot = useMemo(() => {
+    if (!guest) return null;
+
+    if (existingRsvp) {
+      return {
+        ...normalizeExistingRsvp(existingRsvp),
+        id: 'continuity',
+      };
+    }
+
+    const defaultGuestIds = householdGuests.length > 0
+      ? dedupeGuestIds([guest.id, ...householdGuests.map((member) => member.id)])
+      : [guest.id];
+
+    return buildNormalizedExistingRsvp(
+      {
+        attending: true,
+        attendCeremony: guest.invited_to_ceremony,
+        attendReception: guest.invited_to_reception,
+        meal_choice: mealConfig.enabled ? '' : '',
+        plus_one_name: '',
+        notes: '',
+      },
+      {},
+      'continuity',
+      defaultGuestIds,
+    );
+  }, [existingRsvp, guest, householdGuests, mealConfig]);
+
+  const hasPendingLocalRsvpEdits = useMemo(() => {
+    if (!normalizedCurrentRsvpSnapshot || !normalizedBaselineRsvpSnapshot) return false;
+
+    return JSON.stringify(normalizedCurrentRsvpSnapshot) !== JSON.stringify(normalizedBaselineRsvpSnapshot);
+  }, [normalizedBaselineRsvpSnapshot, normalizedCurrentRsvpSnapshot]);
+
   const returnToLoadedRsvp = useCallback(() => {
     invalidateActiveSubmit();
     if (!guest) {
@@ -543,8 +591,7 @@ export default function RSVP() {
     };
   }, []);
 
-  useEffect(() => {
-    const token = searchParams.get('token');
+  const loadInvitationForToken = useCallback((token: string) => {
     if (!token) {
       activeLookupRequestRef.current += 1;
       activeSubmitRequestRef.current += 1;
@@ -638,7 +685,64 @@ export default function RSVP() {
         if (activeLookupRequestRef.current !== requestId) return;
         setTokenAutoLoading(false);
       });
-  }, [searchParams]);
+  }, []);
+
+  const refreshTokenLinkedRsvpForContinuity = useCallback(() => {
+    if (!activeToken) return;
+    if (loading || tokenAutoLoading || submitting || submitInFlightRef.current || hasPendingLocalRsvpEdits) {
+      pendingContinuityRefreshRef.current = true;
+      return;
+    }
+
+    pendingContinuityRefreshRef.current = false;
+    loadInvitationForToken(activeToken);
+  }, [activeToken, hasPendingLocalRsvpEdits, loadInvitationForToken, loading, submitting, tokenAutoLoading]);
+
+  useEffect(() => {
+    loadInvitationForToken(activeToken ?? '');
+  }, [activeToken, loadInvitationForToken]);
+
+  useEffect(() => {
+    if (!activeToken) return undefined;
+
+    const handleRsvpContinuityUpdate = () => {
+      if (ignoreNextLocalContinuityEventRef.current) {
+        ignoreNextLocalContinuityEventRef.current = false;
+        return;
+      }
+      refreshTokenLinkedRsvpForContinuity();
+    };
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== RSVP_CONTINUITY_STORAGE_KEY || !event.newValue) return;
+      refreshTokenLinkedRsvpForContinuity();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') return;
+      refreshTokenLinkedRsvpForContinuity();
+    };
+
+    window.addEventListener('focus', refreshTokenLinkedRsvpForContinuity);
+    window.addEventListener(RSVP_CONTINUITY_EVENT, handleRsvpContinuityUpdate);
+    window.addEventListener('storage', handleStorage);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', refreshTokenLinkedRsvpForContinuity);
+      window.removeEventListener(RSVP_CONTINUITY_EVENT, handleRsvpContinuityUpdate);
+      window.removeEventListener('storage', handleStorage);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [activeToken, refreshTokenLinkedRsvpForContinuity]);
+
+  useEffect(() => {
+    if (!pendingContinuityRefreshRef.current || !activeToken) return;
+    if (loading || tokenAutoLoading || submitting || submitInFlightRef.current || hasPendingLocalRsvpEdits) return;
+
+    pendingContinuityRefreshRef.current = false;
+    loadInvitationForToken(activeToken);
+  }, [activeToken, hasPendingLocalRsvpEdits, loadInvitationForToken, loading, submitting, tokenAutoLoading]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -723,7 +827,7 @@ export default function RSVP() {
     }
   };
 
-  const selectGuest = (foundGuest: Guest, foundRsvp: ExistingRSVP | null, deadline: string | null = null, questions: RSVPQuestion[] = [], meal: RSVPMealConfig = { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, household: HouseholdGuest[] = [], playlistUrl: string | null = null) => {
+  function selectGuest(foundGuest: Guest, foundRsvp: ExistingRSVP | null, deadline: string | null = null, questions: RSVPQuestion[] = [], meal: RSVPMealConfig = { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, household: HouseholdGuest[] = [], playlistUrl: string | null = null) {
     const normalizedRsvp = foundRsvp ? normalizeExistingRsvp(foundRsvp) : null;
     setGuest(foundGuest);
     setFormStep(1);
@@ -762,7 +866,7 @@ export default function RSVP() {
     }
     setFormStep(1);
     setStep('form');
-  };
+  }
 
   const handlePickGuest = async (picked: Guest) => {
     const pickedLookupValue = picked.invite_token ?? picked.id;
@@ -867,6 +971,7 @@ export default function RSVP() {
         selectGuest(guest, payload, rsvpDeadline, rsvpQuestions, mealConfig, householdGuests, musicPlaylistUrl);
         setApplyToHousehold(applyToHousehold && normalizedSelectedHouseholdGuestIds.length > 0);
         setSelectedHouseholdGuestIds(applyToHousehold ? normalizedSelectedHouseholdGuestIds : []);
+        ignoreNextLocalContinuityEventRef.current = true;
         notifyRsvpContinuityUpdate();
         setStep('success');
         return;
@@ -907,6 +1012,7 @@ export default function RSVP() {
       selectGuest(guest, normalizedExistingRsvp, rsvpDeadline, rsvpQuestions, mealConfig, householdGuests, musicPlaylistUrl);
       setApplyToHousehold(applyToHousehold && normalizedSelectedHouseholdGuestIds.length > 0);
       setSelectedHouseholdGuestIds(applyToHousehold ? normalizedSelectedHouseholdGuestIds : []);
+      ignoreNextLocalContinuityEventRef.current = true;
       notifyRsvpContinuityUpdate();
       setStep('success');
     } catch {

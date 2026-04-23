@@ -144,6 +144,174 @@ describe('RSVP stale submit protection', () => {
     expect(screen.queryByText('An error occurred. Please try again.')).not.toBeInTheDocument();
   });
 
+  it('refreshes token-linked RSVP truth when continuity updates arrive without local edits', async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          guest: {
+            id: 'guest-1',
+            first_name: 'Taylor',
+            last_name: 'Rivera',
+            name: 'Taylor Rivera',
+            email: 'taylor@example.com',
+            phone: null,
+            group_name: null,
+            wedding_site_id: 'site-1',
+            plus_one_allowed: false,
+            invited_to_ceremony: true,
+            invited_to_reception: true,
+            invite_token: 'token-1',
+          },
+          existingRsvp: null,
+          guests: null,
+          rsvpDeadline: null,
+          rsvpQuestions: [],
+          rsvpMealConfig: { enabled: true, options: ['Chicken', 'Beef'] },
+          musicPlaylistUrl: null,
+          householdGuests: [],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          guest: {
+            id: 'guest-1',
+            first_name: 'Taylor',
+            last_name: 'Rivera',
+            name: 'Taylor Rivera',
+            email: 'taylor@example.com',
+            phone: null,
+            group_name: null,
+            wedding_site_id: 'site-1',
+            plus_one_allowed: false,
+            invited_to_ceremony: true,
+            invited_to_reception: true,
+            invite_token: 'token-1',
+          },
+          existingRsvp: {
+            id: 'rsvp-1',
+            attending: true,
+            attending_ceremony: true,
+            attending_reception: true,
+            guest_ids: ['guest-1'],
+            meal_choice: 'Chicken',
+            plus_one_name: null,
+            notes: 'See you there',
+            custom_answers: null,
+          },
+          guests: null,
+          rsvpDeadline: null,
+          rsvpQuestions: [],
+          rsvpMealConfig: { enabled: true, options: ['Chicken', 'Beef'] },
+          musicPlaylistUrl: null,
+          householdGuests: [],
+        }),
+      });
+
+    render(
+      <MemoryRouter initialEntries={['/rsvp?token=token-1']}>
+        <RSVP />
+      </MemoryRouter>
+    );
+
+    await screen.findByText('Welcome, Taylor Rivera!');
+    expect(screen.queryByText('We have your current RSVP on file.')).not.toBeInTheDocument();
+
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('dayof:rsvp-updated', { detail: { updatedAt: String(Date.now()) } }));
+    });
+
+    expect(await screen.findByText('We have your current RSVP on file.')).toBeInTheDocument();
+  });
+
+  it('defers token-linked continuity refresh until local RSVP edits are cleared', async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          guest: {
+            id: 'guest-1',
+            first_name: 'Taylor',
+            last_name: 'Rivera',
+            name: 'Taylor Rivera',
+            email: 'taylor@example.com',
+            phone: null,
+            group_name: null,
+            wedding_site_id: 'site-1',
+            plus_one_allowed: false,
+            invited_to_ceremony: true,
+            invited_to_reception: true,
+            invite_token: 'token-1',
+          },
+          existingRsvp: null,
+          guests: null,
+          rsvpDeadline: null,
+          rsvpQuestions: [],
+          rsvpMealConfig: { enabled: true, options: ['Chicken', 'Beef'] },
+          musicPlaylistUrl: null,
+          householdGuests: [],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          guest: {
+            id: 'guest-1',
+            first_name: 'Taylor',
+            last_name: 'Rivera',
+            name: 'Taylor Rivera',
+            email: 'taylor@example.com',
+            phone: null,
+            group_name: null,
+            wedding_site_id: 'site-1',
+            plus_one_allowed: false,
+            invited_to_ceremony: true,
+            invited_to_reception: true,
+            invite_token: 'token-1',
+          },
+          existingRsvp: {
+            id: 'rsvp-1',
+            attending: true,
+            attending_ceremony: true,
+            attending_reception: true,
+            guest_ids: ['guest-1'],
+            meal_choice: 'Chicken',
+            plus_one_name: null,
+            notes: 'See you there',
+            custom_answers: null,
+          },
+          guests: null,
+          rsvpDeadline: null,
+          rsvpQuestions: [],
+          rsvpMealConfig: { enabled: true, options: ['Chicken', 'Beef'] },
+          musicPlaylistUrl: null,
+          householdGuests: [],
+        }),
+      });
+
+    render(
+      <MemoryRouter initialEntries={['/rsvp?token=token-1']}>
+        <RSVP />
+      </MemoryRouter>
+    );
+
+    await screen.findByText('Welcome, Taylor Rivera!');
+
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'no' } });
+
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('dayof:rsvp-updated', { detail: { updatedAt: String(Date.now()) } }));
+    });
+
+    expect(screen.queryByText('We have your current RSVP on file.')).not.toBeInTheDocument();
+    expect(screen.getByRole('combobox')).toHaveValue('no');
+
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'yes' } });
+
+    expect(await screen.findByText('We have your current RSVP on file.')).toBeInTheDocument();
+  });
+
   it('accepts a single fallback guest result from token lookup', async () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
