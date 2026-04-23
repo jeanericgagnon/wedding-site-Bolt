@@ -136,8 +136,44 @@ describe('name change action feed', () => {
       origin: 'document_repair',
       title: 'Certified marriage certificate',
       sectionKey: 'documents',
+      laneLabel: 'Social Security Administration unblock',
       urgencyTier: 'elevated',
       urgencyReason: 'document_gap',
+    });
+  });
+
+  it('shows the primary impacted target on document repair feed items', () => {
+    const feed = buildNameChangeActionFeed([], [
+      makeRepairItem({
+        impactedTargets: ['U.S. Passport'],
+        nextActions: [{
+          category: 'document',
+          label: 'Capture county + certificate number for certified marriage certificate',
+          detail: 'Ground the certificate for passport follow-through.',
+          documentKind: 'marriage_certificate',
+        }],
+      }),
+    ]);
+
+    expect(feed[0]).toMatchObject({
+      origin: 'document_repair',
+      title: 'Certified marriage certificate',
+      laneLabel: 'U.S. Passport unblock',
+      action: expect.objectContaining({
+        label: 'Capture county + certificate number for certified marriage certificate',
+      }),
+    });
+  });
+
+  it('collapses multi-target document repair lane labels into a compact summary', () => {
+    const feed = buildNameChangeActionFeed([], [
+      makeRepairItem({
+        impactedTargets: ['U.S. Passport', 'TSA PreCheck / travel profiles', 'Social Security Administration'],
+      }),
+    ]);
+
+    expect(feed[0]).toMatchObject({
+      laneLabel: 'U.S. Passport +2 more',
     });
   });
 

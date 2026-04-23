@@ -54,6 +54,18 @@ function getExecutionSectionKey(targetKey: NameChangeTargetExecutionSnapshot['ta
   return 'cleanup';
 }
 
+function buildDocumentRepairLaneLabel(item: NameChangeDocumentRepairQueueItem) {
+  if (item.impactedTargets.length === 0) {
+    return 'Document repair';
+  }
+
+  if (item.impactedTargets.length === 1) {
+    return `${item.impactedTargets[0]} unblock`;
+  }
+
+  return `${item.impactedTargets[0]} +${item.impactedTargets.length - 1} more`;
+}
+
 export function buildNameChangeActionFeed(
   executionSnapshots: NameChangeTargetExecutionSnapshot[],
   documentRepairQueue: NameChangeDocumentRepairQueueItem[],
@@ -88,7 +100,7 @@ export function buildNameChangeActionFeed(
       origin: 'document_repair',
       sectionKey: 'documents' as const,
       title: item.label,
-      laneLabel: 'Document repair',
+      laneLabel: buildDocumentRepairLaneLabel(item),
       severity: item.severity,
       urgencyTier: getActionFeedUrgencyTier(item.score, item.severity),
       urgencyReason: getActionFeedUrgencyReason(item.nextActions[0], item.severity),
