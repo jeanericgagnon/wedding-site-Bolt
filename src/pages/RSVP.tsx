@@ -16,7 +16,23 @@ const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const DEMO_RSVP_QUESTIONS_KEY = 'dayof_demo_rsvp_custom_questions_v1';
 const DEMO_RSVP_RESPONSES_KEY = 'dayof_demo_rsvp_responses_v1';
 const DEMO_RSVP_MEAL_KEY = 'dayof_demo_rsvp_meal_config_v1';
+const RSVP_CONTINUITY_EVENT = 'dayof:rsvp-updated';
+const RSVP_CONTINUITY_STORAGE_KEY = 'dayof.rsvp.updatedAt';
 const DEFAULT_MEAL_CONFIG: RSVPMealConfig = { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] };
+
+function notifyRsvpContinuityUpdate() {
+  if (typeof window === 'undefined') return;
+
+  const updatedAt = String(Date.now());
+
+  try {
+    window.localStorage.setItem(RSVP_CONTINUITY_STORAGE_KEY, updatedAt);
+  } catch {
+    // Ignore storage failures for continuity pings.
+  }
+
+  window.dispatchEvent(new CustomEvent(RSVP_CONTINUITY_EVENT, { detail: { updatedAt } }));
+}
 
 async function rsvpCall(body: object): Promise<{ data?: unknown; error?: string }> {
   const res = await fetch(RSVP_FN_URL, {
@@ -851,6 +867,7 @@ export default function RSVP() {
         selectGuest(guest, payload, rsvpDeadline, rsvpQuestions, mealConfig, householdGuests, musicPlaylistUrl);
         setApplyToHousehold(applyToHousehold && normalizedSelectedHouseholdGuestIds.length > 0);
         setSelectedHouseholdGuestIds(applyToHousehold ? normalizedSelectedHouseholdGuestIds : []);
+        notifyRsvpContinuityUpdate();
         setStep('success');
         return;
       }
@@ -890,6 +907,7 @@ export default function RSVP() {
       selectGuest(guest, normalizedExistingRsvp, rsvpDeadline, rsvpQuestions, mealConfig, householdGuests, musicPlaylistUrl);
       setApplyToHousehold(applyToHousehold && normalizedSelectedHouseholdGuestIds.length > 0);
       setSelectedHouseholdGuestIds(applyToHousehold ? normalizedSelectedHouseholdGuestIds : []);
+      notifyRsvpContinuityUpdate();
       setStep('success');
     } catch {
       if (activeSubmitRequestRef.current !== requestId) return;

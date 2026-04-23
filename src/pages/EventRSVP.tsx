@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Calendar, Clock, MapPin, Check, X, ExternalLink, AlertCircle, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -122,6 +122,7 @@ export default function EventRSVP() {
   const activeLoadRequestRef = useRef(0);
   const activeSubmitRequestRef = useRef(0);
   const submitInFlightRef = useRef(false);
+  const pendingContinuityRefreshRef = useRef(false);
 
   useEffect(() => {
     if (token) {
@@ -158,7 +159,7 @@ export default function EventRSVP() {
     };
   }, []);
 
-  async function loadGuestAndEvents() {
+  const loadGuestAndEvents = useCallback(async () => {
     const requestId = activeLoadRequestRef.current + 1;
     activeLoadRequestRef.current = requestId;
     activeSubmitRequestRef.current += 1;
@@ -280,7 +281,56 @@ export default function EventRSVP() {
       if (activeLoadRequestRef.current !== requestId) return;
       setLoading(false);
     }
-  }
+  }, [token]);
+
+  const refreshGuestAndEventsForContinuity = useCallback(() => {
+    if (!token) return;
+    if (selectedEvent || submitting || submitInFlightRef.current) {
+      pendingContinuityRefreshRef.current = true;
+      return;
+    }
+
+    pendingContinuityRefreshRef.current = false;
+    loadGuestAndEvents();
+  }, [loadGuestAndEvents, selectedEvent, submitting, token]);
+
+  useEffect(() => {
+    if (!token) return undefined;
+
+    const handleRsvpContinuityUpdate = () => {
+      refreshGuestAndEventsForContinuity();
+    };
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== RSVP_CONTINUITY_STORAGE_KEY || !event.newValue) return;
+      refreshGuestAndEventsForContinuity();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') return;
+      refreshGuestAndEventsForContinuity();
+    };
+
+    window.addEventListener('focus', refreshGuestAndEventsForContinuity);
+    window.addEventListener(RSVP_CONTINUITY_EVENT, handleRsvpContinuityUpdate);
+    window.addEventListener('storage', handleStorage);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', refreshGuestAndEventsForContinuity);
+      window.removeEventListener(RSVP_CONTINUITY_EVENT, handleRsvpContinuityUpdate);
+      window.removeEventListener('storage', handleStorage);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [refreshGuestAndEventsForContinuity, token]);
+
+  useEffect(() => {
+    if (!pendingContinuityRefreshRef.current) return;
+    if (!token || selectedEvent || submitting || submitInFlightRef.current) return;
+
+    pendingContinuityRefreshRef.current = false;
+    loadGuestAndEvents();
+  }, [loadGuestAndEvents, selectedEvent, submitting, token]);
 
   function formatDate(dateString: string) {
     return new Date(dateString).toLocaleDateString('en-US', {

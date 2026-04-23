@@ -1,5 +1,5 @@
 import React from 'react';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 let currentToken = 'old-token';
@@ -1513,6 +1513,138 @@ describe('EventRSVP token trust continuity', () => {
 
     await waitFor(() => {
       expect(screen.queryByText('Hello, Taylor!')).not.toBeInTheDocument();
+    });
+  });
+
+  it('refreshes stale invitation RSVP truth when RSVP continuity updates arrive', async () => {
+    maybeSingleQueue.push(
+      { data: { id: 'guest-1', name: 'Alex Guest', email: 'alex@example.com' }, error: null },
+      { data: null, error: null },
+      { data: { id: 'guest-1', name: 'Alex Guest', email: 'alex@example.com' }, error: null },
+      { data: { attending: true, dietary_restrictions: 'Vegan', notes: 'See you there' }, error: null },
+    );
+
+    selectQueue.push(
+      {
+        data: [{
+          id: 'inv-1',
+          event_id: 'event-1',
+          itinerary_events: {
+            id: 'event-1',
+            event_name: 'Welcome Party',
+            description: 'Kickoff dinner',
+            event_date: '2026-09-18',
+            start_time: '18:00:00',
+            end_time: null,
+            location_name: 'Beach Club',
+            location_address: '123 Shoreline Dr',
+            dress_code: null,
+            notes: null,
+          },
+        }],
+        error: null,
+      },
+      {
+        data: [{
+          id: 'inv-1',
+          event_id: 'event-1',
+          itinerary_events: {
+            id: 'event-1',
+            event_name: 'Welcome Party',
+            description: 'Kickoff dinner',
+            event_date: '2026-09-18',
+            start_time: '18:00:00',
+            end_time: null,
+            location_name: 'Beach Club',
+            location_address: '123 Shoreline Dr',
+            dress_code: null,
+            notes: null,
+          },
+        }],
+        error: null,
+      },
+    );
+
+    render(<EventRSVP />);
+
+    await screen.findByText('Welcome Party');
+    expect(screen.getByRole('button', { name: 'RSVP for this event' })).toBeInTheDocument();
+
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('dayof:rsvp-updated', { detail: { updatedAt: String(Date.now()) } }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Update my RSVP' })).toBeInTheDocument();
+    });
+  });
+
+  it('defers continuity refresh while the RSVP form is open so active edits do not get reset', async () => {
+    maybeSingleQueue.push(
+      { data: { id: 'guest-1', name: 'Alex Guest', email: 'alex@example.com' }, error: null },
+      { data: null, error: null },
+      { data: { id: 'guest-1', name: 'Alex Guest', email: 'alex@example.com' }, error: null },
+      { data: { attending: true, dietary_restrictions: 'Vegan', notes: 'See you there' }, error: null },
+    );
+
+    selectQueue.push(
+      {
+        data: [{
+          id: 'inv-1',
+          event_id: 'event-1',
+          itinerary_events: {
+            id: 'event-1',
+            event_name: 'Welcome Party',
+            description: 'Kickoff dinner',
+            event_date: '2026-09-18',
+            start_time: '18:00:00',
+            end_time: null,
+            location_name: 'Beach Club',
+            location_address: '123 Shoreline Dr',
+            dress_code: null,
+            notes: null,
+          },
+        }],
+        error: null,
+      },
+      {
+        data: [{
+          id: 'inv-1',
+          event_id: 'event-1',
+          itinerary_events: {
+            id: 'event-1',
+            event_name: 'Welcome Party',
+            description: 'Kickoff dinner',
+            event_date: '2026-09-18',
+            start_time: '18:00:00',
+            end_time: null,
+            location_name: 'Beach Club',
+            location_address: '123 Shoreline Dr',
+            dress_code: null,
+            notes: null,
+          },
+        }],
+        error: null,
+      },
+    );
+
+    render(<EventRSVP />);
+
+    await screen.findByText('Welcome Party');
+    fireEvent.click(screen.getByRole('button', { name: 'RSVP for this event' }));
+    await screen.findByRole('button', { name: 'Submit RSVP' });
+
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('dayof:rsvp-updated', { detail: { updatedAt: String(Date.now()) } }));
+    });
+
+    expect(screen.getByRole('button', { name: 'Submit RSVP' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: 'Submit RSVP' })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Update my RSVP' })).toBeInTheDocument();
     });
   });
 
