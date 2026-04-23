@@ -1,4 +1,5 @@
 import { matchesNameChangeDocumentKind } from './documentKinds';
+import { evaluateNameChangeRequirements } from './requirements';
 import { NAME_CHANGE_ENGINE_VERSION, NAME_CHANGE_FORM_REGISTRY, NAME_CHANGE_INSTITUTION_LIBRARY } from './registry';
 import type {
   NameChangeEligibilityDecision,
@@ -82,6 +83,7 @@ function collectMissingInputs(
   legalBasis: 'marriage' | 'court_order',
   legalProofReady: boolean,
   hasLegalProofInIntake: boolean,
+  outOfStateMarriageCertificateGroundingMissing: boolean,
 ) {
   const missing: string[] = [];
   const profile = input.profile;
@@ -96,6 +98,7 @@ function collectMissingInputs(
     if (!hasMeaningfulValue(profile.marriage_date)) missing.push('Marriage date');
     if (!hasMeaningfulValue(String(profile.structured_intake.spouseLastName ?? ''))) missing.push('Spouse last name');
     if (!legalProofReady) missing.push(hasLegalProofInIntake ? 'Certified marriage certificate review' : 'Certified marriage certificate metadata');
+    if (outOfStateMarriageCertificateGroundingMissing) missing.push('Out-of-state marriage certificate reference fields');
   }
 
   if (legalBasis === 'court_order' && !legalProofReady) {
@@ -158,13 +161,19 @@ function buildInstitutionRolloutSteps(institutions: NameChangeInstitutionEntry[]
 
 export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePlan {
   const eligibility = evaluateCaliforniaNameChangeEligibility(input);
+  const requirementResults = evaluateNameChangeRequirements(input.profile, input.documents, input.extractedFields).results;
   const legalBasis = eligibility.decision === 'court_order_required' ? 'court_order' : eligibility.legalBasis;
   const hasMarriageCertificate = hasDocument(input, 'marriage_certificate');
   const hasReviewedMarriageCertificate = hasReviewedDocument(input, 'marriage_certificate');
   const hasCourtOrder = hasDocument(input, 'court_order');
   const hasReviewedCourtOrder = hasReviewedDocument(input, 'court_order');
+  const outOfStateMarriageCertificateGrounding = requirementResults.find((result) => result.key === 'out-of-state-marriage-certificate-grounding');
+  const outOfStateMarriageCertificateGroundingMissing = legalBasis === 'marriage'
+    && outOfStateMarriageCertificateGrounding?.status !== 'satisfied';
   const hasLegalProofInIntake = legalBasis === 'marriage' ? hasMarriageCertificate : hasCourtOrder;
-  const legalProofReady = legalBasis === 'marriage' ? hasReviewedMarriageCertificate : hasReviewedCourtOrder;
+  const legalProofReady = legalBasis === 'marriage'
+    ? hasReviewedMarriageCertificate && !outOfStateMarriageCertificateGroundingMissing
+    : hasReviewedCourtOrder;
   const institutionalTargets = institutionsFor(input);
   const travelBookedSoon = Boolean(input.profile.structured_intake.travelBookedSoon);
   const wantsDocumentIntakeHelp = input.profile.structured_intake.wantsDocumentIntakeHelp !== false;
@@ -174,14 +183,22 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
       ? []
       : [legalBasis === 'marriage'
         ? hasLegalProofInIntake
-          ? 'Certified marriage certificate is in intake but still needs review.'
+          ? outOfStateMarriageCertificateGroundingMissing && outOfStateMarriageCertificateGrounding?.reason
+            ? outOfStateMarriageCertificateGrounding.reason
+            : 'Certified marriage certificate is in intake but still needs review.'
           : 'Certified marriage certificate still missing from intake.'
         : hasLegalProofInIntake
           ? 'Court order packet or signed order is in intake but still needs review.'
           : 'Court order packet or signed order still missing from intake.']),
     ...eligibility.reasons.filter((reason) => eligibility.decision === 'court_order_required' && !reason.includes('selected')),
   ];
-  const missingInputs = collectMissingInputs(input, legalBasis, legalProofReady, hasLegalProofInIntake);
+  const missingInputs = collectMissingInputs(
+    input,
+    legalBasis,
+    legalProofReady,
+    hasLegalProofInIntake,
+    outOfStateMarriageCertificateGroundingMissing,
+  );
 
   const steps: NameChangePlanStep[] = [];
 

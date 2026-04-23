@@ -105,6 +105,33 @@ describe('name change engine', () => {
     });
   });
 
+  it('keeps marriage-path steps blocked when out-of-state certificate grounding is still missing', () => {
+    const plan = buildNameChangePlan({
+      ...makeInput({ marriage_state: 'Nevada' }),
+      documents: [
+        {
+          id: 'doc-marriage',
+          document_kind: 'marriage_certificate',
+          display_name: 'Certified marriage certificate',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+        },
+      ],
+      extractedFields: [],
+    });
+
+    expect(plan.summary.blockers).toContain('Marriage certificate is present, but no grounded county or certificate-number extraction is represented yet for out-of-state follow-through.');
+    expect(plan.summary.missingInputs).toContain('Out-of-state marriage certificate reference fields');
+    expect(plan.steps.find((step) => step.id === 'eligibility-proof')).toMatchObject({
+      status: 'blocked',
+      blockers: ['Marriage certificate is present, but no grounded county or certificate-number extraction is represented yet for out-of-state follow-through.'],
+    });
+    expect(plan.steps.find((step) => step.id === 'federal-ssa')).toMatchObject({
+      status: 'blocked',
+      blockers: ['Legal proof needs to be ready before SSA.'],
+    });
+  });
+
   it('pushes travel-sensitive caution notes when upcoming travel is flagged', () => {
     const plan = buildNameChangePlan(makeInput({ structured_intake: { spouseLastName: 'Jordan', travelBookedSoon: true, wantsDocumentIntakeHelp: true } }));
     expect(plan.summary.cautionNotes.some((note) => note.includes('Upcoming travel'))).toBe(true);
