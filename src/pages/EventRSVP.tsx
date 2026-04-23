@@ -123,6 +123,7 @@ export default function EventRSVP() {
   const activeSubmitRequestRef = useRef(0);
   const submitInFlightRef = useRef(false);
   const pendingContinuityRefreshRef = useRef(false);
+  const ignoreNextLocalContinuityEventRef = useRef(false);
 
   useEffect(() => {
     if (token) {
@@ -298,6 +299,10 @@ export default function EventRSVP() {
     if (!token) return undefined;
 
     const handleRsvpContinuityUpdate = () => {
+      if (ignoreNextLocalContinuityEventRef.current) {
+        ignoreNextLocalContinuityEventRef.current = false;
+        return;
+      }
       refreshGuestAndEventsForContinuity();
     };
 
@@ -510,6 +515,7 @@ export default function EventRSVP() {
       setHasEventRsvpSupport(true);
       setRsvpForm(normalizedForm);
       applyInvitationRsvp(selectedEvent, normalizedForm);
+      ignoreNextLocalContinuityEventRef.current = true;
       notifyRsvpContinuityUpdate();
       setSubmitSuccess(true);
       submittedSuccessfully = true;

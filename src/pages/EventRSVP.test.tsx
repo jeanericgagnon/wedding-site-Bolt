@@ -1648,6 +1648,88 @@ describe('EventRSVP token trust continuity', () => {
     });
   });
 
+  it('ignores its own submit continuity event so stale refetch truth does not overwrite the saved RSVP', async () => {
+    currentToken = 'guest-token';
+
+    maybeSingleQueue.push(
+      { data: { id: 'guest-1', name: 'Taylor', email: 'taylor@example.com' }, error: null },
+      { data: null, error: null },
+      { data: { id: 'guest-1', name: 'Taylor', email: 'taylor@example.com' }, error: null },
+      { data: null, error: null },
+    );
+
+    selectQueue.push(
+      {
+        data: [
+          {
+            id: 'inv-1',
+            event_id: 'event-1',
+            itinerary_events: {
+              id: 'event-1',
+              event_name: 'Welcome Dinner',
+              description: '',
+              event_date: '2026-05-01',
+              start_time: '18:00:00',
+              end_time: null,
+              location_name: 'The Loft',
+              location_address: '',
+              dress_code: null,
+              notes: null,
+            },
+          },
+        ],
+        error: null,
+      },
+      {
+        data: [
+          {
+            id: 'inv-1',
+            event_id: 'event-1',
+            itinerary_events: {
+              id: 'event-1',
+              event_name: 'Welcome Dinner',
+              description: '',
+              event_date: '2026-05-01',
+              start_time: '18:00:00',
+              end_time: null,
+              location_name: 'The Loft',
+              location_address: '',
+              dress_code: null,
+              notes: null,
+            },
+          },
+        ],
+        error: null,
+      },
+    );
+
+    insertQueue.push({ error: null });
+
+    render(<EventRSVP />);
+
+    expect(await screen.findByText('Hello, Taylor!')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'RSVP for this event' }));
+    fireEvent.change(screen.getByPlaceholderText('e.g., Vegetarian, Gluten-free, Nut allergy'), {
+      target: { value: 'Vegetarian' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Any special requests or messages for the couple'), {
+      target: { value: 'See you there' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Submit RSVP' }));
+
+    await waitFor(() => {
+      expect(screen.getByText("You're in!")).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Update my RSVP' })).toBeInTheDocument();
+    }, { timeout: 4000 });
+
+    expect(screen.queryByRole('button', { name: 'RSVP for this event' })).not.toBeInTheDocument();
+    expect(maybeSingleQueue).toHaveLength(2);
+    expect(selectQueue).toHaveLength(1);
+  }, 10000);
+
   it('ignores a second event RSVP submit while the first submit is still in flight', async () => {
     currentToken = 'guest-token';
 
