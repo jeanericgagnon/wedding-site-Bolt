@@ -1,7 +1,7 @@
 import { buildNameChangeCanonicalCase } from './canonical';
 import { canonicalizeNameChangeDocumentKind, matchesNameChangeDocumentKind } from './documentKinds';
-import { buildNameChangeExtractionContractSnapshot, getDocumentLinkedCapturedFieldKeys } from './extractionContract';
-import { isDraftNameChangePlaceholderDocument } from './intakeDraft';
+import { buildNameChangeExtractionContractSnapshot } from './extractionContract';
+import { isDraftNameChangePlaceholderDocument, normalizeDraftFieldKey } from './intakeDraft';
 import type {
   NameChangeCaseInput,
   NameChangeDocumentContractDefinition,
@@ -148,6 +148,21 @@ function findBestContractDocument(
     })[0];
 }
 
+function getContractDocumentCapturedFieldKeys(
+  document: NameChangeDocumentInput | undefined,
+  extractedFields: NameChangeExtractedFieldInput[],
+  expectedFields: NameChangeExtractionFieldKey[],
+): NameChangeExtractionFieldKey[] {
+  if (!document?.id) return [];
+
+  return [...new Set(
+    extractedFields
+      .filter((field) => field.document_id === document.id && field.is_verified)
+      .map((field) => normalizeDraftFieldKey(field.field_key) as NameChangeExtractionFieldKey)
+      .filter((fieldKey): fieldKey is NameChangeExtractionFieldKey => expectedFields.includes(fieldKey)),
+  )];
+}
+
 export function buildNameChangeDocumentIntakeSnapshot(
   profile: NameChangeCaseInput,
   documents: NameChangeDocumentInput[],
@@ -159,7 +174,7 @@ export function buildNameChangeDocumentIntakeSnapshot(
   const statuses: NameChangeDocumentContractStatus[] = NAME_CHANGE_DOCUMENT_CONTRACTS.map((definition) => {
     const canonicalDocument = findBestContractDocument(documents, definition.kind);
     const documentState = canonicalCase.documents[definition.kind];
-    const typedCapturedFields = getDocumentLinkedCapturedFieldKeys(documents, extractedFields, definition.kind);
+    const typedCapturedFields = getContractDocumentCapturedFieldKeys(canonicalDocument, extractedFields, definition.extractionFields);
     const required = definition.requiredFor.includes('all') || definition.requiredFor.includes(canonicalCase.legalBasis);
     const metadataMissing = metadataMissingForDocument(canonicalDocument);
     const contractIntakeStatus = canonicalDocument?.intake_status ?? documentState.intakeStatus;

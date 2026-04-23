@@ -862,6 +862,58 @@ describe('name change document intake contract', () => {
     });
   });
 
+  it('keeps captured extraction fields tied to the selected strongest court-order document', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase({ legal_basis: 'court_order', marriage_state: null, marriage_date: null }),
+      [
+        {
+          id: 'doc-alias',
+          document_kind: 'court_order_name_change',
+          display_name: 'Court order alias',
+          storage_mode: 'metadata_only',
+          intake_status: 'uploaded',
+          file_name_masked: 'court-order-•••.pdf',
+        },
+        {
+          id: 'doc-canonical',
+          document_kind: 'court_order',
+          display_name: 'Court order',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'court-order-•••.pdf',
+          issuing_authority: 'San Diego Superior Court',
+          issued_on: '2026-04-05',
+          extraction_confidence: 0.93,
+        },
+      ],
+      [
+        {
+          document_id: 'doc-alias',
+          field_key: 'court_order_date',
+          field_label: 'Court order date',
+          field_value_masked: '2026-04-01',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-canonical',
+          field_key: 'case_number',
+          field_label: 'Case number',
+          field_value_masked: '24-CV-1188',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+      ],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'court_order')).toMatchObject({
+      intakeStatus: 'reviewed',
+      extractionFieldCount: 1,
+      capturedExtractionFields: ['case_number'],
+      missingExtractionFields: ['first_name', 'last_name', 'court_order_date'],
+    });
+  });
+
   it('deduplicates repeated captured extraction field keys in contract output', () => {
     const snapshot = buildNameChangeDocumentIntakeSnapshot(
       makeCase(),
