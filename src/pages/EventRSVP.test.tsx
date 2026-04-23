@@ -387,7 +387,7 @@ describe('EventRSVP token trust continuity', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Submit RSVP' }));
 
     await waitFor(() => {
-      expect(screen.getByText("You're in!")).toBeInTheDocument();
+      expect(screen.getByText('Response saved')).toBeInTheDocument();
     });
 
     expect(insertedPayloads).toHaveLength(1);
@@ -441,7 +441,7 @@ describe('EventRSVP token trust continuity', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Update RSVP' }));
 
     await waitFor(() => {
-      expect(screen.getByText("You're in!")).toBeInTheDocument();
+      expect(screen.getByText('Response saved')).toBeInTheDocument();
     });
 
     expect(updatedPayloads).toHaveLength(1);
