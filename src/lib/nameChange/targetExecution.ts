@@ -1,7 +1,10 @@
 import { buildNameChangeAutofillPrepSnapshot } from './autofill';
 import { evaluateNameChangeExecutionGates } from './executionGates';
 import { buildNameChangeExecutionSequenceSnapshot } from './executionSequence';
-import { buildNameChangeExtractionContractSnapshot } from './extractionContract';
+import {
+  buildNameChangeExtractionContractSnapshot,
+  hasVerifiedLinkedDocumentFieldValue,
+} from './extractionContract';
 import { NAME_CHANGE_FORM_BUILDERS } from './formRegistry';
 import { buildNameChangeTargetChecklist } from './targetChecklist';
 import { NAME_CHANGE_EXECUTION_TARGETS } from './targets';
@@ -65,11 +68,32 @@ export function buildNameChangeTargetExecutionSnapshot(
   const primaryCanonicalConflict = extraction.conflicts[0] ?? null;
   const firstAttentionChecklistItem = checklist.find((item) => item.status === 'attention');
   const buildCourtOrderNextAction = () => {
-    const referenceExtractionDependency = sequence.dependencies.find((dependency) => dependency.key === 'court-order-reference-extraction' && dependency.status === 'missing');
-    if (referenceExtractionDependency) {
+    const hasVerifiedCourtOrderTargetFirstName = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'first_name');
+    const hasVerifiedCourtOrderTargetLastName = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'last_name');
+    const hasVerifiedCourtOrderCaseNumber = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'case_number');
+    const hasVerifiedCourtOrderSignedDate = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'court_order_date');
+    const referenceExtractionDependency = sequence.dependencies.find((dependency) => dependency.key === 'court-order-reference-extraction');
+    const hasCompleteCourtOrderGrounding = hasVerifiedCourtOrderTargetFirstName
+      && hasVerifiedCourtOrderTargetLastName
+      && hasVerifiedCourtOrderCaseNumber
+      && hasVerifiedCourtOrderSignedDate;
+
+    if (referenceExtractionDependency && !hasCompleteCourtOrderGrounding) {
+      const label = !hasVerifiedCourtOrderTargetFirstName && !hasVerifiedCourtOrderTargetLastName
+        ? 'Capture court-order target legal name + case reference fields'
+        : !hasVerifiedCourtOrderTargetFirstName
+          ? 'Capture court-order target first name'
+          : !hasVerifiedCourtOrderTargetLastName
+            ? 'Capture court-order target last name'
+            : !hasVerifiedCourtOrderCaseNumber
+              ? 'Capture court-order case number'
+              : !hasVerifiedCourtOrderSignedDate
+                ? 'Capture court-order signed date'
+                : 'Review court-order extraction grounding';
+
       return {
         category: 'document' as const,
-        label: 'Capture court-order target legal name + case reference fields',
+        label,
         detail: referenceExtractionDependency.reason,
       };
     }
@@ -106,14 +130,14 @@ export function buildNameChangeTargetExecutionSnapshot(
         label: `Resolve ${blockingFieldConflict.documentKind.replace(/_/g, ' ')} conflict`,
         detail: blockingFieldConflict.reason,
       }
+    : courtOrderNextAction
+      ? courtOrderNextAction
     : firstBlockingFieldRisk
       ? {
           category: 'packet' as const,
           label: `Repair ${firstBlockingFieldRisk.label}`,
           detail: firstBlockingFieldRisk.reason,
         }
-    : courtOrderNextAction
-      ? courtOrderNextAction
     : firstMissingDependency
       ? {
           category: firstMissingDependency.key.includes('support') || firstMissingDependency.key.includes('document') ? 'document' as const : 'dependency' as const,

@@ -114,9 +114,10 @@ describe('court-order path review execution snapshot', () => {
     expect(snapshot.blockers).toContain('Court-order proof is in intake, but no verified target-name or case-reference extraction is represented yet.');
   });
 
-  it('still stays in attention once target legal name and only part of court-order reference extraction are represented', () => {
+  it('surfaces attention once target legal name is grounded but signed date is still missing', () => {
     const documents: NameChangeDocumentInput[] = [
       {
+        id: 'court-order-doc',
         document_kind: 'court_order_name_change',
         display_name: 'Court order',
         storage_mode: 'metadata_only',
@@ -132,6 +133,7 @@ describe('court-order path review execution snapshot', () => {
 
     const snapshot = buildNameChangeCourtOrderExecutionSnapshot(makeCase(), documents, [
       {
+        document_id: 'court-order-doc',
         field_key: 'first_name',
         field_label: 'First name',
         field_value_masked: 'Alex',
@@ -139,6 +141,7 @@ describe('court-order path review execution snapshot', () => {
         is_verified: true,
       },
       {
+        document_id: 'court-order-doc',
         field_key: 'last_name',
         field_label: 'Last name',
         field_value_masked: 'Jordan',
@@ -146,6 +149,7 @@ describe('court-order path review execution snapshot', () => {
         is_verified: true,
       },
       {
+        document_id: 'court-order-doc',
         field_key: 'case_number',
         field_label: 'Case number',
         field_value_masked: '24-CV-1188',
@@ -154,7 +158,11 @@ describe('court-order path review execution snapshot', () => {
       },
     ]);
     expect(snapshot.ready).toBe(false);
-    expect(snapshot.checklist.find((item) => item.key === 'court-order-reference-extraction')).toMatchObject({ status: 'missing' });
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'document',
+      label: 'Capture court-order signed date',
+      detail: 'Court-order target legal name and case number are verified, but the signed date still needs grounded extraction before downstream use is fully trusted.',
+    });
   });
 
   it('blocks when launch state is not aligned to the modeled California court-order review path', () => {
