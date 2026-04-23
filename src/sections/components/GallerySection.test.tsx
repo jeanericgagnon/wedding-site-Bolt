@@ -40,6 +40,48 @@ describe('GallerySection', () => {
     expect(screen.queryByAltText('Fallback photo')).not.toBeInTheDocument();
   });
 
+  it('renders galleryImages objects from section settings', () => {
+    const data = createEmptyWeddingData();
+    data.media.gallery = [{ id: 'fallback-1', url: 'https://example.com/fallback.jpg', caption: 'Fallback photo' }];
+
+    render(
+      <GallerySection
+        data={data}
+        instance={makeInstance({
+          showTitle: true,
+          title: 'Photos',
+          galleryImages: [
+            { id: 'gallery-1', url: 'https://example.com/gallery.jpg', caption: 'Gallery photo' },
+          ],
+        })}
+      />
+    );
+
+    const image = screen.getByAltText('Gallery photo') as HTMLImageElement;
+    expect(image.src).toContain('https://example.com/gallery.jpg');
+    expect(screen.queryByAltText('Fallback photo')).not.toBeInTheDocument();
+  });
+
+  it('renders photos string arrays from section settings', () => {
+    const data = createEmptyWeddingData();
+    data.media.gallery = [{ id: 'fallback-1', url: 'https://example.com/fallback.jpg', caption: 'Fallback photo' }];
+
+    render(
+      <GallerySection
+        data={data}
+        instance={makeInstance({
+          showTitle: true,
+          title: 'Photos',
+          photos: ['https://example.com/photos-array.jpg'],
+        })}
+      />
+    );
+
+    const image = screen.getByAltText('Gallery photo') as HTMLImageElement;
+    expect(image.src).toContain('https://example.com/photos-array.jpg');
+    expect(screen.queryByAltText('Fallback photo')).not.toBeInTheDocument();
+  });
+
   it('falls back to weddingData gallery when section settings are empty', () => {
     const data = createEmptyWeddingData();
     data.media.gallery = [{ id: 'fallback-1', url: 'https://example.com/fallback.jpg', caption: 'Fallback photo' }];

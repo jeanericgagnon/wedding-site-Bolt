@@ -16,7 +16,13 @@ interface GalleryPhoto {
 }
 
 function normalizeGalleryPhotos(data: WeddingDataV1, settings: SectionInstance['settings']): GalleryPhoto[] {
-  const rawSettingImages = Array.isArray(settings.images) ? settings.images : [];
+  const rawSettingImages = Array.isArray(settings.images)
+    ? settings.images
+    : Array.isArray(settings.galleryImages)
+      ? settings.galleryImages
+      : Array.isArray(settings.photos)
+        ? settings.photos
+        : [];
   const settingPhotos = rawSettingImages
     .map((item, index) => {
       if (typeof item === 'string') {
@@ -27,14 +33,28 @@ function normalizeGalleryPhotos(data: WeddingDataV1, settings: SectionInstance['
       if (!item || typeof item !== 'object') return null;
 
       const record = item as Record<string, unknown>;
-      const url = typeof record.url === 'string' ? record.url.trim() : '';
+      const url = typeof record.url === 'string'
+        ? record.url.trim()
+        : typeof record.image === 'string'
+          ? record.image.trim()
+          : '';
       if (!url) return null;
 
       return {
         id: typeof record.id === 'string' && record.id ? record.id : `settings-${index}`,
         url,
-        caption: typeof record.caption === 'string' ? record.caption : '',
-        alt: typeof record.alt === 'string' ? record.alt : '',
+        caption: typeof record.caption === 'string'
+          ? record.caption
+          : typeof record.title === 'string'
+            ? record.title
+            : '',
+        alt: typeof record.alt === 'string'
+          ? record.alt
+          : typeof record.caption === 'string'
+            ? record.caption
+            : typeof record.title === 'string'
+              ? record.title
+              : '',
       };
     })
     .filter((photo): photo is GalleryPhoto => Boolean(photo));
