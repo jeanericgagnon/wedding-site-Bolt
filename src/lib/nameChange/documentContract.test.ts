@@ -1105,6 +1105,49 @@ describe('name change document intake contract', () => {
     });
   });
 
+  it('treats labeled reference-number values as canonical document truth', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase(),
+      [
+        {
+          id: 'doc-court-order',
+          document_kind: 'court_order',
+          display_name: 'Certified court order',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'court-order-•••.pdf',
+          issuing_authority: 'Superior Court',
+          issued_on: '2026-04-05',
+          extraction_confidence: 0.97,
+        },
+      ],
+      [
+        {
+          document_id: 'doc-court-order',
+          field_key: 'case_number',
+          field_label: 'Case number',
+          field_value_masked: 'Case No. 24-cv-1188',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-court-order',
+          field_key: 'court_order_date',
+          field_label: 'Signed date',
+          field_value_masked: '2026-04-05',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+      ],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'court_order')).toMatchObject({
+      capturedExtractionFields: expect.arrayContaining(['case_number', 'court_order_date']),
+      missingExtractionFields: expect.not.arrayContaining(['case_number']),
+      canonicalConflicts: [],
+    });
+  });
+
   it('keeps optional other documents out of metadata-gap summary counts', () => {
     const snapshot = buildNameChangeDocumentIntakeSnapshot(
       makeCase(),

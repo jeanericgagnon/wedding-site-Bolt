@@ -369,6 +369,20 @@ function normalizeDraftCountyValue(value: string) {
   return humanizeDraftToken(countyWithoutAffixes.toLowerCase());
 }
 
+function normalizeDraftReferenceNumberValue(value: string) {
+  const normalizedValue = normalizeDraftText(value);
+  if (!normalizedValue) return '';
+
+  return normalizedValue
+    .replace(/^(?:(?:case|docket|certificate|cert|record)\s*(?:number|no\.?|#)?\s*[:#-]\s*|(?:case|docket|certificate|cert|record)\s+(?:number|no\.?|#)\s*)/i, '')
+    .trim()
+    .toUpperCase()
+    .replace(/[–—−]/g, '-')
+    .replace(/\s*([\-/#])\s*/g, '$1')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 export function normalizeDraftFieldValue(fieldKey: NameChangeExtractedFieldInput['field_key'], value: string) {
   const normalizedValue = normalizeDraftText(value);
   if (!normalizedValue) return '';
@@ -382,12 +396,7 @@ export function normalizeDraftFieldValue(fieldKey: NameChangeExtractedFieldInput
   }
 
   if (fieldKey === 'case_number' || fieldKey === 'certificate_number') {
-    return normalizedValue
-      .toUpperCase()
-      .replace(/[–—−]/g, '-')
-      .replace(/\s*([\-/#])\s*/g, '$1')
-      .replace(/\s+/g, ' ')
-      .trim();
+    return normalizeDraftReferenceNumberValue(normalizedValue);
   }
 
   if (fieldKey === 'court_order_date' || fieldKey === 'issuance_date') {
