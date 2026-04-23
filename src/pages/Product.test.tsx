@@ -160,6 +160,15 @@ describe('Product starter draft truth', () => {
     expect(navigateMock).toHaveBeenCalledWith('/settings');
   });
 
+  it('gives signed-in couples a planner shortcut inside the command preview', () => {
+    authState.user = { id: 'user-1' };
+    render(<Product />);
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Open planner workspace' })[0]);
+
+    expect(navigateMock).toHaveBeenCalledWith('/dashboard/planning');
+  });
+
   it('gives signed-in couples a direct planner workspace shortcut', () => {
     authState.user = { id: 'user-1' };
     render(<Product />);

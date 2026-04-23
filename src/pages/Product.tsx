@@ -237,12 +237,22 @@ export const Product: React.FC = () => {
     return (
       <div className="space-y-4">
         <p className="text-sm text-ink/70">Planner command view: checklist ready, timeline in view, messaging draft prepared.</p>
-        <button
-          onClick={user ? () => navigate('/settings') : handleSignUp}
-          className="px-4 py-2 rounded-lg border border-brand/40 hover:bg-brand/5"
-        >
-          {user ? 'Open collaboration settings' : 'Start your draft'}
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={user ? () => navigate('/dashboard/planning') : handleSignUp}
+            className="px-4 py-2 rounded-lg border border-brand/40 hover:bg-brand/5"
+          >
+            {user ? 'Open planner workspace' : 'Start your draft'}
+          </button>
+          {user && (
+            <button
+              onClick={() => navigate('/settings')}
+              className="px-4 py-2 rounded-lg border border-brand/40 hover:bg-brand/5"
+            >
+              Open collaboration settings
+            </button>
+          )}
+        </div>
       </div>
     );
   };
