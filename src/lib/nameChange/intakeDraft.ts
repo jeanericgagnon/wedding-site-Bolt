@@ -25,7 +25,8 @@ const SUPPORTED_DRAFT_FIELD_KEYS = new Set<NameChangeExtractedFieldInput['field_
   'court_order_date',
 ]);
 
-const DRAFT_LABEL_SEPARATOR_PATTERN = '[:#=.|\\-–—]';
+const DRAFT_LABEL_SEPARATOR_PATTERN = '[:#=.|：＝｜\\-–—]';
+const DRAFT_WRAPPING_CHAR_PATTERN = /^["'([{「『【（]+|["')\]}」』】）]+$/g;
 
 function humanizeDraftToken(value: string) {
   return value
@@ -270,7 +271,7 @@ function normalizeDraftDateValue(value: string) {
   const sanitizedTimestampValue = deweekdayValue.replace(/,\s*(\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?)\b/g, ' $1');
   const compactTimestampValue = sanitizedTimestampValue.replace(/\s+/g, ' ').trim();
   const depunctuatedTimestampValue = compactTimestampValue.replace(/[.,;:]+$/g, '').trim();
-  const unwrappedTimestampValue = depunctuatedTimestampValue.replace(/^["'([{]+|["')\]}]+$/g, '').trim();
+  const unwrappedTimestampValue = depunctuatedTimestampValue.replace(DRAFT_WRAPPING_CHAR_PATTERN, '').trim();
   const normalizedTimestampValue = unwrappedTimestampValue.replace(/\b(am|pm)\b/gi, (_, meridiem: string) => meridiem.toUpperCase());
   const canonicalTimestampValue = normalizedTimestampValue
     .replace(/\bz\b/g, 'Z')
@@ -379,7 +380,7 @@ function normalizeDraftCountyValue(value: string) {
     '',
   );
   const countyWithoutTrailingPunctuation = countyWithoutLabels.replace(/[.,;:]+$/g, '').trim();
-  const countyWithoutWrapping = countyWithoutTrailingPunctuation.replace(/^["'([{]+|["')\]}]+$/g, '').trim();
+  const countyWithoutWrapping = countyWithoutTrailingPunctuation.replace(DRAFT_WRAPPING_CHAR_PATTERN, '').trim();
 
   const countyWithoutAffixes = countyWithoutWrapping
     .replace(/^county\s+of\s+/i, '')
@@ -406,7 +407,7 @@ function normalizeDraftPersonNameValue(
   const unlabeledValue = normalizedValue.replace(labelPatterns[fieldKey], '').trim();
   const cleanedValue = unlabeledValue
     .replace(/[.,;:]+$/g, '')
-    .replace(/^["'([{]+|["')\]}]+$/g, '')
+    .replace(DRAFT_WRAPPING_CHAR_PATTERN, '')
     .trim();
   if (!cleanedValue) return '';
 
@@ -425,7 +426,7 @@ function normalizeDraftReferenceNumberValue(value: string) {
     .replace(new RegExp(`^(?:(?:case|docket|certificate|cert|record)\\s*(?:number|no\\.?|#)?\\s*${DRAFT_LABEL_SEPARATOR_PATTERN}\\s*|(?:case|docket|certificate|cert|record)\\s+(?:number|no\\.?|#)\\s*)`, 'i'), '')
     .trim()
     .replace(/[.,;:]+$/g, '')
-    .replace(/^["'([{]+|["')\]}]+$/g, '')
+    .replace(DRAFT_WRAPPING_CHAR_PATTERN, '')
     .toUpperCase()
     .replace(/[–—−]/g, '-')
     .replace(/\s*([\-/#])\s*/g, '$1')
