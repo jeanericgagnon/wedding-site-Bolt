@@ -331,7 +331,7 @@ describe('name change document intake contract', () => {
     expect(snapshot.documents.find((document) => document.kind === 'current_passport')).toMatchObject({
       intakeStatus: 'uploaded',
       metadataReady: 0,
-      capturedExtractionFields: expect.arrayContaining(['issuance_date']),
+      capturedExtractionFields: [],
     });
     expect(snapshot.summary.metadataReady).toBe(1);
     expect(snapshot.summary.autofillReady).toBe(0);
@@ -564,7 +564,7 @@ describe('name change document intake contract', () => {
     );
 
     expect(snapshot.documents.find((document) => document.kind === 'court_order')).toMatchObject({
-      capturedExtractionFields: ['case_number', 'court_order_date'],
+      capturedExtractionFields: expect.arrayContaining(['case_number', 'court_order_date']),
       missingExtractionFields: ['first_name', 'last_name'],
     });
   });
@@ -600,6 +600,39 @@ describe('name change document intake contract', () => {
     expect(snapshot.documents.find((document) => document.kind === 'court_order')).toMatchObject({
       capturedExtractionFields: ['case_number'],
       missingExtractionFields: ['first_name', 'last_name', 'court_order_date'],
+    });
+  });
+
+  it('does not treat manual fallback extraction as document-captured truth', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase({ legal_basis: 'court_order', marriage_state: null, marriage_date: null }),
+      [
+        {
+          id: 'doc-court-order',
+          document_kind: 'court_order_name_change',
+          display_name: 'Court order',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'court-order-•••.pdf',
+          issuing_authority: 'San Diego Superior Court',
+          issued_on: '2026-04-05',
+          extraction_confidence: 0.93,
+        },
+      ],
+      [
+        {
+          field_key: 'case #',
+          field_label: 'Case #',
+          field_value_masked: '24-cv - 1188',
+          source_type: 'manual',
+          is_verified: true,
+        },
+      ],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'court_order')).toMatchObject({
+      capturedExtractionFields: [],
+      missingExtractionFields: ['first_name', 'last_name', 'case_number', 'court_order_date'],
     });
   });
 
@@ -857,8 +890,9 @@ describe('name change document intake contract', () => {
     );
 
     expect(snapshot.documents.find((document) => document.kind === 'current_passport')).toMatchObject({
-      extractionFieldCount: 1,
-      capturedExtractionFields: ['issuance_date'],
+      extractionFieldCount: 0,
+      capturedExtractionFields: [],
+      missingExtractionFields: ['first_name', 'middle_name', 'last_name', 'issuance_date'],
     });
   });
 
@@ -1098,7 +1132,7 @@ describe('name change document intake contract', () => {
       extractionFieldCount: 1,
     });
     expect(snapshot.documents.find((document) => document.kind === 'court_order')).toMatchObject({
-      capturedExtractionFields: ['case_number', 'court_order_date'],
+      capturedExtractionFields: expect.arrayContaining(['case_number', 'court_order_date']),
       extractionFieldCount: 2,
     });
     expect(extractedFields).toEqual(expect.arrayContaining([

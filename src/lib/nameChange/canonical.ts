@@ -1,5 +1,5 @@
 import { getNameChangeDocumentKindAliases } from './documentKinds';
-import { getDocumentCapturedFieldKeys } from './extractionContract';
+import { getDocumentLinkedCapturedFieldKeys } from './extractionContract';
 import type {
   NameChangeCanonicalCase,
   NameChangeCanonicalPersonName,
@@ -37,7 +37,7 @@ export function buildNameChangeCanonicalCase(
 ): NameChangeCanonicalCase {
   const canonicalDocuments = DOCUMENT_KINDS.reduce<NameChangeCanonicalCase['documents']>((acc, kind) => {
     const document = documents.find((candidate) => getNameChangeDocumentKindAliases(kind).includes(candidate.document_kind));
-    const extractedFieldKeys = getDocumentCapturedFieldKeys(documents, extractedFields, kind);
+    const extractedFieldKeys = getDocumentLinkedCapturedFieldKeys(documents, extractedFields, kind);
     acc[kind] = {
       intakeStatus: document?.intake_status ?? 'not_started',
       storageMode: document?.storage_mode ?? 'none',

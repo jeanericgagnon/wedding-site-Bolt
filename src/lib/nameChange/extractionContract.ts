@@ -168,6 +168,17 @@ export function getDocumentCapturedFieldKeys(
   return [...new Set([...linkedKeys, ...manualFallbackKeys])];
 }
 
+export function getDocumentLinkedCapturedFieldKeys(
+  documents: NameChangeDocumentInput[],
+  extractedFields: NameChangeExtractedFieldInput[],
+  kind: NameChangeDocumentKind,
+): NameChangeExtractionFieldKey[] {
+  const document = getDocumentByKind(documents, extractedFields, kind);
+  if (!document?.id) return [];
+
+  return getVerifiedLinkedCanonicalFieldKeys(document.id, extractedFields);
+}
+
 function buildMarriageCertificateExtraction(
   documents: NameChangeDocumentInput[],
   extractedFields: NameChangeExtractedFieldInput[],

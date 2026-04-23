@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildNameChangeExtractionContractSnapshot, getDocumentCapturedFieldKeys, getVerifiedDocumentLinkedFieldValue, hasAnyDocumentLinkedFieldValue, hasVerifiedDocumentLinkedFieldValue } from './extractionContract';
+import { buildNameChangeExtractionContractSnapshot, getDocumentCapturedFieldKeys, getDocumentLinkedCapturedFieldKeys, getVerifiedDocumentLinkedFieldValue, hasAnyDocumentLinkedFieldValue, hasVerifiedDocumentLinkedFieldValue } from './extractionContract';
 import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput } from './types';
 
 function makeCase(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseInput {
@@ -216,6 +216,25 @@ describe('name change extraction contract', () => {
 
     expect(getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'case_number')).toBe('24-CV-1188');
     expect(getDocumentCapturedFieldKeys(documents, extractedFields, 'court_order')).toEqual(['case_number']);
+  });
+
+  it('keeps manual fallback out of document-linked captured keys', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-court-order',
+        document_kind: 'court_order_name_change',
+        display_name: 'Court order name change',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      { field_key: 'case #', field_label: 'Case #', field_value_masked: '24-cv - 1188', source_type: 'manual', is_verified: true },
+    ];
+
+    expect(getDocumentCapturedFieldKeys(documents, extractedFields, 'court_order')).toEqual(['case_number']);
+    expect(getDocumentLinkedCapturedFieldKeys(documents, extractedFields, 'court_order')).toEqual([]);
+    expect(getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'case_number')).toBe('24-CV-1188');
   });
 
   it('flags court-order target-name conflicts against canonical case truth', () => {

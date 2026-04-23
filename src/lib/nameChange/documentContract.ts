@@ -1,6 +1,6 @@
 import { buildNameChangeCanonicalCase } from './canonical';
 import { canonicalizeNameChangeDocumentKind, matchesNameChangeDocumentKind } from './documentKinds';
-import { buildNameChangeExtractionContractSnapshot, getDocumentCapturedFieldKeys } from './extractionContract';
+import { buildNameChangeExtractionContractSnapshot, getDocumentLinkedCapturedFieldKeys } from './extractionContract';
 import { isDraftNameChangePlaceholderDocument } from './intakeDraft';
 import type {
   NameChangeCaseInput,
@@ -159,54 +159,7 @@ export function buildNameChangeDocumentIntakeSnapshot(
   const statuses: NameChangeDocumentContractStatus[] = NAME_CHANGE_DOCUMENT_CONTRACTS.map((definition) => {
     const canonicalDocument = findBestContractDocument(documents, definition.kind);
     const documentState = canonicalCase.documents[definition.kind];
-    const typedCapturedFields = (() => {
-      switch (definition.kind) {
-        case 'marriage_certificate':
-          return Object.entries(extraction.marriageCertificate).filter(([, value]) => value).map(([key]) => {
-            const mapping = {
-              firstName: 'first_name',
-              lastName: 'last_name',
-              spouseLastName: 'spouse_last_name',
-              county: 'county',
-              issuanceDate: 'issuance_date',
-              certificateNumber: 'certificate_number',
-            } as const;
-            return mapping[key as keyof typeof mapping];
-          });
-        case 'court_order':
-          return Object.entries(extraction.courtOrder).filter(([, value]) => value).map(([key]) => {
-            const mapping = {
-              firstName: 'first_name',
-              lastName: 'last_name',
-              caseNumber: 'case_number',
-              courtOrderDate: 'court_order_date',
-            } as const;
-            return mapping[key as keyof typeof mapping];
-          });
-        case 'current_passport':
-          return Object.entries(extraction.currentPassport).filter(([, value]) => value).map(([key]) => {
-            const mapping = {
-              firstName: 'first_name',
-              middleName: 'middle_name',
-              lastName: 'last_name',
-              issuanceDate: 'issuance_date',
-            } as const;
-            return mapping[key as keyof typeof mapping];
-          });
-        case 'current_drivers_license':
-          return Object.entries(extraction.currentDriversLicense).filter(([, value]) => value).map(([key]) => {
-            const mapping = {
-              firstName: 'first_name',
-              middleName: 'middle_name',
-              lastName: 'last_name',
-              issuanceDate: 'issuance_date',
-            } as const;
-            return mapping[key as keyof typeof mapping];
-          });
-        default:
-          return getDocumentCapturedFieldKeys(documents, extractedFields, definition.kind);
-      }
-    })();
+    const typedCapturedFields = getDocumentLinkedCapturedFieldKeys(documents, extractedFields, definition.kind);
     const required = definition.requiredFor.includes('all') || definition.requiredFor.includes(canonicalCase.legalBasis);
     const metadataMissing = metadataMissingForDocument(canonicalDocument);
     const contractIntakeStatus = canonicalDocument?.intake_status ?? documentState.intakeStatus;
