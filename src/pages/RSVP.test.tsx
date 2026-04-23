@@ -312,6 +312,97 @@ describe('RSVP stale submit protection', () => {
     expect(await screen.findByText('We have your current RSVP on file.')).toBeInTheDocument();
   });
 
+  it('keeps token-linked RSVP continuity retries alive after a background refresh failure', async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          guest: {
+            id: 'guest-1',
+            first_name: 'Taylor',
+            last_name: 'Rivera',
+            name: 'Taylor Rivera',
+            email: 'taylor@example.com',
+            phone: null,
+            group_name: null,
+            wedding_site_id: 'site-1',
+            plus_one_allowed: false,
+            invited_to_ceremony: true,
+            invited_to_reception: true,
+            invite_token: 'token-1',
+          },
+          existingRsvp: null,
+          guests: null,
+          rsvpDeadline: null,
+          rsvpQuestions: [],
+          rsvpMealConfig: { enabled: true, options: ['Chicken', 'Beef'] },
+          musicPlaylistUrl: null,
+          householdGuests: [],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        json: async () => null,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          guest: {
+            id: 'guest-1',
+            first_name: 'Taylor',
+            last_name: 'Rivera',
+            name: 'Taylor Rivera',
+            email: 'taylor@example.com',
+            phone: null,
+            group_name: null,
+            wedding_site_id: 'site-1',
+            plus_one_allowed: false,
+            invited_to_ceremony: true,
+            invited_to_reception: true,
+            invite_token: 'token-1',
+          },
+          existingRsvp: {
+            id: 'rsvp-1',
+            attending: true,
+            attending_ceremony: true,
+            attending_reception: true,
+            guest_ids: ['guest-1'],
+            meal_choice: 'Chicken',
+            plus_one_name: null,
+            notes: 'See you there',
+            custom_answers: null,
+          },
+          guests: null,
+          rsvpDeadline: null,
+          rsvpQuestions: [],
+          rsvpMealConfig: { enabled: true, options: ['Chicken', 'Beef'] },
+          musicPlaylistUrl: null,
+          householdGuests: [],
+        }),
+      });
+
+    render(
+      <MemoryRouter initialEntries={['/rsvp?token=token-1']}>
+        <RSVP />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('Welcome, Taylor Rivera!')).toBeInTheDocument();
+
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('dayof:rsvp-updated', { detail: { updatedAt: String(Date.now()) } }));
+    });
+
+    expect(screen.getByText('Welcome, Taylor Rivera!')).toBeInTheDocument();
+    expect(screen.queryByText('Failed to load invitation. Please search by name below.')).not.toBeInTheDocument();
+
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('dayof:rsvp-updated', { detail: { updatedAt: String(Date.now()) } }));
+    });
+
+    expect(await screen.findByText('We have your current RSVP on file.')).toBeInTheDocument();
+  });
+
   it('does not let a stale token continuity refresh override a manual RSVP search', async () => {
     fetchMock
       .mockResolvedValueOnce({

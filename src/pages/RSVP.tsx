@@ -595,7 +595,7 @@ export default function RSVP() {
     };
   }, []);
 
-  const loadInvitationForToken = useCallback((token: string) => {
+  const loadInvitationForToken = useCallback((token: string, { preserveVisibleState = false }: { preserveVisibleState?: boolean } = {}) => {
     if (!token) {
       activeLookupRequestRef.current += 1;
       activeSubmitRequestRef.current += 1;
@@ -638,30 +638,37 @@ export default function RSVP() {
     submitInFlightRef.current = false;
     pendingContinuityRefreshRef.current = false;
     ignoreNextLocalContinuityEventRef.current = false;
+    const shouldPreserveVisibleState = preserveVisibleState && tokenLinkedSessionRef.current;
     setLoading(false);
-    setTokenAutoLoading(true);
+    setTokenAutoLoading(!shouldPreserveVisibleState);
     setSubmitting(false);
-    setStep('search');
-    setError('');
-    setSearchValue(token);
-    setGuest(null);
-    setExistingRsvp(null);
-    setAmbiguousGuests([]);
-    setRsvpDeadline(null);
-    setMusicPlaylistUrl(null);
-    setRsvpQuestions([]);
-    setMealConfig(DEFAULT_MEAL_CONFIG);
-    setHouseholdGuests([]);
-    setApplyToHousehold(true);
-    setSelectedHouseholdGuestIds([]);
-    setCustomAnswers({});
-    setFormData({ attending: true, attendCeremony: true, attendReception: true, meal_choice: '', plus_one_name: '', notes: '' });
-    setFormStep(1);
-    setActivePredictionIndex(-1);
+    if (!shouldPreserveVisibleState) {
+      setStep('search');
+      setError('');
+      setSearchValue(token);
+      setGuest(null);
+      setExistingRsvp(null);
+      setAmbiguousGuests([]);
+      setRsvpDeadline(null);
+      setMusicPlaylistUrl(null);
+      setRsvpQuestions([]);
+      setMealConfig(DEFAULT_MEAL_CONFIG);
+      setHouseholdGuests([]);
+      setApplyToHousehold(true);
+      setSelectedHouseholdGuestIds([]);
+      setCustomAnswers({});
+      setFormData({ attending: true, attendCeremony: true, attendReception: true, meal_choice: '', plus_one_name: '', notes: '' });
+      setFormStep(1);
+      setActivePredictionIndex(-1);
+    }
     (DEMO_MODE ? Promise.resolve({ data: demoLookup(token) as unknown, error: undefined as string | undefined }) : rsvpCall({ action: 'lookup', searchValue: token }))
       .then(({ data, error: err }) => {
         if (activeLookupRequestRef.current !== requestId) return;
         if (err || !data) {
+          if (shouldPreserveVisibleState) {
+            tokenLinkedSessionRef.current = true;
+            return;
+          }
           tokenLinkedSessionRef.current = false;
           setError(err ?? 'Invitation not recognized. Please search by name below.');
           setTokenAutoLoading(false);
@@ -673,6 +680,10 @@ export default function RSVP() {
         } else if (result.guests && result.guests.length === 1) {
           selectGuest(result.guests[0], result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null, 'token');
         } else if (result.guests && result.guests.length > 1) {
+          if (shouldPreserveVisibleState) {
+            tokenLinkedSessionRef.current = true;
+            return;
+          }
           tokenLinkedSessionRef.current = false;
           setAmbiguousGuests(result.guests);
           setRsvpDeadline(result.rsvpDeadline);
@@ -685,12 +696,20 @@ export default function RSVP() {
           setSelectedHouseholdGuestIds(hh.map((h) => h.id));
           setStep('pick');
         } else {
+          if (shouldPreserveVisibleState) {
+            tokenLinkedSessionRef.current = true;
+            return;
+          }
           tokenLinkedSessionRef.current = false;
           setError('Invitation not recognized. Please search by name below.');
         }
       })
       .catch(() => {
         if (activeLookupRequestRef.current !== requestId) return;
+        if (shouldPreserveVisibleState) {
+          tokenLinkedSessionRef.current = true;
+          return;
+        }
         tokenLinkedSessionRef.current = false;
         setError('Failed to load invitation. Please search by name below.');
       })
@@ -708,7 +727,7 @@ export default function RSVP() {
     }
 
     pendingContinuityRefreshRef.current = false;
-    loadInvitationForToken(activeToken);
+    loadInvitationForToken(activeToken, { preserveVisibleState: true });
   }, [activeToken, hasPendingLocalRsvpEdits, loadInvitationForToken, loading, submitting, tokenAutoLoading]);
 
   useEffect(() => {
@@ -754,7 +773,7 @@ export default function RSVP() {
     if (loading || tokenAutoLoading || submitting || submitInFlightRef.current || hasPendingLocalRsvpEdits) return;
 
     pendingContinuityRefreshRef.current = false;
-    loadInvitationForToken(activeToken);
+    loadInvitationForToken(activeToken, { preserveVisibleState: true });
   }, [activeToken, hasPendingLocalRsvpEdits, loadInvitationForToken, loading, submitting, tokenAutoLoading]);
 
   const handleSearch = async (e: React.FormEvent) => {
