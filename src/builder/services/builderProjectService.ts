@@ -9,6 +9,12 @@ import { getBuilderRevision, listBuilderRevisions, recordBuilderRevision } from 
 import { rewriteSignedMediaUrlsToPublicDeep } from '../../lib/mediaUrl';
 import { buildCoupleDisplayName } from '../../lib/coupleDisplayName';
 
+const toIsoDateOrUndefined = (value: unknown): string | undefined => {
+  if (typeof value !== 'string' || !value.trim()) return undefined;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+};
+
 export const builderProjectService = {
   async loadProject(weddingSiteId: string): Promise<BuilderProject | null> {
     const { data, error } = await supabase
@@ -68,9 +74,7 @@ export const builderProjectService = {
         displayName: buildCoupleDisplayName(partner1, partner2),
       },
       event: {
-        weddingDateISO: (data.venue_date || data.wedding_date)
-          ? new Date((data.venue_date || data.wedding_date) as string).toISOString()
-          : undefined,
+        weddingDateISO: toIsoDateOrUndefined(data.venue_date || data.wedding_date),
       },
       venues: data.venue_name
         ? [{ id: 'primary', name: data.venue_name as string, address: ((data.wedding_location as string) || (data.venue_location as string) || undefined) }]

@@ -65,4 +65,21 @@ describe('builderProjectService.loadWeddingData', () => {
 
     expect(result.couple.displayName).toBe('Alex & Jordan');
   });
+
+  it('skips invalid row wedding dates instead of crashing builder load', async () => {
+    maybeSingle.mockResolvedValue({
+      data: {
+        couple_name_1: 'Alex',
+        couple_name_2: 'Jordan',
+        wedding_date: 'not-a-date',
+      },
+      error: null,
+    });
+
+    await expect(builderProjectService.loadWeddingData('site-3')).resolves.toMatchObject({
+      event: {
+        weddingDateISO: undefined,
+      },
+    });
+  });
 });
