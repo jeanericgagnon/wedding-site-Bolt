@@ -151,12 +151,16 @@ function normalizeExistingRsvp(existingRsvp: ExistingRSVP): ExistingRSVP {
   const mealChoice = (existingRsvp.meal_choice || '').trim();
   const plusOneName = (existingRsvp.plus_one_name || '').trim();
   const notes = (existingRsvp.notes || '').trim();
+  const normalizedGuestIds = Array.isArray(existingRsvp.guest_ids)
+    ? dedupeGuestIds(existingRsvp.guest_ids.map((guestId) => typeof guestId === 'string' ? guestId : ''))
+    : null;
 
   return {
     ...existingRsvp,
     meal_choice: mealChoice || null,
     plus_one_name: plusOneName || null,
     plus_one_count: plusOneName ? 1 : 0,
+    guest_ids: normalizedGuestIds,
     notes: notes || null,
     custom_answers: existingRsvp.custom_answers && typeof existingRsvp.custom_answers === 'object'
       ? normalizeCustomAnswers(existingRsvp.custom_answers as Record<string, string | string[]>)
