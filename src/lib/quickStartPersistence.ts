@@ -464,9 +464,14 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     && Number.isInteger(parsed.currentIndex)
     && Number.isSafeInteger(parsed.currentIndex)
     && parsed.currentIndex >= 0;
-  const hasRecoverableClosedCurrentIndex = typeof parsed.currentIndex === 'number'
+  const hasRecoverableClosedCurrentIndex = (
+    typeof parsed.currentIndex === 'number'
     && Number.isFinite(parsed.currentIndex)
-    && parsed.currentIndex >= 0;
+    && parsed.currentIndex >= 0
+  ) || (
+    typeof parsed.currentIndex === 'string'
+    && /^\d+$/.test(parsed.currentIndex.trim())
+  );
   const recoveredClosedCurrentIndex = hasMeaningfulQuickStartAnswers(normalizedInitialSetupAnswers)
     ? resolveRestorableCurrentIndex(RESTORABLE_SETUP_STEPS.length, normalizedInitialSetupAnswers)
     : 0;
