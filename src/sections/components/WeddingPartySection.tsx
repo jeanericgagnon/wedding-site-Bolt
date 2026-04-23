@@ -2,6 +2,7 @@ import React from 'react';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { SectionInstance } from '../../types/layoutConfig';
 import { Users } from 'lucide-react';
+import { readBuilderValue } from '../../lib/weddingProfile';
 
 interface Props {
   data: WeddingDataV1;
@@ -55,6 +56,11 @@ export const WeddingPartySection: React.FC<Props> = ({ data, instance }) => {
   const { bridal, groomsmen } = getPartyMembers(settings);
   const partner1 = data.couple.partner1Name || 'Partner 1';
   const partner2 = data.couple.partner2Name || 'Partner 2';
+  const eyebrow = readBuilderValue(settings.eyebrow as string | { value: string } | undefined, 'The crew');
+  const title = readBuilderValue(settings.title as string | { value: string } | undefined, 'Wedding Party');
+  const subtitle = readBuilderValue(settings.subtitle as string | { value: string } | undefined, '');
+  const bridalTitle = readBuilderValue(settings.bridalTitle as string | { value: string } | undefined, `${partner1}'s Side`);
+  const groomTitle = readBuilderValue(settings.groomTitle as string | { value: string } | undefined, `${partner2}'s Side`);
 
   return (
     <section className="py-20 px-4 bg-surface-subtle">
@@ -62,13 +68,13 @@ export const WeddingPartySection: React.FC<Props> = ({ data, instance }) => {
         {settings.showTitle !== false && (
           <div className="text-center mb-14">
             <p className="text-xs uppercase tracking-[0.3em] text-primary mb-3 font-medium">
-              {settings.eyebrow || 'The crew'}
+              {eyebrow}
             </p>
             <h2 className="text-4xl font-light text-text-primary">
-              {settings.title || 'Wedding Party'}
+              {title}
             </h2>
-            {settings.subtitle && (
-              <p className="mt-4 text-text-secondary max-w-xl mx-auto">{settings.subtitle}</p>
+            {subtitle && (
+              <p className="mt-4 text-text-secondary max-w-xl mx-auto">{subtitle}</p>
             )}
             <div className="w-10 h-px bg-primary mx-auto mt-6" />
           </div>
@@ -77,7 +83,7 @@ export const WeddingPartySection: React.FC<Props> = ({ data, instance }) => {
         <div className="space-y-14">
           <div>
             <h3 className="text-center text-xs uppercase tracking-[0.25em] font-medium text-text-tertiary mb-8">
-              {settings.bridalTitle || `${partner1}'s Side`}
+              {bridalTitle}
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-8 justify-items-center">
               {bridal.map((member, i) => (
@@ -90,7 +96,7 @@ export const WeddingPartySection: React.FC<Props> = ({ data, instance }) => {
 
           <div>
             <h3 className="text-center text-xs uppercase tracking-[0.25em] font-medium text-text-tertiary mb-8">
-              {settings.groomTitle || `${partner2}'s Side`}
+              {groomTitle}
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-8 justify-items-center">
               {groomsmen.map((member, i) => (
@@ -108,6 +114,7 @@ export const WeddingPartyGrid: React.FC<Props> = ({ data, instance }) => {
   const { settings } = instance;
   const { bridal, groomsmen } = getPartyMembers(settings);
   const all = [...bridal, ...groomsmen];
+  const title = readBuilderValue(settings.title as string | { value: string } | undefined, 'Wedding Party');
 
   return (
     <section className="py-20 px-4 bg-surface">
@@ -115,7 +122,7 @@ export const WeddingPartyGrid: React.FC<Props> = ({ data, instance }) => {
         {settings.showTitle !== false && (
           <div className="text-center mb-14">
             <h2 className="text-4xl font-light text-text-primary">
-              {settings.title || 'Wedding Party'}
+              {title}
             </h2>
             <div className="w-10 h-px bg-primary mx-auto mt-6" />
           </div>
