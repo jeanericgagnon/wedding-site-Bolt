@@ -362,9 +362,15 @@ function normalizeDraftCountyValue(value: string) {
   const normalizedValue = normalizeDraftText(value);
   if (!normalizedValue) return '';
 
-  const countyWithoutAffixes = normalizedValue
+  const countyWithoutLabels = normalizedValue.replace(
+    /^(?:(?:county\s+of|residence\s+county|resident\s+county|county\s+residence|county))\s*[:#-]?\s*/i,
+    '',
+  );
+
+  const countyWithoutAffixes = countyWithoutLabels
     .replace(/^county\s+of\s+/i, '')
-    .replace(/\s+county$/i, '');
+    .replace(/\s+county$/i, '')
+    .trim();
 
   return humanizeDraftToken(countyWithoutAffixes.toLowerCase());
 }
