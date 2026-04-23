@@ -682,7 +682,7 @@ describe('name change target execution snapshot', () => {
     });
   });
 
-  it('gives a concrete court-order extraction next action when reference fields are still missing', () => {
+  it('gives a concrete court-order extraction next action when target legal name + case reference fields are still missing', () => {
     const profile = makeCase({
       legal_basis: 'court_order' as never,
       marriage_state: null,
@@ -712,8 +712,8 @@ describe('name change target execution snapshot', () => {
     const snapshot = buildNameChangeTargetExecutionSnapshot('courtOrder', profile, documents, []);
     expect(snapshot.nextAction).toMatchObject({
       category: 'document',
-      label: 'Capture court-order reference fields',
-      detail: 'Court-order proof is in intake, but no verified case-number or signed-date extraction is represented yet.',
+      label: 'Capture court-order target legal name + case reference fields',
+      detail: 'Court-order proof is in intake, but no verified target-name or case-reference extraction is represented yet.',
     });
   });
 

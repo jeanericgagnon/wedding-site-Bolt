@@ -69,7 +69,7 @@ export function buildNameChangeTargetExecutionSnapshot(
     if (referenceExtractionDependency) {
       return {
         category: 'document' as const,
-        label: 'Capture court-order reference fields',
+        label: 'Capture court-order target legal name + case reference fields',
         detail: referenceExtractionDependency.reason,
       };
     }

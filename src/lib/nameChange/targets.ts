@@ -147,11 +147,11 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'courtOrder' | 'ssa' | 'dmv' 
       },
       {
         key: 'court-order-reference-extraction',
-        label: 'Court-order reference extraction is available',
+        label: 'Court-order target legal name and case reference extraction are available',
         kind: 'requirement',
         requirementKey: 'court-order-reference-extraction',
-        missingReason: 'Court-order reference extraction has not been evaluated yet.',
-        satisfiedReason: 'Court-order reference extraction is available for this modeled review slice.',
+        missingReason: 'Court-order target legal name and case reference extraction have not been evaluated yet.',
+        satisfiedReason: 'Court-order target legal name and case reference extraction are available for this modeled review slice.',
       },
       {
         key: 'legal-proof-document',
