@@ -74,4 +74,59 @@ describe('name change canonical case', () => {
       extractedFieldKeys: expect.arrayContaining(['case_number', 'court_order_date']),
     });
   });
+
+  it('prefers the best real reviewed court-order document over earlier alias placeholders', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'draft-court-order',
+        document_kind: 'court_order_name_change',
+        display_name: 'Court order placeholder',
+        file_name_masked: 'document-placeholder.pdf',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+      {
+        id: 'doc-court-order',
+        document_kind: 'court_order',
+        display_name: 'Signed court order',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'doc-court-order',
+        field_key: 'first_name',
+        field_label: 'First name',
+        field_value_masked: 'Alex',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'doc-court-order',
+        field_key: 'last_name',
+        field_label: 'Last name',
+        field_value_masked: 'Jordan',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'doc-court-order',
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: '24-CV-1188',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+
+    const canonical = buildNameChangeCanonicalCase(makeCase(), documents, extractedFields);
+
+    expect(canonical.documents.court_order).toMatchObject({
+      intakeStatus: 'reviewed',
+      storageMode: 'metadata_only',
+      extractionFieldCount: 3,
+      extractedFieldKeys: expect.arrayContaining(['first_name', 'last_name', 'case_number']),
+    });
+  });
 });

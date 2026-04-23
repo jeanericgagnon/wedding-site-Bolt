@@ -1,5 +1,6 @@
-import { getNameChangeDocumentKindAliases } from './documentKinds';
+import { canonicalizeNameChangeDocumentKind, getNameChangeDocumentKindAliases } from './documentKinds';
 import { getDocumentLinkedCapturedFieldKeys } from './extractionContract';
+import { isDraftNameChangePlaceholderDocument } from './intakeDraft';
 import type {
   NameChangeCanonicalCase,
   NameChangeCanonicalPersonName,
@@ -30,13 +31,47 @@ const DOCUMENT_KINDS: NameChangeDocumentKind[] = [
   'other',
 ];
 
+function getCanonicalDocumentPriority(
+  document: NameChangeDocumentInput,
+  kind: NameChangeDocumentKind,
+  extractedFields: NameChangeExtractedFieldInput[],
+) {
+  const linkedFieldCount = document.id
+    ? getDocumentLinkedCapturedFieldKeys([document], extractedFields, kind).length
+    : 0;
+  const realDocumentWeight = isDraftNameChangePlaceholderDocument(document) ? 0 : 1;
+  const intakeWeight = document.intake_status === 'reviewed'
+    ? 2
+    : document.intake_status === 'uploaded'
+      ? 1
+      : 0;
+  const canonicalKindWeight = document.document_kind === canonicalizeNameChangeDocumentKind(kind) ? 1 : 0;
+
+  return (linkedFieldCount * 1000) + (realDocumentWeight * 100) + (intakeWeight * 10) + canonicalKindWeight;
+}
+
+function findCanonicalDocument(
+  documents: NameChangeDocumentInput[],
+  extractedFields: NameChangeExtractedFieldInput[],
+  kind: NameChangeDocumentKind,
+) {
+  const aliases = getNameChangeDocumentKindAliases(kind);
+  return documents
+    .filter((candidate) => aliases.includes(candidate.document_kind))
+    .sort((left, right) => {
+      const priorityDelta = getCanonicalDocumentPriority(right, kind, extractedFields) - getCanonicalDocumentPriority(left, kind, extractedFields);
+      if (priorityDelta !== 0) return priorityDelta;
+      return (right.id ?? '').localeCompare(left.id ?? '');
+    })[0];
+}
+
 export function buildNameChangeCanonicalCase(
   profile: NameChangeCaseInput,
   documents: NameChangeDocumentInput[],
   extractedFields: NameChangeExtractedFieldInput[],
 ): NameChangeCanonicalCase {
   const canonicalDocuments = DOCUMENT_KINDS.reduce<NameChangeCanonicalCase['documents']>((acc, kind) => {
-    const document = documents.find((candidate) => getNameChangeDocumentKindAliases(kind).includes(candidate.document_kind));
+    const document = findCanonicalDocument(documents, extractedFields, kind);
     const extractedFieldKeys = getDocumentLinkedCapturedFieldKeys(documents, extractedFields, kind);
     acc[kind] = {
       intakeStatus: document?.intake_status ?? 'not_started',
