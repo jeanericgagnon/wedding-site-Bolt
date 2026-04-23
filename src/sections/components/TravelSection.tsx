@@ -2,6 +2,7 @@ import React from 'react';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { SectionInstance } from '../../types/layoutConfig';
 import { Car, Hotel, Plane, MapPin, ExternalLink } from 'lucide-react';
+import { readBuilderValue } from '../../lib/weddingProfile';
 
 interface Props {
   data: WeddingDataV1;
@@ -67,13 +68,14 @@ export const TravelSection: React.FC<Props> = ({ data, instance }) => {
   const { venues, travel } = data;
   const timezone = data.event?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'local time';
   const hasContent = venues.length > 0 || travel?.notes || travel?.flightInfo || travel?.hotelInfo || travel?.parkingInfo;
+  const title = readBuilderValue(settings.title as string | { value: string } | undefined, 'Travel & Accommodations');
 
   return (
     <section className="py-16 px-4 bg-surface-subtle">
       <div className="max-w-4xl mx-auto">
         {settings.showTitle && (
           <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary mb-8 text-center">
-            {settings.title || 'Travel & Accommodations'}
+            {title}
           </h2>
         )}
         {(settings.showTimezoneBadge !== false || settings.showIcsButton !== false) && (
@@ -167,6 +169,7 @@ export const TravelCards: React.FC<Props> = ({ data, instance }) => {
   const { settings } = instance;
   const { venues, travel } = data;
   const timezone = data.event?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'local time';
+  const title = readBuilderValue(settings.title as string | { value: string } | undefined, 'Travel & Accommodations');
 
   return (
     <section className="py-20 px-4 bg-surface">
@@ -174,7 +177,7 @@ export const TravelCards: React.FC<Props> = ({ data, instance }) => {
         {settings.showTitle && (
           <div className="text-center mb-10 md:mb-14">
             <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Travel details</p>
-            <h2 className="text-4xl font-light tracking-tight text-text-primary">{settings.title || 'Travel & Accommodations'}</h2>
+            <h2 className="text-4xl font-light tracking-tight text-text-primary">{title}</h2>
             {travel?.notes && <p className="text-text-secondary mt-4 max-w-xl mx-auto leading-relaxed">{travel.notes}</p>}
             <div className="w-10 h-px bg-primary mx-auto mt-6" />
           </div>
@@ -263,6 +266,7 @@ export const TravelLocalGuide: React.FC<Props> = ({ data, instance }) => {
   const { settings } = instance;
   const { venues, travel } = data;
   const timezone = data.event?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'local time';
+  const title = readBuilderValue(settings.title as string | { value: string } | undefined, 'Travel & Local Guide');
 
   const localTips = (travel?.notes || '')
     .split(/\n+/)
@@ -276,7 +280,7 @@ export const TravelLocalGuide: React.FC<Props> = ({ data, instance }) => {
         {settings.showTitle && (
           <div className="text-center mb-10 md:mb-12">
             <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Travel details</p>
-            <h2 className="text-3xl md:text-4xl font-light tracking-tight text-text-primary leading-tight">{settings.title || 'Travel & Local Guide'}</h2>
+            <h2 className="text-3xl md:text-4xl font-light tracking-tight text-text-primary leading-tight">{title}</h2>
             <div className="w-10 h-px bg-primary mx-auto mt-6" />
           </div>
         )}
