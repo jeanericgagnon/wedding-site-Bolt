@@ -196,6 +196,11 @@ export default function EventRSVP() {
       if (guestError) throw guestError;
       if (!guestData) {
         if (activeLoadRequestRef.current !== requestId) return;
+        setGuest(null);
+        setInvitations([]);
+        setSelectedEvent(null);
+        setRsvpForm(buildDefaultEventRsvpFormState());
+        setHasEventRsvpSupport(null);
         setError("This invitation link isn't valid. Please use the link from your invitation email, or ask the couple for a new one.");
         setLoading(false);
         return;

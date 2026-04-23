@@ -1655,6 +1655,53 @@ describe('EventRSVP token trust continuity', () => {
     });
   });
 
+  it('does not replace loaded event RSVP truth with a fake invalid-link state during a background continuity refresh', async () => {
+    currentToken = 'guest-token';
+
+    maybeSingleQueue.push(
+      { data: { id: 'guest-1', name: 'Alex Guest', email: 'alex@example.com' }, error: null },
+      { data: null, error: null },
+      { data: null, error: null },
+    );
+
+    selectQueue.push({
+      data: [{
+        id: 'inv-1',
+        event_id: 'event-1',
+        itinerary_events: {
+          id: 'event-1',
+          event_name: 'Welcome Party',
+          description: 'Kickoff dinner',
+          event_date: '2026-09-18',
+          start_time: '18:00:00',
+          end_time: null,
+          location_name: 'Beach Club',
+          location_address: '123 Shoreline Dr',
+          dress_code: null,
+          notes: null,
+        },
+      }],
+      error: null,
+    });
+
+    render(<EventRSVP />);
+
+    expect(await screen.findByText('Hello, Alex Guest!')).toBeInTheDocument();
+    expect(screen.getByText('Welcome Party')).toBeInTheDocument();
+
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('dayof:rsvp-updated', { detail: { updatedAt: String(Date.now()) } }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Hello, Alex Guest!')).toBeInTheDocument();
+      expect(screen.getByText('Welcome Party')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText('Link Not Recognized')).not.toBeInTheDocument();
+    expect(screen.queryByText("This invitation link isn't valid. Please use the link from your invitation email, or ask the couple for a new one.")).not.toBeInTheDocument();
+  });
+
   it('defers continuity refresh while the RSVP form is open so active edits do not get reset', async () => {
     maybeSingleQueue.push(
       { data: { id: 'guest-1', name: 'Alex Guest', email: 'alex@example.com' }, error: null },
