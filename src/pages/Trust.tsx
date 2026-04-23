@@ -288,6 +288,13 @@ export const Trust: React.FC = () => {
                   </button>
                   <button
                     type="button"
+                    onClick={() => navigate('/dashboard/builder')}
+                    className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
+                  >
+                    Open your builder
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => navigate('/dashboard/overview')}
                     className="rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:border-primary/30 hover:text-primary"
                   >
