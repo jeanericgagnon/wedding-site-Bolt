@@ -433,6 +433,7 @@ export interface NameChangeExecutionTargetDefinition {
     key: string;
     label: string;
     kind: 'requirement' | 'field_presence' | 'document_support';
+    nextActionCategory?: 'packet' | 'checklist' | 'document' | 'review';
     requirementKey?: string;
     targetField?: string;
     targetFields?: string[];
@@ -482,6 +483,7 @@ export interface NameChangeTargetExecutionSnapshot {
     key: string;
     label: string;
     kind: 'requirement' | 'field_presence' | 'document_support';
+    nextActionCategory?: 'packet' | 'checklist' | 'document' | 'review';
     status: 'ready' | 'missing' | 'attention';
     reason: string;
   }>;

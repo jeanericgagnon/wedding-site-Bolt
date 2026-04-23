@@ -94,6 +94,35 @@ describe('name change target checklist', () => {
     expect(checklist.find((item) => item.key === 'target-surname-county')).toMatchObject({ status: 'ready' });
   });
 
+  it('carries explicit next-action intent on checklist items', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'marriage-doc',
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'marriage-doc',
+        field_key: 'spouse_surname',
+        field_label: 'Spouse surname',
+        field_value_masked: 'Jordan-Smythe',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+
+    const checklist = buildNameChangeTargetChecklist(NAME_CHANGE_EXECUTION_TARGETS.ssa, makeCase(), documents, extractedFields);
+    expect(checklist.find((item) => item.key === 'canonical-extraction-alignment')).toMatchObject({
+      kind: 'requirement',
+      nextActionCategory: 'document',
+      status: 'attention',
+    });
+  });
+
   it('marks field-presence checklist items as attention when values exist but only from low-confidence sources', () => {
     const documents: NameChangeDocumentInput[] = [
       {

@@ -64,8 +64,7 @@ export function buildNameChangeTargetExecutionSnapshot(
   const firstBlockingDependency = sequence.dependencies.find((dependency) => dependency.blocksReady ?? (dependency.required && dependency.status === 'missing'));
   const firstAttentionDependency = sequence.dependencies.find((dependency) => dependency.status === 'attention');
   const firstMissingChecklistItem = checklist.find((item) => item.status === 'missing');
-  const blockingAttentionChecklistKeys = new Set(['canonical-extraction-alignment']);
-  const firstBlockingAttentionChecklistItem = checklist.find((item) => item.status === 'attention' && blockingAttentionChecklistKeys.has(item.key));
+  const firstBlockingAttentionChecklistItem = checklist.find((item) => item.status === 'attention' && item.nextActionCategory === 'document');
   const primaryCanonicalConflict = extraction.conflicts[0] ?? null;
   const firstAttentionChecklistItem = checklist.find((item) => item.status === 'attention');
   const buildCourtOrderNextAction = () => {
@@ -133,12 +132,24 @@ export function buildNameChangeTargetExecutionSnapshot(
     && primaryCanonicalConflict.fieldKey === firstBlockingFieldRisk.sourceFieldKey
       ? primaryCanonicalConflict
       : null;
-  const getChecklistCategory = (kind: 'requirement' | 'field_presence' | 'document_support') => {
-    if (kind === 'document_support') {
+  const getChecklistCategory = (item: typeof checklist[number]) => {
+    if (item.nextActionCategory === 'document') {
       return 'document' as const;
     }
 
-    if (kind === 'field_presence') {
+    if (item.nextActionCategory === 'packet') {
+      return 'packet' as const;
+    }
+
+    if (item.nextActionCategory === 'review') {
+      return 'review' as const;
+    }
+
+    if (item.kind === 'document_support') {
+      return 'document' as const;
+    }
+
+    if (item.kind === 'field_presence') {
       return 'packet' as const;
     }
 
@@ -151,12 +162,24 @@ export function buildNameChangeTargetExecutionSnapshot(
 
     return `Complete ${item.label}`;
   };
-  const getAttentionChecklistCategory = (kind: 'requirement' | 'field_presence' | 'document_support') => {
-    if (kind === 'document_support') {
+  const getAttentionChecklistCategory = (item: typeof checklist[number]) => {
+    if (item.nextActionCategory === 'document') {
       return 'document' as const;
     }
 
-    if (kind === 'field_presence') {
+    if (item.nextActionCategory === 'packet') {
+      return 'packet' as const;
+    }
+
+    if (item.nextActionCategory === 'checklist') {
+      return 'checklist' as const;
+    }
+
+    if (item.kind === 'document_support') {
+      return 'document' as const;
+    }
+
+    if (item.kind === 'field_presence') {
       return 'packet' as const;
     }
 
@@ -202,16 +225,16 @@ export function buildNameChangeTargetExecutionSnapshot(
         }
       : firstMissingChecklistItem
         ? {
-            category: getChecklistCategory(firstMissingChecklistItem.kind),
+            category: getChecklistCategory(firstMissingChecklistItem),
             label: getMissingChecklistLabel(firstMissingChecklistItem),
             detail: firstMissingChecklistItem.reason,
           }
         : firstBlockingAttentionChecklistItem
           ? {
-              category: firstBlockingAttentionChecklistItem.key.includes('alignment') ? 'document' as const : 'review' as const,
+              category: getAttentionChecklistCategory(firstBlockingAttentionChecklistItem),
               label: primaryCanonicalConflict
                 ? `Resolve ${primaryCanonicalConflict.documentKind.replace(/_/g, ' ')} conflict`
-                : `${firstBlockingAttentionChecklistItem.key.includes('alignment') ? 'Unblock' : 'Review'} ${firstBlockingAttentionChecklistItem.label}`,
+                : getAttentionChecklistLabel(firstBlockingAttentionChecklistItem),
               detail: primaryCanonicalConflict
                 ? primaryCanonicalConflict.reason
                 : firstBlockingAttentionChecklistItem.reason,
@@ -230,7 +253,7 @@ export function buildNameChangeTargetExecutionSnapshot(
               }
             : firstAttentionChecklistItem
               ? {
-                  category: getAttentionChecklistCategory(firstAttentionChecklistItem.kind),
+                  category: getAttentionChecklistCategory(firstAttentionChecklistItem),
                   label: getAttentionChecklistLabel(firstAttentionChecklistItem),
                   detail: firstAttentionChecklistItem.reason,
                 }
