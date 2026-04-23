@@ -127,6 +127,25 @@ describe('quickStartPersistence', () => {
     expect(normalized.viewState).toBe('question');
   });
 
+  it('keeps closed legacy string indexes aligned with the stored setup progress boundary', () => {
+    const normalized = normalizeQuickStartDraftSnapshot({
+      currentIndex: '0',
+      initialSetupAnswers: {
+        names: 'Alex & Jordan',
+        labelPreference: 'names-only',
+        whenWhere: 'January 17, 2027 — Sayulita, Mexico',
+        style: 'Tropical, relaxed',
+      },
+      showFollowUps: false,
+      viewState: 'question',
+      clarifyingState: null,
+    });
+
+    expect(normalized.currentIndex).toBe(0);
+    expect(normalized.showFollowUps).toBe(false);
+    expect(normalized.viewState).toBe('question');
+  });
+
   it('keeps completed onboarding step progress when follow-up restore state survives sparse setup answers', () => {
     const normalized = normalizeQuickStartDraftSnapshot({
       currentIndex: 13,

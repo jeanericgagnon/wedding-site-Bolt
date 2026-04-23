@@ -464,14 +464,10 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     && Number.isInteger(parsed.currentIndex)
     && Number.isSafeInteger(parsed.currentIndex)
     && parsed.currentIndex >= 0;
-  const hasRecoverableClosedCurrentIndex = (
-    typeof parsed.currentIndex === 'number'
-    && Number.isFinite(parsed.currentIndex)
-    && parsed.currentIndex >= 0
-  ) || (
-    typeof parsed.currentIndex === 'string'
+  const recoverableClosedCurrentIndex = typeof parsed.currentIndex === 'string'
     && /^\d+$/.test(parsed.currentIndex.trim())
-  );
+    ? Number.parseInt(parsed.currentIndex.trim(), 10)
+    : null;
   const recoveredClosedCurrentIndex = hasMeaningfulQuickStartAnswers(normalizedInitialSetupAnswers)
     ? resolveRestorableCurrentIndex(RESTORABLE_SETUP_STEPS.length, normalizedInitialSetupAnswers)
     : 0;
@@ -483,7 +479,9 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
         : 0
     : hasMeaningfulRestoreState && (showFollowUps || normalizedViewState !== 'question')
       ? RESTORABLE_SETUP_STEPS.length
-      : hasRecoverableClosedCurrentIndex && recoveredClosedCurrentIndex > 2
+      : recoverableClosedCurrentIndex !== null && hasMeaningfulQuickStartAnswers(normalizedInitialSetupAnswers)
+        ? resolveRestorableCurrentIndex(recoverableClosedCurrentIndex, normalizedInitialSetupAnswers)
+      : recoveredClosedCurrentIndex > 2
         ? recoveredClosedCurrentIndex
         : 0;
 
