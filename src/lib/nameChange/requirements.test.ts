@@ -112,7 +112,7 @@ describe('name change requirements skeleton', () => {
 
     const snapshot = evaluateNameChangeRequirements(makeCase(), documents, []);
     expect(snapshot.summary).toEqual({
-      satisfied: 12,
+      satisfied: 13,
       missing: 0,
       attention: 1,
     });
@@ -668,6 +668,65 @@ describe('name change requirements skeleton', () => {
     expect(snapshot.results.find((result) => result.key === 'marriage-jurisdiction-alignment')).toMatchObject({
       status: 'missing',
       reason: 'Marriage occurred in Nevada, but no marriage certificate is represented in intake for out-of-state certificate handling.',
+    });
+  });
+
+  it('requires grounded certificate reference fields for out-of-state marriage follow-through', () => {
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase({ marriage_state: 'Nevada' }),
+      [
+        {
+          id: 'doc-marriage',
+          document_kind: 'marriage_certificate',
+          display_name: 'Marriage certificate',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+        },
+      ],
+      [],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'out-of-state-marriage-certificate-grounding')).toMatchObject({
+      status: 'missing',
+      reason: 'Marriage certificate is present, but no grounded county or certificate-number extraction is represented yet for out-of-state follow-through.',
+    });
+  });
+
+  it('satisfies out-of-state marriage certificate grounding once county and certificate number are verified on the certificate', () => {
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase({ marriage_state: 'Nevada' }),
+      [
+        {
+          id: 'doc-marriage',
+          document_kind: 'marriage_certificate',
+          display_name: 'Marriage certificate',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+        },
+      ],
+      [
+        {
+          document_id: 'doc-marriage',
+          field_key: 'county',
+          field_label: 'County',
+          field_value_masked: 'Clark',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-marriage',
+          field_key: 'certificate_number',
+          field_label: 'Certificate number',
+          field_value_masked: 'MC-123',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+      ],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'out-of-state-marriage-certificate-grounding')).toMatchObject({
+      status: 'satisfied',
+      reason: 'Verified marriage-certificate county and certificate-number extraction are present for out-of-state follow-through.',
     });
   });
 

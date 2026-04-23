@@ -185,4 +185,29 @@ describe('name change TSA execution snapshot', () => {
     expect(snapshot.blockers).toContain('Marriage occurred in Nevada, but no marriage certificate is represented in intake for out-of-state certificate handling.');
     expect(snapshot.checklist.find((item) => item.key === 'marriage-jurisdiction-alignment')).toMatchObject({ status: 'missing' });
   });
+
+  it('blocks TSA update when out-of-state marriage certificate grounding is still missing', () => {
+    const profile = makeCase({ marriage_state: 'Nevada' });
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-marriage',
+        document_kind: 'marriage_certificate',
+        display_name: 'Marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const basePlan = buildNameChangePlan({ profile, documents, extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-passport'
+        ? { ...step, executionStatus: 'in_progress' as const }
+        : step),
+    };
+
+    const snapshot = buildNameChangeTsaExecutionSnapshot(profile, documents, [], plan);
+    expect(snapshot.ready).toBe(false);
+    expect(snapshot.blockers).toContain('Marriage certificate is present, but no grounded county or certificate-number extraction is represented yet for out-of-state follow-through.');
+    expect(snapshot.checklist.find((item) => item.key === 'out-of-state-marriage-certificate-grounding')).toMatchObject({ status: 'missing' });
+  });
 });

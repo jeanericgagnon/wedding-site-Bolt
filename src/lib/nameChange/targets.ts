@@ -387,6 +387,15 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'courtOrder' | 'ssa' | 'dmv' 
         satisfiedReason: 'Marriage jurisdiction is aligned for the modeled passport prep flow.',
       },
       {
+        key: 'out-of-state-marriage-certificate-grounding',
+        label: 'Out-of-state marriage certificate grounding',
+        kind: 'requirement',
+        requirementKey: 'out-of-state-marriage-certificate-grounding',
+        missingReason: 'Out-of-state marriage certificate grounding has not been evaluated yet.',
+        attentionReason: 'Passport follow-through still needs grounded certificate reference fields from the out-of-state marriage certificate.',
+        satisfiedReason: 'Out-of-state marriage certificate grounding is ready for passport prep.',
+      },
+      {
         key: 'passport-timing-risk',
         label: 'Passport timing risk reviewed',
         kind: 'requirement',
@@ -812,6 +821,15 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'courtOrder' | 'ssa' | 'dmv' 
         missingReason: 'Marriage jurisdiction alignment has not been evaluated yet.',
         attentionReason: 'Marriage happened outside California, so TSA / travel-profile follow-through should keep the out-of-state certificate path in view.',
         satisfiedReason: 'Marriage jurisdiction is aligned for the modeled TSA / travel-profile flow.',
+      },
+      {
+        key: 'out-of-state-marriage-certificate-grounding',
+        label: 'Out-of-state marriage certificate grounding',
+        kind: 'requirement',
+        requirementKey: 'out-of-state-marriage-certificate-grounding',
+        missingReason: 'Out-of-state marriage certificate grounding has not been evaluated yet.',
+        attentionReason: 'TSA / travel-profile follow-through still needs grounded certificate reference fields from the out-of-state marriage certificate.',
+        satisfiedReason: 'Out-of-state marriage certificate grounding is ready for TSA / travel-profile follow-through.',
       },
       {
         key: 'passport-timing-risk',
