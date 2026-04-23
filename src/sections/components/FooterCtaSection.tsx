@@ -19,9 +19,15 @@ function formatDate(iso: string | undefined): string {
   });
 }
 
+function getFooterDisplayName(couple: WeddingDataV1['couple']): string {
+  return couple.displayName
+    || [couple.partner1Name, couple.partner2Name].filter(Boolean).join(' & ')
+    || 'The couple';
+}
+
 export const FooterCtaSection: React.FC<Props> = ({ data, instance }) => {
   const { settings } = instance;
-  const displayName = data.couple.displayName || `${data.couple.partner1Name} & ${data.couple.partner2Name}`;
+  const displayName = getFooterDisplayName(data.couple);
   const date = formatDate(data.event.weddingDateISO);
   const rsvpUrl = readBuilderValue(settings.rsvpUrl as string | { value: string } | undefined, '#rsvp') || '#rsvp';
   const buttonLabel = readBuilderValue(settings.buttonLabel as string | { value: string } | undefined, 'Send RSVP');
@@ -71,7 +77,7 @@ export const FooterCtaSection: React.FC<Props> = ({ data, instance }) => {
 
 export const FooterCtaMinimal: React.FC<Props> = ({ data, instance }) => {
   const { settings } = instance;
-  const displayName = data.couple.displayName || `${data.couple.partner1Name} & ${data.couple.partner2Name}`;
+  const displayName = getFooterDisplayName(data.couple);
   const date = formatDate(data.event.weddingDateISO);
   const rsvpUrl = readBuilderValue(settings.rsvpUrl as string | { value: string } | undefined, '#rsvp') || '#rsvp';
   const buttonLabel = readBuilderValue(settings.buttonLabel as string | { value: string } | undefined, 'Send RSVP');
