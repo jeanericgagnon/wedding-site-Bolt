@@ -73,7 +73,7 @@ export const TravelSection: React.FC<Props> = ({ data, instance }) => {
   return (
     <section className="py-16 px-4 bg-surface-subtle">
       <div className="max-w-4xl mx-auto">
-        {settings.showTitle && (
+        {settings.showTitle !== false && (
           <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary mb-8 text-center">
             {title}
           </h2>
@@ -174,7 +174,7 @@ export const TravelCards: React.FC<Props> = ({ data, instance }) => {
   return (
     <section className="py-20 px-4 bg-surface">
       <div className="max-w-5xl mx-auto">
-        {settings.showTitle && (
+        {settings.showTitle !== false && (
           <div className="text-center mb-10 md:mb-14">
             <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Travel details</p>
             <h2 className="text-4xl font-light tracking-tight text-text-primary">{title}</h2>
@@ -277,7 +277,7 @@ export const TravelLocalGuide: React.FC<Props> = ({ data, instance }) => {
   return (
     <section className="py-16 md:py-20 px-4 bg-surface-subtle">
       <div className="max-w-5xl mx-auto">
-        {settings.showTitle && (
+        {settings.showTitle !== false && (
           <div className="text-center mb-10 md:mb-12">
             <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Travel details</p>
             <h2 className="text-3xl md:text-4xl font-light tracking-tight text-text-primary leading-tight">{title}</h2>

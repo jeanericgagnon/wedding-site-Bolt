@@ -38,6 +38,37 @@ function makeInstance(settings: SectionInstance['settings']): SectionInstance {
 }
 
 describe('TravelSection', () => {
+  it('shows default titles when showTitle is unset across travel variants', () => {
+    const data = createWeddingData();
+
+    const { rerender } = render(
+      <TravelSection
+        data={data}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(screen.getByText('Travel & Accommodations')).toBeInTheDocument();
+
+    rerender(
+      <TravelCards
+        data={data}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(screen.getByText('Travel & Accommodations')).toBeInTheDocument();
+
+    rerender(
+      <TravelLocalGuide
+        data={data}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(screen.getByText('Travel & Local Guide')).toBeInTheDocument();
+  });
+
   it('renders builder-wrapped titles in the default variant', () => {
     render(
       <TravelSection
