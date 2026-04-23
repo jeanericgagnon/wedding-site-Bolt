@@ -241,7 +241,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     window.history.replaceState({}, '', next);
 
     window.setTimeout(() => {
-      const action = getPublishNowAction(true, state.project, state.weddingData);
+      const action = getPublishNowAction(true, state.project, state.weddingData, { isDirty: state.isDirty });
       if (action === 'fix-blockers') {
         handleFixPublishBlockers();
         return;

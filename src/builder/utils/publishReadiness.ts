@@ -7,7 +7,8 @@ export type PublishIssue =
   | { kind: 'missing-couple-names'; message: string }
   | { kind: 'missing-event-date'; message: string }
   | { kind: 'missing-venue'; message: string }
-  | { kind: 'rsvp-disabled'; message: string };
+  | { kind: 'rsvp-disabled'; message: string }
+  | { kind: 'unsaved-changes'; message: string };
 
 export interface PublishReadinessItem {
   id: string;
@@ -79,7 +80,11 @@ const getSortedNormalizedVenues = (weddingData?: WeddingDataV1 | null) =>
 const getNormalizedVenues = (weddingData?: WeddingDataV1 | null) =>
   (Array.isArray(weddingData?.venues) ? weddingData.venues.filter(isVenueLike) : []);
 
-export const getPublishIssue = (project: BuilderProject, weddingData?: WeddingDataV1 | null): PublishIssue | null => {
+export const getPublishIssue = (
+  project: BuilderProject,
+  weddingData?: WeddingDataV1 | null,
+  options?: { isDirty?: boolean }
+): PublishIssue | null => {
   const normalizedPages = getNormalizedPages(project);
 
   if (!normalizedPages.length) {
@@ -121,6 +126,10 @@ export const getPublishIssue = (project: BuilderProject, weddingData?: WeddingDa
     if (rsvp?.enabled !== true) {
       return { kind: 'rsvp-disabled', message: 'Turn RSVP on before going live.' };
     }
+  }
+
+  if (options?.isDirty === true) {
+    return { kind: 'unsaved-changes', message: 'Save your latest draft changes before going live.' };
   }
 
   return null;

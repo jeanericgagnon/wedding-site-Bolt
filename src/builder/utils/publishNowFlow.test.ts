@@ -51,6 +51,34 @@ describe('publishNowFlow', () => {
     expect(getPublishNowAction(true, project, weddingData)).toBe('publish');
   });
 
+  it('returns fix-blockers when auto-publish is requested with unsaved changes', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [createDefaultSectionInstance('hero', 'default', 0)];
+    project.pages[0].sections[0].enabled = true;
+    const weddingData = createEmptyWeddingData();
+    weddingData.couple.partner1Name = 'Alex';
+    weddingData.couple.partner2Name = 'Jordan';
+    weddingData.event.weddingDateISO = '2027-06-12';
+    weddingData.venues = [{ id: 'v1', name: 'Test Venue', address: '123 Main St' }];
+    weddingData.rsvp.enabled = true;
+
+    expect(getPublishNowAction(true, project, weddingData, { isDirty: true })).toBe('fix-blockers');
+  });
+
+  it('still returns publish when auto-publish is requested with saved launch-ready data', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [createDefaultSectionInstance('hero', 'default', 0)];
+    project.pages[0].sections[0].enabled = true;
+    const weddingData = createEmptyWeddingData();
+    weddingData.couple.partner1Name = 'Alex';
+    weddingData.couple.partner2Name = 'Jordan';
+    weddingData.event.weddingDateISO = '2027-06-12';
+    weddingData.venues = [{ id: 'v1', name: 'Test Venue', address: '123 Main St' }];
+    weddingData.rsvp.enabled = true;
+
+    expect(getPublishNowAction(true, project, weddingData, { isDirty: false })).toBe('publish');
+  });
+
   it('keeps returning skip when both intent and project are missing', () => {
     expect(getPublishNowAction(false, null)).toBe('skip');
   });

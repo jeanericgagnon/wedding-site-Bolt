@@ -171,6 +171,26 @@ describe('publishReadiness', () => {
     expect(getPublishValidationError(project, data)).toBeNull();
   });
 
+  it('blocks publish when latest draft edits are still unsaved', () => {
+    const project = createEmptyBuilderProject('w1', 'classic');
+    project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
+    const data = createEmptyWeddingData();
+    data.couple.partner1Name = 'Alex';
+    data.couple.partner2Name = 'Jordan';
+    data.event.weddingDateISO = '2027-06-12';
+    data.venues = [{ id: 'v1', name: 'Test Venue', address: '123 Main St' }];
+    data.rsvp.enabled = true;
+
+    expect(getPublishIssue(project, data, { isDirty: true })?.kind).toBe('unsaved-changes');
+    expect(getPublishIssue(project, data, { isDirty: false })).toBeNull();
+    expect(buildPublishReadiness(project, data, { isDirty: true }).find((item) => item.id === 'saved')).toEqual({
+      id: 'saved',
+      label: 'Latest edits are saved',
+      done: false,
+      detail: 'Save your latest draft changes before going live.',
+    });
+  });
+
   it('blocks publish when event date is missing even if names and RSVP are configured', () => {
     const project = createEmptyBuilderProject('w1', 'classic');
     project.pages[0].sections = [makeSection({ id: 'sec-ok', enabled: true })];
