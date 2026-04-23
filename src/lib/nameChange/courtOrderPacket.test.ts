@@ -53,6 +53,22 @@ describe('court-order name change packet snapshot', () => {
     const extractedFields: NameChangeExtractedFieldInput[] = [
       {
         document_id: 'doc-court-order',
+        field_key: 'first_name',
+        field_label: 'First name',
+        field_value_masked: 'Alex',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'doc-court-order',
+        field_key: 'last_name',
+        field_label: 'Last name',
+        field_value_masked: 'Jordan',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'doc-court-order',
         field_key: 'case_number',
         field_label: 'Case number',
         field_value_masked: '24-CV-1188',
@@ -71,7 +87,18 @@ describe('court-order name change packet snapshot', () => {
 
     const snapshot = buildNameChangeCourtOrderPacketSnapshot(makeCase(), documents, extractedFields);
     expect(snapshot.formCode).toBe('COURT-ORDER-PATH-REVIEW');
-    expect(snapshot.fields.find((field) => field.fieldKey === 'case.targetLastName')).toMatchObject({ value: 'Jordan' });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'case.targetFirstName')).toMatchObject({
+      value: 'Alex',
+      source: 'extracted_field',
+      sourceDocumentKind: 'court_order',
+      sourceFieldKey: 'first_name',
+    });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'case.targetLastName')).toMatchObject({
+      value: 'Jordan',
+      source: 'extracted_field',
+      sourceDocumentKind: 'court_order',
+      sourceFieldKey: 'last_name',
+    });
     expect(snapshot.fields.find((field) => field.fieldKey === 'case.caseNumber')).toMatchObject({ value: '24-CV-1188' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'case.orderDate')).toMatchObject({ value: '2026-04-05' });
   });

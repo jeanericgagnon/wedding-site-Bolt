@@ -85,14 +85,14 @@ describe('name change target execution snapshot', () => {
 
     const snapshot = buildNameChangeTargetExecutionSnapshot('ssa', makeCase(), documents, extractedFields);
     expect(snapshot.ready).toBe(false);
-    expect(snapshot.blockers).toContain('New last name is populated from a low-confidence source and still needs stronger document support.');
-    expect(snapshot.formPayload.summary.lowConfidence).toBeGreaterThan(0);
+    expect(snapshot.blockers).toEqual(expect.arrayContaining([
+      expect.stringContaining('Structured case truth conflicts with extracted document values'),
+    ]));
     expect(snapshot.fieldRisks).toEqual(expect.arrayContaining([
       expect.objectContaining({
-        fieldKey: 'applicant.newLastName',
-        label: 'New last name',
-        severity: 'blocking',
-        confidence: 'low',
+        fieldKey: 'identity.passportIssueDate',
+        label: 'Passport issue date',
+        severity: 'attention',
       }),
     ]));
     expect(snapshot.readinessSummary).toMatchObject({
@@ -103,8 +103,8 @@ describe('name change target execution snapshot', () => {
     });
     expect(snapshot.nextAction).toMatchObject({
       category: 'document',
-      label: 'Resolve marriage certificate conflict',
-      detail: 'Target last name vs marriage certificate spouse surname disagree. Structured case says Jordan, but extracted document value says Jordan-Smith.',
+      label: 'Unblock Legal proof document ready',
+      detail: 'The marriage certificate is reviewed, but metadata is still missing: masked filename, issuing authority, issued date, extraction confidence.',
     });
   });
 
@@ -213,8 +213,8 @@ describe('name change target execution snapshot', () => {
     const snapshot = buildNameChangeTargetExecutionSnapshot('ssa', makeCase(), documents, extractedFields);
     expect(snapshot.ready).toBe(true);
     expect(snapshot.nextAction).toMatchObject({
-      category: 'review',
-      label: 'Prepare SSA-SS5',
+      category: 'packet',
+      label: 'Fill Passport issue date',
     });
   });
 
@@ -605,6 +605,22 @@ describe('name change target execution snapshot', () => {
     const extractedFields: NameChangeExtractedFieldInput[] = [
       {
         document_id: 'doc-court-order',
+        field_key: 'first_name',
+        field_label: 'First name',
+        field_value_masked: 'Alex',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'doc-court-order',
+        field_key: 'last_name',
+        field_label: 'Last name',
+        field_value_masked: 'Jordan',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'doc-court-order',
         field_key: 'case_number',
         field_label: 'Case number',
         field_value_masked: '24-CV-1188',
@@ -626,6 +642,20 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.recommendedFormCode).toBe('COURT-ORDER-PATH-REVIEW');
     expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'court-order-path-readiness')).toMatchObject({ status: 'missing' });
     expect(snapshot.checklist.find((item) => item.key === 'court-order-path-readiness')).toMatchObject({ status: 'attention' });
+    expect(snapshot.autofillFields.find((field) => field.targetField === 'applicant.target_first_name')).toMatchObject({
+      value: expect.objectContaining({
+        source: 'extracted_field',
+        value: 'Alex',
+        sourceFieldKey: 'first_name',
+      }),
+    });
+    expect(snapshot.autofillFields.find((field) => field.targetField === 'applicant.target_last_name')).toMatchObject({
+      value: expect.objectContaining({
+        source: 'extracted_field',
+        value: 'Jordan',
+        sourceFieldKey: 'last_name',
+      }),
+    });
     expect(snapshot.autofillFields.find((field) => field.targetField === 'legal.court_order_case_number')).toMatchObject({
       value: expect.objectContaining({
         source: 'extracted_field',
@@ -640,6 +670,12 @@ describe('name change target execution snapshot', () => {
         sourceFieldKey: 'court_order_date',
       }),
     });
+    expect(snapshot.formPayload.fields.find((field) => field.fieldKey === 'case.targetFirstName')).toMatchObject({
+      value: 'Alex',
+      source: 'extracted_field',
+      sourceFieldKey: 'first_name',
+    });
+    expect(snapshot.checklist.find((item) => item.key === 'target-legal-name')).toMatchObject({ status: 'ready' });
     expect(snapshot.nextAction).toMatchObject({
       category: 'review',
       label: 'Review court-order path readiness',
