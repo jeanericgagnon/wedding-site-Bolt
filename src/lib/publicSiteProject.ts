@@ -166,11 +166,21 @@ export const getPublicWeddingData = (row: Record<string, unknown>): WeddingDataV
   const siteSource = asRecord(row.site_json);
   const preferredSource = asRecord(isPublished ? (row.published_json ?? row.site_json) : row.site_json);
   const fallbackSource = preferredSource === siteSource ? null : siteSource;
-  const snapshot = preferredSource?.weddingDataSnapshot
-    ?? preferredSource?.weddingData
-    ?? fallbackSource?.weddingDataSnapshot
-    ?? fallbackSource?.weddingData
-    ?? row.wedding_data;
-  const parsed = safeJsonParse<WeddingDataV1 | null>(snapshot, null);
-  return parsed ? rewriteSignedMediaUrlsToPublicDeep(withTruthfulCoupleDisplayName(parsed)) : null;
+
+  const candidates = [
+    preferredSource?.weddingDataSnapshot,
+    preferredSource?.weddingData,
+    fallbackSource?.weddingDataSnapshot,
+    fallbackSource?.weddingData,
+    row.wedding_data,
+  ];
+
+  for (const candidate of candidates) {
+    const parsed = safeJsonParse<WeddingDataV1 | null>(candidate, null);
+    if (parsed) {
+      return rewriteSignedMediaUrlsToPublicDeep(withTruthfulCoupleDisplayName(parsed));
+    }
+  }
+
+  return null;
 };
