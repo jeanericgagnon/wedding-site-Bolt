@@ -132,6 +132,8 @@ describe('Product starter draft truth', () => {
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Open your builder' })[0]);
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
+    fireEvent.click(screen.getByRole('button', { name: 'Open guest list' }));
+    expect(navigateMock).toHaveBeenCalledWith('/dashboard/guests');
   });
 
   it('keeps the product demo banner in demo mode for signed-out visitors', () => {

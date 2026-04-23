@@ -550,10 +550,16 @@ export const Product: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-3 justify-center mb-4 w-full max-w-xl mx-auto">
             <button onClick={handleSignUp} className="w-full sm:w-auto px-7 py-3.5 bg-brand text-paper font-semibold rounded-2xl hover:bg-brand/90 transition-all">{user ? 'Review your draft' : 'Start your draft'}</button>
             {user ? (
-              <button onClick={() => navigate('/dashboard/builder')} className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
-                Open your builder
-                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-              </button>
+              <>
+                <button onClick={() => navigate('/dashboard/builder')} className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
+                  Open your builder
+                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                </button>
+                <button onClick={() => navigate('/dashboard/guests')} className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 transition-all inline-flex items-center justify-center gap-2">
+                  Open guest list
+                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                </button>
+              </>
             ) : (
               <button onClick={handleDemoLogin} disabled={demoLoading} className="group w-full sm:w-auto px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 transition-all disabled:opacity-60 inline-flex items-center justify-center gap-2">
                 {demoLoading ? 'Opening demo...' : 'Try product demo'}
