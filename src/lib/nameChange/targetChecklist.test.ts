@@ -123,6 +123,14 @@ describe('name change target checklist', () => {
       status: 'attention',
     });
 
+    const sharedInstitutionChecklist = buildNameChangeTargetChecklist(NAME_CHANGE_EXECUTION_TARGETS.banks, makeCase(), documents, extractedFields);
+    expect(sharedInstitutionChecklist.find((item) => item.key === 'canonical-extraction-alignment')).toMatchObject({
+      kind: 'requirement',
+      nextActionCategory: 'document',
+      blocksReady: true,
+      status: 'attention',
+    });
+
     const courtOrderChecklist = buildNameChangeTargetChecklist(
       NAME_CHANGE_EXECUTION_TARGETS.courtOrder,
       makeCase({

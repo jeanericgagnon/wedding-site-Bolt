@@ -28,6 +28,7 @@ function buildSharedIdentityChecklist(targetNoun: string, supportKey: string, su
       label: 'Canonical vs extracted values aligned',
       kind: 'requirement',
       nextActionCategory: 'document',
+      blocksReady: true,
       requirementKey: 'canonical-extraction-alignment',
       missingReason: 'Canonical/extracted alignment has not been evaluated yet.',
       attentionReason: `Structured case truth and extracted document values still disagree for ${targetNoun}.`,

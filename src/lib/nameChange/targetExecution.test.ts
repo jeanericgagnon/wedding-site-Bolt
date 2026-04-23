@@ -984,4 +984,71 @@ describe('name change target execution snapshot', () => {
       detail: 'Current first name vs passport extraction disagree. Structured case says Alex, but extracted document value says Alicia.',
     });
   });
+
+  it('blocks shared institution execution when canonical conflicts remain unresolved', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-marriage',
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'San Diego County Clerk',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
+      },
+      {
+        id: 'doc-passport',
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'passport-•••.pdf',
+        issuing_authority: 'U.S. Department of State',
+        issued_on: '2024-06-01',
+        expires_on: '2034-06-01',
+        extraction_confidence: 0.92,
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'doc-marriage',
+        field_key: 'spouse_last_name',
+        field_label: 'Spouse last name',
+        field_value_masked: 'Jordan-Smith',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'doc-passport',
+        field_key: 'first_name',
+        field_label: 'First name',
+        field_value_masked: 'Alicia',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+    const basePlan = buildNameChangePlan({ profile: makeCase(), documents, extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'state-dmv'
+        ? { ...step, executionStatus: 'in_progress' as const }
+        : step),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('banks', makeCase(), documents, extractedFields, plan);
+    expect(snapshot.ready).toBe(false);
+    expect(snapshot.checklist.find((item) => item.key === 'canonical-extraction-alignment')).toMatchObject({
+      status: 'attention',
+      nextActionCategory: 'document',
+      blocksReady: true,
+    });
+    expect(snapshot.blockers).toContain('Structured case truth conflicts with extracted document values in 2 places: Current first name vs passport extraction, Target last name vs marriage certificate spouse surname.');
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'document',
+      label: 'Resolve current passport conflict',
+      detail: 'Current first name vs passport extraction disagree. Structured case says Alex, but extracted document value says Alicia.',
+    });
+  });
 });
