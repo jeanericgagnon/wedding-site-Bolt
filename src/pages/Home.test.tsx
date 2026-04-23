@@ -51,8 +51,14 @@ describe('Home draft-first CTAs', () => {
 
     expect(navigateMock).toHaveBeenCalledWith('/signup');
     expect(screen.getAllByRole('button', { name: 'Start your wedding site draft' }).length).toBeGreaterThan(0);
-    const anonymousFeatureLinks = screen.getAllByRole('link', { name: 'Explore this feature' }).filter((link) => link.getAttribute('href') === '/product');
-    expect(anonymousFeatureLinks.length).toBe(2);
+    const anonymousFeatureLinks = screen.getAllByRole('link', { name: 'Explore this feature' });
+    expect(anonymousFeatureLinks.find((link) => link.getAttribute('href') === '/product')).toBeTruthy();
+    expect(anonymousFeatureLinks.find((link) => link.getAttribute('href') === '/features/guests')).toBeTruthy();
+    expect(anonymousFeatureLinks.find((link) => link.getAttribute('href') === '/features/rsvp')).toBeTruthy();
+    expect(anonymousFeatureLinks.find((link) => link.getAttribute('href') === '/features/messaging')).toBeTruthy();
+    expect(anonymousFeatureLinks.find((link) => link.getAttribute('href') === '/features/travel')).toBeTruthy();
+    expect(anonymousFeatureLinks.find((link) => link.getAttribute('href') === '/features/registry')).toBeTruthy();
+    expect(anonymousFeatureLinks.find((link) => link.getAttribute('href') === '/features/seating')).toBeTruthy();
   });
 
   it('sends signed-in users straight to the builder when they start their draft', () => {
@@ -71,7 +77,13 @@ describe('Home draft-first CTAs', () => {
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
     expect(screen.getAllByRole('link', { name: 'Open your builder' })[1]).toHaveAttribute('href', '/dashboard/builder');
     const signedInFeatureLinks = screen.getAllByRole('link', { name: 'Explore this feature' });
+    expect(signedInFeatureLinks.find((link) => link.getAttribute('href') === '/dashboard/guests')).toBeTruthy();
+    expect(signedInFeatureLinks.find((link) => link.getAttribute('href') === '/dashboard/rsvp-board')).toBeTruthy();
+    expect(signedInFeatureLinks.find((link) => link.getAttribute('href') === '/dashboard/messages')).toBeTruthy();
     expect(signedInFeatureLinks.find((link) => link.getAttribute('href') === '/dashboard/planning')).toBeTruthy();
     expect(signedInFeatureLinks.find((link) => link.getAttribute('href') === '/dashboard/coordinator')).toBeTruthy();
+    expect(signedInFeatureLinks.find((link) => link.getAttribute('href') === '/dashboard/itinerary')).toBeTruthy();
+    expect(signedInFeatureLinks.find((link) => link.getAttribute('href') === '/dashboard/registry')).toBeTruthy();
+    expect(signedInFeatureLinks.find((link) => link.getAttribute('href') === '/dashboard/seating')).toBeTruthy();
   });
 });
