@@ -7,6 +7,7 @@ import { fromExistingLayoutToBuilderProject, fromBuilderProjectToExistingLayout 
 import { serializeBuilderProject } from '../serializers/projectSerializer';
 import { getBuilderRevision, listBuilderRevisions, recordBuilderRevision } from './versionHistory';
 import { rewriteSignedMediaUrlsToPublicDeep } from '../../lib/mediaUrl';
+import { buildCoupleDisplayName } from '../../lib/coupleDisplayName';
 
 export const builderProjectService = {
   async loadProject(weddingSiteId: string): Promise<BuilderProject | null> {
@@ -64,7 +65,7 @@ export const builderProjectService = {
       couple: {
         partner1Name: partner1,
         partner2Name: partner2,
-        displayName: partner1 && partner2 ? `${partner1} & ${partner2}` : '',
+        displayName: buildCoupleDisplayName(partner1, partner2),
       },
       event: {
         weddingDateISO: (data.venue_date || data.wedding_date)
