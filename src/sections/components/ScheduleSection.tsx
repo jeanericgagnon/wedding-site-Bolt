@@ -29,7 +29,7 @@ function formatTime(iso: string | undefined): string {
 export const ScheduleSection: React.FC<Props> = ({ data, instance }) => {
   const { schedule, venues } = data;
   const { settings, bindings } = instance;
-  const itemsToShow = bindings.scheduleItemIds && bindings.scheduleItemIds.length > 0
+  const itemsToShow = bindings?.scheduleItemIds && bindings.scheduleItemIds.length > 0
     ? schedule.filter(s => bindings.scheduleItemIds!.includes(s.id))
     : schedule;
 
@@ -37,7 +37,7 @@ export const ScheduleSection: React.FC<Props> = ({ data, instance }) => {
     return (
       <section className="py-16 px-4 bg-surface">
         <div className="max-w-4xl mx-auto text-center">
-          {settings.showTitle && (
+          {settings.showTitle !== false && (
             <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary mb-6">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Schedule')}</h2>
           )}
           <p className="text-text-secondary">Schedule details will appear here once events are added.</p>
@@ -49,7 +49,7 @@ export const ScheduleSection: React.FC<Props> = ({ data, instance }) => {
   return (
     <section className="py-16 md:py-20 px-4 bg-surface">
       <div className="max-w-4xl mx-auto">
-        {settings.showTitle && (
+        {settings.showTitle !== false && (
           <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary text-center mb-10 md:mb-12">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Schedule')}</h2>
         )}
         <div className="space-y-6">
@@ -76,7 +76,7 @@ export const ScheduleSection: React.FC<Props> = ({ data, instance }) => {
 export const ScheduleTimeline: React.FC<Props> = ({ data, instance }) => {
   const { schedule, venues } = data;
   const { settings, bindings } = instance;
-  const itemsToShow = bindings.scheduleItemIds && bindings.scheduleItemIds.length > 0
+  const itemsToShow = bindings?.scheduleItemIds && bindings.scheduleItemIds.length > 0
     ? schedule.filter(s => bindings.scheduleItemIds!.includes(s.id))
     : schedule;
 
@@ -84,7 +84,7 @@ export const ScheduleTimeline: React.FC<Props> = ({ data, instance }) => {
     return (
       <section className="py-20 px-4 bg-surface-subtle">
         <div className="max-w-3xl mx-auto text-center">
-          {settings.showTitle && (
+          {settings.showTitle !== false && (
             <h2 className="text-4xl font-light text-text-primary mb-8">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Schedule')}</h2>
           )}
           <p className="text-text-secondary">Schedule details will appear here once events are added.</p>
@@ -96,7 +96,7 @@ export const ScheduleTimeline: React.FC<Props> = ({ data, instance }) => {
   return (
     <section className="py-20 px-4 bg-surface-subtle">
       <div className="max-w-2xl mx-auto">
-        {settings.showTitle && (
+        {settings.showTitle !== false && (
           <div className="text-center mb-14">
             <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">The plan</p>
             <h2 className="text-4xl font-light tracking-tight text-text-primary">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Schedule')}</h2>
@@ -139,7 +139,7 @@ export const ScheduleTimeline: React.FC<Props> = ({ data, instance }) => {
 export const ScheduleDayTabs: React.FC<Props> = ({ data, instance }) => {
   const { schedule, venues } = data;
   const { settings, bindings } = instance;
-  const itemsToShow = bindings.scheduleItemIds && bindings.scheduleItemIds.length > 0
+  const itemsToShow = bindings?.scheduleItemIds && bindings.scheduleItemIds.length > 0
     ? schedule.filter(s => bindings.scheduleItemIds!.includes(s.id))
     : schedule;
 
@@ -160,7 +160,7 @@ export const ScheduleDayTabs: React.FC<Props> = ({ data, instance }) => {
     return (
       <section className="py-20 px-4 bg-surface">
         <div className="max-w-3xl mx-auto text-center">
-          {settings.showTitle && <h2 className="text-4xl font-light text-text-primary mb-8">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Schedule')}</h2>}
+          {settings.showTitle !== false && <h2 className="text-4xl font-light text-text-primary mb-8">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Schedule')}</h2>}
           <p className="text-text-secondary">Schedule details will appear here once events are added.</p>
         </div>
       </section>
@@ -170,7 +170,7 @@ export const ScheduleDayTabs: React.FC<Props> = ({ data, instance }) => {
   return (
     <section className="py-20 px-4 bg-surface">
       <div className="max-w-4xl mx-auto">
-        {settings.showTitle && (
+        {settings.showTitle !== false && (
           <div className="text-center mb-10">
             <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Weekend schedule</p>
             <h2 className="text-4xl font-light tracking-tight text-text-primary">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Schedule')}</h2>
