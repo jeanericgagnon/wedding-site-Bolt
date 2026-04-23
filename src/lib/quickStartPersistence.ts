@@ -464,6 +464,9 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     && Number.isInteger(parsed.currentIndex)
     && Number.isSafeInteger(parsed.currentIndex)
     && parsed.currentIndex >= 0;
+  const hasRecoverableClosedCurrentIndex = typeof parsed.currentIndex === 'number'
+    && Number.isFinite(parsed.currentIndex)
+    && parsed.currentIndex >= 0;
   const recoveredClosedCurrentIndex = hasMeaningfulQuickStartAnswers(normalizedInitialSetupAnswers)
     ? resolveRestorableCurrentIndex(RESTORABLE_SETUP_STEPS.length, normalizedInitialSetupAnswers)
     : 0;
@@ -475,7 +478,7 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
         : 0
     : hasMeaningfulRestoreState && (showFollowUps || normalizedViewState !== 'question')
       ? RESTORABLE_SETUP_STEPS.length
-      : recoveredClosedCurrentIndex > 2
+      : hasRecoverableClosedCurrentIndex && recoveredClosedCurrentIndex > 2
         ? recoveredClosedCurrentIndex
         : 0;
 
