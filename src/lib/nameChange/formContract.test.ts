@@ -48,6 +48,10 @@ describe('name change shared form contract builder', () => {
 
     const snapshot = buildNameChangeFormPayloadSnapshot(definition, makeCase({ current_middle_name: null }), [], []);
     expect(snapshot.formCode).toBe('TEST');
+    expect(snapshot.fields).toEqual([
+      expect.objectContaining({ fieldKey: 'required.first', required: true, value: 'Alex' }),
+      expect.objectContaining({ fieldKey: 'optional.middle', required: false, value: null }),
+    ]);
     expect(snapshot.summary).toEqual({
       ready: 1,
       missing: 0,
@@ -62,22 +66,24 @@ describe('name change shared form contract builder', () => {
       formCode: 'TEST',
       label: 'Test form',
       fieldSpecs: [
-        { fieldKey: 'new.last', label: 'New last name', sourceTargetField: 'applicant.target_last_name' },
+        { fieldKey: 'identity.passportIssueDate', label: 'Passport issue date', sourceTargetField: 'identity.passport_issue_date' },
       ],
     };
     const documents: NameChangeDocumentInput[] = [
       {
-        document_kind: 'marriage_certificate',
-        display_name: 'Certified marriage certificate',
+        id: 'passport-doc',
+        document_kind: 'current_passport',
+        display_name: 'Passport',
         storage_mode: 'metadata_only',
-        intake_status: 'reviewed',
+        intake_status: 'uploaded',
       },
     ];
     const extractedFields: NameChangeExtractedFieldInput[] = [
       {
-        field_key: 'spouse_last_name',
-        field_label: 'Spouse last name',
-        field_value_masked: 'Jordan-Smith',
+        document_id: 'passport-doc',
+        field_key: 'issuance_date',
+        field_label: 'Passport issue date',
+        field_value_masked: '2024-06-01',
         source_type: 'manual',
         is_verified: true,
       },
@@ -85,12 +91,49 @@ describe('name change shared form contract builder', () => {
 
     const snapshot = buildNameChangeFormPayloadSnapshot(definition, makeCase(), documents, extractedFields);
     expect(snapshot.fields[0]).toMatchObject({
-      value: 'Jordan-Smith',
+      value: '2024-06-01',
       source: 'extracted_field',
     });
     expect(snapshot.summary.extractedBacked).toBe(1);
     expect(snapshot.summary.trustedReady).toBe(0);
     expect(snapshot.summary.lowConfidence).toBe(1);
+  });
+
+  it('does not count optional low-confidence extracted values as packet risk debt', () => {
+    const definition: NameChangeFormContractDefinition = {
+      formCode: 'TEST',
+      label: 'Test form',
+      fieldSpecs: [
+        { fieldKey: 'optional.issueDate', label: 'Optional issue date', sourceTargetField: 'identity.passport_issue_date', required: false },
+      ],
+    };
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'passport-doc',
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'passport-doc',
+        field_key: 'issuance_date',
+        field_label: 'Passport issue date',
+        field_value_masked: '2024-06-01',
+        source_type: 'manual',
+        is_verified: true,
+      },
+    ];
+
+    const snapshot = buildNameChangeFormPayloadSnapshot(definition, makeCase(), documents, extractedFields);
+    expect(snapshot.fields[0]).toMatchObject({
+      required: false,
+      value: '2024-06-01',
+      confidence: 'low',
+    });
+    expect(snapshot.summary.lowConfidence).toBe(0);
   });
 
   it('counts metadata-backed extracted values as trusted ready', () => {

@@ -71,6 +71,34 @@ describe('name change execution gates', () => {
     expect(result.attentionItems).toEqual(['Dependency attention blocker']);
   });
 
+  it('ignores optional low-confidence form fields when deciding packet readiness', () => {
+    const result = evaluateNameChangeExecutionGates([], [], {
+      formCode: 'TEST',
+      formLabel: 'Test form',
+      fields: [
+        {
+          fieldKey: 'optional.issueDate',
+          label: 'Optional issue date',
+          required: false,
+          value: '2024-06-01',
+          source: 'extracted_field',
+          confidence: 'low',
+        },
+      ],
+      summary: {
+        ready: 0,
+        missing: 0,
+        trustedReady: 0,
+        lowConfidence: 0,
+        extractedBacked: 1,
+      },
+    });
+
+    expect(result.ready).toBe(true);
+    expect(result.blockers).toEqual([]);
+    expect(result.attentionItems).toEqual([]);
+  });
+
   it('treats canonical extraction alignment drift as a blocker', () => {
     const result = evaluateNameChangeExecutionGates([], [
       {

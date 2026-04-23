@@ -88,17 +88,11 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.blockers).toEqual(expect.arrayContaining([
       expect.stringContaining('Structured case truth conflicts with extracted document values'),
     ]));
-    expect(snapshot.fieldRisks).toEqual(expect.arrayContaining([
-      expect.objectContaining({
-        fieldKey: 'identity.passportIssueDate',
-        label: 'Passport issue date',
-        severity: 'attention',
-      }),
-    ]));
+    expect(snapshot.fieldRisks).toEqual([]);
     expect(snapshot.readinessSummary).toMatchObject({
       status: 'blocked',
-      blockingFieldRisks: expect.any(Number),
-      lowConfidenceFields: expect.any(Number),
+      blockingFieldRisks: 0,
+      lowConfidenceFields: 0,
       documentRepairDebt: expect.any(Number),
     });
     expect(snapshot.nextAction).toMatchObject({
@@ -213,9 +207,14 @@ describe('name change target execution snapshot', () => {
 
     const snapshot = buildNameChangeTargetExecutionSnapshot('ssa', makeCase(), documents, extractedFields);
     expect(snapshot.ready).toBe(true);
+    expect(snapshot.readinessSummary).toMatchObject({
+      status: 'ready',
+      blockingFieldRisks: 0,
+      attentionFieldRisks: 0,
+    });
     expect(snapshot.nextAction).toMatchObject({
-      category: 'packet',
-      label: 'Fill Passport issue date',
+      category: 'review',
+      label: 'Prepare SSA-SS5',
     });
   });
 

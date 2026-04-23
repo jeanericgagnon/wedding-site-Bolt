@@ -36,6 +36,7 @@ function mapField(
   return {
     fieldKey: spec.fieldKey,
     label: spec.label,
+    required: spec.required !== false,
     value: sourceField?.value.value ?? null,
     source: sourceField?.value.source ?? 'canonical_case',
     confidence: sourceField?.value.confidence ?? 'low',
@@ -70,7 +71,7 @@ export function buildNameChangeFormPayloadSnapshot(
         const field = fields.find((item) => item.fieldKey === spec.fieldKey);
         return Boolean(field?.value) && field?.confidence !== 'low';
       }).length,
-      lowConfidence: fields.filter((field) => Boolean(field.value) && field.confidence === 'low').length,
+      lowConfidence: fields.filter((field) => field.required && Boolean(field.value) && field.confidence === 'low').length,
       extractedBacked: fields.filter((field) => field.source === 'extracted_field').length,
     },
   };

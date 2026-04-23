@@ -367,6 +367,7 @@ export interface NameChangeAutofillPrepSnapshot {
 export interface NameChangeFormFieldPayload {
   fieldKey: string;
   label: string;
+  required: boolean;
   value: string | null;
   source: 'canonical_case' | 'extracted_field' | 'derived';
   confidence: 'high' | 'medium' | 'low';

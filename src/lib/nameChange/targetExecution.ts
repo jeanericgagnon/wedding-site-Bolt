@@ -33,7 +33,7 @@ export function buildNameChangeTargetExecutionSnapshot(
   const formPayload = NAME_CHANGE_FORM_BUILDERS[target.formBuilderKey](profile, documents, extractedFields);
   const gates = evaluateNameChangeExecutionGates(sequence.dependencies, checklist, formPayload);
   const fieldRisks = formPayload.fields
-    .filter((field) => !field.value || field.confidence === 'low')
+    .filter((field) => field.required && (!field.value || field.confidence === 'low'))
     .map((field) => ({
       fieldKey: field.fieldKey,
       label: field.label,
@@ -48,8 +48,8 @@ export function buildNameChangeTargetExecutionSnapshot(
     }));
   const blockingFieldRisks = fieldRisks.filter((risk) => risk.severity === 'blocking').length;
   const attentionFieldRisks = fieldRisks.filter((risk) => risk.severity === 'attention').length;
-  const lowConfidenceFields = formPayload.fields.filter((field) => field.value && field.confidence === 'low').length;
-  const missingFields = formPayload.fields.filter((field) => !field.value).length;
+  const lowConfidenceFields = formPayload.fields.filter((field) => field.required && field.value && field.confidence === 'low').length;
+  const missingFields = formPayload.fields.filter((field) => field.required && !field.value).length;
   const documentRepairDebt = new Set([
     ...fieldRisks
       .map((risk) => risk.sourceDocumentKind)

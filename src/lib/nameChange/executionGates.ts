@@ -12,7 +12,7 @@ export function evaluateNameChangeExecutionGates(
   checklist: NameChangeChecklistItem[],
   formPayload?: NameChangeFormPayloadSnapshot,
 ): NameChangeExecutionGateSnapshot {
-  const lowConfidenceFields = (formPayload?.fields ?? []).filter((field) => field.value && field.confidence === 'low');
+  const lowConfidenceFields = (formPayload?.fields ?? []).filter((field) => field.required && field.value && field.confidence === 'low');
   const blockingAttentionChecklistKeys = new Set(['canonical-extraction-alignment']);
   const blockers = [
     ...dependencies.filter((dependency) => dependency.blocksReady ?? (dependency.required && dependency.status === 'missing')).map((dependency) => dependency.reason),
