@@ -368,8 +368,9 @@ function normalizeDraftCountyValue(value: string) {
     '',
   );
   const countyWithoutTrailingPunctuation = countyWithoutLabels.replace(/[.,;:]+$/g, '').trim();
+  const countyWithoutWrapping = countyWithoutTrailingPunctuation.replace(/^["'([{]+|["')\]}]+$/g, '').trim();
 
-  const countyWithoutAffixes = countyWithoutTrailingPunctuation
+  const countyWithoutAffixes = countyWithoutWrapping
     .replace(/^county\s+of\s+/i, '')
     .replace(/\s+(?:county|co\.?)$/i, '')
     .trim();
@@ -392,14 +393,17 @@ function normalizeDraftPersonNameValue(
   };
 
   const unlabeledValue = normalizedValue.replace(labelPatterns[fieldKey], '').trim();
-  const depunctuatedValue = unlabeledValue.replace(/[.,;:]+$/g, '').trim();
-  if (!depunctuatedValue) return '';
+  const cleanedValue = unlabeledValue
+    .replace(/[.,;:]+$/g, '')
+    .replace(/^["'([{]+|["')\]}]+$/g, '')
+    .trim();
+  if (!cleanedValue) return '';
 
-  if (fieldKey === 'middle_name' && /^[A-Za-z]\.?$/.test(depunctuatedValue)) {
-    return depunctuatedValue.charAt(0).toUpperCase();
+  if (fieldKey === 'middle_name' && /^[A-Za-z]\.?$/.test(cleanedValue)) {
+    return cleanedValue.charAt(0).toUpperCase();
   }
 
-  return humanizeDraftToken(depunctuatedValue.toLowerCase());
+  return humanizeDraftToken(cleanedValue.toLowerCase());
 }
 
 function normalizeDraftReferenceNumberValue(value: string) {
@@ -410,6 +414,7 @@ function normalizeDraftReferenceNumberValue(value: string) {
     .replace(/^(?:(?:case|docket|certificate|cert|record)\s*(?:number|no\.?|#)?\s*[:#-]\s*|(?:case|docket|certificate|cert|record)\s+(?:number|no\.?|#)\s*)/i, '')
     .trim()
     .replace(/[.,;:]+$/g, '')
+    .replace(/^["'([{]+|["')\]}]+$/g, '')
     .toUpperCase()
     .replace(/[–—−]/g, '-')
     .replace(/\s*([\-/#])\s*/g, '$1')
