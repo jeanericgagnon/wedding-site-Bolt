@@ -70,7 +70,8 @@ describe('Home draft-first CTAs', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'Open your builder' })[1]);
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
     expect(screen.getAllByRole('link', { name: 'Open your builder' })[1]).toHaveAttribute('href', '/dashboard/builder');
-    const signedInFeatureLinks = screen.getAllByRole('link', { name: 'Explore this feature' }).filter((link) => link.getAttribute('href') === '/dashboard/overview');
-    expect(signedInFeatureLinks.length).toBe(2);
+    const signedInFeatureLinks = screen.getAllByRole('link', { name: 'Explore this feature' });
+    expect(signedInFeatureLinks.find((link) => link.getAttribute('href') === '/dashboard/planning')).toBeTruthy();
+    expect(signedInFeatureLinks.find((link) => link.getAttribute('href') === '/dashboard/coordinator')).toBeTruthy();
   });
 });

@@ -88,14 +88,14 @@ export const Home: React.FC = () => {
       id: 'planner',
       title: 'Planner Collaboration',
       icon: Calendar,
-      href: user ? '/dashboard/overview' : '/product',
+      href: user ? '/dashboard/planning' : '/product',
       bullets: ['Invite your planner from the couple side', 'Named planner invite with role preset', 'Planner coordination view', 'Shared guest + seating + timeline context', 'Read-only or operational access', 'Built for real event-day help'],
     },
     {
       id: 'dayof',
       title: 'Day-of Coordination',
       icon: Radio,
-      href: user ? '/dashboard/overview' : '/product',
+      href: user ? '/dashboard/coordinator' : '/product',
       bullets: ['Coordinator workspace', 'Check-in and arrivals focus', 'Timeline + Q&A context', 'Fast guest lookup', 'Alert and issue visibility', 'Built for calmer event-week execution'],
     },
     {
