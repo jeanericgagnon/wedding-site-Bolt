@@ -14,6 +14,7 @@ type RequirementBag = {
   courtOrderReferenceExtraction: NameChangeRequirementResult | undefined;
   courtOrderJurisdictionContext: NameChangeRequirementResult | undefined;
   marriageJurisdictionAlignment: NameChangeRequirementResult | undefined;
+  outOfStateMarriageCertificateGrounding: NameChangeRequirementResult | undefined;
   countyContext: NameChangeRequirementResult | undefined;
   launchStateAlignment: NameChangeRequirementResult | undefined;
   passportTimingRisk: NameChangeRequirementResult | undefined;
@@ -123,6 +124,7 @@ const buildCourtOrderDependencies: NameChangeDependencyRecipe = ({ requirements 
 const buildPassportDependencies: NameChangeDependencyRecipe = ({ profile, requirements, prerequisiteDependencies }) => [
   ...buildStrictLegalAndIdentityDependencies({ profile, intake: null as never, requirements, prerequisiteDependencies }),
   buildRequirementDependency(requirements.marriageJurisdictionAlignment, 'marriage-jurisdiction-alignment', 'Marriage jurisdiction alignment', true, 'Marriage jurisdiction alignment has not been evaluated.', true),
+  buildRequirementDependency(requirements.outOfStateMarriageCertificateGrounding, 'out-of-state-marriage-certificate-grounding', 'Out-of-state marriage certificate grounding', true, 'Out-of-state marriage certificate grounding has not been evaluated.', true),
   {
     key: 'citizenship-eligibility',
     label: 'Citizenship eligible for passport path',
@@ -197,6 +199,7 @@ const buildVoterDependencies: NameChangeDependencyRecipe = ({ intake, requiremen
 
 const buildTsaDependencies: NameChangeDependencyRecipe = ({ intake, requirements, prerequisiteDependencies }) => [
   buildRequirementDependency(requirements.marriageJurisdictionAlignment, 'marriage-jurisdiction-alignment', 'Marriage jurisdiction alignment', true, 'Marriage jurisdiction alignment has not been evaluated.', true),
+  buildRequirementDependency(requirements.outOfStateMarriageCertificateGrounding, 'out-of-state-marriage-certificate-grounding', 'Out-of-state marriage certificate grounding', true, 'Out-of-state marriage certificate grounding has not been evaluated.', true),
   buildRequirementDependency(requirements.identityCoverage, 'identity-document-coverage', 'Identity document coverage', true, 'Identity coverage requirement not evaluated.'),
   buildRequirementDependency(requirements.passportTimingRisk, 'passport-timing-risk', 'Passport timing risk reviewed', false, 'Passport timing risk has not been evaluated.'),
   buildRequirementDependency(requirements.expeditedTravelSequencing, 'expedited-travel-sequencing', 'Expedited travel sequencing ready', false, 'Expedited travel sequencing has not been evaluated.'),

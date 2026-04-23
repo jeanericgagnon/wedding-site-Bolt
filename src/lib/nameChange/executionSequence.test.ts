@@ -324,6 +324,66 @@ describe('name change execution sequence snapshot', () => {
     });
   });
 
+  it('blocks passport sequencing when out-of-state marriage certificate grounding is still missing', () => {
+    const profile = makeCase({ marriage_state: 'Nevada' });
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-marriage',
+        document_kind: 'marriage_certificate',
+        display_name: 'Marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+    const basePlan = buildNameChangePlan({ profile, documents, extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) =>
+        step.id === 'federal-ssa' ? { ...step, executionStatus: 'in_progress' as const } : step,
+      ),
+    };
+
+    const snapshot = buildNameChangeExecutionSequenceSnapshot('passport', profile, documents, [], plan);
+    expect(snapshot.ready).toBe(false);
+    expect(snapshot.dependencies.find((dependency) => dependency.key === 'out-of-state-marriage-certificate-grounding')).toMatchObject({
+      status: 'missing',
+      reason: 'Marriage certificate is present, but no grounded county or certificate-number extraction is represented yet for out-of-state follow-through.',
+    });
+  });
+
+  it('blocks travel sequencing when out-of-state marriage certificate grounding is still missing', () => {
+    const profile = makeCase({ marriage_state: 'Nevada' });
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-marriage',
+        document_kind: 'marriage_certificate',
+        display_name: 'Marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const basePlan = buildNameChangePlan({ profile, documents, extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) =>
+        step.id === 'federal-passport' ? { ...step, executionStatus: 'in_progress' as const } : step,
+      ),
+    };
+
+    const snapshot = buildNameChangeExecutionSequenceSnapshot('tsa', profile, documents, [], plan);
+    expect(snapshot.ready).toBe(false);
+    expect(snapshot.dependencies.find((dependency) => dependency.key === 'out-of-state-marriage-certificate-grounding')).toMatchObject({
+      status: 'missing',
+      reason: 'Marriage certificate is present, but no grounded county or certificate-number extraction is represented yet for out-of-state follow-through.',
+    });
+  });
+
   it('marks professional-license sequencing ready when DMV is in progress for employed users', () => {
     const documents: NameChangeDocumentInput[] = [
       {
