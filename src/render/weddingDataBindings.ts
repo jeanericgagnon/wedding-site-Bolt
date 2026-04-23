@@ -89,13 +89,15 @@ function bindVenue(section: BindableSection, weddingData: WeddingDataV1): Record
 
   const selectedVenues = pickByIds(venues, section.bindings?.venueIds)
     .filter((v) => !!v.name || !!v.address);
+  const fallbackVenues = venues.filter((v) => !!v.name || !!v.address);
+  const venuesToUse = selectedVenues.length > 0 ? selectedVenues : fallbackVenues;
 
-  if (selectedVenues.length === 0) return section.data;
+  if (venuesToUse.length === 0) return section.data;
 
   const dateText = formatDate(weddingDateISO);
   const timeText = weddingDateISO ? formatTime(weddingDateISO) : '';
 
-  const mappedVenues = selectedVenues.map((venue, index) => ({
+  const mappedVenues = venuesToUse.map((venue, index) => ({
     id: venue.id,
     name: venue.name ?? '',
     role: index === 0 ? 'Ceremony & Reception' : 'Venue',
@@ -208,10 +210,12 @@ function bindRegistry(section: BindableSection, weddingData: WeddingDataV1): Rec
 
   const selectedLinks = pickByIds(registryLinks, section.bindings?.linkIds)
     .filter((link) => !!link.url);
+  const fallbackLinks = registryLinks.filter((link) => !!link.url);
+  const linksToUse = selectedLinks.length > 0 ? selectedLinks : fallbackLinks;
 
-  if (selectedLinks.length === 0) return section.data;
+  if (linksToUse.length === 0) return section.data;
 
-  const storeLinks = selectedLinks.map((link) => ({
+  const storeLinks = linksToUse.map((link) => ({
     id: link.id,
     store: link.label ?? 'Registry',
     url: link.url,
@@ -227,7 +231,7 @@ function bindRegistry(section: BindableSection, weddingData: WeddingDataV1): Rec
     ...section.data,
     links: storeLinks,
     storeLinks,
-    viewAllUrl: selectedLinks[0]?.url ?? '',
+    viewAllUrl: linksToUse[0]?.url ?? '',
     cashFundUrl: safeCashFundUrl,
     cashFundEnabled: safeCashFundUrl ? !!section.data.cashFundEnabled : false,
   };

@@ -76,6 +76,23 @@ describe('applyWeddingDataBindings', () => {
     expect(links[0].url).toBe('https://amazon.com/registry');
   });
 
+  it('falls back to live registry links when bound registry ids are stale', () => {
+    const data = createEmptyWeddingData();
+    data.registry.links = [{ id: 'r1', label: 'Amazon', url: 'https://amazon.com/registry' }];
+
+    const result = applyWeddingDataBindings({
+      type: 'registry',
+      variant: 'cards',
+      data: { links: [{ id: 'demo', store: 'Demo', url: '#' }] },
+      bindings: { linkIds: ['missing-id'] },
+    }, data);
+
+    const links = result.links as Array<Record<string, unknown>>;
+    expect(links).toHaveLength(1);
+    expect(links[0].store).toBe('Amazon');
+    expect(links[0].url).toBe('https://amazon.com/registry');
+  });
+
   it('binds faq items from wedding data', () => {
     const data = createEmptyWeddingData();
     data.faq = [
@@ -176,6 +193,23 @@ describe('applyWeddingDataBindings', () => {
       variant: 'mapFirst',
       data: { venues: [] },
       bindings: { venueIds: ['v1'] },
+    }, data);
+
+    const venues = result.venues as Array<Record<string, unknown>>;
+    expect(venues).toHaveLength(1);
+    expect(venues[0].name).toBe('The Grand Pavilion');
+    expect(venues[0].address).toBe('450 Park Ave');
+  });
+
+  it('falls back to live venue entries when bound venue ids are stale', () => {
+    const data = createEmptyWeddingData();
+    data.venues = [{ id: 'v1', name: 'The Grand Pavilion', address: '450 Park Ave' }];
+
+    const result = applyWeddingDataBindings({
+      type: 'venue',
+      variant: 'mapFirst',
+      data: { venues: [{ id: 'demo', name: 'Demo Venue', address: 'Nowhere' }] },
+      bindings: { venueIds: ['missing-id'] },
     }, data);
 
     const venues = result.venues as Array<Record<string, unknown>>;
