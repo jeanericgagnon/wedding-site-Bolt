@@ -50,9 +50,9 @@ function makeSnapshot(overrides: Partial<NameChangeTargetExecutionSnapshot> = {}
 
 describe('name change execution prioritization', () => {
   it('keeps guided action weights in descending urgency order', () => {
-    expect(getNameChangeGuidedActionWeight('packet')).toBeGreaterThan(getNameChangeGuidedActionWeight('dependency'));
-    expect(getNameChangeGuidedActionWeight('dependency')).toBeGreaterThan(getNameChangeGuidedActionWeight('document'));
-    expect(getNameChangeGuidedActionWeight('document')).toBeGreaterThan(getNameChangeGuidedActionWeight('checklist'));
+    expect(getNameChangeGuidedActionWeight('document')).toBeGreaterThan(getNameChangeGuidedActionWeight('dependency'));
+    expect(getNameChangeGuidedActionWeight('dependency')).toBeGreaterThan(getNameChangeGuidedActionWeight('packet'));
+    expect(getNameChangeGuidedActionWeight('packet')).toBeGreaterThan(getNameChangeGuidedActionWeight('checklist'));
     expect(getNameChangeGuidedActionWeight('checklist')).toBeGreaterThan(getNameChangeGuidedActionWeight('review'));
   });
 
@@ -67,11 +67,11 @@ describe('name change execution prioritization', () => {
 
   it('breaks blocker ties using next-action urgency instead of arbitrary card order', () => {
     const top = getHighestPriorityNameChangeExecutionCard([
-      { key: 'checklist-card', title: 'Checklist card', snapshot: makeSnapshot({ blockers: ['Need work'], nextAction: { category: 'checklist', label: 'Complete checklist item', detail: 'Checklist first.' } }) },
       { key: 'packet-card', title: 'Packet card', snapshot: makeSnapshot({ blockers: ['Need work'], nextAction: { category: 'packet', label: 'Repair passport issue date', detail: 'Packet trust is broken.' } }) },
+      { key: 'document-card', title: 'Document card', snapshot: makeSnapshot({ blockers: ['Need work'], nextAction: { category: 'document', label: 'Review court-order proof', detail: 'Ground the source document first.' } }) },
     ]);
 
-    expect(top?.key).toBe('packet-card');
+    expect(top?.key).toBe('document-card');
   });
 
   it('falls back to attention load when readiness, blockers, and action category are tied', () => {

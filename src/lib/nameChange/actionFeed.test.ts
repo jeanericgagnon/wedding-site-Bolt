@@ -172,4 +172,44 @@ describe('name change action feed', () => {
 
     expect(feed[0]).toMatchObject({ urgencyReason: 'packet_trust' });
   });
+
+  it('ranks blocking document-grounding work above packet cleanup when severity is tied', () => {
+    const feed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'ssa',
+        targetLabel: 'Social Security Administration',
+        nextAction: {
+          category: 'packet',
+          label: 'Repair Current legal name available for SS-5',
+          detail: 'Packet trust is broken.',
+        },
+        blockers: ['Packet trust is broken.'],
+        readinessSummary: {
+          status: 'blocked',
+          blockingFieldRisks: 0,
+          attentionFieldRisks: 0,
+          lowConfidenceFields: 0,
+          missingFields: 0,
+          documentRepairDebt: 0,
+          summaryLabel: 'Blocked.',
+        },
+      }),
+      makeExecutionSnapshot({
+        targetKey: 'passport',
+        targetLabel: 'Passport',
+        recommendedFormCode: 'DS-82',
+        nextAction: {
+          category: 'document',
+          label: 'Review court-order proof',
+          detail: 'Ground the source document first.',
+        },
+        blockers: ['Ground the source document first.'],
+      }),
+    ], []);
+
+    expect(feed[0]).toMatchObject({
+      title: 'Passport',
+      urgencyReason: 'document_gap',
+    });
+  });
 });

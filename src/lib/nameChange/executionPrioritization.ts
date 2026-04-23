@@ -8,11 +8,11 @@ export interface NameChangeExecutionPriorityInput {
 
 export function getNameChangeGuidedActionWeight(category: NameChangeGuidedAction['category']) {
   switch (category) {
-    case 'packet':
+    case 'document':
       return 5;
     case 'dependency':
       return 4;
-    case 'document':
+    case 'packet':
       return 3;
     case 'checklist':
       return 2;
