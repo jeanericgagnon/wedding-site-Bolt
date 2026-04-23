@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildNameChangeTargetChecklist } from './targetChecklist';
 import { NAME_CHANGE_EXECUTION_TARGETS } from './targets';
-import type { NameChangeCaseInput, NameChangeDocumentInput } from './types';
+import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput } from './types';
 
 function makeCase(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseInput {
   return {
@@ -91,5 +91,46 @@ describe('name change target checklist', () => {
     const checklist = buildNameChangeTargetChecklist(NAME_CHANGE_EXECUTION_TARGETS.dmv, makeCase(), documents, []);
     expect(checklist.find((item) => item.key === 'current-legal-name')).toMatchObject({ status: 'ready' });
     expect(checklist.find((item) => item.key === 'target-surname-county')).toMatchObject({ status: 'ready' });
+  });
+
+  it('marks field-presence checklist items as attention when values exist but only from low-confidence sources', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'court-order-doc',
+        document_kind: 'court_order',
+        display_name: 'Court order',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'court-order-doc',
+        field_key: 'first_name',
+        field_label: 'Target first name',
+        field_value_masked: 'Taylor',
+        source_type: 'manual',
+        is_verified: true,
+      },
+      {
+        document_id: 'court-order-doc',
+        field_key: 'last_name',
+        field_label: 'Target last name',
+        field_value_masked: 'Jordan',
+        source_type: 'manual',
+        is_verified: true,
+      },
+    ];
+
+    const checklist = buildNameChangeTargetChecklist(
+      NAME_CHANGE_EXECUTION_TARGETS.courtOrder,
+      makeCase({ legal_basis: 'court_order', target_first_name: '', target_last_name: '' }),
+      documents,
+      extractedFields,
+    );
+    expect(checklist.find((item) => item.key === 'target-legal-name')).toMatchObject({
+      status: 'attention',
+      reason: 'Target legal name is populated for the court-order path, but at least one field still needs stronger document support.',
+    });
   });
 });

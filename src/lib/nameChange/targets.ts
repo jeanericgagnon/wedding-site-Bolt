@@ -38,6 +38,7 @@ function buildSharedIdentityChecklist(targetNoun: string, supportKey: string, su
       kind: 'field_presence',
       targetFields: ['applicant.current_first_name', 'applicant.current_last_name'],
       missingReason: `Current legal name fields are still incomplete for ${targetNoun}.`,
+      attentionReason: `Current legal name is populated for ${targetNoun}, but at least one field still needs stronger document support.`,
       satisfiedReason: `Current legal first and last name are available for ${targetNoun}.`,
     },
     {
@@ -46,6 +47,7 @@ function buildSharedIdentityChecklist(targetNoun: string, supportKey: string, su
       kind: 'field_presence',
       targetField: 'applicant.target_last_name',
       missingReason: `Target last name is still missing for ${targetNoun}.`,
+      attentionReason: `Target last name is populated for ${targetNoun}, but it still needs stronger document support.`,
       satisfiedReason: `Target last name is available for ${targetNoun}.`,
     },
     {
@@ -184,6 +186,7 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'courtOrder' | 'ssa' | 'dmv' 
         kind: 'field_presence',
         targetFields: ['applicant.target_first_name', 'applicant.target_last_name'],
         missingReason: 'Target first and/or last name are still missing for the court-order path.',
+        attentionReason: 'Target legal name is populated for the court-order path, but at least one field still needs stronger document support.',
         satisfiedReason: 'Target first and last name are available for the court-order path.',
       },
     ],

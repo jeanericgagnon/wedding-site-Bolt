@@ -42,17 +42,19 @@ export function buildNameChangeTargetChecklist(
         : spec.targetField
           ? [spec.targetField]
           : [];
-      const ready = targetFields.length > 0
-        && targetFields.every((targetField) => {
-          const field = autofill.fields.find((candidate) => candidate.targetField === targetField);
-          return Boolean(field?.value.value);
-        });
+      const matchedFields = targetFields.map((targetField) => autofill.fields.find((candidate) => candidate.targetField === targetField));
+      const allPresent = targetFields.length > 0 && matchedFields.every((field) => Boolean(field?.value.value));
+      const allTrusted = allPresent && matchedFields.every((field) => field?.value.confidence !== 'low');
 
       return {
         key: spec.key,
         label: spec.label,
-        status: ready ? 'ready' : 'missing',
-        reason: ready ? spec.satisfiedReason : spec.missingReason,
+        status: !allPresent ? 'missing' : allTrusted ? 'ready' : 'attention',
+        reason: !allPresent
+          ? spec.missingReason
+          : allTrusted
+            ? spec.satisfiedReason
+            : spec.attentionReason ?? `${spec.label} is populated, but at least one field still comes from a low-confidence source.`,
       } satisfies NameChangeTargetChecklistItem;
     }
 
