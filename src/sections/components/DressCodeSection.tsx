@@ -2,6 +2,7 @@ import React from 'react';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { SectionInstance } from '../../types/layoutConfig';
 import { Shirt, Star } from 'lucide-react';
+import { readBuilderValue } from '../../lib/weddingProfile';
 
 interface Props {
   data: WeddingDataV1;
@@ -46,11 +47,15 @@ export const DressCodeSection: React.FC<Props> = ({ data: _data, instance }) => 
   const presetKey = (settings.presetCode as string) || '';
   const preset = DRESS_CODE_PRESETS[presetKey];
 
-  const title = (settings.dressCodeLabel as string) || preset?.label || settings.title as string || 'Dress Code';
-  const description = (settings.description as string) || preset?.description || '';
+  const title = readBuilderValue(
+    settings.dressCodeLabel as string | { value: string } | undefined,
+    readBuilderValue(settings.title as string | { value: string } | undefined, preset?.label || 'Dress Code'),
+  );
+  const eyebrow = readBuilderValue(settings.eyebrow as string | { value: string } | undefined, 'What to wear');
+  const description = readBuilderValue(settings.description as string | { value: string } | undefined, preset?.description || '');
   const suggestions = (settings.suggestions as string[]) || preset?.suggestions || [];
-  const colorNote = settings.colorNote as string;
-  const additionalNote = settings.additionalNote as string;
+  const colorNote = readBuilderValue(settings.colorNote as string | { value: string } | undefined, '');
+  const additionalNote = readBuilderValue(settings.additionalNote as string | { value: string } | undefined, '');
 
   return (
     <section className="py-16 md:py-20 px-4 bg-surface">
@@ -58,7 +63,7 @@ export const DressCodeSection: React.FC<Props> = ({ data: _data, instance }) => 
         {settings.showTitle !== false && (
           <div className="mb-10">
             <p className="text-xs uppercase tracking-[0.3em] text-primary mb-3 font-medium">
-              {settings.eyebrow as string || 'What to wear'}
+              {eyebrow}
             </p>
             <h2 className="text-3xl md:text-4xl font-light text-text-primary leading-tight">{title}</h2>
             <div className="w-10 h-px bg-primary mx-auto mt-5" />
@@ -107,8 +112,15 @@ export const DressCodeBanner: React.FC<Props> = ({ data: _data, instance }) => {
   const presetKey = (settings.presetCode as string) || '';
   const preset = DRESS_CODE_PRESETS[presetKey];
 
-  const title = (settings.dressCodeLabel as string) || preset?.label || 'Dress Code';
-  const description = (settings.description as string) || preset?.description || 'Dress code details will appear here once they’re added.';
+  const title = readBuilderValue(
+    settings.dressCodeLabel as string | { value: string } | undefined,
+    preset?.label || 'Dress Code',
+  );
+  const description = readBuilderValue(
+    settings.description as string | { value: string } | undefined,
+    preset?.description || 'Dress code details will appear here once they’re added.',
+  );
+  const colorNote = readBuilderValue(settings.colorNote as string | { value: string } | undefined, '');
 
   return (
     <section className="py-14 px-4 bg-surface-subtle border-y border-border">
@@ -122,9 +134,9 @@ export const DressCodeBanner: React.FC<Props> = ({ data: _data, instance }) => {
             <h2 className="text-2xl font-semibold text-text-primary mb-2">{title}</h2>
             <p className="text-text-secondary">{description}</p>
           </div>
-          {settings.colorNote && (
+          {colorNote && (
             <div className="flex-shrink-0 px-5 py-3 bg-surface border border-border rounded-xl text-sm text-text-secondary">
-              {settings.colorNote as string}
+              {colorNote}
             </div>
           )}
         </div>
