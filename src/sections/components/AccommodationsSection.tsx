@@ -2,6 +2,7 @@ import React from 'react';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { SectionInstance } from '../../types/layoutConfig';
 import { Hotel, ExternalLink, Phone, Tag } from 'lucide-react';
+import { readBuilderValue } from '../../lib/weddingProfile';
 
 interface Props {
   data: WeddingDataV1;
@@ -30,7 +31,12 @@ function getHotels(settings: SectionInstance['settings']): HotelBlock[] {
 export const AccommodationsSection: React.FC<Props> = ({ data, instance }) => {
   const { settings } = instance;
   const hotels = getHotels(settings);
-  const generalNote = (settings.generalNote as string) || data.travel?.hotelInfo || '';
+  const eyebrow = readBuilderValue(settings.eyebrow as string | { value: string } | undefined, 'Where to stay');
+  const title = readBuilderValue(settings.title as string | { value: string } | undefined, 'Accommodations');
+  const generalNote = readBuilderValue(
+    settings.generalNote as string | { value: string } | undefined,
+    data.travel?.hotelInfo || ''
+  );
 
   return (
     <section className="py-16 md:py-20 px-4 bg-surface-subtle">
@@ -38,10 +44,10 @@ export const AccommodationsSection: React.FC<Props> = ({ data, instance }) => {
         {settings.showTitle !== false && (
           <div className="text-center mb-10 md:mb-12">
             <p className="text-xs uppercase tracking-[0.3em] text-primary mb-3 font-medium">
-              {settings.eyebrow as string || 'Where to stay'}
+              {eyebrow}
             </p>
             <h2 className="text-3xl md:text-4xl font-light text-text-primary leading-tight">
-              {settings.title as string || 'Accommodations'}
+              {title}
             </h2>
             {generalNote && (
               <p className="mt-4 text-text-secondary max-w-xl mx-auto">{generalNote}</p>
@@ -128,7 +134,12 @@ export const AccommodationsSection: React.FC<Props> = ({ data, instance }) => {
 export const AccommodationsCards: React.FC<Props> = ({ data, instance }) => {
   const { settings } = instance;
   const hotels = getHotels(settings);
-  const generalNote = (settings.generalNote as string) || data.travel?.hotelInfo || '';
+  const eyebrow = readBuilderValue(settings.eyebrow as string | { value: string } | undefined, 'Where to stay');
+  const title = readBuilderValue(settings.title as string | { value: string } | undefined, 'Accommodations');
+  const generalNote = readBuilderValue(
+    settings.generalNote as string | { value: string } | undefined,
+    data.travel?.hotelInfo || ''
+  );
 
   return (
     <section className="py-16 md:py-20 px-4 bg-surface">
@@ -136,10 +147,10 @@ export const AccommodationsCards: React.FC<Props> = ({ data, instance }) => {
         {settings.showTitle !== false && (
           <div className="text-center mb-10 md:mb-14">
             <p className="text-xs uppercase tracking-[0.3em] text-primary mb-3 font-medium">
-              {settings.eyebrow as string || 'Where to stay'}
+              {eyebrow}
             </p>
             <h2 className="text-3xl md:text-4xl font-light text-text-primary leading-tight">
-              {settings.title as string || 'Accommodations'}
+              {title}
             </h2>
             {generalNote && (
               <p className="mt-4 text-text-secondary max-w-xl mx-auto">{generalNote}</p>
