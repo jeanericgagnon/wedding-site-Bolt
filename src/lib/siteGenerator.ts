@@ -9,6 +9,7 @@ import type {
   RsvpContent,
   GalleryContent,
 } from '../types/siteConfig';
+import { buildCoupleDisplayName } from './coupleDisplayName';
 import { getTemplate } from '../templates/registry';
 
 export interface OnboardingData {
@@ -80,9 +81,9 @@ function generateSiteConfig(data: OnboardingData): SiteConfig {
   const template = getTemplate(data.template);
   const now = new Date().toISOString();
 
-  const displayName = data.couple_last_name
-    ? `${data.couple_name_1} & ${data.couple_name_2} ${data.couple_last_name}`
-    : `${data.couple_name_1} & ${data.couple_name_2}`;
+  const partnerDisplayName = buildCoupleDisplayName(data.couple_name_1, data.couple_name_2);
+  const familyName = data.couple_last_name?.trim() || '';
+  const displayName = [partnerDisplayName, familyName].filter(Boolean).join(' ') || 'The couple';
 
   const hero: HeroContent = {
     headline: displayName,
