@@ -41,7 +41,7 @@ function normalizeDraftText(value: string | null | undefined) {
 }
 
 function stripLeadingDraftValueMarker(value: string) {
-  return value.replace(/^(?:[•*·●○◦▪■]+\s*|\d+[.)-]\s+)/, '').trim();
+  return value.replace(/^(?:(?:\[(?:x|X| )\]|\((?:x|X| )\))\s*|[•*·●○◦▪■]+\s*|\d+[.)-]\s+)/, '').trim();
 }
 
 function buildDraftMaskedFileName(kind: NameChangeDocumentInput['document_kind']) {
