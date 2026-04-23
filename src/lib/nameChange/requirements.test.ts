@@ -293,7 +293,7 @@ describe('name change requirements skeleton', () => {
     });
   });
 
-  it('marks court-order reference extraction missing when proof exists but no verified extracted reference fields are present', () => {
+  it('marks court-order reference extraction missing when proof exists but no verified extracted target-name or reference fields are present', () => {
     const snapshot = evaluateNameChangeRequirements(
       makeCase({ legal_basis: 'court_order' as never }),
       [
@@ -315,11 +315,11 @@ describe('name change requirements skeleton', () => {
 
     expect(snapshot.results.find((result) => result.key === 'court-order-reference-extraction')).toMatchObject({
       status: 'missing',
-      reason: 'Court-order proof is in intake, but no verified case-number or signed-date extraction is represented yet.',
+      reason: 'Court-order proof is in intake, but no verified target-name or case-reference extraction is represented yet.',
     });
   });
 
-  it('marks court-order reference extraction satisfied when reviewed proof carries verified case number and signed date', () => {
+  it('marks court-order reference extraction satisfied when reviewed proof carries verified target legal name plus case number and signed date', () => {
     const snapshot = evaluateNameChangeRequirements(
       makeCase({ legal_basis: 'court_order' as never }),
       [
@@ -338,6 +338,22 @@ describe('name change requirements skeleton', () => {
         },
       ],
       [
+        {
+          document_id: 'doc-court-order',
+          field_key: 'first_name',
+          field_label: 'First name',
+          field_value_masked: 'Alex',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-court-order',
+          field_key: 'last_name',
+          field_label: 'Last name',
+          field_value_masked: 'Jordan',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
         {
           document_id: 'doc-court-order',
           field_key: 'case_number',
@@ -359,7 +375,7 @@ describe('name change requirements skeleton', () => {
 
     expect(snapshot.results.find((result) => result.key === 'court-order-reference-extraction')).toMatchObject({
       status: 'satisfied',
-      reason: 'Court-order reference extraction is present for the modeled review path.',
+      reason: 'Court-order target legal name and case reference extraction are present for the modeled review path.',
     });
   });
 
@@ -378,6 +394,22 @@ describe('name change requirements skeleton', () => {
       [
         {
           document_id: 'doc-court-order',
+          field_key: 'first_name',
+          field_label: 'First name',
+          field_value_masked: 'Alex',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-court-order',
+          field_key: 'last_name',
+          field_label: 'Last name',
+          field_value_masked: 'Jordan',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-court-order',
           field_key: 'case_number',
           field_label: 'Case number',
           field_value_masked: '24-CV-1188',
@@ -397,11 +429,11 @@ describe('name change requirements skeleton', () => {
 
     expect(snapshot.results.find((result) => result.key === 'court-order-reference-extraction')).toMatchObject({
       status: 'attention',
-      reason: 'Court-order reference extraction exists, but the proof document still needs review before downstream use is grounded.',
+      reason: 'Court-order extraction exists, but the proof document still needs review before downstream use is grounded.',
     });
   });
 
-  it('marks court-order reference extraction attention when only the case number is grounded', () => {
+  it('marks court-order reference extraction attention when target legal name and case number are grounded but signed date is still missing', () => {
     const snapshot = evaluateNameChangeRequirements(
       makeCase({ legal_basis: 'court_order' as never }),
       [
@@ -414,6 +446,22 @@ describe('name change requirements skeleton', () => {
         },
       ],
       [
+        {
+          document_id: 'doc-court-order',
+          field_key: 'first_name',
+          field_label: 'First name',
+          field_value_masked: 'Alex',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-court-order',
+          field_key: 'last_name',
+          field_label: 'Last name',
+          field_value_masked: 'Jordan',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
         {
           document_id: 'doc-court-order',
           field_key: 'case_number',
@@ -427,11 +475,11 @@ describe('name change requirements skeleton', () => {
 
     expect(snapshot.results.find((result) => result.key === 'court-order-reference-extraction')).toMatchObject({
       status: 'attention',
-      reason: 'Court-order case number is verified, but the signed date still needs grounded extraction before downstream use is fully trusted.',
+      reason: 'Court-order target legal name and case number are verified, but the signed date still needs grounded extraction before downstream use is fully trusted.',
     });
   });
 
-  it('marks court-order reference extraction attention when only the signed date is grounded', () => {
+  it('marks court-order reference extraction attention when target legal name and signed date are grounded but case number is still missing', () => {
     const snapshot = evaluateNameChangeRequirements(
       makeCase({ legal_basis: 'court_order' as never }),
       [
@@ -446,6 +494,22 @@ describe('name change requirements skeleton', () => {
       [
         {
           document_id: 'doc-court-order',
+          field_key: 'first_name',
+          field_label: 'First name',
+          field_value_masked: 'Alex',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-court-order',
+          field_key: 'last_name',
+          field_label: 'Last name',
+          field_value_masked: 'Jordan',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-court-order',
           field_key: 'court_order_date',
           field_label: 'Court order date',
           field_value_masked: '2026-04-05',
@@ -457,7 +521,7 @@ describe('name change requirements skeleton', () => {
 
     expect(snapshot.results.find((result) => result.key === 'court-order-reference-extraction')).toMatchObject({
       status: 'attention',
-      reason: 'Court-order signed date is verified, but the case number still needs grounded extraction before downstream use is fully trusted.',
+      reason: 'Court-order target legal name and signed date are verified, but the case number still needs grounded extraction before downstream use is fully trusted.',
     });
   });
 
@@ -492,7 +556,7 @@ describe('name change requirements skeleton', () => {
 
     expect(snapshot.results.find((result) => result.key === 'court-order-reference-extraction')).toMatchObject({
       status: 'missing',
-      reason: 'Court-order proof is in intake, but no verified case-number or signed-date extraction is represented yet.',
+      reason: 'Court-order proof is in intake, but no verified target-name or case-reference extraction is represented yet.',
     });
   });
 
@@ -528,7 +592,37 @@ describe('name change requirements skeleton', () => {
 
     expect(snapshot.results.find((result) => result.key === 'court-order-reference-extraction')).toMatchObject({
       status: 'missing',
-      reason: 'Court-order proof is in intake, but no verified case-number or signed-date extraction is represented yet.',
+      reason: 'Court-order proof is in intake, but no verified target-name or case-reference extraction is represented yet.',
+    });
+  });
+
+  it('marks court-order reference extraction attention when only target last name is verified', () => {
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase({ legal_basis: 'court_order' as never }),
+      [
+        {
+          id: 'doc-court-order',
+          document_kind: 'court_order_name_change',
+          display_name: 'Court order',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+        },
+      ],
+      [
+        {
+          document_id: 'doc-court-order',
+          field_key: 'last_name',
+          field_label: 'Last name',
+          field_value_masked: 'Jordan',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+      ],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'court-order-reference-extraction')).toMatchObject({
+      status: 'attention',
+      reason: 'Court-order target last name is verified, but the target first name still needs grounded extraction before downstream use is fully trusted.',
     });
   });
 
@@ -562,7 +656,7 @@ describe('name change requirements skeleton', () => {
     });
   });
 
-  it('marks court-order reference extraction attention when linked reference data exists but is still unverified', () => {
+  it('marks court-order reference extraction attention when linked target-name data exists but is still unverified', () => {
     const snapshot = evaluateNameChangeRequirements(
       makeCase({ legal_basis: 'court_order' as never }),
       [
@@ -583,9 +677,9 @@ describe('name change requirements skeleton', () => {
       [
         {
           document_id: 'doc-court-order',
-          field_key: 'case_number',
-          field_label: 'Case number',
-          field_value_masked: '24-CV-1188',
+          field_key: 'first_name',
+          field_label: 'First name',
+          field_value_masked: 'Alex',
           source_type: 'document_extract',
           is_verified: false,
         },

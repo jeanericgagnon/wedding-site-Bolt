@@ -111,10 +111,10 @@ describe('court-order path review execution snapshot', () => {
 
     const snapshot = buildNameChangeCourtOrderExecutionSnapshot(makeCase(), documents, []);
     expect(snapshot.ready).toBe(false);
-    expect(snapshot.blockers).toContain('Court-order proof is in intake, but no verified case-number or signed-date extraction is represented yet.');
+    expect(snapshot.blockers).toContain('Court-order proof is in intake, but no verified target-name or case-reference extraction is represented yet.');
   });
 
-  it('still stays in attention once court-order reference extraction is represented', () => {
+  it('still stays in attention once target legal name and only part of court-order reference extraction are represented', () => {
     const documents: NameChangeDocumentInput[] = [
       {
         document_kind: 'court_order_name_change',
@@ -132,6 +132,20 @@ describe('court-order path review execution snapshot', () => {
 
     const snapshot = buildNameChangeCourtOrderExecutionSnapshot(makeCase(), documents, [
       {
+        field_key: 'first_name',
+        field_label: 'First name',
+        field_value_masked: 'Alex',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        field_key: 'last_name',
+        field_label: 'Last name',
+        field_value_masked: 'Jordan',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
         field_key: 'case_number',
         field_label: 'Case number',
         field_value_masked: '24-CV-1188',
@@ -140,7 +154,7 @@ describe('court-order path review execution snapshot', () => {
       },
     ]);
     expect(snapshot.ready).toBe(false);
-    expect(snapshot.checklist.find((item) => item.key === 'court-order-reference-extraction')).toMatchObject({ status: 'ready' });
+    expect(snapshot.checklist.find((item) => item.key === 'court-order-reference-extraction')).toMatchObject({ status: 'missing' });
   });
 
   it('blocks when launch state is not aligned to the modeled California court-order review path', () => {

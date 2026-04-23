@@ -70,7 +70,7 @@ export const NAME_CHANGE_REQUIREMENT_DEFINITIONS: NameChangeRequirementDefinitio
     key: 'court-order-reference-extraction',
     label: 'Court-order reference extraction',
     stage: 'proof',
-    description: 'Court-order review should have a verified case number or signed-date extraction before downstream use is treated as grounded.',
+    description: 'Court-order review should have verified target-name plus case-reference extraction before downstream use is treated as grounded.',
   },
   {
     key: 'passport-timing-risk',
@@ -102,11 +102,18 @@ export function evaluateNameChangeRequirements(
   const hasIdentityMetadataReady = intakeSnapshot.documents.some((document) => identityCoverageKinds.includes(document.kind) && document.metadataMissing.length === 0 && document.intakeStatus !== 'not_started');
   const hasTravelIdentitySupport = ['current_passport', 'current_drivers_license'].some((kind) => canonicalCase.documents[kind as NameChangeDocumentKind].intakeStatus !== 'not_started');
   const hasCourtOrderProof = canonicalCase.documents.court_order.intakeStatus !== 'not_started';
-  const hasAnyCourtOrderReferenceExtraction = hasAnyLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'case_number')
-    || hasAnyLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'court_order_date');
+  const hasAnyCourtOrderCaseNumber = hasAnyLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'case_number');
+  const hasAnyCourtOrderSignedDate = hasAnyLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'court_order_date');
+  const hasAnyCourtOrderTargetFirstName = hasAnyLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'first_name');
+  const hasAnyCourtOrderTargetLastName = hasAnyLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'last_name');
+  const hasAnyCourtOrderReferenceExtraction = hasAnyCourtOrderCaseNumber || hasAnyCourtOrderSignedDate || hasAnyCourtOrderTargetFirstName || hasAnyCourtOrderTargetLastName;
   const hasVerifiedCourtOrderCaseNumber = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'case_number');
   const hasVerifiedCourtOrderSignedDate = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'court_order_date');
-  const hasVerifiedCourtOrderReferenceExtraction = hasVerifiedCourtOrderCaseNumber || hasVerifiedCourtOrderSignedDate;
+  const hasVerifiedCourtOrderTargetFirstName = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'first_name');
+  const hasVerifiedCourtOrderTargetLastName = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'last_name');
+  const hasVerifiedCourtOrderTargetNameExtraction = hasVerifiedCourtOrderTargetFirstName && hasVerifiedCourtOrderTargetLastName;
+  const hasVerifiedCourtOrderReferenceFields = hasVerifiedCourtOrderCaseNumber || hasVerifiedCourtOrderSignedDate;
+  const hasVerifiedCourtOrderReferenceExtraction = hasVerifiedCourtOrderTargetNameExtraction && hasVerifiedCourtOrderReferenceFields;
   const needsOutOfStateMarriageCertificateGrounding = canonicalCase.legalBasis === 'marriage'
     && canonicalCase.launchState === 'california'
     && Boolean(canonicalCase.legalContext.marriageState)
@@ -271,14 +278,20 @@ export function evaluateNameChangeRequirements(
           : hasVerifiedCourtOrderReferenceExtraction
             ? hasVerifiedCourtOrderCaseNumber && hasVerifiedCourtOrderSignedDate
               ? hasReviewedCourtOrderProof
-                ? 'Court-order reference extraction is present for the modeled review path.'
-                : 'Court-order reference extraction exists, but the proof document still needs review before downstream use is grounded.'
+                ? 'Court-order target legal name and case reference extraction are present for the modeled review path.'
+                : 'Court-order extraction exists, but the proof document still needs review before downstream use is grounded.'
               : hasVerifiedCourtOrderCaseNumber
-                ? 'Court-order case number is verified, but the signed date still needs grounded extraction before downstream use is fully trusted.'
-                : 'Court-order signed date is verified, but the case number still needs grounded extraction before downstream use is fully trusted.'
+                ? 'Court-order target legal name and case number are verified, but the signed date still needs grounded extraction before downstream use is fully trusted.'
+                : 'Court-order target legal name and signed date are verified, but the case number still needs grounded extraction before downstream use is fully trusted.'
             : hasAnyCourtOrderReferenceExtraction
-              ? 'Court-order reference data exists, but it is still unverified so downstream use is not grounded yet.'
-              : 'Court-order proof is in intake, but no verified case-number or signed-date extraction is represented yet.',
+              ? !hasVerifiedCourtOrderTargetFirstName && hasVerifiedCourtOrderTargetLastName
+                ? 'Court-order target last name is verified, but the target first name still needs grounded extraction before downstream use is fully trusted.'
+                : hasVerifiedCourtOrderTargetFirstName && !hasVerifiedCourtOrderTargetLastName
+                  ? 'Court-order target first name is verified, but the target last name still needs grounded extraction before downstream use is fully trusted.'
+                  : hasVerifiedCourtOrderTargetNameExtraction && !hasVerifiedCourtOrderReferenceFields
+                    ? 'Court-order target legal name is verified, but the case number or signed date still needs grounded extraction before downstream use is fully trusted.'
+                    : 'Court-order reference data exists, but it is still unverified so downstream use is not grounded yet.'
+              : 'Court-order proof is in intake, but no verified target-name or case-reference extraction is represented yet.',
     },
     {
       key: 'passport-timing-risk',
