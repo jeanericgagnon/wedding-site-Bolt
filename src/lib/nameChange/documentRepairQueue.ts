@@ -32,6 +32,46 @@ export interface NameChangeDocumentRepairQueueItem {
   required: boolean;
 }
 
+function buildExtractionRepairAction(
+  document: Pick<NameChangeDocumentRepairQueueItem, 'kind' | 'label'>,
+  actionableMissingExtractionFields: NameChangeExtractionFieldKey[],
+): NameChangeGuidedAction {
+  if (document.kind === 'marriage_certificate') {
+    const missingCounty = actionableMissingExtractionFields.includes('county');
+    const missingCertificateNumber = actionableMissingExtractionFields.includes('certificate_number');
+
+    if (missingCounty && missingCertificateNumber) {
+      return {
+        category: 'document',
+        label: 'Capture county + certificate number for certified marriage certificate',
+        detail: 'Out-of-state marriage follow-through needs grounded county and certificate-number extraction from the marriage certificate.',
+      };
+    }
+
+    if (missingCounty) {
+      return {
+        category: 'document',
+        label: 'Capture county for certified marriage certificate',
+        detail: 'Out-of-state marriage follow-through still needs grounded county extraction from the marriage certificate.',
+      };
+    }
+
+    if (missingCertificateNumber) {
+      return {
+        category: 'document',
+        label: 'Capture certificate number for certified marriage certificate',
+        detail: 'Out-of-state marriage follow-through still needs grounded certificate-number extraction from the marriage certificate.',
+      };
+    }
+  }
+
+  return {
+    category: 'document',
+    label: `Capture extraction fields for ${document.label.toLowerCase()}`,
+    detail: `Missing extraction fields: ${actionableMissingExtractionFields.join(', ')}.`,
+  };
+}
+
 export function buildNameChangeDocumentRepairQueue(
   intake: NameChangeDocumentIntakeSnapshot,
   executionSnapshots: NameChangeTargetExecutionSnapshot[],
@@ -109,11 +149,7 @@ export function buildNameChangeDocumentRepairQueue(
         });
       }
       if (actionableMissingExtractionFields.length > 0) {
-        nextActions.push({
-          category: 'document',
-          label: `Capture extraction fields for ${document.label.toLowerCase()}`,
-          detail: `Missing extraction fields: ${actionableMissingExtractionFields.join(', ')}.`,
-        });
+        nextActions.push(buildExtractionRepairAction(document, actionableMissingExtractionFields as NameChangeExtractionFieldKey[]));
       }
       if (canonicalConflictCount > 0) {
         const preview = document.canonicalConflicts.slice(0, 2).map((conflict) => conflict.label).join(', ');

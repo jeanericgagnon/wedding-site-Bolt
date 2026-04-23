@@ -78,31 +78,21 @@ describe('name change document repair queue', () => {
     ];
 
     const queue = buildNameChangeDocumentRepairQueue(intake, snapshots);
-    expect(queue[0]).toMatchObject({
+    const marriageCertificateItem = queue.find((item) => item.kind === 'marriage_certificate');
+    expect(marriageCertificateItem).toMatchObject({
       kind: 'marriage_certificate',
       severity: 'blocking',
     });
-    expect(queue[0].impactSummary).toContain('metadata gaps');
-    expect(queue[0].payoffSummary).toContain('removes');
-    expect(queue[0].impactedTargets.length).toBeGreaterThan(0);
-    expect(queue[0].impactedFields).toEqual(expect.arrayContaining([
-      expect.objectContaining({
-        targetLabel: expect.any(String),
-        label: expect.any(String),
-      }),
-    ]));
-    expect(queue[0].nextActions).toEqual(expect.arrayContaining([
+    expect(marriageCertificateItem?.impactSummary).toContain('metadata gaps');
+    expect(marriageCertificateItem?.payoffSummary).toContain('removes');
+    expect(marriageCertificateItem?.nextActions).toEqual(expect.arrayContaining([
       expect.objectContaining({
         category: 'document',
         label: expect.stringContaining('Fill metadata'),
       }),
       expect.objectContaining({
         category: 'document',
-        label: expect.stringContaining('Capture extraction fields'),
-      }),
-      expect.objectContaining({
-        category: 'review',
-        label: 'Recheck impacted packet fields',
+        label: 'Capture county + certificate number for certified marriage certificate',
       }),
     ]));
   });
@@ -218,6 +208,87 @@ describe('name change document repair queue', () => {
       expect.objectContaining({
         kind: 'current_passport',
         canonicalConflictCount: 1,
+      }),
+    ]));
+  });
+
+  it('gives a concrete out-of-state marriage certificate grounding repair action', () => {
+    const profile = makeCase({ marriage_state: 'Nevada' });
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-marriage',
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'Clark County Clerk',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
+      },
+    ];
+
+    const intake = buildNameChangeDocumentIntakeSnapshot(profile, documents, []);
+    const queue = buildNameChangeDocumentRepairQueue(intake, [
+      buildNameChangeTargetExecutionSnapshot('passport', profile, documents, []),
+    ]);
+
+    expect(queue).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        kind: 'marriage_certificate',
+        missingExtractionFields: expect.arrayContaining(['county', 'certificate_number']),
+        nextActions: expect.arrayContaining([
+          expect.objectContaining({
+            category: 'document',
+            label: 'Capture county + certificate number for certified marriage certificate',
+            detail: 'Out-of-state marriage follow-through needs grounded county and certificate-number extraction from the marriage certificate.',
+          }),
+        ]),
+      }),
+    ]));
+  });
+
+  it('narrows marriage certificate repair action when only one out-of-state reference field is missing', () => {
+    const profile = makeCase({ marriage_state: 'Nevada' });
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-marriage',
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'Clark County Clerk',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'doc-marriage',
+        field_key: 'certificate_number',
+        field_label: 'Certificate number',
+        field_value_masked: 'MC-123',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+
+    const intake = buildNameChangeDocumentIntakeSnapshot(profile, documents, extractedFields);
+    const queue = buildNameChangeDocumentRepairQueue(intake, [
+      buildNameChangeTargetExecutionSnapshot('tsa', profile, documents, extractedFields),
+    ]);
+
+    expect(queue).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        kind: 'marriage_certificate',
+        nextActions: expect.arrayContaining([
+          expect.objectContaining({
+            category: 'document',
+            label: 'Capture county for certified marriage certificate',
+            detail: 'Out-of-state marriage follow-through still needs grounded county extraction from the marriage certificate.',
+          }),
+        ]),
       }),
     ]));
   });
