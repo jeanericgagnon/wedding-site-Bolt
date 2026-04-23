@@ -386,13 +386,22 @@ export const Product: React.FC = () => {
             <p className="mt-3 max-w-3xl text-ink/75">DayOf should let the couple bring in a planner or coordinator from a calm, tasteful settings flow, share the right operational surfaces, and keep ownership where it belongs.</p>
             <div className="mt-5 flex flex-wrap gap-3">
               {user ? (
-                <button
-                  type="button"
-                  onClick={() => navigate('/settings')}
-                  className="rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-paper transition hover:bg-brand/90"
-                >
-                  Open collaboration settings
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/settings')}
+                    className="rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-paper transition hover:bg-brand/90"
+                  >
+                    Open collaboration settings
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/dashboard/planning')}
+                    className="rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-medium text-ink transition hover:border-brand/30 hover:text-brand"
+                  >
+                    Open planner workspace
+                  </button>
+                </>
               ) : (
                 <Link to="/trust" className="rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-medium text-ink transition hover:border-brand/30 hover:text-brand">
                   See collaboration trust notes

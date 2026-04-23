@@ -153,4 +153,13 @@ describe('Product starter draft truth', () => {
 
     expect(navigateMock).toHaveBeenCalledWith('/settings');
   });
+
+  it('gives signed-in couples a direct planner workspace shortcut', () => {
+    authState.user = { id: 'user-1' };
+    render(<Product />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open planner workspace' }));
+
+    expect(navigateMock).toHaveBeenCalledWith('/dashboard/planning');
+  });
 });
