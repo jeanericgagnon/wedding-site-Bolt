@@ -201,7 +201,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     setPublishNotice(null);
     setPublishAttemptedAt(new Date().toISOString());
 
-    const publishValidationError = getPublishValidationError(currentState.project, currentState.weddingData, { isDirty: currentState.isDirty });
+    const publishValidationError = getPublishValidationError(currentState.project, currentState.weddingData);
     if (publishValidationError) {
       setPublishError(publishValidationError);
       return;

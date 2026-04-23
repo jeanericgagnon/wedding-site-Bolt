@@ -17,6 +17,10 @@ export interface PublishReadinessItem {
   detail: string;
 }
 
+export interface PublishIssueOptions {
+  isDirty?: boolean;
+}
+
 const hasNonEmptyString = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
 const getNormalizedId = (value: unknown) => {
   if (typeof value === 'string') return value.trim();
@@ -87,7 +91,7 @@ const getNormalizedVenues = (weddingData?: WeddingDataV1 | null) =>
 export const getPublishIssue = (
   project: BuilderProject,
   weddingData?: WeddingDataV1 | null,
-  options?: { isDirty?: boolean }
+  options?: PublishIssueOptions,
 ): PublishIssue | null => {
   const normalizedPages = getNormalizedPages(project);
 
