@@ -233,17 +233,18 @@ describe('name change document repair queue', () => {
       buildNameChangeTargetExecutionSnapshot('passport', profile, documents, []),
     ]);
 
-    expect(queue).toEqual(expect.arrayContaining([
+    const marriageCertificateItem = queue.find((item) => item.kind === 'marriage_certificate');
+    expect(marriageCertificateItem).toMatchObject({
+      kind: 'marriage_certificate',
+      impactedTargets: ['U.S. Passport'],
+      payoffSummary: 'removes 6 document gaps · helps 1 target',
+    });
+    expect(marriageCertificateItem?.missingExtractionFields).toEqual(expect.arrayContaining(['county', 'certificate_number']));
+    expect(marriageCertificateItem?.nextActions).toEqual(expect.arrayContaining([
       expect.objectContaining({
-        kind: 'marriage_certificate',
-        missingExtractionFields: expect.arrayContaining(['county', 'certificate_number']),
-        nextActions: expect.arrayContaining([
-          expect.objectContaining({
-            category: 'document',
-            label: 'Capture county + certificate number for certified marriage certificate',
-            detail: 'Out-of-state marriage follow-through needs grounded county and certificate-number extraction from the marriage certificate.',
-          }),
-        ]),
+        category: 'document',
+        label: 'Capture county + certificate number for certified marriage certificate',
+        detail: 'Out-of-state marriage follow-through needs grounded county and certificate-number extraction from the marriage certificate.',
       }),
     ]));
   });
@@ -279,16 +280,17 @@ describe('name change document repair queue', () => {
       buildNameChangeTargetExecutionSnapshot('tsa', profile, documents, extractedFields),
     ]);
 
-    expect(queue).toEqual(expect.arrayContaining([
+    const marriageCertificateItem = queue.find((item) => item.kind === 'marriage_certificate');
+    expect(marriageCertificateItem).toMatchObject({
+      kind: 'marriage_certificate',
+      impactedTargets: ['TSA PreCheck / travel profiles'],
+      payoffSummary: 'removes 5 document gaps · helps 1 target',
+    });
+    expect(marriageCertificateItem?.nextActions).toEqual(expect.arrayContaining([
       expect.objectContaining({
-        kind: 'marriage_certificate',
-        nextActions: expect.arrayContaining([
-          expect.objectContaining({
-            category: 'document',
-            label: 'Capture county for certified marriage certificate',
-            detail: 'Out-of-state marriage follow-through still needs grounded county extraction from the marriage certificate.',
-          }),
-        ]),
+        category: 'document',
+        label: 'Capture county for certified marriage certificate',
+        detail: 'Out-of-state marriage follow-through still needs grounded county extraction from the marriage certificate.',
       }),
     ]));
   });

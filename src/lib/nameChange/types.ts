@@ -495,6 +495,7 @@ export interface NameChangeGuidedAction {
   category: 'packet' | 'dependency' | 'checklist' | 'document' | 'review';
   label: string;
   detail: string;
+  documentKind?: NameChangeDocumentKind;
 }
 
 export interface NameChangeMarriageCertificateExtraction {

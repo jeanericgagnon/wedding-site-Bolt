@@ -94,6 +94,10 @@ export function buildNameChangeDocumentRepairQueue(
         : document.latentMissingExtractionFields;
 
       executionSnapshots.forEach((snapshot) => {
+        if (snapshot.nextAction.category === 'document' && snapshot.nextAction.documentKind === document.kind) {
+          impactedTargets.add(snapshot.targetLabel);
+        }
+
         snapshot.fieldRisks.forEach((risk) => {
           const matchesDocument = risk.sourceDocumentKind === document.kind
             || (!risk.sourceDocumentKind && Boolean(risk.sourceFieldKey)

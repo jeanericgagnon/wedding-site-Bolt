@@ -103,6 +103,7 @@ export function buildNameChangeTargetExecutionSnapshot(
         category: 'document' as const,
         label,
         detail: referenceExtractionDependency.reason,
+        documentKind: 'court_order' as const,
       };
     }
 
@@ -146,6 +147,7 @@ export function buildNameChangeTargetExecutionSnapshot(
       category: 'document' as const,
       label,
       detail: groundingDependency.reason,
+      documentKind: 'marriage_certificate' as const,
     };
   };
   const courtOrderNextAction = targetKey === 'courtOrder' ? buildCourtOrderNextAction() : null;
