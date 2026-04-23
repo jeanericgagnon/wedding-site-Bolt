@@ -125,6 +125,7 @@ export function normalizeDraftFieldKey(value: string) {
     .trim()
     .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
     .toLowerCase()
+    .replace(/#/g, ' number ')
     .replace(/\bno\.?\b/g, 'number')
     .replace(/[+#,&()\\/.:\-'’\s]+/g, '_')
     .replace(/_+/g, '_')

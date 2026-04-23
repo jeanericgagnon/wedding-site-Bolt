@@ -200,6 +200,24 @@ describe('name change extraction contract', () => {
     expect(getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'court_order_date')).toBe('2026-04-05');
   });
 
+  it('treats hash-labeled case number extraction keys as canonical contract truth', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-court-order',
+        document_kind: 'court_order_name_change',
+        display_name: 'Court order name change',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      { document_id: 'doc-court-order', field_key: 'case #', field_label: 'Case #', field_value_masked: '24-cv - 1188', source_type: 'document_extract', is_verified: true },
+    ];
+
+    expect(getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'case_number')).toBe('24-CV-1188');
+    expect(getDocumentCapturedFieldKeys(documents, extractedFields, 'court_order')).toEqual(['case_number']);
+  });
+
   it('flags court-order target-name conflicts against canonical case truth', () => {
     const documents: NameChangeDocumentInput[] = [
       {

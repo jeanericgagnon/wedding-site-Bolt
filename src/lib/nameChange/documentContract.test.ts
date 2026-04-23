@@ -569,6 +569,40 @@ describe('name change document intake contract', () => {
     });
   });
 
+  it('treats raw case-hash extraction labels as canonical captured case numbers', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase({ legal_basis: 'court_order', marriage_state: null, marriage_date: null }),
+      [
+        {
+          id: 'doc-court-order',
+          document_kind: 'court_order_name_change',
+          display_name: 'Court order',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'court-order-•••.pdf',
+          issuing_authority: 'San Diego Superior Court',
+          issued_on: '2026-04-05',
+          extraction_confidence: 0.93,
+        },
+      ],
+      [
+        {
+          document_id: 'doc-court-order',
+          field_key: 'case #',
+          field_label: 'Case #',
+          field_value_masked: '24-cv - 1188',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+      ],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'court_order')).toMatchObject({
+      capturedExtractionFields: ['case_number'],
+      missingExtractionFields: ['first_name', 'last_name', 'court_order_date'],
+    });
+  });
+
   it('does not let duplicate alias rows on a weaker document outrank the stronger court-order truth source', () => {
     const snapshot = buildNameChangeDocumentIntakeSnapshot(
       makeCase({ legal_basis: 'court_order', marriage_state: null, marriage_date: null }),
