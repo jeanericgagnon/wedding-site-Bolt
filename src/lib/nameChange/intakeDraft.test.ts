@@ -181,6 +181,20 @@ describe('name change intake draft helpers', () => {
     });
   });
 
+  it('builds canonical document metadata from issue and expiry aliases', () => {
+    expect(buildDraftNameChangeDocumentMetadataFromSnapshot({
+      issuingAgency: 'Texas DPS',
+      issueDate: '2025-01-08T00:00:00Z',
+      expiryDate: '2033-01-08T00:00:00Z',
+      confidence: '0.91',
+    })).toEqual({
+      issuingAuthority: 'Texas DPS',
+      issuedOn: '2025-01-08',
+      expiresOn: '2033-01-08',
+      extractionConfidence: 0.91,
+    });
+  });
+
   it('collapses draft document labels into one clean downstream display name', () => {
     expect(createDraftNameChangeDocument('marriage_certificate', '  Certified   marriage   certificate  ')).toMatchObject({
       display_name: 'Certified marriage certificate',

@@ -873,11 +873,11 @@ export function buildDraftNameChangeDocumentMetadataFromSnapshot(
   const extractionConfidenceValue = readValue('extraction_confidence', 'extractionConfidence', 'confidence');
   const parsedExtractionConfidence = extractionConfidenceValue == null ? null : Number.parseFloat(extractionConfidenceValue);
 
-  const issuedOnValue = readValue('issued_on', 'issuedOn', 'issuance_date', 'issuanceDate');
-  const expiresOnValue = readValue('expires_on', 'expiresOn', 'expiration_date', 'expirationDate');
+  const issuedOnValue = readValue('issued_on', 'issuedOn', 'issuance_date', 'issuanceDate', 'issue_date', 'issueDate');
+  const expiresOnValue = readValue('expires_on', 'expiresOn', 'expiration_date', 'expirationDate', 'expiry_date', 'expiryDate');
 
   return {
-    issuingAuthority: readValue('issuing_authority', 'issuingAuthority', 'authority', 'issuer'),
+    issuingAuthority: readValue('issuing_authority', 'issuingAuthority', 'issuing_agency', 'issuingAgency', 'authority', 'issuer'),
     issuedOn: issuedOnValue ? normalizeDraftDateValue(issuedOnValue) : null,
     expiresOn: expiresOnValue ? normalizeDraftDateValue(expiresOnValue) : null,
     extractionConfidence: Number.isFinite(parsedExtractionConfidence) ? parsedExtractionConfidence : null,
