@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Lock, Heart, Send, CheckCircle, AlertCircle, Loader2, Mic, Square } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { DEMO_MODE } from '../config/env';
+import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
 
 interface SiteInfo {
   id: string;
@@ -25,6 +26,18 @@ const DEMO_VAULT_STORAGE_KEY = 'dayof_demo_vault_state_v1';
 const MAX_UPLOAD_MB_BY_TYPE: Record<'photo' | 'video' | 'voice', number> = { photo: 8, video: 35, voice: 12 };
 const VAULT_SUBMITTED_KEY_PREFIX = 'vault_submitted_years_';
 const DEMO_WEDDING_DATE = '2026-02-23';
+
+export function getVaultCoupleName(site: Pick<SiteInfo, 'couple_name_1' | 'couple_name_2'> | null): string {
+  if (!site) return '';
+  return buildCoupleDisplayName(site.couple_name_1, site.couple_name_2, 'the couple');
+}
+
+export function getVaultUnlockYear(weddingDate: string | null | undefined, durationYears: number | null | undefined): number | null {
+  if (!weddingDate || durationYears == null) return null;
+  const date = new Date(weddingDate);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.getFullYear() + durationYears;
+}
 
 function getContributionWindow(weddingDateRaw: string | null): { canSubmit: boolean; message: string | null } {
   if (!weddingDateRaw) return { canSubmit: true, message: null };
@@ -578,15 +591,9 @@ export const VaultContribute: React.FC = () => {
     return;
   }, [step, hasYearParam, siteSlug, navigate]);
 
-  const coupleName = site
-    ? site.couple_name_1 && site.couple_name_2
-      ? `${site.couple_name_1} & ${site.couple_name_2}`
-      : site.couple_name_1 ?? site.couple_name_2 ?? 'the couple'
-    : '';
+  const coupleName = getVaultCoupleName(site);
 
-  const unlockYear = site?.wedding_date && vaultConfig
-    ? new Date(site.wedding_date).getFullYear() + vaultConfig.duration_years
-    : null;
+  const unlockYear = getVaultUnlockYear(site?.wedding_date, vaultConfig?.duration_years);
   const storageProvider = site?.vault_storage_provider ?? 'supabase';
   const usingGoogleDrive = storageProvider === 'google_drive';
 
