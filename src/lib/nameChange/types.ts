@@ -530,6 +530,8 @@ export interface NameChangeTargetExecutionSnapshot {
       total: number;
     };
     notes: string[];
+    executionNote: string | null;
+    reminderNote: string | null;
     lastUpdatedAt: string | null;
     lastTouchedAt: string | null;
     lastTouchedSource: 'execution' | 'reminder' | null;

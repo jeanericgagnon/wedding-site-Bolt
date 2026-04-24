@@ -97,6 +97,8 @@ interface TargetStatusVaultRow {
   proofMissingCount: number;
   proofAttentionCount: number;
   note: string | null;
+  executionNote: string | null;
+  reminderNote: string | null;
   updatedLabel: string | null;
   executionUpdatedLabel: string | null;
   nextActionLabel: string | null;
@@ -615,6 +617,8 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       proofMissingCount: snapshot.statusVault.proofCounts.missing,
       proofAttentionCount: snapshot.statusVault.proofCounts.attention,
       note: snapshot.statusVault.notes[0] ?? null,
+      executionNote: snapshot.statusVault.executionNote,
+      reminderNote: snapshot.statusVault.reminderNote,
       updatedLabel: snapshot.statusVault.lastTouchedAt
         ? `Latest touch ${formatNameChangeExecutionDateTime(snapshot.statusVault.lastTouchedAt)}${snapshot.statusVault.lastTouchedSource === 'reminder' ? ' · reminder' : snapshot.statusVault.lastTouchedSource === 'execution' ? ' · execution' : ''}`
         : null,
@@ -1195,6 +1199,8 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                     </div>
                   </div>
                   {row.note && <p className="mt-3 text-sm text-text-secondary">{row.note}</p>}
+                  {row.executionNote && row.executionNote !== row.note ? <p className="mt-2 text-xs text-text-secondary">Execution note: {row.executionNote}</p> : null}
+                  {row.reminderNote && row.reminderNote !== row.note ? <p className="mt-2 text-xs text-text-secondary">Reminder note: {row.reminderNote}</p> : null}
                   {row.nextActionLabel && <p className="mt-2 text-xs text-text-secondary">Next: {row.nextActionLabel}</p>}
                   {row.reminderLabel && <p className="mt-2 text-xs text-text-secondary">Reminders: {row.reminderLabel}</p>}
                   {row.updatedLabel && <p className="mt-3 text-xs text-text-secondary">{row.updatedLabel}</p>}

@@ -202,4 +202,51 @@ describe('NameChangePlannerTab', () => {
       'California DMV',
     ]);
   });
+
+  it('keeps reminder-backed target tracking visible when a reminder is the latest touch', () => {
+    const draft = makeDraft();
+    const basePlan = buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-ssa' ? {
+        ...step,
+        executionStatus: 'in_progress' as const,
+        executionNote: 'Submitted the SS-5 packet and waiting on return mail.',
+        executionUpdatedAt: '2026-04-24T20:15:00.000Z',
+      } : step),
+    };
+
+    render(
+      <NameChangePlannerTab
+        draft={draft}
+        documents={[]}
+        extractedFields={[]}
+        plan={plan}
+        reminders={[
+          {
+            reminder_key: 'ssa-follow-up',
+            label: 'SSA follow-up',
+            reason: 'Receipt still missing',
+            trigger_type: 'manual',
+            status: 'pending',
+            urgency: 'high',
+            focus_target_id: 'ssa',
+            updated_at: '2026-04-24T22:20:00.000Z',
+          },
+        ]}
+        saving={false}
+        onDraftChange={vi.fn()}
+        onStructuredIntakeChange={vi.fn()}
+        onDocumentsChange={vi.fn()}
+        onExtractedFieldsChange={vi.fn()}
+        onRemindersChange={vi.fn()}
+        onStepExecutionStatusChange={vi.fn()}
+        onStepExecutionNoteChange={vi.fn()}
+        onSave={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    expect(screen.getByText(/SSA follow-up/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Latest touch/).length).toBeGreaterThan(0);
+  });
 });

@@ -130,6 +130,7 @@ function getTargetStatusVaultSnapshot(
   const notesWithReminder = reminderNote && lastTouchedSource === 'reminder'
     ? [reminderNote, ...notes.filter((note) => note !== reminderNote)]
     : notes;
+  const executionNote = explicitNotes[0] ?? milestoneNotes[0] ?? (nextAction ? nextAction.detail : blockers[0] ?? null);
 
   return {
     status,
@@ -141,6 +142,8 @@ function getTargetStatusVaultSnapshot(
       total: checklist.length,
     },
     notes: notesWithReminder,
+    executionNote,
+    reminderNote,
     lastUpdatedAt: latestExecutionUpdatedAt,
     lastTouchedAt,
     lastTouchedSource,

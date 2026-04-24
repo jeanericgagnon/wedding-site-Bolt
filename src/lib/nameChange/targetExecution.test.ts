@@ -2281,6 +2281,44 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.statusVault.notes[0]).toBe('SSA packet already filed and waiting on receipt.');
   });
 
+  it('preserves execution truth when reminder pressure is newer', () => {
+    const basePlan = buildNameChangePlan({ profile: makeCase(), documents: [], extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-ssa'
+        ? {
+            ...step,
+            executionStatus: 'in_progress' as const,
+            executionNote: 'SSA packet already filed and waiting on receipt.',
+            executionUpdatedAt: '2026-04-24T22:10:00.000Z',
+          }
+        : step),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot(
+      'ssa',
+      makeCase(),
+      [],
+      [],
+      plan,
+      [{
+        reminder_key: 'ssa-follow-up',
+        label: 'SSA follow-up',
+        reason: 'Receipt still missing',
+        trigger_type: 'manual',
+        status: 'pending',
+        urgency: 'high',
+        focus_target_id: 'ssa',
+        updated_at: '2026-04-24T22:20:00.000Z',
+      }],
+    );
+
+    expect(snapshot.statusVault.lastTouchedSource).toBe('reminder');
+    expect(snapshot.statusVault.notes[0]).toBe('Reminder: SSA follow-up — Receipt still missing');
+    expect(snapshot.statusVault.executionNote).toBe('SSA packet already filed and waiting on receipt.');
+    expect(snapshot.statusVault.reminderNote).toBe('Reminder: SSA follow-up — Receipt still missing');
+  });
+
   it('falls back to milestone confirmations when a target has no explicit execution note yet', () => {
     const basePlan = buildNameChangePlan({ profile: makeCase(), documents: [], extractedFields: [] });
     const plan = {
