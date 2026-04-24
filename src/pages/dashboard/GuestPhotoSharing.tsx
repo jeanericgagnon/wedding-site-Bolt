@@ -15,6 +15,7 @@ import { PhotoBucketKind } from '../../lib/aiPhotoBuckets';
 import { buildPhotoPlacementPlan } from '../../lib/aiPhotoPlacement';
 import { mergeGeneratedDraftIntoBuilderProject } from '../../lib/aiBuilderProjectPatch';
 import { buildQuickStartOverviewPath, readQuickStartDashboardContinuation } from '../../lib/quickStartContinuation';
+import { parseDatetimeLocalToIso, toDatetimeLocalOrEmpty } from './guestPhotoDateTime';
 
 type ItineraryEvent = {
   id: string;
@@ -55,15 +56,6 @@ type SlideshowFrame = {
   title: string;
   caption: string;
 };
-
-const toDatetimeLocal = (iso: string | null): string => {
-  if (!iso) return '';
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-};
-
-const fromDatetimeLocal = (v: string): string | null => (v.trim() ? new Date(v).toISOString() : null);
 
 const PHOTO_ALBUM_LINKS_STORAGE_KEY = 'dayof.photoBucketLinks';
 
@@ -312,8 +304,8 @@ export const GuestPhotoSharing: React.FC = () => {
       const nextDrafts: Record<string, { opensAt: string; closesAt: string }> = {};
       nextBuckets.forEach((a) => {
         nextDrafts[a.id] = {
-          opensAt: toDatetimeLocal(a.opens_at),
-          closesAt: toDatetimeLocal(a.closes_at),
+          opensAt: toDatetimeLocalOrEmpty(a.opens_at),
+          closesAt: toDatetimeLocalOrEmpty(a.closes_at),
         };
       });
       setWindowDrafts(nextDrafts);
@@ -839,8 +831,11 @@ export const GuestPhotoSharing: React.FC = () => {
       setError(null);
       setSuccess(null);
       const draft = windowDrafts[bucketId] ?? { opensAt: '', closesAt: '' };
-      const opensAt = fromDatetimeLocal(draft.opensAt);
-      const closesAt = fromDatetimeLocal(draft.closesAt);
+      const opensAt = parseDatetimeLocalToIso(draft.opensAt);
+      const closesAt = parseDatetimeLocalToIso(draft.closesAt);
+      if (opensAt === undefined || closesAt === undefined) {
+        throw new Error('Enter valid open and close times.');
+      }
       if (opensAt && closesAt && new Date(closesAt) <= new Date(opensAt)) {
         throw new Error('Close time must be after open time.');
       }
