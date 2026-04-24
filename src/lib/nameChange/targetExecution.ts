@@ -18,6 +18,10 @@ import type {
   NameChangeTargetExecutionSnapshot,
 } from './types';
 
+function hasDualPartnerNameChange(profile: NameChangeCaseInput) {
+  return profile.change_reasons.some((reason) => /both_partners_change_name|dual/i.test(reason));
+}
+
 export function buildNameChangeTargetExecutionSnapshot(
   targetKey: NameChangeExecutionTargetKey,
   profile: NameChangeCaseInput,
@@ -162,8 +166,57 @@ export function buildNameChangeTargetExecutionSnapshot(
       documentKind: 'marriage_certificate' as const,
     };
   };
+  const buildPassportBranchNextAction = () => {
+    if (targetKey !== 'passport') return null;
+
+    const citizenshipDependency = sequence.dependencies.find((dependency) => dependency.key === 'citizenship-eligibility' && dependency.status === 'missing');
+    if (citizenshipDependency) {
+      return {
+        category: 'dependency' as const,
+        label: 'Route non-U.S. passport follow-through',
+        detail: citizenshipDependency.reason,
+      };
+    }
+
+    if (!profile.has_us_passport) {
+      return {
+        category: 'review' as const,
+        label: 'Confirm first-passport eligibility path',
+        detail: 'This passport update is really a first-passport branch, so confirm the initial application path and packet before treating it like a standard renewal.',
+      };
+    }
+
+    const passportEligibilityDependency = sequence.dependencies.find((dependency) => dependency.key === 'passport-eligibility-path' && dependency.status !== 'satisfied');
+    if (passportEligibilityDependency) {
+      return {
+        category: 'review' as const,
+        label: profile.has_us_passport ? 'Confirm passport amendment or renewal path' : 'Confirm first-passport eligibility path',
+        detail: passportEligibilityDependency.reason,
+      };
+    }
+
+    const ssaDependency = sequence.dependencies.find((dependency) => dependency.key === 'federal-ssa-progress' && dependency.status !== 'satisfied');
+    if (ssaDependency) {
+      return {
+        category: 'dependency' as const,
+        label: 'Finish SSA before passport packet',
+        detail: ssaDependency.reason,
+      };
+    }
+
+    if (hasDualPartnerNameChange(profile)) {
+      return {
+        category: 'review' as const,
+        label: 'Split passport work into two partner chains',
+        detail: 'Both partners are changing names, so passport follow-through should track separate document packets, travel timing, and submission checkpoints for each partner.',
+      };
+    }
+
+    return null;
+  };
   const courtOrderNextAction = targetKey === 'courtOrder' ? buildCourtOrderNextAction() : null;
   const marriageCertificateGroundingNextAction = buildMarriageCertificateGroundingNextAction();
+  const passportBranchNextAction = buildPassportBranchNextAction();
   const blockingFieldConflict = primaryCanonicalConflict && firstBlockingFieldRisk
     && primaryCanonicalConflict.documentKind === firstBlockingFieldRisk.sourceDocumentKind
     && primaryCanonicalConflict.fieldKey === firstBlockingFieldRisk.sourceFieldKey
@@ -229,7 +282,10 @@ export function buildNameChangeTargetExecutionSnapshot(
 
     return `Review ${item.label}`;
   };
-  const getDependencyCategory = (dependency: typeof dependencies[number], fallback: 'dependency' | 'review') => {
+  const getDependencyCategory = (
+    dependency: NonNullable<typeof firstBlockingDependency>,
+    fallback: 'dependency' | 'review',
+  ) => {
     if (dependency.nextActionCategory === 'document') {
       return 'document' as const;
     }
@@ -240,7 +296,7 @@ export function buildNameChangeTargetExecutionSnapshot(
 
     return fallback;
   };
-  const getBlockingDependencyLabel = (dependency: typeof dependencies[number]) => {
+  const getBlockingDependencyLabel = (dependency: NonNullable<typeof firstBlockingDependency>) => {
     const category = getDependencyCategory(dependency, 'dependency');
     return `${category === 'review' ? 'Review' : 'Unblock'} ${dependency.label}`;
   };
@@ -255,6 +311,8 @@ export function buildNameChangeTargetExecutionSnapshot(
       ? courtOrderNextAction
     : marriageCertificateGroundingNextAction
       ? marriageCertificateGroundingNextAction
+    : passportBranchNextAction
+      ? passportBranchNextAction
     : firstBlockingFieldRisk
       ? {
           category: 'packet' as const,

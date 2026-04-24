@@ -49,6 +49,16 @@ describe('name change target execution snapshot', () => {
         issued_on: '2026-04-05',
         extraction_confidence: 0.97,
       },
+      {
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'license-•••.pdf',
+        issuing_authority: 'California DMV',
+        issued_on: '2025-03-01',
+        extraction_confidence: 0.9,
+      },
     ];
 
     const snapshot = buildNameChangeTargetExecutionSnapshot('ssa', makeCase(), documents, []);
@@ -1195,6 +1205,115 @@ describe('name change target execution snapshot', () => {
       category: 'document',
       label: 'Capture marriage-certificate county + certificate number',
       detail: 'Marriage certificate is present, but no grounded county or certificate-number extraction is represented yet for out-of-state follow-through.',
+    });
+  });
+
+  it('uses a passport-specific next action for non-us passport routing', () => {
+    const snapshot = buildNameChangeTargetExecutionSnapshot('passport', makeCase({ is_us_citizen: false }), [], []);
+
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'dependency',
+      label: 'Route non-U.S. passport follow-through',
+      detail: 'Current modeled passport flow assumes U.S. citizenship eligibility.',
+    });
+  });
+
+  it('uses a passport-specific next action for first-passport eligibility branching', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'San Diego County Clerk',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        field_key: 'spouse_last_name',
+        field_label: 'Spouse last name',
+        field_value_masked: 'Jordan',
+        source_type: 'manual',
+        is_verified: true,
+      },
+    ];
+    const basePlan = buildNameChangePlan({
+      profile: makeCase({ has_us_passport: false, passport_needs_update: true }),
+      documents,
+      extractedFields,
+    });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-ssa'
+        ? { ...step, executionStatus: 'in_progress' as const }
+        : step),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('passport', makeCase({ has_us_passport: false, passport_needs_update: true }), documents, extractedFields, plan);
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'review',
+      label: 'Confirm first-passport eligibility path',
+      detail: 'This passport update is really a first-passport branch, so confirm the initial application path and packet before treating it like a standard renewal.',
+    });
+  });
+
+  it('splits ready passport work into two chains when both partners are changing names', () => {
+    const profile = makeCase({ change_reasons: ['marriage', 'both_partners_change_name'] });
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'San Diego County Clerk',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
+      },
+      {
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'passport-•••.pdf',
+        issuing_authority: 'U.S. Department of State',
+        issued_on: '2024-06-01',
+        expires_on: '2034-06-01',
+        extraction_confidence: 0.92,
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        field_key: 'spouse_last_name',
+        field_label: 'Spouse last name',
+        field_value_masked: 'Jordan',
+        source_type: 'manual',
+        is_verified: true,
+      },
+      {
+        field_key: 'issuance_date',
+        field_label: 'Passport issue date',
+        field_value_masked: '2024-06-01',
+        source_type: 'manual',
+        is_verified: true,
+      },
+    ];
+    const basePlan = buildNameChangePlan({ profile, documents, extractedFields });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-ssa'
+        ? { ...step, executionStatus: 'in_progress' as const }
+        : step),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('passport', profile, documents, extractedFields, plan);
+    expect(snapshot.ready).toBe(true);
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'review',
+      label: 'Split passport work into two partner chains',
     });
   });
 

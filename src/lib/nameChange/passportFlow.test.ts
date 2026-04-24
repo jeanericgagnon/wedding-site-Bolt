@@ -112,6 +112,10 @@ describe('name change passport execution snapshot', () => {
     expect(snapshot.ready).toBe(false);
     expect(snapshot.blockers).toContain('Current passport follow-through is not modeled for non-citizen or passport-ineligible cases yet.');
     expect(snapshot.checklist.find((item) => item.key === 'passport-eligibility-path')).toMatchObject({ status: 'missing' });
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'dependency',
+      label: 'Route non-U.S. passport follow-through',
+    });
   });
 
   it('blocks passport execution when travel is booked soon but no travel identity support is in intake', () => {
