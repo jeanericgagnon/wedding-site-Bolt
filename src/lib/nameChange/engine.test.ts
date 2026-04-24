@@ -113,6 +113,15 @@ describe('name change engine', () => {
         expect.objectContaining({ audience: 'Phone, utilities, or primary digital identity support' }),
       ]),
     );
+    expect(plan.summary.institutionCategoryCoverage).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'legal_government', institutionKeys: expect.arrayContaining(['irs-records']) }),
+        expect.objectContaining({ id: 'financial', institutionKeys: expect.arrayContaining(['banks', 'investments-loans']) }),
+        expect.objectContaining({ id: 'work_insurance', institutionKeys: expect.arrayContaining(['irs-employer', 'insurance']) }),
+        expect.objectContaining({ id: 'personal_lifestyle', institutionKeys: expect.arrayContaining(['phone-digital-identity', 'subscriptions-social']) }),
+        expect.objectContaining({ id: 'travel_mobility', institutionKeys: expect.arrayContaining(['tsa-precheck', 'travel-hospitality']) }),
+      ]),
+    );
   });
 
   it('surfaces blockers when the legal proof doc is missing', () => {

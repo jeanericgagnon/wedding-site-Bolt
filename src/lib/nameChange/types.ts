@@ -200,6 +200,15 @@ export interface NameChangePlanSummary {
     status: 'ready' | 'blocked' | 'upcoming' | 'in_progress' | 'complete';
     dependsOnStepIds: string[];
   }>;
+  institutionCategoryCoverage?: Array<{
+    id: 'legal_government' | 'financial' | 'work_insurance' | 'personal_lifestyle' | 'travel_mobility';
+    label: string;
+    status: 'ready' | 'blocked' | 'upcoming' | 'in_progress' | 'complete';
+    summary: string;
+    targetCount: number;
+    dependsOnStepIds: string[];
+    institutionKeys: string[];
+  }>;
   accountUpdateTemplates?: Array<{
     id: string;
     audience: string;

@@ -232,6 +232,27 @@ export function buildNameChangeReminderSuggestions(plan: NameChangePlan): NameCh
     });
   });
 
+  plan.summary.institutionCategoryCoverage?.forEach((category) => {
+    if (category.dependsOnStepIds.length === 0) return;
+
+    const matchingInstitutions = NAME_CHANGE_INSTITUTION_LIBRARY.filter((institution) => category.institutionKeys.includes(institution.key));
+    if (matchingInstitutions.length === 0) return;
+
+    const suggestedOffsetDays = Math.max(
+      3,
+      ...matchingInstitutions.map((institution) => institution.reminderDaysAfterPrimaryId + 2),
+    );
+
+    suggestions.push({
+      id: `reminder-category-confirm-${category.id}`,
+      label: `Confirm ${category.label.toLowerCase()} rollout is actually done`,
+      suggestedOffsetDays,
+      reason: `${category.summary}. Use this checkpoint to confirm the whole ${category.label.toLowerCase()} lane is no longer carrying the old name.`,
+      dependsOnStepId: category.dependsOnStepIds[category.dependsOnStepIds.length - 1] ?? category.dependsOnStepIds[0] ?? 'institutions-rollout',
+      urgency: raiseUrgency(urgencyFromOffset(suggestedOffsetDays), category.id === 'travel_mobility' ? 'medium' : undefined),
+    });
+  });
+
   return suggestions
     .map((suggestion) => adjustReminderSuggestionForStepState(suggestion, plan))
     .filter((suggestion): suggestion is NameChangeReminderSuggestion => suggestion !== null)

@@ -11,6 +11,34 @@ import type {
   NameChangePlanStep,
 } from './types';
 
+const INSTITUTION_CATEGORY_COVERAGE_CONFIG = [
+  {
+    id: 'legal_government',
+    label: 'Legal + government',
+    matches: (institution: NameChangeInstitutionEntry) => institution.category === 'government',
+  },
+  {
+    id: 'financial',
+    label: 'Financial',
+    matches: (institution: NameChangeInstitutionEntry) => institution.category === 'financial',
+  },
+  {
+    id: 'work_insurance',
+    label: 'Work + insurance',
+    matches: (institution: NameChangeInstitutionEntry) => institution.category === 'employment' || institution.category === 'insurance',
+  },
+  {
+    id: 'personal_lifestyle',
+    label: 'Personal + lifestyle',
+    matches: (institution: NameChangeInstitutionEntry) => institution.category === 'personal' && !['tsa-precheck', 'travel-hospitality'].includes(institution.key),
+  },
+  {
+    id: 'travel_mobility',
+    label: 'Travel + mobility',
+    matches: (institution: NameChangeInstitutionEntry) => ['tsa-precheck', 'travel-hospitality'].includes(institution.key),
+  },
+] as const;
+
 function normalize(value: string | null | undefined) {
   return (value ?? '').trim().toLowerCase();
 }
@@ -157,6 +185,44 @@ function buildInstitutionRolloutSteps(institutions: NameChangeInstitutionEntry[]
     institutions: [institution.label],
     evidenceNeeded: institution.evidenceNeeded,
   }));
+}
+
+function resolveInstitutionCoverageStatus(stepIds: string[], steps: NameChangePlanStep[]): 'ready' | 'blocked' | 'upcoming' {
+  const matchingSteps = stepIds
+    .map((stepId) => steps.find((step) => step.id === stepId))
+    .filter((step): step is NameChangePlanStep => Boolean(step));
+
+  if (matchingSteps.length === 0) return 'upcoming';
+  if (matchingSteps.some((step) => step.status === 'ready')) return 'ready';
+  if (matchingSteps.some((step) => step.status === 'blocked')) return 'blocked';
+  return 'upcoming';
+}
+
+function buildInstitutionCategoryCoverage(
+  institutions: NameChangeInstitutionEntry[],
+  steps: NameChangePlanStep[],
+): NonNullable<NameChangePlan['summary']['institutionCategoryCoverage']> {
+  return INSTITUTION_CATEGORY_COVERAGE_CONFIG.map((config) => {
+    const categoryInstitutions = institutions.filter((institution) => config.matches(institution));
+    const dependsOnStepIds = categoryInstitutions.map((institution) => `institution-${institution.key}`);
+    const labels = categoryInstitutions.slice(0, 2).map((institution) => institution.label);
+    const trailingCount = Math.max(0, categoryInstitutions.length - labels.length);
+    const labelSummary = labels.length === 0
+      ? 'No institutions queued yet.'
+      : trailingCount > 0
+        ? `${labels.join(', ')}, +${trailingCount} more`
+        : labels.join(', ');
+
+    return {
+      id: config.id,
+      label: config.label,
+      status: resolveInstitutionCoverageStatus(dependsOnStepIds, steps),
+      summary: `${categoryInstitutions.length} targets queued · ${labelSummary}`,
+      targetCount: categoryInstitutions.length,
+      dependsOnStepIds,
+      institutionKeys: categoryInstitutions.map((institution) => institution.key),
+    };
+  }).filter((category) => category.targetCount > 0);
 }
 
 export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePlan {
@@ -419,6 +485,7 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
     counts[key] += 1;
     return counts;
   }, { todo: 0, in_progress: 0, complete: 0 });
+  const institutionCategoryCoverage = buildInstitutionCategoryCoverage(institutionalTargets, steps);
   const nextBestAction = missingInputs[0]
     ? `Fill: ${missingInputs[0]}`
     : travelBookedSoon && input.profile.passport_needs_update
@@ -511,6 +578,11 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
       milestoneChecklist: milestoneChecklist.map((milestone) => ({
         ...milestone,
         dependsOnStepIds: [...milestone.dependsOnStepIds],
+      })),
+      institutionCategoryCoverage: institutionCategoryCoverage.map((category) => ({
+        ...category,
+        dependsOnStepIds: [...category.dependsOnStepIds],
+        institutionKeys: [...category.institutionKeys],
       })),
       accountUpdateTemplates: accountUpdateTemplates.map((template) => ({ ...template })),
       executionCounts,
