@@ -3852,4 +3852,47 @@ describe('name change document intake contract', () => {
       capturedExtractionFields: expect.arrayContaining(['first_name', 'middle_name', 'last_name']),
     });
   });
+
+  it('treats normalized and extracted value aliases as canonical reviewed document truth', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase(),
+      [
+        {
+          id: 'doc-marriage-normalized-values',
+          document_kind: 'marriage_certificate',
+          display_name: 'Marriage certificate',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'marriage-certificate-•••.pdf',
+          issuing_authority: null,
+          issued_on: null,
+          extraction_confidence: null,
+          extracted_snapshot: {
+            fields: [
+              { field: 'spouse_last_name', normalizedValue: 'Jordan' },
+              { fieldKey: 'county', extracted_value: 'San Diego County' },
+              { key: 'certificate_number', displayValue: 'MC-441' },
+            ],
+            metadata: [
+              { field: 'issuing_authority', normalizedValue: 'San Diego County Clerk' },
+              { fieldKey: 'issuance_date', extractedValue: '2026-04-05T00:00:00Z' },
+              { label: 'extraction_confidence', normalized_value: '0.97' },
+            ],
+            normalized_fields: {
+              first_name: { normalized_value: 'Alex' },
+              last_name: { extractedValue: 'Rivera' },
+            },
+          },
+        },
+      ],
+      [],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'marriage_certificate')).toMatchObject({
+      intakeStatus: 'reviewed',
+      metadataMissing: [],
+      missingExtractionFields: [],
+      capturedExtractionFields: expect.arrayContaining(['first_name', 'last_name', 'spouse_last_name', 'county', 'certificate_number', 'issuance_date']),
+    });
+  });
 });

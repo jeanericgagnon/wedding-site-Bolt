@@ -221,6 +221,38 @@ describe('name change intake draft helpers', () => {
     });
   });
 
+  it('builds canonical snapshot truth from normalized and extracted value aliases', () => {
+    expect(buildDraftNameChangeExtractedFieldsFromSnapshot('draft-marriage_certificate', {
+      fields: [
+        { field: 'spouse_last_name', normalizedValue: 'Jordan' },
+        { fieldKey: 'county', extracted_value: 'San Diego County' },
+        { key: 'certificate_number', displayValue: 'MC-441' },
+      ],
+      metadata: {
+        issuance_date: { normalized_value: '2026-04-05T00:00:00Z' },
+      },
+    })).toEqual(expect.arrayContaining([
+      expect.objectContaining({ document_id: 'draft-marriage_certificate', field_key: 'spouse_last_name', field_value_masked: 'Jordan' }),
+      expect.objectContaining({ document_id: 'draft-marriage_certificate', field_key: 'county', field_value_masked: 'San Diego' }),
+      expect.objectContaining({ document_id: 'draft-marriage_certificate', field_key: 'certificate_number', field_value_masked: 'MC-441' }),
+      expect.objectContaining({ document_id: 'draft-marriage_certificate', field_key: 'issuance_date', field_value_masked: '2026-04-05' }),
+    ]));
+
+    expect(buildDraftNameChangeDocumentMetadataFromSnapshot({
+      metadata: [
+        { field: 'issuing_authority', normalizedValue: 'San Diego County Clerk' },
+        { fieldKey: 'issuance_date', extractedValue: '2026-04-05T00:00:00Z' },
+        { key: 'expiration_date', display_value: '2036-04-05T00:00:00Z' },
+        { label: 'extraction_confidence', normalized_value: '0.97' },
+      ],
+    })).toEqual({
+      issuingAuthority: 'San Diego County Clerk',
+      issuedOn: '2026-04-05',
+      expiresOn: '2036-04-05',
+      extractionConfidence: 0.97,
+    });
+  });
+
   it('collapses draft document labels into one clean downstream display name', () => {
     expect(createDraftNameChangeDocument('marriage_certificate', '  Certified   marriage   certificate  ')).toMatchObject({
       display_name: 'Certified marriage certificate',

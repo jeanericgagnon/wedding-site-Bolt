@@ -773,7 +773,7 @@ function getDraftSnapshotFieldValue(candidate: unknown): string | null {
   }
 
   const record = candidate as Record<string, unknown>;
-  for (const key of ['value', 'field_value', 'fieldValue', 'masked_value', 'maskedValue', 'text', 'raw']) {
+  for (const key of ['value', 'field_value', 'fieldValue', 'masked_value', 'maskedValue', 'normalized_value', 'normalizedValue', 'extracted_value', 'extractedValue', 'display_value', 'displayValue', 'text', 'raw']) {
     const nestedValue = record[key];
     if (typeof nestedValue === 'string' || typeof nestedValue === 'number' || typeof nestedValue === 'boolean') {
       return String(nestedValue);
@@ -807,7 +807,7 @@ function appendDraftSnapshotFieldEntries(
         }
 
         const record = candidateEntry as Record<string, unknown>;
-        const entryKey = ['field_key', 'fieldKey', 'key', 'name', 'label']
+        const entryKey = ['field_key', 'fieldKey', 'field', 'key', 'name', 'label']
           .map((key) => record[key])
           .find((value): value is string => typeof value === 'string' && value.trim().length > 0);
         if (!entryKey) continue;
