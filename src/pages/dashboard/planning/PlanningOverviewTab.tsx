@@ -2,6 +2,12 @@ import React from 'react';
 import { AlertTriangle, Clock, DollarSign, Users, CheckCircle, HeartHandshake } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import type { NameChangePlan } from '../../../lib/nameChange/types';
+import {
+  buildNameChangeReminderSuggestions,
+  deriveNameChangeReminderAttention,
+  mapReminderSuggestionsToInputs,
+  summarizeNameChangeReminderAttention,
+} from '../../../lib/nameChange/reminders';
 import { PlanningTask, PlanningBudgetItem, PlanningVendor } from './planningService';
 
 interface SeatingReadiness {
@@ -58,6 +64,14 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
   const nameChangeCompletedCount = nameChangePlan.steps.filter((step) => step.executionStatus === 'complete').length;
   const nextNameChangeAction = nameChangePlan.summary.nextBestAction;
   const rolloutMilestone = nameChangePlan.summary.milestoneChecklist?.find((milestone) => milestone.id === 'milestone-account-rollout') ?? null;
+  const nextNameChangeMilestone = nameChangePlan.summary.milestoneChecklist?.find((milestone) => milestone.status !== 'complete') ?? null;
+  const blockedNameChangeMilestones = nameChangePlan.summary.milestoneChecklist?.filter((milestone) => milestone.status === 'blocked').length ?? 0;
+  const nameChangeReminderAttention = summarizeNameChangeReminderAttention(
+    deriveNameChangeReminderAttention(
+      mapReminderSuggestionsToInputs(buildNameChangeReminderSuggestions(nameChangePlan)),
+      nameChangePlan,
+    ),
+  );
 
   return (
     <div className="space-y-6">
@@ -137,6 +151,24 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
                     {nameChangeCompletedCount} complete · {nameChangeReadyCount} ready now
                     {rolloutMilestone ? ` · rollout milestone ${rolloutMilestone.status.replace('_', ' ')}` : ''}
                   </p>
+                  <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                    <span className="rounded-full bg-white px-2 py-1 text-text-secondary shadow-sm">
+                      {nameChangeReminderAttention.actionableNow} reminder{nameChangeReminderAttention.actionableNow === 1 ? '' : 's'} actionable now
+                    </span>
+                    <span className="rounded-full bg-white px-2 py-1 text-text-secondary shadow-sm">
+                      {blockedNameChangeMilestones} blocked milestone{blockedNameChangeMilestones === 1 ? '' : 's'}
+                    </span>
+                    {nameChangeReminderAttention.stale > 0 ? (
+                      <span className="rounded-full bg-amber-500/15 px-2 py-1 text-amber-200">
+                        {nameChangeReminderAttention.stale} stale follow-up{nameChangeReminderAttention.stale === 1 ? '' : 's'}
+                      </span>
+                    ) : null}
+                  </div>
+                  {nextNameChangeMilestone ? (
+                    <p className="mt-3 text-xs text-text-secondary">
+                      Next milestone: <span className="font-medium text-text-primary">{nextNameChangeMilestone.label}</span>
+                    </p>
+                  ) : null}
                 </div>
               </div>
               <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-primary shadow-sm">Open lane</span>

@@ -36,5 +36,8 @@ describe('PlanningOverviewTab', () => {
     fireEvent.click(tile.closest('button') as HTMLButtonElement);
     expect(onTabChange).toHaveBeenCalledWith('nameChange');
     expect(screen.getByText(plan.summary.nextBestAction)).toBeTruthy();
+    expect(screen.getByText(/reminder.*actionable now/i)).toBeTruthy();
+    expect(screen.getByText(/blocked milestone/i)).toBeTruthy();
+    expect(screen.getByText(/Next milestone:/i)).toBeTruthy();
   });
 });
