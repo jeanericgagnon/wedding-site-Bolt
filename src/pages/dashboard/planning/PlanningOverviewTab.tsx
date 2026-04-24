@@ -9,6 +9,7 @@ import {
   summarizeNameChangeReminderAttention,
 } from '../../../lib/nameChange/reminders';
 import { PlanningTask, PlanningBudgetItem, PlanningVendor } from './planningService';
+import { isTaskDueBetween, isTaskDueOnOrBefore } from './taskDueDate';
 
 interface SeatingReadiness {
   attending: number;
@@ -38,13 +39,12 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
 
   const overdueTasks = tasks.filter(t => {
     if (t.status === 'done' || !t.due_date) return false;
-    return new Date(t.due_date) < today;
+    return isTaskDueOnOrBefore(t.due_date, today);
   });
 
   const upcomingTasks = tasks.filter(t => {
     if (t.status === 'done' || !t.due_date) return false;
-    const d = new Date(t.due_date);
-    return d >= today && d <= in7Days;
+    return isTaskDueBetween(t.due_date, today, in7Days);
   });
 
   const totalEstimated = budgetItems.reduce((s, i) => s + (i.estimated_amount || 0), 0);

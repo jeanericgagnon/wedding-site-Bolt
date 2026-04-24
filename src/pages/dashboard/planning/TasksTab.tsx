@@ -4,6 +4,7 @@ import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { PlanningTask } from './planningService';
+import { formatTaskDueDate, isTaskDueOnOrBefore } from './taskDueDate';
 
 interface Props {
   tasks: PlanningTask[];
@@ -138,7 +139,7 @@ function TaskCard({ task, onUpdate, onDelete, onEdit, canEdit = true }: {
 }) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const isOverdue = task.due_date && task.status !== 'done' && new Date(task.due_date) < today;
+  const isOverdue = task.status !== 'done' && isTaskDueOnOrBefore(task.due_date, today);
 
   return (
     <div className={`p-3 bg-white rounded-xl border transition-shadow ${isOverdue ? 'border-error/30 bg-error/5 shadow-[0_4px_14px_rgba(220,38,38,0.06)]' : 'border-border/35 shadow-[0_4px_14px_rgba(15,23,42,0.05)] hover:shadow-[0_8px_20px_rgba(15,23,42,0.08)]'}`}>
@@ -161,7 +162,7 @@ function TaskCard({ task, onUpdate, onDelete, onEdit, canEdit = true }: {
             <Badge variant={PRIORITY_COLORS[task.priority]}>{task.priority}</Badge>
             {task.due_date && (
               <span className={`text-xs ${isOverdue ? 'text-error font-medium' : 'text-text-tertiary'}`}>
-                {isOverdue ? 'Overdue: ' : ''}{new Date(task.due_date).toLocaleDateString()}
+                {isOverdue ? 'Overdue: ' : ''}{formatTaskDueDate(task.due_date)}
               </span>
             )}
             {task.owner_name && (
