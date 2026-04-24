@@ -66,6 +66,15 @@ describe('name change engine', () => {
     expect(plan.summary.recommendedOrder[1]).toContain('Update Social Security first');
     expect(plan.summary.recommendedOrder[2]).toContain('Update your California DMV record');
     expect(plan.summary.recommendedOrder[3]).toContain('passport');
+    expect(plan.summary.executionTracks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'track-legal-proof', sequenceLabel: '1 · proof first', status: 'ready', featureTag: 'core' }),
+        expect.objectContaining({ id: 'track-ssa', sequenceLabel: '2 · federal anchor', status: 'ready' }),
+        expect.objectContaining({ id: 'track-photo-id', sequenceLabel: '3 · photo ID chain', status: 'upcoming' }),
+        expect.objectContaining({ id: 'track-passport', sequenceLabel: '4 · travel identity', status: 'upcoming', featureTag: 'travel' }),
+        expect.objectContaining({ id: 'track-rollout', sequenceLabel: '5 · account rollout', status: 'upcoming', featureTag: 'rollout' }),
+      ]),
+    );
     expect(plan.summary.readinessPercent).toBeGreaterThan(0);
     expect(plan.summary.executionCounts).toMatchObject({ todo: plan.steps.length, in_progress: 0, complete: 0 });
     expect(plan.steps.some((step) => step.title.includes('passport'))).toBe(true);
@@ -107,6 +116,7 @@ describe('name change engine', () => {
   it('surfaces blockers when the legal proof doc is missing', () => {
     const plan = buildNameChangePlan({ ...makeInput(), documents: [] });
     expect(plan.summary.blockers[0]).toContain('Certified marriage certificate');
+    expect(plan.summary.executionTracks?.every((track) => track.status === 'blocked')).toBe(true);
     expect(plan.summary.missingInputs).toContain('Certified marriage certificate metadata');
     expect(plan.summary.nextBestAction).toContain('Fill:');
     expect(plan.steps.find((step) => step.id === 'federal-ssa')?.status).toBe('blocked');
@@ -173,7 +183,32 @@ describe('name change engine', () => {
   it('pushes travel-sensitive caution notes when upcoming travel is flagged', () => {
     const plan = buildNameChangePlan(makeInput({ structured_intake: { spouseLastName: 'Jordan', travelBookedSoon: true, wantsDocumentIntakeHelp: true } }));
     expect(plan.summary.cautionNotes.some((note) => note.includes('Upcoming travel'))).toBe(true);
+    expect(plan.summary.executionTracks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'track-passport', summary: expect.stringContaining('Travel is on the board') }),
+      ]),
+    );
+    expect(plan.summary.edgeCaseGuidance).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'edge-travel-timing', severity: 'warning' }),
+      ]),
+    );
     expect(plan.steps.find((step) => step.id === 'institution-tsa-precheck')?.description).toContain('Best timing');
+  });
+
+  it('surfaces edge-case guidance for non-us passports and court-order workflow', () => {
+    const plan = buildNameChangePlan(makeInput({
+      is_us_citizen: false,
+      target_first_name: 'Avery',
+      target_last_name: 'Moonbeam',
+    }));
+
+    expect(plan.summary.edgeCaseGuidance).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'edge-non-us-passport', severity: 'warning' }),
+        expect.objectContaining({ id: 'edge-court-order-path', severity: 'info' }),
+      ]),
+    );
   });
 
   it('omits employment rollout institutions when the user is not employed', () => {

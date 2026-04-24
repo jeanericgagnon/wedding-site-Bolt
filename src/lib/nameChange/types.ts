@@ -175,6 +175,21 @@ export interface NameChangePlanStep {
 export interface NameChangePlanSummary {
   legalPathLabel: string;
   recommendedOrder: string[];
+  executionTracks?: Array<{
+    id: string;
+    title: string;
+    sequenceLabel: string;
+    status: 'ready' | 'blocked' | 'upcoming';
+    summary: string;
+    dependsOnStepIds: string[];
+    featureTag: 'core' | 'travel' | 'rollout';
+  }>;
+  edgeCaseGuidance?: Array<{
+    id: string;
+    label: string;
+    detail: string;
+    severity: 'info' | 'warning';
+  }>;
   blockers: string[];
   cautionNotes: string[];
   missingInputs: string[];

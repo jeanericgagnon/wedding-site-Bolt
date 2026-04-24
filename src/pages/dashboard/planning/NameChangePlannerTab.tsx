@@ -462,6 +462,8 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   const effectiveReminders = useMemo(() => reminders, [reminders]);
   const milestoneChecklist = useMemo(() => plan.summary.milestoneChecklist ?? [], [plan.summary.milestoneChecklist]);
   const accountUpdateTemplates = useMemo(() => plan.summary.accountUpdateTemplates ?? [], [plan.summary.accountUpdateTemplates]);
+  const executionTracks = useMemo(() => plan.summary.executionTracks ?? [], [plan.summary.executionTracks]);
+  const edgeCaseGuidance = useMemo(() => plan.summary.edgeCaseGuidance ?? [], [plan.summary.edgeCaseGuidance]);
   const documentVaultRows = useMemo(() => documents.map((document) => {
     const contract = NAME_CHANGE_DOCUMENT_CONTRACTS.find((entry) => matchesNameChangeDocumentKind(document.document_kind, entry.kind));
     const linkedFieldCount = extractedFields.filter((field) => {
@@ -918,6 +920,26 @@ export const NameChangePlannerTab: React.FC<Props> = ({
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {executionTracks.map((track) => (
+              <div key={track.id} className="rounded-xl border border-border-subtle bg-white/60 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-text-tertiary">{track.sequenceLabel}</p>
+                    <p className="mt-2 text-sm font-semibold text-text-primary">{track.title}</p>
+                  </div>
+                  <span className={`rounded-full px-2 py-1 text-xs ${track.featureTag === 'travel' ? 'bg-primary/10 text-primary' : track.featureTag === 'rollout' ? 'bg-success/10 text-success' : 'bg-surface-subtle text-text-secondary'}`}>
+                    {track.featureTag}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm text-text-secondary">{track.summary}</p>
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <p className="text-xs text-text-secondary">Depends on: {track.dependsOnStepIds.join(' → ')}</p>
+                  <span className={`rounded-full px-2 py-1 text-xs ${track.status === 'ready' ? 'bg-success/10 text-success' : track.status === 'upcoming' ? 'bg-primary/10 text-primary' : 'bg-warning/10 text-warning'}`}>
+                    {track.status}
+                  </span>
+                </div>
+              </div>
+            ))}
             {plan.summary.recommendedOrder.map((stepLabel, index) => (
               <div key={stepLabel} className="rounded-xl border border-border-subtle p-4">
                 <p className="text-xs uppercase tracking-wide text-text-tertiary">Step {index + 1}</p>
@@ -941,6 +963,19 @@ export const NameChangePlannerTab: React.FC<Props> = ({
           </div>
 
           <div className="mt-4 space-y-3">
+            {edgeCaseGuidance.map((item) => (
+              <div key={item.id} className={`rounded-xl border p-4 ${item.severity === 'warning' ? 'border-warning/30 bg-warning/5' : 'border-border-subtle bg-white/50'}`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-text-primary">{item.label}</p>
+                    <p className="mt-1 text-xs text-text-secondary">{item.detail}</p>
+                  </div>
+                  <span className={`rounded-full px-2 py-1 text-xs ${item.severity === 'warning' ? 'bg-warning/10 text-warning' : 'bg-surface-subtle text-text-secondary'}`}>
+                    {item.severity}
+                  </span>
+                </div>
+              </div>
+            ))}
             {milestoneChecklist.map((milestone) => (
               <div key={milestone.id} className="rounded-xl border border-border-subtle p-4">
                 <div className="flex items-start justify-between gap-3">

@@ -253,7 +253,7 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
       title: input.profile.has_us_passport ? 'Refresh your passport to the new name' : 'Apply for a passport in the new name',
       description: 'Keep travel records aligned with the new legal name after the main SSA and DMV changes are underway.',
       timing: input.profile.urgency_level === 'expedited' ? 'Book this early if upcoming travel matters' : 'After SSA and DMV are underway',
-      status: legalProofReady ? 'ready' : 'blocked',
+      status: legalProofReady ? 'ready' as const : 'blocked' as const,
       blockers: legalProofReady ? [] : ['Passport update waits on the same legal proof and supporting ID chain.'],
       forms: passportForms,
       institutions: ['U.S. Department of State'],
@@ -289,6 +289,59 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
   const readinessDenominator = Math.max(1, steps.length + missingInputs.length);
   const readinessNumerator = steps.filter((step) => step.status !== 'blocked').length + (missingInputs.length === 0 ? 1 : 0);
   const readinessPercent = Math.max(0, Math.min(100, Math.round((readinessNumerator / readinessDenominator) * 100)));
+  const executionTracks: NonNullable<NameChangePlan['summary']['executionTracks']> = [
+    {
+      id: 'track-legal-proof',
+      title: legalBasis === 'marriage' ? 'County / legal proof grounding' : 'Court-order grounding',
+      sequenceLabel: '1 · proof first',
+      status: legalProofReady ? 'ready' : 'blocked',
+      summary: legalBasis === 'marriage'
+        ? 'Ground the certified marriage certificate before anything federal or state can safely move.'
+        : 'Ground the signed court order before SSA or DMV can use the new legal name.',
+      dependsOnStepIds: ['eligibility-proof'],
+      featureTag: 'core' as const,
+    },
+    {
+      id: 'track-ssa',
+      title: 'SSA anchor update',
+      sequenceLabel: '2 · federal anchor',
+      status: legalProofReady ? 'ready' as const : 'blocked' as const,
+      summary: 'Move Social Security first so tax, payroll, and federal identity stop fighting the new name.',
+      dependsOnStepIds: ['eligibility-proof', 'federal-ssa'],
+      featureTag: 'core' as const,
+    },
+    {
+      id: 'track-photo-id',
+      title: 'Driver license / state ID follow-through',
+      sequenceLabel: '3 · photo ID chain',
+      status: legalProofReady ? 'upcoming' as const : 'blocked' as const,
+      summary: 'Use the SSA-updated record to refresh California ID so downstream accounts can verify against current photo ID.',
+      dependsOnStepIds: ['federal-ssa', 'state-dmv'],
+      featureTag: 'core' as const,
+    },
+    ...(input.profile.passport_needs_update
+      ? [{
+        id: 'track-passport',
+        title: input.profile.has_us_passport ? 'Passport refresh lane' : 'Passport application lane',
+        sequenceLabel: '4 · travel identity',
+        status: legalProofReady ? 'upcoming' as const : 'blocked' as const,
+        summary: travelBookedSoon
+          ? 'Travel is on the board, so passport timing needs active watching as soon as SSA is moving and DMV is queued.'
+          : 'Passport should trail the SSA + photo-ID chain so travel identity stays aligned.',
+        dependsOnStepIds: ['federal-ssa', 'state-dmv', 'federal-passport'],
+        featureTag: 'travel' as const,
+      }]
+      : []),
+    {
+      id: 'track-rollout',
+      title: 'Everything-else rollout packet',
+      sequenceLabel: input.profile.passport_needs_update ? '5 · account rollout' : '4 · account rollout',
+      status: legalProofReady ? 'upcoming' as const : 'blocked' as const,
+      summary: 'Once the identity chain is grounded, fan out across payroll, banking, insurance, licenses, travel, and personal accounts from one packet.',
+      dependsOnStepIds: ['state-dmv', 'institutions-rollout'],
+      featureTag: 'rollout' as const,
+    },
+  ];
   const milestoneChecklist = [
     {
       id: 'milestone-legal-proof',
@@ -345,6 +398,40 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
     : travelBookedSoon && input.profile.passport_needs_update
       ? 'Line up your passport update timing'
       : steps.find((step) => step.status === 'ready')?.title ?? steps[0]?.title ?? 'Complete intake';
+  const edgeCaseGuidance = [
+    ...(travelBookedSoon && input.profile.passport_needs_update
+      ? [{
+        id: 'edge-travel-timing',
+        label: 'Upcoming travel timing conflict',
+        detail: 'Keep booking names, TSA profiles, and passport timing aligned while the SSA → DMV chain is in motion. Do not strand travel records between old and new identity documents.',
+        severity: 'warning' as const,
+      }]
+      : []),
+    ...(!input.profile.is_us_citizen && input.profile.passport_needs_update
+      ? [{
+        id: 'edge-non-us-passport',
+        label: 'Non-U.S. passport handling',
+        detail: 'Passport guidance needs country-specific follow-through because the free assistant cannot assume a U.S. passport update path here.',
+        severity: 'warning' as const,
+      }]
+      : []),
+    ...(legalBasis === 'court_order'
+      ? [{
+        id: 'edge-court-order-path',
+        label: 'Court-order path in effect',
+        detail: 'This case does not fit the simple marriage shortcut, so the assistant keeps the court-order packet as the hard gate before SSA, DMV, or passport execution.',
+        severity: 'info' as const,
+      }]
+      : []),
+    ...(outOfStateMarriageCertificateGroundingMissing
+      ? [{
+        id: 'edge-out-of-state-proof',
+        label: 'Out-of-state certificate grounding gap',
+        detail: 'County / certificate reference fields still need to be grounded before the free assistant can safely treat the marriage certificate as execution-ready proof.',
+        severity: 'warning' as const,
+      }]
+      : []),
+  ];
 
   return {
     engineVersion: NAME_CHANGE_ENGINE_VERSION,
@@ -364,6 +451,8 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
     summary: {
       legalPathLabel: legalBasis === 'marriage' ? 'California marriage-based name change path' : 'California court-order-backed name change path',
       recommendedOrder,
+      executionTracks: executionTracks.map((track) => ({ ...track, dependsOnStepIds: [...track.dependsOnStepIds] })),
+      edgeCaseGuidance: edgeCaseGuidance.map((item) => ({ ...item })),
       blockers,
       cautionNotes,
       missingInputs,
