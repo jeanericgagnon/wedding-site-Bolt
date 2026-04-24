@@ -103,6 +103,8 @@ interface TargetStatusVaultRow {
   milestoneInProgressCount: number;
   milestoneCompleteCount: number;
   milestoneTotalCount: number;
+  reminderOpenCount: number;
+  reminderHighUrgencyCount: number;
   note: string | null;
   executionNote: string | null;
   reminderNote: string | null;
@@ -630,6 +632,8 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       milestoneInProgressCount: snapshot.statusVault.milestoneCounts.inProgress,
       milestoneCompleteCount: snapshot.statusVault.milestoneCounts.complete,
       milestoneTotalCount: snapshot.statusVault.milestoneCounts.total,
+      reminderOpenCount: snapshot.statusVault.reminderSummary.openCount,
+      reminderHighUrgencyCount: snapshot.statusVault.reminderSummary.highUrgencyCount,
       note: snapshot.statusVault.notes[0] ?? null,
       executionNote: snapshot.statusVault.executionNote,
       reminderNote: snapshot.statusVault.reminderNote,
@@ -1216,6 +1220,11 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                       {row.milestoneTotalCount > 0 ? (
                         <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
                           Milestones {row.milestoneCompleteCount} confirmed • {row.milestoneInProgressCount} tracking
+                        </span>
+                      ) : null}
+                      {row.reminderOpenCount > 0 ? (
+                        <span className={`rounded-full px-2 py-1 text-xs ${row.reminderHighUrgencyCount > 0 ? 'bg-amber-50 text-amber-700' : 'bg-surface-subtle text-text-secondary'}`}>
+                          Reminders {row.reminderOpenCount} open{row.reminderHighUrgencyCount > 0 ? ` • ${row.reminderHighUrgencyCount} high urgency` : ''}
                         </span>
                       ) : null}
                       {row.proofMissingCount > 0 ? (

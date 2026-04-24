@@ -256,6 +256,7 @@ describe('NameChangePlannerTab', () => {
     );
 
     expect(screen.getByText(/SSA follow-up/)).toBeInTheDocument();
+    expect(screen.getByText(/high urgency/)).toBeInTheDocument();
     expect(screen.getAllByText(/Latest touch/).length).toBeGreaterThan(0);
   });
 
