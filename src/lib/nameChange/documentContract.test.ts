@@ -2316,6 +2316,45 @@ describe('name change document intake contract', () => {
     );
   });
 
+  it('treats document-prefixed kind keys as the canonical draft document truth', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase(),
+      [
+        {
+          id: 'draft-current_passport',
+          document_kind: 'current_passport',
+          display_name: 'Current passport',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'passport-•••.pdf',
+          issuing_authority: 'U.S. Department of State',
+          issued_on: '2024-06-01',
+          expires_on: '2034-06-01',
+          extraction_confidence: 0.97,
+        },
+      ],
+      [
+        {
+          document_id: 'uploaded passport document',
+          field_key: 'issuance_date',
+          field_label: 'Issued on',
+          field_value_masked: '2024-06-01',
+          source_type: 'manual',
+          is_verified: true,
+        },
+      ],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'current_passport')).toMatchObject({
+      intakeStatus: 'reviewed',
+      metadataReady: 1,
+      canonicalConflicts: [],
+    });
+    expect(snapshot.documents.find((document) => document.kind === 'current_passport')?.capturedExtractionFields).toEqual(
+      expect.arrayContaining(['issuance_date']),
+    );
+  });
+
   it('treats unicode checkbox-prefixed extracted values as canonical document truth', () => {
     const snapshot = buildNameChangeDocumentIntakeSnapshot(
       makeCase({ legal_basis: 'marriage', county_residence: 'Orange' }),
