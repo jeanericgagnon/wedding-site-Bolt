@@ -27,6 +27,7 @@ const SUPPORTED_DRAFT_FIELD_KEYS = new Set<NameChangeExtractedFieldInput['field_
 
 const DRAFT_LABEL_SEPARATOR_PATTERN = '[:;#=.|：；＝｜\\-–—]';
 const DRAFT_WRAPPING_CHAR_PATTERN = /^["'([{「『【（]+|["')\]}」』】）]+$/g;
+const DRAFT_VALUE_PREFIX_PATTERN = /^[~∼〜]+\s*/;
 
 function humanizeDraftToken(value: string) {
   return value
@@ -42,6 +43,10 @@ function normalizeDraftText(value: string | null | undefined) {
 
 function stripLeadingDraftValueMarker(value: string) {
   return value.replace(/^(?:(?:\[(?:x|X| )\]|\((?:x|X| )\))\s*|[•*·●○◦▪■]+\s*|\d+[.)-]\s+)/, '').trim();
+}
+
+function stripLeadingDraftValuePrefix(value: string) {
+  return value.replace(DRAFT_VALUE_PREFIX_PATTERN, '').trim();
 }
 
 function buildDraftMaskedFileName(kind: NameChangeDocumentInput['document_kind']) {
@@ -234,7 +239,7 @@ function parseDraftMonthName(monthName: string) {
 }
 
 function normalizeDraftDateValue(value: string) {
-  const markerStrippedValue = stripLeadingDraftValueMarker(value);
+  const markerStrippedValue = stripLeadingDraftValuePrefix(stripLeadingDraftValueMarker(value));
   const rawOffsetPattern = '[+-](?:\\d{1,2}|\\d{3,4}|\\d{1,2}:\\d{2})';
   const namedOffsetPattern = '(?:UTC|GMT)[+-]?(?:\\d{1,2}|\\d{3,4}|\\d{1,2}:\\d{2})?';
   const zoneTokenPattern = `(?:Z|${rawOffsetPattern}|${namedOffsetPattern}|[A-Za-z]{2,5}|[A-Za-z_-]+(?:\\/[A-Za-z_-]+)+|\\([^)]*\\)|\\[[^\\]]+\\])`;
@@ -372,7 +377,7 @@ function normalizeDraftDateValue(value: string) {
 }
 
 function normalizeDraftCountyValue(value: string) {
-  const normalizedValue = stripLeadingDraftValueMarker(normalizeDraftText(value));
+  const normalizedValue = stripLeadingDraftValuePrefix(stripLeadingDraftValueMarker(normalizeDraftText(value)));
   if (!normalizedValue) return '';
 
   const countyWithoutLabels = normalizedValue.replace(
@@ -394,7 +399,7 @@ function normalizeDraftPersonNameValue(
   value: string,
   fieldKey: 'first_name' | 'middle_name' | 'last_name' | 'spouse_last_name',
 ) {
-  const normalizedValue = stripLeadingDraftValueMarker(normalizeDraftText(value));
+  const normalizedValue = stripLeadingDraftValuePrefix(stripLeadingDraftValueMarker(normalizeDraftText(value)));
   if (!normalizedValue) return '';
 
   const labelPatterns: Record<typeof fieldKey, RegExp> = {
@@ -419,7 +424,7 @@ function normalizeDraftPersonNameValue(
 }
 
 function normalizeDraftReferenceNumberValue(value: string) {
-  const normalizedValue = stripLeadingDraftValueMarker(normalizeDraftText(value));
+  const normalizedValue = stripLeadingDraftValuePrefix(stripLeadingDraftValueMarker(normalizeDraftText(value)));
   if (!normalizedValue) return '';
 
   return normalizedValue
