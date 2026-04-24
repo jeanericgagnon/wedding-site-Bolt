@@ -2150,6 +2150,11 @@ describe('name change target execution snapshot', () => {
         complete: 0,
         total: 1,
       },
+      milestoneCounts: {
+        inProgress: 0,
+        complete: 0,
+        total: 2,
+      },
       proofCounts: {
         ready: expect.any(Number),
         attention: expect.any(Number),
@@ -2213,6 +2218,11 @@ describe('name change target execution snapshot', () => {
       complete: 0,
       total: 0,
     });
+    expect(snapshot.statusVault.milestoneCounts).toEqual({
+      inProgress: 0,
+      complete: 0,
+      total: 0,
+    });
     expect(snapshot.statusVault.proofSummary).toContain('Proof stack looks grounded');
   });
 
@@ -2247,6 +2257,11 @@ describe('name change target execution snapshot', () => {
       inProgress: 1,
       complete: 1,
       total: 2,
+    });
+    expect(snapshot.statusVault.milestoneCounts).toEqual({
+      inProgress: 0,
+      complete: 0,
+      total: 0,
     });
     expect(snapshot.statusVault.status).toBe('complete');
   });
@@ -2380,6 +2395,11 @@ describe('name change target execution snapshot', () => {
 
     const snapshot = buildNameChangeTargetExecutionSnapshot('courtOrder', makeCase(), [], [], plan);
     expect(snapshot.statusVault.notes[0]).toBe('Confirmed milestone: Certified legal proof is grounded and reviewed');
+    expect(snapshot.statusVault.milestoneCounts).toEqual({
+      inProgress: 0,
+      complete: 1,
+      total: 2,
+    });
   });
 
   it('falls back to the guided action detail when no note or milestone confirmation exists yet', () => {

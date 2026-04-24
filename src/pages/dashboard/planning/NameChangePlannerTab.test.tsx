@@ -113,6 +113,12 @@ describe('NameChangePlannerTab', () => {
     const basePlan = buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] });
     const plan = {
       ...basePlan,
+      summary: {
+        ...basePlan.summary,
+        milestoneChecklist: (basePlan.summary.milestoneChecklist ?? []).map((milestone) => milestone.id === 'milestone-legal-proof'
+          ? { ...milestone, status: 'complete' as const }
+          : milestone),
+      },
       steps: basePlan.steps.map((step) => step.id === 'federal-ssa' ? {
         ...step,
         executionStatus: 'in_progress' as const,

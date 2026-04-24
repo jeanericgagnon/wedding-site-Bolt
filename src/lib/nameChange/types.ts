@@ -543,6 +543,11 @@ export interface NameChangeTargetExecutionSnapshot {
       complete: number;
       total: number;
     };
+    milestoneCounts: {
+      inProgress: number;
+      complete: number;
+      total: number;
+    };
     reminderSummary: {
       openCount: number;
       highUrgencyCount: number;

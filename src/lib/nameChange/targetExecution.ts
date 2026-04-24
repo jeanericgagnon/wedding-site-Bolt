@@ -81,6 +81,19 @@ function getTargetStatusVaultSnapshot(
   const milestoneNotes = relevantMilestones
     .filter((milestone) => milestone.status === 'in_progress' || milestone.status === 'complete')
     .map((milestone) => `${milestone.status === 'complete' ? 'Confirmed' : 'Tracking'} milestone: ${milestone.label}`);
+  const milestoneCounts = relevantMilestones.reduce(
+    (summary, milestone) => {
+      if (milestone.status === 'complete') {
+        summary.complete += 1;
+      } else if (milestone.status === 'in_progress') {
+        summary.inProgress += 1;
+      }
+
+      summary.total += 1;
+      return summary;
+    },
+    { inProgress: 0, complete: 0, total: 0 },
+  );
   const missingChecklist = checklist.filter((item) => item.status === 'missing');
   const attentionChecklist = checklist.filter((item) => item.status === 'attention');
   const readyChecklist = checklist.filter((item) => item.status === 'ready');
@@ -163,6 +176,7 @@ function getTargetStatusVaultSnapshot(
     lastTouchedAt,
     lastTouchedSource,
     executionCounts,
+    milestoneCounts,
     reminderSummary: {
       openCount: targetReminders.filter((reminder) => reminder.status === 'pending' || reminder.status === 'scheduled').length,
       highUrgencyCount: targetReminders.filter((reminder) => reminder.urgency === 'high' && reminder.status !== 'sent').length,
