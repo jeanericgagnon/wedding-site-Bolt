@@ -4,6 +4,7 @@ import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card } from '../../components/ui/Card';
 import { useAuth } from '../../hooks/useAuth';
+import { formatAuditLogDateTime } from './auditLogTime';
 
 interface GuestAuditRow {
   id: string;
@@ -126,7 +127,7 @@ export const DashboardAuditLogs: React.FC = () => {
                     <div>
                       <p className="text-sm font-medium text-text-primary">{actionLabelMap[row.action]}</p>
                       <p className="mt-1 text-xs text-text-secondary">{row.guest_name || `Guest ${row.guest_id}`}</p>
-                      <p className="mt-1 text-xs text-text-secondary">{new Date(row.changed_at).toLocaleString()} · actor {row.changed_by || 'unknown'}</p>
+                      <p className="mt-1 text-xs text-text-secondary">{formatAuditLogDateTime(row.changed_at)} · actor {row.changed_by || 'unknown'}</p>
                     </div>
                   </div>
                 </div>
