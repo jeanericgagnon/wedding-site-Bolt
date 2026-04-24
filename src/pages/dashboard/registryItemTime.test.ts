@@ -1,0 +1,26 @@
+import { describe, expect, it } from 'vitest';
+
+import {
+  ageExceedsMs,
+  formatRegistryItemDate,
+  getRegistryItemTimestamp,
+  isRegistryItemDue,
+} from './registryItemTime';
+
+describe('registry item time guards', () => {
+  it('treats invalid persisted timestamps as due/stale without leaking Invalid Date', () => {
+    expect(getRegistryItemTimestamp('not-a-date')).toBe(Number.NEGATIVE_INFINITY);
+    expect(isRegistryItemDue('not-a-date')).toBe(true);
+    expect(ageExceedsMs('not-a-date', 60_000)).toBe(true);
+    expect(formatRegistryItemDate('not-a-date')).toBe('Unknown date');
+  });
+
+  it('keeps valid persisted timestamps truthful', () => {
+    const value = '2026-06-21T18:30:00.000Z';
+    const now = new Date('2026-06-21T19:30:00.000Z').getTime();
+    expect(getRegistryItemTimestamp(value)).toBe(new Date(value).getTime());
+    expect(isRegistryItemDue('2026-06-21T20:30:00.000Z', now)).toBe(false);
+    expect(ageExceedsMs(value, 30 * 60 * 1000, now)).toBe(true);
+    expect(formatRegistryItemDate(value)).toBe(new Date(value).toLocaleDateString());
+  });
+});

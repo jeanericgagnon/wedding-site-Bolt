@@ -22,6 +22,7 @@ import { demoWeddingSite, demoRegistryItems } from '../../lib/demoData';
 import { getRegistryRepairStates } from './registry/repairState';
 import { findDuplicateRegistryGroups } from './registry/duplicateRegistryItems';
 import { getCurrentMonthKey, resolveRegistryRefreshBudgetState } from './registry/refreshBudget';
+import { ageExceedsMs, formatRegistryItemDate, getRegistryItemTimestamp, isRegistryItemDue } from './registryItemTime';
 import { getWeddingRefreshWindowDate, parseRefreshWindowEndIso, toDateInputValueOrEmpty, toValidDateOrNull } from './registryRefreshWindow';
 
 interface Toast {
@@ -540,10 +541,10 @@ export const DashboardRegistry: React.FC = () => {
       .filter((item) => !!(item.item_url || item.canonical_url))
       .filter((item) => refreshIncludePurchased || (item.purchase_status !== 'purchased' && !item.hide_when_purchased))
       .filter((item) => {
-        const dueBySchedule = !item.next_refresh_at || new Date(item.next_refresh_at).getTime() <= Date.now();
+        const dueBySchedule = isRegistryItemDue(item.next_refresh_at);
         const failCount = item.refresh_fail_count ?? 0;
-        const backoffDue = !item.last_auto_refreshed_at || (Date.now() - new Date(item.last_auto_refreshed_at).getTime()) >= getBackoffMs(failCount);
-        const stale = !item.metadata_last_checked_at || (Date.now() - new Date(item.metadata_last_checked_at).getTime()) > WEEKLY_REFRESH_MS;
+        const backoffDue = ageExceedsMs(item.last_auto_refreshed_at, getBackoffMs(failCount));
+        const stale = ageExceedsMs(item.metadata_last_checked_at, WEEKLY_REFRESH_MS);
         const outOfStock = (item.availability || '').toLowerCase().includes('out');
         const priceChanged = item.previous_price_amount != null && item.price_amount != null && item.previous_price_amount !== item.price_amount;
         return alertsOnly ? ((dueBySchedule || stale || outOfStock || priceChanged) && backoffDue) : ((dueBySchedule || stale) && backoffDue);
@@ -775,7 +776,7 @@ export const DashboardRegistry: React.FC = () => {
     const matchesFilter = filter === 'all' || item.purchase_status === filter;
     const hasAlert =
       !item.metadata_last_checked_at ||
-      (Date.now() - new Date(item.metadata_last_checked_at).getTime()) > WEEKLY_REFRESH_MS ||
+      ageExceedsMs(item.metadata_last_checked_at, WEEKLY_REFRESH_MS) ||
       ((item.availability || '').toLowerCase().includes('out')) ||
       (item.previous_price_amount != null && item.price_amount != null && item.previous_price_amount !== item.price_amount);
     const hasImageIssue = !item.image_url || item.image_url.includes('thum.io') || item.image_url.includes('weserv.nl');
@@ -787,7 +788,7 @@ export const DashboardRegistry: React.FC = () => {
 
   useEffect(() => {
     if (loading || isDemoMode || items.length === 0) return;
-    const hasStale = normalizedItems.some((item) => !item.metadata_last_checked_at || (Date.now() - new Date(item.metadata_last_checked_at).getTime()) > WEEKLY_REFRESH_MS);
+    const hasStale = normalizedItems.some((item) => ageExceedsMs(item.metadata_last_checked_at, WEEKLY_REFRESH_MS));
     if (!hasStale) return;
     handleAutoRefreshStale(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -847,7 +848,7 @@ export const DashboardRegistry: React.FC = () => {
   const fulfillmentRate = counts.total > 0 ? Math.round((counts.purchased / counts.total) * 100) : 0;
   const recentActivity = [...normalizedItems]
     .filter((item) => item.updated_at || item.created_at)
-    .sort((a, b) => new Date(b.updated_at ?? b.created_at ?? 0).getTime() - new Date(a.updated_at ?? a.created_at ?? 0).getTime())
+    .sort((a, b) => getRegistryItemTimestamp(b.updated_at ?? b.created_at) - getRegistryItemTimestamp(a.updated_at ?? a.created_at))
     .slice(0, 6);
   const topRegistryItems = [...normalizedItems]
     .sort((a, b) => {
@@ -858,7 +859,7 @@ export const DashboardRegistry: React.FC = () => {
     .slice(0, 5);
 
   const alertCounts = {
-    stale: normalizedItems.filter((i) => !i.metadata_last_checked_at || (Date.now() - new Date(i.metadata_last_checked_at).getTime()) > 1000 * 60 * 60 * 24).length,
+    stale: normalizedItems.filter((i) => ageExceedsMs(i.metadata_last_checked_at, 1000 * 60 * 60 * 24)).length,
     priceChanged: normalizedItems.filter((i) => i.previous_price_amount != null && i.price_amount != null && i.previous_price_amount !== i.price_amount).length,
     outOfStock: normalizedItems.filter((i) => (i.availability || '').toLowerCase().includes('out')).length,
     imageIssues: normalizedItems.filter((i) => !i.image_url || i.image_url.includes('thum.io') || i.image_url.includes('weserv.nl')).length,
@@ -1002,7 +1003,7 @@ Import a list of links
                     <p className="text-sm font-medium text-text-primary">{item.item_name}</p>
                     <span className="text-xs text-text-tertiary">{item.purchase_status}</span>
                   </div>
-                  <p className="mt-1 text-xs text-text-secondary">Updated {new Date(item.updated_at ?? item.created_at ?? Date.now()).toLocaleDateString()}</p>
+                  <p className="mt-1 text-xs text-text-secondary">Updated {formatRegistryItemDate(item.updated_at ?? item.created_at)}</p>
                 </div>
               ))}
             </div>
