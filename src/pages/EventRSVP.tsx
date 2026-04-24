@@ -313,6 +313,17 @@ export default function EventRSVP() {
       if (activeLoadRequestRef.current !== requestId) return;
       loadInFlightRef.current = false;
       setLoading(false);
+      if (
+        pendingContinuityRefreshRef.current
+        && token
+        && tokenLinkedSessionRef.current
+        && !selectedEvent
+        && !submitting
+        && !submitInFlightRef.current
+      ) {
+        pendingContinuityRefreshRef.current = false;
+        void loadGuestAndEvents({ preserveVisibleState: true });
+      }
     }
   }, [guest, selectedEvent, token]);
 
