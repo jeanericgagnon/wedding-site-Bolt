@@ -106,6 +106,7 @@ interface TargetStatusVaultRow {
   reminderOpenCount: number;
   reminderHighUrgencyCount: number;
   note: string | null;
+  additionalNotes: string[];
   executionNote: string | null;
   milestoneNote: string | null;
   proofNote: string | null;
@@ -642,6 +643,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       reminderOpenCount: snapshot.statusVault.reminderSummary.openCount,
       reminderHighUrgencyCount: snapshot.statusVault.reminderSummary.highUrgencyCount,
       note: snapshot.statusVault.notes[0] ?? null,
+      additionalNotes: snapshot.statusVault.notes.slice(1, 4),
       executionNote: snapshot.statusVault.executionNote,
       milestoneNote: snapshot.statusVault.milestoneNote,
       proofNote: snapshot.statusVault.proofNote,
@@ -1259,6 +1261,11 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                     </div>
                   </div>
                   {row.note && <p className="mt-3 text-sm text-text-secondary">{row.note}</p>}
+                  {row.additionalNotes.length > 0 ? (
+                    <ul className="mt-2 space-y-1 text-xs text-text-secondary">
+                      {row.additionalNotes.map((note) => <li key={note}>• {note}</li>)}
+                    </ul>
+                  ) : null}
                   {row.executionNote && row.executionNote !== row.note ? <p className="mt-2 text-xs text-text-secondary">Execution note: {row.executionNote}</p> : null}
                   {row.milestoneNote && row.milestoneNote !== row.note && row.milestoneNote !== row.executionNote ? <p className="mt-2 text-xs text-text-secondary">Milestone note: {row.milestoneNote}</p> : null}
                   {row.proofNote && row.proofNote !== row.note && row.proofNote !== row.executionNote && row.proofNote !== row.milestoneNote ? <p className="mt-2 text-xs text-text-secondary">Proof note: {row.proofNote}</p> : null}

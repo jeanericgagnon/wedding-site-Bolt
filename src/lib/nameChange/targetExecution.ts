@@ -145,24 +145,29 @@ function getTargetStatusVaultSnapshot(
     status = 'ready';
   }
 
-  const notes = explicitNotes.length > 0
-    ? explicitNotes
-    : milestoneNotes.length > 0
-      ? milestoneNotes
-    : nextAction
-      ? [nextAction.detail]
-      : blockers.slice(0, 2);
   const reminderNote = latestReminder?.reason
     ? `Reminder: ${latestReminder.label} — ${latestReminder.reason}`
     : latestReminder?.label
       ? `Reminder: ${latestReminder.label}`
       : null;
-  const notesWithReminder = reminderNote && lastTouchedSource === 'reminder'
-    ? [reminderNote, ...notes.filter((note) => note !== reminderNote)]
-    : notes;
   const executionNote = explicitNotes[0] ?? (nextAction ? nextAction.detail : blockers[0] ?? null);
   const milestoneNote = milestoneNotes[0] ?? null;
   const proofNote = proofIssues ? `Proof needs: ${proofIssues}` : null;
+  const primaryExecutionNote = explicitNotes[0] ?? null;
+  const fallbackNotes = explicitNotes.length > 0
+    ? explicitNotes
+    : milestoneNotes.length > 0
+      ? milestoneNotes
+      : nextAction
+        ? [nextAction.detail]
+        : blockers.slice(0, 2);
+  const prioritizedNotes = [
+    lastTouchedSource === 'reminder' ? reminderNote : (primaryExecutionNote ?? milestoneNote ?? executionNote),
+    lastTouchedSource === 'reminder' ? (primaryExecutionNote ?? milestoneNote ?? executionNote) : reminderNote,
+    milestoneNote,
+    proofNote,
+    ...fallbackNotes,
+  ].filter((note, index, items): note is string => Boolean(note) && items.indexOf(note) === index);
 
   return {
     status,
@@ -173,7 +178,7 @@ function getTargetStatusVaultSnapshot(
       missing: missingChecklist.length,
       total: checklist.length,
     },
-    notes: notesWithReminder,
+    notes: prioritizedNotes,
     executionNote,
     milestoneNote,
     proofNote,

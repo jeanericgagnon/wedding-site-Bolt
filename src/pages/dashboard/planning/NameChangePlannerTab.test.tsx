@@ -353,6 +353,8 @@ describe('NameChangePlannerTab', () => {
     );
 
     expect(screen.getAllByText(/Proof note:/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/SSA packet already filed and waiting on receipt\./).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/• Proof needs:/).length).toBeGreaterThan(0);
   });
 
   it('keeps plan-level execution timing visible when reminders are newer than execution', () => {

@@ -2161,7 +2161,10 @@ describe('name change target execution snapshot', () => {
         missing: expect.any(Number),
         total: expect.any(Number),
       },
-      notes: ['Need the SSA receipt number before rolling into DMV.'],
+      notes: [
+        'Need the SSA receipt number before rolling into DMV.',
+        expect.stringMatching(/^Proof needs: /),
+      ],
     });
     expect(snapshot.statusVault.proofSummary).toContain('checks ready');
   });
@@ -2406,6 +2409,8 @@ describe('name change target execution snapshot', () => {
 
     expect(snapshot.statusVault.lastTouchedSource).toBe('reminder');
     expect(snapshot.statusVault.notes[0]).toBe('Reminder: SSA follow-up — Receipt still missing');
+    expect(snapshot.statusVault.notes).toContain('SSA packet already filed and waiting on receipt.');
+    expect(snapshot.statusVault.notes).toContainEqual(expect.stringMatching(/^Proof needs: /));
     expect(snapshot.statusVault.executionNote).toBe('SSA packet already filed and waiting on receipt.');
     expect(snapshot.statusVault.milestoneNote).toBeNull();
     expect(snapshot.statusVault.proofNote).toMatch(/^Proof needs: /);
