@@ -1365,8 +1365,8 @@ describe('name change target execution snapshot', () => {
     const snapshot = buildNameChangeTargetExecutionSnapshot('ssa', profile, documents, extractedFields);
     expect(snapshot.ready).toBe(true);
     expect(snapshot.nextAction).toMatchObject({
-      category: 'review',
-      label: 'Split SSA work into two partner packets',
+      category: 'packet',
+      label: 'Open two SSA partner packets',
     });
   });
 
@@ -1425,8 +1425,8 @@ describe('name change target execution snapshot', () => {
     const snapshot = buildNameChangeTargetExecutionSnapshot('dmv', profile, documents, extractedFields, plan);
     expect(snapshot.ready).toBe(true);
     expect(snapshot.nextAction).toMatchObject({
-      category: 'review',
-      label: 'Split DMV work into two partner appointments',
+      category: 'packet',
+      label: 'Open two DMV partner appointment tracks',
     });
   });
 
@@ -1495,8 +1495,8 @@ describe('name change target execution snapshot', () => {
     const snapshot = buildNameChangeTargetExecutionSnapshot('banks', profile, documents, extractedFields, plan);
     expect(snapshot.ready).toBe(true);
     expect(snapshot.nextAction).toMatchObject({
-      category: 'review',
-      label: 'Split downstream rollout into partner-specific confirmations',
+      category: 'checklist',
+      label: 'Track downstream rollout separately for each partner',
     });
   });
 

@@ -235,24 +235,24 @@ export function buildNameChangeTargetExecutionSnapshot(
 
     if (targetKey === 'ssa') {
       return {
-        category: 'review' as const,
-        label: 'Split SSA work into two partner packets',
-        detail: 'Both partners are changing names, so SSA prep should track separate SS-5 packets, evidence copies, and submission follow-through for each partner instead of treating this as one shared chain.',
+        category: 'packet' as const,
+        label: 'Open two SSA partner packets',
+        detail: 'Both partners are changing names, so SSA execution should branch into one SS-5 packet, evidence stack, and submission checkpoint set per partner instead of one shared federal chain.',
       };
     }
 
     if (targetKey === 'dmv') {
       return {
-        category: 'review' as const,
-        label: 'Split DMV work into two partner appointments',
-        detail: 'Both partners are changing names, so DMV follow-through should keep separate appointment timing, temporary-ID expectations, and title/registration follow-up per partner.',
+        category: 'packet' as const,
+        label: 'Open two DMV partner appointment tracks',
+        detail: 'Both partners are changing names, so DMV execution should branch into separate appointment timing, temporary-ID handling, and title/registration follow-through per partner.',
       };
     }
 
     return {
-      category: 'review' as const,
-      label: 'Split downstream rollout into partner-specific confirmations',
-      detail: 'Both partners are changing names, so this rollout lane should confirm account updates, mailed notices, and completion proof separately for each partner instead of collapsing everything into one checklist.',
+      category: 'checklist' as const,
+      label: 'Track downstream rollout separately for each partner',
+      detail: 'Both partners are changing names, so this rollout lane should keep separate account confirmations, mailed notices, and completion proof for each partner instead of collapsing everything into one checklist.',
     };
   };
   const courtOrderNextAction = targetKey === 'courtOrder' ? buildCourtOrderNextAction() : null;
