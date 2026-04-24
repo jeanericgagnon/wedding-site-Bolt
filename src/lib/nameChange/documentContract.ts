@@ -2,6 +2,7 @@ import { buildNameChangeCanonicalCase } from './canonical';
 import { canonicalizeNameChangeDocumentKind, matchesNameChangeDocumentKind } from './documentKinds';
 import { buildNameChangeExtractionContractSnapshot } from './extractionContract';
 import {
+  buildDraftNameChangeDocumentMetadataFromSnapshot,
   buildDraftNameChangeExtractedFieldsFromSnapshot,
   buildDraftNameChangeDocumentId,
   isDraftNameChangePlaceholderDocument,
@@ -104,16 +105,22 @@ function metadataMissingForDocument(document: NameChangeDocumentInput | undefine
   if (!document || document.intake_status === 'not_started') return [];
   if (document.document_kind === 'other') return [];
 
+  const snapshotMetadata = buildDraftNameChangeDocumentMetadataFromSnapshot(document.extracted_snapshot);
+  const issuingAuthority = document.issuing_authority?.trim() || snapshotMetadata.issuingAuthority?.trim() || null;
+  const issuedOn = document.issued_on?.trim() || snapshotMetadata.issuedOn?.trim() || null;
+  const expiresOn = document.expires_on?.trim() || snapshotMetadata.expiresOn?.trim() || null;
+  const extractionConfidence = document.extraction_confidence ?? snapshotMetadata.extractionConfidence;
+
   const missing: string[] = [];
   if (!document.file_name_masked?.trim() || isDraftNameChangePlaceholderDocument({ file_name_masked: document.file_name_masked })) missing.push('masked filename');
-  if (!document.issuing_authority?.trim()) missing.push('issuing authority');
-  if (!document.issued_on?.trim()) missing.push('issued date');
+  if (!issuingAuthority) missing.push('issuing authority');
+  if (!issuedOn) missing.push('issued date');
 
   if (document.document_kind === 'current_passport' || document.document_kind === 'current_drivers_license') {
-    if (!document.expires_on?.trim()) missing.push('expiration date');
+    if (!expiresOn) missing.push('expiration date');
   }
 
-  if (document.extraction_confidence == null) missing.push('extraction confidence');
+  if (extractionConfidence == null) missing.push('extraction confidence');
   return missing;
 }
 

@@ -823,3 +823,38 @@ export function buildDraftNameChangeExtractedFieldsFromSnapshot(
     return upsertDraftNameChangeExtractedField(fields, documentId, fieldKey as NameChangeExtractedFieldInput['field_key'], '', value);
   }, []);
 }
+
+export function buildDraftNameChangeDocumentMetadataFromSnapshot(
+  snapshot: Record<string, unknown> | null | undefined,
+) {
+  if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)) {
+    return {
+      issuingAuthority: null,
+      issuedOn: null,
+      expiresOn: null,
+      extractionConfidence: null,
+    };
+  }
+
+  const readValue = (...keys: string[]) => {
+    for (const key of keys) {
+      const value = getDraftSnapshotFieldValue(snapshot[key]);
+      if (value) return value;
+    }
+
+    return null;
+  };
+
+  const extractionConfidenceValue = readValue('extraction_confidence', 'extractionConfidence', 'confidence');
+  const parsedExtractionConfidence = extractionConfidenceValue == null ? null : Number.parseFloat(extractionConfidenceValue);
+
+  const issuedOnValue = readValue('issued_on', 'issuedOn', 'issuance_date', 'issuanceDate');
+  const expiresOnValue = readValue('expires_on', 'expiresOn', 'expiration_date', 'expirationDate');
+
+  return {
+    issuingAuthority: readValue('issuing_authority', 'issuingAuthority', 'authority', 'issuer'),
+    issuedOn: issuedOnValue ? normalizeDraftDateValue(issuedOnValue) : null,
+    expiresOn: expiresOnValue ? normalizeDraftDateValue(expiresOnValue) : null,
+    extractionConfidence: Number.isFinite(parsedExtractionConfidence) ? parsedExtractionConfidence : null,
+  };
+}

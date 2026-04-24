@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildDraftNameChangeDocumentId, buildDraftNameChangeExtractedFieldsFromSnapshot, createDraftNameChangeDocument, isDraftNameChangeDocumentId, isDraftNameChangePlaceholderDocument, normalizeDraftNameChangeDocumentId, upsertDraftNameChangeExtractedField } from './intakeDraft';
+import { buildDraftNameChangeDocumentId, buildDraftNameChangeDocumentMetadataFromSnapshot, buildDraftNameChangeExtractedFieldsFromSnapshot, createDraftNameChangeDocument, isDraftNameChangeDocumentId, isDraftNameChangePlaceholderDocument, normalizeDraftNameChangeDocumentId, upsertDraftNameChangeExtractedField } from './intakeDraft';
 import type { NameChangeExtractedFieldInput } from './types';
 
 describe('name change intake draft helpers', () => {
@@ -82,6 +82,20 @@ describe('name change intake draft helpers', () => {
         field_value_masked: 'San Diego',
       }),
     ]));
+  });
+
+  it('builds canonical document metadata from snapshots', () => {
+    expect(buildDraftNameChangeDocumentMetadataFromSnapshot({
+      issuingAuthority: ' California DMV ',
+      issuanceDate: '2026-04-05T00:00:00Z',
+      expiration_date: '2031-04-05T00:00:00Z',
+      confidence: '0.88',
+    })).toEqual({
+      issuingAuthority: ' California DMV ',
+      issuedOn: '2026-04-05',
+      expiresOn: '2031-04-05',
+      extractionConfidence: 0.88,
+    });
   });
 
   it('collapses draft document labels into one clean downstream display name', () => {
