@@ -12,6 +12,7 @@ import { Input } from '../../components/ui/Input';
 import { Textarea } from '../../components/ui/Textarea';
 import { deleteEventRsvpByInvitationId, deleteEventRsvpsByInvitationIds, getEventRsvpSnapshotsByInvitationIds, restoreEventRsvpSnapshots } from '../../lib/eventRsvpCleanup';
 import type { WeddingDataV1 } from '../../types/weddingData';
+import { combineDateAndTimeISO } from './itineraryDateTime';
 
 interface ItineraryEvent {
   id: string;
@@ -38,13 +39,6 @@ interface EventWithInvites extends ItineraryEvent {
   rsvp_count: number;
   attending_count: number;
   declined_count: number;
-}
-
-function combineDateAndTimeISO(date: string, time: string | null): string | undefined {
-  if (!date) return undefined;
-  const normalizedTime = time && time.trim().length > 0 ? time : '00:00';
-  const iso = new Date(`${date}T${normalizedTime}:00`).toISOString();
-  return Number.isNaN(new Date(iso).getTime()) ? undefined : iso;
 }
 
 function toScheduleSectionEvents(events: ItineraryEvent[]) {
