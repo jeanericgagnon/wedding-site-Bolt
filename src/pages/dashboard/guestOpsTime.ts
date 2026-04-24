@@ -17,3 +17,12 @@ export function formatGuestOpsRelativeTime(value: string | null | undefined, now
   const days = Math.floor(hours / 24);
   return `${days}d ago`;
 }
+
+export function formatGuestOpsDateTime(
+  value: string | null | undefined,
+  options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' },
+): string {
+  const timestamp = getGuestOpsTimestamp(value);
+  if (!Number.isFinite(timestamp)) return 'Unknown time';
+  return new Date(timestamp).toLocaleString('en-US', options);
+}

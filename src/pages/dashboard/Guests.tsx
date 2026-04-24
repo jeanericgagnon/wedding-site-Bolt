@@ -3,7 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { PLANNER_ROLE_OPTIONS, canEditPlannerSurface, derivePlannerRoleFromPermissions, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
-import { formatGuestOpsRelativeTime, getGuestOpsTimestamp } from './guestOpsTime';
+import { formatGuestOpsDateTime, formatGuestOpsRelativeTime, getGuestOpsTimestamp } from './guestOpsTime';
+import { formatGuestEventDate } from './guestEventDate';
 import { getRsvpFallbackState } from '../../lib/rsvpFallbackState';
 import { getInviteLifecycleState } from '../../lib/inviteLifecycle';
 import { getGuestLifecycleStage } from '../../lib/guestLifecycleStage';
@@ -4782,7 +4783,7 @@ Proceed with send?`)) return;
                 ) : (
                   <div className="space-y-2.5">
                     {guestAuditEntries.map((entry) => {
-                      const absolute = new Date(entry.changed_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+                      const absolute = formatGuestOpsDateTime(entry.changed_at);
                       const relative = formatGuestOpsRelativeTime(entry.changed_at);
                       const Icon = getAuditActionIcon(entry.action);
                       return (
@@ -4850,7 +4851,7 @@ Proceed with send?`)) return;
                           </p>
                           <p className="text-xs text-text-tertiary mt-0.5">
                             {event.event_date
-                              ? new Date(event.event_date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+                              ? formatGuestEventDate(event.event_date)
                               : 'No date set'}
                             {event.start_time && ` · ${event.start_time}`}
                             {event.location_name && ` · ${event.location_name}`}
