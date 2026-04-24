@@ -389,6 +389,66 @@ describe('name change execution sequence snapshot', () => {
     });
   });
 
+  it('adds dual-partner branching dependencies across employer and rollout-only targets', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+      {
+        document_kind: 'proof_of_address',
+        display_name: 'Proof of address',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+      {
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const profile = makeCase({
+      employment_status: 'employed',
+      structured_intake: { spouseLastName: 'Jordan', bothPartnersChangeName: true },
+    });
+
+    const employerSnapshot = buildNameChangeExecutionSequenceSnapshot('employer', profile, documents, []);
+    const courtesySnapshot = buildNameChangeExecutionSequenceSnapshot('courtesy', profile, documents, []);
+    const voterSnapshot = buildNameChangeExecutionSequenceSnapshot('voter', profile, documents, []);
+    const tsaSnapshot = buildNameChangeExecutionSequenceSnapshot('tsa', profile, documents, []);
+    const licensesSnapshot = buildNameChangeExecutionSequenceSnapshot('licenses', profile, documents, []);
+
+    expect(employerSnapshot.dependencies.find((dependency) => dependency.key === 'dual-partner-employer-packet')).toMatchObject({
+      status: 'attention',
+      nextActionCategory: 'review',
+    });
+    expect(courtesySnapshot.dependencies.find((dependency) => dependency.key === 'dual-partner-courtesy-identity-support')).toMatchObject({
+      status: 'attention',
+      nextActionCategory: 'review',
+    });
+    expect(voterSnapshot.dependencies.find((dependency) => dependency.key === 'dual-partner-california-voter-support')).toMatchObject({
+      status: 'attention',
+      nextActionCategory: 'review',
+    });
+    expect(tsaSnapshot.dependencies.find((dependency) => dependency.key === 'dual-partner-travel-profile-support')).toMatchObject({
+      status: 'attention',
+      nextActionCategory: 'review',
+    });
+    expect(licensesSnapshot.dependencies.find((dependency) => dependency.key === 'dual-partner-license-identity-support')).toMatchObject({
+      status: 'attention',
+      nextActionCategory: 'review',
+    });
+  });
+
   it('marks insurance sequencing ready when DMV is in progress', () => {
     const documents: NameChangeDocumentInput[] = [
       {

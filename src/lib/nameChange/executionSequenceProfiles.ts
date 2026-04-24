@@ -206,6 +206,12 @@ function buildEmploymentTargetDependencies(config: {
       satisfiedReason: config.supportSatisfiedReason,
       missingReason: config.supportMissingReason,
     }),
+    buildDualPartnerExecutionDependency(
+      profile,
+      `dual-partner-${config.supportKey}`,
+      'Dual-partner downstream rollout split',
+      'Both partners are changing names, so this downstream rollout should track separate confirmations, mailed notices, and completion proof for each partner.',
+    ),
     ...prerequisiteDependencies,
   ];
 }
@@ -236,7 +242,7 @@ function buildPhotoIdPacketDependencies(config: {
   ];
 }
 
-const buildVoterDependencies: NameChangeDependencyRecipe = ({ intake, requirements, prerequisiteDependencies }) => [
+const buildVoterDependencies: NameChangeDependencyRecipe = ({ profile, intake, requirements, prerequisiteDependencies }) => [
   buildRequirementDependency(requirements.launchStateAlignment, 'launch-state-alignment', 'California launch-state alignment', true, 'California launch-state alignment has not been evaluated.', false, 'dependency'),
   buildRequirementDependency(requirements.countyContext, 'county-context', 'County / jurisdiction context', true, 'County context requirement not evaluated.', false, 'dependency'),
   buildDocumentSupportDependency(intake, {
@@ -246,10 +252,16 @@ const buildVoterDependencies: NameChangeDependencyRecipe = ({ intake, requiremen
     satisfiedReason: 'California voter-supporting identity/address support exists in intake.',
     missingReason: 'No California voter-supporting identity/address support exists in intake yet.',
   }),
+  buildDualPartnerExecutionDependency(
+    profile,
+    'dual-partner-california-voter-support',
+    'Dual-partner downstream rollout split',
+    'Both partners are changing names, so this downstream rollout should track separate confirmations, mailed notices, and completion proof for each partner.',
+  ),
   ...prerequisiteDependencies,
 ];
 
-const buildTsaDependencies: NameChangeDependencyRecipe = ({ intake, requirements, prerequisiteDependencies }) => [
+const buildTsaDependencies: NameChangeDependencyRecipe = ({ profile, intake, requirements, prerequisiteDependencies }) => [
   buildRequirementDependency(requirements.marriageJurisdictionAlignment, 'marriage-jurisdiction-alignment', 'Marriage jurisdiction alignment', true, 'Marriage jurisdiction alignment has not been evaluated.', true, 'document'),
   buildRequirementDependency(requirements.outOfStateMarriageCertificateGrounding, 'out-of-state-marriage-certificate-grounding', 'Out-of-state marriage certificate grounding', true, 'Out-of-state marriage certificate grounding has not been evaluated.', true, 'document'),
   buildRequirementDependency(requirements.identityCoverage, 'identity-document-coverage', 'Identity document coverage', true, 'Identity coverage requirement not evaluated.', false, 'document'),
@@ -263,6 +275,12 @@ const buildTsaDependencies: NameChangeDependencyRecipe = ({ intake, requirements
     satisfiedReason: 'Passport or Real ID support exists in intake for travel-profile updates.',
     missingReason: 'No passport or Real ID support exists in intake yet for travel-profile updates.',
   }),
+  buildDualPartnerExecutionDependency(
+    profile,
+    'dual-partner-travel-profile-support',
+    'Dual-partner downstream rollout split',
+    'Both partners are changing names, so this downstream rollout should track separate confirmations, mailed notices, and completion proof for each partner.',
+  ),
   ...prerequisiteDependencies,
 ];
 
@@ -278,6 +296,12 @@ export const NAME_CHANGE_SEQUENCE_PROFILE_RECIPES: Record<NameChangeExecutionSeq
       'Employment context eligible for employer packet',
       'Employment context is active enough to justify employer / payroll packet prep.',
       'Employer / payroll packet only matters when employment context is active.',
+    ),
+    buildDualPartnerExecutionDependency(
+      profile,
+      'dual-partner-employer-packet',
+      'Dual-partner downstream rollout split',
+      'Both partners are changing names, so this downstream rollout should track separate payroll, HR, and benefits confirmations for each partner.',
     ),
     ...prerequisiteDependencies,
   ],
@@ -309,7 +333,7 @@ export const NAME_CHANGE_SEQUENCE_PROFILE_RECIPES: Record<NameChangeExecutionSeq
     supportSatisfiedReason: 'Utilities/lease identity support exists in intake.',
     supportMissingReason: 'No utilities/lease identity support exists in intake yet.',
   }),
-  courtesy: ({ intake, prerequisiteDependencies }) => [
+  courtesy: ({ profile, intake, prerequisiteDependencies }) => [
     buildDocumentSupportDependency(intake, {
       key: 'courtesy-identity-support',
       label: 'Courtesy/social identity context exists',
@@ -317,6 +341,12 @@ export const NAME_CHANGE_SEQUENCE_PROFILE_RECIPES: Record<NameChangeExecutionSeq
       satisfiedReason: 'Courtesy/social identity context exists in intake.',
       missingReason: 'No courtesy/social identity context exists in intake yet.',
     }),
+    buildDualPartnerExecutionDependency(
+      profile,
+      'dual-partner-courtesy-identity-support',
+      'Dual-partner downstream rollout split',
+      'Both partners are changing names, so this downstream rollout should track separate courtesy-name confirmations and social profile proof for each partner.',
+    ),
     ...prerequisiteDependencies,
   ],
   voter: buildVoterDependencies,
