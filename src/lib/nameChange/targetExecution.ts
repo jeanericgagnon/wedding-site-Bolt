@@ -90,10 +90,10 @@ function getTargetStatusVaultSnapshot(
     .join('; ');
   const proofSummary = proofIssues ? `${proofCounts} • Needs ${proofIssues}` : `${proofCounts} • Proof stack looks grounded`;
   const targetReminders = reminders.filter((reminder) => reminder.focus_target_id === targetKey && reminder.status !== 'dismissed');
-  const latestReminderAt = targetReminders
-    .map((reminder) => reminder.updated_at ?? null)
-    .filter((value): value is string => Boolean(value))
-    .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
+  const latestReminder = [...targetReminders]
+    .filter((reminder) => Boolean(reminder.updated_at))
+    .sort((left, right) => new Date(right.updated_at ?? 0).getTime() - new Date(left.updated_at ?? 0).getTime())[0] ?? null;
+  const latestReminderAt = latestReminder?.updated_at ?? null;
   const lastTouchedAt = [latestExecutionUpdatedAt, latestReminderAt]
     .filter((value): value is string => Boolean(value))
     .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
@@ -121,11 +121,19 @@ function getTargetStatusVaultSnapshot(
     : nextAction
       ? [nextAction.detail]
       : blockers.slice(0, 2);
+  const reminderNote = latestReminder?.reason
+    ? `Reminder: ${latestReminder.label} — ${latestReminder.reason}`
+    : latestReminder?.label
+      ? `Reminder: ${latestReminder.label}`
+      : null;
+  const notesWithReminder = reminderNote && lastTouchedSource === 'reminder'
+    ? [reminderNote, ...notes.filter((note) => note !== reminderNote)]
+    : notes;
 
   return {
     status,
     proofSummary,
-    notes,
+    notes: notesWithReminder,
     lastUpdatedAt: latestExecutionUpdatedAt,
     lastTouchedAt,
     lastTouchedSource,
