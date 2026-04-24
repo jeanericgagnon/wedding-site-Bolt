@@ -137,6 +137,8 @@ describe('name change target checklist', () => {
         legal_basis: 'court_order',
         marriage_state: null,
         marriage_date: null,
+        current_middle_name: '',
+        target_middle_name: '',
         structured_intake: {
           spouseLastName: null,
           travelBookedSoon: false,
@@ -455,5 +457,44 @@ describe('name change target checklist', () => {
       status: 'ready',
       reason: 'Current legal name is available for banks and credit cards prep.',
     });
+  });
+
+  it('treats snapshot-backed opaque court-order uploads as ready checklist grounding', () => {
+    const checklist = buildNameChangeTargetChecklist(
+      NAME_CHANGE_EXECUTION_TARGETS.courtOrder,
+      makeCase({
+        legal_basis: 'court_order',
+        marriage_state: null,
+        marriage_date: null,
+        current_middle_name: '',
+        target_middle_name: '',
+        structured_intake: {
+          spouseLastName: null,
+          travelBookedSoon: false,
+          wantsDocumentIntakeHelp: true,
+        },
+        change_reasons: ['court_order'],
+      }),
+      [
+        {
+          id: 'court-order-upload-final.pdf',
+          document_kind: 'court_order',
+          display_name: 'Court order',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          extracted_snapshot: {
+            fields: {
+              first_name: { value: 'Alex' },
+              last_name: { value: 'Jordan' },
+              case_number: { value: '24-CV-1188' },
+              court_order_date: { value: '2026-04-12' },
+            },
+          },
+        },
+      ],
+      [],
+    );
+
+    expect(checklist.find((item) => item.key === 'court-order-reference-extraction')).toMatchObject({ status: 'ready' });
   });
 });

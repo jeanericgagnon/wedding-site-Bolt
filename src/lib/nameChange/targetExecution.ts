@@ -166,8 +166,8 @@ export function buildNameChangeTargetExecutionSnapshot(
     const marriageCertificateDocuments = documents.filter((document) => marriageCertificateKinds.has(document.document_kind));
     const hasMarriageCertificate = marriageCertificateDocuments.length > 0;
     const hasReviewedMarriageCertificate = marriageCertificateDocuments.some((document) => document.intake_status === 'reviewed');
-    const hasVerifiedMarriageCertificateCounty = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'marriage_certificate', 'county');
-    const hasVerifiedMarriageCertificateNumber = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'marriage_certificate', 'certificate_number');
+    const hasVerifiedMarriageCertificateCounty = hasVerifiedLinkedDocumentFieldValue(documents, mergedExtractedFields, 'marriage_certificate', 'county');
+    const hasVerifiedMarriageCertificateNumber = hasVerifiedLinkedDocumentFieldValue(documents, mergedExtractedFields, 'marriage_certificate', 'certificate_number');
 
     if (groundingDependency.status !== 'missing' && groundingDependency.status !== 'attention') return null;
 

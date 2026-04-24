@@ -1,5 +1,6 @@
 import { buildNameChangeAutofillPrepSnapshot } from './autofill';
 import { buildNameChangeDocumentIntakeSnapshot } from './documentContract';
+import { buildNameChangeSnapshotBackedExtractedFields } from './intakeDraft';
 import { evaluateNameChangeRequirements } from './requirements';
 import type {
   NameChangeCaseInput,
@@ -50,9 +51,10 @@ export function buildNameChangeTargetChecklist(
   documents: NameChangeDocumentInput[],
   extractedFields: NameChangeExtractedFieldInput[],
 ): NameChangeTargetChecklistItem[] {
-  const requirements = evaluateNameChangeRequirements(profile, documents, extractedFields);
-  const intake = buildNameChangeDocumentIntakeSnapshot(profile, documents, extractedFields);
-  const autofill = buildNameChangeAutofillPrepSnapshot(profile, documents, extractedFields);
+  const mergedExtractedFields = buildNameChangeSnapshotBackedExtractedFields(documents, extractedFields);
+  const requirements = evaluateNameChangeRequirements(profile, documents, mergedExtractedFields);
+  const intake = buildNameChangeDocumentIntakeSnapshot(profile, documents, mergedExtractedFields);
+  const autofill = buildNameChangeAutofillPrepSnapshot(profile, documents, mergedExtractedFields);
 
   return target.checklistSpecs.map((spec) => {
     if (spec.kind === 'requirement') {

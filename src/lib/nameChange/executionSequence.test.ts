@@ -217,6 +217,44 @@ describe('name change execution sequence snapshot', () => {
     expect(snapshot.dependencies.find((dependency) => dependency.key === 'federal-ssa-progress')).toMatchObject({ status: 'satisfied' });
   });
 
+  it('treats snapshot-backed opaque court-order uploads as sequence-grounded extraction truth', () => {
+    const profile = makeCase({
+      legal_basis: 'court_order',
+      marriage_state: null,
+      marriage_date: null,
+      current_middle_name: '',
+      target_middle_name: '',
+      structured_intake: {
+        spouseLastName: null,
+        travelBookedSoon: false,
+        wantsDocumentIntakeHelp: true,
+      },
+      change_reasons: ['court_order'],
+    });
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'court-order-upload-final.pdf',
+        document_kind: 'court_order',
+        display_name: 'Court order',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        extracted_snapshot: {
+          fields: {
+            first_name: { value: 'Alex' },
+            last_name: { value: 'Jordan' },
+            case_number: { value: '24-CV-1188' },
+            court_order_date: { value: '2026-04-12' },
+          },
+        },
+      },
+    ];
+
+    const snapshot = buildNameChangeExecutionSequenceSnapshot('courtOrder', profile, documents, []);
+    expect(snapshot.dependencies.find((dependency) => dependency.key === 'court-order-reference-extraction')).toMatchObject({
+      status: 'satisfied',
+    });
+  });
+
   it('marks passport sequencing ready once SSA is underway', () => {
     const documents: NameChangeDocumentInput[] = [
       {

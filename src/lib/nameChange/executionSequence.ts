@@ -1,6 +1,7 @@
 import { buildNameChangeDocumentIntakeSnapshot } from './documentContract';
 import { evaluateNameChangeExecutionPrerequisites } from './executionPrerequisites';
 import { NAME_CHANGE_SEQUENCE_PROFILE_RECIPES } from './executionSequenceProfiles';
+import { buildNameChangeSnapshotBackedExtractedFields } from './intakeDraft';
 import { evaluateNameChangeRequirements } from './requirements';
 import { NAME_CHANGE_EXECUTION_TARGETS } from './targets';
 import type {
@@ -19,9 +20,10 @@ export function buildNameChangeExecutionSequenceSnapshot(
   extractedFields: NameChangeExtractedFieldInput[],
   plan: NameChangePlan | null = null,
 ): NameChangeExecutionSequenceSnapshot {
+  const mergedExtractedFields = buildNameChangeSnapshotBackedExtractedFields(documents, extractedFields);
   const target = NAME_CHANGE_EXECUTION_TARGETS[targetKey];
-  const results = evaluateNameChangeRequirements(profile, documents, extractedFields).results;
-  const intake = buildNameChangeDocumentIntakeSnapshot(profile, documents, extractedFields);
+  const results = evaluateNameChangeRequirements(profile, documents, mergedExtractedFields).results;
+  const intake = buildNameChangeDocumentIntakeSnapshot(profile, documents, mergedExtractedFields);
   const prerequisiteDependencies = evaluateNameChangeExecutionPrerequisites(target.prerequisiteRules, plan);
 
   const dependencies = NAME_CHANGE_SEQUENCE_PROFILE_RECIPES[target.sequenceProfile]({
