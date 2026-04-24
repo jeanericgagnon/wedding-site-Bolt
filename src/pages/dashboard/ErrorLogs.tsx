@@ -4,6 +4,7 @@ import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { useAuth } from '../../hooks/useAuth';
 import { Card } from '../../components/ui/Card';
 import { Link } from 'react-router-dom';
+import { formatErrorLogDateTime, getErrorLogTimestamp } from './errorLogTime';
 
 interface ErrorLogRow {
   id: string;
@@ -101,7 +102,7 @@ export const DashboardErrorLogs: React.FC = () => {
     const severityOk = severityFilter === 'all' ? true : row.severity === severityFilter;
     const routeOk = routeFilter === 'all' ? true : (row.route || '—') === routeFilter;
     const now = Date.now();
-    const rowTs = new Date(row.created_at).getTime();
+    const rowTs = getErrorLogTimestamp(row.created_at);
     const dateOk = datePreset === 'all'
       ? true
       : datePreset === '24h'
@@ -189,7 +190,7 @@ export const DashboardErrorLogs: React.FC = () => {
         });
       } else {
         existing.count += 1;
-        if (new Date(row.created_at).getTime() > new Date(existing.latestAt).getTime()) {
+        if (getErrorLogTimestamp(row.created_at) > getErrorLogTimestamp(existing.latestAt)) {
           existing.latestAt = row.created_at;
         }
       }
@@ -318,7 +319,7 @@ export const DashboardErrorLogs: React.FC = () => {
                   <div key={g.fingerprint} className="flex items-start justify-between gap-3 text-sm border-b border-border-subtle last:border-0 pb-2 last:pb-0">
                     <div className="min-w-0">
                       <p className="text-text-primary truncate">{g.sampleMessage}</p>
-                      <p className="text-xs text-text-tertiary">Latest: {new Date(g.latestAt).toLocaleString()}</p>
+                      <p className="text-xs text-text-tertiary">Latest: {formatErrorLogDateTime(g.latestAt)}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <button
@@ -353,7 +354,7 @@ export const DashboardErrorLogs: React.FC = () => {
                   return (
                     <React.Fragment key={r.id}>
                       <tr className="border-t border-border-subtle align-top">
-                        <td className="px-3 py-2 whitespace-nowrap">{new Date(r.created_at).toLocaleString()}</td>
+                        <td className="px-3 py-2 whitespace-nowrap">{formatErrorLogDateTime(r.created_at)}</td>
                         <td className="px-3 py-2">{r.severity}</td>
                         <td className="px-3 py-2">{r.source}</td>
                         <td className="px-3 py-2">{r.route || '—'}</td>
