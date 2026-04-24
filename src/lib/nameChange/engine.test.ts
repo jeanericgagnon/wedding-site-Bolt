@@ -122,13 +122,23 @@ describe('name change engine', () => {
     );
     expect(plan.summary.accountUpdateTemplates).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ audience: 'Employer payroll / HR', subject: 'Name change update for payroll and benefits' }),
-        expect.objectContaining({ audience: 'Bank or credit card support' }),
+        expect.objectContaining({
+          audience: 'Employer payroll / HR',
+          subject: 'Name change update for payroll and benefits',
+          readiness: 'ready',
+          dependsOnStepIds: expect.arrayContaining(['federal-ssa', 'institution-irs-employer']),
+          proofChecklist: expect.arrayContaining(['Certified legal name-change proof', 'Updated Social Security record or SSA receipt']),
+        }),
+        expect.objectContaining({ audience: 'Bank or credit card support', proofChecklist: expect.arrayContaining(['Updated photo ID or DMV receipt']) }),
         expect.objectContaining({ audience: 'Insurance or subscription support' }),
-        expect.objectContaining({ audience: 'Airline, hotel, loyalty, or travel support' }),
-        expect.objectContaining({ audience: 'Phone, utilities, or primary digital identity support' }),
+        expect.objectContaining({ audience: 'Tax agency or payroll tax support', dependsOnStepIds: expect.arrayContaining(['institution-state-tax-agency']) }),
+        expect.objectContaining({ audience: 'Airline, hotel, loyalty, or travel support', readiness: 'ready' }),
+        expect.objectContaining({ audience: 'Phone, utilities, housing, or primary digital identity support', dependsOnStepIds: expect.arrayContaining(['institution-utilities-housing']) }),
+        expect.objectContaining({ audience: 'Licensing board or credentialing support', dependsOnStepIds: ['state-photo-id', 'institution-professional-licenses'] }),
       ]),
     );
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.body).toContain('Alex Marie Rivera');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.body).toContain('Alex Marie Jordan');
     expect(plan.summary.institutionCategoryCoverage).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'legal_government', institutionKeys: expect.arrayContaining(['uscis-immigration-records', 'irs-records', 'state-tax-agency', 'county-recorder-property']) }),
@@ -153,6 +163,11 @@ describe('name change engine', () => {
         expect.objectContaining({ id: 'milestone-ssa', status: 'blocked' }),
       ]),
     );
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')).toMatchObject({
+      readiness: 'blocked',
+      readinessLabel: 'Hold this until the upstream proof chain is further along.',
+      proofChecklist: expect.arrayContaining(['Certified legal name-change proof still needs review before most downstream updates will stick']),
+    });
   });
 
   it('surfaces conditional middle-name gaps when middle-name truth is already in play', () => {

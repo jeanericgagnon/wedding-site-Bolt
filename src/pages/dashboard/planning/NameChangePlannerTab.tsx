@@ -1061,8 +1061,17 @@ export const NameChangePlannerTab: React.FC<Props> = ({
           <div className="mt-4 space-y-3">
             {accountUpdateTemplates.map((template) => (
               <div key={template.id} className="rounded-xl border border-border-subtle p-4">
-                <p className="text-xs uppercase tracking-wide text-text-tertiary">{template.audience}</p>
-                <p className="mt-2 text-sm font-semibold text-text-primary">{template.subject}</p>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-text-tertiary">{template.audience}</p>
+                    <p className="mt-2 text-sm font-semibold text-text-primary">{template.subject}</p>
+                  </div>
+                  <span className={`rounded-full px-2 py-1 text-xs ${getExecutionSummaryTone(template.readiness)}`}>
+                    {template.readiness.replace('_', ' ')}
+                  </span>
+                </div>
+                <p className="mt-2 text-xs text-text-secondary">{template.readinessLabel}</p>
+                <p className="mt-2 text-xs text-text-secondary">Proof to have handy: {template.proofChecklist.join(' · ')}</p>
                 <p className="mt-2 whitespace-pre-line text-sm text-text-secondary">{template.body}</p>
               </div>
             ))}

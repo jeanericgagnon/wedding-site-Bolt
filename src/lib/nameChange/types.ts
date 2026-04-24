@@ -222,6 +222,10 @@ export interface NameChangePlanSummary {
     audience: string;
     subject: string;
     body: string;
+    readiness: 'ready' | 'blocked' | 'upcoming' | 'in_progress' | 'complete';
+    readinessLabel: string;
+    dependsOnStepIds: string[];
+    proofChecklist: string[];
   }>;
   executionCounts?: {
     todo: number;

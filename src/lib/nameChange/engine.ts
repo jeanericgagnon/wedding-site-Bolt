@@ -276,14 +276,16 @@ function buildDualPartnerProofSteps(legalProofReady: boolean): NameChangePlanSte
   ];
 }
 
-function resolveInstitutionCoverageStatus(stepIds: string[], steps: NameChangePlanStep[]): 'ready' | 'blocked' | 'upcoming' {
+function resolveInstitutionCoverageStatus(stepIds: string[], steps: NameChangePlanStep[]): 'ready' | 'blocked' | 'upcoming' | 'in_progress' | 'complete' {
   const matchingSteps = stepIds
     .map((stepId) => steps.find((step) => step.id === stepId))
     .filter((step): step is NameChangePlanStep => Boolean(step));
 
   if (matchingSteps.length === 0) return 'upcoming';
+  if (matchingSteps.every((step) => step.executionStatus === 'complete')) return 'complete';
+  if (matchingSteps.some((step) => step.executionStatus === 'in_progress' || step.executionStatus === 'complete')) return 'in_progress';
   if (matchingSteps.some((step) => step.status === 'ready')) return 'ready';
-  if (matchingSteps.some((step) => step.status === 'blocked')) return 'blocked';
+  if (matchingSteps.every((step) => step.status === 'blocked')) return 'blocked';
   return 'upcoming';
 }
 
@@ -312,6 +314,133 @@ function buildInstitutionCategoryCoverage(
       institutionKeys: categoryInstitutions.map((institution) => institution.key),
     };
   }).filter((category) => category.targetCount > 0);
+}
+
+function buildAccountUpdateTemplates(
+  input: NameChangeEngineInput,
+  steps: NameChangePlanStep[],
+  legalProofReady: boolean,
+): NonNullable<NameChangePlan['summary']['accountUpdateTemplates']> {
+  const proofChecklistBase = legalProofReady
+    ? ['Certified legal name-change proof']
+    : ['Certified legal name-change proof still needs review before most downstream updates will stick'];
+  const hasPassport = Boolean(input.profile.has_us_passport);
+  const needsPassport = Boolean(input.profile.passport_needs_update);
+  const normalizedTargetName = [input.profile.target_first_name, input.profile.target_middle_name, input.profile.target_last_name]
+    .filter((value) => hasMeaningfulValue(value))
+    .join(' ');
+  const normalizedCurrentName = [input.profile.current_first_name, input.profile.current_middle_name, input.profile.current_last_name]
+    .filter((value) => hasMeaningfulValue(value))
+    .join(' ');
+  const templateConfig = [
+    {
+      id: 'template-payroll',
+      audience: 'Employer payroll / HR',
+      subject: 'Name change update for payroll and benefits',
+      dependsOnStepIds: ['federal-ssa', 'institution-irs-employer', 'institution-retirement-benefits'],
+      proofChecklist: [
+        ...proofChecklistBase,
+        'Updated Social Security record or SSA receipt',
+        'Updated photo ID if payroll or benefits asks for one',
+      ],
+      buildBody: (proofLine: string, readinessLine: string) => `Hi team — I have legally updated my name from ${normalizedCurrentName} to ${normalizedTargetName} and need payroll, benefits, and internal records aligned. ${proofLine} ${readinessLine} Please confirm the exact upload/form path, whether payroll, health coverage, retirement, and beneficiary records will all update together, and when the change will hit payroll.`,
+    },
+    {
+      id: 'template-bank',
+      audience: 'Bank or credit card support',
+      subject: 'Request to update account name after legal name change',
+      dependsOnStepIds: ['state-photo-id', 'institution-banks', 'institution-credit-bureaus'],
+      proofChecklist: [
+        ...proofChecklistBase,
+        'Updated photo ID or DMV receipt',
+        'Replacement card / account reissue instructions',
+      ],
+      buildBody: (proofLine: string, readinessLine: string) => `Hello — I recently completed a legal name change and need the name on my account updated. ${proofLine} ${readinessLine} Please tell me the fastest secure submission path and confirm whether cards, checks, statements, and my online profile will all update together.`,
+    },
+    {
+      id: 'template-insurance',
+      audience: 'Insurance or subscription support',
+      subject: 'Please update my account to my legal name',
+      dependsOnStepIds: ['state-photo-id', 'institution-insurance', 'institution-medical-records'],
+      proofChecklist: [
+        ...proofChecklistBase,
+        'Updated photo ID if coverage verification requires it',
+        'Member ID / policy number so cards and claims stay aligned',
+      ],
+      buildBody: (proofLine: string, readinessLine: string) => `Hi — I need this account updated to my current legal name so coverage, billing, and member records stay aligned. ${proofLine} ${readinessLine} Please confirm what proof you require and whether cards, autopay records, claims history, and beneficiary settings should be refreshed at the same time.`,
+    },
+    {
+      id: 'template-tax',
+      audience: 'Tax agency or payroll tax support',
+      subject: 'Align my tax records with my legal name change',
+      dependsOnStepIds: ['federal-ssa', 'institution-irs-records', 'institution-state-tax-agency'],
+      proofChecklist: [
+        ...proofChecklistBase,
+        'Updated Social Security record or SSA confirmation',
+        'Any employer payroll confirmation already on file',
+      ],
+      buildBody: (proofLine: string, readinessLine: string) => `Hello — I need my tax records updated to match my legal name so payroll reporting and year-end forms do not drift. ${proofLine} ${readinessLine} Please confirm whether you need direct document submission from me, whether the SSA sync is enough, and how I should verify the update before the next filing cycle.`,
+    },
+    {
+      id: 'template-travel',
+      audience: 'Airline, hotel, loyalty, or travel support',
+      subject: 'Please align my travel profile with my legal name change',
+      dependsOnStepIds: ['federal-passport', 'institution-tsa-precheck', 'institution-travel-hospitality', 'institution-frequent-flyer-hotel-rail'],
+      proofChecklist: [
+        ...proofChecklistBase,
+        needsPassport ? 'Updated passport or passport renewal timing confirmation' : 'Current passport details if no passport update is needed',
+        'Any existing booking references that need manual relinking',
+      ],
+      buildBody: (proofLine: string, readinessLine: string) => `Hello — I am updating my legal name and need my traveler profile, loyalty records, and any upcoming reservation notes aligned so they do not conflict with my ID or passport timing. ${proofLine} ${readinessLine} Please confirm what proof you need, whether existing bookings can stay linked, and how to avoid check-in or TSA mismatch issues during the transition.`,
+    },
+    {
+      id: 'template-digital-identity',
+      audience: 'Phone, utilities, housing, or primary digital identity support',
+      subject: 'Update my account holder name to match my legal records',
+      dependsOnStepIds: ['state-photo-id', 'institution-utilities-housing', 'institution-phone-digital-identity'],
+      proofChecklist: [
+        ...proofChecklistBase,
+        'Updated photo ID if identity verification is required',
+        'Any lease / utility account numbers or recovery-email checkpoints to refresh',
+      ],
+      buildBody: (proofLine: string, readinessLine: string) => `Hi — I recently completed a legal name change and need my account holder name updated so billing, verification checks, and recovery/contact records stay consistent. ${proofLine} ${readinessLine} Please tell me the secure submission path and whether autopay, lease contacts, caller ID, email aliases, or account recovery settings should be refreshed at the same time.`,
+    },
+    {
+      id: 'template-licenses',
+      audience: 'Licensing board or credentialing support',
+      subject: 'Update my professional license to my legal name',
+      dependsOnStepIds: ['state-photo-id', 'institution-professional-licenses'],
+      proofChecklist: [
+        ...proofChecklistBase,
+        'Updated photo ID or license reissue receipt',
+        'License number / renewal cycle details',
+      ],
+      buildBody: (proofLine: string, readinessLine: string) => `Hello — I need my professional license and credentialing records updated to my current legal name so renewals, verification, and employer matching stay clean. ${proofLine} ${readinessLine} Please confirm the board-specific submission path, whether my wallet card or public lookup entry will update automatically, and how long the change usually takes.`,
+    },
+  ] as const;
+
+  return templateConfig.map((template) => {
+    const readiness = resolveInstitutionCoverageStatus(template.dependsOnStepIds, steps);
+    const readinessLabel = readiness === 'ready'
+      ? 'You have enough upstream proof to send this now.'
+      : readiness === 'in_progress'
+        ? 'The upstream identity work is already moving, so this outreach can be drafted now and sent as soon as the current step lands.'
+        : readiness === 'complete'
+          ? 'The core proof chain is already complete, so this should be a clean confirmation/update pass.'
+          : 'Hold this until the upstream proof chain is further along.';
+    const proofLine = `I can provide ${template.proofChecklist.join(', ')}.`;
+
+    return {
+      id: template.id,
+      audience: template.audience,
+      subject: template.subject,
+      body: template.buildBody(proofLine, readinessLabel),
+      readiness,
+      readinessLabel,
+      dependsOnStepIds: [...template.dependsOnStepIds],
+      proofChecklist: [...template.proofChecklist],
+    };
+  }).filter((template) => (hasPassport ? true : template.id !== 'template-travel' || needsPassport || template.readiness !== 'blocked'));
 }
 
 export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePlan {
@@ -586,38 +715,7 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
       },
     ]
     : [];
-  const accountUpdateTemplates = [
-    {
-      id: 'template-payroll',
-      audience: 'Employer payroll / HR',
-      subject: 'Name change update for payroll and benefits',
-      body: 'Hi team — I have legally updated my name and would like payroll, benefits, and internal records updated to match. I can provide my updated Social Security record, photo ID, and legal name-change proof if you need them. Please let me know the exact documents or form you want from me and when the update will be reflected in payroll.',
-    },
-    {
-      id: 'template-bank',
-      audience: 'Bank or credit card support',
-      subject: 'Request to update account name after legal name change',
-      body: 'Hello — I recently completed a legal name change and need the name on my account updated. I can provide my updated government ID plus legal name-change proof. Please tell me the fastest secure path to submit the documents and confirm whether cards, checks, and online banking profile details will all update together.',
-    },
-    {
-      id: 'template-insurance',
-      audience: 'Insurance or subscription support',
-      subject: 'Please update my account to my legal name',
-      body: 'Hi — I need to update this account to my current legal name so billing, coverage, and member records stay aligned. I can share the minimum proof you require, such as updated ID or legal name-change documentation. Please confirm what you need and whether any cards, autopay records, or beneficiary settings should also be refreshed.',
-    },
-    {
-      id: 'template-travel',
-      audience: 'Airline, hotel, loyalty, or travel support',
-      subject: 'Please align my travel profile with my legal name change',
-      body: 'Hello — I am updating my legal name and need my traveler profile, loyalty records, and any upcoming reservation notes aligned so they do not conflict with my government ID and passport timing. Please confirm what proof you need, whether existing bookings can stay linked, and how to avoid check-in or TSA mismatch issues during the transition.',
-    },
-    {
-      id: 'template-digital-identity',
-      audience: 'Phone, utilities, or primary digital identity support',
-      subject: 'Update my account holder name to match my legal records',
-      body: 'Hi — I recently completed a legal name change and need my account holder name updated so billing, verification checks, and recovery/contact records stay consistent. I can provide updated ID plus legal proof if needed. Please tell me the secure submission path and whether any autopay, caller ID, email, or account-recovery settings should be refreshed at the same time.',
-    },
-  ] as const;
+  const accountUpdateTemplates = buildAccountUpdateTemplates(input, steps, legalProofReady);
   const executionCounts = steps.reduce((counts, step) => {
     const key = step.executionStatus ?? 'todo';
     counts[key] += 1;
