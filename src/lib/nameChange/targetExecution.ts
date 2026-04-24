@@ -16,6 +16,7 @@ import type {
   NameChangeExecutionTargetKey,
   NameChangeExtractedFieldInput,
   NameChangePlan,
+  NameChangeReminderInput,
   NameChangeTargetExecutionSnapshot,
 } from './types';
 
@@ -61,6 +62,7 @@ const TARGET_STATUS_VAULT_STEP_IDS: Partial<Record<NameChangeExecutionTargetKey,
 function getTargetStatusVaultSnapshot(
   targetKey: NameChangeExecutionTargetKey,
   plan: NameChangePlan | null | undefined,
+  reminders: NameChangeReminderInput[],
   checklist: NameChangeTargetExecutionSnapshot['checklist'],
   ready: boolean,
   blockers: string[],
@@ -83,6 +85,11 @@ function getTargetStatusVaultSnapshot(
     .map((item) => item.label)
     .join('; ');
   const proofSummary = proofIssues ? `${proofCounts} • Needs ${proofIssues}` : `${proofCounts} • Proof stack looks grounded`;
+  const targetReminders = reminders.filter((reminder) => reminder.focus_target_id === targetKey && reminder.status !== 'dismissed');
+  const latestReminderAt = targetReminders
+    .map((reminder) => reminder.updated_at ?? null)
+    .filter((value): value is string => Boolean(value))
+    .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
 
   let status: NameChangeTargetExecutionSnapshot['statusVault']['status'] = 'todo';
   if (relevantSteps.some((step) => step.executionStatus === 'complete')) {
@@ -106,6 +113,11 @@ function getTargetStatusVaultSnapshot(
     proofSummary,
     notes,
     lastUpdatedAt: latestUpdatedAt,
+    reminderSummary: {
+      openCount: targetReminders.filter((reminder) => reminder.status === 'pending' || reminder.status === 'scheduled').length,
+      highUrgencyCount: targetReminders.filter((reminder) => reminder.urgency === 'high' && reminder.status !== 'sent').length,
+      latestReminderAt,
+    },
   };
 }
 
@@ -119,6 +131,7 @@ export function buildNameChangeTargetExecutionSnapshot(
   documents: NameChangeDocumentInput[],
   extractedFields: NameChangeExtractedFieldInput[],
   plan: NameChangePlan | null = null,
+  reminders: NameChangeReminderInput[] = [],
 ): NameChangeTargetExecutionSnapshot {
   const mergedExtractedFields = buildNameChangeSnapshotBackedExtractedFields(documents, extractedFields);
   const target = NAME_CHANGE_EXECUTION_TARGETS[targetKey];
@@ -516,6 +529,7 @@ export function buildNameChangeTargetExecutionSnapshot(
   const statusVault = getTargetStatusVaultSnapshot(
     targetKey,
     plan,
+    reminders,
     checklist,
     gates.ready,
     gates.blockers,

@@ -521,6 +521,11 @@ export interface NameChangeTargetExecutionSnapshot {
     proofSummary: string;
     notes: string[];
     lastUpdatedAt: string | null;
+    reminderSummary: {
+      openCount: number;
+      highUrgencyCount: number;
+      latestReminderAt: string | null;
+    };
   };
   readinessSummary: {
     status: 'ready' | 'blocked' | 'attention';
@@ -645,6 +650,8 @@ export interface NameChangeReminderInput {
   section_key?: 'core-government' | 'work-identity' | 'institutional' | 'cleanup';
   planner_intent?: 'open_execution_card';
   focus_target_id?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface HydratedNameChangeWorkspace {

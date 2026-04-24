@@ -2195,4 +2195,42 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.statusVault.status).toBe('ready');
     expect(snapshot.statusVault.proofSummary).toContain('Proof stack looks grounded');
   });
+
+  it('tracks per-target reminder pressure inside the status vault', () => {
+    const snapshot = buildNameChangeTargetExecutionSnapshot(
+      'ssa',
+      makeCase(),
+      [],
+      [],
+      null,
+      [
+        {
+          reminder_key: 'ssa-follow-up',
+          label: 'SSA follow-up',
+          reason: 'Receipt still missing',
+          trigger_type: 'manual',
+          status: 'pending',
+          urgency: 'high',
+          focus_target_id: 'ssa',
+          updated_at: '2026-04-24T22:20:00.000Z',
+        },
+        {
+          reminder_key: 'dmv-hold',
+          label: 'DMV hold',
+          reason: 'Wait for SSA',
+          trigger_type: 'manual',
+          status: 'pending',
+          urgency: 'normal',
+          focus_target_id: 'dmv',
+          updated_at: '2026-04-24T22:15:00.000Z',
+        },
+      ],
+    );
+
+    expect(snapshot.statusVault.reminderSummary).toEqual({
+      openCount: 1,
+      highUrgencyCount: 1,
+      latestReminderAt: '2026-04-24T22:20:00.000Z',
+    });
+  });
 });

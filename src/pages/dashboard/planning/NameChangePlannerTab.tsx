@@ -95,6 +95,7 @@ interface TargetStatusVaultRow {
   note: string | null;
   updatedLabel: string | null;
   nextActionLabel: string | null;
+  reminderLabel: string | null;
 }
 
 const EXECUTION_SECTION_STEP_IDS: Record<string, string[]> = {
@@ -578,16 +579,24 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     () => buildNameChangeActionFeed(executionSnapshots, documentRepairQueue, reminderAttention),
     [documentRepairQueue, executionSnapshots, reminderAttention],
   );
-  const targetStatusVaultRows = useMemo<TargetStatusVaultRow[]>(() => executionSnapshots.map((snapshot) => ({
-    key: snapshot.targetKey,
-    title: snapshot.targetLabel,
-    vaultStatus: snapshot.statusVault.status,
-    ready: snapshot.ready,
-    proofSummary: snapshot.statusVault.proofSummary,
-    note: snapshot.statusVault.notes[0] ?? null,
-    updatedLabel: snapshot.statusVault.lastUpdatedAt ? `Updated ${formatNameChangeExecutionDateTime(snapshot.statusVault.lastUpdatedAt)}` : null,
-    nextActionLabel: snapshot.nextAction?.label ?? null,
-  })), [executionSnapshots]);
+  const targetStatusVaultRows = useMemo<TargetStatusVaultRow[]>(() => executionSnapshots.map((snapshot) => {
+    const targetReminders = effectiveReminders.filter((reminder) => reminder.focus_target_id === snapshot.targetKey && reminder.status !== 'dismissed');
+    const openReminderCount = targetReminders.filter((reminder) => reminder.status === 'pending' || reminder.status === 'scheduled').length;
+    const highUrgencyCount = targetReminders.filter((reminder) => reminder.urgency === 'high' && reminder.status !== 'sent').length;
+    return {
+      key: snapshot.targetKey,
+      title: snapshot.targetLabel,
+      vaultStatus: snapshot.statusVault.status,
+      ready: snapshot.ready,
+      proofSummary: snapshot.statusVault.proofSummary,
+      note: snapshot.statusVault.notes[0] ?? null,
+      updatedLabel: snapshot.statusVault.lastUpdatedAt ? `Updated ${formatNameChangeExecutionDateTime(snapshot.statusVault.lastUpdatedAt)}` : null,
+      nextActionLabel: snapshot.nextAction?.label ?? null,
+      reminderLabel: openReminderCount > 0
+        ? `${openReminderCount} reminder${openReminderCount === 1 ? '' : 's'}${highUrgencyCount > 0 ? ` • ${highUrgencyCount} high urgency` : ''}`
+        : null,
+    };
+  }), [effectiveReminders, executionSnapshots]);
   const reminderAttentionSummary = useMemo(() => summarizeNameChangeReminderAttention(reminderAttention, {
     hasRecentStart: plan.summary.hasRecentStart,
     hasRecentCompletion: plan.summary.hasRecentCompletion,
@@ -1121,6 +1130,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                   </div>
                   {row.note && <p className="mt-3 text-sm text-text-secondary">{row.note}</p>}
                   {row.nextActionLabel && <p className="mt-2 text-xs text-text-secondary">Next: {row.nextActionLabel}</p>}
+                  {row.reminderLabel && <p className="mt-2 text-xs text-text-secondary">Reminders: {row.reminderLabel}</p>}
                   {row.updatedLabel && <p className="mt-3 text-xs text-text-secondary">{row.updatedLabel}</p>}
                 </div>
               ))}
