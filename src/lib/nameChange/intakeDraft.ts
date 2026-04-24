@@ -527,6 +527,7 @@ export function normalizeDraftNameChangeDocumentId(documentId: string | null | u
   if (/^(?:blob|data):/i.test(normalizedDocumentId)) return null;
   if (/^draft$/i.test(normalizedDocumentId)) return null;
   if (/^draft(?:\s*[\\/_-]?\s*)other$/i.test(normalizedDocumentId)) return null;
+  const queryFilenameMatch = normalizedDocumentId.match(/[?&](?:filename|file|name)=([^&#]+)/i);
   const querylessDocumentId = normalizedDocumentId.replace(/[?#].*$/, '');
   const decodedDocumentId = (() => {
     try {
@@ -535,11 +536,19 @@ export function normalizeDraftNameChangeDocumentId(documentId: string | null | u
       return querylessDocumentId;
     }
   })();
+  const decodedQueryFilename = (() => {
+    if (!queryFilenameMatch?.[1]) return null;
+    try {
+      return decodeURIComponent(queryFilenameMatch[1]);
+    } catch {
+      return queryFilenameMatch[1];
+    }
+  })();
   const extensionStrippedDocumentId = decodedDocumentId.replace(/\.(pdf|png|jpg|jpeg|webp|heic|heif|tif|tiff)$/i, '');
-  const pathLikeDocumentId = extensionStrippedDocumentId
+  const pathLikeDocumentId = (decodedQueryFilename || extensionStrippedDocumentId)
     .split(/[\\/]/)
     .filter(Boolean)
-    .pop() ?? extensionStrippedDocumentId;
+    .pop() ?? decodedQueryFilename ?? extensionStrippedDocumentId;
   const normalizedDraftPrefix = /^draft(?:\s*[\\/_-]?\s*)/i.test(extensionStrippedDocumentId)
     ? extensionStrippedDocumentId.replace(/^draft(?:\s*[\\/_-]?\s*)/i, 'draft-')
     : pathLikeDocumentId?.replace(/^draft(?:\s*[\\/_-]?\s*)/i, 'draft-') ?? null;
