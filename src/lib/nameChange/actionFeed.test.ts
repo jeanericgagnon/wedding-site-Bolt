@@ -443,6 +443,27 @@ describe('name change action feed', () => {
     });
   });
 
+  it('routes institution reminders to their institutional execution cards', () => {
+    const feed = buildNameChangeActionFeed([], [], [
+      makeReminderAttention({
+        reminderKey: 'reminder-banks',
+        label: 'Follow up on banks',
+        dependsOnStepId: 'institution-banks',
+        dependentStepTitle: 'Bank accounts',
+        sectionKey: 'institutional',
+        plannerIntent: 'open_execution_card',
+        focusTargetId: 'execution-card-banks',
+      }),
+    ]);
+
+    expect(feed[0]).toMatchObject({
+      origin: 'reminder',
+      plannerIntent: 'open_execution_card',
+      focusTargetId: 'execution-card-banks',
+      sectionKey: 'institutional',
+    });
+  });
+
   it('keeps critical reminder attention above lower-ranked ready execution work', () => {
     const feed = buildNameChangeActionFeed([
       makeExecutionSnapshot({

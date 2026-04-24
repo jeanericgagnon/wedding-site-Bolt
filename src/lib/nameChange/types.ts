@@ -585,6 +585,9 @@ export interface NameChangeReminderSuggestion {
   reason: string;
   dependsOnStepId: string;
   urgency: 'high' | 'medium' | 'low';
+  sectionKey?: 'core-government' | 'work-identity' | 'institutional' | 'cleanup';
+  plannerIntent?: 'open_execution_card';
+  focusTargetId?: string;
 }
 
 export interface NameChangeReminderRecord {
@@ -609,6 +612,9 @@ export interface NameChangeReminderInput {
   suggested_offset_days: number;
   urgency: 'high' | 'medium' | 'low';
   status: 'pending' | 'scheduled' | 'sent' | 'dismissed';
+  section_key?: 'core-government' | 'work-identity' | 'institutional' | 'cleanup';
+  planner_intent?: 'open_execution_card';
+  focus_target_id?: string;
 }
 
 export interface HydratedNameChangeWorkspace {
@@ -642,6 +648,9 @@ export interface NameChangeReminderAttentionItem {
   suggestedOffsetDays: number;
   lastTouchedAt: string | null;
   isStale: boolean;
+  sectionKey?: 'core-government' | 'work-identity' | 'institutional' | 'cleanup';
+  plannerIntent?: 'open_execution_card';
+  focusTargetId?: string;
 }
 
 export interface NameChangeReminderAttentionSummary {

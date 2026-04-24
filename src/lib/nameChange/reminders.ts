@@ -198,44 +198,145 @@ function getCaseLegalNameSetupMissingInputs(plan: NameChangePlan): string[] {
   );
 }
 
+function getReminderPlannerRoute(
+  suggestion: Pick<NameChangeReminderSuggestion, 'id' | 'dependsOnStepId'>,
+): Pick<NameChangeReminderSuggestion, 'sectionKey' | 'plannerIntent' | 'focusTargetId'> {
+  if (suggestion.id === 'reminder-case-legal-name-setup') {
+    return {
+      sectionKey: 'cleanup',
+      plannerIntent: 'open_execution_card',
+      focusTargetId: 'case-setup',
+    };
+  }
+
+  if (suggestion.dependsOnStepId === 'federal-ssa') {
+    return {
+      sectionKey: 'core-government',
+      plannerIntent: 'open_execution_card',
+      focusTargetId: 'execution-card-ssa',
+    };
+  }
+
+  if (suggestion.dependsOnStepId === 'state-dmv') {
+    return {
+      sectionKey: 'core-government',
+      plannerIntent: 'open_execution_card',
+      focusTargetId: 'execution-card-dmv',
+    };
+  }
+
+  if (suggestion.dependsOnStepId === 'federal-passport') {
+    return {
+      sectionKey: 'core-government',
+      plannerIntent: 'open_execution_card',
+      focusTargetId: 'execution-card-passport',
+    };
+  }
+
+  if (
+    suggestion.dependsOnStepId === 'institution-employer'
+    || suggestion.dependsOnStepId === 'institution-licenses'
+    || suggestion.dependsOnStepId === 'institution-voter-registration'
+    || suggestion.dependsOnStepId === 'institution-courtesy-notifications'
+    || suggestion.dependsOnStepId === 'institution-travel-hospitality'
+  ) {
+    return {
+      sectionKey: 'work-identity',
+      plannerIntent: 'open_execution_card',
+      focusTargetId:
+        suggestion.dependsOnStepId === 'institution-licenses'
+          ? 'execution-card-licenses'
+          : suggestion.dependsOnStepId === 'institution-travel-hospitality'
+            ? 'execution-card-tsa'
+            : suggestion.dependsOnStepId === 'institution-voter-registration'
+              ? 'execution-card-voter'
+              : suggestion.dependsOnStepId === 'institution-courtesy-notifications'
+                ? 'execution-card-courtesy'
+                : 'execution-card-employer',
+    };
+  }
+
+  if (
+    suggestion.dependsOnStepId === 'institutions-rollout'
+    || suggestion.dependsOnStepId === 'institution-banks'
+    || suggestion.dependsOnStepId === 'institution-insurance'
+    || suggestion.dependsOnStepId === 'institution-medical-records'
+    || suggestion.dependsOnStepId === 'institution-utilities'
+  ) {
+    return {
+      sectionKey: 'institutional',
+      plannerIntent: 'open_execution_card',
+      focusTargetId:
+        suggestion.dependsOnStepId === 'institution-insurance'
+          ? 'execution-card-insurance'
+          : suggestion.dependsOnStepId === 'institution-medical-records'
+            ? 'execution-card-medical'
+            : suggestion.dependsOnStepId === 'institution-utilities'
+              ? 'execution-card-utilities'
+              : 'execution-card-banks',
+    };
+  }
+
+  return {
+    sectionKey: 'cleanup',
+    plannerIntent: 'open_execution_card',
+    focusTargetId: 'execution-card-ssa',
+  };
+}
+
 export function buildNameChangeReminderSuggestions(plan: NameChangePlan): NameChangeReminderSuggestion[] {
   const suggestions: NameChangeReminderSuggestion[] = [];
   const missingCaseLegalNameInputs = getCaseLegalNameSetupMissingInputs(plan);
 
   if (missingCaseLegalNameInputs.length > 0) {
-    suggestions.push({
+    const suggestion = {
       id: 'reminder-case-legal-name-setup',
       label: 'Finish case legal-name setup before downstream filing',
       suggestedOffsetDays: 0,
       reason: `Case setup is still missing ${missingCaseLegalNameInputs.map((item) => item.toLowerCase()).join(', ')}. Lock the current and target legal-name fields before trusting packet prep, sequencing, or reminder timing.`,
       dependsOnStepId: 'eligibility-proof',
       urgency: 'high',
+    } satisfies NameChangeReminderSuggestion;
+
+    suggestions.push({
+      ...suggestion,
+      ...getReminderPlannerRoute(suggestion),
     });
   }
 
   Object.entries(CORE_STEP_REMINDER_CONFIGS).forEach(([stepId, config]) => {
     if (config.includeWhen && !config.includeWhen(plan)) return;
 
-    suggestions.push({
+    const suggestion = {
       id: config.id,
       label: config.label,
       suggestedOffsetDays: plan.profile.urgencyLevel === 'expedited' ? config.expeditedOffsetDays : config.standardOffsetDays,
       reason: config.reason,
       dependsOnStepId: stepId,
       urgency: plan.profile.urgencyLevel === 'expedited' ? config.expeditedUrgency : config.standardUrgency,
+    } satisfies NameChangeReminderSuggestion;
+
+    suggestions.push({
+      ...suggestion,
+      ...getReminderPlannerRoute(suggestion),
     });
   });
 
   CONTEXT_REMINDER_CONFIGS.forEach((config) => {
     if (!config.includeWhen(plan)) return;
 
-    suggestions.push({
+    const suggestion = {
       id: config.id,
       label: config.label,
       suggestedOffsetDays: plan.profile.urgencyLevel === 'expedited' ? config.expeditedOffsetDays : config.standardOffsetDays,
       reason: config.reason,
       dependsOnStepId: config.dependsOnStepId,
       urgency: plan.profile.urgencyLevel === 'expedited' ? config.expeditedUrgency : config.standardUrgency,
+    } satisfies NameChangeReminderSuggestion;
+
+    suggestions.push({
+      ...suggestion,
+      ...getReminderPlannerRoute(suggestion),
     });
   });
 
@@ -245,13 +346,18 @@ export function buildNameChangeReminderSuggestions(plan: NameChangePlan): NameCh
     const familyConfig = INSTITUTION_REMINDER_FAMILY_CONFIGS[institution.category] ?? null;
     const suggestedOffsetDays = Math.max(1, institution.reminderDaysAfterPrimaryId + (familyConfig?.offsetAdjustmentDays ?? 0));
 
-    suggestions.push({
+    const suggestion = {
       id: `reminder-${institution.key}`,
       label: `Follow up on ${institution.label}`,
       suggestedOffsetDays,
       reason: `${institution.notes}${familyConfig?.reasonSuffix ?? ''}`,
       dependsOnStepId: matchingStep.id,
       urgency: raiseUrgency(urgencyFromOffset(suggestedOffsetDays), familyConfig?.minimumUrgency),
+    } satisfies NameChangeReminderSuggestion;
+
+    suggestions.push({
+      ...suggestion,
+      ...getReminderPlannerRoute(suggestion),
     });
   });
 
@@ -266,13 +372,18 @@ export function buildNameChangeReminderSuggestions(plan: NameChangePlan): NameCh
       ...matchingInstitutions.map((institution) => institution.reminderDaysAfterPrimaryId + 2),
     );
 
-    suggestions.push({
+    const suggestion = {
       id: `reminder-category-confirm-${category.id}`,
       label: `Confirm ${category.label.toLowerCase()} rollout is actually done`,
       suggestedOffsetDays,
       reason: `${category.summary}. Use this checkpoint to confirm the whole ${category.label.toLowerCase()} lane is no longer carrying the old name.`,
       dependsOnStepId: category.dependsOnStepIds[category.dependsOnStepIds.length - 1] ?? category.dependsOnStepIds[0] ?? 'institutions-rollout',
       urgency: raiseUrgency(urgencyFromOffset(suggestedOffsetDays), category.id === 'travel_mobility' ? 'medium' : undefined),
+    } satisfies NameChangeReminderSuggestion;
+
+    suggestions.push({
+      ...suggestion,
+      ...getReminderPlannerRoute(suggestion),
     });
   });
 
@@ -291,6 +402,9 @@ export function mapReminderSuggestionsToInputs(suggestions: NameChangeReminderSu
     suggested_offset_days: suggestion.suggestedOffsetDays,
     urgency: suggestion.urgency,
     status: 'pending',
+    section_key: suggestion.sectionKey,
+    planner_intent: suggestion.plannerIntent,
+    focus_target_id: suggestion.focusTargetId,
   }));
 }
 
@@ -486,6 +600,9 @@ export function deriveNameChangeReminderAttention(
         suggestedOffsetDays: reminder.suggested_offset_days,
         lastTouchedAt,
         isStale,
+        sectionKey: reminder.section_key,
+        plannerIntent: reminder.planner_intent,
+        focusTargetId: reminder.focus_target_id,
       });
     });
 

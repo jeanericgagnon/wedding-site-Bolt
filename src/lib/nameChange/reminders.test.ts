@@ -143,10 +143,15 @@ describe('name change reminder suggestions', () => {
       depends_on_step_id: 'institution-banks',
       suggested_offset_days: 4,
       urgency: 'medium',
+      section_key: 'institutional',
+      planner_intent: 'open_execution_card',
+      focus_target_id: 'execution-card-banks',
     });
     expect(inputs.find((reminder) => reminder.reminder_key === 'reminder-ssa-followup')).toMatchObject({
       status: 'pending',
       depends_on_step_id: 'federal-ssa',
+      section_key: 'core-government',
+      focus_target_id: 'execution-card-ssa',
     });
   });
 
@@ -230,6 +235,9 @@ describe('name change reminder suggestions', () => {
       suggestedOffsetDays: 0,
       urgency: 'high',
       reason: 'Case setup is still missing target middle name. Lock the current and target legal-name fields before trusting packet prep, sequencing, or reminder timing.',
+      sectionKey: 'cleanup',
+      plannerIntent: 'open_execution_card',
+      focusTargetId: 'case-setup',
     });
   });
 
@@ -473,6 +481,30 @@ describe('name change reminder suggestions', () => {
     ], plan, '2026-04-18T12:00:00.000Z');
 
     expect(attention[0]).toMatchObject({ priorityTier: 'critical', dependentStepExecutionStatus: 'todo' });
+  });
+
+  it('carries reminder planner routing metadata into attention items', () => {
+    const plan = buildNameChangePlan(makeInput());
+    const attention = deriveNameChangeReminderAttention([
+      {
+        reminder_key: 'reminder-banks',
+        label: 'Banks',
+        reason: 'Reason',
+        depends_on_step_id: 'institution-banks',
+        suggested_offset_days: 4,
+        urgency: 'medium',
+        status: 'pending',
+        section_key: 'institutional',
+        planner_intent: 'open_execution_card',
+        focus_target_id: 'execution-card-banks',
+      },
+    ], plan, '2026-04-18T12:00:00.000Z');
+
+    expect(attention[0]).toMatchObject({
+      sectionKey: 'institutional',
+      plannerIntent: 'open_execution_card',
+      focusTargetId: 'execution-card-banks',
+    });
   });
 
   it('summarizes reminder attention counts for stale and high urgency items', () => {

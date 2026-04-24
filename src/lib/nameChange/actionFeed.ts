@@ -107,7 +107,23 @@ function getReminderSectionKey(dependsOnStepId: string): NameChangeActionFeedIte
     return 'core-government';
   }
 
-  if (dependsOnStepId === 'institutions-rollout') {
+  if (
+    dependsOnStepId === 'institution-employer'
+    || dependsOnStepId === 'institution-licenses'
+    || dependsOnStepId === 'institution-voter-registration'
+    || dependsOnStepId === 'institution-courtesy-notifications'
+    || dependsOnStepId === 'institution-travel-hospitality'
+  ) {
+    return 'work-identity';
+  }
+
+  if (
+    dependsOnStepId === 'institutions-rollout'
+    || dependsOnStepId === 'institution-banks'
+    || dependsOnStepId === 'institution-insurance'
+    || dependsOnStepId === 'institution-medical-records'
+    || dependsOnStepId === 'institution-utilities'
+  ) {
     return 'institutional';
   }
 
@@ -194,14 +210,14 @@ export function buildNameChangeActionFeed(
     return {
       key: `reminder:${item.reminderKey}`,
       origin: 'reminder',
-      sectionKey: getReminderSectionKey(item.dependsOnStepId),
+      sectionKey: item.sectionKey ?? getReminderSectionKey(item.dependsOnStepId),
       title: item.label,
       laneLabel: item.dependentStepTitle,
       severity: item.priorityTier === 'critical' || item.actionability === 'blocked_by_untouched_step' ? 'blocking' : 'attention',
       urgencyTier: item.priorityTier ?? 'normal',
       urgencyReason: 'review_queue',
-      plannerIntent: 'open_execution_card',
-      focusTargetId: getReminderFocusTargetId(item),
+      plannerIntent: item.plannerIntent ?? 'open_execution_card',
+      focusTargetId: item.focusTargetId ?? getReminderFocusTargetId(item),
       score,
       action: {
         category: 'checklist',
