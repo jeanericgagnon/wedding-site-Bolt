@@ -98,7 +98,7 @@ export interface NameChangeDocumentRecord {
   issued_on: string | null;
   expires_on: string | null;
   extraction_confidence: number | null;
-  extracted_snapshot: Record<string, unknown> | null;
+  extracted_snapshot: Record<string, unknown> | Array<unknown> | string | null;
   created_at: string;
   updated_at: string;
 }
@@ -114,7 +114,7 @@ export interface NameChangeDocumentInput {
   issued_on?: string | null;
   expires_on?: string | null;
   extraction_confidence?: number | null;
-  extracted_snapshot?: Record<string, unknown> | null;
+  extracted_snapshot?: Record<string, unknown> | Array<unknown> | string | null;
 }
 
 export interface NameChangeExtractedFieldRecord {

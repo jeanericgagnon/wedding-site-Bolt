@@ -790,6 +790,27 @@ function getDraftSnapshotFieldValue(candidate: unknown): string | null {
   return null;
 }
 
+function normalizeDraftSnapshotPayload(
+  snapshot: unknown,
+): Record<string, unknown> | Array<unknown> | null {
+  if (Array.isArray(snapshot)) return snapshot;
+  if (snapshot && typeof snapshot === 'object') return snapshot as Record<string, unknown>;
+  if (typeof snapshot !== 'string') return null;
+
+  const trimmedSnapshot = snapshot.trim();
+  if (!trimmedSnapshot) return null;
+
+  try {
+    const parsedSnapshot = JSON.parse(trimmedSnapshot) as unknown;
+    if (Array.isArray(parsedSnapshot)) return parsedSnapshot;
+    if (parsedSnapshot && typeof parsedSnapshot === 'object') return parsedSnapshot as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
 function appendDraftSnapshotFieldEntries(
   entries: Array<[string, unknown]>,
   snapshot: Record<string, unknown> | Array<unknown>,
@@ -844,14 +865,15 @@ function appendDraftSnapshotFieldEntries(
 
 export function buildDraftNameChangeExtractedFieldsFromSnapshot(
   documentId: string | null | undefined,
-  snapshot: Record<string, unknown> | null | undefined,
+  snapshot: unknown,
 ): NameChangeExtractedFieldInput[] {
-  if (!snapshot || typeof snapshot !== 'object') {
+  const normalizedSnapshot = normalizeDraftSnapshotPayload(snapshot);
+  if (!normalizedSnapshot) {
     return [];
   }
 
   const entries: Array<[string, unknown]> = [];
-  appendDraftSnapshotFieldEntries(entries, snapshot as Record<string, unknown> | Array<unknown>);
+  appendDraftSnapshotFieldEntries(entries, normalizedSnapshot);
 
   return entries.reduce<NameChangeExtractedFieldInput[]>((fields, [fieldKey, candidateValue]) => {
     const value = getDraftSnapshotFieldValue(candidateValue);
@@ -864,9 +886,10 @@ export function buildDraftNameChangeExtractedFieldsFromSnapshot(
 }
 
 export function buildDraftNameChangeDocumentMetadataFromSnapshot(
-  snapshot: Record<string, unknown> | Array<unknown> | null | undefined,
+  snapshot: unknown,
 ) {
-  if (!snapshot || typeof snapshot !== 'object') {
+  const normalizedSnapshot = normalizeDraftSnapshotPayload(snapshot);
+  if (!normalizedSnapshot) {
     return {
       issuingAuthority: null,
       issuedOn: null,
@@ -876,12 +899,12 @@ export function buildDraftNameChangeDocumentMetadataFromSnapshot(
   }
 
   const snapshotEntries: Array<[string, unknown]> = [];
-  appendDraftSnapshotFieldEntries(snapshotEntries, snapshot as Record<string, unknown> | Array<unknown>);
+  appendDraftSnapshotFieldEntries(snapshotEntries, normalizedSnapshot);
 
   const readValue = (...keys: string[]) => {
-    if (!Array.isArray(snapshot)) {
+    if (!Array.isArray(normalizedSnapshot)) {
       for (const key of keys) {
-        const directValue = getDraftSnapshotFieldValue(snapshot[key]);
+        const directValue = getDraftSnapshotFieldValue(normalizedSnapshot[key]);
         if (directValue) return directValue;
       }
     }
