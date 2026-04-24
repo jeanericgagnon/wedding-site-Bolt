@@ -8,6 +8,7 @@ import { getRsvpFallbackState } from '../../lib/rsvpFallbackState';
 import { getInviteLifecycleState } from '../../lib/inviteLifecycle';
 import { getPerEventRsvpState } from '../../lib/perEventRsvpState';
 import { isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
+import { filterRsvpBoardRows, type RsvpBoardFilter } from './rsvpBoardFilter';
 
 type GuestRow = {
   id: string;
@@ -28,7 +29,7 @@ export const DashboardRsvpBoard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [siteId, setSiteId] = useState<string | null>(null);
   const [rows, setRows] = useState<GuestRow[]>([]);
-  const [, setFilter] = useState<'all' | 'pending'>('all');
+  const [filter, setFilter] = useState<RsvpBoardFilter>('all');
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const fetchBoard = async (resolvedSiteId?: string | null) => {
@@ -85,13 +86,15 @@ export const DashboardRsvpBoard: React.FC = () => {
     return () => window.clearInterval(timer);
   }, [loading, siteId]);
 
+  const visibleRows = useMemo(() => filterRsvpBoardRows(rows, filter), [rows, filter]);
+
   const stats = useMemo(() => {
-    const total = rows.length;
-    const confirmed = rows.filter((r) => isAttendingRsvpStatus(r.rsvp_status)).length;
-    const declined = rows.filter((r) => isDeclinedRsvpStatus(r.rsvp_status)).length;
-    const pending = rows.filter((r) => isPendingRsvpStatus(r.rsvp_status)).length;
-    const checkedIn = rows.filter((r) => !!r.checked_in_at).length;
-    const fallback = rows.map((row) => getRsvpFallbackState({
+    const total = visibleRows.length;
+    const confirmed = visibleRows.filter((r) => isAttendingRsvpStatus(r.rsvp_status)).length;
+    const declined = visibleRows.filter((r) => isDeclinedRsvpStatus(r.rsvp_status)).length;
+    const pending = visibleRows.filter((r) => isPendingRsvpStatus(r.rsvp_status)).length;
+    const checkedIn = visibleRows.filter((r) => !!r.checked_in_at).length;
+    const fallback = visibleRows.map((row) => getRsvpFallbackState({
       rsvpStatus: row.rsvp_status,
       hasEmail: Boolean(row.email),
       hasPhone: Boolean(row.phone),
@@ -101,7 +104,7 @@ export const DashboardRsvpBoard: React.FC = () => {
     const manualHandled = fallback.filter((item) => item.state === 'manual-handled').length;
     const unreachable = fallback.filter((item) => item.state === 'unreachable').length;
     return { total, confirmed, declined, pending, checkedIn, manualFollowUp, manualHandled, unreachable };
-  }, [rows]);
+  }, [visibleRows]);
 
   return (
     <DashboardLayout currentPage="guests">
@@ -115,7 +118,7 @@ export const DashboardRsvpBoard: React.FC = () => {
           <div className="mt-3 flex flex-wrap gap-2">
             <Link to="/dashboard/coordinator" className="rounded border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">Open coordinator mode</Link>
             <Link to="/dashboard/guests" className="rounded border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">Open guest ops</Link>
-            <button onClick={() => setFilter('pending')} className="rounded border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">Focus pending</button>
+            <button onClick={() => setFilter((prev) => prev === 'pending' ? 'all' : 'pending')} className="rounded border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">{filter === 'pending' ? 'Show all guests' : 'Focus pending'}</button>
           </div>
           <div className="mt-3 rounded-lg border border-border/35 bg-surface-subtle/30 px-3 py-2 text-xs text-text-secondary">
             Use this to spot guests who are not following the default ceremony + reception path, especially when welcome events, brunch, or reception-only invitations need their own follow-up.
@@ -130,10 +133,10 @@ export const DashboardRsvpBoard: React.FC = () => {
           <p className="text-sm font-semibold text-text-primary">Per-event response structure</p>
           <div className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2">
             {['Ceremony + reception', 'Ceremony only', 'Reception only'].map((label) => {
-              const count = rows.filter((row) => getPerEventRsvpState({ invitedToCeremony: row.invited_to_ceremony, invitedToReception: row.invited_to_reception, invitedEventIds: row.invited_event_ids }).summary === label).length;
+              const count = visibleRows.filter((row) => getPerEventRsvpState({ invitedToCeremony: row.invited_to_ceremony, invitedToReception: row.invited_to_reception, invitedEventIds: row.invited_event_ids }).summary === label).length;
               return <div key={label} className="rounded-lg border border-border/35 bg-surface-subtle/30 px-3 py-2"><p className="text-[11px] text-text-tertiary">{label}</p><p className="text-sm font-semibold text-text-primary">{loading ? '—' : count}</p></div>;
             })}
-            <div className="rounded-lg border border-border/35 bg-surface-subtle/30 px-3 py-2"><p className="text-[11px] text-text-tertiary">Event-specific invites</p><p className="text-sm font-semibold text-text-primary">{loading ? '—' : rows.filter((row) => (row.invited_event_ids?.length ?? 0) > 0).length}</p></div>
+            <div className="rounded-lg border border-border/35 bg-surface-subtle/30 px-3 py-2"><p className="text-[11px] text-text-tertiary">Event-specific invites</p><p className="text-sm font-semibold text-text-primary">{loading ? '—' : visibleRows.filter((row) => (row.invited_event_ids?.length ?? 0) > 0).length}</p></div>
           </div>
         </div>
 
@@ -158,7 +161,7 @@ export const DashboardRsvpBoard: React.FC = () => {
           <p className="text-sm font-semibold text-text-primary">Invite lifecycle snapshot</p>
           <div className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2">
             {['not-invited', 'invited', 'reminded', 'manual-handled'].map((state) => {
-              const count = rows.filter((row) => getInviteLifecycleState({
+              const count = visibleRows.filter((row) => getInviteLifecycleState({
                 invitationSentAt: row.invitation_sent_at,
                 reminderLastSentAt: row.reminder_last_sent_at,
                 rsvpStatus: row.rsvp_status,
