@@ -1060,6 +1060,50 @@ describe('name change document intake contract', () => {
     });
   });
 
+  it('does not borrow extracted snapshot fields from a weaker duplicate of the same contract kind', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase(),
+      [
+        {
+          id: 'draft-current_passport',
+          document_kind: 'current_passport',
+          display_name: 'Passport',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          extracted_snapshot: {
+            fileName: 'passport-verified.pdf',
+            issuingAuthority: 'U.S. Department of State',
+            issuedOn: '2024-06-01',
+            expiresOn: '2034-06-01',
+            extractionConfidence: 0.94,
+          },
+        },
+        {
+          id: 'doc-passport-uploaded',
+          document_kind: 'current_passport',
+          display_name: 'Passport upload',
+          storage_mode: 'metadata_only',
+          intake_status: 'uploaded',
+          extracted_snapshot: {
+            fieldEntries: [
+              { key: 'first_name', value: 'Alex' },
+              { key: 'last_name', value: 'Jordan' },
+            ],
+          },
+        },
+      ],
+      [],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'current_passport')).toMatchObject({
+      documentId: 'draft-current_passport',
+      intakeStatus: 'reviewed',
+      extractionFieldCount: 1,
+      capturedExtractionFields: ['issuance_date'],
+      missingExtractionFields: ['first_name', 'middle_name', 'last_name'],
+    });
+  });
+
   it('deduplicates repeated captured extraction field keys in contract output', () => {
     const snapshot = buildNameChangeDocumentIntakeSnapshot(
       makeCase(),

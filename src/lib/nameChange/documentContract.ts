@@ -229,7 +229,9 @@ function getContractDocumentCapturedFieldKeys(
       }
 
       if (normalizedDocumentId) candidateDocumentIds.add(normalizedDocumentId);
-      snapshotExtractedFields.push(...buildDraftNameChangeExtractedFieldsFromSnapshot(document.id ?? null, document.extracted_snapshot));
+      if (document.id === canonicalDocument?.id) {
+        snapshotExtractedFields.push(...buildDraftNameChangeExtractedFieldsFromSnapshot(document.id ?? null, document.extracted_snapshot));
+      }
     });
 
   const normalizedDraftDocumentId = normalizeDraftNameChangeDocumentId(buildDraftNameChangeDocumentId(kind));
