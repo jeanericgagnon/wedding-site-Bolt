@@ -168,6 +168,33 @@ function normalizeDraftDocumentKind(value: string) {
   return SUPPORTED_DRAFT_DOCUMENT_KINDS.has(canonicalKind) ? canonicalKind : 'other';
 }
 
+function decodeDraftDocumentQueryValue(value: string | null | undefined) {
+  if (!value) return null;
+  try {
+    return decodeURIComponent(value.replace(/\+/g, ' '));
+  } catch {
+    return value.replace(/\+/g, ' ');
+  }
+}
+
+function extractDraftDocumentQueryFilename(documentId: string) {
+  const directFilenameMatch = documentId.match(/[?&](?:filename|file|name)=([^&#]+)/i);
+  if (directFilenameMatch?.[1]) return decodeDraftDocumentQueryValue(directFilenameMatch[1]);
+
+  const contentDispositionMatch = documentId.match(/[?&](?:response-content-disposition|content-disposition)=([^&#]+)/i);
+  const decodedDisposition = decodeDraftDocumentQueryValue(contentDispositionMatch?.[1]);
+  if (!decodedDisposition) return null;
+
+  const utfFilenameMatch = decodedDisposition.match(/filename\*\s*=\s*(?:UTF-8''|utf-8'')?([^;]+)/i);
+  if (utfFilenameMatch?.[1]) {
+    return decodeDraftDocumentQueryValue(utfFilenameMatch[1].trim().replace(/^"|"$/g, ''));
+  }
+
+  const filenameMatch = decodedDisposition.match(/filename\s*=\s*([^;]+)/i);
+  if (!filenameMatch?.[1]) return null;
+  return decodeDraftDocumentQueryValue(filenameMatch[1].trim().replace(/^"|"$/g, ''));
+}
+
 export function normalizeDraftFieldKey(value: string) {
   const normalizedFieldKey = value
     .trim()
@@ -527,7 +554,7 @@ export function normalizeDraftNameChangeDocumentId(documentId: string | null | u
   if (/^(?:blob|data):/i.test(normalizedDocumentId)) return null;
   if (/^draft$/i.test(normalizedDocumentId)) return null;
   if (/^draft(?:\s*[\\/_-]?\s*)other$/i.test(normalizedDocumentId)) return null;
-  const queryFilenameMatch = normalizedDocumentId.match(/[?&](?:filename|file|name)=([^&#]+)/i);
+  const queryFilename = extractDraftDocumentQueryFilename(normalizedDocumentId);
   const querylessDocumentId = normalizedDocumentId.replace(/[?#].*$/, '');
   const decodedDocumentId = (() => {
     try {
@@ -536,14 +563,7 @@ export function normalizeDraftNameChangeDocumentId(documentId: string | null | u
       return querylessDocumentId;
     }
   })();
-  const decodedQueryFilename = (() => {
-    if (!queryFilenameMatch?.[1]) return null;
-    try {
-      return decodeURIComponent(queryFilenameMatch[1]);
-    } catch {
-      return queryFilenameMatch[1];
-    }
-  })();
+  const decodedQueryFilename = queryFilename;
   const extensionStrippedDocumentId = decodedDocumentId.replace(/\.(pdf|png|jpg|jpeg|webp|heic|heif|tif|tiff)$/i, '');
   const pathLikeDocumentId = (decodedQueryFilename || extensionStrippedDocumentId)
     .split(/[\\/]/)

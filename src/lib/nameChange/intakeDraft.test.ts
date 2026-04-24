@@ -2046,6 +2046,8 @@ describe('name change intake draft helpers', () => {
     expect(normalizeDraftNameChangeDocumentId('tmp/edited driver license front page 1.png')).toBe('draft-current_drivers_license');
     expect(normalizeDraftNameChangeDocumentId('https://cdn.dayof.love/object/123?filename=marriage%20certificate.pdf&token=abc')).toBe('draft-marriage_certificate');
     expect(normalizeDraftNameChangeDocumentId('https://cdn.dayof.love/object/123?file=passport%20upload.jpg')).toBe('draft-current_passport');
+    expect(normalizeDraftNameChangeDocumentId('https://cdn.dayof.love/object/123?response-content-disposition=attachment%3B%20filename%3D%22marriage%20certificate.pdf%22&token=abc')).toBe('draft-marriage_certificate');
+    expect(normalizeDraftNameChangeDocumentId("https://cdn.dayof.love/object/123?response-content-disposition=attachment%3B%20filename*%3DUTF-8''passport%2520upload.jpg")).toBe('draft-current_passport');
     expect(normalizeDraftNameChangeDocumentId('draft')).toBeNull();
     expect(normalizeDraftNameChangeDocumentId('draft-other')).toBeNull();
     expect(normalizeDraftNameChangeDocumentId('draft other')).toBeNull();

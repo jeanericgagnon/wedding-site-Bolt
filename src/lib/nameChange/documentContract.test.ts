@@ -2158,7 +2158,7 @@ describe('name change document intake contract', () => {
           document_id: 'draft-marriage_certificate',
           field_key: 'county',
           field_label: 'Residence county',
-          field_value_masked: 'orange county',
+          field_value_masked: 'san diego county',
           source_type: 'manual',
           is_verified: true,
         },
@@ -2565,6 +2565,44 @@ describe('name change document intake contract', () => {
       [
         {
           document_id: 'https://cdn.dayof.love/object/123?filename=marriage%20certificate.pdf&token=abc',
+          field_key: 'certificate_number',
+          field_label: 'Certificate number',
+          field_value_masked: 'mc-123',
+          source_type: 'manual',
+          is_verified: true,
+        },
+      ],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'marriage_certificate')).toMatchObject({
+      intakeStatus: 'reviewed',
+      metadataReady: 1,
+      canonicalConflicts: [],
+    });
+    expect(snapshot.documents.find((document) => document.kind === 'marriage_certificate')?.capturedExtractionFields).toEqual(
+      expect.arrayContaining(['certificate_number']),
+    );
+  });
+
+  it('treats content-disposition filename aliases as the canonical draft document truth', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase(),
+      [
+        {
+          id: 'draft-marriage_certificate',
+          document_kind: 'marriage_certificate',
+          display_name: 'Certified marriage certificate',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'marriage-certificate-•••.pdf',
+          issuing_authority: 'Orange County Clerk',
+          issued_on: '2026-04-05',
+          extraction_confidence: 0.97,
+        },
+      ],
+      [
+        {
+          document_id: 'https://cdn.dayof.love/object/123?response-content-disposition=attachment%3B%20filename%3D%22marriage%20certificate.pdf%22&token=abc',
           field_key: 'certificate_number',
           field_label: 'Certificate number',
           field_value_masked: 'mc-123',
