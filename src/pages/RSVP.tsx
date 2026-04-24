@@ -453,12 +453,14 @@ export default function RSVP() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [tokenAutoLoading, setTokenAutoLoading] = useState(false);
+  const [loadCycle, setLoadCycle] = useState(0);
   const activeLookupRequestRef = useRef(0);
   const activeSubmitRequestRef = useRef(0);
   const submitInFlightRef = useRef(false);
   const pendingContinuityRefreshRef = useRef(false);
   const ignoreNextLocalContinuityEventRef = useRef(false);
   const tokenLinkedSessionRef = useRef(false);
+  const loadInFlightRef = useRef(false);
   const [activePredictionIndex, setActivePredictionIndex] = useState(-1);
   const [formStep, setFormStep] = useState<1 | 2 | 3>(1);
   const [rsvpQuestions, setRsvpQuestions] = useState<RSVPQuestion[]>([]);
@@ -482,6 +484,7 @@ export default function RSVP() {
     invalidateActiveSubmit();
     pendingContinuityRefreshRef.current = false;
     ignoreNextLocalContinuityEventRef.current = false;
+    loadInFlightRef.current = false;
     setLoading(false);
     setSubmitting(false);
     setTokenAutoLoading(false);
@@ -592,6 +595,7 @@ export default function RSVP() {
     return () => {
       activeLookupRequestRef.current += 1;
       activeSubmitRequestRef.current += 1;
+      loadInFlightRef.current = false;
     };
   }, []);
 
@@ -603,6 +607,7 @@ export default function RSVP() {
       pendingContinuityRefreshRef.current = false;
       ignoreNextLocalContinuityEventRef.current = false;
       tokenLinkedSessionRef.current = false;
+      loadInFlightRef.current = false;
       setLoading(false);
       setTokenAutoLoading(false);
       setSubmitting(false);
@@ -635,6 +640,7 @@ export default function RSVP() {
     const requestId = activeLookupRequestRef.current + 1;
     activeLookupRequestRef.current = requestId;
     activeSubmitRequestRef.current += 1;
+    loadInFlightRef.current = true;
     submitInFlightRef.current = false;
     pendingContinuityRefreshRef.current = false;
     ignoreNextLocalContinuityEventRef.current = false;
@@ -715,13 +721,15 @@ export default function RSVP() {
       })
       .finally(() => {
         if (activeLookupRequestRef.current !== requestId) return;
+        loadInFlightRef.current = false;
         setTokenAutoLoading(false);
+        setLoadCycle((cycle) => cycle + 1);
       });
   }, []);
 
   const refreshTokenLinkedRsvpForContinuity = useCallback(() => {
     if (!activeToken || !tokenLinkedSessionRef.current) return;
-    if (loading || tokenAutoLoading || submitting || submitInFlightRef.current || hasPendingLocalRsvpEdits) {
+    if (loadInFlightRef.current || loading || tokenAutoLoading || submitting || submitInFlightRef.current || hasPendingLocalRsvpEdits) {
       pendingContinuityRefreshRef.current = true;
       return;
     }
@@ -770,11 +778,11 @@ export default function RSVP() {
 
   useEffect(() => {
     if (!pendingContinuityRefreshRef.current || !activeToken || !tokenLinkedSessionRef.current) return;
-    if (loading || tokenAutoLoading || submitting || submitInFlightRef.current || hasPendingLocalRsvpEdits) return;
+    if (loadInFlightRef.current || loading || tokenAutoLoading || submitting || submitInFlightRef.current || hasPendingLocalRsvpEdits) return;
 
     pendingContinuityRefreshRef.current = false;
     loadInvitationForToken(activeToken, { preserveVisibleState: true });
-  }, [activeToken, hasPendingLocalRsvpEdits, loadInvitationForToken, loading, submitting, tokenAutoLoading]);
+  }, [activeToken, hasPendingLocalRsvpEdits, loadCycle, loadInvitationForToken, loading, submitting, tokenAutoLoading]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
