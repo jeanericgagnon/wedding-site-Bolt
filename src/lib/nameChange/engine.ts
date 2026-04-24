@@ -9,6 +9,7 @@ import type {
   NameChangePlan,
   NameChangePlanFormRef,
   NameChangePlanStep,
+  NameChangeReminderInput,
 } from './types';
 
 const INSTITUTION_CATEGORY_COVERAGE_CONFIG = [
@@ -289,12 +290,28 @@ function resolveInstitutionCoverageStatus(stepIds: string[], steps: NameChangePl
   return 'upcoming';
 }
 
-function buildTargetStatusOverview(steps: NameChangePlanStep[]): NonNullable<NameChangePlan['summary']['targetStatusOverview']> {
+function buildTargetStatusOverview(
+  steps: NameChangePlanStep[],
+  reminders: NameChangeReminderInput[] = [],
+): NonNullable<NameChangePlan['summary']['targetStatusOverview']> {
   const trackedSteps = steps.filter((step) => step.phase !== 'eligibility');
   const latestUpdatedAt = trackedSteps
     .flatMap((step) => [step.executionUpdatedAt, step.completedAt])
     .filter((value): value is string => Boolean(value))
     .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
+  const latestReminderAt = reminders
+    .filter((reminder) => reminder.status !== 'dismissed')
+    .map((reminder) => reminder.updated_at ?? null)
+    .filter((value): value is string => Boolean(value))
+    .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
+  const latestTouchedAt = [latestUpdatedAt, latestReminderAt]
+    .filter((value): value is string => Boolean(value))
+    .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
+  const latestTouchedSource = latestTouchedAt === latestReminderAt && latestReminderAt
+    ? 'reminder' as const
+    : latestTouchedAt === latestUpdatedAt && latestUpdatedAt
+      ? 'execution' as const
+      : null;
 
   return trackedSteps.reduce((summary, step) => {
     const executionStatus = step.executionStatus ?? 'todo';
@@ -320,6 +337,8 @@ function buildTargetStatusOverview(steps: NameChangePlanStep[]): NonNullable<Nam
     ready: 0,
     blocked: 0,
     latestUpdatedAt,
+    latestTouchedAt,
+    latestTouchedSource,
   });
 }
 
@@ -878,7 +897,7 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
       cautionNotes,
       missingInputs,
       readinessPercent,
-      targetStatusOverview: buildTargetStatusOverview(steps),
+      targetStatusOverview: buildTargetStatusOverview(steps, input.reminders),
       milestoneChecklist: milestoneChecklist.map((milestone) => ({
         ...milestone,
         dependsOnStepIds: [...milestone.dependsOnStepIds],

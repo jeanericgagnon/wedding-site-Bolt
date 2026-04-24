@@ -1116,8 +1116,11 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.blocked ?? 0} blocked</span>
                 <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.inProgress ?? 0} in progress</span>
                 <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.complete ?? 0} complete</span>
-                {plan.summary.targetStatusOverview?.latestUpdatedAt ? (
-                  <span className="rounded-full bg-surface-subtle px-2 py-1">Latest move {formatNameChangeExecutionDateTime(plan.summary.targetStatusOverview.latestUpdatedAt)}</span>
+                {plan.summary.targetStatusOverview?.latestTouchedAt ? (
+                  <span className="rounded-full bg-surface-subtle px-2 py-1">
+                    Latest move {formatNameChangeExecutionDateTime(plan.summary.targetStatusOverview.latestTouchedAt)}
+                    {plan.summary.targetStatusOverview.latestTouchedSource === 'reminder' ? ' · reminder' : plan.summary.targetStatusOverview.latestTouchedSource === 'execution' ? ' · execution' : ''}
+                  </span>
                 ) : null}
               </div>
             </div>

@@ -490,6 +490,8 @@ describe('name change engine', () => {
       ready: plan.steps.filter((step) => step.phase !== 'eligibility' && step.status === 'ready').length,
       blocked: plan.steps.filter((step) => step.phase !== 'eligibility' && step.status === 'blocked').length,
       latestUpdatedAt: null,
+      latestTouchedAt: null,
+      latestTouchedSource: null,
     });
     expect(plan.summary.targetStatusOverview?.todo).toBe(plan.steps.filter((step) => step.phase !== 'eligibility').length);
   });
@@ -512,6 +514,31 @@ describe('name change engine', () => {
     expect(plan.steps.find((step) => step.id === 'eligibility-proof')).toMatchObject({
       status: 'blocked',
       blockers: ['Court order packet or signed order is in intake but still needs review.'],
+    });
+  });
+
+  it('tracks reminder-driven latest movement in the target-status overview', () => {
+    const plan = buildNameChangePlan({
+      ...makeInput(),
+      reminders: [
+        {
+          reminder_key: 'ssa-follow-up',
+          label: 'SSA follow-up',
+          reason: 'Receipt still missing',
+          depends_on_step_id: 'federal-ssa',
+          suggested_offset_days: 7,
+          urgency: 'high',
+          status: 'pending',
+          focus_target_id: 'ssa',
+          updated_at: '2026-04-24T22:20:00.000Z',
+        },
+      ],
+    });
+
+    expect(plan.summary.targetStatusOverview).toMatchObject({
+      latestUpdatedAt: null,
+      latestTouchedAt: '2026-04-24T22:20:00.000Z',
+      latestTouchedSource: 'reminder',
     });
   });
 });

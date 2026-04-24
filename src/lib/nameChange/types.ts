@@ -183,6 +183,8 @@ export interface NameChangePlanSummary {
     ready: number;
     blocked: number;
     latestUpdatedAt: string | null;
+    latestTouchedAt: string | null;
+    latestTouchedSource: 'execution' | 'reminder' | null;
   };
   executionTracks?: Array<{
     id: string;
