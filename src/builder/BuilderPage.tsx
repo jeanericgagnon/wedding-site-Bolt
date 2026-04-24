@@ -71,30 +71,43 @@ function applyTemplateDefaultsToProject(project: BuilderProject, templateId: str
   };
 }
 
-function createDemoWeddingDataFromSite(): WeddingDataV1 {
-  const data = createEmptyWeddingData();
-  const now = new Date();
-  const weddingDate = new Date(demoWeddingSite.wedding_date);
+const toIsoDateOrUndefined = (value: string): string | undefined => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+};
 
-  data.couple.partner1Name = demoWeddingSite.couple_name_1;
-  data.couple.partner2Name = demoWeddingSite.couple_name_2;
-  data.couple.displayName = buildCoupleDisplayName(demoWeddingSite.couple_name_1, demoWeddingSite.couple_name_2, 'The couple');
-  data.couple.story = 'We met on a rainy Tuesday in Seattle and spent our first date talking for six hours in a tiny coffee shop. Years later, after moving cities, building a home, and collecting too many plants, we got engaged at sunset with our families nearby. We cannot wait to celebrate with everyone we love.';
-  data.event.weddingDateISO = weddingDate.toISOString();
-  data.event.timezone = 'America/Los_Angeles';
+const buildDemoSchedule = (weddingDateISO?: string) => {
+  if (!weddingDateISO) return [];
+  const weddingDate = new Date(weddingDateISO);
 
-  data.venues = [
-    { id: 'venue-ceremony', name: 'Sunset Gardens Estate', address: demoWeddingSite.venue_location, notes: 'Ceremony lawn opens at 3:30 PM.' },
-    { id: 'venue-reception', name: 'Grand Ballroom', address: '123 Garden Lane, Napa Valley, CA 94558', notes: 'Cocktail hour and reception.' },
-  ];
-
-  data.schedule = [
+  return [
     { id: 'sched-1', label: 'Guest Arrival', startTimeISO: new Date(weddingDate.getTime() - 60 * 60 * 1000).toISOString(), venueId: 'venue-ceremony' },
     { id: 'sched-2', label: 'Ceremony', startTimeISO: weddingDate.toISOString(), venueId: 'venue-ceremony' },
     { id: 'sched-3', label: 'Cocktail Hour', startTimeISO: new Date(weddingDate.getTime() + 90 * 60 * 1000).toISOString(), venueId: 'venue-reception' },
     { id: 'sched-4', label: 'Dinner & Toasts', startTimeISO: new Date(weddingDate.getTime() + 150 * 60 * 1000).toISOString(), venueId: 'venue-reception' },
     { id: 'sched-5', label: 'Dancing', startTimeISO: new Date(weddingDate.getTime() + 240 * 60 * 1000).toISOString(), venueId: 'venue-reception' },
   ];
+};
+
+export function createDemoWeddingDataFromSite(overrides: Partial<typeof demoWeddingSite> = {}): WeddingDataV1 {
+  const data = createEmptyWeddingData();
+  const now = new Date();
+  const site = { ...demoWeddingSite, ...overrides };
+  const weddingDateISO = toIsoDateOrUndefined(site.wedding_date);
+
+  data.couple.partner1Name = site.couple_name_1;
+  data.couple.partner2Name = site.couple_name_2;
+  data.couple.displayName = buildCoupleDisplayName(site.couple_name_1, site.couple_name_2, 'The couple');
+  data.couple.story = 'We met on a rainy Tuesday in Seattle and spent our first date talking for six hours in a tiny coffee shop. Years later, after moving cities, building a home, and collecting too many plants, we got engaged at sunset with our families nearby. We cannot wait to celebrate with everyone we love.';
+  data.event.weddingDateISO = weddingDateISO;
+  data.event.timezone = 'America/Los_Angeles';
+
+  data.venues = [
+    { id: 'venue-ceremony', name: 'Sunset Gardens Estate', address: site.venue_location, notes: 'Ceremony lawn opens at 3:30 PM.' },
+    { id: 'venue-reception', name: 'Grand Ballroom', address: '123 Garden Lane, Napa Valley, CA 94558', notes: 'Cocktail hour and reception.' },
+  ];
+
+  data.schedule = buildDemoSchedule(weddingDateISO);
 
   data.rsvp.deadlineISO = new Date(now.getTime() + 45 * 86400000).toISOString();
   data.travel.hotelInfo = 'We reserved room blocks at Hotel Indigo Napa Valley and The Archer. Mention "Thompson-Rivera Wedding" for discounted rates.';
@@ -115,7 +128,7 @@ function createDemoWeddingDataFromSite(): WeddingDataV1 {
     { id: 'faq-4', q: 'What time should I arrive?', a: 'Please arrive 30 minutes before the ceremony so we can begin on time.' },
   ];
 
-  data.media.heroImageUrl = demoWeddingSite.hero_image_url;
+  data.media.heroImageUrl = site.hero_image_url;
   data.media.gallery = [
     { id: 'g-1', url: 'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg', caption: 'Our favorite weekend trip' },
     { id: 'g-2', url: 'https://images.pexels.com/photos/169193/pexels-photo-169193.jpeg', caption: 'Engagement day' },
