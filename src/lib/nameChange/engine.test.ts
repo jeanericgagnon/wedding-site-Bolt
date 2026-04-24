@@ -362,6 +362,22 @@ describe('name change engine', () => {
         expect.objectContaining({ id: 'edge-both-partners-changing', severity: 'info' }),
       ]),
     );
+    expect(plan.summary.dualPartnerProofTracks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'dual-partner-ssa-proof',
+          requiredProof: ['Partner A SSA confirmation', 'Partner B SSA confirmation'],
+        }),
+        expect.objectContaining({
+          id: 'dual-partner-dmv-proof',
+          requiredProof: ['Partner A updated photo ID', 'Partner B updated photo ID'],
+        }),
+        expect.objectContaining({
+          id: 'dual-partner-rollout-proof',
+          requiredProof: expect.arrayContaining(['Partner A account confirmations', 'Partner B account confirmations']),
+        }),
+      ]),
+    );
   });
 
   it('omits employment rollout institutions when the user is not employed', () => {

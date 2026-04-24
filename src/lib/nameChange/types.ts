@@ -201,6 +201,13 @@ export interface NameChangePlanSummary {
     status: 'ready' | 'blocked' | 'upcoming' | 'in_progress' | 'complete';
     dependsOnStepIds: string[];
   }>;
+  dualPartnerProofTracks?: Array<{
+    id: string;
+    label: string;
+    status: 'ready' | 'blocked' | 'upcoming' | 'in_progress' | 'complete';
+    dependsOnStepIds: string[];
+    requiredProof: string[];
+  }>;
   institutionCategoryCoverage?: Array<{
     id: 'legal_government' | 'financial' | 'work_insurance' | 'personal_lifestyle' | 'travel_mobility';
     label: string;

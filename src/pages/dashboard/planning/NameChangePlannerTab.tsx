@@ -473,6 +473,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   }), [plan.steps]);
   const effectiveReminders = useMemo(() => reminders, [reminders]);
   const milestoneChecklist = useMemo(() => plan.summary.milestoneChecklist ?? [], [plan.summary.milestoneChecklist]);
+  const dualPartnerProofTracks = useMemo(() => plan.summary.dualPartnerProofTracks ?? [], [plan.summary.dualPartnerProofTracks]);
   const accountUpdateTemplates = useMemo(() => plan.summary.accountUpdateTemplates ?? [], [plan.summary.accountUpdateTemplates]);
   const executionTracks = useMemo(() => plan.summary.executionTracks ?? [], [plan.summary.executionTracks]);
   const edgeCaseGuidance = useMemo(() => plan.summary.edgeCaseGuidance ?? [], [plan.summary.edgeCaseGuidance]);
@@ -997,6 +998,20 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                   </div>
                   <span className={`rounded-full px-2 py-1 text-xs ${getExecutionSummaryTone(milestone.status)}`}>
                     {milestone.status}
+                  </span>
+                </div>
+              </div>
+            ))}
+            {dualPartnerProofTracks.map((track) => (
+              <div key={track.id} className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-text-primary">{track.label}</p>
+                    <p className="mt-1 text-xs text-text-secondary">Depends on: {track.dependsOnStepIds.join(' → ')}</p>
+                    <p className="mt-2 text-xs text-text-secondary">Proof: {track.requiredProof.join(' · ')}</p>
+                  </div>
+                  <span className={`rounded-full px-2 py-1 text-xs ${getExecutionSummaryTone(track.status)}`}>
+                    {track.status}
                   </span>
                 </div>
               </div>

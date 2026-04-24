@@ -478,6 +478,31 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
       dependsOnStepIds: ['state-dmv', 'institutions-rollout'],
     },
   ] as const;
+  const dualPartnerProofTracks = hasBothPartnersChanging
+    ? [
+      {
+        id: 'dual-partner-ssa-proof',
+        label: 'SSA proof for both partners',
+        status: legalProofReady ? 'ready' as const : 'blocked' as const,
+        dependsOnStepIds: ['eligibility-proof', 'federal-ssa'],
+        requiredProof: ['Partner A SSA confirmation', 'Partner B SSA confirmation'],
+      },
+      {
+        id: 'dual-partner-dmv-proof',
+        label: 'Photo ID proof for both partners',
+        status: legalProofReady ? 'upcoming' as const : 'blocked' as const,
+        dependsOnStepIds: ['federal-ssa', 'state-dmv'],
+        requiredProof: ['Partner A updated photo ID', 'Partner B updated photo ID'],
+      },
+      {
+        id: 'dual-partner-rollout-proof',
+        label: 'Downstream account proof for both partners',
+        status: legalProofReady ? 'upcoming' as const : 'blocked' as const,
+        dependsOnStepIds: ['state-dmv', 'institutions-rollout'],
+        requiredProof: ['Partner A account confirmations', 'Partner B account confirmations', 'mailed-notice or portal proof where available'],
+      },
+    ]
+    : [];
   const accountUpdateTemplates = [
     {
       id: 'template-payroll',
@@ -641,6 +666,11 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
       milestoneChecklist: milestoneChecklist.map((milestone) => ({
         ...milestone,
         dependsOnStepIds: [...milestone.dependsOnStepIds],
+      })),
+      dualPartnerProofTracks: dualPartnerProofTracks.map((track) => ({
+        ...track,
+        dependsOnStepIds: [...track.dependsOnStepIds],
+        requiredProof: [...track.requiredProof],
       })),
       institutionCategoryCoverage: institutionCategoryCoverage.map((category) => ({
         ...category,
