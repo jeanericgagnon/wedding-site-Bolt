@@ -154,15 +154,19 @@ function findBestContractDocument(
 }
 
 function getContractDocumentCapturedFieldKeys(
-  document: NameChangeDocumentInput | undefined,
+  documents: NameChangeDocumentInput[],
   kind: NameChangeDocumentInput['document_kind'],
   extractedFields: NameChangeExtractedFieldInput[],
   expectedFields: NameChangeExtractionFieldKey[],
 ): NameChangeExtractionFieldKey[] {
   const candidateDocumentIds = new Set<string>();
 
-  const normalizedDocumentId = normalizeDraftNameChangeDocumentId(document?.id ?? null);
-  if (normalizedDocumentId) candidateDocumentIds.add(normalizedDocumentId);
+  documents
+    .filter((document) => matchesNameChangeDocumentKind(document.document_kind, kind))
+    .forEach((document) => {
+      const normalizedDocumentId = normalizeDraftNameChangeDocumentId(document.id ?? null);
+      if (normalizedDocumentId) candidateDocumentIds.add(normalizedDocumentId);
+    });
 
   const normalizedDraftDocumentId = normalizeDraftNameChangeDocumentId(buildDraftNameChangeDocumentId(kind));
   if (normalizedDraftDocumentId) candidateDocumentIds.add(normalizedDraftDocumentId);
@@ -192,7 +196,7 @@ export function buildNameChangeDocumentIntakeSnapshot(
   const statuses: NameChangeDocumentContractStatus[] = NAME_CHANGE_DOCUMENT_CONTRACTS.map((definition) => {
     const canonicalDocument = findBestContractDocument(documents, definition.kind);
     const documentState = canonicalCase.documents[definition.kind];
-    const typedCapturedFields = getContractDocumentCapturedFieldKeys(canonicalDocument, definition.kind, extractedFields, definition.extractionFields);
+    const typedCapturedFields = getContractDocumentCapturedFieldKeys(documents, definition.kind, extractedFields, definition.extractionFields);
     const required = definition.requiredFor.includes('all') || definition.requiredFor.includes(canonicalCase.legalBasis);
     const metadataMissing = metadataMissingForDocument(canonicalDocument);
     const contractIntakeStatus = canonicalDocument?.intake_status ?? documentState.intakeStatus;

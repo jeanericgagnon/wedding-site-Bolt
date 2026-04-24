@@ -693,9 +693,11 @@ describe('name change document intake contract', () => {
 
     expect(snapshot.documents.find((document) => document.kind === 'court_order')).toMatchObject({
       intakeStatus: 'reviewed',
-      capturedExtractionFields: ['case_number'],
-      missingExtractionFields: ['first_name', 'last_name', 'court_order_date'],
+      missingExtractionFields: ['first_name', 'last_name'],
     });
+    expect(snapshot.documents.find((document) => document.kind === 'court_order')?.capturedExtractionFields).toEqual(
+      expect.arrayContaining(['case_number', 'court_order_date']),
+    );
   });
 
   it('prefers reviewed metadata-ready documents over uploaded metadata-light duplicates', () => {
@@ -908,10 +910,12 @@ describe('name change document intake contract', () => {
 
     expect(snapshot.documents.find((document) => document.kind === 'court_order')).toMatchObject({
       intakeStatus: 'reviewed',
-      extractionFieldCount: 1,
-      capturedExtractionFields: ['case_number'],
-      missingExtractionFields: ['first_name', 'last_name', 'court_order_date'],
+      extractionFieldCount: 2,
+      missingExtractionFields: ['first_name', 'last_name'],
     });
+    expect(snapshot.documents.find((document) => document.kind === 'court_order')?.capturedExtractionFields).toEqual(
+      expect.arrayContaining(['case_number', 'court_order_date']),
+    );
   });
 
   it('deduplicates repeated captured extraction field keys in contract output', () => {
@@ -2169,6 +2173,62 @@ describe('name change document intake contract', () => {
     });
     expect(snapshot.documents.find((document) => document.kind === 'marriage_certificate')?.capturedExtractionFields).toEqual(
       expect.arrayContaining(['county', 'certificate_number', 'issuance_date']),
+    );
+  });
+
+  it('preserves verified extracted fields across matching document id swaps for the same kind', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase(),
+      [
+        {
+          id: 'passport-upload-1',
+          document_kind: 'current_passport',
+          display_name: 'Passport upload',
+          storage_mode: 'metadata_only',
+          intake_status: 'uploaded',
+          file_name_masked: 'passport-upload-•••.pdf',
+          extraction_confidence: 0.84,
+        },
+        {
+          id: 'passport-reviewed-1',
+          document_kind: 'current_passport',
+          display_name: 'Passport reviewed',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'passport-reviewed-•••.pdf',
+          issuing_authority: 'U.S. Department of State',
+          issued_on: '2024-06-01',
+          expires_on: '2034-06-01',
+          extraction_confidence: 0.97,
+        },
+      ],
+      [
+        {
+          document_id: 'passport-upload-1',
+          field_key: 'first_name',
+          field_label: 'First name',
+          field_value_masked: 'Alex',
+          source_type: 'manual',
+          is_verified: true,
+        },
+        {
+          document_id: 'passport-upload-1',
+          field_key: 'issuance_date',
+          field_label: 'Issued on',
+          field_value_masked: '2024-06-01',
+          source_type: 'manual',
+          is_verified: true,
+        },
+      ],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'current_passport')).toMatchObject({
+      intakeStatus: 'reviewed',
+      metadataReady: 1,
+      canonicalConflicts: [],
+    });
+    expect(snapshot.documents.find((document) => document.kind === 'current_passport')?.capturedExtractionFields).toEqual(
+      expect.arrayContaining(['first_name', 'issuance_date']),
     );
   });
 
