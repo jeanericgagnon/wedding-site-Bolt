@@ -92,6 +92,10 @@ interface TargetStatusVaultRow {
   vaultStatus: 'todo' | 'blocked' | 'ready' | 'in_progress' | 'complete';
   ready: boolean;
   proofSummary: string;
+  proofReadyCount: number;
+  proofTotalCount: number;
+  proofMissingCount: number;
+  proofAttentionCount: number;
   note: string | null;
   updatedLabel: string | null;
   executionUpdatedLabel: string | null;
@@ -598,6 +602,10 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       vaultStatus: snapshot.statusVault.status,
       ready: snapshot.ready,
       proofSummary: snapshot.statusVault.proofSummary,
+      proofReadyCount: snapshot.statusVault.proofCounts.ready,
+      proofTotalCount: snapshot.statusVault.proofCounts.total,
+      proofMissingCount: snapshot.statusVault.proofCounts.missing,
+      proofAttentionCount: snapshot.statusVault.proofCounts.attention,
       note: snapshot.statusVault.notes[0] ?? null,
       updatedLabel: snapshot.statusVault.lastTouchedAt
         ? `Latest touch ${formatNameChangeExecutionDateTime(snapshot.statusVault.lastTouchedAt)}${snapshot.statusVault.lastTouchedSource === 'reminder' ? ' · reminder' : snapshot.statusVault.lastTouchedSource === 'execution' ? ' · execution' : ''}`
@@ -1147,16 +1155,16 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                       <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">Vault: {row.vaultStatus.replace(/_/g, ' ')}</span>
                       <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">Ready: {row.ready ? 'yes' : 'no'}</span>
                       <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
-                        Proof {executionSnapshots.find((snapshot) => snapshot.targetKey === row.key)?.statusVault.proofCounts.ready ?? 0}/{executionSnapshots.find((snapshot) => snapshot.targetKey === row.key)?.statusVault.proofCounts.total ?? 0}
+                        Proof {row.proofReadyCount}/{row.proofTotalCount}
                       </span>
-                      {(executionSnapshots.find((snapshot) => snapshot.targetKey === row.key)?.statusVault.proofCounts.missing ?? 0) > 0 ? (
+                      {row.proofMissingCount > 0 ? (
                         <span className="rounded-full bg-rose-50 px-2 py-1 text-xs text-rose-700">
-                          {executionSnapshots.find((snapshot) => snapshot.targetKey === row.key)?.statusVault.proofCounts.missing} missing
+                          {row.proofMissingCount} missing
                         </span>
                       ) : null}
-                      {(executionSnapshots.find((snapshot) => snapshot.targetKey === row.key)?.statusVault.proofCounts.attention ?? 0) > 0 ? (
+                      {row.proofAttentionCount > 0 ? (
                         <span className="rounded-full bg-amber-50 px-2 py-1 text-xs text-amber-700">
-                          {executionSnapshots.find((snapshot) => snapshot.targetKey === row.key)?.statusVault.proofCounts.attention} attention
+                          {row.proofAttentionCount} attention
                         </span>
                       ) : null}
                     </div>
