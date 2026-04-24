@@ -514,7 +514,11 @@ export function normalizeDraftNameChangeDocumentId(documentId: string | null | u
   if (/^draft$/i.test(normalizedDocumentId)) return null;
   if (/^draft[-_]?other$/i.test(normalizedDocumentId)) return null;
   const normalizedDraftPrefix = normalizedDocumentId?.replace(/^draft(?:\s*[\\/_-]?\s*)/i, 'draft-') ?? null;
-  if (!normalizedDraftPrefix?.startsWith('draft-')) return normalizedDocumentId;
+  if (!normalizedDraftPrefix?.startsWith('draft-')) {
+    const normalizedKind = normalizeDraftDocumentKind(normalizedDocumentId);
+    if (!normalizedKind || normalizedKind === 'other') return normalizedDocumentId;
+    return buildDraftNameChangeDocumentId(normalizedKind as NameChangeDocumentInput['document_kind']);
+  }
   const normalizedKind = normalizeDraftDocumentKind(normalizedDraftPrefix.slice('draft-'.length));
   if (!normalizedKind) return null;
   if (normalizedKind === 'other') return null;

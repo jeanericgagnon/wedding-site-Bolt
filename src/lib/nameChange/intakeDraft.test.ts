@@ -24,7 +24,7 @@ describe('name change intake draft helpers', () => {
 
   it('falls back to other when a draft document kind normalizes empty', () => {
     expect(createDraftNameChangeDocument('___' as never, ' Weird custom label ')).toMatchObject({
-      id: null,
+      id: undefined,
       document_kind: 'other',
       display_name: 'Other',
       intake_status: 'not_started',
@@ -193,7 +193,7 @@ describe('name change intake draft helpers', () => {
 
   it('falls back unknown draft document aliases to other instead of inventing unsupported kinds', () => {
     expect(createDraftNameChangeDocument('temporary visa card' as never, ' Temporary visa card ')).toMatchObject({
-      id: null,
+      id: undefined,
       document_kind: 'other',
       display_name: 'Other',
       intake_status: 'not_started',
@@ -2022,6 +2022,9 @@ describe('name change intake draft helpers', () => {
 
   it('normalizes legacy draft document ids onto the canonical draft id', () => {
     expect(normalizeDraftNameChangeDocumentId('draft-court_order_name_change')).toBe('draft-court_order');
+    expect(normalizeDraftNameChangeDocumentId('marriage_certificate')).toBe('draft-marriage_certificate');
+    expect(normalizeDraftNameChangeDocumentId('currentPassport')).toBe('draft-current_passport');
+    expect(normalizeDraftNameChangeDocumentId('court order name change')).toBe('draft-court_order');
     expect(normalizeDraftNameChangeDocumentId('draft')).toBeNull();
     expect(normalizeDraftNameChangeDocumentId('draft-other')).toBeNull();
     expect(normalizeDraftNameChangeDocumentId('draft other')).toBeNull();
