@@ -397,6 +397,38 @@ describe('name change extraction contract', () => {
     ]));
   });
 
+  it('detects canonical conflicts from snapshot-backed opaque upload ids without explicit extracted rows', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'passport-upload-final.pdf',
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        extracted_snapshot: {
+          fields: {
+            first_name: { value: 'Alicia' },
+            last_name: { value: 'Rivera-Smith' },
+          },
+        },
+      },
+    ];
+
+    const snapshot = buildNameChangeExtractionContractSnapshot(
+      makeCase({
+        current_first_name: 'Alex',
+        current_last_name: 'Rivera',
+      }),
+      documents,
+      [],
+    );
+
+    expect(snapshot.conflicts).toEqual(expect.arrayContaining([
+      expect.objectContaining({ key: 'current-first-name-passport', canonicalValue: 'Alex', extractedValue: 'Alicia' }),
+      expect.objectContaining({ key: 'current-last-name-passport', canonicalValue: 'Rivera', extractedValue: 'Rivera-Smith' }),
+    ]));
+  });
+
   it('ignores unverified extracted values when building canonical conflict signals', () => {
     const documents: NameChangeDocumentInput[] = [
       {

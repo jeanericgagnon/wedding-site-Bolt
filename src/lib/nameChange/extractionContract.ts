@@ -1,4 +1,5 @@
 import { buildNameChangeCanonicalCase } from './canonical';
+import { buildNameChangeSnapshotBackedExtractedFields } from './intakeDraft';
 import { canonicalizeNameChangeDocumentKind, getNameChangeDocumentKindAliases } from './documentKinds';
 import { isDraftNameChangePlaceholderDocument, normalizeDraftFieldKey, normalizeDraftFieldValue } from './intakeDraft';
 import type {
@@ -452,13 +453,14 @@ export function buildNameChangeExtractionContractSnapshot(
   documents: NameChangeDocumentInput[],
   extractedFields: NameChangeExtractedFieldInput[],
 ): NameChangeExtractionContractSnapshot {
-  const conflicts = buildCanonicalFieldConflicts(profile, documents, extractedFields);
+  const mergedExtractedFields = buildNameChangeSnapshotBackedExtractedFields(documents, extractedFields);
+  const conflicts = buildCanonicalFieldConflicts(profile, documents, mergedExtractedFields);
 
   return {
-    marriageCertificate: buildMarriageCertificateExtraction(documents, extractedFields),
-    courtOrder: buildCourtOrderExtraction(documents, extractedFields),
-    currentPassport: buildPassportExtraction(documents, extractedFields),
-    currentDriversLicense: buildDriversLicenseExtraction(documents, extractedFields),
+    marriageCertificate: buildMarriageCertificateExtraction(documents, mergedExtractedFields),
+    courtOrder: buildCourtOrderExtraction(documents, mergedExtractedFields),
+    currentPassport: buildPassportExtraction(documents, mergedExtractedFields),
+    currentDriversLicense: buildDriversLicenseExtraction(documents, mergedExtractedFields),
     conflicts,
     summary: {
       conflictCount: conflicts.length,
