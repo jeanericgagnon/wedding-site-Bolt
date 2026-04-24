@@ -26,7 +26,7 @@ const SUPPORTED_DRAFT_FIELD_KEYS = new Set<NameChangeExtractedFieldInput['field_
 ]);
 
 const DRAFT_LABEL_SEPARATOR_PATTERN = '[:;#=.|。/:／⁄⧸ᐟ~∼〜：；︓︔﹕﹔∶꞉＃＝﹦｜∣ǀ❘⏐\\-–—]';
-const DRAFT_WRAPPING_CHAR_PATTERN = /^["'([{「『【（]+|["')\]}」』】）]+$/g;
+const DRAFT_WRAPPING_CHAR_PATTERN = /^["'([{<«‹「『【《〈（]+|["')\]}>»›」』】》〉）]+$/g;
 const DRAFT_VALUE_PREFIX_PATTERN = /^[~∼〜]+\s*/;
 const DRAFT_QUOTE_PREFIX_PATTERN = /^(?:>+|[›»])\s*/;
 
