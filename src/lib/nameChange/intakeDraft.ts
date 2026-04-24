@@ -101,9 +101,16 @@ function normalizeDraftDocumentKind(value: string) {
     .replace(/_+/g, '_')
     .replace(/^_+|_+$/g, '');
 
-  const strippedSuffixKind = normalizedKind
+  const strippedVersionKind = normalizedKind
+    .replace(/(?:_(?:page_\d+|page|v\d+|version_\d+|\d+))+$/g, '')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '');
+
+  const strippedSuffixKind = strippedVersionKind
     .replace(/^(?:(?:document|documents|doc|copy|scan|scanned|upload|uploaded|file|image|photo|pdf|png|jpg|jpeg|webp|heic|heif|tif|tiff)_)+/g, '')
     .replace(/(?:_(?:document|documents|doc|copy|scan|scanned|upload|uploaded|file|image|photo|front|back|pdf|png|jpg|jpeg|webp|heic|heif|tif|tiff))+$/g, '')
+    .replace(/^(?:(?:reviewed|review|final|edited|cropped|processed|renamed|latest|new|temp|tmp|attachment)_)+/g, '')
+    .replace(/(?:_(?:reviewed|review|final|edited|cropped|processed|renamed|latest|new|temp|tmp|attachment|page))+$/g, '')
     .replace(/_+/g, '_')
     .replace(/^_+|_+$/g, '');
 

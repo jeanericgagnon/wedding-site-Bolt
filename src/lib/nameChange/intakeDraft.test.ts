@@ -2041,6 +2041,9 @@ describe('name change intake draft helpers', () => {
     expect(normalizeDraftNameChangeDocumentId('documents/passport-upload.jpg#page=1')).toBe('draft-current_passport');
     expect(normalizeDraftNameChangeDocumentId('uploads/marriage%20certificate.pdf?token=abc')).toBe('draft-marriage_certificate');
     expect(normalizeDraftNameChangeDocumentId('blob:https://dayof.love/passport-upload.jpg')).toBeNull();
+    expect(normalizeDraftNameChangeDocumentId('attachments/final marriage certificate (1).pdf')).toBe('draft-marriage_certificate');
+    expect(normalizeDraftNameChangeDocumentId('reviewed/passport upload v2.jpg')).toBe('draft-current_passport');
+    expect(normalizeDraftNameChangeDocumentId('tmp/edited driver license front page 1.png')).toBe('draft-current_drivers_license');
     expect(normalizeDraftNameChangeDocumentId('draft')).toBeNull();
     expect(normalizeDraftNameChangeDocumentId('draft-other')).toBeNull();
     expect(normalizeDraftNameChangeDocumentId('draft other')).toBeNull();
