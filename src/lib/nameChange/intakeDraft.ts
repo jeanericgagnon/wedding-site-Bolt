@@ -791,7 +791,7 @@ function appendDraftSnapshotFieldEntries(
     entries.push([key, value]);
   }
 
-  for (const nestedKey of ['fields', 'extracted_fields', 'extractedFields', 'normalized_fields', 'normalizedFields']) {
+  for (const nestedKey of ['fields', 'extracted_fields', 'extractedFields', 'normalized_fields', 'normalizedFields', 'metadata', 'document_metadata', 'documentMetadata']) {
     const nestedValue = snapshot[nestedKey];
     if (!nestedValue || typeof nestedValue !== 'object' || Array.isArray(nestedValue)) {
       continue;

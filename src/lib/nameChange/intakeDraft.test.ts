@@ -114,6 +114,22 @@ describe('name change intake draft helpers', () => {
     });
   });
 
+  it('builds canonical document metadata from snapshot metadata containers', () => {
+    expect(buildDraftNameChangeDocumentMetadataFromSnapshot({
+      documentMetadata: {
+        issuing_authority: ' County Clerk ',
+        issuance_date: '2026-04-11T00:00:00Z',
+        expiration_date: '2036-04-11T00:00:00Z',
+        extraction_confidence: '0.96',
+      },
+    })).toEqual({
+      issuingAuthority: ' County Clerk ',
+      issuedOn: '2026-04-11',
+      expiresOn: '2036-04-11',
+      extractionConfidence: 0.96,
+    });
+  });
+
   it('collapses draft document labels into one clean downstream display name', () => {
     expect(createDraftNameChangeDocument('marriage_certificate', '  Certified   marriage   certificate  ')).toMatchObject({
       display_name: 'Certified marriage certificate',

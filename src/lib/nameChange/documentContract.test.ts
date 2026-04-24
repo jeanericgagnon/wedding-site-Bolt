@@ -3649,4 +3649,45 @@ describe('name change document intake contract', () => {
       capturedExtractionFields: ['issuance_date', 'first_name', 'last_name'],
     });
   });
+
+  it('treats documentMetadata snapshot containers as canonical readiness truth for reviewed documents', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase(),
+      [
+        {
+          id: 'doc-marriage-certificate',
+          document_kind: 'marriage_certificate',
+          display_name: 'Marriage certificate',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'marriage-certificate-•••.pdf',
+          issuing_authority: null,
+          issued_on: null,
+          extraction_confidence: null,
+          extracted_snapshot: {
+            documentMetadata: {
+              issuing_authority: 'Orange County Clerk',
+              issuance_date: '2026-04-12T00:00:00Z',
+              extraction_confidence: '0.95',
+              county: 'Orange',
+              certificate_number: 'MC-12345',
+            },
+            fields: {
+              first_name: 'Alex',
+              last_name: 'Rivera',
+              spouse_last_name: 'Jordan',
+            },
+          },
+        },
+      ],
+      [],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'marriage_certificate')).toMatchObject({
+      intakeStatus: 'reviewed',
+      metadataMissing: [],
+      missingExtractionFields: [],
+      capturedExtractionFields: expect.arrayContaining(['county', 'certificate_number', 'issuance_date', 'first_name', 'last_name', 'spouse_last_name']),
+    });
+  });
 });
