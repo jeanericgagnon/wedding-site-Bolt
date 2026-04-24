@@ -523,6 +523,12 @@ export interface NameChangeTargetExecutionSnapshot {
   statusVault: {
     status: 'todo' | 'blocked' | 'ready' | 'in_progress' | 'complete';
     proofSummary: string;
+    proofCounts: {
+      ready: number;
+      attention: number;
+      missing: number;
+      total: number;
+    };
     notes: string[];
     lastUpdatedAt: string | null;
     lastTouchedAt: string | null;

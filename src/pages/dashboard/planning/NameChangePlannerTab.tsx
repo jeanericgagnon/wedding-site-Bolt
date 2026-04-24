@@ -1143,9 +1143,22 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                       <p className="text-sm font-semibold text-text-primary">{row.title}</p>
                       <p className="mt-1 text-xs text-text-secondary">{row.proofSummary}</p>
                     </div>
-                    <div className="flex flex-wrap items-center justify-end gap-2">
+                  <div className="flex flex-wrap items-center justify-end gap-2">
                       <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">Vault: {row.vaultStatus.replace(/_/g, ' ')}</span>
                       <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">Ready: {row.ready ? 'yes' : 'no'}</span>
+                      <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+                        Proof {executionSnapshots.find((snapshot) => snapshot.targetKey === row.key)?.statusVault.proofCounts.ready ?? 0}/{executionSnapshots.find((snapshot) => snapshot.targetKey === row.key)?.statusVault.proofCounts.total ?? 0}
+                      </span>
+                      {(executionSnapshots.find((snapshot) => snapshot.targetKey === row.key)?.statusVault.proofCounts.missing ?? 0) > 0 ? (
+                        <span className="rounded-full bg-rose-50 px-2 py-1 text-xs text-rose-700">
+                          {executionSnapshots.find((snapshot) => snapshot.targetKey === row.key)?.statusVault.proofCounts.missing} missing
+                        </span>
+                      ) : null}
+                      {(executionSnapshots.find((snapshot) => snapshot.targetKey === row.key)?.statusVault.proofCounts.attention ?? 0) > 0 ? (
+                        <span className="rounded-full bg-amber-50 px-2 py-1 text-xs text-amber-700">
+                          {executionSnapshots.find((snapshot) => snapshot.targetKey === row.key)?.statusVault.proofCounts.attention} attention
+                        </span>
+                      ) : null}
                     </div>
                   </div>
                   {row.note && <p className="mt-3 text-sm text-text-secondary">{row.note}</p>}

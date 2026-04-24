@@ -83,7 +83,8 @@ function getTargetStatusVaultSnapshot(
     .map((milestone) => `${milestone.status === 'complete' ? 'Confirmed' : 'Tracking'} milestone: ${milestone.label}`);
   const missingChecklist = checklist.filter((item) => item.status === 'missing');
   const attentionChecklist = checklist.filter((item) => item.status === 'attention');
-  const proofCounts = `${checklist.filter((item) => item.status === 'ready').length}/${checklist.length} checks ready`;
+  const readyChecklist = checklist.filter((item) => item.status === 'ready');
+  const proofCounts = `${readyChecklist.length}/${checklist.length} checks ready`;
   const proofIssues = [...missingChecklist, ...attentionChecklist]
     .slice(0, 2)
     .map((item) => item.label)
@@ -133,6 +134,12 @@ function getTargetStatusVaultSnapshot(
   return {
     status,
     proofSummary,
+    proofCounts: {
+      ready: readyChecklist.length,
+      attention: attentionChecklist.length,
+      missing: missingChecklist.length,
+      total: checklist.length,
+    },
     notes: notesWithReminder,
     lastUpdatedAt: latestExecutionUpdatedAt,
     lastTouchedAt,

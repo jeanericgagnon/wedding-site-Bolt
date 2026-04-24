@@ -2144,6 +2144,12 @@ describe('name change target execution snapshot', () => {
       lastUpdatedAt: '2026-04-24T21:55:00.000Z',
       lastTouchedAt: '2026-04-24T21:55:00.000Z',
       lastTouchedSource: 'execution',
+      proofCounts: {
+        ready: expect.any(Number),
+        attention: expect.any(Number),
+        missing: expect.any(Number),
+        total: expect.any(Number),
+      },
       notes: ['Need the SSA receipt number before rolling into DMV.'],
     });
     expect(snapshot.statusVault.proofSummary).toContain('checks ready');
