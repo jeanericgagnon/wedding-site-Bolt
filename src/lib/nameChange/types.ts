@@ -245,6 +245,7 @@ export interface NameChangePlan {
   };
   profile: {
     legalBasis: NameChangeLegalBasis;
+    isUsCitizen: boolean;
     hasPassport: boolean;
     passportNeedsUpdate: boolean;
     hasRealIdLicense: boolean;

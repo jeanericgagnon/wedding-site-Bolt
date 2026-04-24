@@ -177,6 +177,19 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
   const institutionalTargets = institutionsFor(input);
   const travelBookedSoon = Boolean(input.profile.structured_intake.travelBookedSoon);
   const wantsDocumentIntakeHelp = input.profile.structured_intake.wantsDocumentIntakeHelp !== false;
+  const normalizedCurrentLastName = normalize(input.profile.current_last_name);
+  const normalizedTargetLastName = normalize(input.profile.target_last_name);
+  const normalizedSpouseLastName = normalize(String(input.profile.structured_intake.spouseLastName ?? ''));
+  const targetLastTokens = normalizedTargetLastName.split(/[-\s]+/).filter(Boolean);
+  const hasHyphenatedTargetLastName = normalizedTargetLastName.includes('-');
+  const hasDualLastNamePath = Boolean(
+    normalizedCurrentLastName
+    && normalizedSpouseLastName
+    && normalizedTargetLastName !== normalizedCurrentLastName
+    && normalizedTargetLastName !== normalizedSpouseLastName
+    && targetLastTokens.includes(normalizedCurrentLastName)
+    && targetLastTokens.includes(normalizedSpouseLastName),
+  );
 
   const blockers = [
     ...(legalProofReady
@@ -431,6 +444,22 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
         severity: 'warning' as const,
       }]
       : []),
+    ...(hasHyphenatedTargetLastName
+      ? [{
+        id: 'edge-hyphenated-name',
+        label: 'Hyphenated surname consistency',
+        detail: 'Use the exact same hyphenated surname format on SSA, DMV, passport, payroll, and travel profiles so punctuation drift does not create identity mismatches downstream.',
+        severity: 'info' as const,
+      }]
+      : []),
+    ...(hasDualLastNamePath
+      ? [{
+        id: 'edge-dual-name-path',
+        label: 'Dual surname rollout',
+        detail: 'This looks like a keep-one-plus-add-one surname path, so keep the same surname order across legal proof, SSA, DMV, passport, and institution updates.',
+        severity: 'info' as const,
+      }]
+      : []),
   ];
 
   return {
@@ -442,6 +471,7 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
     },
     profile: {
       legalBasis,
+      isUsCitizen: input.profile.is_us_citizen,
       hasPassport: input.profile.has_us_passport,
       passportNeedsUpdate: input.profile.passport_needs_update,
       hasRealIdLicense: input.profile.has_real_id_license,

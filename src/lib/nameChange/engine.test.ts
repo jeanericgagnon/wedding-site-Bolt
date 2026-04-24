@@ -211,6 +211,25 @@ describe('name change engine', () => {
     );
   });
 
+  it('surfaces hyphenation and dual-surname guidance for exact-format rollout cases', () => {
+    const plan = buildNameChangePlan(makeInput({
+      current_last_name: 'Rivera',
+      target_last_name: 'Rivera-Jordan',
+      structured_intake: {
+        spouseLastName: 'Jordan',
+        travelBookedSoon: false,
+        wantsDocumentIntakeHelp: true,
+      },
+    }));
+
+    expect(plan.summary.edgeCaseGuidance).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'edge-hyphenated-name', severity: 'info' }),
+        expect.objectContaining({ id: 'edge-dual-name-path', severity: 'info' }),
+      ]),
+    );
+  });
+
   it('omits employment rollout institutions when the user is not employed', () => {
     const plan = buildNameChangePlan(makeInput({ employment_status: 'not_employed' }));
     expect(plan.steps.some((step) => step.id === 'institution-irs-employer')).toBe(false);

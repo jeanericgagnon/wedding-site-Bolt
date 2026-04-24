@@ -20,6 +20,18 @@ type NameChangeInstitutionReminderFamilyConfig = {
   reasonSuffix?: string;
 };
 
+type NameChangeContextReminderConfig = {
+  id: string;
+  label: string;
+  standardOffsetDays: number;
+  expeditedOffsetDays: number;
+  standardUrgency: NameChangeReminderSuggestion['urgency'];
+  expeditedUrgency: NameChangeReminderSuggestion['urgency'];
+  reason: string;
+  dependsOnStepId: string;
+  includeWhen: (plan: NameChangePlan) => boolean;
+};
+
 const CORE_STEP_REMINDER_CONFIGS: Record<string, NameChangeCoreStepReminderConfig> = {
   'federal-ssa': {
     id: 'reminder-ssa-followup',
@@ -81,6 +93,53 @@ const INSTITUTION_REMINDER_FAMILY_CONFIGS: Record<string, NameChangeInstitutionR
   },
 };
 
+const CONTEXT_REMINDER_CONFIGS: NameChangeContextReminderConfig[] = [
+  {
+    id: 'reminder-travel-bookings',
+    label: 'Double-check travel bookings against your live ID path',
+    standardOffsetDays: 1,
+    expeditedOffsetDays: 0,
+    standardUrgency: 'high',
+    expeditedUrgency: 'high',
+    dependsOnStepId: 'federal-passport',
+    reason: 'Upcoming travel means booking names, TSA profiles, and passport timing can get messy fast if they drift from the SSA → DMV sequence.',
+    includeWhen: (plan) => Boolean(plan.profile.passportNeedsUpdate && plan.summary.edgeCaseGuidance?.some((item) => item.id === 'edge-travel-timing')),
+  },
+  {
+    id: 'reminder-international-passport',
+    label: 'Confirm your country-specific passport update path',
+    standardOffsetDays: 2,
+    expeditedOffsetDays: 1,
+    standardUrgency: 'high',
+    expeditedUrgency: 'high',
+    dependsOnStepId: 'federal-passport',
+    reason: 'Non-U.S. passport handling is country-specific, so pinning down that rule set early keeps the rest of the identity chain honest.',
+    includeWhen: (plan) => !plan.profile.isUsCitizen && plan.profile.passportNeedsUpdate,
+  },
+  {
+    id: 'reminder-court-order-packet',
+    label: 'Check court-order packet and hearing progress',
+    standardOffsetDays: 3,
+    expeditedOffsetDays: 1,
+    standardUrgency: 'high',
+    expeditedUrgency: 'high',
+    dependsOnStepId: 'eligibility-proof',
+    reason: 'On the court-order path, nothing downstream matters until the packet, hearing, and signed order are actually moving.',
+    includeWhen: (plan) => plan.profile.legalBasis === 'court_order',
+  },
+  {
+    id: 'reminder-name-format-consistency',
+    label: 'Lock the exact surname format before SSA and DMV drift',
+    standardOffsetDays: 2,
+    expeditedOffsetDays: 1,
+    standardUrgency: 'medium',
+    expeditedUrgency: 'high',
+    dependsOnStepId: 'federal-ssa',
+    reason: 'Hyphenated or dual-surname cases need the exact same last-name formatting across SSA, DMV, passport, payroll, and account templates.',
+    includeWhen: (plan) => Boolean(plan.summary.edgeCaseGuidance?.some((item) => item.id === 'edge-hyphenated-name' || item.id === 'edge-dual-name-path')),
+  },
+];
+
 function raiseUrgency(
   current: NameChangeReminderSuggestion['urgency'],
   minimum?: NameChangeReminderSuggestion['urgency'],
@@ -129,6 +188,19 @@ export function buildNameChangeReminderSuggestions(plan: NameChangePlan): NameCh
       suggestedOffsetDays: plan.profile.urgencyLevel === 'expedited' ? config.expeditedOffsetDays : config.standardOffsetDays,
       reason: config.reason,
       dependsOnStepId: stepId,
+      urgency: plan.profile.urgencyLevel === 'expedited' ? config.expeditedUrgency : config.standardUrgency,
+    });
+  });
+
+  CONTEXT_REMINDER_CONFIGS.forEach((config) => {
+    if (!config.includeWhen(plan)) return;
+
+    suggestions.push({
+      id: config.id,
+      label: config.label,
+      suggestedOffsetDays: plan.profile.urgencyLevel === 'expedited' ? config.expeditedOffsetDays : config.standardOffsetDays,
+      reason: config.reason,
+      dependsOnStepId: config.dependsOnStepId,
       urgency: plan.profile.urgencyLevel === 'expedited' ? config.expeditedUrgency : config.standardUrgency,
     });
   });

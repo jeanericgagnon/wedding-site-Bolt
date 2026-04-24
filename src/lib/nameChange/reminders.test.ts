@@ -160,6 +160,38 @@ describe('name change reminder suggestions', () => {
     });
   });
 
+  it('adds edge-case reminders for travel timing, international passports, court orders, and exact surname formatting', () => {
+    const reminders = buildNameChangeReminderSuggestions(buildNameChangePlan(makeInput({
+      urgency_level: 'expedited',
+      legal_basis: 'court_order',
+      is_us_citizen: false,
+      target_last_name: 'Rivera-Jordan',
+      structured_intake: {
+        spouseLastName: 'Jordan',
+        travelBookedSoon: true,
+        wantsDocumentIntakeHelp: true,
+      },
+    })));
+
+    expect(reminders.find((reminder) => reminder.id === 'reminder-travel-bookings')).toMatchObject({
+      dependsOnStepId: 'federal-passport',
+      suggestedOffsetDays: 0,
+      urgency: 'high',
+    });
+    expect(reminders.find((reminder) => reminder.id === 'reminder-international-passport')).toMatchObject({
+      dependsOnStepId: 'federal-passport',
+      urgency: 'high',
+    });
+    expect(reminders.find((reminder) => reminder.id === 'reminder-court-order-packet')).toMatchObject({
+      dependsOnStepId: 'eligibility-proof',
+      urgency: 'high',
+    });
+    expect(reminders.find((reminder) => reminder.id === 'reminder-name-format-consistency')).toMatchObject({
+      dependsOnStepId: 'federal-ssa',
+      urgency: 'high',
+    });
+  });
+
   it('summarizes reminder status counts', () => {
     const summary = summarizeNameChangeReminders([
       {
