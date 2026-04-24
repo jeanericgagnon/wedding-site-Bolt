@@ -365,6 +365,9 @@ const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
           {snapshot.statusVault.lastUpdatedAt && snapshot.statusVault.lastUpdatedAt !== snapshot.statusVault.lastTouchedAt ? (
             <p className="text-xs text-text-secondary">Execution updated {new Date(snapshot.statusVault.lastUpdatedAt).toLocaleString()}</p>
           ) : null}
+          {snapshot.statusVault.reminderSummary.latestReminderAt && snapshot.statusVault.reminderSummary.latestReminderAt !== snapshot.statusVault.lastTouchedAt ? (
+            <p className="text-xs text-text-secondary">Reminder updated {new Date(snapshot.statusVault.reminderSummary.latestReminderAt).toLocaleString()}</p>
+          ) : null}
         </div>
       </div>
       <p className="mt-3 text-sm text-text-secondary">{snapshot.statusVault.proofSummary}</p>

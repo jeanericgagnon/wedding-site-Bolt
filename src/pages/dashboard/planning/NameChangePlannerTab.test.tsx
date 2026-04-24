@@ -304,7 +304,7 @@ describe('NameChangePlannerTab', () => {
     );
 
     expect(screen.getAllByText(/Latest touch .*execution/).length).toBeGreaterThan(0);
-    expect(screen.getByText(/Reminder updated/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Reminder updated/).length).toBeGreaterThan(0);
   });
 
   it('keeps proof debt visible when reminder pressure becomes the latest touch', () => {
