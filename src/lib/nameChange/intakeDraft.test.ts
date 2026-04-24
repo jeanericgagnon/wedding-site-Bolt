@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildDraftNameChangeDocumentId, buildDraftNameChangeDocumentMetadataFromSnapshot, buildDraftNameChangeExtractedFieldsFromSnapshot, createDraftNameChangeDocument, isDraftNameChangeDocumentId, isDraftNameChangePlaceholderDocument, normalizeDraftNameChangeDocumentId, upsertDraftNameChangeExtractedField } from './intakeDraft';
+import { buildDraftNameChangeDocumentId, buildDraftNameChangeDocumentMetadataFromSnapshot, buildDraftNameChangeExtractedFieldsFromSnapshot, buildNameChangeSnapshotBackedExtractedFields, createDraftNameChangeDocument, isDraftNameChangeDocumentId, isDraftNameChangePlaceholderDocument, normalizeDraftNameChangeDocumentId, upsertDraftNameChangeExtractedField } from './intakeDraft';
 import type { NameChangeExtractedFieldInput } from './types';
 
 describe('name change intake draft helpers', () => {
@@ -350,6 +350,68 @@ describe('name change intake draft helpers', () => {
       expect.objectContaining({ document_id: 'draft-current_passport', field_key: 'first_name', field_value_masked: 'Alex' }),
       expect.objectContaining({ document_id: 'draft-current_passport', field_key: 'last_name', field_value_masked: 'Rivera' }),
     ]));
+  });
+
+  it('does not duplicate snapshot-backed fields when explicit extracted rows already cover the same document kind', () => {
+    const mergedFields = buildNameChangeSnapshotBackedExtractedFields(
+      [{
+        id: 'passport-upload-final.pdf',
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        extracted_snapshot: {
+          fields: {
+            first_name: { value: 'Snapshot Alex' },
+            issuance_date: { value: '2024-06-01' },
+          },
+        },
+      }],
+      [{
+        document_id: 'passport-upload-final.pdf',
+        field_key: 'first_name',
+        field_label: 'First Name',
+        field_value_masked: 'Verified Alex',
+        source_type: 'document_extract',
+        is_verified: true,
+      } as NameChangeExtractedFieldInput],
+    );
+
+    expect(mergedFields.filter((field) => field.field_key === 'first_name')).toEqual([
+      expect.objectContaining({ document_id: 'passport-upload-final.pdf', field_value_masked: 'Verified Alex' }),
+    ]);
+    expect(mergedFields).toEqual(expect.arrayContaining([
+      expect.objectContaining({ document_id: 'draft-current_passport', field_key: 'issuance_date', field_value_masked: '2024-06-01' }),
+    ]));
+  });
+
+  it('does not duplicate snapshot-backed fields when explicit extracted rows already use canonical draft ids', () => {
+    const mergedFields = buildNameChangeSnapshotBackedExtractedFields(
+      [{
+        id: 'passport-upload-final.pdf',
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        extracted_snapshot: {
+          fields: {
+            last_name: { value: 'Snapshot Rivera' },
+          },
+        },
+      }],
+      [{
+        document_id: 'draft-current_passport',
+        field_key: 'last_name',
+        field_label: 'Last Name',
+        field_value_masked: 'Verified Rivera',
+        source_type: 'document_extract',
+        is_verified: true,
+      } as NameChangeExtractedFieldInput],
+    );
+
+    expect(mergedFields.filter((field) => field.field_key === 'last_name')).toEqual([
+      expect.objectContaining({ document_id: 'draft-current_passport', field_value_masked: 'Verified Rivera' }),
+    ]);
   });
 
   it('builds canonical snapshot truth from wrapped snapshot payloads', () => {

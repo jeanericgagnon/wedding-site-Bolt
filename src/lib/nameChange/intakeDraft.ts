@@ -927,14 +927,50 @@ export function buildNameChangeSnapshotBackedExtractedFields(
   documents: NameChangeDocumentInput[],
   extractedFields: NameChangeExtractedFieldInput[],
 ) {
+  const explicitFieldKeys = new Set<string>();
+
+  extractedFields.forEach((field) => {
+    const resolvedDocumentKind = resolveSnapshotBackedFieldDocumentKind(documents, field.document_id);
+    if (!resolvedDocumentKind) return;
+    explicitFieldKeys.add(buildSnapshotBackedFieldKey(resolvedDocumentKind, field.field_key));
+  });
+
   return [
     ...extractedFields,
     ...documents.flatMap((document) => buildDraftNameChangeExtractedFieldsFromSnapshot(
       document.id ?? null,
       document.extracted_snapshot,
       document.document_kind,
-    )),
+    ).filter((field) => !explicitFieldKeys.has(buildSnapshotBackedFieldKey(document.document_kind, field.field_key)))),
   ];
+}
+
+function buildSnapshotBackedFieldKey(
+  documentKind: NameChangeDocumentInput['document_kind'],
+  fieldKey: NameChangeExtractedFieldInput['field_key'],
+) {
+  return `${documentKind}:${fieldKey}`;
+}
+
+function resolveSnapshotBackedFieldDocumentKind(
+  documents: NameChangeDocumentInput[],
+  documentId: string | null | undefined,
+) {
+  const trimmedDocumentId = documentId?.trim();
+  if (!trimmedDocumentId) return null;
+
+  for (const document of documents) {
+    const exactDocumentId = document.id?.trim();
+    if (exactDocumentId && exactDocumentId === trimmedDocumentId) return document.document_kind;
+
+    const normalizedExactDocumentId = normalizeDraftNameChangeDocumentId(exactDocumentId ?? null, document.document_kind);
+    const normalizedFieldDocumentId = normalizeDraftNameChangeDocumentId(trimmedDocumentId, document.document_kind);
+    if (normalizedExactDocumentId && normalizedFieldDocumentId && normalizedExactDocumentId === normalizedFieldDocumentId) {
+      return document.document_kind;
+    }
+  }
+
+  return null;
 }
 
 function resolveDraftSnapshotDocumentId(
