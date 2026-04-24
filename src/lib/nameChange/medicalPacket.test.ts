@@ -39,7 +39,9 @@ describe('name change medical packet snapshot', () => {
   it('builds a structured medical/provider record update packet payload', () => {
     const snapshot = buildNameChangeMedicalPacketSnapshot(makeCase(), [], []);
     expect(snapshot.formCode).toBe('MEDICAL-PROVIDER-RECORD-UPDATE');
+    expect(snapshot.fields.find((field) => field.fieldKey === 'patient.currentMiddleName')).toMatchObject({ value: 'Marie' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'patient.newFirstName')).toMatchObject({ value: 'Alex' });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'patient.newMiddleName')).toMatchObject({ value: 'Marie' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'patient.newLastName')).toMatchObject({ value: 'Jordan' });
   });
 });

@@ -324,4 +324,55 @@ describe('name change target checklist', () => {
       reason: 'Target legal name + county available is populated, but at least one field still comes from a low-confidence source.',
     });
   });
+
+  it('treats current middle name as part of shared current legal-name readiness when canonical truth includes one', () => {
+    const checklist = buildNameChangeTargetChecklist(
+      NAME_CHANGE_EXECUTION_TARGETS.banks,
+      makeCase({ current_middle_name: null }),
+      [
+        {
+          document_kind: 'current_drivers_license',
+          display_name: 'Driver license',
+          storage_mode: 'metadata_only',
+          intake_status: 'uploaded',
+        },
+        {
+          document_kind: 'bank_statement',
+          display_name: 'Bank statement',
+          storage_mode: 'metadata_only',
+          intake_status: 'uploaded',
+        },
+      ],
+      [],
+    );
+
+    expect(checklist.find((item) => item.key === 'current-legal-name')).toMatchObject({
+      status: 'ready',
+    });
+
+    const checklistWithMiddle = buildNameChangeTargetChecklist(
+      NAME_CHANGE_EXECUTION_TARGETS.banks,
+      makeCase(),
+      [
+        {
+          document_kind: 'current_drivers_license',
+          display_name: 'Driver license',
+          storage_mode: 'metadata_only',
+          intake_status: 'uploaded',
+        },
+        {
+          document_kind: 'bank_statement',
+          display_name: 'Bank statement',
+          storage_mode: 'metadata_only',
+          intake_status: 'uploaded',
+        },
+      ],
+      [],
+    );
+
+    expect(checklistWithMiddle.find((item) => item.key === 'current-legal-name')).toMatchObject({
+      status: 'ready',
+      reason: 'Current legal name is available for banks and credit cards prep.',
+    });
+  });
 });

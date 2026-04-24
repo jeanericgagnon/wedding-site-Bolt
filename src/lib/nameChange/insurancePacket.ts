@@ -11,8 +11,10 @@ export const NAME_CHANGE_INSURANCE_PACKET_CONTRACT: NameChangeFormContractDefini
   label: 'Insurance policy update packet',
   fieldSpecs: [
     { fieldKey: 'policyHolder.currentFirstName', label: 'Current first name', sourceTargetField: 'applicant.current_first_name' },
+    { fieldKey: 'policyHolder.currentMiddleName', label: 'Current middle name', sourceTargetField: 'applicant.current_middle_name', required: false },
     { fieldKey: 'policyHolder.currentLastName', label: 'Current last name', sourceTargetField: 'applicant.current_last_name' },
     { fieldKey: 'policyHolder.newFirstName', label: 'New first name', sourceTargetField: 'applicant.target_first_name' },
+    { fieldKey: 'policyHolder.newMiddleName', label: 'New middle name', sourceTargetField: 'applicant.target_middle_name', required: false },
     { fieldKey: 'policyHolder.newLastName', label: 'New last name', sourceTargetField: 'applicant.target_last_name' },
     { fieldKey: 'legal.marriageDate', label: 'Marriage date', sourceTargetField: 'legal.marriage_date', required: false },
     { fieldKey: 'residence.county', label: 'County', sourceTargetField: 'applicant.county', required: false },

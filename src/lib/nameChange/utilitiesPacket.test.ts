@@ -39,7 +39,9 @@ describe('name change utilities packet snapshot', () => {
   it('builds a structured utilities/lease record update packet payload', () => {
     const snapshot = buildNameChangeUtilitiesPacketSnapshot(makeCase(), [], []);
     expect(snapshot.formCode).toBe('UTILITIES-LEASE-RECORD-UPDATE');
+    expect(snapshot.fields.find((field) => field.fieldKey === 'resident.currentMiddleName')).toMatchObject({ value: 'Marie' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'resident.newFirstName')).toMatchObject({ value: 'Alex' });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'resident.newMiddleName')).toMatchObject({ value: 'Marie' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'resident.newLastName')).toMatchObject({ value: 'Jordan' });
   });
 });
