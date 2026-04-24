@@ -26,6 +26,7 @@ import { buildNameChangeSsaExecutionSnapshot } from '../../../lib/nameChange/ssa
 import { buildNameChangeTsaExecutionSnapshot } from '../../../lib/nameChange/tsaFlow';
 import { buildNameChangeUtilitiesExecutionSnapshot } from '../../../lib/nameChange/utilitiesFlow';
 import { buildNameChangeVoterExecutionSnapshot } from '../../../lib/nameChange/voterFlow';
+import { formatNameChangeExecutionDateTime } from './nameChangeExecutionTime';
 import type {
   NameChangeCaseInput,
   NameChangeDocumentInput,
@@ -566,7 +567,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     const updatedLabel = step.completedAt
       ? `Completed ${new Date(step.completedAt).toLocaleString()}`
       : step.executionUpdatedAt
-        ? `Updated ${new Date(step.executionUpdatedAt).toLocaleString()}`
+        ? `Updated ${formatNameChangeExecutionDateTime(step.executionUpdatedAt)}`
         : null;
 
     return {
@@ -1995,7 +1996,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 />
                 {(step.executionUpdatedAt || step.completedAt) && (
                   <p className="text-xs text-text-secondary">
-                    {step.executionUpdatedAt ? `Updated ${new Date(step.executionUpdatedAt).toLocaleString()}` : ''}
+                    {step.executionUpdatedAt ? `Updated ${formatNameChangeExecutionDateTime(step.executionUpdatedAt)}` : ''}
                     {step.executionUpdatedAt && step.completedAt ? ' · ' : ''}
                     {step.completedAt ? `Completed ${new Date(step.completedAt).toLocaleString()}` : ''}
                   </p>
@@ -2036,7 +2037,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-text-primary">{item.title}</p>
-                    <p className="mt-1 text-xs text-text-secondary">{new Date(item.timestamp).toLocaleString()}</p>
+                    <p className="mt-1 text-xs text-text-secondary">{formatNameChangeExecutionDateTime(item.timestamp)}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{item.source}</span>

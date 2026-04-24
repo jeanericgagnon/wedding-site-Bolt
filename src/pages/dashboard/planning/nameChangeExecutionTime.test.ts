@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getNameChangeExecutionTimestamp, sortNameChangeExecutionActivity } from './nameChangeExecutionTime';
+import { formatNameChangeExecutionDateTime, getNameChangeExecutionTimestamp, sortNameChangeExecutionActivity } from './nameChangeExecutionTime';
 
 describe('name change execution time guards', () => {
   it('treats invalid persisted execution timestamps as oldest activity', () => {
@@ -16,5 +16,14 @@ describe('name change execution time guards', () => {
   it('keeps valid execution timestamps truthful', () => {
     const value = '2026-04-18T20:00:00.000Z';
     expect(getNameChangeExecutionTimestamp(value)).toBe(new Date(value).getTime());
+  });
+
+  it('formats invalid execution timestamps as unknown time', () => {
+    expect(formatNameChangeExecutionDateTime('not-a-date')).toBe('Unknown time');
+  });
+
+  it('formats valid execution timestamps truthfully', () => {
+    const value = '2026-04-18T20:00:00.000Z';
+    expect(formatNameChangeExecutionDateTime(value)).toBe(new Date(value).toLocaleString());
   });
 });
