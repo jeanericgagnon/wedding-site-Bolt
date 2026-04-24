@@ -15,6 +15,7 @@ import { buildRsvpReminderDraft } from '../../lib/reminderDraftHelper';
 import { buildDayOfUpdateDraft } from '../../lib/dayOfUpdateHelper';
 import { buildEventReminderDraft } from '../../lib/eventReminderHelper';
 import { formatMessageEventOptionLabel } from './messageEventDate';
+import { formatMessageHistoryDate, formatMessageHistoryDateTime } from './messageHistoryTime';
 import { parseScheduleInputToIso, toScheduleInputValue } from './messageScheduleTime';
 
 const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bulk-message`;
@@ -2831,11 +2832,11 @@ export const DashboardMessages: React.FC = () => {
                     <div key={tx.id} className="flex items-center justify-between gap-3 text-xs border border-border rounded-lg px-3 py-2 bg-surface-subtle">
                       <div>
                         <p className="text-text-primary capitalize">{tx.reason}</p>
-                        <p className="text-text-tertiary">{new Date(tx.created_at).toLocaleString()}</p>
+                        <p className="text-text-tertiary">{formatMessageHistoryDateTime(tx.created_at)}</p>
                       </div>
                       <div className="text-right">
                         <p className={`${tx.credits_delta >= 0 ? 'text-success' : 'text-error'} font-medium`}>{tx.credits_delta >= 0 ? '+' : ''}{tx.credits_delta} credits</p>
-                        {tx.expires_at && tx.reason === 'purchase' && <p className="text-text-tertiary">Expires {new Date(tx.expires_at).toLocaleDateString()}</p>}
+                        {tx.expires_at && tx.reason === 'purchase' && <p className="text-text-tertiary">Expires {formatMessageHistoryDate(tx.expires_at)}</p>}
                       </div>
                     </div>
                   ))}
@@ -3201,8 +3202,8 @@ export const DashboardMessages: React.FC = () => {
                             </p>
                           )}
                           <p className="mt-2 text-[11px] text-text-tertiary">
-                            Created {new Date(template.createdAt).toLocaleString()}
-                            {template.updatedAt ? ` • Updated ${new Date(template.updatedAt).toLocaleString()}` : ''}
+                            Created {formatMessageHistoryDateTime(template.createdAt)}
+                            {template.updatedAt ? ` • Updated ${formatMessageHistoryDateTime(template.updatedAt)}` : ''}
                           </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
