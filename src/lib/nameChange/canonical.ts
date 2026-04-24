@@ -1,5 +1,10 @@
 import { canonicalizeNameChangeDocumentKind, getNameChangeDocumentKindAliases } from './documentKinds';
-import { isDraftNameChangePlaceholderDocument, normalizeDraftFieldKey } from './intakeDraft';
+import {
+  buildDraftNameChangeExtractedFieldsFromSnapshot,
+  isDraftNameChangePlaceholderDocument,
+  normalizeDraftNameChangeDocumentId,
+  normalizeDraftFieldKey,
+} from './intakeDraft';
 import type {
   NameChangeCanonicalCase,
   NameChangeCanonicalPersonName,
@@ -37,9 +42,15 @@ function getCanonicalDocumentFieldKeys(
 ): NameChangeExtractionFieldKey[] {
   if (!document?.id) return [];
 
+  const documentSnapshotFields = buildDraftNameChangeExtractedFieldsFromSnapshot(document.id, document.extracted_snapshot);
+  const candidateDocumentIds = new Set([
+    document.id,
+    normalizeDraftNameChangeDocumentId(document.id, document.document_kind),
+  ].filter(Boolean));
+
   return [...new Set(
-    extractedFields
-      .filter((field) => field.document_id === document.id && field.is_verified)
+    [...extractedFields, ...documentSnapshotFields]
+      .filter((field) => candidateDocumentIds.has(field.document_id) && field.is_verified)
       .map((field) => normalizeDraftFieldKey(field.field_key) as NameChangeExtractionFieldKey)
       .filter((fieldKey): fieldKey is NameChangeExtractionFieldKey => Boolean(fieldKey)),
   )];

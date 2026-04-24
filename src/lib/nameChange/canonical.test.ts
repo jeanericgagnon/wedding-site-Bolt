@@ -192,4 +192,33 @@ describe('name change canonical case', () => {
       extractedFieldKeys: ['first_name', 'last_name'],
     });
   });
+
+  it('counts snapshot-backed extracted fields on the chosen canonical document', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-passport',
+        document_kind: 'current_passport',
+        display_name: 'Reviewed passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        extracted_snapshot: {
+          fields: {
+            first_name: { value: 'Alex' },
+            middle_name: { normalizedValue: 'Marie' },
+            last_name: { extractedValue: 'Jordan' },
+            issuance_date: { value: '2024-06-01T00:00:00Z' },
+          },
+        },
+      },
+    ];
+
+    const canonical = buildNameChangeCanonicalCase(makeCase(), documents, []);
+
+    expect(canonical.documents.current_passport).toMatchObject({
+      intakeStatus: 'reviewed',
+      storageMode: 'metadata_only',
+      extractionFieldCount: 4,
+      extractedFieldKeys: expect.arrayContaining(['first_name', 'middle_name', 'last_name', 'issuance_date']),
+    });
+  });
 });
