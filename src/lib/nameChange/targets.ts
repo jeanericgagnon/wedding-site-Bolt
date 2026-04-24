@@ -8,6 +8,7 @@ import { NAME_CHANGE_LICENSE_PACKET_CONTRACT } from './licensePacket';
 import { NAME_CHANGE_MEDICAL_PACKET_CONTRACT } from './medicalPacket';
 import { NAME_CHANGE_PASSPORT_RENEWAL_FORM_CONTRACT } from './passportForm';
 import { NAME_CHANGE_SS5_FORM_CONTRACT } from './ss5Form';
+import { NAME_CHANGE_TAX_PACKET_CONTRACT } from './taxPacket';
 import { NAME_CHANGE_TSA_PACKET_CONTRACT } from './tsaPacket';
 import { NAME_CHANGE_UTILITIES_PACKET_CONTRACT } from './utilitiesPacket';
 import { NAME_CHANGE_VOTER_PACKET_CONTRACT } from './voterPacket';
@@ -111,7 +112,7 @@ function buildPhotoIdInstitutionTarget(config: {
   };
 }
 
-export const NAME_CHANGE_EXECUTION_TARGETS: Record<'courtOrder' | 'ssa' | 'dmv' | 'passport' | 'employer' | 'banks' | 'insurance' | 'medical' | 'utilities' | 'courtesy' | 'voter' | 'tsa' | 'licenses', NameChangeExecutionTargetDefinition> = {
+export const NAME_CHANGE_EXECUTION_TARGETS: Record<'courtOrder' | 'ssa' | 'dmv' | 'passport' | 'employer' | 'taxes' | 'banks' | 'insurance' | 'medical' | 'utilities' | 'courtesy' | 'voter' | 'tsa' | 'licenses', NameChangeExecutionTargetDefinition> = {
   courtOrder: {
     key: 'courtOrder',
     label: 'Court-order path review',
@@ -571,6 +572,109 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'courtOrder' | 'ssa' | 'dmv' 
         documentKinds: ['social_security_card', 'current_drivers_license', 'current_passport'],
         missingReason: 'No employer-supporting identity document is represented in intake yet.',
         satisfiedReason: 'An employer-supporting identity document exists in intake.',
+      },
+    ],
+  },
+  taxes: {
+    key: 'taxes',
+    label: 'IRS and state tax alignment',
+    lane: 'state',
+    recommendedFormCode: NAME_CHANGE_TAX_PACKET_CONTRACT.formCode,
+    formBuilderKey: 'taxes',
+    sequenceProfile: 'taxes',
+    prerequisiteRules: [
+      {
+        key: 'federal-ssa-complete',
+        label: 'SSA completed before tax alignment',
+        required: true,
+        requiredStepId: 'federal-ssa',
+        requiredStatuses: ['complete'],
+        missingReason: 'IRS and state tax alignment should wait until SSA is complete because tax identity follows the Social Security record.',
+        attentionReason: 'SSA is in motion, but tax alignment should still wait for completion.',
+        satisfiedReason: 'SSA is complete, so IRS and state tax alignment can proceed cleanly.',
+      },
+      {
+        key: 'employer-payroll-progress',
+        label: 'Payroll / withholding lane is moving',
+        required: false,
+        requiredStepId: 'institution-irs-employer',
+        requiredStatuses: ['in_progress', 'complete'],
+        missingReason: 'Employer payroll and withholding updates are not moving yet, so state tax alignment may need manual follow-through.',
+        attentionReason: 'Employer payroll and withholding updates are moving, which helps tax records stay aligned.',
+        satisfiedReason: 'Employer payroll and withholding updates are already moving for tax alignment.',
+      },
+    ],
+    autofillTargetFields: [
+      'applicant.current_first_name',
+      'applicant.current_middle_name',
+      'applicant.current_last_name',
+      'applicant.target_first_name',
+      'applicant.target_middle_name',
+      'applicant.target_last_name',
+      'legal.marriage_date',
+      'applicant.county',
+    ],
+    checklistSpecs: [
+      {
+        key: 'legal-proof-document',
+        label: 'Legal proof ready for tax alignment',
+        kind: 'requirement',
+        requirementKey: 'legal-proof-document',
+        missingReason: 'Legal proof requirement not evaluated.',
+        satisfiedReason: 'Legal proof document is ready for IRS and state tax alignment.',
+      },
+      {
+        key: 'identity-document-coverage',
+        label: 'Identity document coverage',
+        kind: 'requirement',
+        requirementKey: 'identity-document-coverage',
+        missingReason: 'Identity coverage requirement not evaluated.',
+        satisfiedReason: 'Identity document coverage is ready for tax alignment.',
+      },
+      {
+        key: 'county-context',
+        label: 'State / county tax jurisdiction context',
+        kind: 'requirement',
+        requirementKey: 'county-context',
+        missingReason: 'County and state tax jurisdiction context has not been evaluated yet.',
+        satisfiedReason: 'County and state tax jurisdiction context is available for tax alignment.',
+      },
+      {
+        key: 'canonical-extraction-alignment',
+        label: 'Canonical vs extracted values aligned',
+        kind: 'requirement',
+        nextActionCategory: 'document',
+        blocksReady: true,
+        requirementKey: 'canonical-extraction-alignment',
+        missingReason: 'Canonical/extracted alignment has not been evaluated yet.',
+        attentionReason: 'Structured case truth and extracted document values still disagree for tax alignment.',
+        satisfiedReason: 'Structured case truth and extracted document values are aligned for tax alignment.',
+      },
+      {
+        key: 'current-legal-name',
+        label: 'Current legal name available for tax alignment',
+        kind: 'field_presence',
+        targetFields: ['applicant.current_first_name', 'applicant.current_last_name'],
+        conditionalTargetFields: ['applicant.current_middle_name'],
+        missingReason: 'Current legal name fields are still incomplete for tax alignment.',
+        satisfiedReason: 'Current legal name is available for tax alignment.',
+      },
+      {
+        key: 'target-legal-name',
+        label: 'Target legal name available for tax alignment',
+        kind: 'field_presence',
+        targetFields: ['applicant.target_first_name', 'applicant.target_last_name'],
+        conditionalTargetFields: ['applicant.target_middle_name'],
+        missingReason: 'Target legal name fields are still missing for tax alignment.',
+        satisfiedReason: 'Target legal name is available for tax alignment.',
+      },
+      {
+        key: 'tax-support-doc',
+        label: 'Tax-supporting identity document intake',
+        kind: 'document_support',
+        documentKinds: ['social_security_card', 'current_drivers_license', 'current_passport'],
+        missingReason: 'No tax-supporting identity document is represented in intake yet.',
+        satisfiedReason: 'A tax-supporting identity document exists in intake.',
       },
     ],
   },

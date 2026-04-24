@@ -8,6 +8,7 @@ import { buildNameChangeLicensePacketSnapshot } from './licensePacket';
 import { buildNameChangeMedicalPacketSnapshot } from './medicalPacket';
 import { buildNameChangePassportFormSnapshot } from './passportForm';
 import { buildNameChangeSs5FormSnapshot } from './ss5Form';
+import { buildNameChangeTaxPacketSnapshot } from './taxPacket';
 import { buildNameChangeTsaPacketSnapshot } from './tsaPacket';
 import { buildNameChangeUtilitiesPacketSnapshot } from './utilitiesPacket';
 import { buildNameChangeVoterPacketSnapshot } from './voterPacket';
@@ -36,6 +37,7 @@ export const NAME_CHANGE_FORM_BUILDERS: Record<NameChangeFormBuilderKey, NameCha
   dmv: buildNameChangeDmvFormSnapshot,
   passport: buildNameChangePassportFormSnapshot,
   employer: buildNameChangeEmployerPacketSnapshot,
+  taxes: buildNameChangeTaxPacketSnapshot,
   tsa: buildNameChangeTsaPacketSnapshot,
   utilities: buildNameChangeUtilitiesPacketSnapshot,
   voter: buildNameChangeVoterPacketSnapshot,

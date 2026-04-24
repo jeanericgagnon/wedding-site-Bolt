@@ -50,6 +50,7 @@ describe('name change form builder registry', () => {
     const dmv = NAME_CHANGE_FORM_BUILDERS.dmv(makeCase(), [], []);
     const passport = NAME_CHANGE_FORM_BUILDERS.passport(makeCase(), [], []);
     const employer = NAME_CHANGE_FORM_BUILDERS.employer(makeCase(), [], []);
+    const taxes = NAME_CHANGE_FORM_BUILDERS.taxes(makeCase(), [], []);
 
     expect(banks.formCode).toBe('BANK-ACCOUNT-UPDATE-PACKET');
     expect(insurance.formCode).toBe('INSURANCE-POLICY-UPDATE-PACKET');
@@ -64,5 +65,6 @@ describe('name change form builder registry', () => {
     expect(dmv.formCode).toBe('CA-DL-44');
     expect(passport.formCode).toBe('DS-82');
     expect(employer.formCode).toBe('EMPLOYER-HR-PACKET');
+    expect(taxes.formCode).toBe('TAX-SSA-STATE-ALIGNMENT-PACKET');
   });
 });

@@ -310,6 +310,17 @@ export const NAME_CHANGE_SEQUENCE_PROFILE_RECIPES: Record<NameChangeExecutionSeq
     ),
     ...prerequisiteDependencies,
   ],
+  taxes: ({ profile, requirements, prerequisiteDependencies }) => [
+    ...buildLegalAndIdentityDependencies({ profile, intake: null as never, requirements, prerequisiteDependencies }),
+    buildRequirementDependency(requirements.countyContext, 'county-context', 'County / state tax jurisdiction context', true, 'County context requirement not evaluated.', false, 'dependency'),
+    buildDualPartnerExecutionDependency(
+      profile,
+      'dual-partner-tax-alignment',
+      'Dual-partner tax identity split',
+      'Both partners are changing names, so IRS, state tax, withholding, and payroll confirmations should be tracked separately for each partner.',
+    ),
+    ...prerequisiteDependencies,
+  ],
   banks: buildPhotoIdPacketDependencies({
     supportKey: 'financial-identity-support',
     supportLabel: 'Financial identity / address support exists',

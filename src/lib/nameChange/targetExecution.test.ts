@@ -712,6 +712,36 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'employment-context')).toMatchObject({ status: 'satisfied' });
   });
 
+  it('builds tax execution snapshots gated behind SSA and jurisdiction context', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'social_security_card',
+        display_name: 'Social Security card',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+    const basePlan = buildNameChangePlan({ profile: makeCase(), documents, extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-ssa'
+        ? { ...step, executionStatus: 'complete' as const }
+        : step),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('taxes', makeCase(), documents, [], plan);
+    expect(snapshot.targetLabel).toContain('IRS and state tax');
+    expect(snapshot.recommendedFormCode).toBe('TAX-SSA-STATE-ALIGNMENT-PACKET');
+    expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'federal-ssa-complete')).toMatchObject({ status: 'satisfied' });
+    expect(snapshot.checklist.find((item) => item.key === 'county-context')).toMatchObject({ status: 'ready' });
+  });
+
   it('builds shared medical execution snapshots with post-ID institutional gating', () => {
     const documents: NameChangeDocumentInput[] = [
       {

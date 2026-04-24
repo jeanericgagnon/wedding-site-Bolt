@@ -28,6 +28,7 @@ function isDualPartnerExecutionTarget(targetKey: NameChangeExecutionTargetKey) {
     'ssa',
     'dmv',
     'employer',
+    'taxes',
     'banks',
     'insurance',
     'medical',
