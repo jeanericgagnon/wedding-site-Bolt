@@ -1169,6 +1169,12 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                     {plan.summary.targetStatusOverview.latestTouchedSource === 'reminder' ? ' · reminder' : plan.summary.targetStatusOverview.latestTouchedSource === 'execution' ? ' · execution' : ''}
                   </span>
                 ) : null}
+                {plan.summary.targetStatusOverview?.latestUpdatedAt
+                && plan.summary.targetStatusOverview.latestUpdatedAt !== plan.summary.targetStatusOverview.latestTouchedAt ? (
+                  <span className="rounded-full bg-surface-subtle px-2 py-1">
+                    Latest execution {formatNameChangeExecutionDateTime(plan.summary.targetStatusOverview.latestUpdatedAt)}
+                  </span>
+                  ) : null}
               </div>
             </div>
 
