@@ -27,7 +27,9 @@ import { getPublishStateDescriptor } from '../../lib/publishState';
 import { listBuilderRevisions, type BuilderRevision } from '../../builder/services/versionHistory';
 import { getArchiveModeDescriptor } from '../../lib/archiveMode';
 import { hasRespondedRsvpStatus, isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
+import { writeOnboardingResumeTarget } from '../../lib/onboardingResumeStorage';
 import { useToast } from '../../components/ui/Toast';
+import { calcOverviewDaysUntil, formatOverviewRelativeTime, formatOverviewWeddingDate, getOverviewTimestamp } from './overviewDate';
 
 interface OverviewStats {
   siteId: string | null;
@@ -67,37 +69,6 @@ interface InteractiveSuggestion {
   id: string;
   suggestion_text: string;
   created_at: string;
-}
-
-function formatRelativeTime(dateStr: string): string {
-  const now = new Date();
-  const date = new Date(dateStr);
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
-
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 7) return `${diffDays} days ago`;
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
-
-function formatWeddingDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
-
-function calcDaysUntil(dateStr: string): number {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const target = new Date(dateStr);
-  target.setHours(0, 0, 0, 0);
-  return Math.ceil((target.getTime() - today.getTime()) / 86400000);
 }
 
 function resolveWeddingDateFromData(
@@ -299,7 +270,7 @@ export const DashboardOverview: React.FC = () => {
           confirmedGuests: confirmed.length,
           declinedGuests: declined.length,
           pendingGuests: pending.length,
-          daysUntilWedding: weddingDate ? calcDaysUntil(weddingDate) : null,
+              daysUntilWedding: calcOverviewDaysUntil(weddingDate),
           weddingDate,
           siteSlug: resolvePublicSiteSlugFromRow(demoWeddingSite as unknown as Record<string, unknown>),
           isPublished: true,
@@ -439,7 +410,7 @@ export const DashboardOverview: React.FC = () => {
         confirmedGuests: confirmed.length,
         declinedGuests: declined.length,
         pendingGuests: pending.length,
-        daysUntilWedding: weddingDate ? calcDaysUntil(weddingDate) : null,
+        daysUntilWedding: calcOverviewDaysUntil(weddingDate),
         weddingDate,
         siteSlug: resolvePublicSiteSlugFromRow((site as unknown as Record<string, unknown> | null) ?? null),
         isPublished,
@@ -531,7 +502,7 @@ export const DashboardOverview: React.FC = () => {
   const publishState = getPublishStateDescriptor({
     isPublished: stats?.isPublished,
     hasUnsavedChanges: stats?.isPublished && stats?.siteUpdatedAt && stats?.lastPublishedAt
-      ? new Date(stats.siteUpdatedAt).getTime() > new Date(stats.lastPublishedAt).getTime()
+      ? getOverviewTimestamp(stats.siteUpdatedAt) > getOverviewTimestamp(stats.lastPublishedAt)
       : false,
   });
   const publishBadgeVariant = publishState.tone === 'success'
@@ -705,7 +676,7 @@ export const DashboardOverview: React.FC = () => {
                       <p className="text-sm text-text-secondary">
                         {stats.daysUntilWedding > 0 ? 'Days until wedding' : stats.daysUntilWedding === 0 ? 'Wedding day!' : 'Days since wedding'}
                       </p>
-                      {stats.weddingDate && <p className="text-xs text-text-tertiary mt-2">{formatWeddingDate(stats.weddingDate)}</p>}
+                      {stats.weddingDate && <p className="text-xs text-text-tertiary mt-2">{formatOverviewWeddingDate(stats.weddingDate)}</p>}
                     </>
                   ) : (
                     <>
@@ -1028,7 +999,7 @@ export const DashboardOverview: React.FC = () => {
                   </div>
                   <div className="flex items-center justify-between py-3 border-b border-border-subtle">
                     <span className="text-text-secondary">Last live update</span>
-                    <span className="text-text-primary">{stats?.lastPublishedAt ? formatRelativeTime(stats.lastPublishedAt) : '—'}</span>
+                    <span className="text-text-primary">{stats?.lastPublishedAt ? formatOverviewRelativeTime(stats.lastPublishedAt) : '—'}</span>
                   </div>
                   <div className="rounded-lg border border-border-subtle bg-surface-secondary/30 px-3 py-2.5 text-sm">
                     <p className="font-medium text-text-primary">{publishState.label}</p>
@@ -1054,7 +1025,7 @@ export const DashboardOverview: React.FC = () => {
                       </div>
                       <div className="flex items-center justify-between py-2">
                         <span className="text-text-secondary text-sm">Last updated</span>
-                        <span className="text-text-primary text-sm">{stats?.siteUpdatedAt ? formatRelativeTime(stats.siteUpdatedAt) : '—'}</span>
+                        <span className="text-text-primary text-sm">{stats?.siteUpdatedAt ? formatOverviewRelativeTime(stats.siteUpdatedAt) : '—'}</span>
                       </div>
 
                       {!stats?.isPublished && (
@@ -1103,7 +1074,7 @@ export const DashboardOverview: React.FC = () => {
                           <div className="flex-1">
                             <p className="text-sm text-text-primary font-medium">{rsvp.guestName}</p>
                             <p className="text-xs text-text-secondary">{isAttendingRsvpStatus(rsvp.status) ? 'Confirmed attendance' : 'Declined'}</p>
-                            <p className="text-xs text-text-tertiary mt-1">{formatRelativeTime(rsvp.receivedAt)}</p>
+                            <p className="text-xs text-text-tertiary mt-1">{formatOverviewRelativeTime(rsvp.receivedAt)}</p>
                           </div>
                         </div>
                       ))}
@@ -1165,7 +1136,7 @@ export const DashboardOverview: React.FC = () => {
                           <div className="flex items-center justify-between gap-3">
                             <div>
                               <p className="text-sm font-medium text-text-primary capitalize">{activity.action === 'publish' ? 'Published live site' : activity.action === 'rollback' ? 'Restored older version' : 'Saved draft'}</p>
-                              <p className="mt-0.5 text-[11px] text-text-tertiary">{formatRelativeTime(activity.createdAtISO)} • {activity.actor}</p>
+                              <p className="mt-0.5 text-[11px] text-text-tertiary">{formatOverviewRelativeTime(activity.createdAtISO)} • {activity.actor}</p>
                             </div>
                             <Badge variant={activity.action === 'publish' ? 'success' : activity.action === 'rollback' ? 'warning' : 'secondary'}>
                               {activity.action}
@@ -1206,7 +1177,7 @@ export const DashboardOverview: React.FC = () => {
                               Hide
                             </button>
                           </div>
-                          <p className="mt-1 text-[11px] text-text-tertiary">{formatRelativeTime(item.created_at)}</p>
+                          <p className="mt-1 text-[11px] text-text-tertiary">{formatOverviewRelativeTime(item.created_at)}</p>
                         </div>
                       ))}
                     </div>
