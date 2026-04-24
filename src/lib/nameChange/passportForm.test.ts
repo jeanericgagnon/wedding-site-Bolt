@@ -106,4 +106,31 @@ describe('name change passport form snapshot', () => {
     const snapshot = buildNameChangePassportFormSnapshot(makeCase(), documents, extractedFields);
     expect(snapshot.formCode).toBe('DS-5504');
   });
+
+  it('uses snapshot-backed passport issue dates when explicit extracted rows are missing', () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'passport-upload-final.pdf',
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+        extracted_snapshot: {
+          fields: {
+            issuance_date: { value: today },
+          },
+        },
+      },
+    ];
+
+    const snapshot = buildNameChangePassportFormSnapshot(makeCase(), documents, []);
+    expect(snapshot.formCode).toBe('DS-5504');
+    expect(snapshot.fields.find((field) => field.fieldKey === 'identity.passportIssueDate')).toMatchObject({
+      value: today,
+      source: 'extracted_field',
+      sourceDocumentKind: 'current_passport',
+      sourceFieldKey: 'issuance_date',
+    });
+  });
 });

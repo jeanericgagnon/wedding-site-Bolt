@@ -1,5 +1,6 @@
 import { buildNameChangeFormPayloadSnapshot, type NameChangeFormContractDefinition } from './formContract';
 import { getVerifiedDocumentLinkedFieldValue } from './extractionContract';
+import { buildNameChangeSnapshotBackedExtractedFields } from './intakeDraft';
 import type {
   NameChangeCaseInput,
   NameChangeDocumentInput,
@@ -48,7 +49,8 @@ export function buildNameChangePassportFormSnapshot(
   documents: NameChangeDocumentInput[],
   extractedFields: NameChangeExtractedFieldInput[],
 ): NameChangeFormPayloadSnapshot {
-  const passportIssueDate = getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'current_passport', 'issuance_date');
+  const mergedExtractedFields = buildNameChangeSnapshotBackedExtractedFields(documents, extractedFields);
+  const passportIssueDate = getVerifiedDocumentLinkedFieldValue(documents, mergedExtractedFields, 'current_passport', 'issuance_date');
   const contract = !profile.has_us_passport
     ? NAME_CHANGE_PASSPORT_APPLICATION_FORM_CONTRACT
     : isRecentPassportIssueDate(passportIssueDate)
