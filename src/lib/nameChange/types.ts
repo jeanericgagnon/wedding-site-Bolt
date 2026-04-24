@@ -179,7 +179,7 @@ export interface NameChangePlanSummary {
     id: string;
     title: string;
     sequenceLabel: string;
-    status: 'ready' | 'blocked' | 'upcoming';
+    status: 'ready' | 'blocked' | 'upcoming' | 'in_progress' | 'complete';
     summary: string;
     dependsOnStepIds: string[];
     featureTag: 'core' | 'travel' | 'rollout';
@@ -197,7 +197,7 @@ export interface NameChangePlanSummary {
   milestoneChecklist?: Array<{
     id: string;
     label: string;
-    status: 'ready' | 'blocked' | 'upcoming';
+    status: 'ready' | 'blocked' | 'upcoming' | 'in_progress' | 'complete';
     dependsOnStepIds: string[];
   }>;
   accountUpdateTemplates?: Array<{

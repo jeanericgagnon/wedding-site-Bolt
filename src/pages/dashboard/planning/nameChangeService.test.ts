@@ -878,6 +878,53 @@ describe('nameChangeService normalization', () => {
     expect(completionPlan.summary.mixedMovementReminderHeavy).toBe(false);
   });
 
+  it('recomputes execution tracks and milestones from ordered step progress', () => {
+    const basePlan = buildNameChangeWorkspaceBundle(makeCase(), [], [], []).plan;
+    const progressedPlan = mergeNameChangePlanExecutionState({
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'eligibility-proof'
+        ? {
+          ...step,
+          status: 'ready' as const,
+          executionStatus: 'complete' as const,
+          executionUpdatedAt: '2026-04-18T19:00:00.000Z',
+          completedAt: '2026-04-18T19:00:00.000Z',
+        }
+        : step.id === 'federal-ssa'
+          ? {
+            ...step,
+            status: 'ready' as const,
+            executionStatus: 'in_progress' as const,
+            executionUpdatedAt: '2026-04-18T19:05:00.000Z',
+          }
+          : step.id === 'state-dmv'
+            ? {
+              ...step,
+              status: 'ready' as const,
+              executionStatus: 'todo' as const,
+            }
+            : step,
+      ),
+    }, basePlan);
+
+    expect(progressedPlan.summary.executionTracks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'track-legal-proof', status: 'complete' }),
+        expect.objectContaining({ id: 'track-ssa', status: 'in_progress' }),
+        expect.objectContaining({ id: 'track-photo-id', status: 'in_progress' }),
+        expect.objectContaining({ id: 'track-rollout', status: 'upcoming' }),
+      ]),
+    );
+    expect(progressedPlan.summary.milestoneChecklist).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'milestone-legal-proof', status: 'complete' }),
+        expect.objectContaining({ id: 'milestone-ssa', status: 'in_progress' }),
+        expect.objectContaining({ id: 'milestone-photo-id', status: 'in_progress' }),
+        expect.objectContaining({ id: 'milestone-account-rollout', status: 'upcoming' }),
+      ]),
+    );
+  });
+
   it('explains mixed movement when both starts and completions are present without dominance', () => {
     const basePlan = buildNameChangeWorkspaceBundle(makeCase(), [], [], []).plan;
     const mixedStepPlan = mergeNameChangePlanExecutionState({

@@ -401,6 +401,18 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
       subject: 'Please update my account to my legal name',
       body: 'Hi — I need to update this account to my current legal name so billing, coverage, and member records stay aligned. I can share the minimum proof you require, such as updated ID or legal name-change documentation. Please confirm what you need and whether any cards, autopay records, or beneficiary settings should also be refreshed.',
     },
+    {
+      id: 'template-travel',
+      audience: 'Airline, hotel, loyalty, or travel support',
+      subject: 'Please align my travel profile with my legal name change',
+      body: 'Hello — I am updating my legal name and need my traveler profile, loyalty records, and any upcoming reservation notes aligned so they do not conflict with my government ID and passport timing. Please confirm what proof you need, whether existing bookings can stay linked, and how to avoid check-in or TSA mismatch issues during the transition.',
+    },
+    {
+      id: 'template-digital-identity',
+      audience: 'Phone, utilities, or primary digital identity support',
+      subject: 'Update my account holder name to match my legal records',
+      body: 'Hi — I recently completed a legal name change and need my account holder name updated so billing, verification checks, and recovery/contact records stay consistent. I can provide updated ID plus legal proof if needed. Please tell me the secure submission path and whether any autopay, caller ID, email, or account-recovery settings should be refreshed at the same time.',
+    },
   ] as const;
   const executionCounts = steps.reduce((counts, step) => {
     const key = step.executionStatus ?? 'todo';

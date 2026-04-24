@@ -109,6 +109,8 @@ describe('name change engine', () => {
         expect.objectContaining({ audience: 'Employer payroll / HR', subject: 'Name change update for payroll and benefits' }),
         expect.objectContaining({ audience: 'Bank or credit card support' }),
         expect.objectContaining({ audience: 'Insurance or subscription support' }),
+        expect.objectContaining({ audience: 'Airline, hotel, loyalty, or travel support' }),
+        expect.objectContaining({ audience: 'Phone, utilities, or primary digital identity support' }),
       ]),
     );
   });

@@ -119,6 +119,14 @@ function getActionFeedSectionLabel(sectionKey: 'core-government' | 'work-identit
   }
 }
 
+function getExecutionSummaryTone(status: 'ready' | 'blocked' | 'upcoming' | 'in_progress' | 'complete') {
+  if (status === 'complete') return 'bg-success/15 text-success';
+  if (status === 'in_progress') return 'bg-primary/15 text-primary';
+  if (status === 'ready') return 'bg-success/10 text-success';
+  if (status === 'upcoming') return 'bg-primary/10 text-primary';
+  return 'bg-warning/10 text-warning';
+}
+
 function getActionFeedUrgencyClass(urgencyTier: 'critical' | 'elevated' | 'normal') {
   switch (urgencyTier) {
     case 'critical':
@@ -934,7 +942,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 <p className="mt-3 text-sm text-text-secondary">{track.summary}</p>
                 <div className="mt-3 flex items-center justify-between gap-3">
                   <p className="text-xs text-text-secondary">Depends on: {track.dependsOnStepIds.join(' → ')}</p>
-                  <span className={`rounded-full px-2 py-1 text-xs ${track.status === 'ready' ? 'bg-success/10 text-success' : track.status === 'upcoming' ? 'bg-primary/10 text-primary' : 'bg-warning/10 text-warning'}`}>
+                  <span className={`rounded-full px-2 py-1 text-xs ${getExecutionSummaryTone(track.status)}`}>
                     {track.status}
                   </span>
                 </div>
@@ -983,7 +991,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                     <p className="text-sm font-semibold text-text-primary">{milestone.label}</p>
                     <p className="mt-1 text-xs text-text-secondary">Depends on: {milestone.dependsOnStepIds.join(' → ')}</p>
                   </div>
-                  <span className={`rounded-full px-2 py-1 text-xs ${milestone.status === 'ready' ? 'bg-success/10 text-success' : milestone.status === 'upcoming' ? 'bg-primary/10 text-primary' : 'bg-warning/10 text-warning'}`}>
+                  <span className={`rounded-full px-2 py-1 text-xs ${getExecutionSummaryTone(milestone.status)}`}>
                     {milestone.status}
                   </span>
                 </div>

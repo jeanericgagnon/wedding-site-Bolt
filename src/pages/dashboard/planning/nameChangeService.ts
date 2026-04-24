@@ -314,12 +314,44 @@ export function mergeNameChangePlanExecutionState(
   const hasRecentStart = mergedRecentExecutionActivity.some((item) => item.source === 'step' && item.executionStatus === 'in_progress');
   const hasRecentUntouchedRisk = mergedRecentExecutionActivity.some((item) => item.source === 'step' && item.executionStatus === 'todo');
   const hasZeroRecentStepMovement = !mergedRecentExecutionActivity.some((item) => item.source === 'step');
+  const stepById = new Map(steps.map((step) => [step.id, step]));
+  const resolveSequenceStatus = (dependsOnStepIds: string[]): 'ready' | 'blocked' | 'upcoming' | 'in_progress' | 'complete' => {
+    const dependencySteps = dependsOnStepIds
+      .map((stepId) => stepById.get(stepId))
+      .filter((step): step is NonNullable<typeof step> => Boolean(step));
+
+    if (dependencySteps.length === 0) return 'upcoming';
+    if (dependencySteps.every((step) => step.executionStatus === 'complete')) return 'complete';
+
+    const firstIncompleteIndex = dependencySteps.findIndex((step) => step.executionStatus !== 'complete');
+    const firstIncomplete = dependencySteps[firstIncompleteIndex];
+    const priorSteps = dependencySteps.slice(0, firstIncompleteIndex);
+    const activeDependencyIsCurrentTarget = firstIncompleteIndex === dependencySteps.length - 1;
+
+    if (priorSteps.some((step) => step.executionStatus === 'in_progress')) return 'in_progress';
+    if (priorSteps.some((step) => step.status === 'blocked')) return 'blocked';
+    if (firstIncomplete?.status === 'blocked') return 'blocked';
+    if (firstIncomplete?.executionStatus === 'in_progress') return 'in_progress';
+    if (!activeDependencyIsCurrentTarget) return 'upcoming';
+    if (priorSteps.every((step) => step.executionStatus === 'complete') && firstIncomplete?.status === 'ready') return 'ready';
+    return 'upcoming';
+  };
+  const executionTracks = generatedPlan.summary.executionTracks?.map((track) => ({
+    ...track,
+    status: resolveSequenceStatus(track.dependsOnStepIds),
+  }));
+  const milestoneChecklist = generatedPlan.summary.milestoneChecklist?.map((milestone) => ({
+    ...milestone,
+    status: resolveSequenceStatus(milestone.dependsOnStepIds),
+  }));
 
   return {
     ...generatedPlan,
     steps,
     summary: {
       ...generatedPlan.summary,
+      executionTracks,
+      milestoneChecklist,
       executionCounts,
       activitySourceCounts,
       latestMovementPosture,
