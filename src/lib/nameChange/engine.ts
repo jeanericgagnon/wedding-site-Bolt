@@ -1,6 +1,8 @@
 import { matchesNameChangeDocumentKind } from './documentKinds';
 import { evaluateNameChangeRequirements } from './requirements';
 import { NAME_CHANGE_ENGINE_VERSION, NAME_CHANGE_FORM_REGISTRY, NAME_CHANGE_INSTITUTION_LIBRARY } from './registry';
+import { buildNameChangeTargetExecutionSnapshot } from './targetExecution';
+import { NAME_CHANGE_EXECUTION_TARGETS } from './targets';
 import type {
   NameChangeEligibilityDecision,
   NameChangeEngineInput,
@@ -291,6 +293,8 @@ function resolveInstitutionCoverageStatus(stepIds: string[], steps: NameChangePl
 }
 
 function buildTargetStatusOverview(
+  input: NameChangeEngineInput,
+  plan: NameChangePlan,
   steps: NameChangePlanStep[],
   reminders: NameChangeReminderInput[] = [],
 ): NonNullable<NameChangePlan['summary']['targetStatusOverview']> {
@@ -318,6 +322,22 @@ function buildTargetStatusOverview(
     : latestTouchedAt === latestUpdatedAt && latestUpdatedAt
       ? 'execution' as const
       : null;
+  const targetProofCounts = Object.keys(NAME_CHANGE_EXECUTION_TARGETS).reduce((summary, targetKey) => {
+    const snapshot = buildNameChangeTargetExecutionSnapshot(targetKey as keyof typeof NAME_CHANGE_EXECUTION_TARGETS, input.profile, input.documents, input.extractedFields, plan, reminders);
+
+    if (snapshot.statusVault.proofCounts.missing > 0) {
+      summary.missingProofTargets += 1;
+    }
+
+    if (snapshot.statusVault.proofCounts.attention > 0) {
+      summary.attentionProofTargets += 1;
+    }
+
+    return summary;
+  }, {
+    missingProofTargets: 0,
+    attentionProofTargets: 0,
+  });
 
   return trackedSteps.reduce((summary, step) => {
     const executionStatus = step.executionStatus ?? 'todo';
@@ -350,6 +370,8 @@ function buildTargetStatusOverview(
     complete: 0,
     ready: 0,
     blocked: 0,
+    missingProofTargets: targetProofCounts.missingProofTargets,
+    attentionProofTargets: targetProofCounts.attentionProofTargets,
     touchedByExecution: 0,
     touchedByReminder: 0,
     latestUpdatedAt,
@@ -889,7 +911,7 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
       : []),
   ];
 
-  return {
+  const plan = {
     engineVersion: NAME_CHANGE_ENGINE_VERSION,
     jurisdiction: {
       country: 'US',
@@ -914,7 +936,7 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
       cautionNotes,
       missingInputs,
       readinessPercent,
-      targetStatusOverview: buildTargetStatusOverview(steps, input.reminders),
+      targetStatusOverview: undefined,
       milestoneChecklist: milestoneChecklist.map((milestone) => ({
         ...milestone,
         dependsOnStepIds: [...milestone.dependsOnStepIds],
@@ -935,4 +957,8 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
     },
     steps,
   };
+
+  plan.summary.targetStatusOverview = buildTargetStatusOverview(input, plan, steps, input.reminders);
+
+  return plan;
 }

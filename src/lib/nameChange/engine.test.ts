@@ -489,6 +489,8 @@ describe('name change engine', () => {
       complete: 0,
       ready: plan.steps.filter((step) => step.phase !== 'eligibility' && step.status === 'ready').length,
       blocked: plan.steps.filter((step) => step.phase !== 'eligibility' && step.status === 'blocked').length,
+      missingProofTargets: expect.any(Number),
+      attentionProofTargets: expect.any(Number),
       touchedByExecution: 0,
       touchedByReminder: 0,
       latestUpdatedAt: null,
@@ -496,6 +498,16 @@ describe('name change engine', () => {
       latestTouchedSource: null,
     });
     expect(plan.summary.targetStatusOverview?.todo).toBe(plan.steps.filter((step) => step.phase !== 'eligibility').length);
+  });
+
+  it('rolls target proof debt into the plan summary overview', () => {
+    const plan = buildNameChangePlan(makeInput());
+
+    expect(plan.summary.targetStatusOverview).toMatchObject({
+      missingProofTargets: expect.any(Number),
+      attentionProofTargets: expect.any(Number),
+    });
+    expect((plan.summary.targetStatusOverview?.missingProofTargets ?? 0) + (plan.summary.targetStatusOverview?.attentionProofTargets ?? 0)).toBeGreaterThan(0);
   });
 
   it('keeps court-order plans blocked until alias proof is reviewed', () => {
