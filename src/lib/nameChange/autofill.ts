@@ -1,6 +1,7 @@
 import { buildNameChangeCanonicalCase } from './canonical';
 import { buildNameChangeDocumentIntakeSnapshot } from './documentContract';
 import { buildNameChangeExtractionContractSnapshot, getVerifiedDocumentLinkedFieldValue } from './extractionContract';
+import { buildDraftNameChangeExtractedFieldsFromSnapshot } from './intakeDraft';
 import type {
   NameChangeAutofillFieldMapping,
   NameChangeAutofillPrepSnapshot,
@@ -45,6 +46,20 @@ function buildExtractionLookup(
   };
 }
 
+function buildAutofillExtractedFields(
+  documents: NameChangeDocumentInput[],
+  extractedFields: NameChangeExtractedFieldInput[],
+) {
+  return [
+    ...extractedFields,
+    ...documents.flatMap((document) => buildDraftNameChangeExtractedFieldsFromSnapshot(
+      document.id ?? null,
+      document.extracted_snapshot,
+      document.document_kind,
+    )),
+  ];
+}
+
 function makeField(
   targetField: string,
   label: string,
@@ -78,10 +93,11 @@ export function buildNameChangeAutofillPrepSnapshot(
   documents: NameChangeDocumentInput[],
   extractedFields: NameChangeExtractedFieldInput[],
 ): NameChangeAutofillPrepSnapshot {
-  const canonicalCase = buildNameChangeCanonicalCase(profile, documents, extractedFields);
-  const intakeSnapshot = buildNameChangeDocumentIntakeSnapshot(profile, documents, extractedFields);
-  const extraction = buildNameChangeExtractionContractSnapshot(profile, documents, extractedFields);
-  const lookup = buildExtractionLookup(documents, extractedFields);
+  const autofillExtractedFields = buildAutofillExtractedFields(documents, extractedFields);
+  const canonicalCase = buildNameChangeCanonicalCase(profile, documents, autofillExtractedFields);
+  const intakeSnapshot = buildNameChangeDocumentIntakeSnapshot(profile, documents, autofillExtractedFields);
+  const extraction = buildNameChangeExtractionContractSnapshot(profile, documents, autofillExtractedFields);
+  const lookup = buildExtractionLookup(documents, autofillExtractedFields);
   const isDocumentMetadataReady = (kind: NameChangeDocumentKind | undefined) => {
     if (!kind) return true;
     const contract = intakeSnapshot.documents.find((document) => document.kind === kind);

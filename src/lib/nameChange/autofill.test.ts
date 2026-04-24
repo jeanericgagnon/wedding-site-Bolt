@@ -599,6 +599,51 @@ describe('name change autofill prep snapshot', () => {
     });
   });
 
+  it('uses snapshot-backed canonical aliases as autofill truth for opaque passport uploads', () => {
+    const snapshot = buildNameChangeAutofillPrepSnapshot(
+      makeCase(),
+      [
+        {
+          id: 'passport-upload-final.pdf',
+          document_kind: 'current_passport',
+          display_name: 'Passport',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          extracted_snapshot: {
+            fields: {
+              first_name: { value: 'Alicia' },
+            },
+            metadata: {
+              fileName: 'passport-verified.pdf',
+              issuingAuthority: 'U.S. Department of State',
+              issuance_date: '2024-06-01',
+              expiration_date: '2034-06-01',
+              extractionConfidence: 0.94,
+            },
+          },
+        },
+      ],
+      [],
+    );
+
+    expect(snapshot.fields.find((field) => field.targetField === 'applicant.current_first_name')).toMatchObject({
+      value: expect.objectContaining({
+        source: 'extracted_field',
+        value: 'Alicia',
+        sourceDocumentKind: 'current_passport',
+        sourceFieldKey: 'first_name',
+      }),
+    });
+    expect(snapshot.fields.find((field) => field.targetField === 'identity.passport_issue_date')).toMatchObject({
+      value: expect.objectContaining({
+        source: 'extracted_field',
+        value: '2024-06-01',
+        sourceDocumentKind: 'current_passport',
+        sourceFieldKey: 'issuance_date',
+      }),
+    });
+  });
+
   it('keeps unverified court-order autofill values out of the packet draft', () => {
     const documents: NameChangeDocumentInput[] = [
       {
