@@ -340,6 +340,18 @@ describe('name change intake draft helpers', () => {
     ]));
   });
 
+  it('canonicalizes opaque persisted document ids into draft-kind ids when a fallback kind is provided', () => {
+    expect(buildDraftNameChangeExtractedFieldsFromSnapshot('passport-upload-final.pdf', {
+      fields: {
+        first_name: { value: 'Alex' },
+        last_name: { value: 'Rivera' },
+      },
+    }, 'current_passport')).toEqual(expect.arrayContaining([
+      expect.objectContaining({ document_id: 'draft-current_passport', field_key: 'first_name', field_value_masked: 'Alex' }),
+      expect.objectContaining({ document_id: 'draft-current_passport', field_key: 'last_name', field_value_masked: 'Rivera' }),
+    ]));
+  });
+
   it('builds canonical snapshot truth from wrapped snapshot payloads', () => {
     expect(buildDraftNameChangeExtractedFieldsFromSnapshot('draft-current_passport', {
       payload: {

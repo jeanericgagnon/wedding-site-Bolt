@@ -42,7 +42,7 @@ function getCanonicalDocumentFieldKeys(
 ): NameChangeExtractionFieldKey[] {
   if (!document?.id) return [];
 
-  const documentSnapshotFields = buildDraftNameChangeExtractedFieldsFromSnapshot(document.id, document.extracted_snapshot);
+  const documentSnapshotFields = buildDraftNameChangeExtractedFieldsFromSnapshot(document.id, document.extracted_snapshot, document.document_kind);
   const candidateDocumentIds = new Set([
     document.id,
     normalizeDraftNameChangeDocumentId(document.id, document.document_kind),

@@ -223,14 +223,14 @@ function getContractDocumentCapturedFieldKeys(
           candidateDocumentIds.add(normalizedDocumentId);
         }
         if (document.id === canonicalDocument?.id) {
-          snapshotExtractedFields.push(...buildDraftNameChangeExtractedFieldsFromSnapshot(document.id ?? null, document.extracted_snapshot));
+          snapshotExtractedFields.push(...buildDraftNameChangeExtractedFieldsFromSnapshot(document.id ?? null, document.extracted_snapshot, kind));
         }
         return;
       }
 
       if (normalizedDocumentId) candidateDocumentIds.add(normalizedDocumentId);
       if (document.id === canonicalDocument?.id) {
-        snapshotExtractedFields.push(...buildDraftNameChangeExtractedFieldsFromSnapshot(document.id ?? null, document.extracted_snapshot));
+        snapshotExtractedFields.push(...buildDraftNameChangeExtractedFieldsFromSnapshot(document.id ?? null, document.extracted_snapshot, kind));
       }
     });
 
@@ -285,7 +285,7 @@ function buildDocumentContractExtractedFields(
       return [];
     }
 
-    return buildDraftNameChangeExtractedFieldsFromSnapshot(document.id ?? null, document.extracted_snapshot);
+    return buildDraftNameChangeExtractedFieldsFromSnapshot(document.id ?? null, document.extracted_snapshot, document.document_kind);
   });
   return [...extractedFields, ...snapshotExtractedFields];
 }

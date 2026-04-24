@@ -900,6 +900,7 @@ function appendDraftSnapshotFieldEntries(
 export function buildDraftNameChangeExtractedFieldsFromSnapshot(
   documentId: string | null | undefined,
   snapshot: unknown,
+  fallbackKind?: NameChangeDocumentInput['document_kind'] | null,
 ): NameChangeExtractedFieldInput[] {
   const normalizedSnapshot = normalizeDraftSnapshotPayload(snapshot);
   if (!normalizedSnapshot) {
@@ -908,7 +909,7 @@ export function buildDraftNameChangeExtractedFieldsFromSnapshot(
 
   const entries: Array<[string, unknown]> = [];
   appendDraftSnapshotFieldEntries(entries, normalizedSnapshot);
-  const snapshotDocumentId = resolveDraftSnapshotDocumentId(documentId);
+  const snapshotDocumentId = resolveDraftSnapshotDocumentId(documentId, fallbackKind);
 
   return entries.reduce<NameChangeExtractedFieldInput[]>((fields, [fieldKey, candidateValue]) => {
     const value = getDraftSnapshotFieldValue(candidateValue);
@@ -922,15 +923,20 @@ export function buildDraftNameChangeExtractedFieldsFromSnapshot(
   }, []);
 }
 
-function resolveDraftSnapshotDocumentId(documentId: string | null | undefined) {
+function resolveDraftSnapshotDocumentId(
+  documentId: string | null | undefined,
+  fallbackKind?: NameChangeDocumentInput['document_kind'] | null,
+) {
   const trimmedDocumentId = documentId?.trim() || null;
   if (!trimmedDocumentId) return null;
   if (/^(?:blob|data):/i.test(trimmedDocumentId)) return null;
   if (/^draft(?:$|\s*[\/_-]?)/i.test(trimmedDocumentId)) {
-    return normalizeDraftNameChangeDocumentId(trimmedDocumentId);
+    return normalizeDraftNameChangeDocumentId(trimmedDocumentId, fallbackKind);
   }
 
-  return trimmedDocumentId;
+  return fallbackKind
+    ? (normalizeDraftNameChangeDocumentId(trimmedDocumentId, fallbackKind) ?? trimmedDocumentId)
+    : trimmedDocumentId;
 }
 
 export function buildDraftNameChangeDocumentMetadataFromSnapshot(
