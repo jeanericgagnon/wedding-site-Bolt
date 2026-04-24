@@ -565,7 +565,7 @@ describe('name change document intake contract', () => {
 
     expect(snapshot.documents.find((document) => document.kind === 'court_order')).toMatchObject({
       capturedExtractionFields: expect.arrayContaining(['case_number', 'court_order_date']),
-      missingExtractionFields: ['first_name', 'last_name'],
+      missingExtractionFields: ['first_name', 'middle_name', 'last_name'],
     });
   });
 
@@ -599,7 +599,7 @@ describe('name change document intake contract', () => {
 
     expect(snapshot.documents.find((document) => document.kind === 'court_order')).toMatchObject({
       capturedExtractionFields: ['case_number'],
-      missingExtractionFields: ['first_name', 'last_name', 'court_order_date'],
+      missingExtractionFields: ['first_name', 'middle_name', 'last_name', 'court_order_date'],
     });
   });
 
@@ -632,7 +632,7 @@ describe('name change document intake contract', () => {
 
     expect(snapshot.documents.find((document) => document.kind === 'court_order')).toMatchObject({
       capturedExtractionFields: [],
-      missingExtractionFields: ['first_name', 'last_name', 'case_number', 'court_order_date'],
+      missingExtractionFields: ['first_name', 'middle_name', 'last_name', 'case_number', 'court_order_date'],
     });
   });
 
@@ -693,7 +693,7 @@ describe('name change document intake contract', () => {
 
     expect(snapshot.documents.find((document) => document.kind === 'court_order')).toMatchObject({
       intakeStatus: 'reviewed',
-      missingExtractionFields: ['first_name', 'last_name'],
+      missingExtractionFields: ['first_name', 'middle_name', 'last_name'],
     });
     expect(snapshot.documents.find((document) => document.kind === 'court_order')?.capturedExtractionFields).toEqual(
       expect.arrayContaining(['case_number', 'court_order_date']),
@@ -911,7 +911,7 @@ describe('name change document intake contract', () => {
     expect(snapshot.documents.find((document) => document.kind === 'court_order')).toMatchObject({
       intakeStatus: 'reviewed',
       extractionFieldCount: 2,
-      missingExtractionFields: ['first_name', 'last_name'],
+      missingExtractionFields: ['first_name', 'middle_name', 'last_name'],
     });
     expect(snapshot.documents.find((document) => document.kind === 'court_order')?.capturedExtractionFields).toEqual(
       expect.arrayContaining(['case_number', 'court_order_date']),
@@ -3156,7 +3156,7 @@ describe('name change document intake contract', () => {
 
   it('treats labeled person-name values as canonical document truth', () => {
     const snapshot = buildNameChangeDocumentIntakeSnapshot(
-      makeCase({ legal_basis: 'court_order', target_first_name: 'Alicia', target_last_name: 'Smith' }),
+      makeCase({ legal_basis: 'court_order', target_first_name: 'Alicia', target_middle_name: 'Quinn', target_last_name: 'Smith' }),
       [
         {
           id: 'doc-court-order',
@@ -3176,6 +3176,14 @@ describe('name change document intake contract', () => {
           field_key: 'first_name',
           field_label: 'First name',
           field_value_masked: 'First name: alicia',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-court-order',
+          field_key: 'middle_name',
+          field_label: 'Middle name',
+          field_value_masked: 'Middle name: quinn',
           source_type: 'document_extract',
           is_verified: true,
         },
@@ -3207,7 +3215,7 @@ describe('name change document intake contract', () => {
     );
 
     expect(snapshot.documents.find((document) => document.kind === 'court_order')).toMatchObject({
-      capturedExtractionFields: expect.arrayContaining(['first_name', 'last_name', 'case_number', 'court_order_date']),
+      capturedExtractionFields: expect.arrayContaining(['first_name', 'middle_name', 'last_name', 'case_number', 'court_order_date']),
       missingExtractionFields: [],
       canonicalConflicts: [],
     });
@@ -3215,7 +3223,7 @@ describe('name change document intake contract', () => {
 
   it('treats punctuated labeled person and reference values as canonical document truth', () => {
     const snapshot = buildNameChangeDocumentIntakeSnapshot(
-      makeCase({ legal_basis: 'court_order', target_first_name: 'Alicia', target_last_name: 'Smith' }),
+      makeCase({ legal_basis: 'court_order', target_first_name: 'Alicia', target_middle_name: 'Quinn', target_last_name: 'Smith' }),
       [
         {
           id: 'doc-court-order-punctuated',
@@ -3235,6 +3243,14 @@ describe('name change document intake contract', () => {
           field_key: 'first_name',
           field_label: 'First name',
           field_value_masked: 'First name: alicia,',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-court-order-punctuated',
+          field_key: 'middle_name',
+          field_label: 'Middle name',
+          field_value_masked: 'Middle name: quinn,',
           source_type: 'document_extract',
           is_verified: true,
         },
@@ -3266,7 +3282,7 @@ describe('name change document intake contract', () => {
     );
 
     expect(snapshot.documents.find((document) => document.kind === 'court_order')).toMatchObject({
-      capturedExtractionFields: expect.arrayContaining(['first_name', 'last_name', 'case_number', 'court_order_date']),
+      capturedExtractionFields: expect.arrayContaining(['first_name', 'middle_name', 'last_name', 'case_number', 'court_order_date']),
       missingExtractionFields: [],
       canonicalConflicts: [],
     });

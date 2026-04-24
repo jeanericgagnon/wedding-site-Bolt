@@ -31,7 +31,7 @@ export const NAME_CHANGE_DOCUMENT_CONTRACTS: NameChangeDocumentContractDefinitio
     label: 'Court order',
     requiredFor: ['court_order'],
     preferredForAutofill: true,
-    extractionFields: ['first_name', 'last_name', 'case_number', 'court_order_date'],
+    extractionFields: ['first_name', 'middle_name', 'last_name', 'case_number', 'court_order_date'],
     acceptedSignals: ['signed court order', 'filed order metadata'],
   },
   {
