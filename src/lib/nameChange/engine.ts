@@ -110,6 +110,10 @@ function hasMiddleNameInPlay(profile: NameChangeEngineInput['profile']) {
   return hasMeaningfulValue(profile.current_middle_name) || hasMeaningfulValue(profile.target_middle_name);
 }
 
+function hasChangeReason(profile: NameChangeEngineInput['profile'], matcher: RegExp) {
+  return profile.change_reasons.some((reason) => matcher.test(normalize(reason)));
+}
+
 function collectMissingInputs(
   input: NameChangeEngineInput,
   legalBasis: 'marriage' | 'court_order',
@@ -253,6 +257,22 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
   const normalizedTargetLastName = normalize(input.profile.target_last_name);
   const normalizedSpouseLastName = normalize(String(input.profile.structured_intake.spouseLastName ?? ''));
   const hasMarriageNameMismatch = input.profile.legal_basis === 'marriage' && legalBasis === 'court_order';
+  const hasBothPartnersChanging = hasChangeReason(input.profile, /(both|dual).*(partner|spouse)/) || hasChangeReason(input.profile, /(partner|spouse).*(both|dual)/);
+  const isOutOfStateMarriage = normalize(input.profile.marriage_state) !== '' && normalize(input.profile.marriage_state) !== 'california';
+  const countyOfficeDetail = legalBasis === 'marriage'
+    ? isOutOfStateMarriage
+      ? 'The issuing office may be a county clerk, recorder, or vital-records office depending on where the marriage was filed, so ground the exact county and certificate trail before treating the certificate as execution-ready.'
+      : 'California county proof can come back through either the county clerk or recorder path, so capture the exact issuing office and certificate reference before pushing SSA or DMV.'
+    : 'Court-order cases should still keep county and filing authority details straight so the signed order and future certified copies stay traceable.';
+  const passportBranchDetail = !input.profile.passport_needs_update
+    ? null
+    : !input.profile.is_us_citizen
+      ? 'This passport lane needs country-specific follow-through and should not be treated like the standard U.S. Department of State path.'
+      : input.profile.has_us_passport
+        ? travelBookedSoon
+          ? 'Renew or amend the existing U.S. passport carefully so upcoming travel, TSA, and reservation names do not split during the transition.'
+          : 'Refresh the existing U.S. passport after SSA and DMV so federal travel identity stays aligned with the new legal name.'
+        : 'This is a first-passport branch, so build the new-name application packet instead of assuming a simple renewal.';
   const targetLastTokens = normalizedTargetLastName.split(/[-\s]+/).filter(Boolean);
   const hasHyphenatedTargetLastName = normalizedTargetLastName.includes('-');
   const hasDualLastNamePath = Boolean(
@@ -293,7 +313,7 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
     phase: 'eligibility',
     title: legalBasis === 'marriage' ? 'Confirm certified marriage proof' : 'Complete California court-order packet',
     description: legalBasis === 'marriage'
-      ? 'Before anything else, make sure you have the certified marriage certificate that will support the record updates.'
+      ? `Before anything else, make sure you have the certified marriage certificate that will support the record updates. ${countyOfficeDetail}`
       : 'Because this requested name looks outside the standard California marriage shortcut, start with the California court petition path.',
     timing: 'Start now',
     status: legalProofReady ? 'ready' : 'blocked',
@@ -337,7 +357,7 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
       id: 'federal-passport',
       phase: 'identity',
       title: input.profile.has_us_passport ? 'Refresh your passport to the new name' : 'Apply for a passport in the new name',
-      description: 'Keep travel records aligned with the new legal name after the main SSA and DMV changes are underway.',
+      description: `Keep travel records aligned with the new legal name after the main SSA and DMV changes are underway. ${passportBranchDetail}`,
       timing: input.profile.urgency_level === 'expedited' ? 'Book this early if upcoming travel matters' : 'After SSA and DMV are underway',
       status: legalProofReady ? 'ready' as const : 'blocked' as const,
       blockers: legalProofReady ? [] : ['Passport update waits on the same legal proof and supporting ID chain.'],
@@ -413,7 +433,9 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
         status: legalProofReady ? 'upcoming' as const : 'blocked' as const,
         summary: travelBookedSoon
           ? 'Travel is on the board, so passport timing needs active watching as soon as SSA is moving and DMV is queued.'
-          : 'Passport should trail the SSA + photo-ID chain so travel identity stays aligned.',
+          : input.profile.has_us_passport
+            ? 'Passport should trail the SSA + photo-ID chain so travel identity stays aligned.'
+            : 'First-passport work should start only after the SSA + photo-ID chain is grounded in the new name.',
         dependsOnStepIds: ['federal-ssa', 'state-dmv', 'federal-passport'],
         featureTag: 'travel' as const,
       }]
@@ -522,6 +544,14 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
         severity: 'info' as const,
       }]
       : []),
+    ...(legalBasis === 'marriage'
+      ? [{
+        id: 'edge-county-office-variation',
+        label: isOutOfStateMarriage ? 'Out-of-state county record variation' : 'County clerk / recorder variation',
+        detail: countyOfficeDetail,
+        severity: outOfStateMarriageCertificateGroundingMissing ? 'warning' as const : 'info' as const,
+      }]
+      : []),
     ...(outOfStateMarriageCertificateGroundingMissing
       ? [{
         id: 'edge-out-of-state-proof',
@@ -536,6 +566,31 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
         label: 'Marriage shortcut target-name mismatch',
         detail: 'The requested target legal name does not fit the straight California marriage shortcut, so treat this as a court-order workflow unless the target name is corrected.',
         severity: 'warning' as const,
+      }, {
+        id: 'edge-mismatch-recovery',
+        label: 'Mismatch recovery needs court-order proof',
+        detail: 'Do not keep pushing marriage-certificate-only updates if the target name and legal path disagree. Ground the court-order packet, then re-run SSA, DMV, and passport sequencing from that proof set.',
+        severity: 'warning' as const,
+      }]
+      : []),
+    ...(hasBothPartnersChanging
+      ? [{
+        id: 'edge-both-partners-changing',
+        label: 'Both partners are changing names',
+        detail: 'Treat this as two separate execution chains. Do not reuse reminder timing, SSA assumptions, or account confirmations from one partner as proof the other partner is done.',
+        severity: 'info' as const,
+      }]
+      : []),
+    ...(passportBranchDetail
+      ? [{
+        id: 'edge-passport-branch',
+        label: input.profile.is_us_citizen
+          ? input.profile.has_us_passport
+            ? 'Passport renewal branch'
+            : 'First-passport branch'
+          : 'Non-U.S. passport branch',
+        detail: passportBranchDetail,
+        severity: input.profile.is_us_citizen ? 'info' as const : 'warning' as const,
       }]
       : []),
     ...(hasHyphenatedTargetLastName

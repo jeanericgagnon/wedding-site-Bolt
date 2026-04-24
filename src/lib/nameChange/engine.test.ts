@@ -236,9 +236,11 @@ describe('name change engine', () => {
     expect(plan.summary.edgeCaseGuidance).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'edge-travel-timing', severity: 'warning' }),
+        expect.objectContaining({ id: 'edge-passport-branch', label: 'Passport renewal branch', severity: 'info' }),
       ]),
     );
     expect(plan.steps.find((step) => step.id === 'institution-tsa-precheck')?.description).toContain('Best timing');
+    expect(plan.steps.find((step) => step.id === 'federal-passport')?.description).toContain('Renew or amend the existing U.S. passport carefully');
   });
 
   it('surfaces edge-case guidance for non-us passports and court-order workflow', () => {
@@ -251,7 +253,38 @@ describe('name change engine', () => {
     expect(plan.summary.edgeCaseGuidance).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'edge-non-us-passport', severity: 'warning' }),
+        expect.objectContaining({ id: 'edge-passport-branch', label: 'Non-U.S. passport branch', severity: 'warning' }),
         expect.objectContaining({ id: 'edge-court-order-path', severity: 'info' }),
+      ]),
+    );
+  });
+
+  it('adds county-office variation handling for marriage proof grounding', () => {
+    const plan = buildNameChangePlan(makeInput());
+
+    expect(plan.steps.find((step) => step.id === 'eligibility-proof')?.description).toContain('county clerk or recorder');
+    expect(plan.summary.edgeCaseGuidance).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'edge-county-office-variation', label: 'County clerk / recorder variation', severity: 'info' }),
+      ]),
+    );
+  });
+
+  it('branches passport guidance for first-passport cases', () => {
+    const plan = buildNameChangePlan(makeInput({ has_us_passport: false, passport_needs_update: true }));
+
+    expect(plan.steps.find((step) => step.id === 'federal-passport')).toMatchObject({
+      title: 'Apply for a passport in the new name',
+    });
+    expect(plan.steps.find((step) => step.id === 'federal-passport')?.description).toContain('first-passport branch');
+    expect(plan.summary.executionTracks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'track-passport', summary: expect.stringContaining('First-passport work should start') }),
+      ]),
+    );
+    expect(plan.summary.edgeCaseGuidance).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'edge-passport-branch', label: 'First-passport branch', severity: 'info' }),
       ]),
     );
   });
@@ -294,7 +327,22 @@ describe('name change engine', () => {
           detail: 'The requested target legal name does not fit the straight California marriage shortcut, so treat this as a court-order workflow unless the target name is corrected.',
           severity: 'warning',
         }),
+        expect.objectContaining({
+          id: 'edge-mismatch-recovery',
+          label: 'Mismatch recovery needs court-order proof',
+          severity: 'warning',
+        }),
         expect.objectContaining({ id: 'edge-court-order-path', severity: 'info' }),
+      ]),
+    );
+  });
+
+  it('surfaces separate execution guidance when both partners are changing names', () => {
+    const plan = buildNameChangePlan(makeInput({ change_reasons: ['marriage', 'both_partners_change_name'] }));
+
+    expect(plan.summary.edgeCaseGuidance).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'edge-both-partners-changing', severity: 'info' }),
       ]),
     );
   });
