@@ -793,7 +793,23 @@ function appendDraftSnapshotFieldEntries(
 
   for (const nestedKey of ['fields', 'extracted_fields', 'extractedFields', 'normalized_fields', 'normalizedFields', 'metadata', 'document_metadata', 'documentMetadata', 'meta', 'document_info', 'documentInfo']) {
     const nestedValue = snapshot[nestedKey];
-    if (!nestedValue || typeof nestedValue !== 'object' || Array.isArray(nestedValue)) {
+    if (Array.isArray(nestedValue)) {
+      for (const candidateEntry of nestedValue) {
+        if (!candidateEntry || typeof candidateEntry !== 'object' || Array.isArray(candidateEntry)) {
+          continue;
+        }
+
+        const record = candidateEntry as Record<string, unknown>;
+        const entryKey = ['field_key', 'fieldKey', 'key', 'name', 'label']
+          .map((key) => record[key])
+          .find((value): value is string => typeof value === 'string' && value.trim().length > 0);
+        if (!entryKey) continue;
+        entries.push([entryKey, candidateEntry]);
+      }
+      continue;
+    }
+
+    if (!nestedValue || typeof nestedValue !== 'object') {
       continue;
     }
 

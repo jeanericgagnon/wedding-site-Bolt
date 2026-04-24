@@ -148,6 +148,39 @@ describe('name change intake draft helpers', () => {
     });
   });
 
+  it('builds canonical extracted fields and metadata from snapshot field arrays', () => {
+    expect(buildDraftNameChangeExtractedFieldsFromSnapshot('draft-current_passport', {
+      fields: [
+        { field_key: 'first_name', value: 'Alex' },
+        { key: 'middle_name', text: 'Marie' },
+        { name: 'last_name', raw: 'Rivera' },
+      ],
+      metadata: [
+        { fieldKey: 'issuance_date', value: '2026-03-04T00:00:00Z' },
+        { key: 'extraction_confidence', value: '0.87' },
+      ],
+    })).toEqual(expect.arrayContaining([
+      expect.objectContaining({ document_id: 'draft-current_passport', field_key: 'first_name', field_value_masked: 'Alex' }),
+      expect.objectContaining({ document_id: 'draft-current_passport', field_key: 'middle_name', field_value_masked: 'Marie' }),
+      expect.objectContaining({ document_id: 'draft-current_passport', field_key: 'last_name', field_value_masked: 'Rivera' }),
+      expect.objectContaining({ document_id: 'draft-current_passport', field_key: 'issuance_date', field_value_masked: '2026-03-04' }),
+    ]));
+
+    expect(buildDraftNameChangeDocumentMetadataFromSnapshot({
+      metadata: [
+        { fieldKey: 'issuing_authority', value: 'California DMV' },
+        { key: 'issuance_date', value: '2026-03-04T00:00:00Z' },
+        { name: 'expiration_date', value: '2034-03-04T00:00:00Z' },
+        { label: 'extraction_confidence', value: '0.87' },
+      ],
+    })).toEqual({
+      issuingAuthority: 'California DMV',
+      issuedOn: '2026-03-04',
+      expiresOn: '2034-03-04',
+      extractionConfidence: 0.87,
+    });
+  });
+
   it('collapses draft document labels into one clean downstream display name', () => {
     expect(createDraftNameChangeDocument('marriage_certificate', '  Certified   marriage   certificate  ')).toMatchObject({
       display_name: 'Certified marriage certificate',

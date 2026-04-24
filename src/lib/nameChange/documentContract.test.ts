@@ -3733,4 +3733,45 @@ describe('name change document intake contract', () => {
       capturedExtractionFields: expect.arrayContaining(['issuance_date', 'first_name', 'middle_name', 'last_name']),
     });
   });
+
+  it('treats snapshot field arrays as canonical document truth for reviewed contracts', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase(),
+      [
+        {
+          id: 'doc-drivers-license-array',
+          document_kind: 'current_drivers_license',
+          display_name: 'Driver license',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'driver-license-•••.pdf',
+          issuing_authority: null,
+          issued_on: null,
+          expires_on: null,
+          extraction_confidence: null,
+          extracted_snapshot: {
+            fields: [
+              { field_key: 'first_name', value: 'Alex' },
+              { key: 'middle_name', value: 'Marie' },
+              { name: 'last_name', value: 'Rivera' },
+            ],
+            metadata: [
+              { fieldKey: 'issuing_authority', value: 'California DMV' },
+              { key: 'issuance_date', value: '2026-03-04T00:00:00Z' },
+              { name: 'expiration_date', value: '2034-03-04T00:00:00Z' },
+              { label: 'extraction_confidence', value: '0.87' },
+            ],
+          },
+        },
+      ],
+      [],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'current_drivers_license')).toMatchObject({
+      intakeStatus: 'reviewed',
+      metadataMissing: [],
+      missingExtractionFields: [],
+      capturedExtractionFields: expect.arrayContaining(['issuance_date', 'first_name', 'middle_name', 'last_name']),
+    });
+  });
 });
