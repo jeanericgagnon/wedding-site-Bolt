@@ -151,6 +151,35 @@ describe('name change extraction contract', () => {
     ]));
   });
 
+  it('surfaces current middle-name conflicts for passport and license extractions', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-passport',
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        id: 'doc-license',
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      { document_id: 'doc-passport', field_key: 'middle_name', field_label: 'Middle name', field_value_masked: 'Quinn', source_type: 'document_extract', is_verified: true },
+      { document_id: 'doc-license', field_key: 'middle_name', field_label: 'Middle name', field_value_masked: 'Lane', source_type: 'document_extract', is_verified: true },
+    ];
+
+    const snapshot = buildNameChangeExtractionContractSnapshot(makeCase(), documents, extractedFields);
+    expect(snapshot.conflicts).toEqual(expect.arrayContaining([
+      expect.objectContaining({ key: 'current-middle-name-passport', documentKind: 'current_passport', canonicalValue: 'Marie', extractedValue: 'Quinn' }),
+      expect.objectContaining({ key: 'current-middle-name-license', documentKind: 'current_drivers_license', canonicalValue: 'Marie', extractedValue: 'Lane' }),
+    ]));
+  });
+
   it('maps court-order name-change documents and case-number extraction into the typed court-order snapshot', () => {
     const documents: NameChangeDocumentInput[] = [
       {

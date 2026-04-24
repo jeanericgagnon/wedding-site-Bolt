@@ -344,6 +344,14 @@ function buildCanonicalFieldConflicts(
       extractedValue: getVerifiedDocumentFieldValue(documents, extractedFields, 'current_passport', 'last_name'),
     },
     {
+      key: 'current-middle-name-passport',
+      label: 'Current middle name vs passport extraction',
+      documentKind: 'current_passport',
+      fieldKey: 'middle_name',
+      canonicalValue: canonicalCase.currentName.middle,
+      extractedValue: getVerifiedDocumentFieldValue(documents, extractedFields, 'current_passport', 'middle_name'),
+    },
+    {
       key: 'current-first-name-license',
       label: 'Current first name vs driver license extraction',
       documentKind: 'current_drivers_license',
@@ -358,6 +366,14 @@ function buildCanonicalFieldConflicts(
       fieldKey: 'last_name',
       canonicalValue: canonicalCase.currentName.last,
       extractedValue: getVerifiedDocumentFieldValue(documents, extractedFields, 'current_drivers_license', 'last_name'),
+    },
+    {
+      key: 'current-middle-name-license',
+      label: 'Current middle name vs driver license extraction',
+      documentKind: 'current_drivers_license',
+      fieldKey: 'middle_name',
+      canonicalValue: canonicalCase.currentName.middle,
+      extractedValue: getVerifiedDocumentFieldValue(documents, extractedFields, 'current_drivers_license', 'middle_name'),
     },
     {
       key: 'target-last-name-marriage',

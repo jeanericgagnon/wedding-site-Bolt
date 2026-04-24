@@ -506,17 +506,27 @@ function normalizeDraftPersonNameValue(
   return humanizeDraftToken(cleanedValue.toLowerCase());
 }
 
-function isDraftCompositeTargetNameLabel(fieldKey: string, fieldLabel: string) {
+function getDraftCompositeNameLabelKind(fieldKey: string, fieldLabel: string): 'current' | 'target' | null {
   const normalizedFieldKey = normalizeDraftText(fieldKey).toLowerCase();
   const normalizedFieldLabel = normalizeDraftText(fieldLabel).toLowerCase();
-  const compositeNamePattern = /(?:^|\b)(?:new|target)\s+legal\s+name(?:\b|$)|(?:^|\b)target\s+name(?:\b|$)|(?:^|\b)new\s+name(?:\b|$)/i;
-  return compositeNamePattern.test(normalizedFieldKey) || compositeNamePattern.test(normalizedFieldLabel);
+  const compositeTargetNamePattern = /(?:^|\b)(?:new|target)\s+legal\s+name(?:\b|$)|(?:^|\b)target\s+name(?:\b|$)|(?:^|\b)new\s+name(?:\b|$)/i;
+  if (compositeTargetNamePattern.test(normalizedFieldKey) || compositeTargetNamePattern.test(normalizedFieldLabel)) {
+    return 'target';
+  }
+
+  const compositeCurrentNamePattern = /(?:^|\b)current\s+legal\s+name(?:\b|$)|(?:^|\b)current\s+name(?:\b|$)|(?:^|\b)(?:existing|present)\s+legal\s+name(?:\b|$)/i;
+  if (compositeCurrentNamePattern.test(normalizedFieldKey) || compositeCurrentNamePattern.test(normalizedFieldLabel)) {
+    return 'current';
+  }
+
+  return null;
 }
 
-function buildDraftCompositeTargetNameFields(
+function buildDraftCompositeNameFields(
   documentId: string | null,
   fieldLabel: string,
   nextValue: string,
+  fallbackLabel: string,
 ): NameChangeExtractedFieldInput[] | null {
   const normalizedValue = normalizeDraftPersonNameValue(nextValue, 'last_name');
   if (!normalizedValue) return [];
@@ -527,7 +537,7 @@ function buildDraftCompositeTargetNameFields(
   const firstName = nameParts[0] ?? '';
   const lastName = nameParts[nameParts.length - 1] ?? '';
   const middleName = nameParts.slice(1, -1).join(' ');
-  const normalizedLabel = normalizeDraftText(fieldLabel) || 'Target legal name';
+  const normalizedLabel = normalizeDraftText(fieldLabel) || fallbackLabel;
 
   return [
     {
@@ -706,16 +716,22 @@ export function upsertDraftNameChangeExtractedField(
     return extractedFields;
   }
 
-  const compositeTargetNameFields = isDraftCompositeTargetNameLabel(fieldKey, fieldLabel)
-    ? buildDraftCompositeTargetNameFields(normalizedDocumentId, fieldLabel, nextValue)
+  const compositeNameLabelKind = getDraftCompositeNameLabelKind(fieldKey, fieldLabel);
+  const compositeNameFields = compositeNameLabelKind
+    ? buildDraftCompositeNameFields(
+      normalizedDocumentId,
+      fieldLabel,
+      nextValue,
+      compositeNameLabelKind === 'current' ? 'Current legal name' : 'Target legal name',
+    )
     : null;
-  if (compositeTargetNameFields) {
-    const compositeFieldKeys = new Set(compositeTargetNameFields.map((field) => field.field_key));
+  if (compositeNameFields) {
+    const compositeFieldKeys = new Set(compositeNameFields.map((field) => field.field_key));
     const rest = extractedFields.filter((field) => !(
       normalizeDraftNameChangeDocumentId(field.document_id) === normalizedDocumentId
       && compositeFieldKeys.has(normalizeDraftFieldKey(field.field_key))
     ));
-    return [...rest, ...compositeTargetNameFields];
+    return [...rest, ...compositeNameFields];
   }
 
   const normalizedFieldKey = normalizeDraftFieldKey(fieldKey);

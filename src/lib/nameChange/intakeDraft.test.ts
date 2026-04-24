@@ -2881,4 +2881,87 @@ describe('name change intake draft helpers', () => {
       }),
     ]);
   });
+
+  it('splits composite current legal-name draft intake into first middle and last fields', () => {
+    expect(upsertDraftNameChangeExtractedField([], 'draft-current_passport', 'current legal name' as never, 'Current legal name', ' Alicia  Quinn   Rivera ')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-current_passport',
+        field_key: 'first_name',
+        field_label: 'Current legal name first name',
+        field_value_masked: 'Alicia',
+      }),
+      expect.objectContaining({
+        document_id: 'draft-current_passport',
+        field_key: 'middle_name',
+        field_label: 'Current legal name middle name',
+        field_value_masked: 'Quinn',
+      }),
+      expect.objectContaining({
+        document_id: 'draft-current_passport',
+        field_key: 'last_name',
+        field_label: 'Current legal name last name',
+        field_value_masked: 'Rivera',
+      }),
+    ]);
+  });
+
+  it('replaces stale current-name components when composite current-name intake is re-entered', () => {
+    const next = upsertDraftNameChangeExtractedField([
+      {
+        document_id: 'draft-current_drivers_license',
+        field_key: 'first_name',
+        field_label: 'Current first name',
+        field_value_masked: 'Alex',
+        source_type: 'manual',
+        is_verified: true,
+      },
+      {
+        document_id: 'draft-current_drivers_license',
+        field_key: 'middle_name',
+        field_label: 'Current middle name',
+        field_value_masked: 'Marie',
+        source_type: 'manual',
+        is_verified: true,
+      },
+      {
+        document_id: 'draft-current_drivers_license',
+        field_key: 'last_name',
+        field_label: 'Current last name',
+        field_value_masked: 'Jordan',
+        source_type: 'manual',
+        is_verified: true,
+      },
+      {
+        document_id: null,
+        field_key: 'last_name',
+        field_label: 'Current last name',
+        field_value_masked: 'Fallback',
+        source_type: 'manual',
+        is_verified: true,
+      },
+    ], 'draft-current_drivers_license', 'current name' as never, 'Current name', 'Alicia Rae Rivera');
+
+    expect(next).toEqual([
+      expect.objectContaining({
+        document_id: null,
+        field_key: 'last_name',
+        field_value_masked: 'Fallback',
+      }),
+      expect.objectContaining({
+        document_id: 'draft-current_drivers_license',
+        field_key: 'first_name',
+        field_value_masked: 'Alicia',
+      }),
+      expect.objectContaining({
+        document_id: 'draft-current_drivers_license',
+        field_key: 'middle_name',
+        field_value_masked: 'Rae',
+      }),
+      expect.objectContaining({
+        document_id: 'draft-current_drivers_license',
+        field_key: 'last_name',
+        field_value_masked: 'Rivera',
+      }),
+    ]);
+  });
 });
