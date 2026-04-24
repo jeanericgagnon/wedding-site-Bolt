@@ -305,11 +305,20 @@ function buildTargetStatusOverview(steps: NameChangePlanStep[]): NonNullable<Nam
     } else {
       summary.todo += 1;
     }
+
+    if (step.status === 'ready') {
+      summary.ready += 1;
+    } else if (step.status === 'blocked') {
+      summary.blocked += 1;
+    }
+
     return summary;
   }, {
     todo: 0,
     inProgress: 0,
     complete: 0,
+    ready: 0,
+    blocked: 0,
     latestUpdatedAt,
   });
 }

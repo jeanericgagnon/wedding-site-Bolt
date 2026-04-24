@@ -487,6 +487,8 @@ describe('name change engine', () => {
     expect(plan.summary.targetStatusOverview).toMatchObject({
       inProgress: 0,
       complete: 0,
+      ready: plan.steps.filter((step) => step.phase !== 'eligibility' && step.status === 'ready').length,
+      blocked: plan.steps.filter((step) => step.phase !== 'eligibility' && step.status === 'blocked').length,
       latestUpdatedAt: null,
     });
     expect(plan.summary.targetStatusOverview?.todo).toBe(plan.steps.filter((step) => step.phase !== 'eligibility').length);

@@ -1112,6 +1112,8 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               </div>
               <div className="flex flex-wrap items-center justify-end gap-2 text-xs text-text-secondary">
                 <span className="rounded-full bg-surface-subtle px-2 py-1">{targetStatusVaultRows.length} tracked targets</span>
+                <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.ready ?? 0} ready</span>
+                <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.blocked ?? 0} blocked</span>
                 <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.inProgress ?? 0} in progress</span>
                 <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.complete ?? 0} complete</span>
                 {plan.summary.targetStatusOverview?.latestUpdatedAt ? (

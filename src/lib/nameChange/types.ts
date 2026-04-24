@@ -180,6 +180,8 @@ export interface NameChangePlanSummary {
     todo: number;
     inProgress: number;
     complete: number;
+    ready: number;
+    blocked: number;
     latestUpdatedAt: string | null;
   };
   executionTracks?: Array<{
