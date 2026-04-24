@@ -24,7 +24,7 @@ export const NAME_CHANGE_DOCUMENT_CONTRACTS: NameChangeDocumentContractDefinitio
     requiredFor: ['marriage'],
     preferredForAutofill: true,
     extractionFields: ['first_name', 'last_name', 'spouse_last_name', 'issuance_date', 'county', 'certificate_number'],
-    acceptedSignals: ['certified copy', 'county clerk issuance', 'marriage certificate metadata'],
+    acceptedSignals: ['filed certificate record', 'certified copy', 'county clerk issuance', 'county recorder issuance', 'marriage certificate metadata'],
   },
   {
     kind: 'court_order',

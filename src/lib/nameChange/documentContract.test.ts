@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildNameChangeDocumentIntakeSnapshot } from './documentContract';
+import { NAME_CHANGE_DOCUMENT_CONTRACTS, buildNameChangeDocumentIntakeSnapshot } from './documentContract';
 import { createDraftNameChangeDocument, upsertDraftNameChangeExtractedField } from './intakeDraft';
 import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput } from './types';
 
@@ -37,6 +37,12 @@ function makeCase(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseI
 }
 
 describe('name change document intake contract', () => {
+  it('treats marriage proof as a filed county record with certified-copy support', () => {
+    expect(NAME_CHANGE_DOCUMENT_CONTRACTS.find((document) => document.kind === 'marriage_certificate')?.acceptedSignals).toEqual(
+      expect.arrayContaining(['filed certificate record', 'certified copy', 'county clerk issuance', 'county recorder issuance']),
+    );
+  });
+
   it('builds required-document readiness and extraction gap summary', () => {
     const documents: NameChangeDocumentInput[] = [
       {

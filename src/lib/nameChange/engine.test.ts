@@ -200,6 +200,20 @@ describe('name change engine', () => {
     });
   });
 
+  it('requires filed marriage record and certified copies before government execution', () => {
+    const plan = buildNameChangePlan(makeInput());
+    const legalProofStep = plan.steps.find((step) => step.id === 'eligibility-proof');
+
+    expect(legalProofStep?.description).toContain('filed by the county');
+    expect(legalProofStep?.evidenceNeeded).toEqual(
+      expect.arrayContaining([
+        'Filed marriage certificate record',
+        'Certified marriage certificate copies',
+        'County clerk / recorder or vital-records issuing authority',
+      ]),
+    );
+  });
+
   it('keeps marriage-path steps blocked when out-of-state certificate grounding is still missing', () => {
     const plan = buildNameChangePlan({
       ...makeInput({ marriage_state: 'Nevada' }),

@@ -394,14 +394,16 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
     phase: 'eligibility',
     title: legalBasis === 'marriage' ? 'Confirm certified marriage proof' : 'Complete California court-order packet',
     description: legalBasis === 'marriage'
-      ? `Before anything else, make sure you have the certified marriage certificate that will support the record updates. ${countyOfficeDetail}`
+      ? `Before anything else, make sure the marriage certificate has been filed by the county and that you have certified copies ready for record updates. ${countyOfficeDetail}`
       : 'Because this requested name looks outside the standard California marriage shortcut, start with the California court petition path.',
     timing: 'Start now',
     status: legalProofReady ? 'ready' : 'blocked',
     blockers: legalProofReady ? [] : blockers,
     forms: legalBasis === 'marriage' ? [] : formsFor('court_order', 'california_resident'),
     institutions: [],
-    evidenceNeeded: legalBasis === 'marriage' ? ['Certified marriage certificate'] : ['Filed California name change petition packet', 'Signed court order'],
+    evidenceNeeded: legalBasis === 'marriage'
+      ? ['Filed marriage certificate record', 'Certified marriage certificate copies', 'County clerk / recorder or vital-records issuing authority']
+      : ['Filed California name change petition packet', 'Signed court order'],
   }));
 
   steps.push(buildStep({
