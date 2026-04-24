@@ -836,9 +836,18 @@ export function buildDraftNameChangeDocumentMetadataFromSnapshot(
     };
   }
 
+  const snapshotEntries: Array<[string, unknown]> = [];
+  appendDraftSnapshotFieldEntries(snapshotEntries, snapshot);
+
   const readValue = (...keys: string[]) => {
     for (const key of keys) {
-      const value = getDraftSnapshotFieldValue(snapshot[key]);
+      const directValue = getDraftSnapshotFieldValue(snapshot[key]);
+      if (directValue) return directValue;
+    }
+
+    for (const [entryKey, entryValue] of snapshotEntries) {
+      if (!keys.includes(entryKey)) continue;
+      const value = getDraftSnapshotFieldValue(entryValue);
       if (value) return value;
     }
 

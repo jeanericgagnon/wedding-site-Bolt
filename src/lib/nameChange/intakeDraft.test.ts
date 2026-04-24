@@ -98,6 +98,22 @@ describe('name change intake draft helpers', () => {
     });
   });
 
+  it('builds canonical document metadata from nested snapshot fields', () => {
+    expect(buildDraftNameChangeDocumentMetadataFromSnapshot({
+      fields: {
+        issuing_authority: ' U.S. Department of State ',
+        issued_on: '2024-06-01T00:00:00Z',
+        expirationDate: '2034-06-01T00:00:00Z',
+        extractionConfidence: '0.94',
+      },
+    })).toEqual({
+      issuingAuthority: ' U.S. Department of State ',
+      issuedOn: '2024-06-01',
+      expiresOn: '2034-06-01',
+      extractionConfidence: 0.94,
+    });
+  });
+
   it('collapses draft document labels into one clean downstream display name', () => {
     expect(createDraftNameChangeDocument('marriage_certificate', '  Certified   marriage   certificate  ')).toMatchObject({
       display_name: 'Certified marriage certificate',
