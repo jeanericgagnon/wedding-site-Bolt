@@ -188,18 +188,27 @@ function getContractDocumentCapturedFieldKeys(
   )];
 }
 
+function buildDocumentContractExtractedFields(
+  documents: NameChangeDocumentInput[],
+  extractedFields: NameChangeExtractedFieldInput[],
+): NameChangeExtractedFieldInput[] {
+  const snapshotExtractedFields = documents.flatMap((document) => buildDraftNameChangeExtractedFieldsFromSnapshot(document.id ?? null, document.extracted_snapshot));
+  return [...extractedFields, ...snapshotExtractedFields];
+}
+
 export function buildNameChangeDocumentIntakeSnapshot(
   profile: NameChangeCaseInput,
   documents: NameChangeDocumentInput[],
   extractedFields: NameChangeExtractedFieldInput[],
 ): NameChangeDocumentIntakeSnapshot {
-  const canonicalCase = buildNameChangeCanonicalCase(profile, documents, extractedFields);
-  const extraction = buildNameChangeExtractionContractSnapshot(profile, documents, extractedFields);
+  const contractExtractedFields = buildDocumentContractExtractedFields(documents, extractedFields);
+  const canonicalCase = buildNameChangeCanonicalCase(profile, documents, contractExtractedFields);
+  const extraction = buildNameChangeExtractionContractSnapshot(profile, documents, contractExtractedFields);
 
   const statuses: NameChangeDocumentContractStatus[] = NAME_CHANGE_DOCUMENT_CONTRACTS.map((definition) => {
     const canonicalDocument = findBestContractDocument(documents, definition.kind);
     const documentState = canonicalCase.documents[definition.kind];
-    const typedCapturedFields = getContractDocumentCapturedFieldKeys(documents, definition.kind, extractedFields, definition.extractionFields);
+    const typedCapturedFields = getContractDocumentCapturedFieldKeys(documents, definition.kind, contractExtractedFields, definition.extractionFields);
     const required = definition.requiredFor.includes('all') || definition.requiredFor.includes(canonicalCase.legalBasis);
     const metadataMissing = metadataMissingForDocument(canonicalDocument);
     const contractIntakeStatus = canonicalDocument?.intake_status ?? documentState.intakeStatus;

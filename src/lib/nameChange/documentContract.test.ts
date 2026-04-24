@@ -1039,6 +1039,48 @@ describe('name change document intake contract', () => {
     expect(snapshot.summary.extractionGaps).toBe(1);
   });
 
+  it('surfaces canonical conflicts from reviewed extracted snapshots without separate extraction rows', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase(),
+      [
+        {
+          id: 'doc-marriage',
+          document_kind: 'marriage_certificate',
+          display_name: 'Certified marriage certificate',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'marriage-certificate-•••.pdf',
+          issuing_authority: 'San Diego County Clerk',
+          issued_on: '2026-04-05',
+          extraction_confidence: 0.97,
+          extracted_snapshot: {
+            fields: {
+              first_name: 'Alex',
+              last_name: 'Rivera',
+              spouse_last_name: 'Jordan-Smith',
+              county: 'San Diego',
+            },
+            issuanceDate: '2026-04-05T00:00:00Z',
+            certificate_no: 'MC-123',
+          },
+        },
+      ],
+      [],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'marriage_certificate')).toMatchObject({
+      metadataReady: 0,
+      missingExtractionFields: [],
+      canonicalConflicts: [expect.objectContaining({ key: 'target-last-name-marriage' })],
+    });
+    expect(snapshot.summary.requiredReady).toBe(0);
+    expect(snapshot.summary.requiredMissing).toBe(6);
+    expect(snapshot.summary.metadataReady).toBe(0);
+    expect(snapshot.summary.metadataGaps).toBe(1);
+    expect(snapshot.summary.autofillReady).toBe(0);
+    expect(snapshot.summary.extractionGaps).toBe(1);
+  });
+
   it('does not surface extraction expectations for documents that are not started', () => {
     const snapshot = buildNameChangeDocumentIntakeSnapshot(
       makeCase(),
