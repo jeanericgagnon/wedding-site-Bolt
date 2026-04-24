@@ -89,6 +89,7 @@ describe('name change engine', () => {
         'Investment, retirement, and loan accounts',
         'Student loans, servicers, and financial aid portals',
         'Mortgage, property title, and homeowner records',
+        'Credit bureau identity file monitoring',
         'Retirement plan, pension, and beneficiary records',
         'Health, dental, vision, auto, renters, and life insurance',
         'Disability insurance and leave administrators',
@@ -107,6 +108,7 @@ describe('name change engine', () => {
     );
     expect(plan.steps.find((step) => step.id === 'institution-uscis-immigration-records')?.timing).toContain('legal proof');
     expect(plan.steps.find((step) => step.id === 'institution-state-tax-agency')?.timing).toContain('payroll');
+    expect(plan.steps.find((step) => step.id === 'institution-credit-bureaus')?.timing).toContain('credit cards');
     expect(plan.steps.find((step) => step.id === 'institution-retirement-benefits')?.institutions).toContain('Retirement plan, pension, and beneficiary records');
     expect(plan.steps.find((step) => step.id === 'institution-frequent-flyer-hotel-rail')?.timing).toContain('passport');
     expect(plan.steps.find((step) => step.id === 'institution-irs-employer')?.timing).toContain('SSA');
@@ -130,7 +132,7 @@ describe('name change engine', () => {
     expect(plan.summary.institutionCategoryCoverage).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'legal_government', institutionKeys: expect.arrayContaining(['uscis-immigration-records', 'irs-records', 'state-tax-agency', 'county-recorder-property']) }),
-        expect.objectContaining({ id: 'financial', institutionKeys: expect.arrayContaining(['banks', 'investments-loans', 'student-loans-financial-aid', 'mortgage-property-records']) }),
+        expect.objectContaining({ id: 'financial', institutionKeys: expect.arrayContaining(['banks', 'investments-loans', 'student-loans-financial-aid', 'mortgage-property-records', 'credit-bureaus']) }),
         expect.objectContaining({ id: 'work_insurance', institutionKeys: expect.arrayContaining(['irs-employer', 'retirement-benefits', 'insurance', 'workers-comp-leave']) }),
         expect.objectContaining({ id: 'personal_lifestyle', institutionKeys: expect.arrayContaining(['phone-digital-identity', 'school-alumni-records', 'subscriptions-social']) }),
         expect.objectContaining({ id: 'travel_mobility', institutionKeys: expect.arrayContaining(['tsa-precheck', 'travel-hospitality', 'dmv-registration-title', 'frequent-flyer-hotel-rail']) }),

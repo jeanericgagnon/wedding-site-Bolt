@@ -149,6 +149,17 @@ export const NAME_CHANGE_INSTITUTION_LIBRARY: NameChangeInstitutionEntry[] = [
     reminderDaysAfterPrimaryId: 9,
   },
   {
+    key: 'credit-bureaus',
+    label: 'Credit bureau identity file monitoring',
+    category: 'financial',
+    launchPriority: 26,
+    triggers: ['all'],
+    notes: 'Credit bureaus usually learn the new name through lenders, but they are worth monitoring so reports, fraud alerts, freezes, and future credit pulls do not split across names.',
+    suggestedTiming: 'After banks, credit cards, loans, and mortgage or property records start reporting the updated name',
+    evidenceNeeded: ['Updated lender or credit-card records', 'Legal proof document', 'Credit bureau login or freeze / alert details when relevant'],
+    reminderDaysAfterPrimaryId: 14,
+  },
+  {
     key: 'insurance',
     label: 'Health, dental, vision, auto, renters, and life insurance',
     category: 'insurance',
