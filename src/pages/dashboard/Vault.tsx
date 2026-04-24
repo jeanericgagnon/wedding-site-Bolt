@@ -12,6 +12,7 @@ import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { useAuth } from '../../hooks/useAuth';
 import { getArchiveModeDescriptor } from '../../lib/archiveMode';
 import { sendAnniversaryReminder } from '../../lib/emailService';
+import { getVaultUnlockDate, toValidDateOrNull } from './vaultDate';
 
 const MAX_VAULTS = 5;
 const DEMO_VAULT_STORAGE_KEY = 'dayof_demo_vault_state_v1';
@@ -340,9 +341,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
 
   const displayEntries = entries.map((entry) => ({ ...entry, ...(entryOverrides[entry.id] ?? {}) }));
 
-  const unlockDate = weddingDate
-    ? new Date(new Date(weddingDate).setFullYear(weddingDate.getFullYear() + config.duration_years))
-    : null;
+  const unlockDate = getVaultUnlockDate(weddingDate, config.duration_years);
   const isUnlocked = unlockDate ? new Date() >= unlockDate : false;
 
   const unlockLabel = unlockDate
@@ -1037,8 +1036,8 @@ export const DashboardVault: React.FC = () => {
           void forceGoogleDriveProvider(demoSite.id).catch(() => {
             toast('Couldn’t sync Google Drive as the active vault provider right now.', 'error');
           });
-if (demoSite.wedding_date) setWeddingDate(new Date(demoSite.wedding_date));
-          else setWeddingDate(new Date(DEMO_WEDDING_DATE));
+if (demoSite.wedding_date) setWeddingDate(toValidDateOrNull(demoSite.wedding_date));
+          else setWeddingDate(toValidDateOrNull(DEMO_WEDDING_DATE));
 
           const { data: configData, error: configError } = await supabase
             .from('vault_configs')
@@ -1068,7 +1067,7 @@ if (demoSite.wedding_date) setWeddingDate(new Date(demoSite.wedding_date));
 setWeddingSiteId('demo-site-id');
         setVaultStorageProvider('google_drive');
         setGoogleDriveConnected(false);
-        setWeddingDate(new Date(DEMO_WEDDING_DATE));
+        setWeddingDate(toValidDateOrNull(DEMO_WEDDING_DATE));
         const demoState = loadDemoState();
         setVaultConfigs(demoState.vaultConfigs);
         setEntries(demoState.entries);
@@ -1104,7 +1103,7 @@ setWeddingSiteId('demo-site-id');
       void forceGoogleDriveProvider(site.id).catch(() => {
         toast('Couldn’t sync Google Drive as the active vault provider right now.', 'error');
       });
-      if (site.wedding_date) setWeddingDate(new Date(site.wedding_date));
+      if (site.wedding_date) setWeddingDate(toValidDateOrNull(site.wedding_date));
       if (site.site_slug) setSiteSlug(site.site_slug as string);
       setCoupleName1((site as { couple_name_1?: string | null }).couple_name_1 || 'Partner');
       setCoupleName2((site as { couple_name_2?: string | null }).couple_name_2 || 'Partner');
@@ -1217,8 +1216,8 @@ setWeddingSiteId('demo-site-id');
     })();
 
     const newlyUnlocked = vaultConfigs.filter((cfg) => {
-      const unlockDate = new Date(weddingDate);
-      unlockDate.setFullYear(unlockDate.getFullYear() + cfg.duration_years);
+      const unlockDate = getVaultUnlockDate(weddingDate, cfg.duration_years);
+      if (!unlockDate) return false;
       const key = `${cfg.id}:${unlockDate.toISOString().slice(0, 10)}`;
       return cfg.is_enabled && new Date() >= unlockDate && !notified.includes(key);
     });
@@ -1230,10 +1229,10 @@ setWeddingSiteId('demo-site-id');
     });
 
     const next = [...notified, ...newlyUnlocked.map((cfg) => {
-      const unlockDate = new Date(weddingDate);
-      unlockDate.setFullYear(unlockDate.getFullYear() + cfg.duration_years);
+      const unlockDate = getVaultUnlockDate(weddingDate, cfg.duration_years);
+      if (!unlockDate) return null;
       return `${cfg.id}:${unlockDate.toISOString().slice(0, 10)}`;
-    })];
+    }).filter(Boolean) as string[]];
 
     localStorage.setItem(VAULT_RELEASE_NOTICE_KEY, JSON.stringify(Array.from(new Set(next))));
   }, [vaultConfigs, weddingDate]);
@@ -1246,8 +1245,7 @@ setWeddingSiteId('demo-site-id');
 
     setSendingReminderFor(config.id);
     try {
-      const unlockDate = weddingDate ? new Date(weddingDate) : null;
-      if (unlockDate) unlockDate.setFullYear(unlockDate.getFullYear() + config.duration_years);
+      const unlockDate = getVaultUnlockDate(weddingDate, config.duration_years);
 
       const vaultUrl = siteSlug ? `${window.location.origin}/vault/${siteSlug}/${config.duration_years}` : null;
 
