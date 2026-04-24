@@ -460,6 +460,24 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     later: plan.steps.filter((step) => step.status === 'later').length,
   }), [plan.steps]);
   const effectiveReminders = useMemo(() => reminders, [reminders]);
+  const milestoneChecklist = useMemo(() => plan.summary.milestoneChecklist ?? [], [plan.summary.milestoneChecklist]);
+  const accountUpdateTemplates = useMemo(() => plan.summary.accountUpdateTemplates ?? [], [plan.summary.accountUpdateTemplates]);
+  const documentVaultRows = useMemo(() => documents.map((document) => {
+    const contract = NAME_CHANGE_DOCUMENT_CONTRACTS.find((entry) => matchesNameChangeDocumentKind(document.document_kind, entry.kind));
+    const linkedFieldCount = extractedFields.filter((field) => {
+      const documentId = normalizeDraftNameChangeDocumentId(document.id);
+      return documentId && normalizeDraftNameChangeDocumentId(field.document_id) === documentId;
+    }).length;
+
+    return {
+      key: document.id ?? document.document_kind,
+      label: document.display_name,
+      status: document.intake_status,
+      storageMode: document.storage_mode,
+      linkedFieldCount,
+      expectedFieldCount: contract?.extractionFields.length ?? 0,
+    };
+  }), [documents, extractedFields]);
   const requirementSnapshot = useMemo(() => evaluateNameChangeRequirements(draft, documents, extractedFields), [draft, documents, extractedFields]);
   const documentIntakeSnapshot = useMemo(() => buildNameChangeDocumentIntakeSnapshot(draft, documents, extractedFields), [draft, documents, extractedFields]);
   const extractionContractSnapshot = useMemo(() => buildNameChangeExtractionContractSnapshot(draft, documents, extractedFields), [draft, documents, extractedFields]);
@@ -885,6 +903,107 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               <p className="text-xs uppercase tracking-wide text-primary">Privacy rule</p>
               <p className="mt-2 text-sm text-text-primary">Raw uploads are optional. Structured fields are the truth.</p>
             </div>
+          </div>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[1.2fr,1fr]">
+        <Card>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold text-text-primary">Post-wedding name change roadmap</h3>
+              <p className="mt-1 text-sm text-text-secondary">Free, no-upsell guidance. Lock the core identity chain first, then fan out across money, work, insurance, travel, and personal accounts.</p>
+            </div>
+            <span className="rounded-full bg-primary/10 px-2 py-1 text-xs text-primary">Day of Love free assistant</span>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {plan.summary.recommendedOrder.map((stepLabel, index) => (
+              <div key={stepLabel} className="rounded-xl border border-border-subtle p-4">
+                <p className="text-xs uppercase tracking-wide text-text-tertiary">Step {index + 1}</p>
+                <p className="mt-2 text-sm font-semibold text-text-primary">{stepLabel}</p>
+                {index === 0 && <p className="mt-2 text-xs text-text-secondary">Get certified proof grounded before anything else moves.</p>}
+                {index === 1 && <p className="mt-2 text-xs text-text-secondary">SSA is the first real filing move because tax, payroll, and federal identity depend on it.</p>}
+                {index === 2 && <p className="mt-2 text-xs text-text-secondary">Driver license or state ID is next so the rest of the packet has fresh government photo ID.</p>}
+                {index === 3 && <p className="mt-2 text-xs text-text-secondary">Passport follows the new SSA + ID chain, especially if travel is coming up.</p>}
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold text-text-primary">Milestones and progress</h3>
+              <p className="mt-1 text-sm text-text-secondary">Track the hard gates that decide whether the rest of the rollout is actually safe to start.</p>
+            </div>
+            <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{plan.summary.readinessPercent}% ready</span>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {milestoneChecklist.map((milestone) => (
+              <div key={milestone.id} className="rounded-xl border border-border-subtle p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-text-primary">{milestone.label}</p>
+                    <p className="mt-1 text-xs text-text-secondary">Depends on: {milestone.dependsOnStepIds.join(' → ')}</p>
+                  </div>
+                  <span className={`rounded-full px-2 py-1 text-xs ${milestone.status === 'ready' ? 'bg-success/10 text-success' : milestone.status === 'upcoming' ? 'bg-primary/10 text-primary' : 'bg-warning/10 text-warning'}`}>
+                    {milestone.status}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[1fr,1fr]">
+        <Card>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold text-text-primary">Lightweight document and status vault</h3>
+              <p className="mt-1 text-sm text-text-secondary">Only status, linkage, and extraction counts live here. No sensitive raw document storage required.</p>
+            </div>
+            <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{documentVaultRows.length} tracked docs</span>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {documentVaultRows.length > 0 ? documentVaultRows.map((row) => (
+              <div key={row.key} className="rounded-xl border border-border-subtle p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-text-primary">{row.label}</p>
+                    <p className="mt-1 text-xs text-text-secondary">{row.linkedFieldCount}/{row.expectedFieldCount} grounded fields · {row.storageMode.replace('_', ' ')}</p>
+                  </div>
+                  <span className={`rounded-full px-2 py-1 text-xs ${row.status === 'reviewed' ? 'bg-success/10 text-success' : row.status === 'uploaded' ? 'bg-warning/10 text-warning' : 'bg-surface-subtle text-text-secondary'}`}>
+                    {row.status}
+                  </span>
+                </div>
+              </div>
+            )) : (
+              <div className="rounded-xl border border-dashed border-border-subtle p-4 text-sm text-text-secondary">Add a certificate, ID, or proof document and the vault will track readiness without holding raw files.</div>
+            )}
+          </div>
+        </Card>
+
+        <Card>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold text-text-primary">Prewritten update templates</h3>
+              <p className="mt-1 text-sm text-text-secondary">Copy, send, and move on. Payroll, bank, insurance, and other downstream updates should not require fresh writing every time.</p>
+            </div>
+            <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{accountUpdateTemplates.length} templates</span>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {accountUpdateTemplates.map((template) => (
+              <div key={template.id} className="rounded-xl border border-border-subtle p-4">
+                <p className="text-xs uppercase tracking-wide text-text-tertiary">{template.audience}</p>
+                <p className="mt-2 text-sm font-semibold text-text-primary">{template.subject}</p>
+                <p className="mt-2 whitespace-pre-line text-sm text-text-secondary">{template.body}</p>
+              </div>
+            ))}
           </div>
         </Card>
       </div>

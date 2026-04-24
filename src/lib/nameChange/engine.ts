@@ -368,8 +368,11 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
       cautionNotes,
       missingInputs,
       readinessPercent,
-      milestoneChecklist: [...milestoneChecklist],
-      accountUpdateTemplates: [...accountUpdateTemplates],
+      milestoneChecklist: milestoneChecklist.map((milestone) => ({
+        ...milestone,
+        dependsOnStepIds: [...milestone.dependsOnStepIds],
+      })),
+      accountUpdateTemplates: accountUpdateTemplates.map((template) => ({ ...template })),
       executionCounts,
       nextBestAction,
     },
