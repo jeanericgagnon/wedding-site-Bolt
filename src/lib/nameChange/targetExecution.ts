@@ -22,6 +22,22 @@ function hasDualPartnerNameChange(profile: NameChangeCaseInput) {
   return profile.change_reasons.some((reason) => /both_partners_change_name|dual/i.test(reason));
 }
 
+function isDualPartnerExecutionTarget(targetKey: NameChangeExecutionTargetKey) {
+  return [
+    'ssa',
+    'dmv',
+    'employer',
+    'banks',
+    'insurance',
+    'medical',
+    'utilities',
+    'courtesy',
+    'voter',
+    'tsa',
+    'licenses',
+  ].includes(targetKey);
+}
+
 export function buildNameChangeTargetExecutionSnapshot(
   targetKey: NameChangeExecutionTargetKey,
   profile: NameChangeCaseInput,
@@ -214,9 +230,35 @@ export function buildNameChangeTargetExecutionSnapshot(
 
     return null;
   };
+  const buildDualPartnerExecutionNextAction = () => {
+    if (!hasDualPartnerNameChange(profile) || !isDualPartnerExecutionTarget(targetKey)) return null;
+
+    if (targetKey === 'ssa') {
+      return {
+        category: 'review' as const,
+        label: 'Split SSA work into two partner packets',
+        detail: 'Both partners are changing names, so SSA prep should track separate SS-5 packets, evidence copies, and submission follow-through for each partner instead of treating this as one shared chain.',
+      };
+    }
+
+    if (targetKey === 'dmv') {
+      return {
+        category: 'review' as const,
+        label: 'Split DMV work into two partner appointments',
+        detail: 'Both partners are changing names, so DMV follow-through should keep separate appointment timing, temporary-ID expectations, and title/registration follow-up per partner.',
+      };
+    }
+
+    return {
+      category: 'review' as const,
+      label: 'Split downstream rollout into partner-specific confirmations',
+      detail: 'Both partners are changing names, so this rollout lane should confirm account updates, mailed notices, and completion proof separately for each partner instead of collapsing everything into one checklist.',
+    };
+  };
   const courtOrderNextAction = targetKey === 'courtOrder' ? buildCourtOrderNextAction() : null;
   const marriageCertificateGroundingNextAction = buildMarriageCertificateGroundingNextAction();
   const passportBranchNextAction = buildPassportBranchNextAction();
+  const dualPartnerExecutionNextAction = buildDualPartnerExecutionNextAction();
   const blockingFieldConflict = primaryCanonicalConflict && firstBlockingFieldRisk
     && primaryCanonicalConflict.documentKind === firstBlockingFieldRisk.sourceDocumentKind
     && primaryCanonicalConflict.fieldKey === firstBlockingFieldRisk.sourceFieldKey
@@ -376,6 +418,17 @@ export function buildNameChangeTargetExecutionSnapshot(
                   label: `Prepare ${formPayload.formCode || target.recommendedFormCode}`,
                   detail: 'Packet is execution-ready. Final review and submission prep can move now.',
                 };
+  const nextActionWithDualPartnerBranch = dualPartnerExecutionNextAction
+    && nextAction.category === 'review'
+    && nextAction.label === `Prepare ${formPayload.formCode || target.recommendedFormCode}`
+      ? dualPartnerExecutionNextAction
+      : dualPartnerExecutionNextAction
+        && nextAction.category === 'review'
+        && targetKey !== 'passport'
+        && targetKey !== 'courtOrder'
+        && nextAction.label.startsWith('Review ')
+          ? dualPartnerExecutionNextAction
+          : nextAction;
   const readinessSummary = {
     status: gates.ready ? 'ready' as const : blockingFieldRisks > 0 || gates.blockers.length > 0 ? 'blocked' as const : 'attention' as const,
     blockingFieldRisks,
@@ -397,7 +450,7 @@ export function buildNameChangeTargetExecutionSnapshot(
     targetLabel: target.label,
     ready: gates.ready,
     blockers: gates.blockers,
-    nextAction,
+    nextAction: nextActionWithDualPartnerBranch,
     readinessSummary,
     recommendedFormCode: formPayload.formCode || target.recommendedFormCode,
     autofillFields: autofill.fields.filter((field) => target.autofillTargetFields.includes(field.targetField)),

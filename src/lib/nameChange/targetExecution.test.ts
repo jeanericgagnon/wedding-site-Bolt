@@ -401,9 +401,9 @@ describe('name change target execution snapshot', () => {
       status: 'missing',
     });
     expect(snapshot.nextAction).toMatchObject({
-      category: 'packet',
-      label: 'Fill Current legal name available for SS-5',
-      detail: 'Current legal name fields are still incomplete for SS-5 preparation.',
+      category: 'dependency',
+      label: 'Unblock Case legal-name setup complete',
+      detail: 'Case setup is still missing current last name.',
     });
   });
 
@@ -1314,6 +1314,189 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.nextAction).toMatchObject({
       category: 'review',
       label: 'Split passport work into two partner chains',
+    });
+  });
+
+  it('splits ready SSA work into two partner packets when both partners are changing names', () => {
+    const profile = makeCase({ change_reasons: ['marriage', 'both_partners_change_name'] });
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'San Diego County Clerk',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
+      },
+      {
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'license-•••.pdf',
+        issuing_authority: 'California DMV',
+        issued_on: '2025-03-01',
+        extraction_confidence: 0.9,
+      },
+      {
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'passport-•••.pdf',
+        issuing_authority: 'U.S. Department of State',
+        issued_on: '2024-06-01',
+        expires_on: '2034-06-01',
+        extraction_confidence: 0.92,
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        field_key: 'spouse_last_name',
+        field_label: 'Spouse last name',
+        field_value_masked: 'Jordan',
+        source_type: 'manual',
+        is_verified: true,
+      },
+    ];
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('ssa', profile, documents, extractedFields);
+    expect(snapshot.ready).toBe(true);
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'review',
+      label: 'Split SSA work into two partner packets',
+    });
+  });
+
+  it('splits ready DMV work into two partner appointments when both partners are changing names', () => {
+    const profile = makeCase({ change_reasons: ['marriage', 'both_partners_change_name'] });
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'San Diego County Clerk',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
+      },
+      {
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'license-•••.pdf',
+        issuing_authority: 'California DMV',
+        issued_on: '2025-03-01',
+        extraction_confidence: 0.9,
+      },
+      {
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'passport-•••.pdf',
+        issuing_authority: 'U.S. Department of State',
+        issued_on: '2024-06-01',
+        expires_on: '2034-06-01',
+        extraction_confidence: 0.92,
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        field_key: 'spouse_last_name',
+        field_label: 'Spouse last name',
+        field_value_masked: 'Jordan',
+        source_type: 'manual',
+        is_verified: true,
+      },
+    ];
+    const basePlan = buildNameChangePlan({ profile, documents, extractedFields });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-ssa'
+        ? { ...step, executionStatus: 'complete' as const }
+        : step),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('dmv', profile, documents, extractedFields, plan);
+    expect(snapshot.ready).toBe(true);
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'review',
+      label: 'Split DMV work into two partner appointments',
+    });
+  });
+
+  it('splits downstream rollout into partner-specific confirmations when both partners are changing names', () => {
+    const profile = makeCase({ change_reasons: ['marriage', 'both_partners_change_name'] });
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'San Diego County Clerk',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
+      },
+      {
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'license-•••.pdf',
+        issuing_authority: 'California DMV',
+        issued_on: '2025-03-01',
+        extraction_confidence: 0.9,
+      },
+      {
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'passport-•••.pdf',
+        issuing_authority: 'U.S. Department of State',
+        issued_on: '2024-06-01',
+        expires_on: '2034-06-01',
+        extraction_confidence: 0.92,
+      },
+      {
+        document_kind: 'proof_of_address',
+        display_name: 'Utility bill',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'utility-bill-•••.pdf',
+        issuing_authority: 'SDGE',
+        issued_on: '2026-04-12',
+        extraction_confidence: 0.88,
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        field_key: 'spouse_last_name',
+        field_label: 'Spouse last name',
+        field_value_masked: 'Jordan',
+        source_type: 'manual',
+        is_verified: true,
+      },
+    ];
+    const basePlan = buildNameChangePlan({ profile, documents, extractedFields });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-ssa' || step.id === 'state-dmv'
+        ? { ...step, executionStatus: 'complete' as const }
+        : step),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('banks', profile, documents, extractedFields, plan);
+    expect(snapshot.ready).toBe(true);
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'review',
+      label: 'Split downstream rollout into partner-specific confirmations',
     });
   });
 
