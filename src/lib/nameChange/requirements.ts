@@ -13,6 +13,12 @@ import type {
 
 export const NAME_CHANGE_REQUIREMENT_DEFINITIONS: NameChangeRequirementDefinition[] = [
   {
+    key: 'case-legal-name-completeness',
+    label: 'Case legal-name setup is complete',
+    stage: 'proof',
+    description: 'Current and target legal-name fields should be complete before downstream packets and sequencing are treated as reliable.',
+  },
+  {
     key: 'legal-proof-document',
     label: 'Legal proof document on file',
     stage: 'proof',
@@ -129,8 +135,27 @@ export function evaluateNameChangeRequirements(
   const hasVerifiedOutOfStateMarriageCertificateGrounding = hasVerifiedOutOfStateMarriageCertificateNumber && hasVerifiedOutOfStateMarriageCertificateCounty;
   const legalBasisLabel = canonicalCase.legalBasis === 'court_order' ? 'court-order proof' : legalProofKind.replace(/_/g, ' ');
   const hasReviewedCourtOrderProof = legalProof.intakeStatus === 'reviewed';
+  const hasCurrentMiddleNameInPlay = Boolean(canonicalCase.currentName.middle || canonicalCase.targetName.middle);
+  const hasTargetMiddleNameInPlay = Boolean(canonicalCase.targetName.middle || canonicalCase.currentName.middle);
+  const missingCaseLegalNameFields = [
+    !canonicalCase.currentName.first ? 'current first name' : null,
+    hasCurrentMiddleNameInPlay && !canonicalCase.currentName.middle ? 'current middle name' : null,
+    !canonicalCase.currentName.last ? 'current last name' : null,
+    !canonicalCase.targetName.first ? 'target first name' : null,
+    hasTargetMiddleNameInPlay && !canonicalCase.targetName.middle ? 'target middle name' : null,
+    !canonicalCase.targetName.last ? 'target last name' : null,
+  ].filter((field): field is string => Boolean(field));
 
   const results: NameChangeRequirementResult[] = [
+    {
+      key: 'case-legal-name-completeness',
+      label: 'Case legal-name setup is complete',
+      stage: 'proof',
+      status: missingCaseLegalNameFields.length === 0 ? 'satisfied' : 'missing',
+      reason: missingCaseLegalNameFields.length === 0
+        ? 'Current and target legal name fields are populated for the modeled case.'
+        : `Case setup is still missing ${missingCaseLegalNameFields.join(', ')}.`,
+    },
     {
       key: 'legal-proof-document',
       label: 'Legal proof document on file',

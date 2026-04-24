@@ -112,11 +112,41 @@ describe('name change requirements skeleton', () => {
 
     const snapshot = evaluateNameChangeRequirements(makeCase(), documents, []);
     expect(snapshot.summary).toEqual({
-      satisfied: 13,
+      satisfied: 14,
       missing: 0,
       attention: 1,
     });
+    expect(snapshot.results.find((result) => result.key === 'case-legal-name-completeness')).toMatchObject({
+      status: 'satisfied',
+      reason: 'Current and target legal name fields are populated for the modeled case.',
+    });
     expect(snapshot.results.find((result) => result.key === 'passport-timing-risk')).toMatchObject({ status: 'attention' });
+  });
+
+  it('marks case legal-name setup missing when a conditional middle-name field is missing', () => {
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase({ current_middle_name: 'Marie', target_middle_name: '' }),
+      [],
+      [],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'case-legal-name-completeness')).toMatchObject({
+      status: 'missing',
+      reason: 'Case setup is still missing target middle name.',
+    });
+  });
+
+  it('does not require middle-name setup when neither current nor target middle name is in play', () => {
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase({ current_middle_name: '', target_middle_name: '' }),
+      [],
+      [],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'case-legal-name-completeness')).toMatchObject({
+      status: 'satisfied',
+      reason: 'Current and target legal name fields are populated for the modeled case.',
+    });
   });
 
   it('downgrades legal proof and identity coverage when metadata is too thin for downstream use', () => {
