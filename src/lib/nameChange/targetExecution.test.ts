@@ -2249,4 +2249,11 @@ describe('name change target execution snapshot', () => {
     const snapshot = buildNameChangeTargetExecutionSnapshot('courtOrder', makeCase(), [], [], plan);
     expect(snapshot.statusVault.notes[0]).toBe('Confirmed milestone: Certified legal proof is grounded and reviewed');
   });
+
+  it('falls back to the guided action detail when no note or milestone confirmation exists yet', () => {
+    const snapshot = buildNameChangeTargetExecutionSnapshot('dmv', makeCase(), [], []);
+
+    expect(snapshot.nextAction).not.toBeNull();
+    expect(snapshot.statusVault.notes[0]).toBe(snapshot.nextAction?.detail);
+  });
 });

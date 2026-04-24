@@ -111,7 +111,7 @@ function getTargetStatusVaultSnapshot(
     : milestoneNotes.length > 0
       ? milestoneNotes
     : nextAction
-      ? [nextAction.description]
+      ? [nextAction.detail]
       : blockers.slice(0, 2);
 
   return {
