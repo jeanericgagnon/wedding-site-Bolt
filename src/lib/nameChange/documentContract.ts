@@ -106,13 +106,14 @@ function metadataMissingForDocument(document: NameChangeDocumentInput | undefine
   if (document.document_kind === 'other') return [];
 
   const snapshotMetadata = buildDraftNameChangeDocumentMetadataFromSnapshot(document.extracted_snapshot);
+  const fileNameMasked = document.file_name_masked?.trim() || snapshotMetadata.fileNameMasked?.trim() || null;
   const issuingAuthority = document.issuing_authority?.trim() || snapshotMetadata.issuingAuthority?.trim() || null;
   const issuedOn = document.issued_on?.trim() || snapshotMetadata.issuedOn?.trim() || null;
   const expiresOn = document.expires_on?.trim() || snapshotMetadata.expiresOn?.trim() || null;
   const extractionConfidence = document.extraction_confidence ?? snapshotMetadata.extractionConfidence;
 
   const missing: string[] = [];
-  if (!document.file_name_masked?.trim() || isDraftNameChangePlaceholderDocument({ file_name_masked: document.file_name_masked })) missing.push('masked filename');
+  if (!fileNameMasked || isDraftNameChangePlaceholderDocument({ file_name_masked: fileNameMasked })) missing.push('masked filename');
   if (!issuingAuthority) missing.push('issuing authority');
   if (!issuedOn) missing.push('issued date');
 

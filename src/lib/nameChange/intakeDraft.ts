@@ -909,6 +909,7 @@ export function buildDraftNameChangeDocumentMetadataFromSnapshot(
   const normalizedSnapshot = normalizeDraftSnapshotPayload(snapshot);
   if (!normalizedSnapshot) {
     return {
+      fileNameMasked: null,
       issuingAuthority: null,
       issuedOn: null,
       expiresOn: null,
@@ -939,10 +940,22 @@ export function buildDraftNameChangeDocumentMetadataFromSnapshot(
   const extractionConfidenceValue = readValue('extraction_confidence', 'extractionConfidence', 'confidence');
   const parsedExtractionConfidence = extractionConfidenceValue == null ? null : Number.parseFloat(extractionConfidenceValue);
 
+  const fileNameMasked = readValue(
+    'file_name_masked',
+    'fileNameMasked',
+    'masked_filename',
+    'maskedFilename',
+    'file_name',
+    'fileName',
+    'filename',
+    'file',
+    'name',
+  );
   const issuedOnValue = readValue('issued_on', 'issuedOn', 'issuance_date', 'issuanceDate', 'issue_date', 'issueDate');
   const expiresOnValue = readValue('expires_on', 'expiresOn', 'expiration_date', 'expirationDate', 'expiry_date', 'expiryDate');
 
   return {
+    fileNameMasked: fileNameMasked ? normalizeDraftText(fileNameMasked) : null,
     issuingAuthority: readValue('issuing_authority', 'issuingAuthority', 'issuing_agency', 'issuingAgency', 'authority', 'issuer'),
     issuedOn: issuedOnValue ? normalizeDraftDateValue(issuedOnValue) : null,
     expiresOn: expiresOnValue ? normalizeDraftDateValue(expiresOnValue) : null,

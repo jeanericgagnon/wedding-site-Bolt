@@ -91,6 +91,7 @@ describe('name change intake draft helpers', () => {
       expiration_date: '2031-04-05T00:00:00Z',
       confidence: '0.88',
     })).toEqual({
+      fileNameMasked: null,
       issuingAuthority: ' California DMV ',
       issuedOn: '2026-04-05',
       expiresOn: '2031-04-05',
@@ -107,6 +108,7 @@ describe('name change intake draft helpers', () => {
         extractionConfidence: '0.94',
       },
     })).toEqual({
+      fileNameMasked: null,
       issuingAuthority: ' U.S. Department of State ',
       issuedOn: '2024-06-01',
       expiresOn: '2034-06-01',
@@ -123,6 +125,7 @@ describe('name change intake draft helpers', () => {
         extraction_confidence: '0.96',
       },
     })).toEqual({
+      fileNameMasked: null,
       issuingAuthority: ' County Clerk ',
       issuedOn: '2026-04-11',
       expiresOn: '2036-04-11',
@@ -141,6 +144,7 @@ describe('name change intake draft helpers', () => {
         confidence: '0.89',
       },
     })).toEqual({
+      fileNameMasked: null,
       issuingAuthority: 'Nevada DMV',
       issuedOn: '2026-02-03',
       expiresOn: '2034-02-03',
@@ -174,6 +178,7 @@ describe('name change intake draft helpers', () => {
         { label: 'extraction_confidence', value: '0.87' },
       ],
     })).toEqual({
+      fileNameMasked: null,
       issuingAuthority: 'California DMV',
       issuedOn: '2026-03-04',
       expiresOn: '2034-03-04',
@@ -188,6 +193,7 @@ describe('name change intake draft helpers', () => {
       expiryDate: '2033-01-08T00:00:00Z',
       confidence: '0.91',
     })).toEqual({
+      fileNameMasked: null,
       issuingAuthority: 'Texas DPS',
       issuedOn: '2025-01-08',
       expiresOn: '2033-01-08',
@@ -214,6 +220,7 @@ describe('name change intake draft helpers', () => {
       expiryDate: { maskedValue: { value: '2035-01-08T00:00:00Z' } },
       confidence: { fieldValue: { text: '0.91' } },
     })).toEqual({
+      fileNameMasked: null,
       issuingAuthority: 'U.S. Department of State',
       issuedOn: '2025-01-08',
       expiresOn: '2035-01-08',
@@ -246,6 +253,7 @@ describe('name change intake draft helpers', () => {
         { label: 'extraction_confidence', normalized_value: '0.97' },
       ],
     })).toEqual({
+      fileNameMasked: null,
       issuingAuthority: 'San Diego County Clerk',
       issuedOn: '2026-04-05',
       expiresOn: '2036-04-05',
@@ -272,6 +280,7 @@ describe('name change intake draft helpers', () => {
       { key: 'expiration_date', extractedValue: '2034-06-01T00:00:00Z' },
       { label: 'extraction_confidence', value: '0.94' },
     ])).toEqual({
+      fileNameMasked: null,
       issuingAuthority: 'U.S. Department of State',
       issuedOn: '2024-06-01',
       expiresOn: '2034-06-01',
@@ -302,6 +311,7 @@ describe('name change intake draft helpers', () => {
       { key: 'expiration_date', extractedValue: '2034-06-01T00:00:00Z' },
       { label: 'extraction_confidence', value: '0.94' },
     ]))).toEqual({
+      fileNameMasked: null,
       issuingAuthority: 'U.S. Department of State',
       issuedOn: '2024-06-01',
       expiresOn: '2034-06-01',
@@ -310,6 +320,7 @@ describe('name change intake draft helpers', () => {
 
     expect(buildDraftNameChangeExtractedFieldsFromSnapshot('draft-current_passport', '{bad json')).toEqual([]);
     expect(buildDraftNameChangeDocumentMetadataFromSnapshot('{bad json')).toEqual({
+      fileNameMasked: null,
       issuingAuthority: null,
       issuedOn: null,
       expiresOn: null,
@@ -348,6 +359,7 @@ describe('name change intake draft helpers', () => {
         ],
       },
     })).toEqual({
+      fileNameMasked: null,
       issuingAuthority: 'U.S. Department of State',
       issuedOn: '2024-06-01',
       expiresOn: '2034-06-01',
@@ -376,11 +388,37 @@ describe('name change intake draft helpers', () => {
 
     expect(buildDraftNameChangeDocumentMetadataFromSnapshot("```json\n[\n  { \"fieldKey\": \"issuing_authority\", \"value\": \"U.S. Department of State\" },\n  { \"field\": \"issuance_date\", \"normalizedValue\": \"2024-06-01T00:00:00Z\" },\n  { \"key\": \"expiration_date\", \"extractedValue\": \"2034-06-01T00:00:00Z\" },\n  { \"label\": \"extraction_confidence\", \"value\": \"0.94\" }\n]\n```"))
       .toEqual({
+        fileNameMasked: null,
         issuingAuthority: 'U.S. Department of State',
         issuedOn: '2024-06-01',
         expiresOn: '2034-06-01',
         extractionConfidence: 0.94,
       });
+  });
+
+  it('builds canonical masked filename truth from snapshot payloads', () => {
+    expect(buildDraftNameChangeDocumentMetadataFromSnapshot({
+      metadata: {
+        file_name_masked: 'passport-reviewed-•••.pdf',
+        issuing_authority: 'U.S. Department of State',
+      },
+    })).toEqual({
+      fileNameMasked: 'passport-reviewed-•••.pdf',
+      issuingAuthority: 'U.S. Department of State',
+      issuedOn: null,
+      expiresOn: null,
+      extractionConfidence: null,
+    });
+
+    expect(buildDraftNameChangeDocumentMetadataFromSnapshot([
+      { fieldKey: 'maskedFilename', value: 'license-reviewed-•••.pdf' },
+    ])).toEqual({
+      fileNameMasked: 'license-reviewed-•••.pdf',
+      issuingAuthority: null,
+      issuedOn: null,
+      expiresOn: null,
+      extractionConfidence: null,
+    });
   });
 
   it('collapses draft document labels into one clean downstream display name', () => {
