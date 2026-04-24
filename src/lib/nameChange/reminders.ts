@@ -140,13 +140,13 @@ const CONTEXT_REMINDER_CONFIGS: NameChangeContextReminderConfig[] = [
   },
   {
     id: 'reminder-marriage-name-mismatch',
-    label: 'Resolve the target surname path before filing the wrong packet',
+    label: 'Resolve the target legal-name path before filing the wrong packet',
     standardOffsetDays: 1,
     expeditedOffsetDays: 0,
     standardUrgency: 'high',
     expeditedUrgency: 'high',
     dependsOnStepId: 'eligibility-proof',
-    reason: 'If the requested surname is outside the California marriage shortcut, the assistant should not let you drift into the wrong packet or sequence.',
+    reason: 'If the requested target legal name falls outside the California marriage shortcut, the assistant should not let you drift into the wrong packet or sequence.',
     includeWhen: (plan) => Boolean(plan.summary.edgeCaseGuidance?.some((item) => item.id === 'edge-marriage-name-mismatch')),
   },
 ];

@@ -241,10 +241,10 @@ describe('name change engine', () => {
     );
   });
 
-  it('surfaces mismatch guidance when a marriage intake falls outside the california shortcut path', () => {
+  it('surfaces target-name mismatch guidance when a marriage intake falls outside the california shortcut path', () => {
     const plan = buildNameChangePlan(makeInput({
       legal_basis: 'marriage',
-      target_last_name: 'Evergreen',
+      target_first_name: 'Alicia',
       structured_intake: {
         spouseLastName: 'Jordan',
         travelBookedSoon: false,
@@ -254,7 +254,12 @@ describe('name change engine', () => {
 
     expect(plan.summary.edgeCaseGuidance).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ id: 'edge-marriage-name-mismatch', severity: 'warning' }),
+        expect.objectContaining({
+          id: 'edge-marriage-name-mismatch',
+          label: 'Marriage shortcut target-name mismatch',
+          detail: 'The requested target legal name does not fit the straight California marriage shortcut, so treat this as a court-order workflow unless the target name is corrected.',
+          severity: 'warning',
+        }),
         expect.objectContaining({ id: 'edge-court-order-path', severity: 'info' }),
       ]),
     );

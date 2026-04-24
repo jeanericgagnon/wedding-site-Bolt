@@ -527,8 +527,8 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
     ...(hasMarriageNameMismatch
       ? [{
         id: 'edge-marriage-name-mismatch',
-        label: 'Marriage shortcut name mismatch',
-        detail: 'The requested name change does not look like a straight California marriage-based surname path, so treat this as a court-order workflow unless the target name is corrected.',
+        label: 'Marriage shortcut target-name mismatch',
+        detail: 'The requested target legal name does not fit the straight California marriage shortcut, so treat this as a court-order workflow unless the target name is corrected.',
         severity: 'warning' as const,
       }]
       : []),

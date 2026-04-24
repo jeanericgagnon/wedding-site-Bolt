@@ -199,10 +199,10 @@ describe('name change reminder suggestions', () => {
     });
   });
 
-  it('adds a packet-warning reminder when marriage intake naming does not fit the shortcut path', () => {
+  it('adds a packet-warning reminder when marriage intake target legal name does not fit the shortcut path', () => {
     const reminders = buildNameChangeReminderSuggestions(buildNameChangePlan(makeInput({
       legal_basis: 'marriage',
-      target_last_name: 'Evergreen',
+      target_first_name: 'Alicia',
       structured_intake: {
         spouseLastName: 'Jordan',
         travelBookedSoon: false,
@@ -211,6 +211,8 @@ describe('name change reminder suggestions', () => {
     })));
 
     expect(reminders.find((reminder) => reminder.id === 'reminder-marriage-name-mismatch')).toMatchObject({
+      label: 'Resolve the target legal-name path before filing the wrong packet',
+      reason: 'If the requested target legal name falls outside the California marriage shortcut, the assistant should not let you drift into the wrong packet or sequence.',
       dependsOnStepId: 'eligibility-proof',
       urgency: 'high',
       suggestedOffsetDays: 1,
