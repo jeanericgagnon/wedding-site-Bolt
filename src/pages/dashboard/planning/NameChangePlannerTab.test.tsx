@@ -260,6 +260,53 @@ describe('NameChangePlannerTab', () => {
     expect(screen.getAllByText(/Latest touch/).length).toBeGreaterThan(0);
   });
 
+  it('keeps older reminder timing visible when execution is now the latest touch', () => {
+    const draft = makeDraft();
+    const basePlan = buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-ssa' ? {
+        ...step,
+        executionStatus: 'in_progress' as const,
+        executionNote: 'SSA packet already filed and waiting on receipt.',
+        executionUpdatedAt: '2026-04-24T22:40:00.000Z',
+      } : step),
+    };
+
+    render(
+      <NameChangePlannerTab
+        draft={draft}
+        documents={[]}
+        extractedFields={[]}
+        plan={plan}
+        reminders={[
+          {
+            reminder_key: 'ssa-follow-up',
+            label: 'SSA follow-up',
+            reason: 'Receipt still missing',
+            trigger_type: 'manual',
+            status: 'pending',
+            urgency: 'high',
+            focus_target_id: 'ssa',
+            updated_at: '2026-04-24T22:20:00.000Z',
+          },
+        ]}
+        saving={false}
+        onDraftChange={vi.fn()}
+        onStructuredIntakeChange={vi.fn()}
+        onDocumentsChange={vi.fn()}
+        onExtractedFieldsChange={vi.fn()}
+        onRemindersChange={vi.fn()}
+        onStepExecutionStatusChange={vi.fn()}
+        onStepExecutionNoteChange={vi.fn()}
+        onSave={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    expect(screen.getAllByText(/Latest touch .*execution/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Reminder updated/)).toBeInTheDocument();
+  });
+
   it('keeps plan-level execution timing visible when reminders are newer than execution', () => {
     const draft = makeDraft();
     const reminders = [

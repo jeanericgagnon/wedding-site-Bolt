@@ -110,6 +110,7 @@ interface TargetStatusVaultRow {
   reminderNote: string | null;
   updatedLabel: string | null;
   executionUpdatedLabel: string | null;
+  reminderUpdatedLabel: string | null;
   nextActionLabel: string | null;
   reminderLabel: string | null;
 }
@@ -615,6 +616,10 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     const targetReminders = effectiveReminders.filter((reminder) => reminder.focus_target_id === snapshot.targetKey && reminder.status !== 'dismissed');
     const openReminderCount = targetReminders.filter((reminder) => reminder.status === 'pending' || reminder.status === 'scheduled').length;
     const highUrgencyCount = targetReminders.filter((reminder) => reminder.urgency === 'high' && reminder.status !== 'sent').length;
+    const latestReminderAt = targetReminders
+      .map((reminder) => reminder.updated_at ?? null)
+      .filter((value): value is string => Boolean(value))
+      .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
     return {
       key: snapshot.targetKey,
       title: snapshot.targetLabel,
@@ -643,6 +648,10 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       executionUpdatedLabel: snapshot.statusVault.lastUpdatedAt
         && snapshot.statusVault.lastUpdatedAt !== snapshot.statusVault.lastTouchedAt
         ? `Execution updated ${formatNameChangeExecutionDateTime(snapshot.statusVault.lastUpdatedAt)}`
+        : null,
+      reminderUpdatedLabel: latestReminderAt
+        && latestReminderAt !== snapshot.statusVault.lastTouchedAt
+        ? `Reminder updated ${formatNameChangeExecutionDateTime(latestReminderAt)}`
         : null,
       nextActionLabel: snapshot.nextAction?.label ?? null,
       reminderLabel: openReminderCount > 0
@@ -1246,6 +1255,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                   {row.reminderLabel && <p className="mt-2 text-xs text-text-secondary">Reminders: {row.reminderLabel}</p>}
                   {row.updatedLabel && <p className="mt-3 text-xs text-text-secondary">{row.updatedLabel}</p>}
                   {row.executionUpdatedLabel && <p className="mt-1 text-xs text-text-secondary">{row.executionUpdatedLabel}</p>}
+                  {row.reminderUpdatedLabel && <p className="mt-1 text-xs text-text-secondary">{row.reminderUpdatedLabel}</p>}
                 </div>
               ))}
             </div>
