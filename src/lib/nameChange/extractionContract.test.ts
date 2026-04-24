@@ -288,6 +288,44 @@ describe('name change extraction contract', () => {
     expect(getDocumentLinkedCapturedFieldKeys(documents, extractedFields, 'current_passport')).toEqual(['issuance_date']);
   });
 
+  it('treats opaque file-id aliases as canonical truth for the selected document kind', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'draft-current_passport',
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'passport-upload-final.pdf',
+        field_key: 'first_name',
+        field_label: 'First name',
+        field_value_masked: 'Alex',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'passport-upload-final.pdf',
+        field_key: 'last_name',
+        field_label: 'Last name',
+        field_value_masked: 'Rivera',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+
+    const snapshot = buildNameChangeExtractionContractSnapshot(makeCase(), documents, extractedFields);
+
+    expect(snapshot.currentPassport).toMatchObject({
+      firstName: 'Alex',
+      lastName: 'Rivera',
+    });
+    expect(getDocumentLinkedCapturedFieldKeys(documents, extractedFields, 'current_passport')).toEqual(['first_name', 'last_name']);
+  });
+
   it('treats hash-labeled case number extraction keys as canonical contract truth', () => {
     const documents: NameChangeDocumentInput[] = [
       {
