@@ -745,6 +745,53 @@ describe('name change document intake contract', () => {
     });
   });
 
+  it('prefers the reviewed duplicate with richer captured extraction truth when metadata ties', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase(),
+      [
+        {
+          id: 'doc-reviewed-sparse',
+          document_kind: 'current_passport',
+          display_name: 'Passport sparse',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'passport-sparse-•••.pdf',
+          issuing_authority: 'U.S. Department of State',
+          issued_on: '2024-06-01',
+          expires_on: '2034-06-01',
+          extraction_confidence: 0.92,
+        },
+        {
+          id: 'doc-reviewed-rich',
+          document_kind: 'current_passport',
+          display_name: 'Passport rich',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'passport-rich-•••.pdf',
+          issuing_authority: 'U.S. Department of State',
+          issued_on: '2024-06-01',
+          expires_on: '2034-06-01',
+          extraction_confidence: 0.92,
+          extracted_snapshot: {
+            fields: {
+              issuance_date: { value: '2024-06-01' },
+              first_name: { value: 'Taylor' },
+              last_name: { value: 'Rivera' },
+            },
+          },
+        },
+      ],
+      [],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'current_passport')).toMatchObject({
+      documentId: 'doc-reviewed-rich',
+      displayName: 'Passport rich',
+      capturedExtractionFields: ['issuance_date', 'first_name', 'last_name'],
+      metadataReady: 0,
+    });
+  });
+
   it('prefers persisted documents over draft placeholders when both exist', () => {
     const snapshot = buildNameChangeDocumentIntakeSnapshot(
       makeCase(),

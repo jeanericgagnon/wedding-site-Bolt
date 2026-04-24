@@ -162,7 +162,9 @@ function isContractPlaceholderDocument(document: NameChangeDocumentInput | undef
 function getDocumentContractPriority(
   document: NameChangeDocumentInput,
   kind: NameChangeDocumentInput['document_kind'],
+  extractedFields: NameChangeExtractedFieldInput[],
 ) {
+  const definition = NAME_CHANGE_DOCUMENT_CONTRACTS.find((contract) => contract.kind === canonicalizeNameChangeDocumentKind(kind));
   const placeholderDocument = isContractPlaceholderDocument(document);
   const reviewedMetadataReadyWeight = !placeholderDocument && document.intake_status === 'reviewed' && metadataMissingForDocument(document).length === 0 ? 1 : 0;
   const persistedDocumentWeight = placeholderDocument ? 0 : 1;
@@ -172,12 +174,23 @@ function getDocumentContractPriority(
       ? 1
       : 0;
   const canonicalKindWeight = document.document_kind === canonicalizeNameChangeDocumentKind(kind) ? 1 : 0;
-  return (reviewedMetadataReadyWeight * 10000) + (persistedDocumentWeight * 5000) + (intakeWeight * 1000) + (canonicalKindWeight * 100) - metadataMissingForDocument(document).length;
+  const normalizedDocumentId = normalizeDraftNameChangeDocumentId(document.id ?? null, kind);
+  const snapshotExtractedFields = buildDraftNameChangeExtractedFieldsFromSnapshot(document.id ?? null, document.extracted_snapshot, kind);
+  const extractedFieldWeight = definition
+    ? [...new Set(
+      [...extractedFields, ...snapshotExtractedFields]
+        .filter((field) => field.is_verified && normalizeDraftNameChangeDocumentId(field.document_id, kind) === normalizedDocumentId)
+        .map((field) => normalizeDraftFieldKey(field.field_key) as NameChangeExtractionFieldKey)
+        .filter((fieldKey): fieldKey is NameChangeExtractionFieldKey => definition.extractionFields.includes(fieldKey)),
+    )].length
+    : 0;
+  return (reviewedMetadataReadyWeight * 10000) + (persistedDocumentWeight * 5000) + (intakeWeight * 1000) + (canonicalKindWeight * 100) + (extractedFieldWeight * 10) - metadataMissingForDocument(document).length;
 }
 
 function findBestContractDocument(
   documents: NameChangeDocumentInput[],
   kind: NameChangeDocumentInput['document_kind'],
+  extractedFields: NameChangeExtractedFieldInput[] = [],
 ) {
   const canonicalKind = canonicalizeNameChangeDocumentKind(kind);
   const matchingDocuments = documents.filter((document) => matchesNameChangeDocumentKind(document.document_kind, kind));
@@ -190,7 +203,7 @@ function findBestContractDocument(
 
   return rankedDocuments
     .sort((left, right) => {
-      const priorityDelta = getDocumentContractPriority(right, kind) - getDocumentContractPriority(left, kind);
+      const priorityDelta = getDocumentContractPriority(right, kind, extractedFields) - getDocumentContractPriority(left, kind, extractedFields);
       if (priorityDelta !== 0) return priorityDelta;
       return (right.id ?? '').localeCompare(left.id ?? '');
     })[0];
@@ -202,7 +215,7 @@ function getContractDocumentCapturedFieldKeys(
   extractedFields: NameChangeExtractedFieldInput[],
   expectedFields: NameChangeExtractionFieldKey[],
 ): NameChangeExtractionFieldKey[] {
-  const canonicalDocument = findBestContractDocument(documents, kind);
+  const canonicalDocument = findBestContractDocument(documents, kind, extractedFields);
   const canonicalDocumentId = canonicalDocument?.id?.trim() || null;
   const canonicalDocumentIsPlaceholder = isContractPlaceholderDocument(canonicalDocument);
   const canonicalDocumentUsesDraftId = typeof canonicalDocumentId === 'string' && /^draft/i.test(canonicalDocumentId);
@@ -274,9 +287,13 @@ function buildDocumentContractExtractedFields(
   documents: NameChangeDocumentInput[],
   extractedFields: NameChangeExtractedFieldInput[],
 ): NameChangeExtractedFieldInput[] {
+  const priorityExtractedFields = [
+    ...extractedFields,
+    ...documents.flatMap((document) => buildDraftNameChangeExtractedFieldsFromSnapshot(document.id ?? null, document.extracted_snapshot, document.document_kind)),
+  ];
   const canonicalSnapshotDocumentIds = new Set(
     NAME_CHANGE_DOCUMENT_CONTRACTS
-      .map((definition) => findBestContractDocument(documents, definition.kind)?.id?.trim() || null)
+      .map((definition) => findBestContractDocument(documents, definition.kind, priorityExtractedFields)?.id?.trim() || null)
       .filter((documentId): documentId is string => Boolean(documentId)),
   );
   const snapshotExtractedFields = documents.flatMap((document) => {
@@ -301,7 +318,7 @@ export function buildNameChangeDocumentIntakeSnapshot(
 
     const statuses: NameChangeDocumentContractStatus[] = NAME_CHANGE_DOCUMENT_CONTRACTS.map((definition) => {
     const documentState = canonicalCase.documents[definition.kind];
-    const canonicalDocument = findBestContractDocument(documents, definition.kind);
+    const canonicalDocument = findBestContractDocument(documents, definition.kind, contractExtractedFields);
     const typedCapturedFields = getContractDocumentCapturedFieldKeys(documents, definition.kind, contractExtractedFields, definition.extractionFields);
     const required = definition.requiredFor.includes('all') || definition.requiredFor.includes(canonicalCase.legalBasis);
     const metadataMissing = metadataMissingForDocument(canonicalDocument);
