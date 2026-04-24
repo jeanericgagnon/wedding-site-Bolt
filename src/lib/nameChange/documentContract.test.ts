@@ -2168,6 +2168,57 @@ describe('name change document intake contract', () => {
     });
   });
 
+  it('treats ideographic-dot-labeled extracted values as canonical document truth', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase({ legal_basis: 'marriage', county_residence: 'Orange' }),
+      [
+        {
+          id: 'doc-marriage-ideographic-dot',
+          document_kind: 'marriage_certificate',
+          display_name: 'Certified marriage certificate',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'marriage-certificate-•••.pdf',
+          issuing_authority: 'Orange County Clerk',
+          issued_on: '2026-04-05',
+          extraction_confidence: 0.96,
+        },
+      ],
+      [
+        {
+          document_id: 'doc-marriage-ideographic-dot',
+          field_key: 'county',
+          field_label: 'County',
+          field_value_masked: 'Residence county。 orange county',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-marriage-ideographic-dot',
+          field_key: 'certificate_number',
+          field_label: 'Certificate number',
+          field_value_masked: 'Certificate number。 mc - 123',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-marriage-ideographic-dot',
+          field_key: 'issuance_date',
+          field_label: 'Issued on',
+          field_value_masked: 'Issued on。 2026-04-05',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+      ],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'marriage_certificate')).toMatchObject({
+      capturedExtractionFields: expect.arrayContaining(['county', 'certificate_number', 'issuance_date']),
+      missingExtractionFields: expect.not.arrayContaining(['county', 'certificate_number', 'issuance_date']),
+      canonicalConflicts: [],
+    });
+  });
+
   it('treats labeled person-name values as canonical document truth', () => {
     const snapshot = buildNameChangeDocumentIntakeSnapshot(
       makeCase({ legal_basis: 'court_order', target_first_name: 'Alicia', target_last_name: 'Smith' }),
