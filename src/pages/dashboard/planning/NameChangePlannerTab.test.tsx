@@ -61,4 +61,50 @@ describe('NameChangePlannerTab', () => {
     expect(onDraftChange).toHaveBeenCalledWith({ target_middle_name: 'Lane' });
     expect(document.getElementById('case-setup')).not.toBeNull();
   });
+
+  it('lets persisted reminder routing jump straight to the linked planner target', () => {
+    const draft = makeDraft();
+    const scrollIntoView = vi.fn();
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = scrollIntoView;
+
+    try {
+      render(
+        <NameChangePlannerTab
+          draft={draft}
+          documents={[]}
+          extractedFields={[]}
+          plan={buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] })}
+          reminders={[
+            {
+              reminder_key: 'reminder-case-legal-name-setup',
+              label: 'Finish case legal-name setup before downstream filing',
+              reason: 'Case setup is still missing target middle name.',
+              depends_on_step_id: 'eligibility-proof',
+              suggested_offset_days: 0,
+              urgency: 'high',
+              status: 'pending',
+              section_key: 'cleanup',
+              planner_intent: 'open_execution_card',
+              focus_target_id: 'case-setup',
+            },
+          ]}
+          saving={false}
+          onDraftChange={vi.fn()}
+          onStructuredIntakeChange={vi.fn()}
+          onDocumentsChange={vi.fn()}
+          onExtractedFieldsChange={vi.fn()}
+          onRemindersChange={vi.fn()}
+          onStepExecutionStatusChange={vi.fn()}
+          onStepExecutionNoteChange={vi.fn()}
+          onSave={vi.fn().mockResolvedValue(undefined)}
+        />,
+      );
+
+      fireEvent.click(screen.getAllByRole('button', { name: 'Open linked execution' })[0]);
+      expect(scrollIntoView).toHaveBeenCalled();
+    } finally {
+      HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    }
+  });
 });

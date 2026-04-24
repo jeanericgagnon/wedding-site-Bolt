@@ -103,6 +103,10 @@ function getActionFeedCtaLabel(intent: 'open_execution_card' | 'open_document_re
   return intent === 'open_execution_card' ? 'Open execution card' : 'Open document repair';
 }
 
+function getReminderCtaLabel(intent?: 'open_execution_card') {
+  return intent === 'open_execution_card' ? 'Open linked execution' : 'Open linked step';
+}
+
 function getActionFeedSectionLabel(sectionKey: 'core-government' | 'work-identity' | 'institutional' | 'cleanup' | 'documents') {
   switch (sectionKey) {
     case 'core-government':
@@ -2039,6 +2043,11 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 <p className="mt-2 text-xs font-medium text-text-primary">Follow-up target: {item.suggestedOffsetDays} day{item.suggestedOffsetDays === 1 ? '' : 's'} after the triggering step</p>
                 <p className="mt-2 text-xs text-text-secondary">Last workflow touch: {item.lastTouchedAt ? new Date(item.lastTouchedAt).toLocaleString() : 'No execution updates yet'}</p>
                 <div className="mt-3 flex gap-2">
+                  {item.focusTargetId && (
+                    <Button variant="ghost" size="sm" onClick={() => scrollToPlannerTarget(item.focusTargetId)}>
+                      {getReminderCtaLabel(item.plannerIntent)}
+                    </Button>
+                  )}
                   {item.reminderStatus !== 'scheduled' && (
                     <Button variant="ghost" size="sm" onClick={() => onRemindersChange(updateNameChangeReminderStatus(effectiveReminders, item.reminderKey, 'scheduled'), { action: 'single-update' })}>Schedule</Button>
                   )}
@@ -2080,6 +2089,11 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 <div className="mt-3 flex items-center justify-between gap-3">
                   <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{reminder.status}</span>
                   <div className="flex gap-2">
+                    {reminder.focus_target_id && (
+                      <Button variant="ghost" size="sm" onClick={() => scrollToPlannerTarget(reminder.focus_target_id!)}>
+                        {getReminderCtaLabel(reminder.planner_intent)}
+                      </Button>
+                    )}
                     {reminder.status !== 'scheduled' && (
                       <Button variant="ghost" size="sm" onClick={() => onRemindersChange(updateNameChangeReminderStatus(effectiveReminders, reminder.reminder_key, 'scheduled'), { action: 'single-update' })}>Schedule</Button>
                     )}

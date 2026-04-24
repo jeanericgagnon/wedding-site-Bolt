@@ -600,6 +600,9 @@ export interface NameChangeReminderRecord {
   suggested_offset_days: number;
   urgency: 'high' | 'medium' | 'low';
   status: 'pending' | 'scheduled' | 'sent' | 'dismissed';
+  section_key?: 'core-government' | 'work-identity' | 'institutional' | 'cleanup';
+  planner_intent?: 'open_execution_card';
+  focus_target_id?: string;
   created_at: string;
   updated_at: string;
 }
