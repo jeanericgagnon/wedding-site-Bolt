@@ -179,6 +179,18 @@ export interface NameChangePlanSummary {
   cautionNotes: string[];
   missingInputs: string[];
   readinessPercent: number;
+  milestoneChecklist?: Array<{
+    id: string;
+    label: string;
+    status: 'ready' | 'blocked' | 'upcoming';
+    dependsOnStepIds: string[];
+  }>;
+  accountUpdateTemplates?: Array<{
+    id: string;
+    audience: string;
+    subject: string;
+    body: string;
+  }>;
   executionCounts?: {
     todo: number;
     in_progress: number;

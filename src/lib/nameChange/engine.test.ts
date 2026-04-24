@@ -70,6 +70,19 @@ describe('name change engine', () => {
     const institutionsStep = plan.steps.find((step) => step.phase === 'institutional');
     expect(institutionsStep?.institutions).toContain('Employer payroll / HR');
     expect(plan.steps.find((step) => step.id === 'institution-irs-employer')?.timing).toContain('SSA');
+    expect(plan.summary.milestoneChecklist).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'milestone-legal-proof', status: 'ready', dependsOnStepIds: ['eligibility-proof'] }),
+        expect.objectContaining({ id: 'milestone-account-rollout', status: 'upcoming' }),
+      ]),
+    );
+    expect(plan.summary.accountUpdateTemplates).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ audience: 'Employer payroll / HR', subject: 'Name change update for payroll and benefits' }),
+        expect.objectContaining({ audience: 'Bank or credit card support' }),
+        expect.objectContaining({ audience: 'Insurance or subscription support' }),
+      ]),
+    );
   });
 
   it('surfaces blockers when the legal proof doc is missing', () => {
@@ -78,6 +91,12 @@ describe('name change engine', () => {
     expect(plan.summary.missingInputs).toContain('Certified marriage certificate metadata');
     expect(plan.summary.nextBestAction).toContain('Fill:');
     expect(plan.steps.find((step) => step.id === 'federal-ssa')?.status).toBe('blocked');
+    expect(plan.summary.milestoneChecklist).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'milestone-legal-proof', status: 'blocked' }),
+        expect.objectContaining({ id: 'milestone-ssa', status: 'blocked' }),
+      ]),
+    );
   });
 
   it('keeps legal-proof steps blocked until intake proof is reviewed', () => {

@@ -289,6 +289,52 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
   const readinessDenominator = Math.max(1, steps.length + missingInputs.length);
   const readinessNumerator = steps.filter((step) => step.status !== 'blocked').length + (missingInputs.length === 0 ? 1 : 0);
   const readinessPercent = Math.max(0, Math.min(100, Math.round((readinessNumerator / readinessDenominator) * 100)));
+  const milestoneChecklist = [
+    {
+      id: 'milestone-legal-proof',
+      label: 'Certified legal proof is grounded and reviewed',
+      status: legalProofReady ? 'ready' : 'blocked',
+      dependsOnStepIds: ['eligibility-proof'],
+    },
+    {
+      id: 'milestone-ssa',
+      label: 'Social Security update is ready to file',
+      status: legalProofReady ? 'ready' : 'blocked',
+      dependsOnStepIds: ['eligibility-proof', 'federal-ssa'],
+    },
+    {
+      id: 'milestone-photo-id',
+      label: 'Primary photo ID can move right after SSA',
+      status: legalProofReady ? 'upcoming' : 'blocked',
+      dependsOnStepIds: ['federal-ssa', 'state-dmv'],
+    },
+    {
+      id: 'milestone-account-rollout',
+      label: 'Banks, payroll, insurance, and subscriptions can be updated from one packet',
+      status: legalProofReady ? 'upcoming' : 'blocked',
+      dependsOnStepIds: ['state-dmv', 'institutions-rollout'],
+    },
+  ] as const;
+  const accountUpdateTemplates = [
+    {
+      id: 'template-payroll',
+      audience: 'Employer payroll / HR',
+      subject: 'Name change update for payroll and benefits',
+      body: 'Hi team — I have legally updated my name and would like payroll, benefits, and internal records updated to match. I can provide my updated Social Security record, photo ID, and legal name-change proof if you need them. Please let me know the exact documents or form you want from me and when the update will be reflected in payroll.',
+    },
+    {
+      id: 'template-bank',
+      audience: 'Bank or credit card support',
+      subject: 'Request to update account name after legal name change',
+      body: 'Hello — I recently completed a legal name change and need the name on my account updated. I can provide my updated government ID plus legal name-change proof. Please tell me the fastest secure path to submit the documents and confirm whether cards, checks, and online banking profile details will all update together.',
+    },
+    {
+      id: 'template-insurance',
+      audience: 'Insurance or subscription support',
+      subject: 'Please update my account to my legal name',
+      body: 'Hi — I need to update this account to my current legal name so billing, coverage, and member records stay aligned. I can share the minimum proof you require, such as updated ID or legal name-change documentation. Please confirm what you need and whether any cards, autopay records, or beneficiary settings should also be refreshed.',
+    },
+  ] as const;
   const executionCounts = steps.reduce((counts, step) => {
     const key = step.executionStatus ?? 'todo';
     counts[key] += 1;
@@ -322,6 +368,8 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
       cautionNotes,
       missingInputs,
       readinessPercent,
+      milestoneChecklist: [...milestoneChecklist],
+      accountUpdateTemplates: [...accountUpdateTemplates],
       executionCounts,
       nextBestAction,
     },
