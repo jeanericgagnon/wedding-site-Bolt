@@ -192,6 +192,24 @@ describe('name change reminder suggestions', () => {
     });
   });
 
+  it('adds a packet-warning reminder when marriage intake naming does not fit the shortcut path', () => {
+    const reminders = buildNameChangeReminderSuggestions(buildNameChangePlan(makeInput({
+      legal_basis: 'marriage',
+      target_last_name: 'Evergreen',
+      structured_intake: {
+        spouseLastName: 'Jordan',
+        travelBookedSoon: false,
+        wantsDocumentIntakeHelp: true,
+      },
+    })));
+
+    expect(reminders.find((reminder) => reminder.id === 'reminder-marriage-name-mismatch')).toMatchObject({
+      dependsOnStepId: 'eligibility-proof',
+      urgency: 'high',
+      suggestedOffsetDays: 1,
+    });
+  });
+
   it('summarizes reminder status counts', () => {
     const summary = summarizeNameChangeReminders([
       {

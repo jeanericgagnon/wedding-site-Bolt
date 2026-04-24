@@ -138,6 +138,17 @@ const CONTEXT_REMINDER_CONFIGS: NameChangeContextReminderConfig[] = [
     reason: 'Hyphenated or dual-surname cases need the exact same last-name formatting across SSA, DMV, passport, payroll, and account templates.',
     includeWhen: (plan) => Boolean(plan.summary.edgeCaseGuidance?.some((item) => item.id === 'edge-hyphenated-name' || item.id === 'edge-dual-name-path')),
   },
+  {
+    id: 'reminder-marriage-name-mismatch',
+    label: 'Resolve the target surname path before filing the wrong packet',
+    standardOffsetDays: 1,
+    expeditedOffsetDays: 0,
+    standardUrgency: 'high',
+    expeditedUrgency: 'high',
+    dependsOnStepId: 'eligibility-proof',
+    reason: 'If the requested surname is outside the California marriage shortcut, the assistant should not let you drift into the wrong packet or sequence.',
+    includeWhen: (plan) => Boolean(plan.summary.edgeCaseGuidance?.some((item) => item.id === 'edge-marriage-name-mismatch')),
+  },
 ];
 
 function raiseUrgency(

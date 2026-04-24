@@ -180,6 +180,7 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
   const normalizedCurrentLastName = normalize(input.profile.current_last_name);
   const normalizedTargetLastName = normalize(input.profile.target_last_name);
   const normalizedSpouseLastName = normalize(String(input.profile.structured_intake.spouseLastName ?? ''));
+  const hasMarriageNameMismatch = input.profile.legal_basis === 'marriage' && legalBasis === 'court_order';
   const targetLastTokens = normalizedTargetLastName.split(/[-\s]+/).filter(Boolean);
   const hasHyphenatedTargetLastName = normalizedTargetLastName.includes('-');
   const hasDualLastNamePath = Boolean(
@@ -441,6 +442,14 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
         id: 'edge-out-of-state-proof',
         label: 'Out-of-state certificate grounding gap',
         detail: 'County / certificate reference fields still need to be grounded before the free assistant can safely treat the marriage certificate as execution-ready proof.',
+        severity: 'warning' as const,
+      }]
+      : []),
+    ...(hasMarriageNameMismatch
+      ? [{
+        id: 'edge-marriage-name-mismatch',
+        label: 'Marriage shortcut name mismatch',
+        detail: 'The requested name change does not look like a straight California marriage-based surname path, so treat this as a court-order workflow unless the target name is corrected.',
         severity: 'warning' as const,
       }]
       : []),
