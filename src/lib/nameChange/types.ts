@@ -364,6 +364,9 @@ export interface NameChangeDocumentContractStatus {
   label: string;
   required: boolean;
   preferredForAutofill: boolean;
+  documentId: string | null;
+  displayName: string | null;
+  fileNameMasked: string | null;
   intakeStatus: NameChangeDocumentInput['intake_status'];
   storageMode: NameChangeDocumentInput['storage_mode'];
   extractionFieldCount: number;

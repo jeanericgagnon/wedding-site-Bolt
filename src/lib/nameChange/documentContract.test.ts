@@ -823,9 +823,39 @@ describe('name change document intake contract', () => {
     );
 
     expect(snapshot.documents.find((document) => document.kind === 'current_passport')).toMatchObject({
+      documentId: 'draft-current_passport',
+      displayName: 'Passport reviewed from snapshot',
+      fileNameMasked: 'passport-reviewed-•••.pdf',
       intakeStatus: 'reviewed',
       metadataMissing: [],
       metadataReady: 1,
+    });
+  });
+
+  it('surfaces the chosen canonical document identity for downstream workflows', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase(),
+      [
+        {
+          id: 'doc-court-order-review',
+          document_kind: 'court_order',
+          display_name: 'Filed court order',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'court-order-filed-•••.pdf',
+          issuing_authority: 'San Diego Superior Court',
+          issued_on: '2026-04-05',
+          extraction_confidence: 0.95,
+        },
+      ],
+      [],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'court_order')).toMatchObject({
+      documentId: 'doc-court-order-review',
+      displayName: 'Filed court order',
+      fileNameMasked: 'court-order-filed-•••.pdf',
+      intakeStatus: 'reviewed',
     });
   });
 
