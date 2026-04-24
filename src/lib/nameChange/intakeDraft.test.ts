@@ -130,6 +130,24 @@ describe('name change intake draft helpers', () => {
     });
   });
 
+  it('builds canonical document metadata from meta and documentInfo snapshot containers', () => {
+    expect(buildDraftNameChangeDocumentMetadataFromSnapshot({
+      meta: {
+        issuingAuthority: 'Nevada DMV',
+        issuanceDate: '2026-02-03T00:00:00Z',
+      },
+      documentInfo: {
+        expirationDate: '2034-02-03T00:00:00Z',
+        confidence: '0.89',
+      },
+    })).toEqual({
+      issuingAuthority: 'Nevada DMV',
+      issuedOn: '2026-02-03',
+      expiresOn: '2034-02-03',
+      extractionConfidence: 0.89,
+    });
+  });
+
   it('collapses draft document labels into one clean downstream display name', () => {
     expect(createDraftNameChangeDocument('marriage_certificate', '  Certified   marriage   certificate  ')).toMatchObject({
       display_name: 'Certified marriage certificate',
