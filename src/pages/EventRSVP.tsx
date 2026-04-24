@@ -7,6 +7,7 @@ import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Textarea } from '../components/ui/Textarea';
 import { Header, Footer } from '../components/layout';
+import { formatEventRsvpDate } from './eventRsvpDate';
 
 interface Guest {
   id: string;
@@ -380,15 +381,6 @@ export default function EventRSVP() {
     loadGuestAndEvents({ preserveVisibleState: true });
   }, [loadGuestAndEvents, selectedEvent, submitting, token]);
 
-  function formatDate(dateString: string) {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'long',
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  }
-
   function formatTime(timeString: string | null) {
     if (!timeString) return '';
     const [hours, minutes] = timeString.split(':');
@@ -662,7 +654,7 @@ export default function EventRSVP() {
                     <div className="space-y-2">
                       <div className="flex items-center text-neutral-600">
                         <Calendar className="w-5 h-5 mr-2 flex-shrink-0" />
-                        <span>{formatDate(invitation.event.event_date)}</span>
+                        <span>{formatEventRsvpDate(invitation.event.event_date)}</span>
                       </div>
 
                       {invitation.event.start_time && (
@@ -759,7 +751,7 @@ export default function EventRSVP() {
                   <p className="text-sm text-neutral-500 mt-1">
                     {(() => {
                       const inv = invitations.find(i => i.id === selectedEvent);
-                      return inv ? formatDate(inv.event.event_date) : '';
+                      return inv ? formatEventRsvpDate(inv.event.event_date) : '';
                     })()}
                   </p>
                 </div>
