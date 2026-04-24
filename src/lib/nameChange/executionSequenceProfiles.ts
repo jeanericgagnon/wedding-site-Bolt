@@ -94,6 +94,26 @@ function buildEmploymentContextDependency(profile: NameChangeCaseInput, label: s
   };
 }
 
+function buildDualPartnerExecutionDependency(
+  profile: NameChangeCaseInput,
+  key: string,
+  label: string,
+  reason: string,
+): NameChangeExecutionDependency {
+  const dualPartner = profile.structured_intake?.bothPartnersChangeName === true;
+  return {
+    key,
+    label,
+    required: false,
+    status: dualPartner ? 'attention' : 'satisfied',
+    reason: dualPartner
+      ? reason
+      : 'Only one partner is changing names, so no dual-chain execution split is required here.',
+    nextActionCategory: 'review',
+    blocksReady: false,
+  };
+}
+
 const buildLegalAndIdentityDependencies: NameChangeDependencyRecipe = ({ requirements }) => [
   buildRequirementDependency(requirements.caseLegalNameCompleteness, 'case-legal-name-completeness', 'Case legal-name setup complete', true, 'Case legal-name completeness has not been evaluated.', false, 'dependency'),
   buildRequirementDependency(requirements.legalProof, 'legal-proof-document', 'Legal proof document ready', true, 'Legal proof requirement not evaluated.', false, 'document'),
@@ -106,7 +126,18 @@ const buildStrictLegalAndIdentityDependencies: NameChangeDependencyRecipe = ({ r
   buildRequirementDependency(requirements.identityCoverage, 'identity-document-coverage', 'Identity document coverage', true, 'Identity coverage requirement not evaluated.', true, 'document'),
 ];
 
-const buildDmvDependencies: NameChangeDependencyRecipe = ({ intake, requirements, prerequisiteDependencies }) => [
+const buildSsaDependencies: NameChangeDependencyRecipe = ({ profile, requirements, prerequisiteDependencies }) => [
+  ...buildStrictLegalAndIdentityDependencies({ profile, intake: null as never, requirements, prerequisiteDependencies }),
+  buildDualPartnerExecutionDependency(
+    profile,
+    'dual-partner-ssa-split',
+    'Dual-partner SSA chain split',
+    'Both partners are changing names, so SSA work should branch into separate packets, evidence copies, and submission follow-through for each partner.',
+  ),
+  ...prerequisiteDependencies,
+];
+
+const buildDmvDependencies: NameChangeDependencyRecipe = ({ profile, intake, requirements, prerequisiteDependencies }) => [
   buildRequirementDependency(requirements.caseLegalNameCompleteness, 'case-legal-name-completeness', 'Case legal-name setup complete', true, 'Case legal-name completeness has not been evaluated.', true, 'dependency'),
   buildRequirementDependency(requirements.legalProof, 'legal-proof-document', 'Legal proof document ready', true, 'Legal proof requirement not evaluated.', true, 'document'),
   buildRequirementDependency(requirements.launchStateAlignment, 'launch-state-alignment', 'California launch-state alignment', true, 'California launch-state alignment has not been evaluated.', true, 'dependency'),
@@ -118,6 +149,12 @@ const buildDmvDependencies: NameChangeDependencyRecipe = ({ intake, requirements
     satisfiedReason: 'California-facing identity or address support exists in intake.',
     missingReason: 'No California-facing identity or address support exists in intake yet.',
   }),
+  buildDualPartnerExecutionDependency(
+    profile,
+    'dual-partner-dmv-split',
+    'Dual-partner DMV chain split',
+    'Both partners are changing names, so DMV work should branch into separate appointment, temporary-ID, and title/registration follow-through per partner.',
+  ),
   ...prerequisiteDependencies,
 ];
 
@@ -180,7 +217,7 @@ function buildPhotoIdPacketDependencies(config: {
   supportSatisfiedReason: string;
   supportMissingReason: string;
 }): NameChangeDependencyRecipe {
-  return ({ intake, requirements, prerequisiteDependencies }) => [
+  return ({ profile, intake, requirements, prerequisiteDependencies }) => [
     ...buildLegalAndIdentityDependencies({ profile: null as never, intake, requirements, prerequisiteDependencies }),
     buildDocumentSupportDependency(intake, {
       key: config.supportKey,
@@ -189,6 +226,12 @@ function buildPhotoIdPacketDependencies(config: {
       satisfiedReason: config.supportSatisfiedReason,
       missingReason: config.supportMissingReason,
     }),
+    buildDualPartnerExecutionDependency(
+      profile,
+      `dual-partner-${config.supportKey}`,
+      'Dual-partner downstream rollout split',
+      'Both partners are changing names, so this downstream rollout should track separate confirmations, mailed notices, and completion proof for each partner.',
+    ),
     ...prerequisiteDependencies,
   ];
 }
@@ -225,7 +268,7 @@ const buildTsaDependencies: NameChangeDependencyRecipe = ({ intake, requirements
 
 export const NAME_CHANGE_SEQUENCE_PROFILE_RECIPES: Record<NameChangeExecutionSequenceProfileKey, NameChangeDependencyRecipe> = {
   courtOrder: buildCourtOrderDependencies,
-  ssa: buildStrictLegalAndIdentityDependencies,
+  ssa: buildSsaDependencies,
   dmv: buildDmvDependencies,
   passport: buildPassportDependencies,
   employer: ({ profile, requirements, prerequisiteDependencies }) => [

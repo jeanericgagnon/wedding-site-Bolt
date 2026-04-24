@@ -317,6 +317,78 @@ describe('name change execution sequence snapshot', () => {
     expect(snapshot.dependencies.find((dependency) => dependency.key === 'primary-photo-id-progress')).toMatchObject({ status: 'satisfied' });
   });
 
+  it('adds a dual-partner SSA execution dependency when both partners are changing names', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+
+    const snapshot = buildNameChangeExecutionSequenceSnapshot(
+      'ssa',
+      makeCase({ structured_intake: { spouseLastName: 'Jordan', bothPartnersChangeName: true } }),
+      documents,
+      [],
+    );
+
+    expect(snapshot.dependencies.find((dependency) => dependency.key === 'dual-partner-ssa-split')).toMatchObject({
+      status: 'attention',
+      nextActionCategory: 'review',
+    });
+  });
+
+  it('adds dual-partner branching dependencies for DMV and downstream rollout targets', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+      {
+        document_kind: 'proof_of_address',
+        display_name: 'Proof of address',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+    const profile = makeCase({ structured_intake: { spouseLastName: 'Jordan', bothPartnersChangeName: true } });
+    const basePlan = buildNameChangePlan({ profile, documents, extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) =>
+        step.id === 'state-dmv' ? { ...step, executionStatus: 'in_progress' as const } : step,
+      ),
+    };
+
+    const dmvSnapshot = buildNameChangeExecutionSequenceSnapshot('dmv', profile, documents, [], plan);
+    const banksSnapshot = buildNameChangeExecutionSequenceSnapshot('banks', profile, documents, [], plan);
+
+    expect(dmvSnapshot.dependencies.find((dependency) => dependency.key === 'dual-partner-dmv-split')).toMatchObject({
+      status: 'attention',
+      nextActionCategory: 'review',
+    });
+    expect(banksSnapshot.dependencies.find((dependency) => dependency.key === 'dual-partner-financial-identity-support')).toMatchObject({
+      status: 'attention',
+      nextActionCategory: 'review',
+    });
+  });
+
   it('marks insurance sequencing ready when DMV is in progress', () => {
     const documents: NameChangeDocumentInput[] = [
       {
