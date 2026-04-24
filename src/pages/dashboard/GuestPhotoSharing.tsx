@@ -16,6 +16,7 @@ import { buildPhotoPlacementPlan } from '../../lib/aiPhotoPlacement';
 import { mergeGeneratedDraftIntoBuilderProject } from '../../lib/aiBuilderProjectPatch';
 import { buildQuickStartOverviewPath, readQuickStartDashboardContinuation } from '../../lib/quickStartContinuation';
 import { parseDatetimeLocalToIso, toDatetimeLocalOrEmpty } from './guestPhotoDateTime';
+import { formatGuestPhotoDate, formatGuestPhotoDateTime, getGuestPhotoSortTime, toGuestPhotoCsvTimestamp } from './guestPhotoUploadTime';
 
 type ItineraryEvent = {
   id: string;
@@ -382,15 +383,15 @@ export const GuestPhotoSharing: React.FC = () => {
           bucketId: upload.photo_bucket_id,
           bucketName: bucket?.name || 'Bucket',
           title: upload.original_filename,
-          caption: `${upload.guest_name || 'Guest'} · ${new Date(upload.uploaded_at).toLocaleDateString()}`,
+          caption: `${upload.guest_name || 'Guest'} · ${formatGuestPhotoDate(upload.uploaded_at)}`,
           uploadedAt: upload.uploaded_at,
         };
       });
 
     if (slideshowOrder === 'newest') {
-      selectedUploads = selectedUploads.sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
+      selectedUploads = selectedUploads.sort((a, b) => getGuestPhotoSortTime(b.uploadedAt) - getGuestPhotoSortTime(a.uploadedAt));
     } else if (slideshowOrder === 'oldest') {
-      selectedUploads = selectedUploads.sort((a, b) => new Date(a.uploadedAt).getTime() - new Date(b.uploadedAt).getTime());
+      selectedUploads = selectedUploads.sort((a, b) => getGuestPhotoSortTime(a.uploadedAt) - getGuestPhotoSortTime(b.uploadedAt));
     } else {
       selectedUploads = [...selectedUploads].sort((a, b) => a.uploadId.localeCompare(b.uploadId));
     }
@@ -465,7 +466,7 @@ export const GuestPhotoSharing: React.FC = () => {
         escapeCsv(r.original_filename),
         escapeCsv(r.guest_name || ''),
         escapeCsv(r.guest_email || ''),
-        escapeCsv(new Date(r.uploaded_at).toISOString()),
+        escapeCsv(toGuestPhotoCsvTimestamp(r.uploaded_at)),
       ].join(',')),
     ];
 
@@ -1317,7 +1318,7 @@ export const GuestPhotoSharing: React.FC = () => {
                         <div>
                           <p className="font-medium text-neutral-900">{bucket.name}</p>
                           <p className="mt-1 text-sm text-neutral-600">{bucketCardTone(bucket.name)}</p>
-                          <p className="text-xs text-neutral-500">Created {new Date(bucket.created_at).toLocaleString()}</p>
+                          <p className="text-xs text-neutral-500">Created {formatGuestPhotoDateTime(bucket.created_at)}</p>
                           <div className="mt-1 text-xs text-neutral-500 flex items-center gap-2 flex-wrap">
                             <span className={`inline-flex rounded px-2 py-0.5 ${bucket.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-neutral-100 text-neutral-600'}`}>
                               {bucket.is_active ? 'Active' : 'Paused'}
@@ -1452,7 +1453,7 @@ export const GuestPhotoSharing: React.FC = () => {
                             <li key={u.id} className={`rounded border px-2 py-1 ${u.is_hidden ? 'bg-neutral-100 border-neutral-200' : 'bg-white border-neutral-200'}`}>
                               <div className="flex items-center justify-between gap-2">
                                 <span>
-                                  {u.original_filename} · {u.guest_name || 'Guest'}{u.guest_email ? ` (${u.guest_email})` : ''} · {new Date(u.uploaded_at).toLocaleString()}
+                                  {u.original_filename} · {u.guest_name || 'Guest'}{u.guest_email ? ` (${u.guest_email})` : ''} · {formatGuestPhotoDateTime(u.uploaded_at)}
                                 </span>
                                 <div className="flex items-center gap-1">
                                   <button
