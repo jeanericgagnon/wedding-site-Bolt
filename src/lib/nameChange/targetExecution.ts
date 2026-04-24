@@ -38,6 +38,10 @@ function isDualPartnerExecutionTarget(targetKey: NameChangeExecutionTargetKey) {
   ].includes(targetKey);
 }
 
+function isDualPartnerDownstreamExecutionTarget(targetKey: NameChangeExecutionTargetKey) {
+  return targetKey !== 'ssa' && targetKey !== 'dmv';
+}
+
 export function buildNameChangeTargetExecutionSnapshot(
   targetKey: NameChangeExecutionTargetKey,
   profile: NameChangeCaseInput,
@@ -246,6 +250,14 @@ export function buildNameChangeTargetExecutionSnapshot(
         category: 'packet' as const,
         label: 'Open two DMV partner appointment tracks',
         detail: 'Both partners are changing names, so DMV execution should branch into separate appointment timing, temporary-ID handling, and title/registration follow-through per partner.',
+      };
+    }
+
+    if (isDualPartnerDownstreamExecutionTarget(targetKey)) {
+      return {
+        category: 'checklist' as const,
+        label: 'Track separate partner completion proof',
+        detail: `Both partners are changing names, so ${target.label.toLowerCase()} should keep separate completion status, confirmation artifacts, and mailed-notice proof for each partner. Mark this lane complete only after both partner tracks are finished.`,
       };
     }
 

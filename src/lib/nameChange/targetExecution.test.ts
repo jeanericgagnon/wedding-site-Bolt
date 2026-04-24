@@ -1496,7 +1496,65 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.ready).toBe(true);
     expect(snapshot.nextAction).toMatchObject({
       category: 'checklist',
-      label: 'Track downstream rollout separately for each partner',
+      label: 'Track separate partner completion proof',
+      detail: 'Both partners are changing names, so banks and credit cards should keep separate completion status, confirmation artifacts, and mailed-notice proof for each partner. Mark this lane complete only after both partner tracks are finished.',
+    });
+  });
+
+  it('prompts courtesy rollout lanes to keep separate per-partner proof state', () => {
+    const profile = makeCase({
+      change_reasons: ['marriage', 'both_partners_change_name'],
+    });
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-license',
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'drivers-license-•••.jpg',
+        issuing_authority: 'California DMV',
+        issued_on: '2025-10-20',
+        extraction_confidence: 0.95,
+      },
+      {
+        id: 'doc-address',
+        document_kind: 'proof_of_address',
+        display_name: 'Proof of address',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'utility-bill-•••.pdf',
+        issuing_authority: 'SDGE',
+        issued_on: '2026-04-11',
+        extraction_confidence: 0.9,
+      },
+      {
+        id: 'doc-passport',
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'passport-•••.jpg',
+        issuing_authority: 'US Department of State',
+        issued_on: '2025-09-10',
+        extraction_confidence: 0.95,
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [];
+    const basePlan = buildNameChangePlan({ profile, documents, extractedFields });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-ssa' || step.id === 'state-dmv'
+        ? { ...step, executionStatus: 'complete' as const }
+        : step),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('courtesy', profile, documents, extractedFields, plan);
+    expect(snapshot.ready).toBe(true);
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'checklist',
+      label: 'Track separate partner completion proof',
+      detail: 'Both partners are changing names, so courtesy / social identity sync should keep separate completion status, confirmation artifacts, and mailed-notice proof for each partner. Mark this lane complete only after both partner tracks are finished.',
     });
   });
 
