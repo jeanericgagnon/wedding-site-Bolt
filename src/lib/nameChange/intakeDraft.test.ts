@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildDraftNameChangeDocumentId, createDraftNameChangeDocument, isDraftNameChangeDocumentId, isDraftNameChangePlaceholderDocument, normalizeDraftNameChangeDocumentId, upsertDraftNameChangeExtractedField } from './intakeDraft';
+import { buildDraftNameChangeDocumentId, buildDraftNameChangeExtractedFieldsFromSnapshot, createDraftNameChangeDocument, isDraftNameChangeDocumentId, isDraftNameChangePlaceholderDocument, normalizeDraftNameChangeDocumentId, upsertDraftNameChangeExtractedField } from './intakeDraft';
 import type { NameChangeExtractedFieldInput } from './types';
 
 describe('name change intake draft helpers', () => {
@@ -33,6 +33,55 @@ describe('name change intake draft helpers', () => {
     });
     expect(buildDraftNameChangeDocumentId('___' as never)).toBe('draft-other');
     expect(buildDraftNameChangeDocumentId('other')).toBe('draft-other');
+  });
+
+  it('builds canonical extracted fields from document snapshots', () => {
+    const fields = buildDraftNameChangeExtractedFieldsFromSnapshot('draft-marriage_certificate', {
+      fields: {
+        first_name: ' Alex ',
+        spouse_family_name: ' Jordan ',
+        certificate_no: ' MC-441 ',
+      },
+      issuanceDate: '2026-04-05T00:00:00Z',
+      county: {
+        value: ' County of San Diego ',
+      },
+    });
+
+    expect(fields).toHaveLength(5);
+    expect(fields).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        document_id: 'draft-marriage_certificate',
+        field_key: 'first_name',
+        field_label: 'First Name',
+        field_value_masked: 'Alex',
+        source_type: 'manual',
+        is_verified: true,
+      }),
+      expect.objectContaining({
+        document_id: 'draft-marriage_certificate',
+        field_key: 'spouse_last_name',
+        field_label: 'Spouse Last Name',
+        field_value_masked: 'Jordan',
+      }),
+      expect.objectContaining({
+        document_id: 'draft-marriage_certificate',
+        field_key: 'certificate_number',
+        field_label: 'Certificate Number',
+        field_value_masked: 'MC-441',
+      }),
+      expect.objectContaining({
+        document_id: 'draft-marriage_certificate',
+        field_key: 'issuance_date',
+        field_value_masked: '2026-04-05',
+      }),
+      expect.objectContaining({
+        document_id: 'draft-marriage_certificate',
+        field_key: 'county',
+        field_label: 'County',
+        field_value_masked: 'San Diego',
+      }),
+    ]));
   });
 
   it('collapses draft document labels into one clean downstream display name', () => {

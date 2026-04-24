@@ -3484,4 +3484,50 @@ describe('name change document intake contract', () => {
       expect.objectContaining({ field_key: 'court_order_date', field_value_masked: '2026-04-05' }),
     ]));
   });
+
+  it('counts extracted snapshot fields as canonical document truth for reviewed contracts', () => {
+    const profile = makeCase();
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'marriage-record-1',
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'San Diego County Clerk',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
+        extracted_snapshot: {
+          fields: {
+            first_name: 'Alex',
+            last_name: 'Rivera',
+            spouse_last_name: 'Jordan',
+            county: 'San Diego County',
+          },
+          issuanceDate: '2026-04-05T00:00:00Z',
+          certificate_no: 'MC-441',
+        },
+      },
+    ];
+
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(profile, documents, []);
+    const contract = snapshot.documents.find((entry) => entry.kind === 'marriage_certificate');
+
+    expect(contract).toMatchObject({
+      kind: 'marriage_certificate',
+      intakeStatus: 'reviewed',
+      metadataMissing: [],
+      missingExtractionFields: [],
+    });
+    expect(contract?.capturedExtractionFields).toHaveLength(6);
+    expect(contract?.capturedExtractionFields).toEqual(expect.arrayContaining([
+      'first_name',
+      'last_name',
+      'spouse_last_name',
+      'issuance_date',
+      'county',
+      'certificate_number',
+    ]));
+  });
 });

@@ -2,6 +2,7 @@ import { buildNameChangeCanonicalCase } from './canonical';
 import { canonicalizeNameChangeDocumentKind, matchesNameChangeDocumentKind } from './documentKinds';
 import { buildNameChangeExtractionContractSnapshot } from './extractionContract';
 import {
+  buildDraftNameChangeExtractedFieldsFromSnapshot,
   buildDraftNameChangeDocumentId,
   isDraftNameChangePlaceholderDocument,
   normalizeDraftFieldKey,
@@ -160,12 +161,14 @@ function getContractDocumentCapturedFieldKeys(
   expectedFields: NameChangeExtractionFieldKey[],
 ): NameChangeExtractionFieldKey[] {
   const candidateDocumentIds = new Set<string>();
+  const snapshotExtractedFields: NameChangeExtractedFieldInput[] = [];
 
   documents
     .filter((document) => matchesNameChangeDocumentKind(document.document_kind, kind))
     .forEach((document) => {
       const normalizedDocumentId = normalizeDraftNameChangeDocumentId(document.id ?? null);
       if (normalizedDocumentId) candidateDocumentIds.add(normalizedDocumentId);
+      snapshotExtractedFields.push(...buildDraftNameChangeExtractedFieldsFromSnapshot(document.id ?? null, document.extracted_snapshot));
     });
 
   const normalizedDraftDocumentId = normalizeDraftNameChangeDocumentId(buildDraftNameChangeDocumentId(kind));
@@ -174,7 +177,7 @@ function getContractDocumentCapturedFieldKeys(
   if (candidateDocumentIds.size === 0) return [];
 
   return [...new Set(
-    extractedFields
+    [...extractedFields, ...snapshotExtractedFields]
       .filter((field) => {
         if (!field.is_verified) return false;
         const normalizedFieldDocumentId = normalizeDraftNameChangeDocumentId(field.document_id);

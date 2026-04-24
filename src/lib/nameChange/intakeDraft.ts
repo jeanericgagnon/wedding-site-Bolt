@@ -758,3 +758,68 @@ export function upsertDraftNameChangeExtractedField(
     },
   ];
 }
+
+function getDraftSnapshotFieldValue(candidate: unknown): string | null {
+  if (typeof candidate === 'string') {
+    return candidate;
+  }
+
+  if (typeof candidate === 'number' || typeof candidate === 'boolean') {
+    return String(candidate);
+  }
+
+  if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) {
+    return null;
+  }
+
+  const record = candidate as Record<string, unknown>;
+  for (const key of ['value', 'field_value', 'fieldValue', 'masked_value', 'maskedValue', 'text', 'raw']) {
+    const nestedValue = record[key];
+    if (typeof nestedValue === 'string' || typeof nestedValue === 'number' || typeof nestedValue === 'boolean') {
+      return String(nestedValue);
+    }
+  }
+
+  return null;
+}
+
+function appendDraftSnapshotFieldEntries(
+  entries: Array<[string, unknown]>,
+  snapshot: Record<string, unknown>,
+) {
+  for (const [key, value] of Object.entries(snapshot)) {
+    entries.push([key, value]);
+  }
+
+  for (const nestedKey of ['fields', 'extracted_fields', 'extractedFields', 'normalized_fields', 'normalizedFields']) {
+    const nestedValue = snapshot[nestedKey];
+    if (!nestedValue || typeof nestedValue !== 'object' || Array.isArray(nestedValue)) {
+      continue;
+    }
+
+    for (const [key, value] of Object.entries(nestedValue as Record<string, unknown>)) {
+      entries.push([key, value]);
+    }
+  }
+}
+
+export function buildDraftNameChangeExtractedFieldsFromSnapshot(
+  documentId: string | null | undefined,
+  snapshot: Record<string, unknown> | null | undefined,
+): NameChangeExtractedFieldInput[] {
+  if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)) {
+    return [];
+  }
+
+  const entries: Array<[string, unknown]> = [];
+  appendDraftSnapshotFieldEntries(entries, snapshot);
+
+  return entries.reduce<NameChangeExtractedFieldInput[]>((fields, [fieldKey, candidateValue]) => {
+    const value = getDraftSnapshotFieldValue(candidateValue);
+    if (!value) {
+      return fields;
+    }
+
+    return upsertDraftNameChangeExtractedField(fields, documentId, fieldKey as NameChangeExtractedFieldInput['field_key'], '', value);
+  }, []);
+}
