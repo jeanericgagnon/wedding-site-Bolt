@@ -102,8 +102,8 @@ function normalizeDraftDocumentKind(value: string) {
     .replace(/^_+|_+$/g, '');
 
   const strippedSuffixKind = normalizedKind
-    .replace(/^(?:(?:document|documents|doc|copy|scan|scanned|upload|uploaded|file|image|photo)_)+/g, '')
-    .replace(/(?:_(?:document|documents|doc|copy|scan|scanned|upload|uploaded|file|image|photo|front|back))+$/g, '')
+    .replace(/^(?:(?:document|documents|doc|copy|scan|scanned|upload|uploaded|file|image|photo|pdf|png|jpg|jpeg|webp|heic|heif|tif|tiff)_)+/g, '')
+    .replace(/(?:_(?:document|documents|doc|copy|scan|scanned|upload|uploaded|file|image|photo|front|back|pdf|png|jpg|jpeg|webp|heic|heif|tif|tiff))+$/g, '')
     .replace(/_+/g, '_')
     .replace(/^_+|_+$/g, '');
 
