@@ -2798,4 +2798,87 @@ describe('name change intake draft helpers', () => {
       expect.objectContaining({ document_id: null, field_key: 'case_number', field_value_masked: 'manual fallback' }),
     ]);
   });
+
+  it('splits composite target legal-name draft intake into first middle and last fields', () => {
+    expect(upsertDraftNameChangeExtractedField([], 'draft-court_order', 'target legal name' as never, 'Target legal name', ' Alicia  Quinn   Jordan ')).toEqual([
+      expect.objectContaining({
+        document_id: 'draft-court_order',
+        field_key: 'first_name',
+        field_label: 'Target legal name first name',
+        field_value_masked: 'Alicia',
+      }),
+      expect.objectContaining({
+        document_id: 'draft-court_order',
+        field_key: 'middle_name',
+        field_label: 'Target legal name middle name',
+        field_value_masked: 'Quinn',
+      }),
+      expect.objectContaining({
+        document_id: 'draft-court_order',
+        field_key: 'last_name',
+        field_label: 'Target legal name last name',
+        field_value_masked: 'Jordan',
+      }),
+    ]);
+  });
+
+  it('replaces stale target-name components when composite new legal-name intake is re-entered', () => {
+    const next = upsertDraftNameChangeExtractedField([
+      {
+        document_id: 'draft-court_order',
+        field_key: 'first_name',
+        field_label: 'Target first name',
+        field_value_masked: 'Alex',
+        source_type: 'manual',
+        is_verified: true,
+      },
+      {
+        document_id: 'draft-court_order',
+        field_key: 'middle_name',
+        field_label: 'Target middle name',
+        field_value_masked: 'Marie',
+        source_type: 'manual',
+        is_verified: true,
+      },
+      {
+        document_id: 'draft-court_order',
+        field_key: 'last_name',
+        field_label: 'Target last name',
+        field_value_masked: 'Jordan',
+        source_type: 'manual',
+        is_verified: true,
+      },
+      {
+        document_id: null,
+        field_key: 'last_name',
+        field_label: 'Target last name',
+        field_value_masked: 'Fallback',
+        source_type: 'manual',
+        is_verified: true,
+      },
+    ], 'draft-court_order', 'new legal name' as never, 'New legal name', 'Alicia Rae Jordan');
+
+    expect(next).toEqual([
+      expect.objectContaining({
+        document_id: null,
+        field_key: 'last_name',
+        field_value_masked: 'Fallback',
+      }),
+      expect.objectContaining({
+        document_id: 'draft-court_order',
+        field_key: 'first_name',
+        field_value_masked: 'Alicia',
+      }),
+      expect.objectContaining({
+        document_id: 'draft-court_order',
+        field_key: 'middle_name',
+        field_value_masked: 'Rae',
+      }),
+      expect.objectContaining({
+        document_id: 'draft-court_order',
+        field_key: 'last_name',
+        field_value_masked: 'Jordan',
+      }),
+    ]);
+  });
 });

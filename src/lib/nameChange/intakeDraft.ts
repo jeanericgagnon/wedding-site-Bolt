@@ -488,7 +488,7 @@ function normalizeDraftPersonNameValue(
   const labelPatterns: Record<typeof fieldKey, RegExp> = {
     first_name: new RegExp(`^(?:(?:first|given)(?:\\s+legal)?\\s+name|name\\s*${DRAFT_LABEL_SEPARATOR_PATTERN}?\\s*first)\\s*${DRAFT_LABEL_SEPARATOR_PATTERN}?\\s*`, 'i'),
     middle_name: new RegExp(`^(?:middle(?:\\s+legal)?\\s+name|middle\\s+initial)\\s*${DRAFT_LABEL_SEPARATOR_PATTERN}?\\s*`, 'i'),
-    last_name: new RegExp(`^(?:(?:last|family|surname)(?:\\s+legal)?\\s+name|new\\s+legal\\s+name)\\s*${DRAFT_LABEL_SEPARATOR_PATTERN}?\\s*`, 'i'),
+    last_name: new RegExp(`^(?:(?:last|family|surname)(?:\\s+legal)?\\s+name|new\\s+legal\\s+name|target\\s+legal\\s+name)\\s*${DRAFT_LABEL_SEPARATOR_PATTERN}?\\s*`, 'i'),
     spouse_last_name: new RegExp(`^(?:spouse(?:'s)?\\s+(?:(?:last|family)\\s+name|surname))\\s*${DRAFT_LABEL_SEPARATOR_PATTERN}?\\s*`, 'i'),
   };
 
@@ -504,6 +504,59 @@ function normalizeDraftPersonNameValue(
   }
 
   return humanizeDraftToken(cleanedValue.toLowerCase());
+}
+
+function isDraftCompositeTargetNameLabel(fieldKey: string, fieldLabel: string) {
+  const normalizedFieldKey = normalizeDraftText(fieldKey).toLowerCase();
+  const normalizedFieldLabel = normalizeDraftText(fieldLabel).toLowerCase();
+  const compositeNamePattern = /(?:^|\b)(?:new|target)\s+legal\s+name(?:\b|$)|(?:^|\b)target\s+name(?:\b|$)|(?:^|\b)new\s+name(?:\b|$)/i;
+  return compositeNamePattern.test(normalizedFieldKey) || compositeNamePattern.test(normalizedFieldLabel);
+}
+
+function buildDraftCompositeTargetNameFields(
+  documentId: string | null,
+  fieldLabel: string,
+  nextValue: string,
+): NameChangeExtractedFieldInput[] | null {
+  const normalizedValue = normalizeDraftPersonNameValue(nextValue, 'last_name');
+  if (!normalizedValue) return [];
+
+  const nameParts = normalizedValue.split(/\s+/).filter(Boolean);
+  if (nameParts.length < 2) return null;
+
+  const firstName = nameParts[0] ?? '';
+  const lastName = nameParts[nameParts.length - 1] ?? '';
+  const middleName = nameParts.slice(1, -1).join(' ');
+  const normalizedLabel = normalizeDraftText(fieldLabel) || 'Target legal name';
+
+  return [
+    {
+      document_id: documentId,
+      field_key: 'first_name',
+      field_label: `${normalizedLabel} first name`,
+      field_value_masked: firstName,
+      source_type: 'manual',
+      is_verified: true,
+    },
+    ...(middleName
+      ? [{
+        document_id: documentId,
+        field_key: 'middle_name' as const,
+        field_label: `${normalizedLabel} middle name`,
+        field_value_masked: middleName,
+        source_type: 'manual' as const,
+        is_verified: true,
+      }]
+      : []),
+    {
+      document_id: documentId,
+      field_key: 'last_name',
+      field_label: `${normalizedLabel} last name`,
+      field_value_masked: lastName,
+      source_type: 'manual',
+      is_verified: true,
+    },
+  ];
 }
 
 function normalizeDraftReferenceNumberValue(value: string) {
@@ -652,6 +705,19 @@ export function upsertDraftNameChangeExtractedField(
   if (shouldBlockDraftDocumentFieldWrite(documentId, normalizedDocumentId)) {
     return extractedFields;
   }
+
+  const compositeTargetNameFields = isDraftCompositeTargetNameLabel(fieldKey, fieldLabel)
+    ? buildDraftCompositeTargetNameFields(normalizedDocumentId, fieldLabel, nextValue)
+    : null;
+  if (compositeTargetNameFields) {
+    const compositeFieldKeys = new Set(compositeTargetNameFields.map((field) => field.field_key));
+    const rest = extractedFields.filter((field) => !(
+      normalizeDraftNameChangeDocumentId(field.document_id) === normalizedDocumentId
+      && compositeFieldKeys.has(normalizeDraftFieldKey(field.field_key))
+    ));
+    return [...rest, ...compositeTargetNameFields];
+  }
+
   const normalizedFieldKey = normalizeDraftFieldKey(fieldKey);
   if (!normalizedFieldKey) {
     return extractedFields;
