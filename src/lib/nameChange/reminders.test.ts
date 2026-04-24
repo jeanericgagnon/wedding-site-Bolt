@@ -76,6 +76,14 @@ describe('name change reminder suggestions', () => {
       dependsOnStepId: 'institution-travel-hospitality',
       urgency: 'medium',
     });
+    expect(reminders.find((reminder) => reminder.id === 'reminder-milestone-confirm-milestone-ssa')).toMatchObject({
+      dependsOnStepId: 'federal-ssa',
+      urgency: 'high',
+    });
+    expect(reminders.find((reminder) => reminder.id === 'reminder-milestone-confirm-milestone-account-rollout')).toMatchObject({
+      dependsOnStepId: 'institutions-rollout',
+      urgency: 'medium',
+    });
   });
 
   it('raises passport follow-up urgency when the case is expedited', () => {
@@ -389,6 +397,32 @@ describe('name change reminder suggestions', () => {
     ]);
   });
 
+  it('keeps milestone confirmation reminders open after the dependent step completes', () => {
+    expect(syncNameChangeRemindersWithStepExecution([
+      {
+        reminder_key: 'reminder-milestone-confirm-milestone-ssa',
+        label: 'Confirm SSA',
+        reason: 'Reason',
+        depends_on_step_id: 'federal-ssa',
+        suggested_offset_days: 3,
+        urgency: 'high',
+        status: 'scheduled',
+      },
+      {
+        reminder_key: 'reminder-ssa-followup',
+        label: 'Follow up SSA',
+        reason: 'Reason',
+        depends_on_step_id: 'federal-ssa',
+        suggested_offset_days: 3,
+        urgency: 'medium',
+        status: 'scheduled',
+      },
+    ], 'federal-ssa', 'complete')).toEqual([
+      expect.objectContaining({ reminder_key: 'reminder-milestone-confirm-milestone-ssa', status: 'pending' }),
+      expect.objectContaining({ reminder_key: 'reminder-ssa-followup', status: 'sent' }),
+    ]);
+  });
+
   it('derives reminder attention items from open reminders tied to incomplete steps', () => {
     const plan = buildNameChangePlan(makeInput());
     const reminders = [
@@ -481,6 +515,34 @@ describe('name change reminder suggestions', () => {
     ], plan, '2026-04-18T12:00:00.000Z');
 
     expect(attention[0]).toMatchObject({ priorityTier: 'critical', dependentStepExecutionStatus: 'todo' });
+  });
+
+  it('keeps milestone confirmation reminders in attention after the dependent step is complete', () => {
+    const plan = buildNameChangePlan(makeInput());
+    const attention = deriveNameChangeReminderAttention([
+      {
+        reminder_key: 'reminder-milestone-confirm-milestone-photo-id',
+        label: 'Confirm ID',
+        reason: 'Reason',
+        depends_on_step_id: 'state-dmv',
+        suggested_offset_days: 5,
+        urgency: 'high',
+        status: 'pending',
+      },
+    ], {
+      ...plan,
+      steps: plan.steps.map((step) => step.id === 'state-dmv'
+        ? { ...step, executionStatus: 'complete' as const, executionUpdatedAt: '2026-04-14T12:00:00.000Z' }
+        : step),
+    }, '2026-04-18T12:00:00.000Z');
+
+    expect(attention[0]).toMatchObject({
+      reminderKey: 'reminder-milestone-confirm-milestone-photo-id',
+      dependentStepExecutionStatus: 'complete',
+      priorityTier: 'elevated',
+      actionability: 'actionable_now',
+      isStale: true,
+    });
   });
 
   it('carries reminder planner routing metadata into attention items', () => {

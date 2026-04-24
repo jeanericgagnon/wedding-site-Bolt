@@ -2,6 +2,7 @@ import { NAME_CHANGE_INSTITUTION_LIBRARY } from './registry';
 import type { NameChangePlan, NameChangeReminderAttentionItem, NameChangeReminderAttentionSummary, NameChangeReminderInput, NameChangeReminderSuggestion, NameChangeReminderSummary } from './types';
 
 const REMINDER_STALE_AFTER_MS = 1000 * 60 * 60 * 72;
+const MILESTONE_CONFIRM_REMINDER_PREFIX = 'reminder-milestone-confirm-';
 
 type NameChangeCoreStepReminderConfig = {
   id: string;
@@ -31,6 +32,43 @@ type NameChangeContextReminderConfig = {
   dependsOnStepId: string;
   includeWhen: (plan: NameChangePlan) => boolean;
 };
+
+const MILESTONE_CONFIRMATION_CONFIG: Record<string, {
+  label: string;
+  reason: string;
+  urgency?: NameChangeReminderSuggestion['urgency'];
+  suggestedOffsetDays: number;
+}> = {
+  'milestone-legal-proof': {
+    label: 'Confirm certified legal proof is actually grounded',
+    reason: 'Make sure the reviewed legal-proof document is the exact certificate or court order you will reuse downstream before SSA or DMV work starts.',
+    urgency: 'medium',
+    suggestedOffsetDays: 1,
+  },
+  'milestone-ssa': {
+    label: 'Confirm Social Security update actually landed',
+    reason: 'Do not assume the SSA change is done just because the filing was sent. Confirm the federal identity record actually moved before DMV, payroll, or tax systems branch off bad data.',
+    urgency: 'high',
+    suggestedOffsetDays: 3,
+  },
+  'milestone-photo-id': {
+    label: 'Confirm primary photo ID is updated and usable',
+    reason: 'Make sure the replacement ID is issued and usable in real life before passport, travel, banking, or employer records depend on it.',
+    urgency: 'high',
+    suggestedOffsetDays: 5,
+  },
+  'milestone-account-rollout': {
+    label: 'Confirm the main account rollout packet actually stuck',
+    reason: 'After the core rollout push, verify that banking, payroll, insurance, and other downstream records are no longer split across old and new names.',
+    urgency: 'medium',
+    suggestedOffsetDays: 7,
+  },
+};
+
+function isMilestoneConfirmationReminder(reminder: Pick<NameChangeReminderInput, 'reminder_key'> | Pick<NameChangeReminderSuggestion, 'id'>): boolean {
+  const reminderKey = 'reminder_key' in reminder ? reminder.reminder_key : reminder.id;
+  return reminderKey.startsWith(MILESTONE_CONFIRM_REMINDER_PREFIX);
+}
 
 const CORE_STEP_REMINDER_CONFIGS: Record<string, NameChangeCoreStepReminderConfig> = {
   'federal-ssa': {
@@ -387,6 +425,27 @@ export function buildNameChangeReminderSuggestions(plan: NameChangePlan): NameCh
     });
   });
 
+  plan.summary.milestoneChecklist?.forEach((milestone) => {
+    if (milestone.dependsOnStepIds.length === 0) return;
+
+    const config = MILESTONE_CONFIRMATION_CONFIG[milestone.id];
+    if (!config) return;
+
+    const suggestion = {
+      id: `${MILESTONE_CONFIRM_REMINDER_PREFIX}${milestone.id}`,
+      label: config.label,
+      suggestedOffsetDays: config.suggestedOffsetDays,
+      reason: config.reason,
+      dependsOnStepId: milestone.dependsOnStepIds[milestone.dependsOnStepIds.length - 1] ?? milestone.dependsOnStepIds[0] ?? 'eligibility-proof',
+      urgency: config.urgency ?? urgencyFromOffset(config.suggestedOffsetDays),
+    } satisfies NameChangeReminderSuggestion;
+
+    suggestions.push({
+      ...suggestion,
+      ...getReminderPlannerRoute(suggestion),
+    });
+  });
+
   return suggestions
     .map((suggestion) => adjustReminderSuggestionForStepState(suggestion, plan))
     .filter((suggestion): suggestion is NameChangeReminderSuggestion => suggestion !== null)
@@ -544,8 +603,13 @@ export function syncNameChangeRemindersWithStepExecution(
   return reminders.map((reminder) => {
     if (reminder.depends_on_step_id !== stepId) return reminder;
 
+    const milestoneConfirmation = isMilestoneConfirmationReminder(reminder);
+
     if (executionStatus === 'complete') {
-      return { ...reminder, status: 'sent' };
+      return {
+        ...reminder,
+        status: milestoneConfirmation ? (reminder.status === 'dismissed' ? 'dismissed' : 'pending') : 'sent',
+      };
     }
 
     if (executionStatus === 'in_progress') {
@@ -574,7 +638,10 @@ export function deriveNameChangeReminderAttention(
     .filter((reminder) => reminder.status === 'pending' || reminder.status === 'scheduled')
     .forEach((reminder) => {
       const dependentStep = plan.steps.find((step) => step.id === reminder.depends_on_step_id);
-      if (!dependentStep || dependentStep.executionStatus === 'complete') return;
+      if (!dependentStep) return;
+
+      const milestoneConfirmation = isMilestoneConfirmationReminder(reminder);
+      if (dependentStep.executionStatus === 'complete' && !milestoneConfirmation) return;
 
       const lastTouchedAt = dependentStep.executionUpdatedAt ?? null;
       const isStale = lastTouchedAt ? (nowMs - new Date(lastTouchedAt).getTime()) >= REMINDER_STALE_AFTER_MS : true;
