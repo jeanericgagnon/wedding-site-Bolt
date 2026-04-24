@@ -236,4 +236,92 @@ describe('name change target checklist', () => {
       reason: 'Target legal name is populated for the court-order path, but at least one field still needs stronger document support.',
     });
   });
+
+  it('treats target middle name as part of target legal-name readiness when canonical truth includes one', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'court-order-doc',
+        document_kind: 'court_order_name_change',
+        display_name: 'Court order',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+      {
+        document_kind: 'proof_of_address',
+        display_name: 'Proof of address',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'court-order-doc',
+        field_key: 'first_name',
+        field_label: 'Target first name',
+        field_value_masked: 'Alex',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'court-order-doc',
+        field_key: 'middle_name',
+        field_label: 'Target middle name',
+        field_value_masked: 'Quinn',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'court-order-doc',
+        field_key: 'last_name',
+        field_label: 'Target last name',
+        field_value_masked: 'Jordan',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'court-order-doc',
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: '24-CV-1188',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'court-order-doc',
+        field_key: 'court_order_date',
+        field_label: 'Court order date',
+        field_value_masked: '2026-04-05',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+
+    const checklist = buildNameChangeTargetChecklist(
+      NAME_CHANGE_EXECUTION_TARGETS.dmv,
+      makeCase({
+        legal_basis: 'court_order',
+        marriage_state: null,
+        marriage_date: null,
+        target_middle_name: 'Marie',
+        structured_intake: {
+          spouseLastName: null,
+          travelBookedSoon: false,
+          wantsDocumentIntakeHelp: true,
+        },
+        change_reasons: ['court_order'],
+      }),
+      documents,
+      extractedFields,
+    );
+    expect(checklist.find((item) => item.key === 'target-legal-name-county')).toMatchObject({
+      status: 'attention',
+      reason: 'Target legal name + county available is populated, but at least one field still comes from a low-confidence source.',
+    });
+  });
 });

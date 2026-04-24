@@ -475,6 +475,7 @@ export interface NameChangeExecutionTargetDefinition {
     requirementKey?: string;
     targetField?: string;
     targetFields?: string[];
+    conditionalTargetFields?: string[];
     documentKinds?: NameChangeDocumentKind[];
     missingReason: string;
     attentionReason?: string;

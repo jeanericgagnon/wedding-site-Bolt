@@ -240,6 +240,95 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'federal-ssa-progress')).toMatchObject({ status: 'satisfied' });
   });
 
+  it('treats target middle name conflicts as target legal-name checklist attention for DMV execution', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'court-order-doc',
+        document_kind: 'court_order_name_change',
+        display_name: 'Court order',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+      {
+        document_kind: 'proof_of_address',
+        display_name: 'Proof of address',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'court-order-doc',
+        field_key: 'first_name',
+        field_label: 'First name',
+        field_value_masked: 'Alex',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'court-order-doc',
+        field_key: 'middle_name',
+        field_label: 'Middle name',
+        field_value_masked: 'Quinn',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'court-order-doc',
+        field_key: 'last_name',
+        field_label: 'Last name',
+        field_value_masked: 'Jordan',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'court-order-doc',
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: '24-CV-1188',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'court-order-doc',
+        field_key: 'court_order_date',
+        field_label: 'Court order date',
+        field_value_masked: '2026-04-05',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+    const profile = makeCase({
+      legal_basis: 'court_order' as never,
+      marriage_state: null,
+      marriage_date: null,
+      target_middle_name: 'Marie',
+      structured_intake: {
+        spouseLastName: null,
+        travelBookedSoon: false,
+        wantsDocumentIntakeHelp: true,
+      },
+      change_reasons: ['court_order'],
+    });
+    const basePlan = buildNameChangePlan({ profile, documents, extractedFields });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-ssa' ? { ...step, executionStatus: 'complete' as const } : step),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('dmv', profile, documents, extractedFields, plan);
+    expect(snapshot.checklist.find((item) => item.key === 'target-legal-name-county')).toMatchObject({
+      status: 'attention',
+      reason: 'Target legal name + county available is populated, but at least one field still comes from a low-confidence source.',
+    });
+  });
+
   it('keeps county-context dependency blockers routed as dependency work', () => {
     const documents: NameChangeDocumentInput[] = [
       {
@@ -1501,6 +1590,6 @@ describe('name change target execution snapshot', () => {
       sourceFieldKey: 'middle_name',
       required: false,
     });
-    expect(snapshot.checklist.find((item) => item.key === 'target-legal-name-county')).toMatchObject({ status: 'ready' });
+    expect(snapshot.checklist.find((item) => item.key === 'target-legal-name-county')).toMatchObject({ status: 'attention' });
   });
 });

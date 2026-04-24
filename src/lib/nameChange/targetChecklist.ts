@@ -43,11 +43,16 @@ export function buildNameChangeTargetChecklist(
     }
 
     if (spec.kind === 'field_presence') {
-      const targetFields = spec.targetFields?.length
+      const alwaysRequiredTargetFields = spec.targetFields?.length
         ? spec.targetFields
         : spec.targetField
           ? [spec.targetField]
           : [];
+      const conditionalTargetFields = (spec.conditionalTargetFields ?? []).filter((targetField) => {
+        const autofillField = autofill.fields.find((candidate) => candidate.targetField === targetField);
+        return Boolean(autofillField?.value.value);
+      });
+      const targetFields = [...new Set([...alwaysRequiredTargetFields, ...conditionalTargetFields])];
       const matchedFields = targetFields.map((targetField) => autofill.fields.find((candidate) => candidate.targetField === targetField));
       const allPresent = targetFields.length > 0 && matchedFields.every((field) => Boolean(field?.value.value));
       const allTrusted = allPresent && matchedFields.every((field) => field?.value.confidence !== 'low');
