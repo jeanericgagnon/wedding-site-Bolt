@@ -107,4 +107,43 @@ describe('NameChangePlannerTab', () => {
       HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
     }
   });
+
+  it('shows per-target status vault details with proof summary, notes, and last update', () => {
+    const draft = makeDraft();
+    const basePlan = buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-ssa' ? {
+        ...step,
+        executionStatus: 'in_progress' as const,
+        executionNote: 'Submitted the SS-5 packet and waiting on return mail.',
+        executionUpdatedAt: '2026-04-24T20:15:00.000Z',
+      } : step),
+    };
+
+    render(
+      <NameChangePlannerTab
+        draft={draft}
+        documents={[]}
+        extractedFields={[]}
+        plan={plan}
+        reminders={[]}
+        saving={false}
+        onDraftChange={vi.fn()}
+        onStructuredIntakeChange={vi.fn()}
+        onDocumentsChange={vi.fn()}
+        onExtractedFieldsChange={vi.fn()}
+        onRemindersChange={vi.fn()}
+        onStepExecutionStatusChange={vi.fn()}
+        onStepExecutionNoteChange={vi.fn()}
+        onSave={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    expect(screen.getByText('Target status tracking')).toBeInTheDocument();
+    expect(screen.getAllByText(/proof item/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Submitted the SS-5 packet and waiting on return mail.').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Execution: in_progress').length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Updated /).length).toBeGreaterThan(0);
+  });
 });

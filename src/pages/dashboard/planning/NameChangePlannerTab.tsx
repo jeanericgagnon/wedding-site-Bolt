@@ -85,6 +85,16 @@ interface ExecutionSectionSummary {
   staleReminderKeys: string[];
 }
 
+interface TargetStatusVaultRow {
+  key: string;
+  title: string;
+  planStatus: 'ready' | 'blocked' | 'later';
+  executionStatus: 'todo' | 'in_progress' | 'complete';
+  proofSummary: string;
+  note: string | null;
+  updatedLabel: string | null;
+}
+
 const EXECUTION_SECTION_STEP_IDS: Record<string, string[]> = {
   'core-government': ['federal-ssa', 'state-dmv', 'federal-passport'],
   'work-identity': ['institutions-rollout'],
@@ -546,6 +556,29 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     () => buildNameChangeActionFeed(executionSnapshots, documentRepairQueue, reminderAttention),
     [documentRepairQueue, executionSnapshots, reminderAttention],
   );
+  const targetStatusVaultRows = useMemo<TargetStatusVaultRow[]>(() => plan.steps.map((step) => {
+    const proofSummary = step.evidenceNeeded.length > 0
+      ? `${step.evidenceNeeded.length} proof item${step.evidenceNeeded.length === 1 ? '' : 's'}: ${step.evidenceNeeded.join(' · ')}`
+      : step.blockers.length > 0
+        ? `Blocked by ${step.blockers.join(' · ')}`
+        : 'No extra proof tracked yet';
+
+    const updatedLabel = step.completedAt
+      ? `Completed ${new Date(step.completedAt).toLocaleString()}`
+      : step.executionUpdatedAt
+        ? `Updated ${new Date(step.executionUpdatedAt).toLocaleString()}`
+        : null;
+
+    return {
+      key: step.id,
+      title: step.title,
+      planStatus: step.status,
+      executionStatus: step.executionStatus ?? 'todo',
+      proofSummary,
+      note: step.executionNote?.trim() || null,
+      updatedLabel,
+    };
+  }), [plan.steps]);
   const reminderAttentionSummary = useMemo(() => summarizeNameChangeReminderAttention(reminderAttention, {
     hasRecentStart: plan.summary.hasRecentStart,
     hasRecentCompletion: plan.summary.hasRecentCompletion,
@@ -1046,6 +1079,35 @@ export const NameChangePlannerTab: React.FC<Props> = ({
             )) : (
               <div className="rounded-xl border border-dashed border-border-subtle p-4 text-sm text-text-secondary">Add a certificate, ID, or proof document and the vault will track readiness without holding raw files.</div>
             )}
+          </div>
+
+          <div className="mt-6 border-t border-border-subtle pt-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h4 className="text-sm font-semibold text-text-primary">Target status tracking</h4>
+                <p className="mt-1 text-xs text-text-secondary">Per-target status, proof summary, note, and last movement across the filing workflow.</p>
+              </div>
+              <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{targetStatusVaultRows.length} tracked targets</span>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              {targetStatusVaultRows.map((row) => (
+                <div key={row.key} className="rounded-xl border border-border-subtle p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-text-primary">{row.title}</p>
+                      <p className="mt-1 text-xs text-text-secondary">{row.proofSummary}</p>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">Plan: {row.planStatus}</span>
+                      <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">Execution: {row.executionStatus}</span>
+                    </div>
+                  </div>
+                  {row.note && <p className="mt-3 text-sm text-text-secondary">{row.note}</p>}
+                  {row.updatedLabel && <p className="mt-3 text-xs text-text-secondary">{row.updatedLabel}</p>}
+                </div>
+              ))}
+            </div>
           </div>
         </Card>
 
