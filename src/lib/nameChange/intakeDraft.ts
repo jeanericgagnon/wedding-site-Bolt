@@ -794,7 +794,17 @@ function normalizeDraftSnapshotPayload(
   snapshot: unknown,
 ): Record<string, unknown> | Array<unknown> | null {
   if (Array.isArray(snapshot)) return snapshot;
-  if (snapshot && typeof snapshot === 'object') return snapshot as Record<string, unknown>;
+  if (snapshot && typeof snapshot === 'object') {
+    const record = snapshot as Record<string, unknown>;
+    for (const wrapperKey of ['snapshot', 'payload', 'data', 'result', 'document']) {
+      const wrappedSnapshot = normalizeDraftSnapshotPayload(record[wrapperKey]);
+      if (wrappedSnapshot) {
+        return wrappedSnapshot;
+      }
+    }
+
+    return record;
+  }
   if (typeof snapshot !== 'string') return null;
 
   const trimmedSnapshot = snapshot.trim();
