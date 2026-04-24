@@ -587,4 +587,28 @@ describe('name change engine', () => {
     });
   });
 
+  it('counts target reminders even when they are not tied to a specific step id', () => {
+    const plan = buildNameChangePlan({
+      ...makeInput(),
+      reminders: [
+        {
+          reminder_key: 'ssa-follow-up',
+          label: 'SSA follow-up',
+          reason: 'Receipt still missing',
+          urgency: 'high',
+          status: 'pending',
+          focus_target_id: 'ssa',
+          updated_at: '2026-04-24T22:20:00.000Z',
+        },
+      ],
+    });
+
+    expect(plan.summary.targetStatusOverview).toMatchObject({
+      touchedByReminder: 1,
+      latestReminderAt: '2026-04-24T22:20:00.000Z',
+      latestTouchedAt: '2026-04-24T22:20:00.000Z',
+      latestTouchedSource: 'reminder',
+    });
+  });
+
 });

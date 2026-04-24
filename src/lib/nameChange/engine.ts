@@ -299,12 +299,6 @@ function buildTargetStatusOverview(
   reminders: NameChangeReminderInput[] = [],
 ): NonNullable<NameChangePlan['summary']['targetStatusOverview']> {
   const trackedSteps = steps.filter((step) => step.phase !== 'eligibility');
-  const reminderStepIds = new Set(
-    reminders
-      .filter((reminder) => reminder.status !== 'dismissed')
-      .map((reminder) => reminder.depends_on_step_id ?? null)
-      .filter((stepId): stepId is string => Boolean(stepId)),
-  );
   const latestUpdatedAt = trackedSteps
     .flatMap((step) => [step.executionUpdatedAt, step.completedAt])
     .filter((value): value is string => Boolean(value))
@@ -322,7 +316,7 @@ function buildTargetStatusOverview(
     : latestTouchedAt === latestUpdatedAt && latestUpdatedAt
       ? 'execution' as const
       : null;
-  const targetProofCounts = Object.keys(NAME_CHANGE_EXECUTION_TARGETS).reduce((summary, targetKey) => {
+  const targetStatusCounts = Object.keys(NAME_CHANGE_EXECUTION_TARGETS).reduce((summary, targetKey) => {
     const snapshot = buildNameChangeTargetExecutionSnapshot(targetKey as keyof typeof NAME_CHANGE_EXECUTION_TARGETS, input.profile, input.documents, input.extractedFields, plan, reminders);
 
     if (snapshot.statusVault.proofCounts.missing > 0) {
@@ -333,10 +327,20 @@ function buildTargetStatusOverview(
       summary.attentionProofTargets += 1;
     }
 
+    if (snapshot.statusVault.executionCounts.inProgress > 0 || snapshot.statusVault.executionCounts.complete > 0 || Boolean(snapshot.statusVault.lastUpdatedAt)) {
+      summary.touchedByExecution += 1;
+    }
+
+    if (snapshot.statusVault.reminderSummary.openCount > 0 || Boolean(snapshot.statusVault.reminderSummary.latestReminderAt)) {
+      summary.touchedByReminder += 1;
+    }
+
     return summary;
   }, {
     missingProofTargets: 0,
     attentionProofTargets: 0,
+    touchedByExecution: 0,
+    touchedByReminder: 0,
   });
 
   return trackedSteps.reduce((summary, step) => {
@@ -347,14 +351,6 @@ function buildTargetStatusOverview(
       summary.inProgress += 1;
     } else {
       summary.todo += 1;
-    }
-
-    if (step.executionUpdatedAt || step.completedAt || executionStatus === 'in_progress' || executionStatus === 'complete') {
-      summary.touchedByExecution += 1;
-    }
-
-    if (reminderStepIds.has(step.id)) {
-      summary.touchedByReminder += 1;
     }
 
     if (step.status === 'ready') {
@@ -370,10 +366,10 @@ function buildTargetStatusOverview(
     complete: 0,
     ready: 0,
     blocked: 0,
-    missingProofTargets: targetProofCounts.missingProofTargets,
-    attentionProofTargets: targetProofCounts.attentionProofTargets,
-    touchedByExecution: 0,
-    touchedByReminder: 0,
+    missingProofTargets: targetStatusCounts.missingProofTargets,
+    attentionProofTargets: targetStatusCounts.attentionProofTargets,
+    touchedByExecution: targetStatusCounts.touchedByExecution,
+    touchedByReminder: targetStatusCounts.touchedByReminder,
     latestUpdatedAt,
     latestReminderAt,
     latestTouchedAt,
