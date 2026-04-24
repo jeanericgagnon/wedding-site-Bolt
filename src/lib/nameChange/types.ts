@@ -215,6 +215,7 @@ export interface NameChangePlanSummary {
     label: string;
     status: 'ready' | 'blocked' | 'upcoming' | 'in_progress' | 'complete';
     dependsOnStepIds: string[];
+    lastUpdatedAt?: string | null;
   }>;
   dualPartnerProofTracks?: Array<{
     id: string;
@@ -540,8 +541,9 @@ export interface NameChangeTargetExecutionSnapshot {
     proofNote: string | null;
     reminderNote: string | null;
     lastUpdatedAt: string | null;
+    milestoneUpdatedAt: string | null;
     lastTouchedAt: string | null;
-    lastTouchedSource: 'execution' | 'reminder' | null;
+    lastTouchedSource: 'execution' | 'milestone' | 'reminder' | null;
     executionCounts: {
       todo: number;
       inProgress: number;

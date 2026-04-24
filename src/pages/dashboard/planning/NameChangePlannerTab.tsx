@@ -113,6 +113,7 @@ interface TargetStatusVaultRow {
   reminderNote: string | null;
   updatedLabel: string | null;
   executionUpdatedLabel: string | null;
+  milestoneUpdatedLabel: string | null;
   reminderUpdatedLabel: string | null;
   nextActionLabel: string | null;
   reminderLabel: string | null;
@@ -652,11 +653,15 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       proofNote: snapshot.statusVault.proofNote,
       reminderNote: snapshot.statusVault.reminderNote,
       updatedLabel: snapshot.statusVault.lastTouchedAt
-        ? `Latest touch ${formatNameChangeExecutionDateTime(snapshot.statusVault.lastTouchedAt)}${snapshot.statusVault.lastTouchedSource === 'reminder' ? ' · reminder' : snapshot.statusVault.lastTouchedSource === 'execution' ? ' · execution' : ''}`
+        ? `Latest touch ${formatNameChangeExecutionDateTime(snapshot.statusVault.lastTouchedAt)}${snapshot.statusVault.lastTouchedSource === 'reminder' ? ' · reminder' : snapshot.statusVault.lastTouchedSource === 'milestone' ? ' · milestone' : snapshot.statusVault.lastTouchedSource === 'execution' ? ' · execution' : ''}`
         : null,
       executionUpdatedLabel: snapshot.statusVault.lastUpdatedAt
         && snapshot.statusVault.lastUpdatedAt !== snapshot.statusVault.lastTouchedAt
         ? `Execution updated ${formatNameChangeExecutionDateTime(snapshot.statusVault.lastUpdatedAt)}`
+        : null,
+      milestoneUpdatedLabel: snapshot.statusVault.milestoneUpdatedAt
+        && snapshot.statusVault.milestoneUpdatedAt !== snapshot.statusVault.lastTouchedAt
+        ? `Milestone updated ${formatNameChangeExecutionDateTime(snapshot.statusVault.milestoneUpdatedAt)}`
         : null,
       reminderUpdatedLabel: latestReminderAt
         && latestReminderAt !== snapshot.statusVault.lastTouchedAt
@@ -1277,6 +1282,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                   {row.reminderLabel && <p className="mt-2 text-xs text-text-secondary">Reminders: {row.reminderLabel}</p>}
                   {row.updatedLabel && <p className="mt-3 text-xs text-text-secondary">{row.updatedLabel}</p>}
                   {row.executionUpdatedLabel && <p className="mt-1 text-xs text-text-secondary">{row.executionUpdatedLabel}</p>}
+                  {row.milestoneUpdatedLabel && <p className="mt-1 text-xs text-text-secondary">{row.milestoneUpdatedLabel}</p>}
                   {row.reminderUpdatedLabel && <p className="mt-1 text-xs text-text-secondary">{row.reminderUpdatedLabel}</p>}
                 </div>
               ))}

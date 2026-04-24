@@ -75,6 +75,11 @@ function getTargetStatusVaultSnapshot(
     .flatMap((step) => [step.executionUpdatedAt, step.completedAt])
     .filter((value): value is string => Boolean(value))
     .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
+  const latestMilestoneUpdatedAt = relevantMilestones
+    .filter((milestone) => milestone.status === 'in_progress' || milestone.status === 'complete')
+    .map((milestone) => milestone.lastUpdatedAt ?? null)
+    .filter((value): value is string => Boolean(value))
+    .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
   const explicitNotes = relevantSteps
     .map((step) => step.executionNote?.trim() || null)
     .filter((note): note is string => Boolean(note));
@@ -129,11 +134,13 @@ function getTargetStatusVaultSnapshot(
     .filter((reminder) => Boolean(reminder.updated_at))
     .sort((left, right) => new Date(right.updated_at ?? 0).getTime() - new Date(left.updated_at ?? 0).getTime())[0] ?? null;
   const latestReminderAt = latestReminder?.updated_at ?? null;
-  const lastTouchedAt = [latestExecutionUpdatedAt, latestReminderAt]
+  const lastTouchedAt = [latestExecutionUpdatedAt, latestMilestoneUpdatedAt, latestReminderAt]
     .filter((value): value is string => Boolean(value))
     .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
   const lastTouchedSource = lastTouchedAt === latestReminderAt && latestReminderAt
     ? 'reminder' as const
+    : lastTouchedAt === latestMilestoneUpdatedAt && latestMilestoneUpdatedAt
+      ? 'milestone' as const
     : lastTouchedAt === latestExecutionUpdatedAt && latestExecutionUpdatedAt
       ? 'execution' as const
       : null;
@@ -190,6 +197,7 @@ function getTargetStatusVaultSnapshot(
     proofNote,
     reminderNote,
     lastUpdatedAt: latestExecutionUpdatedAt,
+    milestoneUpdatedAt: latestMilestoneUpdatedAt,
     lastTouchedAt,
     lastTouchedSource,
     executionCounts,

@@ -2436,11 +2436,37 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.statusVault.notes[0]).toBe('Confirmed milestone: Certified legal proof is grounded and reviewed');
     expect(snapshot.statusVault.executionNote).toBe('Court-order reference extraction is not needed for marriage-based cases.');
     expect(snapshot.statusVault.milestoneNote).toBe('Confirmed milestone: Certified legal proof is grounded and reviewed');
+    expect(snapshot.statusVault.milestoneUpdatedAt).toBeNull();
     expect(snapshot.statusVault.milestoneCounts).toEqual({
       inProgress: 0,
       complete: 1,
       total: 2,
     });
+  });
+
+  it('uses milestone timing as the latest touch when milestone progress is newer than execution notes', () => {
+    const basePlan = buildNameChangePlan({ profile: makeCase(), documents: [], extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      summary: {
+        ...basePlan.summary,
+        milestoneChecklist: (basePlan.summary.milestoneChecklist ?? []).map((milestone) => milestone.id === 'milestone-legal-proof'
+          ? { ...milestone, status: 'complete' as const, lastUpdatedAt: '2026-04-24T21:45:00.000Z' }
+          : milestone),
+      },
+      steps: basePlan.steps.map((step) => step.id === 'eligibility-proof'
+        ? {
+            ...step,
+            executionStatus: 'in_progress' as const,
+            executionUpdatedAt: '2026-04-24T20:45:00.000Z',
+          }
+        : step),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('courtOrder', makeCase(), [], [], plan);
+    expect(snapshot.statusVault.milestoneUpdatedAt).toBe('2026-04-24T21:45:00.000Z');
+    expect(snapshot.statusVault.lastTouchedAt).toBe('2026-04-24T21:45:00.000Z');
+    expect(snapshot.statusVault.lastTouchedSource).toBe('milestone');
   });
 
   it('falls back to the guided action detail when no note or milestone confirmation exists yet', () => {

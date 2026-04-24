@@ -778,6 +778,14 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
       dependsOnStepIds: ['state-dmv', 'institutions-rollout'],
     },
   ] as const;
+  const milestoneChecklistWithTiming = milestoneChecklist.map((milestone) => ({
+    ...milestone,
+    lastUpdatedAt: milestone.dependsOnStepIds
+      .flatMap((stepId) => steps.find((step) => step.id === stepId))
+      .flatMap((step) => step ? [step.executionUpdatedAt, step.completedAt] : [])
+      .filter((value): value is string => Boolean(value))
+      .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null,
+  }));
   const dualPartnerProofTracks = hasBothPartnersChanging
     ? [
       {
@@ -933,7 +941,7 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
       missingInputs,
       readinessPercent,
       targetStatusOverview: undefined,
-      milestoneChecklist: milestoneChecklist.map((milestone) => ({
+      milestoneChecklist: milestoneChecklistWithTiming.map((milestone) => ({
         ...milestone,
         dependsOnStepIds: [...milestone.dependsOnStepIds],
       })),
