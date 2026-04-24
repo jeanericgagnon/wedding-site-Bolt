@@ -197,6 +197,85 @@ function buildInstitutionRolloutSteps(institutions: NameChangeInstitutionEntry[]
   }));
 }
 
+function buildDualPartnerProofSteps(legalProofReady: boolean): NameChangePlanStep[] {
+  const blockedUntilLegalProof = legalProofReady ? [] : ['Certified legal proof must be ready before partner-specific execution proof can be tracked.'];
+
+  return [
+    buildStep({
+      id: 'dual-partner-ssa-partner-a-proof',
+      phase: 'federal',
+      title: 'Track Partner A Social Security confirmation',
+      description: 'Capture whether Partner A has submitted and confirmed the SSA name update so the dual-change workflow does not collapse both partners into one shared status.',
+      timing: 'After legal proof is ready and before DMV',
+      status: legalProofReady ? 'ready' : 'blocked',
+      blockers: blockedUntilLegalProof,
+      forms: [],
+      institutions: ['Social Security Administration'],
+      evidenceNeeded: ['Partner A SSA confirmation or receipt', 'Partner A legal name-change proof'],
+    }),
+    buildStep({
+      id: 'dual-partner-ssa-partner-b-proof',
+      phase: 'federal',
+      title: 'Track Partner B Social Security confirmation',
+      description: 'Capture whether Partner B has submitted and confirmed the SSA name update separately from Partner A.',
+      timing: 'After legal proof is ready and before DMV',
+      status: legalProofReady ? 'ready' : 'blocked',
+      blockers: blockedUntilLegalProof,
+      forms: [],
+      institutions: ['Social Security Administration'],
+      evidenceNeeded: ['Partner B SSA confirmation or receipt', 'Partner B legal name-change proof'],
+    }),
+    buildStep({
+      id: 'dual-partner-dmv-partner-a-proof',
+      phase: 'state',
+      title: 'Track Partner A photo ID confirmation',
+      description: 'Track Partner A DMV or state ID completion separately so downstream banks, payroll, insurance, and travel profiles know which identity proof is ready.',
+      timing: 'After Partner A SSA confirmation',
+      status: legalProofReady ? 'later' : 'blocked',
+      blockers: legalProofReady ? ['Partner A SSA confirmation should come first.'] : blockedUntilLegalProof,
+      forms: [],
+      institutions: ['California DMV'],
+      evidenceNeeded: ['Partner A updated photo ID', 'Partner A SSA confirmation'],
+    }),
+    buildStep({
+      id: 'dual-partner-dmv-partner-b-proof',
+      phase: 'state',
+      title: 'Track Partner B photo ID confirmation',
+      description: 'Track Partner B DMV or state ID completion separately from Partner A.',
+      timing: 'After Partner B SSA confirmation',
+      status: legalProofReady ? 'later' : 'blocked',
+      blockers: legalProofReady ? ['Partner B SSA confirmation should come first.'] : blockedUntilLegalProof,
+      forms: [],
+      institutions: ['California DMV'],
+      evidenceNeeded: ['Partner B updated photo ID', 'Partner B SSA confirmation'],
+    }),
+    buildStep({
+      id: 'dual-partner-rollout-partner-a-proof',
+      phase: 'institutional',
+      title: 'Track Partner A downstream account confirmations',
+      description: 'Track Partner A payroll, banking, insurance, licensing, travel, and personal-account confirmations as a separate rollout lane.',
+      timing: 'After Partner A photo ID is updated',
+      status: legalProofReady ? 'later' : 'blocked',
+      blockers: legalProofReady ? ['Partner A photo ID should be updated before broad account rollout.'] : blockedUntilLegalProof,
+      forms: [],
+      institutions: ['Banks', 'Payroll / HR', 'Insurance providers', 'Travel and loyalty accounts'],
+      evidenceNeeded: ['Partner A account confirmations', 'Partner A updated photo ID', 'Partner A legal proof'],
+    }),
+    buildStep({
+      id: 'dual-partner-rollout-partner-b-proof',
+      phase: 'institutional',
+      title: 'Track Partner B downstream account confirmations',
+      description: 'Track Partner B payroll, banking, insurance, licensing, travel, and personal-account confirmations as a separate rollout lane.',
+      timing: 'After Partner B photo ID is updated',
+      status: legalProofReady ? 'later' : 'blocked',
+      blockers: legalProofReady ? ['Partner B photo ID should be updated before broad account rollout.'] : blockedUntilLegalProof,
+      forms: [],
+      institutions: ['Banks', 'Payroll / HR', 'Insurance providers', 'Travel and loyalty accounts'],
+      evidenceNeeded: ['Partner B account confirmations', 'Partner B updated photo ID', 'Partner B legal proof'],
+    }),
+  ];
+}
+
 function resolveInstitutionCoverageStatus(stepIds: string[], steps: NameChangePlanStep[]): 'ready' | 'blocked' | 'upcoming' {
   const matchingSteps = stepIds
     .map((stepId) => steps.find((step) => step.id === stepId))
@@ -370,6 +449,7 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
   }
 
   const institutionRolloutSteps = buildInstitutionRolloutSteps(institutionalTargets, legalProofReady);
+  const dualPartnerProofSteps = hasBothPartnersChanging ? buildDualPartnerProofSteps(legalProofReady) : [];
 
   steps.push(buildStep({
     id: 'institutions-rollout',
@@ -384,6 +464,7 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
     evidenceNeeded: ['Updated photo ID', 'Legal proof document', 'Account-specific supporting info'],
   }));
 
+  steps.push(...dualPartnerProofSteps);
   steps.push(...institutionRolloutSteps);
 
   const recommendedOrder = steps.map((step) => step.title);
@@ -484,21 +565,21 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
         id: 'dual-partner-ssa-proof',
         label: 'SSA proof for both partners',
         status: legalProofReady ? 'ready' as const : 'blocked' as const,
-        dependsOnStepIds: ['eligibility-proof', 'federal-ssa'],
+        dependsOnStepIds: ['dual-partner-ssa-partner-a-proof', 'dual-partner-ssa-partner-b-proof'],
         requiredProof: ['Partner A SSA confirmation', 'Partner B SSA confirmation'],
       },
       {
         id: 'dual-partner-dmv-proof',
         label: 'Photo ID proof for both partners',
         status: legalProofReady ? 'upcoming' as const : 'blocked' as const,
-        dependsOnStepIds: ['federal-ssa', 'state-dmv'],
+        dependsOnStepIds: ['dual-partner-dmv-partner-a-proof', 'dual-partner-dmv-partner-b-proof'],
         requiredProof: ['Partner A updated photo ID', 'Partner B updated photo ID'],
       },
       {
         id: 'dual-partner-rollout-proof',
         label: 'Downstream account proof for both partners',
         status: legalProofReady ? 'upcoming' as const : 'blocked' as const,
-        dependsOnStepIds: ['state-dmv', 'institutions-rollout'],
+        dependsOnStepIds: ['dual-partner-rollout-partner-a-proof', 'dual-partner-rollout-partner-b-proof'],
         requiredProof: ['Partner A account confirmations', 'Partner B account confirmations', 'mailed-notice or portal proof where available'],
       },
     ]

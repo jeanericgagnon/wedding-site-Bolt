@@ -366,15 +366,52 @@ describe('name change engine', () => {
       expect.arrayContaining([
         expect.objectContaining({
           id: 'dual-partner-ssa-proof',
+          dependsOnStepIds: ['dual-partner-ssa-partner-a-proof', 'dual-partner-ssa-partner-b-proof'],
           requiredProof: ['Partner A SSA confirmation', 'Partner B SSA confirmation'],
         }),
         expect.objectContaining({
           id: 'dual-partner-dmv-proof',
+          dependsOnStepIds: ['dual-partner-dmv-partner-a-proof', 'dual-partner-dmv-partner-b-proof'],
           requiredProof: ['Partner A updated photo ID', 'Partner B updated photo ID'],
         }),
         expect.objectContaining({
           id: 'dual-partner-rollout-proof',
+          dependsOnStepIds: ['dual-partner-rollout-partner-a-proof', 'dual-partner-rollout-partner-b-proof'],
           requiredProof: expect.arrayContaining(['Partner A account confirmations', 'Partner B account confirmations']),
+        }),
+      ]),
+    );
+    expect(plan.steps).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'dual-partner-ssa-partner-a-proof',
+          executionStatus: 'todo',
+          evidenceNeeded: expect.arrayContaining(['Partner A SSA confirmation or receipt']),
+        }),
+        expect.objectContaining({
+          id: 'dual-partner-ssa-partner-b-proof',
+          executionStatus: 'todo',
+          evidenceNeeded: expect.arrayContaining(['Partner B SSA confirmation or receipt']),
+        }),
+        expect.objectContaining({
+          id: 'dual-partner-dmv-partner-a-proof',
+          executionStatus: 'todo',
+          evidenceNeeded: expect.arrayContaining(['Partner A updated photo ID']),
+        }),
+        expect.objectContaining({
+          id: 'dual-partner-dmv-partner-b-proof',
+          executionStatus: 'todo',
+          evidenceNeeded: expect.arrayContaining(['Partner B updated photo ID']),
+        }),
+        expect.objectContaining({
+          id: 'dual-partner-rollout-partner-a-proof',
+          executionStatus: 'todo',
+          evidenceNeeded: expect.arrayContaining(['Partner A account confirmations']),
+        }),
+        expect.objectContaining({
+          id: 'dual-partner-rollout-partner-b-proof',
+          executionStatus: 'todo',
+          evidenceNeeded: expect.arrayContaining(['Partner B account confirmations']),
         }),
       ]),
     );
