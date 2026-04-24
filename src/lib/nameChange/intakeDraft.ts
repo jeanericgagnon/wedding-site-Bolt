@@ -54,6 +54,24 @@ function stripLeadingDraftQuotePrefix(value: string) {
   return value.replace(DRAFT_QUOTE_PREFIX_PATTERN, '').trim();
 }
 
+function stripLeadingDraftValueNoise(value: string) {
+  let cleanedValue = value.trim();
+
+  while (cleanedValue) {
+    const nextValue = stripLeadingDraftQuotePrefix(
+      stripLeadingDraftValuePrefix(stripLeadingDraftValueMarker(cleanedValue)),
+    );
+
+    if (nextValue === cleanedValue) {
+      return cleanedValue;
+    }
+
+    cleanedValue = nextValue;
+  }
+
+  return cleanedValue;
+}
+
 function buildDraftMaskedFileName(kind: NameChangeDocumentInput['document_kind']) {
   return `${kind.replace(/_/g, '-')}-draft.pdf`;
 }
@@ -244,7 +262,7 @@ function parseDraftMonthName(monthName: string) {
 }
 
 function normalizeDraftDateValue(value: string) {
-  const markerStrippedValue = stripLeadingDraftQuotePrefix(stripLeadingDraftValuePrefix(stripLeadingDraftValueMarker(value)));
+  const markerStrippedValue = stripLeadingDraftValueNoise(value);
   const rawOffsetPattern = '[+-](?:\\d{1,2}|\\d{3,4}|\\d{1,2}:\\d{2})';
   const namedOffsetPattern = '(?:UTC|GMT)[+-]?(?:\\d{1,2}|\\d{3,4}|\\d{1,2}:\\d{2})?';
   const zoneTokenPattern = `(?:Z|${rawOffsetPattern}|${namedOffsetPattern}|[A-Za-z]{2,5}|[A-Za-z_-]+(?:\\/[A-Za-z_-]+)+|\\([^)]*\\)|\\[[^\\]]+\\])`;
@@ -382,7 +400,7 @@ function normalizeDraftDateValue(value: string) {
 }
 
 function normalizeDraftCountyValue(value: string) {
-  const normalizedValue = stripLeadingDraftQuotePrefix(stripLeadingDraftValuePrefix(stripLeadingDraftValueMarker(normalizeDraftText(value))));
+  const normalizedValue = stripLeadingDraftValueNoise(normalizeDraftText(value));
   if (!normalizedValue) return '';
 
   const countyWithoutLabels = normalizedValue.replace(
@@ -404,7 +422,7 @@ function normalizeDraftPersonNameValue(
   value: string,
   fieldKey: 'first_name' | 'middle_name' | 'last_name' | 'spouse_last_name',
 ) {
-  const normalizedValue = stripLeadingDraftQuotePrefix(stripLeadingDraftValuePrefix(stripLeadingDraftValueMarker(normalizeDraftText(value))));
+  const normalizedValue = stripLeadingDraftValueNoise(normalizeDraftText(value));
   if (!normalizedValue) return '';
 
   const labelPatterns: Record<typeof fieldKey, RegExp> = {
@@ -429,7 +447,7 @@ function normalizeDraftPersonNameValue(
 }
 
 function normalizeDraftReferenceNumberValue(value: string) {
-  const normalizedValue = stripLeadingDraftQuotePrefix(stripLeadingDraftValuePrefix(stripLeadingDraftValueMarker(normalizeDraftText(value))));
+  const normalizedValue = stripLeadingDraftValueNoise(normalizeDraftText(value));
   if (!normalizedValue) return '';
 
   return normalizedValue
