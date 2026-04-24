@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { PLANNER_ROLE_OPTIONS, canEditPlannerSurface, derivePlannerRoleFromPermissions, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
+import { formatGuestOpsRelativeTime, getGuestOpsTimestamp } from './guestOpsTime';
 import { getRsvpFallbackState } from '../../lib/rsvpFallbackState';
 import { getInviteLifecycleState } from '../../lib/inviteLifecycle';
 import { getGuestLifecycleStage } from '../../lib/guestLifecycleStage';
@@ -158,17 +159,6 @@ function getAuditGuestLabel(entry: GuestAuditEntry): string {
     || (entry.old_data?.name as string | undefined)
     || `${entry.old_data?.first_name ?? ''} ${entry.old_data?.last_name ?? ''}`.trim();
   return preferred || 'Guest';
-}
-
-function formatRelativeTime(iso: string): string {
-  const ms = Date.now() - new Date(iso).getTime();
-  const minutes = Math.floor(ms / 60000);
-  if (minutes < 1) return 'just now';
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
 }
 
 function getAuditActionIcon(action: GuestAuditEntry['action']) {
@@ -758,10 +748,10 @@ export const DashboardGuests: React.FC = () => {
     const dayAgo = now - (24 * 60 * 60 * 1000);
     const threeDaysAgo = now - (72 * 60 * 60 * 1000);
 
-    const opened24h = rsvpConflictHistory.filter((c) => new Date(c.created_at).getTime() >= dayAgo).length;
-    const resolved24h = rsvpConflictHistory.filter((c) => c.resolved_at && new Date(c.resolved_at).getTime() >= dayAgo).length;
-    const unresolvedOver24h = rsvpConflicts.filter((c) => new Date(c.created_at).getTime() < dayAgo).length;
-    const unresolvedOver72h = rsvpConflicts.filter((c) => new Date(c.created_at).getTime() < threeDaysAgo).length;
+    const opened24h = rsvpConflictHistory.filter((c) => getGuestOpsTimestamp(c.created_at) >= dayAgo).length;
+    const resolved24h = rsvpConflictHistory.filter((c) => getGuestOpsTimestamp(c.resolved_at) >= dayAgo).length;
+    const unresolvedOver24h = rsvpConflicts.filter((c) => getGuestOpsTimestamp(c.created_at) < dayAgo).length;
+    const unresolvedOver72h = rsvpConflicts.filter((c) => getGuestOpsTimestamp(c.created_at) < threeDaysAgo).length;
 
     const codeCounts = new Map<string, number>();
     for (const c of rsvpConflictHistory) {
@@ -3497,7 +3487,7 @@ Proceed with send?`)) return;
                           </div>
                           <p className="text-sm text-text-secondary leading-relaxed">{summarizeAuditEntry(entry)}</p>
                         </div>
-                        <span className="text-xs text-text-tertiary whitespace-nowrap">{formatRelativeTime(entry.changed_at)}</span>
+                        <span className="text-xs text-text-tertiary whitespace-nowrap">{formatGuestOpsRelativeTime(entry.changed_at)}</span>
                       </div>
                     </div>
                   ))
@@ -4793,7 +4783,7 @@ Proceed with send?`)) return;
                   <div className="space-y-2.5">
                     {guestAuditEntries.map((entry) => {
                       const absolute = new Date(entry.changed_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-                      const relative = formatRelativeTime(entry.changed_at);
+                      const relative = formatGuestOpsRelativeTime(entry.changed_at);
                       const Icon = getAuditActionIcon(entry.action);
                       return (
                         <div key={entry.id} className="text-xs text-text-primary border border-border-subtle rounded-lg p-2.5 bg-surface">
