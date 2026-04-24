@@ -1102,6 +1102,10 @@ describe('name change document intake contract', () => {
       capturedExtractionFields: ['issuance_date'],
       missingExtractionFields: ['first_name', 'middle_name', 'last_name'],
     });
+    expect(snapshot.canonicalCase.documents.current_passport).toMatchObject({
+      extractionFieldCount: 1,
+      extractedFieldKeys: ['issuance_date'],
+    });
   });
 
   it('deduplicates repeated captured extraction field keys in contract output', () => {

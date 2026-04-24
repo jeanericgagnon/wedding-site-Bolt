@@ -274,7 +274,19 @@ function buildDocumentContractExtractedFields(
   documents: NameChangeDocumentInput[],
   extractedFields: NameChangeExtractedFieldInput[],
 ): NameChangeExtractedFieldInput[] {
-  const snapshotExtractedFields = documents.flatMap((document) => buildDraftNameChangeExtractedFieldsFromSnapshot(document.id ?? null, document.extracted_snapshot));
+  const canonicalSnapshotDocumentIds = new Set(
+    NAME_CHANGE_DOCUMENT_CONTRACTS
+      .map((definition) => findBestContractDocument(documents, definition.kind)?.id?.trim() || null)
+      .filter((documentId): documentId is string => Boolean(documentId)),
+  );
+  const snapshotExtractedFields = documents.flatMap((document) => {
+    const documentId = document.id?.trim() || null;
+    if (document.document_kind !== 'other' && documentId && !canonicalSnapshotDocumentIds.has(documentId)) {
+      return [];
+    }
+
+    return buildDraftNameChangeExtractedFieldsFromSnapshot(document.id ?? null, document.extracted_snapshot);
+  });
   return [...extractedFields, ...snapshotExtractedFields];
 }
 
