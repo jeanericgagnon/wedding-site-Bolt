@@ -4,6 +4,7 @@ import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { PlanningVendor } from './planningService';
+import { formatVendorDate, isVendorDateOnOrBefore } from './vendorDate';
 
 interface Props {
   vendors: PlanningVendor[];
@@ -193,8 +194,7 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
   const totalBalance = vendors.reduce((s, v) => s + (v.balance_due || 0), 0);
   const followUpDueCount = vendors.filter((v) => {
     const dt = vendorMeta[v.id]?.nextFollowUp;
-    if (!dt) return false;
-    return new Date(dt) <= in7Days;
+    return isVendorDateOnOrBefore(dt, in7Days);
   }).length;
 
   const filteredVendors = useMemo(() => {
@@ -208,7 +208,7 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
   }, [vendors, search]);
 
   const vendorStage = (vendor: PlanningVendor): 'due-soon' | 'open-balance' | 'paid' => {
-    const dueSoon = vendor.next_payment_due && vendor.balance_due > 0 && new Date(vendor.next_payment_due) <= in7Days;
+    const dueSoon = Boolean(vendor.balance_due > 0 && isVendorDateOnOrBefore(vendor.next_payment_due, in7Days));
     if (dueSoon) return 'due-soon';
     if ((vendor.balance_due || 0) > 0) return 'open-balance';
     return 'paid';
@@ -296,7 +296,7 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
         <div className="space-y-3">
           {filteredVendors.map(vendor => {
             const isExpanded = expandedId === vendor.id;
-            const isDueSoon = vendor.next_payment_due && vendor.balance_due > 0 && new Date(vendor.next_payment_due) <= in7Days;
+            const isDueSoon = Boolean(vendor.balance_due > 0 && isVendorDateOnOrBefore(vendor.next_payment_due, in7Days));
             const balancePct = vendor.contract_total > 0 ? (vendor.amount_paid / vendor.contract_total) * 100 : 0;
 
             return (
@@ -371,14 +371,14 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
                         {vendor.next_payment_due && (
                           <p className="text-xs text-text-secondary">
                             Next payment: <span className={`font-medium ${isDueSoon ? 'text-warning' : 'text-text-primary'}`}>
-                              {new Date(vendor.next_payment_due).toLocaleDateString()}
+                              {formatVendorDate(vendor.next_payment_due)}
                             </span>
                           </p>
                         )}
                         <div className="rounded-lg border border-border/35 bg-surface-subtle/40 px-2.5 py-2 space-y-1.5">
                           <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Follow-up</p>
                           <p className="text-xs text-text-secondary">
-                            Last contacted: {vendorMeta[vendor.id]?.lastContacted ? new Date(vendorMeta[vendor.id]!.lastContacted as string).toLocaleDateString() : 'Not added yet'}
+                            Last contacted: {vendorMeta[vendor.id]?.lastContacted ? formatVendorDate(vendorMeta[vendor.id]!.lastContacted as string) : 'Not added yet'}
                           </p>
                           <div className="flex items-center gap-2">
                             <button
