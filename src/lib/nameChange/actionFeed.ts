@@ -21,6 +21,13 @@ function getActionDocumentKind(item: NameChangeActionFeedItem) {
   return item.action.category === 'document' ? item.action.documentKind : undefined;
 }
 
+function isCaseSetupExecutionAction(action: NameChangeGuidedAction) {
+  if (action.category !== 'dependency') return false;
+
+  return action.label === 'Unblock Case legal-name setup complete'
+    || action.detail.startsWith('Case setup is still missing ');
+}
+
 function dedupeDocumentRoutedExecutionItems(items: NameChangeActionFeedItem[]) {
   const retainedByDocumentKind = new Map<string, NameChangeActionFeedItem>();
   const passthrough: NameChangeActionFeedItem[] = [];
@@ -132,6 +139,7 @@ export function buildNameChangeActionFeed(
   const executionItems: NameChangeActionFeedItem[] = executionSnapshots.map((snapshot) => {
     const severity = getExecutionSeverity(snapshot);
     const routesToDocumentRepair = snapshot.nextAction.category === 'document' && Boolean(snapshot.nextAction.documentKind);
+    const routesToCaseSetup = isCaseSetupExecutionAction(snapshot.nextAction);
     const score =
       (getSeverityWeight(severity) * 100) +
       (snapshot.blockers.length * 10) +
@@ -149,7 +157,9 @@ export function buildNameChangeActionFeed(
       plannerIntent: routesToDocumentRepair ? 'open_document_repair' : 'open_execution_card',
       focusTargetId: routesToDocumentRepair
         ? `document-${snapshot.nextAction.documentKind}`
-        : `execution-card-${snapshot.targetKey}`,
+        : routesToCaseSetup
+          ? 'case-setup'
+          : `execution-card-${snapshot.targetKey}`,
       score,
       action: snapshot.nextAction,
     };

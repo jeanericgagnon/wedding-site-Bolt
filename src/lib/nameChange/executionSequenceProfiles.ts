@@ -131,7 +131,6 @@ const buildCourtOrderDependencies: NameChangeDependencyRecipe = ({ requirements 
 ];
 
 const buildPassportDependencies: NameChangeDependencyRecipe = ({ profile, requirements, prerequisiteDependencies }) => [
-  buildRequirementDependency(requirements.caseLegalNameCompleteness, 'case-legal-name-completeness', 'Case legal-name setup complete', true, 'Case legal-name completeness has not been evaluated.', true, 'dependency'),
   ...buildStrictLegalAndIdentityDependencies({ profile, intake: null as never, requirements, prerequisiteDependencies }),
   buildRequirementDependency(requirements.marriageJurisdictionAlignment, 'marriage-jurisdiction-alignment', 'Marriage jurisdiction alignment', true, 'Marriage jurisdiction alignment has not been evaluated.', true, 'document'),
   buildRequirementDependency(requirements.outOfStateMarriageCertificateGrounding, 'out-of-state-marriage-certificate-grounding', 'Out-of-state marriage certificate grounding', true, 'Out-of-state marriage certificate grounding has not been evaluated.', true, 'document'),

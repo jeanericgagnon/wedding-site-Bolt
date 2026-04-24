@@ -266,6 +266,28 @@ describe('name change action feed', () => {
     });
   });
 
+  it('routes legal-name setup blockers to the planner case-setup section', () => {
+    const feed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'ssa',
+        targetLabel: 'Social Security Administration',
+        blockers: ['Case setup is still missing target middle name.'],
+        nextAction: {
+          category: 'dependency',
+          label: 'Unblock Case legal-name setup complete',
+          detail: 'Case setup is still missing target middle name.',
+        },
+      }),
+    ], []);
+
+    expect(feed[0]).toMatchObject({
+      origin: 'execution',
+      plannerIntent: 'open_execution_card',
+      focusTargetId: 'case-setup',
+      urgencyReason: 'blocking_dependency',
+    });
+  });
+
   it('dedupes multiple execution lanes that all route to the same document repair target', () => {
     const feed = buildNameChangeActionFeed([
       makeExecutionSnapshot({

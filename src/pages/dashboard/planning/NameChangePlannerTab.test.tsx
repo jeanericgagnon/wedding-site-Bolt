@@ -59,5 +59,6 @@ describe('NameChangePlannerTab', () => {
 
     expect(onDraftChange).toHaveBeenCalledWith({ current_middle_name: 'Rae' });
     expect(onDraftChange).toHaveBeenCalledWith({ target_middle_name: 'Lane' });
+    expect(document.getElementById('case-setup')).not.toBeNull();
   });
 });

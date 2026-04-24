@@ -1052,6 +1052,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       </div>
 
       <Card>
+        <div id="case-setup" className="scroll-mt-24" />
         <div className="flex items-start justify-between gap-3">
           <div>
             <h3 className="text-lg font-semibold text-text-primary">Case setup</h3>
