@@ -89,11 +89,12 @@ interface ExecutionSectionSummary {
 interface TargetStatusVaultRow {
   key: string;
   title: string;
-  planStatus: 'ready' | 'blocked' | 'later';
-  executionStatus: 'todo' | 'in_progress' | 'complete';
+  vaultStatus: 'todo' | 'blocked' | 'ready' | 'in_progress' | 'complete';
+  ready: boolean;
   proofSummary: string;
   note: string | null;
   updatedLabel: string | null;
+  nextActionLabel: string | null;
 }
 
 const EXECUTION_SECTION_STEP_IDS: Record<string, string[]> = {
@@ -577,29 +578,16 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     () => buildNameChangeActionFeed(executionSnapshots, documentRepairQueue, reminderAttention),
     [documentRepairQueue, executionSnapshots, reminderAttention],
   );
-  const targetStatusVaultRows = useMemo<TargetStatusVaultRow[]>(() => plan.steps.map((step) => {
-    const proofSummary = step.evidenceNeeded.length > 0
-      ? `${step.evidenceNeeded.length} proof item${step.evidenceNeeded.length === 1 ? '' : 's'}: ${step.evidenceNeeded.join(' · ')}`
-      : step.blockers.length > 0
-        ? `Blocked by ${step.blockers.join(' · ')}`
-        : 'No extra proof tracked yet';
-
-    const updatedLabel = step.completedAt
-      ? `Completed ${new Date(step.completedAt).toLocaleString()}`
-      : step.executionUpdatedAt
-        ? `Updated ${formatNameChangeExecutionDateTime(step.executionUpdatedAt)}`
-        : null;
-
-    return {
-      key: step.id,
-      title: step.title,
-      planStatus: step.status,
-      executionStatus: step.executionStatus ?? 'todo',
-      proofSummary,
-      note: step.executionNote?.trim() || null,
-      updatedLabel,
-    };
-  }), [plan.steps]);
+  const targetStatusVaultRows = useMemo<TargetStatusVaultRow[]>(() => executionSnapshots.map((snapshot) => ({
+    key: snapshot.targetKey,
+    title: snapshot.targetLabel,
+    vaultStatus: snapshot.statusVault.status,
+    ready: snapshot.ready,
+    proofSummary: snapshot.statusVault.proofSummary,
+    note: snapshot.statusVault.notes[0] ?? null,
+    updatedLabel: snapshot.statusVault.lastUpdatedAt ? `Updated ${formatNameChangeExecutionDateTime(snapshot.statusVault.lastUpdatedAt)}` : null,
+    nextActionLabel: snapshot.nextAction?.label ?? null,
+  })), [executionSnapshots]);
   const reminderAttentionSummary = useMemo(() => summarizeNameChangeReminderAttention(reminderAttention, {
     hasRecentStart: plan.summary.hasRecentStart,
     hasRecentCompletion: plan.summary.hasRecentCompletion,
@@ -1108,7 +1096,14 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 <h4 className="text-sm font-semibold text-text-primary">Target status tracking</h4>
                 <p className="mt-1 text-xs text-text-secondary">Per-target status, proof summary, note, and last movement across the filing workflow.</p>
               </div>
-              <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{targetStatusVaultRows.length} tracked targets</span>
+              <div className="flex flex-wrap items-center justify-end gap-2 text-xs text-text-secondary">
+                <span className="rounded-full bg-surface-subtle px-2 py-1">{targetStatusVaultRows.length} tracked targets</span>
+                <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.inProgress ?? 0} in progress</span>
+                <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.complete ?? 0} complete</span>
+                {plan.summary.targetStatusOverview?.latestUpdatedAt ? (
+                  <span className="rounded-full bg-surface-subtle px-2 py-1">Latest move {formatNameChangeExecutionDateTime(plan.summary.targetStatusOverview.latestUpdatedAt)}</span>
+                ) : null}
+              </div>
             </div>
 
             <div className="mt-4 space-y-3">
@@ -1120,11 +1115,12 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                       <p className="mt-1 text-xs text-text-secondary">{row.proofSummary}</p>
                     </div>
                     <div className="flex flex-wrap items-center justify-end gap-2">
-                      <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">Plan: {row.planStatus}</span>
-                      <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">Execution: {row.executionStatus}</span>
+                      <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">Vault: {row.vaultStatus.replace(/_/g, ' ')}</span>
+                      <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">Ready: {row.ready ? 'yes' : 'no'}</span>
                     </div>
                   </div>
                   {row.note && <p className="mt-3 text-sm text-text-secondary">{row.note}</p>}
+                  {row.nextActionLabel && <p className="mt-2 text-xs text-text-secondary">Next: {row.nextActionLabel}</p>}
                   {row.updatedLabel && <p className="mt-3 text-xs text-text-secondary">{row.updatedLabel}</p>}
                 </div>
               ))}

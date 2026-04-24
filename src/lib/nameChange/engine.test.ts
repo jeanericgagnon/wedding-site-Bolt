@@ -481,6 +481,17 @@ describe('name change engine', () => {
     });
   });
 
+  it('tracks target-status overview counts in the plan summary', () => {
+    const plan = buildNameChangePlan(makeInput());
+
+    expect(plan.summary.targetStatusOverview).toMatchObject({
+      inProgress: 0,
+      complete: 0,
+      latestUpdatedAt: null,
+    });
+    expect(plan.summary.targetStatusOverview?.todo).toBe(plan.steps.filter((step) => step.phase !== 'eligibility').length);
+  });
+
   it('keeps court-order plans blocked until alias proof is reviewed', () => {
     const plan = buildNameChangePlan({
       ...makeInput({ legal_basis: 'court_order' }),

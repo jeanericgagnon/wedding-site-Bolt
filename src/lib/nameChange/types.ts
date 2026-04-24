@@ -176,6 +176,12 @@ export interface NameChangePlanStep {
 export interface NameChangePlanSummary {
   legalPathLabel: string;
   recommendedOrder: string[];
+  targetStatusOverview?: {
+    todo: number;
+    inProgress: number;
+    complete: number;
+    latestUpdatedAt: string | null;
+  };
   executionTracks?: Array<{
     id: string;
     title: string;

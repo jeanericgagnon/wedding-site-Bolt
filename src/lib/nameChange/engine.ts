@@ -289,6 +289,31 @@ function resolveInstitutionCoverageStatus(stepIds: string[], steps: NameChangePl
   return 'upcoming';
 }
 
+function buildTargetStatusOverview(steps: NameChangePlanStep[]): NonNullable<NameChangePlan['summary']['targetStatusOverview']> {
+  const trackedSteps = steps.filter((step) => step.phase !== 'eligibility');
+  const latestUpdatedAt = trackedSteps
+    .flatMap((step) => [step.executionUpdatedAt, step.completedAt])
+    .filter((value): value is string => Boolean(value))
+    .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
+
+  return trackedSteps.reduce((summary, step) => {
+    const executionStatus = step.executionStatus ?? 'todo';
+    if (executionStatus === 'complete') {
+      summary.complete += 1;
+    } else if (executionStatus === 'in_progress') {
+      summary.inProgress += 1;
+    } else {
+      summary.todo += 1;
+    }
+    return summary;
+  }, {
+    todo: 0,
+    inProgress: 0,
+    complete: 0,
+    latestUpdatedAt,
+  });
+}
+
 function buildInstitutionCategoryCoverage(
   institutions: NameChangeInstitutionEntry[],
   steps: NameChangePlanStep[],
@@ -844,6 +869,7 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
       cautionNotes,
       missingInputs,
       readinessPercent,
+      targetStatusOverview: buildTargetStatusOverview(steps),
       milestoneChecklist: milestoneChecklist.map((milestone) => ({
         ...milestone,
         dependsOnStepIds: [...milestone.dependsOnStepIds],
