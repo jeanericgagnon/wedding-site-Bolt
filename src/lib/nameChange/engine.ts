@@ -257,7 +257,9 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
   const normalizedTargetLastName = normalize(input.profile.target_last_name);
   const normalizedSpouseLastName = normalize(String(input.profile.structured_intake.spouseLastName ?? ''));
   const hasMarriageNameMismatch = input.profile.legal_basis === 'marriage' && legalBasis === 'court_order';
-  const hasBothPartnersChanging = hasChangeReason(input.profile, /(both|dual).*(partner|spouse)/) || hasChangeReason(input.profile, /(partner|spouse).*(both|dual)/);
+  const hasBothPartnersChanging = input.profile.structured_intake.bothPartnersChangeName === true
+    || hasChangeReason(input.profile, /(both|dual).*(partner|spouse)/)
+    || hasChangeReason(input.profile, /(partner|spouse).*(both|dual)/);
   const isOutOfStateMarriage = normalize(input.profile.marriage_state) !== '' && normalize(input.profile.marriage_state) !== 'california';
   const countyOfficeDetail = legalBasis === 'marriage'
     ? isOutOfStateMarriage

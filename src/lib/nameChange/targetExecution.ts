@@ -19,7 +19,8 @@ import type {
 } from './types';
 
 function hasDualPartnerNameChange(profile: NameChangeCaseInput) {
-  return profile.change_reasons.some((reason) => /both_partners_change_name|dual/i.test(reason));
+  return profile.structured_intake.bothPartnersChangeName === true
+    || profile.change_reasons.some((reason) => /both_partners_change_name|dual/i.test(reason));
 }
 
 function isDualPartnerExecutionTarget(targetKey: NameChangeExecutionTargetKey) {

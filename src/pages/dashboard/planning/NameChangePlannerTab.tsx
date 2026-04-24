@@ -2044,7 +2044,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 <p className="mt-2 text-xs text-text-secondary">Last workflow touch: {item.lastTouchedAt ? new Date(item.lastTouchedAt).toLocaleString() : 'No execution updates yet'}</p>
                 <div className="mt-3 flex gap-2">
                   {item.focusTargetId && (
-                    <Button variant="ghost" size="sm" onClick={() => scrollToPlannerTarget(item.focusTargetId)}>
+                    <Button variant="ghost" size="sm" onClick={() => scrollToPlannerTarget(item.focusTargetId!)}>
                       {getReminderCtaLabel(item.plannerIntent)}
                     </Button>
                   )}

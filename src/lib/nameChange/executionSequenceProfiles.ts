@@ -94,13 +94,18 @@ function buildEmploymentContextDependency(profile: NameChangeCaseInput, label: s
   };
 }
 
+function hasDualPartnerNameChange(profile: NameChangeCaseInput) {
+  return profile.structured_intake.bothPartnersChangeName === true
+    || profile.change_reasons.some((reason) => /both_partners_change_name|dual/i.test(reason));
+}
+
 function buildDualPartnerExecutionDependency(
   profile: NameChangeCaseInput,
   key: string,
   label: string,
   reason: string,
 ): NameChangeExecutionDependency {
-  const dualPartner = profile.structured_intake?.bothPartnersChangeName === true;
+  const dualPartner = hasDualPartnerNameChange(profile);
   return {
     key,
     label,

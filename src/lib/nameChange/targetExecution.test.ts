@@ -1370,6 +1370,57 @@ describe('name change target execution snapshot', () => {
     });
   });
 
+  it('splits ready SSA work from structured dual-partner intake', () => {
+    const profile = makeCase({
+      structured_intake: {
+        spouseLastName: 'Jordan',
+        travelBookedSoon: false,
+        wantsDocumentIntakeHelp: true,
+        bothPartnersChangeName: true,
+      },
+    });
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'San Diego County Clerk',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
+      },
+      {
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'license-•••.pdf',
+        issuing_authority: 'California DMV',
+        issued_on: '2025-03-01',
+        extraction_confidence: 0.9,
+      },
+      {
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'passport-•••.pdf',
+        issuing_authority: 'U.S. Department of State',
+        issued_on: '2024-06-01',
+        expires_on: '2034-06-01',
+        extraction_confidence: 0.92,
+      },
+    ];
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('ssa', profile, documents, []);
+    expect(snapshot.ready).toBe(true);
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'packet',
+      label: 'Open two SSA partner packets',
+    });
+  });
+
   it('splits ready DMV work into two partner appointments when both partners are changing names', () => {
     const profile = makeCase({ change_reasons: ['marriage', 'both_partners_change_name'] });
     const documents: NameChangeDocumentInput[] = [

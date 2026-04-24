@@ -27,6 +27,7 @@ export interface NameChangeStructuredIntake {
   spouseLastName: string | null;
   travelBookedSoon: boolean;
   wantsDocumentIntakeHelp: boolean;
+  bothPartnersChangeName?: boolean;
 }
 
 export interface NameChangeCaseRecord {
