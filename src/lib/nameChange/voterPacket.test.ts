@@ -39,7 +39,9 @@ describe('name change voter packet snapshot', () => {
   it('builds a structured voter registration update packet payload', () => {
     const snapshot = buildNameChangeVoterPacketSnapshot(makeCase(), [], []);
     expect(snapshot.formCode).toBe('CA-VOTER-REGISTRATION-UPDATE');
+    expect(snapshot.fields.find((field) => field.fieldKey === 'voter.currentMiddleName')).toMatchObject({ value: 'Marie' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'voter.newFirstName')).toMatchObject({ value: 'Alex' });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'voter.newMiddleName')).toMatchObject({ value: 'Marie' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'voter.newLastName')).toMatchObject({ value: 'Jordan' });
   });
 });

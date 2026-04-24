@@ -56,7 +56,9 @@ describe('name change TSA packet snapshot', () => {
     ];
     const snapshot = buildNameChangeTsaPacketSnapshot(makeCase(), documents, extractedFields);
     expect(snapshot.formCode).toBe('TSA-TRAVEL-PROFILE-UPDATE');
+    expect(snapshot.fields.find((field) => field.fieldKey === 'traveler.currentMiddleName')).toMatchObject({ value: 'Marie' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'traveler.newFirstName')).toMatchObject({ value: 'Alex' });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'traveler.newMiddleName')).toMatchObject({ value: 'Marie' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'traveler.newLastName')).toMatchObject({ value: 'Jordan' });
   });
 });

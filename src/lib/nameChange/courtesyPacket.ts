@@ -11,8 +11,10 @@ export const NAME_CHANGE_COURTESY_PACKET_CONTRACT: NameChangeFormContractDefinit
   label: 'Courtesy / social identity sync packet',
   fieldSpecs: [
     { fieldKey: 'profile.currentFirstName', label: 'Current first name', sourceTargetField: 'applicant.current_first_name' },
+    { fieldKey: 'profile.currentMiddleName', label: 'Current middle name', sourceTargetField: 'applicant.current_middle_name', required: false },
     { fieldKey: 'profile.currentLastName', label: 'Current last name', sourceTargetField: 'applicant.current_last_name' },
     { fieldKey: 'profile.newFirstName', label: 'New first name', sourceTargetField: 'applicant.target_first_name' },
+    { fieldKey: 'profile.newMiddleName', label: 'New middle name', sourceTargetField: 'applicant.target_middle_name', required: false },
     { fieldKey: 'profile.newLastName', label: 'New last name', sourceTargetField: 'applicant.target_last_name' },
     { fieldKey: 'residence.county', label: 'County', sourceTargetField: 'applicant.county', required: false },
   ],

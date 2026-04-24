@@ -39,7 +39,9 @@ describe('name change employer packet snapshot', () => {
   it('builds a structured employer update packet payload', () => {
     const snapshot = buildNameChangeEmployerPacketSnapshot(makeCase(), [], []);
     expect(snapshot.formCode).toBe('EMPLOYER-HR-PACKET');
+    expect(snapshot.fields.find((field) => field.fieldKey === 'employee.currentMiddleName')).toMatchObject({ value: 'Marie' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'employee.newFirstName')).toMatchObject({ value: 'Alex' });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'employee.newMiddleName')).toMatchObject({ value: 'Marie' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'employee.newLastName')).toMatchObject({ value: 'Jordan' });
   });
 });

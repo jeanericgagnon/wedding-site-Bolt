@@ -39,7 +39,9 @@ describe('name change professional license packet snapshot', () => {
   it('builds a structured professional license update packet payload', () => {
     const snapshot = buildNameChangeLicensePacketSnapshot(makeCase(), [], []);
     expect(snapshot.formCode).toBe('PROFESSIONAL-LICENSE-UPDATE-PACKET');
+    expect(snapshot.fields.find((field) => field.fieldKey === 'licenseHolder.currentMiddleName')).toMatchObject({ value: 'Marie' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'licenseHolder.newFirstName')).toMatchObject({ value: 'Alex' });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'licenseHolder.newMiddleName')).toMatchObject({ value: 'Marie' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'licenseHolder.newLastName')).toMatchObject({ value: 'Jordan' });
   });
 });
