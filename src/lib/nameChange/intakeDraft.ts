@@ -101,6 +101,11 @@ function normalizeDraftDocumentKind(value: string) {
     .replace(/_+/g, '_')
     .replace(/^_+|_+$/g, '');
 
+  const strippedSuffixKind = normalizedKind
+    .replace(/(?:_(?:document|documents|doc|copy|scan|scanned|upload|uploaded|file|image|photo|front|back))+$/g, '')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '');
+
   const kindAliases: Record<string, NameChangeDocumentInput['document_kind']> = {
     marriage_cert: 'marriage_certificate',
     marriage_license: 'marriage_certificate',
@@ -151,7 +156,7 @@ function normalizeDraftDocumentKind(value: string) {
     proof_address: 'proof_of_address',
   };
 
-  const canonicalKind = (kindAliases[normalizedKind] ?? normalizedKind) as NameChangeDocumentInput['document_kind'];
+  const canonicalKind = (kindAliases[strippedSuffixKind] ?? kindAliases[normalizedKind] ?? strippedSuffixKind) as NameChangeDocumentInput['document_kind'];
   return SUPPORTED_DRAFT_DOCUMENT_KINDS.has(canonicalKind) ? canonicalKind : 'other';
 }
 

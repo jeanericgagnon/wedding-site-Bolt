@@ -2025,6 +2025,9 @@ describe('name change intake draft helpers', () => {
     expect(normalizeDraftNameChangeDocumentId('marriage_certificate')).toBe('draft-marriage_certificate');
     expect(normalizeDraftNameChangeDocumentId('currentPassport')).toBe('draft-current_passport');
     expect(normalizeDraftNameChangeDocumentId('court order name change')).toBe('draft-court_order');
+    expect(normalizeDraftNameChangeDocumentId('marriage certificate document')).toBe('draft-marriage_certificate');
+    expect(normalizeDraftNameChangeDocumentId('passport upload')).toBe('draft-current_passport');
+    expect(normalizeDraftNameChangeDocumentId('driver license front image')).toBe('draft-current_drivers_license');
     expect(normalizeDraftNameChangeDocumentId('draft')).toBeNull();
     expect(normalizeDraftNameChangeDocumentId('draft-other')).toBeNull();
     expect(normalizeDraftNameChangeDocumentId('draft other')).toBeNull();
