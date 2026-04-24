@@ -64,12 +64,31 @@ describe('name change engine', () => {
     expect(plan.summary.legalPathLabel).toContain('marriage');
     expect(plan.summary.recommendedOrder[0]).toContain('Confirm certified marriage proof');
     expect(plan.summary.recommendedOrder[1]).toContain('Update Social Security first');
+    expect(plan.summary.recommendedOrder[2]).toContain('Update your California DMV record');
+    expect(plan.summary.recommendedOrder[3]).toContain('passport');
     expect(plan.summary.readinessPercent).toBeGreaterThan(0);
     expect(plan.summary.executionCounts).toMatchObject({ todo: plan.steps.length, in_progress: 0, complete: 0 });
     expect(plan.steps.some((step) => step.title.includes('passport'))).toBe(true);
     const institutionsStep = plan.steps.find((step) => step.phase === 'institutional');
     expect(institutionsStep?.institutions).toContain('Employer payroll / HR');
+    expect(institutionsStep?.institutions).toEqual(
+      expect.arrayContaining([
+        'IRS name / tax record alignment',
+        'Banks and credit cards',
+        'Investment, retirement, and loan accounts',
+        'Health, dental, vision, auto, renters, and life insurance',
+        'Disability insurance and leave administrators',
+        'California voter registration',
+        'TSA PreCheck, Global Entry, and airline profiles',
+        'Hotel loyalty, car registration/title, and auto insurance follow-through',
+        'Professional licenses and certifications',
+        'Phone plan, email/domain, and primary digital identity',
+        'Subscriptions, social profiles, and lifestyle memberships',
+      ]),
+    );
     expect(plan.steps.find((step) => step.id === 'institution-irs-employer')?.timing).toContain('SSA');
+    expect(plan.steps.find((step) => step.id === 'institution-irs-records')?.timing).toContain('SSA');
+    expect(plan.steps.find((step) => step.id === 'institution-tsa-precheck')?.institutions).toContain('TSA PreCheck, Global Entry, and airline profiles');
     expect(plan.summary.milestoneChecklist).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'milestone-legal-proof', status: 'ready', dependsOnStepIds: ['eligibility-proof'] }),
@@ -161,6 +180,7 @@ describe('name change engine', () => {
     const plan = buildNameChangePlan(makeInput({ employment_status: 'not_employed' }));
     expect(plan.steps.some((step) => step.id === 'institution-irs-employer')).toBe(false);
     expect(plan.steps.some((step) => step.id === 'institution-professional-licenses')).toBe(false);
+    expect(plan.steps.some((step) => step.id === 'institution-disability-insurance')).toBe(false);
   });
 
   it('treats legacy court-order proof aliases as real legal proof for guided execution', () => {
