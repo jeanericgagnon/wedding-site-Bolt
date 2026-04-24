@@ -94,6 +94,7 @@ interface TargetStatusVaultRow {
   proofSummary: string;
   note: string | null;
   updatedLabel: string | null;
+  executionUpdatedLabel: string | null;
   nextActionLabel: string | null;
   reminderLabel: string | null;
 }
@@ -327,12 +328,17 @@ const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
           <p className="text-xs uppercase tracking-wide text-text-tertiary">Status vault</p>
           <p className="mt-2 text-sm font-semibold text-text-primary">{snapshot.statusVault.status.replace(/_/g, ' ')}</p>
         </div>
-        {snapshot.statusVault.lastTouchedAt ? (
-          <p className="text-xs text-text-secondary">
-            Latest touch {new Date(snapshot.statusVault.lastTouchedAt).toLocaleString()}
-            {snapshot.statusVault.lastTouchedSource === 'reminder' ? ' · reminder' : snapshot.statusVault.lastTouchedSource === 'execution' ? ' · execution' : ''}
-          </p>
-        ) : null}
+        <div className="space-y-1 text-right">
+          {snapshot.statusVault.lastTouchedAt ? (
+            <p className="text-xs text-text-secondary">
+              Latest touch {new Date(snapshot.statusVault.lastTouchedAt).toLocaleString()}
+              {snapshot.statusVault.lastTouchedSource === 'reminder' ? ' · reminder' : snapshot.statusVault.lastTouchedSource === 'execution' ? ' · execution' : ''}
+            </p>
+          ) : null}
+          {snapshot.statusVault.lastUpdatedAt && snapshot.statusVault.lastUpdatedAt !== snapshot.statusVault.lastTouchedAt ? (
+            <p className="text-xs text-text-secondary">Execution updated {new Date(snapshot.statusVault.lastUpdatedAt).toLocaleString()}</p>
+          ) : null}
+        </div>
       </div>
       <p className="mt-3 text-sm text-text-secondary">{snapshot.statusVault.proofSummary}</p>
       {snapshot.statusVault.notes.length > 0 ? (
@@ -595,6 +601,10 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       note: snapshot.statusVault.notes[0] ?? null,
       updatedLabel: snapshot.statusVault.lastTouchedAt
         ? `Latest touch ${formatNameChangeExecutionDateTime(snapshot.statusVault.lastTouchedAt)}${snapshot.statusVault.lastTouchedSource === 'reminder' ? ' · reminder' : snapshot.statusVault.lastTouchedSource === 'execution' ? ' · execution' : ''}`
+        : null,
+      executionUpdatedLabel: snapshot.statusVault.lastUpdatedAt
+        && snapshot.statusVault.lastUpdatedAt !== snapshot.statusVault.lastTouchedAt
+        ? `Execution updated ${formatNameChangeExecutionDateTime(snapshot.statusVault.lastUpdatedAt)}`
         : null,
       nextActionLabel: snapshot.nextAction?.label ?? null,
       reminderLabel: openReminderCount > 0
@@ -1142,6 +1152,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                   {row.nextActionLabel && <p className="mt-2 text-xs text-text-secondary">Next: {row.nextActionLabel}</p>}
                   {row.reminderLabel && <p className="mt-2 text-xs text-text-secondary">Reminders: {row.reminderLabel}</p>}
                   {row.updatedLabel && <p className="mt-3 text-xs text-text-secondary">{row.updatedLabel}</p>}
+                  {row.executionUpdatedLabel && <p className="mt-1 text-xs text-text-secondary">{row.executionUpdatedLabel}</p>}
                 </div>
               ))}
             </div>
