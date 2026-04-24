@@ -319,6 +319,26 @@ const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
       </div>
     </div>
 
+    <div className="mt-4 rounded-xl border border-border-subtle p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-text-tertiary">Status vault</p>
+          <p className="mt-2 text-sm font-semibold text-text-primary">{snapshot.statusVault.status.replace(/_/g, ' ')}</p>
+        </div>
+        {snapshot.statusVault.lastUpdatedAt ? (
+          <p className="text-xs text-text-secondary">Updated {new Date(snapshot.statusVault.lastUpdatedAt).toLocaleString()}</p>
+        ) : null}
+      </div>
+      <p className="mt-3 text-sm text-text-secondary">{snapshot.statusVault.proofSummary}</p>
+      {snapshot.statusVault.notes.length > 0 ? (
+        <ul className="mt-3 space-y-1 text-sm text-text-secondary">
+          {snapshot.statusVault.notes.slice(0, 2).map((note, noteIndex) => (
+            <li key={`${snapshot.targetKey}-status-vault-note-${noteIndex}`}>• {note}</li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+
     <div className="mt-4 grid gap-3 md:grid-cols-2">
       {snapshot.checklist.map((item) => (
         <div key={item.label} className="rounded-xl border border-border-subtle p-4">

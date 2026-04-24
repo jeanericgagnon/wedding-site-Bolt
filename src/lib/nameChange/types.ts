@@ -510,6 +510,12 @@ export interface NameChangeTargetExecutionSnapshot {
   ready: boolean;
   blockers: string[];
   nextAction: NameChangeGuidedAction;
+  statusVault: {
+    status: 'todo' | 'blocked' | 'ready' | 'in_progress' | 'complete';
+    proofSummary: string;
+    notes: string[];
+    lastUpdatedAt: string | null;
+  };
   readinessSummary: {
     status: 'ready' | 'blocked' | 'attention';
     blockingFieldRisks: number;

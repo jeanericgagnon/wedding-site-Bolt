@@ -2110,4 +2110,89 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.checklist.find((item) => item.key === 'court-order-reference-extraction')).toMatchObject({ status: 'ready' });
     expect(snapshot.nextAction?.label).not.toContain('Capture court-order');
   });
+
+  it('builds a per-target status vault from execution truth so the workflow can resume cleanly', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'marriage-cert-doc',
+        document_kind: 'marriage_certificate',
+        display_name: 'Marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'marriage-•••.pdf',
+        issuing_authority: 'San Diego County',
+        issued_on: '2026-04-10',
+        extraction_confidence: 0.94,
+      },
+    ];
+    const basePlan = buildNameChangePlan({ profile: makeCase(), documents, extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-ssa'
+        ? {
+            ...step,
+            executionStatus: 'in_progress' as const,
+            executionNote: 'Need the SSA receipt number before rolling into DMV.',
+            executionUpdatedAt: '2026-04-24T21:55:00.000Z',
+          }
+        : step),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('ssa', makeCase(), documents, [], plan);
+    expect(snapshot.statusVault).toMatchObject({
+      status: 'in_progress',
+      lastUpdatedAt: '2026-04-24T21:55:00.000Z',
+      notes: ['Need the SSA receipt number before rolling into DMV.'],
+    });
+    expect(snapshot.statusVault.proofSummary).toContain('checks ready');
+  });
+
+  it('marks the status vault ready when proof is grounded but no execution step has started yet', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'marriage-cert-doc',
+        document_kind: 'marriage_certificate',
+        display_name: 'Marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'marriage-•••.pdf',
+        issuing_authority: 'San Diego County',
+        issued_on: '2026-04-10',
+        extraction_confidence: 0.94,
+      },
+      {
+        id: 'passport-doc',
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'passport-•••.pdf',
+        issuing_authority: 'U.S. Department of State',
+        issued_on: '2024-06-01',
+        expires_on: '2034-06-01',
+        extraction_confidence: 0.92,
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        field_key: 'spouse_last_name',
+        field_label: 'Spouse last name',
+        field_value_masked: 'Jordan',
+        source_type: 'manual',
+        is_verified: true,
+      },
+      {
+        field_key: 'issuance_date',
+        field_label: 'Passport issue date',
+        field_value_masked: '2024-06-01',
+        source_type: 'manual',
+        is_verified: true,
+      },
+    ];
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('ssa', makeCase(), documents, extractedFields);
+    expect(snapshot.ready).toBe(true);
+    expect(snapshot.statusVault.status).toBe('ready');
+    expect(snapshot.statusVault.proofSummary).toContain('Proof stack looks grounded');
+  });
 });

@@ -41,6 +41,74 @@ function isDualPartnerExecutionTarget(targetKey: NameChangeExecutionTargetKey) {
   ].includes(targetKey);
 }
 
+const TARGET_STATUS_VAULT_STEP_IDS: Partial<Record<NameChangeExecutionTargetKey, string[]>> = {
+  courtOrder: ['state-court-order'],
+  ssa: ['federal-ssa'],
+  dmv: ['state-photo-id'],
+  passport: ['federal-passport'],
+  employer: ['institution-irs-employer'],
+  taxes: ['institution-irs-records', 'institution-state-tax-agency'],
+  banks: ['institution-banks'],
+  insurance: ['institution-insurance'],
+  medical: ['institution-medical-providers'],
+  utilities: ['institution-utilities-housing', 'institution-phone-digital-identity'],
+  courtesy: ['institution-credit-bureaus', 'institution-subscriptions-social', 'institution-school-alumni-records'],
+  voter: ['institution-voter-registration'],
+  tsa: ['institution-tsa-precheck', 'institution-frequent-flyer-hotel-rail'],
+  licenses: ['institution-professional-licenses'],
+};
+
+function getTargetStatusVaultSnapshot(
+  targetKey: NameChangeExecutionTargetKey,
+  plan: NameChangePlan | null | undefined,
+  checklist: NameChangeTargetExecutionSnapshot['checklist'],
+  ready: boolean,
+  blockers: string[],
+  nextAction: NameChangeTargetExecutionSnapshot['nextAction'],
+): NameChangeTargetExecutionSnapshot['statusVault'] {
+  const relevantStepIds = new Set(TARGET_STATUS_VAULT_STEP_IDS[targetKey] ?? []);
+  const relevantSteps = (plan?.steps ?? []).filter((step) => relevantStepIds.has(step.id));
+  const latestUpdatedAt = relevantSteps
+    .flatMap((step) => [step.executionUpdatedAt, step.completedAt])
+    .filter((value): value is string => Boolean(value))
+    .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
+  const explicitNotes = relevantSteps
+    .map((step) => step.executionNote?.trim() || null)
+    .filter((note): note is string => Boolean(note));
+  const missingChecklist = checklist.filter((item) => item.status === 'missing');
+  const attentionChecklist = checklist.filter((item) => item.status === 'attention');
+  const proofCounts = `${checklist.filter((item) => item.status === 'ready').length}/${checklist.length} checks ready`;
+  const proofIssues = [...missingChecklist, ...attentionChecklist]
+    .slice(0, 2)
+    .map((item) => item.label)
+    .join('; ');
+  const proofSummary = proofIssues ? `${proofCounts} • Needs ${proofIssues}` : `${proofCounts} • Proof stack looks grounded`;
+
+  let status: NameChangeTargetExecutionSnapshot['statusVault']['status'] = 'todo';
+  if (relevantSteps.some((step) => step.executionStatus === 'complete')) {
+    status = 'complete';
+  } else if (relevantSteps.some((step) => step.executionStatus === 'in_progress')) {
+    status = 'in_progress';
+  } else if (blockers.length > 0) {
+    status = 'blocked';
+  } else if (ready) {
+    status = 'ready';
+  }
+
+  const notes = explicitNotes.length > 0
+    ? explicitNotes
+    : nextAction
+      ? [nextAction.description]
+      : blockers.slice(0, 2);
+
+  return {
+    status,
+    proofSummary,
+    notes,
+    lastUpdatedAt: latestUpdatedAt,
+  };
+}
+
 function isDualPartnerDownstreamExecutionTarget(targetKey: NameChangeExecutionTargetKey) {
   return targetKey !== 'ssa' && targetKey !== 'dmv';
 }
@@ -445,6 +513,14 @@ export function buildNameChangeTargetExecutionSnapshot(
         && nextAction.label.startsWith('Review ')
           ? dualPartnerExecutionNextAction
           : nextAction;
+  const statusVault = getTargetStatusVaultSnapshot(
+    targetKey,
+    plan,
+    checklist,
+    gates.ready,
+    gates.blockers,
+    nextActionWithDualPartnerBranch,
+  );
   const readinessSummary = {
     status: gates.ready ? 'ready' as const : blockingFieldRisks > 0 || gates.blockers.length > 0 ? 'blocked' as const : 'attention' as const,
     blockingFieldRisks,
@@ -467,6 +543,7 @@ export function buildNameChangeTargetExecutionSnapshot(
     ready: gates.ready,
     blockers: gates.blockers,
     nextAction: nextActionWithDualPartnerBranch,
+    statusVault,
     readinessSummary,
     recommendedFormCode: formPayload.formCode || target.recommendedFormCode,
     autofillFields: autofill.fields.filter((field) => target.autofillTargetFields.includes(field.targetField)),
