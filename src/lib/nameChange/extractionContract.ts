@@ -14,6 +14,7 @@ import type {
   NameChangeMarriageCertificateExtraction,
   NameChangePassportExtraction,
 } from './types';
+import { buildDraftNameChangeDocumentId, normalizeDraftNameChangeDocumentId } from './intakeDraft';
 
 function normalizeValue(fieldKey: NameChangeExtractionFieldKey, value: string | null | undefined) {
   const normalized = normalizeDraftFieldValue(fieldKey, value ?? '');
@@ -24,15 +25,39 @@ function normalizeFieldKey(fieldKey: string) {
   return normalizeDraftFieldKey(fieldKey) as NameChangeExtractionFieldKey;
 }
 
+function getCandidateDocumentIds(
+  documents: NameChangeDocumentInput[],
+  kind: NameChangeDocumentKind,
+) {
+  const candidateDocumentIds = new Set<string>();
+
+  documents
+    .filter((document) => getNameChangeDocumentKindAliases(kind).includes(document.document_kind))
+    .forEach((document) => {
+      const normalizedDocumentId = normalizeDraftNameChangeDocumentId(document.id ?? null);
+      if (normalizedDocumentId) candidateDocumentIds.add(normalizedDocumentId);
+    });
+
+  const canonicalDraftId = normalizeDraftNameChangeDocumentId(buildDraftNameChangeDocumentId(kind));
+  if (canonicalDraftId) candidateDocumentIds.add(canonicalDraftId);
+
+  return candidateDocumentIds;
+}
+
 function getVerifiedLinkedCanonicalFieldKeys(
-  documentId: string | null | undefined,
+  documentIds: Iterable<string>,
   extractedFields: NameChangeExtractedFieldInput[],
 ): NameChangeExtractionFieldKey[] {
-  if (!documentId) return [];
+  const candidateDocumentIds = new Set(documentIds);
+  if (candidateDocumentIds.size === 0) return [];
 
   return [...new Set(
     extractedFields
-      .filter((field) => field.document_id === documentId && field.is_verified)
+      .filter((field) => {
+        if (!field.is_verified) return false;
+        const normalizedDocumentId = normalizeDraftNameChangeDocumentId(field.document_id);
+        return normalizedDocumentId ? candidateDocumentIds.has(normalizedDocumentId) : false;
+      })
       .map((field) => normalizeFieldKey(field.field_key))
       .filter((fieldKey): fieldKey is NameChangeExtractionFieldKey => Boolean(fieldKey)),
   )];
@@ -43,7 +68,7 @@ function getDocumentExtractionPriority(
   canonicalKind: NameChangeDocumentKind,
   extractedFields: NameChangeExtractedFieldInput[],
 ) {
-  const verifiedLinkedFieldCount = getVerifiedLinkedCanonicalFieldKeys(document.id, extractedFields).length;
+  const verifiedLinkedFieldCount = getVerifiedLinkedCanonicalFieldKeys(getCandidateDocumentIds([document], canonicalKind), extractedFields).length;
   const realDocumentWeight = isDraftNameChangePlaceholderDocument(document) ? 0 : 1;
   const intakeWeight = document.intake_status === 'reviewed'
     ? 2
@@ -83,11 +108,22 @@ function getLinkedFieldValue(
   requireVerified = false,
 ): string | null {
   const document = getDocumentByKind(documents, extractedFields, kind);
-  if (!document?.id) return null;
+  const candidateDocumentIds = getCandidateDocumentIds(documents, kind);
+  if (candidateDocumentIds.size === 0) return null;
 
-  const field = extractedFields.find((item) => item.document_id === document.id
-    && normalizeFieldKey(item.field_key) === fieldKey
-    && (!requireVerified || item.is_verified));
+  const field = (document?.id
+    ? extractedFields.find((item) => item.document_id === document.id
+      && normalizeFieldKey(item.field_key) === fieldKey
+      && (!requireVerified || item.is_verified))
+    : undefined)
+    ?? extractedFields.find((item) => {
+      const normalizedDocumentId = normalizeDraftNameChangeDocumentId(item.document_id);
+      return normalizedDocumentId
+        ? candidateDocumentIds.has(normalizedDocumentId)
+          && normalizeFieldKey(item.field_key) === fieldKey
+          && (!requireVerified || item.is_verified)
+        : false;
+    });
   return normalizeValue(fieldKey, field?.field_value_masked);
 }
 
@@ -143,10 +179,13 @@ export function hasAnyLinkedDocumentFieldValue(
   kind: NameChangeDocumentKind,
   fieldKey: NameChangeExtractionFieldKey,
 ): boolean {
-  const document = getDocumentByKind(documents, extractedFields, kind);
-  const linkedField = document?.id
-    ? extractedFields.find((item) => item.document_id === document.id && normalizeFieldKey(item.field_key) === fieldKey)
-    : null;
+  const candidateDocumentIds = getCandidateDocumentIds(documents, kind);
+  const linkedField = extractedFields.find((item) => {
+    const normalizedDocumentId = normalizeDraftNameChangeDocumentId(item.document_id);
+    return normalizedDocumentId
+      ? candidateDocumentIds.has(normalizedDocumentId) && normalizeFieldKey(item.field_key) === fieldKey
+      : false;
+  }) ?? null;
 
   return Boolean(normalizeValue(fieldKey, linkedField?.field_value_masked));
 }
@@ -157,10 +196,13 @@ export function hasVerifiedLinkedDocumentFieldValue(
   kind: NameChangeDocumentKind,
   fieldKey: NameChangeExtractionFieldKey,
 ): boolean {
-  const document = getDocumentByKind(documents, extractedFields, kind);
-  const linkedField = document?.id
-    ? extractedFields.find((item) => item.document_id === document.id && normalizeFieldKey(item.field_key) === fieldKey && item.is_verified)
-    : null;
+  const candidateDocumentIds = getCandidateDocumentIds(documents, kind);
+  const linkedField = extractedFields.find((item) => {
+    const normalizedDocumentId = normalizeDraftNameChangeDocumentId(item.document_id);
+    return normalizedDocumentId
+      ? candidateDocumentIds.has(normalizedDocumentId) && normalizeFieldKey(item.field_key) === fieldKey && item.is_verified
+      : false;
+  }) ?? null;
 
   return Boolean(normalizeValue(fieldKey, linkedField?.field_value_masked));
 }
@@ -194,12 +236,7 @@ export function getDocumentCapturedFieldKeys(
   extractedFields: NameChangeExtractedFieldInput[],
   kind: NameChangeDocumentKind,
 ): NameChangeExtractionFieldKey[] {
-  const document = getDocumentByKind(documents, extractedFields, kind);
-  if (!document) return [];
-
-  const linkedKeys = document.id
-    ? getVerifiedLinkedCanonicalFieldKeys(document.id, extractedFields)
-    : [];
+  const linkedKeys = getVerifiedLinkedCanonicalFieldKeys(getCandidateDocumentIds(documents, kind), extractedFields);
   const manualFallbackKeys = extractedFields
     .filter((field) => !field.document_id && field.source_type === 'manual' && field.is_verified)
     .map((field) => normalizeFieldKey(field.field_key));
@@ -212,10 +249,7 @@ export function getDocumentLinkedCapturedFieldKeys(
   extractedFields: NameChangeExtractedFieldInput[],
   kind: NameChangeDocumentKind,
 ): NameChangeExtractionFieldKey[] {
-  const document = getDocumentByKind(documents, extractedFields, kind);
-  if (!document?.id) return [];
-
-  return getVerifiedLinkedCanonicalFieldKeys(document.id, extractedFields);
+  return getVerifiedLinkedCanonicalFieldKeys(getCandidateDocumentIds(documents, kind), extractedFields);
 }
 
 function buildMarriageCertificateExtraction(

@@ -144,6 +144,41 @@ describe('name change autofill prep snapshot', () => {
     });
   });
 
+  it('feeds autofill from canonicalized upload aliases when verified extraction is no longer keyed to the persisted document id', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'reviewed-marriage-123',
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'San Diego County Clerk',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'https://cdn.dayof.love/object/123?filename=marriage%20certificate.pdf&token=abc',
+        field_key: 'spouse_last_name',
+        field_label: 'Spouse last name',
+        field_value_masked: 'Jordan-Smith',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+
+    const snapshot = buildNameChangeAutofillPrepSnapshot(makeCase(), documents, extractedFields);
+    expect(snapshot.fields.find((field) => field.targetField === 'applicant.target_last_name')).toMatchObject({
+      value: expect.objectContaining({
+        source: 'extracted_field',
+        value: 'Jordan-Smith',
+        sourceDocumentKind: 'marriage_certificate',
+      }),
+    });
+  });
+
   it('keeps uploaded-only extracted values at low confidence until review completes', () => {
     const documents: NameChangeDocumentInput[] = [
       {

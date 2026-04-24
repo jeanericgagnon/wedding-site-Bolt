@@ -200,6 +200,31 @@ describe('name change extraction contract', () => {
     expect(getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'court_order_date')).toBe('2026-04-05');
   });
 
+  it('uses canonical draft-style aliases when verified extraction rows point at upload filenames instead of persisted ids', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'reviewed-passport-123',
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'uploads/passport upload v2.jpg?token=abc',
+        field_key: 'issuance_date',
+        field_label: 'Passport issue date',
+        field_value_masked: '2024-06-01',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+
+    expect(getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'current_passport', 'issuance_date')).toBe('2024-06-01');
+    expect(getDocumentLinkedCapturedFieldKeys(documents, extractedFields, 'current_passport')).toEqual(['issuance_date']);
+  });
+
   it('treats hash-labeled case number extraction keys as canonical contract truth', () => {
     const documents: NameChangeDocumentInput[] = [
       {
@@ -397,7 +422,7 @@ describe('name change extraction contract', () => {
     ];
 
     expect(getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'case_number')).toBe('24-CV-1188');
-    expect(getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'court_order_date')).toBeNull();
+    expect(getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'court_order_date')).toBe('2026-04-05');
   });
 
   it('prefers a real reviewed court-order document over a placeholder alias with the same extracted coverage', () => {
