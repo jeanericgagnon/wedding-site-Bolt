@@ -1060,6 +1060,54 @@ describe('name change document intake contract', () => {
     });
   });
 
+  it('treats non-draft file-id aliases as canonical capture for the selected contract kind', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase(),
+      [
+        {
+          id: 'draft-current_passport',
+          document_kind: 'current_passport',
+          display_name: 'Passport',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          extracted_snapshot: {
+            fileName: 'passport-verified.pdf',
+            issuingAuthority: 'U.S. Department of State',
+            issuedOn: '2024-06-01',
+            expiresOn: '2034-06-01',
+            extractionConfidence: 0.94,
+          },
+        },
+      ],
+      [
+        {
+          document_id: 'passport-upload-final.pdf',
+          field_key: 'first_name',
+          field_label: 'First name',
+          field_value_masked: 'Alex',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'passport-upload-final.pdf',
+          field_key: 'last_name',
+          field_label: 'Last name',
+          field_value_masked: 'Jordan',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+      ],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'current_passport')).toMatchObject({
+      documentId: 'draft-current_passport',
+      intakeStatus: 'reviewed',
+      extractionFieldCount: 3,
+      capturedExtractionFields: ['first_name', 'last_name', 'issuance_date'],
+      missingExtractionFields: ['middle_name'],
+    });
+  });
+
   it('does not borrow extracted snapshot fields from a weaker duplicate of the same contract kind', () => {
     const snapshot = buildNameChangeDocumentIntakeSnapshot(
       makeCase(),

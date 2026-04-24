@@ -631,7 +631,10 @@ export function buildDraftNameChangeDocumentId(kind: NameChangeDocumentInput['do
     : `draft-${canonicalizeNameChangeDocumentKind(normalizedKind as NameChangeDocumentInput['document_kind'])}`;
 }
 
-export function normalizeDraftNameChangeDocumentId(documentId: string | null | undefined) {
+export function normalizeDraftNameChangeDocumentId(
+  documentId: string | null | undefined,
+  fallbackKind?: NameChangeDocumentInput['document_kind'] | null,
+) {
   const normalizedDocumentId = documentId?.trim() || null;
   if (!normalizedDocumentId) return null;
   if (/^(?:blob|data):/i.test(normalizedDocumentId)) return null;
@@ -657,8 +660,11 @@ export function normalizeDraftNameChangeDocumentId(documentId: string | null | u
     : pathLikeDocumentId?.replace(/^draft(?:\s*[\\/_-]?\s*)/i, 'draft-') ?? null;
   if (!normalizedDraftPrefix?.startsWith('draft-')) {
     const normalizedKind = normalizeDraftDocumentKind(pathLikeDocumentId);
-    if (!normalizedKind || normalizedKind === 'other') return normalizedDocumentId;
-    return buildDraftNameChangeDocumentId(normalizedKind as NameChangeDocumentInput['document_kind']);
+    const resolvedKind = normalizedKind && normalizedKind !== 'other'
+      ? normalizedKind
+      : (fallbackKind ? canonicalizeNameChangeDocumentKind(fallbackKind) : null);
+    if (!resolvedKind || resolvedKind === 'other') return normalizedDocumentId;
+    return buildDraftNameChangeDocumentId(resolvedKind as NameChangeDocumentInput['document_kind']);
   }
   const normalizedKind = normalizeDraftDocumentKind(normalizedDraftPrefix.slice('draft-'.length));
   if (!normalizedKind) return null;
