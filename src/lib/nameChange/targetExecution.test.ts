@@ -1288,4 +1288,105 @@ describe('name change target execution snapshot', () => {
     });
     expect(snapshot.checklist.find((item) => item.key === 'target-legal-name')).toMatchObject({ status: 'ready' });
   });
+
+  it('carries court-order target first name through dmv execution', () => {
+    const profile = makeCase({
+      legal_basis: 'court_order' as never,
+      marriage_state: null,
+      marriage_date: null,
+      target_first_name: '',
+      target_last_name: '',
+      change_reasons: ['court_order'],
+      structured_intake: {
+        spouseLastName: null,
+        travelBookedSoon: false,
+        wantsDocumentIntakeHelp: true,
+      },
+    });
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'court-order-doc',
+        document_kind: 'court_order_name_change',
+        display_name: 'Court order',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'court-order-•••.pdf',
+        issuing_authority: 'San Diego Superior Court',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.98,
+      },
+      {
+        id: 'license-doc',
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'license-•••.pdf',
+        issuing_authority: 'California DMV',
+        issued_on: '2025-01-02',
+        expires_on: '2033-01-02',
+        extraction_confidence: 0.92,
+      },
+      {
+        id: 'address-doc',
+        document_kind: 'proof_of_address',
+        display_name: 'Utility bill',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'utility-•••.pdf',
+        issuing_authority: 'SDG&E',
+        issued_on: '2026-04-09',
+        extraction_confidence: 0.88,
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'court-order-doc',
+        field_key: 'first_name',
+        field_label: 'Target first name',
+        field_value_masked: 'Alicia',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'court-order-doc',
+        field_key: 'last_name',
+        field_label: 'Target last name',
+        field_value_masked: 'Jordan',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'court-order-doc',
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: '24-CV-1188',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'court-order-doc',
+        field_key: 'court_order_date',
+        field_label: 'Court order date',
+        field_value_masked: '2026-04-05',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('dmv', profile, documents, extractedFields);
+    expect(snapshot.autofillFields.find((field) => field.targetField === 'applicant.target_first_name')).toMatchObject({
+      value: expect.objectContaining({
+        source: 'extracted_field',
+        value: 'Alicia',
+        sourceFieldKey: 'first_name',
+      }),
+    });
+    expect(snapshot.formPayload.fields.find((field) => field.fieldKey === 'applicant.newFirstName')).toMatchObject({
+      value: 'Alicia',
+      source: 'extracted_field',
+      sourceFieldKey: 'first_name',
+    });
+    expect(snapshot.checklist.find((item) => item.key === 'target-legal-name-county')).toMatchObject({ status: 'ready' });
+  });
 });

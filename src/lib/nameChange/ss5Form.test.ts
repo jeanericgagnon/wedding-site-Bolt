@@ -57,10 +57,13 @@ describe('name change SS-5 form snapshot', () => {
 
     const snapshot = buildNameChangeSs5FormSnapshot(makeCase(), documents, extractedFields);
     expect(snapshot.formCode).toBe('SSA-SS5');
+    expect(snapshot.fields.find((field) => field.fieldKey === 'applicant.newFirstName')).toMatchObject({
+      value: 'Alex',
+      source: 'canonical_case',
+    });
     expect(snapshot.fields.find((field) => field.fieldKey === 'applicant.newLastName')).toMatchObject({
-      value: 'Jordan-Smith',
-      source: 'extracted_field',
-      sourceDocumentKind: 'marriage_certificate',
+      value: 'Jordan',
+      source: 'canonical_case',
       sourceFieldKey: 'spouse_last_name',
     });
     expect(snapshot.summary.ready).toBeGreaterThan(0);

@@ -64,16 +64,18 @@ describe('name change DMV form snapshot', () => {
 
     const snapshot = buildNameChangeDmvFormSnapshot(makeCase(), documents, extractedFields);
     expect(snapshot.formCode).toBe('CA-DL-44');
+    expect(snapshot.fields.find((field) => field.fieldKey === 'applicant.newFirstName')).toMatchObject({
+      value: 'Alex',
+      source: 'canonical_case',
+    });
     expect(snapshot.fields.find((field) => field.fieldKey === 'applicant.newLastName')).toMatchObject({
-      value: 'Jordan-Smith',
-      source: 'extracted_field',
-      sourceDocumentKind: 'marriage_certificate',
+      value: 'Jordan',
+      source: 'canonical_case',
       sourceFieldKey: 'spouse_last_name',
     });
     expect(snapshot.fields.find((field) => field.fieldKey === 'applicant.county')).toMatchObject({
-      value: 'Orange County',
-      source: 'extracted_field',
-      sourceDocumentKind: 'marriage_certificate',
+      value: 'San Diego',
+      source: 'canonical_case',
       sourceFieldKey: 'county',
     });
   });

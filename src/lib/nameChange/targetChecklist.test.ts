@@ -62,7 +62,7 @@ describe('name change target checklist', () => {
     ];
 
     const checklist = buildNameChangeTargetChecklist(NAME_CHANGE_EXECUTION_TARGETS.dmv, makeCase({ county_residence: null }), documents, []);
-    expect(checklist.find((item) => item.key === 'target-surname-county')).toMatchObject({
+    expect(checklist.find((item) => item.key === 'target-legal-name-county')).toMatchObject({
       status: 'missing',
     });
   });
@@ -91,7 +91,7 @@ describe('name change target checklist', () => {
 
     const checklist = buildNameChangeTargetChecklist(NAME_CHANGE_EXECUTION_TARGETS.dmv, makeCase(), documents, []);
     expect(checklist.find((item) => item.key === 'current-legal-name')).toMatchObject({ status: 'ready' });
-    expect(checklist.find((item) => item.key === 'target-surname-county')).toMatchObject({ status: 'ready' });
+    expect(checklist.find((item) => item.key === 'target-legal-name-county')).toMatchObject({ status: 'ready' });
   });
 
   it('carries explicit next-action intent on checklist items', () => {

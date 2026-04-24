@@ -39,6 +39,7 @@ describe('name change courtesy packet snapshot', () => {
   it('builds a structured courtesy/social identity sync packet payload', () => {
     const snapshot = buildNameChangeCourtesyPacketSnapshot(makeCase(), [], []);
     expect(snapshot.formCode).toBe('COURTESY-SOCIAL-IDENTITY-SYNC');
+    expect(snapshot.fields.find((field) => field.fieldKey === 'profile.newFirstName')).toMatchObject({ value: 'Alex' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'profile.newLastName')).toMatchObject({ value: 'Jordan' });
   });
 });

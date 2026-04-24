@@ -39,6 +39,7 @@ describe('name change passport form snapshot', () => {
   it('uses DS-82 when the user already has a passport', () => {
     const documents: NameChangeDocumentInput[] = [
       {
+        id: 'passport-doc',
         document_kind: 'current_passport',
         display_name: 'Passport',
         storage_mode: 'metadata_only',
@@ -47,6 +48,7 @@ describe('name change passport form snapshot', () => {
     ];
     const extractedFields: NameChangeExtractedFieldInput[] = [
       {
+        document_id: 'passport-doc',
         field_key: 'issuance_date',
         field_label: 'Passport issue date',
         field_value_masked: '2024-06-01',
@@ -57,6 +59,10 @@ describe('name change passport form snapshot', () => {
 
     const snapshot = buildNameChangePassportFormSnapshot(makeCase(), documents, extractedFields);
     expect(snapshot.formCode).toBe('DS-82');
+    expect(snapshot.fields.find((field) => field.fieldKey === 'applicant.newFirstName')).toMatchObject({
+      value: 'Alex',
+      source: 'canonical_case',
+    });
     expect(snapshot.fields.find((field) => field.fieldKey === 'identity.passportIssueDate')).toMatchObject({
       value: '2024-06-01',
       source: 'extracted_field',
