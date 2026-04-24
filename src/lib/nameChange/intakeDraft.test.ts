@@ -355,6 +355,34 @@ describe('name change intake draft helpers', () => {
     });
   });
 
+  it('builds canonical snapshot truth from double-encoded and fenced snapshot payloads', () => {
+    const doubleEncodedSnapshot = JSON.stringify(JSON.stringify({
+      fields: {
+        first_name: { value: 'Alex' },
+        middle_name: { normalizedValue: 'Marie' },
+        last_name: { extractedValue: 'Rivera' },
+      },
+      metadata: {
+        issuance_date: '2024-06-01T00:00:00Z',
+      },
+    }));
+
+    expect(buildDraftNameChangeExtractedFieldsFromSnapshot('draft-current_passport', doubleEncodedSnapshot)).toEqual(expect.arrayContaining([
+      expect.objectContaining({ document_id: 'draft-current_passport', field_key: 'first_name', field_value_masked: 'Alex' }),
+      expect.objectContaining({ document_id: 'draft-current_passport', field_key: 'middle_name', field_value_masked: 'Marie' }),
+      expect.objectContaining({ document_id: 'draft-current_passport', field_key: 'last_name', field_value_masked: 'Rivera' }),
+      expect.objectContaining({ document_id: 'draft-current_passport', field_key: 'issuance_date', field_value_masked: '2024-06-01' }),
+    ]));
+
+    expect(buildDraftNameChangeDocumentMetadataFromSnapshot("```json\n[\n  { \"fieldKey\": \"issuing_authority\", \"value\": \"U.S. Department of State\" },\n  { \"field\": \"issuance_date\", \"normalizedValue\": \"2024-06-01T00:00:00Z\" },\n  { \"key\": \"expiration_date\", \"extractedValue\": \"2034-06-01T00:00:00Z\" },\n  { \"label\": \"extraction_confidence\", \"value\": \"0.94\" }\n]\n```"))
+      .toEqual({
+        issuingAuthority: 'U.S. Department of State',
+        issuedOn: '2024-06-01',
+        expiresOn: '2034-06-01',
+        extractionConfidence: 0.94,
+      });
+  });
+
   it('collapses draft document labels into one clean downstream display name', () => {
     expect(createDraftNameChangeDocument('marriage_certificate', '  Certified   marriage   certificate  ')).toMatchObject({
       display_name: 'Certified marriage certificate',

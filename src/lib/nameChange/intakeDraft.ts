@@ -792,12 +792,14 @@ function getDraftSnapshotFieldValue(candidate: unknown): string | null {
 
 function normalizeDraftSnapshotPayload(
   snapshot: unknown,
+  depth = 0,
 ): Record<string, unknown> | Array<unknown> | null {
+  if (depth > 4) return null;
   if (Array.isArray(snapshot)) return snapshot;
   if (snapshot && typeof snapshot === 'object') {
     const record = snapshot as Record<string, unknown>;
     for (const wrapperKey of ['snapshot', 'payload', 'data', 'result', 'document']) {
-      const wrappedSnapshot = normalizeDraftSnapshotPayload(record[wrapperKey]);
+      const wrappedSnapshot = normalizeDraftSnapshotPayload(record[wrapperKey], depth + 1);
       if (wrappedSnapshot) {
         return wrappedSnapshot;
       }
@@ -810,15 +812,21 @@ function normalizeDraftSnapshotPayload(
   const trimmedSnapshot = snapshot.trim();
   if (!trimmedSnapshot) return null;
 
+  const normalizedString = trimmedSnapshot.startsWith('```')
+    ? trimmedSnapshot
+      .replace(/^```(?:json)?\s*/i, '')
+      .replace(/\s*```$/, '')
+      .trim()
+    : trimmedSnapshot;
+
+  if (!normalizedString) return null;
+
   try {
-    const parsedSnapshot = JSON.parse(trimmedSnapshot) as unknown;
-    if (Array.isArray(parsedSnapshot)) return parsedSnapshot;
-    if (parsedSnapshot && typeof parsedSnapshot === 'object') return parsedSnapshot as Record<string, unknown>;
+    const parsedSnapshot = JSON.parse(normalizedString) as unknown;
+    return normalizeDraftSnapshotPayload(parsedSnapshot, depth + 1);
   } catch {
     return null;
   }
-
-  return null;
 }
 
 function appendDraftSnapshotFieldEntries(
