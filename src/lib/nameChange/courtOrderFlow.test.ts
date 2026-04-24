@@ -147,6 +147,14 @@ describe('court-order path review execution snapshot', () => {
       },
       {
         document_id: 'court-order-doc',
+        field_key: 'middle_name',
+        field_label: 'Middle name',
+        field_value_masked: 'Marie',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'court-order-doc',
         field_key: 'last_name',
         field_label: 'Last name',
         field_value_masked: 'Jordan',
@@ -167,6 +175,75 @@ describe('court-order path review execution snapshot', () => {
       category: 'document',
       label: 'Capture court-order signed date',
       detail: 'Court-order target legal name and case number are verified, but the signed date still needs grounded extraction before downstream use is fully trusted.',
+    });
+  });
+
+  it('carries current middle name through court-order review autofill', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'court-order-doc',
+        document_kind: 'court_order_name_change',
+        display_name: 'Court order',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+
+    const snapshot = buildNameChangeCourtOrderExecutionSnapshot(makeCase(), documents, [
+      {
+        document_id: 'court-order-doc',
+        field_key: 'first_name',
+        field_label: 'First name',
+        field_value_masked: 'Alex',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'court-order-doc',
+        field_key: 'middle_name',
+        field_label: 'Middle name',
+        field_value_masked: 'Marie',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'court-order-doc',
+        field_key: 'last_name',
+        field_label: 'Last name',
+        field_value_masked: 'Jordan',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'court-order-doc',
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: '24-CV-1188',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'court-order-doc',
+        field_key: 'court_order_date',
+        field_label: 'Court order date',
+        field_value_masked: '2026-04-05',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ]);
+
+    expect(snapshot.autofillFields.find((field) => field.targetField === 'applicant.current_middle_name')).toMatchObject({
+      value: {
+        value: 'Marie',
+        source: 'canonical_case',
+        sourceFieldKey: 'middle_name',
+      },
     });
   });
 

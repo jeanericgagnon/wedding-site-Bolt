@@ -95,6 +95,11 @@ describe('court-order name change packet snapshot', () => {
 
     const snapshot = buildNameChangeCourtOrderPacketSnapshot(makeCase(), documents, extractedFields);
     expect(snapshot.formCode).toBe('COURT-ORDER-PATH-REVIEW');
+    expect(snapshot.fields.find((field) => field.fieldKey === 'case.currentMiddleName')).toMatchObject({
+      value: 'Marie',
+      source: 'canonical_case',
+      sourceFieldKey: 'middle_name',
+    });
     expect(snapshot.fields.find((field) => field.fieldKey === 'case.targetFirstName')).toMatchObject({
       value: 'Alex',
       source: 'extracted_field',

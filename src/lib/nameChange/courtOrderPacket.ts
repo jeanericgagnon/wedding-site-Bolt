@@ -11,6 +11,7 @@ export const NAME_CHANGE_COURT_ORDER_PACKET_CONTRACT: NameChangeFormContractDefi
   label: 'Court-order name change path review packet',
   fieldSpecs: [
     { fieldKey: 'case.currentFirstName', label: 'Current first name', sourceTargetField: 'applicant.current_first_name' },
+    { fieldKey: 'case.currentMiddleName', label: 'Current middle name', sourceTargetField: 'applicant.current_middle_name', required: false },
     { fieldKey: 'case.currentLastName', label: 'Current last name', sourceTargetField: 'applicant.current_last_name' },
     { fieldKey: 'case.targetFirstName', label: 'Target first name', sourceTargetField: 'applicant.target_first_name' },
     { fieldKey: 'case.targetMiddleName', label: 'Target middle name', sourceTargetField: 'applicant.target_middle_name', required: false },
