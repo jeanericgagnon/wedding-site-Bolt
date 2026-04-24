@@ -70,10 +70,10 @@ describe('name change reminder suggestions', () => {
     expect(reminders.some((reminder) => reminder.id === 'reminder-banks')).toBe(true);
     expect(reminders.some((reminder) => reminder.id === 'reminder-medical-records')).toBe(true);
     expect(reminders.find((reminder) => reminder.id === 'reminder-category-confirm-legal_government')).toMatchObject({
-      dependsOnStepId: 'institution-voter-registration',
+      dependsOnStepId: 'institution-county-recorder-property',
     });
     expect(reminders.find((reminder) => reminder.id === 'reminder-category-confirm-travel_mobility')).toMatchObject({
-      dependsOnStepId: 'institution-travel-hospitality',
+      dependsOnStepId: 'institution-frequent-flyer-hotel-rail',
       urgency: 'medium',
     });
     expect(reminders.find((reminder) => reminder.id === 'reminder-milestone-confirm-milestone-ssa')).toMatchObject({

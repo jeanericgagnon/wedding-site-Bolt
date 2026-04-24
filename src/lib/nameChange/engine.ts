@@ -30,12 +30,12 @@ const INSTITUTION_CATEGORY_COVERAGE_CONFIG = [
   {
     id: 'personal_lifestyle',
     label: 'Personal + lifestyle',
-    matches: (institution: NameChangeInstitutionEntry) => institution.category === 'personal' && !['tsa-precheck', 'travel-hospitality'].includes(institution.key),
+    matches: (institution: NameChangeInstitutionEntry) => institution.category === 'personal' && !['tsa-precheck', 'travel-hospitality', 'dmv-registration-title', 'frequent-flyer-hotel-rail'].includes(institution.key),
   },
   {
     id: 'travel_mobility',
     label: 'Travel + mobility',
-    matches: (institution: NameChangeInstitutionEntry) => ['tsa-precheck', 'travel-hospitality'].includes(institution.key),
+    matches: (institution: NameChangeInstitutionEntry) => ['tsa-precheck', 'travel-hospitality', 'dmv-registration-title', 'frequent-flyer-hotel-rail'].includes(institution.key),
   },
 ] as const;
 

@@ -82,19 +82,33 @@ describe('name change engine', () => {
     expect(institutionsStep?.institutions).toContain('Employer payroll / HR');
     expect(institutionsStep?.institutions).toEqual(
       expect.arrayContaining([
+        'USCIS / immigration records',
         'IRS name / tax record alignment',
+        'State tax agency and withholding records',
         'Banks and credit cards',
         'Investment, retirement, and loan accounts',
+        'Student loans, servicers, and financial aid portals',
+        'Mortgage, property title, and homeowner records',
+        'Retirement plan, pension, and beneficiary records',
         'Health, dental, vision, auto, renters, and life insurance',
         'Disability insurance and leave administrators',
+        'Workers comp, leave, and claims administrators',
         'California voter registration',
+        'County recorder, deed, and local property filings',
         'TSA PreCheck, Global Entry, and airline profiles',
         'Hotel loyalty, car registration/title, and auto insurance follow-through',
+        'Vehicle registration and title records',
+        'Frequent flyer, hotel, rail, and cruise loyalty accounts',
         'Professional licenses and certifications',
         'Phone plan, email/domain, and primary digital identity',
+        'School, alumni, and transcript records',
         'Subscriptions, social profiles, and lifestyle memberships',
       ]),
     );
+    expect(plan.steps.find((step) => step.id === 'institution-uscis-immigration-records')?.timing).toContain('legal proof');
+    expect(plan.steps.find((step) => step.id === 'institution-state-tax-agency')?.timing).toContain('payroll');
+    expect(plan.steps.find((step) => step.id === 'institution-retirement-benefits')?.institutions).toContain('Retirement plan, pension, and beneficiary records');
+    expect(plan.steps.find((step) => step.id === 'institution-frequent-flyer-hotel-rail')?.timing).toContain('passport');
     expect(plan.steps.find((step) => step.id === 'institution-irs-employer')?.timing).toContain('SSA');
     expect(plan.steps.find((step) => step.id === 'institution-irs-records')?.timing).toContain('SSA');
     expect(plan.steps.find((step) => step.id === 'institution-tsa-precheck')?.institutions).toContain('TSA PreCheck, Global Entry, and airline profiles');
@@ -115,11 +129,11 @@ describe('name change engine', () => {
     );
     expect(plan.summary.institutionCategoryCoverage).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ id: 'legal_government', institutionKeys: expect.arrayContaining(['irs-records']) }),
-        expect.objectContaining({ id: 'financial', institutionKeys: expect.arrayContaining(['banks', 'investments-loans']) }),
-        expect.objectContaining({ id: 'work_insurance', institutionKeys: expect.arrayContaining(['irs-employer', 'insurance']) }),
-        expect.objectContaining({ id: 'personal_lifestyle', institutionKeys: expect.arrayContaining(['phone-digital-identity', 'subscriptions-social']) }),
-        expect.objectContaining({ id: 'travel_mobility', institutionKeys: expect.arrayContaining(['tsa-precheck', 'travel-hospitality']) }),
+        expect.objectContaining({ id: 'legal_government', institutionKeys: expect.arrayContaining(['uscis-immigration-records', 'irs-records', 'state-tax-agency', 'county-recorder-property']) }),
+        expect.objectContaining({ id: 'financial', institutionKeys: expect.arrayContaining(['banks', 'investments-loans', 'student-loans-financial-aid', 'mortgage-property-records']) }),
+        expect.objectContaining({ id: 'work_insurance', institutionKeys: expect.arrayContaining(['irs-employer', 'retirement-benefits', 'insurance', 'workers-comp-leave']) }),
+        expect.objectContaining({ id: 'personal_lifestyle', institutionKeys: expect.arrayContaining(['phone-digital-identity', 'school-alumni-records', 'subscriptions-social']) }),
+        expect.objectContaining({ id: 'travel_mobility', institutionKeys: expect.arrayContaining(['tsa-precheck', 'travel-hospitality', 'dmv-registration-title', 'frequent-flyer-hotel-rail']) }),
       ]),
     );
   });
@@ -290,6 +304,8 @@ describe('name change engine', () => {
     expect(plan.steps.some((step) => step.id === 'institution-irs-employer')).toBe(false);
     expect(plan.steps.some((step) => step.id === 'institution-professional-licenses')).toBe(false);
     expect(plan.steps.some((step) => step.id === 'institution-disability-insurance')).toBe(false);
+    expect(plan.steps.some((step) => step.id === 'institution-retirement-benefits')).toBe(false);
+    expect(plan.steps.some((step) => step.id === 'institution-workers-comp-leave')).toBe(false);
   });
 
   it('treats legacy court-order proof aliases as real legal proof for guided execution', () => {
