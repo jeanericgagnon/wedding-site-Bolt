@@ -295,6 +295,12 @@ function buildTargetStatusOverview(
   reminders: NameChangeReminderInput[] = [],
 ): NonNullable<NameChangePlan['summary']['targetStatusOverview']> {
   const trackedSteps = steps.filter((step) => step.phase !== 'eligibility');
+  const reminderStepIds = new Set(
+    reminders
+      .filter((reminder) => reminder.status !== 'dismissed')
+      .map((reminder) => reminder.depends_on_step_id ?? null)
+      .filter((stepId): stepId is string => Boolean(stepId)),
+  );
   const latestUpdatedAt = trackedSteps
     .flatMap((step) => [step.executionUpdatedAt, step.completedAt])
     .filter((value): value is string => Boolean(value))
@@ -323,6 +329,14 @@ function buildTargetStatusOverview(
       summary.todo += 1;
     }
 
+    if (step.executionUpdatedAt || step.completedAt || executionStatus === 'in_progress' || executionStatus === 'complete') {
+      summary.touchedByExecution += 1;
+    }
+
+    if (reminderStepIds.has(step.id)) {
+      summary.touchedByReminder += 1;
+    }
+
     if (step.status === 'ready') {
       summary.ready += 1;
     } else if (step.status === 'blocked') {
@@ -336,6 +350,8 @@ function buildTargetStatusOverview(
     complete: 0,
     ready: 0,
     blocked: 0,
+    touchedByExecution: 0,
+    touchedByReminder: 0,
     latestUpdatedAt,
     latestTouchedAt,
     latestTouchedSource,

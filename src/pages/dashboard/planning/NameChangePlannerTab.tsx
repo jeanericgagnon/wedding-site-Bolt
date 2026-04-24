@@ -1161,6 +1161,8 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 <span className="rounded-full bg-surface-subtle px-2 py-1">{targetStatusVaultSummary.attentionProofTargets} with proof attention</span>
                 <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.ready ?? 0} ready</span>
                 <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.blocked ?? 0} blocked</span>
+                <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.touchedByExecution ?? 0} with execution activity</span>
+                <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.touchedByReminder ?? 0} with reminder pressure</span>
                 <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.inProgress ?? 0} in progress</span>
                 <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.complete ?? 0} complete</span>
                 {plan.summary.targetStatusOverview?.latestTouchedAt ? (

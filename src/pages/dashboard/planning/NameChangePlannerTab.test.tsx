@@ -147,6 +147,8 @@ describe('NameChangePlannerTab', () => {
     expect(screen.getAllByText(/Latest touch|Execution updated/).length).toBeGreaterThan(0);
     expect(screen.getByText(/with missing proof/)).toBeInTheDocument();
     expect(screen.getByText(/with proof attention/)).toBeInTheDocument();
+    expect(screen.getByText(/with execution activity/)).toBeInTheDocument();
+    expect(screen.getByText(/with reminder pressure/)).toBeInTheDocument();
   });
 
   it('surfaces the most recently touched target first in the status vault list', () => {

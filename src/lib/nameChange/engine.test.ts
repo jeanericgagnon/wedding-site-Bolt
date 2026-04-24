@@ -489,6 +489,8 @@ describe('name change engine', () => {
       complete: 0,
       ready: plan.steps.filter((step) => step.phase !== 'eligibility' && step.status === 'ready').length,
       blocked: plan.steps.filter((step) => step.phase !== 'eligibility' && step.status === 'blocked').length,
+      touchedByExecution: 0,
+      touchedByReminder: 0,
       latestUpdatedAt: null,
       latestTouchedAt: null,
       latestTouchedSource: null,
@@ -536,6 +538,35 @@ describe('name change engine', () => {
     });
 
     expect(plan.summary.targetStatusOverview).toMatchObject({
+      touchedByExecution: 0,
+      touchedByReminder: 1,
+      latestUpdatedAt: null,
+      latestTouchedAt: '2026-04-24T22:20:00.000Z',
+      latestTouchedSource: 'reminder',
+    });
+  });
+
+  it('counts reminder-touched targets in the overview summary', () => {
+    const plan = buildNameChangePlan({
+      ...makeInput(),
+      reminders: [
+        {
+          reminder_key: 'ssa-follow-up',
+          label: 'SSA follow-up',
+          reason: 'Receipt still missing',
+          depends_on_step_id: 'federal-ssa',
+          suggested_offset_days: 7,
+          urgency: 'high',
+          status: 'pending',
+          focus_target_id: 'ssa',
+          updated_at: '2026-04-24T22:20:00.000Z',
+        },
+      ],
+    });
+
+    expect(plan.summary.targetStatusOverview).toMatchObject({
+      touchedByExecution: 0,
+      touchedByReminder: 1,
       latestUpdatedAt: null,
       latestTouchedAt: '2026-04-24T22:20:00.000Z',
       latestTouchedSource: 'reminder',

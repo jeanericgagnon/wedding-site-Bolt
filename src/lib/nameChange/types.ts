@@ -182,6 +182,8 @@ export interface NameChangePlanSummary {
     complete: number;
     ready: number;
     blocked: number;
+    touchedByExecution: number;
+    touchedByReminder: number;
     latestUpdatedAt: string | null;
     latestTouchedAt: string | null;
     latestTouchedSource: 'execution' | 'reminder' | null;
