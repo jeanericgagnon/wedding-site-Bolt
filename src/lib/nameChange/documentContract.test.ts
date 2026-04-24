@@ -2117,6 +2117,61 @@ describe('name change document intake contract', () => {
     });
   });
 
+  it('keeps verified extracted fields when a reviewed document replaces the draft placeholder id', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase(),
+      [
+        {
+          id: 'marriage-certificate-upload',
+          document_kind: 'marriage_certificate',
+          display_name: 'Certified marriage certificate',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'marriage-certificate-•••.pdf',
+          issuing_authority: 'Orange County Clerk',
+          issued_on: '2026-04-05',
+          extraction_confidence: 0.97,
+        },
+      ],
+      [
+        {
+          document_id: 'draft-marriage_certificate',
+          field_key: 'certificate_number',
+          field_label: 'Certificate number',
+          field_value_masked: 'mc-123',
+          source_type: 'manual',
+          is_verified: true,
+        },
+        {
+          document_id: 'draft-marriage_certificate',
+          field_key: 'issuance_date',
+          field_label: 'Issued on',
+          field_value_masked: '2026-04-05',
+          source_type: 'manual',
+          is_verified: true,
+        },
+        {
+          document_id: 'draft-marriage_certificate',
+          field_key: 'county',
+          field_label: 'Residence county',
+          field_value_masked: 'orange county',
+          source_type: 'manual',
+          is_verified: true,
+        },
+      ],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'marriage_certificate')).toMatchObject({
+      intakeStatus: 'reviewed',
+      metadataReady: 1,
+      missingExtractionFields: ['first_name', 'last_name', 'spouse_last_name'],
+      canonicalConflicts: [],
+    });
+    expect(snapshot.documents.find((document) => document.kind === 'marriage_certificate')?.capturedExtractionFields).toEqual(
+      expect.arrayContaining(['county', 'certificate_number', 'issuance_date']),
+    );
+  });
+
   it('treats unicode checkbox-prefixed extracted values as canonical document truth', () => {
     const snapshot = buildNameChangeDocumentIntakeSnapshot(
       makeCase({ legal_basis: 'marriage', county_residence: 'Orange' }),

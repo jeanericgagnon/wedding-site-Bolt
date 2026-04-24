@@ -1,7 +1,12 @@
 import { buildNameChangeCanonicalCase } from './canonical';
 import { canonicalizeNameChangeDocumentKind, matchesNameChangeDocumentKind } from './documentKinds';
 import { buildNameChangeExtractionContractSnapshot } from './extractionContract';
-import { isDraftNameChangePlaceholderDocument, normalizeDraftFieldKey } from './intakeDraft';
+import {
+  buildDraftNameChangeDocumentId,
+  isDraftNameChangePlaceholderDocument,
+  normalizeDraftFieldKey,
+  normalizeDraftNameChangeDocumentId,
+} from './intakeDraft';
 import type {
   NameChangeCaseInput,
   NameChangeDocumentContractDefinition,
@@ -150,14 +155,27 @@ function findBestContractDocument(
 
 function getContractDocumentCapturedFieldKeys(
   document: NameChangeDocumentInput | undefined,
+  kind: NameChangeDocumentInput['document_kind'],
   extractedFields: NameChangeExtractedFieldInput[],
   expectedFields: NameChangeExtractionFieldKey[],
 ): NameChangeExtractionFieldKey[] {
-  if (!document?.id) return [];
+  const candidateDocumentIds = new Set<string>();
+
+  const normalizedDocumentId = normalizeDraftNameChangeDocumentId(document?.id ?? null);
+  if (normalizedDocumentId) candidateDocumentIds.add(normalizedDocumentId);
+
+  const normalizedDraftDocumentId = normalizeDraftNameChangeDocumentId(buildDraftNameChangeDocumentId(kind));
+  if (normalizedDraftDocumentId) candidateDocumentIds.add(normalizedDraftDocumentId);
+
+  if (candidateDocumentIds.size === 0) return [];
 
   return [...new Set(
     extractedFields
-      .filter((field) => field.document_id === document.id && field.is_verified)
+      .filter((field) => {
+        if (!field.is_verified) return false;
+        const normalizedFieldDocumentId = normalizeDraftNameChangeDocumentId(field.document_id);
+        return normalizedFieldDocumentId ? candidateDocumentIds.has(normalizedFieldDocumentId) : false;
+      })
       .map((field) => normalizeDraftFieldKey(field.field_key) as NameChangeExtractionFieldKey)
       .filter((fieldKey): fieldKey is NameChangeExtractionFieldKey => expectedFields.includes(fieldKey)),
   )];
@@ -174,7 +192,7 @@ export function buildNameChangeDocumentIntakeSnapshot(
   const statuses: NameChangeDocumentContractStatus[] = NAME_CHANGE_DOCUMENT_CONTRACTS.map((definition) => {
     const canonicalDocument = findBestContractDocument(documents, definition.kind);
     const documentState = canonicalCase.documents[definition.kind];
-    const typedCapturedFields = getContractDocumentCapturedFieldKeys(canonicalDocument, extractedFields, definition.extractionFields);
+    const typedCapturedFields = getContractDocumentCapturedFieldKeys(canonicalDocument, definition.kind, extractedFields, definition.extractionFields);
     const required = definition.requiredFor.includes('all') || definition.requiredFor.includes(canonicalCase.legalBasis);
     const metadataMissing = metadataMissingForDocument(canonicalDocument);
     const contractIntakeStatus = canonicalDocument?.intake_status ?? documentState.intakeStatus;
