@@ -114,7 +114,14 @@ function getReminderSectionKey(dependsOnStepId: string): NameChangeActionFeedIte
   return 'cleanup';
 }
 
-function getReminderFocusTargetId(dependsOnStepId: string) {
+function isCaseSetupReminder(item: NameChangeReminderAttentionItem) {
+  return item.reminderKey === 'reminder-case-legal-name-setup';
+}
+
+function getReminderFocusTargetId(item: NameChangeReminderAttentionItem) {
+  if (isCaseSetupReminder(item)) return 'case-setup';
+
+  const { dependsOnStepId } = item;
   if (dependsOnStepId === 'eligibility-proof') return 'execution-card-ssa';
   if (dependsOnStepId === 'federal-ssa') return 'execution-card-ssa';
   if (dependsOnStepId === 'state-dmv') return 'execution-card-dmv';
@@ -194,7 +201,7 @@ export function buildNameChangeActionFeed(
       urgencyTier: item.priorityTier ?? 'normal',
       urgencyReason: 'review_queue',
       plannerIntent: 'open_execution_card',
-      focusTargetId: getReminderFocusTargetId(item.dependsOnStepId),
+      focusTargetId: getReminderFocusTargetId(item),
       score,
       action: {
         category: 'checklist',

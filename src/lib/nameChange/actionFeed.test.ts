@@ -427,6 +427,22 @@ describe('name change action feed', () => {
     });
   });
 
+  it('routes case legal-name setup reminders to the planner case-setup section', () => {
+    const feed = buildNameChangeActionFeed([], [], [
+      makeReminderAttention({
+        reminderKey: 'reminder-case-legal-name-setup',
+        label: 'Finish case legal-name setup before downstream filing',
+      }),
+    ]);
+
+    expect(feed[0]).toMatchObject({
+      origin: 'reminder',
+      plannerIntent: 'open_execution_card',
+      focusTargetId: 'case-setup',
+      sectionKey: 'cleanup',
+    });
+  });
+
   it('keeps critical reminder attention above lower-ranked ready execution work', () => {
     const feed = buildNameChangeActionFeed([
       makeExecutionSnapshot({
