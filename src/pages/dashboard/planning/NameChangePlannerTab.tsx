@@ -370,7 +370,7 @@ const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
       <p className="mt-3 text-sm text-text-secondary">{snapshot.statusVault.proofSummary}</p>
       {snapshot.statusVault.notes.length > 0 ? (
         <ul className="mt-3 space-y-1 text-sm text-text-secondary">
-          {snapshot.statusVault.notes.slice(0, 2).map((note, noteIndex) => (
+          {snapshot.statusVault.notes.slice(0, 3).map((note, noteIndex) => (
             <li key={`${snapshot.targetKey}-status-vault-note-${noteIndex}`}>• {note}</li>
           ))}
         </ul>

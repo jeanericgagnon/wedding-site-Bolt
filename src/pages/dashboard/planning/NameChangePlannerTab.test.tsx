@@ -357,6 +357,32 @@ describe('NameChangePlannerTab', () => {
     expect(screen.getAllByText(/• Proof needs:/).length).toBeGreaterThan(0);
   });
 
+  it('keeps proof debt visible inside the execution card status vault note stack', () => {
+    const draft = makeDraft();
+    const plan = buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] });
+
+    render(
+      <NameChangePlannerTab
+        draft={draft}
+        documents={[]}
+        extractedFields={[]}
+        plan={plan}
+        reminders={[]}
+        saving={false}
+        onDraftChange={vi.fn()}
+        onStructuredIntakeChange={vi.fn()}
+        onDocumentsChange={vi.fn()}
+        onExtractedFieldsChange={vi.fn()}
+        onRemindersChange={vi.fn()}
+        onStepExecutionStatusChange={vi.fn()}
+        onStepExecutionNoteChange={vi.fn()}
+        onSave={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    expect(screen.getAllByText(/• Proof needs:/).length).toBeGreaterThan(0);
+  });
+
   it('keeps plan-level execution timing visible when reminders are newer than execution', () => {
     const draft = makeDraft();
     const reminders = [
