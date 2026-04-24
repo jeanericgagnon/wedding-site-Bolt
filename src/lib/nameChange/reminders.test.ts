@@ -219,6 +219,25 @@ describe('name change reminder suggestions', () => {
     });
   });
 
+  it('adds an immediate reminder when case legal-name setup is still incomplete', () => {
+    const reminders = buildNameChangeReminderSuggestions(buildNameChangePlan(makeInput({
+      target_middle_name: '',
+    })));
+
+    expect(reminders.find((reminder) => reminder.id === 'reminder-case-legal-name-setup')).toMatchObject({
+      label: 'Finish case legal-name setup before downstream filing',
+      dependsOnStepId: 'eligibility-proof',
+      suggestedOffsetDays: 0,
+      urgency: 'high',
+      reason: 'Case setup is still missing target middle name. Lock the current and target legal-name fields before trusting packet prep, sequencing, or reminder timing.',
+    });
+  });
+
+  it('does not add a case-setup reminder when legal-name setup is complete', () => {
+    const reminders = buildNameChangeReminderSuggestions(buildNameChangePlan(makeInput()));
+    expect(reminders.some((reminder) => reminder.id === 'reminder-case-legal-name-setup')).toBe(false);
+  });
+
   it('summarizes reminder status counts', () => {
     const summary = summarizeNameChangeReminders([
       {

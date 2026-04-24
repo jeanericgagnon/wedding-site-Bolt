@@ -187,8 +187,31 @@ function adjustReminderSuggestionForStepState(
   return suggestion;
 }
 
+function getCaseLegalNameSetupMissingInputs(plan: NameChangePlan): string[] {
+  return plan.summary.missingInputs.filter((item) =>
+    item === 'Current first name'
+    || item === 'Current middle name'
+    || item === 'Current last name'
+    || item === 'Target first name'
+    || item === 'Target middle name'
+    || item === 'Target last name'
+  );
+}
+
 export function buildNameChangeReminderSuggestions(plan: NameChangePlan): NameChangeReminderSuggestion[] {
   const suggestions: NameChangeReminderSuggestion[] = [];
+  const missingCaseLegalNameInputs = getCaseLegalNameSetupMissingInputs(plan);
+
+  if (missingCaseLegalNameInputs.length > 0) {
+    suggestions.push({
+      id: 'reminder-case-legal-name-setup',
+      label: 'Finish case legal-name setup before downstream filing',
+      suggestedOffsetDays: 0,
+      reason: `Case setup is still missing ${missingCaseLegalNameInputs.map((item) => item.toLowerCase()).join(', ')}. Lock the current and target legal-name fields before trusting packet prep, sequencing, or reminder timing.`,
+      dependsOnStepId: 'eligibility-proof',
+      urgency: 'high',
+    });
+  }
 
   Object.entries(CORE_STEP_REMINDER_CONFIGS).forEach(([stepId, config]) => {
     if (config.includeWhen && !config.includeWhen(plan)) return;
