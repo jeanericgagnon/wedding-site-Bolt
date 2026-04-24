@@ -13,6 +13,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { getArchiveModeDescriptor } from '../../lib/archiveMode';
 import { sendAnniversaryReminder } from '../../lib/emailService';
 import { getVaultUnlockDate, toValidDateOrNull } from './vaultDate';
+import { formatVaultEntryDate, getVaultEntryTimestamp } from './vaultEntryTime';
 
 const MAX_VAULTS = 5;
 const DEMO_VAULT_STORAGE_KEY = 'dayof_demo_vault_state_v1';
@@ -245,7 +246,7 @@ function buildAnniversaryRecap(
       })
     : entries;
 
-  const sorted = [...source].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+  const sorted = [...source].sort((a, b) => getVaultEntryTimestamp(a.created_at) - getVaultEntryTimestamp(b.created_at));
   const first = sorted[0];
   const last = sorted[sorted.length - 1];
 
@@ -259,7 +260,7 @@ function buildAnniversaryRecap(
   const photoLimit = length === 'short' ? 4 : length === 'long' ? 10 : 8;
 
   const timelineMoments = sorted.slice(0, timelineLimit).map((entry) => {
-    const date = new Date(entry.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const date = formatVaultEntryDate(entry.created_at);
     const title = (entry.title || '').trim();
     const fileName = (entry.attachment_name || '').trim();
     const content = (entry.content || '').trim();
@@ -270,7 +271,7 @@ function buildAnniversaryRecap(
   });
 
   const photoHighlights = photoEntries.slice(0, photoLimit).map((entry) => {
-    const date = new Date(entry.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    const date = formatVaultEntryDate(entry.created_at, { month: 'short', year: 'numeric' });
     const name = (entry.attachment_name || entry.title || 'Captured moment').replace(/[_-]+/g, ' ').trim();
     return `- ${date}: ${name}`;
   });
@@ -280,8 +281,8 @@ function buildAnniversaryRecap(
     'family', 'friends', 'dance', 'ceremony', 'sunset', 'travel', 'laughter', 'home', 'joy', 'gratitude'
   ].filter((w) => textCorpus.includes(w)).slice(0, 4);
 
-  const openingDate = first ? new Date(first.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : null;
-  const closingDate = last ? new Date(last.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : null;
+  const openingDate = first ? formatVaultEntryDate(first.created_at, { month: 'long', year: 'numeric' }, '') : null;
+  const closingDate = last ? formatVaultEntryDate(last.created_at, { month: 'long', year: 'numeric' }, '') : null;
 
   const openingBase = openingDate && closingDate
     ? `Over ${openingDate} to ${closingDate}, this ${years}-year chapter unfolds through ${sorted.length} saved memories, including ${photoEntries.length} photo moments.`
@@ -436,7 +437,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
     if (generatingRecap) return;
     const latestRecap = [...displayEntries]
       .filter((entry) => (entry.title || '').toLowerCase().includes('ai recap'))
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+      .sort((a, b) => getVaultEntryTimestamp(b.created_at) - getVaultEntryTimestamp(a.created_at))[0];
 
     if (!latestRecap) {
       await handleGenerateRecap();
@@ -474,7 +475,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
 
   const latestRecap = [...displayEntries]
     .filter((entry) => (entry.title || '').toLowerCase().includes('ai recap'))
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+    .sort((a, b) => getVaultEntryTimestamp(b.created_at) - getVaultEntryTimestamp(a.created_at))[0];
   const hasRecap = !!latestRecap;
 
   function handleCopyRecapLink() {
@@ -590,7 +591,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
                   <div className="flex-1 min-w-0">
                     {entry.title && <p className="font-semibold text-text-primary text-sm mb-0.5">{entry.title}</p>}
                     <p className="text-xs text-text-tertiary">
-                      From {entry.author_name} · {new Date(entry.created_at).toLocaleDateString()}
+                      From {entry.author_name} · {formatVaultEntryDate(entry.created_at, undefined, 'Unknown date')}
                     </p>
                   </div>
                   <button

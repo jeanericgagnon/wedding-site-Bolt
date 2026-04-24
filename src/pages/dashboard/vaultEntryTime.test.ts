@@ -1,0 +1,21 @@
+import { describe, expect, it } from 'vitest';
+
+import {
+  formatVaultEntryDate,
+  getVaultEntryTimestamp,
+  toValidVaultEntryDateOrNull,
+} from './vaultEntryTime';
+
+describe('vault entry time guards', () => {
+  it('drops invalid persisted vault entry timestamps instead of leaking Invalid Date', () => {
+    expect(toValidVaultEntryDateOrNull('not-a-date')).toBeNull();
+    expect(getVaultEntryTimestamp('not-a-date')).toBe(Number.NEGATIVE_INFINITY);
+    expect(formatVaultEntryDate('not-a-date')).toBe('Unknown date');
+  });
+
+  it('keeps valid vault entry timestamps truthful', () => {
+    expect(getVaultEntryTimestamp('2026-06-21T18:30:00.000Z')).toBe(new Date('2026-06-21T18:30:00.000Z').getTime());
+    expect(formatVaultEntryDate('2026-06-21T18:30:00.000Z')).toBe('Jun 21, 2026');
+    expect(formatVaultEntryDate('2026-06-21T18:30:00.000Z', { month: 'long', year: 'numeric' })).toBe('June 2026');
+  });
+});
