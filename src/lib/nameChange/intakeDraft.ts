@@ -710,16 +710,26 @@ export function upsertDraftNameChangeExtractedField(
   fieldKey: NameChangeExtractedFieldInput['field_key'],
   fieldLabel: string,
   nextValue: string,
+  options?: { preserveExactDocumentId?: boolean },
 ): NameChangeExtractedFieldInput[] {
   const normalizedDocumentId = normalizeDraftNameChangeDocumentId(documentId);
-  if (shouldBlockDraftDocumentFieldWrite(documentId, normalizedDocumentId)) {
+  const persistedDocumentId = options?.preserveExactDocumentId ? documentId?.trim() || null : null;
+  const targetDocumentId = persistedDocumentId && !/^draft(?:$|\s*[\/_-]?)/i.test(persistedDocumentId)
+    ? persistedDocumentId
+    : normalizedDocumentId;
+  const matchesTargetDocument = (candidateDocumentId: string | null | undefined) => (
+    targetDocumentId && targetDocumentId.startsWith('draft-')
+      ? normalizeDraftNameChangeDocumentId(candidateDocumentId) === targetDocumentId
+      : candidateDocumentId === targetDocumentId
+  );
+  if (shouldBlockDraftDocumentFieldWrite(documentId, targetDocumentId)) {
     return extractedFields;
   }
 
   const compositeNameLabelKind = getDraftCompositeNameLabelKind(fieldKey, fieldLabel);
   const compositeNameFields = compositeNameLabelKind
     ? buildDraftCompositeNameFields(
-      normalizedDocumentId,
+      targetDocumentId,
       fieldLabel,
       nextValue,
       compositeNameLabelKind === 'current' ? 'Current legal name' : 'Target legal name',
@@ -728,7 +738,7 @@ export function upsertDraftNameChangeExtractedField(
   if (compositeNameFields) {
     const compositeFieldKeys = new Set(compositeNameFields.map((field) => field.field_key));
     const rest = extractedFields.filter((field) => !(
-      normalizeDraftNameChangeDocumentId(field.document_id) === normalizedDocumentId
+      matchesTargetDocument(field.document_id)
       && compositeFieldKeys.has(normalizeDraftFieldKey(field.field_key))
     ));
     return [...rest, ...compositeNameFields];
@@ -741,7 +751,7 @@ export function upsertDraftNameChangeExtractedField(
   const normalizedValue = normalizeDraftFieldValue(normalizedFieldKey, nextValue);
   const normalizedLabel = buildDraftFieldLabel(normalizedFieldKey, fieldLabel);
   const rest = extractedFields.filter((field) => !(
-    normalizeDraftNameChangeDocumentId(field.document_id) === normalizedDocumentId
+    matchesTargetDocument(field.document_id)
     && normalizeDraftFieldKey(field.field_key) === normalizedFieldKey
   ));
   if (!normalizedValue) return rest;
@@ -749,7 +759,7 @@ export function upsertDraftNameChangeExtractedField(
   return [
     ...rest,
     {
-      document_id: normalizedDocumentId,
+      document_id: targetDocumentId,
       field_key: normalizedFieldKey,
       field_label: normalizedLabel,
       field_value_masked: normalizedValue,
@@ -892,6 +902,7 @@ export function buildDraftNameChangeExtractedFieldsFromSnapshot(
 
   const entries: Array<[string, unknown]> = [];
   appendDraftSnapshotFieldEntries(entries, normalizedSnapshot);
+  const snapshotDocumentId = resolveDraftSnapshotDocumentId(documentId);
 
   return entries.reduce<NameChangeExtractedFieldInput[]>((fields, [fieldKey, candidateValue]) => {
     const value = getDraftSnapshotFieldValue(candidateValue);
@@ -899,8 +910,21 @@ export function buildDraftNameChangeExtractedFieldsFromSnapshot(
       return fields;
     }
 
-    return upsertDraftNameChangeExtractedField(fields, documentId, fieldKey as NameChangeExtractedFieldInput['field_key'], '', value);
+    return upsertDraftNameChangeExtractedField(fields, snapshotDocumentId, fieldKey as NameChangeExtractedFieldInput['field_key'], '', value, {
+      preserveExactDocumentId: true,
+    });
   }, []);
+}
+
+function resolveDraftSnapshotDocumentId(documentId: string | null | undefined) {
+  const trimmedDocumentId = documentId?.trim() || null;
+  if (!trimmedDocumentId) return null;
+  if (/^(?:blob|data):/i.test(trimmedDocumentId)) return null;
+  if (/^draft(?:$|\s*[\/_-]?)/i.test(trimmedDocumentId)) {
+    return normalizeDraftNameChangeDocumentId(trimmedDocumentId);
+  }
+
+  return trimmedDocumentId;
 }
 
 export function buildDraftNameChangeDocumentMetadataFromSnapshot(

@@ -328,6 +328,18 @@ describe('name change intake draft helpers', () => {
     });
   });
 
+  it('preserves persisted document ids when deriving extracted fields from snapshot truth', () => {
+    expect(buildDraftNameChangeExtractedFieldsFromSnapshot('doc-passport-123', {
+      fields: {
+        first_name: { value: 'Alex' },
+        last_name: { value: 'Rivera' },
+      },
+    })).toEqual(expect.arrayContaining([
+      expect.objectContaining({ document_id: 'doc-passport-123', field_key: 'first_name', field_value_masked: 'Alex' }),
+      expect.objectContaining({ document_id: 'doc-passport-123', field_key: 'last_name', field_value_masked: 'Rivera' }),
+    ]));
+  });
+
   it('builds canonical snapshot truth from wrapped snapshot payloads', () => {
     expect(buildDraftNameChangeExtractedFieldsFromSnapshot('draft-current_passport', {
       payload: {
