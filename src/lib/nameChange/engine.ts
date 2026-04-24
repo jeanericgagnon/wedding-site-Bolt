@@ -303,16 +303,22 @@ function buildTargetStatusOverview(
     .flatMap((step) => [step.executionUpdatedAt, step.completedAt])
     .filter((value): value is string => Boolean(value))
     .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
+  const latestMilestoneAt = (plan.summary.milestoneChecklist ?? [])
+    .map((milestone) => milestone.lastUpdatedAt ?? null)
+    .filter((value): value is string => Boolean(value))
+    .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
   const latestReminderAt = reminders
     .filter((reminder) => reminder.status !== 'dismissed')
     .map((reminder) => reminder.updated_at ?? null)
     .filter((value): value is string => Boolean(value))
     .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
-  const latestTouchedAt = [latestUpdatedAt, latestReminderAt]
+  const latestTouchedAt = [latestUpdatedAt, latestMilestoneAt, latestReminderAt]
     .filter((value): value is string => Boolean(value))
     .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
   const latestTouchedSource = latestTouchedAt === latestReminderAt && latestReminderAt
     ? 'reminder' as const
+    : latestTouchedAt === latestMilestoneAt && latestMilestoneAt
+      ? 'milestone' as const
     : latestTouchedAt === latestUpdatedAt && latestUpdatedAt
       ? 'execution' as const
       : null;
@@ -371,6 +377,7 @@ function buildTargetStatusOverview(
     touchedByExecution: targetStatusCounts.touchedByExecution,
     touchedByReminder: targetStatusCounts.touchedByReminder,
     latestUpdatedAt,
+    latestMilestoneAt,
     latestReminderAt,
     latestTouchedAt,
     latestTouchedSource,

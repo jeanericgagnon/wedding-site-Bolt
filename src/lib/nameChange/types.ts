@@ -187,9 +187,10 @@ export interface NameChangePlanSummary {
     touchedByExecution: number;
     touchedByReminder: number;
     latestUpdatedAt: string | null;
+    latestMilestoneAt: string | null;
     latestReminderAt: string | null;
     latestTouchedAt: string | null;
-    latestTouchedSource: 'execution' | 'reminder' | null;
+    latestTouchedSource: 'execution' | 'milestone' | 'reminder' | null;
   };
   executionTracks?: Array<{
     id: string;

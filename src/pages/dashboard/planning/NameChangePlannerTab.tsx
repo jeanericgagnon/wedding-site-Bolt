@@ -1209,13 +1209,19 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 {plan.summary.targetStatusOverview?.latestTouchedAt ? (
                   <span className="rounded-full bg-surface-subtle px-2 py-1">
                     Latest move {formatNameChangeExecutionDateTime(plan.summary.targetStatusOverview.latestTouchedAt)}
-                    {plan.summary.targetStatusOverview.latestTouchedSource === 'reminder' ? ' · reminder' : plan.summary.targetStatusOverview.latestTouchedSource === 'execution' ? ' · execution' : ''}
+                    {plan.summary.targetStatusOverview.latestTouchedSource === 'reminder' ? ' · reminder' : plan.summary.targetStatusOverview.latestTouchedSource === 'milestone' ? ' · milestone' : plan.summary.targetStatusOverview.latestTouchedSource === 'execution' ? ' · execution' : ''}
                   </span>
                 ) : null}
                 {plan.summary.targetStatusOverview?.latestUpdatedAt
                 && plan.summary.targetStatusOverview.latestUpdatedAt !== plan.summary.targetStatusOverview.latestTouchedAt ? (
                   <span className="rounded-full bg-surface-subtle px-2 py-1">
                     Latest execution {formatNameChangeExecutionDateTime(plan.summary.targetStatusOverview.latestUpdatedAt)}
+                  </span>
+                  ) : null}
+                {plan.summary.targetStatusOverview?.latestMilestoneAt
+                && plan.summary.targetStatusOverview.latestMilestoneAt !== plan.summary.targetStatusOverview.latestTouchedAt ? (
+                  <span className="rounded-full bg-surface-subtle px-2 py-1">
+                    Latest milestone {formatNameChangeExecutionDateTime(plan.summary.targetStatusOverview.latestMilestoneAt)}
                   </span>
                   ) : null}
                 {plan.summary.targetStatusOverview?.latestReminderAt

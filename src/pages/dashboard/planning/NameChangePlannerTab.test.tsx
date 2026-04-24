@@ -29,7 +29,7 @@ describe('NameChangePlannerTab', () => {
     const draft = makeDraft();
     const onDraftChange = vi.fn();
 
-    render(
+    const view = render(
       <NameChangePlannerTab
         draft={draft}
         documents={[]}
@@ -127,7 +127,7 @@ describe('NameChangePlannerTab', () => {
       } : step),
     };
 
-    render(
+    const view = render(
       <NameChangePlannerTab
         draft={draft}
         documents={[]}
@@ -500,6 +500,48 @@ describe('NameChangePlannerTab', () => {
     );
 
     expect(screen.getByText(/Latest move .*execution/)).toBeInTheDocument();
+    expect(screen.getByText(/Latest reminder/)).toBeInTheDocument();
+  });
+
+  it('shows plan-level milestone timing when milestone confirmations are the latest move', () => {
+    const draft = makeDraft();
+    const basePlan = buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      summary: {
+        ...basePlan.summary,
+        targetStatusOverview: {
+          ...basePlan.summary.targetStatusOverview,
+          latestUpdatedAt: '2026-04-24T20:15:00.000Z',
+          latestMilestoneAt: '2026-04-24T22:20:00.000Z',
+          latestReminderAt: '2026-04-24T21:20:00.000Z',
+          latestTouchedAt: '2026-04-24T22:20:00.000Z',
+          latestTouchedSource: 'milestone' as const,
+        },
+      },
+    };
+
+    render(
+      <NameChangePlannerTab
+        draft={draft}
+        documents={[]}
+        extractedFields={[]}
+        plan={plan}
+        reminders={[]}
+        saving={false}
+        onDraftChange={vi.fn()}
+        onStructuredIntakeChange={vi.fn()}
+        onDocumentsChange={vi.fn()}
+        onExtractedFieldsChange={vi.fn()}
+        onRemindersChange={vi.fn()}
+        onStepExecutionStatusChange={vi.fn()}
+        onStepExecutionNoteChange={vi.fn()}
+        onSave={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    expect(screen.getByText(/Latest move .*milestone/)).toBeInTheDocument();
+    expect(screen.getByText(/Latest execution/)).toBeInTheDocument();
     expect(screen.getByText(/Latest reminder/)).toBeInTheDocument();
   });
 });

@@ -496,6 +496,7 @@ describe('name change engine', () => {
       touchedByExecution: 0,
       touchedByReminder: 0,
       latestUpdatedAt: null,
+      latestMilestoneAt: null,
       latestTouchedAt: null,
       latestTouchedSource: null,
     });
@@ -607,6 +608,7 @@ describe('name change engine', () => {
 
     expect(plan.summary.targetStatusOverview).toMatchObject({
       touchedByReminder: 1,
+      latestMilestoneAt: null,
       latestReminderAt: '2026-04-24T22:20:00.000Z',
       latestTouchedAt: '2026-04-24T22:20:00.000Z',
       latestTouchedSource: 'reminder',
