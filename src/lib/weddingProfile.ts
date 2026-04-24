@@ -270,6 +270,12 @@ export const buildDraftSitePatchFromProfile = (profile: WeddingProfile) => ({
 
 const dayToOffset: Record<string, number> = { friday: -2, saturday: -1, sunday: 0, monday: 1, thursday: -3 };
 
+const normalizeWeddingDate = (value?: string | null) => {
+  if (!value?.trim()) return null;
+  const date = new Date(`${value}T12:00:00Z`);
+  return Number.isNaN(date.getTime()) ? null : value;
+};
+
 const inferDressCode = (profile: WeddingProfile) => {
   const notes = `${profile.story.welcomeNote} ${profile.design.theme}`.toLowerCase();
   if (notes.includes('tropical formal')) return 'Tropical formal';
@@ -279,12 +285,12 @@ const inferDressCode = (profile: WeddingProfile) => {
 };
 
 const getSeedEventDate = (weddingDate: string, dateLabel: string) => {
-  if (!weddingDate) return null;
+  const safeWeddingDate = normalizeWeddingDate(weddingDate);
+  if (!safeWeddingDate) return null;
   const match = dateLabel.trim().toLowerCase();
   const offset = dayToOffset[match];
-  if (offset === undefined) return weddingDate;
-  const date = new Date(`${weddingDate}T12:00:00Z`);
-  if (Number.isNaN(date.getTime())) return null;
+  if (offset === undefined) return safeWeddingDate;
+  const date = new Date(`${safeWeddingDate}T12:00:00Z`);
   date.setUTCDate(date.getUTCDate() + offset);
   return date.toISOString().slice(0, 10);
 };
@@ -301,7 +307,7 @@ export const buildRsvpEventSeedFromStructuredEvents = (profile: WeddingProfile) 
 export const buildItinerarySeedFromStructuredEvents = (profile: WeddingProfile) => (profile.event.structuredWeekendEvents || []).map((event, index) => ({
   event_name: event.title,
   description: `${event.dateLabel ? `${event.dateLabel} ` : ''}${event.title}`.trim(),
-  event_date: getSeedEventDate(profile.event.date, event.dateLabel) || profile.event.date || null,
+  event_date: getSeedEventDate(profile.event.date, event.dateLabel) || normalizeWeddingDate(profile.event.date),
   start_time: null,
   end_time: null,
   location_name: event.locationName || null,

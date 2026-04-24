@@ -52,4 +52,29 @@ describe('weekend event seed pipeline', () => {
     expect(rsvpSeeds[2].locationName).toBe('Casa Rosada');
     expect(rsvpSeeds.every((event) => event.rsvpEnabled)).toBe(true);
   });
+
+  it('drops invalid wedding dates instead of seeding bogus itinerary dates', () => {
+    const profile = applyInitialSetupAnswersToWeddingProfile({
+      names: 'Eric & Kara',
+      labelPreference: 'bride-groom',
+      whenWhere: '2027-01-17 — Sayulita, Mexico',
+      venueNameOrTbd: 'Amor Boutique Hotel',
+      style: 'tropical relaxed',
+      weekendEventsRaw: 'Friday welcome dinner, Sunday wedding',
+      ceremonyArrivalTime: '4:30 PM',
+      guestCountBand: '50-100',
+      plusOnePolicy: 'some',
+      childrenAllowed: 'unsure',
+      rsvpDeadline: '2026-10-17',
+      mealChoice: 'yes',
+      registryIntent: 'unsure',
+      optionalStory: 'We met on Hinge and finally met for real after a concert idea turned into an actual plan.',
+    });
+
+    profile.event.date = 'not-a-date';
+
+    const itinerarySeeds = buildItinerarySeedFromStructuredEvents(profile);
+
+    expect(itinerarySeeds.map((event) => event.event_date)).toEqual([null, null]);
+  });
 });
