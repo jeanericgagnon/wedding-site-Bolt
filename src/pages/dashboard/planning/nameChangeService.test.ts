@@ -8,6 +8,7 @@ import {
   defaultNameChangeCaseInput,
   hydrateNameChangeWorkspace,
   mapCaseRecordToNameChangeInput,
+  mapReminderRecordToInput,
   mergeNameChangeReminders,
   mergeNameChangePlanExecutionState,
   normalizeNameChangeReminders,
@@ -481,6 +482,9 @@ describe('nameChangeService normalization', () => {
         suggested_offset_days: 4.6,
         urgency: 'medium',
         status: 'pending',
+        section_key: 'institutional',
+        planner_intent: 'open_execution_card',
+        focus_target_id: ' execution-card-banks ',
       },
       {
         reminder_key: 'reminder-banks',
@@ -490,6 +494,9 @@ describe('nameChangeService normalization', () => {
         suggested_offset_days: 2,
         urgency: 'high',
         status: 'scheduled',
+        section_key: 'institutional',
+        planner_intent: 'open_execution_card',
+        focus_target_id: 'execution-card-banks',
       },
     ])).toEqual([
       {
@@ -500,8 +507,35 @@ describe('nameChangeService normalization', () => {
         suggested_offset_days: 2,
         urgency: 'high',
         status: 'scheduled',
+        section_key: 'institutional',
+        planner_intent: 'open_execution_card',
+        focus_target_id: 'execution-card-banks',
       },
     ]);
+  });
+
+  it('maps reminder records to inputs without dropping planner routing metadata', () => {
+    expect(mapReminderRecordToInput({
+      id: 'reminder-row-1',
+      name_change_case_id: 'case-1',
+      reminder_key: 'reminder-banks',
+      label: 'Follow up on Banks and credit cards',
+      reason: 'Keep bank rollout moving',
+      depends_on_step_id: 'institution-banks',
+      suggested_offset_days: 4,
+      urgency: 'medium',
+      status: 'pending',
+      section_key: 'institutional',
+      planner_intent: 'open_execution_card',
+      focus_target_id: 'execution-card-banks',
+      created_at: '2026-04-24T14:00:00.000Z',
+      updated_at: '2026-04-24T14:00:00.000Z',
+    })).toMatchObject({
+      reminder_key: 'reminder-banks',
+      section_key: 'institutional',
+      planner_intent: 'open_execution_card',
+      focus_target_id: 'execution-card-banks',
+    });
   });
 
   it('builds a workspace bundle with generated reminders', () => {
@@ -534,6 +568,9 @@ describe('nameChangeService normalization', () => {
     expect(bundle.reminders.find((reminder) => reminder.reminder_key === 'reminder-banks')).toMatchObject({
       reminder_key: 'reminder-banks',
       status: 'scheduled',
+      section_key: 'institutional',
+      planner_intent: 'open_execution_card',
+      focus_target_id: 'execution-card-banks',
     });
     expect(bundle.reminders.length).toBeGreaterThan(1);
   });
@@ -921,6 +958,13 @@ describe('nameChangeService normalization', () => {
         expect.objectContaining({ id: 'milestone-ssa', status: 'in_progress' }),
         expect.objectContaining({ id: 'milestone-photo-id', status: 'in_progress' }),
         expect.objectContaining({ id: 'milestone-account-rollout', status: 'upcoming' }),
+      ]),
+    );
+    expect(progressedPlan.summary.institutionCategoryCoverage).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'legal_government', status: 'blocked' }),
+        expect.objectContaining({ id: 'financial', status: 'blocked' }),
+        expect.objectContaining({ id: 'travel_mobility', status: 'blocked' }),
       ]),
     );
   });

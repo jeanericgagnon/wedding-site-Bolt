@@ -190,6 +190,9 @@ export function mapReminderRecordToInput(reminder: NameChangeReminderRecord): Na
     suggested_offset_days: reminder.suggested_offset_days,
     urgency: reminder.urgency,
     status: reminder.status,
+    section_key: reminder.section_key,
+    planner_intent: reminder.planner_intent,
+    focus_target_id: reminder.focus_target_id,
   };
 }
 
@@ -208,6 +211,9 @@ export function normalizeNameChangeReminders(reminders: NameChangeReminderInput[
       suggested_offset_days: Math.max(0, Math.round(reminder.suggested_offset_days)),
       urgency: reminder.urgency,
       status: reminder.status,
+      section_key: reminder.section_key,
+      planner_intent: reminder.planner_intent,
+      focus_target_id: normalizeText(reminder.focus_target_id) || undefined,
     });
   });
 
@@ -344,6 +350,10 @@ export function mergeNameChangePlanExecutionState(
     ...milestone,
     status: resolveSequenceStatus(milestone.dependsOnStepIds),
   }));
+  const institutionCategoryCoverage = generatedPlan.summary.institutionCategoryCoverage?.map((category) => ({
+    ...category,
+    status: resolveSequenceStatus(category.dependsOnStepIds),
+  }));
 
   return {
     ...generatedPlan,
@@ -352,6 +362,7 @@ export function mergeNameChangePlanExecutionState(
       ...generatedPlan.summary,
       executionTracks,
       milestoneChecklist,
+      institutionCategoryCoverage,
       executionCounts,
       activitySourceCounts,
       latestMovementPosture,

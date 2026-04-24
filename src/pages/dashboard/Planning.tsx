@@ -648,6 +648,8 @@ export const DashboardPlanning: React.FC = () => {
                 budgetItems={budgetItems}
                 vendors={vendors}
                 seatingReadiness={seatingReadiness}
+                weddingDate={weddingDate}
+                nameChangePlan={nameChangePlan}
                 onTabChange={(tab) => setActiveTab(tab as Tab)}
               />
             )}

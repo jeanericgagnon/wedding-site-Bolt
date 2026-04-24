@@ -1,6 +1,7 @@
 import React from 'react';
-import { AlertTriangle, Clock, DollarSign, Users, CheckCircle } from 'lucide-react';
+import { AlertTriangle, Clock, DollarSign, Users, CheckCircle, HeartHandshake } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
+import type { NameChangePlan } from '../../../lib/nameChange/types';
 import { PlanningTask, PlanningBudgetItem, PlanningVendor } from './planningService';
 
 interface SeatingReadiness {
@@ -14,6 +15,8 @@ interface Props {
   budgetItems: PlanningBudgetItem[];
   vendors: PlanningVendor[];
   seatingReadiness: SeatingReadiness;
+  weddingDate: string | null;
+  nameChangePlan: NameChangePlan;
   onTabChange: (tab: string) => void;
 }
 
@@ -21,7 +24,7 @@ function fmt(n: number) {
   return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 }
 
-export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendors, seatingReadiness, onTabChange }) => {
+export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendors, seatingReadiness, weddingDate, nameChangePlan, onTabChange }) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const in7Days = new Date(today);
@@ -48,6 +51,13 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
     const d = new Date(v.next_payment_due);
     return d <= in7Days;
   });
+
+  const weddingDateValue = weddingDate ? new Date(`${weddingDate}T00:00:00`) : null;
+  const isPostWedding = weddingDateValue ? weddingDateValue.getTime() <= today.getTime() : false;
+  const nameChangeReadyCount = nameChangePlan.steps.filter((step) => step.status === 'ready').length;
+  const nameChangeCompletedCount = nameChangePlan.steps.filter((step) => step.executionStatus === 'complete').length;
+  const nextNameChangeAction = nameChangePlan.summary.nextBestAction;
+  const rolloutMilestone = nameChangePlan.summary.milestoneChecklist?.find((milestone) => milestone.id === 'milestone-account-rollout') ?? null;
 
   return (
     <div className="space-y-6">
@@ -111,6 +121,29 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
           </Card>
         </button>
       </div>
+
+      {isPostWedding && (
+        <button onClick={() => onTabChange('nameChange')} className="block w-full text-left">
+          <Card padding="md" className="border-primary/25 bg-primary/5 transition-shadow hover:shadow-md">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="rounded-xl bg-primary/10 p-2">
+                  <HeartHandshake className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-text-primary">Post-wedding name change assistant</p>
+                  <p className="mt-1 text-sm text-text-secondary">{nextNameChangeAction}</p>
+                  <p className="mt-2 text-xs text-text-secondary">
+                    {nameChangeCompletedCount} complete · {nameChangeReadyCount} ready now
+                    {rolloutMilestone ? ` · rollout milestone ${rolloutMilestone.status.replace('_', ' ')}` : ''}
+                  </p>
+                </div>
+              </div>
+              <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-primary shadow-sm">Open lane</span>
+            </div>
+          </Card>
+        </button>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card padding="md">
