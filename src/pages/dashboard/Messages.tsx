@@ -14,6 +14,7 @@ import { GUEST_COMMUNICATION_FLOW } from '../../lib/guestCommunicationFlow';
 import { buildRsvpReminderDraft } from '../../lib/reminderDraftHelper';
 import { buildDayOfUpdateDraft } from '../../lib/dayOfUpdateHelper';
 import { buildEventReminderDraft } from '../../lib/eventReminderHelper';
+import { formatMessageEventOptionLabel } from './messageEventDate';
 import { parseScheduleInputToIso, toScheduleInputValue } from './messageScheduleTime';
 
 const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bulk-message`;
@@ -1228,7 +1229,7 @@ export const DashboardMessages: React.FC = () => {
 
       const options = demoEventList.map((e, idx) => ({
         value: `event:${e.id}`,
-        label: `${e.event_name}${e.event_date ? ` — ${new Date(e.event_date).toLocaleDateString()}` : ''}`,
+        label: formatMessageEventOptionLabel(e.event_name, e.event_date),
         count: Math.max(0, total - idx * 8),
       }));
       setItineraryAudienceOptions(options);
@@ -1271,7 +1272,7 @@ export const DashboardMessages: React.FC = () => {
 
     const options: AudienceOption[] = (events as any[]).map((e) => ({
       value: `event:${e.id}`,
-      label: `${e.event_name}${e.event_date ? ` — ${new Date(e.event_date).toLocaleDateString()}` : ''}`,
+      label: formatMessageEventOptionLabel(e.event_name, e.event_date),
       count: map[e.id]?.size ?? 0,
     }));
     setItineraryAudienceOptions(options);
