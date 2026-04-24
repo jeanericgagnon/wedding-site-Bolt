@@ -2142,6 +2142,8 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.statusVault).toMatchObject({
       status: 'in_progress',
       lastUpdatedAt: '2026-04-24T21:55:00.000Z',
+      lastTouchedAt: '2026-04-24T21:55:00.000Z',
+      lastTouchedSource: 'execution',
       notes: ['Need the SSA receipt number before rolling into DMV.'],
     });
     expect(snapshot.statusVault.proofSummary).toContain('checks ready');
@@ -2232,6 +2234,8 @@ describe('name change target execution snapshot', () => {
       highUrgencyCount: 1,
       latestReminderAt: '2026-04-24T22:20:00.000Z',
     });
+    expect(snapshot.statusVault.lastTouchedAt).toBe('2026-04-24T22:20:00.000Z');
+    expect(snapshot.statusVault.lastTouchedSource).toBe('reminder');
   });
 
   it('falls back to milestone confirmations when a target has no explicit execution note yet', () => {

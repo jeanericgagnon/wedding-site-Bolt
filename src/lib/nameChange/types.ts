@@ -521,6 +521,8 @@ export interface NameChangeTargetExecutionSnapshot {
     proofSummary: string;
     notes: string[];
     lastUpdatedAt: string | null;
+    lastTouchedAt: string | null;
+    lastTouchedSource: 'execution' | 'reminder' | null;
     reminderSummary: {
       openCount: number;
       highUrgencyCount: number;

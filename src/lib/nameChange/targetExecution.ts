@@ -71,7 +71,7 @@ function getTargetStatusVaultSnapshot(
   const relevantStepIds = new Set(TARGET_STATUS_VAULT_STEP_IDS[targetKey] ?? []);
   const relevantSteps = (plan?.steps ?? []).filter((step) => relevantStepIds.has(step.id));
   const relevantMilestones = (plan?.summary.milestoneChecklist ?? []).filter((milestone) => milestone.dependsOnStepIds.some((stepId) => relevantStepIds.has(stepId)));
-  const latestUpdatedAt = relevantSteps
+  const latestExecutionUpdatedAt = relevantSteps
     .flatMap((step) => [step.executionUpdatedAt, step.completedAt])
     .filter((value): value is string => Boolean(value))
     .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
@@ -94,6 +94,14 @@ function getTargetStatusVaultSnapshot(
     .map((reminder) => reminder.updated_at ?? null)
     .filter((value): value is string => Boolean(value))
     .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
+  const lastTouchedAt = [latestExecutionUpdatedAt, latestReminderAt]
+    .filter((value): value is string => Boolean(value))
+    .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
+  const lastTouchedSource = lastTouchedAt === latestReminderAt && latestReminderAt
+    ? 'reminder' as const
+    : lastTouchedAt === latestExecutionUpdatedAt && latestExecutionUpdatedAt
+      ? 'execution' as const
+      : null;
 
   let status: NameChangeTargetExecutionSnapshot['statusVault']['status'] = 'todo';
   if (relevantSteps.some((step) => step.executionStatus === 'complete')) {
@@ -118,7 +126,9 @@ function getTargetStatusVaultSnapshot(
     status,
     proofSummary,
     notes,
-    lastUpdatedAt: latestUpdatedAt,
+    lastUpdatedAt: latestExecutionUpdatedAt,
+    lastTouchedAt,
+    lastTouchedSource,
     reminderSummary: {
       openCount: targetReminders.filter((reminder) => reminder.status === 'pending' || reminder.status === 'scheduled').length,
       highUrgencyCount: targetReminders.filter((reminder) => reminder.urgency === 'high' && reminder.status !== 'sent').length,
