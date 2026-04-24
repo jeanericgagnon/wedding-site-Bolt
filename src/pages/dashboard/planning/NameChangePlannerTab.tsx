@@ -639,6 +639,10 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     if (statusDelta !== 0) return statusDelta;
     return left.title.localeCompare(right.title);
   }), [effectiveReminders, executionSnapshots]);
+  const targetStatusVaultSummary = useMemo(() => ({
+    missingProofTargets: targetStatusVaultRows.filter((row) => row.proofMissingCount > 0).length,
+    attentionProofTargets: targetStatusVaultRows.filter((row) => row.proofAttentionCount > 0).length,
+  }), [targetStatusVaultRows]);
   const reminderAttentionSummary = useMemo(() => summarizeNameChangeReminderAttention(reminderAttention, {
     hasRecentStart: plan.summary.hasRecentStart,
     hasRecentCompletion: plan.summary.hasRecentCompletion,
@@ -1149,6 +1153,8 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               </div>
               <div className="flex flex-wrap items-center justify-end gap-2 text-xs text-text-secondary">
                 <span className="rounded-full bg-surface-subtle px-2 py-1">{targetStatusVaultRows.length} tracked targets</span>
+                <span className="rounded-full bg-surface-subtle px-2 py-1">{targetStatusVaultSummary.missingProofTargets} with missing proof</span>
+                <span className="rounded-full bg-surface-subtle px-2 py-1">{targetStatusVaultSummary.attentionProofTargets} with proof attention</span>
                 <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.ready ?? 0} ready</span>
                 <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.blocked ?? 0} blocked</span>
                 <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.inProgress ?? 0} in progress</span>
