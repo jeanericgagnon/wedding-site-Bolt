@@ -730,14 +730,14 @@ export default function RSVP() {
 
   const refreshTokenLinkedRsvpForContinuity = useCallback(() => {
     if (!activeToken || !tokenLinkedSessionRef.current) return;
-    if (loadInFlightRef.current || loading || tokenAutoLoading || submitting || submitInFlightRef.current || hasPendingLocalRsvpEdits) {
+    if (step === 'success' || loadInFlightRef.current || loading || tokenAutoLoading || submitting || submitInFlightRef.current || hasPendingLocalRsvpEdits) {
       pendingContinuityRefreshRef.current = true;
       return;
     }
 
     pendingContinuityRefreshRef.current = false;
     loadInvitationForToken(activeToken, { preserveVisibleState: true });
-  }, [activeToken, hasPendingLocalRsvpEdits, loadInvitationForToken, loading, submitting, tokenAutoLoading]);
+  }, [activeToken, hasPendingLocalRsvpEdits, loadInvitationForToken, loading, step, submitting, tokenAutoLoading]);
 
   useEffect(() => {
     loadInvitationForToken(activeToken ?? '');
@@ -779,11 +779,11 @@ export default function RSVP() {
 
   useEffect(() => {
     if (!pendingContinuityRefreshRef.current || !activeToken || !tokenLinkedSessionRef.current) return;
-    if (loadInFlightRef.current || loading || tokenAutoLoading || submitting || submitInFlightRef.current || hasPendingLocalRsvpEdits) return;
+    if (step === 'success' || loadInFlightRef.current || loading || tokenAutoLoading || submitting || submitInFlightRef.current || hasPendingLocalRsvpEdits) return;
 
     pendingContinuityRefreshRef.current = false;
     loadInvitationForToken(activeToken, { preserveVisibleState: true });
-  }, [activeToken, hasPendingLocalRsvpEdits, loadCycle, loadInvitationForToken, loading, submitting, tokenAutoLoading]);
+  }, [activeToken, hasPendingLocalRsvpEdits, loadCycle, loadInvitationForToken, loading, step, submitting, tokenAutoLoading]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
