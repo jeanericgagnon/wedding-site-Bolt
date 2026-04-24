@@ -821,6 +821,42 @@ describe('nameChangeService normalization', () => {
     expect(updatedPlan.summary.hasZeroRecentStepMovement).toBe(true);
   });
 
+  it('keeps invalid persisted execution activity timestamps from outranking real recent activity', () => {
+    const basePlan = buildNameChangeWorkspaceBundle(makeCase(), [], [], []).plan;
+    const withInvalidPersistedActivity = {
+      ...basePlan,
+      summary: {
+        ...basePlan.summary,
+        recentExecutionActivity: [
+          {
+            stepId: null,
+            source: 'reminder' as const,
+            title: 'Broken imported reminder',
+            executionStatus: 'in_progress' as const,
+            note: 'Imported with a bad timestamp',
+            timestamp: 'not-a-date',
+          },
+        ],
+      },
+    };
+
+    const updatedPlan = appendNameChangeExecutionActivity(withInvalidPersistedActivity, {
+      title: 'Reminder updated: Follow up on Banks and credit cards',
+      executionStatus: 'in_progress',
+      note: 'Reminder status changed to scheduled',
+      timestamp: '2026-04-18T20:00:00.000Z',
+    });
+
+    expect(updatedPlan.summary.recentExecutionActivity?.[0]).toMatchObject({
+      title: 'Reminder updated: Follow up on Banks and credit cards',
+      timestamp: '2026-04-18T20:00:00.000Z',
+    });
+    expect(updatedPlan.summary.recentExecutionActivity?.[1]).toMatchObject({
+      title: 'Broken imported reminder',
+      timestamp: 'not-a-date',
+    });
+  });
+
   it('marks latest movement posture as mixed when recent activity is balanced', () => {
     const basePlan = buildNameChangeWorkspaceBundle(makeCase(), [], [], []).plan;
     const planWithStep = mergeNameChangePlanExecutionState({

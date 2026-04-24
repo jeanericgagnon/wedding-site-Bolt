@@ -18,6 +18,7 @@ import type {
   NameChangeReminderRecord,
   NameChangeStructuredIntake,
 } from '../../../lib/nameChange/types';
+import { sortNameChangeExecutionActivity } from './nameChangeExecutionTime';
 
 export const defaultNameChangeStructuredIntake: NameChangeStructuredIntake = {
   spouseLastName: '',
@@ -263,22 +264,20 @@ export function mergeNameChangePlanExecutionState(
     counts[key] += 1;
     return counts;
   }, { todo: 0, in_progress: 0, complete: 0 });
-  const recentExecutionActivity = steps
-    .filter((step) => step.executionUpdatedAt)
-    .map((step) => ({
-      stepId: step.id,
-      source: 'step' as const,
-      title: step.title,
-      executionStatus: step.executionStatus ?? 'todo',
-      note: step.executionNote ?? null,
-      timestamp: step.executionUpdatedAt as string,
-    }))
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-    .slice(0, 5);
+  const recentExecutionActivity = sortNameChangeExecutionActivity(
+    steps
+      .filter((step) => step.executionUpdatedAt)
+      .map((step) => ({
+        stepId: step.id,
+        source: 'step' as const,
+        title: step.title,
+        executionStatus: step.executionStatus ?? 'todo',
+        note: step.executionNote ?? null,
+        timestamp: step.executionUpdatedAt as string,
+      })),
+  ).slice(0, 5);
   const carriedActivity = (existingPlan.summary.recentExecutionActivity ?? []).filter((item) => item.stepId === null);
-  const mergedRecentExecutionActivity = [...recentExecutionActivity, ...carriedActivity]
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-    .slice(0, 5);
+  const mergedRecentExecutionActivity = sortNameChangeExecutionActivity([...recentExecutionActivity, ...carriedActivity]).slice(0, 5);
   const activitySourceCounts = mergedRecentExecutionActivity.reduce((counts, item) => {
     counts[item.source] += 1;
     return counts;
@@ -392,77 +391,38 @@ export function appendNameChangeExecutionActivity(
 ): NameChangePlan {
   const timestamp = activity.timestamp ?? new Date().toISOString();
   const existing = plan.summary.recentExecutionActivity ?? [];
+  const nextRecentExecutionActivity = sortNameChangeExecutionActivity([
+    {
+      stepId: null,
+      source: activity.source ?? 'reminder',
+      title: activity.title,
+      executionStatus: activity.executionStatus,
+      note: activity.note,
+      timestamp,
+    },
+    ...existing,
+  ]).slice(0, 5);
 
   return {
     ...plan,
     summary: {
       ...plan.summary,
-      recentExecutionActivity: [
-        {
-          stepId: null,
-          source: activity.source ?? 'reminder',
-          title: activity.title,
-          executionStatus: activity.executionStatus,
-          note: activity.note,
-          timestamp,
-        },
-        ...existing,
-      ]
-        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-        .slice(0, 5),
-      activitySourceCounts: [
-        {
-          stepId: null,
-          source: activity.source ?? 'reminder',
-          title: activity.title,
-          executionStatus: activity.executionStatus,
-          note: activity.note,
-          timestamp,
-        },
-        ...existing,
-      ]
-        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-        .slice(0, 5)
-        .reduce((counts, item) => {
-          counts[item.source] += 1;
-          return counts;
-        }, { step: 0, reminder: 0 }),
+      recentExecutionActivity: nextRecentExecutionActivity,
+      activitySourceCounts: nextRecentExecutionActivity.reduce((counts, item) => {
+        counts[item.source] += 1;
+        return counts;
+      }, { step: 0, reminder: 0 }),
       latestMovementPosture: (() => {
-        const counts = [
-          {
-            stepId: null,
-            source: activity.source ?? 'reminder',
-            title: activity.title,
-            executionStatus: activity.executionStatus,
-            note: activity.note,
-            timestamp,
-          },
-          ...existing,
-        ]
-          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-          .slice(0, 5)
-          .reduce((result, item) => {
-            result[item.source] += 1;
-            return result;
-          }, { step: 0, reminder: 0 });
+        const counts = nextRecentExecutionActivity.reduce((result, item) => {
+          result[item.source] += 1;
+          return result;
+        }, { step: 0, reminder: 0 });
 
         if (counts.step === counts.reminder) return 'mixed';
         return counts.step > counts.reminder ? 'step-led' : 'reminder-led';
       })(),
       dominantMovementLane: (() => {
-        const items = [
-          {
-            stepId: null,
-            source: activity.source ?? 'reminder',
-            title: activity.title,
-            executionStatus: activity.executionStatus,
-            note: activity.note,
-            timestamp,
-          },
-          ...existing,
-        ]
-          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-          .slice(0, 5);
+        const items = nextRecentExecutionActivity;
         const counts = items.reduce((result, item) => {
           result[item.source] += 1;
           return result;
@@ -475,19 +435,7 @@ export function appendNameChangeExecutionActivity(
         return counts.step > counts.reminder ? 'step-progress' : 'reminder-churn';
       })(),
       mixedMovementReason: (() => {
-        const items = [
-          {
-            stepId: null,
-            source: activity.source ?? 'reminder',
-            title: activity.title,
-            executionStatus: activity.executionStatus,
-            note: activity.note,
-            timestamp,
-          },
-          ...existing,
-        ]
-          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-          .slice(0, 5);
+        const items = nextRecentExecutionActivity;
         const counts = items.reduce((result, item) => {
           result[item.source] += 1;
           return result;
@@ -511,19 +459,7 @@ export function appendNameChangeExecutionActivity(
           : 'step-reminder-balance';
       })(),
       mixedMovementHasUntouchedRisk: (() => {
-        const items = [
-          {
-            stepId: null,
-            source: activity.source ?? 'reminder',
-            title: activity.title,
-            executionStatus: activity.executionStatus,
-            note: activity.note,
-            timestamp,
-          },
-          ...existing,
-        ]
-          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-          .slice(0, 5);
+        const items = nextRecentExecutionActivity;
         const counts = items.reduce((result, item) => {
           result[item.source] += 1;
           return result;
@@ -545,19 +481,7 @@ export function appendNameChangeExecutionActivity(
           : false;
       })(),
       mixedMovementReminderHeavy: (() => {
-        const items = [
-          {
-            stepId: null,
-            source: activity.source ?? 'reminder',
-            title: activity.title,
-            executionStatus: activity.executionStatus,
-            note: activity.note,
-            timestamp,
-          },
-          ...existing,
-        ]
-          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-          .slice(0, 5);
+        const items = nextRecentExecutionActivity;
         const counts = items.reduce((result, item) => {
           result[item.source] += 1;
           return result;
@@ -577,84 +501,19 @@ export function appendNameChangeExecutionActivity(
         return lane === 'mixed' ? counts.reminder > counts.step : false;
       })(),
       reminderChurnRisk: (() => {
-        const counts = [
-          {
-            stepId: null,
-            source: activity.source ?? 'reminder',
-            title: activity.title,
-            executionStatus: activity.executionStatus,
-            note: activity.note,
-            timestamp,
-          },
-          ...existing,
-        ]
-          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-          .slice(0, 5)
-          .reduce((result, item) => {
-            result[item.source] += 1;
-            return result;
-          }, { step: 0, reminder: 0 });
+        const counts = nextRecentExecutionActivity.reduce((result, item) => {
+          result[item.source] += 1;
+          return result;
+        }, { step: 0, reminder: 0 });
 
         if (counts.reminder >= 4) return 'high';
         if (counts.reminder > counts.step) return 'medium';
         return 'low';
       })(),
-      hasRecentCompletion: [
-        {
-          stepId: null,
-          source: activity.source ?? 'reminder',
-          title: activity.title,
-          executionStatus: activity.executionStatus,
-          note: activity.note,
-          timestamp,
-        },
-        ...existing,
-      ]
-        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-        .slice(0, 5)
-        .some((item) => item.executionStatus === 'complete'),
-      hasRecentStart: [
-        {
-          stepId: null,
-          source: activity.source ?? 'reminder',
-          title: activity.title,
-          executionStatus: activity.executionStatus,
-          note: activity.note,
-          timestamp,
-        },
-        ...existing,
-      ]
-        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-        .slice(0, 5)
-        .some((item) => item.source === 'step' && item.executionStatus === 'in_progress'),
-      hasRecentUntouchedRisk: [
-        {
-          stepId: null,
-          source: activity.source ?? 'reminder',
-          title: activity.title,
-          executionStatus: activity.executionStatus,
-          note: activity.note,
-          timestamp,
-        },
-        ...existing,
-      ]
-        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-        .slice(0, 5)
-        .some((item) => item.source === 'step' && item.executionStatus === 'todo'),
-      hasZeroRecentStepMovement: ![
-        {
-          stepId: null,
-          source: activity.source ?? 'reminder',
-          title: activity.title,
-          executionStatus: activity.executionStatus,
-          note: activity.note,
-          timestamp,
-        },
-        ...existing,
-      ]
-        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-        .slice(0, 5)
-        .some((item) => item.source === 'step'),
+      hasRecentCompletion: nextRecentExecutionActivity.some((item) => item.executionStatus === 'complete'),
+      hasRecentStart: nextRecentExecutionActivity.some((item) => item.source === 'step' && item.executionStatus === 'in_progress'),
+      hasRecentUntouchedRisk: nextRecentExecutionActivity.some((item) => item.source === 'step' && item.executionStatus === 'todo'),
+      hasZeroRecentStepMovement: !nextRecentExecutionActivity.some((item) => item.source === 'step'),
     },
   };
 }
