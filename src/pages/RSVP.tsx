@@ -581,6 +581,7 @@ export default function RSVP() {
     const normalizedSelectedHouseholdGuestIds = normalizeSelectedHouseholdGuestIds(selectedHouseholdGuestIds, householdGuests);
     const shouldKeepHouseholdSelection = applyToHousehold && normalizedSelectedHouseholdGuestIds.length > 0;
 
+    tokenLinkedSessionRef.current = !!activeToken && guest.invite_token === activeToken;
     setError('');
     setFormData(buildNormalizedRsvpFormData(guest, normalizedExistingRsvp, mealConfig));
     setCustomAnswers(normalizedExistingRsvp.custom_answers || {});
@@ -589,7 +590,7 @@ export default function RSVP() {
     setStep('form');
     setFormStep(1);
     setExistingRsvp(normalizedExistingRsvp);
-  }, [applyToHousehold, customAnswers, formData, guest, householdGuests, invalidateActiveSubmit, mealConfig, resetToSearch, selectedHouseholdGuestIds]);
+  }, [activeToken, applyToHousehold, customAnswers, formData, guest, householdGuests, invalidateActiveSubmit, mealConfig, resetToSearch, selectedHouseholdGuestIds]);
 
   useEffect(() => {
     return () => {
@@ -1009,10 +1010,11 @@ export default function RSVP() {
         const targetIds = applyToHousehold ? dedupeGuestIds([guest.id, ...selectedHouseholdGuestIds]) : [guest.id];
         const payload = buildNormalizedExistingRsvp(formData, customAnswers, `demo-rsvp-${guest.id}`, targetIds);
         const normalizedSelectedHouseholdGuestIds = normalizeSelectedHouseholdGuestIds(targetIds.filter((id) => id !== guest.id), householdGuests);
+        const submitSource = tokenLinkedSessionRef.current && activeToken === guest.invite_token ? 'token' : 'manual';
         targetIds.forEach((id) => { stored[id] = { ...payload, id: `demo-rsvp-${id}` }; });
         localStorage.setItem(DEMO_RSVP_RESPONSES_KEY, JSON.stringify(stored));
         if (activeSubmitRequestRef.current !== requestId) return;
-        selectGuest(guest, payload, rsvpDeadline, rsvpQuestions, mealConfig, householdGuests, musicPlaylistUrl);
+        selectGuest(guest, payload, rsvpDeadline, rsvpQuestions, mealConfig, householdGuests, musicPlaylistUrl, submitSource);
         setApplyToHousehold(applyToHousehold && normalizedSelectedHouseholdGuestIds.length > 0);
         setSelectedHouseholdGuestIds(applyToHousehold ? normalizedSelectedHouseholdGuestIds : []);
         ignoreNextLocalContinuityEventRef.current = true;
@@ -1053,7 +1055,8 @@ export default function RSVP() {
       if (activeSubmitRequestRef.current !== requestId) return;
       const normalizedExistingRsvp = buildNormalizedExistingRsvp(formData, customAnswers, existingRsvp?.id ?? 'submitted-rsvp', targetGuestIds);
       const normalizedSelectedHouseholdGuestIds = normalizeSelectedHouseholdGuestIds(targetGuestIds.filter((id) => id !== guest.id), householdGuests);
-      selectGuest(guest, normalizedExistingRsvp, rsvpDeadline, rsvpQuestions, mealConfig, householdGuests, musicPlaylistUrl);
+      const submitSource = tokenLinkedSessionRef.current && activeToken === guest.invite_token ? 'token' : 'manual';
+      selectGuest(guest, normalizedExistingRsvp, rsvpDeadline, rsvpQuestions, mealConfig, householdGuests, musicPlaylistUrl, submitSource);
       setApplyToHousehold(applyToHousehold && normalizedSelectedHouseholdGuestIds.length > 0);
       setSelectedHouseholdGuestIds(applyToHousehold ? normalizedSelectedHouseholdGuestIds : []);
       ignoreNextLocalContinuityEventRef.current = true;
