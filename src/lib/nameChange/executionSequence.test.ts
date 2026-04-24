@@ -68,6 +68,47 @@ describe('name change execution sequence snapshot', () => {
     expect(snapshot.dependencies.find((dependency) => dependency.key === 'legal-proof-document')).toMatchObject({ status: 'satisfied' });
   });
 
+  it('blocks SSA sequencing when conditional legal-name setup is still incomplete', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'San Diego County Clerk',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
+      },
+      {
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+        file_name_masked: 'passport-•••.pdf',
+        issuing_authority: 'U.S. Department of State',
+        issued_on: '2024-06-01',
+        expires_on: '2034-06-01',
+        extraction_confidence: 0.92,
+      },
+    ];
+
+    const snapshot = buildNameChangeExecutionSequenceSnapshot(
+      'ssa',
+      makeCase({ current_middle_name: 'Marie', target_middle_name: '' }),
+      documents,
+      [],
+    );
+
+    expect(snapshot.ready).toBe(false);
+    expect(snapshot.blockers).toContain('Case setup is still missing target middle name.');
+    expect(snapshot.dependencies.find((dependency) => dependency.key === 'case-legal-name-completeness')).toMatchObject({
+      status: 'missing',
+      blocksReady: true,
+      reason: 'Case setup is still missing target middle name.',
+    });
+  });
+
   it('keeps DMV sequencing in attention when federal/state dependencies are incomplete', () => {
     const snapshot = buildNameChangeExecutionSequenceSnapshot('dmv', makeCase({ workflow_status: 'draft', county_residence: null }), [], []);
     expect(snapshot.lane).toBe('state');
@@ -110,6 +151,14 @@ describe('name change execution sequence snapshot', () => {
         field_key: 'first_name',
         field_label: 'Target first name',
         field_value_masked: 'Alex',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'court-order-doc',
+        field_key: 'middle_name',
+        field_label: 'Target middle name',
+        field_value_masked: 'Marie',
         source_type: 'document_extract',
         is_verified: true,
       },

@@ -8,6 +8,7 @@ import type {
 } from './types';
 
 type RequirementBag = {
+  caseLegalNameCompleteness: NameChangeRequirementResult | undefined;
   legalProof: NameChangeRequirementResult | undefined;
   identityCoverage: NameChangeRequirementResult | undefined;
   courtOrderPathReadiness: NameChangeRequirementResult | undefined;
@@ -94,16 +95,19 @@ function buildEmploymentContextDependency(profile: NameChangeCaseInput, label: s
 }
 
 const buildLegalAndIdentityDependencies: NameChangeDependencyRecipe = ({ requirements }) => [
+  buildRequirementDependency(requirements.caseLegalNameCompleteness, 'case-legal-name-completeness', 'Case legal-name setup complete', true, 'Case legal-name completeness has not been evaluated.', false, 'dependency'),
   buildRequirementDependency(requirements.legalProof, 'legal-proof-document', 'Legal proof document ready', true, 'Legal proof requirement not evaluated.', false, 'document'),
   buildRequirementDependency(requirements.identityCoverage, 'identity-document-coverage', 'Identity document coverage', true, 'Identity coverage requirement not evaluated.', false, 'document'),
 ];
 
 const buildStrictLegalAndIdentityDependencies: NameChangeDependencyRecipe = ({ requirements }) => [
+  buildRequirementDependency(requirements.caseLegalNameCompleteness, 'case-legal-name-completeness', 'Case legal-name setup complete', true, 'Case legal-name completeness has not been evaluated.', true, 'dependency'),
   buildRequirementDependency(requirements.legalProof, 'legal-proof-document', 'Legal proof document ready', true, 'Legal proof requirement not evaluated.', true, 'document'),
   buildRequirementDependency(requirements.identityCoverage, 'identity-document-coverage', 'Identity document coverage', true, 'Identity coverage requirement not evaluated.', true, 'document'),
 ];
 
 const buildDmvDependencies: NameChangeDependencyRecipe = ({ intake, requirements, prerequisiteDependencies }) => [
+  buildRequirementDependency(requirements.caseLegalNameCompleteness, 'case-legal-name-completeness', 'Case legal-name setup complete', true, 'Case legal-name completeness has not been evaluated.', true, 'dependency'),
   buildRequirementDependency(requirements.legalProof, 'legal-proof-document', 'Legal proof document ready', true, 'Legal proof requirement not evaluated.', true, 'document'),
   buildRequirementDependency(requirements.launchStateAlignment, 'launch-state-alignment', 'California launch-state alignment', true, 'California launch-state alignment has not been evaluated.', true, 'dependency'),
   buildRequirementDependency(requirements.countyContext, 'county-context', 'County / jurisdiction context', true, 'County context requirement not evaluated.', true, 'dependency'),
@@ -118,6 +122,7 @@ const buildDmvDependencies: NameChangeDependencyRecipe = ({ intake, requirements
 ];
 
 const buildCourtOrderDependencies: NameChangeDependencyRecipe = ({ requirements }) => [
+  buildRequirementDependency(requirements.caseLegalNameCompleteness, 'case-legal-name-completeness', 'Case legal-name setup complete', true, 'Case legal-name completeness has not been evaluated.', true, 'dependency'),
   buildRequirementDependency(requirements.launchStateAlignment, 'launch-state-alignment', 'California launch-state alignment', true, 'California launch-state alignment has not been evaluated.', true, 'dependency'),
   buildRequirementDependency(requirements.courtOrderPathReadiness, 'court-order-path-readiness', 'Court-order path readiness', true, 'Court-order path readiness has not been evaluated.', true, 'review'),
   buildRequirementDependency(requirements.courtOrderJurisdictionContext, 'court-order-jurisdiction-context', 'Court-order jurisdiction context', true, 'Court-order jurisdiction context has not been evaluated.', true, 'dependency'),
@@ -126,6 +131,7 @@ const buildCourtOrderDependencies: NameChangeDependencyRecipe = ({ requirements 
 ];
 
 const buildPassportDependencies: NameChangeDependencyRecipe = ({ profile, requirements, prerequisiteDependencies }) => [
+  buildRequirementDependency(requirements.caseLegalNameCompleteness, 'case-legal-name-completeness', 'Case legal-name setup complete', true, 'Case legal-name completeness has not been evaluated.', true, 'dependency'),
   ...buildStrictLegalAndIdentityDependencies({ profile, intake: null as never, requirements, prerequisiteDependencies }),
   buildRequirementDependency(requirements.marriageJurisdictionAlignment, 'marriage-jurisdiction-alignment', 'Marriage jurisdiction alignment', true, 'Marriage jurisdiction alignment has not been evaluated.', true, 'document'),
   buildRequirementDependency(requirements.outOfStateMarriageCertificateGrounding, 'out-of-state-marriage-certificate-grounding', 'Out-of-state marriage certificate grounding', true, 'Out-of-state marriage certificate grounding has not been evaluated.', true, 'document'),

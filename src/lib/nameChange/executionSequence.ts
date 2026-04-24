@@ -28,6 +28,7 @@ export function buildNameChangeExecutionSequenceSnapshot(
     profile,
     intake,
     requirements: {
+      caseLegalNameCompleteness: results.find((result) => result.key === 'case-legal-name-completeness'),
       legalProof: results.find((result) => result.key === 'legal-proof-document'),
       identityCoverage: results.find((result) => result.key === 'identity-document-coverage'),
       courtOrderPathReadiness: results.find((result) => result.key === 'court-order-path-readiness'),
