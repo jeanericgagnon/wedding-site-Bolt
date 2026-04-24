@@ -63,6 +63,12 @@ describe('name change passport form snapshot', () => {
       value: 'Alex',
       source: 'canonical_case',
     });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'applicant.newMiddleName')).toMatchObject({
+      value: 'Marie',
+      source: 'canonical_case',
+      sourceFieldKey: 'middle_name',
+      required: false,
+    });
     expect(snapshot.fields.find((field) => field.fieldKey === 'identity.passportIssueDate')).toMatchObject({
       value: '2024-06-01',
       source: 'extracted_field',

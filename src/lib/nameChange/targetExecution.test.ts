@@ -1350,6 +1350,14 @@ describe('name change target execution snapshot', () => {
       },
       {
         document_id: 'court-order-doc',
+        field_key: 'middle_name',
+        field_label: 'Target middle name',
+        field_value_masked: 'Quinn',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'court-order-doc',
         field_key: 'last_name',
         field_label: 'Target last name',
         field_value_masked: 'Jordan',
@@ -1382,10 +1390,23 @@ describe('name change target execution snapshot', () => {
         sourceFieldKey: 'first_name',
       }),
     });
+    expect(snapshot.autofillFields.find((field) => field.targetField === 'applicant.target_middle_name')).toMatchObject({
+      value: expect.objectContaining({
+        source: 'extracted_field',
+        value: 'Quinn',
+        sourceFieldKey: 'middle_name',
+      }),
+    });
     expect(snapshot.formPayload.fields.find((field) => field.fieldKey === 'applicant.newFirstName')).toMatchObject({
       value: 'Alicia',
       source: 'extracted_field',
       sourceFieldKey: 'first_name',
+    });
+    expect(snapshot.formPayload.fields.find((field) => field.fieldKey === 'applicant.newMiddleName')).toMatchObject({
+      value: 'Quinn',
+      source: 'extracted_field',
+      sourceFieldKey: 'middle_name',
+      required: false,
     });
     expect(snapshot.checklist.find((item) => item.key === 'target-legal-name-county')).toMatchObject({ status: 'ready' });
   });

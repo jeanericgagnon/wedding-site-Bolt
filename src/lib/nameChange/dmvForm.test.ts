@@ -68,6 +68,12 @@ describe('name change DMV form snapshot', () => {
       value: 'Alex',
       source: 'canonical_case',
     });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'applicant.newMiddleName')).toMatchObject({
+      value: 'Marie',
+      source: 'canonical_case',
+      sourceFieldKey: 'middle_name',
+      required: false,
+    });
     expect(snapshot.fields.find((field) => field.fieldKey === 'applicant.newLastName')).toMatchObject({
       value: 'Jordan',
       source: 'canonical_case',
