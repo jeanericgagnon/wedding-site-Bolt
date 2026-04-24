@@ -2263,6 +2263,35 @@ describe('name change target execution snapshot', () => {
       complete: 0,
       total: 0,
     });
+    expect(snapshot.statusVault.status).toBe('in_progress');
+  });
+
+  it('only marks a target complete when every tracked step is complete', () => {
+    const basePlan = buildNameChangePlan({ profile: makeCase(), documents: [], extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => {
+        if (step.id === 'institution-irs-records' || step.id === 'institution-state-tax-agency') {
+          return {
+            ...step,
+            executionStatus: 'complete' as const,
+            completedAt: step.id === 'institution-irs-records'
+              ? '2026-04-24T18:10:00.000Z'
+              : '2026-04-24T20:10:00.000Z',
+          };
+        }
+
+        return step;
+      }),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('taxes', makeCase(), [], [], plan);
+    expect(snapshot.statusVault.executionCounts).toEqual({
+      todo: 0,
+      inProgress: 0,
+      complete: 2,
+      total: 2,
+    });
     expect(snapshot.statusVault.status).toBe('complete');
   });
 

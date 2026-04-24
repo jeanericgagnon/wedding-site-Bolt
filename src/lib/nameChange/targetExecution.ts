@@ -133,9 +133,11 @@ function getTargetStatusVaultSnapshot(
       : null;
 
   let status: NameChangeTargetExecutionSnapshot['statusVault']['status'] = 'todo';
-  if (relevantSteps.some((step) => step.executionStatus === 'complete')) {
+  const hasTrackedExecution = executionCounts.total > 0;
+  const allTrackedStepsComplete = hasTrackedExecution && executionCounts.complete === executionCounts.total;
+  if (allTrackedStepsComplete) {
     status = 'complete';
-  } else if (relevantSteps.some((step) => step.executionStatus === 'in_progress')) {
+  } else if (executionCounts.inProgress > 0 || executionCounts.complete > 0) {
     status = 'in_progress';
   } else if (blockers.length > 0) {
     status = 'blocked';
