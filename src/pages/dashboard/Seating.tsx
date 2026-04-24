@@ -19,6 +19,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { demoWeddingSite, demoGuests, demoEvents } from '../../lib/demoData';
 import { supabase } from '../../lib/supabase';
 import { isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
+import { formatSeatingEventLabel } from './seatingEventDate';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -1586,7 +1587,7 @@ export const DashboardSeating: React.FC = () => {
             >
               {itineraryEvents.map(e => (
                 <option key={e.id} value={e.id}>
-                  {e.event_name} — {new Date(e.event_date).toLocaleDateString()}
+                  {formatSeatingEventLabel(e.event_name, e.event_date)}
                 </option>
               ))}
             </select>
