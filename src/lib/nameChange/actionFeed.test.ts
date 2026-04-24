@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildNameChangeActionFeed } from './actionFeed';
 import type { NameChangeDocumentRepairQueueItem } from './documentRepairQueue';
-import type { NameChangeTargetExecutionSnapshot } from './types';
+import type { NameChangeReminderAttentionItem, NameChangeTargetExecutionSnapshot } from './types';
 
 function makeExecutionSnapshot(overrides: Partial<NameChangeTargetExecutionSnapshot> = {}): NameChangeTargetExecutionSnapshot {
   return {
@@ -71,6 +71,24 @@ function makeRepairItem(overrides: Partial<NameChangeDocumentRepairQueueItem> = 
     missingExtractionFields: [],
     intakeStatus: 'not_started',
     required: true,
+    ...overrides,
+  };
+}
+
+function makeReminderAttention(overrides: Partial<NameChangeReminderAttentionItem> = {}): NameChangeReminderAttentionItem {
+  return {
+    reminderKey: 'reminder-marriage-name-mismatch',
+    label: 'Resolve the target surname path before filing the wrong packet',
+    dependsOnStepId: 'eligibility-proof',
+    dependentStepTitle: 'Legal proof eligibility',
+    dependentStepExecutionStatus: 'todo',
+    reminderStatus: 'pending',
+    urgency: 'high',
+    priorityTier: 'critical',
+    actionability: 'blocked_by_untouched_step',
+    suggestedOffsetDays: 0,
+    lastTouchedAt: null,
+    isStale: true,
     ...overrides,
   };
 }
@@ -367,6 +385,63 @@ describe('name change action feed', () => {
     expect(feed[0]).toMatchObject({
       title: 'Passport',
       urgencyReason: 'document_gap',
+    });
+  });
+
+  it('surfaces reminder attention inside the ranked action feed', () => {
+    const feed = buildNameChangeActionFeed([], [], [
+      makeReminderAttention(),
+    ]);
+
+    expect(feed[0]).toMatchObject({
+      origin: 'reminder',
+      title: 'Resolve the target surname path before filing the wrong packet',
+      laneLabel: 'Legal proof eligibility',
+      plannerIntent: 'open_execution_card',
+      focusTargetId: 'execution-card-ssa',
+      urgencyTier: 'critical',
+      severity: 'blocking',
+      sectionKey: 'cleanup',
+    });
+  });
+
+  it('keeps critical reminder attention above lower-ranked ready execution work', () => {
+    const feed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        ready: true,
+        blockers: [],
+        targetKey: 'passport',
+        targetLabel: 'U.S. Passport',
+        nextAction: {
+          category: 'review',
+          label: 'Prepare DS-82',
+          detail: 'Ready for final review.',
+        },
+        readinessSummary: {
+          status: 'ready',
+          blockingFieldRisks: 0,
+          attentionFieldRisks: 0,
+          lowConfidenceFields: 0,
+          missingFields: 0,
+          documentRepairDebt: 0,
+          summaryLabel: 'Ready.',
+        },
+        recommendedFormCode: 'DS-82',
+      }),
+    ], [], [
+      makeReminderAttention({
+        reminderKey: 'reminder-travel-bookings',
+        label: 'Lock travel bookings to the current passport name until DS-82 timing is clear',
+        dependsOnStepId: 'federal-passport',
+        dependentStepTitle: 'U.S. passport',
+        actionability: 'actionable_now',
+      }),
+    ]);
+
+    expect(feed[0]).toMatchObject({
+      origin: 'reminder',
+      focusTargetId: 'execution-card-passport',
+      sectionKey: 'core-government',
     });
   });
 });

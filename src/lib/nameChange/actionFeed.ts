@@ -1,10 +1,10 @@
 import { getNameChangeGuidedActionWeight } from './executionPrioritization';
 import type { NameChangeDocumentRepairQueueItem } from './documentRepairQueue';
-import type { NameChangeGuidedAction, NameChangeTargetExecutionSnapshot } from './types';
+import type { NameChangeGuidedAction, NameChangeReminderAttentionItem, NameChangeTargetExecutionSnapshot } from './types';
 
 export interface NameChangeActionFeedItem {
   key: string;
-  origin: 'execution' | 'document_repair';
+  origin: 'execution' | 'document_repair' | 'reminder';
   sectionKey: 'core-government' | 'work-identity' | 'institutional' | 'cleanup' | 'documents';
   title: string;
   laneLabel: string;
@@ -95,9 +95,39 @@ function buildDocumentRepairLaneLabel(item: NameChangeDocumentRepairQueueItem) {
   return `${item.impactedTargets[0]} +${item.impactedTargets.length - 1} more`;
 }
 
+function getReminderSectionKey(dependsOnStepId: string): NameChangeActionFeedItem['sectionKey'] {
+  if (dependsOnStepId === 'federal-ssa' || dependsOnStepId === 'state-dmv' || dependsOnStepId === 'federal-passport') {
+    return 'core-government';
+  }
+
+  if (dependsOnStepId === 'institutions-rollout') {
+    return 'institutional';
+  }
+
+  return 'cleanup';
+}
+
+function getReminderFocusTargetId(dependsOnStepId: string) {
+  if (dependsOnStepId === 'eligibility-proof') return 'execution-card-ssa';
+  if (dependsOnStepId === 'federal-ssa') return 'execution-card-ssa';
+  if (dependsOnStepId === 'state-dmv') return 'execution-card-dmv';
+  if (dependsOnStepId === 'federal-passport') return 'execution-card-passport';
+  if (dependsOnStepId === 'institutions-rollout') return 'execution-card-banks';
+  return 'reminder-attention';
+}
+
+function getReminderScore(item: NameChangeReminderAttentionItem) {
+  const urgencyWeight = item.priorityTier === 'critical' ? 320 : item.priorityTier === 'elevated' ? 230 : 170;
+  const actionabilityWeight = item.actionability === 'actionable_now' ? 35 : 0;
+  const staleWeight = item.isStale ? 20 : 0;
+  const inProgressWeight = item.dependentStepExecutionStatus === 'in_progress' ? 10 : 0;
+  return urgencyWeight + actionabilityWeight + staleWeight + inProgressWeight;
+}
+
 export function buildNameChangeActionFeed(
   executionSnapshots: NameChangeTargetExecutionSnapshot[],
   documentRepairQueue: NameChangeDocumentRepairQueueItem[],
+  reminderAttention: NameChangeReminderAttentionItem[] = [],
 ): NameChangeActionFeedItem[] {
   const executionItems: NameChangeActionFeedItem[] = executionSnapshots.map((snapshot) => {
     const severity = getExecutionSeverity(snapshot);
@@ -142,6 +172,32 @@ export function buildNameChangeActionFeed(
       action: item.nextActions[0],
     }));
 
+  const reminderItems: NameChangeActionFeedItem[] = reminderAttention.map((item) => {
+    const score = getReminderScore(item);
+    return {
+      key: `reminder:${item.reminderKey}`,
+      origin: 'reminder',
+      sectionKey: getReminderSectionKey(item.dependsOnStepId),
+      title: item.label,
+      laneLabel: item.dependentStepTitle,
+      severity: item.priorityTier === 'critical' || item.actionability === 'blocked_by_untouched_step' ? 'blocking' : 'attention',
+      urgencyTier: item.priorityTier ?? 'normal',
+      urgencyReason: 'review_queue',
+      plannerIntent: 'open_execution_card',
+      focusTargetId: getReminderFocusTargetId(item.dependsOnStepId),
+      score,
+      action: {
+        category: 'checklist',
+        label: item.label,
+        detail: item.isStale
+          ? `${item.dependentStepTitle} has stale reminder follow-through.`
+          : item.actionability === 'blocked_by_untouched_step'
+            ? `${item.dependentStepTitle} still needs first-touch execution before this reminder can clear.`
+            : item.dependentStepTitle,
+      },
+    };
+  });
+
   const routedExecutionItems = dedupeDocumentRoutedExecutionItems(executionItems);
   const queuedDocumentKinds = new Set(documentItems.map((item) => getActionDocumentKind(item)).filter(Boolean));
   const dedupedExecutionItems = routedExecutionItems.filter((item) => {
@@ -150,6 +206,6 @@ export function buildNameChangeActionFeed(
     return !documentKind || !queuedDocumentKinds.has(documentKind);
   });
 
-  return [...dedupedExecutionItems, ...documentItems]
+  return [...dedupedExecutionItems, ...documentItems, ...reminderItems]
     .sort((left, right) => right.score - left.score || left.title.localeCompare(right.title));
 }

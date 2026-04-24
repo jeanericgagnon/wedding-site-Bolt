@@ -527,12 +527,12 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     () => buildNameChangeDocumentRepairQueue(documentIntakeSnapshot, executionSnapshots),
     [documentIntakeSnapshot, executionSnapshots],
   );
-  const actionFeed = useMemo(
-    () => buildNameChangeActionFeed(executionSnapshots, documentRepairQueue),
-    [executionSnapshots, documentRepairQueue],
-  );
   const reminderSummary = useMemo(() => summarizeNameChangeReminders(effectiveReminders), [effectiveReminders]);
   const reminderAttention = useMemo(() => deriveNameChangeReminderAttention(effectiveReminders, plan), [effectiveReminders, plan]);
+  const actionFeed = useMemo(
+    () => buildNameChangeActionFeed(executionSnapshots, documentRepairQueue, reminderAttention),
+    [documentRepairQueue, executionSnapshots, reminderAttention],
+  );
   const reminderAttentionSummary = useMemo(() => summarizeNameChangeReminderAttention(reminderAttention, {
     hasRecentStart: plan.summary.hasRecentStart,
     hasRecentCompletion: plan.summary.hasRecentCompletion,
