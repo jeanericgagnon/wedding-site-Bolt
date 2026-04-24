@@ -111,6 +111,9 @@ export function buildNameChangeAutofillPrepSnapshot(
   const targetFirstNameExtraction = canonicalCase.legalBasis === 'court_order'
     ? lookup('first_name', ['court_order'])
     : lookup('first_name', ['marriage_certificate', 'court_order']);
+  const targetMiddleNameExtraction = canonicalCase.legalBasis === 'court_order'
+    ? lookup('middle_name', ['court_order'])
+    : lookup('middle_name');
   const targetLastNameExtraction = canonicalCase.legalBasis === 'court_order'
     ? lookup('last_name', ['court_order'])
     : lookup('spouse_last_name', ['marriage_certificate']);
@@ -120,6 +123,7 @@ export function buildNameChangeAutofillPrepSnapshot(
     directField('applicant.current_middle_name', 'Current middle name', canonicalCase.currentName.middle, lookup('middle_name', ['current_drivers_license', 'current_passport'])),
     directField('applicant.current_last_name', 'Current last name', canonicalCase.currentName.last, lookup('last_name', ['current_drivers_license', 'current_passport', 'marriage_certificate', 'court_order'])),
     directField('applicant.target_first_name', 'Target first name', canonicalCase.targetName.first, targetFirstNameExtraction),
+    directField('applicant.target_middle_name', 'Target middle name', canonicalCase.targetName.middle, targetMiddleNameExtraction),
     directField('applicant.target_last_name', 'Target last name', canonicalCase.targetName.last, targetLastNameExtraction),
     directField('applicant.county', 'County', canonicalCase.countyResidence, lookup('county', ['marriage_certificate'])),
     directField('legal.marriage_date', 'Marriage date', canonicalCase.legalContext.marriageDate, lookup('issuance_date', ['marriage_certificate'])),

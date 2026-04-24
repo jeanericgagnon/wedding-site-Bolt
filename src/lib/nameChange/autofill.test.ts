@@ -99,11 +99,61 @@ describe('name change autofill prep snapshot', () => {
         confidence: 'low',
       }),
     });
+    expect(snapshot.fields.find((field) => field.targetField === 'applicant.target_middle_name')).toMatchObject({
+      value: expect.objectContaining({
+        source: 'canonical_case',
+        value: 'Marie',
+        sourceFieldKey: 'middle_name',
+        confidence: 'high',
+      }),
+    });
     expect(snapshot.fields.find((field) => field.targetField === 'applicant.current_first_name')).toMatchObject({
       value: expect.objectContaining({
         source: 'extracted_field',
         value: 'Alicia',
         sourceDocumentKind: 'current_passport',
+        confidence: 'low',
+      }),
+    });
+  });
+
+  it('prefers reviewed court-order target middle-name extraction over canonical fallback when present', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-court-order',
+        document_kind: 'court_order_name_change',
+        display_name: 'Court order name change',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'court-order-•••.pdf',
+        issuing_authority: 'Superior Court of California',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'doc-court-order',
+        field_key: 'middle_name',
+        field_label: 'Middle name',
+        field_value_masked: 'Quinn',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+
+    const snapshot = buildNameChangeAutofillPrepSnapshot(
+      makeCase({ legal_basis: 'court_order', marriage_state: null, marriage_date: null }),
+      documents,
+      extractedFields,
+    );
+
+    expect(snapshot.fields.find((field) => field.targetField === 'applicant.target_middle_name')).toMatchObject({
+      value: expect.objectContaining({
+        source: 'extracted_field',
+        value: 'Quinn',
+        sourceDocumentKind: 'court_order',
+        sourceFieldKey: 'middle_name',
         confidence: 'low',
       }),
     });

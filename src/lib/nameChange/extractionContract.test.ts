@@ -113,6 +113,7 @@ describe('name change extraction contract', () => {
     const snapshot = buildNameChangeExtractionContractSnapshot(makeCase(), [], []);
     expect(snapshot.courtOrder).toMatchObject({
       firstName: null,
+      middleName: null,
       lastName: null,
       caseNumber: null,
       courtOrderDate: null,
@@ -162,6 +163,7 @@ describe('name change extraction contract', () => {
     ];
     const extractedFields: NameChangeExtractedFieldInput[] = [
       { document_id: 'doc-court-order', field_key: 'first_name', field_label: 'First name', field_value_masked: 'Alex', source_type: 'document_extract', is_verified: true },
+      { document_id: 'doc-court-order', field_key: 'middle_name', field_label: 'Middle name', field_value_masked: 'Quinn', source_type: 'document_extract', is_verified: true },
       { document_id: 'doc-court-order', field_key: 'last_name', field_label: 'Last name', field_value_masked: 'Rivera', source_type: 'document_extract', is_verified: true },
       { document_id: 'doc-court-order', field_key: 'case_number', field_label: 'Case number', field_value_masked: '24-CV-1188', source_type: 'document_extract', is_verified: true },
       { document_id: 'doc-court-order', field_key: 'court_order_date', field_label: 'Court order date', field_value_masked: '2026-04-05', source_type: 'document_extract', is_verified: true },
@@ -170,6 +172,7 @@ describe('name change extraction contract', () => {
     const snapshot = buildNameChangeExtractionContractSnapshot(makeCase({ legal_basis: 'court_order', marriage_state: null, marriage_date: null }), documents, extractedFields);
     expect(snapshot.courtOrder).toMatchObject({
       firstName: 'Alex',
+      middleName: 'Quinn',
       lastName: 'Rivera',
       caseNumber: '24-CV-1188',
       courtOrderDate: '2026-04-05',
@@ -198,6 +201,37 @@ describe('name change extraction contract', () => {
     });
     expect(getDocumentCapturedFieldKeys(documents, extractedFields, 'court_order')).toEqual(expect.arrayContaining(['case_number', 'court_order_date']));
     expect(getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'court_order_date')).toBe('2026-04-05');
+  });
+
+  it('surfaces court-order target middle-name conflicts against canonical case truth', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-court-order',
+        document_kind: 'court_order_name_change',
+        display_name: 'Court order name change',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      { document_id: 'doc-court-order', field_key: 'middle_name', field_label: 'Middle name', field_value_masked: 'Quinn', source_type: 'document_extract', is_verified: true },
+    ];
+
+    const snapshot = buildNameChangeExtractionContractSnapshot(
+      makeCase({ legal_basis: 'court_order', marriage_state: null, marriage_date: null }),
+      documents,
+      extractedFields,
+    );
+
+    expect(snapshot.summary.conflictCount).toBe(1);
+    expect(snapshot.conflicts).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        key: 'target-middle-name-court-order',
+        fieldKey: 'middle_name',
+        canonicalValue: 'Marie',
+        extractedValue: 'Quinn',
+      }),
+    ]));
   });
 
   it('uses canonical draft-style aliases when verified extraction rows point at upload filenames instead of persisted ids', () => {

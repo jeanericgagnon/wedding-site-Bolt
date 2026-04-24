@@ -546,6 +546,7 @@ export interface NameChangeMarriageCertificateExtraction {
 
 export interface NameChangeCourtOrderExtraction {
   firstName: string | null;
+  middleName: string | null;
   lastName: string | null;
   caseNumber: string | null;
   courtOrderDate: string | null;

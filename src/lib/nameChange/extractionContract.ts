@@ -272,6 +272,7 @@ function buildCourtOrderExtraction(
 ): NameChangeCourtOrderExtraction {
   return {
     firstName: getDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'first_name'),
+    middleName: getDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'middle_name'),
     lastName: getDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'last_name'),
     caseNumber: getDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'case_number'),
     courtOrderDate: getDocumentLinkedFieldValue(documents, extractedFields, 'court_order', 'court_order_date'),
@@ -382,6 +383,16 @@ function buildCanonicalFieldConflicts(
       canonicalValue: canonicalCase.legalBasis === 'court_order' ? canonicalCase.targetName.first : null,
       extractedValue: canonicalCase.legalBasis === 'court_order'
         ? getVerifiedDocumentFieldValue(documents, extractedFields, 'court_order', 'first_name')
+        : null,
+    },
+    {
+      key: 'target-middle-name-court-order',
+      label: 'Target middle name vs court-order extraction',
+      documentKind: 'court_order',
+      fieldKey: 'middle_name',
+      canonicalValue: canonicalCase.legalBasis === 'court_order' ? canonicalCase.targetName.middle : null,
+      extractedValue: canonicalCase.legalBasis === 'court_order'
+        ? getVerifiedDocumentFieldValue(documents, extractedFields, 'court_order', 'middle_name')
         : null,
     },
     {
