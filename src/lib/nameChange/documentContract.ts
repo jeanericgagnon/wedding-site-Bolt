@@ -106,7 +106,7 @@ function metadataMissingForDocument(document: NameChangeDocumentInput | undefine
   if (document.document_kind === 'other') return [];
 
   const snapshotMetadata = buildDraftNameChangeDocumentMetadataFromSnapshot(document.extracted_snapshot);
-  const fileNameMasked = document.file_name_masked?.trim() || snapshotMetadata.fileNameMasked?.trim() || null;
+  const fileNameMasked = getContractDocumentFileNameMasked(document, snapshotMetadata);
   const issuingAuthority = document.issuing_authority?.trim() || snapshotMetadata.issuingAuthority?.trim() || null;
   const issuedOn = document.issued_on?.trim() || snapshotMetadata.issuedOn?.trim() || null;
   const expiresOn = document.expires_on?.trim() || snapshotMetadata.expiresOn?.trim() || null;
@@ -125,11 +125,45 @@ function metadataMissingForDocument(document: NameChangeDocumentInput | undefine
   return missing;
 }
 
+function getContractDocumentFileNameMasked(
+  document: Pick<NameChangeDocumentInput, 'file_name_masked' | 'extracted_snapshot'> | undefined,
+  snapshotMetadata = buildDraftNameChangeDocumentMetadataFromSnapshot(document?.extracted_snapshot),
+) {
+  const persistedFileNameMasked = document?.file_name_masked?.trim() || null;
+  const snapshotFileNameMasked = snapshotMetadata.fileNameMasked?.trim() || null;
+
+  if (persistedFileNameMasked && !isDraftNameChangePlaceholderDocument({ file_name_masked: persistedFileNameMasked })) {
+    return persistedFileNameMasked;
+  }
+
+  if (snapshotFileNameMasked && !isDraftNameChangePlaceholderDocument({ file_name_masked: snapshotFileNameMasked })) {
+    return snapshotFileNameMasked;
+  }
+
+  return persistedFileNameMasked || snapshotFileNameMasked || null;
+}
+
+function isContractPlaceholderDocument(document: NameChangeDocumentInput | undefined) {
+  if (!document) return false;
+
+  const snapshotMetadata = buildDraftNameChangeDocumentMetadataFromSnapshot(document.extracted_snapshot);
+  const fileNameMasked = getContractDocumentFileNameMasked(document, snapshotMetadata);
+
+  if (fileNameMasked && !isDraftNameChangePlaceholderDocument({ file_name_masked: fileNameMasked })) {
+    return false;
+  }
+
+  return isDraftNameChangePlaceholderDocument({
+    id: document.id,
+    file_name_masked: fileNameMasked,
+  });
+}
+
 function getDocumentContractPriority(
   document: NameChangeDocumentInput,
   kind: NameChangeDocumentInput['document_kind'],
 ) {
-  const placeholderDocument = isDraftNameChangePlaceholderDocument(document);
+  const placeholderDocument = isContractPlaceholderDocument(document);
   const reviewedMetadataReadyWeight = !placeholderDocument && document.intake_status === 'reviewed' && metadataMissingForDocument(document).length === 0 ? 1 : 0;
   const persistedDocumentWeight = placeholderDocument ? 0 : 1;
   const intakeWeight = document.intake_status === 'reviewed'
@@ -150,8 +184,8 @@ function findBestContractDocument(
   const preferredDocuments = matchingDocuments.some((document) => document.document_kind === canonicalKind)
     ? matchingDocuments.filter((document) => document.document_kind === canonicalKind)
     : matchingDocuments;
-  const rankedDocuments = preferredDocuments.some((document) => !isDraftNameChangePlaceholderDocument(document))
-    ? preferredDocuments.filter((document) => !isDraftNameChangePlaceholderDocument(document))
+  const rankedDocuments = preferredDocuments.some((document) => !isContractPlaceholderDocument(document))
+    ? preferredDocuments.filter((document) => !isContractPlaceholderDocument(document))
     : preferredDocuments;
 
   return rankedDocuments

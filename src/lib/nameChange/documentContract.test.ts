@@ -781,6 +781,54 @@ describe('name change document intake contract', () => {
     });
   });
 
+  it('prefers snapshot-backed reviewed documents even when they still carry draft placeholder ids', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase(),
+      [
+        {
+          id: 'doc-uploaded',
+          document_kind: 'current_passport',
+          display_name: 'Passport upload',
+          storage_mode: 'metadata_only',
+          intake_status: 'uploaded',
+          file_name_masked: 'passport-upload-•••.pdf',
+          issuing_authority: 'U.S. Department of State',
+          issued_on: '2024-06-01',
+          expires_on: '2034-06-01',
+          extraction_confidence: 0.92,
+        },
+        {
+          id: 'draft-current_passport',
+          document_kind: 'current_passport',
+          display_name: 'Passport reviewed from snapshot',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'current-passport-draft.pdf',
+          issuing_authority: null,
+          issued_on: null,
+          expires_on: null,
+          extraction_confidence: null,
+          extracted_snapshot: {
+            metadata: {
+              file_name_masked: 'passport-reviewed-•••.pdf',
+              issuing_authority: 'U.S. Department of State',
+              issuance_date: '2024-06-01T00:00:00Z',
+              expiration_date: '2034-06-01T00:00:00Z',
+              extraction_confidence: '0.94',
+            },
+          },
+        },
+      ],
+      [],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'current_passport')).toMatchObject({
+      intakeStatus: 'reviewed',
+      metadataMissing: [],
+      metadataReady: 1,
+    });
+  });
+
   it('prefers the canonical document kind when duplicate alias rows are otherwise tied', () => {
     const snapshot = buildNameChangeDocumentIntakeSnapshot(
       makeCase({ legal_basis: 'court_order', marriage_state: null, marriage_date: null }),
