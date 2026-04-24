@@ -43,7 +43,7 @@ function isDualPartnerExecutionTarget(targetKey: NameChangeExecutionTargetKey) {
 }
 
 const TARGET_STATUS_VAULT_STEP_IDS: Partial<Record<NameChangeExecutionTargetKey, string[]>> = {
-  courtOrder: ['state-court-order'],
+  courtOrder: ['eligibility-proof', 'state-court-order'],
   ssa: ['federal-ssa'],
   dmv: ['state-photo-id'],
   passport: ['federal-passport'],
@@ -70,6 +70,7 @@ function getTargetStatusVaultSnapshot(
 ): NameChangeTargetExecutionSnapshot['statusVault'] {
   const relevantStepIds = new Set(TARGET_STATUS_VAULT_STEP_IDS[targetKey] ?? []);
   const relevantSteps = (plan?.steps ?? []).filter((step) => relevantStepIds.has(step.id));
+  const relevantMilestones = (plan?.summary.milestoneChecklist ?? []).filter((milestone) => milestone.dependsOnStepIds.some((stepId) => relevantStepIds.has(stepId)));
   const latestUpdatedAt = relevantSteps
     .flatMap((step) => [step.executionUpdatedAt, step.completedAt])
     .filter((value): value is string => Boolean(value))
@@ -77,6 +78,9 @@ function getTargetStatusVaultSnapshot(
   const explicitNotes = relevantSteps
     .map((step) => step.executionNote?.trim() || null)
     .filter((note): note is string => Boolean(note));
+  const milestoneNotes = relevantMilestones
+    .filter((milestone) => milestone.status === 'in_progress' || milestone.status === 'complete')
+    .map((milestone) => `${milestone.status === 'complete' ? 'Confirmed' : 'Tracking'} milestone: ${milestone.label}`);
   const missingChecklist = checklist.filter((item) => item.status === 'missing');
   const attentionChecklist = checklist.filter((item) => item.status === 'attention');
   const proofCounts = `${checklist.filter((item) => item.status === 'ready').length}/${checklist.length} checks ready`;
@@ -104,6 +108,8 @@ function getTargetStatusVaultSnapshot(
 
   const notes = explicitNotes.length > 0
     ? explicitNotes
+    : milestoneNotes.length > 0
+      ? milestoneNotes
     : nextAction
       ? [nextAction.description]
       : blockers.slice(0, 2);

@@ -2233,4 +2233,20 @@ describe('name change target execution snapshot', () => {
       latestReminderAt: '2026-04-24T22:20:00.000Z',
     });
   });
+
+  it('falls back to milestone confirmations when a target has no explicit execution note yet', () => {
+    const basePlan = buildNameChangePlan({ profile: makeCase(), documents: [], extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      summary: {
+        ...basePlan.summary,
+        milestoneChecklist: (basePlan.summary.milestoneChecklist ?? []).map((milestone) => milestone.id === 'milestone-legal-proof'
+          ? { ...milestone, status: 'complete' as const }
+          : milestone),
+      },
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('courtOrder', makeCase(), [], [], plan);
+    expect(snapshot.statusVault.notes[0]).toBe('Confirmed milestone: Certified legal proof is grounded and reviewed');
+  });
 });
