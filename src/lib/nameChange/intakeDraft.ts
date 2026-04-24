@@ -519,7 +519,8 @@ export function normalizeDraftNameChangeDocumentId(documentId: string | null | u
   if (!normalizedDocumentId) return null;
   if (/^draft$/i.test(normalizedDocumentId)) return null;
   if (/^draft(?:\s*[\\/_-]?\s*)other$/i.test(normalizedDocumentId)) return null;
-  const extensionStrippedDocumentId = normalizedDocumentId.replace(/\.(pdf|png|jpg|jpeg|webp|heic|heif|tif|tiff)$/i, '');
+  const querylessDocumentId = normalizedDocumentId.replace(/[?#].*$/, '');
+  const extensionStrippedDocumentId = querylessDocumentId.replace(/\.(pdf|png|jpg|jpeg|webp|heic|heif|tif|tiff)$/i, '');
   const pathLikeDocumentId = extensionStrippedDocumentId
     .split(/[\\/]/)
     .filter(Boolean)
