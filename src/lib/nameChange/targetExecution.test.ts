@@ -2408,6 +2408,7 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.statusVault.notes[0]).toBe('Reminder: SSA follow-up — Receipt still missing');
     expect(snapshot.statusVault.executionNote).toBe('SSA packet already filed and waiting on receipt.');
     expect(snapshot.statusVault.milestoneNote).toBeNull();
+    expect(snapshot.statusVault.proofNote).toMatch(/^Proof needs: /);
     expect(snapshot.statusVault.reminderNote).toBe('Reminder: SSA follow-up — Receipt still missing');
   });
 

@@ -108,6 +108,7 @@ interface TargetStatusVaultRow {
   note: string | null;
   executionNote: string | null;
   milestoneNote: string | null;
+  proofNote: string | null;
   reminderNote: string | null;
   updatedLabel: string | null;
   executionUpdatedLabel: string | null;
@@ -643,6 +644,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       note: snapshot.statusVault.notes[0] ?? null,
       executionNote: snapshot.statusVault.executionNote,
       milestoneNote: snapshot.statusVault.milestoneNote,
+      proofNote: snapshot.statusVault.proofNote,
       reminderNote: snapshot.statusVault.reminderNote,
       updatedLabel: snapshot.statusVault.lastTouchedAt
         ? `Latest touch ${formatNameChangeExecutionDateTime(snapshot.statusVault.lastTouchedAt)}${snapshot.statusVault.lastTouchedSource === 'reminder' ? ' · reminder' : snapshot.statusVault.lastTouchedSource === 'execution' ? ' · execution' : ''}`
@@ -1259,6 +1261,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                   {row.note && <p className="mt-3 text-sm text-text-secondary">{row.note}</p>}
                   {row.executionNote && row.executionNote !== row.note ? <p className="mt-2 text-xs text-text-secondary">Execution note: {row.executionNote}</p> : null}
                   {row.milestoneNote && row.milestoneNote !== row.note && row.milestoneNote !== row.executionNote ? <p className="mt-2 text-xs text-text-secondary">Milestone note: {row.milestoneNote}</p> : null}
+                  {row.proofNote && row.proofNote !== row.note && row.proofNote !== row.executionNote && row.proofNote !== row.milestoneNote ? <p className="mt-2 text-xs text-text-secondary">Proof note: {row.proofNote}</p> : null}
                   {row.reminderNote && row.reminderNote !== row.note ? <p className="mt-2 text-xs text-text-secondary">Reminder note: {row.reminderNote}</p> : null}
                   {row.nextActionLabel && <p className="mt-2 text-xs text-text-secondary">Next: {row.nextActionLabel}</p>}
                   {row.reminderLabel && <p className="mt-2 text-xs text-text-secondary">Reminders: {row.reminderLabel}</p>}

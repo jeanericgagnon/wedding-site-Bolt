@@ -162,6 +162,7 @@ function getTargetStatusVaultSnapshot(
     : notes;
   const executionNote = explicitNotes[0] ?? (nextAction ? nextAction.detail : blockers[0] ?? null);
   const milestoneNote = milestoneNotes[0] ?? null;
+  const proofNote = proofIssues ? `Proof needs: ${proofIssues}` : null;
 
   return {
     status,
@@ -175,6 +176,7 @@ function getTargetStatusVaultSnapshot(
     notes: notesWithReminder,
     executionNote,
     milestoneNote,
+    proofNote,
     reminderNote,
     lastUpdatedAt: latestExecutionUpdatedAt,
     lastTouchedAt,

@@ -535,6 +535,7 @@ export interface NameChangeTargetExecutionSnapshot {
     notes: string[];
     executionNote: string | null;
     milestoneNote: string | null;
+    proofNote: string | null;
     reminderNote: string | null;
     lastUpdatedAt: string | null;
     lastTouchedAt: string | null;
