@@ -96,6 +96,10 @@ interface TargetStatusVaultRow {
   proofTotalCount: number;
   proofMissingCount: number;
   proofAttentionCount: number;
+  executionTodoCount: number;
+  executionInProgressCount: number;
+  executionCompleteCount: number;
+  executionTotalCount: number;
   note: string | null;
   executionNote: string | null;
   reminderNote: string | null;
@@ -616,6 +620,10 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       proofTotalCount: snapshot.statusVault.proofCounts.total,
       proofMissingCount: snapshot.statusVault.proofCounts.missing,
       proofAttentionCount: snapshot.statusVault.proofCounts.attention,
+      executionTodoCount: snapshot.statusVault.executionCounts.todo,
+      executionInProgressCount: snapshot.statusVault.executionCounts.inProgress,
+      executionCompleteCount: snapshot.statusVault.executionCounts.complete,
+      executionTotalCount: snapshot.statusVault.executionCounts.total,
       note: snapshot.statusVault.notes[0] ?? null,
       executionNote: snapshot.statusVault.executionNote,
       reminderNote: snapshot.statusVault.reminderNote,
@@ -1188,12 +1196,17 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                       <p className="text-sm font-semibold text-text-primary">{row.title}</p>
                       <p className="mt-1 text-xs text-text-secondary">{row.proofSummary}</p>
                     </div>
-                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    <div className="flex flex-wrap items-center justify-end gap-2">
                       <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">Vault: {row.vaultStatus.replace(/_/g, ' ')}</span>
                       <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">Ready: {row.ready ? 'yes' : 'no'}</span>
                       <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
                         Proof {row.proofReadyCount}/{row.proofTotalCount}
                       </span>
+                      {row.executionTotalCount > 0 ? (
+                        <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+                          Steps {row.executionCompleteCount} done • {row.executionInProgressCount} active • {row.executionTodoCount} todo
+                        </span>
+                      ) : null}
                       {row.proofMissingCount > 0 ? (
                         <span className="rounded-full bg-rose-50 px-2 py-1 text-xs text-rose-700">
                           {row.proofMissingCount} missing

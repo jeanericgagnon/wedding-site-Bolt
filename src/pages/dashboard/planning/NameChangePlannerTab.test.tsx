@@ -145,6 +145,7 @@ describe('NameChangePlannerTab', () => {
     expect(screen.getAllByText('Submitted the SS-5 packet and waiting on return mail.').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Execution: in_progress').length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Latest touch|Execution updated/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Steps 0 done • 1 active • 0 todo/)).toBeInTheDocument();
     expect(screen.getByText(/with missing proof/)).toBeInTheDocument();
     expect(screen.getByText(/with proof attention/)).toBeInTheDocument();
     expect(screen.getByText(/with execution activity/)).toBeInTheDocument();

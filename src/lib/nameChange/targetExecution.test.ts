@@ -2144,6 +2144,12 @@ describe('name change target execution snapshot', () => {
       lastUpdatedAt: '2026-04-24T21:55:00.000Z',
       lastTouchedAt: '2026-04-24T21:55:00.000Z',
       lastTouchedSource: 'execution',
+      executionCounts: {
+        todo: 0,
+        inProgress: 1,
+        complete: 0,
+        total: 1,
+      },
       proofCounts: {
         ready: expect.any(Number),
         attention: expect.any(Number),
@@ -2201,7 +2207,48 @@ describe('name change target execution snapshot', () => {
     const snapshot = buildNameChangeTargetExecutionSnapshot('ssa', makeCase(), documents, extractedFields);
     expect(snapshot.ready).toBe(true);
     expect(snapshot.statusVault.status).toBe('ready');
+    expect(snapshot.statusVault.executionCounts).toEqual({
+      todo: 0,
+      inProgress: 0,
+      complete: 0,
+      total: 0,
+    });
     expect(snapshot.statusVault.proofSummary).toContain('Proof stack looks grounded');
+  });
+
+  it('tracks multi-step execution counts for downstream targets', () => {
+    const basePlan = buildNameChangePlan({ profile: makeCase(), documents: [], extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => {
+        if (step.id === 'institution-irs-records') {
+          return {
+            ...step,
+            executionStatus: 'complete' as const,
+            completedAt: '2026-04-24T18:10:00.000Z',
+          };
+        }
+
+        if (step.id === 'institution-state-tax-agency') {
+          return {
+            ...step,
+            executionStatus: 'in_progress' as const,
+            executionUpdatedAt: '2026-04-24T20:10:00.000Z',
+          };
+        }
+
+        return step;
+      }),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('taxes', makeCase(), [], [], plan);
+    expect(snapshot.statusVault.executionCounts).toEqual({
+      todo: 0,
+      inProgress: 1,
+      complete: 1,
+      total: 2,
+    });
+    expect(snapshot.statusVault.status).toBe('complete');
   });
 
   it('tracks per-target reminder pressure inside the status vault', () => {

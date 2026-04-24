@@ -84,6 +84,21 @@ function getTargetStatusVaultSnapshot(
   const missingChecklist = checklist.filter((item) => item.status === 'missing');
   const attentionChecklist = checklist.filter((item) => item.status === 'attention');
   const readyChecklist = checklist.filter((item) => item.status === 'ready');
+  const executionCounts = relevantSteps.reduce(
+    (summary, step) => {
+      if (step.executionStatus === 'complete') {
+        summary.complete += 1;
+      } else if (step.executionStatus === 'in_progress') {
+        summary.inProgress += 1;
+      } else {
+        summary.todo += 1;
+      }
+
+      summary.total += 1;
+      return summary;
+    },
+    { todo: 0, inProgress: 0, complete: 0, total: 0 },
+  );
   const proofCounts = `${readyChecklist.length}/${checklist.length} checks ready`;
   const proofIssues = [...missingChecklist, ...attentionChecklist]
     .slice(0, 2)
@@ -147,6 +162,7 @@ function getTargetStatusVaultSnapshot(
     lastUpdatedAt: latestExecutionUpdatedAt,
     lastTouchedAt,
     lastTouchedSource,
+    executionCounts,
     reminderSummary: {
       openCount: targetReminders.filter((reminder) => reminder.status === 'pending' || reminder.status === 'scheduled').length,
       highUrgencyCount: targetReminders.filter((reminder) => reminder.urgency === 'high' && reminder.status !== 'sent').length,

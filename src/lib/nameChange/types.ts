@@ -537,6 +537,12 @@ export interface NameChangeTargetExecutionSnapshot {
     lastUpdatedAt: string | null;
     lastTouchedAt: string | null;
     lastTouchedSource: 'execution' | 'reminder' | null;
+    executionCounts: {
+      todo: number;
+      inProgress: number;
+      complete: number;
+      total: number;
+    };
     reminderSummary: {
       openCount: number;
       highUrgencyCount: number;
