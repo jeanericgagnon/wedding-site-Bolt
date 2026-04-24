@@ -7,6 +7,7 @@ import {
   hasVerifiedLinkedDocumentFieldValue,
 } from './extractionContract';
 import { NAME_CHANGE_FORM_BUILDERS } from './formRegistry';
+import { buildNameChangeSnapshotBackedExtractedFields } from './intakeDraft';
 import { buildNameChangeTargetChecklist } from './targetChecklist';
 import { NAME_CHANGE_EXECUTION_TARGETS } from './targets';
 import type {
@@ -51,11 +52,12 @@ export function buildNameChangeTargetExecutionSnapshot(
   extractedFields: NameChangeExtractedFieldInput[],
   plan: NameChangePlan | null = null,
 ): NameChangeTargetExecutionSnapshot {
+  const mergedExtractedFields = buildNameChangeSnapshotBackedExtractedFields(documents, extractedFields);
   const target = NAME_CHANGE_EXECUTION_TARGETS[targetKey];
   const autofill = buildNameChangeAutofillPrepSnapshot(profile, documents, extractedFields);
   const sequence = buildNameChangeExecutionSequenceSnapshot(targetKey, profile, documents, extractedFields, plan);
   const checklist = buildNameChangeTargetChecklist(target, profile, documents, extractedFields);
-  const extraction = buildNameChangeExtractionContractSnapshot(profile, documents, extractedFields);
+  const extraction = buildNameChangeExtractionContractSnapshot(profile, documents, mergedExtractedFields);
   const formPayload = NAME_CHANGE_FORM_BUILDERS[target.formBuilderKey](profile, documents, extractedFields);
   const gates = evaluateNameChangeExecutionGates(sequence.dependencies, checklist, formPayload);
   const fieldRisks = formPayload.fields
@@ -99,11 +101,11 @@ export function buildNameChangeTargetExecutionSnapshot(
     return item.kind === 'document_support' && documentKinds.length === 1 ? documentKinds[0] : undefined;
   };
   const buildCourtOrderNextAction = () => {
-    const hasVerifiedCourtOrderTargetFirstName = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'first_name');
-    const hasVerifiedCourtOrderTargetMiddleName = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'middle_name');
-    const hasVerifiedCourtOrderTargetLastName = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'last_name');
-    const hasVerifiedCourtOrderCaseNumber = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'case_number');
-    const hasVerifiedCourtOrderSignedDate = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'court_order_date');
+    const hasVerifiedCourtOrderTargetFirstName = hasVerifiedLinkedDocumentFieldValue(documents, mergedExtractedFields, 'court_order', 'first_name');
+    const hasVerifiedCourtOrderTargetMiddleName = hasVerifiedLinkedDocumentFieldValue(documents, mergedExtractedFields, 'court_order', 'middle_name');
+    const hasVerifiedCourtOrderTargetLastName = hasVerifiedLinkedDocumentFieldValue(documents, mergedExtractedFields, 'court_order', 'last_name');
+    const hasVerifiedCourtOrderCaseNumber = hasVerifiedLinkedDocumentFieldValue(documents, mergedExtractedFields, 'court_order', 'case_number');
+    const hasVerifiedCourtOrderSignedDate = hasVerifiedLinkedDocumentFieldValue(documents, mergedExtractedFields, 'court_order', 'court_order_date');
     const needsVerifiedCourtOrderTargetMiddleName = Boolean(profile.target_middle_name);
     const courtOrderKinds = new Set(getNameChangeDocumentKindAliases('court_order'));
     const courtOrderDocuments = documents.filter((document) => courtOrderKinds.has(document.document_kind));

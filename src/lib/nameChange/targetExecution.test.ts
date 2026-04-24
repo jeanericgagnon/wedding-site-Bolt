@@ -2059,4 +2059,55 @@ describe('name change target execution snapshot', () => {
     });
     expect(snapshot.checklist.find((item) => item.key === 'target-legal-name-county')).toMatchObject({ status: 'attention' });
   });
+
+  it('uses snapshot-backed opaque court-order uploads when choosing the next grounded execution action', () => {
+    const profile = makeCase({
+      legal_basis: 'court_order' as never,
+      marriage_state: null,
+      marriage_date: null,
+      current_middle_name: '',
+      target_middle_name: '',
+      structured_intake: {
+        spouseLastName: null,
+        travelBookedSoon: false,
+        wantsDocumentIntakeHelp: true,
+      },
+      change_reasons: ['court_order'],
+    });
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'court-order-upload-final.pdf',
+        document_kind: 'court_order',
+        display_name: 'Court order',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'court-order-•••.pdf',
+        issuing_authority: 'San Diego Superior Court',
+        issued_on: '2026-04-12',
+        extraction_confidence: 0.96,
+        extracted_snapshot: {
+          fields: {
+            first_name: { value: 'Alex' },
+            last_name: { value: 'Jordan' },
+            case_number: { value: '24-CV-1188' },
+            court_order_date: { value: '2026-04-12' },
+          },
+        },
+      },
+      {
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'license-•••.pdf',
+        issuing_authority: 'California DMV',
+        issued_on: '2024-02-01',
+        extraction_confidence: 0.91,
+      },
+    ];
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('courtOrder', profile, documents, []);
+    expect(snapshot.checklist.find((item) => item.key === 'court-order-reference-extraction')).toMatchObject({ status: 'ready' });
+    expect(snapshot.nextAction?.label).not.toContain('Capture court-order');
+  });
 });

@@ -208,6 +208,44 @@ describe('name change requirements skeleton', () => {
     });
   });
 
+  it('treats snapshot-backed opaque court-order uploads as grounded requirement truth', () => {
+    const profile = makeCase({
+      legal_basis: 'court_order',
+      change_reasons: ['court_order'],
+      target_middle_name: '',
+      current_middle_name: '',
+    });
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'court-order-upload-final.pdf',
+        document_kind: 'court_order',
+        display_name: 'Court order',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'court-order-•••.pdf',
+        issuing_authority: 'San Diego Superior Court',
+        issued_on: '2026-04-12',
+        extraction_confidence: 0.96,
+        extracted_snapshot: {
+          fields: {
+            first_name: { value: 'Alex' },
+            last_name: { value: 'Jordan' },
+            case_number: { value: '24-CV-1188' },
+            court_order_date: { value: '2026-04-12' },
+          },
+        },
+      },
+    ];
+
+    const snapshot = evaluateNameChangeRequirements(profile, documents, []);
+    expect(snapshot.results.find((result) => result.key === 'court-order-reference-extraction')).toMatchObject({
+      status: 'satisfied',
+    });
+    expect(snapshot.results.find((result) => result.key === 'legal-proof-document')).toMatchObject({
+      status: 'satisfied',
+    });
+  });
+
   it('flags missing legal proof and identity coverage when intake is thin', () => {
     const snapshot = evaluateNameChangeRequirements(makeCase({ county_residence: null, marriage_state: null }), [], []);
     expect(snapshot.results.find((result) => result.key === 'legal-proof-document')).toMatchObject({ status: 'missing' });

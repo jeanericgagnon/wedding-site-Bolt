@@ -923,6 +923,20 @@ export function buildDraftNameChangeExtractedFieldsFromSnapshot(
   }, []);
 }
 
+export function buildNameChangeSnapshotBackedExtractedFields(
+  documents: NameChangeDocumentInput[],
+  extractedFields: NameChangeExtractedFieldInput[],
+) {
+  return [
+    ...extractedFields,
+    ...documents.flatMap((document) => buildDraftNameChangeExtractedFieldsFromSnapshot(
+      document.id ?? null,
+      document.extracted_snapshot,
+      document.document_kind,
+    )),
+  ];
+}
+
 function resolveDraftSnapshotDocumentId(
   documentId: string | null | undefined,
   fallbackKind?: NameChangeDocumentInput['document_kind'] | null,

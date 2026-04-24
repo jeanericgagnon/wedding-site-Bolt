@@ -1,6 +1,7 @@
 import { buildNameChangeCanonicalCase } from './canonical';
 import { buildNameChangeDocumentIntakeSnapshot } from './documentContract';
 import { buildNameChangeExtractionContractSnapshot, hasAnyLinkedDocumentFieldValue, hasVerifiedLinkedDocumentFieldValue } from './extractionContract';
+import { buildNameChangeSnapshotBackedExtractedFields } from './intakeDraft';
 import type {
   NameChangeCaseInput,
   NameChangeDocumentInput,
@@ -97,9 +98,10 @@ export function evaluateNameChangeRequirements(
   documents: NameChangeDocumentInput[],
   extractedFields: NameChangeExtractedFieldInput[],
 ): NameChangeRequirementSnapshot {
-  const canonicalCase = buildNameChangeCanonicalCase(profile, documents, extractedFields);
-  const intakeSnapshot = buildNameChangeDocumentIntakeSnapshot(profile, documents, extractedFields);
-  const extractionSnapshot = buildNameChangeExtractionContractSnapshot(profile, documents, extractedFields);
+  const mergedExtractedFields = buildNameChangeSnapshotBackedExtractedFields(documents, extractedFields);
+  const canonicalCase = buildNameChangeCanonicalCase(profile, documents, mergedExtractedFields);
+  const intakeSnapshot = buildNameChangeDocumentIntakeSnapshot(profile, documents, mergedExtractedFields);
+  const extractionSnapshot = buildNameChangeExtractionContractSnapshot(profile, documents, mergedExtractedFields);
   const legalProofKind = canonicalCase.legalBasis === 'marriage' ? 'marriage_certificate' : 'court_order';
   const legalProof = canonicalCase.documents[legalProofKind];
   const legalProofContract = intakeSnapshot.documents.find((document) => document.kind === legalProofKind);
@@ -108,16 +110,16 @@ export function evaluateNameChangeRequirements(
   const hasIdentityMetadataReady = intakeSnapshot.documents.some((document) => identityCoverageKinds.includes(document.kind) && document.metadataMissing.length === 0 && document.intakeStatus !== 'not_started');
   const hasTravelIdentitySupport = ['current_passport', 'current_drivers_license'].some((kind) => canonicalCase.documents[kind as NameChangeDocumentKind].intakeStatus !== 'not_started');
   const hasCourtOrderProof = canonicalCase.documents.court_order.intakeStatus !== 'not_started';
-  const hasAnyCourtOrderCaseNumber = hasAnyLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'case_number');
-  const hasAnyCourtOrderSignedDate = hasAnyLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'court_order_date');
-  const hasAnyCourtOrderTargetFirstName = hasAnyLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'first_name');
-  const hasAnyCourtOrderTargetLastName = hasAnyLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'last_name');
+  const hasAnyCourtOrderCaseNumber = hasAnyLinkedDocumentFieldValue(documents, mergedExtractedFields, 'court_order', 'case_number');
+  const hasAnyCourtOrderSignedDate = hasAnyLinkedDocumentFieldValue(documents, mergedExtractedFields, 'court_order', 'court_order_date');
+  const hasAnyCourtOrderTargetFirstName = hasAnyLinkedDocumentFieldValue(documents, mergedExtractedFields, 'court_order', 'first_name');
+  const hasAnyCourtOrderTargetLastName = hasAnyLinkedDocumentFieldValue(documents, mergedExtractedFields, 'court_order', 'last_name');
   const hasAnyCourtOrderReferenceExtraction = hasAnyCourtOrderCaseNumber || hasAnyCourtOrderSignedDate || hasAnyCourtOrderTargetFirstName || hasAnyCourtOrderTargetLastName;
-  const hasVerifiedCourtOrderCaseNumber = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'case_number');
-  const hasVerifiedCourtOrderSignedDate = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'court_order_date');
-  const hasVerifiedCourtOrderTargetFirstName = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'first_name');
-  const hasVerifiedCourtOrderTargetMiddleName = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'middle_name');
-  const hasVerifiedCourtOrderTargetLastName = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'last_name');
+  const hasVerifiedCourtOrderCaseNumber = hasVerifiedLinkedDocumentFieldValue(documents, mergedExtractedFields, 'court_order', 'case_number');
+  const hasVerifiedCourtOrderSignedDate = hasVerifiedLinkedDocumentFieldValue(documents, mergedExtractedFields, 'court_order', 'court_order_date');
+  const hasVerifiedCourtOrderTargetFirstName = hasVerifiedLinkedDocumentFieldValue(documents, mergedExtractedFields, 'court_order', 'first_name');
+  const hasVerifiedCourtOrderTargetMiddleName = hasVerifiedLinkedDocumentFieldValue(documents, mergedExtractedFields, 'court_order', 'middle_name');
+  const hasVerifiedCourtOrderTargetLastName = hasVerifiedLinkedDocumentFieldValue(documents, mergedExtractedFields, 'court_order', 'last_name');
   const needsVerifiedCourtOrderTargetMiddleName = Boolean(canonicalCase.targetName.middle);
   const hasVerifiedCourtOrderTargetNameExtraction = hasVerifiedCourtOrderTargetFirstName
     && hasVerifiedCourtOrderTargetLastName
@@ -128,10 +130,10 @@ export function evaluateNameChangeRequirements(
     && canonicalCase.launchState === 'california'
     && Boolean(canonicalCase.legalContext.marriageState)
     && canonicalCase.legalContext.marriageState !== 'California';
-  const hasAnyOutOfStateMarriageCertificateGrounding = hasAnyLinkedDocumentFieldValue(documents, extractedFields, 'marriage_certificate', 'certificate_number')
-    || hasAnyLinkedDocumentFieldValue(documents, extractedFields, 'marriage_certificate', 'county');
-  const hasVerifiedOutOfStateMarriageCertificateNumber = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'marriage_certificate', 'certificate_number');
-  const hasVerifiedOutOfStateMarriageCertificateCounty = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'marriage_certificate', 'county');
+  const hasAnyOutOfStateMarriageCertificateGrounding = hasAnyLinkedDocumentFieldValue(documents, mergedExtractedFields, 'marriage_certificate', 'certificate_number')
+    || hasAnyLinkedDocumentFieldValue(documents, mergedExtractedFields, 'marriage_certificate', 'county');
+  const hasVerifiedOutOfStateMarriageCertificateNumber = hasVerifiedLinkedDocumentFieldValue(documents, mergedExtractedFields, 'marriage_certificate', 'certificate_number');
+  const hasVerifiedOutOfStateMarriageCertificateCounty = hasVerifiedLinkedDocumentFieldValue(documents, mergedExtractedFields, 'marriage_certificate', 'county');
   const hasVerifiedOutOfStateMarriageCertificateGrounding = hasVerifiedOutOfStateMarriageCertificateNumber && hasVerifiedOutOfStateMarriageCertificateCounty;
   const legalBasisLabel = canonicalCase.legalBasis === 'court_order' ? 'court-order proof' : legalProofKind.replace(/_/g, ' ');
   const hasReviewedCourtOrderProof = legalProof.intakeStatus === 'reviewed';
