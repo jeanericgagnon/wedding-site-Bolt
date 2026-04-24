@@ -16,6 +16,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { PLANNER_ROLE_OPTIONS, PLANNER_PERMISSION_GROUPS, getPlannerPermissionPreset, readPlannerInvite, writePlannerInvite, type PlannerInviteRecord, type PlannerPermissionKey } from '../../lib/plannerAccess';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { useToast } from '../../components/ui/Toast';
+import { formatSettingsDate } from './settingsDate';
 
 
 interface RSVPQuestionSetting {
@@ -1074,7 +1075,7 @@ export const DashboardSettings: React.FC = () => {
                               <div className="flex items-center justify-between gap-3">
                                 <div>
                                   <p className="text-sm font-medium text-text-primary">{invite.invite_name || invite.invite_email}</p>
-                                  <p className="mt-1 text-xs text-text-secondary">{invite.invite_email} · {invite.role} · {new Date(invite.invited_at).toLocaleDateString()}{invite.expires_at ? ` · expires ${new Date(invite.expires_at).toLocaleDateString()}` : ''}</p>
+                                  <p className="mt-1 text-xs text-text-secondary">{invite.invite_email} · {invite.role} · {formatSettingsDate(invite.invited_at)}{invite.expires_at ? ` · expires ${formatSettingsDate(invite.expires_at)}` : ''}</p>
                                   {invite.permissions && invite.permissions.length > 0 && <p className="mt-1 text-[11px] text-text-tertiary">{invite.permissions.join(' · ')}</p>}
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -1824,7 +1825,7 @@ export const DashboardSettings: React.FC = () => {
                                 <p className="font-semibold text-text-primary">One-time purchase — 2 years access</p>
                                 {billingInfo.site_expires_at && (() => {
                                   const days = daysUntilExpiry(billingInfo.site_expires_at);
-                                  const expDate = new Date(billingInfo.site_expires_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                                  const expDate = formatSettingsDate(billingInfo.site_expires_at, { year: 'numeric', month: 'long', day: 'numeric' });
                                   const isExpiringSoon = days !== null && days <= 90;
                                   return (
                                     <p className={`text-sm mt-0.5 ${isExpiringSoon ? 'text-warning font-medium' : 'text-text-secondary'}`}>
@@ -1912,7 +1913,7 @@ export const DashboardSettings: React.FC = () => {
                                 {billingInfo.billing_type === 'recurring' ? 'Annual Plan' : 'DayOf.Love — 2-Year Access'}
                               </p>
                               <p className="text-sm text-text-secondary">
-                                {new Date(billingInfo.paid_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                {formatSettingsDate(billingInfo.paid_at, { year: 'numeric', month: 'long', day: 'numeric' })}
                               </p>
                             </div>
                             <div className="flex items-center gap-3">
