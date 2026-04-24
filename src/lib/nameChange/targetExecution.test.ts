@@ -2407,6 +2407,7 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.statusVault.lastTouchedSource).toBe('reminder');
     expect(snapshot.statusVault.notes[0]).toBe('Reminder: SSA follow-up — Receipt still missing');
     expect(snapshot.statusVault.executionNote).toBe('SSA packet already filed and waiting on receipt.');
+    expect(snapshot.statusVault.milestoneNote).toBeNull();
     expect(snapshot.statusVault.reminderNote).toBe('Reminder: SSA follow-up — Receipt still missing');
   });
 
@@ -2424,6 +2425,8 @@ describe('name change target execution snapshot', () => {
 
     const snapshot = buildNameChangeTargetExecutionSnapshot('courtOrder', makeCase(), [], [], plan);
     expect(snapshot.statusVault.notes[0]).toBe('Confirmed milestone: Certified legal proof is grounded and reviewed');
+    expect(snapshot.statusVault.executionNote).toBe('Court-order reference extraction is not needed for marriage-based cases.');
+    expect(snapshot.statusVault.milestoneNote).toBe('Confirmed milestone: Certified legal proof is grounded and reviewed');
     expect(snapshot.statusVault.milestoneCounts).toEqual({
       inProgress: 0,
       complete: 1,
