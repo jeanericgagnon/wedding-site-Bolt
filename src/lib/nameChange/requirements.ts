@@ -110,8 +110,12 @@ export function evaluateNameChangeRequirements(
   const hasVerifiedCourtOrderCaseNumber = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'case_number');
   const hasVerifiedCourtOrderSignedDate = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'court_order_date');
   const hasVerifiedCourtOrderTargetFirstName = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'first_name');
+  const hasVerifiedCourtOrderTargetMiddleName = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'middle_name');
   const hasVerifiedCourtOrderTargetLastName = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'last_name');
-  const hasVerifiedCourtOrderTargetNameExtraction = hasVerifiedCourtOrderTargetFirstName && hasVerifiedCourtOrderTargetLastName;
+  const needsVerifiedCourtOrderTargetMiddleName = Boolean(canonicalCase.targetName.middle);
+  const hasVerifiedCourtOrderTargetNameExtraction = hasVerifiedCourtOrderTargetFirstName
+    && hasVerifiedCourtOrderTargetLastName
+    && (!needsVerifiedCourtOrderTargetMiddleName || hasVerifiedCourtOrderTargetMiddleName);
   const hasVerifiedCourtOrderReferenceFields = hasVerifiedCourtOrderCaseNumber || hasVerifiedCourtOrderSignedDate;
   const hasVerifiedCourtOrderReferenceExtraction = hasVerifiedCourtOrderTargetNameExtraction && hasVerifiedCourtOrderReferenceFields;
   const needsOutOfStateMarriageCertificateGrounding = canonicalCase.legalBasis === 'marriage'
@@ -288,9 +292,11 @@ export function evaluateNameChangeRequirements(
                 ? 'Court-order target last name is verified, but the target first name still needs grounded extraction before downstream use is fully trusted.'
                 : hasVerifiedCourtOrderTargetFirstName && !hasVerifiedCourtOrderTargetLastName
                   ? 'Court-order target first name is verified, but the target last name still needs grounded extraction before downstream use is fully trusted.'
-                  : hasVerifiedCourtOrderTargetNameExtraction && !hasVerifiedCourtOrderReferenceFields
-                    ? 'Court-order target legal name is verified, but the case number or signed date still needs grounded extraction before downstream use is fully trusted.'
-                    : 'Court-order reference data exists, but it is still unverified so downstream use is not grounded yet.'
+                  : needsVerifiedCourtOrderTargetMiddleName && hasVerifiedCourtOrderTargetFirstName && hasVerifiedCourtOrderTargetLastName && !hasVerifiedCourtOrderTargetMiddleName
+                    ? 'Court-order target first and last name are verified, but the target middle name still needs grounded extraction before downstream use is fully trusted.'
+                    : hasVerifiedCourtOrderTargetNameExtraction && !hasVerifiedCourtOrderReferenceFields
+                      ? 'Court-order target legal name is verified, but the case number or signed date still needs grounded extraction before downstream use is fully trusted.'
+                      : 'Court-order reference data exists, but it is still unverified so downstream use is not grounded yet.'
               : 'Court-order proof is in intake, but no verified target-name or case-reference extraction is represented yet.',
     },
     {

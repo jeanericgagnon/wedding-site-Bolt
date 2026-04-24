@@ -379,6 +379,14 @@ describe('name change requirements skeleton', () => {
         },
         {
           document_id: 'doc-court-order',
+          field_key: 'middle_name',
+          field_label: 'Middle name',
+          field_value_masked: 'Marie',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-court-order',
           field_key: 'last_name',
           field_label: 'Last name',
           field_value_masked: 'Jordan',
@@ -428,6 +436,14 @@ describe('name change requirements skeleton', () => {
           field_key: 'first_name',
           field_label: 'First name',
           field_value_masked: 'Alex',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-court-order',
+          field_key: 'middle_name',
+          field_label: 'Middle name',
+          field_value_masked: 'Marie',
           source_type: 'document_extract',
           is_verified: true,
         },
@@ -487,6 +503,14 @@ describe('name change requirements skeleton', () => {
         },
         {
           document_id: 'doc-court-order',
+          field_key: 'middle_name',
+          field_label: 'Middle name',
+          field_value_masked: 'Marie',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-court-order',
           field_key: 'last_name',
           field_label: 'Last name',
           field_value_masked: 'Jordan',
@@ -528,6 +552,14 @@ describe('name change requirements skeleton', () => {
           field_key: 'first_name',
           field_label: 'First name',
           field_value_masked: 'Alex',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-court-order',
+          field_key: 'middle_name',
+          field_label: 'Middle name',
+          field_value_masked: 'Marie',
           source_type: 'document_extract',
           is_verified: true,
         },
@@ -654,6 +686,44 @@ describe('name change requirements skeleton', () => {
     expect(snapshot.results.find((result) => result.key === 'court-order-reference-extraction')).toMatchObject({
       status: 'attention',
       reason: 'Court-order target last name is verified, but the target first name still needs grounded extraction before downstream use is fully trusted.',
+    });
+  });
+
+  it('marks court-order reference extraction attention when target first and last name are verified but target middle name is still missing', () => {
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase({ legal_basis: 'court_order' as never, target_middle_name: 'Quinn' }),
+      [
+        {
+          id: 'doc-court-order',
+          document_kind: 'court_order_name_change',
+          display_name: 'Court order',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+        },
+      ],
+      [
+        {
+          document_id: 'doc-court-order',
+          field_key: 'first_name',
+          field_label: 'First name',
+          field_value_masked: 'Alex',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-court-order',
+          field_key: 'last_name',
+          field_label: 'Last name',
+          field_value_masked: 'Jordan',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+      ],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'court-order-reference-extraction')).toMatchObject({
+      status: 'attention',
+      reason: 'Court-order target first and last name are verified, but the target middle name still needs grounded extraction before downstream use is fully trusted.',
     });
   });
 
