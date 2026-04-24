@@ -518,10 +518,17 @@ export function normalizeDraftNameChangeDocumentId(documentId: string | null | u
   const normalizedDocumentId = documentId?.trim() || null;
   if (!normalizedDocumentId) return null;
   if (/^draft$/i.test(normalizedDocumentId)) return null;
-  if (/^draft[-_]?other$/i.test(normalizedDocumentId)) return null;
-  const normalizedDraftPrefix = normalizedDocumentId?.replace(/^draft(?:\s*[\\/_-]?\s*)/i, 'draft-') ?? null;
+  if (/^draft(?:\s*[\\/_-]?\s*)other$/i.test(normalizedDocumentId)) return null;
+  const extensionStrippedDocumentId = normalizedDocumentId.replace(/\.(pdf|png|jpg|jpeg|webp|heic|heif|tif|tiff)$/i, '');
+  const pathLikeDocumentId = extensionStrippedDocumentId
+    .split(/[\\/]/)
+    .filter(Boolean)
+    .pop() ?? extensionStrippedDocumentId;
+  const normalizedDraftPrefix = /^draft(?:\s*[\\/_-]?\s*)/i.test(extensionStrippedDocumentId)
+    ? extensionStrippedDocumentId.replace(/^draft(?:\s*[\\/_-]?\s*)/i, 'draft-')
+    : pathLikeDocumentId?.replace(/^draft(?:\s*[\\/_-]?\s*)/i, 'draft-') ?? null;
   if (!normalizedDraftPrefix?.startsWith('draft-')) {
-    const normalizedKind = normalizeDraftDocumentKind(normalizedDocumentId);
+    const normalizedKind = normalizeDraftDocumentKind(pathLikeDocumentId);
     if (!normalizedKind || normalizedKind === 'other') return normalizedDocumentId;
     return buildDraftNameChangeDocumentId(normalizedKind as NameChangeDocumentInput['document_kind']);
   }
