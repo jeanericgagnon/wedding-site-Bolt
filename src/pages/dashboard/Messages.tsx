@@ -14,6 +14,7 @@ import { GUEST_COMMUNICATION_FLOW } from '../../lib/guestCommunicationFlow';
 import { buildRsvpReminderDraft } from '../../lib/reminderDraftHelper';
 import { buildDayOfUpdateDraft } from '../../lib/dayOfUpdateHelper';
 import { buildEventReminderDraft } from '../../lib/eventReminderHelper';
+import { parseScheduleInputToIso, toScheduleInputValue } from './messageScheduleTime';
 
 const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bulk-message`;
 const DEMO_MESSAGES_STORAGE_KEY = 'dayof.demo.messages.history';
@@ -594,20 +595,14 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
     ? new Date(message.scheduled_for).toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' })
     : null;
   const initialScheduleInput = React.useMemo(() => {
-    if (!message.scheduled_for) return '';
-    const d = new Date(message.scheduled_for);
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    const hh = String(d.getHours()).padStart(2, '0');
-    const min = String(d.getMinutes()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+    return toScheduleInputValue(message.scheduled_for);
   }, [message.scheduled_for]);
   const [scheduleInput, setScheduleInput] = React.useState(initialScheduleInput);
   React.useEffect(() => {
     setScheduleInput(initialScheduleInput);
   }, [initialScheduleInput, message.id]);
-  const scheduleInputIsPast = scheduleInput ? isPastScheduledTime(new Date(scheduleInput).toISOString()) : false;
+  const scheduledInputIso = parseScheduleInputToIso(scheduleInput);
+  const scheduleInputIsPast = !!scheduledInputIso && isPastScheduledTime(scheduledInputIso);
   const messageDeliveries = deliveries.filter((delivery) => delivery.message_id === message.id);
   const failedDeliveries = messageDeliveries.filter((delivery) => delivery.status === 'failed');
   const skippedDeliveries = messageDeliveries.filter((delivery) => delivery.status === 'skipped');
@@ -722,9 +717,10 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
                     size="sm"
                     disabled={!canManageCampaigns || rescheduling || !scheduleInput || scheduleInputIsPast}
                     onClick={async () => {
+                      if (!scheduledInputIso) return;
                       setRescheduling(true);
                       try {
-                        await onReschedule(message, new Date(scheduleInput).toISOString());
+                        await onReschedule(message, scheduledInputIso);
                       } finally {
                         setRescheduling(false);
                         onClose();
