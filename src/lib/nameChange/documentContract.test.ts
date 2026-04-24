@@ -1002,6 +1002,64 @@ describe('name change document intake contract', () => {
     );
   });
 
+  it('does not borrow extracted fields from a weaker duplicate of the same contract kind', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase(),
+      [
+        {
+          id: 'doc-passport-uploaded',
+          document_kind: 'current_passport',
+          display_name: 'Uploaded passport',
+          storage_mode: 'metadata_only',
+          intake_status: 'uploaded',
+          file_name_masked: 'passport-uploaded-•••.pdf',
+          issuing_authority: 'U.S. Department of State',
+          issued_on: '2024-06-01',
+          expires_on: '2034-06-01',
+          extraction_confidence: 0.9,
+        },
+        {
+          id: 'draft-current_passport',
+          document_kind: 'current_passport',
+          display_name: 'Reviewed passport shell',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'passport-reviewed-•••.pdf',
+          issuing_authority: 'U.S. Department of State',
+          issued_on: '2024-06-01',
+          expires_on: '2034-06-01',
+          extraction_confidence: 0.94,
+        },
+      ],
+      [
+        {
+          document_id: 'doc-passport-uploaded',
+          field_key: 'first_name',
+          field_label: 'First name',
+          field_value_masked: 'Alex',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-passport-uploaded',
+          field_key: 'last_name',
+          field_label: 'Last name',
+          field_value_masked: 'Jordan',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+      ],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'current_passport')).toMatchObject({
+      documentId: 'draft-current_passport',
+      intakeStatus: 'reviewed',
+      extractionFieldCount: 0,
+      capturedExtractionFields: [],
+      missingExtractionFields: ['first_name', 'middle_name', 'last_name', 'issuance_date'],
+    });
+  });
+
   it('deduplicates repeated captured extraction field keys in contract output', () => {
     const snapshot = buildNameChangeDocumentIntakeSnapshot(
       makeCase(),
