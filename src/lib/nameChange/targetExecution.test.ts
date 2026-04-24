@@ -2167,6 +2167,8 @@ describe('name change target execution snapshot', () => {
       ],
     });
     expect(snapshot.statusVault.proofSummary).toContain('checks ready');
+    expect(snapshot.statusVault.proofSummary).toContain('missing');
+    expect(snapshot.statusVault.proofSummary).toContain('attention');
   });
 
   it('marks the status vault ready when proof is grounded but no execution step has started yet', () => {
@@ -2411,6 +2413,7 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.statusVault.notes[0]).toBe('Reminder: SSA follow-up — Receipt still missing');
     expect(snapshot.statusVault.notes).toContain('SSA packet already filed and waiting on receipt.');
     expect(snapshot.statusVault.notes).toContainEqual(expect.stringMatching(/^Proof needs: /));
+    expect(snapshot.statusVault.proofSummary).toContain('missing');
     expect(snapshot.statusVault.executionNote).toBe('SSA packet already filed and waiting on receipt.');
     expect(snapshot.statusVault.milestoneNote).toBeNull();
     expect(snapshot.statusVault.proofNote).toMatch(/^Proof needs: /);

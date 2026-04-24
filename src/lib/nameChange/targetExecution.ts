@@ -117,7 +117,13 @@ function getTargetStatusVaultSnapshot(
     .slice(0, 2)
     .map((item) => item.label)
     .join('; ');
-  const proofSummary = proofIssues ? `${proofCounts} • Needs ${proofIssues}` : `${proofCounts} • Proof stack looks grounded`;
+  const proofStateSummary = [
+    missingChecklist.length > 0 ? `${missingChecklist.length} missing` : null,
+    attentionChecklist.length > 0 ? `${attentionChecklist.length} attention` : null,
+  ].filter((value): value is string => Boolean(value)).join(' • ');
+  const proofSummary = proofIssues
+    ? `${proofCounts} • ${proofStateSummary} • Needs ${proofIssues}`
+    : `${proofCounts} • Proof stack looks grounded`;
   const targetReminders = reminders.filter((reminder) => reminder.focus_target_id === targetKey && reminder.status !== 'dismissed');
   const latestReminder = [...targetReminders]
     .filter((reminder) => Boolean(reminder.updated_at))
