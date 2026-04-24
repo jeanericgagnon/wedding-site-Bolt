@@ -3895,4 +3895,41 @@ describe('name change document intake contract', () => {
       capturedExtractionFields: expect.arrayContaining(['first_name', 'last_name', 'spouse_last_name', 'county', 'certificate_number', 'issuance_date']),
     });
   });
+
+  it('treats root-level snapshot entry arrays as canonical reviewed document truth', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase(),
+      [
+        {
+          id: 'doc-passport-root-array',
+          document_kind: 'current_passport',
+          display_name: 'Passport',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'passport-•••.pdf',
+          issuing_authority: null,
+          issued_on: null,
+          expires_on: null,
+          extraction_confidence: null,
+          extracted_snapshot: [
+            { fieldKey: 'issuing_authority', value: 'U.S. Department of State' },
+            { field: 'issuance_date', normalizedValue: '2024-06-01T00:00:00Z' },
+            { key: 'expiration_date', extractedValue: '2034-06-01T00:00:00Z' },
+            { label: 'extraction_confidence', value: '0.94' },
+            { fieldKey: 'first_name', value: 'Alex' },
+            { field: 'middle_name', normalizedValue: 'Marie' },
+            { key: 'last_name', extractedValue: 'Rivera' },
+          ],
+        },
+      ],
+      [],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'current_passport')).toMatchObject({
+      intakeStatus: 'reviewed',
+      metadataMissing: [],
+      missingExtractionFields: [],
+      capturedExtractionFields: expect.arrayContaining(['issuance_date', 'first_name', 'middle_name', 'last_name']),
+    });
+  });
 });
