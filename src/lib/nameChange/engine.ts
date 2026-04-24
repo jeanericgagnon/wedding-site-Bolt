@@ -319,6 +319,18 @@ function buildTargetStatusOverview(
   const targetStatusCounts = Object.keys(NAME_CHANGE_EXECUTION_TARGETS).reduce((summary, targetKey) => {
     const snapshot = buildNameChangeTargetExecutionSnapshot(targetKey as keyof typeof NAME_CHANGE_EXECUTION_TARGETS, input.profile, input.documents, input.extractedFields, plan, reminders);
 
+    if (snapshot.statusVault.status === 'complete') {
+      summary.complete += 1;
+    } else if (snapshot.statusVault.status === 'in_progress') {
+      summary.inProgress += 1;
+    } else if (snapshot.statusVault.status === 'ready') {
+      summary.ready += 1;
+    } else if (snapshot.statusVault.status === 'blocked') {
+      summary.blocked += 1;
+    } else {
+      summary.todo += 1;
+    }
+
     if (snapshot.statusVault.proofCounts.missing > 0) {
       summary.missingProofTargets += 1;
     }
@@ -337,35 +349,23 @@ function buildTargetStatusOverview(
 
     return summary;
   }, {
+    todo: 0,
+    inProgress: 0,
+    complete: 0,
+    ready: 0,
+    blocked: 0,
     missingProofTargets: 0,
     attentionProofTargets: 0,
     touchedByExecution: 0,
     touchedByReminder: 0,
   });
 
-  return trackedSteps.reduce((summary, step) => {
-    const executionStatus = step.executionStatus ?? 'todo';
-    if (executionStatus === 'complete') {
-      summary.complete += 1;
-    } else if (executionStatus === 'in_progress') {
-      summary.inProgress += 1;
-    } else {
-      summary.todo += 1;
-    }
-
-    if (step.status === 'ready') {
-      summary.ready += 1;
-    } else if (step.status === 'blocked') {
-      summary.blocked += 1;
-    }
-
-    return summary;
-  }, {
-    todo: 0,
-    inProgress: 0,
-    complete: 0,
-    ready: 0,
-    blocked: 0,
+  return trackedSteps.reduce((summary) => summary, {
+    todo: targetStatusCounts.todo,
+    inProgress: targetStatusCounts.inProgress,
+    complete: targetStatusCounts.complete,
+    ready: targetStatusCounts.ready,
+    blocked: targetStatusCounts.blocked,
     missingProofTargets: targetStatusCounts.missingProofTargets,
     attentionProofTargets: targetStatusCounts.attentionProofTargets,
     touchedByExecution: targetStatusCounts.touchedByExecution,

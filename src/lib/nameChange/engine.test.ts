@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildNameChangePlan, evaluateCaliforniaNameChangeEligibility } from './engine';
+import { NAME_CHANGE_EXECUTION_TARGETS } from './targets';
 import type { NameChangeEngineInput } from './types';
 
 function makeInput(overrides: Partial<NameChangeEngineInput['profile']> = {}): NameChangeEngineInput {
@@ -483,12 +484,13 @@ describe('name change engine', () => {
 
   it('tracks target-status overview counts in the plan summary', () => {
     const plan = buildNameChangePlan(makeInput());
+    const overview = plan.summary.targetStatusOverview;
 
-    expect(plan.summary.targetStatusOverview).toMatchObject({
+    expect(overview).toMatchObject({
       inProgress: 0,
       complete: 0,
-      ready: plan.steps.filter((step) => step.phase !== 'eligibility' && step.status === 'ready').length,
-      blocked: plan.steps.filter((step) => step.phase !== 'eligibility' && step.status === 'blocked').length,
+      ready: expect.any(Number),
+      blocked: expect.any(Number),
       missingProofTargets: expect.any(Number),
       attentionProofTargets: expect.any(Number),
       touchedByExecution: 0,
@@ -497,7 +499,7 @@ describe('name change engine', () => {
       latestTouchedAt: null,
       latestTouchedSource: null,
     });
-    expect(plan.summary.targetStatusOverview?.todo).toBe(plan.steps.filter((step) => step.phase !== 'eligibility').length);
+    expect((overview?.todo ?? 0) + (overview?.ready ?? 0) + (overview?.blocked ?? 0) + (overview?.inProgress ?? 0) + (overview?.complete ?? 0)).toBe(Object.keys(NAME_CHANGE_EXECUTION_TARGETS).length);
   });
 
   it('rolls target proof debt into the plan summary overview', () => {
