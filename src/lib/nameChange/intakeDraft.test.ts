@@ -195,6 +195,32 @@ describe('name change intake draft helpers', () => {
     });
   });
 
+  it('builds canonical snapshot truth from deeply nested value wrappers', () => {
+    expect(buildDraftNameChangeExtractedFieldsFromSnapshot('draft-current_passport', {
+      fields: {
+        first_name: { value: { text: 'Alex' } },
+        middle_name: { fieldValue: { raw: 'Marie' } },
+        last_name: { maskedValue: { value: 'Rivera' } },
+      },
+    })).toEqual(expect.arrayContaining([
+      expect.objectContaining({ document_id: 'draft-current_passport', field_key: 'first_name', field_value_masked: 'Alex' }),
+      expect.objectContaining({ document_id: 'draft-current_passport', field_key: 'middle_name', field_value_masked: 'Marie' }),
+      expect.objectContaining({ document_id: 'draft-current_passport', field_key: 'last_name', field_value_masked: 'Rivera' }),
+    ]));
+
+    expect(buildDraftNameChangeDocumentMetadataFromSnapshot({
+      issuingAuthority: { value: { text: 'U.S. Department of State' } },
+      issueDate: { value: { raw: '2025-01-08T00:00:00Z' } },
+      expiryDate: { maskedValue: { value: '2035-01-08T00:00:00Z' } },
+      confidence: { fieldValue: { text: '0.91' } },
+    })).toEqual({
+      issuingAuthority: 'U.S. Department of State',
+      issuedOn: '2025-01-08',
+      expiresOn: '2035-01-08',
+      extractionConfidence: 0.91,
+    });
+  });
+
   it('collapses draft document labels into one clean downstream display name', () => {
     expect(createDraftNameChangeDocument('marriage_certificate', '  Certified   marriage   certificate  ')).toMatchObject({
       display_name: 'Certified marriage certificate',

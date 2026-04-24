@@ -3813,4 +3813,43 @@ describe('name change document intake contract', () => {
       capturedExtractionFields: expect.arrayContaining(['first_name', 'middle_name', 'last_name']),
     });
   });
+
+  it('treats deeply nested snapshot value wrappers as canonical readiness truth for reviewed documents', () => {
+    const snapshot = buildNameChangeDocumentIntakeSnapshot(
+      makeCase(),
+      [
+        {
+          id: 'doc-passport-deep-values',
+          document_kind: 'current_passport',
+          display_name: 'Passport',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+          file_name_masked: 'passport-•••.pdf',
+          issuing_authority: null,
+          issued_on: null,
+          expires_on: null,
+          extraction_confidence: null,
+          extracted_snapshot: {
+            issuingAuthority: { value: { text: 'U.S. Department of State' } },
+            issueDate: { value: { raw: '2025-01-08T00:00:00Z' } },
+            expiryDate: { maskedValue: { value: '2035-01-08T00:00:00Z' } },
+            confidence: { fieldValue: { text: '0.91' } },
+            fields: {
+              first_name: { value: { text: 'Alex' } },
+              middle_name: { fieldValue: { raw: 'Marie' } },
+              last_name: { maskedValue: { value: 'Rivera' } },
+            },
+          },
+        },
+      ],
+      [],
+    );
+
+    expect(snapshot.documents.find((document) => document.kind === 'current_passport')).toMatchObject({
+      intakeStatus: 'reviewed',
+      metadataMissing: [],
+      missingExtractionFields: [],
+      capturedExtractionFields: expect.arrayContaining(['first_name', 'middle_name', 'last_name']),
+    });
+  });
 });

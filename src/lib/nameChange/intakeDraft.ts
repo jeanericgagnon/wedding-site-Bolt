@@ -778,6 +778,13 @@ function getDraftSnapshotFieldValue(candidate: unknown): string | null {
     if (typeof nestedValue === 'string' || typeof nestedValue === 'number' || typeof nestedValue === 'boolean') {
       return String(nestedValue);
     }
+
+    if (nestedValue && typeof nestedValue === 'object' && !Array.isArray(nestedValue)) {
+      const deepValue = getDraftSnapshotFieldValue(nestedValue);
+      if (deepValue) {
+        return deepValue;
+      }
+    }
   }
 
   return null;
