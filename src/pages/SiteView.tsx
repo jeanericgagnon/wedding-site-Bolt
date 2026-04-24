@@ -166,14 +166,20 @@ function normalizeSectionVariants(sections: BuilderSectionInstance[]): BuilderSe
   });
 }
 
-function createAlexJordanDemoWeddingData(): WeddingDataV1 {
+const toIsoDateOrUndefined = (value: string): string | undefined => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+};
+
+export function createAlexJordanDemoWeddingData(overrides: Partial<typeof demoWeddingSite> = {}): WeddingDataV1 {
+  const site = { ...demoWeddingSite, ...overrides };
   const data = createEmptyWeddingData();
-  data.couple.partner1Name = demoWeddingSite.couple_name_1;
-  data.couple.partner2Name = demoWeddingSite.couple_name_2;
-  data.couple.displayName = buildCoupleDisplayName(demoWeddingSite.couple_name_1, demoWeddingSite.couple_name_2, 'The couple');
-  data.event.weddingDateISO = new Date(demoWeddingSite.wedding_date).toISOString();
-  data.venues = [{ id: 'demo-venue-1', name: demoWeddingSite.venue_name, address: demoWeddingSite.venue_location }];
-  data.media.heroImageUrl = demoWeddingSite.hero_image_url;
+  data.couple.partner1Name = site.couple_name_1;
+  data.couple.partner2Name = site.couple_name_2;
+  data.couple.displayName = buildCoupleDisplayName(site.couple_name_1, site.couple_name_2, 'The couple');
+  data.event.weddingDateISO = toIsoDateOrUndefined(site.wedding_date);
+  data.venues = [{ id: 'demo-venue-1', name: site.venue_name, address: site.venue_location }];
+  data.media.heroImageUrl = site.hero_image_url;
   data.theme.preset = 'elegant';
   return data;
 }
