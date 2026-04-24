@@ -74,9 +74,11 @@ export function buildNameChangeTargetExecutionSnapshot(
   };
   const buildCourtOrderNextAction = () => {
     const hasVerifiedCourtOrderTargetFirstName = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'first_name');
+    const hasVerifiedCourtOrderTargetMiddleName = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'middle_name');
     const hasVerifiedCourtOrderTargetLastName = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'last_name');
     const hasVerifiedCourtOrderCaseNumber = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'case_number');
     const hasVerifiedCourtOrderSignedDate = hasVerifiedLinkedDocumentFieldValue(documents, extractedFields, 'court_order', 'court_order_date');
+    const needsVerifiedCourtOrderTargetMiddleName = Boolean(profile.target_middle_name);
     const courtOrderKinds = new Set(getNameChangeDocumentKindAliases('court_order'));
     const courtOrderDocuments = documents.filter((document) => courtOrderKinds.has(document.document_kind));
     const hasCourtOrderProof = courtOrderDocuments.length > 0;
@@ -84,6 +86,7 @@ export function buildNameChangeTargetExecutionSnapshot(
     const referenceExtractionDependency = sequence.dependencies.find((dependency) => dependency.key === 'court-order-reference-extraction');
     const hasCompleteCourtOrderGrounding = hasVerifiedCourtOrderTargetFirstName
       && hasVerifiedCourtOrderTargetLastName
+      && (!needsVerifiedCourtOrderTargetMiddleName || hasVerifiedCourtOrderTargetMiddleName)
       && hasVerifiedCourtOrderCaseNumber
       && hasVerifiedCourtOrderSignedDate;
 
@@ -92,17 +95,21 @@ export function buildNameChangeTargetExecutionSnapshot(
         ? 'Upload court-order proof'
         : !hasReviewedCourtOrderProof
           ? 'Review court-order proof'
-          : !hasVerifiedCourtOrderTargetFirstName && !hasVerifiedCourtOrderTargetLastName
+          : !hasVerifiedCourtOrderTargetFirstName
+            && (!needsVerifiedCourtOrderTargetMiddleName || !hasVerifiedCourtOrderTargetMiddleName)
+            && !hasVerifiedCourtOrderTargetLastName
             ? 'Capture court-order target legal name + case reference fields'
             : !hasVerifiedCourtOrderTargetFirstName
               ? 'Capture court-order target first name'
-              : !hasVerifiedCourtOrderTargetLastName
-                ? 'Capture court-order target last name'
-                : !hasVerifiedCourtOrderCaseNumber
-                  ? 'Capture court-order case number'
-                  : !hasVerifiedCourtOrderSignedDate
-                    ? 'Capture court-order signed date'
-                    : 'Review court-order extraction grounding';
+              : needsVerifiedCourtOrderTargetMiddleName && !hasVerifiedCourtOrderTargetMiddleName
+                ? 'Capture court-order target middle name'
+                : !hasVerifiedCourtOrderTargetLastName
+                  ? 'Capture court-order target last name'
+                  : !hasVerifiedCourtOrderCaseNumber
+                    ? 'Capture court-order case number'
+                    : !hasVerifiedCourtOrderSignedDate
+                      ? 'Capture court-order signed date'
+                      : 'Review court-order extraction grounding';
 
       return {
         category: 'document' as const,

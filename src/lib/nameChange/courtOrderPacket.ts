@@ -13,6 +13,7 @@ export const NAME_CHANGE_COURT_ORDER_PACKET_CONTRACT: NameChangeFormContractDefi
     { fieldKey: 'case.currentFirstName', label: 'Current first name', sourceTargetField: 'applicant.current_first_name' },
     { fieldKey: 'case.currentLastName', label: 'Current last name', sourceTargetField: 'applicant.current_last_name' },
     { fieldKey: 'case.targetFirstName', label: 'Target first name', sourceTargetField: 'applicant.target_first_name' },
+    { fieldKey: 'case.targetMiddleName', label: 'Target middle name', sourceTargetField: 'applicant.target_middle_name', required: false },
     { fieldKey: 'case.targetLastName', label: 'Target last name', sourceTargetField: 'applicant.target_last_name' },
     { fieldKey: 'case.caseNumber', label: 'Court-order case number', sourceTargetField: 'legal.court_order_case_number', required: false },
     { fieldKey: 'case.orderDate', label: 'Court-order signed date', sourceTargetField: 'legal.court_order_date', required: false },

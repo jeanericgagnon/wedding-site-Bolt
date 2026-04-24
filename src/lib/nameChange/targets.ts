@@ -120,6 +120,7 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'courtOrder' | 'ssa' | 'dmv' 
       'applicant.current_first_name',
       'applicant.current_last_name',
       'applicant.target_first_name',
+      'applicant.target_middle_name',
       'applicant.target_last_name',
       'applicant.county',
       'legal.court_order_case_number',

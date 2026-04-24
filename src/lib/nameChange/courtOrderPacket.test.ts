@@ -61,6 +61,14 @@ describe('court-order name change packet snapshot', () => {
       },
       {
         document_id: 'doc-court-order',
+        field_key: 'middle_name',
+        field_label: 'Middle name',
+        field_value_masked: 'Marie',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'doc-court-order',
         field_key: 'last_name',
         field_label: 'Last name',
         field_value_masked: 'Jordan',
@@ -92,6 +100,12 @@ describe('court-order name change packet snapshot', () => {
       source: 'extracted_field',
       sourceDocumentKind: 'court_order',
       sourceFieldKey: 'first_name',
+    });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'case.targetMiddleName')).toMatchObject({
+      value: 'Marie',
+      source: 'extracted_field',
+      sourceDocumentKind: 'court_order',
+      sourceFieldKey: 'middle_name',
     });
     expect(snapshot.fields.find((field) => field.fieldKey === 'case.targetLastName')).toMatchObject({
       value: 'Jordan',
