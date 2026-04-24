@@ -18,6 +18,32 @@ export type NameChangeTargetChecklistItem = {
   reason: string;
 };
 
+function hasCanonicalTargetFieldValue(
+  targetField: string,
+  canonicalCase: ReturnType<typeof buildNameChangeAutofillPrepSnapshot>['canonicalCase'],
+) {
+  switch (targetField) {
+    case 'applicant.current_first_name':
+      return Boolean(canonicalCase.currentName.first);
+    case 'applicant.current_middle_name':
+      return Boolean(canonicalCase.currentName.middle);
+    case 'applicant.current_last_name':
+      return Boolean(canonicalCase.currentName.last);
+    case 'applicant.target_first_name':
+      return Boolean(canonicalCase.targetName.first);
+    case 'applicant.target_middle_name':
+      return Boolean(canonicalCase.targetName.middle);
+    case 'applicant.target_last_name':
+      return Boolean(canonicalCase.targetName.last);
+    case 'applicant.county':
+      return Boolean(canonicalCase.countyResidence);
+    case 'legal.marriage_date':
+      return Boolean(canonicalCase.legalContext.marriageDate);
+    default:
+      return false;
+  }
+}
+
 export function buildNameChangeTargetChecklist(
   target: NameChangeExecutionTargetDefinition,
   profile: NameChangeCaseInput,
@@ -48,10 +74,7 @@ export function buildNameChangeTargetChecklist(
         : spec.targetField
           ? [spec.targetField]
           : [];
-      const conditionalTargetFields = (spec.conditionalTargetFields ?? []).filter((targetField) => {
-        const autofillField = autofill.fields.find((candidate) => candidate.targetField === targetField);
-        return Boolean(autofillField?.value.value);
-      });
+      const conditionalTargetFields = (spec.conditionalTargetFields ?? []).filter((targetField) => hasCanonicalTargetFieldValue(targetField, autofill.canonicalCase));
       const targetFields = [...new Set([...alwaysRequiredTargetFields, ...conditionalTargetFields])];
       const matchedFields = targetFields.map((targetField) => autofill.fields.find((candidate) => candidate.targetField === targetField));
       const allPresent = targetFields.length > 0 && matchedFields.every((field) => Boolean(field?.value.value));
