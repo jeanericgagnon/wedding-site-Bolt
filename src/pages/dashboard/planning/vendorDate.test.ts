@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatVendorDate, isVendorDateOnOrBefore, toValidVendorDateOrNull } from './vendorDate';
+import { formatVendorDate, isVendorDateBetween, isVendorDateOnOrBefore, toValidVendorDateOrNull } from './vendorDate';
 
 describe('vendor date guards', () => {
   it('drops invalid persisted vendor dates instead of leaking Invalid Date', () => {
     const compareTo = new Date('2026-06-21T00:00:00.000Z');
     expect(toValidVendorDateOrNull('not-a-date')).toBeNull();
     expect(isVendorDateOnOrBefore('not-a-date', compareTo)).toBe(false);
+    expect(isVendorDateBetween('not-a-date', new Date('2026-06-20T00:00:00.000Z'), new Date('2026-06-28T00:00:00.000Z'))).toBe(false);
     expect(formatVendorDate('not-a-date')).toBe('Unknown date');
   });
 
@@ -15,6 +16,7 @@ describe('vendor date guards', () => {
     const compareTo = new Date('2026-06-21T00:00:00.000Z');
     expect(toValidVendorDateOrNull(value)?.getTime()).toBe(new Date(value).getTime());
     expect(isVendorDateOnOrBefore(value, compareTo)).toBe(true);
+    expect(isVendorDateBetween(value, new Date('2026-06-19T00:00:00.000Z'), new Date('2026-06-21T00:00:00.000Z'))).toBe(true);
     expect(formatVendorDate(value)).toBe(new Date(value).toLocaleDateString());
   });
 });

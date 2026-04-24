@@ -9,6 +9,7 @@ import {
   summarizeNameChangeReminderAttention,
 } from '../../../lib/nameChange/reminders';
 import { PlanningTask, PlanningBudgetItem, PlanningVendor } from './planningService';
+import { isVendorDateBetween } from './vendorDate';
 import { isTaskDueBetween, isTaskDueOnOrBefore } from './taskDueDate';
 
 interface SeatingReadiness {
@@ -54,8 +55,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
 
   const dueSoonVendors = vendors.filter(v => {
     if (!v.next_payment_due || v.balance_due <= 0) return false;
-    const d = new Date(v.next_payment_due);
-    return d <= in7Days;
+    return isVendorDateBetween(v.next_payment_due, today, in7Days);
   });
 
   const weddingDateValue = weddingDate ? new Date(`${weddingDate}T00:00:00`) : null;

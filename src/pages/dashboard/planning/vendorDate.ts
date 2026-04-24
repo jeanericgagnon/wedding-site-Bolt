@@ -9,6 +9,13 @@ export function isVendorDateOnOrBefore(value: string | null | undefined, compare
   return date ? date.getTime() <= compareTo.getTime() : false;
 }
 
+export function isVendorDateBetween(value: string | null | undefined, start: Date, end: Date): boolean {
+  const date = toValidVendorDateOrNull(value);
+  if (!date) return false;
+  const time = date.getTime();
+  return time >= start.getTime() && time <= end.getTime();
+}
+
 export function formatVendorDate(value: string | null | undefined, fallback = 'Unknown date'): string {
   const date = toValidVendorDateOrNull(value);
   return date ? date.toLocaleDateString() : fallback;
