@@ -22,8 +22,29 @@ import { clearOnboardingResumeStorage, readOnboardingResumeState } from '../lib/
 import { writeSignupReturnPath } from '../lib/signupContinuation';
 import { clearAllOnboardingDraftStorage, ONBOARDING_DRAFT_STORAGE_KEY as ONBOARDING_STORAGE_KEY } from '../lib/onboardingDraftCleanup';
 import { clearAllOnboardingContinuationState } from '../lib/onboardingContinuationCleanup';
+import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
 
 type ConciergeQuestion = 'partnerNames' | 'partnerLabels' | 'venueLocation' | 'venueName' | 'theme' | 'weekendEvents' | 'ceremonyTime' | 'guestCount' | 'plusOnePolicy' | 'childrenAllowed' | 'rsvpDeadline' | 'mealChoice' | 'story';
+
+export function parsePartnerNames(value: string): string[] {
+  return value
+    .split('&')
+    .map((name) => name.trim())
+    .filter(Boolean);
+}
+
+export function getDemoPartnerNamesFallback(): string {
+  return buildCoupleDisplayName(demoWeddingSite.couple_name_1, demoWeddingSite.couple_name_2, 'Alex & Jordan');
+}
+
+export function getOnboardingSubdomain(partnerNames: string): string {
+  const parts = parsePartnerNames(partnerNames)
+    .map((name) => name.toLowerCase().replace(/[^a-z0-9]/g, ''))
+    .filter(Boolean);
+
+  const slug = parts.join('and') || 'my-wedding';
+  return `${slug}.dayof.love`;
+}
 
 
 export const Onboarding: React.FC = () => {
@@ -178,7 +199,7 @@ export const Onboarding: React.FC = () => {
   ];
 
 
-  const derivedNames = formData.partnerNames.split('&').map((name) => name.trim()).filter(Boolean);
+  const derivedNames = parsePartnerNames(formData.partnerNames);
   const suggestedSiteSlug = derivedNames.length
     ? derivedNames.map((name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '')).filter(Boolean).join('and')
     : (user?.email?.split('@')[0] || 'my-wedding');
@@ -350,7 +371,7 @@ export const Onboarding: React.FC = () => {
     const prevFormData = initialSetupAnswersToOnboardingFormShape(initialSetupAnswers);
 
     hydrateProfile({
-      partnerNames: prevFormData.partnerNames || `${demoWeddingSite.couple_name_1} & ${demoWeddingSite.couple_name_2}`,
+      partnerNames: prevFormData.partnerNames || getDemoPartnerNamesFallback(),
       weddingDate: prevFormData.weddingDate || demoWeddingSite.wedding_date || '',
       venueName: prevFormData.venueName || demoWeddingSite.venue_name || '',
       venueLocation: prevFormData.venueLocation || demoWeddingSite.venue_location || '',
@@ -402,11 +423,11 @@ export const Onboarding: React.FC = () => {
   const handleOneClickStarter = async () => {
     setLoading(true);
     const fallbackNames = isDemoMode
-      ? `${demoWeddingSite.couple_name_1} & ${demoWeddingSite.couple_name_2}`
+      ? getDemoPartnerNamesFallback()
       : 'Alex & Jordan';
-    const names = (formData.partnerNames || fallbackNames).split('&').map(n => n.trim());
+    const names = parsePartnerNames(formData.partnerNames || fallbackNames);
     const firstName = names[0] || 'Alex';
-    const secondName = names[1] || 'Jordan';
+    const secondName = names[1] || '';
 
     const ok = await createWeddingSite({
       couple_name_1: firstName,
@@ -620,9 +641,9 @@ export const Onboarding: React.FC = () => {
         }
       }
 
-      const names = formData.partnerNames.split('&').map(n => n.trim());
+      const names = parsePartnerNames(formData.partnerNames);
       const firstName = names[0] || '';
-      const secondName = names[1] || names[0] || '';
+      const secondName = names[1] || '';
 
       const ok = await createWeddingSite({
         initialSetupAnswersOverride: merged.initialSetupAnswers,
@@ -1112,10 +1133,7 @@ export const Onboarding: React.FC = () => {
 
 
   const renderComplete = () => {
-    const names = formData.partnerNames.split('&').map(n => n.trim());
-    const firstName = names[0]?.toLowerCase().replace(/[^a-z0-9]/g, '') || '';
-    const secondName = names[1]?.toLowerCase().replace(/[^a-z0-9]/g, '') || '';
-    const subdomain = `${firstName}and${secondName}.dayof.love`;
+    const subdomain = getOnboardingSubdomain(formData.partnerNames);
 
     return (
       <div className="max-w-2xl mx-auto text-center">

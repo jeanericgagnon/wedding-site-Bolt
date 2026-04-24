@@ -27,7 +27,22 @@ vi.mock('../components/ui', () => ({
   Card: ({ children, ...props }: any) => <div {...props}>{children}</div>,
 }));
 
-import { Onboarding } from './Onboarding';
+import { Onboarding, getDemoPartnerNamesFallback, getOnboardingSubdomain, parsePartnerNames } from './Onboarding';
+
+describe('Onboarding partner name truth helpers', () => {
+  it('keeps a single partner name truthful instead of inventing a second partner', () => {
+    expect(parsePartnerNames('Alex')).toEqual(['Alex']);
+  });
+
+  it('builds a clean completion subdomain when only one partner name exists', () => {
+    expect(getOnboardingSubdomain('Alex')).toBe('alex.dayof.love');
+  });
+
+  it('uses the shared demo fallback without leaving broken ampersands', () => {
+    expect(getDemoPartnerNamesFallback()).toBeTruthy();
+    expect(getDemoPartnerNamesFallback()).not.toMatch(/&\s*$/);
+  });
+});
 
 describe('Onboarding starter draft wording truth', () => {
   beforeEach(() => {
