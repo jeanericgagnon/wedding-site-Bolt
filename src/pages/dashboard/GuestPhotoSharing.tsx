@@ -17,6 +17,7 @@ import { mergeGeneratedDraftIntoBuilderProject } from '../../lib/aiBuilderProjec
 import { buildQuickStartOverviewPath, readQuickStartDashboardContinuation } from '../../lib/quickStartContinuation';
 import { parseDatetimeLocalToIso, toDatetimeLocalOrEmpty } from './guestPhotoDateTime';
 import { formatGuestPhotoDate, formatGuestPhotoDateTime, getGuestPhotoSortTime, toGuestPhotoCsvTimestamp } from './guestPhotoUploadTime';
+import { formatGuestPhotoEventDate, getSuggestedGuestPhotoWindowStart } from './guestPhotoEventDate';
 
 type ItineraryEvent = {
   id: string;
@@ -811,7 +812,7 @@ export const GuestPhotoSharing: React.FC = () => {
     if (!bucket) return;
 
     const event = events.find((e) => e.id === bucket.itinerary_event_id);
-    const baseDate = event?.event_date ? new Date(`${event.event_date}T00:00:00`) : new Date();
+    const baseDate = getSuggestedGuestPhotoWindowStart(event?.event_date);
     const opens = baseDate;
     const closes = new Date(baseDate.getTime() + 72 * 60 * 60 * 1000); // +72h
 
@@ -1132,7 +1133,7 @@ export const GuestPhotoSharing: React.FC = () => {
                 <option value="">None</option>
                 {events.map((event) => (
                   <option key={event.id} value={event.id}>
-                    {event.event_name} ({new Date(event.event_date).toLocaleDateString()})
+                    {event.event_name} ({formatGuestPhotoEventDate(event.event_date)})
                   </option>
                 ))}
               </select>
