@@ -22,6 +22,7 @@ import { demoWeddingSite, demoRegistryItems } from '../../lib/demoData';
 import { getRegistryRepairStates } from './registry/repairState';
 import { findDuplicateRegistryGroups } from './registry/duplicateRegistryItems';
 import { getCurrentMonthKey, resolveRegistryRefreshBudgetState } from './registry/refreshBudget';
+import { getWeddingRefreshWindowDate, parseRefreshWindowEndIso, toDateInputValueOrEmpty, toValidDateOrNull } from './registryRefreshWindow';
 
 interface Toast {
   id: number;
@@ -228,7 +229,7 @@ export const DashboardRegistry: React.FC = () => {
           setRefreshIncludePurchased(typedSite.registry_refresh_include_purchased ?? false);
           setPolicyUpdatedAt(typedSite.registry_refresh_policy_updated_at ?? null);
           setPolicyUpdatedBy(typedSite.registry_refresh_policy_updated_by ?? null);
-          setRefreshWindowDraft((typedSite.registry_refresh_enabled_until ?? '').slice(0, 10));
+          setRefreshWindowDraft(toDateInputValueOrEmpty(typedSite.registry_refresh_enabled_until));
           const loadedCap = typedSite.registry_monthly_refresh_cap ?? 100;
           setMonthlyRefreshCap(loadedCap);
           setRefreshCapDraft(loadedCap);
@@ -693,7 +694,11 @@ export const DashboardRegistry: React.FC = () => {
   async function handleSaveRefreshPolicy() {
     if (!weddingSiteId || isDemoMode) return;
     const cap = Math.max(10, Math.min(2000, Number(refreshCapDraft) || 100));
-    const untilIso = refreshWindowDraft ? new Date(`${refreshWindowDraft}T23:59:59.000Z`).toISOString() : null;
+    const untilIso = parseRefreshWindowEndIso(refreshWindowDraft);
+    if (untilIso === undefined) {
+      toast('Enter a valid refresh end date.', 'error');
+      return;
+    }
 
     setSavingRefreshPolicy(true);
     try {
@@ -723,22 +728,17 @@ export const DashboardRegistry: React.FC = () => {
   }
 
   function setDefaultRefreshWindowFromWedding() {
-    if (!weddingDate) return;
-    const d = new Date(weddingDate);
-    d.setDate(d.getDate() + 30);
-    const iso = d.toISOString().slice(0, 10);
-    setRefreshWindowDraft(iso);
+    const date = getWeddingRefreshWindowDate(weddingDate);
+    if (!date) return;
+    setRefreshWindowDraft(date.toISOString().slice(0, 10));
   }
 
   function applyRefreshPreset(preset: 'lean' | 'balanced' | 'aggressive') {
     setRefreshPreset(preset);
     const cap = preset === 'lean' ? 60 : preset === 'balanced' ? 120 : 240;
     setRefreshCapDraft(cap);
-    if (weddingDate) {
-      const d = new Date(weddingDate);
-      d.setDate(d.getDate() + 30);
-      setRefreshWindowDraft(d.toISOString().slice(0, 10));
-    }
+    const date = getWeddingRefreshWindowDate(weddingDate);
+    if (date) setRefreshWindowDraft(date.toISOString().slice(0, 10));
   }
 
   async function handleResetMonthlyBudgetCounter() {
@@ -796,8 +796,8 @@ export const DashboardRegistry: React.FC = () => {
 
   const todayMonthKey = getCurrentMonthKey();
   const refreshWindowUntil = refreshEnabledUntil
-    ? new Date(refreshEnabledUntil)
-    : (weddingDate ? new Date(new Date(weddingDate).getTime() + 1000 * 60 * 60 * 24 * 30) : null);
+    ? toValidDateOrNull(refreshEnabledUntil)
+    : getWeddingRefreshWindowDate(weddingDate);
   const refreshWindowOpen = autoRefreshEnabled && (!refreshWindowUntil || refreshWindowUntil.getTime() >= Date.now());
   const refreshBudgetRemaining = Math.max(0, monthlyRefreshCap - monthlyRefreshCount);
   const budgetUtilization = monthlyRefreshCap > 0 ? monthlyRefreshCount / monthlyRefreshCap : 0;
