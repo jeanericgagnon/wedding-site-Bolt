@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { NameChangePlannerTab } from './NameChangePlannerTab';
 import { defaultNameChangeCaseInput } from './nameChangeService';
 import { buildNameChangePlan } from '../../../lib/nameChange/engine';
@@ -141,9 +141,63 @@ describe('NameChangePlannerTab', () => {
     );
 
     expect(screen.getByText('Target status tracking')).toBeInTheDocument();
-    expect(screen.getAllByText(/proof item/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/checks ready/).length).toBeGreaterThan(0);
     expect(screen.getAllByText('Submitted the SS-5 packet and waiting on return mail.').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Execution: in_progress').length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Updated /).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Latest touch|Execution updated/).length).toBeGreaterThan(0);
+  });
+
+  it('surfaces the most recently touched target first in the status vault list', () => {
+    const draft = makeDraft();
+    const basePlan = buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => {
+        if (step.id === 'federal-ssa') {
+          return {
+            ...step,
+            executionStatus: 'in_progress' as const,
+            executionUpdatedAt: '2026-04-24T20:15:00.000Z',
+          };
+        }
+
+        if (step.id === 'state-dmv') {
+          return {
+            ...step,
+            executionStatus: 'in_progress' as const,
+            executionUpdatedAt: '2026-04-24T19:15:00.000Z',
+          };
+        }
+
+        return step;
+      }),
+    };
+
+    render(
+      <NameChangePlannerTab
+        draft={draft}
+        documents={[]}
+        extractedFields={[]}
+        plan={plan}
+        reminders={[]}
+        saving={false}
+        onDraftChange={vi.fn()}
+        onStructuredIntakeChange={vi.fn()}
+        onDocumentsChange={vi.fn()}
+        onExtractedFieldsChange={vi.fn()}
+        onRemindersChange={vi.fn()}
+        onStepExecutionStatusChange={vi.fn()}
+        onStepExecutionNoteChange={vi.fn()}
+        onSave={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    const trackingHeader = screen.getByText('Target status tracking');
+    const trackingList = trackingHeader.closest('div')?.parentElement?.nextElementSibling as HTMLElement;
+    const targetTitles = within(trackingList).getAllByText(/Social Security Administration|California DMV/).map((node) => node.textContent);
+    expect(targetTitles.slice(0, 2)).toEqual([
+      'Social Security Administration',
+      'California DMV',
+    ]);
   });
 });

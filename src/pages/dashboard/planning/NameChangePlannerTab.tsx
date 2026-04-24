@@ -113,6 +113,14 @@ const EXECUTION_SECTION_STEP_IDS: Record<string, string[]> = {
 const NAME_CHANGE_SECTION_PREFS_STORAGE_KEY = 'dayoflove:name-change:collapsed-sections';
 const NAME_CHANGE_ADMIN_PREFS_STORAGE_KEY = 'dayoflove:name-change:show-admin';
 
+const TARGET_STATUS_VAULT_STATUS_PRIORITY: Record<TargetStatusVaultRow['vaultStatus'], number> = {
+  blocked: 0,
+  in_progress: 1,
+  ready: 2,
+  todo: 3,
+  complete: 4,
+};
+
 function scrollToPlannerTarget(targetId: string) {
   document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -619,6 +627,17 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         ? `${openReminderCount} reminder${openReminderCount === 1 ? '' : 's'}${highUrgencyCount > 0 ? ` • ${highUrgencyCount} high urgency` : ''}`
         : null,
     };
+  }).sort((left, right) => {
+    const leftTouched = left.updatedLabel ? executionSnapshots.find((snapshot) => snapshot.targetKey === left.key)?.statusVault.lastTouchedAt ?? null : null;
+    const rightTouched = right.updatedLabel ? executionSnapshots.find((snapshot) => snapshot.targetKey === right.key)?.statusVault.lastTouchedAt ?? null : null;
+    if (leftTouched && rightTouched && leftTouched !== rightTouched) {
+      return new Date(rightTouched).getTime() - new Date(leftTouched).getTime();
+    }
+    if (leftTouched && !rightTouched) return -1;
+    if (!leftTouched && rightTouched) return 1;
+    const statusDelta = TARGET_STATUS_VAULT_STATUS_PRIORITY[left.vaultStatus] - TARGET_STATUS_VAULT_STATUS_PRIORITY[right.vaultStatus];
+    if (statusDelta !== 0) return statusDelta;
+    return left.title.localeCompare(right.title);
   }), [effectiveReminders, executionSnapshots]);
   const reminderAttentionSummary = useMemo(() => summarizeNameChangeReminderAttention(reminderAttention, {
     hasRecentStart: plan.summary.hasRecentStart,
