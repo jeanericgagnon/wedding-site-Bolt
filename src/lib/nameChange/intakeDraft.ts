@@ -185,7 +185,7 @@ function extractDraftDocumentQueryFilename(documentId: string) {
   const decodedDisposition = decodeDraftDocumentQueryValue(contentDispositionMatch?.[1]);
   if (!decodedDisposition) return null;
 
-  const utfFilenameMatch = decodedDisposition.match(/filename\*\s*=\s*(?:UTF-8''|utf-8'')?([^;]+)/i);
+  const utfFilenameMatch = decodedDisposition.match(/filename\*\s*=\s*(?:[^']*'[^']*')?([^;]+)/i);
   if (utfFilenameMatch?.[1]) {
     return decodeDraftDocumentQueryValue(utfFilenameMatch[1].trim().replace(/^"|"$/g, ''));
   }
