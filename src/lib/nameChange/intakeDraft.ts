@@ -185,6 +185,26 @@ function extractDraftDocumentQueryFilename(documentId: string) {
   const decodedDisposition = decodeDraftDocumentQueryValue(contentDispositionMatch?.[1]);
   if (!decodedDisposition) return null;
 
+  const filenameContinuationParts = [...decodedDisposition.matchAll(/filename\*(\d+)\*?\s*=\s*([^;]+)/gi)]
+    .map((match) => ({
+      index: Number.parseInt(match[1] ?? '', 10),
+      value: match[2]?.trim().replace(/^"|"$/g, '') ?? '',
+    }))
+    .filter((part) => Number.isFinite(part.index) && part.value);
+
+  if (filenameContinuationParts.length > 0) {
+    const sortedParts = filenameContinuationParts.sort((left, right) => left.index - right.index);
+    const isContiguous = sortedParts.every((part, index) => part.index === index);
+    if (isContiguous) {
+      const [firstPart, ...remainingParts] = sortedParts;
+      const firstPartValue = firstPart?.value ?? '';
+      const charsetPrefixedValueMatch = firstPartValue.match(/^(?:[^']*'[^']*')?(.*)$/);
+      const normalizedValue = [charsetPrefixedValueMatch?.[1] ?? firstPartValue, ...remainingParts.map((part) => part.value)].join('');
+      const decodedValue = decodeDraftDocumentQueryValue(normalizedValue);
+      if (decodedValue) return decodedValue;
+    }
+  }
+
   const utfFilenameMatch = decodedDisposition.match(/filename\*\s*=\s*(?:[^']*'[^']*')?([^;]+)/i);
   if (utfFilenameMatch?.[1]) {
     return decodeDraftDocumentQueryValue(utfFilenameMatch[1].trim().replace(/^"|"$/g, ''));
