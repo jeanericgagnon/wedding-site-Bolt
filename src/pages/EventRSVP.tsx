@@ -125,6 +125,7 @@ export default function EventRSVP() {
   const pendingContinuityRefreshRef = useRef(false);
   const ignoreNextLocalContinuityEventRef = useRef(false);
   const tokenLinkedSessionRef = useRef(false);
+  const loadInFlightRef = useRef(false);
 
   useEffect(() => {
     if (token) {
@@ -136,6 +137,7 @@ export default function EventRSVP() {
       pendingContinuityRefreshRef.current = false;
       ignoreNextLocalContinuityEventRef.current = false;
       tokenLinkedSessionRef.current = false;
+      loadInFlightRef.current = false;
       if (postSubmitResetTimeoutRef.current !== null) {
         window.clearTimeout(postSubmitResetTimeoutRef.current);
         postSubmitResetTimeoutRef.current = null;
@@ -167,14 +169,17 @@ export default function EventRSVP() {
   const loadGuestAndEvents = useCallback(async ({ preserveVisibleState = false }: { preserveVisibleState?: boolean } = {}) => {
     const requestId = activeLoadRequestRef.current + 1;
     activeLoadRequestRef.current = requestId;
+    loadInFlightRef.current = true;
     activeSubmitRequestRef.current += 1;
     submitInFlightRef.current = false;
     pendingContinuityRefreshRef.current = false;
     ignoreNextLocalContinuityEventRef.current = false;
-    tokenLinkedSessionRef.current = false;
     let eventRsvpSupportKnown: boolean | null = null;
     let eventRsvpSupportAvailable = true;
     const shouldPreserveVisibleState = preserveVisibleState && !selectedEvent && guest !== null;
+    if (!shouldPreserveVisibleState) {
+      tokenLinkedSessionRef.current = false;
+    }
 
     if (postSubmitResetTimeoutRef.current !== null) {
       window.clearTimeout(postSubmitResetTimeoutRef.current);
@@ -306,13 +311,14 @@ export default function EventRSVP() {
       }
     } finally {
       if (activeLoadRequestRef.current !== requestId) return;
+      loadInFlightRef.current = false;
       setLoading(false);
     }
   }, [guest, selectedEvent, token]);
 
   const refreshGuestAndEventsForContinuity = useCallback(() => {
     if (!token || !tokenLinkedSessionRef.current) return;
-    if (selectedEvent || submitting || submitInFlightRef.current) {
+    if (loadInFlightRef.current || selectedEvent || submitting || submitInFlightRef.current) {
       pendingContinuityRefreshRef.current = true;
       return;
     }
@@ -357,7 +363,7 @@ export default function EventRSVP() {
 
   useEffect(() => {
     if (!pendingContinuityRefreshRef.current) return;
-    if (!token || !tokenLinkedSessionRef.current || selectedEvent || submitting || submitInFlightRef.current) return;
+    if (!token || !tokenLinkedSessionRef.current || loadInFlightRef.current || selectedEvent || submitting || submitInFlightRef.current) return;
 
     pendingContinuityRefreshRef.current = false;
     loadGuestAndEvents({ preserveVisibleState: true });
