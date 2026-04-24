@@ -106,6 +106,10 @@ function hasMeaningfulValue(value: string | null | undefined) {
   return Boolean((value ?? '').trim());
 }
 
+function hasMiddleNameInPlay(profile: NameChangeEngineInput['profile']) {
+  return hasMeaningfulValue(profile.current_middle_name) || hasMeaningfulValue(profile.target_middle_name);
+}
+
 function collectMissingInputs(
   input: NameChangeEngineInput,
   legalBasis: 'marriage' | 'court_order',
@@ -117,8 +121,10 @@ function collectMissingInputs(
   const profile = input.profile;
 
   if (!hasMeaningfulValue(profile.current_first_name)) missing.push('Current first name');
+  if (hasMiddleNameInPlay(profile) && !hasMeaningfulValue(profile.current_middle_name)) missing.push('Current middle name');
   if (!hasMeaningfulValue(profile.current_last_name)) missing.push('Current last name');
   if (!hasMeaningfulValue(profile.target_first_name)) missing.push('Target first name');
+  if (hasMiddleNameInPlay(profile) && !hasMeaningfulValue(profile.target_middle_name)) missing.push('Target middle name');
   if (!hasMeaningfulValue(profile.target_last_name)) missing.push('Target last name');
   if (!hasMeaningfulValue(profile.county_residence)) missing.push('California county');
 

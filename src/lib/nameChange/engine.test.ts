@@ -139,6 +139,26 @@ describe('name change engine', () => {
     );
   });
 
+  it('surfaces conditional middle-name gaps when middle-name truth is already in play', () => {
+    const plan = buildNameChangePlan(makeInput({
+      current_middle_name: 'Marie',
+      target_middle_name: '',
+    }));
+
+    expect(plan.summary.missingInputs).toContain('Target middle name');
+    expect(plan.summary.nextBestAction).toBe('Fill: Target middle name');
+  });
+
+  it('does not require middle names when neither current nor target middle name is in play', () => {
+    const plan = buildNameChangePlan(makeInput({
+      current_middle_name: '',
+      target_middle_name: '',
+    }));
+
+    expect(plan.summary.missingInputs).not.toContain('Current middle name');
+    expect(plan.summary.missingInputs).not.toContain('Target middle name');
+  });
+
   it('keeps legal-proof steps blocked until intake proof is reviewed', () => {
     const plan = buildNameChangePlan({
       ...makeInput(),
