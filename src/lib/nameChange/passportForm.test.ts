@@ -81,4 +81,29 @@ describe('name change passport form snapshot', () => {
     const snapshot = buildNameChangePassportFormSnapshot(makeCase({ has_us_passport: false }), [], []);
     expect(snapshot.formCode).toBe('DS-11');
   });
+
+  it('uses DS-5504 when the existing passport was issued recently', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'passport-doc',
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'passport-doc',
+        field_key: 'issuance_date',
+        field_label: 'Passport issue date',
+        field_value_masked: new Date().toISOString().slice(0, 10),
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+
+    const snapshot = buildNameChangePassportFormSnapshot(makeCase(), documents, extractedFields);
+    expect(snapshot.formCode).toBe('DS-5504');
+  });
 });

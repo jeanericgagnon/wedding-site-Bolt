@@ -1,4 +1,5 @@
 import { buildNameChangeFormPayloadSnapshot, type NameChangeFormContractDefinition } from './formContract';
+import { getVerifiedDocumentLinkedFieldValue } from './extractionContract';
 import type {
   NameChangeCaseInput,
   NameChangeDocumentInput,
@@ -27,14 +28,32 @@ export const NAME_CHANGE_PASSPORT_APPLICATION_FORM_CONTRACT: NameChangeFormContr
   fieldSpecs: NAME_CHANGE_PASSPORT_RENEWAL_FORM_CONTRACT.fieldSpecs,
 };
 
+export const NAME_CHANGE_PASSPORT_CORRECTION_FORM_CONTRACT: NameChangeFormContractDefinition = {
+  formCode: 'DS-5504',
+  label: 'U.S. Passport Re-Application / Data Correction',
+  fieldSpecs: NAME_CHANGE_PASSPORT_RENEWAL_FORM_CONTRACT.fieldSpecs,
+};
+
+function isRecentPassportIssueDate(issueDate: string | null, referenceDate = new Date()): boolean {
+  if (!issueDate) return false;
+  const issuedAt = new Date(`${issueDate}T00:00:00Z`);
+  if (Number.isNaN(issuedAt.getTime())) return false;
+
+  const oneYearMs = 365 * 24 * 60 * 60 * 1000;
+  return referenceDate.getTime() - issuedAt.getTime() <= oneYearMs;
+}
+
 export function buildNameChangePassportFormSnapshot(
   profile: NameChangeCaseInput,
   documents: NameChangeDocumentInput[],
   extractedFields: NameChangeExtractedFieldInput[],
 ): NameChangeFormPayloadSnapshot {
-  const contract = profile.has_us_passport
-    ? NAME_CHANGE_PASSPORT_RENEWAL_FORM_CONTRACT
-    : NAME_CHANGE_PASSPORT_APPLICATION_FORM_CONTRACT;
+  const passportIssueDate = getVerifiedDocumentLinkedFieldValue(documents, extractedFields, 'current_passport', 'issuance_date');
+  const contract = !profile.has_us_passport
+    ? NAME_CHANGE_PASSPORT_APPLICATION_FORM_CONTRACT
+    : isRecentPassportIssueDate(passportIssueDate)
+      ? NAME_CHANGE_PASSPORT_CORRECTION_FORM_CONTRACT
+      : NAME_CHANGE_PASSPORT_RENEWAL_FORM_CONTRACT;
 
   return buildNameChangeFormPayloadSnapshot(contract, profile, documents, extractedFields);
 }

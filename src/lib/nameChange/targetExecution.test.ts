@@ -511,6 +511,32 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'federal-ssa-progress')).toMatchObject({ status: 'satisfied' });
   });
 
+  it('routes recent-passport name changes to DS-5504 at execution level', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'passport-doc',
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'passport-doc',
+        field_key: 'issuance_date',
+        field_label: 'Passport issue date',
+        field_value_masked: new Date().toISOString().slice(0, 10),
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('passport', makeCase(), documents, extractedFields);
+    expect(snapshot.recommendedFormCode).toBe('DS-5504');
+    expect(snapshot.formPayload.formCode).toBe('DS-5504');
+  });
+
   it('builds shared employer execution snapshots with institutional gating', () => {
     const documents: NameChangeDocumentInput[] = [
       {
