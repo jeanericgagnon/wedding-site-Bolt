@@ -541,6 +541,7 @@ describe('name change engine', () => {
       touchedByExecution: 0,
       touchedByReminder: 1,
       latestUpdatedAt: null,
+      latestReminderAt: '2026-04-24T22:20:00.000Z',
       latestTouchedAt: '2026-04-24T22:20:00.000Z',
       latestTouchedSource: 'reminder',
     });
@@ -568,8 +569,10 @@ describe('name change engine', () => {
       touchedByExecution: 0,
       touchedByReminder: 1,
       latestUpdatedAt: null,
+      latestReminderAt: '2026-04-24T22:20:00.000Z',
       latestTouchedAt: '2026-04-24T22:20:00.000Z',
       latestTouchedSource: 'reminder',
     });
   });
+
 });

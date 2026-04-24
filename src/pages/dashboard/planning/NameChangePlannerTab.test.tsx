@@ -334,6 +334,7 @@ describe('NameChangePlannerTab', () => {
         targetStatusOverview: {
           ...basePlan.summary.targetStatusOverview,
           latestUpdatedAt: '2026-04-24T20:15:00.000Z',
+          latestReminderAt: '2026-04-24T22:20:00.000Z',
           latestTouchedAt: '2026-04-24T22:20:00.000Z',
           latestTouchedSource: 'reminder' as const,
         },
@@ -366,5 +367,62 @@ describe('NameChangePlannerTab', () => {
 
     expect(screen.getByText(/Latest move .*reminder/)).toBeInTheDocument();
     expect(screen.getByText(/Latest execution/)).toBeInTheDocument();
+    expect(screen.queryByText(/Latest reminder/)).not.toBeInTheDocument();
+  });
+
+  it('keeps plan-level reminder timing visible when execution becomes the latest move', () => {
+    const draft = makeDraft();
+    const basePlan = buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      summary: {
+        ...basePlan.summary,
+        targetStatusOverview: {
+          ...basePlan.summary.targetStatusOverview,
+          latestUpdatedAt: '2026-04-24T22:40:00.000Z',
+          latestReminderAt: '2026-04-24T22:20:00.000Z',
+          latestTouchedAt: '2026-04-24T22:40:00.000Z',
+          latestTouchedSource: 'execution' as const,
+        },
+      },
+      steps: basePlan.steps.map((step) => step.id === 'federal-ssa' ? {
+        ...step,
+        executionStatus: 'in_progress' as const,
+        executionUpdatedAt: '2026-04-24T22:40:00.000Z',
+      } : step),
+    };
+
+    render(
+      <NameChangePlannerTab
+        draft={draft}
+        documents={[]}
+        extractedFields={[]}
+        plan={plan}
+        reminders={[
+          {
+            reminder_key: 'ssa-follow-up',
+            label: 'SSA follow-up',
+            reason: 'Receipt still missing',
+            trigger_type: 'manual' as const,
+            status: 'pending' as const,
+            urgency: 'high' as const,
+            focus_target_id: 'ssa' as const,
+            updated_at: '2026-04-24T22:20:00.000Z',
+          },
+        ]}
+        saving={false}
+        onDraftChange={vi.fn()}
+        onStructuredIntakeChange={vi.fn()}
+        onDocumentsChange={vi.fn()}
+        onExtractedFieldsChange={vi.fn()}
+        onRemindersChange={vi.fn()}
+        onStepExecutionStatusChange={vi.fn()}
+        onStepExecutionNoteChange={vi.fn()}
+        onSave={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    expect(screen.getByText(/Latest move .*execution/)).toBeInTheDocument();
+    expect(screen.getByText(/Latest reminder/)).toBeInTheDocument();
   });
 });

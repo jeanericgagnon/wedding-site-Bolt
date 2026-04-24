@@ -353,6 +353,7 @@ function buildTargetStatusOverview(
     touchedByExecution: 0,
     touchedByReminder: 0,
     latestUpdatedAt,
+    latestReminderAt,
     latestTouchedAt,
     latestTouchedSource,
   });
