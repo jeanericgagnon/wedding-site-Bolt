@@ -139,4 +139,47 @@ describe('HeroSection', () => {
 
     expect(screen.getByText('Alex')).toBeInTheDocument();
   });
+
+  it('guards invalid persisted wedding dates across hero variants', () => {
+    const data = createEmptyWeddingData();
+    data.event.weddingDateISO = 'not-a-date';
+
+    const { rerender } = render(
+      <HeroSection
+        data={data}
+        instance={makeInstance({})}
+      />
+    );
+
+    expect(screen.getByText('Date TBD')).toBeInTheDocument();
+    expect(screen.queryByText('Invalid Date')).not.toBeInTheDocument();
+
+    rerender(
+      <HeroMinimal
+        data={data}
+        instance={makeInstance({})}
+      />
+    );
+
+    expect(screen.getByText('Date TBD')).toBeInTheDocument();
+
+    rerender(
+      <HeroFullbleed
+        data={data}
+        instance={makeInstance({})}
+      />
+    );
+
+    expect(screen.getByText('Date TBD')).toBeInTheDocument();
+
+    rerender(
+      <HeroCountdown
+        data={data}
+        instance={makeInstance({})}
+      />
+    );
+
+    expect(screen.getByText('Date TBD')).toBeInTheDocument();
+    expect(screen.queryByText('Days')).not.toBeInTheDocument();
+  });
 });
