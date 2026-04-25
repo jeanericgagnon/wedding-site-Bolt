@@ -617,4 +617,28 @@ describe('name change engine', () => {
     });
   });
 
+  it('ignores sent reminders in the overview reminder-touch summary', () => {
+    const plan = buildNameChangePlan({
+      ...makeInput(),
+      reminders: [
+        {
+          reminder_key: 'ssa-follow-up',
+          label: 'SSA follow-up sent',
+          reason: 'Follow-up email already sent',
+          urgency: 'high',
+          status: 'sent',
+          focus_target_id: 'ssa',
+          updated_at: '2026-04-24T22:20:00.000Z',
+        },
+      ],
+    });
+
+    expect(plan.summary.targetStatusOverview).toMatchObject({
+      touchedByReminder: 0,
+      latestReminderAt: null,
+      latestTouchedAt: null,
+      latestTouchedSource: null,
+    });
+  });
+
 });

@@ -316,8 +316,9 @@ function buildTargetStatusOverview(
     .map((milestone) => milestone.lastUpdatedAt ?? null)
     .filter((value): value is string => Boolean(value))
     .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
-  const latestReminderAt = reminders
-    .filter((reminder) => reminder.status !== 'dismissed')
+  const openReminders = reminders
+    .filter((reminder) => reminder.status === 'pending' || reminder.status === 'scheduled');
+  const latestReminderAt = openReminders
     .map((reminder) => reminder.updated_at ?? null)
     .filter((value): value is string => Boolean(value))
     .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
