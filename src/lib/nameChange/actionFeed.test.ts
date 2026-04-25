@@ -1617,4 +1617,21 @@ describe('name change action feed', () => {
     expect(feed[0]?.action.detail).toContain('Proof to have handy: Certified legal name-change proof · Updated photo ID or DMV receipt');
     expect(feed[0]?.action.detail).not.toContain('Proof to have handy: Certified legal name-change proof. · Updated photo ID or DMV receipt.');
   });
+
+  it('deduplicates normalized proof-document summaries', () => {
+    const feed = buildNameChangeActionFeed(
+      [makeExecutionSnapshot({ targetKey: 'banks', targetLabel: 'Banks', recommendedFormCode: 'BANK' })],
+      [],
+      [],
+      [makeTemplate({
+        id: 'template-bank',
+        audience: 'Bank accounts',
+        proofDocuments: ['Certified legal name-change proof.', 'Certified legal name-change proof', ' Updated photo ID or DMV receipt. '],
+        proofChecklist: ['Certified legal name-change proof.'],
+      })],
+    );
+
+    expect(feed[0]?.action.detail).toContain('Proof to have handy: Certified legal name-change proof · Updated photo ID or DMV receipt');
+    expect(feed[0]?.action.detail).not.toContain('Proof to have handy: Certified legal name-change proof · Certified legal name-change proof');
+  });
 });

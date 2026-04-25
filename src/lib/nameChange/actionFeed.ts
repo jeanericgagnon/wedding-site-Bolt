@@ -77,7 +77,7 @@ function ensureTerminalPeriod(line: string | undefined) {
 function formatInlineProofList(items: string[]) {
   return items
     .map((item) => item.trim().replace(/[.\s]+$/u, ''))
-    .filter(Boolean)
+    .filter((item, index, array) => item.length > 0 && array.indexOf(item) === index)
     .join(' · ');
 }
 

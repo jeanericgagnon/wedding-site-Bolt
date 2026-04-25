@@ -1311,6 +1311,51 @@ describe('NameChangePlannerTab', () => {
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining('Proof to have handy: Certified legal name-change proof · Updated Social Security record or SSA confirmation'));
   });
 
+  it('deduplicates normalized proof-to-have-handy text in planner surfaces', async () => {
+    const clipboardWriteText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(window.navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: clipboardWriteText },
+    });
+    HTMLElement.prototype.scrollIntoView = vi.fn();
+
+    const draft = makeDraft();
+    const plan = buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] });
+    const payrollTemplate = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll');
+    if (!payrollTemplate) throw new Error('expected payroll template');
+
+    payrollTemplate.proofDocuments = ['Certified legal name-change proof.', 'Certified legal name-change proof', ' Updated Social Security record or SSA confirmation. '];
+
+    render(
+      <NameChangePlannerTab
+        draft={draft}
+        documents={[]}
+        extractedFields={[]}
+        plan={plan}
+        reminders={[]}
+        saving={false}
+        onDraftChange={vi.fn()}
+        onStructuredIntakeChange={vi.fn()}
+        onDocumentsChange={vi.fn()}
+        onExtractedFieldsChange={vi.fn()}
+        onRemindersChange={vi.fn()}
+        onStepExecutionStatusChange={vi.fn()}
+        onStepExecutionNoteChange={vi.fn()}
+        onSave={vi.fn().mockResolvedValue(undefined)}
+        initialTargetId="account-update-template-template-payroll"
+      />,
+    );
+
+    expect(screen.getByText('Proof to have handy: Certified legal name-change proof · Updated Social Security record or SSA confirmation')).toBeInTheDocument();
+    expect(screen.queryByText('Proof to have handy: Certified legal name-change proof · Certified legal name-change proof')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Copy intake script' })[0]!);
+
+    await waitFor(() => expect(clipboardWriteText).toHaveBeenCalledTimes(1));
+    expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining('Proof to have handy: Certified legal name-change proof · Updated Social Security record or SSA confirmation'));
+    expect(clipboardWriteText).not.toHaveBeenCalledWith(expect.stringContaining('Proof to have handy: Certified legal name-change proof · Certified legal name-change proof'));
+  });
+
   it('omits proof-to-have-handy text when a template has no proof documents', async () => {
     const clipboardWriteText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(window.navigator, 'clipboard', {
