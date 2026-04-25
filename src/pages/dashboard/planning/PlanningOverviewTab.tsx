@@ -199,6 +199,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
                   <p className="mt-2 text-xs text-text-secondary">
                     {nameChangeCompletedCount} complete · {nameChangeReadyCount} ready now
                   </p>
+                  <p className="mt-2 text-xs uppercase tracking-wide text-text-secondary">{nameChangeCard.statusLabel}</p>
                   <div className="mt-3 flex flex-wrap gap-2 text-xs">
                     <span className="rounded-full bg-white px-2 py-1 text-text-secondary shadow-sm">
                       {nameChangeReminderAttention.actionableNow} reminder{nameChangeReminderAttention.actionableNow === 1 ? '' : 's'} actionable now
@@ -235,7 +236,10 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
                   </p>
                 </div>
               </div>
-              <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-primary shadow-sm">Open lane</span>
+              <div className="flex flex-col items-end gap-2">
+                <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-primary shadow-sm">{nameChangeCard.primaryLabel}</span>
+                <span className="text-[11px] uppercase tracking-wide text-text-secondary">{nameChangeCard.badgeLabel}</span>
+              </div>
             </div>
           </Card>
         </button>
