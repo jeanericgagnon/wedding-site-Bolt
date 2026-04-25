@@ -423,6 +423,41 @@ describe('name change reminder suggestions', () => {
     ]);
   });
 
+  it('does not generate downstream follow-up reminders while the plan is still blocked upstream', () => {
+    const blockedInput = makeInput({
+      has_certified_marriage_certificate: false,
+      passport_needs_update: true,
+      has_us_passport: true,
+    });
+    const plan = buildNameChangePlan({
+      ...blockedInput,
+      documents: [],
+    });
+
+    const suggestions = buildNameChangeReminderSuggestions(plan);
+
+    expect(suggestions.some((suggestion) => suggestion.id === 'reminder-ssa-followup')).toBe(false);
+    expect(suggestions.some((suggestion) => suggestion.id === 'reminder-dmv-followup')).toBe(false);
+    expect(suggestions.some((suggestion) => suggestion.id === 'reminder-passport-followup')).toBe(false);
+    expect(suggestions.some((suggestion) => suggestion.id === 'reminder-milestone-confirm-milestone-legal-proof')).toBe(false);
+    expect(suggestions.some((suggestion) => suggestion.id === 'reminder-milestone-confirm-milestone-ssa')).toBe(false);
+  });
+
+  it('drops milestone confirmation reminders once that milestone is already complete', () => {
+    const basePlan = buildNameChangePlan(makeInput());
+    const suggestions = buildNameChangeReminderSuggestions({
+      ...basePlan,
+      summary: {
+        ...basePlan.summary,
+        milestoneChecklist: (basePlan.summary.milestoneChecklist ?? []).map((milestone) => milestone.id === 'milestone-ssa'
+          ? { ...milestone, status: 'complete' as const }
+          : milestone),
+      },
+    });
+
+    expect(suggestions.some((suggestion) => suggestion.id === 'reminder-milestone-confirm-milestone-ssa')).toBe(false);
+  });
+
   it('derives reminder attention items from open reminders tied to incomplete steps', () => {
     const plan = buildNameChangePlan(makeInput());
     const reminders = [

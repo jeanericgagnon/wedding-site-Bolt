@@ -344,6 +344,8 @@ export function buildNameChangeReminderSuggestions(plan: NameChangePlan): NameCh
 
   Object.entries(CORE_STEP_REMINDER_CONFIGS).forEach(([stepId, config]) => {
     if (config.includeWhen && !config.includeWhen(plan)) return;
+    const step = plan.steps.find((candidate) => candidate.id === stepId);
+    if (step?.status === 'blocked') return;
 
     const suggestion = {
       id: config.id,
@@ -381,6 +383,7 @@ export function buildNameChangeReminderSuggestions(plan: NameChangePlan): NameCh
   NAME_CHANGE_INSTITUTION_LIBRARY.forEach((institution) => {
     const matchingStep = plan.steps.find((step) => step.id === `institution-${institution.key}`);
     if (!matchingStep) return;
+    if (matchingStep.status === 'blocked') return;
     const familyConfig = INSTITUTION_REMINDER_FAMILY_CONFIGS[institution.category] ?? null;
     const suggestedOffsetDays = Math.max(1, institution.reminderDaysAfterPrimaryId + (familyConfig?.offsetAdjustmentDays ?? 0));
 
@@ -410,6 +413,9 @@ export function buildNameChangeReminderSuggestions(plan: NameChangePlan): NameCh
       ...matchingInstitutions.map((institution) => institution.reminderDaysAfterPrimaryId + 2),
     );
 
+    const dependentStep = plan.steps.find((step) => step.id === (category.dependsOnStepIds[category.dependsOnStepIds.length - 1] ?? category.dependsOnStepIds[0] ?? 'institutions-rollout'));
+    if (dependentStep?.status === 'blocked') return;
+
     const suggestion = {
       id: `reminder-category-confirm-${category.id}`,
       label: `Confirm ${category.label.toLowerCase()} rollout is actually done`,
@@ -427,6 +433,7 @@ export function buildNameChangeReminderSuggestions(plan: NameChangePlan): NameCh
 
   plan.summary.milestoneChecklist?.forEach((milestone) => {
     if (milestone.dependsOnStepIds.length === 0) return;
+    if (milestone.status === 'blocked' || milestone.status === 'complete') return;
 
     const config = MILESTONE_CONFIRMATION_CONFIG[milestone.id];
     if (!config) return;
