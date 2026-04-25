@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { buildNameChangePlan, evaluateCaliforniaNameChangeEligibility, formatAccountUpdateProofLine } from './engine';
+import {
+  buildNameChangePlan,
+  evaluateCaliforniaNameChangeEligibility,
+  formatAccountUpdateProofLine,
+  normalizeAccountUpdateProofItems,
+} from './engine';
 import { NAME_CHANGE_EXECUTION_TARGETS } from './targets';
 import type { NameChangeEngineInput } from './types';
 
@@ -57,6 +62,15 @@ describe('name change engine', () => {
       ['Certified legal name-change proof', 'Updated photo ID or DMV receipt'],
       'The updated ID is the current gating proof item.',
     )).toBe('I can provide Certified legal name-change proof, Updated photo ID or DMV receipt. The updated ID is the current gating proof item.');
+  });
+
+  it('normalizes account-update proof documents before template surfaces use them', () => {
+    expect(normalizeAccountUpdateProofItems([
+      ' Certified legal name-change proof. ',
+      'Certified legal name-change proof',
+      'Updated photo ID or DMV receipt.',
+      '',
+    ])).toEqual(['Certified legal name-change proof', 'Updated photo ID or DMV receipt']);
   });
 
   it('keeps straightforward california marriage surname updates on marriage path', () => {

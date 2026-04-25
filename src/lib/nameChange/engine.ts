@@ -21,6 +21,12 @@ export function formatAccountUpdateProofLine(proofDocuments: string[], readiness
     : `I can provide ${proofDocuments.join(', ')}.`;
 }
 
+export function normalizeAccountUpdateProofItems(items: string[]) {
+  return items
+    .map((item) => item.trim().replace(/[.\s]+$/u, ''))
+    .filter((item, index, array) => item.length > 0 && array.indexOf(item) === index);
+}
+
 function compactTemplateBody(body: string) {
   return body.replace(/\s{2,}/gu, ' ').trim();
 }
@@ -952,7 +958,7 @@ function buildAccountUpdateTemplates(
                       in_progress: 'Draft now and attach the final proof packet as soon as it lands',
                       complete: 'Confirm the final legal name is already showing across the account records you changed',
                     });
-    const proofDocuments = [...template.proofDocuments];
+    const proofDocuments = normalizeAccountUpdateProofItems([...template.proofDocuments]);
     const checklistHighlight = ensureTerminalPeriod(readinessSpecificChecklistItem);
     const requestLine = getReadinessRequestLine(template.id, readiness);
     const proofReadinessSummary = getProofReadinessSummary(template.id, readiness, blockingProofHopLabel);
