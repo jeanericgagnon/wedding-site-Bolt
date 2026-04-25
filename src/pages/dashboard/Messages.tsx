@@ -15,7 +15,7 @@ import { buildRsvpReminderDraft } from '../../lib/reminderDraftHelper';
 import { buildDayOfUpdateDraft } from '../../lib/dayOfUpdateHelper';
 import { buildEventReminderDraft } from '../../lib/eventReminderHelper';
 import { formatMessageEventOptionLabel } from './messageEventDate';
-import { formatMessageHistoryDate, formatMessageHistoryDateTime } from './messageHistoryTime';
+import { formatMessageHistoryDate, formatMessageHistoryDateTime, getMessageHistoryTimestamp } from './messageHistoryTime';
 import { parseScheduleInputToIso, toScheduleInputValue } from './messageScheduleTime';
 
 const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bulk-message`;
@@ -591,10 +591,10 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
   const campaignType = getCampaignTypeLabel(message);
 
   const sentDate = message.sent_at
-    ? new Date(message.sent_at).toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' })
+    ? formatMessageHistoryDateTime(message.sent_at, { dateStyle: 'long', timeStyle: 'short' }, 'Sent time unavailable')
     : null;
   const scheduledDate = message.scheduled_for
-    ? new Date(message.scheduled_for).toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' })
+    ? formatMessageHistoryDateTime(message.scheduled_for, { dateStyle: 'long', timeStyle: 'short' }, 'Scheduled time unavailable')
     : null;
   const initialScheduleInput = React.useMemo(() => {
     return toScheduleInputValue(message.scheduled_for);
@@ -787,7 +787,7 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
                           {delivery.recipient_name && <p className="text-rose-700">{delivery.recipient_email || 'No contact recorded'}</p>}
                           <p className="mt-0.5 text-rose-700">{delivery.error_message || 'Delivery failed before the provider returned a clear reason.'}</p>
                         </div>
-                        <span className="shrink-0 text-[11px] text-rose-600">{delivery.attempted_at ? new Date(delivery.attempted_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Attempted'}</span>
+                        <span className="shrink-0 text-[11px] text-rose-600">{delivery.attempted_at ? formatMessageHistoryDateTime(delivery.attempted_at, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }, 'Attempted') : 'Attempted'}</span>
                       </div>
                     </div>
                   ))}
@@ -831,7 +831,7 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
                           {delivery.recipient_name && <p className="text-amber-700">{delivery.recipient_email || 'No contact recorded'}</p>}
                           <p className="mt-0.5 text-amber-700">{delivery.error_message || 'Skipped before the provider was called.'}</p>
                         </div>
-                        <span className="shrink-0 text-[11px] text-amber-600">{delivery.attempted_at ? new Date(delivery.attempted_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Skipped'}</span>
+                        <span className="shrink-0 text-[11px] text-amber-600">{delivery.attempted_at ? formatMessageHistoryDateTime(delivery.attempted_at, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }, 'Skipped') : 'Skipped'}</span>
                       </div>
                     </div>
                   ))}
@@ -1680,9 +1680,8 @@ export const DashboardMessages: React.FC = () => {
       return;
     }
 
-    const scheduledAt = message.scheduled_for ? new Date(message.scheduled_for) : null;
-    const scheduleDate = scheduledAt ? `${scheduledAt.getFullYear()}-${String(scheduledAt.getMonth() + 1).padStart(2, '0')}-${String(scheduledAt.getDate()).padStart(2, '0')}` : '';
-    const scheduleTime = scheduledAt ? `${String(scheduledAt.getHours()).padStart(2, '0')}:${String(scheduledAt.getMinutes()).padStart(2, '0')}` : '';
+    const scheduledInputValue = toScheduleInputValue(message.scheduled_for);
+    const [scheduleDate = '', scheduleTime = ''] = scheduledInputValue ? scheduledInputValue.split('T') : [];
 
     setEditingMessageId(mode === 'edit' ? message.id : null);
     setFormData({
@@ -2587,7 +2586,10 @@ export const DashboardMessages: React.FC = () => {
 
     messages.forEach((message) => {
       const key = getCampaignThreadKey(message);
-      const latestAt = new Date(message.sent_at ?? message.scheduled_for ?? 0).getTime();
+      const latestAt = Math.max(
+        getMessageHistoryTimestamp(message.sent_at),
+        getMessageHistoryTimestamp(message.scheduled_for),
+      );
       const prev = map.get(key) ?? {
         key,
         name: key,
@@ -2631,8 +2633,14 @@ export const DashboardMessages: React.FC = () => {
     return messages
       .filter((message) => getCampaignThreadKey(message) === activeCampaignThread.name)
       .sort((a, b) => {
-        const aTime = new Date(a.sent_at ?? a.scheduled_for ?? 0).getTime();
-        const bTime = new Date(b.sent_at ?? b.scheduled_for ?? 0).getTime();
+        const aTime = Math.max(
+          getMessageHistoryTimestamp(a.sent_at),
+          getMessageHistoryTimestamp(a.scheduled_for),
+        );
+        const bTime = Math.max(
+          getMessageHistoryTimestamp(b.sent_at),
+          getMessageHistoryTimestamp(b.scheduled_for),
+        );
         return bTime - aTime;
       });
   }, [messages, activeCampaignThread]);
@@ -3812,9 +3820,9 @@ export const DashboardMessages: React.FC = () => {
                         <span className="flex items-center gap-1 text-text-tertiary">
                           <Clock className="w-3 h-3" />
                           {message.status === 'scheduled' && message.scheduled_for
-                            ? new Date(message.scheduled_for).toLocaleDateString()
+                            ? formatMessageHistoryDate(message.scheduled_for)
                             : message.sent_at
-                            ? new Date(message.sent_at).toLocaleDateString()
+                            ? formatMessageHistoryDate(message.sent_at)
                             : 'Draft'}
                         </span>
                         {(message.delivered_count != null && message.delivered_count > 0) && (
