@@ -1453,15 +1453,15 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
         dependsOnStepIds: ['federal-ssa', 'institution-irs-employer'],
       }
       : null,
-    (hasStep('institution-irs-records') || hasStep('institution-state-tax-agency'))
+    (hasStep('institution-irs-records') || hasStep('institution-state-tax-agency') || hasStep('institution-county-recorder-property') || hasStep('institution-uscis-immigration-records'))
       ? {
         id: 'milestone-tax',
-        label: 'Tax records are ready to align with SSA and payroll',
+        label: 'Tax and government records are ready to align with SSA and legal proof',
         status: resolvePlanSequenceStatus(
-          ['federal-ssa', 'institution-irs-records', 'institution-state-tax-agency'].filter((stepId) => hasStep(stepId)),
+          ['federal-ssa', 'institution-irs-records', 'institution-state-tax-agency', 'institution-county-recorder-property', 'institution-uscis-immigration-records'].filter((stepId) => hasStep(stepId)),
           steps,
         ),
-        dependsOnStepIds: ['federal-ssa', 'institution-irs-records', 'institution-state-tax-agency'].filter((stepId) => hasStep(stepId)),
+        dependsOnStepIds: ['federal-ssa', 'institution-irs-records', 'institution-state-tax-agency', 'institution-county-recorder-property', 'institution-uscis-immigration-records'].filter((stepId) => hasStep(stepId)),
       }
       : null,
     {

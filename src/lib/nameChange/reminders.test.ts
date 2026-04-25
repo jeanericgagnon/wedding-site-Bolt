@@ -94,7 +94,9 @@ describe('name change reminder suggestions', () => {
       urgency: 'high',
     });
     expect(reminders.find((reminder) => reminder.id === 'reminder-milestone-confirm-milestone-tax')).toMatchObject({
-      dependsOnStepId: 'institution-state-tax-agency',
+      label: 'Confirm tax and government records are aligned across filing and status systems',
+      reason: 'Verify that tax, county, and immigration-facing records are lined up so filings, notices, and status checks do not split across names.',
+      dependsOnStepId: 'institution-uscis-immigration-records',
       urgency: 'medium',
     });
     expect(reminders.find((reminder) => reminder.id === 'reminder-milestone-confirm-milestone-account-rollout')).toMatchObject({

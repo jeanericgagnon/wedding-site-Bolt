@@ -259,7 +259,12 @@ describe('name change engine', () => {
         expect.objectContaining({ id: 'milestone-photo-id', status: 'upcoming' }),
         expect.objectContaining({ id: 'milestone-passport', status: 'upcoming', dependsOnStepIds: ['federal-ssa', 'state-dmv', 'federal-passport'] }),
         expect.objectContaining({ id: 'milestone-payroll', status: 'upcoming', dependsOnStepIds: ['federal-ssa', 'institution-irs-employer'] }),
-        expect.objectContaining({ id: 'milestone-tax', status: 'upcoming', dependsOnStepIds: ['federal-ssa', 'institution-irs-records', 'institution-state-tax-agency'] }),
+        expect.objectContaining({
+          id: 'milestone-tax',
+          status: 'upcoming',
+          label: 'Tax and government records are ready to align with SSA and legal proof',
+          dependsOnStepIds: ['federal-ssa', 'institution-irs-records', 'institution-state-tax-agency', 'institution-county-recorder-property', 'institution-uscis-immigration-records'],
+        }),
         expect.objectContaining({ id: 'milestone-account-rollout', status: 'upcoming' }),
         expect.objectContaining({ id: 'milestone-downstream-rollout', status: 'upcoming', dependsOnStepIds: ['state-dmv', 'institutions-rollout'] }),
       ]),
@@ -290,7 +295,10 @@ describe('name change engine', () => {
             'institution-medical-records',
           ]),
         }),
-        expect.objectContaining({ audience: 'Tax agency or payroll tax support', dependsOnStepIds: expect.arrayContaining(['institution-state-tax-agency']) }),
+        expect.objectContaining({
+          audience: 'Tax agency, county recorder, immigration, or government record support',
+          dependsOnStepIds: expect.arrayContaining(['institution-state-tax-agency', 'institution-county-recorder-property', 'institution-uscis-immigration-records']),
+        }),
         expect.objectContaining({
           audience: 'Airline, hotel, loyalty, or travel support',
           readiness: 'upcoming',

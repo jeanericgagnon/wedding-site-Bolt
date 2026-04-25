@@ -77,8 +77,8 @@ const MILESTONE_CONFIRMATION_CONFIG: Record<string, {
     suggestedOffsetDays: 4,
   },
   'milestone-tax': {
-    label: 'Confirm tax records are aligned across IRS, state, and payroll systems',
-    reason: 'Verify that tax-facing records are lined up so withholding, filings, and notices do not split across names.',
+    label: 'Confirm tax and government records are aligned across filing and status systems',
+    reason: 'Verify that tax, county, and immigration-facing records are lined up so filings, notices, and status checks do not split across names.',
     urgency: 'medium',
     suggestedOffsetDays: 5,
   },
