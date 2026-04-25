@@ -62,12 +62,18 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
     ? 'Template state: proof chain complete; confirm the downstream sync only.'
     : template.readiness === 'ready'
       ? 'Template state: proof packet ready to send now.'
-      : template.readiness === 'in_progress' && template.blockingProofHopLabel
-        ? `Template state: draft now and wait for ${template.blockingProofHopLabel.toLowerCase()} to clear before sending.`
-        : template.readiness === 'upcoming' && template.blockingProofHopLabel
-          ? `Template state: prep the ask now and wait for ${template.blockingProofHopLabel.toLowerCase()} to clear before sending.`
-          : template.readiness === 'blocked' && template.blockingProofHopLabel
-            ? `Template state: intake-only until ${template.blockingProofHopLabel.toLowerCase()} clears.`
+      : template.readiness === 'in_progress'
+        ? template.blockingProofHopLabel
+          ? `Template state: draft now and wait for ${template.blockingProofHopLabel.toLowerCase()} to clear before sending.`
+          : 'Template state: draft now and wait for the current proof to clear before sending.'
+        : template.readiness === 'upcoming'
+          ? template.blockingProofHopLabel
+            ? `Template state: prep the ask now and wait for ${template.blockingProofHopLabel.toLowerCase()} to clear before sending.`
+            : 'Template state: prep the ask now before the next proof hop clears.'
+          : template.readiness === 'blocked'
+            ? template.blockingProofHopLabel
+              ? `Template state: intake-only until ${template.blockingProofHopLabel.toLowerCase()} clears.`
+              : 'Template state: intake-only until the proof chain is ready.'
             : undefined;
   const readinessDetail = template.readiness === 'complete'
     ? `${baseDetail} Use this only to confirm the rename already synced.`

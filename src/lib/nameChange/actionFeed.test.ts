@@ -1038,6 +1038,26 @@ describe('name change action feed', () => {
     expect(feed[0]?.laneLabel).toBe('Bank accounts · confirm sync (proof chain complete)');
   });
 
+  it('keeps proof-phase detail fallback copy when staged templates have no named blocker', () => {
+    const feed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({ targetKey: 'banks', targetLabel: 'Banks', recommendedFormCode: 'BANK' }),
+      makeExecutionSnapshot({ targetKey: 'insurance', targetLabel: 'Insurance', recommendedFormCode: 'INS' }),
+      makeExecutionSnapshot({ targetKey: 'taxes', targetLabel: 'Taxes', recommendedFormCode: 'TAX' }),
+    ], [], [], [
+      makeTemplate({ id: 'template-bank', audience: 'Bank accounts', readiness: 'in_progress', blockingProofHopLabel: undefined }),
+      makeTemplate({ id: 'template-insurance', audience: 'Insurance carriers', readiness: 'upcoming', blockingProofHopLabel: undefined }),
+      makeTemplate({ id: 'template-tax', audience: 'Tax agencies', readiness: 'blocked', blockingProofHopLabel: undefined }),
+    ]);
+
+    const bankTemplateItem = feed.find((item) => item.focusTargetId === 'account-update-template-template-bank');
+    const insuranceTemplateItem = feed.find((item) => item.focusTargetId === 'account-update-template-template-insurance');
+    const taxTemplateItem = feed.find((item) => item.focusTargetId === 'account-update-template-template-tax');
+
+    expect(bankTemplateItem?.action.detail).toContain('Template state: draft now and wait for the current proof to clear before sending.');
+    expect(insuranceTemplateItem?.action.detail).toContain('Template state: prep the ask now before the next proof hop clears.');
+    expect(taxTemplateItem?.action.detail).toContain('Template state: intake-only until the proof chain is ready.');
+  });
+
   it('keeps blocked template intake work above lower-value ready execution follow-through', () => {
     const feed = buildNameChangeActionFeed([
       makeExecutionSnapshot({
