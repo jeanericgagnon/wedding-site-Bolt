@@ -223,17 +223,15 @@ function generateSiteConfig(data: OnboardingData): SiteConfig {
 export { generateSiteConfig };
 
 function formatDate(isoDate: string): string {
-  try {
-    const date = new Date(isoDate);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  } catch {
-    return isoDate;
-  }
+  const date = new Date(isoDate);
+  if (Number.isNaN(date.getTime())) return 'the wedding day';
+
+  return date.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
 }
 
 function parseHotelRecommendations(text: string): TravelContent['hotels'] {
