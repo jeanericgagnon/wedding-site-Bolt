@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildNameChangeActionFeed } from './actionFeed';
+import { buildNameChangeActionFeed, getAccountUpdateTemplateReadinessLabel } from './actionFeed';
 import type { NameChangeDocumentRepairQueueItem } from './documentRepairQueue';
 import type { NameChangePlan } from './types';
 import type { NameChangeReminderAttentionItem, NameChangeTargetExecutionSnapshot } from './types';
@@ -137,6 +137,16 @@ function makeReminderAttention(overrides: Partial<NameChangeReminderAttentionIte
     ...overrides,
   };
 }
+
+describe('getAccountUpdateTemplateReadinessLabel', () => {
+  it('keeps planner and feed readiness labels on the same copy map', () => {
+    expect(getAccountUpdateTemplateReadinessLabel('ready')).toBe('send now (proof packet ready)');
+    expect(getAccountUpdateTemplateReadinessLabel('in_progress')).toBe('draft now, send after current proof clears');
+    expect(getAccountUpdateTemplateReadinessLabel('complete')).toBe('confirm sync (proof chain complete)');
+    expect(getAccountUpdateTemplateReadinessLabel('upcoming')).toBe('ask before next proof hop');
+    expect(getAccountUpdateTemplateReadinessLabel('blocked')).toBe('ask intake rules now');
+  });
+});
 
 describe('name change action feed', () => {
   it('merges execution and document repair actions into one ranked feed', () => {

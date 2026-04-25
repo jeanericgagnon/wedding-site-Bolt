@@ -187,19 +187,22 @@ function getTemplateActionLabel(baseLabel: string, template: AccountUpdateTempla
   return `Ask ${audience} intake rules now${blockingProofHopSuffix}`;
 }
 
-function getTemplateLaneLabel(template: AccountUpdateTemplate) {
-  const readinessLabel = template.readiness === 'ready'
+export function getAccountUpdateTemplateReadinessLabel(readiness: AccountUpdateTemplate['readiness']) {
+  return readiness === 'ready'
     ? 'send now (proof packet ready)'
-    : template.readiness === 'complete'
+    : readiness === 'complete'
       ? 'confirm sync (proof chain complete)'
-      : template.readiness === 'in_progress'
+      : readiness === 'in_progress'
         ? 'draft now, send after current proof clears'
-        : template.readiness === 'upcoming'
+        : readiness === 'upcoming'
           ? 'ask before next proof hop'
           : 'ask intake rules now';
+}
+
+function getTemplateLaneLabel(template: AccountUpdateTemplate) {
   const blockingPhaseLabel = getEffectiveBlockingProofHopLabel(template);
 
-  return [template.audience, readinessLabel, blockingPhaseLabel].filter(Boolean).join(' · ');
+  return [template.audience, getAccountUpdateTemplateReadinessLabel(template.readiness), blockingPhaseLabel].filter(Boolean).join(' · ');
 }
 
 function getActionDocumentKind(item: NameChangeActionFeedItem) {

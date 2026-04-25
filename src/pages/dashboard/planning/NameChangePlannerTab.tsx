@@ -4,7 +4,7 @@ import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { buildNameChangeBankExecutionSnapshot } from '../../../lib/nameChange/bankFlow';
 import { buildNameChangeAutofillPrepSnapshot } from '../../../lib/nameChange/autofill';
-import { buildNameChangeActionFeed } from '../../../lib/nameChange/actionFeed';
+import { buildNameChangeActionFeed, getAccountUpdateTemplateReadinessLabel } from '../../../lib/nameChange/actionFeed';
 import { getFallbackBlockingProofHopLabel } from '../../../lib/nameChange/engine';
 import { createDraftNameChangeDocument, normalizeDraftNameChangeDocumentId, upsertDraftNameChangeExtractedField } from '../../../lib/nameChange/intakeDraft';
 import { buildNameChangeCourtesyExecutionSnapshot } from '../../../lib/nameChange/courtesyFlow';
@@ -165,24 +165,8 @@ function getEffectiveBlockingProofHopLabel(template: NonNullable<NameChangePlan[
   return getFallbackBlockingProofHopLabel(template.readiness, template.blockingProofHopLabel);
 }
 
-function getAccountUpdateTemplateStatusLabel(readiness: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]['readiness']) {
-  switch (readiness) {
-    case 'ready':
-      return 'send now (proof packet ready)';
-    case 'in_progress':
-      return 'draft now, send after current proof clears';
-    case 'complete':
-      return 'confirm sync (proof chain complete)';
-    case 'upcoming':
-      return 'ask before next proof hop';
-    case 'blocked':
-    default:
-      return 'ask intake rules now';
-  }
-}
-
 function getAccountUpdateTemplateStatusChip(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
-  const baseLabel = getAccountUpdateTemplateStatusLabel(template.readiness);
+  const baseLabel = getAccountUpdateTemplateReadinessLabel(template.readiness);
   const blockingPhaseLabel = getEffectiveBlockingProofHopLabel(template);
 
   return blockingPhaseLabel ? `${baseLabel} · ${blockingPhaseLabel}` : baseLabel;
