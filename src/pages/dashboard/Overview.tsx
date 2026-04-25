@@ -916,6 +916,11 @@ export const DashboardOverview: React.FC = () => {
                       <Badge variant="secondary">{nameChangeCard.badgeLabel}</Badge>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="rounded-xl border border-sky-300 bg-sky-100/80 px-4 py-3">
+                        <p className="text-xs uppercase tracking-wide text-sky-700">Resume status</p>
+                        <p className="mt-1 text-sm font-semibold text-sky-950">{nameChangeCard.statusLabel}</p>
+                        <p className="mt-1 text-xs text-sky-900">The dashboard keeps the next click soft, obvious, and easy to revisit later.</p>
+                      </div>
                       <div className="rounded-xl border border-sky-200 bg-white px-4 py-3">
                         <p className="text-xs uppercase tracking-wide text-sky-700">Core chain</p>
                         <p className="mt-1 text-sm text-sky-950">Certificate, SSA, and DMV stay together so the legal identity chain does not drift.</p>
@@ -941,7 +946,7 @@ export const DashboardOverview: React.FC = () => {
                         {nameChangeCard.secondaryLabel}
                       </Button>
                       <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/planning?tab=nameChange')}>
-                        {nameChangeOverviewState.hasWorkspace ? 'Open full assistant' : 'See roadmap first'}
+                        {nameChangeOverviewState.hasWorkspace ? 'Open full assistant' : 'Browse full assistant'}
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard/planning')}>
                         Open planning workspace instead

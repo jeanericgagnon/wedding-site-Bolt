@@ -12,6 +12,7 @@ describe('buildNameChangeOverviewCardModel', () => {
     expect(model.primaryLabel).toBe('Start case setup');
     expect(model.primaryHref).toBe('/dashboard/planning?tab=nameChange#case-setup');
     expect(model.secondaryLabel).toBe('See roadmap first');
+    expect(model.statusLabel).toBe('Start free assistant');
   });
 
   it('resumes into the status vault once execution activity exists', () => {
@@ -34,6 +35,18 @@ describe('buildNameChangeOverviewCardModel', () => {
     });
 
     expect(model.primaryLabel).toBe('Review status vault');
+    expect(model.statusLabel).toBe('Status vault complete');
     expect(model.optionalNextStep).toContain('Nothing pushy here');
+  });
+
+  it('keeps the roadmap discoverable when a saved workspace has no execution yet', () => {
+    const model = buildNameChangeOverviewCardModel({
+      hasWorkspace: true,
+      workflowStatus: 'ready',
+      hasExecutionActivity: false,
+    });
+
+    expect(model.statusLabel).toBe('Roadmap saved');
+    expect(model.primaryLabel).toBe('See roadmap first');
   });
 });
