@@ -1557,11 +1557,11 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 <p className="mt-2 text-xs text-text-secondary">{getAccountUpdateTemplateStateLine(template)}</p>
                 <p className="mt-2 text-xs text-text-secondary">{getAccountUpdateTemplateProofStatusLine(template)}</p>
                 <p className="mt-2 text-xs text-text-secondary">{getAccountUpdateTemplateNextAskLine(template)}</p>
-                {formatInlineProofList(template.proofChecklist) ? (
-                  <p className="mt-2 text-xs text-text-secondary">Proof checklist: {formatInlineProofList(template.proofChecklist)}</p>
+                {getAccountUpdateTemplateProofChecklistLine(template) ? (
+                  <p className="mt-2 text-xs text-text-secondary">{getAccountUpdateTemplateProofChecklistLine(template)}</p>
                 ) : null}
-                {formatInlineProofList(template.proofDocuments) ? (
-                  <p className="mt-2 text-xs text-text-secondary">Proof to have handy: {formatInlineProofList(template.proofDocuments)}</p>
+                {getAccountUpdateTemplateProofDocumentsLine(template) ? (
+                  <p className="mt-2 text-xs text-text-secondary">{getAccountUpdateTemplateProofDocumentsLine(template)}</p>
                 ) : null}
                 <p className="mt-2 whitespace-pre-line text-sm text-text-secondary">{template.body}</p>
               </div>
