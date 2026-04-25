@@ -75,4 +75,27 @@ describe('applyInitialSetupAnswersToWeddingProfile', () => {
 
     expect(buildWeddingDataPatchFromProfile(profile).event.weddingDateISO).toBe('');
   });
+
+  it('drops impossible profile event dates instead of rolling them into fake patch dates', () => {
+    const profile = applyInitialSetupAnswersToWeddingProfile({
+      names: 'Alex & Jordan',
+      labelPreference: 'names-only',
+      whenWhere: '2026-06-20 — Puerto Vallarta, Mexico',
+      venueNameOrTbd: 'Narwhal Pickleball Club',
+      style: 'playful, tropical',
+      weekendEventsRaw: 'Welcome drinks and pool time.',
+      ceremonyArrivalTime: '5:00 PM',
+      guestCountBand: 'under-50',
+      plusOnePolicy: 'all',
+      childrenAllowed: 'yes',
+      rsvpDeadline: '2026-04-15',
+      mealChoice: 'no',
+      registryIntent: 'none-for-now',
+      optionalStory: 'We met online. First date was chaotic in the best way.',
+    });
+
+    profile.event.date = '2027-02-30';
+
+    expect(buildWeddingDataPatchFromProfile(profile).event.weddingDateISO).toBe('');
+  });
 });

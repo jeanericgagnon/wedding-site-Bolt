@@ -483,8 +483,10 @@ export const readBuilderValue = <T>(value: T | ProvenanceValue<T> | undefined | 
 };
 
 const toIsoDateOrEmpty = (value?: string | null): string => {
-  if (!value?.trim()) return '';
-  const date = new Date(value);
+  const normalizedDate = normalizeWeddingDate(value);
+  if (!normalizedDate) return '';
+
+  const date = new Date(`${normalizedDate}T12:00:00Z`);
   return Number.isNaN(date.getTime()) ? '' : date.toISOString();
 };
 
