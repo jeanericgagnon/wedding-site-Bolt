@@ -493,7 +493,7 @@ describe('name change action feed', () => {
         readiness: 'blocked',
         readinessLabel: 'The legal-proof chain is still too early, so use this to learn the intake path now and wait to send documents until the upstream proof is real.',
         proofReadinessSummary: 'Do not send yet; the legal proof chain still needs to clear before carrier evidence will stick.',
-        requestSummary: 'Please just share the carrier evidence rules and intake path for now so I can avoid touching cards or claims too early.',
+        requestSummary: 'Please just share the carrier evidence rules and intake path for now so I can return once the legal proof packet is grounded.',
         proofChecklist: [
           'Certified legal name-change proof',
           'Hold policy changes for now and just gather the carrier evidence rules',
@@ -519,8 +519,8 @@ describe('name change action feed', () => {
     expect(feed[0]?.action.detail).toContain('Do not send yet; the legal proof chain still needs to clear before carrier evidence will stick.');
     expect(feed[0]?.action.detail).toContain('Blocked by: legal proof pending.');
     expect(feed[0]?.action.detail).toContain('Proof status: Do not send yet; the legal proof chain still needs to clear before carrier evidence will stick.');
-    expect(feed[0]?.action.detail).toContain('Next ask: Please just share the carrier evidence rules and intake path for now so I can avoid touching cards or claims too early.');
-    expect(feed[0]?.action.detail).toContain('Please just share the carrier evidence rules and intake path for now so I can avoid touching cards or claims too early.');
+    expect(feed[0]?.action.detail).toContain('Next ask: Please just share the carrier evidence rules and intake path for now so I can return once the legal proof packet is grounded.');
+    expect(feed[0]?.action.detail).toContain('Please just share the carrier evidence rules and intake path for now so I can return once the legal proof packet is grounded.');
     expect(feed[0]?.action.detail).toContain('Proof to have handy: Certified legal name-change proof · Hold policy changes for now and just gather the carrier evidence rules');
   });
 
@@ -1184,6 +1184,59 @@ describe('name change action feed', () => {
     expect(licenseTemplateItem?.laneLabel).toBe('Licensing board or credentialing support · ask intake rules now · legal proof pending');
     expect(licenseTemplateItem?.action.label).toBe('Ask licensing board or credentialing support intake rules now (legal proof pending)');
     expect(licenseTemplateItem?.action.detail).toContain('Next ask: Please just share the board submission rules for now so I can return once the legal proof packet is grounded.');
+  });
+
+  it('keeps blocked insurance, travel, and digital-identity next asks anchored to legal-proof readiness', () => {
+    const insuranceFeed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'insurance',
+        targetLabel: 'Insurance carriers',
+        recommendedFormCode: 'INSURANCE',
+      }),
+    ], [], [], [
+      makeTemplate({
+        id: 'template-insurance',
+        audience: 'Insurance carriers',
+        readiness: 'blocked',
+        requestSummary: 'Please just share the carrier evidence rules and intake path for now so I can return once the legal proof packet is grounded.',
+      }),
+    ]);
+    const travelFeed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'tsa',
+        targetLabel: 'Travel profile support',
+        recommendedFormCode: 'TRAVEL',
+      }),
+    ], [], [], [
+      makeTemplate({
+        id: 'template-travel',
+        audience: 'Travel profile support',
+        readiness: 'blocked',
+        requestSummary: 'Please just share your mismatch policy and acceptable temporary-proof rules for now so I can return once the legal proof packet is grounded.',
+      }),
+    ]);
+    const digitalFeed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'utilities',
+        targetLabel: 'Phone, utilities, housing, or primary digital identity support',
+        recommendedFormCode: 'DIGITAL',
+      }),
+    ], [], [], [
+      makeTemplate({
+        id: 'template-digital-identity',
+        audience: 'Phone, utilities, housing, or primary digital identity support',
+        readiness: 'blocked',
+        requestSummary: 'Please just share the verification rules for now so I can return once the legal proof packet is grounded.',
+      }),
+    ]);
+
+    const insuranceTemplateItem = insuranceFeed.find((item) => item.plannerIntent === 'open_account_update_template');
+    const travelTemplateItem = travelFeed.find((item) => item.plannerIntent === 'open_account_update_template');
+    const digitalTemplateItem = digitalFeed.find((item) => item.plannerIntent === 'open_account_update_template');
+
+    expect(insuranceTemplateItem?.action.detail).toContain('Next ask: Please just share the carrier evidence rules and intake path for now so I can return once the legal proof packet is grounded.');
+    expect(travelTemplateItem?.action.detail).toContain('Next ask: Please just share your mismatch policy and acceptable temporary-proof rules for now so I can return once the legal proof packet is grounded.');
+    expect(digitalTemplateItem?.action.detail).toContain('Next ask: Please just share the verification rules for now so I can return once the legal proof packet is grounded.');
   });
 
   it('routes legal-name setup blockers to the planner case-setup section', () => {

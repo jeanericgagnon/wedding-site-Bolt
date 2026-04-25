@@ -220,9 +220,13 @@ describe('name change engine', () => {
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.requestSummary).toBe('Please just confirm the intake path and payroll timing for now so I can come back once the legal proof packet is grounded.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-bank')?.requestSummary).toBe('Please just send the exact bank/card document rules and intake path for now so I can return once the legal proof packet is grounded.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-bank')?.body).toContain('I need your exact document rules first and will send the legal proof packet once it is ready.');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-insurance')?.requestSummary).toBe('Please just share the carrier evidence rules and intake path for now so I can return once the legal proof packet is grounded.');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-insurance')?.body).toContain('I need your exact evidence rules first and will send the legal proof packet once it is ready.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-digital-identity')?.blockingProofHopLabel).toBe('legal proof pending');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-digital-identity')?.body).toContain('Current blocker: legal proof pending.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-digital-identity')?.subject).toBe('Ask intake rules now (legal proof pending): Update my account holder name to match my legal records');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-digital-identity')?.requestSummary).toBe('Please just share the verification rules for now so I can return once the legal proof packet is grounded.');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-digital-identity')?.body).toContain('I need your verification rules first and will send the legal proof packet once it is ready.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-licenses')?.requestSummary).toBe('Please just share the board submission rules for now so I can return once the legal proof packet is grounded.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-licenses')?.body).toContain('I need the board submission rules first and will send the legal proof packet once it is ready.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.blockingProofHopLabel).toBe('legal proof pending');
@@ -230,6 +234,8 @@ describe('name change engine', () => {
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.subject).toBe('Ask intake rules now (legal proof pending): Please align my travel profile with my legal name change');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.proofReadinessSummary).toBe('Do not send yet; the legal proof chain still needs to clear before travel-profile evidence will stick.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.proofChecklist.at(-1)).toBe('Gather mismatch and booking rules only until legal proof is fully grounded.');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.requestSummary).toBe('Please just share your mismatch policy and acceptable temporary-proof rules for now so I can return once the legal proof packet is grounded.');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.body).toContain('I need your mismatch policy first and will send the legal proof packet once it is ready.');
   });
 
   it('uses question-style subject framing for upcoming account-update templates', () => {

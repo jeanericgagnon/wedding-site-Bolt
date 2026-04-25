@@ -500,7 +500,7 @@ function buildAccountUpdateTemplates(
             in_progress: 'Please confirm the carrier intake path now so I can queue cards, billing, and claims follow-through as soon as the updated ID clears.',
             complete: 'Please confirm cards, billing, claims history, and beneficiary settings already reflect the final legal name.',
             upcoming: 'Please confirm whether legal proof alone is enough to start cards, billing, and claims updates before the updated ID lands.',
-            blocked: 'Please just share the carrier evidence rules and intake path for now so I can avoid touching cards or claims too early.',
+            blocked: 'Please just share the carrier evidence rules and intake path for now so I can return once the legal proof packet is grounded.',
           })
         : templateId === 'template-tax'
           ? getReadinessChecklistLine(readiness, {
@@ -516,7 +516,7 @@ function buildAccountUpdateTemplates(
                 in_progress: 'Please confirm the travel support path now so I can queue profile and loyalty updates while the final passport proof is still landing.',
                 complete: 'Please confirm traveler profiles, loyalty records, and any live bookings already match the final ID or passport name.',
                 upcoming: 'Please confirm your hold/change policy and mismatch handling before I touch any bookings while passport timing is still upstream.',
-                blocked: 'Please just share your mismatch policy and acceptable temporary-proof rules for now so I can avoid breaking live travel records.',
+                blocked: 'Please just share your mismatch policy and acceptable temporary-proof rules for now so I can return once the legal proof packet is grounded.',
               })
             : templateId === 'template-digital-identity'
               ? getReadinessChecklistLine(readiness, {
@@ -524,7 +524,7 @@ function buildAccountUpdateTemplates(
                   in_progress: 'Please confirm the verification flow now so I can queue utility, phone, housing, and recovery updates as soon as final ID evidence posts.',
                   complete: 'Please confirm billing, lease contacts, caller ID, and recovery records already show the final legal name everywhere they should.',
                   upcoming: 'Please confirm whether legal proof alone can start utilities, phone, housing, or recovery updates before the updated ID lands.',
-                  blocked: 'Please just share the verification rules for now so I can avoid touching billing or recovery records too early.',
+                  blocked: 'Please just share the verification rules for now so I can return once the legal proof packet is grounded.',
                 })
               : getReadinessChecklistLine(readiness, {
                   ready: 'Please confirm the board-specific submission path, whether my wallet card or public lookup entry will update automatically, and how long the change usually takes.',
@@ -788,7 +788,7 @@ function buildAccountUpdateTemplates(
               in_progress: 'The ID/coverage proof chain is already moving, so I can queue this now and attach the updated ID as soon as it clears.',
               complete: 'Coverage records should already be in sync, so I mainly need confirmation that cards, billing, claims, and beneficiaries all reflect the final legal name.',
               upcoming: 'My legal proof is ready, but updated ID may still be pending, so I need to know whether legal proof alone is enough to start.',
-              blocked: 'The legal-proof chain is still upstream, so I need your exact evidence rules before I touch cards, claims, or autopay.',
+              blocked: 'The legal-proof chain is still upstream, so I need your exact evidence rules first and will send the legal proof packet once it is ready.',
             })
           : template.id === 'template-tax'
             ? getReadinessChecklistLine(readiness, {
@@ -804,7 +804,7 @@ function buildAccountUpdateTemplates(
                   in_progress: 'Passport or travel identity updates are already moving, so I can draft this now and send final proof once the current document lands.',
                   complete: 'The travel-side rename should already be in place, so I mainly need confirmation that traveler profiles, loyalty records, and live bookings all match the final ID.',
                   upcoming: 'My legal proof is ready, but passport/travel identity timing is still upstream, so I need your hold/change policy before I touch bookings.',
-                  blocked: 'The passport/identity proof chain is still too early, so I first need your mismatch policy and acceptable temporary proof.',
+                  blocked: 'The legal-proof chain is still upstream, so I need your mismatch policy first and will send the legal proof packet once it is ready.',
                 })
               : template.id === 'template-digital-identity'
                 ? getReadinessChecklistLine(readiness, {
@@ -812,7 +812,7 @@ function buildAccountUpdateTemplates(
                     in_progress: 'The ID and account-proof chain is already moving, so I can prep this now and send final ID evidence as soon as it posts.',
                     complete: 'These identity records should already be synced, so I mainly need confirmation that billing, recovery, caller ID, and contact records all show the final legal name.',
                     upcoming: 'My legal proof is ready, but photo-ID follow-through is still upstream, so I need to know whether legal proof alone can start the update.',
-                    blocked: 'The proof chain is still upstream, so I need your verification rules before I change utilities, phone, or recovery records.',
+                    blocked: 'The proof chain is still upstream, so I need your verification rules first and will send the legal proof packet once it is ready.',
                   })
                 : template.id === 'template-licenses'
                   ? getReadinessChecklistLine(readiness, {
