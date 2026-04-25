@@ -259,8 +259,12 @@ export function getAccountUpdateTemplateContextLines(
   ].filter(Boolean);
 }
 
-function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemplate) {
-  const readinessDetail = getAccountUpdateTemplateReadinessDetailLine(baseDetail, template);
+function getTemplateActionDetail(template: AccountUpdateTemplate) {
+  const readinessLabel = getEngineAccountUpdateTemplateReadinessLabel(
+    template.readiness,
+    template.blockingProofHopLabel,
+  );
+  const readinessDetail = getAccountUpdateTemplateReadinessDetailLine(readinessLabel, template);
   return [
     readinessDetail,
     ...getAccountUpdateTemplateContextLines(template, { includeAudience: true, includeStatus: true }),
@@ -545,7 +549,7 @@ export function buildNameChangeActionFeed(
         ? {
             ...snapshot.nextAction,
             label: getTemplateActionLabel(linkedTemplate),
-            detail: getTemplateActionDetail(snapshot.nextAction.detail, linkedTemplate),
+            detail: getTemplateActionDetail(linkedTemplate),
           }
         : snapshot.nextAction,
     };

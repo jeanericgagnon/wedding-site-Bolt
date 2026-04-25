@@ -554,7 +554,7 @@ describe('name change action feed', () => {
       urgencyReason: 'packet_trust',
       action: expect.objectContaining({
         label: 'Send bank accounts update (proof packet ready)',
-        detail: expect.stringContaining('Ready for final bank review. Send this now with the current proof packet.'),
+        detail: expect.stringContaining('You have enough upstream proof to send this now. Send this now with the current proof packet.'),
       }),
     });
     expect(feed[0]?.action.detail).toContain('Template state: proof packet ready to send now.');
@@ -732,6 +732,7 @@ describe('name change action feed', () => {
     expect(feed[0]?.action.detail).toContain(
       'Readiness: The legal-proof chain is still too early, so use this to learn the intake path now and wait to send documents until the upstream proof is real (legal proof pending).',
     );
+    expect(feed[0]?.action.detail).not.toContain('Need legal proof first.');
     expect(feed[0]?.action.detail).toContain('Subject: Insurance carriers');
     expect(feed[0]?.action.detail).toContain('Subject: Insurance carriers\nTemplate message: I can provide certified legal proof.');
     expect(feed[0]?.action.detail).toContain('Template message: I can provide certified legal proof.');
@@ -854,7 +855,11 @@ describe('name change action feed', () => {
       focusTargetId: 'account-update-template-template-tax',
       laneLabel: 'Tax and state agencies · draft now, send after current proof clears · SSA pending',
       urgencyReason: 'blocking_dependency',
-      action: expect.objectContaining({ detail: expect.stringContaining('Tax packet can be prepped now. Draft this now, then send it only after SSA pending clears.') }),
+      action: expect.objectContaining({
+        detail: expect.stringContaining(
+          'The upstream identity work is already moving, so this outreach can be drafted now and sent as soon as the current step lands (SSA pending). Draft this now, then send it only after SSA pending clears.',
+        ),
+      }),
     });
   });
 
