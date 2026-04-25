@@ -57,5 +57,5 @@ export function buildNameChangePassportFormSnapshot(
       ? NAME_CHANGE_PASSPORT_CORRECTION_FORM_CONTRACT
       : NAME_CHANGE_PASSPORT_RENEWAL_FORM_CONTRACT;
 
-  return buildNameChangeFormPayloadSnapshot(contract, profile, documents, extractedFields);
+  return buildNameChangeFormPayloadSnapshot(contract, profile, documents, mergedExtractedFields);
 }
