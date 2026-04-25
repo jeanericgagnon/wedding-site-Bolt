@@ -80,7 +80,7 @@ export function buildNameChangeOverviewCardModel(input: {
     headline: 'Start whenever you want, then come back whenever you need',
     statusLabel: 'Roadmap saved',
     helperCopy: 'The roadmap is already there, even if you have not started checking steps off yet, so you can come back without rebuilding the plan.',
-    primaryHref: base,
+    primaryHref: `${base}#name-change-roadmap`,
     primaryLabel: 'See roadmap first',
     secondaryHref: `${base}#case-setup`,
     secondaryLabel: 'Update case setup',

@@ -59,6 +59,7 @@ describe('buildNameChangeOverviewCardModel', () => {
     expect(model.headline).toBe('Start whenever you want, then come back whenever you need');
     expect(model.statusLabel).toBe('Roadmap saved');
     expect(model.primaryLabel).toBe('See roadmap first');
+    expect(model.primaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
     expect(model.tertiaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
   });
 });
