@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildNameChangeTargetExecutionSnapshot,
   getExecutionNextActionDetail,
+  hasExecutionSupportiveWaitGuidance,
   getExecutionStatusVaultNotes,
 } from './targetExecution';
 import { buildNameChangePlan } from './engine';
@@ -2647,6 +2648,7 @@ describe('name change target execution snapshot', () => {
     } as const;
 
     expect(getExecutionNextActionDetail(snapshot)).toContain('Actual submission can safely wait.');
+    expect(hasExecutionSupportiveWaitGuidance(snapshot)).toBe(true);
   });
 
   it('hides guided next-action fallback notes from the visible status-vault stack', () => {

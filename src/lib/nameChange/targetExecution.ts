@@ -91,6 +91,12 @@ function getSupportiveExecutionWaitLine(snapshot: Pick<NameChangeTargetExecution
   }
 }
 
+export function hasExecutionSupportiveWaitGuidance(
+  snapshot: Pick<NameChangeTargetExecutionSnapshot, 'targetKey' | 'nextAction'>,
+) {
+  return Boolean(getSupportiveExecutionWaitLine(snapshot));
+}
+
 export function getExecutionNextActionDetail(snapshot: Pick<NameChangeTargetExecutionSnapshot, 'targetKey' | 'nextAction'>) {
   const supportiveWaitLine = getSupportiveExecutionWaitLine(snapshot);
   if (!supportiveWaitLine || snapshot.nextAction.detail.includes('Actual submission can safely wait.')) {

@@ -10,7 +10,10 @@ import {
   getAccountUpdateTemplateStatusLine as getEngineAccountUpdateTemplateStatusLine,
   getFallbackBlockingProofHopLabel,
 } from './engine';
-import { getExecutionNextActionDetail as getTargetExecutionNextActionDetail } from './targetExecution';
+import {
+  getExecutionNextActionDetail as getTargetExecutionNextActionDetail,
+  hasExecutionSupportiveWaitGuidance,
+} from './targetExecution';
 import type { NameChangeGuidedAction, NameChangePlan, NameChangeReminderAttentionItem, NameChangeTargetExecutionSnapshot } from './types';
 
 export interface NameChangeActionFeedItem {
@@ -423,6 +426,7 @@ function getActionFeedUrgencyTier(score: number, severity: NameChangeActionFeedI
 function getActionFeedUrgencyReason(
   action: NameChangeGuidedAction,
   severity: NameChangeActionFeedItem['severity'],
+  executionSnapshot?: Pick<NameChangeTargetExecutionSnapshot, 'targetKey' | 'nextAction'>,
   template?: AccountUpdateTemplate,
 ): NameChangeActionFeedItem['urgencyReason'] {
   if (template) {
@@ -430,6 +434,10 @@ function getActionFeedUrgencyReason(
     if (template.readiness === 'complete') return 'review_queue';
     if (template.readiness === 'in_progress') return getEffectiveBlockingProofHopLabel(template) ? 'blocking_dependency' : 'review_queue';
     return 'packet_trust';
+  }
+
+  if (executionSnapshot && action.category === 'dependency' && hasExecutionSupportiveWaitGuidance(executionSnapshot)) {
+    return 'review_queue';
   }
 
   if (action.category === 'dependency' && severity === 'blocking') return 'blocking_dependency';
@@ -545,7 +553,7 @@ export function buildNameChangeActionFeed(
         : snapshot.recommendedFormCode,
       severity,
       urgencyTier: getActionFeedUrgencyTier(score, severity),
-      urgencyReason: getActionFeedUrgencyReason(snapshot.nextAction, severity, linkedTemplate),
+      urgencyReason: getActionFeedUrgencyReason(snapshot.nextAction, severity, snapshot, linkedTemplate),
       plannerIntent: routesToDocumentRepair
         ? 'open_document_repair'
         : routesToTemplate

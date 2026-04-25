@@ -2019,6 +2019,7 @@ describe('name change action feed', () => {
 
     const feed = buildNameChangeActionFeed([snapshot], [], []);
     expect(feed[0]?.action.detail).toBe(getExecutionNextActionDetail(snapshot));
+    expect(feed[0]?.urgencyReason).toBe('review_queue');
   });
 
   it('falls back to generic blocker text when the blocker label is blank whitespace', () => {
