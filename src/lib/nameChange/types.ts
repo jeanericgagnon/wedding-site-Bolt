@@ -241,6 +241,7 @@ export interface NameChangePlanSummary {
     body: string;
     readiness: 'ready' | 'blocked' | 'upcoming' | 'in_progress' | 'complete';
     readinessLabel: string;
+    requestSummary: string;
     dependsOnStepIds: string[];
     proofChecklist: string[];
   }>;

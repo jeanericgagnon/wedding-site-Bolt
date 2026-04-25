@@ -742,6 +742,7 @@ function buildAccountUpdateTemplates(
       body: template.buildBody(proofLine, readinessLabel, requestLine),
       readiness,
       readinessLabel,
+      requestSummary: requestLine,
       dependsOnStepIds: [...template.dependsOnStepIds],
       proofChecklist,
     };
