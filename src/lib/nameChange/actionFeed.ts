@@ -19,6 +19,17 @@ export interface NameChangeActionFeedItem {
 
 type AccountUpdateTemplate = NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number];
 
+function getEffectiveBlockingProofHopLabel(template: AccountUpdateTemplate) {
+  return template.blockingProofHopLabel?.trim()
+    || (template.readiness === 'in_progress'
+      ? 'current proof pending'
+      : template.readiness === 'upcoming'
+        ? 'next proof hop pending'
+        : template.readiness === 'blocked'
+          ? 'proof chain pending'
+          : undefined);
+}
+
 function getTemplateIdForTargetKey(targetKey: NameChangeTargetExecutionSnapshot['targetKey']) {
   switch (targetKey) {
     case 'employer':
@@ -58,7 +69,7 @@ function getTemplateFocusTargetId(template: AccountUpdateTemplate | undefined) {
 }
 
 function getTemplateBlockedByLine(template: AccountUpdateTemplate) {
-  const blockingProofHopLabel = template.blockingProofHopLabel?.trim();
+  const blockingProofHopLabel = getEffectiveBlockingProofHopLabel(template);
   return blockingProofHopLabel
     ? `Blocked by: ${blockingProofHopLabel}.`
     : template.readiness === 'in_progress'
@@ -165,7 +176,7 @@ function formatTemplateAudienceForAction(audience: string) {
 
 function getTemplateActionLabel(baseLabel: string, template: AccountUpdateTemplate) {
   const audience = formatTemplateAudienceForAction(template.audience);
-  const blockingProofHopLabel = template.blockingProofHopLabel?.trim();
+  const blockingProofHopLabel = getEffectiveBlockingProofHopLabel(template);
   const blockingProofHopSuffix = blockingProofHopLabel
     ? ` (${blockingProofHopLabel})`
     : template.readiness === 'in_progress'
@@ -192,14 +203,7 @@ function getTemplateLaneLabel(template: AccountUpdateTemplate) {
         : template.readiness === 'upcoming'
           ? 'ask before next proof hop'
           : 'ask intake rules now';
-  const blockingPhaseLabel = template.blockingProofHopLabel?.trim()
-    || (template.readiness === 'in_progress'
-      ? 'current proof pending'
-      : template.readiness === 'upcoming'
-        ? 'next proof hop pending'
-        : template.readiness === 'blocked'
-          ? 'proof chain pending'
-          : undefined);
+  const blockingPhaseLabel = getEffectiveBlockingProofHopLabel(template);
 
   return [template.audience, readinessLabel, blockingPhaseLabel].filter(Boolean).join(' · ');
 }
@@ -311,7 +315,7 @@ function getActionFeedUrgencyReason(
   if (template) {
     if (template.readiness === 'blocked' || template.readiness === 'upcoming') return 'blocking_dependency';
     if (template.readiness === 'complete') return 'review_queue';
-    if (template.readiness === 'in_progress') return template.blockingProofHopLabel?.trim() ? 'blocking_dependency' : 'review_queue';
+    if (template.readiness === 'in_progress') return getEffectiveBlockingProofHopLabel(template) ? 'blocking_dependency' : 'review_queue';
     return 'packet_trust';
   }
 
