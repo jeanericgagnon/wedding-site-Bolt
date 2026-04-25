@@ -562,6 +562,36 @@ describe('name change reminder suggestions', () => {
     expect(attention.some((item) => item.reminderKey === 'reminder-insurance' && item.isStale)).toBe(true);
   });
 
+  it('treats invalid persisted workflow touch timestamps as stale reminder attention', () => {
+    const plan = buildNameChangePlan(makeInput());
+    const attention = deriveNameChangeReminderAttention([
+      {
+        reminder_key: 'reminder-banks',
+        label: 'Banks',
+        reason: 'Reason',
+        depends_on_step_id: 'institution-banks',
+        suggested_offset_days: 5,
+        urgency: 'medium',
+        status: 'pending',
+      },
+    ], {
+      ...plan,
+      steps: plan.steps.map((step) => step.id === 'institution-banks'
+        ? { ...step, executionStatus: 'todo' as const, executionUpdatedAt: 'not-a-date' }
+        : step),
+    }, '2026-04-18T12:00:00.000Z');
+
+    expect(attention).toEqual([
+      expect.objectContaining({
+        reminderKey: 'reminder-banks',
+        lastTouchedAt: 'not-a-date',
+        isStale: true,
+        priorityTier: 'elevated',
+        actionability: 'blocked_by_untouched_step',
+      }),
+    ]);
+  });
+
   it('marks untouched stale high-urgency attention as critical', () => {
     const plan = buildNameChangePlan(makeInput());
     const attention = deriveNameChangeReminderAttention([

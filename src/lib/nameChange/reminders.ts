@@ -2,6 +2,13 @@ import { NAME_CHANGE_INSTITUTION_LIBRARY } from './registry';
 import type { NameChangePlan, NameChangeReminderAttentionItem, NameChangeReminderAttentionSummary, NameChangeReminderInput, NameChangeReminderSuggestion, NameChangeReminderSummary } from './types';
 
 const REMINDER_STALE_AFTER_MS = 1000 * 60 * 60 * 72;
+
+function getReminderTimestamp(value: string | null | undefined): number | null {
+  if (!value) return null;
+  const parsed = new Date(value);
+  const time = parsed.getTime();
+  return Number.isNaN(time) ? null : time;
+}
 const MILESTONE_CONFIRM_REMINDER_PREFIX = 'reminder-milestone-confirm-';
 
 type NameChangeCoreStepReminderConfig = {
@@ -672,7 +679,7 @@ export function deriveNameChangeReminderAttention(
   nowIso: string = new Date().toISOString(),
 ): NameChangeReminderAttentionItem[] {
   const attentionItems: NameChangeReminderAttentionItem[] = [];
-  const nowMs = new Date(nowIso).getTime();
+  const nowMs = getReminderTimestamp(nowIso) ?? Date.now();
 
   reminders
     .filter((reminder) => reminder.status === 'pending' || reminder.status === 'scheduled')
@@ -684,7 +691,8 @@ export function deriveNameChangeReminderAttention(
       if (dependentStep.executionStatus === 'complete' && !milestoneConfirmation) return;
 
       const lastTouchedAt = dependentStep.executionUpdatedAt ?? null;
-      const isStale = lastTouchedAt ? (nowMs - new Date(lastTouchedAt).getTime()) >= REMINDER_STALE_AFTER_MS : true;
+      const lastTouchedMs = getReminderTimestamp(lastTouchedAt);
+      const isStale = lastTouchedMs === null ? true : (nowMs - lastTouchedMs) >= REMINDER_STALE_AFTER_MS;
       const priorityTier = isStale && reminder.urgency === 'high' && (dependentStep.executionStatus ?? 'todo') === 'todo'
         ? 'critical'
         : isStale || reminder.urgency === 'high'
