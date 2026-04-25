@@ -357,8 +357,78 @@ describe('name change action feed', () => {
       focusTargetId: 'account-update-template-template-bank',
       laneLabel: 'Bank accounts · confirm synced',
       urgencyReason: 'review_queue',
+      urgencyTier: 'normal',
     });
     expect(feed[0]?.action.detail).toContain('clean confirmation/update pass');
+  });
+
+  it('keeps ready send-now template work ahead of complete confirmation passes', () => {
+    const feed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'banks',
+        targetLabel: 'Bank accounts',
+        recommendedFormCode: 'BANK',
+        nextAction: {
+          category: 'review',
+          label: 'Confirm bank rename landed',
+          detail: 'Check whether the rename already synced across statements and cards.',
+        },
+        blockers: [],
+        ready: true,
+        readinessSummary: {
+          status: 'ready',
+          blockingFieldRisks: 0,
+          attentionFieldRisks: 0,
+          lowConfidenceFields: 0,
+          missingFields: 0,
+          documentRepairDebt: 0,
+          summaryLabel: 'Ready.',
+        },
+      }),
+      makeExecutionSnapshot({
+        targetKey: 'insurance',
+        targetLabel: 'Insurance carriers',
+        recommendedFormCode: 'INS',
+        nextAction: {
+          category: 'review',
+          label: 'Send insurance update',
+          detail: 'Insurance packet is ready to send.',
+        },
+        blockers: [],
+        ready: true,
+        readinessSummary: {
+          status: 'ready',
+          blockingFieldRisks: 0,
+          attentionFieldRisks: 0,
+          lowConfidenceFields: 0,
+          missingFields: 0,
+          documentRepairDebt: 0,
+          summaryLabel: 'Ready.',
+        },
+      }),
+    ], [], [], [
+      makeTemplate({
+        id: 'template-bank',
+        audience: 'Bank accounts',
+        readiness: 'complete',
+      }),
+      makeTemplate({
+        id: 'template-insurance',
+        audience: 'Insurance carriers',
+        readiness: 'ready',
+      }),
+    ]);
+
+    expect(feed[0]).toMatchObject({
+      title: 'Insurance carriers',
+      laneLabel: 'Insurance carriers · send now',
+      urgencyTier: 'normal',
+    });
+    expect(feed[1]).toMatchObject({
+      title: 'Bank accounts',
+      laneLabel: 'Bank accounts · confirm synced',
+      urgencyTier: 'normal',
+    });
   });
 
   it('routes blocked institutional work into the readiness-aware template when intake guidance is still useful', () => {

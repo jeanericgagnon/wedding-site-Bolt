@@ -45,7 +45,8 @@ function getTemplateIdForTargetKey(targetKey: NameChangeTargetExecutionSnapshot[
 
 function getTemplateUrgencyBoost(template: AccountUpdateTemplate | undefined) {
   if (!template) return 0;
-  if (template.readiness === 'ready' || template.readiness === 'complete') return 18;
+  if (template.readiness === 'ready') return 18;
+  if (template.readiness === 'complete') return 10;
   if (template.readiness === 'in_progress') return 12;
   if (template.readiness === 'upcoming') return 6;
   if (template.readiness === 'blocked') return 8;
