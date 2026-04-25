@@ -5,6 +5,7 @@ import {
   formatAccountUpdateTemplateBlockerLine,
   formatBlockingProofHopStatePhrase,
   formatInlineProofList,
+  getAccountUpdateTemplateAudienceLine,
   getAccountUpdateTemplateBlockedByLine,
   getAccountUpdateTemplateContextLines,
   getAccountUpdateTemplateCurrentBlockerLine,
@@ -193,6 +194,7 @@ describe('account update template surface helpers', () => {
       proofDocuments: ['Certified legal name-change proof.', 'Updated photo ID or DMV receipt'],
     });
 
+    expect(getAccountUpdateTemplateAudienceLine(template)).toBe('Audience: Bank accounts');
     expect(getAccountUpdateTemplateSubjectLine(template)).toBe(
       'Subject: Send now (proof packet ready): Name change update for banking profile',
     );
@@ -209,6 +211,19 @@ describe('account update template surface helpers', () => {
     );
     expect(getAccountUpdateTemplateReadinessLine(template)).toBe(`Readiness: ${template.readinessLabel}`);
     expect(getAccountUpdateTemplateReadinessLine(template, { prefix: false })).toBe(template.readinessLabel);
+    expect(getAccountUpdateTemplateContextLines(template, { includeAudience: true })).toEqual([
+      getAccountUpdateTemplateAudienceLine(template),
+      getAccountUpdateTemplateReadinessLine(template),
+      getAccountUpdateTemplateChecklistLine(template)!,
+      getAccountUpdateTemplateChecklistStatusLine(template)!,
+      getAccountUpdateTemplateStateLine(template)!,
+      getAccountUpdateTemplateProofStatusLine(template),
+      getAccountUpdateTemplateNextAskLine(template),
+      getAccountUpdateTemplateProofChecklistLine(template)!,
+      getAccountUpdateTemplateProofDocumentsLine(template)!,
+      getAccountUpdateTemplateSubjectLine(template),
+      getAccountUpdateTemplateMessageLine(template),
+    ]);
     expect(getAccountUpdateTemplateContextLines(template)).toEqual([
       getAccountUpdateTemplateReadinessLine(template),
       getAccountUpdateTemplateChecklistLine(template)!,
@@ -536,6 +551,7 @@ describe('name change action feed', () => {
       urgencyTier: 'normal',
     });
     expect(feed[0]?.action.label).toBe('Confirm bank accounts sync (proof chain complete)');
+    expect(feed[0]?.action.detail).toContain('Audience: Bank accounts');
     expect(feed[0]?.action.detail).toContain('Template state: proof chain complete; confirm the downstream sync only.');
     expect(feed[0]?.action.detail).toContain('Subject: Confirm sync (proof chain complete): Name change update for banking profile');
     expect(feed[0]?.action.detail).toContain('Use this only to confirm the downstream sync already landed.');

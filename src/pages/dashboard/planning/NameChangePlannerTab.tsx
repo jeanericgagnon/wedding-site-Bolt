@@ -7,6 +7,7 @@ import { buildNameChangeAutofillPrepSnapshot } from '../../../lib/nameChange/aut
 import {
   buildNameChangeActionFeed,
   ensureTerminalPeriod,
+  getAccountUpdateTemplateAudienceLine,
   getAccountUpdateTemplateContextLines,
   getAccountUpdateTemplateMessageLine,
   getAccountUpdateTemplateReadinessLabel,
@@ -193,7 +194,7 @@ function getAccountUpdateTemplateCopyButtonLabel(
 
 function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
   return [
-    `Audience: ${template.audience}`,
+    getAccountUpdateTemplateAudienceLine(template),
     `Status: ${getAccountUpdateTemplateStatusChip(template)}`,
     ...getAccountUpdateTemplateContextLines(template, { includeMessage: false }),
     '',
