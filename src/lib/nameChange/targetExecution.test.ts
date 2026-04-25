@@ -2961,6 +2961,22 @@ describe('name change target execution snapshot', () => {
     expect(getExecutionNextActionDetail(snapshot)).toBe(snapshot.nextAction.detail);
   });
 
+  it('adds title and auto-policy prep guidance to travel supportive waits', () => {
+    expect(getExecutionNextActionGuidance({
+      targetKey: 'tsa',
+      nextAction: {
+        category: 'dependency',
+        label: 'Unblock passport timing',
+        detail: 'Wait for the passport update before submitting travel changes.',
+      },
+    })).toEqual({
+      overview: 'Wait for the passport update before submitting travel changes.',
+      doNow: 'Review upcoming bookings, traveler profiles, loyalty accounts, title records, and auto-policy details now.',
+      whyItHelps: 'That sync goes quicker once passport timing clears.',
+      canWait: 'Actual submission can safely wait.',
+    });
+  });
+
   it('hides guided next-action fallback notes from the visible status-vault stack', () => {
     const guidedDetail = getExecutionNextActionDetail({
       targetKey: 'banks',

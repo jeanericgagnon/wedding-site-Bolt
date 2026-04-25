@@ -804,10 +804,10 @@ function buildAccountUpdateTemplates(
             })
           : templateId === 'template-travel'
             ? getReadinessChecklistLine(readiness, {
-                ready: 'Please confirm what proof you need, whether existing bookings can stay linked, and how to avoid check-in or TSA mismatch issues during the transition.',
-                in_progress: 'Please confirm the travel support path now so I can queue profile and loyalty updates while the final passport proof is still landing.',
-                complete: 'Please confirm traveler profiles, loyalty records, and any live bookings already match the final ID or passport name.',
-                upcoming: 'Please confirm your hold/change policy and mismatch handling before I touch any bookings while passport timing is still upstream.',
+                ready: 'Please confirm what proof you need, whether existing bookings can stay linked, and how to avoid check-in, TSA, title, or auto-policy mismatch issues during the transition.',
+                in_progress: 'Please confirm the travel support path now so I can queue traveler-profile, loyalty, vehicle-title, and auto-policy updates while the final passport proof is still landing.',
+                complete: 'Please confirm traveler profiles, loyalty records, vehicle title/registration files, auto-policy records, and any live bookings already match the final ID or passport name.',
+                upcoming: 'Please confirm your hold/change policy and mismatch handling for bookings, title records, and auto policies before I touch any of them while passport timing is still upstream.',
                 blocked: 'Please just share your mismatch policy and acceptable temporary-proof rules for now so I can return once the legal proof packet is grounded.',
               })
             : templateId === 'template-digital-identity'
@@ -864,9 +864,9 @@ function buildAccountUpdateTemplates(
             })
           : templateId === 'template-travel'
           ? getReadinessChecklistLine(readiness, {
-              ready: 'Send with the passport-safe identity packet now so bookings and loyalty profiles stay aligned.',
+              ready: 'Send with the passport-safe identity packet now so bookings, loyalty profiles, title records, and auto policies stay aligned.',
               in_progress: 'Hold send until final passport proof lands, but lock the mismatch and booking policy now.',
-              complete: 'Use this as a confirmation pass that traveler profiles, loyalty records, and live bookings already synced.',
+              complete: 'Use this as a confirmation pass that traveler profiles, loyalty records, title files, auto policies, and live bookings already synced.',
               upcoming: 'Do not send yet; legal proof is grounded, but passport timing is still the missing proof hop.',
               blocked: 'Do not send yet; the legal proof chain still needs to clear before travel-profile evidence will stick.',
             })
@@ -926,9 +926,9 @@ function buildAccountUpdateTemplates(
             })
           : templateId === 'template-travel'
           ? getReadinessChecklistLine(readiness, {
-              ready: 'Attach the passport-safe packet now and flag any live booking references.',
+              ready: 'Attach the passport-safe packet now and flag any live booking, title, or auto-policy references.',
               in_progress: 'Queue this now, then attach final passport-safe proof once it lands.',
-              complete: 'Use this to confirm traveler profiles, loyalty records, and live bookings already match.',
+              complete: 'Use this to confirm traveler profiles, loyalty records, title files, auto policies, and live bookings already match.',
               upcoming: 'Wait to send until passport-safe proof is the next cleared hop.',
               blocked: 'Gather mismatch and booking rules only until legal proof is fully grounded.',
             })
@@ -1020,8 +1020,8 @@ function buildAccountUpdateTemplates(
     },
     {
       id: 'template-travel',
-      audience: 'Airline, hotel, loyalty, or travel support',
-      subject: 'Please align my travel profile with my legal name change',
+      audience: 'Airline, hotel, loyalty, DMV title/registration, auto insurance, or travel support',
+      subject: 'Please align my travel, loyalty, vehicle title, and auto-policy records with my legal name change',
       dependsOnStepIds: [
         'federal-passport',
         'institution-tsa-precheck',
@@ -1034,7 +1034,7 @@ function buildAccountUpdateTemplates(
         needsPassport ? 'Updated passport or passport renewal timing confirmation' : 'Current passport details if no passport update is needed',
         'Any existing booking references that need manual relinking',
       ],
-      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, audienceLine: string, statusLine: string, proofReadinessSummary: string, blockingProofHopSentence: string, checklistGuidanceLine: string, proofChecklistLine: string) => `Hello — I am updating my legal name and need my traveler profile, loyalty records, and any upcoming reservation notes aligned so they do not conflict with my ID or passport timing. ${audienceLine} ${readinessIntro} ${statusLine} ${blockingProofHopSentence} ${proofReadinessSummary} ${proofLine} ${proofChecklistLine} ${checklistGuidanceLine} ${readinessLine} ${requestLine}`,
+      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, audienceLine: string, statusLine: string, proofReadinessSummary: string, blockingProofHopSentence: string, checklistGuidanceLine: string, proofChecklistLine: string) => `Hello — I am updating my legal name and need my traveler profile, loyalty records, vehicle title/registration files, auto-policy records, and any upcoming reservation notes aligned so they do not conflict with my ID or passport timing. ${audienceLine} ${readinessIntro} ${statusLine} ${blockingProofHopSentence} ${proofReadinessSummary} ${proofLine} ${proofChecklistLine} ${checklistGuidanceLine} ${readinessLine} ${requestLine}`,
     },
     {
       id: 'template-digital-identity',
@@ -1171,8 +1171,8 @@ function buildAccountUpdateTemplates(
               ? getReadinessChecklistLine(readiness, {
                   ready: 'Send the travel-safe packet now with the passport or identity proof now in hand',
                   in_progress: 'Draft the travel request now and attach final passport proof once it lands',
-                  complete: 'Confirm traveler profiles, loyalty accounts, and live bookings all match the final ID name',
-                  upcoming: 'Confirm hold/change policy before touching bookings while passport timing is still upstream',
+                  complete: 'Confirm traveler profiles, loyalty accounts, title files, auto policies, and live bookings all match the final ID name',
+                  upcoming: 'Confirm hold/change policy before touching bookings, title records, or auto policies while passport timing is still upstream',
                   blocked: 'Ask for mismatch policy and booking rules before the legal proof packet is ready',
                 })
               : template.id === 'template-digital-identity'

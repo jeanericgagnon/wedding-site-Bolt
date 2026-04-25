@@ -123,7 +123,7 @@ function getSupportiveExecutionWaitGuidance(snapshot: Pick<NameChangeTargetExecu
       };
     case 'tsa':
       return {
-        doNow: 'Review upcoming bookings and traveler-profile settings now.',
+        doNow: 'Review upcoming bookings, traveler profiles, loyalty accounts, title records, and auto-policy details now.',
         whyItHelps: `That sync goes quicker once ${blockingLabel} clears.`,
         canWait: 'Actual submission can safely wait.',
       };
