@@ -1,6 +1,17 @@
 import type { WeddingProfile } from './weddingProfile';
 import { parseWeekendEvents } from './weddingProfile';
 
+const normalizeLegacyOnboardingDateInput = (value?: string | null): string => {
+  const trimmed = value?.trim() || '';
+  if (!trimmed) return '';
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return '';
+
+  const date = new Date(`${trimmed}T12:00:00Z`);
+  if (Number.isNaN(date.getTime())) return '';
+
+  return date.toISOString().slice(0, 10) === trimmed ? trimmed : '';
+};
+
 export type LegacyOnboardingFormShape = {
   partnerNames: string;
   story: string;
@@ -24,7 +35,7 @@ export type LegacyOnboardingFormShape = {
 export const legacyProfileToOnboardingForm = (profile: WeddingProfile): LegacyOnboardingFormShape => ({
   partnerNames: profile.couple.displayNames,
   partnerLabels: `${profile.couple.partnerOneLabel || 'none'}|${profile.couple.partnerTwoLabel || 'none'}`,
-  weddingDate: profile.event.date || '',
+  weddingDate: normalizeLegacyOnboardingDateInput(profile.event.date),
   venueName: profile.event.venueName || '',
   venueLocation: profile.event.venueLocation || '',
   theme: profile.design.theme || profile.design.vibe,
@@ -37,7 +48,7 @@ export const legacyProfileToOnboardingForm = (profile: WeddingProfile): LegacyOn
   mealChoice: '',
   registryIntent: '',
   extraGuestNotes: profile.story.welcomeNote || '',
-  rsvpDeadline: profile.event.rsvpDeadline || '',
+  rsvpDeadline: normalizeLegacyOnboardingDateInput(profile.event.rsvpDeadline),
   registryLink: '',
 });
 
