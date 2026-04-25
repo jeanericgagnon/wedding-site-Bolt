@@ -58,13 +58,15 @@ function getTemplateFocusTargetId(template: AccountUpdateTemplate | undefined) {
 }
 
 function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemplate) {
-  const readinessChecklistItem = template.proofChecklist[template.proofChecklist.length - 1];
+  const proofChecklistSummary = template.proofChecklist.length > 0
+    ? `Proof to have handy: ${template.proofChecklist.join(' · ')}`
+    : undefined;
   return [
     baseDetail,
     template.readinessLabel,
     template.proofReadinessSummary,
     template.requestSummary,
-    readinessChecklistItem,
+    proofChecklistSummary,
   ].filter(Boolean).join(' ').trim();
 }
 

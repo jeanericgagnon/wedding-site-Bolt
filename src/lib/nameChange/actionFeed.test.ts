@@ -372,7 +372,7 @@ describe('name change action feed', () => {
     expect(feed[0]?.action.detail).toContain('clean confirmation/update pass');
     expect(feed[0]?.action.detail).toContain('Use this as a confirmation pass that cards, checks, statements, and profile records already synced.');
     expect(feed[0]?.action.detail).toContain('Please confirm cards, checks, statements, and my online profile already reflect the final legal name everywhere.');
-    expect(feed[0]?.action.detail).toContain('Confirm cards, statements, and online banking all reflect the final legal name');
+    expect(feed[0]?.action.detail).toContain('Proof to have handy: Certified legal name-change proof · Confirm cards, statements, and online banking all reflect the final legal name');
   });
 
   it('keeps ready send-now template work ahead of complete confirmation passes', () => {
@@ -484,7 +484,7 @@ describe('name change action feed', () => {
     });
     expect(feed[0]?.action.detail).toContain('Do not send yet; the legal proof chain still needs to clear before carrier evidence will stick.');
     expect(feed[0]?.action.detail).toContain('Please just share the carrier evidence rules and intake path for now so I can avoid touching cards or claims too early.');
-    expect(feed[0]?.action.detail).toContain('Hold policy changes for now and just gather the carrier evidence rules');
+    expect(feed[0]?.action.detail).toContain('Proof to have handy: Certified legal name-change proof · Hold policy changes for now and just gather the carrier evidence rules');
   });
 
   it('keeps real blocking execution work above complete template confirmation review', () => {
