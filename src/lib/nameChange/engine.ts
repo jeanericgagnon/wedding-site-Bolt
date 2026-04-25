@@ -532,6 +532,64 @@ function buildAccountUpdateTemplates(
                   upcoming: 'Please confirm the board-specific document rules now so I know whether the next ID/license hop is enough to start.',
                   blocked: 'Please just share the board submission rules for now so I do not trigger public-record or renewal changes with the wrong proof.',
                 });
+  const getProofReadinessSummary = (
+    templateId: string,
+    readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+  ) => templateId === 'template-payroll'
+    ? getReadinessChecklistLine(readiness, {
+        ready: 'Send with certified legal proof plus the SSA receipt or confirmation now.',
+        in_progress: 'Hold send until the SSA receipt posts, but prep payroll, benefits, and beneficiary routing now.',
+        complete: 'Use this as a confirmation pass that payroll, benefits, and beneficiary records already synced.',
+        upcoming: 'Do not send yet; legal proof is grounded, but SSA is still the missing proof hop.',
+        blocked: 'Do not send yet; the legal proof chain still needs to clear before SSA-backed payroll updates can stick.',
+      })
+    : templateId === 'template-bank'
+      ? getReadinessChecklistLine(readiness, {
+          ready: 'Send with legal proof plus the updated photo ID or acceptable DMV receipt now.',
+          in_progress: 'Hold send until the updated ID lands, but lock the bank/card submission path now.',
+          complete: 'Use this as a confirmation pass that cards, checks, statements, and profile records already synced.',
+          upcoming: 'Do not send yet; legal proof is grounded, but the photo-ID hop is still missing.',
+          blocked: 'Do not send yet; the legal proof chain still needs to clear before bank/card rename proof will hold.',
+        })
+      : templateId === 'template-insurance'
+        ? getReadinessChecklistLine(readiness, {
+            ready: 'Send with legal proof now and include updated ID if the carrier verification team asks for it.',
+            in_progress: 'Hold send until the updated ID clears, but lock the carrier intake path now.',
+            complete: 'Use this as a confirmation pass that cards, billing, claims, and beneficiary records already synced.',
+            upcoming: 'Do not send yet; legal proof is grounded, but updated ID may still be the missing carrier proof.',
+            blocked: 'Do not send yet; the legal proof chain still needs to clear before carrier evidence will stick.',
+          })
+        : templateId === 'template-tax'
+          ? getReadinessChecklistLine(readiness, {
+              ready: 'Send with the SSA-backed confirmation path now so tax and withholding records can align.',
+              in_progress: 'Hold send until SSA confirmation lands, but lock the tax/state verification path now.',
+              complete: 'Use this as a confirmation pass that payroll reporting, withholding, and agency records already synced.',
+              upcoming: 'Do not send yet; legal proof is grounded, but SSA sync is still the missing proof hop.',
+              blocked: 'Do not send yet; the legal proof chain still needs to clear before SSA-backed tax updates can stick.',
+            })
+          : templateId === 'template-travel'
+            ? getReadinessChecklistLine(readiness, {
+                ready: 'Send with the passport-safe identity packet now so bookings and loyalty profiles stay aligned.',
+                in_progress: 'Hold send until final passport proof lands, but lock the mismatch and booking policy now.',
+                complete: 'Use this as a confirmation pass that traveler profiles, loyalty records, and live bookings already synced.',
+                upcoming: 'Do not send yet; legal proof is grounded, but passport timing is still the missing proof hop.',
+                blocked: 'Do not send yet; the passport-safe proof chain is still too early for travel-profile changes.',
+              })
+            : templateId === 'template-digital-identity'
+              ? getReadinessChecklistLine(readiness, {
+                  ready: 'Send with legal proof now and include updated ID if the utility or phone verification flow asks for it.',
+                  in_progress: 'Hold send until final ID evidence posts, but lock the verification path now.',
+                  complete: 'Use this as a confirmation pass that billing, housing, recovery, and caller-ID records already synced.',
+                  upcoming: 'Do not send yet; legal proof is grounded, but updated ID is still the missing proof hop.',
+                  blocked: 'Do not send yet; the legal proof chain still needs to clear before identity-verification updates can stick.',
+                })
+              : getReadinessChecklistLine(readiness, {
+                  ready: 'Send with legal proof plus the updated ID or license reissue receipt now.',
+                  in_progress: 'Hold send until the updated ID or reissue receipt lands, but lock the board submission path now.',
+                  complete: 'Use this as a confirmation pass that the board record, wallet card, and lookup entry already synced.',
+                  upcoming: 'Do not send yet; legal proof is grounded, but the ID/license hop is still missing.',
+                  blocked: 'Do not send yet; the legal proof chain still needs to clear before board-facing proof will hold.',
+                });
   const templateConfig = [
     {
       id: 'template-payroll',
@@ -756,6 +814,7 @@ function buildAccountUpdateTemplates(
     const proofChecklist = [...template.proofChecklist, readinessSpecificChecklistItem];
     const proofLine = `I can provide ${proofChecklist.join(', ')} ${readinessSpecificProof}`;
     const requestLine = getReadinessRequestLine(template.id, readiness);
+    const proofReadinessSummary = getProofReadinessSummary(template.id, readiness);
 
     return {
       id: template.id,
@@ -764,6 +823,7 @@ function buildAccountUpdateTemplates(
       body: template.buildBody(proofLine, readinessLabel, requestLine, readinessIntro),
       readiness,
       readinessLabel,
+      proofReadinessSummary,
       requestSummary: requestLine,
       dependsOnStepIds: [...template.dependsOnStepIds],
       proofChecklist,

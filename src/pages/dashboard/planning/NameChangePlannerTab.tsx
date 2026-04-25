@@ -166,6 +166,7 @@ function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['s
     `Subject: ${template.subject}`,
     `Status: ${template.readiness.replace('_', ' ')}`,
     `Readiness: ${template.readinessLabel}`,
+    `Proof status: ${template.proofReadinessSummary}`,
     `Next ask: ${template.requestSummary}`,
     `Proof to have handy: ${template.proofChecklist.join(' · ')}`,
     '',
@@ -1490,6 +1491,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                   </div>
                 </div>
                 <p className="mt-2 text-xs text-text-secondary">{template.readinessLabel}</p>
+                <p className="mt-2 text-xs text-text-secondary">Proof status: {template.proofReadinessSummary}</p>
                 <p className="mt-2 text-xs text-text-secondary">Next ask: {template.requestSummary}</p>
                 <p className="mt-2 text-xs text-text-secondary">Proof to have handy: {template.proofChecklist.join(' · ')}</p>
                 <p className="mt-2 whitespace-pre-line text-sm text-text-secondary">{template.body}</p>

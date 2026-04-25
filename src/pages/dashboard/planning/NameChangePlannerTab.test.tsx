@@ -499,6 +499,7 @@ describe('NameChangePlannerTab', () => {
     const plan = buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] });
     const payrollRequestSummary = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.requestSummary;
     const bankRequestSummary = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-bank')?.requestSummary;
+    const payrollProofStatus = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.proofReadinessSummary;
 
     render(
       <NameChangePlannerTab
@@ -523,6 +524,7 @@ describe('NameChangePlannerTab', () => {
     expect(bankRequestSummary).toBeTruthy();
     expect(screen.getByText(`Next ask: ${payrollRequestSummary}`)).toBeInTheDocument();
     expect(screen.getByText(`Next ask: ${bankRequestSummary}`)).toBeInTheDocument();
+    expect(screen.getByText(`Proof status: ${payrollProofStatus}`)).toBeInTheDocument();
   });
 
   it('copies the full readiness-aware template text from the planner card', async () => {
@@ -561,6 +563,7 @@ describe('NameChangePlannerTab', () => {
     await waitFor(() => expect(clipboardWriteText).toHaveBeenCalledTimes(1));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Subject: ${payrollTemplate?.subject}`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Next ask: ${payrollTemplate?.requestSummary}`));
+    expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Proof status: ${payrollTemplate?.proofReadinessSummary}`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(payrollTemplate?.body ?? ''));
     expect(screen.getByRole('button', { name: 'Copied' })).toBeInTheDocument();
   });

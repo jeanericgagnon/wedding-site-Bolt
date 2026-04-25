@@ -13,6 +13,7 @@ function makeTemplate(overrides: Partial<NonNullable<NameChangePlan['summary']['
     body: 'I can provide certified legal proof.',
     readiness: 'ready',
     readinessLabel: 'The core proof chain is already complete, so this should be a clean confirmation/update pass.',
+    proofReadinessSummary: 'Send with certified legal proof now.',
     requestSummary: 'Please tell me the fastest secure submission path and confirm whether cards, checks, statements, and my online profile will all update together.',
     dependsOnStepIds: ['institution-banks'],
     proofChecklist: ['Certified legal name-change proof'],

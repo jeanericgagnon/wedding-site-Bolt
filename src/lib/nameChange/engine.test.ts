@@ -152,6 +152,7 @@ describe('name change engine', () => {
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.body).toContain('Use this to learn the payroll intake path while SSA alignment is still upstream');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.body).toContain('Please confirm the intake path, hold timing, and whether you can pre-note the request while SSA alignment is still upstream.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.requestSummary).toBe('Please confirm the intake path, hold timing, and whether you can pre-note the request while SSA alignment is still upstream.');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.proofReadinessSummary).toBe('Do not send yet; legal proof is grounded, but SSA is still the missing proof hop.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.proofChecklist).toEqual(expect.arrayContaining(['Use this to learn the payroll intake path while SSA alignment is still upstream']));
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-bank')?.body).toContain('whether an interim DMV receipt works');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-bank')?.body).toContain('Confirm whether legal proof alone or an interim DMV receipt is enough to start');
@@ -201,6 +202,7 @@ describe('name change engine', () => {
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('I am not sending documents yet and just need the intake rules before the proof chain is ready.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('Please just confirm the tax/state process for now so I can return with the SSA-backed packet once the upstream proof is real.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.requestSummary).toBe('Please just confirm the tax/state process for now so I can return with the SSA-backed packet once the upstream proof is real.');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.proofReadinessSummary).toBe('Do not send yet; the legal proof chain still needs to clear before SSA-backed tax updates can stick.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.subject).toBe('Ask intake rules now: Align my tax records with my legal name change');
   });
 
