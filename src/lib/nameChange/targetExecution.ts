@@ -119,6 +119,14 @@ function getSupportiveExecutionWaitGuidance(snapshot: Pick<NameChangeTargetExecu
       };
     }
 
+    if (/finish ssa before passport packet/i.test(blockingLabel)) {
+      return {
+        doNow: 'Prep the passport photo, current passport, and citizenship proof now, but hold the packet until SSA progress is real.',
+        whyItHelps: 'That keeps the passport handoff ready without getting ahead of the federal identity chain.',
+        canWait: 'Actual submission can safely wait until SSA progress clears the passport dependency.',
+      };
+    }
+
     if (/split passport work into two partner chains/i.test(blockingLabel)) {
       return {
         doNow: 'Separate each partner’s passport proof, travel bookings, and submission timing into two distinct checklists now.',

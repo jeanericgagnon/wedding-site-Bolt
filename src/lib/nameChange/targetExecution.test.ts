@@ -3257,6 +3257,22 @@ describe('name change target execution snapshot', () => {
     });
   });
 
+  it('adds structured wait guidance when passport work is still blocked on SSA progress', () => {
+    expect(getExecutionNextActionGuidance({
+      targetKey: 'passport',
+      nextAction: {
+        category: 'dependency',
+        label: 'Finish SSA before passport packet',
+        detail: 'SSA should be underway before the passport packet is submitted so the federal identity chain does not split.',
+      },
+    })).toEqual({
+      overview: 'SSA should be underway before the passport packet is submitted so the federal identity chain does not split.',
+      doNow: 'Prep the passport photo, current passport, and citizenship proof now, but hold the packet until SSA progress is real.',
+      whyItHelps: 'That keeps the passport handoff ready without getting ahead of the federal identity chain.',
+      canWait: 'Actual submission can safely wait until SSA progress clears the passport dependency.',
+    });
+  });
+
   it('adds structured wait guidance for out-of-state travel proof grounding blockers', () => {
     expect(getExecutionNextActionGuidance({
       targetKey: 'tsa',
