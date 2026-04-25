@@ -159,7 +159,7 @@ describe('name change engine', () => {
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.requestSummary).toBe('Please confirm the intake path, hold timing, and whether you can pre-note the request while SSA alignment is still upstream.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.proofReadinessSummary).toBe('Do not send yet; legal proof is grounded, but SSA is still the missing proof hop. Blocking hop: SSA pending.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.blockingProofHopLabel).toBe('SSA pending');
-    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.checklistHighlight).toBe('Use this to learn the payroll intake path while SSA alignment is still upstream');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.checklistHighlight).toBe('Use this to learn the payroll intake path while SSA alignment is still upstream.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.checklistStatusNote).toBe('Wait to send until SSA is the next cleared proof hop.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.proofDocuments).toEqual([
       'Certified legal name-change proof',
@@ -167,7 +167,7 @@ describe('name change engine', () => {
       'Updated photo ID if payroll or benefits asks for one',
     ]);
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.proofChecklist.at(-1)).toBe('Wait to send until SSA is the next cleared proof hop.');
-    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.proofChecklist).toEqual(expect.arrayContaining(['Use this to learn the payroll intake path while SSA alignment is still upstream']));
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.proofChecklist).toEqual(expect.arrayContaining(['Use this to learn the payroll intake path while SSA alignment is still upstream.']));
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.body).toContain('Wait to send until SSA is the next cleared proof hop.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-bank')?.body).toContain('whether an interim DMV receipt works');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-bank')?.body).toContain('Blocked by: ID pending.');
@@ -176,15 +176,15 @@ describe('name change engine', () => {
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-bank')?.body).toContain('I can provide Certified legal name-change proof, Updated photo ID or DMV receipt, Replacement card / account reissue instructions. My legal proof is ready, but the photo-ID update is still upstream, so I mainly need your exact submission requirements and whether an interim DMV receipt works.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-bank')?.body).toContain('Confirm whether legal proof alone or an interim DMV receipt is enough to start');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-bank')?.body).toContain('Please confirm whether legal proof alone or an interim DMV receipt is enough to start, and whether cards or checks need a second pass later.');
-    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-bank')?.proofChecklist).toEqual(expect.arrayContaining(['Confirm whether legal proof alone or an interim DMV receipt is enough to start']));
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-bank')?.proofChecklist).toEqual(expect.arrayContaining(['Confirm whether legal proof alone or an interim DMV receipt is enough to start.']));
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.body).toContain('Please confirm your hold/change policy and mismatch handling before I touch any bookings while passport timing is still upstream.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.body).toContain('I am not sending the final packet yet and mainly need the intake path for the next proof hop (passport pending).');
-    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.proofChecklist).toEqual(expect.arrayContaining(['Confirm hold/change policy before touching bookings while passport timing is still upstream']));
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.proofChecklist).toEqual(expect.arrayContaining(['Confirm hold/change policy before touching bookings while passport timing is still upstream.']));
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-digital-identity')?.body).toContain('Please confirm whether legal proof alone can start utilities, phone, housing, or recovery updates before the updated ID lands.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-digital-identity')?.body).toContain('I am not sending the final packet yet and mainly need the intake path for the next proof hop (ID pending).');
-    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-digital-identity')?.proofChecklist).toEqual(expect.arrayContaining(['Confirm whether legal proof alone can start utilities, phone, housing, or recovery updates']));
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-digital-identity')?.proofChecklist).toEqual(expect.arrayContaining(['Confirm whether legal proof alone can start utilities, phone, housing, or recovery updates.']));
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-licenses')?.body).toContain('Please confirm the board-specific document rules now so I know whether the next ID/license hop is enough to start.');
-    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-licenses')?.proofChecklist).toEqual(expect.arrayContaining(['Ask for the board-specific document rules before the ID/license path lands']));
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-licenses')?.proofChecklist).toEqual(expect.arrayContaining(['Ask for the board-specific document rules before the ID/license path lands.']));
     expect(plan.summary.institutionCategoryCoverage).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'legal_government', status: 'upcoming', institutionKeys: expect.arrayContaining(['uscis-immigration-records', 'irs-records', 'state-tax-agency', 'county-recorder-property']) }),
@@ -214,7 +214,7 @@ describe('name change engine', () => {
       readinessLabel: 'The legal-proof chain is still too early, so use this to learn the intake path now and wait to send documents until the upstream proof is real (legal proof pending).',
       proofChecklist: expect.arrayContaining([
         'Certified legal name-change proof still needs review before most downstream updates will stick',
-        'Do not send documents yet; only confirm the tax/state process first',
+        'Do not send documents yet; only confirm the tax/state process first.',
       ]),
     });
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('I need your process first and will send the legal proof packet once it is ready');
@@ -235,7 +235,7 @@ describe('name change engine', () => {
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.subject).toBe('Ask intake rules now (legal proof pending): Name change update for payroll and benefits');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.requestSummary).toBe('Please just confirm the intake path and payroll timing for now so I can come back once the legal proof packet is grounded.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.proofReadinessSummary).toBe('Do not send yet; the legal proof chain still needs to clear before payroll updates can stick. Blocking hop: legal proof pending.');
-    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.checklistHighlight).toBe('Hold documents for now and only confirm payroll timing + intake rules');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.checklistHighlight).toBe('Hold documents for now and only confirm payroll timing + intake rules.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.proofDocuments).toEqual([
       'Certified legal name-change proof still needs review before most downstream updates will stick',
       'Updated Social Security record or SSA receipt',
@@ -260,12 +260,12 @@ describe('name change engine', () => {
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.body).toContain('Current blocker: legal proof pending.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.subject).toBe('Ask intake rules now (legal proof pending): Please align my travel profile with my legal name change');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.proofReadinessSummary).toBe('Do not send yet; the legal proof chain still needs to clear before travel-profile evidence will stick. Blocking hop: legal proof pending.');
-    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.checklistHighlight).toBe('Ask for mismatch policy and booking rules before the legal proof packet is ready');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.checklistHighlight).toBe('Ask for mismatch policy and booking rules before the legal proof packet is ready.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.checklistStatusNote).toBe('Gather mismatch and booking rules only until legal proof is fully grounded.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.proofChecklist.at(-1)).toBe('Gather mismatch and booking rules only until legal proof is fully grounded.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.requestSummary).toBe('Please just share your mismatch policy and acceptable temporary-proof rules for now so I can return once the legal proof packet is grounded.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.body).toContain('I need your mismatch policy first and will send the legal proof packet once it is ready.');
-    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.proofChecklist).toContain('Ask for mismatch policy and booking rules before the legal proof packet is ready');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.proofChecklist).toContain('Ask for mismatch policy and booking rules before the legal proof packet is ready.');
   });
 
   it('uses question-style subject framing for upcoming account-update templates', () => {

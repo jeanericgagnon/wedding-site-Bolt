@@ -460,6 +460,10 @@ function buildAccountUpdateTemplates(
     return lines.blocked ?? lines.upcoming ?? lines.in_progress;
   };
   const normalizeChecklistSnippet = (value: string) => value.trim().replace(/[.\s]+$/u, '');
+  const ensureTerminalPeriod = (value: string) => {
+    const trimmed = value.trim();
+    return trimmed.endsWith('.') ? trimmed : `${trimmed}.`;
+  };
   const joinChecklistSnippets = (items: string[]) => {
     const normalized = items
       .map((item) => normalizeChecklistSnippet(item))
@@ -938,18 +942,19 @@ function buildAccountUpdateTemplates(
                       complete: 'Confirm the final legal name is already showing across the account records you changed',
                     });
     const proofDocuments = [...template.proofDocuments];
-    const proofChecklist = [...proofDocuments, readinessSpecificChecklistItem];
+    const checklistHighlight = ensureTerminalPeriod(readinessSpecificChecklistItem);
     const requestLine = getReadinessRequestLine(template.id, readiness);
     const proofReadinessSummary = getProofReadinessSummary(template.id, readiness, blockingProofHopLabel);
-    const proofChecklistStatusNote = getProofChecklistStatusNote(template.id, readiness);
+    const proofChecklistStatusNote = ensureTerminalPeriod(getProofChecklistStatusNote(template.id, readiness));
     const readinessIntro = getReadinessIntro(readiness, blockingProofHopLabel);
     const blockingProofHopSentence = getBlockingProofHopSentence(readiness, blockingProofHopLabel);
+    const proofChecklist = [...proofDocuments, checklistHighlight];
     const proofChecklistWithStatus = [...proofChecklist, proofChecklistStatusNote];
     const proofLine = readinessSpecificProof
       ? `I can provide ${proofDocuments.join(', ')}. ${readinessSpecificProof}`
       : `I can provide ${proofDocuments.join(', ')}.`;
     const proofChecklistLine = `Proof checklist I am tracking: ${joinChecklistSnippets(proofChecklistWithStatus)}`;
-    const checklistGuidanceLine = `${readinessSpecificChecklistItem}. ${proofChecklistStatusNote}`;
+    const checklistGuidanceLine = `${checklistHighlight} ${proofChecklistStatusNote}`;
 
     return {
       id: template.id,
@@ -960,7 +965,7 @@ function buildAccountUpdateTemplates(
       readinessLabel,
       proofReadinessSummary,
       blockingProofHopLabel,
-      checklistHighlight: readinessSpecificChecklistItem,
+      checklistHighlight,
       checklistStatusNote: proofChecklistStatusNote,
       requestSummary: requestLine,
       dependsOnStepIds: [...template.dependsOnStepIds],
