@@ -696,6 +696,19 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     hasRecentStart: plan.summary.hasRecentStart,
     hasRecentCompletion: plan.summary.hasRecentCompletion,
   }), [reminderAttention, plan.summary.hasRecentCompletion, plan.summary.hasRecentStart]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const hash = window.location.hash?.replace(/^#/, '').trim();
+    if (!hash) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      scrollToPlannerTarget(hash);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
   const reminderPostureCards = useMemo<ReminderPostureCardConfig[]>(() => {
     if (reminderAttention.length === 0) return [];
 

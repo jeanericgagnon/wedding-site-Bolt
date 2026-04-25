@@ -102,6 +102,43 @@ describe('NameChangePlannerTab', () => {
     }
   });
 
+  it('resumes directly into the status vault when the route hash points there', async () => {
+    const draft = makeDraft();
+    const scrollIntoView = vi.fn();
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    const originalHash = window.location.hash;
+    HTMLElement.prototype.scrollIntoView = scrollIntoView;
+    window.location.hash = '#target-status-tracking';
+
+    try {
+      render(
+        <NameChangePlannerTab
+          draft={draft}
+          documents={[]}
+          extractedFields={[]}
+          plan={buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] })}
+          reminders={[]}
+          saving={false}
+          onDraftChange={vi.fn()}
+          onStructuredIntakeChange={vi.fn()}
+          onDocumentsChange={vi.fn()}
+          onExtractedFieldsChange={vi.fn()}
+          onRemindersChange={vi.fn()}
+          onStepExecutionStatusChange={vi.fn()}
+          onStepExecutionNoteChange={vi.fn()}
+          onSave={vi.fn().mockResolvedValue(undefined)}
+        />,
+      );
+
+      await vi.waitFor(() => {
+        expect(scrollIntoView).toHaveBeenCalled();
+      });
+    } finally {
+      HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+      window.location.hash = originalHash;
+    }
+  });
+
   it('lets persisted reminder routing jump straight to the linked planner target', () => {
     const draft = makeDraft();
     const scrollIntoView = vi.fn();

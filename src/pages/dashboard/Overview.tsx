@@ -911,7 +911,7 @@ export const DashboardOverview: React.FC = () => {
                       <p className="mt-1 text-sm text-sky-950">Open the assistant if you want the next recommended move. Skip it if nothing needs attention right now.</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <Button variant="accent" size="sm" onClick={() => navigate('/dashboard/planning?tab=nameChange')}>
+                      <Button variant="accent" size="sm" onClick={() => navigate('/dashboard/planning?tab=nameChange#target-status-tracking')}>
                         Resume free name change assistant
                       </Button>
                       <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/planning')}>
