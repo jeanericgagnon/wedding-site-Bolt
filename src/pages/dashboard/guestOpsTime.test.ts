@@ -7,6 +7,7 @@ describe('guest ops time guards', () => {
     expect(getGuestOpsTimestamp('not-a-date')).toBe(Number.NEGATIVE_INFINITY);
     expect(formatGuestOpsRelativeTime('not-a-date')).toBe('Unknown time');
     expect(formatGuestOpsDateTime('not-a-date')).toBe('Unknown time');
+    expect(formatGuestOpsDateTime('not-a-date', { hour: 'numeric', minute: '2-digit' })).toBe('Unknown time');
     expect(formatGuestOpsDate('not-a-date')).toBe('Unknown date');
   });
 

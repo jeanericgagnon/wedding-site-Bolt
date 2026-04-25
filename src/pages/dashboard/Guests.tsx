@@ -4376,7 +4376,7 @@ Proceed with send?`)) return;
                                 </p>
                                 <p className="text-sm text-text-secondary">{guest.email || '—'}</p>
                                 {checkInMode && (guest as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at && (
-                                  <p className="text-xs text-success">Checked in {new Date((guest as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at as string).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</p>
+                                  <p className="text-xs text-success">Checked in {formatGuestOpsDateTime((guest as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at, { hour: 'numeric', minute: '2-digit' })}</p>
                                 )}
                               </div>
                               <ChevronRight className="w-3.5 h-3.5 text-text-tertiary ml-1 opacity-0 group-hover:opacity-100" />
