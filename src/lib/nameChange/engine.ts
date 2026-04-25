@@ -763,11 +763,11 @@ function buildAccountUpdateTemplates(
           })
         : templateId === 'template-tax'
           ? getReadinessChecklistLine(readiness, {
-              ready: 'Please confirm whether you need direct document submission from me, whether the SSA sync is enough, and how I should verify the update before the next filing cycle.',
-              in_progress: 'Please confirm the verification path now so I can queue the tax/state request and attach SSA confirmation as soon as the current step lands.',
-              complete: 'Please confirm payroll reporting, withholding records, and agency files now match the final legal name before the next filing cycle.',
-              upcoming: 'Please confirm the verification path and filing-cycle timing while SSA sync is still upstream so I do not miss the next reporting window.',
-              blocked: 'Please just confirm the tax/state process for now so I can return once the legal proof packet is grounded.',
+              ready: 'Please confirm whether you need direct document submission from me, whether the SSA sync is enough, and how I should verify tax or government-record updates before the next filing or recording cycle.',
+              in_progress: 'Please confirm the verification path now so I can queue the tax, county, or immigration request and attach SSA confirmation as soon as the current step lands.',
+              complete: 'Please confirm payroll reporting, withholding records, and government agency files now match the final legal name before the next filing or recording cycle.',
+              upcoming: 'Please confirm the verification path and filing-cycle timing while SSA sync is still upstream so I do not miss the next filing, recording, or status window.',
+              blocked: 'Please just confirm the tax/government process for now so I can return once the legal proof packet is grounded.',
             })
           : templateId === 'template-travel'
             ? getReadinessChecklistLine(readiness, {
@@ -823,11 +823,11 @@ function buildAccountUpdateTemplates(
           })
         : templateId === 'template-tax'
           ? getReadinessChecklistLine(readiness, {
-              ready: 'Send with the SSA-backed confirmation path now so tax and withholding records can align.',
-              in_progress: 'Hold send until SSA confirmation lands, but lock the tax/state verification path now.',
-              complete: 'Use this as a confirmation pass that payroll reporting, withholding, and agency records already synced.',
+              ready: 'Send with the SSA-backed confirmation path now so tax, county, and government records can align.',
+              in_progress: 'Hold send until SSA confirmation lands, but lock the tax/government verification path now.',
+              complete: 'Use this as a confirmation pass that payroll reporting, withholding, and government records already synced.',
               upcoming: 'Do not send yet; legal proof is grounded, but SSA sync is still the missing proof hop.',
-              blocked: 'Do not send yet; the legal proof chain still needs to clear before tax updates can stick.',
+              blocked: 'Do not send yet; the legal proof chain still needs to clear before tax or government updates can stick.',
             })
           : templateId === 'template-travel'
           ? getReadinessChecklistLine(readiness, {
@@ -885,11 +885,11 @@ function buildAccountUpdateTemplates(
           })
         : templateId === 'template-tax'
           ? getReadinessChecklistLine(readiness, {
-              ready: 'Attach the SSA-backed confirmation path now so withholding and agency records can align.',
+              ready: 'Attach the SSA-backed confirmation path now so withholding and government agency records can align.',
               in_progress: 'Queue this now, then attach SSA-backed confirmation once the current proof step lands.',
-              complete: 'Use this to confirm payroll reporting, withholding, and agency records already match.',
+              complete: 'Use this to confirm payroll reporting, withholding, and government agency records already match.',
               upcoming: 'Wait to send until SSA is the next cleared proof hop.',
-              blocked: 'Gather the tax/state process only until legal proof is fully grounded.',
+              blocked: 'Gather the tax/government process only until legal proof is fully grounded.',
             })
           : templateId === 'template-travel'
           ? getReadinessChecklistLine(readiness, {
@@ -975,15 +975,15 @@ function buildAccountUpdateTemplates(
     },
     {
       id: 'template-tax',
-      audience: 'Tax agency or payroll tax support',
-      subject: 'Align my tax records with my legal name change',
-      dependsOnStepIds: ['federal-ssa', 'institution-irs-records', 'institution-state-tax-agency'],
+      audience: 'Tax agency, county recorder, immigration, or government record support',
+      subject: 'Align my tax and government records with my legal name change',
+      dependsOnStepIds: ['federal-ssa', 'institution-irs-records', 'institution-state-tax-agency', 'institution-county-recorder-property', 'institution-uscis-immigration-records'],
       proofDocuments: [
         ...proofChecklistBase,
         'Updated Social Security record or SSA confirmation',
-        'Any employer payroll confirmation already on file',
+        'Any employer payroll confirmation or filing reference already on file',
       ],
-      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, audienceLine: string, statusLine: string, proofReadinessSummary: string, blockingProofHopSentence: string, checklistGuidanceLine: string, proofChecklistLine: string) => `Hello — I need my tax records updated to match my legal name so payroll reporting and year-end forms do not drift. ${audienceLine} ${readinessIntro} ${statusLine} ${blockingProofHopSentence} ${proofReadinessSummary} ${proofLine} ${proofChecklistLine} ${checklistGuidanceLine} ${readinessLine} ${requestLine}`,
+      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, audienceLine: string, statusLine: string, proofReadinessSummary: string, blockingProofHopSentence: string, checklistGuidanceLine: string, proofChecklistLine: string) => `Hello — I need my tax and government-facing records updated to match my legal name so payroll reporting, filing records, and county or immigration records do not drift. ${audienceLine} ${readinessIntro} ${statusLine} ${blockingProofHopSentence} ${proofReadinessSummary} ${proofLine} ${proofChecklistLine} ${checklistGuidanceLine} ${readinessLine} ${requestLine}`,
     },
     {
       id: 'template-travel',

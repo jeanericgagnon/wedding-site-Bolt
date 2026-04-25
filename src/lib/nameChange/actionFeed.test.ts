@@ -1912,6 +1912,29 @@ describe('name change action feed', () => {
     });
   });
 
+  it('keeps legal-government execution work linked to tax/government templates in core-government', () => {
+    const feed = buildNameChangeActionFeed(
+      [makeExecutionSnapshot({
+        targetKey: 'legalGovernment',
+        targetLabel: 'County recorder and immigration record alignment',
+        recommendedFormCode: 'TAX-SSA-STATE-ALIGNMENT-PACKET',
+      })],
+      [],
+      [],
+      [makeTemplate({
+        id: 'template-tax',
+        audience: 'Tax agency, county recorder, immigration, or government record support',
+        readiness: 'blocked',
+        blockingProofHopLabel: 'legal proof pending',
+      })],
+    );
+
+    expect(feed[0]).toMatchObject({
+      focusTargetId: 'account-update-template-template-tax',
+      sectionKey: 'core-government',
+    });
+  });
+
   it('trims terminal punctuation from proof-document summaries', () => {
     const feed = buildNameChangeActionFeed(
       [makeExecutionSnapshot({ targetKey: 'banks', targetLabel: 'Banks', recommendedFormCode: 'BANK' })],

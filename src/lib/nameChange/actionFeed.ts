@@ -50,6 +50,7 @@ function getTemplateIdForTargetKey(targetKey: NameChangeTargetExecutionSnapshot[
     case 'employer':
       return 'template-payroll';
     case 'taxes':
+    case 'legalGovernment':
     case 'voter':
       return 'template-tax';
     case 'banks':
@@ -447,7 +448,7 @@ function getActionFeedUrgencyReason(
 }
 
 function getExecutionSectionKey(targetKey: NameChangeTargetExecutionSnapshot['targetKey']): NameChangeActionFeedItem['sectionKey'] {
-  if (targetKey === 'ssa' || targetKey === 'dmv' || targetKey === 'passport') return 'core-government';
+  if (targetKey === 'ssa' || targetKey === 'dmv' || targetKey === 'passport' || targetKey === 'legalGovernment') return 'core-government';
   if (targetKey === 'employer' || targetKey === 'licenses') return 'work-identity';
   if (targetKey === 'banks' || targetKey === 'insurance' || targetKey === 'medical' || targetKey === 'utilities') return 'institutional';
   return 'cleanup';

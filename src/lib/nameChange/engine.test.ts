@@ -377,27 +377,27 @@ describe('name change engine', () => {
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')).toMatchObject({
       readiness: 'blocked',
       readinessLabel: 'The legal-proof chain is still too early, so use this to learn the intake path now and wait to send documents until the upstream proof is real (legal proof pending).',
-      proofChecklist: expect.arrayContaining([
-        'Certified legal name-change proof still needs review before most downstream updates will stick',
-        'Do not send documents yet; only confirm the tax/state process first.',
-      ]),
+      audience: 'Tax agency, county recorder, immigration, or government record support',
+      dependsOnStepIds: expect.arrayContaining(['institution-county-recorder-property', 'institution-uscis-immigration-records']),
+      proofChecklist: expect.arrayContaining(['Certified legal name-change proof still needs review before most downstream updates will stick']),
     });
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('I need my tax and government-facing records updated to match my legal name');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('I need your process first and will send the legal proof packet once it is ready');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('I am only collecting the intake rules for now until the proof chain is ready (legal proof pending).');
-    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('Audience: Tax agency or payroll tax support.');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('Audience: Tax agency, county recorder, immigration, or government record support.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('Status: ask intake rules now · legal proof pending.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('Blocked by: legal proof pending.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('Current blocker: legal proof pending.');
-    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('Do not send yet; the legal proof chain still needs to clear before tax updates can stick.');
-    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('I can provide Certified legal name-change proof still needs review before most downstream updates will stick, Updated Social Security record or SSA confirmation, Any employer payroll confirmation already on file. The core proof chain is still upstream, so I need your process first and will send the legal proof packet once it is ready.');
-    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('Proof checklist I am tracking: Certified legal name-change proof still needs review before most downstream updates will stick, Updated Social Security record or SSA confirmation, Any employer payroll confirmation already on file, Do not send documents yet; only confirm the tax/state process first, Gather the tax/state process only until legal proof is fully grounded.');
-    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('Please just confirm the tax/state process for now so I can return once the legal proof packet is grounded.');
-    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.requestSummary).toBe('Please just confirm the tax/state process for now so I can return once the legal proof packet is grounded.');
-    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.proofReadinessSummary).toBe('Do not send yet; the legal proof chain still needs to clear before tax updates can stick. Blocking hop: legal proof pending.');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('Do not send yet; the legal proof chain still needs to clear before tax or government updates can stick.');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('I can provide Certified legal name-change proof still needs review before most downstream updates will stick, Updated Social Security record or SSA confirmation, Any employer payroll confirmation or filing reference already on file. The core proof chain is still upstream, so I need your process first and will send the legal proof packet once it is ready.');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('Any employer payroll confirmation or filing reference already on file');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('Please just confirm the tax/government process for now so I can return once the legal proof packet is grounded.');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.requestSummary).toBe('Please just confirm the tax/government process for now so I can return once the legal proof packet is grounded.');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.proofReadinessSummary).toBe('Do not send yet; the legal proof chain still needs to clear before tax or government updates can stick. Blocking hop: legal proof pending.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.blockingProofHopLabel).toBe('legal proof pending');
-    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.proofChecklist.at(-1)).toBe('Gather the tax/state process only until legal proof is fully grounded.');
-    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.subject).toBe('Ask intake rules now (legal proof pending): Align my tax records with my legal name change');
-    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.requestSummary).toBe('Please just confirm the tax/state process for now so I can return once the legal proof packet is grounded.');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.proofChecklist.at(-1)).toBe('Gather the tax/government process only until legal proof is fully grounded.');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.subject).toBe('Ask intake rules now (legal proof pending): Align my tax and government records with my legal name change');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.requestSummary).toBe('Please just confirm the tax/government process for now so I can return once the legal proof packet is grounded.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.blockingProofHopLabel).toBe('legal proof pending');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.subject).toBe('Ask intake rules now (legal proof pending): Name change update for payroll and benefits');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.requestSummary).toBe('Please just confirm the intake path and payroll timing for now so I can come back once the legal proof packet is grounded.');
