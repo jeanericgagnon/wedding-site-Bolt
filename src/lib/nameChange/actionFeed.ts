@@ -58,6 +58,17 @@ function getTemplateFocusTargetId(template: AccountUpdateTemplate | undefined) {
 }
 
 function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemplate) {
+  const proofPhaseLine = template.readiness === 'complete'
+    ? 'Template state: proof chain complete; confirm the downstream sync only.'
+    : template.readiness === 'ready'
+      ? 'Template state: proof packet ready to send now.'
+      : template.readiness === 'in_progress' && template.blockingProofHopLabel
+        ? `Template state: draft now and wait for ${template.blockingProofHopLabel.toLowerCase()} to clear before sending.`
+        : template.readiness === 'upcoming' && template.blockingProofHopLabel
+          ? `Template state: prep the ask now and wait for ${template.blockingProofHopLabel.toLowerCase()} to clear before sending.`
+          : template.readiness === 'blocked' && template.blockingProofHopLabel
+            ? `Template state: intake-only until ${template.blockingProofHopLabel.toLowerCase()} clears.`
+            : undefined;
   const readinessDetail = template.readiness === 'complete'
     ? `${baseDetail} Use this only to confirm the rename already synced.`
     : template.readiness === 'ready'
@@ -83,6 +94,7 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
     : undefined;
   return [
     readinessDetail,
+    proofPhaseLine,
     `Subject: ${template.subject}`,
     `Template message: ${template.body}`,
     `Readiness: ${template.readinessLabel}`,

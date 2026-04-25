@@ -348,6 +348,7 @@ describe('name change action feed', () => {
         detail: expect.stringContaining('Ready for final bank review. Send with the current proof packet now.'),
       }),
     });
+    expect(feed[0]?.action.detail).toContain('Template state: proof packet ready to send now.');
   });
 
   it('shows complete template follow-through as confirmation work instead of another send-now packet', () => {
@@ -396,6 +397,7 @@ describe('name change action feed', () => {
       urgencyTier: 'normal',
     });
     expect(feed[0]?.action.label).toBe('Confirm bank accounts sync (proof chain complete)');
+    expect(feed[0]?.action.detail).toContain('Template state: proof chain complete; confirm the downstream sync only.');
     expect(feed[0]?.action.detail).toContain('Subject: Confirm completed update: Name change update for banking profile');
     expect(feed[0]?.action.detail).toContain('Use this only to confirm the rename already synced.');
     expect(feed[0]?.action.detail).toContain('Subject: Confirm completed update: Name change update for banking profile\nTemplate message: I can provide certified legal proof.');
@@ -773,6 +775,7 @@ describe('name change action feed', () => {
       urgencyReason: 'blocking_dependency',
     });
     expect(feed[0]?.action.label).toBe('Ask employer payroll / HR before next proof hop (SSA pending)');
+    expect(feed[0]?.action.detail).toContain('Template state: prep the ask now and wait for ssa pending to clear before sending.');
     expect(feed[0]?.action.detail).toContain('Use this to prep the ask before ssa pending clears.');
     expect(feed[0]?.action.detail).toContain('Subject: Employer payroll / HR');
     expect(feed[0]?.action.detail).toContain('Subject: Employer payroll / HR\nTemplate message: I can provide certified legal proof.');
@@ -1161,6 +1164,7 @@ describe('name change action feed', () => {
 
     expect(feed[0]?.laneLabel).toBe('Tax agency or payroll tax support · ask intake rules now · legal proof pending');
     expect(feed[0]?.action.label).toBe('Ask tax agency or payroll tax support intake rules now (legal proof pending)');
+    expect(feed[0]?.action.detail).toContain('Template state: intake-only until legal proof pending clears.');
     expect(feed[0]?.action.detail).toContain('Use this only to capture intake rules until legal proof pending clears.');
     expect(feed[0]?.action.detail).toContain('Checklist: Gather the tax/state process only until legal proof is fully grounded.');
     expect(feed[0]?.action.detail).toContain('Checklist status: Gather the tax/state process only until legal proof is fully grounded.');
