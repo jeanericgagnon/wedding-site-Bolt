@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getPublishBlockerUiState } from './BuilderTopBar';
+import { formatPublishedAt, formatSavedAt, getPublishBlockerUiState } from './BuilderTopBar';
 
 describe('getPublishBlockerUiState', () => {
   it('treats unsaved changes as auto-saveable instead of a hard go-live blocker', () => {
@@ -27,5 +27,15 @@ describe('getPublishBlockerUiState', () => {
       effectivePublishValidationError: 'Add both names exactly how you want them shown before going live.',
       canAutoSaveBeforePublish: false,
     });
+  });
+});
+
+describe('builder top bar time formatting', () => {
+  it('falls back cleanly for invalid persisted save timestamps', () => {
+    expect(formatSavedAt('not-a-date')).toBe('Saved time unknown');
+  });
+
+  it('falls back cleanly for invalid persisted publish timestamps', () => {
+    expect(formatPublishedAt('not-a-date')).toBe('Live since unknown time');
   });
 });

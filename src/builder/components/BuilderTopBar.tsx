@@ -73,19 +73,27 @@ function slugifyPage(input: string): string {
     .slice(0, 64);
 }
 
-function formatSavedAt(iso: string): string {
-  const d = new Date(iso);
+function toValidTopBarDate(iso: string): Date | null {
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+export function formatSavedAt(iso: string): string {
+  const d = toValidTopBarDate(iso);
+  if (!d) return 'Saved time unknown';
   const now = new Date();
   const diffMs = now.getTime() - d.getTime();
   const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 0) return 'Saved just now';
   if (diffMin < 1) return 'Saved just now';
   if (diffMin === 1) return 'Saved 1 min ago';
   if (diffMin < 60) return `Saved ${diffMin} min ago`;
   return `Saved at ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 }
 
-function formatPublishedAt(iso: string): string {
-  const d = new Date(iso);
+export function formatPublishedAt(iso: string): string {
+  const d = toValidTopBarDate(iso);
+  if (!d) return 'Live since unknown time';
   const now = new Date();
   const sameDay = d.toDateString() === now.toDateString();
   const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -341,7 +349,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
           </span>
         )}
         {!state.isSaving && !saveError && state.lastSavedAt && !isDirty && (
-          <span className="hidden sm:flex text-xs text-green-700 items-center gap-1.5 bg-green-50 border border-green-200 px-2 py-1 rounded-md" title={`Last saved: ${new Date(state.lastSavedAt).toLocaleString()}`}>
+          <span className="hidden sm:flex text-xs text-green-700 items-center gap-1.5 bg-green-50 border border-green-200 px-2 py-1 rounded-md" title={`Last saved: ${toValidTopBarDate(state.lastSavedAt)?.toLocaleString() ?? 'Unknown time'}`}>
             <CheckCircle2 size={12} className="text-green-500" />
             {formatSavedAt(state.lastSavedAt)}
           </span>
@@ -354,7 +362,7 @@ export const BuilderTopBar: React.FC<BuilderTopBarProps> = ({
         )}
 
         {isPublished && publishedAt && !state.isPublishing && !publishError && (
-          <span className="text-xs text-gray-500 flex items-center gap-1.5 border-l border-gray-200 pl-2" title={`Published: ${new Date(publishedAt).toLocaleString()}`}>
+          <span className="text-xs text-gray-500 flex items-center gap-1.5 border-l border-gray-200 pl-2" title={`Published: ${toValidTopBarDate(publishedAt)?.toLocaleString() ?? 'Unknown time'}`}>
             <Clock size={11} />
             {formatPublishedAt(publishedAt)}
             {typeof publishedVersion === 'number' && (
