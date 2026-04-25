@@ -229,13 +229,21 @@ function getAccountUpdateTemplateCurrentBlockerLine(template: NonNullable<NameCh
   return undefined;
 }
 
+function getAccountUpdateTemplateBlockedByLine(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
+  if (template.blockingProofHopLabel) return `Blocked by: ${template.blockingProofHopLabel}`;
+  if (template.readiness === 'in_progress') return 'Blocked by: current proof pending';
+  if (template.readiness === 'upcoming') return 'Blocked by: next proof hop pending';
+  if (template.readiness === 'blocked') return 'Blocked by: proof chain pending';
+  return undefined;
+}
+
 function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
   return [
     `Audience: ${template.audience}`,
     `Subject: ${template.subject}`,
     `Status: ${getAccountUpdateTemplateStatusChip(template)}`,
     `Readiness: ${template.readinessLabel}`,
-    template.blockingProofHopLabel ? `Blocked by: ${template.blockingProofHopLabel}` : undefined,
+    getAccountUpdateTemplateBlockedByLine(template),
     getAccountUpdateTemplateCurrentBlockerLine(template),
     template.checklistHighlight ? `Checklist: ${template.checklistHighlight}` : undefined,
     template.checklistStatusNote ? `Checklist status: ${template.checklistStatusNote}` : undefined,
@@ -1566,8 +1574,8 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                   </div>
                 </div>
                 <p className="mt-2 text-xs text-text-secondary">{template.readinessLabel}</p>
-                {template.blockingProofHopLabel ? (
-                  <p className="mt-2 text-xs text-text-secondary">Blocked by: {template.blockingProofHopLabel}</p>
+                {getAccountUpdateTemplateBlockedByLine(template) ? (
+                  <p className="mt-2 text-xs text-text-secondary">{getAccountUpdateTemplateBlockedByLine(template)}</p>
                 ) : null}
                 {getAccountUpdateTemplateCurrentBlockerLine(template) ? (
                   <p className="mt-2 text-xs text-text-secondary">{getAccountUpdateTemplateCurrentBlockerLine(template)}</p>
