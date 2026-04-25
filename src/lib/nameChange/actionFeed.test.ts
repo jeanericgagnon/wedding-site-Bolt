@@ -1077,6 +1077,24 @@ describe('name change action feed', () => {
     expect(taxTemplateItem?.action.detail).toContain('Use this only to capture intake rules until the proof chain is ready.');
   });
 
+  it('avoids double punctuation in checklist detail lines', () => {
+    const feed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({ targetKey: 'banks', targetLabel: 'Banks', recommendedFormCode: 'BANK' }),
+    ], [], [], [
+      makeTemplate({
+        id: 'template-bank',
+        audience: 'Bank accounts',
+        readiness: 'blocked',
+        checklistHighlight: 'Gather the tax/state process only until legal proof is fully grounded.',
+        checklistStatusNote: 'Gather the tax/state process only until legal proof is fully grounded.',
+      }),
+    ]);
+
+    expect(feed[0]?.action.detail).toContain('Checklist: Gather the tax/state process only until legal proof is fully grounded.');
+    expect(feed[0]?.action.detail).toContain('Checklist status: Gather the tax/state process only until legal proof is fully grounded.');
+    expect(feed[0]?.action.detail).not.toContain('grounded..');
+  });
+
   it('keeps blocked template intake work above lower-value ready execution follow-through', () => {
     const feed = buildNameChangeActionFeed([
       makeExecutionSnapshot({

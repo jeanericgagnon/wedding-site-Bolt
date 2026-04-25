@@ -69,6 +69,11 @@ function getTemplateBlockedByLine(template: AccountUpdateTemplate) {
           : undefined;
 }
 
+function ensureTerminalPeriod(line: string | undefined) {
+  if (!line) return undefined;
+  return line.endsWith('.') ? line : `${line}.`;
+}
+
 function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemplate) {
   const blockedByLine = getTemplateBlockedByLine(template);
   const currentBlockerLine = template.blockingProofHopLabel
@@ -114,12 +119,8 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
               ? `${baseDetail} Use this only to capture intake rules until ${template.blockingProofHopLabel.toLowerCase()} clears.`
               : `${baseDetail} Use this only to capture intake rules until the proof chain is ready.`
             : baseDetail;
-  const checklistLine = template.checklistHighlight;
-  const checklistStatusLine = template.checklistStatusNote
-    ? template.checklistStatusNote.endsWith('.')
-      ? template.checklistStatusNote
-      : `${template.checklistStatusNote}.`
-    : undefined;
+  const checklistLine = ensureTerminalPeriod(template.checklistHighlight);
+  const checklistStatusLine = ensureTerminalPeriod(template.checklistStatusNote);
   const proofChecklistSummary = template.proofChecklist.length > 0
     ? `Proof checklist: ${template.proofChecklist.join(' · ')}`
     : undefined;
@@ -134,7 +135,7 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
     `Readiness: ${template.readinessLabel}`,
     blockedByLine,
     currentBlockerLine,
-    checklistLine ? `Checklist: ${checklistLine}.` : undefined,
+    checklistLine ? `Checklist: ${checklistLine}` : undefined,
     checklistStatusLine ? `Checklist status: ${checklistStatusLine}` : undefined,
     `Proof status: ${template.proofReadinessSummary}`,
     `Next ask: ${template.requestSummary}`,

@@ -728,6 +728,59 @@ describe('NameChangePlannerTab', () => {
     expect(screen.getByRole('button', { name: 'Copied' })).toBeInTheDocument();
   });
 
+  it('avoids double punctuation in copied checklist lines', async () => {
+    const clipboardWriteText = vi.fn().mockResolvedValue(undefined);
+    HTMLElement.prototype.scrollIntoView = vi.fn();
+    Object.defineProperty(window.navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: clipboardWriteText },
+    });
+
+    const draft = makeDraft();
+    const basePlan = buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      summary: {
+        ...basePlan.summary,
+        accountUpdateTemplates: (basePlan.summary.accountUpdateTemplates ?? []).map((template) => (
+          template.id === 'template-payroll'
+            ? {
+                ...template,
+                checklistHighlight: 'Gather the intake path only until legal proof is fully grounded.',
+                checklistStatusNote: 'Gather the intake path only until legal proof is fully grounded.',
+              }
+            : template
+        )),
+      },
+    };
+
+    render(
+      <NameChangePlannerTab
+        draft={draft}
+        documents={[]}
+        extractedFields={[]}
+        plan={plan}
+        reminders={[]}
+        saving={false}
+        onDraftChange={vi.fn()}
+        onStructuredIntakeChange={vi.fn()}
+        onDocumentsChange={vi.fn()}
+        onExtractedFieldsChange={vi.fn()}
+        onRemindersChange={vi.fn()}
+        onStepExecutionStatusChange={vi.fn()}
+        onStepExecutionNoteChange={vi.fn()}
+        onSave={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Copy intake script' })[0]!);
+
+    await waitFor(() => expect(clipboardWriteText).toHaveBeenCalledTimes(1));
+    expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining('Checklist: Gather the intake path only until legal proof is fully grounded.'));
+    expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining('Checklist status: Gather the intake path only until legal proof is fully grounded.'));
+    expect(clipboardWriteText).toHaveBeenCalledWith(expect.not.stringContaining('grounded..'));
+  });
+
   it('surfaces the most recently touched target first in the status vault list', () => {
     const draft = makeDraft();
     const basePlan = buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] });

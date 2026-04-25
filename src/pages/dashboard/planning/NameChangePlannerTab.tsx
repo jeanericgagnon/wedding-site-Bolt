@@ -237,7 +237,15 @@ function getAccountUpdateTemplateBlockedByLine(template: NonNullable<NameChangeP
   return undefined;
 }
 
+function ensureTerminalPeriod(line: string | undefined) {
+  if (!line) return undefined;
+  return line.endsWith('.') ? line : `${line}.`;
+}
+
 function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
+  const checklistLine = ensureTerminalPeriod(template.checklistHighlight);
+  const checklistStatusLine = ensureTerminalPeriod(template.checklistStatusNote);
+
   return [
     `Audience: ${template.audience}`,
     `Subject: ${template.subject}`,
@@ -245,8 +253,8 @@ function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['s
     `Readiness: ${template.readinessLabel}`,
     getAccountUpdateTemplateBlockedByLine(template),
     getAccountUpdateTemplateCurrentBlockerLine(template),
-    template.checklistHighlight ? `Checklist: ${template.checklistHighlight}` : undefined,
-    template.checklistStatusNote ? `Checklist status: ${template.checklistStatusNote}` : undefined,
+    checklistLine ? `Checklist: ${checklistLine}` : undefined,
+    checklistStatusLine ? `Checklist status: ${checklistStatusLine}` : undefined,
     getAccountUpdateTemplateStateLine(template),
     `Proof status: ${template.proofReadinessSummary}`,
     `Next ask: ${template.requestSummary}`,
