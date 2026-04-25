@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getVaultUnlockDate, toValidDateOrNull } from './vaultDate';
+import { formatVaultUnlockDate, getVaultUnlockDate, toValidDateOrNull } from './vaultDate';
 
 describe('vaultDate guards', () => {
   it('drops invalid persisted wedding dates instead of keeping Invalid Date state', () => {
@@ -13,5 +13,16 @@ describe('vaultDate guards', () => {
 
   it('builds a valid unlock date when the wedding date is valid', () => {
     expect(getVaultUnlockDate('2026-02-23', 10)?.toISOString().slice(0, 10)).toBe('2036-02-23');
+  });
+
+  it('formats invalid persisted unlock dates with a clean fallback', () => {
+    expect(formatVaultUnlockDate('not-a-date')).toBe('Unknown date');
+  });
+
+  it('formats valid unlock dates truthfully', () => {
+    const value = '2036-02-23T00:00:00.000Z';
+    expect(formatVaultUnlockDate(value)).toBe(
+      new Date(value).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+    );
   });
 });

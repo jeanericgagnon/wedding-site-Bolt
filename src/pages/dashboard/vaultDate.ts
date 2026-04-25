@@ -10,3 +10,9 @@ export function getVaultUnlockDate(weddingDate: Date | string | null | undefined
   date.setFullYear(date.getFullYear() + durationYears);
   return date;
 }
+
+export function formatVaultUnlockDate(value: Date | string | null | undefined, fallback = 'Unknown date'): string {
+  const date = toValidDateOrNull(value);
+  if (!date) return fallback;
+  return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+}

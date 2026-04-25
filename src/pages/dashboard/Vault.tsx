@@ -12,7 +12,7 @@ import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { useAuth } from '../../hooks/useAuth';
 import { getArchiveModeDescriptor } from '../../lib/archiveMode';
 import { sendAnniversaryReminder } from '../../lib/emailService';
-import { getVaultUnlockDate, toValidDateOrNull } from './vaultDate';
+import { formatVaultUnlockDate, getVaultUnlockDate, toValidDateOrNull } from './vaultDate';
 import { formatVaultEntryDate, getVaultEntryTimestamp } from './vaultEntryTime';
 
 const MAX_VAULTS = 5;
@@ -346,7 +346,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
   const isUnlocked = unlockDate ? new Date() >= unlockDate : false;
 
   const unlockLabel = unlockDate
-    ? unlockDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    ? formatVaultUnlockDate(unlockDate)
     : 'Set your wedding date to calculate unlock date';
 
   const nowMs = Date.now();
@@ -582,7 +582,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
             const unlocked = isEntryUnlocked(entry);
             const entryUnlockDate = getEntryUnlockDate(entry);
             const entryUnlockLabel = entryUnlockDate
-              ? entryUnlockDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+              ? formatVaultUnlockDate(entryUnlockDate)
               : unlockLabel;
 
             return (
@@ -1256,7 +1256,7 @@ setWeddingSiteId('demo-site-id');
         coupleName2,
         vaultLabel: config.label || `${config.duration_years}-Year Anniversary Vault`,
         anniversaryYear: config.duration_years,
-        unlockDate: unlockDate ? unlockDate.toLocaleDateString() : null,
+        unlockDate: unlockDate ? formatVaultUnlockDate(unlockDate, '') : null,
         vaultUrl,
         reminderKind,
       });
