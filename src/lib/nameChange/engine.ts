@@ -484,7 +484,7 @@ function buildAccountUpdateTemplates(
         in_progress: 'Please confirm the intake path now so I can queue payroll, benefits, and beneficiary follow-through the moment the SSA receipt lands.',
         complete: 'Please confirm payroll, health coverage, retirement, and beneficiary records already show the final legal name everywhere they should.',
         upcoming: 'Please confirm the intake path, hold timing, and whether you can pre-note the request while SSA alignment is still upstream.',
-        blocked: 'Please just confirm the intake path and payroll timing for now so I can come back with the SSA-backed packet once it is ready.',
+        blocked: 'Please just confirm the intake path and payroll timing for now so I can come back once the legal proof packet is grounded.',
       })
     : templateId === 'template-bank'
       ? getReadinessChecklistLine(readiness, {
@@ -508,7 +508,7 @@ function buildAccountUpdateTemplates(
               in_progress: 'Please confirm the verification path now so I can queue the tax/state request and attach SSA confirmation as soon as the current step lands.',
               complete: 'Please confirm payroll reporting, withholding records, and agency files now match the final legal name before the next filing cycle.',
               upcoming: 'Please confirm the verification path and filing-cycle timing while SSA sync is still upstream so I do not miss the next reporting window.',
-              blocked: 'Please just confirm the tax/state process for now so I can return with the SSA-backed packet once the upstream proof is real.',
+              blocked: 'Please just confirm the tax/state process for now so I can return once the legal proof packet is grounded.',
             })
           : templateId === 'template-travel'
             ? getReadinessChecklistLine(readiness, {
@@ -772,7 +772,7 @@ function buildAccountUpdateTemplates(
           in_progress: 'SSA follow-through is already moving, so I can draft this now and attach the SSA receipt as soon as it posts.',
           complete: 'The payroll-side proof chain should already be synced, so I mainly need confirmation that payroll, benefits, and deductions all show the final legal name.',
           upcoming: 'My legal proof is in hand, but SSA/payroll alignment is still upstream, so I mainly need your intake path and hold timing.',
-          blocked: 'My legal proof chain is still being grounded, so I need your intake path first and will send the SSA-backed proof packet once it is ready.',
+          blocked: 'My legal proof chain is still being grounded, so I need your intake path first and will send the legal proof packet once it is ready.',
         })
       : template.id === 'template-bank'
         ? getReadinessChecklistLine(readiness, {
@@ -796,7 +796,7 @@ function buildAccountUpdateTemplates(
                 in_progress: 'SSA and payroll tax alignment are already moving, so I can draft this now and send the confirmation once the current step lands.',
                 complete: 'The tax-side name sync should already be in place, so I mainly need confirmation that payroll reporting and agency records now match the final legal name.',
                 upcoming: 'My legal proof is ready, but SSA/tax sync is still upstream, so I mostly need the exact verification path and timing guardrails.',
-                blocked: 'The core proof chain is still upstream, so I need your process first and will send the SSA-backed packet once it is ready.',
+                blocked: 'The core proof chain is still upstream, so I need your process first and will send the legal proof packet once it is ready.',
               })
             : template.id === 'template-travel'
               ? getReadinessChecklistLine(readiness, {

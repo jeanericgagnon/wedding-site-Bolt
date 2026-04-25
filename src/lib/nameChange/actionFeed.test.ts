@@ -1124,6 +1124,27 @@ describe('name change action feed', () => {
     expect(travelTemplateItem?.action.detail).toContain('Proof to have handy: Certified legal name-change proof · Gather mismatch and booking rules only until legal proof is fully grounded.');
   });
 
+  it('keeps blocked tax template next asks anchored to legal-proof readiness', () => {
+    const feed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'taxes',
+        targetLabel: 'Tax agency or payroll tax support',
+        recommendedFormCode: 'TAX',
+      }),
+    ], [], [], [
+      makeTemplate({
+        id: 'template-tax',
+        audience: 'Tax agency or payroll tax support',
+        readiness: 'blocked',
+        requestSummary: 'Please just confirm the tax/state process for now so I can return once the legal proof packet is grounded.',
+      }),
+    ]);
+
+    expect(feed[0]?.laneLabel).toBe('Tax agency or payroll tax support · ask intake rules now · legal proof pending');
+    expect(feed[0]?.action.label).toBe('Ask tax agency or payroll tax support intake rules now (legal proof pending)');
+    expect(feed[0]?.action.detail).toContain('Next ask: Please just confirm the tax/state process for now so I can return once the legal proof packet is grounded.');
+  });
+
   it('routes legal-name setup blockers to the planner case-setup section', () => {
     const feed = buildNameChangeActionFeed([
       makeExecutionSnapshot({
