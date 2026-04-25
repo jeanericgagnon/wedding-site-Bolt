@@ -8,6 +8,8 @@ import {
   getAccountUpdateTemplateBlockedByLine,
   getAccountUpdateTemplateCurrentBlockerLine,
   getAccountUpdateTemplateMessageLine,
+  getAccountUpdateTemplateNextAskLine,
+  getAccountUpdateTemplateProofStatusLine,
   getAccountUpdateTemplateReadinessDetailLine,
   getAccountUpdateTemplateReadinessLabel,
   getAccountUpdateTemplateStateLine,
@@ -173,13 +175,20 @@ describe('account update template surface helpers', () => {
     );
   });
 
-  it('formats subject and template message lines through shared helpers', () => {
-    const template = makeTemplate({ subject: 'Send now (proof packet ready): Name change update for banking profile', body: 'My proof packet is ready.' });
+  it('formats subject, message, proof-status, and next-ask lines through shared helpers', () => {
+    const template = makeTemplate({
+      subject: 'Send now (proof packet ready): Name change update for banking profile',
+      body: 'My proof packet is ready.',
+      proofReadinessSummary: 'Proof packet ready for bank sync.',
+      requestSummary: 'Ask the bank to update the legal name on file.',
+    });
 
     expect(getAccountUpdateTemplateSubjectLine(template)).toBe(
       'Subject: Send now (proof packet ready): Name change update for banking profile',
     );
     expect(getAccountUpdateTemplateMessageLine(template)).toBe('Template message: My proof packet is ready.');
+    expect(getAccountUpdateTemplateProofStatusLine(template)).toBe('Proof status: Proof packet ready for bank sync.');
+    expect(getAccountUpdateTemplateNextAskLine(template)).toBe('Next ask: Ask the bank to update the legal name on file.');
   });
 
   it('keeps planner and feed readiness labels on the same copy map', () => {

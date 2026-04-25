@@ -176,6 +176,14 @@ export function getAccountUpdateTemplateMessageLine(template: AccountUpdateTempl
   return `Template message: ${template.body}`;
 }
 
+export function getAccountUpdateTemplateProofStatusLine(template: AccountUpdateTemplate) {
+  return `Proof status: ${template.proofReadinessSummary}`;
+}
+
+export function getAccountUpdateTemplateNextAskLine(template: AccountUpdateTemplate) {
+  return `Next ask: ${template.requestSummary}`;
+}
+
 function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemplate) {
   const blockedByLine = getAccountUpdateTemplateBlockedByLine(template);
   const currentBlockerLine = getAccountUpdateTemplateCurrentBlockerLine(template);
@@ -197,8 +205,8 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
     currentBlockerLine,
     checklistLine ? `Checklist: ${checklistLine}` : undefined,
     checklistStatusLine ? `Checklist status: ${checklistStatusLine}` : undefined,
-    `Proof status: ${template.proofReadinessSummary}`,
-    `Next ask: ${template.requestSummary}`,
+    getAccountUpdateTemplateProofStatusLine(template),
+    getAccountUpdateTemplateNextAskLine(template),
     proofChecklistSummary,
     proofDocumentsSummary,
   ].filter(Boolean).join('\n').trim();
