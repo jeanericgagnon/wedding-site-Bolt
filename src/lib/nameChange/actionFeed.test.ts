@@ -7,6 +7,8 @@ import {
   formatInlineProofList,
   getAccountUpdateTemplateBlockedByLine,
   getAccountUpdateTemplateCurrentBlockerLine,
+  getAccountUpdateTemplateChecklistLine,
+  getAccountUpdateTemplateChecklistStatusLine,
   getAccountUpdateTemplateMessageLine,
   getAccountUpdateTemplateNextAskLine,
   getAccountUpdateTemplateProofChecklistLine,
@@ -177,10 +179,12 @@ describe('account update template surface helpers', () => {
     );
   });
 
-  it('formats subject, message, proof-status, next-ask, and proof-summary lines through shared helpers', () => {
+  it('formats subject, message, checklist, proof-status, next-ask, and proof-summary lines through shared helpers', () => {
     const template = makeTemplate({
       subject: 'Send now (proof packet ready): Name change update for banking profile',
       body: 'My proof packet is ready.',
+      checklistHighlight: 'Gather the intake path only until legal proof is fully grounded',
+      checklistStatusNote: 'Wait to send until legal proof is fully grounded',
       proofReadinessSummary: 'Proof packet ready for bank sync.',
       requestSummary: 'Ask the bank to update the legal name on file.',
       proofChecklist: ['Certified legal name-change proof.', 'Updated photo ID or DMV receipt'],
@@ -191,6 +195,8 @@ describe('account update template surface helpers', () => {
       'Subject: Send now (proof packet ready): Name change update for banking profile',
     );
     expect(getAccountUpdateTemplateMessageLine(template)).toBe('Template message: My proof packet is ready.');
+    expect(getAccountUpdateTemplateChecklistLine(template)).toBe('Checklist: Gather the intake path only until legal proof is fully grounded.');
+    expect(getAccountUpdateTemplateChecklistStatusLine(template)).toBe('Checklist status: Wait to send until legal proof is fully grounded.');
     expect(getAccountUpdateTemplateProofStatusLine(template)).toBe('Proof status: Proof packet ready for bank sync.');
     expect(getAccountUpdateTemplateNextAskLine(template)).toBe('Next ask: Ask the bank to update the legal name on file.');
     expect(getAccountUpdateTemplateProofChecklistLine(template)).toBe(

@@ -194,13 +194,23 @@ export function getAccountUpdateTemplateProofDocumentsLine(template: AccountUpda
   return formattedProofDocuments ? `Proof to have handy: ${formattedProofDocuments}` : undefined;
 }
 
+export function getAccountUpdateTemplateChecklistLine(template: AccountUpdateTemplate) {
+  const checklistLine = ensureTerminalPeriod(template.checklistHighlight);
+  return checklistLine ? `Checklist: ${checklistLine}` : undefined;
+}
+
+export function getAccountUpdateTemplateChecklistStatusLine(template: AccountUpdateTemplate) {
+  const checklistStatusLine = ensureTerminalPeriod(template.checklistStatusNote);
+  return checklistStatusLine ? `Checklist status: ${checklistStatusLine}` : undefined;
+}
+
 function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemplate) {
   const blockedByLine = getAccountUpdateTemplateBlockedByLine(template);
   const currentBlockerLine = getAccountUpdateTemplateCurrentBlockerLine(template);
   const proofPhaseLine = getAccountUpdateTemplateStateLine(template);
   const readinessDetail = getAccountUpdateTemplateReadinessDetailLine(baseDetail, template);
-  const checklistLine = ensureTerminalPeriod(template.checklistHighlight);
-  const checklistStatusLine = ensureTerminalPeriod(template.checklistStatusNote);
+  const checklistLine = getAccountUpdateTemplateChecklistLine(template);
+  const checklistStatusLine = getAccountUpdateTemplateChecklistStatusLine(template);
   const proofChecklistSummary = getAccountUpdateTemplateProofChecklistLine(template);
   const proofDocumentsSummary = getAccountUpdateTemplateProofDocumentsLine(template);
   return [
@@ -211,8 +221,8 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
     `Readiness: ${template.readinessLabel}`,
     blockedByLine,
     currentBlockerLine,
-    checklistLine ? `Checklist: ${checklistLine}` : undefined,
-    checklistStatusLine ? `Checklist status: ${checklistStatusLine}` : undefined,
+    checklistLine,
+    checklistStatusLine,
     getAccountUpdateTemplateProofStatusLine(template),
     getAccountUpdateTemplateNextAskLine(template),
     proofChecklistSummary,

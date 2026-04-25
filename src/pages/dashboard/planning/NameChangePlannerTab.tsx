@@ -10,6 +10,8 @@ import {
   formatInlineProofList,
   getAccountUpdateTemplateBlockedByLine,
   getAccountUpdateTemplateCurrentBlockerLine,
+  getAccountUpdateTemplateChecklistLine,
+  getAccountUpdateTemplateChecklistStatusLine,
   getAccountUpdateTemplateMessageLine,
   getAccountUpdateTemplateNextAskLine,
   getAccountUpdateTemplateProofChecklistLine,
@@ -199,8 +201,8 @@ function getAccountUpdateTemplateCopyButtonLabel(
 }
 
 function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
-  const checklistLine = ensureTerminalPeriod(template.checklistHighlight);
-  const checklistStatusLine = ensureTerminalPeriod(template.checklistStatusNote);
+  const checklistLine = getAccountUpdateTemplateChecklistLine(template);
+  const checklistStatusLine = getAccountUpdateTemplateChecklistStatusLine(template);
   const proofChecklistLine = getAccountUpdateTemplateProofChecklistLine(template);
   const proofDocumentsLine = getAccountUpdateTemplateProofDocumentsLine(template);
 
@@ -211,8 +213,8 @@ function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['s
     `Readiness: ${template.readinessLabel}`,
     getAccountUpdateTemplateBlockedByLine(template),
     getAccountUpdateTemplateCurrentBlockerLine(template),
-    checklistLine ? `Checklist: ${checklistLine}` : undefined,
-    checklistStatusLine ? `Checklist status: ${checklistStatusLine}` : undefined,
+    checklistLine,
+    checklistStatusLine,
     getAccountUpdateTemplateStateLine(template),
     getAccountUpdateTemplateProofStatusLine(template),
     getAccountUpdateTemplateNextAskLine(template),
@@ -1546,11 +1548,11 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 {getAccountUpdateTemplateCurrentBlockerLine(template) ? (
                   <p className="mt-2 text-xs text-text-secondary">{getAccountUpdateTemplateCurrentBlockerLine(template)}</p>
                 ) : null}
-                {ensureTerminalPeriod(template.checklistHighlight) ? (
-                  <p className="mt-2 text-xs text-text-secondary">Checklist: {ensureTerminalPeriod(template.checklistHighlight)}</p>
+                {getAccountUpdateTemplateChecklistLine(template) ? (
+                  <p className="mt-2 text-xs text-text-secondary">{getAccountUpdateTemplateChecklistLine(template)}</p>
                 ) : null}
-                {ensureTerminalPeriod(template.checklistStatusNote) ? (
-                  <p className="mt-2 text-xs text-text-secondary">Checklist status: {ensureTerminalPeriod(template.checklistStatusNote)}</p>
+                {getAccountUpdateTemplateChecklistStatusLine(template) ? (
+                  <p className="mt-2 text-xs text-text-secondary">{getAccountUpdateTemplateChecklistStatusLine(template)}</p>
                 ) : null}
                 <p className="mt-2 text-xs text-text-secondary">{getAccountUpdateTemplateStateLine(template)}</p>
                 <p className="mt-2 text-xs text-text-secondary">Proof status: {template.proofReadinessSummary}</p>
