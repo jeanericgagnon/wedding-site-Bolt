@@ -316,6 +316,7 @@ describe('name change action feed', () => {
       laneLabel: 'Bank accounts · send now',
       urgencyReason: 'packet_trust',
       action: expect.objectContaining({
+        label: 'Send bank accounts update',
         detail: expect.stringContaining('clean confirmation/update pass'),
       }),
     });
@@ -365,6 +366,7 @@ describe('name change action feed', () => {
       urgencyReason: 'review_queue',
       urgencyTier: 'normal',
     });
+    expect(feed[0]?.action.label).toBe('Confirm bank accounts sync');
     expect(feed[0]?.action.detail).toContain('clean confirmation/update pass');
     expect(feed[0]?.action.detail).toContain('Please confirm cards, checks, statements, and my online profile already reflect the final legal name everywhere.');
     expect(feed[0]?.action.detail).toContain('Confirm cards, statements, and online banking all reflect the final legal name');
@@ -472,6 +474,7 @@ describe('name change action feed', () => {
       severity: 'blocking',
       urgencyReason: 'blocking_dependency',
       action: expect.objectContaining({
+        label: 'Gather insurance carriers intake rules',
         detail: expect.stringContaining('learn the intake path now'),
       }),
     });
@@ -721,6 +724,7 @@ describe('name change action feed', () => {
       laneLabel: 'Employer payroll / HR · wait for next proof hop',
       urgencyReason: 'blocking_dependency',
     });
+    expect(feed[0]?.action.label).toBe('Learn employer payroll / hr intake path');
     expect(feed[0]?.action.detail).toContain('still depends on the next ID or agency hop');
   });
 

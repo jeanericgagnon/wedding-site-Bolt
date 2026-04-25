@@ -62,6 +62,15 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
   return [baseDetail, template.readinessLabel, template.requestSummary, readinessChecklistItem].filter(Boolean).join(' ').trim();
 }
 
+function getTemplateActionLabel(baseLabel: string, template: AccountUpdateTemplate) {
+  const audience = template.audience;
+  if (template.readiness === 'complete') return `Confirm ${audience.toLowerCase()} sync`;
+  if (template.readiness === 'ready') return `Send ${audience.toLowerCase()} update`;
+  if (template.readiness === 'in_progress') return `Prep ${audience.toLowerCase()} update`;
+  if (template.readiness === 'upcoming') return `Learn ${audience.toLowerCase()} intake path`;
+  return `Gather ${audience.toLowerCase()} intake rules`;
+}
+
 function getTemplateLaneLabel(template: AccountUpdateTemplate) {
   const readinessLabel = template.readiness === 'ready'
     ? 'send now'
@@ -308,6 +317,7 @@ export function buildNameChangeActionFeed(
       action: routesToTemplate
         ? {
             ...snapshot.nextAction,
+            label: getTemplateActionLabel(snapshot.nextAction.label, linkedTemplate),
             detail: getTemplateActionDetail(snapshot.nextAction.detail, linkedTemplate),
           }
         : snapshot.nextAction,
