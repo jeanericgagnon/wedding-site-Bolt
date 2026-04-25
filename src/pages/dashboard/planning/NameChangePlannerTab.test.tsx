@@ -96,9 +96,11 @@ describe('NameChangePlannerTab', () => {
       expect(window.location.hash).toBe('#case-setup');
       fireEvent.click(screen.getByRole('button', { name: 'Preview status vault' }));
       expect(window.location.hash).toBe('#target-status-tracking');
+      fireEvent.click(screen.getByRole('button', { name: 'See roadmap first' }));
+      expect(window.location.hash).toBe('#name-change-roadmap');
       fireEvent.click(screen.getByRole('button', { name: 'Save and come back later' }));
 
-      expect(scrollIntoView).toHaveBeenCalledTimes(2);
+      expect(scrollIntoView).toHaveBeenCalledTimes(3);
       expect(onSave).toHaveBeenCalled();
     } finally {
       HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
@@ -135,9 +137,10 @@ describe('NameChangePlannerTab', () => {
 
       fireEvent.click(screen.getByRole('button', { name: 'Start with case setup' }));
       fireEvent.click(screen.getByRole('button', { name: 'Preview status vault' }));
+      fireEvent.click(screen.getByRole('button', { name: 'See roadmap first' }));
 
-      expect(scrollIntoView).toHaveBeenCalledTimes(2);
-      expect(window.location.hash).toBe('#target-status-tracking');
+      expect(scrollIntoView).toHaveBeenCalledTimes(3);
+      expect(window.location.hash).toBe('#name-change-roadmap');
     } finally {
       HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
     }

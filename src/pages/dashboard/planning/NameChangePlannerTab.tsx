@@ -1073,7 +1073,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   }, [documents]);
 
   return (
-    <div className="space-y-6">
+    <div id="name-change-roadmap" className="space-y-6 scroll-mt-24">
       <div className="grid gap-4 md:grid-cols-3">
         <Card padding="sm">
           <p className="text-xs uppercase tracking-wide text-text-tertiary">Path</p>
@@ -1124,7 +1124,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
             <Button variant="outline" size="sm" onClick={() => scrollToPlannerTarget(hasExecutionActivity ? 'case-setup' : 'target-status-tracking')}>
               {hasExecutionActivity ? 'Update case setup' : 'Preview status vault'}
             </Button>
-            <Button variant="outline" size="sm" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <Button variant="outline" size="sm" onClick={() => scrollToPlannerTarget('name-change-roadmap')}>
               {hasExecutionActivity ? 'Open roadmap' : 'See roadmap first'}
             </Button>
             <Button variant="outline" size="sm" onClick={() => void onSave()} disabled={saving}>{saving ? 'Saving…' : 'Save and come back later'}</Button>

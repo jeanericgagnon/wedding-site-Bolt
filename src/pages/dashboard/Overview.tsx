@@ -918,7 +918,7 @@ export const DashboardOverview: React.FC = () => {
                         Update case setup
                       </Button>
                       <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/planning?tab=nameChange')}>
-                        Open full assistant
+                        See roadmap first
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard/planning')}>
                         Open planning workspace instead
