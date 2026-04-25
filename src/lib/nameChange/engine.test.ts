@@ -149,12 +149,14 @@ describe('name change engine', () => {
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.readinessLabel).toBe('Your legal proof is grounded, but this still depends on the next ID or agency hop before it is ready to send.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.body).toContain('My legal proof is in hand, but SSA/payroll alignment is still upstream');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.body).toContain('I am not sending the final packet yet and mainly need the intake path for the next proof hop.');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.body).toContain('Do not send yet; legal proof is grounded, but SSA is still the missing proof hop.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.body).toContain('Use this to learn the payroll intake path while SSA alignment is still upstream');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.body).toContain('Please confirm the intake path, hold timing, and whether you can pre-note the request while SSA alignment is still upstream.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.requestSummary).toBe('Please confirm the intake path, hold timing, and whether you can pre-note the request while SSA alignment is still upstream.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.proofReadinessSummary).toBe('Do not send yet; legal proof is grounded, but SSA is still the missing proof hop.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.proofChecklist).toEqual(expect.arrayContaining(['Use this to learn the payroll intake path while SSA alignment is still upstream']));
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-bank')?.body).toContain('whether an interim DMV receipt works');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-bank')?.body).toContain('Do not send yet; legal proof is grounded, but the photo-ID hop is still missing.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-bank')?.body).toContain('Confirm whether legal proof alone or an interim DMV receipt is enough to start');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-bank')?.body).toContain('Please confirm whether legal proof alone or an interim DMV receipt is enough to start, and whether cards or checks need a second pass later.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-bank')?.proofChecklist).toEqual(expect.arrayContaining(['Confirm whether legal proof alone or an interim DMV receipt is enough to start']));
@@ -200,6 +202,7 @@ describe('name change engine', () => {
     });
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('I need your process first and will send the SSA-backed packet once it is ready');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('I am not sending documents yet and just need the intake rules before the proof chain is ready.');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('Do not send yet; the legal proof chain still needs to clear before SSA-backed tax updates can stick.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('Please just confirm the tax/state process for now so I can return with the SSA-backed packet once the upstream proof is real.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.requestSummary).toBe('Please just confirm the tax/state process for now so I can return with the SSA-backed packet once the upstream proof is real.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.proofReadinessSummary).toBe('Do not send yet; the legal proof chain still needs to clear before SSA-backed tax updates can stick.');
