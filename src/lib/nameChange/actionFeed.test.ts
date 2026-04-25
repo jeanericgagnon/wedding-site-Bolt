@@ -350,6 +350,7 @@ describe('name change action feed', () => {
       makeTemplate({
         readiness: 'complete',
         subject: 'Confirm completed update: Name change update for banking profile',
+        proofReadinessSummary: 'Use this as a confirmation pass that cards, checks, statements, and profile records already synced.',
         requestSummary: 'Please confirm cards, checks, statements, and my online profile already reflect the final legal name everywhere.',
         proofChecklist: [
           'Certified legal name-change proof',
@@ -369,6 +370,7 @@ describe('name change action feed', () => {
     });
     expect(feed[0]?.action.label).toBe('Confirm bank accounts sync');
     expect(feed[0]?.action.detail).toContain('clean confirmation/update pass');
+    expect(feed[0]?.action.detail).toContain('Use this as a confirmation pass that cards, checks, statements, and profile records already synced.');
     expect(feed[0]?.action.detail).toContain('Please confirm cards, checks, statements, and my online profile already reflect the final legal name everywhere.');
     expect(feed[0]?.action.detail).toContain('Confirm cards, statements, and online banking all reflect the final legal name');
   });
@@ -460,6 +462,7 @@ describe('name change action feed', () => {
         audience: 'Insurance carriers',
         readiness: 'blocked',
         readinessLabel: 'The legal-proof chain is still too early, so use this to learn the intake path now and wait to send documents until the upstream proof is real.',
+        proofReadinessSummary: 'Do not send yet; the legal proof chain still needs to clear before carrier evidence will stick.',
         requestSummary: 'Please just share the carrier evidence rules and intake path for now so I can avoid touching cards or claims too early.',
         proofChecklist: [
           'Certified legal name-change proof',
@@ -479,6 +482,7 @@ describe('name change action feed', () => {
         detail: expect.stringContaining('learn the intake path now'),
       }),
     });
+    expect(feed[0]?.action.detail).toContain('Do not send yet; the legal proof chain still needs to clear before carrier evidence will stick.');
     expect(feed[0]?.action.detail).toContain('Please just share the carrier evidence rules and intake path for now so I can avoid touching cards or claims too early.');
     expect(feed[0]?.action.detail).toContain('Hold policy changes for now and just gather the carrier evidence rules');
   });
