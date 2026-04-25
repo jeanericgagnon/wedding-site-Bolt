@@ -273,7 +273,15 @@ describe('name change engine', () => {
           dependsOnStepIds: expect.arrayContaining(['federal-ssa', 'institution-irs-employer']),
           proofChecklist: expect.arrayContaining(['Certified legal name-change proof', 'Updated Social Security record or SSA receipt']),
         }),
-        expect.objectContaining({ audience: 'Bank or credit card support', proofChecklist: expect.arrayContaining(['Updated photo ID or DMV receipt']) }),
+        expect.objectContaining({
+          audience: 'Bank or credit card support',
+          dependsOnStepIds: expect.arrayContaining([
+            'institution-investments-loans',
+            'institution-student-loans-financial-aid',
+            'institution-mortgage-property-records',
+          ]),
+          proofChecklist: expect.arrayContaining(['Updated photo ID or DMV receipt']),
+        }),
         expect.objectContaining({ audience: 'Insurance or subscription support' }),
         expect.objectContaining({ audience: 'Tax agency or payroll tax support', dependsOnStepIds: expect.arrayContaining(['institution-state-tax-agency']) }),
         expect.objectContaining({

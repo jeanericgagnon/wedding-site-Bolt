@@ -940,7 +940,14 @@ function buildAccountUpdateTemplates(
       id: 'template-bank',
       audience: 'Bank or credit card support',
       subject: 'Request to update account name after legal name change',
-      dependsOnStepIds: ['state-photo-id', 'institution-banks', 'institution-credit-bureaus'],
+      dependsOnStepIds: [
+        'state-photo-id',
+        'institution-banks',
+        'institution-investments-loans',
+        'institution-student-loans-financial-aid',
+        'institution-mortgage-property-records',
+        'institution-credit-bureaus',
+      ],
       proofDocuments: [
         ...proofChecklistBase,
         'Updated photo ID or DMV receipt',
