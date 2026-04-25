@@ -31,6 +31,7 @@ import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
 import { getSiteVisibilityState } from '../../lib/siteVisibilityState';
 import { resolveActiveSiteForUser, resolveActiveSiteRoleForUser } from '../../lib/activeSite';
 import { getStoredActiveSiteId, setStoredActiveSiteId } from '../../lib/activeSiteStorage';
+import { buildSiteMembershipLabel } from './siteMembershipLabel';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -83,7 +84,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
 
       const ownerMemberships: SiteMembershipOption[] = (ownedSites || []).map((site) => ({
         id: site.id,
-        label: [site.couple_name_1, site.couple_name_2].filter(Boolean).join(' & ') || site.site_slug || 'Wedding site',
+        label: buildSiteMembershipLabel(site.couple_name_1, site.couple_name_2, site.site_slug),
         slug: site.site_slug,
         role: 'owner',
       }));
@@ -99,7 +100,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
         wedding_sites: { id: string; site_slug: string | null; couple_name_1: string | null; couple_name_2: string | null };
       }> | null) || []).map((row) => ({
         id: row.wedding_site_id,
-        label: [row.wedding_sites?.couple_name_1, row.wedding_sites?.couple_name_2].filter(Boolean).join(' & ') || row.wedding_sites?.site_slug || 'Wedding site',
+        label: buildSiteMembershipLabel(
+          row.wedding_sites?.couple_name_1,
+          row.wedding_sites?.couple_name_2,
+          row.wedding_sites?.site_slug,
+        ),
         slug: row.wedding_sites?.site_slug || null,
         role: row.role,
       }));
