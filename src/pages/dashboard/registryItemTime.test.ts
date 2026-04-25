@@ -21,6 +21,9 @@ describe('registry item time guards', () => {
     expect(getRegistryItemTimestamp(value)).toBe(new Date(value).getTime());
     expect(isRegistryItemDue('2026-06-21T20:30:00.000Z', now)).toBe(false);
     expect(ageExceedsMs(value, 30 * 60 * 1000, now)).toBe(true);
-    expect(formatRegistryItemDate(value)).toBe(new Date(value).toLocaleDateString());
+    expect(formatRegistryItemDate(value)).toBe(new Date(value).toLocaleDateString('en-US'));
+    expect(
+      formatRegistryItemDate(value, { month: 'short', day: 'numeric', year: 'numeric' }),
+    ).toBe(new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }));
   });
 });

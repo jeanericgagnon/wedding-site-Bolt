@@ -20,7 +20,11 @@ export function ageExceedsMs(value: string | null | undefined, ageMs: number, no
   return timestamp === FALLBACK_TIME || (now - timestamp) > ageMs;
 }
 
-export function formatRegistryItemDate(value: string | null | undefined): string {
+export function formatRegistryItemDate(
+  value: string | null | undefined,
+  options?: Intl.DateTimeFormatOptions,
+  fallback = 'Unknown date',
+): string {
   const date = toValidRegistryItemDateOrNull(value);
-  return date ? date.toLocaleDateString() : 'Unknown date';
+  return date ? date.toLocaleDateString('en-US', options) : fallback;
 }

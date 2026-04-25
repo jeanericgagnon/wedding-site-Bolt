@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { ExternalLink, Pencil, Trash2, GripVertical, Package, CheckCircle2, ShoppingBag, RefreshCw } from 'lucide-react';
 import { Badge } from '../../../components/ui';
+import { formatRegistryItemDate } from '../registryItemTime';
 import { getRegistryItemMetadataState, sanitizeRegistryQuantityState, type RegistryItem, type PurchaseStatus } from './registryTypes';
 
 interface Props {
@@ -152,10 +153,10 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
     return { label: 'Image: Missing', tone: 'error' as const, hint: 'No image source available yet.' };
   })();
   const asOfLabel = normalizedItem.metadata_last_checked_at
-    ? new Date(normalizedItem.metadata_last_checked_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    ? formatRegistryItemDate(normalizedItem.metadata_last_checked_at, { month: 'short', day: 'numeric', year: 'numeric' })
     : null;
   const nextCheckLabel = normalizedItem.next_refresh_at
-    ? new Date(normalizedItem.next_refresh_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    ? formatRegistryItemDate(normalizedItem.next_refresh_at, { month: 'short', day: 'numeric' })
     : null;
   const failCount = normalizedItem.refresh_fail_count ?? 0;
   const sourceLabel = normalizedItem.metadata_source_method ? `Source: ${normalizedItem.metadata_source_method}` : null;
