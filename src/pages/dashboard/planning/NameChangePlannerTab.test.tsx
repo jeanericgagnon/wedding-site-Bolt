@@ -505,6 +505,8 @@ describe('NameChangePlannerTab', () => {
     const payrollProofChecklistSummary = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.proofChecklist.join(' · ');
     const payrollProofChecklist = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.proofDocuments.join(' · ');
     const payrollBlockingProofHop = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.blockingProofHopLabel;
+    const payrollChecklistHighlightLine = payrollChecklistHighlight?.endsWith('.') ? payrollChecklistHighlight : `${payrollChecklistHighlight}.`;
+    const payrollChecklistStatusLine = payrollChecklistStatus?.endsWith('.') ? payrollChecklistStatus : `${payrollChecklistStatus}.`;
 
     render(
       <NameChangePlannerTab
@@ -530,8 +532,8 @@ describe('NameChangePlannerTab', () => {
     expect(screen.getByText(`Next ask: ${payrollRequestSummary}`)).toBeInTheDocument();
     expect(screen.getByText(`Next ask: ${bankRequestSummary}`)).toBeInTheDocument();
     expect(screen.getAllByText(`Blocked by: ${payrollBlockingProofHop}.`).length).toBeGreaterThan(0);
-    expect(screen.getByText(`Checklist: ${payrollChecklistHighlight}`)).toBeInTheDocument();
-    expect(screen.getByText(`Checklist status: ${payrollChecklistStatus}`)).toBeInTheDocument();
+    expect(screen.getByText(`Checklist: ${payrollChecklistHighlightLine}`)).toBeInTheDocument();
+    expect(screen.getByText(`Checklist status: ${payrollChecklistStatusLine}`)).toBeInTheDocument();
     expect(screen.getByText(`Proof status: ${payrollProofStatus}`)).toBeInTheDocument();
     expect(screen.getByText(`Proof checklist: ${payrollProofChecklistSummary}`)).toBeInTheDocument();
     expect(screen.getByText(`Proof to have handy: ${payrollProofChecklist}`)).toBeInTheDocument();
@@ -779,6 +781,49 @@ describe('NameChangePlannerTab', () => {
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining('Checklist: Gather the intake path only until legal proof is fully grounded.'));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining('Checklist status: Gather the intake path only until legal proof is fully grounded.'));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.not.stringContaining('grounded..'));
+  });
+
+  it('punctuates visible checklist lines on planner cards', () => {
+    const draft = makeDraft();
+    const basePlan = buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      summary: {
+        ...basePlan.summary,
+        accountUpdateTemplates: (basePlan.summary.accountUpdateTemplates ?? []).map((template) => (
+          template.id === 'template-payroll'
+            ? {
+                ...template,
+                checklistHighlight: 'Gather the intake path only until legal proof is fully grounded',
+                checklistStatusNote: 'Gather the intake path only until legal proof is fully grounded',
+              }
+            : template
+        )),
+      },
+    };
+
+    render(
+      <NameChangePlannerTab
+        draft={draft}
+        documents={[]}
+        extractedFields={[]}
+        plan={plan}
+        reminders={[]}
+        saving={false}
+        onDraftChange={vi.fn()}
+        onStructuredIntakeChange={vi.fn()}
+        onDocumentsChange={vi.fn()}
+        onExtractedFieldsChange={vi.fn()}
+        onRemindersChange={vi.fn()}
+        onStepExecutionStatusChange={vi.fn()}
+        onStepExecutionNoteChange={vi.fn()}
+        onSave={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    expect(screen.getByText('Checklist: Gather the intake path only until legal proof is fully grounded.')).toBeInTheDocument();
+    expect(screen.getByText('Checklist status: Gather the intake path only until legal proof is fully grounded.')).toBeInTheDocument();
+    expect(screen.queryByText('Checklist: Gather the intake path only until legal proof is fully grounded')).not.toBeInTheDocument();
   });
 
   it('surfaces the most recently touched target first in the status vault list', () => {

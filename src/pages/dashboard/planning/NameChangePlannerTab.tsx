@@ -1588,11 +1588,11 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 {getAccountUpdateTemplateCurrentBlockerLine(template) ? (
                   <p className="mt-2 text-xs text-text-secondary">{getAccountUpdateTemplateCurrentBlockerLine(template)}</p>
                 ) : null}
-                {template.checklistHighlight ? (
-                  <p className="mt-2 text-xs text-text-secondary">Checklist: {template.checklistHighlight}</p>
+                {ensureTerminalPeriod(template.checklistHighlight) ? (
+                  <p className="mt-2 text-xs text-text-secondary">Checklist: {ensureTerminalPeriod(template.checklistHighlight)}</p>
                 ) : null}
-                {template.checklistStatusNote ? (
-                  <p className="mt-2 text-xs text-text-secondary">Checklist status: {template.checklistStatusNote}</p>
+                {ensureTerminalPeriod(template.checklistStatusNote) ? (
+                  <p className="mt-2 text-xs text-text-secondary">Checklist status: {ensureTerminalPeriod(template.checklistStatusNote)}</p>
                 ) : null}
                 <p className="mt-2 text-xs text-text-secondary">{getAccountUpdateTemplateStateLine(template)}</p>
                 <p className="mt-2 text-xs text-text-secondary">Proof status: {template.proofReadinessSummary}</p>
