@@ -4,12 +4,14 @@ export interface NameChangeOverviewInsights {
   coreChainLabel: string;
   followOnLabel: string;
   downstreamLabel: string;
+  concreteResumeLabel: string | null;
 }
 
 export function buildNameChangeOverviewInsights(workspace: Pick<HydratedNameChangeWorkspace, 'plan' | 'reminders'>): NameChangeOverviewInsights {
   const executionCounts = workspace.plan.summary.executionCounts ?? { todo: workspace.plan.steps.length, in_progress: 0, complete: 0 };
   const milestones = workspace.plan.summary.milestoneChecklist ?? [];
   const milestoneCompleteCount = milestones.filter((milestone) => milestone.status === 'complete').length;
+  const nextOpenMilestone = milestones.find((milestone) => milestone.status !== 'complete') ?? null;
   const openReminderCount = workspace.reminders.filter((reminder) => reminder.status === 'pending' || reminder.status === 'scheduled').length;
 
   return {
@@ -25,5 +27,6 @@ export function buildNameChangeOverviewInsights(workspace: Pick<HydratedNameChan
       openReminderCount > 0
         ? `${openReminderCount} reminder${openReminderCount === 1 ? '' : 's'} still open for the long-tail bank, insurance, travel, and loyalty cleanup.`
         : 'Use the long-tail rollout lane for banks, insurance, travel, loyalty, and the rest of the account cleanup.',
+    concreteResumeLabel: nextOpenMilestone?.label ?? null,
   };
 }

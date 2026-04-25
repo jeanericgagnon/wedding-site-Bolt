@@ -29,6 +29,7 @@ describe('buildNameChangeOverviewInsights', () => {
     expect(insights.coreChainLabel).toContain('Certificate, SSA, and DMV');
     expect(insights.followOnLabel).toContain('Passport, payroll, and tax');
     expect(insights.downstreamLabel).toContain('long-tail rollout lane');
+    expect(insights.concreteResumeLabel).toContain('Certified legal proof');
   });
 
   it('surfaces progress, milestone confirmations, and open reminders once the vault is active', () => {
@@ -61,5 +62,6 @@ describe('buildNameChangeOverviewInsights', () => {
     expect(insights.coreChainLabel).toBe('1 complete · 1 in progress across the legal identity chain.');
     expect(insights.followOnLabel).toContain('1 milestone confirmed');
     expect(insights.downstreamLabel).toContain('1 reminder still open');
+    expect(insights.concreteResumeLabel).toBeTruthy();
   });
 });

@@ -945,6 +945,11 @@ export const DashboardOverview: React.FC = () => {
                         <p className="text-xs uppercase tracking-wide text-sky-700">Optional next step</p>
                         <p className="mt-1 text-sm font-semibold text-sky-950">{nameChangeCard.optionalNextStep}</p>
                         <p className="mt-1 text-xs text-sky-900">{nameChangeCard.statusLabel}</p>
+                        {nameChangeInsights.concreteResumeLabel ? (
+                          <p className="mt-1 text-xs text-sky-900">
+                            If you want a concrete place to pick back up, <span className="font-medium">{nameChangeInsights.concreteResumeLabel}</span>
+                          </p>
+                        ) : null}
                       </div>
                       <div className="rounded-xl border border-sky-200 bg-white px-4 py-3">
                         <p className="text-xs uppercase tracking-wide text-sky-700">{NAME_CHANGE_LIFECYCLE_LABELS.coreChain}</p>
