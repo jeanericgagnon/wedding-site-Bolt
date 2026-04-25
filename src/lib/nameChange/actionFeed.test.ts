@@ -724,8 +724,42 @@ describe('name change action feed', () => {
       laneLabel: 'Employer payroll / HR · wait for next proof hop',
       urgencyReason: 'blocking_dependency',
     });
-    expect(feed[0]?.action.label).toBe('Ask employer payroll / hr intake question');
+    expect(feed[0]?.action.label).toBe('Ask employer payroll / HR intake question');
     expect(feed[0]?.action.detail).toContain('still depends on the next ID or agency hop');
+  });
+
+  it('preserves acronym casing inside template action labels', () => {
+    const feed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'employer',
+        targetLabel: 'Employer payroll',
+        recommendedFormCode: 'PAYROLL',
+        nextAction: {
+          category: 'review',
+          label: 'Queue employer update',
+          detail: 'Payroll packet can be staged now.',
+        },
+        ready: true,
+        blockers: [],
+        readinessSummary: {
+          status: 'ready',
+          blockingFieldRisks: 0,
+          attentionFieldRisks: 0,
+          lowConfidenceFields: 0,
+          missingFields: 0,
+          documentRepairDebt: 0,
+          summaryLabel: 'Ready.',
+        },
+      }),
+    ], [], [], [
+      makeTemplate({
+        id: 'template-payroll',
+        audience: 'Employer payroll / HR',
+        readiness: 'ready',
+      }),
+    ]);
+
+    expect(feed[0]?.action.label).toBe('Send employer payroll / HR update');
   });
 
   it('uses draft labels for in-progress template work that can be staged now', () => {

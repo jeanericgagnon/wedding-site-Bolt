@@ -62,13 +62,23 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
   return [baseDetail, template.readinessLabel, template.requestSummary, readinessChecklistItem].filter(Boolean).join(' ').trim();
 }
 
+function formatTemplateAudienceForAction(audience: string) {
+  return audience
+    .split(/(\s+|\/)/)
+    .map((segment) => {
+      if (!segment.trim() || segment === '/') return segment;
+      return /^[A-Z0-9]{2,}$/.test(segment) ? segment : segment.toLowerCase();
+    })
+    .join('');
+}
+
 function getTemplateActionLabel(baseLabel: string, template: AccountUpdateTemplate) {
-  const audience = template.audience;
-  if (template.readiness === 'complete') return `Confirm ${audience.toLowerCase()} sync`;
-  if (template.readiness === 'ready') return `Send ${audience.toLowerCase()} update`;
-  if (template.readiness === 'in_progress') return `Draft ${audience.toLowerCase()} update`;
-  if (template.readiness === 'upcoming') return `Ask ${audience.toLowerCase()} intake question`;
-  return `Ask ${audience.toLowerCase()} intake rules`;
+  const audience = formatTemplateAudienceForAction(template.audience);
+  if (template.readiness === 'complete') return `Confirm ${audience} sync`;
+  if (template.readiness === 'ready') return `Send ${audience} update`;
+  if (template.readiness === 'in_progress') return `Draft ${audience} update`;
+  if (template.readiness === 'upcoming') return `Ask ${audience} intake question`;
+  return `Ask ${audience} intake rules`;
 }
 
 function getTemplateLaneLabel(template: AccountUpdateTemplate) {
