@@ -143,31 +143,36 @@ export function getAccountUpdateTemplateStateLine(template: AccountUpdateTemplat
             : undefined;
 }
 
-function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemplate) {
-  const blockedByLine = getAccountUpdateTemplateBlockedByLine(template);
+export function getAccountUpdateTemplateReadinessDetailLine(baseDetail: string, template: AccountUpdateTemplate) {
   const blockingProofHopLabel = template.blockingProofHopLabel?.trim();
   const blockingProofHopStatePhrase = blockingProofHopLabel
     ? formatBlockingProofHopStatePhrase(blockingProofHopLabel)
     : undefined;
-  const currentBlockerLine = getAccountUpdateTemplateCurrentBlockerLine(template);
-  const proofPhaseLine = getAccountUpdateTemplateStateLine(template);
-  const readinessDetail = template.readiness === 'complete'
-    ? `${baseDetail} Use this only to confirm the rename already synced.`
+
+  return template.readiness === 'complete'
+    ? `${baseDetail} Use this only to confirm the downstream sync already landed.`
     : template.readiness === 'ready'
-      ? `${baseDetail} Send with the current proof packet now.`
+      ? `${baseDetail} Send this now with the current proof packet.`
       : template.readiness === 'in_progress'
         ? blockingProofHopStatePhrase
-          ? `${baseDetail} Send only after ${blockingProofHopStatePhrase} clears.`
-          : `${baseDetail} Send only after the current proof clears.`
+          ? `${baseDetail} Draft this now, then send it only after ${blockingProofHopStatePhrase} clears.`
+          : `${baseDetail} Draft this now, then send it only after the current proof clears.`
         : template.readiness === 'upcoming'
           ? blockingProofHopStatePhrase
-            ? `${baseDetail} Use this to prep the ask before ${blockingProofHopStatePhrase} clears.`
-            : `${baseDetail} Use this to prep the ask before the next proof hop clears.`
+            ? `${baseDetail} Prep this ask now, then send it only after ${blockingProofHopStatePhrase} clears.`
+            : `${baseDetail} Prep this ask now, then send it only after the next proof hop clears.`
           : template.readiness === 'blocked'
             ? blockingProofHopStatePhrase
               ? `${baseDetail} Use this only to capture intake rules until ${blockingProofHopStatePhrase} clears.`
               : `${baseDetail} Use this only to capture intake rules until the proof chain is ready.`
             : baseDetail;
+}
+
+function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemplate) {
+  const blockedByLine = getAccountUpdateTemplateBlockedByLine(template);
+  const currentBlockerLine = getAccountUpdateTemplateCurrentBlockerLine(template);
+  const proofPhaseLine = getAccountUpdateTemplateStateLine(template);
+  const readinessDetail = getAccountUpdateTemplateReadinessDetailLine(baseDetail, template);
   const checklistLine = ensureTerminalPeriod(template.checklistHighlight);
   const checklistStatusLine = ensureTerminalPeriod(template.checklistStatusNote);
   const formattedProofChecklist = formatInlineProofList(template.proofChecklist);

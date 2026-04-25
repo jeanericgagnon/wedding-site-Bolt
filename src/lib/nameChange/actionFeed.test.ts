@@ -7,6 +7,7 @@ import {
   formatInlineProofList,
   getAccountUpdateTemplateBlockedByLine,
   getAccountUpdateTemplateCurrentBlockerLine,
+  getAccountUpdateTemplateReadinessDetailLine,
   getAccountUpdateTemplateReadinessLabel,
   getAccountUpdateTemplateStateLine,
 } from './actionFeed';
@@ -156,6 +157,18 @@ describe('account update template surface helpers', () => {
 
     expect(formatAccountUpdateTemplateBlockerLine('Blocked by', template)).toBe('Blocked by: SSA pending.');
     expect(formatAccountUpdateTemplateBlockerLine('Current blocker', template)).toBe('Current blocker: SSA pending.');
+  });
+
+  it('formats readiness detail lines through one shared helper', () => {
+    expect(getAccountUpdateTemplateReadinessDetailLine('Base detail.', makeTemplate({ readiness: 'ready' }))).toBe(
+      'Base detail. Send this now with the current proof packet.',
+    );
+    expect(
+      getAccountUpdateTemplateReadinessDetailLine('Base detail.', makeTemplate({ readiness: 'in_progress', blockingProofHopLabel: 'SSA pending' })),
+    ).toBe('Base detail. Draft this now, then send it only after SSA pending clears.');
+    expect(getAccountUpdateTemplateReadinessDetailLine('Base detail.', makeTemplate({ readiness: 'complete' }))).toBe(
+      'Base detail. Use this only to confirm the downstream sync already landed.',
+    );
   });
 
   it('keeps planner and feed readiness labels on the same copy map', () => {
@@ -403,7 +416,7 @@ describe('name change action feed', () => {
       urgencyReason: 'packet_trust',
       action: expect.objectContaining({
         label: 'Send bank accounts update (proof packet ready)',
-        detail: expect.stringContaining('Ready for final bank review. Send with the current proof packet now.'),
+        detail: expect.stringContaining('Ready for final bank review. Send this now with the current proof packet.'),
       }),
     });
     expect(feed[0]?.action.detail).toContain('Template state: proof packet ready to send now.');
@@ -457,7 +470,7 @@ describe('name change action feed', () => {
     expect(feed[0]?.action.label).toBe('Confirm bank accounts sync (proof chain complete)');
     expect(feed[0]?.action.detail).toContain('Template state: proof chain complete; confirm the downstream sync only.');
     expect(feed[0]?.action.detail).toContain('Subject: Confirm sync (proof chain complete): Name change update for banking profile');
-    expect(feed[0]?.action.detail).toContain('Use this only to confirm the rename already synced.');
+    expect(feed[0]?.action.detail).toContain('Use this only to confirm the downstream sync already landed.');
     expect(feed[0]?.action.detail).toContain('Subject: Confirm sync (proof chain complete): Name change update for banking profile\nTemplate message: I can provide certified legal proof.');
     expect(feed[0]?.action.detail).toContain('Template message: I can provide certified legal proof.');
     expect(feed[0]?.action.detail).toContain('Readiness: The core proof chain is already complete, so this should be a clean confirmation/update pass.');
@@ -699,7 +712,7 @@ describe('name change action feed', () => {
       focusTargetId: 'account-update-template-template-tax',
       laneLabel: 'Tax and state agencies · draft now, send after current proof clears · SSA pending',
       urgencyReason: 'blocking_dependency',
-      action: expect.objectContaining({ detail: expect.stringContaining('Tax packet can be prepped now. Send only after SSA pending clears.') }),
+      action: expect.objectContaining({ detail: expect.stringContaining('Tax packet can be prepped now. Draft this now, then send it only after SSA pending clears.') }),
     });
   });
 
@@ -836,7 +849,7 @@ describe('name change action feed', () => {
     });
     expect(feed[0]?.action.label).toBe('Ask employer payroll / HR before next proof hop (SSA pending)');
     expect(feed[0]?.action.detail).toContain('Template state: prep the ask now and wait for SSA pending to clear before sending.');
-    expect(feed[0]?.action.detail).toContain('Use this to prep the ask before SSA pending clears.');
+    expect(feed[0]?.action.detail).toContain('Prep this ask now, then send it only after SSA pending clears.');
     expect(feed[0]?.action.detail).toContain('Subject: Employer payroll / HR');
     expect(feed[0]?.action.detail).toContain('Subject: Employer payroll / HR\nTemplate message: I can provide certified legal proof.');
     expect(feed[0]?.action.detail).toContain('Template message: I can provide certified legal proof.');
@@ -1198,8 +1211,8 @@ describe('name change action feed', () => {
     expect(bankTemplateItem?.action.detail).toContain('Template state: draft now and wait for the current proof to clear before sending.');
     expect(insuranceTemplateItem?.action.detail).toContain('Template state: prep the ask now before the next proof hop clears.');
     expect(taxTemplateItem?.action.detail).toContain('Template state: intake-only until the proof chain is ready.');
-    expect(bankTemplateItem?.action.detail).toContain('Send only after the current proof clears.');
-    expect(insuranceTemplateItem?.action.detail).toContain('Use this to prep the ask before the next proof hop clears.');
+    expect(bankTemplateItem?.action.detail).toContain('Draft this now, then send it only after the current proof clears.');
+    expect(insuranceTemplateItem?.action.detail).toContain('Prep this ask now, then send it only after the next proof hop clears.');
     expect(taxTemplateItem?.action.detail).toContain('Use this only to capture intake rules until the proof chain is ready.');
   });
 
@@ -1811,7 +1824,7 @@ describe('name change action feed', () => {
     expect(feed[0]?.action.detail).toContain('Blocked by: current proof pending.');
     expect(feed[0]?.action.detail).toContain('Current blocker: current proof pending.');
     expect(feed[0]?.action.detail).toContain('Template state: draft now and wait for the current proof to clear before sending.');
-    expect(feed[0]?.action.detail).toContain('Send only after the current proof clears.');
+    expect(feed[0]?.action.detail).toContain('Draft this now, then send it only after the current proof clears.');
     expect(feed[0]?.laneLabel).toBe('Bank accounts · draft now, send after current proof clears · current proof pending');
     expect(feed[0]?.action.label).toBe('Draft bank accounts update (current proof pending)');
     expect(feed[0]?.severity).toBe('blocking');
