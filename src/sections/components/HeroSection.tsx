@@ -3,6 +3,7 @@ import { WeddingDataV1 } from '../../types/weddingData';
 import { SectionInstance } from '../../types/layoutConfig';
 import { readBuilderValue } from '../../lib/weddingProfile';
 import { getSectionPrimaryImage } from '../../lib/sectionMedia';
+import { buildCoupleDisplayName } from '../../lib/coupleDisplayName';
 
 interface Props {
   data: WeddingDataV1;
@@ -25,7 +26,7 @@ function getHeroDisplayName(
 ): string {
   return readBuilderValue(headline, '')
     || couple.displayName
-    || [couple.partner1Name, couple.partner2Name].filter(Boolean).join(' & ')
+    || buildCoupleDisplayName(couple.partner1Name, couple.partner2Name)
     || 'The couple';
 }
 

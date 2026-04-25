@@ -96,4 +96,47 @@ describe('HeroSection', () => {
 
     expect(screen.getByText('The couple')).toBeInTheDocument();
   });
+
+  it('keeps hero display names truthful when one persisted partner name is whitespace only', () => {
+    const data = createEmptyWeddingData();
+    data.couple.partner1Name = '   ';
+    data.couple.partner2Name = ' Alex ';
+
+    const { rerender } = render(
+      <HeroSection
+        data={data}
+        instance={makeInstance({})}
+      />
+    );
+
+    expect(screen.getByText('Alex')).toBeInTheDocument();
+    expect(screen.queryByText(/&/)).not.toBeInTheDocument();
+
+    rerender(
+      <HeroMinimal
+        data={data}
+        instance={makeInstance({})}
+      />
+    );
+
+    expect(screen.getByText('Alex')).toBeInTheDocument();
+
+    rerender(
+      <HeroFullbleed
+        data={data}
+        instance={makeInstance({})}
+      />
+    );
+
+    expect(screen.getByText('Alex')).toBeInTheDocument();
+
+    rerender(
+      <HeroCountdown
+        data={data}
+        instance={makeInstance({})}
+      />
+    );
+
+    expect(screen.getByText('Alex')).toBeInTheDocument();
+  });
 });
