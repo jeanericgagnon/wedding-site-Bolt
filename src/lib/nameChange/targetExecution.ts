@@ -129,6 +129,14 @@ function getSupportiveExecutionWaitGuidance(snapshot: Pick<NameChangeTargetExecu
   }
 
   if (snapshot.targetKey === 'courtOrder') {
+    if (/ground court-order jurisdiction review/i.test(blockingLabel)) {
+      return {
+        doNow: 'Confirm the filing county, residence county, and any court location details now.',
+        whyItHelps: 'That grounds the court-order path in the right jurisdiction before downstream packet prep leans on it.',
+        canWait: 'Actual downstream filing can safely wait until the court-order jurisdiction context is grounded.',
+      };
+    }
+
     if (/upload court-order proof/i.test(blockingLabel)) {
       return {
         doNow: 'Pull the petition, filing receipt, hearing details, or signed order draft into one place now.',

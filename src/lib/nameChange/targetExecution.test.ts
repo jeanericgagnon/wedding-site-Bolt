@@ -3081,6 +3081,22 @@ describe('name change target execution snapshot', () => {
     });
   });
 
+  it('adds structured wait guidance for missing court-order jurisdiction context', () => {
+    expect(getExecutionNextActionGuidance({
+      targetKey: 'courtOrder',
+      nextAction: {
+        category: 'dependency',
+        label: 'Ground court-order jurisdiction review',
+        detail: 'County context is still missing, so court-order jurisdiction review cannot be grounded yet.',
+      },
+    })).toEqual({
+      overview: 'County context is still missing, so court-order jurisdiction review cannot be grounded yet.',
+      doNow: 'Confirm the filing county, residence county, and any court location details now.',
+      whyItHelps: 'That grounds the court-order path in the right jurisdiction before downstream packet prep leans on it.',
+      canWait: 'Actual downstream filing can safely wait until the court-order jurisdiction context is grounded.',
+    });
+  });
+
   it('adds structured wait guidance for court-order path readiness reviews', () => {
     expect(getExecutionNextActionGuidance({
       targetKey: 'courtOrder',
