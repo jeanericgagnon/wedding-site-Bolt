@@ -1,5 +1,6 @@
 import { getNameChangeGuidedActionWeight } from './executionPrioritization';
 import type { NameChangeDocumentRepairQueueItem } from './documentRepairQueue';
+import { getFallbackBlockingProofHopLabel } from './engine';
 import type { NameChangeGuidedAction, NameChangePlan, NameChangeReminderAttentionItem, NameChangeTargetExecutionSnapshot } from './types';
 
 export interface NameChangeActionFeedItem {
@@ -20,14 +21,7 @@ export interface NameChangeActionFeedItem {
 type AccountUpdateTemplate = NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number];
 
 function getEffectiveBlockingProofHopLabel(template: AccountUpdateTemplate) {
-  return template.blockingProofHopLabel?.trim()
-    || (template.readiness === 'in_progress'
-      ? 'current proof pending'
-      : template.readiness === 'upcoming'
-        ? 'next proof hop pending'
-        : template.readiness === 'blocked'
-          ? 'proof chain pending'
-          : undefined);
+  return getFallbackBlockingProofHopLabel(template.readiness, template.blockingProofHopLabel);
 }
 
 function getTemplateIdForTargetKey(targetKey: NameChangeTargetExecutionSnapshot['targetKey']) {

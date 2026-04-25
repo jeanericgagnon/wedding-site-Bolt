@@ -904,6 +904,7 @@ describe('name change action feed', () => {
       title: 'Insurance carriers',
       laneLabel: 'Insurance carriers · ask intake rules now · legal proof pending',
       severity: 'blocking',
+      urgencyTier: 'critical',
     });
     expect(feed[0]?.action.label).toBe('Ask insurance carriers intake rules now (legal proof pending)');
     expect(feed[1]).toMatchObject({
@@ -913,6 +914,68 @@ describe('name change action feed', () => {
       urgencyTier: 'elevated',
     });
     expect(feed[1]?.action.label).toBe('Ask employer payroll / HR before next proof hop (SSA pending)');
+  });
+
+  it('keeps upcoming proof-hop asks ahead of ready send-now follow-through without marking them critical', () => {
+    const feed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'employer',
+        targetLabel: 'Employer payroll',
+        recommendedFormCode: 'PAYROLL',
+        nextAction: {
+          category: 'dependency',
+          label: 'Prep payroll intake path',
+          detail: 'Payroll packet depends on the next proof hop.',
+        },
+      }),
+      makeExecutionSnapshot({
+        targetKey: 'banks',
+        targetLabel: 'Bank accounts',
+        recommendedFormCode: 'BANK',
+        nextAction: {
+          category: 'review',
+          label: 'Send bank update',
+          detail: 'Bank packet is ready to send now.',
+        },
+        ready: true,
+        blockers: [],
+        readinessSummary: {
+          status: 'ready',
+          blockingFieldRisks: 0,
+          attentionFieldRisks: 0,
+          lowConfidenceFields: 0,
+          missingFields: 0,
+          documentRepairDebt: 0,
+          summaryLabel: 'Ready.',
+        },
+      }),
+    ], [], [], [
+      makeTemplate({
+        id: 'template-payroll',
+        audience: 'Employer payroll / HR',
+        readiness: 'upcoming',
+      }),
+      makeTemplate({
+        id: 'template-bank',
+        audience: 'Bank accounts',
+        readiness: 'ready',
+      }),
+    ]);
+
+    expect(feed[0]).toMatchObject({
+      title: 'Employer payroll / HR',
+      laneLabel: 'Employer payroll / HR · ask before next proof hop · SSA pending',
+      severity: 'blocking',
+      urgencyTier: 'elevated',
+      urgencyReason: 'blocking_dependency',
+    });
+    expect(feed[0]?.action.label).toBe('Ask employer payroll / HR before next proof hop (SSA pending)');
+    expect(feed[1]).toMatchObject({
+      title: 'Bank accounts',
+      laneLabel: 'Bank accounts · send now (proof packet ready)',
+      severity: 'ready',
+    });
+    expect(feed[1]?.action.label).toBe('Send bank accounts update (proof packet ready)');
   });
 
   it('keeps staged blocker templates ahead of send-now follow-through', () => {
