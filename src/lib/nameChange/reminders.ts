@@ -365,6 +365,16 @@ function getReminderPlannerRoute(
   }
 
   if (
+    suggestion.id === 'reminder-court-order-packet'
+  ) {
+    return {
+      sectionKey: 'cleanup',
+      plannerIntent: 'open_execution_card',
+      focusTargetId: 'execution-card-courtOrder',
+    };
+  }
+
+  if (
     suggestion.id === 'reminder-marriage-name-mismatch'
     || suggestion.id === 'reminder-mismatch-recovery'
     || suggestion.id === 'reminder-both-partners-changing'

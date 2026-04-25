@@ -1851,7 +1851,7 @@ describe('name change action feed', () => {
     });
   });
 
-  it('routes legal-proof edge reminders to the planner case-setup section', () => {
+  it('routes legal-proof edge reminders to the owning execution surfaces', () => {
     const feed = buildNameChangeActionFeed([], [], [
       makeReminderAttention({
         reminderKey: 'reminder-court-order-packet',
@@ -1863,7 +1863,7 @@ describe('name change action feed', () => {
       }),
     ]);
 
-    expect(feed.map((item) => item.focusTargetId)).toEqual(['case-setup', 'case-setup']);
+    expect(feed.map((item) => item.focusTargetId)).toEqual(['execution-card-courtOrder', 'case-setup']);
     expect(feed.map((item) => item.sectionKey)).toEqual(['cleanup', 'cleanup']);
   });
 

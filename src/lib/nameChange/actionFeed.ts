@@ -524,7 +524,6 @@ function getReminderSectionKey(dependsOnStepId: string): NameChangeActionFeedIte
 
 function isCaseSetupReminder(item: NameChangeReminderAttentionItem) {
   return item.reminderKey === 'reminder-case-legal-name-setup'
-    || item.reminderKey === 'reminder-court-order-packet'
     || item.reminderKey === 'reminder-county-office-variation'
     || item.reminderKey === 'reminder-out-of-state-proof-grounding'
     || item.reminderKey === 'reminder-document-name-mismatch'
@@ -535,6 +534,7 @@ function isCaseSetupReminder(item: NameChangeReminderAttentionItem) {
 
 function getReminderFocusTargetId(item: NameChangeReminderAttentionItem) {
   if (isCaseSetupReminder(item)) return 'case-setup';
+  if (item.reminderKey === 'reminder-court-order-packet') return 'execution-card-courtOrder';
   if (item.reminderKey === 'reminder-travel-bookings') return 'execution-card-tsa';
 
   const { dependsOnStepId } = item;
