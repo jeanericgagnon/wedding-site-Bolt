@@ -435,7 +435,7 @@ describe('name change action feed', () => {
     ], [], [], [
       makeTemplate({
         readiness: 'complete',
-        subject: 'Confirm completed update: Name change update for banking profile',
+        subject: 'Confirm sync (proof chain complete): Name change update for banking profile',
         proofReadinessSummary: 'Use this as a confirmation pass that cards, checks, statements, and profile records already synced.',
         requestSummary: 'Please confirm cards, checks, statements, and my online profile already reflect the final legal name everywhere.',
         proofChecklist: [
@@ -456,9 +456,9 @@ describe('name change action feed', () => {
     });
     expect(feed[0]?.action.label).toBe('Confirm bank accounts sync (proof chain complete)');
     expect(feed[0]?.action.detail).toContain('Template state: proof chain complete; confirm the downstream sync only.');
-    expect(feed[0]?.action.detail).toContain('Subject: Confirm completed update: Name change update for banking profile');
+    expect(feed[0]?.action.detail).toContain('Subject: Confirm sync (proof chain complete): Name change update for banking profile');
     expect(feed[0]?.action.detail).toContain('Use this only to confirm the rename already synced.');
-    expect(feed[0]?.action.detail).toContain('Subject: Confirm completed update: Name change update for banking profile\nTemplate message: I can provide certified legal proof.');
+    expect(feed[0]?.action.detail).toContain('Subject: Confirm sync (proof chain complete): Name change update for banking profile\nTemplate message: I can provide certified legal proof.');
     expect(feed[0]?.action.detail).toContain('Template message: I can provide certified legal proof.');
     expect(feed[0]?.action.detail).toContain('Readiness: The core proof chain is already complete, so this should be a clean confirmation/update pass.');
     expect(feed[0]?.action.detail).toContain('clean confirmation/update pass');

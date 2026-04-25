@@ -516,6 +516,20 @@ export function getAccountUpdateTemplateReadinessActionLabel(
           : 'ask intake rules now';
 }
 
+export function getAccountUpdateTemplateReadinessSubjectPrefix(
+  readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+) {
+  return readiness === 'ready'
+    ? 'Send now (proof packet ready)'
+    : readiness === 'complete'
+      ? 'Confirm sync (proof chain complete)'
+      : readiness === 'in_progress'
+        ? 'Draft now, send after current proof clears'
+        : readiness === 'upcoming'
+          ? 'Ask before next proof hop'
+          : 'Ask intake rules now';
+}
+
 function buildAccountUpdateTemplates(
   input: NameChangeEngineInput,
   steps: NameChangePlanStep[],
@@ -567,10 +581,8 @@ function buildAccountUpdateTemplates(
     blockingProofHopLabel?: string,
   ) => {
     const fallbackBlockingProofHopLabel = getFallbackBlockingProofHopLabel(readiness, blockingProofHopLabel);
-    const readinessActionLabel = getAccountUpdateTemplateReadinessActionLabel(readiness);
-    const subjectPrefix = `${readinessActionLabel.charAt(0).toUpperCase()}${readinessActionLabel.slice(1)}`;
+    const subjectPrefix = getAccountUpdateTemplateReadinessSubjectPrefix(readiness);
 
-    if (readiness === 'complete') return `Confirm completed update: ${baseSubject}`;
     return `${subjectPrefix}${fallbackBlockingProofHopLabel ? ` (${fallbackBlockingProofHopLabel})` : ''}: ${baseSubject}`;
   };
   const getReadinessIntro = (

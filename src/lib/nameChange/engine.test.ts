@@ -4,6 +4,7 @@ import {
   evaluateCaliforniaNameChangeEligibility,
   formatAccountUpdateChecklistGuidanceLine,
   getAccountUpdateTemplateReadinessActionLabel,
+  getAccountUpdateTemplateReadinessSubjectPrefix,
   getDefaultAccountUpdateBlockingProofHopLabel,
   getFallbackBlockingProofHopLabel,
   normalizeAccountUpdateChecklistItems,
@@ -122,6 +123,12 @@ describe('name change engine', () => {
     expect(getAccountUpdateTemplateReadinessActionLabel('in_progress')).toBe('draft now, send after current proof clears');
     expect(getAccountUpdateTemplateReadinessActionLabel('upcoming')).toBe('ask before next proof hop');
     expect(getAccountUpdateTemplateReadinessActionLabel('blocked')).toBe('ask intake rules now');
+  });
+
+  it('shares explicit readiness subject prefixes across template bodies', () => {
+    expect(getAccountUpdateTemplateReadinessSubjectPrefix('ready')).toBe('Send now (proof packet ready)');
+    expect(getAccountUpdateTemplateReadinessSubjectPrefix('complete')).toBe('Confirm sync (proof chain complete)');
+    expect(getAccountUpdateTemplateReadinessSubjectPrefix('in_progress')).toBe('Draft now, send after current proof clears');
   });
 
   it('keeps straightforward california marriage surname updates on marriage path', () => {
