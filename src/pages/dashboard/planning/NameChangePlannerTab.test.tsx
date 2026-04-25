@@ -112,6 +112,7 @@ describe('NameChangePlannerTab', () => {
       expect(screen.getByText('Start whenever you want, then come back whenever you need')).toBeInTheDocument();
       expect(screen.getByText('Roadmap saved')).toBeInTheDocument();
       expect(screen.getByText(/Optional next move:/i)).toBeInTheDocument();
+      expect(screen.getByText('Certificate, SSA, and DMV stay together so the legal identity chain does not drift.')).toBeInTheDocument();
 
       const roadmapButtons = screen.getAllByRole('button', { name: 'See roadmap first' });
 
@@ -155,6 +156,7 @@ describe('NameChangePlannerTab', () => {
       );
 
       expect(screen.getByText('Resume where you left off')).toBeInTheDocument();
+      expect(screen.getByText('0 complete · 1 in progress across the legal identity chain.')).toBeInTheDocument();
 
       fireEvent.click(screen.getByRole('button', { name: 'Resume status vault' }));
       expect(window.location.hash).toBe('#target-status-tracking');

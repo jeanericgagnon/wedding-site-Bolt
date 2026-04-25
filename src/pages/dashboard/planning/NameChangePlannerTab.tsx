@@ -28,6 +28,7 @@ import { buildNameChangeUtilitiesExecutionSnapshot } from '../../../lib/nameChan
 import { buildNameChangeVoterExecutionSnapshot } from '../../../lib/nameChange/voterFlow';
 import { formatNameChangeExecutionDateTime } from './nameChangeExecutionTime';
 import { buildNameChangeOverviewCardModel } from '../nameChangeOverviewCard';
+import { buildNameChangeOverviewInsights } from '../nameChangeOverviewInsights';
 import type {
   NameChangeCaseInput,
   NameChangeDocumentInput,
@@ -570,6 +571,10 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       hasExecutionActivity,
     }),
     [hasExecutionActivity],
+  );
+  const lifecycleInsights = useMemo(
+    () => buildNameChangeOverviewInsights({ plan, reminders: effectiveReminders }),
+    [effectiveReminders, plan],
   );
   const documentVaultRows = useMemo(() => documents.map((document) => {
     const contract = NAME_CHANGE_DOCUMENT_CONTRACTS.find((entry) => matchesNameChangeDocumentKind(document.document_kind, entry.kind));
@@ -1138,6 +1143,20 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               {hasExecutionActivity ? 'Open roadmap' : 'See roadmap first'}
             </Button>
             <Button variant="outline" size="sm" onClick={() => void onSave()} disabled={saving}>{saving ? 'Saving…' : 'Save and come back later'}</Button>
+          </div>
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          <div className="rounded-xl border border-sky-200 bg-white/80 px-4 py-3">
+            <p className="text-xs uppercase tracking-wide text-sky-700">Core chain</p>
+            <p className="mt-1 text-sm text-sky-950">{lifecycleInsights.coreChainLabel}</p>
+          </div>
+          <div className="rounded-xl border border-sky-200 bg-white/80 px-4 py-3">
+            <p className="text-xs uppercase tracking-wide text-sky-700">Milestone confirmations</p>
+            <p className="mt-1 text-sm text-sky-950">{lifecycleInsights.followOnLabel}</p>
+          </div>
+          <div className="rounded-xl border border-sky-200 bg-white/80 px-4 py-3">
+            <p className="text-xs uppercase tracking-wide text-sky-700">Reminder follow-through</p>
+            <p className="mt-1 text-sm text-sky-950">{lifecycleInsights.downstreamLabel}</p>
           </div>
         </div>
       </Card>
