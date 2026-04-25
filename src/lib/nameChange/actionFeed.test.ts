@@ -9,6 +9,7 @@ import {
   getAccountUpdateTemplateReadinessLabel,
   getAccountUpdateTemplateStateLine,
 } from './actionFeed';
+import { getDefaultAccountUpdateBlockingProofHopLabel } from './engine';
 import type { NameChangeDocumentRepairQueueItem } from './documentRepairQueue';
 import type { NameChangePlan } from './types';
 import type { NameChangeReminderAttentionItem, NameChangeTargetExecutionSnapshot } from './types';
@@ -17,27 +18,8 @@ function makeTemplate(overrides: Partial<NonNullable<NameChangePlan['summary']['
   const audience = overrides.audience ?? 'Bank accounts';
   const id = overrides.id ?? 'template-bank';
   const readiness = overrides.readiness ?? 'ready';
-  const blockingProofHopLabel = overrides.blockingProofHopLabel ?? (
-    readiness === 'ready' || readiness === 'complete'
-      ? undefined
-      : id === 'template-payroll' || id === 'template-tax'
-        ? readiness === 'blocked'
-          ? 'legal proof pending'
-          : 'SSA pending'
-        : id === 'template-bank' || id === 'template-digital-identity' || id === 'template-licenses'
-          ? readiness === 'blocked'
-            ? 'legal proof pending'
-            : 'ID pending'
-          : id === 'template-travel'
-            ? readiness === 'blocked'
-              ? 'legal proof pending'
-              : 'passport pending'
-            : id === 'template-insurance'
-              ? readiness === 'blocked'
-                ? 'legal proof pending'
-                : 'ID pending'
-              : undefined
-  );
+  const blockingProofHopLabel = overrides.blockingProofHopLabel
+    ?? getDefaultAccountUpdateBlockingProofHopLabel(id, readiness);
   return {
     id,
     audience,

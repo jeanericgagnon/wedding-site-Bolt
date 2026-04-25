@@ -480,6 +480,28 @@ export function getFallbackBlockingProofHopLabel(
           : undefined);
 }
 
+export function getDefaultAccountUpdateBlockingProofHopLabel(
+  templateId: string,
+  readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+) {
+  if (readiness === 'ready' || readiness === 'complete') return undefined;
+  if (templateId === 'template-payroll' || templateId === 'template-tax') {
+    return readiness === 'blocked' ? 'legal proof pending' : 'SSA pending';
+  }
+  if (
+    templateId === 'template-bank'
+    || templateId === 'template-digital-identity'
+    || templateId === 'template-insurance'
+    || templateId === 'template-licenses'
+  ) {
+    return readiness === 'blocked' ? 'legal proof pending' : 'ID pending';
+  }
+  if (templateId === 'template-travel') {
+    return readiness === 'blocked' ? 'legal proof pending' : 'passport pending';
+  }
+  return undefined;
+}
+
 function buildAccountUpdateTemplates(
   input: NameChangeEngineInput,
   steps: NameChangePlanStep[],
@@ -738,21 +760,6 @@ function buildAccountUpdateTemplates(
                   upcoming: 'Wait to send until the ID or license reissue hop clears.',
                   blocked: 'Gather board submission rules only until legal proof is fully grounded.',
                 });
-  const getBlockingProofHopLabel = (
-    templateId: string,
-    readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
-  ) => {
-    if (readiness === 'ready' || readiness === 'complete') return undefined;
-    if (templateId === 'template-payroll' || templateId === 'template-tax') {
-      return readiness === 'blocked' ? 'legal proof pending' : 'SSA pending';
-    }
-    if (templateId === 'template-bank' || templateId === 'template-digital-identity' || templateId === 'template-licenses') {
-      return readiness === 'blocked' ? 'legal proof pending' : 'ID pending';
-    }
-    if (templateId === 'template-travel') return readiness === 'blocked' ? 'legal proof pending' : 'passport pending';
-    if (templateId === 'template-insurance') return readiness === 'blocked' ? 'legal proof pending' : 'ID pending';
-    return undefined;
-  };
   const getBlockingProofHopSentence = (
     readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
     blockingProofHopLabel?: string,
@@ -851,7 +858,7 @@ function buildAccountUpdateTemplates(
 
   return templateConfig.map((template) => {
     const readiness = resolvePlanSequenceStatus(template.dependsOnStepIds, steps);
-    const blockingProofHopLabel = getBlockingProofHopLabel(template.id, readiness);
+    const blockingProofHopLabel = getDefaultAccountUpdateBlockingProofHopLabel(template.id, readiness);
     const fallbackBlockingProofHopLabel = getFallbackBlockingProofHopLabel(readiness, blockingProofHopLabel);
     const readinessLabel = readiness === 'ready'
       ? 'You have enough upstream proof to send this now.'

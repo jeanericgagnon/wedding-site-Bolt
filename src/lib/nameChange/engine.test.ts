@@ -3,6 +3,7 @@ import {
   buildNameChangePlan,
   evaluateCaliforniaNameChangeEligibility,
   formatAccountUpdateChecklistGuidanceLine,
+  getDefaultAccountUpdateBlockingProofHopLabel,
   getFallbackBlockingProofHopLabel,
   normalizeAccountUpdateChecklistItems,
   formatAccountUpdateProofLine,
@@ -100,6 +101,18 @@ describe('name change engine', () => {
     expect(getFallbackBlockingProofHopLabel('in_progress', '   ')).toBe('current proof pending');
     expect(getFallbackBlockingProofHopLabel('upcoming', '   ')).toBe('next proof hop pending');
     expect(getFallbackBlockingProofHopLabel('blocked', '   ')).toBe('proof chain pending');
+  });
+
+  it('maps default blocking proof-hop labels by template and readiness', () => {
+    expect(getDefaultAccountUpdateBlockingProofHopLabel('template-payroll', 'in_progress')).toBe('SSA pending');
+    expect(getDefaultAccountUpdateBlockingProofHopLabel('template-tax', 'upcoming')).toBe('SSA pending');
+    expect(getDefaultAccountUpdateBlockingProofHopLabel('template-bank', 'upcoming')).toBe('ID pending');
+    expect(getDefaultAccountUpdateBlockingProofHopLabel('template-insurance', 'in_progress')).toBe('ID pending');
+    expect(getDefaultAccountUpdateBlockingProofHopLabel('template-digital-identity', 'upcoming')).toBe('ID pending');
+    expect(getDefaultAccountUpdateBlockingProofHopLabel('template-licenses', 'in_progress')).toBe('ID pending');
+    expect(getDefaultAccountUpdateBlockingProofHopLabel('template-travel', 'upcoming')).toBe('passport pending');
+    expect(getDefaultAccountUpdateBlockingProofHopLabel('template-bank', 'blocked')).toBe('legal proof pending');
+    expect(getDefaultAccountUpdateBlockingProofHopLabel('template-payroll', 'ready')).toBeUndefined();
   });
 
   it('keeps straightforward california marriage surname updates on marriage path', () => {
