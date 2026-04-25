@@ -344,7 +344,7 @@ describe('name change action feed', () => {
       laneLabel: 'Bank accounts · send now',
       urgencyReason: 'packet_trust',
       action: expect.objectContaining({
-        label: 'Send bank accounts update',
+        label: 'Send bank accounts update (proof packet ready)',
         detail: expect.stringContaining('Ready for final bank review. Send with the current proof packet now.'),
       }),
     });
@@ -395,7 +395,7 @@ describe('name change action feed', () => {
       urgencyReason: 'review_queue',
       urgencyTier: 'normal',
     });
-    expect(feed[0]?.action.label).toBe('Confirm bank accounts sync');
+    expect(feed[0]?.action.label).toBe('Confirm bank accounts sync (proof chain complete)');
     expect(feed[0]?.action.detail).toContain('Subject: Confirm completed update: Name change update for banking profile');
     expect(feed[0]?.action.detail).toContain('Use this only to confirm the rename already synced.');
     expect(feed[0]?.action.detail).toContain('Subject: Confirm completed update: Name change update for banking profile\nTemplate message: I can provide certified legal proof.');
@@ -814,7 +814,7 @@ describe('name change action feed', () => {
       }),
     ]);
 
-    expect(feed[0]?.action.label).toBe('Send employer payroll / HR update');
+    expect(feed[0]?.action.label).toBe('Send employer payroll / HR update (proof packet ready)');
   });
 
   it('uses draft labels for in-progress template work that can be staged now', () => {

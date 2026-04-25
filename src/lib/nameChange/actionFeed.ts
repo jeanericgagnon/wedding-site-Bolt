@@ -109,8 +109,8 @@ function formatTemplateAudienceForAction(audience: string) {
 function getTemplateActionLabel(baseLabel: string, template: AccountUpdateTemplate) {
   const audience = formatTemplateAudienceForAction(template.audience);
   const blockingProofHopSuffix = template.blockingProofHopLabel ? ` (${template.blockingProofHopLabel})` : '';
-  if (template.readiness === 'complete') return `Confirm ${audience} sync`;
-  if (template.readiness === 'ready') return `Send ${audience} update`;
+  if (template.readiness === 'complete') return `Confirm ${audience} sync (proof chain complete)`;
+  if (template.readiness === 'ready') return `Send ${audience} update (proof packet ready)`;
   if (template.readiness === 'in_progress') return `Draft ${audience} update${blockingProofHopSuffix}`;
   if (template.readiness === 'upcoming') return `Ask ${audience} before next proof hop${blockingProofHopSuffix}`;
   return `Ask ${audience} intake rules now${blockingProofHopSuffix}`;
