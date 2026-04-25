@@ -17,6 +17,7 @@ import {
   getAccountUpdateTemplateProofStatusLine,
   getAccountUpdateTemplateReadinessDetailLine,
   getAccountUpdateTemplateReadinessLabel,
+  getAccountUpdateTemplateReadinessLine,
   getAccountUpdateTemplateStateLine,
   getAccountUpdateTemplateSubjectLine,
 } from './actionFeed';
@@ -206,8 +207,10 @@ describe('account update template surface helpers', () => {
     expect(getAccountUpdateTemplateProofDocumentsLine(template)).toBe(
       'Proof to have handy: Certified legal name-change proof · Updated photo ID or DMV receipt',
     );
+    expect(getAccountUpdateTemplateReadinessLine(template)).toBe(`Readiness: ${template.readinessLabel}`);
+    expect(getAccountUpdateTemplateReadinessLine(template, { prefix: false })).toBe(template.readinessLabel);
     expect(getAccountUpdateTemplateContextLines(template)).toEqual([
-      `Readiness: ${template.readinessLabel}`,
+      getAccountUpdateTemplateReadinessLine(template),
       getAccountUpdateTemplateChecklistLine(template)!,
       getAccountUpdateTemplateChecklistStatusLine(template)!,
       getAccountUpdateTemplateStateLine(template)!,
@@ -225,7 +228,7 @@ describe('account update template surface helpers', () => {
         prefixReadiness: false,
       }),
     ).toEqual([
-      template.readinessLabel,
+      getAccountUpdateTemplateReadinessLine(template, { prefix: false }),
       getAccountUpdateTemplateChecklistLine(template)!,
       getAccountUpdateTemplateChecklistStatusLine(template)!,
       getAccountUpdateTemplateStateLine(template)!,

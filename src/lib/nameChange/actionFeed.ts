@@ -194,6 +194,14 @@ export function getAccountUpdateTemplateProofDocumentsLine(template: AccountUpda
   return formattedProofDocuments ? `Proof to have handy: ${formattedProofDocuments}` : undefined;
 }
 
+export function getAccountUpdateTemplateReadinessLine(
+  template: AccountUpdateTemplate,
+  options: { prefix?: boolean } = {},
+) {
+  const { prefix = true } = options;
+  return prefix ? `Readiness: ${template.readinessLabel}` : template.readinessLabel;
+}
+
 export function getAccountUpdateTemplateChecklistLine(template: AccountUpdateTemplate) {
   const checklistLine = ensureTerminalPeriod(template.checklistHighlight);
   return checklistLine ? `Checklist: ${checklistLine}` : undefined;
@@ -221,7 +229,7 @@ export function getAccountUpdateTemplateContextLines(
   } = options;
 
   return [
-    prefixReadiness ? `Readiness: ${template.readinessLabel}` : template.readinessLabel,
+    getAccountUpdateTemplateReadinessLine(template, { prefix: prefixReadiness }),
     getAccountUpdateTemplateBlockedByLine(template),
     getAccountUpdateTemplateCurrentBlockerLine(template),
     getAccountUpdateTemplateChecklistLine(template),
