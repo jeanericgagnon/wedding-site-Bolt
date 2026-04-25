@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildNameChangeActionFeed,
+  ensureTerminalPeriod,
   formatBlockingProofHopStatePhrase,
   formatInlineProofList,
   getAccountUpdateTemplateBlockedByLine,
@@ -160,6 +161,11 @@ describe('account update template surface helpers', () => {
       'SSA confirmation',
       'ssa confirmation.',
     ])).toBe('Certified legal name-change proof · SSA confirmation');
+  });
+
+  it('normalizes checklist punctuation snippets through one shared helper', () => {
+    expect(ensureTerminalPeriod('Already verified')).toBe('Already verified.');
+    expect(ensureTerminalPeriod(' .  ')).toBeUndefined();
   });
 
   it('keeps planner and feed readiness labels on the same copy map', () => {

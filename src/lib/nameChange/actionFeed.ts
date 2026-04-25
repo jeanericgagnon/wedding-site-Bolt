@@ -75,7 +75,7 @@ export function getAccountUpdateTemplateBlockedByLine(template: AccountUpdateTem
           : undefined;
 }
 
-function ensureTerminalPeriod(line: string | undefined) {
+export function ensureTerminalPeriod(line: string | undefined) {
   if (!line) return undefined;
   const trimmed = line.trim();
   if (trimmed.replace(/[.\s]+$/u, '') === '') return undefined;

@@ -6,6 +6,7 @@ import { buildNameChangeBankExecutionSnapshot } from '../../../lib/nameChange/ba
 import { buildNameChangeAutofillPrepSnapshot } from '../../../lib/nameChange/autofill';
 import {
   buildNameChangeActionFeed,
+  ensureTerminalPeriod,
   formatInlineProofList,
   getAccountUpdateTemplateBlockedByLine,
   getAccountUpdateTemplateCurrentBlockerLine,
@@ -189,13 +190,6 @@ function getAccountUpdateTemplateCopyButtonLabel(
   if (template.readiness === 'in_progress') return 'Copy staged draft';
   if (template.readiness === 'upcoming') return 'Copy next-step draft';
   return 'Copy intake script';
-}
-
-function ensureTerminalPeriod(line: string | undefined) {
-  if (!line) return undefined;
-  const trimmed = line.trim();
-  if (trimmed.replace(/[.\s]+$/u, '') === '') return undefined;
-  return trimmed.endsWith('.') ? trimmed : `${trimmed}.`;
 }
 
 function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
