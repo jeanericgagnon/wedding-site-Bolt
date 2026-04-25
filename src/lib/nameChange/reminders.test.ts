@@ -217,6 +217,12 @@ describe('name change reminder suggestions', () => {
       planner_intent: 'open_execution_card',
       focus_target_id: 'execution-card-banks',
     });
+    expect(inputs.find((reminder) => reminder.reminder_key === 'reminder-category-confirm-personal_lifestyle')).toMatchObject({
+      depends_on_step_id: 'institution-courtesy-social-sync',
+      section_key: 'institutional',
+      planner_intent: 'open_execution_card',
+      focus_target_id: 'execution-card-courtesy',
+    });
     expect(inputs.find((reminder) => reminder.reminder_key === 'reminder-milestone-confirm-milestone-account-rollout')).toMatchObject({
       depends_on_step_id: 'institution-phone-digital-identity',
       section_key: 'institutional',

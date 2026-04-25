@@ -2434,6 +2434,14 @@ describe('name change target execution snapshot', () => {
           };
         }
 
+        if (step.id === 'institution-courtesy-social-sync') {
+          return {
+            ...step,
+            executionStatus: 'complete' as const,
+            completedAt: '2026-04-24T21:10:00.000Z',
+          };
+        }
+
         return step;
       }),
     };
@@ -2442,8 +2450,8 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.statusVault.executionCounts).toEqual({
       todo: 1,
       inProgress: 1,
-      complete: 0,
-      total: 2,
+      complete: 1,
+      total: 3,
     });
     expect(snapshot.statusVault.status).toBe('in_progress');
   });

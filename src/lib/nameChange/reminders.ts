@@ -396,6 +396,7 @@ function getReminderPlannerRoute(
     || suggestion.dependsOnStepId === 'institution-phone-digital-identity'
     || suggestion.dependsOnStepId === 'institution-subscriptions-social'
     || suggestion.dependsOnStepId === 'institution-school-alumni-records'
+    || suggestion.dependsOnStepId === 'institution-courtesy-social-sync'
   ) {
     return {
       sectionKey: 'institutional',
@@ -413,6 +414,7 @@ function getReminderPlannerRoute(
               ? 'execution-card-utilities'
               : suggestion.dependsOnStepId === 'institution-subscriptions-social'
                 || suggestion.dependsOnStepId === 'institution-school-alumni-records'
+                || suggestion.dependsOnStepId === 'institution-courtesy-social-sync'
                 ? 'execution-card-courtesy'
                 : 'execution-card-banks',
     };

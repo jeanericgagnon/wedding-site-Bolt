@@ -1911,8 +1911,8 @@ describe('name change action feed', () => {
       makeReminderAttention({
         reminderKey: 'reminder-courtesy',
         label: 'Follow up on courtesy notifications',
-        dependsOnStepId: 'institution-courtesy-notifications',
-        dependentStepTitle: 'Courtesy notifications',
+        dependsOnStepId: 'institution-courtesy-social-sync',
+        dependentStepTitle: 'Courtesy / social identity sync',
         plannerIntent: 'open_execution_card',
         focusTargetId: 'execution-card-courtesy',
       }),

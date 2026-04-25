@@ -514,6 +514,7 @@ function getReminderSectionKey(dependsOnStepId: string): NameChangeActionFeedIte
     || dependsOnStepId === 'institution-phone-digital-identity'
     || dependsOnStepId === 'institution-subscriptions-social'
     || dependsOnStepId === 'institution-school-alumni-records'
+    || dependsOnStepId === 'institution-courtesy-social-sync'
   ) {
     return 'institutional';
   }
@@ -539,7 +540,7 @@ function getReminderFocusTargetId(item: NameChangeReminderAttentionItem) {
   if (dependsOnStepId === 'institution-licenses' || dependsOnStepId === 'institution-professional-licenses') return 'execution-card-licenses';
   if (dependsOnStepId === 'institution-voter-registration') return 'execution-card-voter';
   if (dependsOnStepId === 'institution-travel-hospitality' || dependsOnStepId === 'institution-dmv-registration-title' || dependsOnStepId === 'institution-frequent-flyer-hotel-rail') return 'execution-card-tsa';
-  if (dependsOnStepId === 'institution-courtesy-notifications' || dependsOnStepId === 'institution-subscriptions-social' || dependsOnStepId === 'institution-school-alumni-records') return 'execution-card-courtesy';
+  if (dependsOnStepId === 'institution-courtesy-notifications' || dependsOnStepId === 'institution-subscriptions-social' || dependsOnStepId === 'institution-school-alumni-records' || dependsOnStepId === 'institution-courtesy-social-sync') return 'execution-card-courtesy';
   if (dependsOnStepId === 'institution-banks' || dependsOnStepId === 'institution-investments-loans' || dependsOnStepId === 'institution-student-loans-financial-aid' || dependsOnStepId === 'institution-mortgage-property-records' || dependsOnStepId === 'institution-credit-bureaus' || dependsOnStepId === 'institutions-rollout') return 'execution-card-banks';
   if (dependsOnStepId === 'institution-insurance' || dependsOnStepId === 'institution-disability-insurance' || dependsOnStepId === 'institution-workers-comp-leave') return 'execution-card-insurance';
   if (dependsOnStepId === 'institution-medical-records') return 'execution-card-medical';

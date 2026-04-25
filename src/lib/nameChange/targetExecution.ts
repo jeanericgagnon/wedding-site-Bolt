@@ -71,7 +71,7 @@ const TARGET_STATUS_VAULT_STEP_IDS: Partial<Record<NameChangeExecutionTargetKey,
   ],
   medical: ['institution-medical-records'],
   utilities: ['institution-utilities-housing', 'institution-phone-digital-identity'],
-  courtesy: ['institution-subscriptions-social', 'institution-school-alumni-records'],
+  courtesy: ['institution-subscriptions-social', 'institution-school-alumni-records', 'institution-courtesy-social-sync'],
   voter: ['institution-voter-registration'],
   tsa: [
     'institution-tsa-precheck',
