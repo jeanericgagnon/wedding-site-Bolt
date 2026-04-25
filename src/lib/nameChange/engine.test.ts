@@ -8,6 +8,7 @@ import {
   getAccountUpdateTemplateReadinessActionLabel,
   getAccountUpdateTemplateReadinessIntroLine,
   getAccountUpdateTemplateReadinessSubjectPrefix,
+  getAccountUpdateTemplateStateLine,
   getAccountUpdateTemplateStatusLabel,
   getAccountUpdateTemplateStatusLine,
   getDefaultAccountUpdateBlockingProofHopLabel,
@@ -155,6 +156,13 @@ describe('name change engine', () => {
     expect(getAccountUpdateTemplateStatusLabel('complete')).toBe('confirm sync (proof chain complete)');
     expect(getAccountUpdateTemplateStatusLabel('upcoming', 'SSA pending')).toBe('ask before next proof hop · SSA pending');
     expect(getAccountUpdateTemplateStatusLabel('blocked', 'legal proof pending')).toBe('ask intake rules now · legal proof pending');
+    expect(getAccountUpdateTemplateStateLine('in_progress', 'Legal proof pending')).toBe(
+      'Template state: draft now and wait for legal proof pending to clear before sending.',
+    );
+    expect(getAccountUpdateTemplateStateLine('upcoming', 'SSA pending')).toBe(
+      'Template state: prep the ask now and wait for SSA pending to clear before sending.',
+    );
+    expect(getAccountUpdateTemplateStateLine('blocked')).toBe('Template state: intake-only until the proof chain is ready.');
     expect(getAccountUpdateTemplateStatusLine('ready')).toBe('Status: send now (proof packet ready).');
     expect(getAccountUpdateTemplateStatusLine('ready', undefined, { terminalPeriod: false })).toBe('Status: send now (proof packet ready)');
   });

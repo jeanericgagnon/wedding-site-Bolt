@@ -27,6 +27,7 @@ import {
 } from './actionFeed';
 import {
   getAccountUpdateTemplateActionLabel as getEngineAccountUpdateTemplateActionLabel,
+  getAccountUpdateTemplateStateLine as getEngineAccountUpdateTemplateStateLine,
   getAccountUpdateTemplateStatusLabel as getEngineAccountUpdateTemplateStatusLabel,
   getDefaultAccountUpdateBlockingProofHopLabel,
 } from './engine';
@@ -283,6 +284,17 @@ describe('account update template surface helpers', () => {
     expect(getAccountUpdateTemplateCopyButtonLabel(makeTemplate({ readiness: 'upcoming' }), null)).toBe('Copy next-step draft');
     expect(getAccountUpdateTemplateCopyButtonLabel(makeTemplate({ readiness: 'blocked' }), null)).toBe('Copy intake script');
     expect(getAccountUpdateTemplateCopyButtonLabel(makeTemplate({ id: 'template-payroll' }), 'template-payroll')).toBe('Copied');
+  });
+
+  it('keeps template state lines on the engine state helper', () => {
+    const template = makeTemplate({
+      readiness: 'in_progress',
+      blockingProofHopLabel: 'Legal proof pending',
+    });
+
+    expect(getAccountUpdateTemplateStateLine(template)).toBe(
+      getEngineAccountUpdateTemplateStateLine('in_progress', 'Legal proof pending'),
+    );
   });
 
   it('keeps planner and feed blocker/state copy on the same helpers', () => {

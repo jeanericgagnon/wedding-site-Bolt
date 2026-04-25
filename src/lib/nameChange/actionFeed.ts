@@ -3,6 +3,7 @@ import type { NameChangeDocumentRepairQueueItem } from './documentRepairQueue';
 import {
   getAccountUpdateTemplateActionLabel as getEngineAccountUpdateTemplateActionLabel,
   getAccountUpdateTemplateAudienceLine as getEngineAccountUpdateTemplateAudienceLine,
+  getAccountUpdateTemplateStateLine as getEngineAccountUpdateTemplateStateLine,
   getAccountUpdateTemplateStatusLabel as getEngineAccountUpdateTemplateStatusLabel,
   getAccountUpdateTemplateStatusLine as getEngineAccountUpdateTemplateStatusLine,
   getFallbackBlockingProofHopLabel,
@@ -126,27 +127,7 @@ export function formatBlockingProofHopStatePhrase(blockingProofHopLabel: string)
 }
 
 export function getAccountUpdateTemplateStateLine(template: AccountUpdateTemplate) {
-  const blockingProofHopLabel = template.blockingProofHopLabel?.trim();
-  const blockingProofHopStatePhrase = blockingProofHopLabel
-    ? formatBlockingProofHopStatePhrase(blockingProofHopLabel)
-    : undefined;
-  return template.readiness === 'complete'
-    ? 'Template state: proof chain complete; confirm the downstream sync only.'
-    : template.readiness === 'ready'
-      ? 'Template state: proof packet ready to send now.'
-      : template.readiness === 'in_progress'
-        ? blockingProofHopStatePhrase
-          ? `Template state: draft now and wait for ${blockingProofHopStatePhrase} to clear before sending.`
-          : 'Template state: draft now and wait for the current proof to clear before sending.'
-        : template.readiness === 'upcoming'
-          ? blockingProofHopStatePhrase
-            ? `Template state: prep the ask now and wait for ${blockingProofHopStatePhrase} to clear before sending.`
-            : 'Template state: prep the ask now before the next proof hop clears.'
-          : template.readiness === 'blocked'
-            ? blockingProofHopStatePhrase
-              ? `Template state: intake-only until ${blockingProofHopStatePhrase} clears.`
-              : 'Template state: intake-only until the proof chain is ready.'
-            : undefined;
+  return getEngineAccountUpdateTemplateStateLine(template.readiness, template.blockingProofHopLabel);
 }
 
 export function getAccountUpdateTemplateReadinessDetailLine(baseDetail: string, template: AccountUpdateTemplate) {

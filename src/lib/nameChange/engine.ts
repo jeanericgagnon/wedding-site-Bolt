@@ -588,6 +588,42 @@ export function getAccountUpdateTemplateActionLabel(
   return `Ask ${normalizedAudience} intake rules now${blockingProofHopSuffix}`;
 }
 
+export function getAccountUpdateTemplateStateLine(
+  readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+  blockingProofHopLabel?: string,
+) {
+  const trimmedBlockingProofHopLabel = blockingProofHopLabel?.trim().replace(/\.+$/, '');
+  const blockingProofHopStatePhrase = trimmedBlockingProofHopLabel
+    ? (() => {
+        const tokens = trimmedBlockingProofHopLabel.split(/\s+/).filter(Boolean);
+        const [firstToken = '', ...rest] = tokens;
+        if (!firstToken) return trimmedBlockingProofHopLabel;
+        const normalizedFirstToken = /^[A-Z0-9-]+$/.test(firstToken)
+          ? firstToken
+          : firstToken.charAt(0).toLowerCase() + firstToken.slice(1);
+        return [normalizedFirstToken, ...rest].join(' ');
+      })()
+    : undefined;
+
+  return readiness === 'complete'
+    ? 'Template state: proof chain complete; confirm the downstream sync only.'
+    : readiness === 'ready'
+      ? 'Template state: proof packet ready to send now.'
+      : readiness === 'in_progress'
+        ? blockingProofHopStatePhrase
+          ? `Template state: draft now and wait for ${blockingProofHopStatePhrase} to clear before sending.`
+          : 'Template state: draft now and wait for the current proof to clear before sending.'
+        : readiness === 'upcoming'
+          ? blockingProofHopStatePhrase
+            ? `Template state: prep the ask now and wait for ${blockingProofHopStatePhrase} to clear before sending.`
+            : 'Template state: prep the ask now before the next proof hop clears.'
+          : readiness === 'blocked'
+            ? blockingProofHopStatePhrase
+              ? `Template state: intake-only until ${blockingProofHopStatePhrase} clears.`
+              : 'Template state: intake-only until the proof chain is ready.'
+            : undefined;
+}
+
 export function getAccountUpdateTemplateReadinessIntroLine(
   readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
   blockingProofHopLabel?: string,
