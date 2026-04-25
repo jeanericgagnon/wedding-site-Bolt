@@ -46,6 +46,15 @@ export function getOnboardingSubdomain(partnerNames: string): string {
   return `${slug}.dayof.love`;
 }
 
+export function getCreateSiteRsvpDeadline(
+  onboardingUpdate: Record<string, unknown>,
+  data: Record<string, unknown>,
+): string | null {
+  return (onboardingUpdate.rsvp_deadline as string | null | undefined)
+    || (data.rsvp_deadline as string | null | undefined)
+    || null;
+}
+
 
 export const Onboarding: React.FC = () => {
   const navigate = useNavigate();
@@ -533,6 +542,7 @@ export const Onboarding: React.FC = () => {
         planningStatus: 'guided_setup_complete',
         template: 'generated-modern-luxe',
         weddingDate: (data.wedding_date as string | null) || undefined,
+        rsvpDeadline: (data.rsvp_deadline as string | null) || undefined,
         venue: (data.venue_name as string | null) || undefined,
         city: (data.venue_location as string | null) || undefined,
       });
@@ -562,7 +572,7 @@ export const Onboarding: React.FC = () => {
           layout_config: onboardingUpdate.layout_config,
           site_slug: onboardingUpdate.site_slug,
           site_url: data.site_url || null,
-          rsvp_deadline: data.rsvp_deadline || null,
+          rsvp_deadline: getCreateSiteRsvpDeadline(onboardingUpdate, data),
           onboarding_answers: profile,
           wedding_data: nextWeddingData,
         })
@@ -582,7 +592,7 @@ export const Onboarding: React.FC = () => {
             venue_name: data.venue_name || null,
             venue_location: data.venue_location || null,
             site_url: data.site_url || null,
-            rsvp_deadline: data.rsvp_deadline || null,
+            rsvp_deadline: getCreateSiteRsvpDeadline(onboardingUpdate, data),
           });
 
         if (fallbackError) throw fallbackError;

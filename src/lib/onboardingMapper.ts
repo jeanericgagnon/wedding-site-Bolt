@@ -112,6 +112,7 @@ export function buildOnboardingUpdateData(input: OnboardingMapperInput): Record<
   return {
     wedding_date: normalizedWeddingDate || null,
     venue_date: normalizedWeddingDate || null,
+    rsvp_deadline: normalizedRsvpDeadline || null,
     venue_name: input.venue || null,
     wedding_location: input.city || input.location || null,
     planning_status: input.planningStatus,

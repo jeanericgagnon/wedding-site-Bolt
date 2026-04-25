@@ -27,7 +27,8 @@ vi.mock('../components/ui', () => ({
   Card: ({ children, ...props }: any) => <div {...props}>{children}</div>,
 }));
 
-import { Onboarding, getDemoPartnerNamesFallback, getOnboardingSubdomain, parsePartnerNames } from './Onboarding';
+import { Onboarding, getCreateSiteRsvpDeadline, getDemoPartnerNamesFallback, getOnboardingSubdomain, parsePartnerNames } from './Onboarding';
+import { buildOnboardingUpdateWithClarifying } from '../lib/buildOnboardingUpdateWithClarifying';
 
 describe('Onboarding partner name truth helpers', () => {
   it('keeps a single partner name truthful instead of inventing a second partner', () => {
@@ -41,6 +42,17 @@ describe('Onboarding partner name truth helpers', () => {
   it('uses the shared demo fallback without leaving broken ampersands', () => {
     expect(getDemoPartnerNamesFallback()).toBeTruthy();
     expect(getDemoPartnerNamesFallback()).not.toMatch(/&\s*$/);
+  });
+
+  it('prefers the normalized onboarding RSVP deadline over raw create-site input', () => {
+    const onboardingUpdate = buildOnboardingUpdateWithClarifying({
+      coupleNames: { name1: 'Alex', name2: 'Jordan' },
+      planningStatus: 'guided_setup_complete',
+      template: 'generated-modern-luxe',
+      rsvpDeadline: '2026-05-15',
+    }) as Record<string, unknown>;
+
+    expect(getCreateSiteRsvpDeadline(onboardingUpdate, { rsvp_deadline: 'not-a-date' })).toBe('2026-05-15');
   });
 });
 
