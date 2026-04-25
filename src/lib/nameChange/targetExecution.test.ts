@@ -3033,6 +3033,38 @@ describe('name change target execution snapshot', () => {
     });
   });
 
+  it('adds structured wait guidance for non-us passport routing blockers', () => {
+    expect(getExecutionNextActionGuidance({
+      targetKey: 'passport',
+      nextAction: {
+        category: 'dependency',
+        label: 'Route non-U.S. passport follow-through',
+        detail: 'Current modeled passport flow assumes U.S. citizenship eligibility.',
+      },
+    })).toEqual({
+      overview: 'Current modeled passport flow assumes U.S. citizenship eligibility.',
+      doNow: 'Gather your current passport, citizenship record, and the country-specific change instructions now.',
+      whyItHelps: 'That makes the handoff faster once the right consulate or foreign passport authority path is confirmed.',
+      canWait: 'Actual submission can safely wait until the correct authority is confirmed.',
+    });
+  });
+
+  it('adds structured wait guidance for first-passport branch reviews', () => {
+    expect(getExecutionNextActionGuidance({
+      targetKey: 'passport',
+      nextAction: {
+        category: 'review',
+        label: 'Confirm first-passport eligibility path',
+        detail: 'This passport update is really a first-passport branch, so confirm the initial application path and packet before treating it like a standard renewal.',
+      },
+    })).toEqual({
+      overview: 'This passport update is really a first-passport branch, so confirm the initial application path and packet before treating it like a standard renewal.',
+      doNow: 'Gather citizenship proof, photo ID, and the in-person acceptance packet details now.',
+      whyItHelps: 'That keeps the first-passport packet ready once the initial application path is confirmed.',
+      canWait: 'Actual submission can safely wait until the first-passport branch is confirmed.',
+    });
+  });
+
   it('hides guided next-action fallback notes from the visible status-vault stack', () => {
     const guidedDetail = getExecutionNextActionDetail({
       targetKey: 'banks',

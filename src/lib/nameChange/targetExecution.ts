@@ -84,7 +84,27 @@ const TARGET_STATUS_VAULT_STEP_IDS: Partial<Record<NameChangeExecutionTargetKey,
 
 function getSupportiveExecutionWaitGuidance(snapshot: Pick<NameChangeTargetExecutionSnapshot, 'targetKey' | 'nextAction'>) {
   const blockingLabel = snapshot.nextAction.label.replace(/^Unblock\s+/, '').trim();
-  if (snapshot.nextAction.category !== 'dependency' || !blockingLabel) return undefined;
+  if (!blockingLabel) return undefined;
+
+  if (snapshot.targetKey === 'passport') {
+    if (/non-u\.s\.|non-us/i.test(blockingLabel)) {
+      return {
+        doNow: 'Gather your current passport, citizenship record, and the country-specific change instructions now.',
+        whyItHelps: 'That makes the handoff faster once the right consulate or foreign passport authority path is confirmed.',
+        canWait: 'Actual submission can safely wait until the correct authority is confirmed.',
+      };
+    }
+
+    if (/first-passport/i.test(blockingLabel)) {
+      return {
+        doNow: 'Gather citizenship proof, photo ID, and the in-person acceptance packet details now.',
+        whyItHelps: 'That keeps the first-passport packet ready once the initial application path is confirmed.',
+        canWait: 'Actual submission can safely wait until the first-passport branch is confirmed.',
+      };
+    }
+  }
+
+  if (snapshot.nextAction.category !== 'dependency') return undefined;
 
   switch (snapshot.targetKey) {
     case 'banks':
