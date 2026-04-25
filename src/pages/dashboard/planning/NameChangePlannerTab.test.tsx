@@ -152,7 +152,7 @@ describe('NameChangePlannerTab', () => {
       fireEvent.click(milestoneChip);
       expect(window.location.hash).toBe('#name-change-roadmap');
       fireEvent.click(reminderChip);
-      expect(window.location.hash).toBe('#case-setup');
+      expect(window.location.hash).toBe('#name-change-roadmap');
       fireEvent.click(screen.getByRole('button', { name: 'Open roadmap' }));
       expect(window.location.hash).toBe('#name-change-roadmap');
       fireEvent.click(roadmapButtons[roadmapButtons.length - 1]);

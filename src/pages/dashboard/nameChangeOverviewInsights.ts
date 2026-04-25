@@ -6,15 +6,25 @@ export interface NameChangeOverviewInsights {
   downstreamLabel: string;
   concreteResumeLabel: string | null;
   milestoneSummaryLabel: string;
+  milestoneSummaryHref: string;
   reminderSummaryLabel: string;
+  reminderSummaryHref: string;
 }
 
 export function buildNameChangeOverviewInsights(workspace: Pick<HydratedNameChangeWorkspace, 'plan' | 'reminders'>): NameChangeOverviewInsights {
+  const basePlannerHref = '/dashboard/planning?tab=nameChange';
   const executionCounts = workspace.plan.summary.executionCounts ?? { todo: workspace.plan.steps.length, in_progress: 0, complete: 0 };
   const milestones = workspace.plan.summary.milestoneChecklist ?? [];
   const milestoneCompleteCount = milestones.filter((milestone) => milestone.status === 'complete').length;
   const nextOpenMilestone = milestones.find((milestone) => milestone.status !== 'complete') ?? null;
   const openReminderCount = workspace.reminders.filter((reminder) => reminder.status === 'pending' || reminder.status === 'scheduled').length;
+  const hasExecutionActivity = executionCounts.complete > 0 || executionCounts.in_progress > 0;
+  const milestoneSummaryHref = hasExecutionActivity || milestoneCompleteCount > 0
+    ? `${basePlannerHref}#target-status-tracking`
+    : `${basePlannerHref}#name-change-roadmap`;
+  const reminderSummaryHref = openReminderCount > 0
+    ? `${basePlannerHref}#target-status-tracking`
+    : `${basePlannerHref}#name-change-roadmap`;
 
   return {
     coreChainLabel:
@@ -34,9 +44,11 @@ export function buildNameChangeOverviewInsights(workspace: Pick<HydratedNameChan
       milestoneCompleteCount > 0
         ? `${milestoneCompleteCount} milestone${milestoneCompleteCount === 1 ? '' : 's'} confirmed`
         : 'Milestones ready to confirm',
+    milestoneSummaryHref,
     reminderSummaryLabel:
       openReminderCount > 0
         ? `${openReminderCount} reminder${openReminderCount === 1 ? '' : 's'} open`
         : 'No open reminders',
+    reminderSummaryHref,
   };
 }

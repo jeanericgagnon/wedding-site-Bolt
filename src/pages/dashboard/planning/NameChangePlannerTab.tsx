@@ -1148,14 +1148,14 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               <button
                 type="button"
                 className="rounded-full border border-sky-300 bg-white px-2 py-1 font-medium"
-                onClick={() => scrollToPlannerHref(resumeCard.primaryHref)}
+                onClick={() => scrollToPlannerHref(lifecycleInsights.milestoneSummaryHref)}
               >
                 {lifecycleInsights.milestoneSummaryLabel}
               </button>
               <button
                 type="button"
                 className="rounded-full border border-sky-300 bg-white px-2 py-1 font-medium"
-                onClick={() => scrollToPlannerHref(resumeCard.secondaryHref)}
+                onClick={() => scrollToPlannerHref(lifecycleInsights.reminderSummaryHref)}
               >
                 {lifecycleInsights.reminderSummaryLabel}
               </button>

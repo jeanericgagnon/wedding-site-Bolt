@@ -31,7 +31,9 @@ describe('buildNameChangeOverviewInsights', () => {
     expect(insights.downstreamLabel).toContain('long-tail rollout lane');
     expect(insights.concreteResumeLabel).toContain('Certified legal proof');
     expect(insights.milestoneSummaryLabel).toBe('Milestones ready to confirm');
+    expect(insights.milestoneSummaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
     expect(insights.reminderSummaryLabel).toBe('No open reminders');
+    expect(insights.reminderSummaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
   });
 
   it('surfaces progress, milestone confirmations, and open reminders once the vault is active', () => {
@@ -66,6 +68,8 @@ describe('buildNameChangeOverviewInsights', () => {
     expect(insights.downstreamLabel).toContain('1 reminder still open');
     expect(insights.concreteResumeLabel).toBeTruthy();
     expect(insights.milestoneSummaryLabel).toBe('1 milestone confirmed');
+    expect(insights.milestoneSummaryHref).toBe('/dashboard/planning?tab=nameChange#target-status-tracking');
     expect(insights.reminderSummaryLabel).toBe('1 reminder open');
+    expect(insights.reminderSummaryHref).toBe('/dashboard/planning?tab=nameChange#target-status-tracking');
   });
 });

@@ -208,6 +208,8 @@ export const DashboardOverview: React.FC = () => {
     coreChainLabel: 'Certificate, SSA, and DMV stay together so the legal identity chain does not drift.',
     followOnLabel: 'Passport, payroll, and tax updates should reflect the same verified name once the first chain lands.',
     downstreamLabel: 'Use the long-tail rollout lane for banks, insurance, travel, loyalty, and the rest of the account cleanup.',
+    milestoneSummaryHref: '/dashboard/planning?tab=nameChange#name-change-roadmap',
+    reminderSummaryHref: '/dashboard/planning?tab=nameChange#name-change-roadmap',
   });
 
   useEffect(() => {
@@ -304,6 +306,8 @@ export const DashboardOverview: React.FC = () => {
           coreChainLabel: '1 complete · 1 in progress across the legal identity chain.',
           followOnLabel: '1 milestone confirmed so passport, payroll, and tax follow-ons can stay in sync.',
           downstreamLabel: '2 reminders still open for the long-tail bank, insurance, travel, and loyalty cleanup.',
+          milestoneSummaryHref: '/dashboard/planning?tab=nameChange#target-status-tracking',
+          reminderSummaryHref: '/dashboard/planning?tab=nameChange#target-status-tracking',
         });
         return;
       }
@@ -427,6 +431,8 @@ export const DashboardOverview: React.FC = () => {
             coreChainLabel: 'Certificate, SSA, and DMV stay together so the legal identity chain does not drift.',
             followOnLabel: 'Passport, payroll, and tax updates should reflect the same verified name once the first chain lands.',
             downstreamLabel: 'Use the long-tail rollout lane for banks, insurance, travel, loyalty, and the rest of the account cleanup.',
+            milestoneSummaryHref: '/dashboard/planning?tab=nameChange#name-change-roadmap',
+            reminderSummaryHref: '/dashboard/planning?tab=nameChange#name-change-roadmap',
           });
         }
       } else {
@@ -435,6 +441,8 @@ export const DashboardOverview: React.FC = () => {
           coreChainLabel: 'Certificate, SSA, and DMV stay together so the legal identity chain does not drift.',
           followOnLabel: 'Passport, payroll, and tax updates should reflect the same verified name once the first chain lands.',
           downstreamLabel: 'Use the long-tail rollout lane for banks, insurance, travel, loyalty, and the rest of the account cleanup.',
+          milestoneSummaryHref: '/dashboard/planning?tab=nameChange#name-change-roadmap',
+          reminderSummaryHref: '/dashboard/planning?tab=nameChange#name-change-roadmap',
         });
       }
 
@@ -962,14 +970,14 @@ export const DashboardOverview: React.FC = () => {
                           <button
                             type="button"
                             className="rounded-full border border-sky-300 bg-white px-2 py-1 font-medium"
-                            onClick={() => navigate(nameChangeCard.primaryHref)}
+                            onClick={() => navigate(nameChangeInsights.milestoneSummaryHref)}
                           >
                             {nameChangeInsights.milestoneSummaryLabel}
                           </button>
                           <button
                             type="button"
                             className="rounded-full border border-sky-300 bg-white px-2 py-1 font-medium"
-                            onClick={() => navigate(nameChangeCard.secondaryHref)}
+                            onClick={() => navigate(nameChangeInsights.reminderSummaryHref)}
                           >
                             {nameChangeInsights.reminderSummaryLabel}
                           </button>
