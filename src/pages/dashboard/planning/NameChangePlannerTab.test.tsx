@@ -92,10 +92,11 @@ describe('NameChangePlannerTab', () => {
       expect(screen.getByText('Soft next steps, not a checklist you have to clear')).toBeInTheDocument();
       expect(screen.getByText(/Optional next move:/i)).toBeInTheDocument();
 
-      fireEvent.click(screen.getByRole('button', { name: 'Open status vault' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Resume from status vault' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Update case setup' }));
       fireEvent.click(screen.getByRole('button', { name: 'Save and come back later' }));
 
-      expect(scrollIntoView).toHaveBeenCalled();
+      expect(scrollIntoView).toHaveBeenCalledTimes(2);
       expect(onSave).toHaveBeenCalled();
     } finally {
       HTMLElement.prototype.scrollIntoView = originalScrollIntoView;

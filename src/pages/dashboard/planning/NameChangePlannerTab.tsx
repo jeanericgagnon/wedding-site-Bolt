@@ -1098,8 +1098,9 @@ export const NameChangePlannerTab: React.FC<Props> = ({
             )}
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" onClick={() => scrollToPlannerTarget('case-setup')}>Resume from case setup</Button>
-            <Button variant="outline" size="sm" onClick={() => scrollToPlannerTarget('target-status-tracking')}>Open status vault</Button>
+            <Button size="sm" onClick={() => scrollToPlannerTarget('target-status-tracking')}>Resume from status vault</Button>
+            <Button variant="outline" size="sm" onClick={() => scrollToPlannerTarget('case-setup')}>Update case setup</Button>
+            <Button variant="outline" size="sm" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>Open roadmap</Button>
             <Button variant="outline" size="sm" onClick={() => void onSave()} disabled={saving}>{saving ? 'Saving…' : 'Save and come back later'}</Button>
           </div>
         </div>

@@ -912,9 +912,15 @@ export const DashboardOverview: React.FC = () => {
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Button variant="accent" size="sm" onClick={() => navigate('/dashboard/planning?tab=nameChange#target-status-tracking')}>
-                        Resume free name change assistant
+                        Resume status vault
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/planning')}>
+                      <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/planning?tab=nameChange#case-setup')}>
+                        Update case setup
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/planning?tab=nameChange')}>
+                        Open full assistant
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard/planning')}>
                         Open planning workspace instead
                       </Button>
                     </div>
