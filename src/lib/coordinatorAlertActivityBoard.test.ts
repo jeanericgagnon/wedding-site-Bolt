@@ -40,4 +40,25 @@ describe('coordinatorAlertActivityBoard', () => {
       pacingLabel: 'No pacing signal yet',
     });
   });
+
+  it('keeps invalid persisted scheduled send times from outranking real follow-ups', () => {
+    expect(buildCoordinatorAlertActivityBoard([
+      {
+        id: 'bad',
+        subject: 'Broken schedule',
+        audience: 'all',
+        channel: 'sms',
+        queuedAt: '2026-04-22T14:00:00.000Z',
+        sendAt: 'not-a-date',
+      },
+      {
+        id: 'good',
+        subject: 'Reception reminder',
+        audience: 'checked-in',
+        channel: 'email',
+        queuedAt: '2026-04-22T14:05:00.000Z',
+        sendAt: '2026-04-22T16:00:00.000Z',
+      },
+    ]).nextScheduledLabel).toBe('Reception reminder · 4/22/2026, 9:00:00 AM');
+  });
 });

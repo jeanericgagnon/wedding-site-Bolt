@@ -37,4 +37,25 @@ describe('coordinatorAlertLogView', () => {
       },
     ]);
   });
+
+  it('guards invalid persisted scheduled send timestamps in owner-facing log rows', () => {
+    expect(buildCoordinatorAlertLogView([
+      {
+        id: 'a2',
+        subject: 'Reception reminder',
+        audience: 'checked-in',
+        channel: 'email',
+        queuedAt: '2026-04-22T14:05:00.000Z',
+        sendAt: 'not-a-date',
+      },
+    ])).toEqual([
+      {
+        id: 'a2',
+        tone: 'warning',
+        title: 'Scheduled send',
+        meta: 'Unknown time · EMAIL',
+        detail: 'Reception reminder · checked-in',
+      },
+    ]);
+  });
 });

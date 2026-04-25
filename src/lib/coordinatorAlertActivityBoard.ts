@@ -1,4 +1,5 @@
 import type { CoordinatorAlertLogItem } from './coordinatorModePersistence';
+import { formatCoordinatorAlertSendTime, getCoordinatorAlertSendTimestamp } from './coordinatorAlertSendTime';
 
 export type CoordinatorAlertActivityBoard = {
   statusLabel: string;
@@ -15,7 +16,7 @@ export const buildCoordinatorAlertActivityBoard = (
   const liveAlerts = alertLog.filter((item) => !item.sendAt);
   const scheduledAlerts = alertLog
     .filter((item) => item.sendAt)
-    .sort((a, b) => new Date(a.sendAt ?? 0).getTime() - new Date(b.sendAt ?? 0).getTime());
+    .sort((a, b) => getCoordinatorAlertSendTimestamp(a.sendAt) - getCoordinatorAlertSendTimestamp(b.sendAt));
   const smsCount = alertLog.filter((item) => item.channel === 'sms').length;
   const emailCount = alertLog.filter((item) => item.channel === 'email').length;
 
@@ -33,7 +34,7 @@ export const buildCoordinatorAlertActivityBoard = (
       ? `${latestLive.subject} · ${latestLive.channel.toUpperCase()}`
       : 'No live send yet',
     nextScheduledLabel: nextScheduled
-      ? `${nextScheduled.subject} · ${new Date(nextScheduled.sendAt ?? '').toLocaleString()}`
+      ? `${nextScheduled.subject} · ${formatCoordinatorAlertSendTime(nextScheduled.sendAt)}`
       : 'No scheduled send queued',
     channelLabel: `${smsCount} SMS · ${emailCount} email`,
     pacingLabel: scheduledAlerts.length > liveAlerts.length

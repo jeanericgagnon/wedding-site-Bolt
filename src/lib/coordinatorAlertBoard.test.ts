@@ -44,4 +44,23 @@ describe('coordinatorAlertBoard', () => {
       latestActivityLabel: 'No recent day-of sends yet.',
     });
   });
+
+  it('guards invalid persisted scheduled send labels', () => {
+    expect(buildCoordinatorAlertBoard({
+      aligned: true,
+      laneLabel: 'Live event update',
+      audienceLabel: 'Ceremony guests',
+      recipientLabel: '42 recipients',
+      deliveryLabel: 'SMS now',
+      hasDraftContent: true,
+      latestAlert: {
+        id: '1',
+        subject: 'Ceremony is live',
+        audience: 'event:event-1',
+        channel: 'sms',
+        queuedAt: '2026-04-21T20:00:00.000Z',
+        sendAt: 'not-a-date',
+      },
+    }).latestActivityLabel).toBe('Latest scheduled send: Ceremony is live at Unknown time');
+  });
 });

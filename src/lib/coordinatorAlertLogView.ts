@@ -1,4 +1,5 @@
 import type { CoordinatorAlertLogItem } from './coordinatorModePersistence';
+import { formatCoordinatorAlertSendTime } from './coordinatorAlertSendTime';
 
 export type CoordinatorAlertLogViewItem = {
   id: string;
@@ -15,7 +16,7 @@ export const buildCoordinatorAlertLogView = (
   tone: item.sendAt ? 'warning' : 'ready',
   title: item.sendAt ? 'Scheduled send' : 'Live send',
   meta: item.sendAt
-    ? `${new Date(item.sendAt).toLocaleString()} · ${item.channel.toUpperCase()}`
+    ? `${formatCoordinatorAlertSendTime(item.sendAt)} · ${item.channel.toUpperCase()}`
     : `${item.channel.toUpperCase()} · sent live`,
   detail: `${item.subject} · ${item.audience}`,
 }));

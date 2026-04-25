@@ -1,4 +1,5 @@
 import type { CoordinatorAlertLogItem } from './coordinatorModePersistence';
+import { formatCoordinatorAlertSendTime } from './coordinatorAlertSendTime';
 
 export type CoordinatorAlertBoard = {
   statusLabel: string;
@@ -40,7 +41,7 @@ export const buildCoordinatorAlertBoard = ({
   const latestActivityLabel = !latestAlert
     ? 'No recent day-of sends yet.'
     : latestAlert.sendAt
-      ? `Latest scheduled send: ${latestAlert.subject} at ${new Date(latestAlert.sendAt).toLocaleString()}`
+      ? `Latest scheduled send: ${latestAlert.subject} at ${formatCoordinatorAlertSendTime(latestAlert.sendAt)}`
       : `Latest live send: ${latestAlert.subject} via ${latestAlert.channel.toUpperCase()}`;
 
   return {
