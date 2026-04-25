@@ -604,6 +604,60 @@ function buildAccountUpdateTemplates(
                       ready: 'I can send the current legal-proof packet now.',
                       in_progress: 'The supporting proof chain is already moving, so I can draft this now and send the final packet as soon as it lands.',
                     });
+    const readinessSpecificChecklistItem = template.id === 'template-payroll'
+      ? getReadinessChecklistLine(readiness, {
+          ready: 'Attach the SSA receipt or confirmation with the payroll packet now',
+          in_progress: 'Queue the payroll ask now, then attach the SSA receipt as soon as it posts',
+          upcoming: 'Use this to learn the payroll intake path while SSA alignment is still upstream',
+          blocked: 'Hold documents for now and only confirm payroll timing + intake rules',
+        })
+      : template.id === 'template-bank'
+        ? getReadinessChecklistLine(readiness, {
+            ready: 'Include the updated photo ID or DMV receipt the bank/card team requires',
+            in_progress: 'Draft now and plan to attach the DMV or ID proof as soon as it lands',
+            upcoming: 'Confirm whether legal proof alone or an interim DMV receipt is enough to start',
+            blocked: 'Ask for the exact bank/card document rules before starting the account rename',
+          })
+        : template.id === 'template-insurance'
+          ? getReadinessChecklistLine(readiness, {
+              ready: 'Send the legal proof packet now and include updated ID if verification asks for it',
+              in_progress: 'Queue the carrier update now and attach the updated ID once it clears',
+              upcoming: 'Confirm whether legal proof alone can start cards, claims, and billing updates',
+              blocked: 'Hold policy changes for now and just gather the carrier evidence rules',
+            })
+          : template.id === 'template-tax'
+            ? getReadinessChecklistLine(readiness, {
+                ready: 'Send the SSA-backed confirmation path the tax team needs now',
+                in_progress: 'Draft the tax/state request now and attach SSA confirmation once it lands',
+                upcoming: 'Ask for the verification path and filing-cycle timing while SSA sync is still upstream',
+                blocked: 'Do not send documents yet; only confirm the tax/state process first',
+              })
+            : template.id === 'template-travel'
+              ? getReadinessChecklistLine(readiness, {
+                  ready: 'Send the travel-safe packet now with the passport or identity proof now in hand',
+                  in_progress: 'Draft the travel request now and attach final passport proof once it lands',
+                  upcoming: 'Confirm hold/change policy before touching bookings while passport timing is still upstream',
+                  blocked: 'Ask for mismatch policy and temporary-proof rules before changing travel profiles',
+                })
+              : template.id === 'template-digital-identity'
+                ? getReadinessChecklistLine(readiness, {
+                    ready: 'Send legal proof now and include updated ID if the verification flow asks for it',
+                    in_progress: 'Queue the utility/phone update now and attach final ID evidence once it posts',
+                    upcoming: 'Confirm whether legal proof alone can start utilities, phone, housing, or recovery updates',
+                    blocked: 'Hold identity changes for now and only gather verification rules',
+                  })
+                : template.id === 'template-licenses'
+                  ? getReadinessChecklistLine(readiness, {
+                      ready: 'Send the board packet now with the updated ID or reissue receipt',
+                      in_progress: 'Draft now and attach the updated ID or license receipt as soon as it clears',
+                      upcoming: 'Ask for the board-specific document rules before the ID/license path lands',
+                      blocked: 'Do not trigger public-record or renewal updates until the proof chain is real',
+                    })
+                  : getReadinessChecklistLine(readiness, {
+                      ready: 'Send the current legal-proof packet now',
+                      in_progress: 'Draft now and attach the final proof packet as soon as it lands',
+                    });
+    const proofChecklist = [...template.proofChecklist, readinessSpecificChecklistItem];
     const proofLine = `I can provide ${template.proofChecklist.join(', ')} ${readinessSpecificProof}`;
 
     return {
@@ -614,7 +668,7 @@ function buildAccountUpdateTemplates(
       readiness,
       readinessLabel,
       dependsOnStepIds: [...template.dependsOnStepIds],
-      proofChecklist: [...template.proofChecklist],
+      proofChecklist,
     };
   }).filter((template) => (hasPassport ? true : template.id !== 'template-travel' || needsPassport || template.readiness !== 'blocked'));
 }

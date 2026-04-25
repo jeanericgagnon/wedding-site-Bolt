@@ -148,7 +148,12 @@ describe('name change engine', () => {
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.body).toContain('Alex Marie Jordan');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.readinessLabel).toBe('Your legal proof is grounded, but this still depends on the next ID or agency hop before it is ready to send.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.body).toContain('My legal proof is in hand, but SSA/payroll alignment is still upstream');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.proofChecklist).toEqual(expect.arrayContaining(['Use this to learn the payroll intake path while SSA alignment is still upstream']));
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-bank')?.body).toContain('whether an interim DMV receipt works');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-bank')?.proofChecklist).toEqual(expect.arrayContaining(['Confirm whether legal proof alone or an interim DMV receipt is enough to start']));
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.proofChecklist).toEqual(expect.arrayContaining(['Confirm hold/change policy before touching bookings while passport timing is still upstream']));
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-digital-identity')?.proofChecklist).toEqual(expect.arrayContaining(['Confirm whether legal proof alone can start utilities, phone, housing, or recovery updates']));
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-licenses')?.proofChecklist).toEqual(expect.arrayContaining(['Ask for the board-specific document rules before the ID/license path lands']));
     expect(plan.summary.institutionCategoryCoverage).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'legal_government', status: 'upcoming', institutionKeys: expect.arrayContaining(['uscis-immigration-records', 'irs-records', 'state-tax-agency', 'county-recorder-property']) }),
@@ -176,7 +181,10 @@ describe('name change engine', () => {
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')).toMatchObject({
       readiness: 'blocked',
       readinessLabel: 'The legal-proof chain is still too early, so use this to learn the intake path now and wait to send documents until the upstream proof is real.',
-      proofChecklist: expect.arrayContaining(['Certified legal name-change proof still needs review before most downstream updates will stick']),
+      proofChecklist: expect.arrayContaining([
+        'Certified legal name-change proof still needs review before most downstream updates will stick',
+        'Do not send documents yet; only confirm the tax/state process first',
+      ]),
     });
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('I need your process first and will send the SSA-backed packet once it is ready');
   });
