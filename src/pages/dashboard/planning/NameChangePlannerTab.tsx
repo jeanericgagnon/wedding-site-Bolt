@@ -769,8 +769,9 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         ? `Reminder updated ${formatNameChangeExecutionDateTime(latestReminderAt)}`
         : null,
       nextActionLabel: snapshot.nextAction?.label ?? null,
-      nextActionDetail: guidedNextAction?.doNow || guidedNextAction?.whyItHelps || guidedNextAction?.canWait
+      nextActionDetail: guidedNextAction?.overview || guidedNextAction?.doNow || guidedNextAction?.whyItHelps || guidedNextAction?.canWait
         ? [
+          guidedNextAction.overview,
           guidedNextAction.doNow ? `Do now: ${guidedNextAction.doNow}` : null,
           guidedNextAction.whyItHelps ? `Why it helps: ${guidedNextAction.whyItHelps}` : null,
           guidedNextAction.canWait ? `Can wait: ${guidedNextAction.canWait}` : null,
