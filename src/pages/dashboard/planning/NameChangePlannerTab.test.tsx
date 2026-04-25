@@ -155,7 +155,7 @@ describe('NameChangePlannerTab', () => {
     expect(screen.getByText(/with missing proof/)).toBeInTheDocument();
     expect(screen.getByText(/with proof attention/)).toBeInTheDocument();
     expect(screen.getByText(/with execution activity/)).toBeInTheDocument();
-    expect(screen.getByText(/with reminder pressure/)).toBeInTheDocument();
+    expect(screen.getByText(/with reminder follow-up/)).toBeInTheDocument();
     expect(screen.getAllByText(/missing|attention/).length).toBeGreaterThan(0);
   });
 
@@ -308,7 +308,7 @@ describe('NameChangePlannerTab', () => {
     expect(screen.getAllByText(/Reminder updated/).length).toBeGreaterThan(0);
   });
 
-  it('keeps proof debt visible when reminder pressure becomes the latest touch', () => {
+  it('keeps proof debt visible when reminder follow-up becomes the latest touch', () => {
     const draft = makeDraft();
     const basePlan = buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] });
     const plan = {

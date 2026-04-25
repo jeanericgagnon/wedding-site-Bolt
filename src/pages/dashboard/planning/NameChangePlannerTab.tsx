@@ -712,7 +712,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       },
       {
         key: 'stale',
-        title: 'Stale pressure',
+        title: 'Stale follow-up',
         value: `${reminderAttentionSummary.stale} stale`,
         detail: `${reminderAttentionSummary.staleTodo} untouched stale · ${reminderAttentionSummary.staleInProgress} stale but moving`,
         tone: reminderAttentionSummary.stale > 0 ? 'warning' : 'neutral',
@@ -1203,7 +1203,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.ready ?? 0} ready</span>
                 <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.blocked ?? 0} blocked</span>
                 <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.touchedByExecution ?? 0} with execution activity</span>
-                <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.touchedByReminder ?? 0} with reminder pressure</span>
+                <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.touchedByReminder ?? 0} with reminder follow-up</span>
                 <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.inProgress ?? 0} in progress</span>
                 <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.complete ?? 0} complete</span>
                 {plan.summary.targetStatusOverview?.latestTouchedAt ? (
@@ -1654,7 +1654,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
             <div className="rounded-xl border border-border-subtle bg-white/60 p-4">
               <p className="text-xs uppercase tracking-wide text-text-tertiary">Stale reminder overlap</p>
               <p className="mt-2 text-sm font-semibold text-text-primary">{section.staleReminderOverlap} stale overlaps</p>
-              <p className="mt-2 text-xs text-text-secondary">How much stale reminder pressure seems to be pooling around this section.</p>
+              <p className="mt-2 text-xs text-text-secondary">How much stale reminder follow-up still seems to be pooling around this section.</p>
             </div>
           </div>
 
