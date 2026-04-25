@@ -83,8 +83,8 @@ function getTemplateActionLabel(baseLabel: string, template: AccountUpdateTempla
   if (template.readiness === 'complete') return `Confirm ${audience} sync`;
   if (template.readiness === 'ready') return `Send ${audience} update`;
   if (template.readiness === 'in_progress') return `Draft ${audience} update`;
-  if (template.readiness === 'upcoming') return `Ask ${audience} intake question`;
-  return `Ask ${audience} intake rules`;
+  if (template.readiness === 'upcoming') return `Ask ${audience} before next proof hop`;
+  return `Ask ${audience} intake rules now`;
 }
 
 function getTemplateLaneLabel(template: AccountUpdateTemplate) {

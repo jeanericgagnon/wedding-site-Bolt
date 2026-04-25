@@ -478,7 +478,7 @@ describe('name change action feed', () => {
       severity: 'blocking',
       urgencyReason: 'blocking_dependency',
       action: expect.objectContaining({
-        label: 'Ask insurance carriers intake rules',
+        label: 'Ask insurance carriers intake rules now',
         detail: expect.stringContaining('learn the intake path now'),
       }),
     });
@@ -729,7 +729,7 @@ describe('name change action feed', () => {
       laneLabel: 'Employer payroll / HR · ask before next proof hop',
       urgencyReason: 'blocking_dependency',
     });
-    expect(feed[0]?.action.label).toBe('Ask employer payroll / HR intake question');
+    expect(feed[0]?.action.label).toBe('Ask employer payroll / HR before next proof hop');
     expect(feed[0]?.action.detail).toContain('still depends on the next ID or agency hop');
   });
 
