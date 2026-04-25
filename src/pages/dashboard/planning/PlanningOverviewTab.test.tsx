@@ -41,5 +41,12 @@ describe('PlanningOverviewTab', () => {
     expect(screen.getByText(/downstream categor/i)).toBeTruthy();
     expect(screen.getByText(/Next milestone:/i)).toBeTruthy();
     expect(screen.getByText(/Legal \+ government \+ Work \+ insurance/i)).toBeTruthy();
+    expect(screen.getByText(/Certified legal proof is grounded and ready to reuse:/i)).toBeTruthy();
+    expect(screen.getByText(/Social Security update is submitted and ready to verify:/i)).toBeTruthy();
+    expect(screen.getByText(/Primary photo ID is ready to move after SSA:/i)).toBeTruthy();
+    expect(screen.getByText(/Passport update is lined up from the live ID chain:/i)).toBeTruthy();
+    expect(screen.getByText(/Payroll and HR can use the verified SSA identity:/i)).toBeTruthy();
+    expect(screen.getByText(/Tax records are ready to align with SSA and payroll:/i)).toBeTruthy();
+    expect(screen.getByText(/Downstream rollout is ready for the long-tail accounts:/i)).toBeTruthy();
   });
 });

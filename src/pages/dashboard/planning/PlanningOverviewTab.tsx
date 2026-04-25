@@ -63,7 +63,21 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
   const nameChangeReadyCount = nameChangePlan.steps.filter((step) => step.status === 'ready').length;
   const nameChangeCompletedCount = nameChangePlan.steps.filter((step) => step.executionStatus === 'complete').length;
   const nextNameChangeAction = nameChangePlan.summary.nextBestAction;
-  const rolloutMilestone = nameChangePlan.summary.milestoneChecklist?.find((milestone) => milestone.id === 'milestone-account-rollout') ?? null;
+  const milestoneStatusLabels = {
+    ready: 'ready',
+    upcoming: 'up next',
+    blocked: 'blocked',
+    complete: 'done',
+  } as const;
+  const milestoneHighlights = (nameChangePlan.summary.milestoneChecklist ?? []).filter((milestone) => [
+    'milestone-legal-proof',
+    'milestone-ssa',
+    'milestone-photo-id',
+    'milestone-passport',
+    'milestone-payroll',
+    'milestone-tax',
+    'milestone-downstream-rollout',
+  ].includes(milestone.id));
   const nextNameChangeMilestone = nameChangePlan.summary.milestoneChecklist?.find((milestone) => milestone.status !== 'complete') ?? null;
   const blockedNameChangeMilestones = nameChangePlan.summary.milestoneChecklist?.filter((milestone) => milestone.status === 'blocked').length ?? 0;
   const downstreamCoverage = nameChangePlan.summary.institutionCategoryCoverage ?? [];
@@ -166,7 +180,6 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
                   <p className="mt-1 text-sm text-text-secondary">{nextNameChangeAction}</p>
                   <p className="mt-2 text-xs text-text-secondary">
                     {nameChangeCompletedCount} complete · {nameChangeReadyCount} ready now
-                    {rolloutMilestone ? ` · rollout milestone ${rolloutMilestone.status.replace('_', ' ')}` : ''}
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2 text-xs">
                     <span className="rounded-full bg-white px-2 py-1 text-text-secondary shadow-sm">
@@ -184,6 +197,15 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
                       </span>
                     ) : null}
                   </div>
+                  {milestoneHighlights.length > 0 ? (
+                    <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                      {milestoneHighlights.map((milestone) => (
+                        <span key={milestone.id} className="rounded-full bg-white px-2 py-1 text-text-secondary shadow-sm">
+                          {milestone.label}: <span className="font-medium text-text-primary">{milestoneStatusLabels[milestone.status]}</span>
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
                   {nextNameChangeMilestone ? (
                     <p className="mt-3 text-xs text-text-secondary">
                       Next milestone: <span className="font-medium text-text-primary">{nextNameChangeMilestone.label}</span>
