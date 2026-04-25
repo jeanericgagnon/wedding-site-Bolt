@@ -380,7 +380,7 @@ describe('name change action feed', () => {
     expect(feed[0]).toMatchObject({
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-bank',
-      title: 'Confirm completed update: Name change update for banking profile',
+      title: 'Bank accounts',
       laneLabel: 'Bank accounts · confirm synced',
       severity: 'attention',
       urgencyReason: 'review_queue',

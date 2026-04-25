@@ -320,7 +320,7 @@ export function buildNameChangeActionFeed(
       key: `execution:${snapshot.targetKey}`,
       origin: 'execution',
       sectionKey: getExecutionSectionKey(snapshot.targetKey),
-      title: routesToTemplate ? linkedTemplate.subject : snapshot.targetLabel,
+      title: routesToTemplate ? linkedTemplate.audience : snapshot.targetLabel,
       laneLabel: routesToTemplate
         ? getTemplateLaneLabel(linkedTemplate)
         : snapshot.recommendedFormCode,
