@@ -156,7 +156,7 @@ function scrollToPlannerHref(href: string) {
 
 function getActionFeedCtaLabel(intent: 'open_execution_card' | 'open_document_repair' | 'open_account_update_template') {
   if (intent === 'open_document_repair') return 'Open document repair';
-  if (intent === 'open_account_update_template') return 'Open copy-ready template';
+  if (intent === 'open_account_update_template') return 'Open update template';
   return 'Open execution card';
 }
 
@@ -1469,7 +1469,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="text-lg font-semibold text-text-primary">Prewritten update templates</h3>
-              <p className="mt-1 text-sm text-text-secondary">Copy, send, and move on. Payroll, bank, insurance, and other downstream updates should not require fresh writing every time.</p>
+              <p className="mt-1 text-sm text-text-secondary">Copy, stage, or send when the proof chain is ready. Payroll, bank, insurance, and other downstream updates should not require fresh writing every time.</p>
             </div>
             <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{accountUpdateTemplates.length} templates</span>
           </div>

@@ -529,6 +529,9 @@ describe('NameChangePlannerTab', () => {
     expect(screen.getAllByText(`Blocked by: ${payrollBlockingProofHop}`).length).toBeGreaterThan(0);
     expect(screen.getByText(`Proof status: ${payrollProofStatus}`)).toBeInTheDocument();
     expect(screen.getByText(`Proof to have handy: ${payrollProofChecklist}`)).toBeInTheDocument();
+    expect(screen.getByText('Copy, stage, or send when the proof chain is ready. Payroll, bank, insurance, and other downstream updates should not require fresh writing every time.')).toBeInTheDocument();
+    expect(screen.queryByText('Open copy-ready template →')).not.toBeInTheDocument();
+    expect(screen.getAllByText('Open update template →').length).toBeGreaterThan(0);
   });
 
   it('copies the full readiness-aware template text from the planner card', async () => {
