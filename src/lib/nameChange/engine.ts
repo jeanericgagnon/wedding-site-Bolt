@@ -555,6 +555,7 @@ function buildAccountUpdateTemplates(
       ? getReadinessChecklistLine(readiness, {
           ready: 'SSA is already far enough along that I can attach the receipt/confirmation with my legal proof now.',
           in_progress: 'SSA follow-through is already moving, so I can draft this now and attach the SSA receipt as soon as it posts.',
+          complete: 'The payroll-side proof chain should already be synced, so I mainly need confirmation that payroll, benefits, and deductions all show the final legal name.',
           upcoming: 'My legal proof is in hand, but SSA/payroll alignment is still upstream, so I mainly need your intake path and hold timing.',
           blocked: 'My legal proof chain is still being grounded, so I need your intake path first and will send the SSA-backed proof packet once it is ready.',
         })
@@ -562,6 +563,7 @@ function buildAccountUpdateTemplates(
         ? getReadinessChecklistLine(readiness, {
             ready: 'My updated ID path is far enough along that I can send legal proof plus the current ID/DMV receipt you require.',
             in_progress: 'My updated ID path is already moving, so I can draft this now and send the DMV/ID proof as soon as it lands.',
+            complete: 'The bank rename should already be through the pipeline, so I mainly need confirmation that cards, statements, checks, and online banking all stayed aligned.',
             upcoming: 'My legal proof is ready, but the photo-ID update is still upstream, so I mainly need your exact submission requirements and whether an interim DMV receipt works.',
             blocked: 'I am still waiting on the core legal-proof chain, so I need your exact document rules before I trigger the bank/card update.',
           })
@@ -569,6 +571,7 @@ function buildAccountUpdateTemplates(
           ? getReadinessChecklistLine(readiness, {
               ready: 'I can send the legal proof packet now and include updated ID if your verification team needs it.',
               in_progress: 'The ID/coverage proof chain is already moving, so I can queue this now and attach the updated ID as soon as it clears.',
+              complete: 'Coverage records should already be in sync, so I mainly need confirmation that cards, billing, claims, and beneficiaries all reflect the final legal name.',
               upcoming: 'My legal proof is ready, but updated ID may still be pending, so I need to know whether legal proof alone is enough to start.',
               blocked: 'The legal-proof chain is still upstream, so I need your exact evidence rules before I touch cards, claims, or autopay.',
             })
@@ -576,6 +579,7 @@ function buildAccountUpdateTemplates(
             ? getReadinessChecklistLine(readiness, {
                 ready: 'SSA alignment is already ready enough that I can send the confirmation path you need now.',
                 in_progress: 'SSA and payroll tax alignment are already moving, so I can draft this now and send the confirmation once the current step lands.',
+                complete: 'The tax-side name sync should already be in place, so I mainly need confirmation that payroll reporting and agency records now match the final legal name.',
                 upcoming: 'My legal proof is ready, but SSA/tax sync is still upstream, so I mostly need the exact verification path and timing guardrails.',
                 blocked: 'The core proof chain is still upstream, so I need your process first and will send the SSA-backed packet once it is ready.',
               })
@@ -583,6 +587,7 @@ function buildAccountUpdateTemplates(
               ? getReadinessChecklistLine(readiness, {
                   ready: 'My passport/identity proof chain is ready enough that I can send the travel-safe version of the packet now.',
                   in_progress: 'Passport or travel identity updates are already moving, so I can draft this now and send final proof once the current document lands.',
+                  complete: 'The travel-side rename should already be in place, so I mainly need confirmation that traveler profiles, loyalty records, and live bookings all match the final ID.',
                   upcoming: 'My legal proof is ready, but passport/travel identity timing is still upstream, so I need your hold/change policy before I touch bookings.',
                   blocked: 'The passport/identity proof chain is still too early, so I first need your mismatch policy and acceptable temporary proof.',
                 })
@@ -590,6 +595,7 @@ function buildAccountUpdateTemplates(
                 ? getReadinessChecklistLine(readiness, {
                     ready: 'I can send the legal proof packet now and include updated ID if your verification flow asks for it.',
                     in_progress: 'The ID and account-proof chain is already moving, so I can prep this now and send final ID evidence as soon as it posts.',
+                    complete: 'These identity records should already be synced, so I mainly need confirmation that billing, recovery, caller ID, and contact records all show the final legal name.',
                     upcoming: 'My legal proof is ready, but photo-ID follow-through is still upstream, so I need to know whether legal proof alone can start the update.',
                     blocked: 'The proof chain is still upstream, so I need your verification rules before I change utilities, phone, or recovery records.',
                   })
@@ -597,17 +603,20 @@ function buildAccountUpdateTemplates(
                   ? getReadinessChecklistLine(readiness, {
                       ready: 'My legal proof and ID chain are ready enough that I can send the board packet now.',
                       in_progress: 'The ID/license proof chain is already moving, so I can draft this now and attach the updated ID or receipt as soon as it clears.',
+                      complete: 'The board-side rename should already be processing, so I mainly need confirmation that the license record, wallet card, and public lookup all show the final legal name.',
                       upcoming: 'My legal proof is ready, but the updated ID/license reissue path is still upstream, so I need the board-specific document rules first.',
                       blocked: 'The proof chain is still upstream, so I need the board submission rules before I trigger public-record or renewal changes.',
                     })
                   : getReadinessChecklistLine(readiness, {
                       ready: 'I can send the current legal-proof packet now.',
                       in_progress: 'The supporting proof chain is already moving, so I can draft this now and send the final packet as soon as it lands.',
+                      complete: 'The account-update proof chain should already be synced, so I mainly need confirmation that the final legal name is showing everywhere it should.',
                     });
     const readinessSpecificChecklistItem = template.id === 'template-payroll'
       ? getReadinessChecklistLine(readiness, {
           ready: 'Attach the SSA receipt or confirmation with the payroll packet now',
           in_progress: 'Queue the payroll ask now, then attach the SSA receipt as soon as it posts',
+          complete: 'Confirm payroll, benefits, timekeeping, and deductions all already show the final legal name',
           upcoming: 'Use this to learn the payroll intake path while SSA alignment is still upstream',
           blocked: 'Hold documents for now and only confirm payroll timing + intake rules',
         })
@@ -615,6 +624,7 @@ function buildAccountUpdateTemplates(
         ? getReadinessChecklistLine(readiness, {
             ready: 'Include the updated photo ID or DMV receipt the bank/card team requires',
             in_progress: 'Draft now and plan to attach the DMV or ID proof as soon as it lands',
+            complete: 'Confirm cards, statements, checks, and online banking all reflect the final legal name',
             upcoming: 'Confirm whether legal proof alone or an interim DMV receipt is enough to start',
             blocked: 'Ask for the exact bank/card document rules before starting the account rename',
           })
@@ -622,6 +632,7 @@ function buildAccountUpdateTemplates(
           ? getReadinessChecklistLine(readiness, {
               ready: 'Send the legal proof packet now and include updated ID if verification asks for it',
               in_progress: 'Queue the carrier update now and attach the updated ID once it clears',
+              complete: 'Confirm cards, billing, claims, dependents, and beneficiaries all reflect the final legal name',
               upcoming: 'Confirm whether legal proof alone can start cards, claims, and billing updates',
               blocked: 'Hold policy changes for now and just gather the carrier evidence rules',
             })
@@ -629,6 +640,7 @@ function buildAccountUpdateTemplates(
             ? getReadinessChecklistLine(readiness, {
                 ready: 'Send the SSA-backed confirmation path the tax team needs now',
                 in_progress: 'Draft the tax/state request now and attach SSA confirmation once it lands',
+                complete: 'Confirm payroll reporting, withholding records, and agency files now match the final legal name',
                 upcoming: 'Ask for the verification path and filing-cycle timing while SSA sync is still upstream',
                 blocked: 'Do not send documents yet; only confirm the tax/state process first',
               })
@@ -636,6 +648,7 @@ function buildAccountUpdateTemplates(
               ? getReadinessChecklistLine(readiness, {
                   ready: 'Send the travel-safe packet now with the passport or identity proof now in hand',
                   in_progress: 'Draft the travel request now and attach final passport proof once it lands',
+                  complete: 'Confirm traveler profiles, loyalty accounts, and live bookings all match the final ID name',
                   upcoming: 'Confirm hold/change policy before touching bookings while passport timing is still upstream',
                   blocked: 'Ask for mismatch policy and temporary-proof rules before changing travel profiles',
                 })
@@ -643,6 +656,7 @@ function buildAccountUpdateTemplates(
                 ? getReadinessChecklistLine(readiness, {
                     ready: 'Send legal proof now and include updated ID if the verification flow asks for it',
                     in_progress: 'Queue the utility/phone update now and attach final ID evidence once it posts',
+                    complete: 'Confirm billing, housing, recovery, and caller-ID records all show the final legal name',
                     upcoming: 'Confirm whether legal proof alone can start utilities, phone, housing, or recovery updates',
                     blocked: 'Hold identity changes for now and only gather verification rules',
                   })
@@ -650,12 +664,14 @@ function buildAccountUpdateTemplates(
                   ? getReadinessChecklistLine(readiness, {
                       ready: 'Send the board packet now with the updated ID or reissue receipt',
                       in_progress: 'Draft now and attach the updated ID or license receipt as soon as it clears',
+                      complete: 'Confirm the board record, wallet card, renewal file, and public lookup all show the final legal name',
                       upcoming: 'Ask for the board-specific document rules before the ID/license path lands',
                       blocked: 'Do not trigger public-record or renewal updates until the proof chain is real',
                     })
                   : getReadinessChecklistLine(readiness, {
                       ready: 'Send the current legal-proof packet now',
                       in_progress: 'Draft now and attach the final proof packet as soon as it lands',
+                      complete: 'Confirm the final legal name is already showing across the account records you changed',
                     });
     const proofChecklist = [...template.proofChecklist, readinessSpecificChecklistItem];
     const proofLine = `I can provide ${proofChecklist.join(', ')} ${readinessSpecificProof}`;

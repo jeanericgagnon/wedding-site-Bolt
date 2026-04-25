@@ -360,6 +360,7 @@ describe('name change action feed', () => {
       urgencyTier: 'normal',
     });
     expect(feed[0]?.action.detail).toContain('clean confirmation/update pass');
+    expect(feed[0]?.action.detail).toContain('Confirm cards, statements, and online banking all reflect the final legal name');
   });
 
   it('keeps ready send-now template work ahead of complete confirmation passes', () => {
