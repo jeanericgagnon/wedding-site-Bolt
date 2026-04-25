@@ -220,6 +220,8 @@ describe('name change engine', () => {
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.blockingProofHopLabel).toBe('legal proof pending');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.body).toContain('Current blocker: legal proof pending.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.subject).toBe('Ask intake rules now (legal proof pending): Please align my travel profile with my legal name change');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.proofReadinessSummary).toBe('Do not send yet; the legal proof chain still needs to clear before travel-profile evidence will stick.');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.proofChecklist.at(-1)).toBe('Gather mismatch and booking rules only until legal proof is fully grounded.');
   });
 
   it('uses question-style subject framing for upcoming account-update templates', () => {

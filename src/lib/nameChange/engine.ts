@@ -569,13 +569,13 @@ function buildAccountUpdateTemplates(
               blocked: 'Do not send yet; the legal proof chain still needs to clear before SSA-backed tax updates can stick.',
             })
           : templateId === 'template-travel'
-            ? getReadinessChecklistLine(readiness, {
-                ready: 'Send with the passport-safe identity packet now so bookings and loyalty profiles stay aligned.',
-                in_progress: 'Hold send until final passport proof lands, but lock the mismatch and booking policy now.',
-                complete: 'Use this as a confirmation pass that traveler profiles, loyalty records, and live bookings already synced.',
-                upcoming: 'Do not send yet; legal proof is grounded, but passport timing is still the missing proof hop.',
-                blocked: 'Do not send yet; the passport-safe proof chain is still too early for travel-profile changes.',
-              })
+          ? getReadinessChecklistLine(readiness, {
+              ready: 'Send with the passport-safe identity packet now so bookings and loyalty profiles stay aligned.',
+              in_progress: 'Hold send until final passport proof lands, but lock the mismatch and booking policy now.',
+              complete: 'Use this as a confirmation pass that traveler profiles, loyalty records, and live bookings already synced.',
+              upcoming: 'Do not send yet; legal proof is grounded, but passport timing is still the missing proof hop.',
+              blocked: 'Do not send yet; the legal proof chain still needs to clear before travel-profile evidence will stick.',
+            })
             : templateId === 'template-digital-identity'
               ? getReadinessChecklistLine(readiness, {
                   ready: 'Send with legal proof now and include updated ID if the utility or phone verification flow asks for it.',
@@ -627,13 +627,13 @@ function buildAccountUpdateTemplates(
               blocked: 'Gather the tax/state process only until legal proof and SSA work are real.',
             })
           : templateId === 'template-travel'
-            ? getReadinessChecklistLine(readiness, {
-                ready: 'Attach the passport-safe packet now and flag any live booking references.',
-                in_progress: 'Queue this now, then attach final passport-safe proof once it lands.',
-                complete: 'Use this to confirm traveler profiles, loyalty records, and live bookings already match.',
-                upcoming: 'Wait to send until passport-safe proof is the next cleared hop.',
-                blocked: 'Gather mismatch and booking rules only until the passport-safe proof chain is real.',
-              })
+          ? getReadinessChecklistLine(readiness, {
+              ready: 'Attach the passport-safe packet now and flag any live booking references.',
+              in_progress: 'Queue this now, then attach final passport-safe proof once it lands.',
+              complete: 'Use this to confirm traveler profiles, loyalty records, and live bookings already match.',
+              upcoming: 'Wait to send until passport-safe proof is the next cleared hop.',
+              blocked: 'Gather mismatch and booking rules only until legal proof is fully grounded.',
+            })
             : templateId === 'template-digital-identity'
               ? getReadinessChecklistLine(readiness, {
                   ready: 'Attach updated ID only if the utility, phone, or housing flow asks for it now.',

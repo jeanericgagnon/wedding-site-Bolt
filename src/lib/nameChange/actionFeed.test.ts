@@ -1104,9 +1104,10 @@ describe('name change action feed', () => {
         audience: 'Travel profile support',
         readiness: 'blocked',
         readinessLabel: 'The legal-proof chain is still too early, so use this to learn the intake path now and wait to send documents until the upstream proof is real.',
+        proofReadinessSummary: 'Do not send yet; the legal proof chain still needs to clear before travel-profile evidence will stick.',
         proofChecklist: [
           'Certified legal name-change proof',
-          'Gather mismatch and hold policies only until legal proof is grounded',
+          'Gather mismatch and booking rules only until legal proof is fully grounded.',
         ],
       }),
     ]);
@@ -1116,6 +1117,8 @@ describe('name change action feed', () => {
     expect(travelTemplateItem?.laneLabel).toBe('Travel profile support · ask intake rules now · legal proof pending');
     expect(travelTemplateItem?.action.label).toBe('Ask travel profile support intake rules now (legal proof pending)');
     expect(travelTemplateItem?.action.detail).toContain('Blocked by: legal proof pending.');
+    expect(travelTemplateItem?.action.detail).toContain('Proof status: Do not send yet; the legal proof chain still needs to clear before travel-profile evidence will stick.');
+    expect(travelTemplateItem?.action.detail).toContain('Proof to have handy: Certified legal name-change proof · Gather mismatch and booking rules only until legal proof is fully grounded.');
   });
 
   it('routes legal-name setup blockers to the planner case-setup section', () => {
