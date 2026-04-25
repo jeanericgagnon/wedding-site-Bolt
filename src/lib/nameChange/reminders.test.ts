@@ -224,8 +224,8 @@ describe('name change reminder suggestions', () => {
     })));
 
     expect(reminders.find((reminder) => reminder.id === 'reminder-marriage-name-mismatch')).toMatchObject({
-      label: 'Resolve the target legal-name path before filing the wrong packet',
-      reason: 'If the requested target legal name falls outside the California marriage shortcut, the assistant should not let you drift into the wrong packet or sequence.',
+      label: 'Resolve the target legal-name path before filing',
+      reason: 'If the requested target legal name falls outside the California marriage shortcut, confirm the right packet and sequence before filing.',
       dependsOnStepId: 'eligibility-proof',
       urgency: 'high',
       suggestedOffsetDays: 1,

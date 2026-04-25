@@ -40,26 +40,26 @@ const MILESTONE_CONFIRMATION_CONFIG: Record<string, {
   suggestedOffsetDays: number;
 }> = {
   'milestone-legal-proof': {
-    label: 'Confirm certified legal proof is actually grounded',
-    reason: 'Make sure the reviewed legal-proof document is the exact certificate or court order you will reuse downstream before SSA or DMV work starts.',
+    label: 'Confirm certified legal proof is ready for downstream use',
+    reason: 'Verify that the reviewed legal-proof document is the certificate or court order you plan to reuse downstream before SSA or DMV work starts.',
     urgency: 'medium',
     suggestedOffsetDays: 1,
   },
   'milestone-ssa': {
-    label: 'Confirm Social Security update actually landed',
-    reason: 'Do not assume the SSA change is done just because the filing was sent. Confirm the federal identity record actually moved before DMV, payroll, or tax systems branch off bad data.',
+    label: 'Confirm Social Security update is recorded',
+    reason: 'Confirm that the SSA update has posted before DMV, payroll, or tax systems start relying on the new name.',
     urgency: 'high',
     suggestedOffsetDays: 3,
   },
   'milestone-photo-id': {
     label: 'Confirm primary photo ID is updated and usable',
-    reason: 'Make sure the replacement ID is issued and usable in real life before passport, travel, banking, or employer records depend on it.',
+    reason: 'Verify that the replacement ID is issued and usable before passport, travel, banking, or employer records depend on it.',
     urgency: 'high',
     suggestedOffsetDays: 5,
   },
   'milestone-account-rollout': {
-    label: 'Confirm the main account rollout packet actually stuck',
-    reason: 'After the core rollout push, verify that banking, payroll, insurance, and other downstream records are no longer split across old and new names.',
+    label: 'Confirm the main account rollout packet is reflected downstream',
+    reason: 'After the core rollout push, verify that banking, payroll, insurance, and other downstream records now reflect the right legal name.',
     urgency: 'medium',
     suggestedOffsetDays: 7,
   },
@@ -78,7 +78,7 @@ const CORE_STEP_REMINDER_CONFIGS: Record<string, NameChangeCoreStepReminderConfi
     expeditedOffsetDays: 1,
     standardUrgency: 'medium' as const,
     expeditedUrgency: 'high' as const,
-    reason: 'SSA is the anchor for the federal-first path, so an early follow-up helps keep the rest of the workflow from drifting.',
+    reason: 'SSA is the anchor for the federal-first path, so an early follow-up keeps the rest of the workflow aligned.',
   },
   'state-dmv': {
     id: 'reminder-dmv-followup',
@@ -118,7 +118,7 @@ const INSTITUTION_REMINDER_FAMILY_CONFIGS: Record<string, NameChangeInstitutionR
   },
   insurance: {
     minimumUrgency: 'medium',
-    reasonSuffix: ' Coverage, cards, and provider rosters are annoying to untangle later if they drift.',
+    reasonSuffix: ' Coverage, cards, and provider rosters are easier to keep aligned when they are checked early.',
   },
   financial: {
     offsetAdjustmentDays: -1,
@@ -127,7 +127,7 @@ const INSTITUTION_REMINDER_FAMILY_CONFIGS: Record<string, NameChangeInstitutionR
   },
   government: {
     minimumUrgency: 'medium',
-    reasonSuffix: ' Government-adjacent record drift usually cascades into other admin work if it lags.',
+    reasonSuffix: ' Government-adjacent record alignment tends to support other admin work once it is confirmed.',
   },
 };
 
@@ -140,7 +140,7 @@ const CONTEXT_REMINDER_CONFIGS: NameChangeContextReminderConfig[] = [
     standardUrgency: 'high',
     expeditedUrgency: 'high',
     dependsOnStepId: 'federal-passport',
-    reason: 'Upcoming travel means booking names, TSA profiles, and passport timing can get messy fast if they drift from the SSA → DMV sequence.',
+    reason: 'Upcoming travel means booking names, TSA profiles, and passport timing should stay aligned with the SSA → DMV sequence.',
     includeWhen: (plan) => Boolean(plan.profile.passportNeedsUpdate && plan.summary.edgeCaseGuidance?.some((item) => item.id === 'edge-travel-timing')),
   },
   {
@@ -167,7 +167,7 @@ const CONTEXT_REMINDER_CONFIGS: NameChangeContextReminderConfig[] = [
   },
   {
     id: 'reminder-name-format-consistency',
-    label: 'Lock the exact surname format before SSA and DMV drift',
+    label: 'Lock the exact surname format before SSA and DMV filing',
     standardOffsetDays: 2,
     expeditedOffsetDays: 1,
     standardUrgency: 'medium',
@@ -178,13 +178,13 @@ const CONTEXT_REMINDER_CONFIGS: NameChangeContextReminderConfig[] = [
   },
   {
     id: 'reminder-marriage-name-mismatch',
-    label: 'Resolve the target legal-name path before filing the wrong packet',
+    label: 'Resolve the target legal-name path before filing',
     standardOffsetDays: 1,
     expeditedOffsetDays: 0,
     standardUrgency: 'high',
     expeditedUrgency: 'high',
     dependsOnStepId: 'eligibility-proof',
-    reason: 'If the requested target legal name falls outside the California marriage shortcut, the assistant should not let you drift into the wrong packet or sequence.',
+    reason: 'If the requested target legal name falls outside the California marriage shortcut, confirm the right packet and sequence before filing.',
     includeWhen: (plan) => Boolean(plan.summary.edgeCaseGuidance?.some((item) => item.id === 'edge-marriage-name-mismatch')),
   },
 ];

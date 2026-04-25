@@ -78,7 +78,7 @@ function makeRepairItem(overrides: Partial<NameChangeDocumentRepairQueueItem> = 
 function makeReminderAttention(overrides: Partial<NameChangeReminderAttentionItem> = {}): NameChangeReminderAttentionItem {
   return {
     reminderKey: 'reminder-marriage-name-mismatch',
-    label: 'Resolve the target legal-name path before filing the wrong packet',
+    label: 'Resolve the target legal-name path before filing',
     dependsOnStepId: 'eligibility-proof',
     dependentStepTitle: 'Legal proof eligibility',
     dependentStepExecutionStatus: 'todo',
@@ -417,7 +417,7 @@ describe('name change action feed', () => {
 
     expect(feed[0]).toMatchObject({
       origin: 'reminder',
-      title: 'Resolve the target legal-name path before filing the wrong packet',
+      title: 'Resolve the target legal-name path before filing',
       laneLabel: 'Legal proof eligibility',
       plannerIntent: 'open_execution_card',
       focusTargetId: 'execution-card-ssa',
