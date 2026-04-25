@@ -29,6 +29,7 @@ import { buildNameChangeVoterExecutionSnapshot } from '../../../lib/nameChange/v
 import { formatNameChangeExecutionDateTime } from './nameChangeExecutionTime';
 import { buildNameChangeOverviewCardModel } from '../nameChangeOverviewCard';
 import { buildNameChangeOverviewInsights } from '../nameChangeOverviewInsights';
+import { NAME_CHANGE_LIFECYCLE_LABELS } from '../nameChangeLifecycleLabels';
 import type {
   NameChangeCaseInput,
   NameChangeDocumentInput,
@@ -1164,15 +1165,15 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         </div>
         <div className="mt-4 grid gap-3 md:grid-cols-3">
           <div className="rounded-xl border border-sky-200 bg-white/80 px-4 py-3">
-            <p className="text-xs uppercase tracking-wide text-sky-700">Core chain</p>
+            <p className="text-xs uppercase tracking-wide text-sky-700">{NAME_CHANGE_LIFECYCLE_LABELS.coreChain}</p>
             <p className="mt-1 text-sm text-sky-950">{lifecycleInsights.coreChainLabel}</p>
           </div>
           <div className="rounded-xl border border-sky-200 bg-white/80 px-4 py-3">
-            <p className="text-xs uppercase tracking-wide text-sky-700">Milestone confirmations</p>
+            <p className="text-xs uppercase tracking-wide text-sky-700">{NAME_CHANGE_LIFECYCLE_LABELS.followOn}</p>
             <p className="mt-1 text-sm text-sky-950">{lifecycleInsights.followOnLabel}</p>
           </div>
           <div className="rounded-xl border border-sky-200 bg-white/80 px-4 py-3">
-            <p className="text-xs uppercase tracking-wide text-sky-700">Reminder follow-through</p>
+            <p className="text-xs uppercase tracking-wide text-sky-700">{NAME_CHANGE_LIFECYCLE_LABELS.downstream}</p>
             <p className="mt-1 text-sm text-sky-950">{lifecycleInsights.downstreamLabel}</p>
           </div>
         </div>

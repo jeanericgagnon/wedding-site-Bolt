@@ -32,6 +32,7 @@ import { useToast } from '../../components/ui/Toast';
 import { calcOverviewDaysUntil, formatOverviewRelativeTime, formatOverviewWeddingDate, getOverviewTimestamp } from './overviewDate';
 import { buildNameChangeOverviewCardModel } from './nameChangeOverviewCard';
 import { buildNameChangeOverviewInsights } from './nameChangeOverviewInsights';
+import { NAME_CHANGE_LIFECYCLE_LABELS } from './nameChangeLifecycleLabels';
 import { hydrateNameChangeWorkspace, loadNameChangeWorkspace } from './planning/nameChangeService';
 
 interface OverviewStats {
@@ -944,15 +945,15 @@ export const DashboardOverview: React.FC = () => {
                         <p className="mt-1 text-xs text-sky-900">The dashboard keeps the next click soft, obvious, and easy to revisit later.</p>
                       </div>
                       <div className="rounded-xl border border-sky-200 bg-white px-4 py-3">
-                        <p className="text-xs uppercase tracking-wide text-sky-700">Core chain</p>
+                        <p className="text-xs uppercase tracking-wide text-sky-700">{NAME_CHANGE_LIFECYCLE_LABELS.coreChain}</p>
                         <p className="mt-1 text-sm text-sky-950">{nameChangeInsights.coreChainLabel}</p>
                       </div>
                       <div className="rounded-xl border border-sky-200 bg-white px-4 py-3">
-                        <p className="text-xs uppercase tracking-wide text-sky-700">Follow-on updates</p>
+                        <p className="text-xs uppercase tracking-wide text-sky-700">{NAME_CHANGE_LIFECYCLE_LABELS.followOn}</p>
                         <p className="mt-1 text-sm text-sky-950">{nameChangeInsights.followOnLabel}</p>
                       </div>
                       <div className="rounded-xl border border-sky-200 bg-white px-4 py-3">
-                        <p className="text-xs uppercase tracking-wide text-sky-700">Downstream rollout</p>
+                        <p className="text-xs uppercase tracking-wide text-sky-700">{NAME_CHANGE_LIFECYCLE_LABELS.downstream}</p>
                         <p className="mt-1 text-sm text-sky-950">{nameChangeInsights.downstreamLabel}</p>
                       </div>
                     </div>
