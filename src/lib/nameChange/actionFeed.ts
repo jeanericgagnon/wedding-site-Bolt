@@ -527,6 +527,7 @@ function isCaseSetupReminder(item: NameChangeReminderAttentionItem) {
     || item.reminderKey === 'reminder-court-order-packet'
     || item.reminderKey === 'reminder-county-office-variation'
     || item.reminderKey === 'reminder-out-of-state-proof-grounding'
+    || item.reminderKey === 'reminder-document-name-mismatch'
     || item.reminderKey === 'reminder-marriage-name-mismatch'
     || item.reminderKey === 'reminder-mismatch-recovery'
     || item.reminderKey === 'reminder-both-partners-changing';

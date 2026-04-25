@@ -234,6 +234,17 @@ const CONTEXT_REMINDER_CONFIGS: NameChangeContextReminderConfig[] = [
     includeWhen: (plan) => Boolean(plan.summary.edgeCaseGuidance?.some((item) => item.id === 'edge-out-of-state-proof')),
   },
   {
+    id: 'reminder-document-name-mismatch',
+    label: 'Resolve document-name conflicts before trusting downstream filing',
+    standardOffsetDays: 1,
+    expeditedOffsetDays: 0,
+    standardUrgency: 'high',
+    expeditedUrgency: 'high',
+    dependsOnStepId: 'eligibility-proof',
+    reason: 'When reviewed document extracts disagree with canonical case truth, fix the proof set before using it for packet prep, sequencing, or account follow-through.',
+    includeWhen: (plan) => Boolean(plan.summary.edgeCaseGuidance?.some((item) => item.id === 'edge-document-name-mismatch')),
+  },
+  {
     id: 'reminder-first-passport-branch',
     label: 'Prep the first-passport packet instead of a renewal shortcut',
     standardOffsetDays: 2,
@@ -359,6 +370,7 @@ function getReminderPlannerRoute(
     || suggestion.id === 'reminder-both-partners-changing'
     || suggestion.id === 'reminder-county-office-variation'
     || suggestion.id === 'reminder-out-of-state-proof-grounding'
+    || suggestion.id === 'reminder-document-name-mismatch'
   ) {
     return {
       sectionKey: 'cleanup',

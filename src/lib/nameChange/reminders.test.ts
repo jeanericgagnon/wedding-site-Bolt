@@ -384,6 +384,56 @@ describe('name change reminder suggestions', () => {
     });
   });
 
+  it('adds a document-mismatch reminder when reviewed proof extracts conflict with case truth', () => {
+    const reminders = buildNameChangeReminderSuggestions(buildNameChangePlan({
+      ...makeInput(),
+      documents: [
+        {
+          id: 'doc-marriage',
+          document_kind: 'marriage_certificate',
+          display_name: 'Marriage certificate',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+        },
+        {
+          id: 'doc-passport',
+          document_kind: 'current_passport',
+          display_name: 'Passport',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+        },
+      ],
+      extractedFields: [
+        {
+          document_id: 'doc-marriage',
+          field_key: 'spouse_last_name',
+          field_label: 'Spouse last name',
+          field_value_masked: 'Jordan-Smith',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-passport',
+          field_key: 'first_name',
+          field_label: 'First name',
+          field_value_masked: 'Alicia',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+      ],
+    }));
+
+    expect(reminders.find((reminder) => reminder.id === 'reminder-document-name-mismatch')).toMatchObject({
+      label: 'Resolve document-name conflicts before trusting downstream filing',
+      dependsOnStepId: 'eligibility-proof',
+      urgency: 'high',
+      suggestedOffsetDays: 1,
+      sectionKey: 'cleanup',
+      plannerIntent: 'open_execution_card',
+      focusTargetId: 'case-setup',
+    });
+  });
+
   it('adds a packet-warning reminder when marriage intake target legal name does not fit the shortcut path', () => {
     const reminders = buildNameChangeReminderSuggestions(buildNameChangePlan(makeInput({
       legal_basis: 'marriage',
