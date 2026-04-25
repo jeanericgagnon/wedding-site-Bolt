@@ -27,6 +27,7 @@ import { buildNameChangeTsaExecutionSnapshot } from '../../../lib/nameChange/tsa
 import { buildNameChangeUtilitiesExecutionSnapshot } from '../../../lib/nameChange/utilitiesFlow';
 import { buildNameChangeVoterExecutionSnapshot } from '../../../lib/nameChange/voterFlow';
 import { formatNameChangeExecutionDateTime } from './nameChangeExecutionTime';
+import { buildNameChangeOverviewCardModel } from '../nameChangeOverviewCard';
 import type {
   NameChangeCaseInput,
   NameChangeDocumentInput,
@@ -561,6 +562,14 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   const hasExecutionActivity = useMemo(
     () => (plan.summary.executionCounts?.in_progress ?? 0) > 0 || (plan.summary.executionCounts?.complete ?? 0) > 0,
     [plan.summary.executionCounts],
+  );
+  const resumeCard = useMemo(
+    () => buildNameChangeOverviewCardModel({
+      hasWorkspace: true,
+      workflowStatus: hasExecutionActivity ? 'in_progress' : 'ready',
+      hasExecutionActivity,
+    }),
+    [hasExecutionActivity],
   );
   const documentVaultRows = useMemo(() => documents.map((document) => {
     const contract = NAME_CHANGE_DOCUMENT_CONTRACTS.find((entry) => matchesNameChangeDocumentKind(document.document_kind, entry.kind));
@@ -1103,6 +1112,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-xs uppercase tracking-wide text-sky-700">Resume any time</p>
+            <p className="mt-2 text-sm font-medium text-sky-950">{resumeCard.statusLabel}</p>
             <h3 className="mt-2 text-lg font-semibold text-sky-950">
               {hasExecutionActivity ? 'Soft next steps, not a checklist you have to clear' : 'Start whenever you want, then come back whenever you need'}
             </h3>
@@ -1119,10 +1129,10 @@ export const NameChangePlannerTab: React.FC<Props> = ({
           </div>
           <div className="flex flex-wrap gap-2">
             <Button size="sm" onClick={() => scrollToPlannerTarget(hasExecutionActivity ? 'target-status-tracking' : 'case-setup')}>
-              {hasExecutionActivity ? 'Resume from status vault' : 'Start with case setup'}
+              {resumeCard.primaryLabel}
             </Button>
             <Button variant="outline" size="sm" onClick={() => scrollToPlannerTarget(hasExecutionActivity ? 'case-setup' : 'target-status-tracking')}>
-              {hasExecutionActivity ? 'Update case setup' : 'Preview status vault'}
+              {resumeCard.secondaryLabel}
             </Button>
             <Button variant="outline" size="sm" onClick={() => scrollToPlannerTarget('name-change-roadmap')}>
               {hasExecutionActivity ? 'Open roadmap' : 'See roadmap first'}

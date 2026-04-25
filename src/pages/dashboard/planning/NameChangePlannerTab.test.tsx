@@ -3,7 +3,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { NameChangePlannerTab } from './NameChangePlannerTab';
 import { defaultNameChangeCaseInput } from './nameChangeService';
 import { buildNameChangePlan } from '../../../lib/nameChange/engine';
-import type { NameChangeCaseInput } from '../../../lib/nameChange/types';
+import type { NameChangeCaseInput, NameChangePlan } from '../../../lib/nameChange/types';
 
 function makeDraft(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseInput {
   return {
@@ -21,6 +21,26 @@ function makeDraft(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCase
       spouseLastName: 'Jordan',
     },
     ...overrides,
+  };
+}
+
+function makePlanWithExecutionActivity(draft: NameChangeCaseInput): NameChangePlan {
+  const plan = buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] });
+  const [firstStep, ...restSteps] = plan.steps;
+
+  return {
+    ...plan,
+    steps: firstStep
+      ? [{ ...firstStep, executionStatus: 'in_progress', executionUpdatedAt: new Date().toISOString() }, ...restSteps]
+      : plan.steps,
+    summary: {
+      ...plan.summary,
+      executionCounts: {
+        todo: Math.max(plan.steps.length - 1, 0),
+        in_progress: firstStep ? 1 : 0,
+        complete: 0,
+      },
+    },
   };
 }
 
@@ -90,18 +110,60 @@ describe('NameChangePlannerTab', () => {
       );
 
       expect(screen.getByText('Start whenever you want, then come back whenever you need')).toBeInTheDocument();
+      expect(screen.getByText('Roadmap saved')).toBeInTheDocument();
       expect(screen.getByText(/Optional next move:/i)).toBeInTheDocument();
 
-      fireEvent.click(screen.getByRole('button', { name: 'Start with case setup' }));
-      expect(window.location.hash).toBe('#case-setup');
-      fireEvent.click(screen.getByRole('button', { name: 'Preview status vault' }));
-      expect(window.location.hash).toBe('#target-status-tracking');
-      fireEvent.click(screen.getByRole('button', { name: 'See roadmap first' }));
+      const roadmapButtons = screen.getAllByRole('button', { name: 'See roadmap first' });
+
+      fireEvent.click(roadmapButtons[roadmapButtons.length - 1]);
+      expect(window.location.hash).toBe('#name-change-roadmap');
+      fireEvent.click(roadmapButtons[roadmapButtons.length - 1]);
       expect(window.location.hash).toBe('#name-change-roadmap');
       fireEvent.click(screen.getByRole('button', { name: 'Save and come back later' }));
 
-      expect(scrollIntoView).toHaveBeenCalledTimes(3);
+      expect(scrollIntoView).toHaveBeenCalledTimes(2);
       expect(onSave).toHaveBeenCalled();
+    } finally {
+      HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    }
+  });
+
+  it('keeps resume labels aligned with the dashboard once execution is underway', () => {
+    const draft = makeDraft();
+    const scrollIntoView = vi.fn();
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = scrollIntoView;
+
+    try {
+      render(
+        <NameChangePlannerTab
+          draft={draft}
+          documents={[]}
+          extractedFields={[]}
+          plan={makePlanWithExecutionActivity(draft)}
+          reminders={[]}
+          saving={false}
+          onDraftChange={vi.fn()}
+          onStructuredIntakeChange={vi.fn()}
+          onDocumentsChange={vi.fn()}
+          onExtractedFieldsChange={vi.fn()}
+          onRemindersChange={vi.fn()}
+          onStepExecutionStatusChange={vi.fn()}
+          onStepExecutionNoteChange={vi.fn()}
+          onSave={vi.fn().mockResolvedValue(undefined)}
+        />,
+      );
+
+      expect(screen.getByText('Resume where you left off')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Resume status vault' }));
+      expect(window.location.hash).toBe('#target-status-tracking');
+      fireEvent.click(screen.getByRole('button', { name: 'Update case setup' }));
+      expect(window.location.hash).toBe('#case-setup');
+      fireEvent.click(screen.getByRole('button', { name: 'Open roadmap' }));
+      expect(window.location.hash).toBe('#name-change-roadmap');
+
+      expect(scrollIntoView).toHaveBeenCalledTimes(3);
     } finally {
       HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
     }
@@ -135,9 +197,11 @@ describe('NameChangePlannerTab', () => {
 
       expect(screen.getByText('Start whenever you want, then come back whenever you need')).toBeInTheDocument();
 
-      fireEvent.click(screen.getByRole('button', { name: 'Start with case setup' }));
-      fireEvent.click(screen.getByRole('button', { name: 'Preview status vault' }));
-      fireEvent.click(screen.getByRole('button', { name: 'See roadmap first' }));
+      const roadmapButtons = screen.getAllByRole('button', { name: 'See roadmap first' });
+
+      fireEvent.click(roadmapButtons[roadmapButtons.length - 1]);
+      fireEvent.click(screen.getByRole('button', { name: 'Update case setup' }));
+      fireEvent.click(roadmapButtons[roadmapButtons.length - 1]);
 
       expect(scrollIntoView).toHaveBeenCalledTimes(3);
       expect(window.location.hash).toBe('#name-change-roadmap');
