@@ -1,6 +1,10 @@
 import { getNameChangeGuidedActionWeight } from './executionPrioritization';
 import type { NameChangeDocumentRepairQueueItem } from './documentRepairQueue';
-import { getAccountUpdateTemplateReadinessActionLabel, getFallbackBlockingProofHopLabel } from './engine';
+import {
+  getAccountUpdateTemplateReadinessActionLabel,
+  getAccountUpdateTemplateStatusLabel as getEngineAccountUpdateTemplateStatusLabel,
+  getFallbackBlockingProofHopLabel,
+} from './engine';
 import type { NameChangeGuidedAction, NameChangePlan, NameChangeReminderAttentionItem, NameChangeTargetExecutionSnapshot } from './types';
 
 export interface NameChangeActionFeedItem {
@@ -301,8 +305,7 @@ export function getAccountUpdateTemplateReadinessLabel(readiness: AccountUpdateT
 }
 
 export function getAccountUpdateTemplateStatusLabel(template: AccountUpdateTemplate) {
-  const blockingPhaseLabel = getEffectiveBlockingProofHopLabel(template);
-  return [getAccountUpdateTemplateReadinessLabel(template.readiness), blockingPhaseLabel].filter(Boolean).join(' · ');
+  return getEngineAccountUpdateTemplateStatusLabel(template.readiness, template.blockingProofHopLabel);
 }
 
 export function getAccountUpdateTemplateStatusLine(template: AccountUpdateTemplate) {
