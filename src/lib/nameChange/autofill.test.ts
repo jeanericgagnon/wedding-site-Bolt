@@ -644,6 +644,63 @@ describe('name change autofill prep snapshot', () => {
     });
   });
 
+  it('prefers reviewed snapshot truth over stale verified passport extract rows', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-passport',
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        extracted_snapshot: {
+          fields: {
+            first_name: { value: 'Alicia' },
+          },
+          metadata: {
+            issuance_date: '2024-06-01',
+          },
+        },
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'doc-passport',
+        field_key: 'first_name',
+        field_label: 'First name',
+        field_value_masked: 'Alice',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'doc-passport',
+        field_key: 'issuance_date',
+        field_label: 'Passport issue date',
+        field_value_masked: '2020-01-01',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+
+    const snapshot = buildNameChangeAutofillPrepSnapshot(makeCase(), documents, extractedFields);
+
+    expect(snapshot.fields.find((field) => field.targetField === 'applicant.current_first_name')).toMatchObject({
+      value: expect.objectContaining({
+        source: 'extracted_field',
+        value: 'Alicia',
+        sourceDocumentKind: 'current_passport',
+        sourceFieldKey: 'first_name',
+      }),
+    });
+    expect(snapshot.fields.find((field) => field.targetField === 'identity.passport_issue_date')).toMatchObject({
+      value: expect.objectContaining({
+        source: 'extracted_field',
+        value: '2024-06-01',
+        sourceDocumentKind: 'current_passport',
+        sourceFieldKey: 'issuance_date',
+      }),
+    });
+  });
+
   it('keeps unverified court-order autofill values out of the packet draft', () => {
     const documents: NameChangeDocumentInput[] = [
       {

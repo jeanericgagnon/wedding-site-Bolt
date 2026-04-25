@@ -1,7 +1,7 @@
 import { buildNameChangeCanonicalCase } from './canonical';
 import { buildNameChangeDocumentIntakeSnapshot } from './documentContract';
 import { buildNameChangeExtractionContractSnapshot, getVerifiedDocumentLinkedFieldValue } from './extractionContract';
-import { buildDraftNameChangeExtractedFieldsFromSnapshot } from './intakeDraft';
+import { buildDraftNameChangeExtractedFieldsFromSnapshot, normalizeDraftNameChangeDocumentId } from './intakeDraft';
 import type {
   NameChangeAutofillFieldMapping,
   NameChangeAutofillPrepSnapshot,
@@ -29,6 +29,32 @@ function buildExtractionLookup(
 ) {
   return (fieldKey: NameChangeExtractionFieldKey, preferredDocumentKinds: NameChangeDocumentKind[] = []): ExtractionLookupResult => {
     for (const kind of preferredDocumentKinds) {
+      const preferredDocumentIds = new Set(
+        documents.flatMap((document) => (
+          document.document_kind === kind
+            ? [document.id, normalizeDraftNameChangeDocumentId(document.id, document.document_kind)]
+            : []
+        )).filter((value): value is string => typeof value === 'string' && value.trim().length > 0),
+      );
+      const linkedManual = extractedFields.find((field) => {
+        if (field.source_type !== 'manual' || field.is_verified !== true || field.field_key !== fieldKey) {
+          return false;
+        }
+        const rawDocumentId = field.document_id?.trim();
+        if (!rawDocumentId) {
+          return false;
+        }
+        const normalizedDocumentId = normalizeDraftNameChangeDocumentId(rawDocumentId, kind) ?? rawDocumentId;
+        return preferredDocumentIds.has(rawDocumentId) || preferredDocumentIds.has(normalizedDocumentId);
+      });
+      if (linkedManual?.field_value_masked) {
+        return {
+          value: linkedManual.field_value_masked,
+          sourceDocumentKind: kind,
+          sourceFieldKey: fieldKey,
+        };
+      }
+
       const value = getVerifiedDocumentLinkedFieldValue(documents, extractedFields, kind, fieldKey);
       if (value) {
         return {
@@ -46,11 +72,40 @@ function buildExtractionLookup(
   };
 }
 
+function getAutofillNormalizedDocumentId(
+  field: NameChangeExtractedFieldInput,
+  documentKindsById: Map<string, NameChangeDocumentKind>,
+) {
+  const rawDocumentId = field.document_id?.trim() || '';
+  return normalizeDraftNameChangeDocumentId(rawDocumentId, documentKindsById.get(rawDocumentId))
+    ?? rawDocumentId;
+}
+
+function getAutofillFieldPriority(
+  field: NameChangeExtractedFieldInput,
+  normalizedDocumentId: string,
+  documentStatusByNormalizedId: Map<string, NameChangeDocumentInput['intake_status']>,
+) {
+  if (field.source_type === 'manual') {
+    return 4;
+  }
+
+  const intakeStatus = documentStatusByNormalizedId.get(normalizedDocumentId);
+  if (intakeStatus === 'reviewed') {
+    return 3;
+  }
+  if (intakeStatus === 'uploaded') {
+    return 2;
+  }
+
+  return 1;
+}
+
 function buildAutofillExtractedFields(
   documents: NameChangeDocumentInput[],
   extractedFields: NameChangeExtractedFieldInput[],
 ) {
-  return [
+  const mergedFields = [
     ...extractedFields,
     ...documents.flatMap((document) => buildDraftNameChangeExtractedFieldsFromSnapshot(
       document.id ?? null,
@@ -58,6 +113,29 @@ function buildAutofillExtractedFields(
       document.document_kind,
     )),
   ];
+
+  const documentKindsById = new Map<string, NameChangeDocumentKind>();
+  const documentStatusByNormalizedId = new Map<string, NameChangeDocumentInput['intake_status']>();
+  documents.forEach((document) => {
+    const rawDocumentId = document.id?.trim();
+    if (!rawDocumentId) return;
+    documentKindsById.set(rawDocumentId, document.document_kind);
+    const normalizedDocumentId = normalizeDraftNameChangeDocumentId(rawDocumentId, document.document_kind) ?? rawDocumentId;
+    documentStatusByNormalizedId.set(normalizedDocumentId, document.intake_status);
+  });
+
+  return mergedFields
+    .map((field, index) => ({
+      field,
+      index,
+      priority: getAutofillFieldPriority(
+        field,
+        getAutofillNormalizedDocumentId(field, documentKindsById),
+        documentStatusByNormalizedId,
+      ),
+    }))
+    .sort((left, right) => right.priority - left.priority || left.index - right.index)
+    .map(({ field }) => field);
 }
 
 function makeField(
