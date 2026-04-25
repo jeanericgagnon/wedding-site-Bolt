@@ -331,6 +331,24 @@ describe('name change reminder suggestions', () => {
     });
   });
 
+  it('adds a first-passport branch reminder when the case needs a new passport packet', () => {
+    const reminders = buildNameChangeReminderSuggestions(buildNameChangePlan(makeInput({
+      passport_needs_update: true,
+      is_us_citizen: true,
+      has_us_passport: false,
+    })));
+
+    expect(reminders.find((reminder) => reminder.id === 'reminder-first-passport-branch')).toMatchObject({
+      label: 'Prep the first-passport packet instead of a renewal shortcut',
+      dependsOnStepId: 'federal-passport',
+      urgency: 'high',
+      suggestedOffsetDays: 2,
+      sectionKey: 'core-government',
+      plannerIntent: 'open_execution_card',
+      focusTargetId: 'execution-card-passport',
+    });
+  });
+
   it('adds a packet-warning reminder when marriage intake target legal name does not fit the shortcut path', () => {
     const reminders = buildNameChangeReminderSuggestions(buildNameChangePlan(makeInput({
       legal_basis: 'marriage',

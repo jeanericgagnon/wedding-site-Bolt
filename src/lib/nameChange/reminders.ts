@@ -212,6 +212,22 @@ const CONTEXT_REMINDER_CONFIGS: NameChangeContextReminderConfig[] = [
     includeWhen: (plan) => plan.profile.legalBasis === 'court_order',
   },
   {
+    id: 'reminder-first-passport-branch',
+    label: 'Prep the first-passport packet instead of a renewal shortcut',
+    standardOffsetDays: 2,
+    expeditedOffsetDays: 1,
+    standardUrgency: 'high',
+    expeditedUrgency: 'high',
+    dependsOnStepId: 'federal-passport',
+    reason: 'If this is a first passport in the new legal name, line up the DS-11-style evidence path instead of assuming the simpler existing-passport branch.',
+    includeWhen: (plan) => Boolean(
+      plan.profile.passportNeedsUpdate
+      && plan.profile.isUsCitizen
+      && !plan.profile.hasUsPassport
+      && plan.summary.edgeCaseGuidance?.some((item) => item.id === 'edge-passport-branch')
+    ),
+  },
+  {
     id: 'reminder-name-format-consistency',
     label: 'Lock the exact surname format before SSA and DMV filing',
     standardOffsetDays: 2,
