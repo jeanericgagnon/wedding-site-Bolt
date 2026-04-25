@@ -494,6 +494,37 @@ describe('NameChangePlannerTab', () => {
     expect(screen.getAllByText(/missing|attention/).length).toBeGreaterThan(0);
   });
 
+  it('surfaces readiness-specific next asks inside prewritten update templates', () => {
+    const draft = makeDraft();
+    const plan = buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] });
+    const payrollRequestSummary = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.requestSummary;
+    const bankRequestSummary = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-bank')?.requestSummary;
+
+    render(
+      <NameChangePlannerTab
+        draft={draft}
+        documents={[]}
+        extractedFields={[]}
+        plan={plan}
+        reminders={[]}
+        saving={false}
+        onDraftChange={vi.fn()}
+        onStructuredIntakeChange={vi.fn()}
+        onDocumentsChange={vi.fn()}
+        onExtractedFieldsChange={vi.fn()}
+        onRemindersChange={vi.fn()}
+        onStepExecutionStatusChange={vi.fn()}
+        onStepExecutionNoteChange={vi.fn()}
+        onSave={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    expect(payrollRequestSummary).toBeTruthy();
+    expect(bankRequestSummary).toBeTruthy();
+    expect(screen.getByText(`Next ask: ${payrollRequestSummary}`)).toBeInTheDocument();
+    expect(screen.getByText(`Next ask: ${bankRequestSummary}`)).toBeInTheDocument();
+  });
+
   it('surfaces the most recently touched target first in the status vault list', () => {
     const draft = makeDraft();
     const basePlan = buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] });

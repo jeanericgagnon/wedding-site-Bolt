@@ -1461,6 +1461,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                   </span>
                 </div>
                 <p className="mt-2 text-xs text-text-secondary">{template.readinessLabel}</p>
+                <p className="mt-2 text-xs text-text-secondary">Next ask: {template.requestSummary}</p>
                 <p className="mt-2 text-xs text-text-secondary">Proof to have handy: {template.proofChecklist.join(' · ')}</p>
                 <p className="mt-2 whitespace-pre-line text-sm text-text-secondary">{template.body}</p>
               </div>
