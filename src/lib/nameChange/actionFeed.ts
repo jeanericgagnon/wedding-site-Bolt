@@ -2,7 +2,6 @@ import { getNameChangeGuidedActionWeight } from './executionPrioritization';
 import type { NameChangeDocumentRepairQueueItem } from './documentRepairQueue';
 import {
   getAccountUpdateTemplateAudienceLine as getEngineAccountUpdateTemplateAudienceLine,
-  getAccountUpdateTemplateReadinessActionLabel,
   getAccountUpdateTemplateStatusLabel as getEngineAccountUpdateTemplateStatusLabel,
   getAccountUpdateTemplateStatusLine as getEngineAccountUpdateTemplateStatusLine,
   getFallbackBlockingProofHopLabel,
@@ -298,12 +297,7 @@ function getTemplateActionLabel(baseLabel: string, template: AccountUpdateTempla
 }
 
 export function getAccountUpdateTemplateReadinessLabel(readiness: AccountUpdateTemplate['readiness']) {
-  const actionLabel = getAccountUpdateTemplateReadinessActionLabel(readiness);
-  return readiness === 'ready'
-    ? `${actionLabel} (proof packet ready)`
-    : readiness === 'complete'
-      ? `${actionLabel} (proof chain complete)`
-      : actionLabel;
+  return getEngineAccountUpdateTemplateStatusLabel(readiness);
 }
 
 export function getAccountUpdateTemplateStatusLabel(template: AccountUpdateTemplate) {

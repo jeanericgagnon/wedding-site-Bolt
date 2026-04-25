@@ -24,7 +24,10 @@ import {
   getAccountUpdateTemplateStateLine,
   getAccountUpdateTemplateSubjectLine,
 } from './actionFeed';
-import { getDefaultAccountUpdateBlockingProofHopLabel } from './engine';
+import {
+  getAccountUpdateTemplateStatusLabel as getEngineAccountUpdateTemplateStatusLabel,
+  getDefaultAccountUpdateBlockingProofHopLabel,
+} from './engine';
 import type { NameChangeDocumentRepairQueueItem } from './documentRepairQueue';
 import type { NameChangePlan } from './types';
 import type { NameChangeReminderAttentionItem, NameChangeTargetExecutionSnapshot } from './types';
@@ -259,12 +262,12 @@ describe('account update template surface helpers', () => {
     ]);
   });
 
-  it('keeps planner and feed readiness labels on the same copy map', () => {
-    expect(getAccountUpdateTemplateReadinessLabel('ready')).toBe('send now (proof packet ready)');
-    expect(getAccountUpdateTemplateReadinessLabel('in_progress')).toBe('draft now, send after current proof clears');
-    expect(getAccountUpdateTemplateReadinessLabel('complete')).toBe('confirm sync (proof chain complete)');
-    expect(getAccountUpdateTemplateReadinessLabel('upcoming')).toBe('ask before next proof hop');
-    expect(getAccountUpdateTemplateReadinessLabel('blocked')).toBe('ask intake rules now');
+  it('keeps planner and feed readiness labels on the engine status copy map', () => {
+    expect(getAccountUpdateTemplateReadinessLabel('ready')).toBe(getEngineAccountUpdateTemplateStatusLabel('ready'));
+    expect(getAccountUpdateTemplateReadinessLabel('in_progress')).toBe(getEngineAccountUpdateTemplateStatusLabel('in_progress'));
+    expect(getAccountUpdateTemplateReadinessLabel('complete')).toBe(getEngineAccountUpdateTemplateStatusLabel('complete'));
+    expect(getAccountUpdateTemplateReadinessLabel('upcoming')).toBe(getEngineAccountUpdateTemplateStatusLabel('upcoming'));
+    expect(getAccountUpdateTemplateReadinessLabel('blocked')).toBe(getEngineAccountUpdateTemplateStatusLabel('blocked'));
   });
 
   it('keeps planner and feed blocker/state copy on the same helpers', () => {
