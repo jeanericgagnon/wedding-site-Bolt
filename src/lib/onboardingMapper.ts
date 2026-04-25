@@ -33,6 +33,17 @@ interface OnboardingMapperInput {
   customFaqs?: string;
 }
 
+const normalizeOnboardingDateInput = (value?: string): string | undefined => {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return undefined;
+
+  const date = new Date(`${trimmed}T12:00:00Z`);
+  if (Number.isNaN(date.getTime())) return undefined;
+
+  return date.toISOString().slice(0, 10) === trimmed ? trimmed : undefined;
+};
+
 export function buildOnboardingUpdateData(input: OnboardingMapperInput): Record<string, unknown> {
   const recovered = buildMigrationRecoveryDefaults({
     coupleName1: input.coupleNames.name1,
@@ -70,12 +81,14 @@ export function buildOnboardingUpdateData(input: OnboardingMapperInput): Record<
   const normalizedRegistryLinks = mergeRegistrySourceLabels(carriedRegistryLinks, parsePersistedRegistryLinks(input.registryLinks ?? ''))
     .map((link) => link.sourceLabel ? `${link.sourceLabel} | ${link.url}` : link.url)
     .join('\n');
+  const normalizedWeddingDate = normalizeOnboardingDateInput(input.weddingDate);
+  const normalizedRsvpDeadline = normalizeOnboardingDateInput(input.rsvpDeadline);
 
   const weddingData = fromOnboarding({
     partner1Name: input.coupleNames.name1,
     partner2Name: input.coupleNames.name2,
     useCasePacks: input.useCasePacks || undefined,
-    weddingDate: input.weddingDate || undefined,
+    weddingDate: normalizedWeddingDate,
     venueName: recovered.venue || undefined,
     location: recovered.location || undefined,
     city: input.city || recovered.location || undefined,
@@ -85,7 +98,7 @@ export function buildOnboardingUpdateData(input: OnboardingMapperInput): Record<
     attire: normalizedAttire,
     hotelRecommendations: normalizedHotelRecommendations,
     parking: normalizedParking,
-    rsvpDeadline: input.rsvpDeadline || undefined,
+    rsvpDeadline: normalizedRsvpDeadline,
     registryLinks: normalizedRegistryLinks || undefined,
     customFaqs: normalizedFaqs,
     template: input.template,
@@ -97,8 +110,8 @@ export function buildOnboardingUpdateData(input: OnboardingMapperInput): Record<
   const siteSlug = generateWeddingSlug(input.coupleNames.name1, input.coupleNames.name2);
 
   return {
-    wedding_date: input.weddingDate || null,
-    venue_date: input.weddingDate || null,
+    wedding_date: normalizedWeddingDate || null,
+    venue_date: normalizedWeddingDate || null,
     venue_name: input.venue || null,
     wedding_location: input.city || input.location || null,
     planning_status: input.planningStatus,
