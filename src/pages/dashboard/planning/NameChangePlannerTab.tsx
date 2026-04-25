@@ -1171,6 +1171,9 @@ export const NameChangePlannerTab: React.FC<Props> = ({
             <Button variant="outline" size="sm" onClick={() => scrollToPlannerHref(resumeCard.tertiaryHref)}>
               {resumeCard.tertiaryLabel}
             </Button>
+            <Button variant="ghost" size="sm" onClick={() => scrollToPlannerHref(resumeCard.plannerHref)}>
+              {resumeCard.plannerLabel}
+            </Button>
             <Button variant="outline" size="sm" onClick={() => void onSave()} disabled={saving}>{saving ? 'Saving…' : 'Save and come back later'}</Button>
           </div>
         </div>

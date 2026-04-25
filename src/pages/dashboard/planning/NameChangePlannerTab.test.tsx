@@ -153,11 +153,13 @@ describe('NameChangePlannerTab', () => {
       expect(window.location.hash).toBe('#name-change-roadmap');
       fireEvent.click(reminderChip);
       expect(window.location.hash).toBe('#case-setup');
+      fireEvent.click(screen.getByRole('button', { name: 'Open roadmap' }));
+      expect(window.location.hash).toBe('#name-change-roadmap');
       fireEvent.click(roadmapButtons[roadmapButtons.length - 1]);
       expect(window.location.hash).toBe('#name-change-roadmap');
       fireEvent.click(screen.getByRole('button', { name: 'Save and come back later' }));
 
-      expect(scrollIntoView).toHaveBeenCalledTimes(4);
+      expect(scrollIntoView).toHaveBeenCalledTimes(5);
       expect(onSave).toHaveBeenCalled();
     } finally {
       HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
@@ -214,10 +216,12 @@ describe('NameChangePlannerTab', () => {
       expect(window.location.hash).toBe('#target-status-tracking');
       fireEvent.click(screen.getByRole('button', { name: 'Update case setup' }));
       expect(window.location.hash).toBe('#case-setup');
+      fireEvent.click(screen.getByRole('button', { name: 'Open status vault' }));
+      expect(window.location.hash).toBe('#target-status-tracking');
       fireEvent.click(screen.getByRole('button', { name: 'Open full assistant' }));
       expect(window.location.hash).toBe('#name-change-roadmap');
 
-      expect(scrollIntoView).toHaveBeenCalledTimes(5);
+      expect(scrollIntoView).toHaveBeenCalledTimes(6);
     } finally {
       HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
     }
@@ -299,10 +303,12 @@ describe('NameChangePlannerTab', () => {
       expect(window.location.hash).toBe('#target-status-tracking');
       fireEvent.click(screen.getByRole('button', { name: 'See roadmap again' }));
       expect(window.location.hash).toBe('#name-change-roadmap');
+      fireEvent.click(screen.getByRole('button', { name: 'Open status vault' }));
+      expect(window.location.hash).toBe('#target-status-tracking');
       fireEvent.click(screen.getByRole('button', { name: 'Open full assistant' }));
       expect(window.location.hash).toBe('#name-change-roadmap');
 
-      expect(scrollIntoView).toHaveBeenCalledTimes(3);
+      expect(scrollIntoView).toHaveBeenCalledTimes(4);
     } finally {
       HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
     }
