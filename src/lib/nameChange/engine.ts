@@ -453,6 +453,18 @@ function buildAccountUpdateTemplates(
     if (readiness === 'upcoming') return lines.upcoming ?? lines.in_progress;
     return lines.blocked ?? lines.upcoming ?? lines.in_progress;
   };
+  const getReadinessSubject = (
+    baseSubject: string,
+    readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+  ) => readiness === 'complete'
+    ? `Confirm completed update: ${baseSubject}`
+    : readiness === 'ready'
+      ? `Send now: ${baseSubject}`
+      : readiness === 'in_progress'
+        ? `Prep now, send after current proof clears: ${baseSubject}`
+        : readiness === 'upcoming'
+          ? `Intake question before next proof hop: ${baseSubject}`
+          : `Need intake rules before sending: ${baseSubject}`;
   const getReadinessRequestLine = (
     templateId: string,
     readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
@@ -738,7 +750,7 @@ function buildAccountUpdateTemplates(
     return {
       id: template.id,
       audience: template.audience,
-      subject: template.subject,
+      subject: getReadinessSubject(template.subject, readiness),
       body: template.buildBody(proofLine, readinessLabel, requestLine),
       readiness,
       readinessLabel,

@@ -131,7 +131,7 @@ describe('name change engine', () => {
       expect.arrayContaining([
         expect.objectContaining({
           audience: 'Employer payroll / HR',
-          subject: 'Name change update for payroll and benefits',
+          subject: 'Intake question before next proof hop: Name change update for payroll and benefits',
           readiness: 'upcoming',
           dependsOnStepIds: expect.arrayContaining(['federal-ssa', 'institution-irs-employer']),
           proofChecklist: expect.arrayContaining(['Certified legal name-change proof', 'Updated Social Security record or SSA receipt']),
@@ -197,6 +197,7 @@ describe('name change engine', () => {
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('I need your process first and will send the SSA-backed packet once it is ready');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('Please just confirm the tax/state process for now so I can return with the SSA-backed packet once the upstream proof is real.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.requestSummary).toBe('Please just confirm the tax/state process for now so I can return with the SSA-backed packet once the upstream proof is real.');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.subject).toBe('Need intake rules before sending: Align my tax records with my legal name change');
   });
 
   it('surfaces conditional middle-name gaps when middle-name truth is already in play', () => {

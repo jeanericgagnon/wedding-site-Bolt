@@ -5,10 +5,11 @@ import type { NameChangePlan } from './types';
 import type { NameChangeReminderAttentionItem, NameChangeTargetExecutionSnapshot } from './types';
 
 function makeTemplate(overrides: Partial<NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]> = {}): NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number] {
+  const audience = overrides.audience ?? 'Bank accounts';
   return {
     id: 'template-bank',
-    audience: 'Bank accounts',
-    subject: 'Name change update for banking profile',
+    audience,
+    subject: overrides.subject ?? audience,
     body: 'I can provide certified legal proof.',
     readiness: 'ready',
     readinessLabel: 'The core proof chain is already complete, so this should be a clean confirmation/update pass.',
@@ -346,6 +347,7 @@ describe('name change action feed', () => {
     ], [], [], [
       makeTemplate({
         readiness: 'complete',
+        subject: 'Confirm completed update: Name change update for banking profile',
         requestSummary: 'Please confirm cards, checks, statements, and my online profile already reflect the final legal name everywhere.',
         proofChecklist: [
           'Certified legal name-change proof',
@@ -357,6 +359,7 @@ describe('name change action feed', () => {
     expect(feed[0]).toMatchObject({
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-bank',
+      title: 'Confirm completed update: Name change update for banking profile',
       laneLabel: 'Bank accounts · confirm synced',
       severity: 'attention',
       urgencyReason: 'review_queue',
@@ -581,7 +584,7 @@ describe('name change action feed', () => {
 
     expect(templateItems).toHaveLength(1);
     expect(templateItems[0]).toMatchObject({
-      title: 'Tax records',
+      title: 'Tax and state agencies',
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-tax',
       laneLabel: 'Tax and state agencies · draft now',
@@ -646,7 +649,7 @@ describe('name change action feed', () => {
 
     expect(templateItems).toHaveLength(1);
     expect(templateItems[0]).toMatchObject({
-      title: 'Courtesy notifications',
+      title: 'Airline, hotel, loyalty, or travel support',
       laneLabel: 'Airline, hotel, loyalty, or travel support · send now',
       plannerIntent: 'open_account_update_template',
     });
@@ -820,7 +823,7 @@ describe('name change action feed', () => {
       urgencyTier: 'critical',
     });
     expect(feed[1]).toMatchObject({
-      title: 'Courtesy notifications',
+      title: 'Travel profile support',
       plannerIntent: 'open_account_update_template',
     });
   });
