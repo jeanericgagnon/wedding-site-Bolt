@@ -626,6 +626,9 @@ describe('NameChangePlannerTab', () => {
     expect(screen.getAllByText('draft now, send after current proof clears · current proof pending').length).toBeGreaterThan(0);
     expect(screen.getAllByText('ask before next proof hop · next proof hop pending').length).toBeGreaterThan(0);
     expect(screen.getAllByText('ask intake rules now · proof chain pending').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Current blocker: current proof pending.').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Current blocker: next proof hop pending.').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Current blocker: proof chain pending.').length).toBeGreaterThan(0);
   });
 
   it('makes ready and complete planner labels explicit about proof readiness', () => {

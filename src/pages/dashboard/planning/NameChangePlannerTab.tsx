@@ -221,6 +221,14 @@ function getAccountUpdateTemplateStateLine(template: NonNullable<NameChangePlan[
     : 'Template state: intake-only until the proof chain is ready.';
 }
 
+function getAccountUpdateTemplateCurrentBlockerLine(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
+  if (template.blockingProofHopLabel) return `Current blocker: ${template.blockingProofHopLabel}.`;
+  if (template.readiness === 'in_progress') return 'Current blocker: current proof pending.';
+  if (template.readiness === 'upcoming') return 'Current blocker: next proof hop pending.';
+  if (template.readiness === 'blocked') return 'Current blocker: proof chain pending.';
+  return undefined;
+}
+
 function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
   return [
     `Audience: ${template.audience}`,
@@ -228,7 +236,7 @@ function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['s
     `Status: ${getAccountUpdateTemplateStatusChip(template)}`,
     `Readiness: ${template.readinessLabel}`,
     template.blockingProofHopLabel ? `Blocked by: ${template.blockingProofHopLabel}` : undefined,
-    template.blockingProofHopLabel ? `Current blocker: ${template.blockingProofHopLabel}.` : undefined,
+    getAccountUpdateTemplateCurrentBlockerLine(template),
     template.checklistHighlight ? `Checklist: ${template.checklistHighlight}` : undefined,
     template.checklistStatusNote ? `Checklist status: ${template.checklistStatusNote}` : undefined,
     getAccountUpdateTemplateStateLine(template),
@@ -1560,6 +1568,9 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 <p className="mt-2 text-xs text-text-secondary">{template.readinessLabel}</p>
                 {template.blockingProofHopLabel ? (
                   <p className="mt-2 text-xs text-text-secondary">Blocked by: {template.blockingProofHopLabel}</p>
+                ) : null}
+                {getAccountUpdateTemplateCurrentBlockerLine(template) ? (
+                  <p className="mt-2 text-xs text-text-secondary">{getAccountUpdateTemplateCurrentBlockerLine(template)}</p>
                 ) : null}
                 {template.checklistHighlight ? (
                   <p className="mt-2 text-xs text-text-secondary">Checklist: {template.checklistHighlight}</p>
