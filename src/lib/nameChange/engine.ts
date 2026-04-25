@@ -530,6 +530,23 @@ export function getAccountUpdateTemplateReadinessSubjectPrefix(
           : 'Ask intake rules now';
 }
 
+export function getAccountUpdateTemplateReadinessIntroLine(
+  readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+  blockingProofHopLabel?: string,
+) {
+  const fallbackBlockingProofHopLabel = getFallbackBlockingProofHopLabel(readiness, blockingProofHopLabel);
+
+  return readiness === 'ready'
+    ? 'My proof packet is ready, so I can submit this update now.'
+    : readiness === 'in_progress'
+      ? `I am drafting this now and will send it as soon as the current proof step clears${fallbackBlockingProofHopLabel ? ` (${fallbackBlockingProofHopLabel})` : ''}.`
+      : readiness === 'complete'
+        ? 'My proof chain should already be complete, so I mainly need to confirm the downstream sync.'
+        : readiness === 'upcoming'
+          ? `I am prepping this ask now, but I am not sending the final packet until the next proof hop clears${fallbackBlockingProofHopLabel ? ` (${fallbackBlockingProofHopLabel})` : ''}.`
+          : `I am only collecting the intake rules for now until the proof chain is ready${fallbackBlockingProofHopLabel ? ` (${fallbackBlockingProofHopLabel})` : ''}.`;
+}
+
 function buildAccountUpdateTemplates(
   input: NameChangeEngineInput,
   steps: NameChangePlanStep[],
@@ -588,19 +605,7 @@ function buildAccountUpdateTemplates(
   const getReadinessIntro = (
     readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
     blockingProofHopLabel?: string,
-  ) => {
-    const fallbackBlockingProofHopLabel = getFallbackBlockingProofHopLabel(readiness, blockingProofHopLabel);
-
-    return readiness === 'ready'
-    ? 'I am ready to submit the update now.'
-    : readiness === 'in_progress'
-      ? `I am staging this now so I can submit it as soon as the current proof step clears${fallbackBlockingProofHopLabel ? ` (${fallbackBlockingProofHopLabel})` : ''}.`
-      : readiness === 'complete'
-        ? 'I believe this update may already be complete and mainly need confirmation that the records are fully synced.'
-        : readiness === 'upcoming'
-          ? `I am not sending the final packet yet and mainly need the intake path for the next proof hop${fallbackBlockingProofHopLabel ? ` (${fallbackBlockingProofHopLabel})` : ''}.`
-          : `I am not sending documents yet and just need the intake rules before the proof chain is ready${fallbackBlockingProofHopLabel ? ` (${fallbackBlockingProofHopLabel})` : ''}.`;
-  };
+  ) => getAccountUpdateTemplateReadinessIntroLine(readiness, blockingProofHopLabel);
   const getReadinessRequestLine = (
     templateId: string,
     readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
