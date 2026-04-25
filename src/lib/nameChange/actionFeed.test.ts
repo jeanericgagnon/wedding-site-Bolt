@@ -491,6 +491,73 @@ describe('name change action feed', () => {
     expect(feed[0]?.action.detail).toContain('Hold identity changes for now and only gather verification rules');
   });
 
+  it('keeps blocked template intake work above lower-value ready execution follow-through', () => {
+    const feed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'insurance',
+        targetLabel: 'Insurance carriers',
+        recommendedFormCode: 'INS',
+        nextAction: {
+          category: 'dependency',
+          label: 'Prep insurance intake path',
+          detail: 'Need carrier rules before submitting proof.',
+        },
+      }),
+      makeExecutionSnapshot({
+        targetKey: 'courtesy',
+        targetLabel: 'Courtesy notifications',
+        recommendedFormCode: 'COURTESY',
+        nextAction: {
+          category: 'review',
+          label: 'Send courtesy update',
+          detail: 'Low-stakes courtesy notifications can go out now.',
+        },
+        ready: true,
+        blockers: [],
+        readinessSummary: {
+          status: 'ready',
+          blockingFieldRisks: 0,
+          attentionFieldRisks: 0,
+          lowConfidenceFields: 0,
+          missingFields: 0,
+          documentRepairDebt: 0,
+          summaryLabel: 'Ready.',
+        },
+      }),
+    ], [], [], [
+      makeTemplate({
+        id: 'template-insurance',
+        audience: 'Insurance carriers',
+        readiness: 'blocked',
+        readinessLabel: 'The legal-proof chain is still too early, so use this to learn the intake path now and wait to send documents until the upstream proof is real.',
+        proofChecklist: [
+          'Certified legal name-change proof',
+          'Hold policy changes for now and just gather the carrier evidence rules',
+        ],
+      }),
+      makeTemplate({
+        id: 'template-travel',
+        audience: 'Travel profile support',
+        readiness: 'ready',
+        proofChecklist: [
+          'Certified legal name-change proof',
+          'Send the travel-safe packet now with the passport or identity proof now in hand',
+        ],
+      }),
+    ]);
+
+    expect(feed[0]).toMatchObject({
+      title: 'Insurance carriers',
+      plannerIntent: 'open_account_update_template',
+      laneLabel: 'Insurance carriers · blocked template',
+      urgencyTier: 'critical',
+    });
+    expect(feed[1]).toMatchObject({
+      title: 'Courtesy notifications',
+      plannerIntent: 'open_account_update_template',
+    });
+  });
+
   it('routes legal-name setup blockers to the planner case-setup section', () => {
     const feed = buildNameChangeActionFeed([
       makeExecutionSnapshot({
