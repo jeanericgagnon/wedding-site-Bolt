@@ -1688,6 +1688,7 @@ describe('name change action feed', () => {
     expect(feed[0]?.action.detail).toContain('Send only after the current proof clears.');
     expect(feed[0]?.laneLabel).toBe('Bank accounts · draft now, send after current proof clears · current proof pending');
     expect(feed[0]?.action.label).toBe('Draft bank accounts update (current proof pending)');
+    expect(feed[0]?.urgencyReason).toBe('review_queue');
     expect(feed[0]?.action.detail).not.toContain('Blocked by:    .');
   });
 });

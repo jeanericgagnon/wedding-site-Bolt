@@ -466,6 +466,20 @@ function buildInstitutionCategoryCoverage(
   }).filter((category) => category.targetCount > 0);
 }
 
+export function getFallbackBlockingProofHopLabel(
+  readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+  blockingProofHopLabel?: string,
+) {
+  return blockingProofHopLabel?.trim()
+    || (readiness === 'in_progress'
+      ? 'current proof pending'
+      : readiness === 'upcoming'
+        ? 'next proof hop pending'
+        : readiness === 'blocked'
+          ? 'proof chain pending'
+          : undefined);
+}
+
 function buildAccountUpdateTemplates(
   input: NameChangeEngineInput,
   steps: NameChangePlanStep[],
@@ -739,17 +753,6 @@ function buildAccountUpdateTemplates(
     if (templateId === 'template-insurance') return readiness === 'blocked' ? 'legal proof pending' : 'ID pending';
     return undefined;
   };
-  const getFallbackBlockingProofHopLabel = (
-    readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
-    blockingProofHopLabel?: string,
-  ) => blockingProofHopLabel
-    ?? (readiness === 'in_progress'
-      ? 'current proof pending'
-      : readiness === 'upcoming'
-        ? 'next proof hop pending'
-        : readiness === 'blocked'
-          ? 'proof chain pending'
-          : undefined);
   const getBlockingProofHopSentence = (
     readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
     blockingProofHopLabel?: string,

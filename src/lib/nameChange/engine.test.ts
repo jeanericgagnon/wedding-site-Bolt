@@ -3,6 +3,7 @@ import {
   buildNameChangePlan,
   evaluateCaliforniaNameChangeEligibility,
   formatAccountUpdateChecklistGuidanceLine,
+  getFallbackBlockingProofHopLabel,
   normalizeAccountUpdateChecklistItems,
   formatAccountUpdateProofLine,
   normalizeAccountUpdateProofItems,
@@ -93,6 +94,12 @@ describe('name change engine', () => {
     expect(formatAccountUpdateChecklistGuidanceLine('Use this to learn the payroll intake path while SSA alignment is still upstream.', ' . ')).toBe(
       'Use this to learn the payroll intake path while SSA alignment is still upstream.',
     );
+  });
+
+  it('falls back to generic proof-hop labels when blocker labels are blank whitespace', () => {
+    expect(getFallbackBlockingProofHopLabel('in_progress', '   ')).toBe('current proof pending');
+    expect(getFallbackBlockingProofHopLabel('upcoming', '   ')).toBe('next proof hop pending');
+    expect(getFallbackBlockingProofHopLabel('blocked', '   ')).toBe('proof chain pending');
   });
 
   it('keeps straightforward california marriage surname updates on marriage path', () => {
