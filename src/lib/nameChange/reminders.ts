@@ -95,6 +95,15 @@ function isMilestoneConfirmationReminder(reminder: Pick<NameChangeReminderInput,
 }
 
 const CORE_STEP_REMINDER_CONFIGS: Record<string, NameChangeCoreStepReminderConfig> = {
+  'eligibility-proof': {
+    id: 'reminder-legal-proof-followup',
+    label: 'Check certified legal proof readiness',
+    standardOffsetDays: 2,
+    expeditedOffsetDays: 1,
+    standardUrgency: 'medium' as const,
+    expeditedUrgency: 'high' as const,
+    reason: 'The certificate or court-order proof packet is the reusable base for SSA, DMV, passport, payroll, tax, and downstream account updates.',
+  },
   'federal-ssa': {
     id: 'reminder-ssa-followup',
     label: 'Check SSA name change progress',

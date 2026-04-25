@@ -52,6 +52,11 @@ describe('name change reminder suggestions', () => {
     const plan = buildNameChangePlan(makeInput());
     const reminders = buildNameChangeReminderSuggestions(plan);
 
+    expect(reminders.find((reminder) => reminder.id === 'reminder-legal-proof-followup')).toMatchObject({
+      id: 'reminder-legal-proof-followup',
+      dependsOnStepId: 'eligibility-proof',
+      urgency: 'medium',
+    });
     expect(reminders.find((reminder) => reminder.id === 'reminder-passport-followup')).toMatchObject({
       id: 'reminder-passport-followup',
       dependsOnStepId: 'federal-passport',
@@ -105,6 +110,10 @@ describe('name change reminder suggestions', () => {
   it('raises passport follow-up urgency when the case is expedited', () => {
     const plan = buildNameChangePlan(makeInput({ urgency_level: 'expedited' }));
     const reminders = buildNameChangeReminderSuggestions(plan);
+    expect(reminders.find((reminder) => reminder.id === 'reminder-legal-proof-followup')).toMatchObject({
+      suggestedOffsetDays: 1,
+      urgency: 'high',
+    });
     expect(reminders.find((reminder) => reminder.id === 'reminder-passport-followup')).toMatchObject({
       suggestedOffsetDays: 1,
       urgency: 'high',
@@ -453,6 +462,7 @@ describe('name change reminder suggestions', () => {
 
     const suggestions = buildNameChangeReminderSuggestions(plan);
 
+    expect(suggestions.some((suggestion) => suggestion.id === 'reminder-legal-proof-followup')).toBe(false);
     expect(suggestions.some((suggestion) => suggestion.id === 'reminder-ssa-followup')).toBe(false);
     expect(suggestions.some((suggestion) => suggestion.id === 'reminder-dmv-followup')).toBe(false);
     expect(suggestions.some((suggestion) => suggestion.id === 'reminder-passport-followup')).toBe(false);
