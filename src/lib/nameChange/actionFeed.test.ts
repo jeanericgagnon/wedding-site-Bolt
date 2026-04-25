@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildNameChangeActionFeed,
   ensureTerminalPeriod,
+  formatAccountUpdateTemplateBlockerLine,
   formatBlockingProofHopStatePhrase,
   formatInlineProofList,
   getAccountUpdateTemplateBlockedByLine,
@@ -148,6 +149,13 @@ describe('account update template surface helpers', () => {
   it('normalizes checklist punctuation snippets through one shared helper', () => {
     expect(ensureTerminalPeriod('Already verified')).toBe('Already verified.');
     expect(ensureTerminalPeriod(' .  ')).toBeUndefined();
+  });
+
+  it('formats blocker lines through one shared helper', () => {
+    const template = makeTemplate({ readiness: 'upcoming', blockingProofHopLabel: 'SSA pending' });
+
+    expect(formatAccountUpdateTemplateBlockerLine('Blocked by', template)).toBe('Blocked by: SSA pending.');
+    expect(formatAccountUpdateTemplateBlockerLine('Current blocker', template)).toBe('Current blocker: SSA pending.');
   });
 
   it('keeps planner and feed readiness labels on the same copy map', () => {

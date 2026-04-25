@@ -24,6 +24,14 @@ function getEffectiveBlockingProofHopLabel(template: AccountUpdateTemplate) {
   return getFallbackBlockingProofHopLabel(template.readiness, template.blockingProofHopLabel);
 }
 
+export function formatAccountUpdateTemplateBlockerLine(
+  linePrefix: 'Blocked by' | 'Current blocker',
+  template: AccountUpdateTemplate,
+) {
+  const blockingProofHopLabel = getEffectiveBlockingProofHopLabel(template);
+  return blockingProofHopLabel ? `${linePrefix}: ${blockingProofHopLabel}.` : undefined;
+}
+
 function getTemplateIdForTargetKey(targetKey: NameChangeTargetExecutionSnapshot['targetKey']) {
   switch (targetKey) {
     case 'employer':
@@ -63,16 +71,7 @@ function getTemplateFocusTargetId(template: AccountUpdateTemplate | undefined) {
 }
 
 export function getAccountUpdateTemplateBlockedByLine(template: AccountUpdateTemplate) {
-  const blockingProofHopLabel = getEffectiveBlockingProofHopLabel(template);
-  return blockingProofHopLabel
-    ? `Blocked by: ${blockingProofHopLabel}.`
-    : template.readiness === 'in_progress'
-      ? 'Blocked by: current proof pending.'
-      : template.readiness === 'upcoming'
-        ? 'Blocked by: next proof hop pending.'
-        : template.readiness === 'blocked'
-          ? 'Blocked by: proof chain pending.'
-          : undefined;
+  return formatAccountUpdateTemplateBlockerLine('Blocked by', template);
 }
 
 export function ensureTerminalPeriod(line: string | undefined) {
@@ -103,16 +102,7 @@ export function formatInlineProofList(items: string[]) {
 }
 
 export function getAccountUpdateTemplateCurrentBlockerLine(template: AccountUpdateTemplate) {
-  const blockingProofHopLabel = getEffectiveBlockingProofHopLabel(template);
-  return blockingProofHopLabel
-    ? `Current blocker: ${blockingProofHopLabel}.`
-    : template.readiness === 'in_progress'
-      ? 'Current blocker: current proof pending.'
-      : template.readiness === 'upcoming'
-        ? 'Current blocker: next proof hop pending.'
-        : template.readiness === 'blocked'
-          ? 'Current blocker: proof chain pending.'
-          : undefined;
+  return formatAccountUpdateTemplateBlockerLine('Current blocker', template);
 }
 
 export function formatBlockingProofHopStatePhrase(blockingProofHopLabel: string) {
