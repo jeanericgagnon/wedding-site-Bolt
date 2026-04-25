@@ -499,7 +499,7 @@ describe('name change action feed', () => {
       severity: 'blocking',
       urgencyReason: 'blocking_dependency',
       action: expect.objectContaining({
-        label: 'Ask insurance carriers intake rules now',
+        label: 'Ask insurance carriers intake rules now (legal proof pending)',
         detail: expect.stringContaining('learn the intake path now'),
       }),
     });
@@ -755,7 +755,7 @@ describe('name change action feed', () => {
       severity: 'attention',
       urgencyReason: 'blocking_dependency',
     });
-    expect(feed[0]?.action.label).toBe('Ask employer payroll / HR before next proof hop');
+    expect(feed[0]?.action.label).toBe('Ask employer payroll / HR before next proof hop (SSA pending)');
     expect(feed[0]?.action.detail).toContain('still depends on the next ID or agency hop');
   });
 
@@ -875,11 +875,13 @@ describe('name change action feed', () => {
       laneLabel: 'Insurance carriers · ask intake rules now · legal proof pending',
       severity: 'blocking',
     });
+    expect(feed[0]?.action.label).toBe('Ask insurance carriers intake rules now (legal proof pending)');
     expect(feed[1]).toMatchObject({
       title: 'Employer payroll / HR',
       laneLabel: 'Employer payroll / HR · ask before next proof hop · SSA pending',
       severity: 'attention',
     });
+    expect(feed[1]?.action.label).toBe('Ask employer payroll / HR before next proof hop (SSA pending)');
   });
 
   it('keeps send-now template work ahead of draft-now staging passes', () => {
