@@ -126,6 +126,10 @@ describe('name change execution targets', () => {
       requiredStatuses: ['complete'],
     });
     expect(NAME_CHANGE_EXECUTION_TARGETS.tsa.prerequisiteRules[0]).toMatchObject({
+      requiredStepId: 'state-dmv',
+      requiredStatuses: ['in_progress', 'complete'],
+    });
+    expect(NAME_CHANGE_EXECUTION_TARGETS.tsa.prerequisiteRules[1]).toMatchObject({
       requiredStepId: 'federal-passport',
       requiredStatuses: ['in_progress', 'complete'],
     });

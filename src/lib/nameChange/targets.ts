@@ -1039,6 +1039,16 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'courtOrder' | 'ssa' | 'dmv' 
     sequenceProfile: 'tsa',
     prerequisiteRules: [
       {
+        key: 'dmv-progress',
+        label: 'Primary photo ID underway before DMV title and travel-profile updates',
+        required: true,
+        requiredStepId: 'state-dmv',
+        requiredStatuses: ['in_progress', 'complete'],
+        missingReason: 'Travel and mobility follow-through should wait until DMV work is underway so vehicle title, registration, and auto-policy records can stay aligned with the same identity chain.',
+        attentionReason: 'DMV work is moving, which supports vehicle-title and travel-profile follow-through.',
+        satisfiedReason: 'DMV work is already moving or complete for vehicle-title and travel-profile follow-through.',
+      },
+      {
         key: 'passport-progress',
         label: 'Passport underway before TSA/travel profile update',
         required: true,

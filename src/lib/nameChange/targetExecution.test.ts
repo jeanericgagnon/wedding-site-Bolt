@@ -2632,6 +2632,46 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.statusVault.status).toBe('in_progress');
   });
 
+  it('keeps travel execution blocked on DMV before title and auto-policy follow-through', () => {
+    const profile = makeCase({
+      structured_intake: {
+        travelBookedSoon: true,
+        wantsDocumentIntakeHelp: true,
+      },
+    });
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-passport',
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'passport-•••.pdf',
+        issuing_authority: 'U.S. Department of State',
+        issued_on: '2024-06-01',
+        expires_on: '2034-06-01',
+      },
+    ];
+    const basePlan = buildNameChangePlan({ profile, documents, extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-passport'
+        ? {
+            ...step,
+            executionStatus: 'in_progress' as const,
+            executionUpdatedAt: '2026-04-25T18:10:00.000Z',
+          }
+        : step),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('tsa', profile, documents, [], plan);
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'dependency',
+      label: 'Unblock Primary photo ID underway before DMV title and travel-profile updates',
+      detail: 'Travel and mobility follow-through should wait until DMV work is underway so vehicle title, registration, and auto-policy records can stay aligned with the same identity chain.',
+    });
+  });
+
   it('only marks a target complete when every tracked step is complete', () => {
     const basePlan = buildNameChangePlan({ profile: makeCase(), documents: [], extractedFields: [] });
     const plan = {
