@@ -71,7 +71,9 @@ function getTemplateBlockedByLine(template: AccountUpdateTemplate) {
 
 function ensureTerminalPeriod(line: string | undefined) {
   if (!line) return undefined;
-  return line.endsWith('.') ? line : `${line}.`;
+  const trimmed = line.trim();
+  if (trimmed.replace(/[.\s]+$/u, '') === '') return undefined;
+  return trimmed.endsWith('.') ? trimmed : `${trimmed}.`;
 }
 
 function formatInlineProofList(items: string[]) {

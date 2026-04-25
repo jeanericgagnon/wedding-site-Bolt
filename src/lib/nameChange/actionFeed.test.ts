@@ -1651,4 +1651,21 @@ describe('name change action feed', () => {
     expect(feed[0]?.action.detail).not.toContain('Proof checklist:');
     expect(feed[0]?.action.detail).not.toContain('Proof to have handy:');
   });
+
+  it('omits punctuation-only checklist detail lines', () => {
+    const feed = buildNameChangeActionFeed(
+      [makeExecutionSnapshot({ targetKey: 'banks', targetLabel: 'Banks', recommendedFormCode: 'BANK' })],
+      [],
+      [],
+      [makeTemplate({
+        id: 'template-bank',
+        audience: 'Bank accounts',
+        checklistHighlight: ' . ',
+        checklistStatusNote: '.',
+      })],
+    );
+
+    expect(feed[0]?.action.detail).not.toContain('Checklist:');
+    expect(feed[0]?.action.detail).not.toContain('Checklist status:');
+  });
 });
