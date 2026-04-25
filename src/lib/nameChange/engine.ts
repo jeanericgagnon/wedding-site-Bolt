@@ -902,7 +902,9 @@ function buildAccountUpdateTemplates(
     const blockingProofHopLabel = getBlockingProofHopLabel(template.id, readiness);
     const blockingProofHopSentence = getBlockingProofHopSentence(blockingProofHopLabel);
     const proofChecklistWithStatus = [...proofChecklist, proofChecklistStatusNote];
-    const proofLine = `I can provide ${proofDocuments.join(', ')} ${readinessSpecificProof}`;
+    const proofLine = readinessSpecificProof
+      ? `I can provide ${proofDocuments.join(', ')}. ${readinessSpecificProof}`
+      : `I can provide ${proofDocuments.join(', ')}.`;
     const checklistGuidanceLine = `${readinessSpecificChecklistItem}. ${proofChecklistStatusNote}`;
 
     return {
