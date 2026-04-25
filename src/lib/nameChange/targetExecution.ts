@@ -121,7 +121,10 @@ function getSupportiveExecutionWaitGuidance(snapshot: Pick<NameChangeTargetExecu
       };
     }
 
-    if (/review court-order proof|court-order path readiness|court-order target legal name|case reference fields/i.test(blockingLabel)) {
+    if (
+      /review court-order proof|court-order path readiness|court-order target legal name|case reference fields|capture court-order target (first|middle|last) name|capture court-order case number|capture court-order signed date|review court-order extraction grounding/i
+        .test(blockingLabel)
+    ) {
       return {
         doNow: 'Confirm the exact target legal name, case number, and hearing or signed-order status now.',
         whyItHelps: 'That keeps the court-order packet grounded before downstream government and account updates depend on it.',

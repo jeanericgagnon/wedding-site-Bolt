@@ -3097,6 +3097,38 @@ describe('name change target execution snapshot', () => {
     });
   });
 
+  it('adds structured wait guidance for court-order target-name extraction blockers', () => {
+    expect(getExecutionNextActionGuidance({
+      targetKey: 'courtOrder',
+      nextAction: {
+        category: 'document',
+        label: 'Capture court-order target middle name',
+        detail: 'Court-order target first and last name are verified, but the target middle name still needs grounded extraction before downstream use is fully trusted.',
+      },
+    })).toEqual({
+      overview: 'Court-order target first and last name are verified, but the target middle name still needs grounded extraction before downstream use is fully trusted.',
+      doNow: 'Confirm the exact target legal name, case number, and hearing or signed-order status now.',
+      whyItHelps: 'That keeps the court-order packet grounded before downstream government and account updates depend on it.',
+      canWait: 'Actual downstream filing can safely wait until the court-order path is verified.',
+    });
+  });
+
+  it('adds structured wait guidance for court-order extraction-grounding reviews', () => {
+    expect(getExecutionNextActionGuidance({
+      targetKey: 'courtOrder',
+      nextAction: {
+        category: 'document',
+        label: 'Review court-order extraction grounding',
+        detail: 'Court-order proof exists, but the extracted target legal name, case number, or signed-order status still needs review before downstream filing should trust it.',
+      },
+    })).toEqual({
+      overview: 'Court-order proof exists, but the extracted target legal name, case number, or signed-order status still needs review before downstream filing should trust it.',
+      doNow: 'Confirm the exact target legal name, case number, and hearing or signed-order status now.',
+      whyItHelps: 'That keeps the court-order packet grounded before downstream government and account updates depend on it.',
+      canWait: 'Actual downstream filing can safely wait until the court-order path is verified.',
+    });
+  });
+
   it('adds structured wait guidance for first-passport branch reviews', () => {
     expect(getExecutionNextActionGuidance({
       targetKey: 'passport',
