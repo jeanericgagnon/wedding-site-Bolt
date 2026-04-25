@@ -30,6 +30,7 @@ import { formatNameChangeExecutionDateTime } from './nameChangeExecutionTime';
 import { buildNameChangeOverviewCardModel } from '../nameChangeOverviewCard';
 import { buildNameChangeOverviewInsights } from '../nameChangeOverviewInsights';
 import { NAME_CHANGE_LIFECYCLE_LABELS } from '../nameChangeLifecycleLabels';
+import { deriveNameChangeLifecycleStatus } from '../nameChangeLifecycleStatus';
 import type {
   NameChangeCaseInput,
   NameChangeDocumentInput,
@@ -151,17 +152,6 @@ function scrollToPlannerTarget(targetId: string) {
 function scrollToPlannerHref(href: string) {
   const [, hash = ''] = href.split('#');
   scrollToPlannerTarget(hash || 'name-change-roadmap');
-}
-
-function derivePlannerWorkflowStatus(plan: NameChangePlan): 'ready' | 'in_progress' | 'complete' {
-  const executionCounts = plan.summary.executionCounts ?? { todo: plan.steps.length, in_progress: 0, complete: 0 };
-  if (executionCounts.complete > 0 && executionCounts.todo === 0 && executionCounts.in_progress === 0) {
-    return 'complete';
-  }
-  if (executionCounts.in_progress > 0 || executionCounts.complete > 0) {
-    return 'in_progress';
-  }
-  return 'ready';
 }
 
 function getActionFeedCtaLabel(intent: 'open_execution_card' | 'open_document_repair') {
@@ -581,7 +571,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     () => (plan.summary.executionCounts?.in_progress ?? 0) > 0 || (plan.summary.executionCounts?.complete ?? 0) > 0,
     [plan.summary.executionCounts],
   );
-  const workflowStatus = useMemo(() => derivePlannerWorkflowStatus(plan), [plan]);
+  const workflowStatus = useMemo(() => deriveNameChangeLifecycleStatus(plan), [plan]);
   const resumeCard = useMemo(
     () => buildNameChangeOverviewCardModel({
       hasWorkspace: true,

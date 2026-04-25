@@ -33,6 +33,7 @@ import { calcOverviewDaysUntil, formatOverviewRelativeTime, formatOverviewWeddin
 import { buildNameChangeOverviewCardModel } from './nameChangeOverviewCard';
 import { buildNameChangeOverviewInsights } from './nameChangeOverviewInsights';
 import { NAME_CHANGE_LIFECYCLE_LABELS } from './nameChangeLifecycleLabels';
+import { deriveNameChangeLifecycleStatus } from './nameChangeLifecycleStatus';
 import { hydrateNameChangeWorkspace, loadNameChangeWorkspace } from './planning/nameChangeService';
 
 interface OverviewStats {
@@ -416,7 +417,7 @@ export const DashboardOverview: React.FC = () => {
           const executionCounts = hydratedWorkspace.plan.summary.executionCounts ?? { todo: hydratedWorkspace.plan.steps.length, in_progress: 0, complete: 0 };
           setNameChangeOverviewState({
             hasWorkspace: true,
-            workflowStatus: hydratedWorkspace.draft.workflow_status,
+            workflowStatus: deriveNameChangeLifecycleStatus(hydratedWorkspace.plan),
             hasExecutionActivity: executionCounts.in_progress > 0 || executionCounts.complete > 0,
           });
           setNameChangeInsights(buildNameChangeOverviewInsights(hydratedWorkspace));
