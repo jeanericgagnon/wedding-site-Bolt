@@ -43,6 +43,7 @@ describe('PlanningOverviewTab', () => {
     expect(screen.getByText('See roadmap first')).toBeTruthy();
     expect(screen.getByText('Post-wedding')).toBeTruthy();
     expect(screen.getByText(/Optional next step: Skim the roadmap first/i)).toBeTruthy();
+    expect(screen.getByText(/If you want a concrete place to pick back up,/i)).toBeTruthy();
     expect(screen.getByText(/reminder.*actionable now/i)).toBeTruthy();
     expect(screen.getByText(/blocked milestone/i)).toBeTruthy();
     expect(screen.getByText(/downstream categor/i)).toBeTruthy();

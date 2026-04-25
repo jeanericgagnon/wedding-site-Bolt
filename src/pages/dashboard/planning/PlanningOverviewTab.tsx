@@ -12,6 +12,7 @@ import { PlanningTask, PlanningBudgetItem, PlanningVendor } from './planningServ
 import { formatVendorDate, isVendorDateBetween } from './vendorDate';
 import { isTaskDueBetween, isTaskDueOnOrBefore } from './taskDueDate';
 import { buildNameChangeOverviewCardModel } from '../nameChangeOverviewCard';
+import { buildNameChangeOverviewInsights } from '../nameChangeOverviewInsights';
 import { deriveNameChangeLifecycleStatus } from '../nameChangeLifecycleStatus';
 
 interface SeatingReadiness {
@@ -80,6 +81,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
     workflowStatus: deriveNameChangeLifecycleStatus(nameChangePlan),
     hasExecutionActivity: nameChangeHasExecutionActivity,
   });
+  const nameChangeInsights = buildNameChangeOverviewInsights({ plan: nameChangePlan, reminders: [] });
   const milestoneStatusLabels = {
     ready: 'ready',
     upcoming: 'up next',
@@ -231,6 +233,11 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
                     </p>
                   ) : null}
                   <p className="mt-2 text-xs text-text-secondary">Optional next step: {nameChangeCard.optionalNextStep}</p>
+                  {nameChangeInsights.concreteResumeLabel ? (
+                    <p className="mt-2 text-xs text-text-secondary">
+                      If you want a concrete place to pick back up, <span className="font-medium text-text-primary">{nameChangeInsights.concreteResumeLabel}</span>
+                    </p>
+                  ) : null}
                   <p className="mt-2 text-xs text-text-secondary">
                     {taxPayrollLabel}: <span className="font-medium text-text-primary">{taxPayrollStatus}</span>
                   </p>
