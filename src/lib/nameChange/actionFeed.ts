@@ -74,7 +74,7 @@ function ensureTerminalPeriod(line: string | undefined) {
   return line.endsWith('.') ? line : `${line}.`;
 }
 
-function formatChecklistSummary(items: string[]) {
+function formatInlineProofList(items: string[]) {
   return items
     .map((item) => item.trim().replace(/[.\s]+$/u, ''))
     .filter(Boolean)
@@ -129,10 +129,10 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
   const checklistLine = ensureTerminalPeriod(template.checklistHighlight);
   const checklistStatusLine = ensureTerminalPeriod(template.checklistStatusNote);
   const proofChecklistSummary = template.proofChecklist.length > 0
-    ? `Proof checklist: ${formatChecklistSummary(template.proofChecklist)}`
+    ? `Proof checklist: ${formatInlineProofList(template.proofChecklist)}`
     : undefined;
   const proofDocumentsSummary = template.proofDocuments.length > 0
-    ? `Proof to have handy: ${template.proofDocuments.join(' · ')}`
+    ? `Proof to have handy: ${formatInlineProofList(template.proofDocuments)}`
     : undefined;
   return [
     readinessDetail,
