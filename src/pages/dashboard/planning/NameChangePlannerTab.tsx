@@ -230,10 +230,10 @@ function getAccountUpdateTemplateCurrentBlockerLine(template: NonNullable<NameCh
 }
 
 function getAccountUpdateTemplateBlockedByLine(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
-  if (template.blockingProofHopLabel) return `Blocked by: ${template.blockingProofHopLabel}`;
-  if (template.readiness === 'in_progress') return 'Blocked by: current proof pending';
-  if (template.readiness === 'upcoming') return 'Blocked by: next proof hop pending';
-  if (template.readiness === 'blocked') return 'Blocked by: proof chain pending';
+  if (template.blockingProofHopLabel) return `Blocked by: ${template.blockingProofHopLabel}.`;
+  if (template.readiness === 'in_progress') return 'Blocked by: current proof pending.';
+  if (template.readiness === 'upcoming') return 'Blocked by: next proof hop pending.';
+  if (template.readiness === 'blocked') return 'Blocked by: proof chain pending.';
   return undefined;
 }
 

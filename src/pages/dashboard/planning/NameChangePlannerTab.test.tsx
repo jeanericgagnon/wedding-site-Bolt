@@ -529,7 +529,7 @@ describe('NameChangePlannerTab', () => {
     expect(bankRequestSummary).toBeTruthy();
     expect(screen.getByText(`Next ask: ${payrollRequestSummary}`)).toBeInTheDocument();
     expect(screen.getByText(`Next ask: ${bankRequestSummary}`)).toBeInTheDocument();
-    expect(screen.getAllByText(`Blocked by: ${payrollBlockingProofHop}`).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(`Blocked by: ${payrollBlockingProofHop}.`).length).toBeGreaterThan(0);
     expect(screen.getByText(`Checklist: ${payrollChecklistHighlight}`)).toBeInTheDocument();
     expect(screen.getByText(`Checklist status: ${payrollChecklistStatus}`)).toBeInTheDocument();
     expect(screen.getByText(`Proof status: ${payrollProofStatus}`)).toBeInTheDocument();
@@ -626,9 +626,9 @@ describe('NameChangePlannerTab', () => {
     expect(screen.getAllByText('draft now, send after current proof clears · current proof pending').length).toBeGreaterThan(0);
     expect(screen.getAllByText('ask before next proof hop · next proof hop pending').length).toBeGreaterThan(0);
     expect(screen.getAllByText('ask intake rules now · proof chain pending').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Blocked by: current proof pending').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Blocked by: next proof hop pending').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Blocked by: proof chain pending').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Blocked by: current proof pending.').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Blocked by: next proof hop pending.').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Blocked by: proof chain pending.').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Current blocker: current proof pending.').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Current blocker: next proof hop pending.').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Current blocker: proof chain pending.').length).toBeGreaterThan(0);
@@ -717,7 +717,7 @@ describe('NameChangePlannerTab', () => {
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Subject: ${payrollTemplate?.subject}`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Status: ask intake rules now · ${payrollTemplate?.blockingProofHopLabel}`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Next ask: ${payrollTemplate?.requestSummary}`));
-    expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Blocked by: ${payrollTemplate?.blockingProofHopLabel}`));
+    expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Blocked by: ${payrollTemplate?.blockingProofHopLabel}.`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Checklist: ${payrollTemplate?.checklistHighlight}`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Checklist status: ${payrollTemplate?.checklistStatusNote}`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining('Template state: intake-only until legal proof pending clears.'));
