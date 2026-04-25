@@ -100,7 +100,7 @@ describe('name change reminder suggestions', () => {
       urgency: 'medium',
     });
     expect(reminders.find((reminder) => reminder.id === 'reminder-milestone-confirm-milestone-account-rollout')).toMatchObject({
-      dependsOnStepId: 'institutions-rollout',
+      dependsOnStepId: 'institution-phone-digital-identity',
       urgency: 'medium',
     });
     expect(reminders.find((reminder) => reminder.id === 'reminder-milestone-confirm-milestone-downstream-rollout')).toMatchObject({
@@ -206,6 +206,12 @@ describe('name change reminder suggestions', () => {
       section_key: 'institutional',
       planner_intent: 'open_execution_card',
       focus_target_id: 'execution-card-banks',
+    });
+    expect(inputs.find((reminder) => reminder.reminder_key === 'reminder-milestone-confirm-milestone-account-rollout')).toMatchObject({
+      depends_on_step_id: 'institution-phone-digital-identity',
+      section_key: 'institutional',
+      planner_intent: 'open_execution_card',
+      focus_target_id: 'execution-card-utilities',
     });
     expect(inputs.find((reminder) => reminder.reminder_key === 'reminder-category-confirm-travel_mobility')).toMatchObject({
       depends_on_step_id: 'institution-frequent-flyer-hotel-rail',

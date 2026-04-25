@@ -68,6 +68,21 @@ const DOWNSTREAM_ROLLOUT_MILESTONE_STEP_IDS = [
   'institution-frequent-flyer-hotel-rail',
 ] as const;
 
+const CORE_ACCOUNT_ROLLOUT_MILESTONE_STEP_IDS = [
+  'state-dmv',
+  'institution-banks',
+  'institution-investments-loans',
+  'institution-student-loans-financial-aid',
+  'institution-mortgage-property-records',
+  'institution-credit-bureaus',
+  'institution-insurance',
+  'institution-disability-insurance',
+  'institution-workers-comp-leave',
+  'institution-medical-records',
+  'institution-utilities-housing',
+  'institution-phone-digital-identity',
+] as const;
+
 const INSTITUTION_CATEGORY_COVERAGE_CONFIG = [
   {
     id: 'legal_government',
@@ -1482,8 +1497,11 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
     {
       id: 'milestone-account-rollout',
       label: 'Banks, insurance, and core accounts can move from one packet',
-      status: resolvePlanSequenceStatus(['state-dmv', 'institutions-rollout'], steps),
-      dependsOnStepIds: ['state-dmv', 'institutions-rollout'],
+      status: resolvePlanSequenceStatus(
+        CORE_ACCOUNT_ROLLOUT_MILESTONE_STEP_IDS.filter((stepId) => hasStep(stepId)),
+        steps,
+      ),
+      dependsOnStepIds: CORE_ACCOUNT_ROLLOUT_MILESTONE_STEP_IDS.filter((stepId) => hasStep(stepId)),
     },
     hasStep('institutions-rollout')
       ? {
