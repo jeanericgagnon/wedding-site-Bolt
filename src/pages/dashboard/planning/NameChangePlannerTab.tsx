@@ -26,7 +26,7 @@ import { buildNameChangeSsaExecutionSnapshot } from '../../../lib/nameChange/ssa
 import { buildNameChangeTsaExecutionSnapshot } from '../../../lib/nameChange/tsaFlow';
 import { buildNameChangeUtilitiesExecutionSnapshot } from '../../../lib/nameChange/utilitiesFlow';
 import { buildNameChangeVoterExecutionSnapshot } from '../../../lib/nameChange/voterFlow';
-import { formatNameChangeExecutionDateTime } from './nameChangeExecutionTime';
+import { formatNameChangeExecutionDateTime, getNameChangeExecutionTimestamp } from './nameChangeExecutionTime';
 import { buildNameChangeOverviewCardModel } from '../nameChangeOverviewCard';
 import { buildNameChangeOverviewInsights } from '../nameChangeOverviewInsights';
 import { NAME_CHANGE_LIFECYCLE_LABELS } from '../nameChangeLifecycleLabels';
@@ -711,7 +711,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     const latestReminderAt = targetReminders
       .map((reminder) => reminder.updated_at ?? null)
       .filter((value): value is string => Boolean(value))
-      .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
+      .sort((left, right) => getNameChangeExecutionTimestamp(right) - getNameChangeExecutionTimestamp(left))[0] ?? null;
     return {
       key: snapshot.targetKey,
       title: snapshot.targetLabel,
@@ -761,7 +761,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     const leftTouched = left.updatedLabel ? executionSnapshots.find((snapshot) => snapshot.targetKey === left.key)?.statusVault.lastTouchedAt ?? null : null;
     const rightTouched = right.updatedLabel ? executionSnapshots.find((snapshot) => snapshot.targetKey === right.key)?.statusVault.lastTouchedAt ?? null : null;
     if (leftTouched && rightTouched && leftTouched !== rightTouched) {
-      return new Date(rightTouched).getTime() - new Date(leftTouched).getTime();
+      return getNameChangeExecutionTimestamp(rightTouched) - getNameChangeExecutionTimestamp(leftTouched);
     }
     if (leftTouched && !rightTouched) return -1;
     if (!leftTouched && rightTouched) return 1;

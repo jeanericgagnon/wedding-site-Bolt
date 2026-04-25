@@ -770,6 +770,62 @@ describe('NameChangePlannerTab', () => {
     expect(screen.getAllByText(/Reminder updated/).length).toBeGreaterThan(0);
   });
 
+  it('keeps invalid reminder timestamps from outranking real reminder history in the status vault', () => {
+    const draft = makeDraft();
+    const basePlan = buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-ssa' ? {
+        ...step,
+        executionStatus: 'in_progress' as const,
+        executionNote: 'SSA packet already filed and waiting on receipt.',
+        executionUpdatedAt: '2026-04-24T22:10:00.000Z',
+      } : step),
+    };
+
+    render(
+      <NameChangePlannerTab
+        draft={draft}
+        documents={[]}
+        extractedFields={[]}
+        plan={plan}
+        reminders={[
+          {
+            reminder_key: 'ssa-bad-follow-up',
+            label: 'Broken reminder payload',
+            reason: 'Bad imported timestamp',
+            trigger_type: 'manual',
+            status: 'pending',
+            urgency: 'medium',
+            focus_target_id: 'ssa',
+            updated_at: 'not-a-date',
+          },
+          {
+            reminder_key: 'ssa-good-follow-up',
+            label: 'SSA follow-up',
+            reason: 'Receipt still missing',
+            trigger_type: 'manual',
+            status: 'pending',
+            urgency: 'high',
+            focus_target_id: 'ssa',
+            updated_at: '2026-04-24T22:20:00.000Z',
+          },
+        ]}
+        saving={false}
+        onDraftChange={vi.fn()}
+        onStructuredIntakeChange={vi.fn()}
+        onDocumentsChange={vi.fn()}
+        onExtractedFieldsChange={vi.fn()}
+        onRemindersChange={vi.fn()}
+        onStepExecutionStatusChange={vi.fn()}
+        onStepExecutionNoteChange={vi.fn()}
+        onSave={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    expect(screen.getAllByText(/Reminder updated 4\/24\/2026, 3:20:00 PM/).length).toBeGreaterThan(0);
+  });
+
   it('keeps proof debt visible when reminder follow-up becomes the latest touch', () => {
     const draft = makeDraft();
     const basePlan = buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] });
