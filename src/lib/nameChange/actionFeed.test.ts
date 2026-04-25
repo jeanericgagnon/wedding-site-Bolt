@@ -524,6 +524,7 @@ describe('name change action feed', () => {
     expect(feed[0]?.action.detail).toContain('Template message: I can provide certified legal proof.');
     expect(feed[0]?.action.detail).toContain('Do not send yet; the legal proof chain still needs to clear before carrier evidence will stick.');
     expect(feed[0]?.action.detail).toContain('Blocked by: legal proof pending.');
+    expect(feed[0]?.action.detail).toContain('Current blocker: legal proof pending.');
     expect(feed[0]?.action.detail).toContain('Proof status: Do not send yet; the legal proof chain still needs to clear before carrier evidence will stick.');
     expect(feed[0]?.action.detail).toContain('Next ask: Please just share the carrier evidence rules and intake path for now so I can return once the legal proof packet is grounded.');
     expect(feed[0]?.action.detail).toContain('Please just share the carrier evidence rules and intake path for now so I can return once the legal proof packet is grounded.');
@@ -781,6 +782,7 @@ describe('name change action feed', () => {
     expect(feed[0]?.action.detail).toContain('Subject: Employer payroll / HR\nTemplate message: I can provide certified legal proof.');
     expect(feed[0]?.action.detail).toContain('Template message: I can provide certified legal proof.');
     expect(feed[0]?.action.detail).toContain('Blocked by: SSA pending.');
+    expect(feed[0]?.action.detail).toContain('Current blocker: SSA pending.');
     expect(feed[0]?.action.detail).toContain('Checklist: Use this to learn the payroll intake path while SSA alignment is still upstream.');
     expect(feed[0]?.action.detail).toContain('Checklist status: Wait to send until SSA is the next cleared proof hop.');
     expect(feed[0]?.action.detail).toContain('still depends on the next ID or agency hop');
@@ -979,6 +981,7 @@ describe('name change action feed', () => {
       severity: 'attention',
     });
     expect(feed[1]?.action.detail).toContain('Blocked by: SSA pending.');
+    expect(feed[1]?.action.detail).toContain('Current blocker: SSA pending.');
   });
 
   it('routes utility follow-through into the blocked digital-identity template so intake rules are captured early', () => {
@@ -1016,6 +1019,7 @@ describe('name change action feed', () => {
       }),
     });
     expect(feed[0]?.action.detail).toContain('Blocked by: legal proof pending.');
+    expect(feed[0]?.action.detail).toContain('Current blocker: legal proof pending.');
     expect(feed[0]?.action.detail).toContain('Hold identity changes for now and only gather verification rules');
   });
 
@@ -1156,6 +1160,7 @@ describe('name change action feed', () => {
     expect(travelTemplateItem?.laneLabel).toBe('Travel profile support · ask intake rules now · legal proof pending');
     expect(travelTemplateItem?.action.label).toBe('Ask travel profile support intake rules now (legal proof pending)');
     expect(travelTemplateItem?.action.detail).toContain('Blocked by: legal proof pending.');
+    expect(travelTemplateItem?.action.detail).toContain('Current blocker: legal proof pending.');
     expect(travelTemplateItem?.action.detail).toContain('Checklist: Ask for mismatch policy and booking rules before the legal proof packet is ready.');
     expect(travelTemplateItem?.action.detail).toContain('Checklist status: Gather mismatch and booking rules only until legal proof is fully grounded.');
     expect(travelTemplateItem?.action.detail).toContain('Proof status: Do not send yet; the legal proof chain still needs to clear before travel-profile evidence will stick.');

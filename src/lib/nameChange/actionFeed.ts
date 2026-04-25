@@ -111,6 +111,7 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
     `Template message: ${template.body}`,
     `Readiness: ${template.readinessLabel}`,
     template.blockingProofHopLabel ? `Blocked by: ${template.blockingProofHopLabel}.` : undefined,
+    template.blockingProofHopLabel ? `Current blocker: ${template.blockingProofHopLabel}.` : undefined,
     checklistLine ? `Checklist: ${checklistLine}.` : undefined,
     checklistStatusLine ? `Checklist status: ${checklistStatusLine}` : undefined,
     `Proof status: ${template.proofReadinessSummary}`,
