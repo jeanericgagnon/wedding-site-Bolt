@@ -687,7 +687,7 @@ function buildAccountUpdateTemplates(
       audience: 'Employer payroll / HR',
       subject: 'Name change update for payroll and benefits',
       dependsOnStepIds: ['federal-ssa', 'institution-irs-employer', 'institution-retirement-benefits'],
-      proofChecklist: [
+      proofDocuments: [
         ...proofChecklistBase,
         'Updated Social Security record or SSA receipt',
         'Updated photo ID if payroll or benefits asks for one',
@@ -699,7 +699,7 @@ function buildAccountUpdateTemplates(
       audience: 'Bank or credit card support',
       subject: 'Request to update account name after legal name change',
       dependsOnStepIds: ['state-photo-id', 'institution-banks', 'institution-credit-bureaus'],
-      proofChecklist: [
+      proofDocuments: [
         ...proofChecklistBase,
         'Updated photo ID or DMV receipt',
         'Replacement card / account reissue instructions',
@@ -711,7 +711,7 @@ function buildAccountUpdateTemplates(
       audience: 'Insurance or subscription support',
       subject: 'Please update my account to my legal name',
       dependsOnStepIds: ['state-photo-id', 'institution-insurance', 'institution-medical-records'],
-      proofChecklist: [
+      proofDocuments: [
         ...proofChecklistBase,
         'Updated photo ID if coverage verification requires it',
         'Member ID / policy number so cards and claims stay aligned',
@@ -723,7 +723,7 @@ function buildAccountUpdateTemplates(
       audience: 'Tax agency or payroll tax support',
       subject: 'Align my tax records with my legal name change',
       dependsOnStepIds: ['federal-ssa', 'institution-irs-records', 'institution-state-tax-agency'],
-      proofChecklist: [
+      proofDocuments: [
         ...proofChecklistBase,
         'Updated Social Security record or SSA confirmation',
         'Any employer payroll confirmation already on file',
@@ -735,7 +735,7 @@ function buildAccountUpdateTemplates(
       audience: 'Airline, hotel, loyalty, or travel support',
       subject: 'Please align my travel profile with my legal name change',
       dependsOnStepIds: ['federal-passport', 'institution-tsa-precheck', 'institution-travel-hospitality', 'institution-frequent-flyer-hotel-rail'],
-      proofChecklist: [
+      proofDocuments: [
         ...proofChecklistBase,
         needsPassport ? 'Updated passport or passport renewal timing confirmation' : 'Current passport details if no passport update is needed',
         'Any existing booking references that need manual relinking',
@@ -747,7 +747,7 @@ function buildAccountUpdateTemplates(
       audience: 'Phone, utilities, housing, or primary digital identity support',
       subject: 'Update my account holder name to match my legal records',
       dependsOnStepIds: ['state-photo-id', 'institution-utilities-housing', 'institution-phone-digital-identity'],
-      proofChecklist: [
+      proofDocuments: [
         ...proofChecklistBase,
         'Updated photo ID if identity verification is required',
         'Any lease / utility account numbers or recovery-email checkpoints to refresh',
@@ -759,7 +759,7 @@ function buildAccountUpdateTemplates(
       audience: 'Licensing board or credentialing support',
       subject: 'Update my professional license to my legal name',
       dependsOnStepIds: ['state-photo-id', 'institution-professional-licenses'],
-      proofChecklist: [
+      proofDocuments: [
         ...proofChecklistBase,
         'Updated photo ID or license reissue receipt',
         'License number / renewal cycle details',
@@ -902,7 +902,7 @@ function buildAccountUpdateTemplates(
                       in_progress: 'Draft now and attach the final proof packet as soon as it lands',
                       complete: 'Confirm the final legal name is already showing across the account records you changed',
                     });
-    const proofDocuments = [...template.proofChecklist];
+    const proofDocuments = [...template.proofDocuments];
     const proofChecklist = [...proofDocuments, readinessSpecificChecklistItem];
     const requestLine = getReadinessRequestLine(template.id, readiness);
     const proofReadinessSummary = getProofReadinessSummary(template.id, readiness);
