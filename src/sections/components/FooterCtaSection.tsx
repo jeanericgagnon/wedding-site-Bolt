@@ -3,6 +3,7 @@ import { WeddingDataV1 } from '../../types/weddingData';
 import { SectionInstance } from '../../types/layoutConfig';
 import { Heart } from 'lucide-react';
 import { readBuilderValue } from '../../lib/weddingProfile';
+import { buildCoupleDisplayName } from '../../lib/coupleDisplayName';
 
 interface Props {
   data: WeddingDataV1;
@@ -21,7 +22,7 @@ function formatDate(iso: string | undefined): string {
 
 function getFooterDisplayName(couple: WeddingDataV1['couple']): string {
   return couple.displayName
-    || [couple.partner1Name, couple.partner2Name].filter(Boolean).join(' & ')
+    || buildCoupleDisplayName(couple.partner1Name, couple.partner2Name)
     || 'The couple';
 }
 

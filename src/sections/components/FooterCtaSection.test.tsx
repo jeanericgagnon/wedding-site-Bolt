@@ -56,4 +56,29 @@ describe('FooterCtaSection', () => {
 
     expect(screen.getByText('Alex & Jordan')).toBeInTheDocument();
   });
+
+  it('keeps footer couple names truthful when one persisted partner name is whitespace only', () => {
+    const data = createEmptyWeddingData();
+    data.couple.partner1Name = '   ';
+    data.couple.partner2Name = ' Alex ';
+
+    const { rerender } = render(
+      <FooterCtaSection
+        data={data}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(screen.getByText('Alex')).toBeInTheDocument();
+    expect(screen.queryByText(/&/)).not.toBeInTheDocument();
+
+    rerender(
+      <FooterCtaMinimal
+        data={data}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(screen.getByText('Alex')).toBeInTheDocument();
+  });
 });
