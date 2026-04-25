@@ -9,7 +9,7 @@ import {
   summarizeNameChangeReminderAttention,
 } from '../../../lib/nameChange/reminders';
 import { PlanningTask, PlanningBudgetItem, PlanningVendor } from './planningService';
-import { isVendorDateBetween } from './vendorDate';
+import { formatVendorDate, isVendorDateBetween } from './vendorDate';
 import { isTaskDueBetween, isTaskDueOnOrBefore } from './taskDueDate';
 
 interface SeatingReadiness {
@@ -313,7 +313,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
                 <div>
                   <span className="font-medium text-text-primary">{v.name}</span>
                   {v.next_payment_due && (
-                    <span className="text-text-tertiary ml-2">due {new Date(v.next_payment_due).toLocaleDateString()}</span>
+                    <span className="text-text-tertiary ml-2">due {formatVendorDate(v.next_payment_due)}</span>
                   )}
                 </div>
                 <span className="font-semibold text-warning">{fmt(v.balance_due)}</span>
