@@ -164,12 +164,6 @@ function derivePlannerWorkflowStatus(plan: NameChangePlan): 'ready' | 'in_progre
   return 'ready';
 }
 
-function getPlannerResumeTitle(workflowStatus: 'ready' | 'in_progress' | 'complete') {
-  if (workflowStatus === 'complete') return 'Everything is saved. Reopen only when you need proof.';
-  if (workflowStatus === 'in_progress') return 'Soft next steps, not a checklist you have to clear';
-  return 'Start whenever you want, then come back whenever you need';
-}
-
 function getActionFeedCtaLabel(intent: 'open_execution_card' | 'open_document_repair') {
   return intent === 'open_execution_card' ? 'Open execution card' : 'Open document repair';
 }
@@ -1142,9 +1136,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
           <div>
             <p className="text-xs uppercase tracking-wide text-sky-700">Resume any time</p>
             <p className="mt-2 text-sm font-medium text-sky-950">{resumeCard.statusLabel}</p>
-            <h3 className="mt-2 text-lg font-semibold text-sky-950">
-              {getPlannerResumeTitle(workflowStatus)}
-            </h3>
+            <h3 className="mt-2 text-lg font-semibold text-sky-950">{resumeCard.headline}</h3>
             <p className="mt-1 text-sm text-sky-900">
               {resumeCard.helperCopy}
             </p>

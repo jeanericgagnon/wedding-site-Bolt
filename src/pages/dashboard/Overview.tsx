@@ -934,6 +934,7 @@ export const DashboardOverview: React.FC = () => {
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold text-sky-950">Post-wedding name change assistant</p>
+                        <p className="mt-1 text-base font-semibold text-sky-950">{nameChangeCard.headline}</p>
                         <p className="mt-1 text-sm text-sky-900">{nameChangeCard.helperCopy}</p>
                       </div>
                       <Badge variant="secondary">{nameChangeCard.badgeLabel}</Badge>
@@ -942,7 +943,7 @@ export const DashboardOverview: React.FC = () => {
                       <div className="rounded-xl border border-sky-300 bg-sky-100/80 px-4 py-3">
                         <p className="text-xs uppercase tracking-wide text-sky-700">Resume status</p>
                         <p className="mt-1 text-sm font-semibold text-sky-950">{nameChangeCard.statusLabel}</p>
-                        <p className="mt-1 text-xs text-sky-900">The dashboard keeps the next click soft, obvious, and easy to revisit later.</p>
+                        <p className="mt-1 text-xs text-sky-900">{nameChangeCard.optionalNextStep}</p>
                       </div>
                       <div className="rounded-xl border border-sky-200 bg-white px-4 py-3">
                         <p className="text-xs uppercase tracking-wide text-sky-700">{NAME_CHANGE_LIFECYCLE_LABELS.coreChain}</p>
@@ -956,10 +957,6 @@ export const DashboardOverview: React.FC = () => {
                         <p className="text-xs uppercase tracking-wide text-sky-700">{NAME_CHANGE_LIFECYCLE_LABELS.downstream}</p>
                         <p className="mt-1 text-sm text-sky-950">{nameChangeInsights.downstreamLabel}</p>
                       </div>
-                    </div>
-                    <div className="rounded-xl border border-sky-200 bg-white px-4 py-3">
-                      <p className="text-xs uppercase tracking-wide text-sky-700">Optional next step</p>
-                      <p className="mt-1 text-sm text-sky-950">{nameChangeCard.optionalNextStep}</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Button variant="accent" size="sm" onClick={() => navigate(nameChangeCard.primaryHref)}>

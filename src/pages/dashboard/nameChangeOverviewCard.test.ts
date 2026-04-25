@@ -9,6 +9,7 @@ describe('buildNameChangeOverviewCardModel', () => {
       hasExecutionActivity: false,
     });
 
+    expect(model.headline).toBe('Start whenever you want, then come back whenever you need');
     expect(model.primaryLabel).toBe('Start case setup');
     expect(model.primaryHref).toBe('/dashboard/planning?tab=nameChange#case-setup');
     expect(model.secondaryLabel).toBe('See roadmap first');
@@ -26,6 +27,7 @@ describe('buildNameChangeOverviewCardModel', () => {
       hasExecutionActivity: true,
     });
 
+    expect(model.headline).toBe('Soft next steps, not a checklist you have to clear');
     expect(model.statusLabel).toBe('Resume where you left off');
     expect(model.primaryHref).toBe('/dashboard/planning?tab=nameChange#target-status-tracking');
     expect(model.secondaryHref).toBe('/dashboard/planning?tab=nameChange#case-setup');
@@ -40,6 +42,7 @@ describe('buildNameChangeOverviewCardModel', () => {
       hasExecutionActivity: true,
     });
 
+    expect(model.headline).toBe('Everything is saved. Reopen only when you need proof.');
     expect(model.primaryLabel).toBe('Review status vault');
     expect(model.statusLabel).toBe('Status vault complete');
     expect(model.optionalNextStep).toContain('Nothing pushy here');
@@ -53,6 +56,7 @@ describe('buildNameChangeOverviewCardModel', () => {
       hasExecutionActivity: false,
     });
 
+    expect(model.headline).toBe('Start whenever you want, then come back whenever you need');
     expect(model.statusLabel).toBe('Roadmap saved');
     expect(model.primaryLabel).toBe('See roadmap first');
     expect(model.tertiaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
