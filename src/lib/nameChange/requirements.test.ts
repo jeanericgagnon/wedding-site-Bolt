@@ -795,6 +795,44 @@ describe('name change requirements skeleton', () => {
     });
   });
 
+  it('marks court-order reference extraction attention when only the current middle name is in play and middle-name grounding is still missing', () => {
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase({ legal_basis: 'court_order' as never, current_middle_name: 'Quinn', target_middle_name: '' }),
+      [
+        {
+          id: 'doc-court-order',
+          document_kind: 'court_order_name_change',
+          display_name: 'Court order',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+        },
+      ],
+      [
+        {
+          document_id: 'doc-court-order',
+          field_key: 'first_name',
+          field_label: 'First name',
+          field_value_masked: 'Alex',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-court-order',
+          field_key: 'last_name',
+          field_label: 'Last name',
+          field_value_masked: 'Jordan',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+      ],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'court-order-reference-extraction')).toMatchObject({
+      status: 'attention',
+      reason: 'Court-order target first and last name are verified, but the target middle name still needs grounded extraction before downstream use is fully trusted.',
+    });
+  });
+
   it('does not escalate canonical extraction alignment from unverified extracted values alone', () => {
     const snapshot = evaluateNameChangeRequirements(
       makeCase(),

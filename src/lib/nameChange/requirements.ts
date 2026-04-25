@@ -120,7 +120,7 @@ export function evaluateNameChangeRequirements(
   const hasVerifiedCourtOrderTargetFirstName = hasVerifiedLinkedDocumentFieldValue(documents, mergedExtractedFields, 'court_order', 'first_name');
   const hasVerifiedCourtOrderTargetMiddleName = hasVerifiedLinkedDocumentFieldValue(documents, mergedExtractedFields, 'court_order', 'middle_name');
   const hasVerifiedCourtOrderTargetLastName = hasVerifiedLinkedDocumentFieldValue(documents, mergedExtractedFields, 'court_order', 'last_name');
-  const needsVerifiedCourtOrderTargetMiddleName = Boolean(canonicalCase.targetName.middle);
+  const needsVerifiedCourtOrderTargetMiddleName = Boolean(canonicalCase.targetName.middle || canonicalCase.currentName.middle);
   const hasVerifiedCourtOrderTargetNameExtraction = hasVerifiedCourtOrderTargetFirstName
     && hasVerifiedCourtOrderTargetLastName
     && (!needsVerifiedCourtOrderTargetMiddleName || hasVerifiedCourtOrderTargetMiddleName);

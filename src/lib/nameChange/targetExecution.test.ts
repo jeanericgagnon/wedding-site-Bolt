@@ -1161,6 +1161,78 @@ describe('name change target execution snapshot', () => {
     });
   });
 
+  it('still requires court-order middle-name grounding when only the current middle name is populated in case truth', () => {
+    const profile = makeCase({
+      legal_basis: 'court_order' as never,
+      marriage_state: null,
+      marriage_date: null,
+      current_middle_name: 'Marie',
+      target_middle_name: '',
+      structured_intake: {
+        spouseLastName: null,
+        travelBookedSoon: false,
+        wantsDocumentIntakeHelp: true,
+      },
+      change_reasons: ['court_order'],
+    });
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'court-order-doc',
+        document_kind: 'court_order_name_change',
+        display_name: 'Court order',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'court-order-doc',
+        field_key: 'first_name',
+        field_label: 'First name',
+        field_value_masked: 'Alex',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'court-order-doc',
+        field_key: 'last_name',
+        field_label: 'Last name',
+        field_value_masked: 'Jordan',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'court-order-doc',
+        field_key: 'case_number',
+        field_label: 'Case number',
+        field_value_masked: '24-CV-1188',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'court-order-doc',
+        field_key: 'court_order_date',
+        field_label: 'Court order date',
+        field_value_masked: '2026-04-15',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('courtOrder', profile, documents, extractedFields);
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'document',
+      label: 'Capture court-order target middle name',
+      detail: 'Court-order target first and last name are verified, but the target middle name still needs grounded extraction before downstream use is fully trusted.',
+    });
+  });
+
   it('gives a concrete court-order extraction next action when signed date is the last missing grounded field', () => {
     const profile = makeCase({
       legal_basis: 'court_order' as never,

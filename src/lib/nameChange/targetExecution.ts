@@ -283,7 +283,7 @@ export function buildNameChangeTargetExecutionSnapshot(
     const hasVerifiedCourtOrderTargetLastName = hasVerifiedLinkedDocumentFieldValue(documents, mergedExtractedFields, 'court_order', 'last_name');
     const hasVerifiedCourtOrderCaseNumber = hasVerifiedLinkedDocumentFieldValue(documents, mergedExtractedFields, 'court_order', 'case_number');
     const hasVerifiedCourtOrderSignedDate = hasVerifiedLinkedDocumentFieldValue(documents, mergedExtractedFields, 'court_order', 'court_order_date');
-    const needsVerifiedCourtOrderTargetMiddleName = Boolean(profile.target_middle_name);
+    const needsVerifiedCourtOrderTargetMiddleName = Boolean(profile.target_middle_name || profile.current_middle_name);
     const courtOrderKinds = new Set(getNameChangeDocumentKindAliases('court_order'));
     const courtOrderDocuments = documents.filter((document) => courtOrderKinds.has(document.document_kind));
     const hasCourtOrderProof = courtOrderDocuments.length > 0;
