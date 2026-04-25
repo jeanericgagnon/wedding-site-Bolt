@@ -10,6 +10,7 @@ import { LanguageSwitcher } from '../components/ui/LanguageSwitcher';
 import { CheckCircle, Search, AlertCircle, User } from 'lucide-react';
 import { demoGuests, demoRSVPs } from '../lib/demoData';
 import { DEMO_MODE } from '../config/env';
+import { formatRsvpDeadline, isRsvpDeadlinePassed } from './rsvpDeadline';
 
 const RSVP_FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/validate-rsvp-token`;
 const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -1079,7 +1080,7 @@ export default function RSVP() {
       : guest.name
     : '';
 
-  const deadlinePassed = rsvpDeadline ? new Date(rsvpDeadline) < new Date() : false;
+  const deadlinePassed = isRsvpDeadlinePassed(rsvpDeadline);
 
   const canSubmit = !!guest?.invite_token && !(deadlinePassed && !existingRsvp);
 
@@ -1390,7 +1391,7 @@ export default function RSVP() {
                 <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="font-medium">RSVP deadline has passed</p>
-                  <p className="mt-0.5">The deadline was {new Date(rsvpDeadline!).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}. Please contact the couple directly.</p>
+                  <p className="mt-0.5">The deadline was {formatRsvpDeadline(rsvpDeadline)}. Please contact the couple directly.</p>
                 </div>
               </div>
             )}

@@ -3139,6 +3139,54 @@ describe('RSVP stale submit protection', () => {
     expect(screen.queryByText("You're confirmed!")).not.toBeInTheDocument();
   });
 
+  it('blocks guest submission and avoids invalid deadline labels when the persisted deadline is malformed', async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        guest: {
+          id: 'guest-1',
+          first_name: 'Taylor',
+          last_name: 'Rivera',
+          name: 'Taylor Rivera',
+          email: 'taylor@example.com',
+          phone: null,
+          group_name: null,
+          wedding_site_id: 'site-1',
+          plus_one_allowed: false,
+          invited_to_ceremony: true,
+          invited_to_reception: true,
+          invite_token: 'token-1',
+        },
+        existingRsvp: null,
+        guests: null,
+        rsvpDeadline: 'not-a-date',
+        rsvpQuestions: [],
+        rsvpMealConfig: { enabled: true, options: ['Chicken', 'Beef'] },
+        musicPlaylistUrl: null,
+        householdGuests: [],
+      }),
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/rsvp']}>
+        <RSVP />
+      </MemoryRouter>
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('rsvp.search_placeholder'), { target: { value: 'Taylor Rivera' } });
+    fireEvent.click(screen.getByText('Find My Invitation'));
+
+    await screen.findByText('Welcome, Taylor Rivera!');
+    expect(screen.getByText('RSVP deadline has passed')).toBeInTheDocument();
+    expect(screen.getByText('The deadline was Unknown date. Please contact the couple directly.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Continue to details'));
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'Chicken' } });
+    fireEvent.click(screen.getByText('Continue to review'));
+
+    expect(screen.getByText('Submit RSVP')).toBeDisabled();
+  });
+
   it('clears stale submit errors when the guest edits their RSVP before retrying', async () => {
     fetchMock
       .mockResolvedValueOnce({
