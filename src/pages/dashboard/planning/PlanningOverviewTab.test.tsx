@@ -3,22 +3,44 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { PlanningOverviewTab } from './PlanningOverviewTab';
 import { buildNameChangePlan } from '../../../lib/nameChange/engine';
 import { defaultNameChangeCaseInput } from './nameChangeService';
+import type { NameChangeCaseInput, NameChangePlan } from '../../../lib/nameChange/types';
+
+function makeDraft(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseInput {
+  return {
+    ...defaultNameChangeCaseInput,
+    current_first_name: 'Taylor',
+    current_last_name: 'Smith',
+    target_last_name: 'Jordan',
+    marriage_date: '2026-04-20',
+    ...overrides,
+  };
+}
+
+function makePlanWithExecutionActivity(draft: NameChangeCaseInput): NameChangePlan {
+  const plan = buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] });
+  const [firstStep, ...restSteps] = plan.steps;
+
+  return {
+    ...plan,
+    steps: firstStep
+      ? [{ ...firstStep, executionStatus: 'in_progress', executionUpdatedAt: new Date().toISOString() }, ...restSteps]
+      : plan.steps,
+    summary: {
+      ...plan.summary,
+      executionCounts: {
+        todo: Math.max(plan.steps.length - 1, 0),
+        in_progress: firstStep ? 1 : 0,
+        complete: 0,
+      },
+    },
+  };
+}
 
 describe('PlanningOverviewTab', () => {
   it('shows a post-wedding name change tile that routes into the assistant lane', () => {
     const onTabChange = vi.fn();
     const replaceState = vi.spyOn(window.history, 'replaceState');
-    const plan = buildNameChangePlan({
-      profile: {
-        ...defaultNameChangeCaseInput,
-        current_first_name: 'Taylor',
-        current_last_name: 'Smith',
-        target_last_name: 'Jordan',
-        marriage_date: '2026-04-20',
-      },
-      documents: [],
-      extractedFields: [],
-    });
+    const plan = buildNameChangePlan({ profile: makeDraft(), documents: [], extractedFields: [] });
 
     render(
       <PlanningOverviewTab
@@ -68,5 +90,31 @@ describe('PlanningOverviewTab', () => {
     expect(screen.getByText(/Payroll and HR can use the verified SSA identity:/i)).toBeTruthy();
     expect(screen.getByText(/Tax records are ready to align with SSA and payroll:/i)).toBeTruthy();
     expect(screen.getByText(/Downstream rollout is ready for the long-tail accounts:/i)).toBeTruthy();
+  });
+
+  it('reopens the post-wedding tile into the status vault once execution has started', () => {
+    const onTabChange = vi.fn();
+    const replaceState = vi.spyOn(window.history, 'replaceState');
+    const plan = makePlanWithExecutionActivity(makeDraft());
+
+    render(
+      <PlanningOverviewTab
+        tasks={[]}
+        budgetItems={[]}
+        vendors={[]}
+        seatingReadiness={{ attending: 0, seated: 0, unassigned: 0 }}
+        weddingDate="2026-04-20"
+        nameChangePlan={plan}
+        onTabChange={onTabChange}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Post-wedding name change assistant/i }));
+    expect(onTabChange).toHaveBeenCalledWith('nameChange');
+    expect(replaceState).toHaveBeenLastCalledWith(null, '', '/#target-status-tracking');
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Certified legal proof is grounded and ready to reuse' })[0]);
+    expect(onTabChange).toHaveBeenLastCalledWith('nameChange');
+    expect(replaceState).toHaveBeenLastCalledWith(null, '', '/#target-status-tracking');
   });
 });

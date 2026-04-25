@@ -190,11 +190,11 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
         <div
           role="button"
           tabIndex={0}
-          onClick={() => routeToNameChangeLane(nameChangeCard.primaryHref, onTabChange)}
+          onClick={() => routeToNameChangeLane(nameChangeCard.plannerHref, onTabChange)}
           onKeyDown={(event) => {
             if (event.key === 'Enter' || event.key === ' ') {
               event.preventDefault();
-              routeToNameChangeLane(nameChangeCard.primaryHref, onTabChange);
+              routeToNameChangeLane(nameChangeCard.plannerHref, onTabChange);
             }
           }}
           className="block w-full text-left"
@@ -247,7 +247,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
                         className="font-medium text-text-primary underline underline-offset-2"
                         onClick={(event) => {
                           event.stopPropagation();
-                          routeToNameChangeLane(nameChangeCard.primaryHref, onTabChange);
+                          routeToNameChangeLane(nameChangeCard.plannerHref, onTabChange);
                         }}
                       >
                         {nextNameChangeMilestone.label}
@@ -263,7 +263,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
                         className="font-medium text-text-primary underline underline-offset-2"
                         onClick={(event) => {
                           event.stopPropagation();
-                          routeToNameChangeLane(nameChangeCard.primaryHref, onTabChange);
+                          routeToNameChangeLane(nameChangeCard.plannerHref, onTabChange);
                         }}
                       >
                         {nameChangeInsights.concreteResumeLabel}
