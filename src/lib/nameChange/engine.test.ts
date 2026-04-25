@@ -282,7 +282,14 @@ describe('name change engine', () => {
           ]),
           proofChecklist: expect.arrayContaining(['Updated photo ID or DMV receipt']),
         }),
-        expect.objectContaining({ audience: 'Insurance or subscription support' }),
+        expect.objectContaining({
+          audience: 'Insurance or subscription support',
+          dependsOnStepIds: expect.arrayContaining([
+            'institution-disability-insurance',
+            'institution-workers-comp-leave',
+            'institution-medical-records',
+          ]),
+        }),
         expect.objectContaining({ audience: 'Tax agency or payroll tax support', dependsOnStepIds: expect.arrayContaining(['institution-state-tax-agency']) }),
         expect.objectContaining({
           audience: 'Airline, hotel, loyalty, or travel support',

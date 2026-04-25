@@ -959,7 +959,13 @@ function buildAccountUpdateTemplates(
       id: 'template-insurance',
       audience: 'Insurance or subscription support',
       subject: 'Please update my account to my legal name',
-      dependsOnStepIds: ['state-photo-id', 'institution-insurance', 'institution-medical-records'],
+      dependsOnStepIds: [
+        'state-photo-id',
+        'institution-insurance',
+        'institution-disability-insurance',
+        'institution-workers-comp-leave',
+        'institution-medical-records',
+      ],
       proofDocuments: [
         ...proofChecklistBase,
         'Updated photo ID if coverage verification requires it',
