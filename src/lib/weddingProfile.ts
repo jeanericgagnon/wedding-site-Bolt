@@ -271,9 +271,14 @@ export const buildDraftSitePatchFromProfile = (profile: WeddingProfile) => ({
 const dayToOffset: Record<string, number> = { friday: -2, saturday: -1, sunday: 0, monday: 1, thursday: -3 };
 
 const normalizeWeddingDate = (value?: string | null) => {
-  if (!value?.trim()) return null;
-  const date = new Date(`${value}T12:00:00Z`);
-  return Number.isNaN(date.getTime()) ? null : value;
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return null;
+
+  const date = new Date(`${trimmed}T12:00:00Z`);
+  if (Number.isNaN(date.getTime())) return null;
+
+  return date.toISOString().slice(0, 10) === trimmed ? trimmed : null;
 };
 
 const inferDressCode = (profile: WeddingProfile) => {
