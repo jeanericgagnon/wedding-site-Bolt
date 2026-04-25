@@ -16,7 +16,7 @@ describe('buildNameChangeOverviewCardModel', () => {
     expect(model.statusLabel).toBe('Start free assistant');
     expect(model.tertiaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
     expect(model.tertiaryLabel).toBe('Browse full assistant');
-    expect(model.plannerHref).toBe('/dashboard/planning?tab=nameChange');
+    expect(model.plannerHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
     expect(model.plannerLabel).toBe('Open name change planner');
   });
 
@@ -31,8 +31,9 @@ describe('buildNameChangeOverviewCardModel', () => {
     expect(model.statusLabel).toBe('Resume where you left off');
     expect(model.primaryHref).toBe('/dashboard/planning?tab=nameChange#target-status-tracking');
     expect(model.secondaryHref).toBe('/dashboard/planning?tab=nameChange#case-setup');
+    expect(model.tertiaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
     expect(model.tertiaryLabel).toBe('Open full assistant');
-    expect(model.plannerHref).toBe('/dashboard/planning?tab=nameChange');
+    expect(model.plannerHref).toBe('/dashboard/planning?tab=nameChange#target-status-tracking');
   });
 
   it('softens the card after the workflow is complete', () => {
@@ -46,7 +47,9 @@ describe('buildNameChangeOverviewCardModel', () => {
     expect(model.primaryLabel).toBe('Review status vault');
     expect(model.statusLabel).toBe('Status vault complete');
     expect(model.optionalNextStep).toContain('Nothing pushy here');
-    expect(model.tertiaryHref).toBe('/dashboard/planning?tab=nameChange');
+    expect(model.secondaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
+    expect(model.tertiaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
+    expect(model.plannerHref).toBe('/dashboard/planning?tab=nameChange#target-status-tracking');
   });
 
   it('keeps the roadmap discoverable when a saved workspace has no execution yet', () => {
@@ -61,5 +64,6 @@ describe('buildNameChangeOverviewCardModel', () => {
     expect(model.primaryLabel).toBe('See roadmap first');
     expect(model.primaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
     expect(model.tertiaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
+    expect(model.plannerHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
   });
 });
