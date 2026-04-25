@@ -63,4 +63,16 @@ describe('setupDraftHydration', () => {
 
     expect(result.event.weddingDateISO).toBeUndefined();
   });
+
+  it('keeps hydrated couple display truth clean when restored names contain only whitespace', () => {
+    const source = createEmptyWeddingData();
+    source.couple.partner1Name = '   ';
+    source.couple.partner2Name = 'Alex';
+    source.couple.story = '';
+
+    const result = applySetupDraftToWeddingData(source, draft());
+
+    expect(result.couple.displayName).toBe('Alex');
+    expect(result.couple.story).toContain('Alex are so excited');
+  });
 });

@@ -1,4 +1,5 @@
 import type { SetupDraft } from '../../lib/setupDraft';
+import { buildCoupleDisplayName } from '../../lib/coupleDisplayName';
 import { unwrapGeneratedFieldValue } from '../../lib/weddingProfile';
 import type { WeddingDataV1 } from '../../types/weddingData';
 
@@ -30,7 +31,7 @@ export const applySetupDraftToWeddingData = (source: WeddingDataV1, draft: Setup
 
   const hasNames = Boolean(next.couple.partner1Name || next.couple.partner2Name);
   if (hasNames) {
-    next.couple.displayName = [next.couple.partner1Name, next.couple.partner2Name].filter(Boolean).join(' & ');
+    next.couple.displayName = buildCoupleDisplayName(next.couple.partner1Name, next.couple.partner2Name);
   }
 
   if (draft.dateKnown && draft.weddingDate) {
@@ -61,7 +62,7 @@ export const applySetupDraftToWeddingData = (source: WeddingDataV1, draft: Setup
   }
 
   const coupleLabel = hasNames
-    ? [next.couple.partner1Name, next.couple.partner2Name].filter(Boolean).join(' & ')
+    ? buildCoupleDisplayName(next.couple.partner1Name, next.couple.partner2Name)
     : 'We';
 
   const existingStory = unwrapGeneratedFieldValue<string>(next.couple.story, '');
