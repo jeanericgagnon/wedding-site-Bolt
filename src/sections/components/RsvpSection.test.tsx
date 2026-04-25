@@ -61,4 +61,19 @@ describe('RsvpSection', () => {
     expect(screen.getByText('RSVP')).toBeInTheDocument();
     expect(screen.getByText('Join Alex & Jordan in celebrating their wedding')).toBeInTheDocument();
   });
+
+  it('keeps inline RSVP couple copy truthful when one persisted partner name is whitespace only', () => {
+    const data = createWeddingData();
+    data.couple.partner1Name = '   ';
+    data.couple.partner2Name = ' Alex ';
+
+    render(
+      <RsvpInline
+        data={data}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(screen.getByText('Join Alex in celebrating their wedding')).toBeInTheDocument();
+  });
 });

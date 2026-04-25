@@ -4,6 +4,7 @@ import { SectionInstance } from '../../types/layoutConfig';
 import { Calendar } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { readBuilderValue } from '../../lib/weddingProfile';
+import { buildCoupleDisplayName } from '../../lib/coupleDisplayName';
 
 interface Props {
   data: WeddingDataV1;
@@ -201,7 +202,7 @@ export const RsvpInline: React.FC<Props> = ({ data, instance }) => {
   const { rsvp, couple } = data;
   const { settings } = instance;
   const deadline = formatDeadline(rsvp.deadlineISO);
-  const displayName = couple.displayName || [couple.partner1Name, couple.partner2Name].filter(Boolean).join(' & ') || 'the couple';
+  const displayName = couple.displayName || buildCoupleDisplayName(couple.partner1Name, couple.partner2Name) || 'the couple';
   const [submitted, setSubmitted] = useState(false);
   const [attending, setAttending] = useState(false);
 
