@@ -1900,7 +1900,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                   </span>
                 </div>
               </div>
-              <p className="mt-3 text-sm text-text-secondary">{item.action.detail}</p>
+              <p className="mt-3 whitespace-pre-line text-sm text-text-secondary">{item.action.detail}</p>
               <p className="mt-2 text-xs text-text-secondary">{getActionFeedSectionLabel(item.sectionKey)} · {item.origin === 'execution' ? 'execution lane' : 'document repair'} · {item.action.category} · {getActionFeedUrgencyReasonLabel(item.urgencyReason)} · score {item.score}</p>
               <p className="mt-3 text-xs font-medium text-primary">{getActionFeedCtaLabel(item.plannerIntent)} →</p>
             </button>
@@ -2002,7 +2002,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                           {item.nextActions.map((action) => (
                             <li key={`${action.category}:${action.label}`} className="rounded-lg border border-border-subtle bg-white/70 px-3 py-2">
                               <p className="font-medium text-text-primary">{action.label}</p>
-                              <p className="mt-1 text-xs text-text-secondary">{action.detail}</p>
+                              <p className="mt-1 whitespace-pre-line text-xs text-text-secondary">{action.detail}</p>
                             </li>
                           ))}
                         </ul>

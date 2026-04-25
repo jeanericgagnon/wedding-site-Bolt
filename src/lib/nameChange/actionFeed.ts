@@ -70,7 +70,7 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
     `Proof status: ${template.proofReadinessSummary}`,
     `Next ask: ${template.requestSummary}`,
     proofChecklistSummary,
-  ].filter(Boolean).join(' ').trim();
+  ].filter(Boolean).join('\n').trim();
 }
 
 function formatTemplateAudienceForAction(audience: string) {
