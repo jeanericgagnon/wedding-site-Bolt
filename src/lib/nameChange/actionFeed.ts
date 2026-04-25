@@ -102,12 +102,18 @@ export function getAccountUpdateTemplateCurrentBlockerLine(template: AccountUpda
           : undefined;
 }
 
-function formatBlockingProofHopStatePhrase(blockingProofHopLabel: string) {
+export function formatBlockingProofHopStatePhrase(blockingProofHopLabel: string) {
   const trimmed = blockingProofHopLabel.trim();
   if (!trimmed) return '';
-  return trimmed.charAt(0).toLowerCase() === trimmed.charAt(0)
-    ? trimmed
-    : trimmed;
+
+  const [firstToken, ...rest] = trimmed.split(/\s+/u);
+  if (!firstToken) return trimmed;
+
+  const normalizedFirstToken = /^[A-Z0-9-]{2,}$/u.test(firstToken)
+    ? firstToken
+    : `${firstToken.charAt(0).toLowerCase()}${firstToken.slice(1)}`;
+
+  return [normalizedFirstToken, ...rest].join(' ');
 }
 
 export function getAccountUpdateTemplateStateLine(template: AccountUpdateTemplate) {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildNameChangeActionFeed,
+  formatBlockingProofHopStatePhrase,
   getAccountUpdateTemplateBlockedByLine,
   getAccountUpdateTemplateCurrentBlockerLine,
   getAccountUpdateTemplateReadinessLabel,
@@ -145,6 +146,12 @@ function makeReminderAttention(overrides: Partial<NameChangeReminderAttentionIte
 }
 
 describe('account update template surface helpers', () => {
+  it('keeps blocker state phrases natural without lowercasing acronyms', () => {
+    expect(formatBlockingProofHopStatePhrase('Legal proof pending')).toBe('legal proof pending');
+    expect(formatBlockingProofHopStatePhrase('SSA pending')).toBe('SSA pending');
+    expect(formatBlockingProofHopStatePhrase('DMV receipt pending')).toBe('DMV receipt pending');
+  });
+
   it('keeps planner and feed readiness labels on the same copy map', () => {
     expect(getAccountUpdateTemplateReadinessLabel('ready')).toBe('send now (proof packet ready)');
     expect(getAccountUpdateTemplateReadinessLabel('in_progress')).toBe('draft now, send after current proof clears');
@@ -166,6 +173,12 @@ describe('account update template surface helpers', () => {
       readiness: 'upcoming',
       blockingProofHopLabel: 'SSA pending',
     });
+    const blockedTemplate = makeTemplate({
+      id: 'template-bank',
+      audience: 'Bank accounts',
+      readiness: 'blocked',
+      blockingProofHopLabel: 'Legal proof pending',
+    });
 
     expect(getAccountUpdateTemplateBlockedByLine(stagedTemplate)).toBe('Blocked by: current proof pending.');
     expect(getAccountUpdateTemplateCurrentBlockerLine(stagedTemplate)).toBe('Current blocker: current proof pending.');
@@ -173,6 +186,7 @@ describe('account update template surface helpers', () => {
     expect(getAccountUpdateTemplateBlockedByLine(upcomingTemplate)).toBe('Blocked by: SSA pending.');
     expect(getAccountUpdateTemplateCurrentBlockerLine(upcomingTemplate)).toBe('Current blocker: SSA pending.');
     expect(getAccountUpdateTemplateStateLine(upcomingTemplate)).toBe('Template state: prep the ask now and wait for SSA pending to clear before sending.');
+    expect(getAccountUpdateTemplateStateLine(blockedTemplate)).toBe('Template state: intake-only until legal proof pending clears.');
   });
 });
 
