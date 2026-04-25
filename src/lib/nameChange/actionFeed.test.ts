@@ -591,7 +591,7 @@ describe('name change action feed', () => {
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-tax',
       laneLabel: 'Tax and state agencies · draft now',
-      urgencyReason: 'packet_trust',
+      urgencyReason: 'review_queue',
       action: expect.objectContaining({ detail: expect.stringContaining('ready to draft') }),
     });
   });
@@ -799,6 +799,7 @@ describe('name change action feed', () => {
       focusTargetId: 'account-update-template-template-tax',
       laneLabel: 'Tax and state agencies · draft now',
       severity: 'attention',
+      urgencyReason: 'review_queue',
     });
     expect(feed[0]?.action.label).toBe('Draft tax and state agencies update');
   });
