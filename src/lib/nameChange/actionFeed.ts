@@ -287,7 +287,7 @@ function getExecutionSeverity(
   if (template?.readiness === 'in_progress') {
     return getEffectiveBlockingProofHopLabel(template) ? 'blocking' : 'attention';
   }
-  if (template?.readiness === 'upcoming') return 'attention';
+  if (template?.readiness === 'upcoming') return 'blocking';
   if (template?.readiness === 'blocked') return 'blocking';
   if (!snapshot.ready) return snapshot.blockers.length > 0 || snapshot.readinessSummary.blockingFieldRisks > 0 ? 'blocking' : 'attention';
   return 'ready';

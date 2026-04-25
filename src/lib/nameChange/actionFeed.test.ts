@@ -772,8 +772,9 @@ describe('name change action feed', () => {
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-payroll',
       laneLabel: 'Employer payroll / HR · ask before next proof hop · SSA pending',
-      severity: 'attention',
+      severity: 'blocking',
       urgencyReason: 'blocking_dependency',
+      urgencyTier: 'critical',
     });
     expect(feed[0]?.action.label).toBe('Ask employer payroll / HR before next proof hop (SSA pending)');
     expect(feed[0]?.action.detail).toContain('Template state: prep the ask now and wait for ssa pending to clear before sending.');
@@ -908,7 +909,8 @@ describe('name change action feed', () => {
     expect(feed[1]).toMatchObject({
       title: 'Employer payroll / HR',
       laneLabel: 'Employer payroll / HR · ask before next proof hop · SSA pending',
-      severity: 'attention',
+      severity: 'blocking',
+      urgencyTier: 'critical',
     });
     expect(feed[1]?.action.label).toBe('Ask employer payroll / HR before next proof hop (SSA pending)');
   });
