@@ -111,7 +111,7 @@ function getTemplateLaneLabel(template: AccountUpdateTemplate) {
     : template.readiness === 'complete'
       ? 'confirm sync'
       : template.readiness === 'in_progress'
-        ? 'draft now'
+        ? 'draft now, send after current proof clears'
         : template.readiness === 'upcoming'
           ? 'ask before next proof hop'
           : 'ask intake rules now';

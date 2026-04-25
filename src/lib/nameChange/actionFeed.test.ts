@@ -635,7 +635,7 @@ describe('name change action feed', () => {
       title: 'Tax and state agencies',
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-tax',
-      laneLabel: 'Tax and state agencies · draft now · SSA pending',
+      laneLabel: 'Tax and state agencies · draft now, send after current proof clears · SSA pending',
       urgencyReason: 'blocking_dependency',
       action: expect.objectContaining({ detail: expect.stringContaining('ready to draft') }),
     });
@@ -850,7 +850,7 @@ describe('name change action feed', () => {
     expect(feed[0]).toMatchObject({
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-tax',
-      laneLabel: 'Tax and state agencies · draft now · SSA pending',
+      laneLabel: 'Tax and state agencies · draft now, send after current proof clears · SSA pending',
       severity: 'attention',
       urgencyReason: 'blocking_dependency',
     });
@@ -970,7 +970,7 @@ describe('name change action feed', () => {
     });
     expect(feed[1]).toMatchObject({
       title: 'Tax and state agencies',
-      laneLabel: 'Tax and state agencies · draft now · SSA pending',
+      laneLabel: 'Tax and state agencies · draft now, send after current proof clears · SSA pending',
       severity: 'attention',
     });
     expect(feed[1]?.action.detail).toContain('Blocked by: SSA pending.');
