@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildNameChangePlan,
   evaluateCaliforniaNameChangeEligibility,
+  normalizeAccountUpdateChecklistItems,
   formatAccountUpdateProofLine,
   normalizeAccountUpdateProofItems,
 } from './engine';
@@ -71,6 +72,19 @@ describe('name change engine', () => {
       'Updated photo ID or DMV receipt.',
       '',
     ])).toEqual(['Certified legal name-change proof', 'Updated photo ID or DMV receipt']);
+  });
+
+  it('normalizes account-update checklist items without repeating the same proof sentence', () => {
+    expect(normalizeAccountUpdateChecklistItems([
+      'Certified legal name-change proof',
+      ' Certified legal name-change proof. ',
+      'Wait to send until SSA is the next cleared proof hop.',
+      'Wait to send until SSA is the next cleared proof hop',
+      '   ',
+    ])).toEqual([
+      'Certified legal name-change proof',
+      'Wait to send until SSA is the next cleared proof hop.',
+    ]);
   });
 
   it('keeps straightforward california marriage surname updates on marriage path', () => {

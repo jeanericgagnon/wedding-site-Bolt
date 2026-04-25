@@ -27,6 +27,17 @@ export function normalizeAccountUpdateProofItems(items: string[]) {
     .filter((item, index, array) => item.length > 0 && array.indexOf(item) === index);
 }
 
+export function normalizeAccountUpdateChecklistItems(items: string[]) {
+  const seen = new Set<string>();
+  return items.flatMap((item) => {
+    const trimmed = item.trim();
+    const normalizedKey = trimmed.replace(/[.\s]+$/u, '');
+    if (!normalizedKey || seen.has(normalizedKey)) return [];
+    seen.add(normalizedKey);
+    return [trimmed];
+  });
+}
+
 function compactTemplateBody(body: string) {
   return body.replace(/\s{2,}/gu, ' ').trim();
 }
@@ -965,10 +976,12 @@ function buildAccountUpdateTemplates(
     const proofChecklistStatusNote = ensureTerminalPeriod(getProofChecklistStatusNote(template.id, readiness));
     const readinessIntro = getReadinessIntro(readiness, blockingProofHopLabel);
     const blockingProofHopSentence = getBlockingProofHopSentence(readiness, blockingProofHopLabel);
-    const proofChecklist = [...proofDocuments, checklistHighlight];
-    const proofChecklistWithStatus = [...proofChecklist, proofChecklistStatusNote];
+    const proofChecklist = normalizeAccountUpdateChecklistItems([...proofDocuments, checklistHighlight]);
+    const proofChecklistWithStatus = normalizeAccountUpdateChecklistItems([...proofChecklist, proofChecklistStatusNote]);
     const proofLine = formatAccountUpdateProofLine(proofDocuments, readinessSpecificProof);
-    const proofChecklistLine = `Proof checklist I am tracking: ${joinChecklistSnippets(proofChecklistWithStatus)}`;
+    const proofChecklistLine = proofChecklistWithStatus.length > 0
+      ? `Proof checklist I am tracking: ${joinChecklistSnippets(proofChecklistWithStatus)}`
+      : '';
     const checklistGuidanceLine = `${checklistHighlight} ${proofChecklistStatusNote}`;
 
     return {
