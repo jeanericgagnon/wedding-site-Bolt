@@ -529,6 +529,8 @@ describe('NameChangePlannerTab', () => {
     expect(screen.getAllByText(`Blocked by: ${payrollBlockingProofHop}`).length).toBeGreaterThan(0);
     expect(screen.getByText(`Proof status: ${payrollProofStatus}`)).toBeInTheDocument();
     expect(screen.getByText(`Proof to have handy: ${payrollProofChecklist}`)).toBeInTheDocument();
+    expect(screen.getAllByText('intake first').length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('button', { name: 'Copy intake script' }).length).toBeGreaterThan(0);
     expect(screen.getByText('Copy, stage, or send when the proof chain is ready. Payroll, bank, insurance, and other downstream updates should not require fresh writing every time.')).toBeInTheDocument();
     expect(screen.queryByText('Open copy-ready template →')).not.toBeInTheDocument();
     expect(screen.getAllByText('Open update template →').length).toBeGreaterThan(0);
@@ -565,10 +567,11 @@ describe('NameChangePlannerTab', () => {
       />,
     );
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Copy text' })[0]!);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Copy intake script' })[0]!);
 
     await waitFor(() => expect(clipboardWriteText).toHaveBeenCalledTimes(1));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Subject: ${payrollTemplate?.subject}`));
+    expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining('Status: intake first'));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Next ask: ${payrollTemplate?.requestSummary}`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Blocked by: ${payrollTemplate?.blockingProofHopLabel}`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Current blocker: ${payrollTemplate?.blockingProofHopLabel}.`));

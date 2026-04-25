@@ -160,11 +160,38 @@ function getActionFeedCtaLabel(intent: 'open_execution_card' | 'open_document_re
   return 'Open execution card';
 }
 
+function getAccountUpdateTemplateStatusLabel(readiness: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]['readiness']) {
+  switch (readiness) {
+    case 'ready':
+      return 'send now';
+    case 'in_progress':
+      return 'draft now';
+    case 'complete':
+      return 'confirm sync';
+    case 'upcoming':
+      return 'ask next';
+    case 'blocked':
+    default:
+      return 'intake first';
+  }
+}
+
+function getAccountUpdateTemplateCopyButtonLabel(
+  template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number],
+  copiedTemplateId: string | null,
+) {
+  if (copiedTemplateId === template.id) return 'Copied';
+  if (template.readiness === 'ready') return 'Copy send-ready text';
+  if (template.readiness === 'complete') return 'Copy confirmation text';
+  if (template.readiness === 'in_progress') return 'Copy staged draft';
+  return 'Copy intake script';
+}
+
 function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
   return [
     `Audience: ${template.audience}`,
     `Subject: ${template.subject}`,
-    `Status: ${template.readiness.replace('_', ' ')}`,
+    `Status: ${getAccountUpdateTemplateStatusLabel(template.readiness)}`,
     `Readiness: ${template.readinessLabel}`,
     template.blockingProofHopLabel ? `Blocked by: ${template.blockingProofHopLabel}` : undefined,
     `Proof status: ${template.proofReadinessSummary}`,
@@ -1484,10 +1511,10 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`rounded-full px-2 py-1 text-xs ${getExecutionSummaryTone(template.readiness)}`}>
-                      {template.readiness.replace('_', ' ')}
+                      {getAccountUpdateTemplateStatusLabel(template.readiness)}
                     </span>
                     <Button size="sm" variant="outline" onClick={() => void copyAccountUpdateTemplate(template)}>
-                      {copiedTemplateId === template.id ? 'Copied' : 'Copy text'}
+                      {getAccountUpdateTemplateCopyButtonLabel(template, copiedTemplateId)}
                     </Button>
                   </div>
                 </div>
