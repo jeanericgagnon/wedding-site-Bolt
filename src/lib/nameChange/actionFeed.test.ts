@@ -474,7 +474,7 @@ describe('name change action feed', () => {
     expect(feed[0]).toMatchObject({
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-insurance',
-      laneLabel: 'Insurance carriers · ask intake rules',
+      laneLabel: 'Insurance carriers · ask intake rules now',
       severity: 'blocking',
       urgencyReason: 'blocking_dependency',
       action: expect.objectContaining({
@@ -906,7 +906,7 @@ describe('name change action feed', () => {
     expect(feed[0]).toMatchObject({
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-digital-identity',
-      laneLabel: 'Phone, utilities, housing, or primary digital identity support · ask intake rules',
+      laneLabel: 'Phone, utilities, housing, or primary digital identity support · ask intake rules now',
       urgencyReason: 'blocking_dependency',
       action: expect.objectContaining({
         detail: expect.stringContaining('gather verification rules first'),
@@ -973,7 +973,7 @@ describe('name change action feed', () => {
     expect(feed[0]).toMatchObject({
       title: 'Insurance carriers',
       plannerIntent: 'open_account_update_template',
-      laneLabel: 'Insurance carriers · ask intake rules',
+      laneLabel: 'Insurance carriers · ask intake rules now',
       urgencyTier: 'critical',
     });
     expect(feed[1]).toMatchObject({

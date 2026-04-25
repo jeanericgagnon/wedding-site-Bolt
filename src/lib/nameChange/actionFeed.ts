@@ -96,7 +96,7 @@ function getTemplateLaneLabel(template: AccountUpdateTemplate) {
         ? 'draft now'
         : template.readiness === 'upcoming'
           ? 'ask before next proof hop'
-          : 'ask intake rules';
+          : 'ask intake rules now';
 
   return `${template.audience} · ${readinessLabel}`;
 }
