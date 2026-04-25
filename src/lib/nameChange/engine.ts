@@ -769,32 +769,68 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
       featureTag: 'rollout' as const,
     },
   ];
+  const hasStep = (stepId: string) => steps.some((step) => step.id === stepId);
   const milestoneChecklist = [
     {
       id: 'milestone-legal-proof',
-      label: 'Certified legal proof is grounded and reviewed',
+      label: 'Certified legal proof is grounded and ready to reuse',
       status: resolvePlanSequenceStatus(['eligibility-proof'], steps),
       dependsOnStepIds: ['eligibility-proof'],
     },
     {
       id: 'milestone-ssa',
-      label: 'Social Security update is ready to file',
+      label: 'Social Security update is submitted and ready to verify',
       status: resolvePlanSequenceStatus(['federal-ssa'], steps),
       dependsOnStepIds: ['eligibility-proof', 'federal-ssa'],
     },
     {
       id: 'milestone-photo-id',
-      label: 'Primary photo ID can move right after SSA',
+      label: 'Primary photo ID is ready to move after SSA',
       status: resolvePlanSequenceStatus(['federal-ssa', 'state-dmv'], steps),
       dependsOnStepIds: ['federal-ssa', 'state-dmv'],
     },
+    hasStep('federal-passport')
+      ? {
+        id: 'milestone-passport',
+        label: 'Passport update is lined up from the live ID chain',
+        status: resolvePlanSequenceStatus(['federal-ssa', 'state-dmv', 'federal-passport'], steps),
+        dependsOnStepIds: ['federal-ssa', 'state-dmv', 'federal-passport'],
+      }
+      : null,
+    hasStep('institution-irs-employer')
+      ? {
+        id: 'milestone-payroll',
+        label: 'Payroll and HR can use the verified SSA identity',
+        status: resolvePlanSequenceStatus(['federal-ssa', 'institution-irs-employer'], steps),
+        dependsOnStepIds: ['federal-ssa', 'institution-irs-employer'],
+      }
+      : null,
+    (hasStep('institution-irs-records') || hasStep('institution-state-tax-agency'))
+      ? {
+        id: 'milestone-tax',
+        label: 'Tax records are ready to align with SSA and payroll',
+        status: resolvePlanSequenceStatus(
+          ['federal-ssa', 'institution-irs-records', 'institution-state-tax-agency'].filter((stepId) => hasStep(stepId)),
+          steps,
+        ),
+        dependsOnStepIds: ['federal-ssa', 'institution-irs-records', 'institution-state-tax-agency'].filter((stepId) => hasStep(stepId)),
+      }
+      : null,
     {
       id: 'milestone-account-rollout',
-      label: 'Banks, payroll, insurance, and subscriptions can be updated from one packet',
+      label: 'Banks, insurance, and core accounts can move from one packet',
       status: resolvePlanSequenceStatus(['state-dmv', 'institutions-rollout'], steps),
       dependsOnStepIds: ['state-dmv', 'institutions-rollout'],
     },
-  ] as const;
+    hasStep('institutions-rollout')
+      ? {
+        id: 'milestone-downstream-rollout',
+        label: 'Downstream rollout is ready for the long-tail accounts',
+        status: resolvePlanSequenceStatus(['state-dmv', 'institutions-rollout'], steps),
+        dependsOnStepIds: ['state-dmv', 'institutions-rollout'],
+      }
+      : null,
+  ].filter((milestone): milestone is NonNullable<typeof milestone> => Boolean(milestone));
   const milestoneChecklistWithTiming = milestoneChecklist.map((milestone) => ({
     ...milestone,
     lastUpdatedAt: milestone.dependsOnStepIds

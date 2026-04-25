@@ -80,7 +80,23 @@ describe('name change reminder suggestions', () => {
       dependsOnStepId: 'federal-ssa',
       urgency: 'high',
     });
+    expect(reminders.find((reminder) => reminder.id === 'reminder-milestone-confirm-milestone-passport')).toMatchObject({
+      dependsOnStepId: 'federal-passport',
+      urgency: 'medium',
+    });
+    expect(reminders.find((reminder) => reminder.id === 'reminder-milestone-confirm-milestone-payroll')).toMatchObject({
+      dependsOnStepId: 'institution-irs-employer',
+      urgency: 'high',
+    });
+    expect(reminders.find((reminder) => reminder.id === 'reminder-milestone-confirm-milestone-tax')).toMatchObject({
+      dependsOnStepId: 'institution-state-tax-agency',
+      urgency: 'medium',
+    });
     expect(reminders.find((reminder) => reminder.id === 'reminder-milestone-confirm-milestone-account-rollout')).toMatchObject({
+      dependsOnStepId: 'institutions-rollout',
+      urgency: 'medium',
+    });
+    expect(reminders.find((reminder) => reminder.id === 'reminder-milestone-confirm-milestone-downstream-rollout')).toMatchObject({
       dependsOnStepId: 'institutions-rollout',
       urgency: 'medium',
     });
@@ -111,6 +127,7 @@ describe('name change reminder suggestions', () => {
     const plan = buildNameChangePlan(makeInput({ passport_needs_update: false }));
     const reminders = buildNameChangeReminderSuggestions(plan);
     expect(reminders.some((reminder) => reminder.id === 'reminder-passport-followup')).toBe(false);
+    expect(reminders.some((reminder) => reminder.id === 'reminder-milestone-confirm-milestone-passport')).toBe(false);
   });
 
   it('suppresses reminders for steps already complete', () => {

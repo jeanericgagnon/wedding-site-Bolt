@@ -57,11 +57,35 @@ const MILESTONE_CONFIRMATION_CONFIG: Record<string, {
     urgency: 'high',
     suggestedOffsetDays: 5,
   },
+  'milestone-passport': {
+    label: 'Confirm passport update is reflected in the travel identity chain',
+    reason: 'Verify that the passport update has landed before travel profiles, bookings, or trusted-traveler records start leaning on it.',
+    urgency: 'medium',
+    suggestedOffsetDays: 6,
+  },
+  'milestone-payroll': {
+    label: 'Confirm payroll and HR are using the verified name',
+    reason: 'Check that payroll, benefits, and HR records picked up the SSA-backed name before the next pay cycle or benefits workflow depends on it.',
+    urgency: 'high',
+    suggestedOffsetDays: 4,
+  },
+  'milestone-tax': {
+    label: 'Confirm tax records are aligned across IRS, state, and payroll systems',
+    reason: 'Verify that tax-facing records are lined up so withholding, filings, and notices do not split across names.',
+    urgency: 'medium',
+    suggestedOffsetDays: 5,
+  },
   'milestone-account-rollout': {
     label: 'Confirm the main account rollout packet is reflected downstream',
-    reason: 'After the core rollout push, verify that banking, payroll, insurance, and other downstream records now reflect the right legal name.',
+    reason: 'After the core rollout push, verify that banking, insurance, and the main downstream records reflect the right legal name.',
     urgency: 'medium',
     suggestedOffsetDays: 7,
+  },
+  'milestone-downstream-rollout': {
+    label: 'Confirm the long-tail downstream rollout is actually finished',
+    reason: 'Use this checkpoint to confirm that travel, loyalty, utilities, and the other long-tail accounts are no longer carrying the old name.',
+    urgency: 'medium',
+    suggestedOffsetDays: 9,
   },
 };
 
