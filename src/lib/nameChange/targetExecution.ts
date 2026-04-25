@@ -20,6 +20,12 @@ import type {
   NameChangeTargetExecutionSnapshot,
 } from './types';
 
+function getNameChangeTargetExecutionTimestamp(value: string | null | undefined): number {
+  if (!value) return Number.NEGATIVE_INFINITY;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? Number.NEGATIVE_INFINITY : date.getTime();
+}
+
 function hasDualPartnerNameChange(profile: NameChangeCaseInput) {
   return profile.structured_intake.bothPartnersChangeName === true
     || profile.change_reasons.some((reason) => /both_partners_change_name|dual/i.test(reason));
@@ -74,12 +80,12 @@ function getTargetStatusVaultSnapshot(
   const latestExecutionUpdatedAt = relevantSteps
     .flatMap((step) => [step.executionUpdatedAt, step.completedAt])
     .filter((value): value is string => Boolean(value))
-    .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
+    .sort((left, right) => getNameChangeTargetExecutionTimestamp(right) - getNameChangeTargetExecutionTimestamp(left))[0] ?? null;
   const latestMilestoneUpdatedAt = relevantMilestones
     .filter((milestone) => milestone.status === 'in_progress' || milestone.status === 'complete')
     .map((milestone) => milestone.lastUpdatedAt ?? null)
     .filter((value): value is string => Boolean(value))
-    .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
+    .sort((left, right) => getNameChangeTargetExecutionTimestamp(right) - getNameChangeTargetExecutionTimestamp(left))[0] ?? null;
   const explicitNotes = relevantSteps
     .map((step) => step.executionNote?.trim() || null)
     .filter((note): note is string => Boolean(note));
@@ -133,11 +139,11 @@ function getTargetStatusVaultSnapshot(
   const openTargetReminders = targetReminders.filter((reminder) => reminder.status === 'pending' || reminder.status === 'scheduled');
   const latestReminder = [...openTargetReminders]
     .filter((reminder) => Boolean(reminder.updated_at))
-    .sort((left, right) => new Date(right.updated_at ?? 0).getTime() - new Date(left.updated_at ?? 0).getTime())[0] ?? null;
+    .sort((left, right) => getNameChangeTargetExecutionTimestamp(right.updated_at) - getNameChangeTargetExecutionTimestamp(left.updated_at))[0] ?? null;
   const latestReminderAt = latestReminder?.updated_at ?? null;
   const lastTouchedAt = [latestExecutionUpdatedAt, latestMilestoneUpdatedAt, latestReminderAt]
     .filter((value): value is string => Boolean(value))
-    .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
+    .sort((left, right) => getNameChangeTargetExecutionTimestamp(right) - getNameChangeTargetExecutionTimestamp(left))[0] ?? null;
   const lastTouchedSource = lastTouchedAt === latestReminderAt && latestReminderAt
     ? 'reminder' as const
     : lastTouchedAt === latestMilestoneUpdatedAt && latestMilestoneUpdatedAt
