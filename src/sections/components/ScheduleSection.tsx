@@ -26,6 +26,19 @@ function formatTime(iso: string | undefined): string {
   return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 }
 
+function formatScheduleDayLabel(dayKey: string): string {
+  if (dayKey === 'Wedding Day') return dayKey;
+
+  const date = new Date(`${dayKey}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return 'Wedding Day';
+
+  return date.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
 export const ScheduleSection: React.FC<Props> = ({ data, instance }) => {
   const { schedule, venues } = data;
   const { settings, bindings } = instance;
@@ -189,7 +202,7 @@ export const ScheduleDayTabs: React.FC<Props> = ({ data, instance }) => {
                     : 'bg-white text-text-secondary border-border hover:border-primary/40'
                 }`}
               >
-                {group.key === 'Wedding Day' ? group.key : new Date(`${group.key}T12:00:00`).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                {formatScheduleDayLabel(group.key)}
               </button>
             ))}
           </div>

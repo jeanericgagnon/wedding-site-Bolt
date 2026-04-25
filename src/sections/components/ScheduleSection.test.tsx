@@ -99,4 +99,21 @@ describe('ScheduleSection', () => {
     expect(screen.getByText('Schedule')).toBeInTheDocument();
     expect(screen.getByText('Weekend schedule')).toBeInTheDocument();
   });
+
+  it('guards invalid persisted day-tab dates instead of rendering Invalid Date', () => {
+    const populatedData = createWeddingData([
+      { id: 'event-1', label: 'Welcome Party', startTimeISO: 'not-a-dateT18:00:00' },
+      { id: 'event-2', label: 'Ceremony', startTimeISO: '2026-06-20T21:00:00.000Z' },
+    ]);
+
+    render(
+      <ScheduleDayTabs
+        data={populatedData}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(screen.getAllByRole('button', { name: 'Wedding Day' }).length).toBeGreaterThan(0);
+    expect(screen.queryByText('Invalid Date')).not.toBeInTheDocument();
+  });
 });
