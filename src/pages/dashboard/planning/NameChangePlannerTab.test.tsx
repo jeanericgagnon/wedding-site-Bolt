@@ -142,6 +142,46 @@ describe('NameChangePlannerTab', () => {
     }
   });
 
+  it('tracks later hash changes so resume links stay usable after mount', async () => {
+    const draft = makeDraft();
+    const scrollIntoView = vi.fn();
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    const originalHash = window.location.hash;
+    HTMLElement.prototype.scrollIntoView = scrollIntoView;
+    window.location.hash = '';
+
+    try {
+      render(
+        <NameChangePlannerTab
+          draft={draft}
+          documents={[]}
+          extractedFields={[]}
+          plan={buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] })}
+          reminders={[]}
+          saving={false}
+          onDraftChange={vi.fn()}
+          onStructuredIntakeChange={vi.fn()}
+          onDocumentsChange={vi.fn()}
+          onExtractedFieldsChange={vi.fn()}
+          onRemindersChange={vi.fn()}
+          onStepExecutionStatusChange={vi.fn()}
+          onStepExecutionNoteChange={vi.fn()}
+          onSave={vi.fn().mockResolvedValue(undefined)}
+        />,
+      );
+
+      window.location.hash = '#case-setup';
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+
+      await vi.waitFor(() => {
+        expect(scrollIntoView).toHaveBeenCalled();
+      });
+    } finally {
+      HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+      window.location.hash = originalHash;
+    }
+  });
+
   it('lets persisted reminder routing jump straight to the linked planner target', () => {
     const draft = makeDraft();
     const scrollIntoView = vi.fn();
