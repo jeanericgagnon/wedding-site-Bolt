@@ -32,9 +32,9 @@ describe('PlanningOverviewTab', () => {
       />,
     );
 
-    const tile = screen.getByText('Post-wedding name change assistant');
+    const tile = screen.getByRole('button', { name: /Post-wedding name change assistant/i });
     expect(tile).toBeTruthy();
-    fireEvent.click(tile.closest('button') as HTMLButtonElement);
+    fireEvent.click(tile);
     expect(onTabChange).toHaveBeenCalledWith('nameChange');
     expect(replaceState).toHaveBeenCalledWith(null, '', '/#name-change-roadmap');
     expect(screen.getByText('Start whenever you want, then come back whenever you need')).toBeTruthy();
@@ -51,6 +51,9 @@ describe('PlanningOverviewTab', () => {
     expect(screen.getByText(/blocked milestone/i)).toBeTruthy();
     expect(screen.getByText(/downstream categor/i)).toBeTruthy();
     expect(screen.getByText(/Concrete resume point:/i)).toBeTruthy();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Certified legal proof is grounded and ready to reuse' })[0]);
+    expect(onTabChange).toHaveBeenLastCalledWith('nameChange');
+    expect(replaceState).toHaveBeenLastCalledWith(null, '', '/#name-change-roadmap');
     expect(screen.getByText(/Legal \+ government \+ Work \+ insurance/i)).toBeTruthy();
     expect(screen.getByText(/Certified legal proof is grounded and ready to reuse:/i)).toBeTruthy();
     expect(screen.getByText(/Social Security update is submitted and ready to verify:/i)).toBeTruthy();

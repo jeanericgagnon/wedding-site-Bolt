@@ -187,7 +187,18 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
       </div>
 
       {isPostWedding && (
-        <button onClick={() => routeToNameChangeLane(nameChangeCard.primaryHref, onTabChange)} className="block w-full text-left">
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => routeToNameChangeLane(nameChangeCard.primaryHref, onTabChange)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              routeToNameChangeLane(nameChangeCard.primaryHref, onTabChange);
+            }
+          }}
+          className="block w-full text-left"
+        >
           <Card padding="md" className="border-primary/25 bg-primary/5 transition-shadow hover:shadow-md">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-start gap-3">
@@ -230,13 +241,33 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
                   ) : null}
                   {nextNameChangeMilestone ? (
                     <p className="mt-3 text-xs text-text-secondary">
-                      Concrete resume point: <span className="font-medium text-text-primary">{nextNameChangeMilestone.label}</span>
+                      Concrete resume point:{' '}
+                      <button
+                        type="button"
+                        className="font-medium text-text-primary underline underline-offset-2"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          routeToNameChangeLane(nameChangeCard.primaryHref, onTabChange);
+                        }}
+                      >
+                        {nextNameChangeMilestone.label}
+                      </button>
                     </p>
                   ) : null}
                   <p className="mt-2 text-xs text-text-secondary">Optional next step: {nameChangeCard.optionalNextStep}</p>
                   {nameChangeInsights.concreteResumeLabel ? (
                     <p className="mt-2 text-xs text-text-secondary">
-                      If you want a concrete place to pick back up, <span className="font-medium text-text-primary">{nameChangeInsights.concreteResumeLabel}</span>
+                      If you want a concrete place to pick back up,{' '}
+                      <button
+                        type="button"
+                        className="font-medium text-text-primary underline underline-offset-2"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          routeToNameChangeLane(nameChangeCard.primaryHref, onTabChange);
+                        }}
+                      >
+                        {nameChangeInsights.concreteResumeLabel}
+                      </button>
                     </p>
                   ) : null}
                   <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-text-secondary">
@@ -258,7 +289,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
               </div>
             </div>
           </Card>
-        </button>
+        </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
