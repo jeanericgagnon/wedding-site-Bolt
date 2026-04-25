@@ -45,6 +45,8 @@ describe('PlanningOverviewTab', () => {
     expect(screen.getByText('Free assistant · status vault · proof tracking')).toBeTruthy();
     expect(screen.getByText(/Optional next step: Skim the roadmap first/i)).toBeTruthy();
     expect(screen.getByText(/If you want a concrete place to pick back up,/i)).toBeTruthy();
+    expect(screen.getByText('Milestones ready to confirm')).toBeTruthy();
+    expect(screen.getByText('No open reminders')).toBeTruthy();
     expect(screen.getByText(/reminder.*actionable now/i)).toBeTruthy();
     expect(screen.getByText(/blocked milestone/i)).toBeTruthy();
     expect(screen.getByText(/downstream categor/i)).toBeTruthy();

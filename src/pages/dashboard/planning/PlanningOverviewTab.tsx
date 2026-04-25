@@ -239,6 +239,14 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
                       If you want a concrete place to pick back up, <span className="font-medium text-text-primary">{nameChangeInsights.concreteResumeLabel}</span>
                     </p>
                   ) : null}
+                  <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-text-secondary">
+                    <span className="rounded-full bg-white px-2 py-1 text-text-secondary shadow-sm">
+                      {nameChangeInsights.milestoneSummaryLabel}
+                    </span>
+                    <span className="rounded-full bg-white px-2 py-1 text-text-secondary shadow-sm">
+                      {nameChangeInsights.reminderSummaryLabel}
+                    </span>
+                  </div>
                   <p className="mt-2 text-xs text-text-secondary">
                     {taxPayrollLabel}: <span className="font-medium text-text-primary">{taxPayrollStatus}</span>
                   </p>
