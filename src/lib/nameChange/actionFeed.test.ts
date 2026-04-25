@@ -636,7 +636,7 @@ describe('name change action feed', () => {
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-tax',
       laneLabel: 'Tax and state agencies · draft now · SSA pending',
-      urgencyReason: 'review_queue',
+      urgencyReason: 'blocking_dependency',
       action: expect.objectContaining({ detail: expect.stringContaining('ready to draft') }),
     });
   });
@@ -852,7 +852,7 @@ describe('name change action feed', () => {
       focusTargetId: 'account-update-template-template-tax',
       laneLabel: 'Tax and state agencies · draft now · SSA pending',
       severity: 'attention',
-      urgencyReason: 'review_queue',
+      urgencyReason: 'blocking_dependency',
     });
     expect(feed[0]?.action.label).toBe('Draft tax and state agencies update (SSA pending)');
   });

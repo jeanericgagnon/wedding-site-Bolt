@@ -226,7 +226,7 @@ function getActionFeedUrgencyReason(
   if (template) {
     if (template.readiness === 'blocked' || template.readiness === 'upcoming') return 'blocking_dependency';
     if (template.readiness === 'complete') return 'review_queue';
-    if (template.readiness === 'in_progress') return 'review_queue';
+    if (template.readiness === 'in_progress') return template.blockingProofHopLabel ? 'blocking_dependency' : 'review_queue';
     return 'packet_trust';
   }
 
