@@ -474,7 +474,7 @@ describe('name change action feed', () => {
       severity: 'blocking',
       urgencyReason: 'blocking_dependency',
       action: expect.objectContaining({
-        label: 'Gather insurance carriers intake rules',
+        label: 'Ask insurance carriers intake rules',
         detail: expect.stringContaining('learn the intake path now'),
       }),
     });
@@ -724,8 +724,48 @@ describe('name change action feed', () => {
       laneLabel: 'Employer payroll / HR · wait for next proof hop',
       urgencyReason: 'blocking_dependency',
     });
-    expect(feed[0]?.action.label).toBe('Learn employer payroll / hr intake path');
+    expect(feed[0]?.action.label).toBe('Ask employer payroll / hr intake question');
     expect(feed[0]?.action.detail).toContain('still depends on the next ID or agency hop');
+  });
+
+  it('uses draft labels for in-progress template work that can be staged now', () => {
+    const taxTemplate = makeTemplate({
+      id: 'template-tax',
+      audience: 'Tax and state agencies',
+      readiness: 'in_progress',
+      readinessLabel: 'SSA and payroll tax alignment are already moving, so this is ready to draft.',
+    });
+
+    const feed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'taxes',
+        targetLabel: 'Tax records',
+        recommendedFormCode: 'TAX',
+        nextAction: {
+          category: 'review',
+          label: 'Queue tax agency update',
+          detail: 'Tax packet can be prepped now.',
+        },
+        ready: true,
+        blockers: [],
+        readinessSummary: {
+          status: 'ready',
+          blockingFieldRisks: 0,
+          attentionFieldRisks: 0,
+          lowConfidenceFields: 0,
+          missingFields: 0,
+          documentRepairDebt: 0,
+          summaryLabel: 'Ready.',
+        },
+      }),
+    ], [], [], [taxTemplate]);
+
+    expect(feed[0]).toMatchObject({
+      plannerIntent: 'open_account_update_template',
+      focusTargetId: 'account-update-template-template-tax',
+      laneLabel: 'Tax and state agencies · draft now',
+    });
+    expect(feed[0]?.action.label).toBe('Draft tax and state agencies update');
   });
 
   it('routes utility follow-through into the blocked digital-identity template so intake rules are captured early', () => {

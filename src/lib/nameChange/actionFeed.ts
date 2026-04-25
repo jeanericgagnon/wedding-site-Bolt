@@ -66,9 +66,9 @@ function getTemplateActionLabel(baseLabel: string, template: AccountUpdateTempla
   const audience = template.audience;
   if (template.readiness === 'complete') return `Confirm ${audience.toLowerCase()} sync`;
   if (template.readiness === 'ready') return `Send ${audience.toLowerCase()} update`;
-  if (template.readiness === 'in_progress') return `Prep ${audience.toLowerCase()} update`;
-  if (template.readiness === 'upcoming') return `Learn ${audience.toLowerCase()} intake path`;
-  return `Gather ${audience.toLowerCase()} intake rules`;
+  if (template.readiness === 'in_progress') return `Draft ${audience.toLowerCase()} update`;
+  if (template.readiness === 'upcoming') return `Ask ${audience.toLowerCase()} intake question`;
+  return `Ask ${audience.toLowerCase()} intake rules`;
 }
 
 function getTemplateLaneLabel(template: AccountUpdateTemplate) {
