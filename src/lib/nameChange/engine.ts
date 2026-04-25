@@ -476,19 +476,22 @@ function buildAccountUpdateTemplates(
     : readiness === 'ready'
       ? `Send now: ${baseSubject}`
       : readiness === 'in_progress'
-        ? `Draft now, send after current proof clears: ${baseSubject}`
+        ? `Draft now, send after current proof clears${blockingProofHopLabel ? ` (${blockingProofHopLabel})` : ''}: ${baseSubject}`
         : readiness === 'upcoming'
           ? `Ask before next proof hop${blockingProofHopLabel ? ` (${blockingProofHopLabel})` : ''}: ${baseSubject}`
           : `Ask intake rules now${blockingProofHopLabel ? ` (${blockingProofHopLabel})` : ''}: ${baseSubject}`;
-  const getReadinessIntro = (readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness']) => readiness === 'ready'
+  const getReadinessIntro = (
+    readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+    blockingProofHopLabel?: string,
+  ) => readiness === 'ready'
     ? 'I am ready to submit the update now.'
     : readiness === 'in_progress'
-      ? 'I am staging this now so I can submit it as soon as the current proof step clears.'
+      ? `I am staging this now so I can submit it as soon as the current proof step clears${blockingProofHopLabel ? ` (${blockingProofHopLabel})` : ''}.`
       : readiness === 'complete'
         ? 'I believe this update may already be complete and mainly need confirmation that the records are fully synced.'
         : readiness === 'upcoming'
-          ? 'I am not sending the final packet yet and mainly need the intake path for the next proof hop.'
-          : 'I am not sending documents yet and just need the intake rules before the proof chain is ready.';
+          ? `I am not sending the final packet yet and mainly need the intake path for the next proof hop${blockingProofHopLabel ? ` (${blockingProofHopLabel})` : ''}.`
+          : `I am not sending documents yet and just need the intake rules before the proof chain is ready${blockingProofHopLabel ? ` (${blockingProofHopLabel})` : ''}.`;
   const getReadinessRequestLine = (
     templateId: string,
     readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
@@ -779,7 +782,6 @@ function buildAccountUpdateTemplates(
           : readiness === 'upcoming'
             ? 'Your legal proof is grounded, but this still depends on the next ID or agency hop before it is ready to send.'
             : 'The legal-proof chain is still too early, so use this to learn the intake path now and wait to send documents until the upstream proof is real.';
-    const readinessIntro = getReadinessIntro(readiness);
     const readinessSpecificProof = template.id === 'template-payroll'
       ? getReadinessChecklistLine(readiness, {
           ready: 'SSA is already far enough along that I can attach the receipt/confirmation with my legal proof now.',
@@ -908,6 +910,7 @@ function buildAccountUpdateTemplates(
     const proofReadinessSummary = getProofReadinessSummary(template.id, readiness);
     const proofChecklistStatusNote = getProofChecklistStatusNote(template.id, readiness);
     const blockingProofHopLabel = getBlockingProofHopLabel(template.id, readiness);
+    const readinessIntro = getReadinessIntro(readiness, blockingProofHopLabel);
     const blockingProofHopSentence = getBlockingProofHopSentence(blockingProofHopLabel);
     const proofChecklistWithStatus = [...proofChecklist, proofChecklistStatusNote];
     const proofLine = readinessSpecificProof
