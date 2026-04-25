@@ -2461,6 +2461,29 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.statusVault.status).toBe('in_progress');
   });
 
+  it('tracks medical rollout through provider record follow-through', () => {
+    const basePlan = buildNameChangePlan({ profile: makeCase(), documents: [], extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'institution-medical-records'
+        ? {
+            ...step,
+            executionStatus: 'in_progress' as const,
+            executionUpdatedAt: '2026-04-24T20:10:00.000Z',
+          }
+        : step),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('medical', makeCase(), [], [], plan);
+    expect(snapshot.statusVault.executionCounts).toEqual({
+      todo: 0,
+      inProgress: 1,
+      complete: 0,
+      total: 1,
+    });
+    expect(snapshot.statusVault.status).toBe('in_progress');
+  });
+
   it('only marks a target complete when every tracked step is complete', () => {
     const basePlan = buildNameChangePlan({ profile: makeCase(), documents: [], extractedFields: [] });
     const plan = {
