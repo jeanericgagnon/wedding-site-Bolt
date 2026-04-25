@@ -746,6 +746,7 @@ describe('name change action feed', () => {
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-payroll',
       laneLabel: 'Employer payroll / HR · ask before next proof hop · SSA pending',
+      severity: 'attention',
       urgencyReason: 'blocking_dependency',
     });
     expect(feed[0]?.action.label).toBe('Ask employer payroll / HR before next proof hop');
@@ -826,6 +827,53 @@ describe('name change action feed', () => {
       urgencyReason: 'review_queue',
     });
     expect(feed[0]?.action.label).toBe('Draft tax and state agencies update');
+  });
+
+  it('keeps blocked template work above upcoming proof-hop asks', () => {
+    const feed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'employer',
+        targetLabel: 'Employer payroll',
+        recommendedFormCode: 'PAYROLL',
+        nextAction: {
+          category: 'dependency',
+          label: 'Prep payroll intake path',
+          detail: 'Payroll packet depends on the next proof hop.',
+        },
+      }),
+      makeExecutionSnapshot({
+        targetKey: 'insurance',
+        targetLabel: 'Insurance carriers',
+        recommendedFormCode: 'INS',
+        nextAction: {
+          category: 'dependency',
+          label: 'Prep carrier intake path',
+          detail: 'Carrier packet is still blocked on the legal proof chain.',
+        },
+      }),
+    ], [], [], [
+      makeTemplate({
+        id: 'template-payroll',
+        audience: 'Employer payroll / HR',
+        readiness: 'upcoming',
+      }),
+      makeTemplate({
+        id: 'template-insurance',
+        audience: 'Insurance carriers',
+        readiness: 'blocked',
+      }),
+    ]);
+
+    expect(feed[0]).toMatchObject({
+      title: 'Insurance carriers',
+      laneLabel: 'Insurance carriers · ask intake rules now · legal proof pending',
+      severity: 'blocking',
+    });
+    expect(feed[1]).toMatchObject({
+      title: 'Employer payroll / HR',
+      laneLabel: 'Employer payroll / HR · ask before next proof hop · SSA pending',
+      severity: 'attention',
+    });
   });
 
   it('keeps send-now template work ahead of draft-now staging passes', () => {

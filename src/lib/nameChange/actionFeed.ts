@@ -181,7 +181,8 @@ function getExecutionSeverity(
 ): NameChangeActionFeedItem['severity'] {
   if (template?.readiness === 'complete') return 'attention';
   if (template?.readiness === 'in_progress') return 'attention';
-  if (template && (template.readiness === 'blocked' || template.readiness === 'upcoming')) return 'blocking';
+  if (template?.readiness === 'upcoming') return 'attention';
+  if (template?.readiness === 'blocked') return 'blocking';
   if (!snapshot.ready) return snapshot.blockers.length > 0 || snapshot.readinessSummary.blockingFieldRisks > 0 ? 'blocking' : 'attention';
   return 'ready';
 }
