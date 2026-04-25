@@ -74,6 +74,13 @@ function ensureTerminalPeriod(line: string | undefined) {
   return line.endsWith('.') ? line : `${line}.`;
 }
 
+function formatChecklistSummary(items: string[]) {
+  return items
+    .map((item) => item.trim().replace(/[.\s]+$/u, ''))
+    .filter(Boolean)
+    .join(' · ');
+}
+
 function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemplate) {
   const blockedByLine = getTemplateBlockedByLine(template);
   const currentBlockerLine = template.blockingProofHopLabel
@@ -122,7 +129,7 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
   const checklistLine = ensureTerminalPeriod(template.checklistHighlight);
   const checklistStatusLine = ensureTerminalPeriod(template.checklistStatusNote);
   const proofChecklistSummary = template.proofChecklist.length > 0
-    ? `Proof checklist: ${template.proofChecklist.join(' · ')}`
+    ? `Proof checklist: ${formatChecklistSummary(template.proofChecklist)}`
     : undefined;
   const proofDocumentsSummary = template.proofDocuments.length > 0
     ? `Proof to have handy: ${template.proofDocuments.join(' · ')}`

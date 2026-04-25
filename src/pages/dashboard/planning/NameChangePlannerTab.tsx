@@ -242,6 +242,13 @@ function ensureTerminalPeriod(line: string | undefined) {
   return line.endsWith('.') ? line : `${line}.`;
 }
 
+function formatChecklistSummary(items: string[]) {
+  return items
+    .map((item) => item.trim().replace(/[.\s]+$/u, ''))
+    .filter(Boolean)
+    .join(' · ');
+}
+
 function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
   const checklistLine = ensureTerminalPeriod(template.checklistHighlight);
   const checklistStatusLine = ensureTerminalPeriod(template.checklistStatusNote);
@@ -258,7 +265,7 @@ function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['s
     getAccountUpdateTemplateStateLine(template),
     `Proof status: ${template.proofReadinessSummary}`,
     `Next ask: ${template.requestSummary}`,
-    template.proofChecklist.length > 0 ? `Proof checklist: ${template.proofChecklist.join(' · ')}` : undefined,
+    template.proofChecklist.length > 0 ? `Proof checklist: ${formatChecklistSummary(template.proofChecklist)}` : undefined,
     `Proof to have handy: ${template.proofDocuments.join(' · ')}`,
     '',
     template.body,
@@ -1598,7 +1605,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 <p className="mt-2 text-xs text-text-secondary">Proof status: {template.proofReadinessSummary}</p>
                 <p className="mt-2 text-xs text-text-secondary">Next ask: {template.requestSummary}</p>
                 {template.proofChecklist.length > 0 ? (
-                  <p className="mt-2 text-xs text-text-secondary">Proof checklist: {template.proofChecklist.join(' · ')}</p>
+                  <p className="mt-2 text-xs text-text-secondary">Proof checklist: {formatChecklistSummary(template.proofChecklist)}</p>
                 ) : null}
                 <p className="mt-2 text-xs text-text-secondary">Proof to have handy: {template.proofDocuments.join(' · ')}</p>
                 <p className="mt-2 whitespace-pre-line text-sm text-text-secondary">{template.body}</p>

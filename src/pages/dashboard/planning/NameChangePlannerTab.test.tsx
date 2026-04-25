@@ -502,7 +502,7 @@ describe('NameChangePlannerTab', () => {
     const payrollProofStatus = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.proofReadinessSummary;
     const payrollChecklistHighlight = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.checklistHighlight;
     const payrollChecklistStatus = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.checklistStatusNote;
-    const payrollProofChecklistSummary = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.proofChecklist.join(' · ');
+    const payrollProofChecklistSummary = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.proofChecklist.map((item) => item.replace(/[.\s]+$/u, '')).join(' · ');
     const payrollProofChecklist = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.proofDocuments.join(' · ');
     const payrollBlockingProofHop = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.blockingProofHopLabel;
     const payrollChecklistHighlightLine = payrollChecklistHighlight?.endsWith('.') ? payrollChecklistHighlight : `${payrollChecklistHighlight}.`;
@@ -725,7 +725,7 @@ describe('NameChangePlannerTab', () => {
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining('Template state: intake-only until legal proof pending clears.'));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Current blocker: ${payrollTemplate?.blockingProofHopLabel}.`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Proof status: ${payrollTemplate?.proofReadinessSummary}`));
-    expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Proof checklist: ${payrollTemplate?.proofChecklist.join(' · ')}`));
+    expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Proof checklist: ${payrollTemplate?.proofChecklist.map((item) => item.replace(/[.\s]+$/u, '')).join(' · ')}`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(payrollTemplate?.body ?? ''));
     expect(screen.getByRole('button', { name: 'Copied' })).toBeInTheDocument();
   });
