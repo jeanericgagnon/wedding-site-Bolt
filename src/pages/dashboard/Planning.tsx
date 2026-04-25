@@ -27,6 +27,8 @@ import { NameChangePlannerTab } from './planning/NameChangePlannerTab';
 
 type Tab = 'overview' | 'tasks' | 'budget' | 'vendors' | 'nameChange';
 
+let planningLocationEventsPatched = false;
+
 const TABS: { id: Tab; label: string }[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'tasks', label: 'Tasks' },
@@ -39,6 +41,28 @@ export function resolvePlanningTabFromSearch(search: string): Tab | null {
   const params = new URLSearchParams(search);
   const tab = params.get('tab');
   return TABS.some((candidate) => candidate.id === tab) ? (tab as Tab) : null;
+}
+
+export function ensurePlanningLocationEventsPatched() {
+  if (planningLocationEventsPatched || typeof window === 'undefined') return;
+
+  const dispatchLocationChange = () => {
+    window.dispatchEvent(new Event('dayof:locationchange'));
+  };
+
+  const originalPushState = window.history.pushState.bind(window.history);
+  window.history.pushState = ((...args: Parameters<History['pushState']>) => {
+    originalPushState(...args);
+    dispatchLocationChange();
+  }) as History['pushState'];
+
+  const originalReplaceState = window.history.replaceState.bind(window.history);
+  window.history.replaceState = ((...args: Parameters<History['replaceState']>) => {
+    originalReplaceState(...args);
+    dispatchLocationChange();
+  }) as History['replaceState'];
+
+  planningLocationEventsPatched = true;
 }
 
 export const DashboardPlanning: React.FC = () => {
@@ -68,10 +92,23 @@ export const DashboardPlanning: React.FC = () => {
   }, [isDemoMode, user]);
 
   useEffect(() => {
-    const tabFromSearch = resolvePlanningTabFromSearch(window.location.search);
-    if (tabFromSearch) {
-      setActiveTab(tabFromSearch);
-    }
+    ensurePlanningLocationEventsPatched();
+
+    const syncTabFromLocation = () => {
+      const tabFromSearch = resolvePlanningTabFromSearch(window.location.search);
+      if (tabFromSearch) {
+        setActiveTab(tabFromSearch);
+      }
+    };
+
+    syncTabFromLocation();
+    window.addEventListener('popstate', syncTabFromLocation);
+    window.addEventListener('dayof:locationchange', syncTabFromLocation);
+
+    return () => {
+      window.removeEventListener('popstate', syncTabFromLocation);
+      window.removeEventListener('dayof:locationchange', syncTabFromLocation);
+    };
   }, []);
 
   useEffect(() => {
