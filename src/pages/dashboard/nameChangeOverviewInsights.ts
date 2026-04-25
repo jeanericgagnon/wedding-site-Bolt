@@ -1,0 +1,29 @@
+import type { HydratedNameChangeWorkspace } from '../../lib/nameChange/types';
+
+export interface NameChangeOverviewInsights {
+  coreChainLabel: string;
+  followOnLabel: string;
+  downstreamLabel: string;
+}
+
+export function buildNameChangeOverviewInsights(workspace: Pick<HydratedNameChangeWorkspace, 'plan' | 'reminders'>): NameChangeOverviewInsights {
+  const executionCounts = workspace.plan.summary.executionCounts ?? { todo: workspace.plan.steps.length, in_progress: 0, complete: 0 };
+  const milestones = workspace.plan.summary.milestoneChecklist ?? [];
+  const milestoneCompleteCount = milestones.filter((milestone) => milestone.status === 'complete').length;
+  const openReminderCount = workspace.reminders.filter((reminder) => reminder.status === 'pending' || reminder.status === 'scheduled').length;
+
+  return {
+    coreChainLabel:
+      executionCounts.complete > 0 || executionCounts.in_progress > 0
+        ? `${executionCounts.complete} complete · ${executionCounts.in_progress} in progress across the legal identity chain.`
+        : 'Certificate, SSA, and DMV stay together so the legal identity chain does not drift.',
+    followOnLabel:
+      milestoneCompleteCount > 0
+        ? `${milestoneCompleteCount} milestone${milestoneCompleteCount === 1 ? '' : 's'} confirmed so passport, payroll, and tax follow-ons can stay in sync.`
+        : 'Passport, payroll, and tax updates should reflect the same verified name once the first chain lands.',
+    downstreamLabel:
+      openReminderCount > 0
+        ? `${openReminderCount} reminder${openReminderCount === 1 ? '' : 's'} still open for the long-tail bank, insurance, travel, and loyalty cleanup.`
+        : 'Use the long-tail rollout lane for banks, insurance, travel, loyalty, and the rest of the account cleanup.',
+  };
+}

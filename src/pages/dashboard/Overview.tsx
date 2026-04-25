@@ -31,6 +31,7 @@ import { writeOnboardingResumeTarget } from '../../lib/onboardingResumeStorage';
 import { useToast } from '../../components/ui/Toast';
 import { calcOverviewDaysUntil, formatOverviewRelativeTime, formatOverviewWeddingDate, getOverviewTimestamp } from './overviewDate';
 import { buildNameChangeOverviewCardModel } from './nameChangeOverviewCard';
+import { buildNameChangeOverviewInsights } from './nameChangeOverviewInsights';
 import { hydrateNameChangeWorkspace, loadNameChangeWorkspace } from './planning/nameChangeService';
 
 interface OverviewStats {
@@ -201,6 +202,11 @@ export const DashboardOverview: React.FC = () => {
   const [draftRefineTargets, setDraftRefineTargets] = useState<Array<{ id: string; label: string; questionIndex: number; value: string }>>([]);
   const [draftBriefDebug, setDraftBriefDebug] = useState<string>('init');
   const [nameChangeOverviewState, setNameChangeOverviewState] = useState<{ hasWorkspace: boolean; workflowStatus: 'draft' | 'ready' | 'in_progress' | 'complete' | null; hasExecutionActivity: boolean; }>({ hasWorkspace: false, workflowStatus: null, hasExecutionActivity: false });
+  const [nameChangeInsights, setNameChangeInsights] = useState({
+    coreChainLabel: 'Certificate, SSA, and DMV stay together so the legal identity chain does not drift.',
+    followOnLabel: 'Passport, payroll, and tax updates should reflect the same verified name once the first chain lands.',
+    downstreamLabel: 'Use the long-tail rollout lane for banks, insurance, travel, loyalty, and the rest of the account cleanup.',
+  });
 
   useEffect(() => {
     if (!user) return;
@@ -292,6 +298,11 @@ export const DashboardOverview: React.FC = () => {
           recentRsvps,
         });
         setNameChangeOverviewState({ hasWorkspace: true, workflowStatus: 'in_progress', hasExecutionActivity: true });
+        setNameChangeInsights({
+          coreChainLabel: '1 complete · 1 in progress across the legal identity chain.',
+          followOnLabel: '1 milestone confirmed so passport, payroll, and tax follow-ons can stay in sync.',
+          downstreamLabel: '2 reminders still open for the long-tail bank, insurance, travel, and loyalty cleanup.',
+        });
         return;
       }
 
@@ -407,11 +418,22 @@ export const DashboardOverview: React.FC = () => {
             workflowStatus: hydratedWorkspace.draft.workflow_status,
             hasExecutionActivity: executionCounts.in_progress > 0 || executionCounts.complete > 0,
           });
+          setNameChangeInsights(buildNameChangeOverviewInsights(hydratedWorkspace));
         } else {
           setNameChangeOverviewState({ hasWorkspace: false, workflowStatus: null, hasExecutionActivity: false });
+          setNameChangeInsights({
+            coreChainLabel: 'Certificate, SSA, and DMV stay together so the legal identity chain does not drift.',
+            followOnLabel: 'Passport, payroll, and tax updates should reflect the same verified name once the first chain lands.',
+            downstreamLabel: 'Use the long-tail rollout lane for banks, insurance, travel, loyalty, and the rest of the account cleanup.',
+          });
         }
       } else {
         setNameChangeOverviewState({ hasWorkspace: false, workflowStatus: null, hasExecutionActivity: false });
+        setNameChangeInsights({
+          coreChainLabel: 'Certificate, SSA, and DMV stay together so the legal identity chain does not drift.',
+          followOnLabel: 'Passport, payroll, and tax updates should reflect the same verified name once the first chain lands.',
+          downstreamLabel: 'Use the long-tail rollout lane for banks, insurance, travel, loyalty, and the rest of the account cleanup.',
+        });
       }
 
       const siteJson = (site?.site_json as Record<string, unknown> | null) ?? null;
@@ -923,15 +945,15 @@ export const DashboardOverview: React.FC = () => {
                       </div>
                       <div className="rounded-xl border border-sky-200 bg-white px-4 py-3">
                         <p className="text-xs uppercase tracking-wide text-sky-700">Core chain</p>
-                        <p className="mt-1 text-sm text-sky-950">Certificate, SSA, and DMV stay together so the legal identity chain does not drift.</p>
+                        <p className="mt-1 text-sm text-sky-950">{nameChangeInsights.coreChainLabel}</p>
                       </div>
                       <div className="rounded-xl border border-sky-200 bg-white px-4 py-3">
                         <p className="text-xs uppercase tracking-wide text-sky-700">Follow-on updates</p>
-                        <p className="mt-1 text-sm text-sky-950">Passport, payroll, and tax updates should reflect the same verified name once the first chain lands.</p>
+                        <p className="mt-1 text-sm text-sky-950">{nameChangeInsights.followOnLabel}</p>
                       </div>
                       <div className="rounded-xl border border-sky-200 bg-white px-4 py-3">
                         <p className="text-xs uppercase tracking-wide text-sky-700">Downstream rollout</p>
-                        <p className="mt-1 text-sm text-sky-950">Use the long-tail rollout lane for banks, insurance, travel, loyalty, and the rest of the account cleanup.</p>
+                        <p className="mt-1 text-sm text-sky-950">{nameChangeInsights.downstreamLabel}</p>
                       </div>
                     </div>
                     <div className="rounded-xl border border-sky-200 bg-white px-4 py-3">
