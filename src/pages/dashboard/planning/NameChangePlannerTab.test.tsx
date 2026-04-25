@@ -500,6 +500,8 @@ describe('NameChangePlannerTab', () => {
     const payrollRequestSummary = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.requestSummary;
     const bankRequestSummary = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-bank')?.requestSummary;
     const payrollProofStatus = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.proofReadinessSummary;
+    const payrollChecklistHighlight = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.checklistHighlight;
+    const payrollChecklistStatus = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.checklistStatusNote;
     const payrollProofChecklist = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.proofChecklist.join(' · ');
     const payrollBlockingProofHop = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.blockingProofHopLabel;
 
@@ -527,6 +529,8 @@ describe('NameChangePlannerTab', () => {
     expect(screen.getByText(`Next ask: ${payrollRequestSummary}`)).toBeInTheDocument();
     expect(screen.getByText(`Next ask: ${bankRequestSummary}`)).toBeInTheDocument();
     expect(screen.getAllByText(`Blocked by: ${payrollBlockingProofHop}`).length).toBeGreaterThan(0);
+    expect(screen.getByText(`Checklist: ${payrollChecklistHighlight}`)).toBeInTheDocument();
+    expect(screen.getByText(`Checklist status: ${payrollChecklistStatus}`)).toBeInTheDocument();
     expect(screen.getByText(`Proof status: ${payrollProofStatus}`)).toBeInTheDocument();
     expect(screen.getByText(`Proof to have handy: ${payrollProofChecklist}`)).toBeInTheDocument();
     expect(screen.getAllByText('intake first · legal proof pending').length).toBeGreaterThan(0);
@@ -612,9 +616,11 @@ describe('NameChangePlannerTab', () => {
 
     await waitFor(() => expect(clipboardWriteText).toHaveBeenCalledTimes(1));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Subject: ${payrollTemplate?.subject}`));
-    expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining('Status: intake first · SSA pending'));
+    expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Status: intake first · ${payrollTemplate?.blockingProofHopLabel}`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Next ask: ${payrollTemplate?.requestSummary}`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Blocked by: ${payrollTemplate?.blockingProofHopLabel}`));
+    expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Checklist: ${payrollTemplate?.checklistHighlight}`));
+    expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Checklist status: ${payrollTemplate?.checklistStatusNote}`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Current blocker: ${payrollTemplate?.blockingProofHopLabel}.`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Proof status: ${payrollTemplate?.proofReadinessSummary}`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(payrollTemplate?.body ?? ''));

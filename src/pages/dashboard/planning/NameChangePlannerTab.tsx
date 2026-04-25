@@ -200,6 +200,8 @@ function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['s
     `Status: ${getAccountUpdateTemplateStatusChip(template)}`,
     `Readiness: ${template.readinessLabel}`,
     template.blockingProofHopLabel ? `Blocked by: ${template.blockingProofHopLabel}` : undefined,
+    template.checklistHighlight ? `Checklist: ${template.checklistHighlight}` : undefined,
+    template.checklistStatusNote ? `Checklist status: ${template.checklistStatusNote}` : undefined,
     `Proof status: ${template.proofReadinessSummary}`,
     `Next ask: ${template.requestSummary}`,
     `Proof to have handy: ${template.proofChecklist.join(' · ')}`,
@@ -1527,6 +1529,12 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 <p className="mt-2 text-xs text-text-secondary">{template.readinessLabel}</p>
                 {template.blockingProofHopLabel ? (
                   <p className="mt-2 text-xs text-text-secondary">Blocked by: {template.blockingProofHopLabel}</p>
+                ) : null}
+                {template.checklistHighlight ? (
+                  <p className="mt-2 text-xs text-text-secondary">Checklist: {template.checklistHighlight}</p>
+                ) : null}
+                {template.checklistStatusNote ? (
+                  <p className="mt-2 text-xs text-text-secondary">Checklist status: {template.checklistStatusNote}</p>
                 ) : null}
                 <p className="mt-2 text-xs text-text-secondary">Proof status: {template.proofReadinessSummary}</p>
                 <p className="mt-2 text-xs text-text-secondary">Next ask: {template.requestSummary}</p>
