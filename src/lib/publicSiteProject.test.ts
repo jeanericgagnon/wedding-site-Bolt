@@ -142,6 +142,23 @@ describe('publicSiteProject', () => {
     expect(getPublicWeddingData(row)?.couple.displayName).toBe('Alex');
   });
 
+  it('trims whitespace-only public partner names when rebuilding a blank snapshot displayName', () => {
+    const row = {
+      is_published: false,
+      site_json: draftProject,
+      wedding_data: {
+        ...liveWeddingData,
+        couple: {
+          partner1Name: '   ',
+          partner2Name: ' Alex ',
+          displayName: '',
+        },
+      },
+    };
+
+    expect(getPublicWeddingData(row)?.couple.displayName).toBe('Alex');
+  });
+
   it('prefers site_json weddingDataSnapshot over stale wedding_data when unpublished', () => {
     const row = {
       is_published: false,

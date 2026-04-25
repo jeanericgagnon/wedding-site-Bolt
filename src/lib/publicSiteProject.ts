@@ -1,6 +1,7 @@
 import type { BuilderProject } from '../types/builder/project';
 import type { BuilderSectionInstance } from '../types/builder/section';
 import type { WeddingDataV1 } from '../types/weddingData';
+import { buildCoupleDisplayName } from './coupleDisplayName';
 import { safeJsonParse } from './jsonUtils';
 import { rewriteSignedMediaUrlsToPublicDeep } from './mediaUrl';
 
@@ -15,7 +16,7 @@ const asRecord = (value: unknown): Record<string, unknown> | null => {
 
 const withTruthfulCoupleDisplayName = (data: WeddingDataV1): WeddingDataV1 => {
   const displayName = data.couple.displayName
-    || [data.couple.partner1Name, data.couple.partner2Name].filter(Boolean).join(' & ');
+    || buildCoupleDisplayName(data.couple.partner1Name, data.couple.partner2Name);
 
   if (displayName === data.couple.displayName) return data;
 
