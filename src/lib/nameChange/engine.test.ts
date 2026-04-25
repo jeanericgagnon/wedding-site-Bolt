@@ -296,7 +296,14 @@ describe('name change engine', () => {
           readiness: 'upcoming',
           dependsOnStepIds: expect.arrayContaining(['institution-dmv-registration-title']),
         }),
-        expect.objectContaining({ audience: 'Phone, utilities, housing, or primary digital identity support', dependsOnStepIds: expect.arrayContaining(['institution-utilities-housing']) }),
+        expect.objectContaining({
+          audience: 'Phone, utilities, housing, alumni, or primary digital identity support',
+          dependsOnStepIds: expect.arrayContaining([
+            'institution-utilities-housing',
+            'institution-subscriptions-social',
+            'institution-school-alumni-records',
+          ]),
+        }),
         expect.objectContaining({ audience: 'Licensing board or credentialing support', dependsOnStepIds: ['state-photo-id', 'institution-professional-licenses'] }),
       ]),
     );
@@ -338,9 +345,9 @@ describe('name change engine', () => {
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.body).toContain('Please confirm your hold/change policy and mismatch handling before I touch any bookings while passport timing is still upstream.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.body).toContain('I am prepping this ask now, but I am not sending the final packet until the next proof hop clears (passport pending).');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.proofChecklist).toEqual(expect.arrayContaining(['Confirm hold/change policy before touching bookings while passport timing is still upstream.']));
-    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-digital-identity')?.body).toContain('Please confirm whether legal proof alone can start utilities, phone, housing, or recovery updates before the updated ID lands.');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-digital-identity')?.body).toContain('Please confirm whether legal proof alone can start utilities, phone, housing, social/profile, or recovery updates before the updated ID lands.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-digital-identity')?.body).toContain('I am prepping this ask now, but I am not sending the final packet until the next proof hop clears (ID pending).');
-    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-digital-identity')?.proofChecklist).toEqual(expect.arrayContaining(['Confirm whether legal proof alone can start utilities, phone, housing, or recovery updates.']));
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-digital-identity')?.proofChecklist).toEqual(expect.arrayContaining(['Confirm whether legal proof alone can start utilities, phone, housing, social/profile, or recovery updates.']));
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-licenses')?.body).toContain('Please confirm the board-specific document rules now so I know whether the next ID/license hop is enough to start.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-licenses')?.proofChecklist).toEqual(expect.arrayContaining(['Ask for the board-specific document rules before the ID/license path lands.']));
     expect(plan.summary.institutionCategoryCoverage).toEqual(
