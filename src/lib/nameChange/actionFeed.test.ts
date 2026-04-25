@@ -1972,6 +1972,27 @@ describe('name change action feed', () => {
     expect(feed[0]?.action.detail).not.toContain('Checklist status:');
   });
 
+  it('omits blank subject, message, proof status, and next ask lines from template detail', () => {
+    const feed = buildNameChangeActionFeed(
+      [makeExecutionSnapshot({ targetKey: 'banks', targetLabel: 'Banks', recommendedFormCode: 'BANK' })],
+      [],
+      [],
+      [makeTemplate({
+        id: 'template-bank',
+        audience: 'Bank accounts',
+        subject: '   ',
+        body: ' . ',
+        proofReadinessSummary: ' - ',
+        requestSummary: ' ... ',
+      })],
+    );
+
+    expect(feed[0]?.action.detail).not.toContain('Subject:');
+    expect(feed[0]?.action.detail).not.toContain('Template message:');
+    expect(feed[0]?.action.detail).not.toContain('Proof status:');
+    expect(feed[0]?.action.detail).not.toContain('Next ask:');
+  });
+
   it('falls back to generic blocker text when the blocker label is blank whitespace', () => {
     const feed = buildNameChangeActionFeed(
       [makeExecutionSnapshot({ targetKey: 'banks', targetLabel: 'Banks', recommendedFormCode: 'BANK' })],

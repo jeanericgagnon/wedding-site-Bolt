@@ -90,6 +90,13 @@ export function ensureTerminalPeriod(line: string | undefined) {
   return trimmed.endsWith('.') ? trimmed : `${trimmed}.`;
 }
 
+function formatAccountUpdateTemplateTextLine(label: string, value: string | undefined) {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  if (!trimmed || !/[\p{L}\p{N}]/u.test(trimmed)) return undefined;
+  return `${label}: ${trimmed}`;
+}
+
 function normalizeInlineProofListItem(item: string) {
   return item.trim().replace(/[.\s]+$/u, '').toLowerCase();
 }
@@ -162,19 +169,19 @@ export function getAccountUpdateTemplateAudienceLine(template: AccountUpdateTemp
 }
 
 export function getAccountUpdateTemplateSubjectLine(template: AccountUpdateTemplate) {
-  return `Subject: ${template.subject}`;
+  return formatAccountUpdateTemplateTextLine('Subject', template.subject);
 }
 
 export function getAccountUpdateTemplateMessageLine(template: AccountUpdateTemplate) {
-  return `Template message: ${template.body}`;
+  return formatAccountUpdateTemplateTextLine('Template message', template.body);
 }
 
 export function getAccountUpdateTemplateProofStatusLine(template: AccountUpdateTemplate) {
-  return `Proof status: ${template.proofReadinessSummary}`;
+  return formatAccountUpdateTemplateTextLine('Proof status', template.proofReadinessSummary);
 }
 
 export function getAccountUpdateTemplateNextAskLine(template: AccountUpdateTemplate) {
-  return `Next ask: ${template.requestSummary}`;
+  return formatAccountUpdateTemplateTextLine('Next ask', template.requestSummary);
 }
 
 export function getAccountUpdateTemplateProofChecklistLine(template: AccountUpdateTemplate) {
