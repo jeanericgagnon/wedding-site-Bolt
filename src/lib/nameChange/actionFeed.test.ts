@@ -310,7 +310,7 @@ describe('name change action feed', () => {
 
     expect(feed[0]).toMatchObject({
       plannerIntent: 'open_account_update_template',
-      focusTargetId: 'account-update-templates',
+      focusTargetId: 'account-update-template-template-bank',
       laneLabel: 'Bank accounts · ready template',
       action: expect.objectContaining({
         detail: expect.stringContaining('clean confirmation/update pass'),
@@ -396,13 +396,13 @@ describe('name change action feed', () => {
 
     expect(feed.find((item) => item.title === 'Tax records')).toMatchObject({
       plannerIntent: 'open_account_update_template',
-      focusTargetId: 'account-update-templates',
+      focusTargetId: 'account-update-template-template-tax',
       laneLabel: 'Tax and state agencies · in progress template',
       action: expect.objectContaining({ detail: expect.stringContaining('ready to draft') }),
     });
     expect(feed.find((item) => item.title === 'Voter registration')).toMatchObject({
       plannerIntent: 'open_account_update_template',
-      focusTargetId: 'account-update-templates',
+      focusTargetId: 'account-update-template-template-tax',
       laneLabel: 'Tax and state agencies · in progress template',
     });
   });
@@ -436,7 +436,7 @@ describe('name change action feed', () => {
 
     expect(feed[0]).toMatchObject({
       plannerIntent: 'open_account_update_template',
-      focusTargetId: 'account-update-templates',
+      focusTargetId: 'account-update-template-template-insurance',
       laneLabel: 'Insurance and medical · ready template',
     });
   });

@@ -1450,7 +1450,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
 
           <div className="mt-4 space-y-3">
             {accountUpdateTemplates.map((template) => (
-              <div key={template.id} className="rounded-xl border border-border-subtle p-4">
+              <div id={`account-update-template-${template.id}`} key={template.id} className="scroll-mt-24 rounded-xl border border-border-subtle p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-xs uppercase tracking-wide text-text-tertiary">{template.audience}</p>

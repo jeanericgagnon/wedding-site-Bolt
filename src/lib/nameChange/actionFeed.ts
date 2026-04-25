@@ -51,6 +51,10 @@ function getTemplateUrgencyBoost(template: AccountUpdateTemplate | undefined) {
   return 0;
 }
 
+function getTemplateFocusTargetId(template: AccountUpdateTemplate | undefined) {
+  return template ? `account-update-template-${template.id}` : 'account-update-templates';
+}
+
 function getActionDocumentKind(item: NameChangeActionFeedItem) {
   return item.action.category === 'document' ? item.action.documentKind : undefined;
 }
@@ -231,7 +235,7 @@ export function buildNameChangeActionFeed(
         : routesToCaseSetup
           ? 'case-setup'
           : routesToTemplate
-            ? 'account-update-templates'
+            ? getTemplateFocusTargetId(linkedTemplate)
             : `execution-card-${snapshot.targetKey}`,
       score,
       action: routesToTemplate
