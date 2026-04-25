@@ -79,12 +79,18 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
     ? `${baseDetail} Use this only to confirm the rename already synced.`
     : template.readiness === 'ready'
       ? `${baseDetail} Send with the current proof packet now.`
-      : template.readiness === 'in_progress' && template.blockingProofHopLabel
-        ? `${baseDetail} Send only after ${template.blockingProofHopLabel.toLowerCase()} clears.`
-        : template.readiness === 'upcoming' && template.blockingProofHopLabel
-          ? `${baseDetail} Use this to prep the ask before ${template.blockingProofHopLabel.toLowerCase()} clears.`
-          : template.readiness === 'blocked' && template.blockingProofHopLabel
-            ? `${baseDetail} Use this only to capture intake rules until ${template.blockingProofHopLabel.toLowerCase()} clears.`
+      : template.readiness === 'in_progress'
+        ? template.blockingProofHopLabel
+          ? `${baseDetail} Send only after ${template.blockingProofHopLabel.toLowerCase()} clears.`
+          : `${baseDetail} Send only after the current proof clears.`
+        : template.readiness === 'upcoming'
+          ? template.blockingProofHopLabel
+            ? `${baseDetail} Use this to prep the ask before ${template.blockingProofHopLabel.toLowerCase()} clears.`
+            : `${baseDetail} Use this to prep the ask before the next proof hop clears.`
+          : template.readiness === 'blocked'
+            ? template.blockingProofHopLabel
+              ? `${baseDetail} Use this only to capture intake rules until ${template.blockingProofHopLabel.toLowerCase()} clears.`
+              : `${baseDetail} Use this only to capture intake rules until the proof chain is ready.`
             : baseDetail;
   const checklistLine = template.checklistHighlight;
   const checklistStatusLine = template.checklistStatusNote

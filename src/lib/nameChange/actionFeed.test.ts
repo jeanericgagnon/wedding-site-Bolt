@@ -1056,6 +1056,9 @@ describe('name change action feed', () => {
     expect(bankTemplateItem?.action.detail).toContain('Template state: draft now and wait for the current proof to clear before sending.');
     expect(insuranceTemplateItem?.action.detail).toContain('Template state: prep the ask now before the next proof hop clears.');
     expect(taxTemplateItem?.action.detail).toContain('Template state: intake-only until the proof chain is ready.');
+    expect(bankTemplateItem?.action.detail).toContain('Send only after the current proof clears.');
+    expect(insuranceTemplateItem?.action.detail).toContain('Use this to prep the ask before the next proof hop clears.');
+    expect(taxTemplateItem?.action.detail).toContain('Use this only to capture intake rules until the proof chain is ready.');
   });
 
   it('keeps blocked template intake work above lower-value ready execution follow-through', () => {
