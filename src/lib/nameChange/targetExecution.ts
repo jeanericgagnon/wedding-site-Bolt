@@ -65,6 +65,41 @@ const TARGET_STATUS_VAULT_STEP_IDS: Partial<Record<NameChangeExecutionTargetKey,
   licenses: ['institution-professional-licenses'],
 };
 
+function getSupportiveExecutionWaitLine(snapshot: Pick<NameChangeTargetExecutionSnapshot, 'targetKey' | 'nextAction'>) {
+  const blockingLabel = snapshot.nextAction.label.replace(/^Unblock\s+/, '').trim();
+  if (snapshot.nextAction.category !== 'dependency' || !blockingLabel) return undefined;
+
+  switch (snapshot.targetKey) {
+    case 'banks':
+    case 'insurance':
+    case 'medical':
+    case 'utilities':
+      return `You can still gather account numbers, policy details, and contact routes now so this handoff moves faster once ${blockingLabel} clears. Actual submission can safely wait.`;
+    case 'employer':
+    case 'licenses':
+      return `You can still collect HR, payroll, or licensing contacts now so this handoff is easier once ${blockingLabel} clears. Actual submission can safely wait.`;
+    case 'taxes':
+      return `You can still line up prior returns, withholding records, and state login access now so filing follow-through is easier once ${blockingLabel} clears. Actual submission can safely wait.`;
+    case 'voter':
+      return `You can still confirm your registration jurisdiction and current voter record now so this update is quick once ${blockingLabel} clears. Actual submission can safely wait.`;
+    case 'tsa':
+      return `You can still review upcoming bookings and traveler-profile settings now so this sync is quicker once ${blockingLabel} clears. Actual submission can safely wait.`;
+    case 'courtesy':
+      return `You can still list the low-stakes profiles and social accounts you want to touch later so cleanup is easier once ${blockingLabel} clears. Actual submission can safely wait.`;
+    default:
+      return undefined;
+  }
+}
+
+export function getExecutionNextActionDetail(snapshot: Pick<NameChangeTargetExecutionSnapshot, 'targetKey' | 'nextAction'>) {
+  const supportiveWaitLine = getSupportiveExecutionWaitLine(snapshot);
+  if (!supportiveWaitLine || snapshot.nextAction.detail.includes('Actual submission can safely wait.')) {
+    return snapshot.nextAction.detail;
+  }
+
+  return `${snapshot.nextAction.detail} ${supportiveWaitLine}`;
+}
+
 function getTargetStatusVaultSnapshot(
   targetKey: NameChangeExecutionTargetKey,
   plan: NameChangePlan | null | undefined,
@@ -170,7 +205,7 @@ function getTargetStatusVaultSnapshot(
     : latestReminder?.label
       ? `Reminder: ${latestReminder.label}`
       : null;
-  const executionNote = explicitNotes[0] ?? (nextAction ? nextAction.detail : blockers[0] ?? null);
+  const executionNote = explicitNotes[0] ?? (nextAction ? getExecutionNextActionDetail({ targetKey, nextAction }) : blockers[0] ?? null);
   const milestoneNote = milestoneNotes[0] ?? null;
   const proofNote = proofIssues ? `Proof needs: ${proofIssues}` : null;
   const primaryExecutionNote = explicitNotes[0] ?? null;
@@ -179,7 +214,7 @@ function getTargetStatusVaultSnapshot(
     : milestoneNotes.length > 0
       ? milestoneNotes
       : nextAction
-        ? [nextAction.detail]
+        ? [getExecutionNextActionDetail({ targetKey, nextAction })]
         : blockers.slice(0, 2);
   const prioritizedNotes = [
     lastTouchedSource === 'reminder' ? reminderNote : (primaryExecutionNote ?? milestoneNote ?? executionNote),

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildNameChangeTargetExecutionSnapshot } from './targetExecution';
+import { buildNameChangeTargetExecutionSnapshot, getExecutionNextActionDetail } from './targetExecution';
 import { buildNameChangePlan } from './engine';
 import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput } from './types';
 
@@ -2225,7 +2225,7 @@ describe('name change target execution snapshot', () => {
       milestoneCounts: {
         inProgress: 0,
         complete: 0,
-        total: 2,
+        total: 5,
       },
       proofCounts: {
         ready: expect.any(Number),
@@ -2338,7 +2338,7 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.statusVault.milestoneCounts).toEqual({
       inProgress: 0,
       complete: 0,
-      total: 0,
+      total: 1,
     });
     expect(snapshot.statusVault.status).toBe('in_progress');
   });
@@ -2589,9 +2589,9 @@ describe('name change target execution snapshot', () => {
     };
 
     const snapshot = buildNameChangeTargetExecutionSnapshot('courtOrder', makeCase(), [], [], plan);
-    expect(snapshot.statusVault.notes[0]).toBe('Confirmed milestone: Certified legal proof is grounded and reviewed');
+    expect(snapshot.statusVault.notes[0]).toBe('Confirmed milestone: Certified legal proof is grounded and ready to reuse');
     expect(snapshot.statusVault.executionNote).toBe('Court-order reference extraction is not needed for marriage-based cases.');
-    expect(snapshot.statusVault.milestoneNote).toBe('Confirmed milestone: Certified legal proof is grounded and reviewed');
+    expect(snapshot.statusVault.milestoneNote).toBe('Confirmed milestone: Certified legal proof is grounded and ready to reuse');
     expect(snapshot.statusVault.milestoneUpdatedAt).toBeNull();
     expect(snapshot.statusVault.milestoneCounts).toEqual({
       inProgress: 0,
@@ -2629,6 +2629,19 @@ describe('name change target execution snapshot', () => {
     const snapshot = buildNameChangeTargetExecutionSnapshot('dmv', makeCase(), [], []);
 
     expect(snapshot.nextAction).not.toBeNull();
-    expect(snapshot.statusVault.notes[0]).toBe(snapshot.nextAction?.detail);
+    expect(snapshot.statusVault.notes[0]).toBe(getExecutionNextActionDetail(snapshot));
+  });
+
+  it('stores supportive optional wait guidance in status-vault fallback notes for downstream targets', () => {
+    const snapshot = {
+      targetKey: 'banks',
+      nextAction: {
+        category: 'dependency',
+        label: 'Unblock DMV completion',
+        detail: 'Wait for the DMV update before submitting bank changes.',
+      },
+    } as const;
+
+    expect(getExecutionNextActionDetail(snapshot)).toContain('Actual submission can safely wait.');
   });
 });
