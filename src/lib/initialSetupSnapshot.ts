@@ -20,7 +20,7 @@ export const buildInitialSetupSnapshot = (answers: InitialSetupAnswers): Initial
     city: interpreted.weddingLocation,
     venue: answers.venueNameOrTbd,
     guestFeel: answers.style,
-    rsvpDeadline: answers.rsvpDeadline,
+    rsvpDeadline: interpreted.rsvpDeadline,
     travelNotes: answers.whenWhere,
     eventLocationGaps: interpreted.structuredWeekendEvents
       .filter((event) => !event.locationName?.trim())
