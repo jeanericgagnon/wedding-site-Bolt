@@ -178,8 +178,8 @@ function getAccountUpdateTemplateStatusLabel(readiness: NonNullable<NameChangePl
 
 function getAccountUpdateTemplateStatusChip(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
   const baseLabel = getAccountUpdateTemplateStatusLabel(template.readiness);
-  const blockingPhaseLabel = template.blockingProofHopLabel
-    ?? (template.readiness === 'in_progress'
+  const blockingPhaseLabel = template.blockingProofHopLabel?.trim()
+    || (template.readiness === 'in_progress'
       ? 'current proof pending'
       : template.readiness === 'upcoming'
         ? 'next proof hop pending'
@@ -203,26 +203,28 @@ function getAccountUpdateTemplateCopyButtonLabel(
 }
 
 function getAccountUpdateTemplateStateLine(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
+  const blockingProofHopLabel = template.blockingProofHopLabel?.trim();
   if (template.readiness === 'ready') return 'Template state: proof packet ready to send now.';
   if (template.readiness === 'complete') return 'Template state: proof chain complete; confirm the downstream sync only.';
   if (template.readiness === 'in_progress') {
-    return template.blockingProofHopLabel
-      ? `Template state: draft now and wait for ${template.blockingProofHopLabel.toLowerCase()} to clear before sending.`
+    return blockingProofHopLabel
+      ? `Template state: draft now and wait for ${blockingProofHopLabel.toLowerCase()} to clear before sending.`
       : 'Template state: draft now and wait for the current proof to clear before sending.';
   }
   if (template.readiness === 'upcoming') {
-    return template.blockingProofHopLabel
-      ? `Template state: prep the ask now and wait for ${template.blockingProofHopLabel.toLowerCase()} to clear before sending.`
+    return blockingProofHopLabel
+      ? `Template state: prep the ask now and wait for ${blockingProofHopLabel.toLowerCase()} to clear before sending.`
       : 'Template state: prep the ask now before the next proof hop clears.';
   }
 
-  return template.blockingProofHopLabel
-    ? `Template state: intake-only until ${template.blockingProofHopLabel.toLowerCase()} clears.`
+  return blockingProofHopLabel
+    ? `Template state: intake-only until ${blockingProofHopLabel.toLowerCase()} clears.`
     : 'Template state: intake-only until the proof chain is ready.';
 }
 
 function getAccountUpdateTemplateCurrentBlockerLine(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
-  if (template.blockingProofHopLabel) return `Current blocker: ${template.blockingProofHopLabel}.`;
+  const blockingProofHopLabel = template.blockingProofHopLabel?.trim();
+  if (blockingProofHopLabel) return `Current blocker: ${blockingProofHopLabel}.`;
   if (template.readiness === 'in_progress') return 'Current blocker: current proof pending.';
   if (template.readiness === 'upcoming') return 'Current blocker: next proof hop pending.';
   if (template.readiness === 'blocked') return 'Current blocker: proof chain pending.';
@@ -230,7 +232,8 @@ function getAccountUpdateTemplateCurrentBlockerLine(template: NonNullable<NameCh
 }
 
 function getAccountUpdateTemplateBlockedByLine(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
-  if (template.blockingProofHopLabel) return `Blocked by: ${template.blockingProofHopLabel}.`;
+  const blockingProofHopLabel = template.blockingProofHopLabel?.trim();
+  if (blockingProofHopLabel) return `Blocked by: ${blockingProofHopLabel}.`;
   if (template.readiness === 'in_progress') return 'Blocked by: current proof pending.';
   if (template.readiness === 'upcoming') return 'Blocked by: next proof hop pending.';
   if (template.readiness === 'blocked') return 'Blocked by: proof chain pending.';

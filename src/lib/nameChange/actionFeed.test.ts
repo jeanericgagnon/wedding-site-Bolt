@@ -1668,4 +1668,26 @@ describe('name change action feed', () => {
     expect(feed[0]?.action.detail).not.toContain('Checklist:');
     expect(feed[0]?.action.detail).not.toContain('Checklist status:');
   });
+
+  it('falls back to generic blocker text when the blocker label is blank whitespace', () => {
+    const feed = buildNameChangeActionFeed(
+      [makeExecutionSnapshot({ targetKey: 'banks', targetLabel: 'Banks', recommendedFormCode: 'BANK' })],
+      [],
+      [],
+      [makeTemplate({
+        id: 'template-bank',
+        audience: 'Bank accounts',
+        readiness: 'in_progress',
+        blockingProofHopLabel: '   ',
+      })],
+    );
+
+    expect(feed[0]?.action.detail).toContain('Blocked by: current proof pending.');
+    expect(feed[0]?.action.detail).toContain('Current blocker: current proof pending.');
+    expect(feed[0]?.action.detail).toContain('Template state: draft now and wait for the current proof to clear before sending.');
+    expect(feed[0]?.action.detail).toContain('Send only after the current proof clears.');
+    expect(feed[0]?.laneLabel).toBe('Bank accounts · draft now, send after current proof clears · current proof pending');
+    expect(feed[0]?.action.label).toBe('Draft bank accounts update (current proof pending)');
+    expect(feed[0]?.action.detail).not.toContain('Blocked by:    .');
+  });
 });

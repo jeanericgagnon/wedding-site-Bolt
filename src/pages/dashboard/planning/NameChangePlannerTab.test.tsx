@@ -1454,6 +1454,59 @@ describe('NameChangePlannerTab', () => {
     expect(clipboardWriteText).not.toHaveBeenCalledWith(expect.stringContaining('Checklist status:'));
   });
 
+  it('falls back to generic blocker copy in planner surfaces when the blocker label is blank whitespace', async () => {
+    const clipboardWriteText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(window.navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: clipboardWriteText },
+    });
+    HTMLElement.prototype.scrollIntoView = vi.fn();
+
+    const draft = makeDraft();
+    const plan = buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] });
+    const payrollTemplate = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll');
+    if (!payrollTemplate) throw new Error('expected payroll template');
+
+    payrollTemplate.readiness = 'in_progress';
+    payrollTemplate.blockingProofHopLabel = '   ';
+
+    render(
+      <NameChangePlannerTab
+        draft={draft}
+        documents={[]}
+        extractedFields={[]}
+        plan={plan}
+        reminders={[]}
+        saving={false}
+        onDraftChange={vi.fn()}
+        onStructuredIntakeChange={vi.fn()}
+        onDocumentsChange={vi.fn()}
+        onExtractedFieldsChange={vi.fn()}
+        onRemindersChange={vi.fn()}
+        onStepExecutionStatusChange={vi.fn()}
+        onStepExecutionNoteChange={vi.fn()}
+        onSave={vi.fn().mockResolvedValue(undefined)}
+        initialTargetId="account-update-template-template-payroll"
+      />,
+    );
+
+    const payrollCard = document.getElementById('account-update-template-template-payroll');
+    if (!payrollCard) throw new Error('expected payroll card');
+
+    expect(within(payrollCard).getByText('Blocked by: current proof pending.')).toBeInTheDocument();
+    expect(within(payrollCard).getByText('Current blocker: current proof pending.')).toBeInTheDocument();
+    expect(within(payrollCard).getByText('Template state: draft now and wait for the current proof to clear before sending.')).toBeInTheDocument();
+    expect(payrollCard).toHaveTextContent('draft now, send after current proof clears · current proof pending');
+
+    fireEvent.click(within(payrollCard).getByRole('button', { name: 'Copy staged draft' }));
+
+    await waitFor(() => expect(clipboardWriteText).toHaveBeenCalledTimes(1));
+    expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining('Blocked by: current proof pending.'));
+    expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining('Current blocker: current proof pending.'));
+    expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining('Template state: draft now and wait for the current proof to clear before sending.'));
+    expect(clipboardWriteText).not.toHaveBeenCalledWith(expect.stringContaining('Blocked by:    .'));
+  });
+
   it('omits proof-to-have-handy text when a template has no proof documents', async () => {
     const clipboardWriteText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(window.navigator, 'clipboard', {

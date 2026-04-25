@@ -58,8 +58,9 @@ function getTemplateFocusTargetId(template: AccountUpdateTemplate | undefined) {
 }
 
 function getTemplateBlockedByLine(template: AccountUpdateTemplate) {
-  return template.blockingProofHopLabel
-    ? `Blocked by: ${template.blockingProofHopLabel}.`
+  const blockingProofHopLabel = template.blockingProofHopLabel?.trim();
+  return blockingProofHopLabel
+    ? `Blocked by: ${blockingProofHopLabel}.`
     : template.readiness === 'in_progress'
       ? 'Blocked by: current proof pending.'
       : template.readiness === 'upcoming'
@@ -85,8 +86,9 @@ function formatInlineProofList(items: string[]) {
 
 function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemplate) {
   const blockedByLine = getTemplateBlockedByLine(template);
-  const currentBlockerLine = template.blockingProofHopLabel
-    ? `Current blocker: ${template.blockingProofHopLabel}.`
+  const blockingProofHopLabel = template.blockingProofHopLabel?.trim();
+  const currentBlockerLine = blockingProofHopLabel
+    ? `Current blocker: ${blockingProofHopLabel}.`
     : template.readiness === 'in_progress'
       ? 'Current blocker: current proof pending.'
       : template.readiness === 'upcoming'
@@ -99,16 +101,16 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
     : template.readiness === 'ready'
       ? 'Template state: proof packet ready to send now.'
       : template.readiness === 'in_progress'
-        ? template.blockingProofHopLabel
-          ? `Template state: draft now and wait for ${template.blockingProofHopLabel.toLowerCase()} to clear before sending.`
+        ? blockingProofHopLabel
+          ? `Template state: draft now and wait for ${blockingProofHopLabel.toLowerCase()} to clear before sending.`
           : 'Template state: draft now and wait for the current proof to clear before sending.'
         : template.readiness === 'upcoming'
-          ? template.blockingProofHopLabel
-            ? `Template state: prep the ask now and wait for ${template.blockingProofHopLabel.toLowerCase()} to clear before sending.`
+          ? blockingProofHopLabel
+            ? `Template state: prep the ask now and wait for ${blockingProofHopLabel.toLowerCase()} to clear before sending.`
             : 'Template state: prep the ask now before the next proof hop clears.'
           : template.readiness === 'blocked'
-            ? template.blockingProofHopLabel
-              ? `Template state: intake-only until ${template.blockingProofHopLabel.toLowerCase()} clears.`
+            ? blockingProofHopLabel
+              ? `Template state: intake-only until ${blockingProofHopLabel.toLowerCase()} clears.`
               : 'Template state: intake-only until the proof chain is ready.'
             : undefined;
   const readinessDetail = template.readiness === 'complete'
@@ -116,16 +118,16 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
     : template.readiness === 'ready'
       ? `${baseDetail} Send with the current proof packet now.`
       : template.readiness === 'in_progress'
-        ? template.blockingProofHopLabel
-          ? `${baseDetail} Send only after ${template.blockingProofHopLabel.toLowerCase()} clears.`
+        ? blockingProofHopLabel
+          ? `${baseDetail} Send only after ${blockingProofHopLabel.toLowerCase()} clears.`
           : `${baseDetail} Send only after the current proof clears.`
         : template.readiness === 'upcoming'
-          ? template.blockingProofHopLabel
-            ? `${baseDetail} Use this to prep the ask before ${template.blockingProofHopLabel.toLowerCase()} clears.`
+          ? blockingProofHopLabel
+            ? `${baseDetail} Use this to prep the ask before ${blockingProofHopLabel.toLowerCase()} clears.`
             : `${baseDetail} Use this to prep the ask before the next proof hop clears.`
           : template.readiness === 'blocked'
-            ? template.blockingProofHopLabel
-              ? `${baseDetail} Use this only to capture intake rules until ${template.blockingProofHopLabel.toLowerCase()} clears.`
+            ? blockingProofHopLabel
+              ? `${baseDetail} Use this only to capture intake rules until ${blockingProofHopLabel.toLowerCase()} clears.`
               : `${baseDetail} Use this only to capture intake rules until the proof chain is ready.`
             : baseDetail;
   const checklistLine = ensureTerminalPeriod(template.checklistHighlight);
@@ -163,8 +165,9 @@ function formatTemplateAudienceForAction(audience: string) {
 
 function getTemplateActionLabel(baseLabel: string, template: AccountUpdateTemplate) {
   const audience = formatTemplateAudienceForAction(template.audience);
-  const blockingProofHopSuffix = template.blockingProofHopLabel
-    ? ` (${template.blockingProofHopLabel})`
+  const blockingProofHopLabel = template.blockingProofHopLabel?.trim();
+  const blockingProofHopSuffix = blockingProofHopLabel
+    ? ` (${blockingProofHopLabel})`
     : template.readiness === 'in_progress'
       ? ' (current proof pending)'
       : template.readiness === 'upcoming'
@@ -189,8 +192,8 @@ function getTemplateLaneLabel(template: AccountUpdateTemplate) {
         : template.readiness === 'upcoming'
           ? 'ask before next proof hop'
           : 'ask intake rules now';
-  const blockingPhaseLabel = template.blockingProofHopLabel
-    ?? (template.readiness === 'in_progress'
+  const blockingPhaseLabel = template.blockingProofHopLabel?.trim()
+    || (template.readiness === 'in_progress'
       ? 'current proof pending'
       : template.readiness === 'upcoming'
         ? 'next proof hop pending'
