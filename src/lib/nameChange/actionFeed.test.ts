@@ -12,7 +12,9 @@ function makeTemplate(overrides: Partial<NonNullable<NameChangePlan['summary']['
     readiness === 'ready' || readiness === 'complete'
       ? undefined
       : id === 'template-payroll' || id === 'template-tax'
-        ? 'SSA pending'
+        ? readiness === 'blocked'
+          ? 'legal proof pending'
+          : 'SSA pending'
         : id === 'template-bank' || id === 'template-digital-identity' || id === 'template-licenses'
           ? readiness === 'blocked'
             ? 'legal proof pending'
@@ -769,6 +771,7 @@ describe('name change action feed', () => {
     expect(feed[0]?.action.detail).toContain('Subject: Employer payroll / HR');
     expect(feed[0]?.action.detail).toContain('Subject: Employer payroll / HR\nTemplate message: I can provide certified legal proof.');
     expect(feed[0]?.action.detail).toContain('Template message: I can provide certified legal proof.');
+    expect(feed[0]?.action.detail).toContain('Blocked by: SSA pending.');
     expect(feed[0]?.action.detail).toContain('still depends on the next ID or agency hop');
   });
 

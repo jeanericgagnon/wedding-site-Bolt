@@ -654,7 +654,9 @@ function buildAccountUpdateTemplates(
     readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
   ) => {
     if (readiness === 'ready' || readiness === 'complete') return undefined;
-    if (templateId === 'template-payroll' || templateId === 'template-tax') return 'SSA pending';
+    if (templateId === 'template-payroll' || templateId === 'template-tax') {
+      return readiness === 'blocked' ? 'legal proof pending' : 'SSA pending';
+    }
     if (templateId === 'template-bank' || templateId === 'template-digital-identity' || templateId === 'template-licenses') {
       return readiness === 'blocked' ? 'legal proof pending' : 'ID pending';
     }
