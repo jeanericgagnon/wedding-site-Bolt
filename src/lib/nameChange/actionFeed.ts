@@ -284,7 +284,9 @@ function getExecutionSeverity(
   template?: AccountUpdateTemplate,
 ): NameChangeActionFeedItem['severity'] {
   if (template?.readiness === 'complete') return 'attention';
-  if (template?.readiness === 'in_progress') return 'attention';
+  if (template?.readiness === 'in_progress') {
+    return getEffectiveBlockingProofHopLabel(template) ? 'blocking' : 'attention';
+  }
   if (template?.readiness === 'upcoming') return 'attention';
   if (template?.readiness === 'blocked') return 'blocking';
   if (!snapshot.ready) return snapshot.blockers.length > 0 || snapshot.readinessSummary.blockingFieldRisks > 0 ? 'blocking' : 'attention';
@@ -297,7 +299,9 @@ function getExecutionScoreBase(
 ) {
   if (template?.readiness === 'ready') return 220;
   if (template?.readiness === 'complete') return 80;
-  if (template?.readiness === 'in_progress') return 120;
+  if (template?.readiness === 'in_progress') {
+    return getEffectiveBlockingProofHopLabel(template) ? 280 : 120;
+  }
   return getSeverityWeight(severity) * 100;
 }
 

@@ -822,7 +822,7 @@ describe('name change action feed', () => {
     expect(feed[0]?.action.label).toBe('Send employer payroll / HR update (proof packet ready)');
   });
 
-  it('uses draft labels for in-progress template work that can be staged now', () => {
+  it('uses blocking draft labels for in-progress template work that can be staged now', () => {
     const taxTemplate = makeTemplate({
       id: 'template-tax',
       audience: 'Tax and state agencies',
@@ -858,7 +858,7 @@ describe('name change action feed', () => {
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-tax',
       laneLabel: 'Tax and state agencies · draft now, send after current proof clears · SSA pending',
-      severity: 'attention',
+      severity: 'blocking',
       urgencyReason: 'blocking_dependency',
     });
     expect(feed[0]?.action.label).toBe('Draft tax and state agencies update (SSA pending)');
@@ -913,7 +913,7 @@ describe('name change action feed', () => {
     expect(feed[1]?.action.label).toBe('Ask employer payroll / HR before next proof hop (SSA pending)');
   });
 
-  it('keeps send-now template work ahead of draft-now staging passes', () => {
+  it('keeps staged blocker templates ahead of send-now follow-through', () => {
     const feed = buildNameChangeActionFeed([
       makeExecutionSnapshot({
         targetKey: 'taxes',
@@ -971,17 +971,17 @@ describe('name change action feed', () => {
     ]);
 
     expect(feed[0]).toMatchObject({
+      title: 'Tax and state agencies',
+      laneLabel: 'Tax and state agencies · draft now, send after current proof clears · SSA pending',
+      severity: 'blocking',
+    });
+    expect(feed[0]?.action.detail).toContain('Blocked by: SSA pending.');
+    expect(feed[0]?.action.detail).toContain('Current blocker: SSA pending.');
+    expect(feed[1]).toMatchObject({
       title: 'Insurance carriers',
       laneLabel: 'Insurance carriers · send now (proof packet ready)',
       severity: 'ready',
     });
-    expect(feed[1]).toMatchObject({
-      title: 'Tax and state agencies',
-      laneLabel: 'Tax and state agencies · draft now, send after current proof clears · SSA pending',
-      severity: 'attention',
-    });
-    expect(feed[1]?.action.detail).toContain('Blocked by: SSA pending.');
-    expect(feed[1]?.action.detail).toContain('Current blocker: SSA pending.');
   });
 
   it('routes utility follow-through into the blocked digital-identity template so intake rules are captured early', () => {
@@ -1069,6 +1069,9 @@ describe('name change action feed', () => {
     expect(bankTemplateItem?.action.detail).toContain('Current blocker: current proof pending.');
     expect(insuranceTemplateItem?.action.detail).toContain('Current blocker: next proof hop pending.');
     expect(taxTemplateItem?.action.detail).toContain('Current blocker: proof chain pending.');
+    expect(bankTemplateItem?.severity).toBe('blocking');
+    expect(bankTemplateItem?.urgencyTier).toBe('elevated');
+    expect(bankTemplateItem?.urgencyReason).toBe('blocking_dependency');
     expect(bankTemplateItem?.action.detail).toContain('Template state: draft now and wait for the current proof to clear before sending.');
     expect(insuranceTemplateItem?.action.detail).toContain('Template state: prep the ask now before the next proof hop clears.');
     expect(taxTemplateItem?.action.detail).toContain('Template state: intake-only until the proof chain is ready.');
@@ -1688,6 +1691,8 @@ describe('name change action feed', () => {
     expect(feed[0]?.action.detail).toContain('Send only after the current proof clears.');
     expect(feed[0]?.laneLabel).toBe('Bank accounts · draft now, send after current proof clears · current proof pending');
     expect(feed[0]?.action.label).toBe('Draft bank accounts update (current proof pending)');
+    expect(feed[0]?.severity).toBe('blocking');
+    expect(feed[0]?.urgencyTier).toBe('elevated');
     expect(feed[0]?.urgencyReason).toBe('blocking_dependency');
     expect(feed[0]?.action.detail).not.toContain('Blocked by:    .');
   });
