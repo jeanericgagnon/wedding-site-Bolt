@@ -144,14 +144,17 @@ describe('NameChangePlannerTab', () => {
       expect(screen.getByText('Certificate, SSA, and DMV stay together so the legal identity chain does not drift.')).toBeInTheDocument();
 
       const roadmapButtons = screen.getAllByRole('button', { name: 'See roadmap first' });
+      const milestoneChip = screen.getByRole('button', { name: 'Milestones ready to confirm' });
 
       fireEvent.click(roadmapButtons[roadmapButtons.length - 1]);
+      expect(window.location.hash).toBe('#name-change-roadmap');
+      fireEvent.click(milestoneChip);
       expect(window.location.hash).toBe('#name-change-roadmap');
       fireEvent.click(roadmapButtons[roadmapButtons.length - 1]);
       expect(window.location.hash).toBe('#name-change-roadmap');
       fireEvent.click(screen.getByRole('button', { name: 'Save and come back later' }));
 
-      expect(scrollIntoView).toHaveBeenCalledTimes(2);
+      expect(scrollIntoView).toHaveBeenCalledTimes(3);
       expect(onSave).toHaveBeenCalled();
     } finally {
       HTMLElement.prototype.scrollIntoView = originalScrollIntoView;

@@ -1145,8 +1145,20 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               </p>
             ) : null}
             <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-sky-900">
-              <span className="rounded-full border border-sky-300 bg-white px-2 py-1">{lifecycleInsights.milestoneSummaryLabel}</span>
-              <span className="rounded-full border border-sky-300 bg-white px-2 py-1">{lifecycleInsights.reminderSummaryLabel}</span>
+              <button
+                type="button"
+                className="rounded-full border border-sky-300 bg-white px-2 py-1 font-medium"
+                onClick={() => scrollToPlannerHref(resumeCard.primaryHref)}
+              >
+                {lifecycleInsights.milestoneSummaryLabel}
+              </button>
+              <button
+                type="button"
+                className="rounded-full border border-sky-300 bg-white px-2 py-1 font-medium"
+                onClick={() => scrollToPlannerHref(resumeCard.primaryHref)}
+              >
+                {lifecycleInsights.reminderSummaryLabel}
+              </button>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
