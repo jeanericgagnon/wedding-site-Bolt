@@ -46,6 +46,12 @@ function normalize(value: string | null | undefined) {
   return (value ?? '').trim().toLowerCase();
 }
 
+function getNameChangeEngineTimestamp(value: string | null | undefined): number {
+  if (!value) return Number.NEGATIVE_INFINITY;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? Number.NEGATIVE_INFINITY : parsed.getTime();
+}
+
 function isMarriageStyleAllowedInCalifornia(input: NameChangeEngineInput): boolean {
   const profile = input.profile;
   if (profile.legal_basis !== 'marriage') return false;
@@ -311,20 +317,20 @@ function buildTargetStatusOverview(
   const latestUpdatedAt = trackedSteps
     .flatMap((step) => [step.executionUpdatedAt, step.completedAt])
     .filter((value): value is string => Boolean(value))
-    .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
+    .sort((left, right) => getNameChangeEngineTimestamp(right) - getNameChangeEngineTimestamp(left))[0] ?? null;
   const latestMilestoneAt = (plan.summary.milestoneChecklist ?? [])
     .map((milestone) => milestone.lastUpdatedAt ?? null)
     .filter((value): value is string => Boolean(value))
-    .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
+    .sort((left, right) => getNameChangeEngineTimestamp(right) - getNameChangeEngineTimestamp(left))[0] ?? null;
   const openReminders = reminders
     .filter((reminder) => reminder.status === 'pending' || reminder.status === 'scheduled');
   const latestReminderAt = openReminders
     .map((reminder) => reminder.updated_at ?? null)
     .filter((value): value is string => Boolean(value))
-    .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
+    .sort((left, right) => getNameChangeEngineTimestamp(right) - getNameChangeEngineTimestamp(left))[0] ?? null;
   const latestTouchedAt = [latestUpdatedAt, latestMilestoneAt, latestReminderAt]
     .filter((value): value is string => Boolean(value))
-    .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
+    .sort((left, right) => getNameChangeEngineTimestamp(right) - getNameChangeEngineTimestamp(left))[0] ?? null;
   const latestTouchedSource = latestTouchedAt === latestReminderAt && latestReminderAt
     ? 'reminder' as const
     : latestTouchedAt === latestMilestoneAt && latestMilestoneAt
@@ -1202,7 +1208,7 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
       .flatMap((stepId) => steps.find((step) => step.id === stepId))
       .flatMap((step) => step ? [step.executionUpdatedAt, step.completedAt] : [])
       .filter((value): value is string => Boolean(value))
-      .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null,
+      .sort((left, right) => getNameChangeEngineTimestamp(right) - getNameChangeEngineTimestamp(left))[0] ?? null,
   }));
   const dualPartnerProofTracks = hasBothPartnersChanging
     ? [

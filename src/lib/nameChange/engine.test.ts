@@ -694,6 +694,39 @@ describe('name change engine', () => {
     });
   });
 
+  it('keeps invalid persisted reminder timing from outranking real target-status activity in the overview summary', () => {
+    const plan = buildNameChangePlan({
+      ...makeInput(),
+      reminders: [
+        {
+          reminder_key: 'ssa-bad-follow-up',
+          label: 'Broken reminder payload',
+          reason: 'Bad imported timestamp',
+          urgency: 'high',
+          status: 'pending',
+          focus_target_id: 'ssa',
+          updated_at: 'not-a-date',
+        },
+        {
+          reminder_key: 'ssa-good-follow-up',
+          label: 'SSA follow-up',
+          reason: 'Receipt still missing',
+          urgency: 'high',
+          status: 'pending',
+          focus_target_id: 'ssa',
+          updated_at: '2026-04-24T22:20:00.000Z',
+        },
+      ],
+    });
+
+    expect(plan.summary.targetStatusOverview).toMatchObject({
+      latestUpdatedAt: null,
+      latestReminderAt: '2026-04-24T22:20:00.000Z',
+      latestTouchedAt: '2026-04-24T22:20:00.000Z',
+      latestTouchedSource: 'reminder',
+    });
+  });
+
   it('ignores sent reminders in the overview reminder-touch summary', () => {
     const plan = buildNameChangePlan({
       ...makeInput(),
