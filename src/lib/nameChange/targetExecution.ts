@@ -65,7 +65,7 @@ const TARGET_STATUS_VAULT_STEP_IDS: Partial<Record<NameChangeExecutionTargetKey,
   licenses: ['institution-professional-licenses'],
 };
 
-function getSupportiveExecutionWaitLine(snapshot: Pick<NameChangeTargetExecutionSnapshot, 'targetKey' | 'nextAction'>) {
+function getSupportiveExecutionWaitGuidance(snapshot: Pick<NameChangeTargetExecutionSnapshot, 'targetKey' | 'nextAction'>) {
   const blockingLabel = snapshot.nextAction.label.replace(/^Unblock\s+/, '').trim();
   if (snapshot.nextAction.category !== 'dependency' || !blockingLabel) return undefined;
 
@@ -74,18 +74,42 @@ function getSupportiveExecutionWaitLine(snapshot: Pick<NameChangeTargetExecution
     case 'insurance':
     case 'medical':
     case 'utilities':
-      return `You can still gather account numbers, policy details, and contact routes now so this handoff moves faster once ${blockingLabel} clears. Actual submission can safely wait.`;
+      return {
+        doNow: 'Gather account numbers, policy details, and contact routes now.',
+        whyItHelps: `That handoff moves faster once ${blockingLabel} clears.`,
+        canWait: 'Actual submission can safely wait.',
+      };
     case 'employer':
     case 'licenses':
-      return `You can still collect HR, payroll, or licensing contacts now so this handoff is easier once ${blockingLabel} clears. Actual submission can safely wait.`;
+      return {
+        doNow: 'Collect HR, payroll, or licensing contacts now.',
+        whyItHelps: `That handoff gets easier once ${blockingLabel} clears.`,
+        canWait: 'Actual submission can safely wait.',
+      };
     case 'taxes':
-      return `You can still line up prior returns, withholding records, and state login access now so filing follow-through is easier once ${blockingLabel} clears. Actual submission can safely wait.`;
+      return {
+        doNow: 'Line up prior returns, withholding records, and state login access now.',
+        whyItHelps: `Filing follow-through gets easier once ${blockingLabel} clears.`,
+        canWait: 'Actual submission can safely wait.',
+      };
     case 'voter':
-      return `You can still confirm your registration jurisdiction and current voter record now so this update is quick once ${blockingLabel} clears. Actual submission can safely wait.`;
+      return {
+        doNow: 'Confirm your registration jurisdiction and current voter record now.',
+        whyItHelps: `That update goes faster once ${blockingLabel} clears.`,
+        canWait: 'Actual submission can safely wait.',
+      };
     case 'tsa':
-      return `You can still review upcoming bookings and traveler-profile settings now so this sync is quicker once ${blockingLabel} clears. Actual submission can safely wait.`;
+      return {
+        doNow: 'Review upcoming bookings and traveler-profile settings now.',
+        whyItHelps: `That sync goes quicker once ${blockingLabel} clears.`,
+        canWait: 'Actual submission can safely wait.',
+      };
     case 'courtesy':
-      return `You can still list the low-stakes profiles and social accounts you want to touch later so cleanup is easier once ${blockingLabel} clears. Actual submission can safely wait.`;
+      return {
+        doNow: 'List the low-stakes profiles and social accounts you want to touch later now.',
+        whyItHelps: `Cleanup is easier once ${blockingLabel} clears.`,
+        canWait: 'Actual submission can safely wait.',
+      };
     default:
       return undefined;
   }
@@ -94,16 +118,47 @@ function getSupportiveExecutionWaitLine(snapshot: Pick<NameChangeTargetExecution
 export function hasExecutionSupportiveWaitGuidance(
   snapshot: Pick<NameChangeTargetExecutionSnapshot, 'targetKey' | 'nextAction'>,
 ) {
-  return Boolean(getSupportiveExecutionWaitLine(snapshot));
+  return Boolean(getSupportiveExecutionWaitGuidance(snapshot));
+}
+
+export function getExecutionNextActionGuidance(
+  snapshot: Pick<NameChangeTargetExecutionSnapshot, 'targetKey' | 'nextAction'>,
+) {
+  const overview = snapshot.nextAction.detail.trim();
+  const supportiveWaitGuidance = getSupportiveExecutionWaitGuidance(snapshot);
+  if (!supportiveWaitGuidance) {
+    return {
+      overview,
+      doNow: null,
+      whyItHelps: null,
+      canWait: null,
+    };
+  }
+
+  return {
+    overview,
+    doNow: supportiveWaitGuidance.doNow,
+    whyItHelps: supportiveWaitGuidance.whyItHelps,
+    canWait: supportiveWaitGuidance.canWait,
+  };
 }
 
 export function getExecutionNextActionDetail(snapshot: Pick<NameChangeTargetExecutionSnapshot, 'targetKey' | 'nextAction'>) {
-  const supportiveWaitLine = getSupportiveExecutionWaitLine(snapshot);
-  if (!supportiveWaitLine || snapshot.nextAction.detail.includes('Actual submission can safely wait.')) {
+  const guidance = getExecutionNextActionGuidance(snapshot);
+  if (!guidance.doNow && !guidance.whyItHelps && !guidance.canWait) {
     return snapshot.nextAction.detail;
   }
 
-  return `${snapshot.nextAction.detail} ${supportiveWaitLine}`;
+  if (snapshot.nextAction.detail.includes('Actual submission can safely wait.')) {
+    return snapshot.nextAction.detail;
+  }
+
+  return [
+    guidance.overview,
+    guidance.doNow ? `Do now: ${guidance.doNow}` : null,
+    guidance.whyItHelps ? `Why it helps: ${guidance.whyItHelps}` : null,
+    guidance.canWait ? `Can wait: ${guidance.canWait}` : null,
+  ].filter(Boolean).join(' ');
 }
 
 export function getExecutionStatusVaultNotes(

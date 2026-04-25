@@ -39,7 +39,7 @@ import { buildNameChangeSsaExecutionSnapshot } from '../../../lib/nameChange/ssa
 import { buildNameChangeTsaExecutionSnapshot } from '../../../lib/nameChange/tsaFlow';
 import { buildNameChangeUtilitiesExecutionSnapshot } from '../../../lib/nameChange/utilitiesFlow';
 import { buildNameChangeVoterExecutionSnapshot } from '../../../lib/nameChange/voterFlow';
-import { getExecutionStatusVaultNotes } from '../../../lib/nameChange/targetExecution';
+import { getExecutionNextActionGuidance, getExecutionStatusVaultNotes } from '../../../lib/nameChange/targetExecution';
 import { formatNameChangeExecutionDateTime, getNameChangeExecutionTimestamp } from './nameChangeExecutionTime';
 import { buildNameChangeOverviewCardModel } from '../nameChangeOverviewCard';
 import { buildNameChangeOverviewInsights } from '../nameChangeOverviewInsights';
@@ -373,6 +373,7 @@ const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
   snapshot,
 }) => {
   const visibleStatusVaultNotes = getExecutionStatusVaultNotes(snapshot);
+  const guidedNextAction = snapshot.nextAction ? getExecutionNextActionGuidance(snapshot) : null;
 
   return (
   <Card>
@@ -488,7 +489,12 @@ const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
         <div className="mb-4 rounded-xl border border-border-subtle p-4">
           <p className="text-xs uppercase tracking-wide text-text-tertiary">Guided next action</p>
           <p className="mt-2 text-sm font-semibold text-text-primary">{snapshot.nextAction.label}</p>
-          <p className="mt-2 text-sm text-text-secondary">{getExecutionNextActionDetail(snapshot)}</p>
+          <div className="mt-2 space-y-1 text-sm text-text-secondary">
+            <p>{guidedNextAction?.overview ?? getExecutionNextActionDetail(snapshot)}</p>
+            {guidedNextAction?.doNow ? <p>Do now: {guidedNextAction.doNow}</p> : null}
+            {guidedNextAction?.whyItHelps ? <p>Why it helps: {guidedNextAction.whyItHelps}</p> : null}
+            {guidedNextAction?.canWait ? <p>Can wait: {guidedNextAction.canWait}</p> : null}
+          </div>
         </div>
       ) : null}
 
@@ -714,6 +720,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   const targetStatusVaultRows = useMemo<TargetStatusVaultRow[]>(() => executionSnapshots.map((snapshot) => {
     const visibleStatusVaultNotes = getExecutionStatusVaultNotes(snapshot);
     const guidedNextActionDetail = snapshot.nextAction ? getExecutionNextActionDetail(snapshot) : null;
+    const guidedNextAction = snapshot.nextAction ? getExecutionNextActionGuidance(snapshot) : null;
     const targetReminders = effectiveReminders.filter((reminder) => reminder.focus_target_id === snapshot.targetKey && reminder.status !== 'dismissed');
     const openReminderCount = targetReminders.filter((reminder) => reminder.status === 'pending' || reminder.status === 'scheduled').length;
     const highUrgencyCount = targetReminders.filter((reminder) => reminder.urgency === 'high' && reminder.status !== 'sent').length;
@@ -762,7 +769,13 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         ? `Reminder updated ${formatNameChangeExecutionDateTime(latestReminderAt)}`
         : null,
       nextActionLabel: snapshot.nextAction?.label ?? null,
-      nextActionDetail: guidedNextActionDetail,
+      nextActionDetail: guidedNextAction?.doNow || guidedNextAction?.whyItHelps || guidedNextAction?.canWait
+        ? [
+          guidedNextAction.doNow ? `Do now: ${guidedNextAction.doNow}` : null,
+          guidedNextAction.whyItHelps ? `Why it helps: ${guidedNextAction.whyItHelps}` : null,
+          guidedNextAction.canWait ? `Can wait: ${guidedNextAction.canWait}` : null,
+        ].filter(Boolean).join(' ')
+        : guidedNextActionDetail,
       reminderLabel: openReminderCount > 0
         ? `${openReminderCount} reminder${openReminderCount === 1 ? '' : 's'}${highUrgencyCount > 0 ? ` • ${highUrgencyCount} high urgency` : ''}`
         : null,

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildNameChangeTargetExecutionSnapshot,
   getExecutionNextActionDetail,
+  getExecutionNextActionGuidance,
   hasExecutionSupportiveWaitGuidance,
   getExecutionStatusVaultNotes,
 } from './targetExecution';
@@ -2649,6 +2650,12 @@ describe('name change target execution snapshot', () => {
 
     expect(getExecutionNextActionDetail(snapshot)).toContain('Actual submission can safely wait.');
     expect(hasExecutionSupportiveWaitGuidance(snapshot)).toBe(true);
+    expect(getExecutionNextActionGuidance(snapshot)).toEqual({
+      overview: 'Wait for the DMV update before submitting bank changes.',
+      doNow: 'Gather account numbers, policy details, and contact routes now.',
+      whyItHelps: 'That handoff moves faster once DMV completion clears.',
+      canWait: 'Actual submission can safely wait.',
+    });
   });
 
   it('hides guided next-action fallback notes from the visible status-vault stack', () => {

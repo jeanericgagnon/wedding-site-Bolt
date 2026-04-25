@@ -349,7 +349,8 @@ describe('NameChangePlannerTab', () => {
     );
 
     expect(screen.getAllByText('Guided next action').length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Actual submission can safely wait\./).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Do now:/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Can wait: Actual submission can safely wait\./).length).toBeGreaterThan(0);
   });
 
   it('does not duplicate guided next-action fallback detail inside status-vault rows', () => {
@@ -377,7 +378,7 @@ describe('NameChangePlannerTab', () => {
       />,
     );
 
-    expect(screen.getAllByText(bankGuidedDetail).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Guided next action|Do now:/).length).toBeGreaterThan(0);
     expect(screen.queryByText(new RegExp(`^Execution note: ${escapeRegExp(bankGuidedDetail)}$`))).not.toBeInTheDocument();
     expect(screen.queryByText(new RegExp(`^• ${escapeRegExp(bankGuidedDetail)}$`))).not.toBeInTheDocument();
   });

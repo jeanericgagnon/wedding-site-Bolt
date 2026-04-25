@@ -2014,7 +2014,7 @@ describe('name change action feed', () => {
     });
 
     expect(getExecutionNextActionDetail(snapshot)).toBe(
-      'Wait for the DMV update before submitting bank changes. You can still gather account numbers, policy details, and contact routes now so this handoff moves faster once DMV completion clears. Actual submission can safely wait.',
+      'Wait for the DMV update before submitting bank changes. Do now: Gather account numbers, policy details, and contact routes now. Why it helps: That handoff moves faster once DMV completion clears. Can wait: Actual submission can safely wait.',
     );
 
     const feed = buildNameChangeActionFeed([snapshot], [], []);
