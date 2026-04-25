@@ -204,20 +204,35 @@ export function getAccountUpdateTemplateChecklistStatusLine(template: AccountUpd
   return checklistStatusLine ? `Checklist status: ${checklistStatusLine}` : undefined;
 }
 
-export function getAccountUpdateTemplateContextLines(template: AccountUpdateTemplate) {
+type AccountUpdateTemplateContextOptions = {
+  includeSubject?: boolean;
+  includeMessage?: boolean;
+  prefixReadiness?: boolean;
+};
+
+export function getAccountUpdateTemplateContextLines(
+  template: AccountUpdateTemplate,
+  options: AccountUpdateTemplateContextOptions = {},
+) {
+  const {
+    includeSubject = true,
+    includeMessage = true,
+    prefixReadiness = true,
+  } = options;
+
   return [
-    getAccountUpdateTemplateStateLine(template),
-    getAccountUpdateTemplateSubjectLine(template),
-    getAccountUpdateTemplateMessageLine(template),
-    `Readiness: ${template.readinessLabel}`,
+    prefixReadiness ? `Readiness: ${template.readinessLabel}` : template.readinessLabel,
     getAccountUpdateTemplateBlockedByLine(template),
     getAccountUpdateTemplateCurrentBlockerLine(template),
     getAccountUpdateTemplateChecklistLine(template),
     getAccountUpdateTemplateChecklistStatusLine(template),
+    getAccountUpdateTemplateStateLine(template),
     getAccountUpdateTemplateProofStatusLine(template),
     getAccountUpdateTemplateNextAskLine(template),
     getAccountUpdateTemplateProofChecklistLine(template),
     getAccountUpdateTemplateProofDocumentsLine(template),
+    includeSubject ? getAccountUpdateTemplateSubjectLine(template) : undefined,
+    includeMessage ? getAccountUpdateTemplateMessageLine(template) : undefined,
   ].filter(Boolean);
 }
 

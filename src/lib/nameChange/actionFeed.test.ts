@@ -207,12 +207,28 @@ describe('account update template surface helpers', () => {
       'Proof to have handy: Certified legal name-change proof · Updated photo ID or DMV receipt',
     );
     expect(getAccountUpdateTemplateContextLines(template)).toEqual([
-      getAccountUpdateTemplateStateLine(template)!,
-      getAccountUpdateTemplateSubjectLine(template),
-      getAccountUpdateTemplateMessageLine(template),
       `Readiness: ${template.readinessLabel}`,
       getAccountUpdateTemplateChecklistLine(template)!,
       getAccountUpdateTemplateChecklistStatusLine(template)!,
+      getAccountUpdateTemplateStateLine(template)!,
+      getAccountUpdateTemplateProofStatusLine(template),
+      getAccountUpdateTemplateNextAskLine(template),
+      getAccountUpdateTemplateProofChecklistLine(template)!,
+      getAccountUpdateTemplateProofDocumentsLine(template)!,
+      getAccountUpdateTemplateSubjectLine(template),
+      getAccountUpdateTemplateMessageLine(template),
+    ]);
+    expect(
+      getAccountUpdateTemplateContextLines(template, {
+        includeSubject: false,
+        includeMessage: false,
+        prefixReadiness: false,
+      }),
+    ).toEqual([
+      template.readinessLabel,
+      getAccountUpdateTemplateChecklistLine(template)!,
+      getAccountUpdateTemplateChecklistStatusLine(template)!,
+      getAccountUpdateTemplateStateLine(template)!,
       getAccountUpdateTemplateProofStatusLine(template),
       getAccountUpdateTemplateNextAskLine(template),
       getAccountUpdateTemplateProofChecklistLine(template)!,

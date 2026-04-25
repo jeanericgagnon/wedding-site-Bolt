@@ -1352,8 +1352,8 @@ describe('NameChangePlannerTab', () => {
     );
 
     expect(screen.getByText('Proof to have handy: Certified legal name-change proof · Updated Social Security record or SSA confirmation')).toBeInTheDocument();
-    expect(screen.queryByText(/Proof to have handy: .*certified legal name-change proof.*certified legal name-change proof/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Proof to have handy: .*Updated Social Security record or SSA confirmation.*updated social security record or ssa confirmation/i)).not.toBeInTheDocument();
+    expect(screen.queryByText('Proof to have handy: Certified legal name-change proof · Certified legal name-change proof')).not.toBeInTheDocument();
+    expect(screen.queryByText('Proof to have handy: Updated Social Security record or SSA confirmation · updated social security record or ssa confirmation')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Copy intake script' })[0]!);
 

@@ -7,20 +7,9 @@ import { buildNameChangeAutofillPrepSnapshot } from '../../../lib/nameChange/aut
 import {
   buildNameChangeActionFeed,
   ensureTerminalPeriod,
-  formatInlineProofList,
-  getAccountUpdateTemplateBlockedByLine,
   getAccountUpdateTemplateContextLines,
-  getAccountUpdateTemplateCurrentBlockerLine,
-  getAccountUpdateTemplateChecklistLine,
-  getAccountUpdateTemplateChecklistStatusLine,
   getAccountUpdateTemplateMessageLine,
-  getAccountUpdateTemplateNextAskLine,
-  getAccountUpdateTemplateProofChecklistLine,
-  getAccountUpdateTemplateProofDocumentsLine,
-  getAccountUpdateTemplateProofStatusLine,
   getAccountUpdateTemplateReadinessLabel,
-  getAccountUpdateTemplateStateLine,
-  getAccountUpdateTemplateSubjectLine,
 } from '../../../lib/nameChange/actionFeed';
 import { getFallbackBlockingProofHopLabel } from '../../../lib/nameChange/engine';
 import { createDraftNameChangeDocument, normalizeDraftNameChangeDocumentId, upsertDraftNameChangeExtractedField } from '../../../lib/nameChange/intakeDraft';
@@ -202,12 +191,10 @@ function getAccountUpdateTemplateCopyButtonLabel(
 }
 
 function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
-  const contextLines = getAccountUpdateTemplateContextLines(template).filter((line) => line !== getAccountUpdateTemplateMessageLine(template));
-
   return [
     `Audience: ${template.audience}`,
     `Status: ${getAccountUpdateTemplateStatusChip(template)}`,
-    ...contextLines,
+    ...getAccountUpdateTemplateContextLines(template, { includeMessage: false }),
     '',
     getAccountUpdateTemplateMessageLine(template),
   ].filter(Boolean).join('\n');
@@ -1529,28 +1516,13 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                     </Button>
                   </div>
                 </div>
-                <p className="mt-2 text-xs text-text-secondary">{template.readinessLabel}</p>
-                {getAccountUpdateTemplateBlockedByLine(template) ? (
-                  <p className="mt-2 text-xs text-text-secondary">{getAccountUpdateTemplateBlockedByLine(template)}</p>
-                ) : null}
-                {getAccountUpdateTemplateCurrentBlockerLine(template) ? (
-                  <p className="mt-2 text-xs text-text-secondary">{getAccountUpdateTemplateCurrentBlockerLine(template)}</p>
-                ) : null}
-                {getAccountUpdateTemplateChecklistLine(template) ? (
-                  <p className="mt-2 text-xs text-text-secondary">{getAccountUpdateTemplateChecklistLine(template)}</p>
-                ) : null}
-                {getAccountUpdateTemplateChecklistStatusLine(template) ? (
-                  <p className="mt-2 text-xs text-text-secondary">{getAccountUpdateTemplateChecklistStatusLine(template)}</p>
-                ) : null}
-                <p className="mt-2 text-xs text-text-secondary">{getAccountUpdateTemplateStateLine(template)}</p>
-                <p className="mt-2 text-xs text-text-secondary">{getAccountUpdateTemplateProofStatusLine(template)}</p>
-                <p className="mt-2 text-xs text-text-secondary">{getAccountUpdateTemplateNextAskLine(template)}</p>
-                {getAccountUpdateTemplateProofChecklistLine(template) ? (
-                  <p className="mt-2 text-xs text-text-secondary">{getAccountUpdateTemplateProofChecklistLine(template)}</p>
-                ) : null}
-                {getAccountUpdateTemplateProofDocumentsLine(template) ? (
-                  <p className="mt-2 text-xs text-text-secondary">{getAccountUpdateTemplateProofDocumentsLine(template)}</p>
-                ) : null}
+                {getAccountUpdateTemplateContextLines(template, {
+                  includeSubject: false,
+                  includeMessage: false,
+                  prefixReadiness: false,
+                }).map((line) => (
+                  <p key={line} className="mt-2 text-xs text-text-secondary">{line}</p>
+                ))}
                 <p className="mt-2 whitespace-pre-line text-sm text-text-secondary">{template.body}</p>
               </div>
             ))}
