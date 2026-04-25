@@ -210,7 +210,21 @@ describe('name change engine', () => {
         expect.objectContaining({ id: 'track-ssa', sequenceLabel: '2 · federal anchor', status: 'ready' }),
         expect.objectContaining({ id: 'track-photo-id', sequenceLabel: '3 · photo ID chain', status: 'upcoming' }),
         expect.objectContaining({ id: 'track-passport', sequenceLabel: '4 · travel identity', status: 'upcoming', featureTag: 'travel' }),
-        expect.objectContaining({ id: 'track-rollout', sequenceLabel: '5 · account rollout', status: 'upcoming', featureTag: 'rollout' }),
+        expect.objectContaining({
+          id: 'track-rollout',
+          sequenceLabel: '5 · account rollout',
+          status: 'upcoming',
+          featureTag: 'rollout',
+          dependsOnStepIds: expect.arrayContaining([
+            'state-dmv',
+            'institution-irs-records',
+            'institution-irs-employer',
+            'institution-banks',
+            'institution-insurance',
+            'institution-phone-digital-identity',
+            'institution-frequent-flyer-hotel-rail',
+          ]),
+        }),
       ]),
     );
     expect(plan.summary.readinessPercent).toBeGreaterThan(0);

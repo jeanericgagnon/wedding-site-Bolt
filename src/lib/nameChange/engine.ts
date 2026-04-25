@@ -1392,6 +1392,7 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
   const readinessDenominator = Math.max(1, steps.length + missingInputs.length);
   const readinessNumerator = steps.filter((step) => step.status !== 'blocked').length + (missingInputs.length === 0 ? 1 : 0);
   const readinessPercent = Math.max(0, Math.min(100, Math.round((readinessNumerator / readinessDenominator) * 100)));
+  const accountRolloutTrackStepIds = ['state-dmv', ...institutionRolloutSteps.map((step) => step.id)];
   const executionTracks: NonNullable<NameChangePlan['summary']['executionTracks']> = [
     {
       id: 'track-legal-proof',
@@ -1441,9 +1442,9 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
       id: 'track-rollout',
       title: 'Everything-else rollout packet',
       sequenceLabel: input.profile.passport_needs_update ? '5 · account rollout' : '4 · account rollout',
-      status: legalProofReady ? 'upcoming' as const : 'blocked' as const,
+      status: legalProofReady ? resolvePlanSequenceStatus(accountRolloutTrackStepIds, steps) : 'blocked' as const,
       summary: 'Once the identity chain is grounded, fan out across payroll, banking, insurance, licenses, travel, and personal accounts from one packet.',
-      dependsOnStepIds: ['state-dmv', 'institutions-rollout'],
+      dependsOnStepIds: accountRolloutTrackStepIds,
       featureTag: 'rollout' as const,
     },
   ];
