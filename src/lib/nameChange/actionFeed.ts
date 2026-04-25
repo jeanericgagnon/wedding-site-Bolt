@@ -133,7 +133,15 @@ function formatTemplateAudienceForAction(audience: string) {
 
 function getTemplateActionLabel(baseLabel: string, template: AccountUpdateTemplate) {
   const audience = formatTemplateAudienceForAction(template.audience);
-  const blockingProofHopSuffix = template.blockingProofHopLabel ? ` (${template.blockingProofHopLabel})` : '';
+  const blockingProofHopSuffix = template.blockingProofHopLabel
+    ? ` (${template.blockingProofHopLabel})`
+    : template.readiness === 'in_progress'
+      ? ' (current proof pending)'
+      : template.readiness === 'upcoming'
+        ? ' (next proof hop pending)'
+        : template.readiness === 'blocked'
+          ? ' (proof chain pending)'
+          : '';
   if (template.readiness === 'complete') return `Confirm ${audience} sync (proof chain complete)`;
   if (template.readiness === 'ready') return `Send ${audience} update (proof packet ready)`;
   if (template.readiness === 'in_progress') return `Draft ${audience} update${blockingProofHopSuffix}`;
