@@ -266,7 +266,7 @@ function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['s
     `Proof status: ${template.proofReadinessSummary}`,
     `Next ask: ${template.requestSummary}`,
     template.proofChecklist.length > 0 ? `Proof checklist: ${formatInlineProofList(template.proofChecklist)}` : undefined,
-    `Proof to have handy: ${formatInlineProofList(template.proofDocuments)}`,
+    template.proofDocuments.length > 0 ? `Proof to have handy: ${formatInlineProofList(template.proofDocuments)}` : undefined,
     '',
     template.body,
   ].filter(Boolean).join('\n');
@@ -1607,7 +1607,9 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 {template.proofChecklist.length > 0 ? (
                   <p className="mt-2 text-xs text-text-secondary">Proof checklist: {formatInlineProofList(template.proofChecklist)}</p>
                 ) : null}
-                <p className="mt-2 text-xs text-text-secondary">Proof to have handy: {formatInlineProofList(template.proofDocuments)}</p>
+                {template.proofDocuments.length > 0 ? (
+                  <p className="mt-2 text-xs text-text-secondary">Proof to have handy: {formatInlineProofList(template.proofDocuments)}</p>
+                ) : null}
                 <p className="mt-2 whitespace-pre-line text-sm text-text-secondary">{template.body}</p>
               </div>
             ))}

@@ -1310,4 +1310,57 @@ describe('NameChangePlannerTab', () => {
     await waitFor(() => expect(clipboardWriteText).toHaveBeenCalledTimes(1));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining('Proof to have handy: Certified legal name-change proof · Updated Social Security record or SSA confirmation'));
   });
+
+  it('omits proof-to-have-handy text when a template has no proof documents', async () => {
+    const clipboardWriteText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(window.navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: clipboardWriteText },
+    });
+    HTMLElement.prototype.scrollIntoView = vi.fn();
+
+    const draft = makeDraft();
+    const basePlan = buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      summary: {
+        ...basePlan.summary,
+        accountUpdateTemplates: (basePlan.summary.accountUpdateTemplates ?? []).map((template) => (
+          template.id === 'template-payroll'
+            ? { ...template, proofDocuments: [] }
+            : template
+        )),
+      },
+    };
+
+    render(
+      <NameChangePlannerTab
+        draft={draft}
+        documents={[]}
+        extractedFields={[]}
+        plan={plan}
+        reminders={[]}
+        saving={false}
+        onDraftChange={vi.fn()}
+        onStructuredIntakeChange={vi.fn()}
+        onDocumentsChange={vi.fn()}
+        onExtractedFieldsChange={vi.fn()}
+        onRemindersChange={vi.fn()}
+        onStepExecutionStatusChange={vi.fn()}
+        onStepExecutionNoteChange={vi.fn()}
+        onSave={vi.fn().mockResolvedValue(undefined)}
+        initialTargetId="account-update-template-template-payroll"
+      />,
+    );
+
+    const payrollCard = document.getElementById('account-update-template-template-payroll');
+    if (!payrollCard) throw new Error('expected payroll card');
+
+    expect(within(payrollCard).queryByText(/Proof to have handy:/)).not.toBeInTheDocument();
+
+    fireEvent.click(within(payrollCard).getByRole('button', { name: 'Copy intake script' }));
+
+    await waitFor(() => expect(clipboardWriteText).toHaveBeenCalledTimes(1));
+    expect(clipboardWriteText).not.toHaveBeenCalledWith(expect.stringContaining('Proof to have handy:'));
+  });
 });
