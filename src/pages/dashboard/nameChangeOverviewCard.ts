@@ -29,7 +29,7 @@ export function buildNameChangeOverviewCardModel(input: {
       helperCopy: 'Keep the free assistant handy after the wedding so certificate, SSA, DMV, passport, payroll, tax, and downstream account updates stay easy to find whenever you want to resume.',
       primaryHref: `${base}#case-setup`,
       primaryLabel: 'Start case setup',
-      secondaryHref: base,
+      secondaryHref: `${base}#name-change-roadmap`,
       secondaryLabel: 'See roadmap first',
       tertiaryHref: `${base}#name-change-roadmap`,
       tertiaryLabel: 'Browse full assistant',

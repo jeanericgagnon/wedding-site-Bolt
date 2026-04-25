@@ -13,6 +13,7 @@ describe('buildNameChangeOverviewCardModel', () => {
     expect(model.primaryLabel).toBe('Start case setup');
     expect(model.primaryHref).toBe('/dashboard/planning?tab=nameChange#case-setup');
     expect(model.secondaryLabel).toBe('See roadmap first');
+    expect(model.secondaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
     expect(model.statusLabel).toBe('Start free assistant');
     expect(model.tertiaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
     expect(model.tertiaryLabel).toBe('Browse full assistant');
