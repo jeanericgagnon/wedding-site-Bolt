@@ -217,7 +217,7 @@ describe('NameChangePlannerTab', () => {
           .getByText((content) => content.includes('account cleanup'))
           .closest('button') as HTMLButtonElement,
       );
-      expect(window.location.hash).toBe('#name-change-roadmap');
+      expect(window.location.hash).toBe('#target-status-tracking');
       fireEvent.click(screen.getByRole('button', { name: 'Resume status vault' }));
       expect(window.location.hash).toBe('#target-status-tracking');
       fireEvent.click(screen.getByRole('button', { name: 'Update case setup' }));

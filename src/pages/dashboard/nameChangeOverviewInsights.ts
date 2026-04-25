@@ -4,6 +4,7 @@ export interface NameChangeOverviewInsights {
   coreChainLabel: string;
   followOnLabel: string;
   downstreamLabel: string;
+  downstreamHref: string;
   concreteResumeLabel: string | null;
   milestoneSummaryLabel: string;
   milestoneSummaryHref: string;
@@ -25,6 +26,9 @@ export function buildNameChangeOverviewInsights(workspace: Pick<HydratedNameChan
   const reminderSummaryHref = openReminderCount > 0
     ? `${basePlannerHref}#target-status-tracking`
     : `${basePlannerHref}#name-change-roadmap`;
+  const downstreamHref = openReminderCount > 0 || hasExecutionActivity
+    ? `${basePlannerHref}#target-status-tracking`
+    : `${basePlannerHref}#name-change-roadmap`;
 
   return {
     coreChainLabel:
@@ -39,6 +43,7 @@ export function buildNameChangeOverviewInsights(workspace: Pick<HydratedNameChan
       openReminderCount > 0
         ? `${openReminderCount} reminder${openReminderCount === 1 ? '' : 's'} still open for the long-tail bank, insurance, travel, and loyalty cleanup.`
         : 'Use the long-tail rollout lane for banks, insurance, travel, loyalty, and the rest of the account cleanup.',
+    downstreamHref,
     concreteResumeLabel: nextOpenMilestone?.label ?? null,
     milestoneSummaryLabel:
       milestoneCompleteCount > 0

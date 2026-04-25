@@ -208,6 +208,7 @@ export const DashboardOverview: React.FC = () => {
     coreChainLabel: 'Certificate, SSA, and DMV stay together so the legal identity chain does not drift.',
     followOnLabel: 'Passport, payroll, and tax updates should reflect the same verified name once the first chain lands.',
     downstreamLabel: 'Use the long-tail rollout lane for banks, insurance, travel, loyalty, and the rest of the account cleanup.',
+    downstreamHref: '/dashboard/planning?tab=nameChange#name-change-roadmap',
     milestoneSummaryHref: '/dashboard/planning?tab=nameChange#name-change-roadmap',
     reminderSummaryHref: '/dashboard/planning?tab=nameChange#name-change-roadmap',
   });
@@ -306,6 +307,7 @@ export const DashboardOverview: React.FC = () => {
           coreChainLabel: '1 complete · 1 in progress across the legal identity chain.',
           followOnLabel: '1 milestone confirmed so passport, payroll, and tax follow-ons can stay in sync.',
           downstreamLabel: '2 reminders still open for the long-tail bank, insurance, travel, and loyalty cleanup.',
+          downstreamHref: '/dashboard/planning?tab=nameChange#target-status-tracking',
           milestoneSummaryHref: '/dashboard/planning?tab=nameChange#target-status-tracking',
           reminderSummaryHref: '/dashboard/planning?tab=nameChange#target-status-tracking',
         });
@@ -431,6 +433,7 @@ export const DashboardOverview: React.FC = () => {
             coreChainLabel: 'Certificate, SSA, and DMV stay together so the legal identity chain does not drift.',
             followOnLabel: 'Passport, payroll, and tax updates should reflect the same verified name once the first chain lands.',
             downstreamLabel: 'Use the long-tail rollout lane for banks, insurance, travel, loyalty, and the rest of the account cleanup.',
+            downstreamHref: '/dashboard/planning?tab=nameChange#name-change-roadmap',
             milestoneSummaryHref: '/dashboard/planning?tab=nameChange#name-change-roadmap',
             reminderSummaryHref: '/dashboard/planning?tab=nameChange#name-change-roadmap',
           });
@@ -441,6 +444,7 @@ export const DashboardOverview: React.FC = () => {
           coreChainLabel: 'Certificate, SSA, and DMV stay together so the legal identity chain does not drift.',
           followOnLabel: 'Passport, payroll, and tax updates should reflect the same verified name once the first chain lands.',
           downstreamLabel: 'Use the long-tail rollout lane for banks, insurance, travel, loyalty, and the rest of the account cleanup.',
+          downstreamHref: '/dashboard/planning?tab=nameChange#name-change-roadmap',
           milestoneSummaryHref: '/dashboard/planning?tab=nameChange#name-change-roadmap',
           reminderSummaryHref: '/dashboard/planning?tab=nameChange#name-change-roadmap',
         });
@@ -1002,7 +1006,7 @@ export const DashboardOverview: React.FC = () => {
                       <button
                         type="button"
                         className="rounded-xl border border-sky-200 bg-white px-4 py-3 text-left"
-                        onClick={() => navigate(nameChangeCard.tertiaryHref)}
+                        onClick={() => navigate(nameChangeInsights.downstreamHref)}
                       >
                         <p className="text-xs uppercase tracking-wide text-sky-700">{NAME_CHANGE_LIFECYCLE_LABELS.downstream}</p>
                         <p className="mt-1 text-sm text-sky-950">{nameChangeInsights.downstreamLabel}</p>

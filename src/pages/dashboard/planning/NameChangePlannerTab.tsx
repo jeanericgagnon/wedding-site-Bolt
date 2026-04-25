@@ -1197,7 +1197,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
           <button
             type="button"
             className="rounded-xl border border-sky-200 bg-white/80 px-4 py-3 text-left"
-            onClick={() => scrollToPlannerHref(resumeCard.tertiaryHref)}
+            onClick={() => scrollToPlannerHref(lifecycleInsights.downstreamHref)}
           >
             <p className="text-xs uppercase tracking-wide text-sky-700">{NAME_CHANGE_LIFECYCLE_LABELS.downstream}</p>
             <p className="mt-1 text-sm text-sky-950">{lifecycleInsights.downstreamLabel}</p>

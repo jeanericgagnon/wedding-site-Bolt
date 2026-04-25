@@ -34,6 +34,7 @@ describe('buildNameChangeOverviewInsights', () => {
     expect(insights.milestoneSummaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
     expect(insights.reminderSummaryLabel).toBe('No open reminders');
     expect(insights.reminderSummaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
+    expect(insights.downstreamHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
   });
 
   it('surfaces progress, milestone confirmations, and open reminders once the vault is active', () => {
@@ -71,5 +72,6 @@ describe('buildNameChangeOverviewInsights', () => {
     expect(insights.milestoneSummaryHref).toBe('/dashboard/planning?tab=nameChange#target-status-tracking');
     expect(insights.reminderSummaryLabel).toBe('1 reminder open');
     expect(insights.reminderSummaryHref).toBe('/dashboard/planning?tab=nameChange#target-status-tracking');
+    expect(insights.downstreamHref).toBe('/dashboard/planning?tab=nameChange#target-status-tracking');
   });
 });
