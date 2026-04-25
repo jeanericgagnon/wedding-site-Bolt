@@ -130,7 +130,8 @@ function getTargetStatusVaultSnapshot(
     ? `${proofCounts} • ${proofStateSummary} • Needs ${proofIssues}`
     : `${proofCounts} • Proof stack looks grounded`;
   const targetReminders = reminders.filter((reminder) => reminder.focus_target_id === targetKey && reminder.status !== 'dismissed');
-  const latestReminder = [...targetReminders]
+  const openTargetReminders = targetReminders.filter((reminder) => reminder.status === 'pending' || reminder.status === 'scheduled');
+  const latestReminder = [...openTargetReminders]
     .filter((reminder) => Boolean(reminder.updated_at))
     .sort((left, right) => new Date(right.updated_at ?? 0).getTime() - new Date(left.updated_at ?? 0).getTime())[0] ?? null;
   const latestReminderAt = latestReminder?.updated_at ?? null;
@@ -204,7 +205,7 @@ function getTargetStatusVaultSnapshot(
     milestoneCounts,
     reminderSummary: {
       openCount: targetReminders.filter((reminder) => reminder.status === 'pending' || reminder.status === 'scheduled').length,
-      highUrgencyCount: targetReminders.filter((reminder) => reminder.urgency === 'high' && reminder.status !== 'sent').length,
+      highUrgencyCount: openTargetReminders.filter((reminder) => reminder.urgency === 'high').length,
       latestReminderAt,
     },
   };
