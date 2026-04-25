@@ -658,7 +658,7 @@ function buildAccountUpdateTemplates(
                       in_progress: 'Draft now and attach the final proof packet as soon as it lands',
                     });
     const proofChecklist = [...template.proofChecklist, readinessSpecificChecklistItem];
-    const proofLine = `I can provide ${template.proofChecklist.join(', ')} ${readinessSpecificProof}`;
+    const proofLine = `I can provide ${proofChecklist.join(', ')} ${readinessSpecificProof}`;
 
     return {
       id: template.id,
