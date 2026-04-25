@@ -377,6 +377,7 @@ describe('NameChangePlannerTab', () => {
       />,
     );
 
+    expect(screen.getAllByText(bankGuidedDetail).length).toBeGreaterThan(0);
     expect(screen.queryByText(new RegExp(`^Execution note: ${escapeRegExp(bankGuidedDetail)}$`))).not.toBeInTheDocument();
     expect(screen.queryByText(new RegExp(`^• ${escapeRegExp(bankGuidedDetail)}$`))).not.toBeInTheDocument();
   });

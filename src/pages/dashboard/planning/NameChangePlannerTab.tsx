@@ -134,6 +134,7 @@ interface TargetStatusVaultRow {
   milestoneUpdatedLabel: string | null;
   reminderUpdatedLabel: string | null;
   nextActionLabel: string | null;
+  nextActionDetail: string | null;
   reminderLabel: string | null;
 }
 
@@ -761,6 +762,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         ? `Reminder updated ${formatNameChangeExecutionDateTime(latestReminderAt)}`
         : null,
       nextActionLabel: snapshot.nextAction?.label ?? null,
+      nextActionDetail: guidedNextActionDetail,
       reminderLabel: openReminderCount > 0
         ? `${openReminderCount} reminder${openReminderCount === 1 ? '' : 's'}${highUrgencyCount > 0 ? ` • ${highUrgencyCount} high urgency` : ''}`
         : null,
@@ -1494,7 +1496,12 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                   {row.milestoneNote && row.milestoneNote !== row.note && row.milestoneNote !== row.executionNote ? <p className="mt-2 text-xs text-text-secondary">Milestone note: {row.milestoneNote}</p> : null}
                   {row.proofNote && row.proofNote !== row.note && row.proofNote !== row.executionNote && row.proofNote !== row.milestoneNote ? <p className="mt-2 text-xs text-text-secondary">Proof note: {row.proofNote}</p> : null}
                   {row.reminderNote && row.reminderNote !== row.note ? <p className="mt-2 text-xs text-text-secondary">Reminder note: {row.reminderNote}</p> : null}
-                  {row.nextActionLabel && <p className="mt-2 text-xs text-text-secondary">Next: {row.nextActionLabel}</p>}
+                  {row.nextActionLabel ? (
+                    <div className="mt-2 space-y-1 text-xs text-text-secondary">
+                      <p>Next: {row.nextActionLabel}</p>
+                      {row.nextActionDetail && row.nextActionDetail !== row.executionNote ? <p>{row.nextActionDetail}</p> : null}
+                    </div>
+                  ) : null}
                   {row.reminderLabel && <p className="mt-2 text-xs text-text-secondary">Reminders: {row.reminderLabel}</p>}
                   {row.updatedLabel && <p className="mt-3 text-xs text-text-secondary">{row.updatedLabel}</p>}
                   {row.executionUpdatedLabel && <p className="mt-1 text-xs text-text-secondary">{row.executionUpdatedLabel}</p>}
