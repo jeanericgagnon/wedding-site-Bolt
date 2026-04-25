@@ -250,6 +250,24 @@ describe('applyWeddingDataBindings', () => {
     expect(result.venueAddress).toBe('450 Park Ave');
   });
 
+  it('keeps bound common couple text truthful when one persisted partner name is whitespace only', () => {
+    const data = createEmptyWeddingData();
+    data.couple.partner1Name = '   ';
+    data.couple.partner2Name = ' Alex ';
+
+    const result = applyWeddingDataBindings({
+      type: 'hero',
+      variant: 'fullbleed',
+      data: {
+        headline: '',
+        title: '',
+      },
+    }, data);
+
+    expect(result.headline).toBe('Alex');
+    expect(result.title).toBe('Alex');
+  });
+
   it('falls back to wedding media when common image fields are blank or empty', () => {
     const data = createEmptyWeddingData();
     data.media.heroImageUrl = 'https://example.com/hero.jpg';

@@ -1,4 +1,5 @@
 import { WeddingDataV1 } from '../types/weddingData';
+import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
 
 interface SectionBindings {
   venueIds?: string[];
@@ -268,7 +269,7 @@ function bindRsvp(section: BindableSection, weddingData: WeddingDataV1): Record<
 }
 
 function bindCommon(section: BindableSection, weddingData: WeddingDataV1): Record<string, unknown> {
-  const coupleName = weddingData.couple.displayName || [weddingData.couple.partner1Name, weddingData.couple.partner2Name].filter(Boolean).join(' & ');
+  const coupleName = weddingData.couple.displayName || buildCoupleDisplayName(weddingData.couple.partner1Name, weddingData.couple.partner2Name);
   const weddingDate = formatDate(weddingData.event?.weddingDateISO);
   const primaryVenue = (weddingData.venues || [])[0];
   const venueName = primaryVenue?.name || '';
