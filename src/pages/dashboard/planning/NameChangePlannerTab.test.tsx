@@ -44,6 +44,31 @@ function makePlanWithExecutionActivity(draft: NameChangeCaseInput): NameChangePl
   };
 }
 
+function makeCompletedPlan(draft: NameChangeCaseInput): NameChangePlan {
+  const plan = buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] });
+
+  return {
+    ...plan,
+    steps: plan.steps.map((step) => ({
+      ...step,
+      executionStatus: 'complete',
+      executionUpdatedAt: new Date().toISOString(),
+    })),
+    summary: {
+      ...plan.summary,
+      executionCounts: {
+        todo: 0,
+        in_progress: 0,
+        complete: plan.steps.length,
+      },
+      milestoneChecklist: (plan.summary.milestoneChecklist ?? []).map((milestone) => ({
+        ...milestone,
+        status: 'complete' as const,
+      })),
+    },
+  };
+}
+
 describe('NameChangePlannerTab', () => {
   it('renders current and target middle-name case setup inputs and routes edits through draft updates', () => {
     const draft = makeDraft();
@@ -162,7 +187,7 @@ describe('NameChangePlannerTab', () => {
       expect(window.location.hash).toBe('#target-status-tracking');
       fireEvent.click(screen.getByRole('button', { name: 'Update case setup' }));
       expect(window.location.hash).toBe('#case-setup');
-      fireEvent.click(screen.getByRole('button', { name: 'Open roadmap' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Open full assistant' }));
       expect(window.location.hash).toBe('#name-change-roadmap');
 
       expect(scrollIntoView).toHaveBeenCalledTimes(3);
@@ -207,6 +232,48 @@ describe('NameChangePlannerTab', () => {
 
       expect(scrollIntoView).toHaveBeenCalledTimes(3);
       expect(window.location.hash).toBe('#name-change-roadmap');
+    } finally {
+      HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    }
+  });
+
+  it('uses the completed lifecycle copy once the execution chain is done', () => {
+    const draft = makeDraft();
+    const scrollIntoView = vi.fn();
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = scrollIntoView;
+
+    try {
+      render(
+        <NameChangePlannerTab
+          draft={draft}
+          documents={[]}
+          extractedFields={[]}
+          plan={makeCompletedPlan(draft)}
+          reminders={[]}
+          saving={false}
+          onDraftChange={vi.fn()}
+          onStructuredIntakeChange={vi.fn()}
+          onDocumentsChange={vi.fn()}
+          onExtractedFieldsChange={vi.fn()}
+          onRemindersChange={vi.fn()}
+          onStepExecutionStatusChange={vi.fn()}
+          onStepExecutionNoteChange={vi.fn()}
+          onSave={vi.fn().mockResolvedValue(undefined)}
+        />,
+      );
+
+      expect(screen.getByText('Status vault complete')).toBeInTheDocument();
+      expect(screen.getByText(/Nothing pushy here/i)).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Review status vault' }));
+      expect(window.location.hash).toBe('#target-status-tracking');
+      fireEvent.click(screen.getByRole('button', { name: 'See roadmap again' }));
+      expect(window.location.hash).toBe('#name-change-roadmap');
+      fireEvent.click(screen.getByRole('button', { name: 'Open full assistant' }));
+      expect(window.location.hash).toBe('#name-change-roadmap');
+
+      expect(scrollIntoView).toHaveBeenCalledTimes(3);
     } finally {
       HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
     }

@@ -147,6 +147,22 @@ function scrollToPlannerTarget(targetId: string) {
   document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+function scrollToPlannerHref(href: string) {
+  const [, hash = ''] = href.split('#');
+  scrollToPlannerTarget(hash || 'name-change-roadmap');
+}
+
+function derivePlannerWorkflowStatus(plan: NameChangePlan): 'ready' | 'in_progress' | 'complete' {
+  const executionCounts = plan.summary.executionCounts ?? { todo: plan.steps.length, in_progress: 0, complete: 0 };
+  if (executionCounts.complete > 0 && executionCounts.todo === 0 && executionCounts.in_progress === 0) {
+    return 'complete';
+  }
+  if (executionCounts.in_progress > 0 || executionCounts.complete > 0) {
+    return 'in_progress';
+  }
+  return 'ready';
+}
+
 function getActionFeedCtaLabel(intent: 'open_execution_card' | 'open_document_repair') {
   return intent === 'open_execution_card' ? 'Open execution card' : 'Open document repair';
 }
@@ -564,13 +580,14 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     () => (plan.summary.executionCounts?.in_progress ?? 0) > 0 || (plan.summary.executionCounts?.complete ?? 0) > 0,
     [plan.summary.executionCounts],
   );
+  const workflowStatus = useMemo(() => derivePlannerWorkflowStatus(plan), [plan]);
   const resumeCard = useMemo(
     () => buildNameChangeOverviewCardModel({
       hasWorkspace: true,
-      workflowStatus: hasExecutionActivity ? 'in_progress' : 'ready',
+      workflowStatus,
       hasExecutionActivity,
     }),
-    [hasExecutionActivity],
+    [hasExecutionActivity, workflowStatus],
   );
   const lifecycleInsights = useMemo(
     () => buildNameChangeOverviewInsights({ plan, reminders: effectiveReminders }),
@@ -1129,18 +1146,18 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 Optional next move: <span className="font-medium">{nextOptionalMilestone.label}</span>
               </p>
             ) : (
-              <p className="mt-2 text-sm text-sky-900">Optional next move: review the status vault and only touch the next step that actually matters.</p>
+              <p className="mt-2 text-sm text-sky-900">Optional next move: {resumeCard.optionalNextStep}</p>
             )}
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" onClick={() => scrollToPlannerTarget(hasExecutionActivity ? 'target-status-tracking' : 'case-setup')}>
+            <Button size="sm" onClick={() => scrollToPlannerHref(resumeCard.primaryHref)}>
               {resumeCard.primaryLabel}
             </Button>
-            <Button variant="outline" size="sm" onClick={() => scrollToPlannerTarget(hasExecutionActivity ? 'case-setup' : 'target-status-tracking')}>
+            <Button variant="outline" size="sm" onClick={() => scrollToPlannerHref(resumeCard.secondaryHref)}>
               {resumeCard.secondaryLabel}
             </Button>
-            <Button variant="outline" size="sm" onClick={() => scrollToPlannerTarget('name-change-roadmap')}>
-              {hasExecutionActivity ? 'Open roadmap' : 'See roadmap first'}
+            <Button variant="outline" size="sm" onClick={() => scrollToPlannerHref(resumeCard.tertiaryHref)}>
+              {resumeCard.tertiaryLabel}
             </Button>
             <Button variant="outline" size="sm" onClick={() => void onSave()} disabled={saving}>{saving ? 'Saving…' : 'Save and come back later'}</Button>
           </div>
