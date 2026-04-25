@@ -10,6 +10,18 @@ export type InitialSetupDerivedOutputs = {
   interpreted: ReturnType<typeof interpretInitialSetupAnswers>;
 };
 
+const normalizeFollowUpDateInput = (value?: string): string => {
+  const trimmed = value?.trim() ?? '';
+  if (!trimmed) return '';
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return '';
+
+  const date = new Date(`${trimmed}T12:00:00Z`);
+  if (Number.isNaN(date.getTime())) return '';
+
+  return date.toISOString().slice(0, 10) === trimmed ? trimmed : '';
+};
+
 export const buildInitialSetupDerivedOutputs = (answers: InitialSetupAnswers, followUps?: InitialSetupFollowUpAnswers): InitialSetupDerivedOutputs => {
   const weddingProfile = applyInitialSetupAnswersToWeddingProfile(answers);
   const interpreted = interpretInitialSetupAnswers(answers);
@@ -21,7 +33,8 @@ export const buildInitialSetupDerivedOutputs = (answers: InitialSetupAnswers, fo
     }));
     if (followUps.storyClarification) weddingProfile.story.summary = followUps.storyClarification;
     if (followUps.registryClarification) { weddingProfile.registry.url = followUps.registryClarification; weddingProfile.registry.status = 'linked'; }
-    if (followUps.rsvpClarification) weddingProfile.event.rsvpDeadline = followUps.rsvpClarification || weddingProfile.event.rsvpDeadline;
+    const normalizedRsvpClarification = normalizeFollowUpDateInput(followUps.rsvpClarification);
+    if (normalizedRsvpClarification) weddingProfile.event.rsvpDeadline = normalizedRsvpClarification;
     if (followUps.venueClarification) weddingProfile.event.venueName = followUps.venueClarification;
   }
   return {
