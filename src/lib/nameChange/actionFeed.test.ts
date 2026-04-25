@@ -345,7 +345,7 @@ describe('name change action feed', () => {
       urgencyReason: 'packet_trust',
       action: expect.objectContaining({
         label: 'Send bank accounts update',
-        detail: expect.stringContaining('clean confirmation/update pass'),
+        detail: expect.stringContaining('Ready for final bank review. Send with the current proof packet now.'),
       }),
     });
   });
@@ -397,6 +397,7 @@ describe('name change action feed', () => {
     });
     expect(feed[0]?.action.label).toBe('Confirm bank accounts sync');
     expect(feed[0]?.action.detail).toContain('Subject: Confirm completed update: Name change update for banking profile');
+    expect(feed[0]?.action.detail).toContain('Use this only to confirm the rename already synced.');
     expect(feed[0]?.action.detail).toContain('Subject: Confirm completed update: Name change update for banking profile\nTemplate message: I can provide certified legal proof.');
     expect(feed[0]?.action.detail).toContain('Template message: I can provide certified legal proof.');
     expect(feed[0]?.action.detail).toContain('Readiness: The core proof chain is already complete, so this should be a clean confirmation/update pass.');
