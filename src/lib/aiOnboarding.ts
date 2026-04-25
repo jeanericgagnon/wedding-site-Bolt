@@ -194,6 +194,16 @@ const mergeProfile = (profile: WeddingProfile, updates: Partial<WeddingProfile>)
   meta: { ...profile.meta, ...compactObject(updates.meta as Record<string, unknown> | null | undefined) },
 });
 
+const normalizeDeterministicDateInput = (value: string): string | null => {
+  const trimmed = value.trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return null;
+
+  const date = new Date(`${trimmed}T12:00:00Z`);
+  if (Number.isNaN(date.getTime())) return null;
+
+  return date.toISOString().slice(0, 10) === trimmed ? trimmed : null;
+};
+
 const deterministicExtractWeddingProfileUpdates = (
   input: string,
   profile: WeddingProfile
@@ -220,14 +230,15 @@ const deterministicExtractWeddingProfileUpdates = (
     confidence = Math.max(confidence, 0.92);
   }
 
-  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+  const normalizedDateInput = normalizeDeterministicDateInput(trimmed);
+  if (normalizedDateInput) {
     const current = getProfileString(profile, 'event.date');
-    if (current && normalize(current) !== normalize(trimmed)) {
-      conflicts.push({ path: 'event.date', currentValue: current, nextValue: trimmed });
+    if (current && normalize(current) !== normalize(normalizedDateInput)) {
+      conflicts.push({ path: 'event.date', currentValue: current, nextValue: normalizedDateInput });
       requiresConfirmation = true;
       confidence = Math.max(confidence, 0.35);
     } else {
-      updates.event = { ...profile.event, date: trimmed };
+      updates.event = { ...profile.event, date: normalizedDateInput };
       notes.push('Captured wedding date');
       confidence = Math.max(confidence, 0.95);
     }

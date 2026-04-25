@@ -22,6 +22,13 @@ describe('aiOnboarding', () => {
     session = await applyOnboardingInput(session, 'San Diego, CA');
     expect(session.readiness.hasEnoughToDraft).toBe(true);
   });
+
+  it('ignores impossible wedding dates instead of treating them as captured profile truth', async () => {
+    const result = await extractWeddingProfileUpdates('2027-02-30', createEmptyWeddingProfile());
+
+    expect(result.updates.event?.date).toBeUndefined();
+    expect(result.notes).not.toContain('Captured wedding date');
+  });
 });
 
 
