@@ -10,8 +10,9 @@ import {
   getAccountUpdateTemplateAudienceLine,
   getAccountUpdateTemplateContextLines,
   getAccountUpdateTemplateMessageLine,
-  getAccountUpdateTemplateReadinessLabel,
   getAccountUpdateTemplateReadinessLine,
+  getAccountUpdateTemplateStatusLabel,
+  getAccountUpdateTemplateStatusLine,
 } from '../../../lib/nameChange/actionFeed';
 import { getFallbackBlockingProofHopLabel } from '../../../lib/nameChange/engine';
 import { createDraftNameChangeDocument, normalizeDraftNameChangeDocumentId, upsertDraftNameChangeExtractedField } from '../../../lib/nameChange/intakeDraft';
@@ -174,10 +175,7 @@ function getEffectiveBlockingProofHopLabel(template: NonNullable<NameChangePlan[
 }
 
 function getAccountUpdateTemplateStatusChip(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
-  const baseLabel = getAccountUpdateTemplateReadinessLabel(template.readiness);
-  const blockingPhaseLabel = getEffectiveBlockingProofHopLabel(template);
-
-  return blockingPhaseLabel ? `${baseLabel} · ${blockingPhaseLabel}` : baseLabel;
+  return getAccountUpdateTemplateStatusLabel(template);
 }
 
 function getAccountUpdateTemplateCopyButtonLabel(
@@ -195,7 +193,7 @@ function getAccountUpdateTemplateCopyButtonLabel(
 function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
   return [
     getAccountUpdateTemplateAudienceLine(template),
-    `Status: ${getAccountUpdateTemplateStatusChip(template)}`,
+    getAccountUpdateTemplateStatusLine(template),
     ...getAccountUpdateTemplateContextLines(template, { includeMessage: false }),
     '',
     getAccountUpdateTemplateMessageLine(template),

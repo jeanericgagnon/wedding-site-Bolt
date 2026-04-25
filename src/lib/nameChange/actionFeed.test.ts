@@ -8,6 +8,8 @@ import {
   getAccountUpdateTemplateAudienceLine,
   getAccountUpdateTemplateBlockedByLine,
   getAccountUpdateTemplateContextLines,
+  getAccountUpdateTemplateStatusLabel,
+  getAccountUpdateTemplateStatusLine,
   getAccountUpdateTemplateCurrentBlockerLine,
   getAccountUpdateTemplateChecklistLine,
   getAccountUpdateTemplateChecklistStatusLine,
@@ -211,6 +213,8 @@ describe('account update template surface helpers', () => {
     );
     expect(getAccountUpdateTemplateReadinessLine(template)).toBe(`Readiness: ${template.readinessLabel}`);
     expect(getAccountUpdateTemplateReadinessLine(template, { prefix: false })).toBe(template.readinessLabel);
+    expect(getAccountUpdateTemplateStatusLabel(template)).toBe('send now (proof packet ready)');
+    expect(getAccountUpdateTemplateStatusLine(template)).toBe('Status: send now (proof packet ready)');
     expect(getAccountUpdateTemplateContextLines(template, { includeAudience: true })).toEqual([
       getAccountUpdateTemplateAudienceLine(template),
       getAccountUpdateTemplateReadinessLine(template),

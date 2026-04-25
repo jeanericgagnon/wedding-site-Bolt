@@ -297,10 +297,17 @@ export function getAccountUpdateTemplateReadinessLabel(readiness: AccountUpdateT
       : actionLabel;
 }
 
-function getTemplateLaneLabel(template: AccountUpdateTemplate) {
+export function getAccountUpdateTemplateStatusLabel(template: AccountUpdateTemplate) {
   const blockingPhaseLabel = getEffectiveBlockingProofHopLabel(template);
+  return [getAccountUpdateTemplateReadinessLabel(template.readiness), blockingPhaseLabel].filter(Boolean).join(' · ');
+}
 
-  return [template.audience, getAccountUpdateTemplateReadinessLabel(template.readiness), blockingPhaseLabel].filter(Boolean).join(' · ');
+export function getAccountUpdateTemplateStatusLine(template: AccountUpdateTemplate) {
+  return `Status: ${getAccountUpdateTemplateStatusLabel(template)}`;
+}
+
+function getTemplateLaneLabel(template: AccountUpdateTemplate) {
+  return [template.audience, getAccountUpdateTemplateStatusLabel(template)].filter(Boolean).join(' · ');
 }
 
 function getActionDocumentKind(item: NameChangeActionFeedItem) {
