@@ -238,6 +238,7 @@ describe('name change engine', () => {
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.proofChecklist.at(-1)).toBe('Gather mismatch and booking rules only until legal proof is fully grounded.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.requestSummary).toBe('Please just share your mismatch policy and acceptable temporary-proof rules for now so I can return once the legal proof packet is grounded.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.body).toContain('I need your mismatch policy first and will send the legal proof packet once it is ready.');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.proofChecklist).toContain('Ask for mismatch policy and booking rules before the legal proof packet is ready');
   });
 
   it('uses question-style subject framing for upcoming account-update templates', () => {

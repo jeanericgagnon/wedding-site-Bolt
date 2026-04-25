@@ -1248,6 +1248,11 @@ describe('name change action feed', () => {
         audience: 'Travel profile support',
         readiness: 'blocked',
         requestSummary: 'Please just share your mismatch policy and acceptable temporary-proof rules for now so I can return once the legal proof packet is grounded.',
+        proofChecklist: [
+          'Certified legal name-change proof',
+          'Ask for mismatch policy and booking rules before the legal proof packet is ready',
+          'Gather mismatch and booking rules only until legal proof is fully grounded.',
+        ],
       }),
     ]);
     const digitalFeed = buildNameChangeActionFeed([

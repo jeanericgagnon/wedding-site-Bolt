@@ -865,7 +865,7 @@ function buildAccountUpdateTemplates(
                   in_progress: 'Draft the travel request now and attach final passport proof once it lands',
                   complete: 'Confirm traveler profiles, loyalty accounts, and live bookings all match the final ID name',
                   upcoming: 'Confirm hold/change policy before touching bookings while passport timing is still upstream',
-                  blocked: 'Ask for mismatch policy and temporary-proof rules before changing travel profiles',
+                  blocked: 'Ask for mismatch policy and booking rules before the legal proof packet is ready',
                 })
               : template.id === 'template-digital-identity'
                 ? getReadinessChecklistLine(readiness, {
