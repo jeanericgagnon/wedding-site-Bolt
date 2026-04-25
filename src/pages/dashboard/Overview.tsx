@@ -30,6 +30,8 @@ import { hasRespondedRsvpStatus, isAttendingRsvpStatus, isDeclinedRsvpStatus, is
 import { writeOnboardingResumeTarget } from '../../lib/onboardingResumeStorage';
 import { useToast } from '../../components/ui/Toast';
 import { calcOverviewDaysUntil, formatOverviewRelativeTime, formatOverviewWeddingDate, getOverviewTimestamp } from './overviewDate';
+import { buildNameChangeOverviewCardModel } from './nameChangeOverviewCard';
+import { hydrateNameChangeWorkspace, loadNameChangeWorkspace } from './planning/nameChangeService';
 
 interface OverviewStats {
   siteId: string | null;
@@ -198,6 +200,7 @@ export const DashboardOverview: React.FC = () => {
   const [refreshingBrief, setRefreshingBrief] = useState(false);
   const [draftRefineTargets, setDraftRefineTargets] = useState<Array<{ id: string; label: string; questionIndex: number; value: string }>>([]);
   const [draftBriefDebug, setDraftBriefDebug] = useState<string>('init');
+  const [nameChangeOverviewState, setNameChangeOverviewState] = useState<{ hasWorkspace: boolean; workflowStatus: 'draft' | 'ready' | 'in_progress' | 'complete' | null; hasExecutionActivity: boolean; }>({ hasWorkspace: false, workflowStatus: null, hasExecutionActivity: false });
 
   useEffect(() => {
     if (!user) return;
@@ -288,6 +291,7 @@ export const DashboardOverview: React.FC = () => {
           contactableGuestCount: demoGuests.filter((g) => Boolean(g.email)).length,
           recentRsvps,
         });
+        setNameChangeOverviewState({ hasWorkspace: true, workflowStatus: 'in_progress', hasExecutionActivity: true });
         return;
       }
 
@@ -393,6 +397,23 @@ export const DashboardOverview: React.FC = () => {
           receivedAt: g.rsvp_received_at!,
         }));
 
+      if (site?.id) {
+        const workspace = await loadNameChangeWorkspace(site.id);
+        if (workspace.caseRecord) {
+          const hydratedWorkspace = hydrateNameChangeWorkspace(workspace);
+          const executionCounts = hydratedWorkspace.plan.summary.executionCounts ?? { todo: hydratedWorkspace.plan.steps.length, in_progress: 0, complete: 0 };
+          setNameChangeOverviewState({
+            hasWorkspace: true,
+            workflowStatus: hydratedWorkspace.draft.workflow_status,
+            hasExecutionActivity: executionCounts.in_progress > 0 || executionCounts.complete > 0,
+          });
+        } else {
+          setNameChangeOverviewState({ hasWorkspace: false, workflowStatus: null, hasExecutionActivity: false });
+        }
+      } else {
+        setNameChangeOverviewState({ hasWorkspace: false, workflowStatus: null, hasExecutionActivity: false });
+      }
+
       const siteJson = (site?.site_json as Record<string, unknown> | null) ?? null;
       const privacyMode = 'public';
       const hideFromSearch = siteJson?.hide_from_search === true;
@@ -434,6 +455,8 @@ export const DashboardOverview: React.FC = () => {
       setLoading(false);
     }
   }
+
+  const nameChangeCard = buildNameChangeOverviewCardModel(nameChangeOverviewState);
 
   const responseRate =
     stats && stats.totalGuests > 0
@@ -888,9 +911,9 @@ export const DashboardOverview: React.FC = () => {
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold text-sky-950">Post-wedding name change assistant</p>
-                        <p className="mt-1 text-sm text-sky-900">Keep the free assistant handy after the wedding so certificate, SSA, DMV, passport, payroll, tax, and downstream account updates stay easy to find whenever you want to resume.</p>
+                        <p className="mt-1 text-sm text-sky-900">{nameChangeCard.helperCopy}</p>
                       </div>
-                      <Badge variant="secondary">Post-wedding</Badge>
+                      <Badge variant="secondary">{nameChangeCard.badgeLabel}</Badge>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <div className="rounded-xl border border-sky-200 bg-white px-4 py-3">
@@ -908,17 +931,17 @@ export const DashboardOverview: React.FC = () => {
                     </div>
                     <div className="rounded-xl border border-sky-200 bg-white px-4 py-3">
                       <p className="text-xs uppercase tracking-wide text-sky-700">Optional next step</p>
-                      <p className="mt-1 text-sm text-sky-950">Jump into the status vault if you already started. If not, open case setup once and leave the rest for later.</p>
+                      <p className="mt-1 text-sm text-sky-950">{nameChangeCard.optionalNextStep}</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <Button variant="accent" size="sm" onClick={() => navigate('/dashboard/planning?tab=nameChange#target-status-tracking')}>
-                        Resume status vault
+                      <Button variant="accent" size="sm" onClick={() => navigate(nameChangeCard.primaryHref)}>
+                        {nameChangeCard.primaryLabel}
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/planning?tab=nameChange#case-setup')}>
-                        Update case setup
+                      <Button variant="outline" size="sm" onClick={() => navigate(nameChangeCard.secondaryHref)}>
+                        {nameChangeCard.secondaryLabel}
                       </Button>
                       <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/planning?tab=nameChange')}>
-                        See roadmap first
+                        {nameChangeOverviewState.hasWorkspace ? 'Open full assistant' : 'See roadmap first'}
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard/planning')}>
                         Open planning workspace instead
