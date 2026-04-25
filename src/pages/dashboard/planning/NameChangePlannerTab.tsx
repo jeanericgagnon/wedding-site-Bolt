@@ -178,7 +178,16 @@ function getAccountUpdateTemplateStatusLabel(readiness: NonNullable<NameChangePl
 
 function getAccountUpdateTemplateStatusChip(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
   const baseLabel = getAccountUpdateTemplateStatusLabel(template.readiness);
-  return template.blockingProofHopLabel ? `${baseLabel} · ${template.blockingProofHopLabel}` : baseLabel;
+  const blockingPhaseLabel = template.blockingProofHopLabel
+    ?? (template.readiness === 'in_progress'
+      ? 'current proof pending'
+      : template.readiness === 'upcoming'
+        ? 'next proof hop pending'
+        : template.readiness === 'blocked'
+          ? 'proof chain pending'
+          : undefined);
+
+  return blockingPhaseLabel ? `${baseLabel} · ${blockingPhaseLabel}` : baseLabel;
 }
 
 function getAccountUpdateTemplateCopyButtonLabel(
@@ -219,6 +228,7 @@ function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['s
     `Status: ${getAccountUpdateTemplateStatusChip(template)}`,
     `Readiness: ${template.readinessLabel}`,
     template.blockingProofHopLabel ? `Blocked by: ${template.blockingProofHopLabel}` : undefined,
+    template.blockingProofHopLabel ? `Current blocker: ${template.blockingProofHopLabel}.` : undefined,
     template.checklistHighlight ? `Checklist: ${template.checklistHighlight}` : undefined,
     template.checklistStatusNote ? `Checklist status: ${template.checklistStatusNote}` : undefined,
     getAccountUpdateTemplateStateLine(template),

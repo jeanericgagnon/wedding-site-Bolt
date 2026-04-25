@@ -584,6 +584,50 @@ describe('NameChangePlannerTab', () => {
     expect(screen.getAllByText('ask before next proof hop · ID pending').length).toBeGreaterThan(0);
   });
 
+  it('shows fallback proof-phase status chips when no blocker label is available', () => {
+    HTMLElement.prototype.scrollIntoView = vi.fn();
+    const draft = makeDraft();
+    const basePlan = buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      summary: {
+        ...basePlan.summary,
+        accountUpdateTemplates: (basePlan.summary.accountUpdateTemplates ?? []).map((template) => (
+          template.id === 'template-bank'
+            ? { ...template, readiness: 'in_progress' as const, blockingProofHopLabel: undefined }
+            : template.id === 'template-insurance'
+              ? { ...template, readiness: 'upcoming' as const, blockingProofHopLabel: undefined }
+              : template.id === 'template-tax'
+                ? { ...template, readiness: 'blocked' as const, blockingProofHopLabel: undefined }
+                : template
+        )),
+      },
+    };
+
+    render(
+      <NameChangePlannerTab
+        draft={draft}
+        documents={[]}
+        extractedFields={[]}
+        plan={plan}
+        reminders={[]}
+        saving={false}
+        onDraftChange={vi.fn()}
+        onStructuredIntakeChange={vi.fn()}
+        onDocumentsChange={vi.fn()}
+        onExtractedFieldsChange={vi.fn()}
+        onRemindersChange={vi.fn()}
+        onStepExecutionStatusChange={vi.fn()}
+        onStepExecutionNoteChange={vi.fn()}
+        onSave={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    expect(screen.getAllByText('draft now, send after current proof clears · current proof pending').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('ask before next proof hop · next proof hop pending').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('ask intake rules now · proof chain pending').length).toBeGreaterThan(0);
+  });
+
   it('makes ready and complete planner labels explicit about proof readiness', () => {
     const draft = makeDraft();
     const basePlan = buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] });
