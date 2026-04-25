@@ -266,7 +266,24 @@ describe('name change engine', () => {
           dependsOnStepIds: ['federal-ssa', 'institution-irs-records', 'institution-state-tax-agency', 'institution-county-recorder-property', 'institution-uscis-immigration-records'],
         }),
         expect.objectContaining({ id: 'milestone-account-rollout', status: 'upcoming' }),
-        expect.objectContaining({ id: 'milestone-downstream-rollout', status: 'upcoming', dependsOnStepIds: ['state-dmv', 'institutions-rollout'] }),
+        expect.objectContaining({
+          id: 'milestone-downstream-rollout',
+          status: 'upcoming',
+          dependsOnStepIds: [
+            'state-dmv',
+            'institution-medical-records',
+            'institution-utilities-housing',
+            'institution-phone-digital-identity',
+            'institution-subscriptions-social',
+            'institution-school-alumni-records',
+            'institution-professional-licenses',
+            'institution-voter-registration',
+            'institution-tsa-precheck',
+            'institution-travel-hospitality',
+            'institution-dmv-registration-title',
+            'institution-frequent-flyer-hotel-rail',
+          ],
+        }),
       ]),
     );
     expect(plan.summary.accountUpdateTemplates).toEqual(

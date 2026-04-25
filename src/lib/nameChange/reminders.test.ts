@@ -104,7 +104,7 @@ describe('name change reminder suggestions', () => {
       urgency: 'medium',
     });
     expect(reminders.find((reminder) => reminder.id === 'reminder-milestone-confirm-milestone-downstream-rollout')).toMatchObject({
-      dependsOnStepId: 'institutions-rollout',
+      dependsOnStepId: 'institution-frequent-flyer-hotel-rail',
       urgency: 'medium',
     });
   });
@@ -208,6 +208,12 @@ describe('name change reminder suggestions', () => {
       focus_target_id: 'execution-card-banks',
     });
     expect(inputs.find((reminder) => reminder.reminder_key === 'reminder-category-confirm-travel_mobility')).toMatchObject({
+      depends_on_step_id: 'institution-frequent-flyer-hotel-rail',
+      section_key: 'cleanup',
+      planner_intent: 'open_execution_card',
+      focus_target_id: 'execution-card-tsa',
+    });
+    expect(inputs.find((reminder) => reminder.reminder_key === 'reminder-milestone-confirm-milestone-downstream-rollout')).toMatchObject({
       depends_on_step_id: 'institution-frequent-flyer-hotel-rail',
       section_key: 'cleanup',
       planner_intent: 'open_execution_card',

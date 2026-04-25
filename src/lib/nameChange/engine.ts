@@ -53,6 +53,21 @@ function compactTemplateBody(body: string) {
   return body.replace(/\s{2,}/gu, ' ').trim();
 }
 
+const DOWNSTREAM_ROLLOUT_MILESTONE_STEP_IDS = [
+  'state-dmv',
+  'institution-medical-records',
+  'institution-utilities-housing',
+  'institution-phone-digital-identity',
+  'institution-subscriptions-social',
+  'institution-school-alumni-records',
+  'institution-professional-licenses',
+  'institution-voter-registration',
+  'institution-tsa-precheck',
+  'institution-travel-hospitality',
+  'institution-dmv-registration-title',
+  'institution-frequent-flyer-hotel-rail',
+] as const;
+
 const INSTITUTION_CATEGORY_COVERAGE_CONFIG = [
   {
     id: 'legal_government',
@@ -1474,8 +1489,11 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
       ? {
         id: 'milestone-downstream-rollout',
         label: 'Downstream rollout is ready for the long-tail accounts',
-        status: resolvePlanSequenceStatus(['state-dmv', 'institutions-rollout'], steps),
-        dependsOnStepIds: ['state-dmv', 'institutions-rollout'],
+        status: resolvePlanSequenceStatus(
+          DOWNSTREAM_ROLLOUT_MILESTONE_STEP_IDS.filter((stepId) => hasStep(stepId)),
+          steps,
+        ),
+        dependsOnStepIds: DOWNSTREAM_ROLLOUT_MILESTONE_STEP_IDS.filter((stepId) => hasStep(stepId)),
       }
       : null,
   ].filter((milestone): milestone is NonNullable<typeof milestone> => Boolean(milestone));
