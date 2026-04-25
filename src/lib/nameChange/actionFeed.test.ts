@@ -341,6 +341,106 @@ describe('name change action feed', () => {
     });
   });
 
+  it('routes tax and voter follow-through into the tax template once proof is usable', () => {
+    const taxTemplate = makeTemplate({
+      id: 'template-tax',
+      audience: 'Tax and state agencies',
+      readiness: 'in_progress',
+      readinessLabel: 'SSA and payroll tax alignment are already moving, so this is ready to draft.',
+    });
+
+    const feed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'taxes',
+        targetLabel: 'Tax records',
+        recommendedFormCode: 'TAX',
+        nextAction: {
+          category: 'review',
+          label: 'Queue tax agency update',
+          detail: 'Tax packet can be prepped now.',
+        },
+        ready: true,
+        blockers: [],
+        readinessSummary: {
+          status: 'ready',
+          blockingFieldRisks: 0,
+          attentionFieldRisks: 0,
+          lowConfidenceFields: 0,
+          missingFields: 0,
+          documentRepairDebt: 0,
+          summaryLabel: 'Ready.',
+        },
+      }),
+      makeExecutionSnapshot({
+        targetKey: 'voter',
+        targetLabel: 'Voter registration',
+        recommendedFormCode: 'VOTE',
+        nextAction: {
+          category: 'review',
+          label: 'Prep voter/state update',
+          detail: 'State-agency packet can be prepped now.',
+        },
+        ready: true,
+        blockers: [],
+        readinessSummary: {
+          status: 'ready',
+          blockingFieldRisks: 0,
+          attentionFieldRisks: 0,
+          lowConfidenceFields: 0,
+          missingFields: 0,
+          documentRepairDebt: 0,
+          summaryLabel: 'Ready.',
+        },
+      }),
+    ], [], [], [taxTemplate]);
+
+    expect(feed.find((item) => item.title === 'Tax records')).toMatchObject({
+      plannerIntent: 'open_account_update_template',
+      focusTargetId: 'account-update-templates',
+      laneLabel: 'Tax and state agencies · in progress template',
+      action: expect.objectContaining({ detail: expect.stringContaining('ready to draft') }),
+    });
+    expect(feed.find((item) => item.title === 'Voter registration')).toMatchObject({
+      plannerIntent: 'open_account_update_template',
+      focusTargetId: 'account-update-templates',
+      laneLabel: 'Tax and state agencies · in progress template',
+    });
+  });
+
+  it('routes medical follow-through into the insurance template when the proof packet is reusable', () => {
+    const feed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'medical',
+        targetLabel: 'Medical records',
+        recommendedFormCode: 'MED',
+        nextAction: {
+          category: 'review',
+          label: 'Prep medical record update',
+          detail: 'Medical packet can be queued now.',
+        },
+        ready: true,
+        blockers: [],
+        readinessSummary: {
+          status: 'ready',
+          blockingFieldRisks: 0,
+          attentionFieldRisks: 0,
+          lowConfidenceFields: 0,
+          missingFields: 0,
+          documentRepairDebt: 0,
+          summaryLabel: 'Ready.',
+        },
+      }),
+    ], [], [], [
+      makeTemplate({ id: 'template-insurance', audience: 'Insurance and medical', readiness: 'ready' }),
+    ]);
+
+    expect(feed[0]).toMatchObject({
+      plannerIntent: 'open_account_update_template',
+      focusTargetId: 'account-update-templates',
+      laneLabel: 'Insurance and medical · ready template',
+    });
+  });
+
   it('routes legal-name setup blockers to the planner case-setup section', () => {
     const feed = buildNameChangeActionFeed([
       makeExecutionSnapshot({

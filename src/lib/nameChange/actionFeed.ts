@@ -23,9 +23,13 @@ function getTemplateIdForTargetKey(targetKey: NameChangeTargetExecutionSnapshot[
   switch (targetKey) {
     case 'employer':
       return 'template-payroll';
+    case 'taxes':
+    case 'voter':
+      return 'template-tax';
     case 'banks':
       return 'template-bank';
     case 'insurance':
+    case 'medical':
       return 'template-insurance';
     case 'utilities':
       return 'template-digital-identity';
