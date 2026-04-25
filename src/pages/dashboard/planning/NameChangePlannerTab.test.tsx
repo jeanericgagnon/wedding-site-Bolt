@@ -501,6 +501,7 @@ describe('NameChangePlannerTab', () => {
     const bankRequestSummary = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-bank')?.requestSummary;
     const payrollProofStatus = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.proofReadinessSummary;
     const payrollProofChecklist = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.proofChecklist.join(' · ');
+    const payrollBlockingProofHop = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.blockingProofHopLabel;
 
     render(
       <NameChangePlannerTab
@@ -525,6 +526,7 @@ describe('NameChangePlannerTab', () => {
     expect(bankRequestSummary).toBeTruthy();
     expect(screen.getByText(`Next ask: ${payrollRequestSummary}`)).toBeInTheDocument();
     expect(screen.getByText(`Next ask: ${bankRequestSummary}`)).toBeInTheDocument();
+    expect(screen.getAllByText(`Blocked by: ${payrollBlockingProofHop}`).length).toBeGreaterThan(0);
     expect(screen.getByText(`Proof status: ${payrollProofStatus}`)).toBeInTheDocument();
     expect(screen.getByText(`Proof to have handy: ${payrollProofChecklist}`)).toBeInTheDocument();
   });
@@ -565,6 +567,7 @@ describe('NameChangePlannerTab', () => {
     await waitFor(() => expect(clipboardWriteText).toHaveBeenCalledTimes(1));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Subject: ${payrollTemplate?.subject}`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Next ask: ${payrollTemplate?.requestSummary}`));
+    expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Blocked by: ${payrollTemplate?.blockingProofHopLabel}`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Proof status: ${payrollTemplate?.proofReadinessSummary}`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(payrollTemplate?.body ?? ''));
     expect(screen.getByRole('button', { name: 'Copied' })).toBeInTheDocument();

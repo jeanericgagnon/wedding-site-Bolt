@@ -166,12 +166,13 @@ function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['s
     `Subject: ${template.subject}`,
     `Status: ${template.readiness.replace('_', ' ')}`,
     `Readiness: ${template.readinessLabel}`,
+    template.blockingProofHopLabel ? `Blocked by: ${template.blockingProofHopLabel}` : undefined,
     `Proof status: ${template.proofReadinessSummary}`,
     `Next ask: ${template.requestSummary}`,
     `Proof to have handy: ${template.proofChecklist.join(' · ')}`,
     '',
     template.body,
-  ].join('\n');
+  ].filter(Boolean).join('\n');
 }
 
 function getReminderCtaLabel(intent?: 'open_execution_card') {
@@ -1491,6 +1492,9 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                   </div>
                 </div>
                 <p className="mt-2 text-xs text-text-secondary">{template.readinessLabel}</p>
+                {template.blockingProofHopLabel ? (
+                  <p className="mt-2 text-xs text-text-secondary">Blocked by: {template.blockingProofHopLabel}</p>
+                ) : null}
                 <p className="mt-2 text-xs text-text-secondary">Proof status: {template.proofReadinessSummary}</p>
                 <p className="mt-2 text-xs text-text-secondary">Next ask: {template.requestSummary}</p>
                 <p className="mt-2 text-xs text-text-secondary">Proof to have handy: {template.proofChecklist.join(' · ')}</p>
