@@ -583,6 +583,49 @@ describe('NameChangePlannerTab', () => {
     expect(screen.getAllByRole('button', { name: 'Copy next-step draft' }).length).toBeGreaterThan(0);
   });
 
+  it('makes ready and complete planner labels explicit about proof readiness', () => {
+    const draft = makeDraft();
+    const basePlan = buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] });
+    const readyCompleteTemplates = (basePlan.summary.accountUpdateTemplates ?? []).map((template) => (
+      template.id === 'template-bank'
+        ? { ...template, readiness: 'ready' as const, blockingProofHopLabel: undefined }
+        : template.id === 'template-insurance'
+          ? { ...template, readiness: 'complete' as const, blockingProofHopLabel: undefined }
+          : template
+    ));
+    const plan = {
+      ...basePlan,
+      summary: {
+        ...basePlan.summary,
+        accountUpdateTemplates: readyCompleteTemplates,
+      },
+    };
+
+    render(
+      <NameChangePlannerTab
+        draft={draft}
+        documents={[]}
+        extractedFields={[]}
+        plan={plan}
+        reminders={[]}
+        saving={false}
+        onDraftChange={vi.fn()}
+        onStructuredIntakeChange={vi.fn()}
+        onDocumentsChange={vi.fn()}
+        onExtractedFieldsChange={vi.fn()}
+        onRemindersChange={vi.fn()}
+        onStepExecutionStatusChange={vi.fn()}
+        onStepExecutionNoteChange={vi.fn()}
+        onSave={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    expect(screen.getAllByText('send now (proof packet ready)').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('confirm sync (proof chain complete)').length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('button', { name: 'Copy proof-ready send text' }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('button', { name: 'Copy proof-complete confirmation' }).length).toBeGreaterThan(0);
+  });
+
   it('copies the full readiness-aware template text from the planner card', async () => {
     const clipboardWriteText = vi.fn().mockResolvedValue(undefined);
     HTMLElement.prototype.scrollIntoView = vi.fn();

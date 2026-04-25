@@ -163,11 +163,11 @@ function getActionFeedCtaLabel(intent: 'open_execution_card' | 'open_document_re
 function getAccountUpdateTemplateStatusLabel(readiness: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]['readiness']) {
   switch (readiness) {
     case 'ready':
-      return 'send now';
+      return 'send now (proof packet ready)';
     case 'in_progress':
       return 'draft now';
     case 'complete':
-      return 'confirm sync';
+      return 'confirm sync (proof chain complete)';
     case 'upcoming':
       return 'ask next';
     case 'blocked':
@@ -186,8 +186,8 @@ function getAccountUpdateTemplateCopyButtonLabel(
   copiedTemplateId: string | null,
 ) {
   if (copiedTemplateId === template.id) return 'Copied';
-  if (template.readiness === 'ready') return 'Copy send-ready text';
-  if (template.readiness === 'complete') return 'Copy confirmation text';
+  if (template.readiness === 'ready') return 'Copy proof-ready send text';
+  if (template.readiness === 'complete') return 'Copy proof-complete confirmation';
   if (template.readiness === 'in_progress') return 'Copy staged draft';
   if (template.readiness === 'upcoming') return 'Copy next-step draft';
   return 'Copy intake script';
