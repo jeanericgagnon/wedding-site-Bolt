@@ -1057,6 +1057,9 @@ describe('name change action feed', () => {
     const insuranceTemplateItem = feed.find((item) => item.focusTargetId === 'account-update-template-template-insurance');
     const taxTemplateItem = feed.find((item) => item.focusTargetId === 'account-update-template-template-tax');
 
+    expect(bankTemplateItem?.laneLabel).toBe('Bank accounts · draft now, send after current proof clears · current proof pending');
+    expect(insuranceTemplateItem?.laneLabel).toBe('Insurance carriers · ask before next proof hop · next proof hop pending');
+    expect(taxTemplateItem?.laneLabel).toBe('Tax agencies · ask intake rules now · proof chain pending');
     expect(bankTemplateItem?.action.label).toBe('Draft bank accounts update (current proof pending)');
     expect(insuranceTemplateItem?.action.label).toBe('Ask insurance carriers before next proof hop (next proof hop pending)');
     expect(taxTemplateItem?.action.label).toBe('Ask tax agencies intake rules now (proof chain pending)');

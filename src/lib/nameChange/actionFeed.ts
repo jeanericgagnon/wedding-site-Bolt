@@ -159,8 +159,16 @@ function getTemplateLaneLabel(template: AccountUpdateTemplate) {
         : template.readiness === 'upcoming'
           ? 'ask before next proof hop'
           : 'ask intake rules now';
+  const blockingPhaseLabel = template.blockingProofHopLabel
+    ?? (template.readiness === 'in_progress'
+      ? 'current proof pending'
+      : template.readiness === 'upcoming'
+        ? 'next proof hop pending'
+        : template.readiness === 'blocked'
+          ? 'proof chain pending'
+          : undefined);
 
-  return [template.audience, readinessLabel, template.blockingProofHopLabel].filter(Boolean).join(' · ');
+  return [template.audience, readinessLabel, blockingPhaseLabel].filter(Boolean).join(' · ');
 }
 
 function getActionDocumentKind(item: NameChangeActionFeedItem) {
