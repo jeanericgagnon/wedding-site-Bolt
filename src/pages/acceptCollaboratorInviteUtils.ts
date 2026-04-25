@@ -1,3 +1,5 @@
+import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
+
 export type InviteRecord = {
   status: string;
   expires_at?: string | null;
@@ -20,6 +22,19 @@ export function resolveInviteValidationState(invite: InviteRecord | null | undef
 
 export function isInviteEmailMatch(userEmail: string | null | undefined, inviteEmail: string | null | undefined): boolean {
   return (userEmail || '').trim().toLowerCase() === (inviteEmail || '').trim().toLowerCase();
+}
+
+export function getInviteSiteLabel(invite: {
+  site_slug?: string | null;
+  couple_name_1?: string | null;
+  couple_name_2?: string | null;
+} | null | undefined): string {
+  if (!invite) return 'this wedding site';
+
+  const coupleName = buildCoupleDisplayName(invite.couple_name_1, invite.couple_name_2);
+  if (coupleName) return `${coupleName}' wedding site`;
+  if (invite.site_slug) return `${invite.site_slug}.dayof.love`;
+  return 'this wedding site';
 }
 
 export function getCollaboratorRedirectPath(role?: string | null): string {

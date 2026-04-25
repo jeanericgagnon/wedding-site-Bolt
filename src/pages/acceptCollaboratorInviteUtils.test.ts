@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { getCollaboratorRedirectPath, isInviteEmailMatch, resolveInviteValidationState } from './acceptCollaboratorInviteUtils';
+import { getCollaboratorRedirectPath, getInviteSiteLabel, isInviteEmailMatch, resolveInviteValidationState } from './acceptCollaboratorInviteUtils';
 
 describe('acceptCollaboratorInviteUtils', () => {
   it('matches invite emails case-insensitively', () => {
@@ -24,5 +24,11 @@ describe('acceptCollaboratorInviteUtils', () => {
 
   it('uses the dashboard overview as the collaborator landing page', () => {
     expect(getCollaboratorRedirectPath()).toBe('/dashboard/overview');
+  });
+
+  it('keeps invite site labels truthful when couple names are blank or partial', () => {
+    expect(getInviteSiteLabel({ couple_name_1: '  ', couple_name_2: 'Alex', site_slug: 'alex-and-sam' })).toBe("Alex' wedding site");
+    expect(getInviteSiteLabel({ couple_name_1: '  ', couple_name_2: '   ', site_slug: 'alex-and-sam' })).toBe('alex-and-sam.dayof.love');
+    expect(getInviteSiteLabel(null)).toBe('this wedding site');
   });
 });

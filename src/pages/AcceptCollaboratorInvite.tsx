@@ -4,7 +4,7 @@ import { AlertCircle, CheckCircle2, Heart, Loader2, LogOut, ShieldCheck, UserPlu
 import { Button, Card, Input } from '../components/ui';
 import { supabase } from '../lib/supabase';
 import { useAuth, type AuthUser } from '../contexts/AuthContext';
-import { getCollaboratorRedirectPath, isInviteEmailMatch, resolveInviteValidationState } from './acceptCollaboratorInviteUtils';
+import { getCollaboratorRedirectPath, getInviteSiteLabel, isInviteEmailMatch, resolveInviteValidationState } from './acceptCollaboratorInviteUtils';
 
 type InviteState = 'loading' | 'valid' | 'invalid' | 'expired' | 'accepted' | 'revoked' | 'missing';
 type AuthMode = 'signin' | 'signup';
@@ -57,13 +57,7 @@ export const AcceptCollaboratorInvite: React.FC = () => {
   const [signUpForm, setSignUpForm] = useState(initialSignUpForm);
 
   const inviteeLabel = useMemo(() => inviteInfo?.invite_name || inviteInfo?.invite_email || 'your collaborator', [inviteInfo]);
-  const siteLabel = useMemo(() => {
-    if (!inviteInfo) return 'this wedding site';
-    const names = [inviteInfo.couple_name_1, inviteInfo.couple_name_2].filter(Boolean).join(' & ');
-    if (names) return `${names}' wedding site`;
-    if (inviteInfo.site_slug) return `${inviteInfo.site_slug}.dayof.love`;
-    return 'this wedding site';
-  }, [inviteInfo]);
+  const siteLabel = useMemo(() => getInviteSiteLabel(inviteInfo), [inviteInfo]);
 
   useEffect(() => {
     if (authMode === 'signup' && !authLoading && !claiming) {
