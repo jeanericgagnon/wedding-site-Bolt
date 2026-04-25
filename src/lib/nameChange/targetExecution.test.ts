@@ -2384,6 +2384,83 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.statusVault.status).toBe('in_progress');
   });
 
+  it('tracks employer rollout through payroll and retirement follow-through', () => {
+    const basePlan = buildNameChangePlan({ profile: makeCase(), documents: [], extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => {
+        if (step.id === 'institution-irs-employer') {
+          return {
+            ...step,
+            executionStatus: 'complete' as const,
+            completedAt: '2026-04-24T18:10:00.000Z',
+          };
+        }
+
+        if (step.id === 'institution-retirement-benefits') {
+          return {
+            ...step,
+            executionStatus: 'in_progress' as const,
+            executionUpdatedAt: '2026-04-24T20:10:00.000Z',
+          };
+        }
+
+        return step;
+      }),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('employer', makeCase(), [], [], plan);
+    expect(snapshot.statusVault.executionCounts).toEqual({
+      todo: 0,
+      inProgress: 1,
+      complete: 1,
+      total: 2,
+    });
+    expect(snapshot.statusVault.status).toBe('in_progress');
+  });
+
+  it('tracks insurance rollout through carrier, disability, and leave follow-through', () => {
+    const profile = makeCase({
+      structured_intake: {
+        employerName: 'Acme Corp',
+        travelBookedSoon: false,
+        wantsDocumentIntakeHelp: true,
+      },
+    });
+    const basePlan = buildNameChangePlan({ profile, documents: [], extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => {
+        if (step.id === 'institution-insurance') {
+          return {
+            ...step,
+            executionStatus: 'complete' as const,
+            completedAt: '2026-04-24T18:10:00.000Z',
+          };
+        }
+
+        if (step.id === 'institution-disability-insurance') {
+          return {
+            ...step,
+            executionStatus: 'in_progress' as const,
+            executionUpdatedAt: '2026-04-24T20:10:00.000Z',
+          };
+        }
+
+        return step;
+      }),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('insurance', profile, [], [], plan);
+    expect(snapshot.statusVault.executionCounts).toEqual({
+      todo: 1,
+      inProgress: 1,
+      complete: 1,
+      total: 3,
+    });
+    expect(snapshot.statusVault.status).toBe('in_progress');
+  });
+
   it('only marks a target complete when every tracked step is complete', () => {
     const basePlan = buildNameChangePlan({ profile: makeCase(), documents: [], extractedFields: [] });
     const plan = {
