@@ -320,6 +320,32 @@ describe('NameChangePlannerTab', () => {
     }
   });
 
+  it('shows supportive guided next-action wait guidance on blocked downstream execution cards', () => {
+    const draft = makeDraft();
+
+    render(
+      <NameChangePlannerTab
+        draft={draft}
+        documents={[]}
+        extractedFields={[]}
+        plan={buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] })}
+        reminders={[]}
+        saving={false}
+        onDraftChange={vi.fn()}
+        onStructuredIntakeChange={vi.fn()}
+        onDocumentsChange={vi.fn()}
+        onExtractedFieldsChange={vi.fn()}
+        onRemindersChange={vi.fn()}
+        onStepExecutionStatusChange={vi.fn()}
+        onStepExecutionNoteChange={vi.fn()}
+        onSave={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    expect(screen.getAllByText('Guided next action').length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Actual submission can safely wait\./).length).toBeGreaterThan(0);
+  });
+
   it('resumes directly into the status vault when the route hash points there', async () => {
     const draft = makeDraft();
     const scrollIntoView = vi.fn();

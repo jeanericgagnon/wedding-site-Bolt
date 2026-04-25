@@ -479,6 +479,14 @@ const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
     </div>
 
     <div className="mt-4 rounded-xl border border-border-subtle p-4">
+      {snapshot.nextAction ? (
+        <div className="mb-4 rounded-xl border border-border-subtle p-4">
+          <p className="text-xs uppercase tracking-wide text-text-tertiary">Guided next action</p>
+          <p className="mt-2 text-sm font-semibold text-text-primary">{snapshot.nextAction.label}</p>
+          <p className="mt-2 text-sm text-text-secondary">{getExecutionNextActionDetail(snapshot)}</p>
+        </div>
+      ) : null}
+
       <div className="flex items-center justify-between gap-3">
         <div>
           <h4 className="text-sm font-semibold text-text-primary">{payloadTitle}</h4>
