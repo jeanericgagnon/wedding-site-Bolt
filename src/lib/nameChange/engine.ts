@@ -648,6 +648,17 @@ function buildAccountUpdateTemplates(
                   upcoming: 'Wait to send until the ID or license reissue hop clears.',
                   blocked: 'Gather board submission rules only until legal proof is fully grounded.',
                 });
+  const getBlockingProofHopLabel = (
+    templateId: string,
+    readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+  ) => {
+    if (readiness === 'ready' || readiness === 'complete') return undefined;
+    if (templateId === 'template-payroll' || templateId === 'template-tax') return 'SSA pending';
+    if (templateId === 'template-bank' || templateId === 'template-digital-identity' || templateId === 'template-licenses') return 'ID pending';
+    if (templateId === 'template-travel') return 'passport pending';
+    if (templateId === 'template-insurance') return readiness === 'blocked' ? 'legal proof pending' : 'ID pending';
+    return undefined;
+  };
   const templateConfig = [
     {
       id: 'template-payroll',
@@ -873,6 +884,7 @@ function buildAccountUpdateTemplates(
     const requestLine = getReadinessRequestLine(template.id, readiness);
     const proofReadinessSummary = getProofReadinessSummary(template.id, readiness);
     const proofChecklistStatusNote = getProofChecklistStatusNote(template.id, readiness);
+    const blockingProofHopLabel = getBlockingProofHopLabel(template.id, readiness);
     const proofChecklistWithStatus = [...proofChecklist, proofChecklistStatusNote];
     const proofLine = `I can provide ${proofChecklistWithStatus.join(', ')} ${readinessSpecificProof}`;
 
@@ -884,6 +896,7 @@ function buildAccountUpdateTemplates(
       readiness,
       readinessLabel,
       proofReadinessSummary,
+      blockingProofHopLabel,
       requestSummary: requestLine,
       dependsOnStepIds: [...template.dependsOnStepIds],
       proofChecklist: proofChecklistWithStatus,

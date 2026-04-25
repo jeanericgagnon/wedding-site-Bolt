@@ -100,18 +100,7 @@ function getTemplateLaneLabel(template: AccountUpdateTemplate) {
           ? 'ask before next proof hop'
           : 'ask intake rules now';
 
-  const proofStatus = template.proofReadinessSummary.toLowerCase();
-  const proofHopLabel = template.readiness === 'ready' || template.readiness === 'complete'
-    ? undefined
-    : proofStatus.includes('passport')
-      ? 'passport pending'
-      : proofStatus.includes('photo-id') || proofStatus.includes('updated id') || proofStatus.includes('id/license') || proofStatus.includes('identity-verification')
-        ? 'ID pending'
-        : proofStatus.includes('ssa')
-          ? 'SSA pending'
-          : undefined;
-
-  return [template.audience, readinessLabel, proofHopLabel].filter(Boolean).join(' · ');
+  return [template.audience, readinessLabel, template.blockingProofHopLabel].filter(Boolean).join(' · ');
 }
 
 function getActionDocumentKind(item: NameChangeActionFeedItem) {

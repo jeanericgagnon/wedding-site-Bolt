@@ -6,14 +6,32 @@ import type { NameChangeReminderAttentionItem, NameChangeTargetExecutionSnapshot
 
 function makeTemplate(overrides: Partial<NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]> = {}): NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number] {
   const audience = overrides.audience ?? 'Bank accounts';
+  const id = overrides.id ?? 'template-bank';
+  const readiness = overrides.readiness ?? 'ready';
+  const blockingProofHopLabel = overrides.blockingProofHopLabel ?? (
+    readiness === 'ready' || readiness === 'complete'
+      ? undefined
+      : id === 'template-payroll' || id === 'template-tax'
+        ? 'SSA pending'
+        : id === 'template-bank' || id === 'template-digital-identity' || id === 'template-licenses'
+          ? 'ID pending'
+          : id === 'template-travel'
+            ? 'passport pending'
+            : id === 'template-insurance'
+              ? readiness === 'blocked'
+                ? 'legal proof pending'
+                : 'ID pending'
+              : undefined
+  );
   return {
-    id: 'template-bank',
+    id,
     audience,
     subject: overrides.subject ?? audience,
     body: 'I can provide certified legal proof.',
-    readiness: 'ready',
+    readiness,
     readinessLabel: 'The core proof chain is already complete, so this should be a clean confirmation/update pass.',
     proofReadinessSummary: 'Send with certified legal proof now.',
+    blockingProofHopLabel,
     requestSummary: 'Please tell me the fastest secure submission path and confirm whether cards, checks, statements, and my online profile will all update together.',
     dependsOnStepIds: ['institution-banks'],
     proofChecklist: ['Certified legal name-change proof'],
@@ -474,7 +492,7 @@ describe('name change action feed', () => {
     expect(feed[0]).toMatchObject({
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-insurance',
-      laneLabel: 'Insurance carriers · ask intake rules now',
+      laneLabel: 'Insurance carriers · ask intake rules now · legal proof pending',
       severity: 'blocking',
       urgencyReason: 'blocking_dependency',
       action: expect.objectContaining({
@@ -595,7 +613,7 @@ describe('name change action feed', () => {
       title: 'Tax and state agencies',
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-tax',
-      laneLabel: 'Tax and state agencies · draft now',
+      laneLabel: 'Tax and state agencies · draft now · SSA pending',
       urgencyReason: 'review_queue',
       action: expect.objectContaining({ detail: expect.stringContaining('ready to draft') }),
     });
@@ -726,7 +744,7 @@ describe('name change action feed', () => {
     expect(feed[0]).toMatchObject({
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-payroll',
-      laneLabel: 'Employer payroll / HR · ask before next proof hop',
+      laneLabel: 'Employer payroll / HR · ask before next proof hop · SSA pending',
       urgencyReason: 'blocking_dependency',
     });
     expect(feed[0]?.action.label).toBe('Ask employer payroll / HR before next proof hop');
@@ -802,7 +820,7 @@ describe('name change action feed', () => {
     expect(feed[0]).toMatchObject({
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-tax',
-      laneLabel: 'Tax and state agencies · draft now',
+      laneLabel: 'Tax and state agencies · draft now · SSA pending',
       severity: 'attention',
       urgencyReason: 'review_queue',
     });
@@ -873,7 +891,7 @@ describe('name change action feed', () => {
     });
     expect(feed[1]).toMatchObject({
       title: 'Tax and state agencies',
-      laneLabel: 'Tax and state agencies · draft now',
+      laneLabel: 'Tax and state agencies · draft now · SSA pending',
       severity: 'attention',
     });
   });
@@ -906,7 +924,7 @@ describe('name change action feed', () => {
     expect(feed[0]).toMatchObject({
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-digital-identity',
-      laneLabel: 'Phone, utilities, housing, or primary digital identity support · ask intake rules now',
+      laneLabel: 'Phone, utilities, housing, or primary digital identity support · ask intake rules now · ID pending',
       urgencyReason: 'blocking_dependency',
       action: expect.objectContaining({
         detail: expect.stringContaining('gather verification rules first'),
@@ -973,7 +991,7 @@ describe('name change action feed', () => {
     expect(feed[0]).toMatchObject({
       title: 'Insurance carriers',
       plannerIntent: 'open_account_update_template',
-      laneLabel: 'Insurance carriers · ask intake rules now',
+      laneLabel: 'Insurance carriers · ask intake rules now · legal proof pending',
       urgencyTier: 'critical',
     });
     expect(feed[1]).toMatchObject({

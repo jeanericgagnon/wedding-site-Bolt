@@ -242,6 +242,7 @@ export interface NameChangePlanSummary {
     readiness: 'ready' | 'blocked' | 'upcoming' | 'in_progress' | 'complete';
     readinessLabel: string;
     proofReadinessSummary: string;
+    blockingProofHopLabel?: string;
     requestSummary: string;
     dependsOnStepIds: string[];
     proofChecklist: string[];
