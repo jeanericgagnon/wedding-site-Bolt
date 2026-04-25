@@ -31,9 +31,10 @@ describe('buildNameChangeOverviewCardModel', () => {
     expect(model.headline).toBe('Soft next steps, not a checklist you have to clear');
     expect(model.statusLabel).toBe('Resume where you left off');
     expect(model.primaryHref).toBe('/dashboard/planning?tab=nameChange#target-status-tracking');
-    expect(model.secondaryHref).toBe('/dashboard/planning?tab=nameChange#case-setup');
-    expect(model.tertiaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
-    expect(model.tertiaryLabel).toBe('Open full assistant');
+    expect(model.secondaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
+    expect(model.secondaryLabel).toBe('Open full assistant');
+    expect(model.tertiaryHref).toBe('/dashboard/planning?tab=nameChange#case-setup');
+    expect(model.tertiaryLabel).toBe('Edit saved details');
     expect(model.plannerHref).toBe('/dashboard/planning?tab=nameChange#target-status-tracking');
     expect(model.plannerLabel).toBe('Open status vault');
   });
@@ -50,7 +51,9 @@ describe('buildNameChangeOverviewCardModel', () => {
     expect(model.statusLabel).toBe('Status vault complete');
     expect(model.optionalNextStep).toContain('Nothing pushy here');
     expect(model.secondaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
-    expect(model.tertiaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
+    expect(model.secondaryLabel).toBe('Open full assistant');
+    expect(model.tertiaryHref).toBe('/dashboard/planning?tab=nameChange#case-setup');
+    expect(model.tertiaryLabel).toBe('Edit saved details');
     expect(model.plannerHref).toBe('/dashboard/planning?tab=nameChange#target-status-tracking');
     expect(model.plannerLabel).toBe('Open status vault');
   });

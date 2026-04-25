@@ -220,12 +220,12 @@ describe('NameChangePlannerTab', () => {
       expect(window.location.hash).toBe('#target-status-tracking');
       fireEvent.click(screen.getByRole('button', { name: 'Resume status vault' }));
       expect(window.location.hash).toBe('#target-status-tracking');
-      fireEvent.click(screen.getByRole('button', { name: 'Update case setup' }));
-      expect(window.location.hash).toBe('#case-setup');
-      fireEvent.click(screen.getByRole('button', { name: 'Open status vault' }));
-      expect(window.location.hash).toBe('#target-status-tracking');
       fireEvent.click(screen.getByRole('button', { name: 'Open full assistant' }));
       expect(window.location.hash).toBe('#name-change-roadmap');
+      fireEvent.click(screen.getByRole('button', { name: 'Open status vault' }));
+      expect(window.location.hash).toBe('#target-status-tracking');
+      fireEvent.click(screen.getByRole('button', { name: 'Edit saved details' }));
+      expect(window.location.hash).toBe('#case-setup');
 
       expect(scrollIntoView).toHaveBeenCalledTimes(7);
     } finally {
@@ -307,12 +307,12 @@ describe('NameChangePlannerTab', () => {
 
       fireEvent.click(screen.getByRole('button', { name: 'Review status vault' }));
       expect(window.location.hash).toBe('#target-status-tracking');
-      fireEvent.click(screen.getByRole('button', { name: 'See roadmap again' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Open full assistant' }));
       expect(window.location.hash).toBe('#name-change-roadmap');
       fireEvent.click(screen.getByRole('button', { name: 'Open status vault' }));
       expect(window.location.hash).toBe('#target-status-tracking');
-      fireEvent.click(screen.getByRole('button', { name: 'Open full assistant' }));
-      expect(window.location.hash).toBe('#name-change-roadmap');
+      fireEvent.click(screen.getByRole('button', { name: 'Edit saved details' }));
+      expect(window.location.hash).toBe('#case-setup');
 
       expect(scrollIntoView).toHaveBeenCalledTimes(4);
     } finally {
