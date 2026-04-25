@@ -276,7 +276,11 @@ describe('name change engine', () => {
         expect.objectContaining({ audience: 'Bank or credit card support', proofChecklist: expect.arrayContaining(['Updated photo ID or DMV receipt']) }),
         expect.objectContaining({ audience: 'Insurance or subscription support' }),
         expect.objectContaining({ audience: 'Tax agency or payroll tax support', dependsOnStepIds: expect.arrayContaining(['institution-state-tax-agency']) }),
-        expect.objectContaining({ audience: 'Airline, hotel, loyalty, or travel support', readiness: 'upcoming' }),
+        expect.objectContaining({
+          audience: 'Airline, hotel, loyalty, or travel support',
+          readiness: 'upcoming',
+          dependsOnStepIds: expect.arrayContaining(['institution-dmv-registration-title']),
+        }),
         expect.objectContaining({ audience: 'Phone, utilities, housing, or primary digital identity support', dependsOnStepIds: expect.arrayContaining(['institution-utilities-housing']) }),
         expect.objectContaining({ audience: 'Licensing board or credentialing support', dependsOnStepIds: ['state-photo-id', 'institution-professional-licenses'] }),
       ]),

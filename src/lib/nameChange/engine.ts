@@ -976,7 +976,13 @@ function buildAccountUpdateTemplates(
       id: 'template-travel',
       audience: 'Airline, hotel, loyalty, or travel support',
       subject: 'Please align my travel profile with my legal name change',
-      dependsOnStepIds: ['federal-passport', 'institution-tsa-precheck', 'institution-travel-hospitality', 'institution-frequent-flyer-hotel-rail'],
+      dependsOnStepIds: [
+        'federal-passport',
+        'institution-tsa-precheck',
+        'institution-travel-hospitality',
+        'institution-dmv-registration-title',
+        'institution-frequent-flyer-hotel-rail',
+      ],
       proofDocuments: [
         ...proofChecklistBase,
         needsPassport ? 'Updated passport or passport renewal timing confirmation' : 'Current passport details if no passport update is needed',
