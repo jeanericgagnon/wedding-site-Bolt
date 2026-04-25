@@ -381,6 +381,7 @@ describe('NameChangePlannerTab', () => {
     expect(screen.getAllByText(/Guided next action|Do now:/).length).toBeGreaterThan(0);
     expect(screen.queryByText(new RegExp(`^Execution note: ${escapeRegExp(bankGuidedDetail)}$`))).not.toBeInTheDocument();
     expect(screen.queryByText(new RegExp(`^• ${escapeRegExp(bankGuidedDetail)}$`))).not.toBeInTheDocument();
+    expect(screen.getAllByText(/Next: Unblock DMV completion|Can wait: Actual submission can safely wait\./).length).toBeGreaterThan(0);
   });
 
   it('resumes directly into the status vault when the route hash points there', async () => {
