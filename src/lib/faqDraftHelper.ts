@@ -1,3 +1,5 @@
+import { normalizeRsvpDeadlineForCopy } from './rsvpDeadlineCopy';
+
 export interface FaqDraftInput {
   weddingCity?: string;
   venue?: string;
@@ -22,11 +24,12 @@ function pushUnique(items: FaqDraftItem[], item: FaqDraftItem | null) {
 export function buildSuggestedFaqDrafts(input: FaqDraftInput): FaqDraftItem[] {
   const items: FaqDraftItem[] = [];
   const packs = new Set(input.useCasePacks ?? []);
+  const rsvpDeadline = normalizeRsvpDeadlineForCopy(input.rsvpDeadline);
 
   pushUnique(items, input.attire?.trim() ? { question: 'What should I wear?', answer: input.attire.trim() } : null);
   pushUnique(items, input.parking?.trim() ? { question: 'Will there be parking?', answer: input.parking.trim() } : null);
   pushUnique(items, input.hotelRecommendations?.trim() ? { question: 'Where should I stay?', answer: input.hotelRecommendations.trim() } : null);
-  pushUnique(items, input.rsvpDeadline?.trim() ? { question: 'When should I RSVP by?', answer: `Please reply by ${input.rsvpDeadline.trim()} if you can.` } : null);
+  pushUnique(items, rsvpDeadline ? { question: 'When should I RSVP by?', answer: `Please reply by ${rsvpDeadline} if you can.` } : null);
 
   if (packs.has('destination')) {
     pushUnique(items, {
