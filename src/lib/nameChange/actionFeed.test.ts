@@ -356,7 +356,7 @@ describe('name change action feed', () => {
     expect(feed[0]?.action.detail).toContain('Hold policy changes for now and just gather the carrier evidence rules');
   });
 
-  it('routes tax and voter follow-through into the tax template once proof is usable', () => {
+  it('dedupes shared tax-template follow-through into one highest-priority template action once proof is usable', () => {
     const taxTemplate = makeTemplate({
       id: 'template-tax',
       audience: 'Tax and state agencies',
@@ -409,17 +409,78 @@ describe('name change action feed', () => {
       }),
     ], [], [], [taxTemplate]);
 
-    expect(feed.find((item) => item.title === 'Tax records')).toMatchObject({
+    const templateItems = feed.filter((item) => item.focusTargetId === 'account-update-template-template-tax');
+
+    expect(templateItems).toHaveLength(1);
+    expect(templateItems[0]).toMatchObject({
+      title: 'Tax records',
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-tax',
       laneLabel: 'Tax and state agencies · draft now',
       urgencyReason: 'packet_trust',
       action: expect.objectContaining({ detail: expect.stringContaining('ready to draft') }),
     });
-    expect(feed.find((item) => item.title === 'Voter registration')).toMatchObject({
+  });
+
+  it('dedupes shared travel-template follow-through so tsa and courtesy work do not spam the same intake card', () => {
+    const feed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'tsa',
+        targetLabel: 'TSA PreCheck',
+        recommendedFormCode: 'TSA',
+        nextAction: {
+          category: 'review',
+          label: 'Prep TSA update',
+          detail: 'TSA update packet can be prepared now.',
+        },
+        ready: true,
+        blockers: [],
+        readinessSummary: {
+          status: 'ready',
+          blockingFieldRisks: 0,
+          attentionFieldRisks: 0,
+          lowConfidenceFields: 0,
+          missingFields: 0,
+          documentRepairDebt: 0,
+          summaryLabel: 'Ready.',
+        },
+      }),
+      makeExecutionSnapshot({
+        targetKey: 'courtesy',
+        targetLabel: 'Courtesy notifications',
+        recommendedFormCode: 'COURTESY',
+        nextAction: {
+          category: 'review',
+          label: 'Prep courtesy update',
+          detail: 'Courtesy update packet can be prepared now.',
+        },
+        ready: true,
+        blockers: [],
+        readinessSummary: {
+          status: 'ready',
+          blockingFieldRisks: 0,
+          attentionFieldRisks: 0,
+          lowConfidenceFields: 0,
+          missingFields: 0,
+          documentRepairDebt: 0,
+          summaryLabel: 'Ready.',
+        },
+      }),
+    ], [], [], [
+      makeTemplate({
+        id: 'template-travel',
+        audience: 'Airline, hotel, loyalty, or travel support',
+        readiness: 'ready',
+      }),
+    ]);
+
+    const templateItems = feed.filter((item) => item.focusTargetId === 'account-update-template-template-travel');
+
+    expect(templateItems).toHaveLength(1);
+    expect(templateItems[0]).toMatchObject({
+      title: 'Courtesy notifications',
+      laneLabel: 'Airline, hotel, loyalty, or travel support · send now',
       plannerIntent: 'open_account_update_template',
-      focusTargetId: 'account-update-template-template-tax',
-      laneLabel: 'Tax and state agencies · draft now',
     });
   });
 

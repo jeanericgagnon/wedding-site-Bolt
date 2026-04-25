@@ -84,6 +84,10 @@ function isCaseSetupExecutionAction(action: NameChangeGuidedAction) {
     || action.detail.startsWith('Case setup is still missing ');
 }
 
+function shouldReplaceRetainedItem(candidate: NameChangeActionFeedItem, retained: NameChangeActionFeedItem | undefined) {
+  return !retained || candidate.score > retained.score || (candidate.score === retained.score && candidate.title.localeCompare(retained.title) < 0);
+}
+
 function dedupeDocumentRoutedExecutionItems(items: NameChangeActionFeedItem[]) {
   const retainedByDocumentKind = new Map<string, NameChangeActionFeedItem>();
   const passthrough: NameChangeActionFeedItem[] = [];
@@ -101,12 +105,31 @@ function dedupeDocumentRoutedExecutionItems(items: NameChangeActionFeedItem[]) {
     }
 
     const retained = retainedByDocumentKind.get(documentKind);
-    if (!retained || item.score > retained.score || (item.score === retained.score && item.title.localeCompare(retained.title) < 0)) {
+    if (shouldReplaceRetainedItem(item, retained)) {
       retainedByDocumentKind.set(documentKind, item);
     }
   });
 
   return [...passthrough, ...retainedByDocumentKind.values()];
+}
+
+function dedupeTemplateRoutedExecutionItems(items: NameChangeActionFeedItem[]) {
+  const retainedByTemplate = new Map<string, NameChangeActionFeedItem>();
+  const passthrough: NameChangeActionFeedItem[] = [];
+
+  items.forEach((item) => {
+    if (item.plannerIntent !== 'open_account_update_template') {
+      passthrough.push(item);
+      return;
+    }
+
+    const retained = retainedByTemplate.get(item.focusTargetId);
+    if (shouldReplaceRetainedItem(item, retained)) {
+      retainedByTemplate.set(item.focusTargetId, item);
+    }
+  });
+
+  return [...passthrough, ...retainedByTemplate.values()];
 }
 
 function getSeverityWeight(severity: NameChangeActionFeedItem['severity']) {
@@ -317,7 +340,7 @@ export function buildNameChangeActionFeed(
     };
   });
 
-  const routedExecutionItems = dedupeDocumentRoutedExecutionItems(executionItems);
+  const routedExecutionItems = dedupeTemplateRoutedExecutionItems(dedupeDocumentRoutedExecutionItems(executionItems));
   const queuedDocumentKinds = new Set(documentItems.map((item) => getActionDocumentKind(item)).filter(Boolean));
   const dedupedExecutionItems = routedExecutionItems.filter((item) => {
     if (item.plannerIntent !== 'open_document_repair') return true;
