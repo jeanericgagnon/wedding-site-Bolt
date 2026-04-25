@@ -16,7 +16,7 @@ import { buildDayOfUpdateDraft } from '../../lib/dayOfUpdateHelper';
 import { buildEventReminderDraft } from '../../lib/eventReminderHelper';
 import { formatMessageEventOptionLabel } from './messageEventDate';
 import { formatMessageHistoryDate, formatMessageHistoryDateTime, getMessageHistoryTimestamp } from './messageHistoryTime';
-import { parseScheduleInputToIso, toScheduleInputValue } from './messageScheduleTime';
+import { formatScheduledMessageDateTime, parseScheduleInputToIso, toScheduleInputValue } from './messageScheduleTime';
 
 const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bulk-message`;
 const DEMO_MESSAGES_STORAGE_KEY = 'dayof.demo.messages.history';
@@ -1631,7 +1631,7 @@ export const DashboardMessages: React.FC = () => {
       }
 
       if (isScheduled) {
-        toast(`${isEditingExistingMessage ? 'Updated' : 'Scheduled'} for ${new Date(scheduledFor!).toLocaleString()} — ${recipientCount} recipient${recipientCount !== 1 ? 's' : ''}`, 'info');
+        toast(`${isEditingExistingMessage ? 'Updated' : 'Scheduled'} for ${formatScheduledMessageDateTime(scheduledFor)} — ${recipientCount} recipient${recipientCount !== 1 ? 's' : ''}`, 'info');
         await fetchMessages();
         return;
       }
@@ -1794,7 +1794,7 @@ export const DashboardMessages: React.FC = () => {
       });
       setShowRecipientPreview(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      toast(`Loaded scheduled reminder for ${new Date(`${yyyy}-${mm}-${dd}T${hh}:${min}:00`).toLocaleString()}.`, 'info');
+      toast(`Loaded scheduled reminder for ${formatScheduledMessageDateTime(`${yyyy}-${mm}-${dd}T${hh}:${min}:00`)}.`, 'info');
       return;
     }
 
@@ -1809,7 +1809,7 @@ export const DashboardMessages: React.FC = () => {
       });
       setShowRecipientPreview(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      toast(`Loaded scheduled day-of update for ${new Date(`${yyyy}-${mm}-${dd}T${hh}:${min}:00`).toLocaleString()}.`, 'info');
+      toast(`Loaded scheduled day-of update for ${formatScheduledMessageDateTime(`${yyyy}-${mm}-${dd}T${hh}:${min}:00`)}.`, 'info');
       return;
     }
 
@@ -1823,7 +1823,7 @@ export const DashboardMessages: React.FC = () => {
     });
     setShowRecipientPreview(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    toast(`Loaded scheduled thank-you for ${new Date(`${yyyy}-${mm}-${dd}T${hh}:${min}:00`).toLocaleString()}.`, 'info');
+    toast(`Loaded scheduled thank-you for ${formatScheduledMessageDateTime(`${yyyy}-${mm}-${dd}T${hh}:${min}:00`)}.`, 'info');
   }
 
   async function handleRetry(message: Message) {
@@ -2012,7 +2012,7 @@ export const DashboardMessages: React.FC = () => {
             }
           : item
       )));
-      toast(`Rescheduled for ${new Date(scheduledFor).toLocaleString()}.`, 'success');
+      toast(`Rescheduled for ${formatScheduledMessageDateTime(scheduledFor)}.`, 'success');
       return;
     }
 
@@ -2042,7 +2042,7 @@ export const DashboardMessages: React.FC = () => {
         })
         .eq('id', message.id);
 
-      toast(`Rescheduled for ${new Date(scheduledFor).toLocaleString()}.`, 'success');
+      toast(`Rescheduled for ${formatScheduledMessageDateTime(scheduledFor)}.`, 'success');
       await fetchMessages();
     } catch (err) {
       toast(err instanceof Error ? err.message : 'Couldn’t reschedule that campaign right now.', 'error');

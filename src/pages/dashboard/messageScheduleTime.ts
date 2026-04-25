@@ -15,3 +15,10 @@ export function parseScheduleInputToIso(value: string): string | undefined {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
 }
+
+export function formatScheduledMessageDateTime(value: string | null | undefined): string {
+  if (!value) return 'Unknown time';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Unknown time';
+  return date.toLocaleString();
+}
