@@ -444,6 +444,41 @@ function getExecutionSectionKey(targetKey: NameChangeTargetExecutionSnapshot['ta
   return 'cleanup';
 }
 
+function getSupportiveExecutionWaitLine(snapshot: NameChangeTargetExecutionSnapshot) {
+  const blockingLabel = snapshot.nextAction.label.replace(/^Unblock\s+/, '').trim();
+  if (snapshot.nextAction.category !== 'dependency' || !blockingLabel) return undefined;
+
+  switch (snapshot.targetKey) {
+    case 'banks':
+    case 'insurance':
+    case 'medical':
+    case 'utilities':
+      return `You can still gather account numbers, policy details, and contact routes now so this handoff moves faster once ${blockingLabel} clears. Actual submission can safely wait.`;
+    case 'employer':
+    case 'licenses':
+      return `You can still collect HR, payroll, or licensing contacts now so this handoff is easier once ${blockingLabel} clears. Actual submission can safely wait.`;
+    case 'taxes':
+      return `You can still line up prior returns, withholding records, and state login access now so filing follow-through is easier once ${blockingLabel} clears. Actual submission can safely wait.`;
+    case 'voter':
+      return `You can still confirm your registration jurisdiction and current voter record now so this update is quick once ${blockingLabel} clears. Actual submission can safely wait.`;
+    case 'tsa':
+      return `You can still review upcoming bookings and traveler-profile settings now so this sync is quicker once ${blockingLabel} clears. Actual submission can safely wait.`;
+    case 'courtesy':
+      return `You can still list the low-stakes profiles and social accounts you want to touch later so cleanup is easier once ${blockingLabel} clears. Actual submission can safely wait.`;
+    default:
+      return undefined;
+  }
+}
+
+export function getExecutionNextActionDetail(snapshot: NameChangeTargetExecutionSnapshot) {
+  const supportiveWaitLine = getSupportiveExecutionWaitLine(snapshot);
+  if (!supportiveWaitLine || snapshot.nextAction.detail.includes('Actual submission can safely wait.')) {
+    return snapshot.nextAction.detail;
+  }
+
+  return `${snapshot.nextAction.detail} ${supportiveWaitLine}`;
+}
+
 function buildDocumentRepairLaneLabel(item: NameChangeDocumentRepairQueueItem) {
   if (item.impactedTargets.length === 0) {
     return 'Document repair';
@@ -560,7 +595,10 @@ export function buildNameChangeActionFeed(
             label: getTemplateActionLabel(linkedTemplate),
             detail: getTemplateActionDetail(linkedTemplate),
           }
-        : snapshot.nextAction,
+        : {
+            ...snapshot.nextAction,
+            detail: getExecutionNextActionDetail(snapshot),
+          },
     };
   });
 

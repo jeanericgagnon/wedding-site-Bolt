@@ -14,6 +14,7 @@ import {
   getAccountUpdateTemplateReadinessLine,
   getAccountUpdateTemplateStatusLabel,
   getAccountUpdateTemplateStatusLine,
+  getExecutionNextActionDetail,
   sanitizeAccountUpdateTemplateText,
 } from '../../../lib/nameChange/actionFeed';
 import { getFallbackBlockingProofHopLabel } from '../../../lib/nameChange/engine';
@@ -1039,7 +1040,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         ? highestRiskCardConfig.snapshot.nextAction.label
         : 'No immediate action needed';
       const nextActionDetail = highestRiskCardConfig
-        ? highestRiskCardConfig.snapshot.nextAction.detail
+        ? getExecutionNextActionDetail(highestRiskCardConfig.snapshot)
         : 'No immediate action needed in this section.';
       const relatedStepIds = EXECUTION_SECTION_STEP_IDS[section.key] ?? [];
       const sectionReminderItems = reminderAttention.filter((item) => relatedStepIds.includes(item.dependsOnStepId));

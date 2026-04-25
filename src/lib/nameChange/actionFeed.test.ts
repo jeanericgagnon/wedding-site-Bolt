@@ -14,6 +14,7 @@ import {
   getAccountUpdateTemplateCurrentBlockerLine,
   getAccountUpdateTemplateChecklistLine,
   getAccountUpdateTemplateChecklistStatusLine,
+  getExecutionNextActionDetail,
   getAccountUpdateTemplateMessageLine,
   getAccountUpdateTemplateNextAskLine,
   getAccountUpdateTemplateProofChecklistLine,
@@ -1998,6 +1999,26 @@ describe('name change action feed', () => {
     expect(feed[0]?.action.detail).not.toContain('Template message:');
     expect(feed[0]?.action.detail).not.toContain('Proof status:');
     expect(feed[0]?.action.detail).not.toContain('Next ask:');
+  });
+
+  it('adds supportive do-now and safe-to-wait guidance for blocked downstream execution targets', () => {
+    const snapshot = makeExecutionSnapshot({
+      targetKey: 'banks',
+      targetLabel: 'Banks',
+      nextAction: {
+        category: 'dependency',
+        label: 'Unblock DMV completion',
+        detail: 'Wait for the DMV update before submitting bank changes.',
+      },
+      recommendedFormCode: 'BANK',
+    });
+
+    expect(getExecutionNextActionDetail(snapshot)).toBe(
+      'Wait for the DMV update before submitting bank changes. You can still gather account numbers, policy details, and contact routes now so this handoff moves faster once DMV completion clears. Actual submission can safely wait.',
+    );
+
+    const feed = buildNameChangeActionFeed([snapshot], [], []);
+    expect(feed[0]?.action.detail).toBe(getExecutionNextActionDetail(snapshot));
   });
 
   it('falls back to generic blocker text when the blocker label is blank whitespace', () => {
