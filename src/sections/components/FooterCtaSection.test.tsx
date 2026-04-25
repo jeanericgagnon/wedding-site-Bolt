@@ -81,4 +81,30 @@ describe('FooterCtaSection', () => {
 
     expect(screen.getByText('Alex')).toBeInTheDocument();
   });
+
+  it('guards invalid persisted footer dates and deadlines', () => {
+    const data = createEmptyWeddingData();
+    data.event.weddingDateISO = 'not-a-date';
+    data.rsvp.deadlineISO = 'still-not-a-date';
+
+    const { rerender } = render(
+      <FooterCtaSection
+        data={data}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(screen.queryByText('Invalid Date')).not.toBeInTheDocument();
+    expect(screen.getByText('Please reply by')).toBeInTheDocument();
+
+    rerender(
+      <FooterCtaMinimal
+        data={data}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(screen.queryByText('Invalid Date')).not.toBeInTheDocument();
+    expect(screen.getByText('Please reply by')).toBeInTheDocument();
+  });
 });
