@@ -458,6 +458,40 @@ describe('name change action feed', () => {
     expect(feed[0]?.action.detail).toContain('Certified legal name-change proof');
   });
 
+  it('shows upcoming template work as waiting on the next proof hop instead of looking send-ready', () => {
+    const feed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'employer',
+        targetLabel: 'Employer payroll',
+        recommendedFormCode: 'PAYROLL',
+        nextAction: {
+          category: 'dependency',
+          label: 'Prep payroll intake path',
+          detail: 'Payroll packet depends on the next ID proof hop.',
+        },
+      }),
+    ], [], [], [
+      makeTemplate({
+        id: 'template-payroll',
+        audience: 'Employer payroll / HR',
+        readiness: 'upcoming',
+        readinessLabel: 'Your legal proof is grounded, but this still depends on the next ID or agency hop before it is ready to send.',
+        proofChecklist: [
+          'Certified legal name-change proof',
+          'Use this to learn the payroll intake path while SSA alignment is still upstream',
+        ],
+      }),
+    ]);
+
+    expect(feed[0]).toMatchObject({
+      plannerIntent: 'open_account_update_template',
+      focusTargetId: 'account-update-template-template-payroll',
+      laneLabel: 'Employer payroll / HR · wait for next proof hop',
+      urgencyReason: 'blocking_dependency',
+    });
+    expect(feed[0]?.action.detail).toContain('still depends on the next ID or agency hop');
+  });
+
   it('routes utility follow-through into the blocked digital-identity template so intake rules are captured early', () => {
     const feed = buildNameChangeActionFeed([
       makeExecutionSnapshot({

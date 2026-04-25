@@ -66,7 +66,9 @@ function getTemplateLaneLabel(template: AccountUpdateTemplate) {
     ? 'send now'
     : template.readiness === 'in_progress'
       ? 'draft now'
-      : 'intake first';
+      : template.readiness === 'upcoming'
+        ? 'wait for next proof hop'
+        : 'intake first';
 
   return `${template.audience} · ${readinessLabel}`;
 }
