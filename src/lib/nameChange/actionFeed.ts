@@ -47,7 +47,7 @@ function getTemplateUrgencyBoost(template: AccountUpdateTemplate | undefined) {
   if (!template) return 0;
   if (template.readiness === 'ready') return 18;
   if (template.readiness === 'complete') return 10;
-  if (template.readiness === 'in_progress') return 12;
+  if (template.readiness === 'in_progress') return 0;
   if (template.readiness === 'upcoming') return 6;
   if (template.readiness === 'blocked') return 8;
   return 0;
@@ -171,6 +171,7 @@ function getExecutionSeverity(
   template?: AccountUpdateTemplate,
 ): NameChangeActionFeedItem['severity'] {
   if (template?.readiness === 'complete') return 'attention';
+  if (template?.readiness === 'in_progress') return 'attention';
   if (template && (template.readiness === 'blocked' || template.readiness === 'upcoming')) return 'blocking';
   if (!snapshot.ready) return snapshot.blockers.length > 0 || snapshot.readinessSummary.blockingFieldRisks > 0 ? 'blocking' : 'attention';
   return 'ready';
@@ -180,7 +181,9 @@ function getExecutionScoreBase(
   severity: NameChangeActionFeedItem['severity'],
   template?: AccountUpdateTemplate,
 ) {
+  if (template?.readiness === 'ready') return 220;
   if (template?.readiness === 'complete') return 80;
+  if (template?.readiness === 'in_progress') return 120;
   return getSeverityWeight(severity) * 100;
 }
 

@@ -432,7 +432,7 @@ describe('name change action feed', () => {
     expect(feed[0]).toMatchObject({
       title: 'Insurance carriers',
       laneLabel: 'Insurance carriers · send now',
-      urgencyTier: 'normal',
+      urgencyTier: 'elevated',
     });
     expect(feed[1]).toMatchObject({
       title: 'Bank accounts',
@@ -798,8 +798,78 @@ describe('name change action feed', () => {
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-tax',
       laneLabel: 'Tax and state agencies · draft now',
+      severity: 'attention',
     });
     expect(feed[0]?.action.label).toBe('Draft tax and state agencies update');
+  });
+
+  it('keeps send-now template work ahead of draft-now staging passes', () => {
+    const feed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'taxes',
+        targetLabel: 'Tax records',
+        recommendedFormCode: 'TAX',
+        nextAction: {
+          category: 'review',
+          label: 'Queue tax agency update',
+          detail: 'Tax packet can be drafted now.',
+        },
+        ready: true,
+        blockers: [],
+        readinessSummary: {
+          status: 'ready',
+          blockingFieldRisks: 0,
+          attentionFieldRisks: 0,
+          lowConfidenceFields: 0,
+          missingFields: 0,
+          documentRepairDebt: 0,
+          summaryLabel: 'Ready.',
+        },
+      }),
+      makeExecutionSnapshot({
+        targetKey: 'insurance',
+        targetLabel: 'Insurance carriers',
+        recommendedFormCode: 'INS',
+        nextAction: {
+          category: 'review',
+          label: 'Send insurance update',
+          detail: 'Insurance packet is ready to send.',
+        },
+        ready: true,
+        blockers: [],
+        readinessSummary: {
+          status: 'ready',
+          blockingFieldRisks: 0,
+          attentionFieldRisks: 0,
+          lowConfidenceFields: 0,
+          missingFields: 0,
+          documentRepairDebt: 0,
+          summaryLabel: 'Ready.',
+        },
+      }),
+    ], [], [], [
+      makeTemplate({
+        id: 'template-tax',
+        audience: 'Tax and state agencies',
+        readiness: 'in_progress',
+      }),
+      makeTemplate({
+        id: 'template-insurance',
+        audience: 'Insurance carriers',
+        readiness: 'ready',
+      }),
+    ]);
+
+    expect(feed[0]).toMatchObject({
+      title: 'Insurance carriers',
+      laneLabel: 'Insurance carriers · send now',
+      severity: 'ready',
+    });
+    expect(feed[1]).toMatchObject({
+      title: 'Tax and state agencies',
+      laneLabel: 'Tax and state agencies · draft now',
+      severity: 'attention',
+    });
   });
 
   it('routes utility follow-through into the blocked digital-identity template so intake rules are captured early', () => {
