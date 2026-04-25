@@ -2349,6 +2349,41 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.statusVault.status).toBe('in_progress');
   });
 
+  it('tracks the full financial rollout inside the banks status vault', () => {
+    const basePlan = buildNameChangePlan({ profile: makeCase(), documents: [], extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => {
+        if (step.id === 'institution-banks') {
+          return {
+            ...step,
+            executionStatus: 'complete' as const,
+            completedAt: '2026-04-24T18:10:00.000Z',
+          };
+        }
+
+        if (step.id === 'institution-credit-bureaus') {
+          return {
+            ...step,
+            executionStatus: 'in_progress' as const,
+            executionUpdatedAt: '2026-04-24T20:10:00.000Z',
+          };
+        }
+
+        return step;
+      }),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('banks', makeCase(), [], [], plan);
+    expect(snapshot.statusVault.executionCounts).toEqual({
+      todo: 3,
+      inProgress: 1,
+      complete: 1,
+      total: 5,
+    });
+    expect(snapshot.statusVault.status).toBe('in_progress');
+  });
+
   it('only marks a target complete when every tracked step is complete', () => {
     const basePlan = buildNameChangePlan({ profile: makeCase(), documents: [], extractedFields: [] });
     const plan = {
