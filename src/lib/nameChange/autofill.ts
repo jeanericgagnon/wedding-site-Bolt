@@ -27,7 +27,41 @@ function buildExtractionLookup(
   documents: NameChangeDocumentInput[],
   extractedFields: NameChangeExtractedFieldInput[],
 ) {
+  const documentKindsById = new Map<string, NameChangeDocumentKind>();
+  documents.forEach((document) => {
+    const rawDocumentId = document.id?.trim();
+    if (!rawDocumentId) return;
+    documentKindsById.set(rawDocumentId, document.document_kind);
+    const normalizedDocumentId = normalizeDraftNameChangeDocumentId(rawDocumentId, document.document_kind);
+    if (normalizedDocumentId) {
+      documentKindsById.set(normalizedDocumentId, document.document_kind);
+    }
+  });
+
   return (fieldKey: NameChangeExtractionFieldKey, preferredDocumentKinds: NameChangeDocumentKind[] = []): ExtractionLookupResult => {
+    if (preferredDocumentKinds.length === 0) {
+      const linkedField = extractedFields.find((field) => {
+        if (field.is_verified !== true || field.field_key !== fieldKey) {
+          return false;
+        }
+        const rawDocumentId = field.document_id?.trim();
+        if (!rawDocumentId) {
+          return false;
+        }
+        const normalizedDocumentId = normalizeDraftNameChangeDocumentId(rawDocumentId, documentKindsById.get(rawDocumentId)) ?? rawDocumentId;
+        return documentKindsById.has(rawDocumentId) || documentKindsById.has(normalizedDocumentId);
+      });
+      if (linkedField?.field_value_masked) {
+        const rawDocumentId = linkedField.document_id?.trim() || '';
+        const normalizedDocumentId = normalizeDraftNameChangeDocumentId(rawDocumentId, documentKindsById.get(rawDocumentId)) ?? rawDocumentId;
+        return {
+          value: linkedField.field_value_masked,
+          sourceDocumentKind: documentKindsById.get(rawDocumentId) ?? documentKindsById.get(normalizedDocumentId),
+          sourceFieldKey: fieldKey,
+        };
+      }
+    }
+
     for (const kind of preferredDocumentKinds) {
       const preferredDocumentIds = new Set(
         documents.flatMap((document) => (

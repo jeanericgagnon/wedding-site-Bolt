@@ -159,6 +159,44 @@ describe('name change autofill prep snapshot', () => {
     });
   });
 
+  it('uses generic reviewed marriage-certificate middle-name extraction when no preferred kind is provided', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-marriage',
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'marriage-•••.pdf',
+        issuing_authority: 'County Clerk',
+        issued_on: '2026-04-10',
+        extraction_confidence: 0.96,
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'doc-marriage',
+        field_key: 'middle_name',
+        field_label: 'Middle name',
+        field_value_masked: 'Quinn',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+
+    const snapshot = buildNameChangeAutofillPrepSnapshot(makeCase(), documents, extractedFields);
+
+    expect(snapshot.fields.find((field) => field.targetField === 'applicant.target_middle_name')).toMatchObject({
+      value: expect.objectContaining({
+        source: 'extracted_field',
+        value: 'Quinn',
+        sourceDocumentKind: 'marriage_certificate',
+        sourceFieldKey: 'middle_name',
+        confidence: 'medium',
+      }),
+    });
+  });
+
   it('keeps non-conflicting extracted values at normal extracted confidence', () => {
     const documents: NameChangeDocumentInput[] = [
       {
