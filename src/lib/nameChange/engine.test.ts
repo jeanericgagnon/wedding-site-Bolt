@@ -418,11 +418,12 @@ describe('name change engine', () => {
       expect.arrayContaining([
         expect.objectContaining({ id: 'legal_government', status: 'upcoming', institutionKeys: expect.arrayContaining(['uscis-immigration-records', 'irs-records', 'state-tax-agency', 'county-recorder-property']) }),
         expect.objectContaining({ id: 'financial', status: 'upcoming', institutionKeys: expect.arrayContaining(['banks', 'investments-loans', 'student-loans-financial-aid', 'mortgage-property-records', 'credit-bureaus']) }),
-        expect.objectContaining({ id: 'work_insurance', status: 'upcoming', institutionKeys: expect.arrayContaining(['irs-employer', 'retirement-benefits', 'insurance', 'workers-comp-leave']) }),
+        expect.objectContaining({ id: 'work_insurance', status: 'upcoming', institutionKeys: expect.arrayContaining(['irs-employer', 'retirement-benefits', 'insurance', 'workers-comp-leave', 'professional-licenses']) }),
         expect.objectContaining({ id: 'personal_lifestyle', status: 'upcoming', institutionKeys: expect.arrayContaining(['phone-digital-identity', 'school-alumni-records', 'subscriptions-social', 'courtesy-social-sync']) }),
         expect.objectContaining({ id: 'travel_mobility', status: 'upcoming', institutionKeys: expect.arrayContaining(['tsa-precheck', 'travel-hospitality', 'dmv-registration-title', 'frequent-flyer-hotel-rail']) }),
       ]),
     );
+    expect(plan.summary.institutionCategoryCoverage?.find((category) => category.id === 'personal_lifestyle')?.institutionKeys).not.toContain('professional-licenses');
   });
 
   it('surfaces blockers when the legal proof doc is missing', () => {

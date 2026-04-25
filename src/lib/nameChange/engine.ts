@@ -97,12 +97,15 @@ const INSTITUTION_CATEGORY_COVERAGE_CONFIG = [
   {
     id: 'work_insurance',
     label: 'Work + insurance',
-    matches: (institution: NameChangeInstitutionEntry) => institution.category === 'employment' || institution.category === 'insurance',
+    matches: (institution: NameChangeInstitutionEntry) => institution.category === 'employment'
+      || institution.category === 'insurance'
+      || institution.key === 'professional-licenses',
   },
   {
     id: 'personal_lifestyle',
     label: 'Personal + lifestyle',
-    matches: (institution: NameChangeInstitutionEntry) => institution.category === 'personal' && !['tsa-precheck', 'travel-hospitality', 'dmv-registration-title', 'frequent-flyer-hotel-rail'].includes(institution.key),
+    matches: (institution: NameChangeInstitutionEntry) => institution.category === 'personal'
+      && !['tsa-precheck', 'travel-hospitality', 'dmv-registration-title', 'frequent-flyer-hotel-rail', 'professional-licenses'].includes(institution.key),
   },
   {
     id: 'travel_mobility',

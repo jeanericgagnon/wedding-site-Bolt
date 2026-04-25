@@ -93,6 +93,10 @@ describe('name change reminder suggestions', () => {
       dependsOnStepId: 'institution-retirement-benefits',
       urgency: 'high',
     });
+    expect(reminders.find((reminder) => reminder.id === 'reminder-category-confirm-work_insurance')).toMatchObject({
+      dependsOnStepId: 'institution-professional-licenses',
+      urgency: 'medium',
+    });
     expect(reminders.find((reminder) => reminder.id === 'reminder-milestone-confirm-milestone-tax')).toMatchObject({
       label: 'Confirm tax and government records are aligned across filing and status systems',
       reason: 'Verify that tax, county, and immigration-facing records are lined up so filings, notices, and status checks do not split across names.',
@@ -210,6 +214,12 @@ describe('name change reminder suggestions', () => {
       section_key: 'work-identity',
       planner_intent: 'open_execution_card',
       focus_target_id: 'execution-card-employer',
+    });
+    expect(inputs.find((reminder) => reminder.reminder_key === 'reminder-category-confirm-work_insurance')).toMatchObject({
+      depends_on_step_id: 'institution-professional-licenses',
+      section_key: 'work-identity',
+      planner_intent: 'open_execution_card',
+      focus_target_id: 'execution-card-licenses',
     });
     expect(inputs.find((reminder) => reminder.reminder_key === 'reminder-category-confirm-financial')).toMatchObject({
       depends_on_step_id: 'institution-credit-bureaus',
