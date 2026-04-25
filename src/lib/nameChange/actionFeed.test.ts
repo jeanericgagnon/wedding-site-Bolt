@@ -319,6 +319,48 @@ describe('name change action feed', () => {
     });
   });
 
+  it('shows complete template follow-through as confirmation work instead of another send-now packet', () => {
+    const feed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'banks',
+        targetLabel: 'Bank accounts',
+        recommendedFormCode: 'BANK',
+        nextAction: {
+          category: 'review',
+          label: 'Confirm bank rename landed',
+          detail: 'Check whether the rename already synced across statements and cards.',
+        },
+        blockers: [],
+        ready: true,
+        readinessSummary: {
+          status: 'ready',
+          blockingFieldRisks: 0,
+          attentionFieldRisks: 0,
+          lowConfidenceFields: 0,
+          missingFields: 0,
+          documentRepairDebt: 0,
+          summaryLabel: 'Ready.',
+        },
+      }),
+    ], [], [], [
+      makeTemplate({
+        readiness: 'complete',
+        proofChecklist: [
+          'Certified legal name-change proof',
+          'Confirm cards, statements, and online banking all reflect the final legal name',
+        ],
+      }),
+    ]);
+
+    expect(feed[0]).toMatchObject({
+      plannerIntent: 'open_account_update_template',
+      focusTargetId: 'account-update-template-template-bank',
+      laneLabel: 'Bank accounts · confirm synced',
+      urgencyReason: 'review_queue',
+    });
+    expect(feed[0]?.action.detail).toContain('clean confirmation/update pass');
+  });
+
   it('routes blocked institutional work into the readiness-aware template when intake guidance is still useful', () => {
     const feed = buildNameChangeActionFeed([
       makeExecutionSnapshot({

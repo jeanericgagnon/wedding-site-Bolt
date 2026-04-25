@@ -62,13 +62,15 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
 }
 
 function getTemplateLaneLabel(template: AccountUpdateTemplate) {
-  const readinessLabel = template.readiness === 'ready' || template.readiness === 'complete'
+  const readinessLabel = template.readiness === 'ready'
     ? 'send now'
-    : template.readiness === 'in_progress'
-      ? 'draft now'
-      : template.readiness === 'upcoming'
-        ? 'wait for next proof hop'
-        : 'intake first';
+    : template.readiness === 'complete'
+      ? 'confirm synced'
+      : template.readiness === 'in_progress'
+        ? 'draft now'
+        : template.readiness === 'upcoming'
+          ? 'wait for next proof hop'
+          : 'intake first';
 
   return `${template.audience} · ${readinessLabel}`;
 }
@@ -162,6 +164,7 @@ function getActionFeedUrgencyReason(
 ): NameChangeActionFeedItem['urgencyReason'] {
   if (template) {
     if (template.readiness === 'blocked' || template.readiness === 'upcoming') return 'blocking_dependency';
+    if (template.readiness === 'complete') return 'review_queue';
     return 'packet_trust';
   }
 
