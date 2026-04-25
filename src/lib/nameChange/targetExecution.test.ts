@@ -3017,6 +3017,22 @@ describe('name change target execution snapshot', () => {
     });
   });
 
+  it('keeps travel supportive wait guidance honest when DMV is the blocking identity hop', () => {
+    expect(getExecutionNextActionGuidance({
+      targetKey: 'tsa',
+      nextAction: {
+        category: 'dependency',
+        label: 'Unblock Primary photo ID underway before DMV title and travel-profile updates',
+        detail: 'Travel and mobility follow-through should wait until DMV work is underway so vehicle title, registration, and auto-policy records can stay aligned with the same identity chain.',
+      },
+    })).toEqual({
+      overview: 'Travel and mobility follow-through should wait until DMV work is underway so vehicle title, registration, and auto-policy records can stay aligned with the same identity chain.',
+      doNow: 'Review upcoming bookings, traveler profiles, loyalty accounts, title records, and auto-policy details now.',
+      whyItHelps: 'That keeps travel, title, and auto-policy updates lined up once the DMV identity chain is moving.',
+      canWait: 'Actual submission can safely wait.',
+    });
+  });
+
   it('hides guided next-action fallback notes from the visible status-vault stack', () => {
     const guidedDetail = getExecutionNextActionDetail({
       targetKey: 'banks',

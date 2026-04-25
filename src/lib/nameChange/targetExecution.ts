@@ -122,6 +122,14 @@ function getSupportiveExecutionWaitGuidance(snapshot: Pick<NameChangeTargetExecu
         canWait: 'Actual submission can safely wait.',
       };
     case 'tsa':
+      if (/dmv|photo id/i.test(blockingLabel)) {
+        return {
+          doNow: 'Review upcoming bookings, traveler profiles, loyalty accounts, title records, and auto-policy details now.',
+          whyItHelps: 'That keeps travel, title, and auto-policy updates lined up once the DMV identity chain is moving.',
+          canWait: 'Actual submission can safely wait.',
+        };
+      }
+
       return {
         doNow: 'Review upcoming bookings, traveler profiles, loyalty accounts, title records, and auto-policy details now.',
         whyItHelps: `That sync goes quicker once ${blockingLabel} clears.`,
