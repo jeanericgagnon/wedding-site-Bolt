@@ -41,6 +41,7 @@ function makeTemplate(overrides: Partial<NonNullable<NameChangePlan['summary']['
     requestSummary: 'Please tell me the fastest secure submission path and confirm whether cards, checks, statements, and my online profile will all update together.',
     dependsOnStepIds: ['institution-banks'],
     proofChecklist: ['Certified legal name-change proof'],
+    checklistHighlight: overrides.checklistHighlight ?? overrides.proofChecklist?.[1],
     ...overrides,
   };
 }

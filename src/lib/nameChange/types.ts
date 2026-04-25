@@ -243,6 +243,7 @@ export interface NameChangePlanSummary {
     readinessLabel: string;
     proofReadinessSummary: string;
     blockingProofHopLabel?: string;
+    checklistHighlight?: string;
     requestSummary: string;
     dependsOnStepIds: string[];
     proofChecklist: string[];

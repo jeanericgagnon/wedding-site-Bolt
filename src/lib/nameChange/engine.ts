@@ -912,6 +912,7 @@ function buildAccountUpdateTemplates(
       readinessLabel,
       proofReadinessSummary,
       blockingProofHopLabel,
+      checklistHighlight: readinessSpecificChecklistItem,
       requestSummary: requestLine,
       dependsOnStepIds: [...template.dependsOnStepIds],
       proofChecklist: proofChecklistWithStatus,
