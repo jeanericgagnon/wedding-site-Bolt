@@ -34,6 +34,16 @@ function fmt(n: number) {
   return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 }
 
+function routeToNameChangeLane(primaryHref: string, onTabChange: (tab: string) => void) {
+  const [, hash = ''] = primaryHref.split('#');
+  if (typeof window !== 'undefined') {
+    const nextHash = `#${hash || 'name-change-roadmap'}`;
+    const { pathname, search } = window.location;
+    window.history.replaceState(null, '', `${pathname}${search}${nextHash}`);
+  }
+  onTabChange('nameChange');
+}
+
 export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendors, seatingReadiness, weddingDate, nameChangePlan, onTabChange }) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -175,7 +185,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
       </div>
 
       {isPostWedding && (
-        <button onClick={() => onTabChange('nameChange')} className="block w-full text-left">
+        <button onClick={() => routeToNameChangeLane(nameChangeCard.primaryHref, onTabChange)} className="block w-full text-left">
           <Card padding="md" className="border-primary/25 bg-primary/5 transition-shadow hover:shadow-md">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-start gap-3">

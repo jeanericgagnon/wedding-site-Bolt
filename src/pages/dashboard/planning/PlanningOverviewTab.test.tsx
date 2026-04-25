@@ -7,6 +7,7 @@ import { defaultNameChangeCaseInput } from './nameChangeService';
 describe('PlanningOverviewTab', () => {
   it('shows a post-wedding name change tile that routes into the assistant lane', () => {
     const onTabChange = vi.fn();
+    const replaceState = vi.spyOn(window.history, 'replaceState');
     const plan = buildNameChangePlan({
       profile: {
         ...defaultNameChangeCaseInput,
@@ -35,6 +36,7 @@ describe('PlanningOverviewTab', () => {
     expect(tile).toBeTruthy();
     fireEvent.click(tile.closest('button') as HTMLButtonElement);
     expect(onTabChange).toHaveBeenCalledWith('nameChange');
+    expect(replaceState).toHaveBeenCalledWith(null, '', '/#name-change-roadmap');
     expect(screen.getByText('Start whenever you want, then come back whenever you need')).toBeTruthy();
     expect(screen.getByText('The roadmap is already there, even if you have not started checking steps off yet, so you can come back without rebuilding the plan.')).toBeTruthy();
     expect(screen.getByText('Roadmap saved')).toBeTruthy();
