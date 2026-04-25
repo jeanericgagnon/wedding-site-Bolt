@@ -491,9 +491,9 @@ export interface NameChangeExecutionPrerequisiteRule {
   satisfiedReason: string;
 }
 
-export type NameChangeExecutionTargetKey = 'courtOrder' | 'ssa' | 'dmv' | 'passport' | 'employer' | 'taxes' | 'banks' | 'insurance' | 'medical' | 'utilities' | 'courtesy' | 'voter' | 'tsa' | 'licenses';
+export type NameChangeExecutionTargetKey = 'courtOrder' | 'ssa' | 'dmv' | 'passport' | 'employer' | 'taxes' | 'legalGovernment' | 'banks' | 'insurance' | 'medical' | 'utilities' | 'courtesy' | 'voter' | 'tsa' | 'licenses';
 export type NameChangeFormBuilderKey = 'courtOrder' | 'ss5' | 'dmv' | 'passport' | 'employer' | 'taxes' | 'banks' | 'insurance' | 'medical' | 'utilities' | 'courtesy' | 'voter' | 'tsa' | 'licenses';
-export type NameChangeExecutionSequenceProfileKey = 'courtOrder' | 'ssa' | 'dmv' | 'passport' | 'employer' | 'taxes' | 'banks' | 'insurance' | 'medical' | 'utilities' | 'courtesy' | 'voter' | 'tsa' | 'licenses';
+export type NameChangeExecutionSequenceProfileKey = 'courtOrder' | 'ssa' | 'dmv' | 'passport' | 'employer' | 'taxes' | 'legalGovernment' | 'banks' | 'insurance' | 'medical' | 'utilities' | 'courtesy' | 'voter' | 'tsa' | 'licenses';
 
 export interface NameChangeExecutionTargetDefinition {
   key: NameChangeExecutionTargetKey;

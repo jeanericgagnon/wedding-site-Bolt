@@ -809,6 +809,35 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'primary-photo-id-progress')).toMatchObject({ status: 'satisfied' });
   });
 
+  it('builds legal-government execution snapshots for county recorder and immigration follow-through', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_passport',
+        display_name: 'Current passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+    const basePlan = buildNameChangePlan({ profile: makeCase(), documents, extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-ssa'
+        ? { ...step, executionStatus: 'in_progress' as const }
+        : step),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('legalGovernment', makeCase(), documents, [], plan);
+    expect(snapshot.targetLabel).toContain('County recorder');
+    expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'legal-proof-ready-for-government-follow-through')).toMatchObject({ status: 'satisfied' });
+    expect(snapshot.checklist.find((item) => item.key === 'county-context')).toMatchObject({ status: 'ready' });
+  });
+
   it('builds shared utilities execution snapshots with household-admin gating', () => {
     const documents: NameChangeDocumentInput[] = [
       {
@@ -2410,6 +2439,41 @@ describe('name change target execution snapshot', () => {
     };
 
     const snapshot = buildNameChangeTargetExecutionSnapshot('employer', makeCase(), [], [], plan);
+    expect(snapshot.statusVault.executionCounts).toEqual({
+      todo: 0,
+      inProgress: 1,
+      complete: 1,
+      total: 2,
+    });
+    expect(snapshot.statusVault.status).toBe('in_progress');
+  });
+
+  it('tracks legal-government rollout through county recorder and immigration follow-through', () => {
+    const basePlan = buildNameChangePlan({ profile: makeCase(), documents: [], extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => {
+        if (step.id === 'institution-county-recorder-property') {
+          return {
+            ...step,
+            executionStatus: 'complete' as const,
+            completedAt: '2026-04-24T18:10:00.000Z',
+          };
+        }
+
+        if (step.id === 'institution-uscis-immigration-records') {
+          return {
+            ...step,
+            executionStatus: 'in_progress' as const,
+            executionUpdatedAt: '2026-04-24T20:10:00.000Z',
+          };
+        }
+
+        return step;
+      }),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('legalGovernment', makeCase(), [], [], plan);
     expect(snapshot.statusVault.executionCounts).toEqual({
       todo: 0,
       inProgress: 1,

@@ -321,6 +321,25 @@ export const NAME_CHANGE_SEQUENCE_PROFILE_RECIPES: Record<NameChangeExecutionSeq
     ),
     ...prerequisiteDependencies,
   ],
+  legalGovernment: ({ profile, requirements, prerequisiteDependencies }) => [
+    ...buildLegalAndIdentityDependencies({ profile, intake: null as never, requirements, prerequisiteDependencies }),
+    buildRequirementDependency(
+      requirements.countyContext,
+      'county-context',
+      'County / local filing jurisdiction context',
+      true,
+      'County and local jurisdiction context has not been evaluated yet.',
+      false,
+      'dependency',
+    ),
+    buildDualPartnerExecutionDependency(
+      profile,
+      'dual-partner-legal-government-rollout',
+      'Dual-partner legal/government split',
+      'Both partners are changing names, so county recorder, immigration, and adjacent government follow-through should keep separate proof trails for each partner.',
+    ),
+    ...prerequisiteDependencies,
+  ],
   banks: buildPhotoIdPacketDependencies({
     supportKey: 'financial-identity-support',
     supportLabel: 'Financial identity / address support exists',

@@ -37,6 +37,7 @@ function isDualPartnerExecutionTarget(targetKey: NameChangeExecutionTargetKey) {
     'dmv',
     'employer',
     'taxes',
+    'legalGovernment',
     'banks',
     'insurance',
     'medical',
@@ -55,6 +56,7 @@ const TARGET_STATUS_VAULT_STEP_IDS: Partial<Record<NameChangeExecutionTargetKey,
   passport: ['federal-passport'],
   employer: ['institution-irs-employer', 'institution-retirement-benefits'],
   taxes: ['institution-irs-records', 'institution-state-tax-agency'],
+  legalGovernment: ['institution-county-recorder-property', 'institution-uscis-immigration-records'],
   banks: [
     'institution-banks',
     'institution-investments-loans',
@@ -105,6 +107,12 @@ function getSupportiveExecutionWaitGuidance(snapshot: Pick<NameChangeTargetExecu
       return {
         doNow: 'Line up prior returns, withholding records, and state login access now.',
         whyItHelps: `Filing follow-through gets easier once ${blockingLabel} clears.`,
+        canWait: 'Actual submission can safely wait.',
+      };
+    case 'legalGovernment':
+      return {
+        doNow: 'Gather filing references, alien-number or case IDs, and county recording details now.',
+        whyItHelps: `Government follow-through gets easier once ${blockingLabel} clears.`,
         canWait: 'Actual submission can safely wait.',
       };
     case 'voter':
