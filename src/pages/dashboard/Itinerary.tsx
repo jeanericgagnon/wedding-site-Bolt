@@ -13,6 +13,7 @@ import { Textarea } from '../../components/ui/Textarea';
 import { deleteEventRsvpByInvitationId, deleteEventRsvpsByInvitationIds, getEventRsvpSnapshotsByInvitationIds, restoreEventRsvpSnapshots } from '../../lib/eventRsvpCleanup';
 import type { WeddingDataV1 } from '../../types/weddingData';
 import { combineDateAndTimeISO } from './itineraryDateTime';
+import { formatItineraryEventDate, toValidItineraryEventDateOrNull } from './itineraryEventDate';
 
 interface ItineraryEvent {
   id: string;
@@ -359,8 +360,8 @@ export const DashboardItinerary: React.FC = () => {
     }
 
     if (formData.event_date) {
-      const selectedDate = new Date(formData.event_date);
-      if (Number.isNaN(selectedDate.getTime())) {
+      const selectedDate = toValidItineraryEventDateOrNull(formData.event_date);
+      if (!selectedDate) {
         setSaveError('Event date is invalid.');
         return;
       }
@@ -551,15 +552,6 @@ export const DashboardItinerary: React.FC = () => {
       }
     }
     return conflictIds;
-  }
-
-  function formatDate(dateString: string) {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'long',
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    });
   }
 
   function formatTime(timeString: string | null) {
@@ -816,7 +808,7 @@ Add to itinerary
                     <div className="space-y-2 mb-4">
                       <div className="flex items-center text-neutral-600">
                         <Calendar className="w-4 h-4 mr-2" />
-                        <span>{formatDate(event.event_date)}</span>
+                        <span>{formatItineraryEventDate(event.event_date)}</span>
                       </div>
 
                       {event.start_time && (

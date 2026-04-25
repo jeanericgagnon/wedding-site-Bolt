@@ -1,0 +1,23 @@
+import { describe, expect, it } from 'vitest';
+
+import { formatItineraryEventDate, toValidItineraryEventDateOrNull } from './itineraryEventDate';
+
+describe('itineraryEventDate', () => {
+  it('drops invalid persisted itinerary dates instead of leaking Invalid Date', () => {
+    expect(toValidItineraryEventDateOrNull('not-a-date')).toBeNull();
+    expect(formatItineraryEventDate('not-a-date')).toBe('Unknown date');
+  });
+
+  it('keeps valid persisted itinerary dates truthful', () => {
+    const value = '2026-06-21';
+    expect(toValidItineraryEventDateOrNull(value)?.getTime()).toBe(new Date(value).getTime());
+    expect(formatItineraryEventDate(value)).toBe(
+      new Date(value).toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      }),
+    );
+  });
+});
