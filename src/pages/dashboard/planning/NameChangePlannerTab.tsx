@@ -189,6 +189,7 @@ function getAccountUpdateTemplateCopyButtonLabel(
   if (template.readiness === 'ready') return 'Copy send-ready text';
   if (template.readiness === 'complete') return 'Copy confirmation text';
   if (template.readiness === 'in_progress') return 'Copy staged draft';
+  if (template.readiness === 'upcoming') return 'Copy next-step draft';
   return 'Copy intake script';
 }
 

@@ -536,6 +536,47 @@ describe('NameChangePlannerTab', () => {
     expect(screen.getAllByText('Open update template →').length).toBeGreaterThan(0);
   });
 
+  it('uses a next-step draft copy label for upcoming templates that are waiting on the next proof hop', () => {
+    const draft = makeDraft();
+    const basePlan = buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      summary: {
+        ...basePlan.summary,
+        accountUpdateTemplates: (basePlan.summary.accountUpdateTemplates ?? []).map((template) => (
+          template.id === 'template-bank'
+            ? {
+                ...template,
+                readiness: 'upcoming' as const,
+                blockingProofHopLabel: 'ID pending',
+              }
+            : template
+        )),
+      },
+    };
+
+    render(
+      <NameChangePlannerTab
+        draft={draft}
+        documents={[]}
+        extractedFields={[]}
+        plan={plan}
+        reminders={[]}
+        saving={false}
+        onDraftChange={vi.fn()}
+        onStructuredIntakeChange={vi.fn()}
+        onDocumentsChange={vi.fn()}
+        onExtractedFieldsChange={vi.fn()}
+        onRemindersChange={vi.fn()}
+        onStepExecutionStatusChange={vi.fn()}
+        onStepExecutionNoteChange={vi.fn()}
+        onSave={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    expect(screen.getAllByRole('button', { name: 'Copy next-step draft' }).length).toBeGreaterThan(0);
+  });
+
   it('copies the full readiness-aware template text from the planner card', async () => {
     const clipboardWriteText = vi.fn().mockResolvedValue(undefined);
     HTMLElement.prototype.scrollIntoView = vi.fn();
