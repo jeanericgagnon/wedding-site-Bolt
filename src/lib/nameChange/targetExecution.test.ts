@@ -3129,6 +3129,54 @@ describe('name change target execution snapshot', () => {
     });
   });
 
+  it('adds structured wait guidance for dual-partner SSA packet branching', () => {
+    expect(getExecutionNextActionGuidance({
+      targetKey: 'ssa',
+      nextAction: {
+        category: 'packet',
+        label: 'Open two SSA partner packets',
+        detail: 'Both partners are changing names, so SSA execution should branch into one SS-5 packet, evidence stack, and submission checkpoint set per partner instead of one shared federal chain.',
+      },
+    })).toEqual({
+      overview: 'Both partners are changing names, so SSA execution should branch into one SS-5 packet, evidence stack, and submission checkpoint set per partner instead of one shared federal chain.',
+      doNow: 'Split each partner into a separate SS-5 packet, evidence stack, and appointment or mailing checklist now.',
+      whyItHelps: 'That keeps one partner’s federal proof or submission timing from blocking the other partner’s SSA chain.',
+      canWait: 'Actual submission can safely wait until both partner packets are cleanly separated.',
+    });
+  });
+
+  it('adds structured wait guidance for dual-partner DMV branching', () => {
+    expect(getExecutionNextActionGuidance({
+      targetKey: 'dmv',
+      nextAction: {
+        category: 'packet',
+        label: 'Open two DMV partner appointment tracks',
+        detail: 'Both partners are changing names, so DMV execution should branch into separate appointment timing, temporary-ID handling, and title/registration follow-through per partner.',
+      },
+    })).toEqual({
+      overview: 'Both partners are changing names, so DMV execution should branch into separate appointment timing, temporary-ID handling, and title/registration follow-through per partner.',
+      doNow: 'Break out separate DMV appointment timing, temporary-ID handling, and title follow-through notes for each partner now.',
+      whyItHelps: 'That keeps the state-ID chain honest when one partner can finish DMV earlier than the other.',
+      canWait: 'Actual submission can safely wait until each partner has a separate DMV track.',
+    });
+  });
+
+  it('adds structured wait guidance for dual-partner downstream proof tracking', () => {
+    expect(getExecutionNextActionGuidance({
+      targetKey: 'banks',
+      nextAction: {
+        category: 'checklist',
+        label: 'Track separate partner completion proof',
+        detail: 'Both partners are changing names, so banks and credit cards should keep separate completion status, confirmation artifacts, and mailed-notice proof for each partner. Mark this lane complete only after both partner tracks are finished.',
+      },
+    })).toEqual({
+      overview: 'Both partners are changing names, so banks and credit cards should keep separate completion status, confirmation artifacts, and mailed-notice proof for each partner. Mark this lane complete only after both partner tracks are finished.',
+      doNow: 'Create one completion checklist and proof bucket per partner for this downstream lane now.',
+      whyItHelps: 'That prevents shared account rollout from looking done when only one partner’s update actually cleared.',
+      canWait: 'Actual submission can safely wait until both partner proof tracks are separated.',
+    });
+  });
+
   it('adds structured wait guidance for first-passport branch reviews', () => {
     expect(getExecutionNextActionGuidance({
       targetKey: 'passport',

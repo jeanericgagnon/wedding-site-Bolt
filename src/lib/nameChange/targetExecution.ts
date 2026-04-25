@@ -149,6 +149,30 @@ function getSupportiveExecutionWaitGuidance(snapshot: Pick<NameChangeTargetExecu
     }
   }
 
+  if (/open two ssa partner packets/i.test(blockingLabel)) {
+    return {
+      doNow: 'Split each partner into a separate SS-5 packet, evidence stack, and appointment or mailing checklist now.',
+      whyItHelps: 'That keeps one partner’s federal proof or submission timing from blocking the other partner’s SSA chain.',
+      canWait: 'Actual submission can safely wait until both partner packets are cleanly separated.',
+    };
+  }
+
+  if (/open two dmv partner appointment tracks/i.test(blockingLabel)) {
+    return {
+      doNow: 'Break out separate DMV appointment timing, temporary-ID handling, and title follow-through notes for each partner now.',
+      whyItHelps: 'That keeps the state-ID chain honest when one partner can finish DMV earlier than the other.',
+      canWait: 'Actual submission can safely wait until each partner has a separate DMV track.',
+    };
+  }
+
+  if (/track separate partner completion proof/i.test(blockingLabel)) {
+    return {
+      doNow: 'Create one completion checklist and proof bucket per partner for this downstream lane now.',
+      whyItHelps: 'That prevents shared account rollout from looking done when only one partner’s update actually cleared.',
+      canWait: 'Actual submission can safely wait until both partner proof tracks are separated.',
+    };
+  }
+
   if (
     snapshot.targetKey === 'tsa'
     && /marriage-certificate county|certificate number/i.test(blockingLabel)
