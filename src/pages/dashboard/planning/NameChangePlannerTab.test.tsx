@@ -568,6 +568,7 @@ describe('NameChangePlannerTab', () => {
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Subject: ${payrollTemplate?.subject}`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Next ask: ${payrollTemplate?.requestSummary}`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Blocked by: ${payrollTemplate?.blockingProofHopLabel}`));
+    expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Current blocker: ${payrollTemplate?.blockingProofHopLabel}.`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Proof status: ${payrollTemplate?.proofReadinessSummary}`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(payrollTemplate?.body ?? ''));
     expect(screen.getByRole('button', { name: 'Copied' })).toBeInTheDocument();

@@ -659,6 +659,9 @@ function buildAccountUpdateTemplates(
     if (templateId === 'template-insurance') return readiness === 'blocked' ? 'legal proof pending' : 'ID pending';
     return undefined;
   };
+  const getBlockingProofHopSentence = (blockingProofHopLabel: string | undefined) => blockingProofHopLabel
+    ? `Current blocker: ${blockingProofHopLabel}.`
+    : '';
   const templateConfig = [
     {
       id: 'template-payroll',
@@ -670,7 +673,7 @@ function buildAccountUpdateTemplates(
         'Updated Social Security record or SSA receipt',
         'Updated photo ID if payroll or benefits asks for one',
       ],
-      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, proofReadinessSummary: string) => `Hi team — I have legally updated my name from ${normalizedCurrentName} to ${normalizedTargetName} and need payroll, benefits, and internal records aligned. ${readinessIntro} ${proofReadinessSummary} ${proofLine} ${readinessLine} ${requestLine}`,
+      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, proofReadinessSummary: string, blockingProofHopSentence: string) => `Hi team — I have legally updated my name from ${normalizedCurrentName} to ${normalizedTargetName} and need payroll, benefits, and internal records aligned. ${readinessIntro} ${blockingProofHopSentence} ${proofReadinessSummary} ${proofLine} ${readinessLine} ${requestLine}`,
     },
     {
       id: 'template-bank',
@@ -682,7 +685,7 @@ function buildAccountUpdateTemplates(
         'Updated photo ID or DMV receipt',
         'Replacement card / account reissue instructions',
       ],
-      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, proofReadinessSummary: string) => `Hello — I recently completed a legal name change and need the name on my account updated. ${readinessIntro} ${proofReadinessSummary} ${proofLine} ${readinessLine} ${requestLine}`,
+      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, proofReadinessSummary: string, blockingProofHopSentence: string) => `Hello — I recently completed a legal name change and need the name on my account updated. ${readinessIntro} ${blockingProofHopSentence} ${proofReadinessSummary} ${proofLine} ${readinessLine} ${requestLine}`,
     },
     {
       id: 'template-insurance',
@@ -694,7 +697,7 @@ function buildAccountUpdateTemplates(
         'Updated photo ID if coverage verification requires it',
         'Member ID / policy number so cards and claims stay aligned',
       ],
-      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, proofReadinessSummary: string) => `Hi — I need this account updated to my current legal name so coverage, billing, and member records stay aligned. ${readinessIntro} ${proofReadinessSummary} ${proofLine} ${readinessLine} ${requestLine}`,
+      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, proofReadinessSummary: string, blockingProofHopSentence: string) => `Hi — I need this account updated to my current legal name so coverage, billing, and member records stay aligned. ${readinessIntro} ${blockingProofHopSentence} ${proofReadinessSummary} ${proofLine} ${readinessLine} ${requestLine}`,
     },
     {
       id: 'template-tax',
@@ -706,7 +709,7 @@ function buildAccountUpdateTemplates(
         'Updated Social Security record or SSA confirmation',
         'Any employer payroll confirmation already on file',
       ],
-      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, proofReadinessSummary: string) => `Hello — I need my tax records updated to match my legal name so payroll reporting and year-end forms do not drift. ${readinessIntro} ${proofReadinessSummary} ${proofLine} ${readinessLine} ${requestLine}`,
+      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, proofReadinessSummary: string, blockingProofHopSentence: string) => `Hello — I need my tax records updated to match my legal name so payroll reporting and year-end forms do not drift. ${readinessIntro} ${blockingProofHopSentence} ${proofReadinessSummary} ${proofLine} ${readinessLine} ${requestLine}`,
     },
     {
       id: 'template-travel',
@@ -718,7 +721,7 @@ function buildAccountUpdateTemplates(
         needsPassport ? 'Updated passport or passport renewal timing confirmation' : 'Current passport details if no passport update is needed',
         'Any existing booking references that need manual relinking',
       ],
-      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, proofReadinessSummary: string) => `Hello — I am updating my legal name and need my traveler profile, loyalty records, and any upcoming reservation notes aligned so they do not conflict with my ID or passport timing. ${readinessIntro} ${proofReadinessSummary} ${proofLine} ${readinessLine} ${requestLine}`,
+      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, proofReadinessSummary: string, blockingProofHopSentence: string) => `Hello — I am updating my legal name and need my traveler profile, loyalty records, and any upcoming reservation notes aligned so they do not conflict with my ID or passport timing. ${readinessIntro} ${blockingProofHopSentence} ${proofReadinessSummary} ${proofLine} ${readinessLine} ${requestLine}`,
     },
     {
       id: 'template-digital-identity',
@@ -730,7 +733,7 @@ function buildAccountUpdateTemplates(
         'Updated photo ID if identity verification is required',
         'Any lease / utility account numbers or recovery-email checkpoints to refresh',
       ],
-      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, proofReadinessSummary: string) => `Hi — I recently completed a legal name change and need my account holder name updated so billing, verification checks, and recovery/contact records stay consistent. ${readinessIntro} ${proofReadinessSummary} ${proofLine} ${readinessLine} ${requestLine}`,
+      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, proofReadinessSummary: string, blockingProofHopSentence: string) => `Hi — I recently completed a legal name change and need my account holder name updated so billing, verification checks, and recovery/contact records stay consistent. ${readinessIntro} ${blockingProofHopSentence} ${proofReadinessSummary} ${proofLine} ${readinessLine} ${requestLine}`,
     },
     {
       id: 'template-licenses',
@@ -742,7 +745,7 @@ function buildAccountUpdateTemplates(
         'Updated photo ID or license reissue receipt',
         'License number / renewal cycle details',
       ],
-      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, proofReadinessSummary: string) => `Hello — I need my professional license and credentialing records updated to my current legal name so renewals, verification, and employer matching stay clean. ${readinessIntro} ${proofReadinessSummary} ${proofLine} ${readinessLine} ${requestLine}`,
+      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, proofReadinessSummary: string, blockingProofHopSentence: string) => `Hello — I need my professional license and credentialing records updated to my current legal name so renewals, verification, and employer matching stay clean. ${readinessIntro} ${blockingProofHopSentence} ${proofReadinessSummary} ${proofLine} ${readinessLine} ${requestLine}`,
     },
   ] as const;
 
@@ -885,6 +888,7 @@ function buildAccountUpdateTemplates(
     const proofReadinessSummary = getProofReadinessSummary(template.id, readiness);
     const proofChecklistStatusNote = getProofChecklistStatusNote(template.id, readiness);
     const blockingProofHopLabel = getBlockingProofHopLabel(template.id, readiness);
+    const blockingProofHopSentence = getBlockingProofHopSentence(blockingProofHopLabel);
     const proofChecklistWithStatus = [...proofChecklist, proofChecklistStatusNote];
     const proofLine = `I can provide ${proofChecklistWithStatus.join(', ')} ${readinessSpecificProof}`;
 
@@ -892,7 +896,7 @@ function buildAccountUpdateTemplates(
       id: template.id,
       audience: template.audience,
       subject: getReadinessSubject(template.subject, readiness),
-      body: template.buildBody(proofLine, readinessLabel, requestLine, readinessIntro, proofReadinessSummary),
+      body: template.buildBody(proofLine, readinessLabel, requestLine, readinessIntro, proofReadinessSummary, blockingProofHopSentence),
       readiness,
       readinessLabel,
       proofReadinessSummary,
