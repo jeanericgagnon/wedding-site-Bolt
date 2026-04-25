@@ -1236,6 +1236,7 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
   const hasCourtOrder = hasDocument(input, 'court_order');
   const hasReviewedCourtOrder = hasReviewedDocument(input, 'court_order');
   const outOfStateMarriageCertificateGrounding = requirementResults.find((result) => result.key === 'out-of-state-marriage-certificate-grounding');
+  const canonicalExtractionAlignment = requirementResults.find((result) => result.key === 'canonical-extraction-alignment');
   const outOfStateMarriageCertificateGroundingMissing = legalBasis === 'marriage'
     && outOfStateMarriageCertificateGrounding?.status !== 'satisfied';
   const hasLegalProofInIntake = legalBasis === 'marriage' ? hasMarriageCertificate : hasCourtOrder;
@@ -1629,6 +1630,14 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
         id: 'edge-mismatch-recovery',
         label: 'Mismatch recovery needs court-order proof',
         detail: 'Do not keep pushing marriage-certificate-only updates if the target name and legal path disagree. Ground the court-order packet, then re-run SSA, DMV, and passport sequencing from that proof set.',
+        severity: 'warning' as const,
+      }]
+      : []),
+    ...(canonicalExtractionAlignment?.status === 'attention'
+      ? [{
+        id: 'edge-document-name-mismatch',
+        label: 'Document name mismatch across proof set',
+        detail: canonicalExtractionAlignment.reason,
         severity: 'warning' as const,
       }]
       : []),

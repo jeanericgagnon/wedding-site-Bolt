@@ -706,6 +706,57 @@ describe('name change engine', () => {
     );
   });
 
+  it('surfaces document-name mismatch guidance when extracted proof disagrees with canonical case truth', () => {
+    const plan = buildNameChangePlan({
+      ...makeInput(),
+      documents: [
+        {
+          id: 'doc-marriage',
+          document_kind: 'marriage_certificate',
+          display_name: 'Marriage certificate',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+        },
+        {
+          id: 'doc-passport',
+          document_kind: 'current_passport',
+          display_name: 'Passport',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+        },
+      ],
+      extractedFields: [
+        {
+          document_id: 'doc-marriage',
+          field_key: 'spouse_last_name',
+          field_label: 'Spouse last name',
+          field_value_masked: 'Jordan-Smith',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+        {
+          document_id: 'doc-passport',
+          field_key: 'first_name',
+          field_label: 'First name',
+          field_value_masked: 'Alicia',
+          source_type: 'document_extract',
+          is_verified: true,
+        },
+      ],
+    });
+
+    expect(plan.summary.edgeCaseGuidance).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'edge-document-name-mismatch',
+          label: 'Document name mismatch across proof set',
+          detail: 'Structured case truth conflicts with extracted document values in 2 places: Current first name vs passport extraction, Target last name vs marriage certificate spouse surname.',
+          severity: 'warning',
+        }),
+      ]),
+    );
+  });
+
   it('surfaces separate execution guidance when both partners are changing names', () => {
     const plan = buildNameChangePlan(makeInput({ change_reasons: ['marriage', 'both_partners_change_name'] }));
 
