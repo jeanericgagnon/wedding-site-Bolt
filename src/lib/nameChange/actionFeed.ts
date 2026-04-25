@@ -82,10 +82,23 @@ function ensureTerminalPeriod(line: string | undefined) {
   return trimmed.endsWith('.') ? trimmed : `${trimmed}.`;
 }
 
-function formatInlineProofList(items: string[]) {
+function normalizeInlineProofListItem(item: string) {
+  return item.trim().replace(/[.\s]+$/u, '').toLowerCase();
+}
+
+export function formatInlineProofList(items: string[]) {
+  const seen = new Set<string>();
+
   return items
-    .map((item) => item.trim().replace(/[.\s]+$/u, ''))
-    .filter((item, index, array) => item.length > 0 && array.indexOf(item) === index)
+    .flatMap((item) => {
+      const trimmed = item.trim().replace(/[.\s]+$/u, '');
+      if (!trimmed) return [];
+
+      const normalized = normalizeInlineProofListItem(trimmed);
+      if (seen.has(normalized)) return [];
+      seen.add(normalized);
+      return [trimmed];
+    })
     .join(' · ');
 }
 

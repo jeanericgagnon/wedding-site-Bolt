@@ -1324,7 +1324,12 @@ describe('NameChangePlannerTab', () => {
     const payrollTemplate = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll');
     if (!payrollTemplate) throw new Error('expected payroll template');
 
-    payrollTemplate.proofDocuments = ['Certified legal name-change proof.', 'Certified legal name-change proof', ' Updated Social Security record or SSA confirmation. '];
+    payrollTemplate.proofDocuments = [
+      'Certified legal name-change proof.',
+      ' certified legal name-change proof ',
+      ' Updated Social Security record or SSA confirmation. ',
+      'updated social security record or ssa confirmation',
+    ];
 
     render(
       <NameChangePlannerTab
@@ -1347,13 +1352,15 @@ describe('NameChangePlannerTab', () => {
     );
 
     expect(screen.getByText('Proof to have handy: Certified legal name-change proof · Updated Social Security record or SSA confirmation')).toBeInTheDocument();
-    expect(screen.queryByText('Proof to have handy: Certified legal name-change proof · Certified legal name-change proof')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Proof to have handy: .*certified legal name-change proof.*certified legal name-change proof/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Proof to have handy: .*Updated Social Security record or SSA confirmation.*updated social security record or ssa confirmation/i)).not.toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Copy intake script' })[0]!);
 
     await waitFor(() => expect(clipboardWriteText).toHaveBeenCalledTimes(1));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining('Proof to have handy: Certified legal name-change proof · Updated Social Security record or SSA confirmation'));
     expect(clipboardWriteText).not.toHaveBeenCalledWith(expect.stringContaining('Proof to have handy: Certified legal name-change proof · Certified legal name-change proof'));
+    expect(clipboardWriteText).not.toHaveBeenCalledWith(expect.stringContaining('Proof to have handy: Updated Social Security record or SSA confirmation · updated social security record or ssa confirmation'));
   });
 
   it('omits blank normalized proof summary text in planner surfaces', async () => {

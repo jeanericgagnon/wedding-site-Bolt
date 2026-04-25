@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildNameChangeActionFeed,
   formatBlockingProofHopStatePhrase,
+  formatInlineProofList,
   getAccountUpdateTemplateBlockedByLine,
   getAccountUpdateTemplateCurrentBlockerLine,
   getAccountUpdateTemplateReadinessLabel,
@@ -150,6 +151,15 @@ describe('account update template surface helpers', () => {
     expect(formatBlockingProofHopStatePhrase('Legal proof pending')).toBe('legal proof pending');
     expect(formatBlockingProofHopStatePhrase('SSA pending')).toBe('SSA pending');
     expect(formatBlockingProofHopStatePhrase('DMV receipt pending')).toBe('DMV receipt pending');
+  });
+
+  it('deduplicates inline proof summaries by normalized text', () => {
+    expect(formatInlineProofList([
+      'Certified legal name-change proof.',
+      ' certified legal name-change proof ',
+      'SSA confirmation',
+      'ssa confirmation.',
+    ])).toBe('Certified legal name-change proof · SSA confirmation');
   });
 
   it('keeps planner and feed readiness labels on the same copy map', () => {

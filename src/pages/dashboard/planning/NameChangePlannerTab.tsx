@@ -6,6 +6,7 @@ import { buildNameChangeBankExecutionSnapshot } from '../../../lib/nameChange/ba
 import { buildNameChangeAutofillPrepSnapshot } from '../../../lib/nameChange/autofill';
 import {
   buildNameChangeActionFeed,
+  formatInlineProofList,
   getAccountUpdateTemplateBlockedByLine,
   getAccountUpdateTemplateCurrentBlockerLine,
   getAccountUpdateTemplateReadinessLabel,
@@ -195,13 +196,6 @@ function ensureTerminalPeriod(line: string | undefined) {
   const trimmed = line.trim();
   if (trimmed.replace(/[.\s]+$/u, '') === '') return undefined;
   return trimmed.endsWith('.') ? trimmed : `${trimmed}.`;
-}
-
-function formatInlineProofList(items: string[]) {
-  return items
-    .map((item) => item.trim().replace(/[.\s]+$/u, ''))
-    .filter((item, index, array) => item.length > 0 && array.indexOf(item) === index)
-    .join(' · ');
 }
 
 function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
