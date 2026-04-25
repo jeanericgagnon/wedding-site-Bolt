@@ -1,3 +1,5 @@
+import { buildCoupleDisplayName } from './coupleDisplayName';
+
 export interface WelcomeNoteInput {
   partner1Name: string;
   partner2Name: string;
@@ -7,7 +9,7 @@ export interface WelcomeNoteInput {
 }
 
 export function buildWelcomeNoteDraft(input: WelcomeNoteInput): string {
-  const names = [input.partner1Name, input.partner2Name].filter(Boolean).join(' & ') || 'We';
+  const names = buildCoupleDisplayName(input.partner1Name, input.partner2Name) || 'We';
   const packs = new Set(input.useCasePacks ?? []);
 
   let middle = 'We are so happy to celebrate this season with the people we love most.';
