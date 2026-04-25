@@ -453,6 +453,64 @@ function buildAccountUpdateTemplates(
     if (readiness === 'upcoming') return lines.upcoming ?? lines.in_progress;
     return lines.blocked ?? lines.upcoming ?? lines.in_progress;
   };
+  const getReadinessRequestLine = (
+    templateId: string,
+    readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+  ) => templateId === 'template-payroll'
+    ? getReadinessChecklistLine(readiness, {
+        ready: 'Please confirm the exact upload/form path and whether payroll, health coverage, retirement, and beneficiary records will all update together.',
+        in_progress: 'Please confirm the intake path now so I can queue payroll, benefits, and beneficiary follow-through the moment the SSA receipt lands.',
+        complete: 'Please confirm payroll, health coverage, retirement, and beneficiary records already show the final legal name everywhere they should.',
+        upcoming: 'Please confirm the intake path, hold timing, and whether you can pre-note the request while SSA alignment is still upstream.',
+        blocked: 'Please just confirm the intake path and payroll timing for now so I can come back with the SSA-backed packet once it is ready.',
+      })
+    : templateId === 'template-bank'
+      ? getReadinessChecklistLine(readiness, {
+          ready: 'Please tell me the fastest secure submission path and confirm whether cards, checks, statements, and my online profile will all update together.',
+          in_progress: 'Please confirm the submission path now and whether you can start the rename while the updated ID or DMV proof is still landing.',
+          complete: 'Please confirm cards, checks, statements, and my online profile already reflect the final legal name everywhere.',
+          upcoming: 'Please confirm whether legal proof alone or an interim DMV receipt is enough to start, and whether cards or checks need a second pass later.',
+          blocked: 'Please just send the exact bank/card document rules and intake path for now so I do not trigger a rename with the wrong proof chain.',
+        })
+      : templateId === 'template-insurance'
+        ? getReadinessChecklistLine(readiness, {
+            ready: 'Please confirm what proof you require and whether cards, autopay records, claims history, and beneficiary settings should be refreshed at the same time.',
+            in_progress: 'Please confirm the carrier intake path now so I can queue cards, billing, and claims follow-through as soon as the updated ID clears.',
+            complete: 'Please confirm cards, billing, claims history, and beneficiary settings already reflect the final legal name.',
+            upcoming: 'Please confirm whether legal proof alone is enough to start cards, billing, and claims updates before the updated ID lands.',
+            blocked: 'Please just share the carrier evidence rules and intake path for now so I can avoid touching cards or claims too early.',
+          })
+        : templateId === 'template-tax'
+          ? getReadinessChecklistLine(readiness, {
+              ready: 'Please confirm whether you need direct document submission from me, whether the SSA sync is enough, and how I should verify the update before the next filing cycle.',
+              in_progress: 'Please confirm the verification path now so I can queue the tax/state request and attach SSA confirmation as soon as the current step lands.',
+              complete: 'Please confirm payroll reporting, withholding records, and agency files now match the final legal name before the next filing cycle.',
+              upcoming: 'Please confirm the verification path and filing-cycle timing while SSA sync is still upstream so I do not miss the next reporting window.',
+              blocked: 'Please just confirm the tax/state process for now so I can return with the SSA-backed packet once the upstream proof is real.',
+            })
+          : templateId === 'template-travel'
+            ? getReadinessChecklistLine(readiness, {
+                ready: 'Please confirm what proof you need, whether existing bookings can stay linked, and how to avoid check-in or TSA mismatch issues during the transition.',
+                in_progress: 'Please confirm the travel support path now so I can queue profile and loyalty updates while the final passport proof is still landing.',
+                complete: 'Please confirm traveler profiles, loyalty records, and any live bookings already match the final ID or passport name.',
+                upcoming: 'Please confirm your hold/change policy and mismatch handling before I touch any bookings while passport timing is still upstream.',
+                blocked: 'Please just share your mismatch policy and acceptable temporary-proof rules for now so I can avoid breaking live travel records.',
+              })
+            : templateId === 'template-digital-identity'
+              ? getReadinessChecklistLine(readiness, {
+                  ready: 'Please tell me the secure submission path and whether autopay, lease contacts, caller ID, email aliases, or account recovery settings should be refreshed at the same time.',
+                  in_progress: 'Please confirm the verification flow now so I can queue utility, phone, housing, and recovery updates as soon as final ID evidence posts.',
+                  complete: 'Please confirm billing, lease contacts, caller ID, and recovery records already show the final legal name everywhere they should.',
+                  upcoming: 'Please confirm whether legal proof alone can start utilities, phone, housing, or recovery updates before the updated ID lands.',
+                  blocked: 'Please just share the verification rules for now so I can avoid touching billing or recovery records too early.',
+                })
+              : getReadinessChecklistLine(readiness, {
+                  ready: 'Please confirm the board-specific submission path, whether my wallet card or public lookup entry will update automatically, and how long the change usually takes.',
+                  in_progress: 'Please confirm the board submission path now so I can queue the record update and attach the updated ID or reissue receipt as soon as it clears.',
+                  complete: 'Please confirm the board record, wallet card, renewal file, and public lookup already show the final legal name.',
+                  upcoming: 'Please confirm the board-specific document rules now so I know whether the next ID/license hop is enough to start.',
+                  blocked: 'Please just share the board submission rules for now so I do not trigger public-record or renewal changes with the wrong proof.',
+                });
   const templateConfig = [
     {
       id: 'template-payroll',
@@ -464,7 +522,7 @@ function buildAccountUpdateTemplates(
         'Updated Social Security record or SSA receipt',
         'Updated photo ID if payroll or benefits asks for one',
       ],
-      buildBody: (proofLine: string, readinessLine: string) => `Hi team — I have legally updated my name from ${normalizedCurrentName} to ${normalizedTargetName} and need payroll, benefits, and internal records aligned. ${proofLine} ${readinessLine} Please confirm the exact upload/form path, whether payroll, health coverage, retirement, and beneficiary records will all update together, and when the change will hit payroll.`,
+      buildBody: (proofLine: string, readinessLine: string, requestLine: string) => `Hi team — I have legally updated my name from ${normalizedCurrentName} to ${normalizedTargetName} and need payroll, benefits, and internal records aligned. ${proofLine} ${readinessLine} ${requestLine}`,
     },
     {
       id: 'template-bank',
@@ -476,7 +534,7 @@ function buildAccountUpdateTemplates(
         'Updated photo ID or DMV receipt',
         'Replacement card / account reissue instructions',
       ],
-      buildBody: (proofLine: string, readinessLine: string) => `Hello — I recently completed a legal name change and need the name on my account updated. ${proofLine} ${readinessLine} Please tell me the fastest secure submission path and confirm whether cards, checks, statements, and my online profile will all update together.`,
+      buildBody: (proofLine: string, readinessLine: string, requestLine: string) => `Hello — I recently completed a legal name change and need the name on my account updated. ${proofLine} ${readinessLine} ${requestLine}`,
     },
     {
       id: 'template-insurance',
@@ -488,7 +546,7 @@ function buildAccountUpdateTemplates(
         'Updated photo ID if coverage verification requires it',
         'Member ID / policy number so cards and claims stay aligned',
       ],
-      buildBody: (proofLine: string, readinessLine: string) => `Hi — I need this account updated to my current legal name so coverage, billing, and member records stay aligned. ${proofLine} ${readinessLine} Please confirm what proof you require and whether cards, autopay records, claims history, and beneficiary settings should be refreshed at the same time.`,
+      buildBody: (proofLine: string, readinessLine: string, requestLine: string) => `Hi — I need this account updated to my current legal name so coverage, billing, and member records stay aligned. ${proofLine} ${readinessLine} ${requestLine}`,
     },
     {
       id: 'template-tax',
@@ -500,7 +558,7 @@ function buildAccountUpdateTemplates(
         'Updated Social Security record or SSA confirmation',
         'Any employer payroll confirmation already on file',
       ],
-      buildBody: (proofLine: string, readinessLine: string) => `Hello — I need my tax records updated to match my legal name so payroll reporting and year-end forms do not drift. ${proofLine} ${readinessLine} Please confirm whether you need direct document submission from me, whether the SSA sync is enough, and how I should verify the update before the next filing cycle.`,
+      buildBody: (proofLine: string, readinessLine: string, requestLine: string) => `Hello — I need my tax records updated to match my legal name so payroll reporting and year-end forms do not drift. ${proofLine} ${readinessLine} ${requestLine}`,
     },
     {
       id: 'template-travel',
@@ -512,7 +570,7 @@ function buildAccountUpdateTemplates(
         needsPassport ? 'Updated passport or passport renewal timing confirmation' : 'Current passport details if no passport update is needed',
         'Any existing booking references that need manual relinking',
       ],
-      buildBody: (proofLine: string, readinessLine: string) => `Hello — I am updating my legal name and need my traveler profile, loyalty records, and any upcoming reservation notes aligned so they do not conflict with my ID or passport timing. ${proofLine} ${readinessLine} Please confirm what proof you need, whether existing bookings can stay linked, and how to avoid check-in or TSA mismatch issues during the transition.`,
+      buildBody: (proofLine: string, readinessLine: string, requestLine: string) => `Hello — I am updating my legal name and need my traveler profile, loyalty records, and any upcoming reservation notes aligned so they do not conflict with my ID or passport timing. ${proofLine} ${readinessLine} ${requestLine}`,
     },
     {
       id: 'template-digital-identity',
@@ -524,7 +582,7 @@ function buildAccountUpdateTemplates(
         'Updated photo ID if identity verification is required',
         'Any lease / utility account numbers or recovery-email checkpoints to refresh',
       ],
-      buildBody: (proofLine: string, readinessLine: string) => `Hi — I recently completed a legal name change and need my account holder name updated so billing, verification checks, and recovery/contact records stay consistent. ${proofLine} ${readinessLine} Please tell me the secure submission path and whether autopay, lease contacts, caller ID, email aliases, or account recovery settings should be refreshed at the same time.`,
+      buildBody: (proofLine: string, readinessLine: string, requestLine: string) => `Hi — I recently completed a legal name change and need my account holder name updated so billing, verification checks, and recovery/contact records stay consistent. ${proofLine} ${readinessLine} ${requestLine}`,
     },
     {
       id: 'template-licenses',
@@ -536,7 +594,7 @@ function buildAccountUpdateTemplates(
         'Updated photo ID or license reissue receipt',
         'License number / renewal cycle details',
       ],
-      buildBody: (proofLine: string, readinessLine: string) => `Hello — I need my professional license and credentialing records updated to my current legal name so renewals, verification, and employer matching stay clean. ${proofLine} ${readinessLine} Please confirm the board-specific submission path, whether my wallet card or public lookup entry will update automatically, and how long the change usually takes.`,
+      buildBody: (proofLine: string, readinessLine: string, requestLine: string) => `Hello — I need my professional license and credentialing records updated to my current legal name so renewals, verification, and employer matching stay clean. ${proofLine} ${readinessLine} ${requestLine}`,
     },
   ] as const;
 
@@ -675,12 +733,13 @@ function buildAccountUpdateTemplates(
                     });
     const proofChecklist = [...template.proofChecklist, readinessSpecificChecklistItem];
     const proofLine = `I can provide ${proofChecklist.join(', ')} ${readinessSpecificProof}`;
+    const requestLine = getReadinessRequestLine(template.id, readiness);
 
     return {
       id: template.id,
       audience: template.audience,
       subject: template.subject,
-      body: template.buildBody(proofLine, readinessLabel),
+      body: template.buildBody(proofLine, readinessLabel, requestLine),
       readiness,
       readinessLabel,
       dependsOnStepIds: [...template.dependsOnStepIds],
