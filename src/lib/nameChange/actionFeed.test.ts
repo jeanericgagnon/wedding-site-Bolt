@@ -854,7 +854,7 @@ describe('name change action feed', () => {
       severity: 'attention',
       urgencyReason: 'review_queue',
     });
-    expect(feed[0]?.action.label).toBe('Draft tax and state agencies update');
+    expect(feed[0]?.action.label).toBe('Draft tax and state agencies update (SSA pending)');
   });
 
   it('keeps blocked template work above upcoming proof-hop asks', () => {
