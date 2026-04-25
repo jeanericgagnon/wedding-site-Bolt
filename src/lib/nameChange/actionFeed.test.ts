@@ -9,6 +9,8 @@ import {
   getAccountUpdateTemplateCurrentBlockerLine,
   getAccountUpdateTemplateMessageLine,
   getAccountUpdateTemplateNextAskLine,
+  getAccountUpdateTemplateProofChecklistLine,
+  getAccountUpdateTemplateProofDocumentsLine,
   getAccountUpdateTemplateProofStatusLine,
   getAccountUpdateTemplateReadinessDetailLine,
   getAccountUpdateTemplateReadinessLabel,
@@ -175,12 +177,14 @@ describe('account update template surface helpers', () => {
     );
   });
 
-  it('formats subject, message, proof-status, and next-ask lines through shared helpers', () => {
+  it('formats subject, message, proof-status, next-ask, and proof-summary lines through shared helpers', () => {
     const template = makeTemplate({
       subject: 'Send now (proof packet ready): Name change update for banking profile',
       body: 'My proof packet is ready.',
       proofReadinessSummary: 'Proof packet ready for bank sync.',
       requestSummary: 'Ask the bank to update the legal name on file.',
+      proofChecklist: ['Certified legal name-change proof.', 'Updated photo ID or DMV receipt'],
+      proofDocuments: ['Certified legal name-change proof.', 'Updated photo ID or DMV receipt'],
     });
 
     expect(getAccountUpdateTemplateSubjectLine(template)).toBe(
@@ -189,6 +193,12 @@ describe('account update template surface helpers', () => {
     expect(getAccountUpdateTemplateMessageLine(template)).toBe('Template message: My proof packet is ready.');
     expect(getAccountUpdateTemplateProofStatusLine(template)).toBe('Proof status: Proof packet ready for bank sync.');
     expect(getAccountUpdateTemplateNextAskLine(template)).toBe('Next ask: Ask the bank to update the legal name on file.');
+    expect(getAccountUpdateTemplateProofChecklistLine(template)).toBe(
+      'Proof checklist: Certified legal name-change proof · Updated photo ID or DMV receipt',
+    );
+    expect(getAccountUpdateTemplateProofDocumentsLine(template)).toBe(
+      'Proof to have handy: Certified legal name-change proof · Updated photo ID or DMV receipt',
+    );
   });
 
   it('keeps planner and feed readiness labels on the same copy map', () => {

@@ -184,6 +184,16 @@ export function getAccountUpdateTemplateNextAskLine(template: AccountUpdateTempl
   return `Next ask: ${template.requestSummary}`;
 }
 
+export function getAccountUpdateTemplateProofChecklistLine(template: AccountUpdateTemplate) {
+  const formattedProofChecklist = formatInlineProofList(template.proofChecklist);
+  return formattedProofChecklist ? `Proof checklist: ${formattedProofChecklist}` : undefined;
+}
+
+export function getAccountUpdateTemplateProofDocumentsLine(template: AccountUpdateTemplate) {
+  const formattedProofDocuments = formatInlineProofList(template.proofDocuments);
+  return formattedProofDocuments ? `Proof to have handy: ${formattedProofDocuments}` : undefined;
+}
+
 function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemplate) {
   const blockedByLine = getAccountUpdateTemplateBlockedByLine(template);
   const currentBlockerLine = getAccountUpdateTemplateCurrentBlockerLine(template);
@@ -191,10 +201,8 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
   const readinessDetail = getAccountUpdateTemplateReadinessDetailLine(baseDetail, template);
   const checklistLine = ensureTerminalPeriod(template.checklistHighlight);
   const checklistStatusLine = ensureTerminalPeriod(template.checklistStatusNote);
-  const formattedProofChecklist = formatInlineProofList(template.proofChecklist);
-  const formattedProofDocuments = formatInlineProofList(template.proofDocuments);
-  const proofChecklistSummary = formattedProofChecklist ? `Proof checklist: ${formattedProofChecklist}` : undefined;
-  const proofDocumentsSummary = formattedProofDocuments ? `Proof to have handy: ${formattedProofDocuments}` : undefined;
+  const proofChecklistSummary = getAccountUpdateTemplateProofChecklistLine(template);
+  const proofDocumentsSummary = getAccountUpdateTemplateProofDocumentsLine(template);
   return [
     readinessDetail,
     proofPhaseLine,

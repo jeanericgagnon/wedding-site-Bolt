@@ -12,6 +12,8 @@ import {
   getAccountUpdateTemplateCurrentBlockerLine,
   getAccountUpdateTemplateMessageLine,
   getAccountUpdateTemplateNextAskLine,
+  getAccountUpdateTemplateProofChecklistLine,
+  getAccountUpdateTemplateProofDocumentsLine,
   getAccountUpdateTemplateProofStatusLine,
   getAccountUpdateTemplateReadinessLabel,
   getAccountUpdateTemplateStateLine,
@@ -199,8 +201,8 @@ function getAccountUpdateTemplateCopyButtonLabel(
 function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
   const checklistLine = ensureTerminalPeriod(template.checklistHighlight);
   const checklistStatusLine = ensureTerminalPeriod(template.checklistStatusNote);
-  const formattedProofChecklist = formatInlineProofList(template.proofChecklist);
-  const formattedProofDocuments = formatInlineProofList(template.proofDocuments);
+  const proofChecklistLine = getAccountUpdateTemplateProofChecklistLine(template);
+  const proofDocumentsLine = getAccountUpdateTemplateProofDocumentsLine(template);
 
   return [
     `Audience: ${template.audience}`,
@@ -214,8 +216,8 @@ function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['s
     getAccountUpdateTemplateStateLine(template),
     getAccountUpdateTemplateProofStatusLine(template),
     getAccountUpdateTemplateNextAskLine(template),
-    formattedProofChecklist ? `Proof checklist: ${formattedProofChecklist}` : undefined,
-    formattedProofDocuments ? `Proof to have handy: ${formattedProofDocuments}` : undefined,
+    proofChecklistLine,
+    proofDocumentsLine,
     '',
     getAccountUpdateTemplateMessageLine(template),
   ].filter(Boolean).join('\n');
