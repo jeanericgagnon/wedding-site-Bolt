@@ -1133,7 +1133,14 @@ export const NameChangePlannerTab: React.FC<Props> = ({
             <p className="mt-2 text-sm text-sky-900">Optional next step: {resumeCard.optionalNextStep}</p>
             {nextOptionalMilestone ? (
               <p className="mt-1 text-sm text-sky-900">
-                If you want a concrete place to pick back up, <span className="font-medium">{nextOptionalMilestone.label}</span>
+                If you want a concrete place to pick back up,{' '}
+                <button
+                  type="button"
+                  className="font-medium text-sky-950 underline underline-offset-2"
+                  onClick={() => scrollToPlannerHref(resumeCard.primaryHref)}
+                >
+                  {nextOptionalMilestone.label}
+                </button>
               </p>
             ) : null}
           </div>

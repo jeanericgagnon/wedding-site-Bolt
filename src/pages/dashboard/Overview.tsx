@@ -947,7 +947,14 @@ export const DashboardOverview: React.FC = () => {
                         <p className="mt-1 text-xs text-sky-900">{nameChangeCard.statusLabel}</p>
                         {nameChangeInsights.concreteResumeLabel ? (
                           <p className="mt-1 text-xs text-sky-900">
-                            If you want a concrete place to pick back up, <span className="font-medium">{nameChangeInsights.concreteResumeLabel}</span>
+                            If you want a concrete place to pick back up,{' '}
+                            <button
+                              type="button"
+                              className="font-medium text-sky-950 underline underline-offset-2"
+                              onClick={() => navigate(nameChangeCard.primaryHref)}
+                            >
+                              {nameChangeInsights.concreteResumeLabel}
+                            </button>
                           </p>
                         ) : null}
                       </div>
