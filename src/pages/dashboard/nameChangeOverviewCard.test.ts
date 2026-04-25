@@ -18,7 +18,7 @@ describe('buildNameChangeOverviewCardModel', () => {
     expect(model.tertiaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
     expect(model.tertiaryLabel).toBe('Browse full assistant');
     expect(model.plannerHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
-    expect(model.plannerLabel).toBe('Open name change planner');
+    expect(model.plannerLabel).toBe('Open roadmap');
   });
 
   it('resumes into the status vault once execution activity exists', () => {
@@ -35,6 +35,7 @@ describe('buildNameChangeOverviewCardModel', () => {
     expect(model.tertiaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
     expect(model.tertiaryLabel).toBe('Open full assistant');
     expect(model.plannerHref).toBe('/dashboard/planning?tab=nameChange#target-status-tracking');
+    expect(model.plannerLabel).toBe('Open status vault');
   });
 
   it('softens the card after the workflow is complete', () => {
@@ -51,6 +52,7 @@ describe('buildNameChangeOverviewCardModel', () => {
     expect(model.secondaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
     expect(model.tertiaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
     expect(model.plannerHref).toBe('/dashboard/planning?tab=nameChange#target-status-tracking');
+    expect(model.plannerLabel).toBe('Open status vault');
   });
 
   it('keeps the roadmap discoverable when a saved workspace has no execution yet', () => {
@@ -66,5 +68,6 @@ describe('buildNameChangeOverviewCardModel', () => {
     expect(model.primaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
     expect(model.tertiaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
     expect(model.plannerHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
+    expect(model.plannerLabel).toBe('Open roadmap');
   });
 });
