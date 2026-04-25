@@ -359,15 +359,15 @@ const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
         <div className="space-y-1 text-right">
           {snapshot.statusVault.lastTouchedAt ? (
             <p className="text-xs text-text-secondary">
-              Latest touch {new Date(snapshot.statusVault.lastTouchedAt).toLocaleString()}
+              Latest touch {formatNameChangeExecutionDateTime(snapshot.statusVault.lastTouchedAt)}
               {snapshot.statusVault.lastTouchedSource === 'reminder' ? ' · reminder' : snapshot.statusVault.lastTouchedSource === 'execution' ? ' · execution' : ''}
             </p>
           ) : null}
           {snapshot.statusVault.lastUpdatedAt && snapshot.statusVault.lastUpdatedAt !== snapshot.statusVault.lastTouchedAt ? (
-            <p className="text-xs text-text-secondary">Execution updated {new Date(snapshot.statusVault.lastUpdatedAt).toLocaleString()}</p>
+            <p className="text-xs text-text-secondary">Execution updated {formatNameChangeExecutionDateTime(snapshot.statusVault.lastUpdatedAt)}</p>
           ) : null}
           {snapshot.statusVault.reminderSummary.latestReminderAt && snapshot.statusVault.reminderSummary.latestReminderAt !== snapshot.statusVault.lastTouchedAt ? (
-            <p className="text-xs text-text-secondary">Reminder updated {new Date(snapshot.statusVault.reminderSummary.latestReminderAt).toLocaleString()}</p>
+            <p className="text-xs text-text-secondary">Reminder updated {formatNameChangeExecutionDateTime(snapshot.statusVault.reminderSummary.latestReminderAt)}</p>
           ) : null}
         </div>
       </div>
@@ -546,6 +546,10 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   }), [plan.steps]);
   const effectiveReminders = useMemo(() => reminders, [reminders]);
   const milestoneChecklist = useMemo(() => plan.summary.milestoneChecklist ?? [], [plan.summary.milestoneChecklist]);
+  const nextOptionalMilestone = useMemo(
+    () => milestoneChecklist.find((milestone) => milestone.status === 'ready' || milestone.status === 'upcoming') ?? null,
+    [milestoneChecklist],
+  );
   const dualPartnerProofTracks = useMemo(() => plan.summary.dualPartnerProofTracks ?? [], [plan.summary.dualPartnerProofTracks]);
   const accountUpdateTemplates = useMemo(() => plan.summary.accountUpdateTemplates ?? [], [plan.summary.accountUpdateTemplates]);
   const executionTracks = useMemo(() => plan.summary.executionTracks ?? [], [plan.summary.executionTracks]);
@@ -1064,12 +1068,36 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         </Card>
       </div>
 
+      <Card className="border-sky-200 bg-sky-50/70">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-wide text-sky-700">Resume any time</p>
+            <h3 className="mt-2 text-lg font-semibold text-sky-950">Soft next steps, not a checklist you have to clear</h3>
+            <p className="mt-1 text-sm text-sky-900">
+              Pick this back up whenever you want. The assistant keeps certificate, SSA, DMV, passport, payroll, tax, and downstream rollout state in one place so you can resume without rebuilding context.
+            </p>
+            {nextOptionalMilestone ? (
+              <p className="mt-2 text-sm text-sky-900">
+                Optional next move: <span className="font-medium">{nextOptionalMilestone.label}</span>
+              </p>
+            ) : (
+              <p className="mt-2 text-sm text-sky-900">Optional next move: review the status vault and only touch the next step that actually matters.</p>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" onClick={() => scrollToPlannerTarget('case-setup')}>Resume from case setup</Button>
+            <Button variant="outline" size="sm" onClick={() => scrollToPlannerTarget('target-status-tracking')}>Open status vault</Button>
+            <Button variant="outline" size="sm" onClick={() => void onSave()} disabled={saving}>{saving ? 'Saving…' : 'Save and come back later'}</Button>
+          </div>
+        </div>
+      </Card>
+
       <div className="grid gap-4 xl:grid-cols-[1.2fr,1fr]">
         <Card>
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="text-lg font-semibold text-text-primary">Post-wedding name change roadmap</h3>
-              <p className="mt-1 text-sm text-text-secondary">Free, no-upsell guidance. Lock the core identity chain first, then fan out across money, work, insurance, travel, and personal accounts.</p>
+              <p className="mt-1 text-sm text-text-secondary">Free, no-upsell guidance. Start with the core identity chain, then pick off the rest whenever you want to resume.</p>
             </div>
             <span className="rounded-full bg-primary/10 px-2 py-1 text-xs text-primary">Day of Love free assistant</span>
           </div>
@@ -2182,7 +2210,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                   <p className="text-xs text-text-secondary">
                     {step.executionUpdatedAt ? `Updated ${formatNameChangeExecutionDateTime(step.executionUpdatedAt)}` : ''}
                     {step.executionUpdatedAt && step.completedAt ? ' · ' : ''}
-                    {step.completedAt ? `Completed ${new Date(step.completedAt).toLocaleString()}` : ''}
+                    {step.completedAt ? `Completed ${formatNameChangeExecutionDateTime(step.completedAt)}` : ''}
                   </p>
                 )}
               </div>
@@ -2312,7 +2340,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 </div>
                 <p className="mt-3 text-sm text-text-secondary">Step is still {item.dependentStepExecutionStatus.replace('_', ' ')} · reminder is {item.reminderStatus}</p>
                 <p className="mt-2 text-xs font-medium text-text-primary">Follow-up target: {item.suggestedOffsetDays} day{item.suggestedOffsetDays === 1 ? '' : 's'} after the triggering step</p>
-                <p className="mt-2 text-xs text-text-secondary">Last workflow touch: {item.lastTouchedAt ? new Date(item.lastTouchedAt).toLocaleString() : 'No execution updates yet'}</p>
+                <p className="mt-2 text-xs text-text-secondary">Last workflow touch: {item.lastTouchedAt ? formatNameChangeExecutionDateTime(item.lastTouchedAt) : 'No execution updates yet'}</p>
                 <div className="mt-3 flex gap-2">
                   {item.focusTargetId && (
                     <Button variant="ghost" size="sm" onClick={() => scrollToPlannerTarget(item.focusTargetId!)}>

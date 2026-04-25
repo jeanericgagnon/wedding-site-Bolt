@@ -20,6 +20,7 @@ describe('name change execution time guards', () => {
 
   it('formats invalid execution timestamps as unknown time', () => {
     expect(formatNameChangeExecutionDateTime('not-a-date')).toBe('Unknown time');
+    expect(formatNameChangeExecutionDateTime(undefined)).toBe('Unknown time');
   });
 
   it('formats valid execution timestamps truthfully', () => {
