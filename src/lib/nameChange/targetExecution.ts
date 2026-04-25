@@ -110,6 +110,22 @@ function getSupportiveExecutionWaitGuidance(snapshot: Pick<NameChangeTargetExecu
         canWait: 'Actual submission can safely wait until the first-passport branch is confirmed.',
       };
     }
+
+    if (/amendment or renewal/i.test(blockingLabel)) {
+      return {
+        doNow: 'Pull the current passport, issue date, and the supporting name-change proof you would use for either branch now.',
+        whyItHelps: 'That makes it faster to lock the correct DS form path once the amendment-versus-renewal rule is confirmed.',
+        canWait: 'Actual submission can safely wait until the correct passport filing path is confirmed.',
+      };
+    }
+
+    if (/split passport work into two partner chains/i.test(blockingLabel)) {
+      return {
+        doNow: 'Separate each partner’s passport proof, travel bookings, and submission timing into two distinct checklists now.',
+        whyItHelps: 'That prevents one partner’s passport timing from scrambling the other partner’s travel and filing path.',
+        canWait: 'Actual submission can safely wait until each partner has a clean separate passport chain.',
+      };
+    }
   }
 
   if (snapshot.targetKey === 'courtOrder') {

@@ -3145,6 +3145,38 @@ describe('name change target execution snapshot', () => {
     });
   });
 
+  it('adds structured wait guidance for passport amendment-versus-renewal reviews', () => {
+    expect(getExecutionNextActionGuidance({
+      targetKey: 'passport',
+      nextAction: {
+        category: 'review',
+        label: 'Confirm passport amendment or renewal path',
+        detail: 'Your current passport exists, but the filing path still depends on whether this should move through the amendment branch or a renewal packet.',
+      },
+    })).toEqual({
+      overview: 'Your current passport exists, but the filing path still depends on whether this should move through the amendment branch or a renewal packet.',
+      doNow: 'Pull the current passport, issue date, and the supporting name-change proof you would use for either branch now.',
+      whyItHelps: 'That makes it faster to lock the correct DS form path once the amendment-versus-renewal rule is confirmed.',
+      canWait: 'Actual submission can safely wait until the correct passport filing path is confirmed.',
+    });
+  });
+
+  it('adds structured wait guidance for dual-partner passport branches', () => {
+    expect(getExecutionNextActionGuidance({
+      targetKey: 'passport',
+      nextAction: {
+        category: 'review',
+        label: 'Split passport work into two partner chains',
+        detail: 'Both partners are changing names, so passport follow-through should track separate document packets, travel timing, and submission checkpoints for each partner.',
+      },
+    })).toEqual({
+      overview: 'Both partners are changing names, so passport follow-through should track separate document packets, travel timing, and submission checkpoints for each partner.',
+      doNow: 'Separate each partner’s passport proof, travel bookings, and submission timing into two distinct checklists now.',
+      whyItHelps: 'That prevents one partner’s passport timing from scrambling the other partner’s travel and filing path.',
+      canWait: 'Actual submission can safely wait until each partner has a clean separate passport chain.',
+    });
+  });
+
   it('adds structured wait guidance for out-of-state travel proof grounding blockers', () => {
     expect(getExecutionNextActionGuidance({
       targetKey: 'tsa',
