@@ -89,17 +89,55 @@ describe('NameChangePlannerTab', () => {
         />,
       );
 
-      expect(screen.getByText('Soft next steps, not a checklist you have to clear')).toBeInTheDocument();
+      expect(screen.getByText('Start whenever you want, then come back whenever you need')).toBeInTheDocument();
       expect(screen.getByText(/Optional next move:/i)).toBeInTheDocument();
 
-      fireEvent.click(screen.getByRole('button', { name: 'Resume from status vault' }));
-      expect(window.location.hash).toBe('#target-status-tracking');
-      fireEvent.click(screen.getByRole('button', { name: 'Update case setup' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Start with case setup' }));
       expect(window.location.hash).toBe('#case-setup');
+      fireEvent.click(screen.getByRole('button', { name: 'Preview status vault' }));
+      expect(window.location.hash).toBe('#target-status-tracking');
       fireEvent.click(screen.getByRole('button', { name: 'Save and come back later' }));
 
       expect(scrollIntoView).toHaveBeenCalledTimes(2);
       expect(onSave).toHaveBeenCalled();
+    } finally {
+      HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    }
+  });
+
+  it('shows softer start-first copy when there is no execution activity yet', () => {
+    const draft = makeDraft();
+    const scrollIntoView = vi.fn();
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = scrollIntoView;
+
+    try {
+      render(
+        <NameChangePlannerTab
+          draft={draft}
+          documents={[]}
+          extractedFields={[]}
+          plan={buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] })}
+          reminders={[]}
+          saving={false}
+          onDraftChange={vi.fn()}
+          onStructuredIntakeChange={vi.fn()}
+          onDocumentsChange={vi.fn()}
+          onExtractedFieldsChange={vi.fn()}
+          onRemindersChange={vi.fn()}
+          onStepExecutionStatusChange={vi.fn()}
+          onStepExecutionNoteChange={vi.fn()}
+          onSave={vi.fn().mockResolvedValue(undefined)}
+        />,
+      );
+
+      expect(screen.getByText('Start whenever you want, then come back whenever you need')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Start with case setup' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Preview status vault' }));
+
+      expect(scrollIntoView).toHaveBeenCalledTimes(2);
+      expect(window.location.hash).toBe('#target-status-tracking');
     } finally {
       HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
     }

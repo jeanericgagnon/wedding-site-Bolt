@@ -908,7 +908,7 @@ export const DashboardOverview: React.FC = () => {
                     </div>
                     <div className="rounded-xl border border-sky-200 bg-white px-4 py-3">
                       <p className="text-xs uppercase tracking-wide text-sky-700">Optional next step</p>
-                      <p className="mt-1 text-sm text-sky-950">Open the assistant if you want the next recommended move. Skip it if nothing needs attention right now.</p>
+                      <p className="mt-1 text-sm text-sky-950">Jump into the status vault if you already started. If not, open case setup once and leave the rest for later.</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Button variant="accent" size="sm" onClick={() => navigate('/dashboard/planning?tab=nameChange#target-status-tracking')}>

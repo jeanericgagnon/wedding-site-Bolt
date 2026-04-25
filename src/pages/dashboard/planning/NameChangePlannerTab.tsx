@@ -558,6 +558,10 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   const accountUpdateTemplates = useMemo(() => plan.summary.accountUpdateTemplates ?? [], [plan.summary.accountUpdateTemplates]);
   const executionTracks = useMemo(() => plan.summary.executionTracks ?? [], [plan.summary.executionTracks]);
   const edgeCaseGuidance = useMemo(() => plan.summary.edgeCaseGuidance ?? [], [plan.summary.edgeCaseGuidance]);
+  const hasExecutionActivity = useMemo(
+    () => (plan.summary.executionCounts?.in_progress ?? 0) > 0 || (plan.summary.executionCounts?.complete ?? 0) > 0,
+    [plan.summary.executionCounts],
+  );
   const documentVaultRows = useMemo(() => documents.map((document) => {
     const contract = NAME_CHANGE_DOCUMENT_CONTRACTS.find((entry) => matchesNameChangeDocumentKind(document.document_kind, entry.kind));
     const linkedFieldCount = extractedFields.filter((field) => {
@@ -1099,7 +1103,9 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-xs uppercase tracking-wide text-sky-700">Resume any time</p>
-            <h3 className="mt-2 text-lg font-semibold text-sky-950">Soft next steps, not a checklist you have to clear</h3>
+            <h3 className="mt-2 text-lg font-semibold text-sky-950">
+              {hasExecutionActivity ? 'Soft next steps, not a checklist you have to clear' : 'Start whenever you want, then come back whenever you need'}
+            </h3>
             <p className="mt-1 text-sm text-sky-900">
               Pick this back up whenever you want. The assistant keeps certificate, SSA, DMV, passport, payroll, tax, and downstream rollout state in one place so you can resume without rebuilding context.
             </p>
@@ -1112,9 +1118,15 @@ export const NameChangePlannerTab: React.FC<Props> = ({
             )}
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" onClick={() => scrollToPlannerTarget('target-status-tracking')}>Resume from status vault</Button>
-            <Button variant="outline" size="sm" onClick={() => scrollToPlannerTarget('case-setup')}>Update case setup</Button>
-            <Button variant="outline" size="sm" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>Open roadmap</Button>
+            <Button size="sm" onClick={() => scrollToPlannerTarget(hasExecutionActivity ? 'target-status-tracking' : 'case-setup')}>
+              {hasExecutionActivity ? 'Resume from status vault' : 'Start with case setup'}
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => scrollToPlannerTarget(hasExecutionActivity ? 'case-setup' : 'target-status-tracking')}>
+              {hasExecutionActivity ? 'Update case setup' : 'Preview status vault'}
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+              {hasExecutionActivity ? 'Open roadmap' : 'See roadmap first'}
+            </Button>
             <Button variant="outline" size="sm" onClick={() => void onSave()} disabled={saving}>{saving ? 'Saving…' : 'Save and come back later'}</Button>
           </div>
         </div>
