@@ -463,8 +463,8 @@ function buildAccountUpdateTemplates(
       : readiness === 'in_progress'
         ? `Draft now, send after current proof clears: ${baseSubject}`
         : readiness === 'upcoming'
-          ? `Ask intake question before next proof hop: ${baseSubject}`
-          : `Ask intake rules before sending: ${baseSubject}`;
+          ? `Ask before next proof hop: ${baseSubject}`
+          : `Ask intake rules now: ${baseSubject}`;
   const getReadinessIntro = (readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness']) => readiness === 'ready'
     ? 'I am ready to submit the update now.'
     : readiness === 'in_progress'
