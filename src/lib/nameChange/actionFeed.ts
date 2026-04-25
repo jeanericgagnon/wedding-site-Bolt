@@ -59,6 +59,11 @@ function getTemplateFocusTargetId(template: AccountUpdateTemplate | undefined) {
 
 function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemplate) {
   const checklistLine = template.checklistHighlight;
+  const checklistStatusLine = template.checklistStatusNote
+    ? template.checklistStatusNote.endsWith('.')
+      ? template.checklistStatusNote
+      : `${template.checklistStatusNote}.`
+    : undefined;
   const proofChecklistSummary = template.proofChecklist.length > 0
     ? `Proof to have handy: ${template.proofChecklist.join(' · ')}`
     : undefined;
@@ -69,6 +74,7 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
     `Readiness: ${template.readinessLabel}`,
     template.blockingProofHopLabel ? `Blocked by: ${template.blockingProofHopLabel}.` : undefined,
     checklistLine ? `Checklist: ${checklistLine}.` : undefined,
+    checklistStatusLine ? `Checklist status: ${checklistStatusLine}` : undefined,
     `Proof status: ${template.proofReadinessSummary}`,
     `Next ask: ${template.requestSummary}`,
     proofChecklistSummary,

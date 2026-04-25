@@ -244,6 +244,7 @@ export interface NameChangePlanSummary {
     proofReadinessSummary: string;
     blockingProofHopLabel?: string;
     checklistHighlight?: string;
+    checklistStatusNote?: string;
     requestSummary: string;
     dependsOnStepIds: string[];
     proofChecklist: string[];
