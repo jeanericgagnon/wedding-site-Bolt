@@ -336,9 +336,6 @@ function getReminderPlannerRoute(
   if (
     suggestion.dependsOnStepId === 'institution-employer'
     || suggestion.dependsOnStepId === 'institution-licenses'
-    || suggestion.dependsOnStepId === 'institution-voter-registration'
-    || suggestion.dependsOnStepId === 'institution-courtesy-notifications'
-    || suggestion.dependsOnStepId === 'institution-travel-hospitality'
   ) {
     return {
       sectionKey: 'work-identity',
@@ -346,13 +343,29 @@ function getReminderPlannerRoute(
       focusTargetId:
         suggestion.dependsOnStepId === 'institution-licenses'
           ? 'execution-card-licenses'
-          : suggestion.dependsOnStepId === 'institution-travel-hospitality'
-            ? 'execution-card-tsa'
-            : suggestion.dependsOnStepId === 'institution-voter-registration'
-              ? 'execution-card-voter'
-              : suggestion.dependsOnStepId === 'institution-courtesy-notifications'
-                ? 'execution-card-courtesy'
-                : 'execution-card-employer',
+          : 'execution-card-employer',
+    };
+  }
+
+  if (suggestion.dependsOnStepId === 'institution-courtesy-notifications') {
+    return {
+      sectionKey: 'institutional',
+      plannerIntent: 'open_execution_card',
+      focusTargetId: 'execution-card-courtesy',
+    };
+  }
+
+  if (
+    suggestion.dependsOnStepId === 'institution-voter-registration'
+    || suggestion.dependsOnStepId === 'institution-travel-hospitality'
+  ) {
+    return {
+      sectionKey: 'cleanup',
+      plannerIntent: 'open_execution_card',
+      focusTargetId:
+        suggestion.dependsOnStepId === 'institution-voter-registration'
+          ? 'execution-card-voter'
+          : 'execution-card-tsa',
     };
   }
 

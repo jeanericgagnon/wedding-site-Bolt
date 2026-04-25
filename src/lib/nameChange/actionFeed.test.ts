@@ -1898,6 +1898,39 @@ describe('name change action feed', () => {
     expect(feed.map((item) => item.sectionKey)).toEqual(expect.arrayContaining(['core-government']));
   });
 
+  it('keeps cleanup and courtesy reminders in the same planner sections as their execution cards', () => {
+    const feed = buildNameChangeActionFeed([], [], [
+      makeReminderAttention({
+        reminderKey: 'reminder-voter-registration',
+        label: 'Follow up on voter registration',
+        dependsOnStepId: 'institution-voter-registration',
+        dependentStepTitle: 'Voter registration',
+        plannerIntent: 'open_execution_card',
+        focusTargetId: 'execution-card-voter',
+      }),
+      makeReminderAttention({
+        reminderKey: 'reminder-courtesy',
+        label: 'Follow up on courtesy notifications',
+        dependsOnStepId: 'institution-courtesy-notifications',
+        dependentStepTitle: 'Courtesy notifications',
+        plannerIntent: 'open_execution_card',
+        focusTargetId: 'execution-card-courtesy',
+      }),
+      makeReminderAttention({
+        reminderKey: 'reminder-travel-rollout',
+        label: 'Follow up on travel profiles',
+        dependsOnStepId: 'institution-travel-hospitality',
+        dependentStepTitle: 'Travel profiles',
+        plannerIntent: 'open_execution_card',
+        focusTargetId: 'execution-card-tsa',
+      }),
+    ]);
+
+    expect(feed.find((item) => item.focusTargetId === 'execution-card-voter')).toMatchObject({ sectionKey: 'cleanup' });
+    expect(feed.find((item) => item.focusTargetId === 'execution-card-courtesy')).toMatchObject({ sectionKey: 'institutional' });
+    expect(feed.find((item) => item.focusTargetId === 'execution-card-tsa')).toMatchObject({ sectionKey: 'cleanup' });
+  });
+
   it('keeps critical reminder attention above lower-ranked ready execution work', () => {
     const feed = buildNameChangeActionFeed([
       makeExecutionSnapshot({

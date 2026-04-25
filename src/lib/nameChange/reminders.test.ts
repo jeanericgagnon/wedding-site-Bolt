@@ -195,6 +195,29 @@ describe('name change reminder suggestions', () => {
       planner_intent: 'open_execution_card',
       focus_target_id: 'execution-card-legalGovernment',
     });
+    expect(inputs.find((reminder) => reminder.reminder_key === 'reminder-voter-registration')).toMatchObject({
+      section_key: 'cleanup',
+      planner_intent: 'open_execution_card',
+      focus_target_id: 'execution-card-voter',
+    });
+  });
+
+  it('routes travel-booking reminders into cleanup travel execution', () => {
+    const plan = buildNameChangePlan(makeInput({
+      urgency_level: 'expedited',
+      structured_intake: {
+        spouseLastName: 'Jordan',
+        travelBookedSoon: true,
+        wantsDocumentIntakeHelp: true,
+      },
+    }));
+
+    expect(mapReminderSuggestionsToInputs(buildNameChangeReminderSuggestions(plan)).find((reminder) => reminder.reminder_key === 'reminder-travel-bookings')).toMatchObject({
+      depends_on_step_id: 'federal-passport',
+      section_key: 'core-government',
+      planner_intent: 'open_execution_card',
+      focus_target_id: 'execution-card-passport',
+    });
   });
 
   it('applies institution-family reminder tuning for downstream lanes', () => {

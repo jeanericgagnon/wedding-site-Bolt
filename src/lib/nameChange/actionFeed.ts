@@ -478,11 +478,16 @@ function getReminderSectionKey(dependsOnStepId: string): NameChangeActionFeedIte
   if (
     dependsOnStepId === 'institution-employer'
     || dependsOnStepId === 'institution-licenses'
-    || dependsOnStepId === 'institution-voter-registration'
-    || dependsOnStepId === 'institution-courtesy-notifications'
-    || dependsOnStepId === 'institution-travel-hospitality'
   ) {
     return 'work-identity';
+  }
+
+  if (dependsOnStepId === 'institution-courtesy-notifications') {
+    return 'institutional';
+  }
+
+  if (dependsOnStepId === 'institution-voter-registration' || dependsOnStepId === 'institution-travel-hospitality') {
+    return 'cleanup';
   }
 
   if (
