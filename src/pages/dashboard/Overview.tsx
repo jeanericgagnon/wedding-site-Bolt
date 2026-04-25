@@ -30,6 +30,7 @@ import { hasRespondedRsvpStatus, isAttendingRsvpStatus, isDeclinedRsvpStatus, is
 import { writeOnboardingResumeTarget } from '../../lib/onboardingResumeStorage';
 import { useToast } from '../../components/ui/Toast';
 import { calcOverviewDaysUntil, formatOverviewRelativeTime, formatOverviewWeddingDate, getOverviewTimestamp } from './overviewDate';
+import { getOverviewFallbackCoupleValue } from './overviewDraftBrief';
 import { buildNameChangeOverviewCardModel } from './nameChangeOverviewCard';
 import { buildNameChangeOverviewInsights } from './nameChangeOverviewInsights';
 import { NAME_CHANGE_LIFECYCLE_LABELS } from './nameChangeLifecycleLabels';
@@ -363,8 +364,9 @@ export const DashboardOverview: React.FC = () => {
           setDraftBriefDebug(`valid:${summary.length}`);
         } else {
           const weddingData = (site.wedding_data as Record<string, unknown> | null) ?? null;
+          const fallbackCoupleValue = getOverviewFallbackCoupleValue(site.couple_name_1, site.couple_name_2);
           const fallbackSummary = [
-            site.couple_name_1 || site.couple_name_2 ? { id: 'couple', label: 'Couple', value: [site.couple_name_1, site.couple_name_2].filter(Boolean).join(' & '), questionKey: 'partnerNames' } : null,
+            fallbackCoupleValue ? { id: 'couple', label: 'Couple', value: fallbackCoupleValue, questionKey: 'partnerNames' } : null,
             site.wedding_date ? { id: 'date', label: 'Date', value: site.wedding_date, questionKey: 'weddingDate' } : null,
             site.venue_name ? { id: 'venue', label: 'Venue', value: site.venue_name, questionKey: 'venueName' } : null,
             site.wedding_location ? { id: 'location', label: 'Location', value: site.wedding_location, questionKey: 'venueLocation' } : null,
