@@ -58,6 +58,9 @@ function getTemplateFocusTargetId(template: AccountUpdateTemplate | undefined) {
 }
 
 function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemplate) {
+  const readinessDetail = template.readiness === 'in_progress' && template.blockingProofHopLabel
+    ? `${baseDetail} Send only after ${template.blockingProofHopLabel.toLowerCase()} clears.`
+    : baseDetail;
   const checklistLine = template.checklistHighlight;
   const checklistStatusLine = template.checklistStatusNote
     ? template.checklistStatusNote.endsWith('.')
@@ -71,7 +74,7 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
     ? `Proof to have handy: ${template.proofDocuments.join(' · ')}`
     : undefined;
   return [
-    baseDetail,
+    readinessDetail,
     `Subject: ${template.subject}`,
     `Template message: ${template.body}`,
     `Readiness: ${template.readinessLabel}`,

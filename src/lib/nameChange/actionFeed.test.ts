@@ -637,7 +637,7 @@ describe('name change action feed', () => {
       focusTargetId: 'account-update-template-template-tax',
       laneLabel: 'Tax and state agencies · draft now, send after current proof clears · SSA pending',
       urgencyReason: 'blocking_dependency',
-      action: expect.objectContaining({ detail: expect.stringContaining('ready to draft') }),
+      action: expect.objectContaining({ detail: expect.stringContaining('Tax packet can be prepped now. Send only after ssa pending clears.') }),
     });
   });
 
