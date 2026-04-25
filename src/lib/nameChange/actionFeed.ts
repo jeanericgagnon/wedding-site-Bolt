@@ -65,6 +65,9 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
       : `${template.checklistStatusNote}.`
     : undefined;
   const proofChecklistSummary = template.proofChecklist.length > 0
+    ? `Proof checklist: ${template.proofChecklist.join(' · ')}`
+    : undefined;
+  const proofDocumentsSummary = template.proofDocuments.length > 0
     ? `Proof to have handy: ${template.proofDocuments.join(' · ')}`
     : undefined;
   return [
@@ -78,6 +81,7 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
     `Proof status: ${template.proofReadinessSummary}`,
     `Next ask: ${template.requestSummary}`,
     proofChecklistSummary,
+    proofDocumentsSummary,
   ].filter(Boolean).join('\n').trim();
 }
 

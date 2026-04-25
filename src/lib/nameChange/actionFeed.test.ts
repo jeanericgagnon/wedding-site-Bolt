@@ -1131,6 +1131,7 @@ describe('name change action feed', () => {
     expect(travelTemplateItem?.action.detail).toContain('Checklist: Ask for mismatch policy and booking rules before the legal proof packet is ready.');
     expect(travelTemplateItem?.action.detail).toContain('Checklist status: Gather mismatch and booking rules only until legal proof is fully grounded.');
     expect(travelTemplateItem?.action.detail).toContain('Proof status: Do not send yet; the legal proof chain still needs to clear before travel-profile evidence will stick.');
+    expect(travelTemplateItem?.action.detail).toContain('Proof checklist: Certified legal name-change proof · Ask for mismatch policy and booking rules before the legal proof packet is ready · Gather mismatch and booking rules only until legal proof is fully grounded.');
     expect(travelTemplateItem?.action.detail).toContain('Proof to have handy: Certified legal name-change proof');
   });
 
@@ -1162,6 +1163,7 @@ describe('name change action feed', () => {
     expect(feed[0]?.action.detail).toContain('Checklist status: Gather the tax/state process only until legal proof is fully grounded.');
     expect(feed[0]?.action.detail).toContain('Next ask: Please just confirm the tax/state process for now so I can return once the legal proof packet is grounded.');
     expect(feed[0]?.action.detail).toContain('Proof status: Do not send yet; the legal proof chain still needs to clear before tax updates can stick.');
+    expect(feed[0]?.action.detail).toContain('Proof checklist: Certified legal name-change proof · Gather the tax/state process only until legal proof is fully grounded.');
     expect(feed[0]?.action.detail).toContain('Proof to have handy: Certified legal name-change proof');
   });
 
@@ -1193,6 +1195,7 @@ describe('name change action feed', () => {
     expect(payrollTemplateItem?.action.detail).toContain('Checklist status: Gather the intake path only until legal proof is fully grounded.');
     expect(payrollTemplateItem?.action.detail).toContain('Next ask: Please just confirm the intake path and payroll timing for now so I can come back once the legal proof packet is grounded.');
     expect(payrollTemplateItem?.action.detail).toContain('Proof status: Do not send yet; the legal proof chain still needs to clear before payroll updates can stick.');
+    expect(payrollTemplateItem?.action.detail).toContain('Proof checklist: Certified legal name-change proof · Gather the intake path only until legal proof is fully grounded.');
     expect(payrollTemplateItem?.action.detail).toContain('Proof to have handy: Certified legal name-change proof');
   });
 
