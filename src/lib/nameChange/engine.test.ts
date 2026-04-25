@@ -358,11 +358,12 @@ describe('name change engine', () => {
           dependsOnStepIds: expect.arrayContaining(['institution-dmv-registration-title']),
         }),
         expect.objectContaining({
-          audience: 'Phone, utilities, housing, alumni, or primary digital identity support',
+          audience: 'Phone, utilities, housing, alumni, social/profile, or primary digital identity support',
           dependsOnStepIds: expect.arrayContaining([
             'institution-utilities-housing',
             'institution-subscriptions-social',
             'institution-school-alumni-records',
+            'institution-courtesy-social-sync',
           ]),
         }),
         expect.objectContaining({ audience: 'Licensing board or credentialing support', dependsOnStepIds: ['state-photo-id', 'institution-professional-licenses'] }),
@@ -406,9 +407,11 @@ describe('name change engine', () => {
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.body).toContain('Please confirm your hold/change policy and mismatch handling before I touch any bookings while passport timing is still upstream.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.body).toContain('I am prepping this ask now, but I am not sending the final packet until the next proof hop clears (passport pending).');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.proofChecklist).toEqual(expect.arrayContaining(['Confirm hold/change policy before touching bookings while passport timing is still upstream.']));
-    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-digital-identity')?.body).toContain('Please confirm whether legal proof alone can start utilities, phone, housing, social/profile, or recovery updates before the updated ID lands.');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-digital-identity')?.body).toContain('Please confirm whether legal proof alone can start utilities, phone, housing, social/profile, display-name sync, or recovery updates before the updated ID lands.');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-digital-identity')?.body).toContain('display-name/social identity sync');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-digital-identity')?.body).toContain('I am prepping this ask now, but I am not sending the final packet until the next proof hop clears (ID pending).');
-    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-digital-identity')?.proofChecklist).toEqual(expect.arrayContaining(['Confirm whether legal proof alone can start utilities, phone, housing, social/profile, or recovery updates.']));
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-digital-identity')?.proofChecklist).toEqual(expect.arrayContaining(['Confirm whether legal proof alone can start utilities, phone, housing, social/profile, display-name sync, or recovery updates.']));
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-digital-identity')?.dependsOnStepIds).toEqual(expect.arrayContaining(['institution-courtesy-social-sync']));
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-licenses')?.body).toContain('Please confirm the board-specific document rules now so I know whether the next ID/license hop is enough to start.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-licenses')?.proofChecklist).toEqual(expect.arrayContaining(['Ask for the board-specific document rules before the ID/license path lands.']));
     expect(plan.summary.institutionCategoryCoverage).toEqual(
@@ -416,7 +419,7 @@ describe('name change engine', () => {
         expect.objectContaining({ id: 'legal_government', status: 'upcoming', institutionKeys: expect.arrayContaining(['uscis-immigration-records', 'irs-records', 'state-tax-agency', 'county-recorder-property']) }),
         expect.objectContaining({ id: 'financial', status: 'upcoming', institutionKeys: expect.arrayContaining(['banks', 'investments-loans', 'student-loans-financial-aid', 'mortgage-property-records', 'credit-bureaus']) }),
         expect.objectContaining({ id: 'work_insurance', status: 'upcoming', institutionKeys: expect.arrayContaining(['irs-employer', 'retirement-benefits', 'insurance', 'workers-comp-leave']) }),
-        expect.objectContaining({ id: 'personal_lifestyle', status: 'upcoming', institutionKeys: expect.arrayContaining(['phone-digital-identity', 'school-alumni-records', 'subscriptions-social']) }),
+        expect.objectContaining({ id: 'personal_lifestyle', status: 'upcoming', institutionKeys: expect.arrayContaining(['phone-digital-identity', 'school-alumni-records', 'subscriptions-social', 'courtesy-social-sync']) }),
         expect.objectContaining({ id: 'travel_mobility', status: 'upcoming', institutionKeys: expect.arrayContaining(['tsa-precheck', 'travel-hospitality', 'dmv-registration-title', 'frequent-flyer-hotel-rail']) }),
       ]),
     );

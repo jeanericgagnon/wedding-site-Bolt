@@ -809,10 +809,10 @@ function buildAccountUpdateTemplates(
               })
             : templateId === 'template-digital-identity'
               ? getReadinessChecklistLine(readiness, {
-                  ready: 'Please tell me the secure submission path and whether autopay, lease contacts, caller ID, email aliases, alumni directories, or account recovery settings should be refreshed at the same time.',
-                  in_progress: 'Please confirm the verification flow now so I can queue utility, phone, housing, social/profile, and recovery updates as soon as final ID evidence posts.',
-                  complete: 'Please confirm billing, lease contacts, caller ID, alumni/profile, and recovery records already show the final legal name everywhere they should.',
-                  upcoming: 'Please confirm whether legal proof alone can start utilities, phone, housing, social/profile, or recovery updates before the updated ID lands.',
+                  ready: 'Please tell me the secure submission path and whether autopay, lease contacts, caller ID, email aliases, alumni directories, display-name/social sync, or account recovery settings should be refreshed at the same time.',
+                  in_progress: 'Please confirm the verification flow now so I can queue utility, phone, housing, social/profile, display-name sync, and recovery updates as soon as final ID evidence posts.',
+                  complete: 'Please confirm billing, lease contacts, caller ID, alumni/profile, display-name sync, and recovery records already show the final legal name everywhere they should.',
+                  upcoming: 'Please confirm whether legal proof alone can start utilities, phone, housing, social/profile, display-name sync, or recovery updates before the updated ID lands.',
                   blocked: 'Please just share the verification rules for now so I can return once the legal proof packet is grounded.',
                 })
               : getReadinessChecklistLine(readiness, {
@@ -871,7 +871,7 @@ function buildAccountUpdateTemplates(
               ? getReadinessChecklistLine(readiness, {
                   ready: 'Send with legal proof now and include updated ID if the utility or phone verification flow asks for it.',
                   in_progress: 'Hold send until final ID evidence posts, but lock the verification path now.',
-                  complete: 'Use this as a confirmation pass that billing, housing, recovery, and caller-ID records already synced.',
+                  complete: 'Use this as a confirmation pass that billing, housing, recovery, caller-ID, and display-name records already synced.',
                   upcoming: 'Do not send yet; legal proof is grounded, but updated ID is still the missing proof hop.',
                   blocked: 'Do not send yet; the legal proof chain still needs to clear before identity-verification updates can stick.',
                 })
@@ -933,7 +933,7 @@ function buildAccountUpdateTemplates(
               ? getReadinessChecklistLine(readiness, {
                   ready: 'Attach updated ID only if the utility, phone, or housing flow asks for it now.',
                   in_progress: 'Queue this now, then attach final ID evidence once the verification proof lands.',
-                  complete: 'Use this to confirm billing, housing, recovery, and caller-ID records already match.',
+                  complete: 'Use this to confirm billing, housing, recovery, caller-ID, and display-name records already match.',
                   upcoming: 'Wait to send until updated ID is the next cleared proof hop.',
                   blocked: 'Gather verification rules only until legal proof is fully grounded.',
                 })
@@ -1035,7 +1035,7 @@ function buildAccountUpdateTemplates(
     },
     {
       id: 'template-digital-identity',
-      audience: 'Phone, utilities, housing, alumni, or primary digital identity support',
+      audience: 'Phone, utilities, housing, alumni, social/profile, or primary digital identity support',
       subject: 'Update my account holder name to match my legal records',
       dependsOnStepIds: [
         'state-photo-id',
@@ -1043,13 +1043,14 @@ function buildAccountUpdateTemplates(
         'institution-phone-digital-identity',
         'institution-subscriptions-social',
         'institution-school-alumni-records',
+        'institution-courtesy-social-sync',
       ],
       proofDocuments: [
         ...proofChecklistBase,
         'Updated photo ID if identity verification is required',
         'Any lease / utility account numbers or recovery-email checkpoints to refresh',
       ],
-      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, audienceLine: string, statusLine: string, proofReadinessSummary: string, blockingProofHopSentence: string, checklistGuidanceLine: string, proofChecklistLine: string) => `Hi — I recently completed a legal name change and need my account holder name updated so billing, verification checks, alumni/profile records, and recovery/contact records stay consistent. ${audienceLine} ${readinessIntro} ${statusLine} ${blockingProofHopSentence} ${proofReadinessSummary} ${proofLine} ${proofChecklistLine} ${checklistGuidanceLine} ${readinessLine} ${requestLine}`,
+      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, audienceLine: string, statusLine: string, proofReadinessSummary: string, blockingProofHopSentence: string, checklistGuidanceLine: string, proofChecklistLine: string) => `Hi — I recently completed a legal name change and need my account holder name updated so billing, verification checks, alumni/profile records, display-name/social identity sync, and recovery/contact records stay consistent. ${audienceLine} ${readinessIntro} ${statusLine} ${blockingProofHopSentence} ${proofReadinessSummary} ${proofLine} ${proofChecklistLine} ${checklistGuidanceLine} ${readinessLine} ${requestLine}`,
     },
     {
       id: 'template-licenses',
@@ -1175,8 +1176,8 @@ function buildAccountUpdateTemplates(
                 ? getReadinessChecklistLine(readiness, {
                     ready: 'Send legal proof now and include updated ID if the verification flow asks for it',
                     in_progress: 'Queue the utility/phone update now and attach final ID evidence once it posts',
-                    complete: 'Confirm billing, housing, recovery, and caller-ID records all show the final legal name',
-                  upcoming: 'Confirm whether legal proof alone can start utilities, phone, housing, social/profile, or recovery updates',
+                    complete: 'Confirm billing, housing, recovery, caller-ID, and display-name records all show the final legal name',
+                    upcoming: 'Confirm whether legal proof alone can start utilities, phone, housing, social/profile, display-name sync, or recovery updates',
                     blocked: 'Hold identity changes for now and only gather verification rules',
                   })
                 : template.id === 'template-licenses'
