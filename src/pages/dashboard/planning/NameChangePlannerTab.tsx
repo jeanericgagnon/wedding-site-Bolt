@@ -252,6 +252,8 @@ function formatInlineProofList(items: string[]) {
 function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
   const checklistLine = ensureTerminalPeriod(template.checklistHighlight);
   const checklistStatusLine = ensureTerminalPeriod(template.checklistStatusNote);
+  const formattedProofChecklist = formatInlineProofList(template.proofChecklist);
+  const formattedProofDocuments = formatInlineProofList(template.proofDocuments);
 
   return [
     `Audience: ${template.audience}`,
@@ -265,8 +267,8 @@ function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['s
     getAccountUpdateTemplateStateLine(template),
     `Proof status: ${template.proofReadinessSummary}`,
     `Next ask: ${template.requestSummary}`,
-    template.proofChecklist.length > 0 ? `Proof checklist: ${formatInlineProofList(template.proofChecklist)}` : undefined,
-    template.proofDocuments.length > 0 ? `Proof to have handy: ${formatInlineProofList(template.proofDocuments)}` : undefined,
+    formattedProofChecklist ? `Proof checklist: ${formattedProofChecklist}` : undefined,
+    formattedProofDocuments ? `Proof to have handy: ${formattedProofDocuments}` : undefined,
     '',
     template.body,
   ].filter(Boolean).join('\n');
@@ -1604,10 +1606,10 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 <p className="mt-2 text-xs text-text-secondary">{getAccountUpdateTemplateStateLine(template)}</p>
                 <p className="mt-2 text-xs text-text-secondary">Proof status: {template.proofReadinessSummary}</p>
                 <p className="mt-2 text-xs text-text-secondary">Next ask: {template.requestSummary}</p>
-                {template.proofChecklist.length > 0 ? (
+                {formatInlineProofList(template.proofChecklist) ? (
                   <p className="mt-2 text-xs text-text-secondary">Proof checklist: {formatInlineProofList(template.proofChecklist)}</p>
                 ) : null}
-                {template.proofDocuments.length > 0 ? (
+                {formatInlineProofList(template.proofDocuments) ? (
                   <p className="mt-2 text-xs text-text-secondary">Proof to have handy: {formatInlineProofList(template.proofDocuments)}</p>
                 ) : null}
                 <p className="mt-2 whitespace-pre-line text-sm text-text-secondary">{template.body}</p>

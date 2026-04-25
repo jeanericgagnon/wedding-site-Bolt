@@ -128,12 +128,10 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
             : baseDetail;
   const checklistLine = ensureTerminalPeriod(template.checklistHighlight);
   const checklistStatusLine = ensureTerminalPeriod(template.checklistStatusNote);
-  const proofChecklistSummary = template.proofChecklist.length > 0
-    ? `Proof checklist: ${formatInlineProofList(template.proofChecklist)}`
-    : undefined;
-  const proofDocumentsSummary = template.proofDocuments.length > 0
-    ? `Proof to have handy: ${formatInlineProofList(template.proofDocuments)}`
-    : undefined;
+  const formattedProofChecklist = formatInlineProofList(template.proofChecklist);
+  const formattedProofDocuments = formatInlineProofList(template.proofDocuments);
+  const proofChecklistSummary = formattedProofChecklist ? `Proof checklist: ${formattedProofChecklist}` : undefined;
+  const proofDocumentsSummary = formattedProofDocuments ? `Proof to have handy: ${formattedProofDocuments}` : undefined;
   return [
     readinessDetail,
     proofPhaseLine,
