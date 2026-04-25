@@ -229,7 +229,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
                   ) : null}
                   {nextNameChangeMilestone ? (
                     <p className="mt-3 text-xs text-text-secondary">
-                      Next milestone: <span className="font-medium text-text-primary">{nextNameChangeMilestone.label}</span>
+                      Concrete resume point: <span className="font-medium text-text-primary">{nextNameChangeMilestone.label}</span>
                     </p>
                   ) : null}
                   <p className="mt-2 text-xs text-text-secondary">Optional next step: {nameChangeCard.optionalNextStep}</p>

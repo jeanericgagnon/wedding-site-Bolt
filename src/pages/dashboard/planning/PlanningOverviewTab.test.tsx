@@ -47,7 +47,7 @@ describe('PlanningOverviewTab', () => {
     expect(screen.getByText(/reminder.*actionable now/i)).toBeTruthy();
     expect(screen.getByText(/blocked milestone/i)).toBeTruthy();
     expect(screen.getByText(/downstream categor/i)).toBeTruthy();
-    expect(screen.getByText(/Next milestone:/i)).toBeTruthy();
+    expect(screen.getByText(/Concrete resume point:/i)).toBeTruthy();
     expect(screen.getByText(/Legal \+ government \+ Work \+ insurance/i)).toBeTruthy();
     expect(screen.getByText(/Certified legal proof is grounded and ready to reuse:/i)).toBeTruthy();
     expect(screen.getByText(/Social Security update is submitted and ready to verify:/i)).toBeTruthy();
