@@ -349,7 +349,8 @@ describe('NameChangePlannerTab', () => {
     );
 
     expect(screen.getAllByText('Guided next action').length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Do now:/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Do now:/).length).toBeGreaterThan(1);
+    expect(screen.getAllByText(/Why it helps:/).length).toBeGreaterThan(1);
     expect(screen.getAllByText(/Can wait: Actual submission can safely wait\./).length).toBeGreaterThan(0);
   });
 

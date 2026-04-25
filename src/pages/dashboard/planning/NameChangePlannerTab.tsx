@@ -99,6 +99,10 @@ interface ExecutionSectionSummary {
   highestRiskCard: string;
   nextActionLabel: string;
   nextActionDetail: string;
+  nextActionOverview: string | null;
+  nextActionDoNow: string | null;
+  nextActionWhyItHelps: string | null;
+  nextActionCanWait: string | null;
   staleReminderOverlap: number;
   reminderKeys: string[];
   staleReminderKeys: string[];
@@ -1070,6 +1074,9 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       const nextActionLabel = highestRiskCardConfig
         ? highestRiskCardConfig.snapshot.nextAction.label
         : 'No immediate action needed';
+      const nextActionGuidance = highestRiskCardConfig
+        ? getExecutionNextActionGuidance(highestRiskCardConfig.snapshot)
+        : null;
       const nextActionDetail = highestRiskCardConfig
         ? getExecutionNextActionDetail(highestRiskCardConfig.snapshot)
         : 'No immediate action needed in this section.';
@@ -1114,6 +1121,10 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         highestRiskCard,
         nextActionLabel,
         nextActionDetail,
+        nextActionOverview: nextActionGuidance?.overview ?? null,
+        nextActionDoNow: nextActionGuidance?.doNow ?? null,
+        nextActionWhyItHelps: nextActionGuidance?.whyItHelps ?? null,
+        nextActionCanWait: nextActionGuidance?.canWait ?? null,
         staleReminderOverlap,
         reminderKeys,
         staleReminderKeys,
@@ -1909,7 +1920,12 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               <div>
                 <p className="text-xs uppercase tracking-wide text-primary">Section next action</p>
                 <p className="mt-2 text-sm font-semibold text-text-primary">{section.nextActionLabel}</p>
-                <p className="mt-2 text-xs text-text-secondary">{section.nextActionDetail}</p>
+                <div className="mt-2 space-y-1 text-xs text-text-secondary">
+                  <p>{section.nextActionOverview ?? section.nextActionDetail}</p>
+                  {section.nextActionDoNow ? <p>Do now: {section.nextActionDoNow}</p> : null}
+                  {section.nextActionWhyItHelps ? <p>Why it helps: {section.nextActionWhyItHelps}</p> : null}
+                  {section.nextActionCanWait ? <p>Can wait: {section.nextActionCanWait}</p> : null}
+                </div>
               </div>
               {section.highestRiskCardKey && (
                 <Button
