@@ -1063,6 +1063,9 @@ describe('name change action feed', () => {
     expect(bankTemplateItem?.action.label).toBe('Draft bank accounts update (current proof pending)');
     expect(insuranceTemplateItem?.action.label).toBe('Ask insurance carriers before next proof hop (next proof hop pending)');
     expect(taxTemplateItem?.action.label).toBe('Ask tax agencies intake rules now (proof chain pending)');
+    expect(bankTemplateItem?.action.detail).toContain('Current blocker: current proof pending.');
+    expect(insuranceTemplateItem?.action.detail).toContain('Current blocker: next proof hop pending.');
+    expect(taxTemplateItem?.action.detail).toContain('Current blocker: proof chain pending.');
     expect(bankTemplateItem?.action.detail).toContain('Template state: draft now and wait for the current proof to clear before sending.');
     expect(insuranceTemplateItem?.action.detail).toContain('Template state: prep the ask now before the next proof hop clears.');
     expect(taxTemplateItem?.action.detail).toContain('Template state: intake-only until the proof chain is ready.');

@@ -58,6 +58,15 @@ function getTemplateFocusTargetId(template: AccountUpdateTemplate | undefined) {
 }
 
 function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemplate) {
+  const currentBlockerLine = template.blockingProofHopLabel
+    ? `Current blocker: ${template.blockingProofHopLabel}.`
+    : template.readiness === 'in_progress'
+      ? 'Current blocker: current proof pending.'
+      : template.readiness === 'upcoming'
+        ? 'Current blocker: next proof hop pending.'
+        : template.readiness === 'blocked'
+          ? 'Current blocker: proof chain pending.'
+          : undefined;
   const proofPhaseLine = template.readiness === 'complete'
     ? 'Template state: proof chain complete; confirm the downstream sync only.'
     : template.readiness === 'ready'
@@ -111,7 +120,7 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
     `Template message: ${template.body}`,
     `Readiness: ${template.readinessLabel}`,
     template.blockingProofHopLabel ? `Blocked by: ${template.blockingProofHopLabel}.` : undefined,
-    template.blockingProofHopLabel ? `Current blocker: ${template.blockingProofHopLabel}.` : undefined,
+    currentBlockerLine,
     checklistLine ? `Checklist: ${checklistLine}.` : undefined,
     checklistStatusLine ? `Checklist status: ${checklistStatusLine}` : undefined,
     `Proof status: ${template.proofReadinessSummary}`,
