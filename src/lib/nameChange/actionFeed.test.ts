@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { buildNameChangeActionFeed, getAccountUpdateTemplateReadinessLabel } from './actionFeed';
+import {
+  buildNameChangeActionFeed,
+  getAccountUpdateTemplateBlockedByLine,
+  getAccountUpdateTemplateCurrentBlockerLine,
+  getAccountUpdateTemplateReadinessLabel,
+  getAccountUpdateTemplateStateLine,
+} from './actionFeed';
 import type { NameChangeDocumentRepairQueueItem } from './documentRepairQueue';
 import type { NameChangePlan } from './types';
 import type { NameChangeReminderAttentionItem, NameChangeTargetExecutionSnapshot } from './types';
@@ -138,13 +144,35 @@ function makeReminderAttention(overrides: Partial<NameChangeReminderAttentionIte
   };
 }
 
-describe('getAccountUpdateTemplateReadinessLabel', () => {
+describe('account update template surface helpers', () => {
   it('keeps planner and feed readiness labels on the same copy map', () => {
     expect(getAccountUpdateTemplateReadinessLabel('ready')).toBe('send now (proof packet ready)');
     expect(getAccountUpdateTemplateReadinessLabel('in_progress')).toBe('draft now, send after current proof clears');
     expect(getAccountUpdateTemplateReadinessLabel('complete')).toBe('confirm sync (proof chain complete)');
     expect(getAccountUpdateTemplateReadinessLabel('upcoming')).toBe('ask before next proof hop');
     expect(getAccountUpdateTemplateReadinessLabel('blocked')).toBe('ask intake rules now');
+  });
+
+  it('keeps planner and feed blocker/state copy on the same helpers', () => {
+    const stagedTemplate = makeTemplate({
+      id: 'template-payroll',
+      audience: 'Employer payroll / HR',
+      readiness: 'in_progress',
+      blockingProofHopLabel: '   ',
+    });
+    const upcomingTemplate = makeTemplate({
+      id: 'template-tax',
+      audience: 'Tax agencies',
+      readiness: 'upcoming',
+      blockingProofHopLabel: 'SSA pending',
+    });
+
+    expect(getAccountUpdateTemplateBlockedByLine(stagedTemplate)).toBe('Blocked by: current proof pending.');
+    expect(getAccountUpdateTemplateCurrentBlockerLine(stagedTemplate)).toBe('Current blocker: current proof pending.');
+    expect(getAccountUpdateTemplateStateLine(stagedTemplate)).toBe('Template state: draft now and wait for the current proof to clear before sending.');
+    expect(getAccountUpdateTemplateBlockedByLine(upcomingTemplate)).toBe('Blocked by: SSA pending.');
+    expect(getAccountUpdateTemplateCurrentBlockerLine(upcomingTemplate)).toBe('Current blocker: SSA pending.');
+    expect(getAccountUpdateTemplateStateLine(upcomingTemplate)).toBe('Template state: prep the ask now and wait for ssa pending to clear before sending.');
   });
 });
 

@@ -62,7 +62,7 @@ function getTemplateFocusTargetId(template: AccountUpdateTemplate | undefined) {
   return template ? `account-update-template-${template.id}` : 'account-update-templates';
 }
 
-function getTemplateBlockedByLine(template: AccountUpdateTemplate) {
+export function getAccountUpdateTemplateBlockedByLine(template: AccountUpdateTemplate) {
   const blockingProofHopLabel = getEffectiveBlockingProofHopLabel(template);
   return blockingProofHopLabel
     ? `Blocked by: ${blockingProofHopLabel}.`
@@ -89,10 +89,9 @@ function formatInlineProofList(items: string[]) {
     .join(' · ');
 }
 
-function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemplate) {
-  const blockedByLine = getTemplateBlockedByLine(template);
-  const blockingProofHopLabel = template.blockingProofHopLabel?.trim();
-  const currentBlockerLine = blockingProofHopLabel
+export function getAccountUpdateTemplateCurrentBlockerLine(template: AccountUpdateTemplate) {
+  const blockingProofHopLabel = getEffectiveBlockingProofHopLabel(template);
+  return blockingProofHopLabel
     ? `Current blocker: ${blockingProofHopLabel}.`
     : template.readiness === 'in_progress'
       ? 'Current blocker: current proof pending.'
@@ -101,7 +100,11 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
         : template.readiness === 'blocked'
           ? 'Current blocker: proof chain pending.'
           : undefined;
-  const proofPhaseLine = template.readiness === 'complete'
+}
+
+export function getAccountUpdateTemplateStateLine(template: AccountUpdateTemplate) {
+  const blockingProofHopLabel = template.blockingProofHopLabel?.trim();
+  return template.readiness === 'complete'
     ? 'Template state: proof chain complete; confirm the downstream sync only.'
     : template.readiness === 'ready'
       ? 'Template state: proof packet ready to send now.'
@@ -118,6 +121,13 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
               ? `Template state: intake-only until ${blockingProofHopLabel.toLowerCase()} clears.`
               : 'Template state: intake-only until the proof chain is ready.'
             : undefined;
+}
+
+function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemplate) {
+  const blockedByLine = getAccountUpdateTemplateBlockedByLine(template);
+  const blockingProofHopLabel = template.blockingProofHopLabel?.trim();
+  const currentBlockerLine = getAccountUpdateTemplateCurrentBlockerLine(template);
+  const proofPhaseLine = getAccountUpdateTemplateStateLine(template);
   const readinessDetail = template.readiness === 'complete'
     ? `${baseDetail} Use this only to confirm the rename already synced.`
     : template.readiness === 'ready'
