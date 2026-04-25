@@ -89,8 +89,8 @@ function getTemplateLaneLabel(template: AccountUpdateTemplate) {
       : template.readiness === 'in_progress'
         ? 'draft now'
         : template.readiness === 'upcoming'
-          ? 'wait for next proof hop'
-          : 'intake first';
+          ? 'ask before next proof hop'
+          : 'ask intake rules';
 
   return `${template.audience} · ${readinessLabel}`;
 }
