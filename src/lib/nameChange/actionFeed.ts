@@ -1,6 +1,7 @@
 import { getNameChangeGuidedActionWeight } from './executionPrioritization';
 import type { NameChangeDocumentRepairQueueItem } from './documentRepairQueue';
 import {
+  getAccountUpdateTemplateAudienceLine as getEngineAccountUpdateTemplateAudienceLine,
   getAccountUpdateTemplateReadinessActionLabel,
   getAccountUpdateTemplateStatusLabel as getEngineAccountUpdateTemplateStatusLabel,
   getFallbackBlockingProofHopLabel,
@@ -173,7 +174,7 @@ export function getAccountUpdateTemplateReadinessDetailLine(baseDetail: string, 
 }
 
 export function getAccountUpdateTemplateAudienceLine(template: AccountUpdateTemplate) {
-  return `Audience: ${template.audience}`;
+  return getEngineAccountUpdateTemplateAudienceLine(template.audience).replace(/\.$/, '');
 }
 
 export function getAccountUpdateTemplateSubjectLine(template: AccountUpdateTemplate) {

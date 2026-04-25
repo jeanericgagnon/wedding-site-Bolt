@@ -530,6 +530,11 @@ export function getAccountUpdateTemplateReadinessSubjectPrefix(
           : 'Ask intake rules now';
 }
 
+export function getAccountUpdateTemplateAudienceLine(audience: string) {
+  const trimmedAudience = audience.trim();
+  return trimmedAudience ? `Audience: ${trimmedAudience}.` : '';
+}
+
 export function getAccountUpdateTemplateStatusLabel(
   readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
   blockingProofHopLabel?: string,
@@ -626,6 +631,7 @@ function buildAccountUpdateTemplates(
     readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
     blockingProofHopLabel?: string,
   ) => `Status: ${getAccountUpdateTemplateStatusLabel(readiness, blockingProofHopLabel)}.`;
+  const getAudienceLine = (audience: string) => getAccountUpdateTemplateAudienceLine(audience);
   const getReadinessRequestLine = (
     templateId: string,
     readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
@@ -826,7 +832,7 @@ function buildAccountUpdateTemplates(
         'Updated Social Security record or SSA receipt',
         'Updated photo ID if payroll or benefits asks for one',
       ],
-      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, statusLine: string, proofReadinessSummary: string, blockingProofHopSentence: string, checklistGuidanceLine: string, proofChecklistLine: string) => `Hi team — I have legally updated my name from ${normalizedCurrentName} to ${normalizedTargetName} and need payroll, benefits, and internal records aligned. ${readinessIntro} ${statusLine} ${blockingProofHopSentence} ${proofReadinessSummary} ${proofLine} ${proofChecklistLine} ${checklistGuidanceLine} ${readinessLine} ${requestLine}`,
+      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, audienceLine: string, statusLine: string, proofReadinessSummary: string, blockingProofHopSentence: string, checklistGuidanceLine: string, proofChecklistLine: string) => `Hi team — I have legally updated my name from ${normalizedCurrentName} to ${normalizedTargetName} and need payroll, benefits, and internal records aligned. ${audienceLine} ${readinessIntro} ${statusLine} ${blockingProofHopSentence} ${proofReadinessSummary} ${proofLine} ${proofChecklistLine} ${checklistGuidanceLine} ${readinessLine} ${requestLine}`,
     },
     {
       id: 'template-bank',
@@ -838,7 +844,7 @@ function buildAccountUpdateTemplates(
         'Updated photo ID or DMV receipt',
         'Replacement card / account reissue instructions',
       ],
-      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, statusLine: string, proofReadinessSummary: string, blockingProofHopSentence: string, checklistGuidanceLine: string, proofChecklistLine: string) => `Hello — I recently completed a legal name change and need the name on my account updated. ${readinessIntro} ${statusLine} ${blockingProofHopSentence} ${proofReadinessSummary} ${proofLine} ${proofChecklistLine} ${checklistGuidanceLine} ${readinessLine} ${requestLine}`,
+      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, audienceLine: string, statusLine: string, proofReadinessSummary: string, blockingProofHopSentence: string, checklistGuidanceLine: string, proofChecklistLine: string) => `Hello — I recently completed a legal name change and need the name on my account updated. ${audienceLine} ${readinessIntro} ${statusLine} ${blockingProofHopSentence} ${proofReadinessSummary} ${proofLine} ${proofChecklistLine} ${checklistGuidanceLine} ${readinessLine} ${requestLine}`,
     },
     {
       id: 'template-insurance',
@@ -850,7 +856,7 @@ function buildAccountUpdateTemplates(
         'Updated photo ID if coverage verification requires it',
         'Member ID / policy number so cards and claims stay aligned',
       ],
-      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, statusLine: string, proofReadinessSummary: string, blockingProofHopSentence: string, checklistGuidanceLine: string, proofChecklistLine: string) => `Hi — I need this account updated to my current legal name so coverage, billing, and member records stay aligned. ${readinessIntro} ${statusLine} ${blockingProofHopSentence} ${proofReadinessSummary} ${proofLine} ${proofChecklistLine} ${checklistGuidanceLine} ${readinessLine} ${requestLine}`,
+      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, audienceLine: string, statusLine: string, proofReadinessSummary: string, blockingProofHopSentence: string, checklistGuidanceLine: string, proofChecklistLine: string) => `Hi — I need this account updated to my current legal name so coverage, billing, and member records stay aligned. ${audienceLine} ${readinessIntro} ${statusLine} ${blockingProofHopSentence} ${proofReadinessSummary} ${proofLine} ${proofChecklistLine} ${checklistGuidanceLine} ${readinessLine} ${requestLine}`,
     },
     {
       id: 'template-tax',
@@ -862,7 +868,7 @@ function buildAccountUpdateTemplates(
         'Updated Social Security record or SSA confirmation',
         'Any employer payroll confirmation already on file',
       ],
-      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, statusLine: string, proofReadinessSummary: string, blockingProofHopSentence: string, checklistGuidanceLine: string, proofChecklistLine: string) => `Hello — I need my tax records updated to match my legal name so payroll reporting and year-end forms do not drift. ${readinessIntro} ${statusLine} ${blockingProofHopSentence} ${proofReadinessSummary} ${proofLine} ${proofChecklistLine} ${checklistGuidanceLine} ${readinessLine} ${requestLine}`,
+      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, audienceLine: string, statusLine: string, proofReadinessSummary: string, blockingProofHopSentence: string, checklistGuidanceLine: string, proofChecklistLine: string) => `Hello — I need my tax records updated to match my legal name so payroll reporting and year-end forms do not drift. ${audienceLine} ${readinessIntro} ${statusLine} ${blockingProofHopSentence} ${proofReadinessSummary} ${proofLine} ${proofChecklistLine} ${checklistGuidanceLine} ${readinessLine} ${requestLine}`,
     },
     {
       id: 'template-travel',
@@ -874,7 +880,7 @@ function buildAccountUpdateTemplates(
         needsPassport ? 'Updated passport or passport renewal timing confirmation' : 'Current passport details if no passport update is needed',
         'Any existing booking references that need manual relinking',
       ],
-      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, statusLine: string, proofReadinessSummary: string, blockingProofHopSentence: string, checklistGuidanceLine: string, proofChecklistLine: string) => `Hello — I am updating my legal name and need my traveler profile, loyalty records, and any upcoming reservation notes aligned so they do not conflict with my ID or passport timing. ${readinessIntro} ${statusLine} ${blockingProofHopSentence} ${proofReadinessSummary} ${proofLine} ${proofChecklistLine} ${checklistGuidanceLine} ${readinessLine} ${requestLine}`,
+      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, audienceLine: string, statusLine: string, proofReadinessSummary: string, blockingProofHopSentence: string, checklistGuidanceLine: string, proofChecklistLine: string) => `Hello — I am updating my legal name and need my traveler profile, loyalty records, and any upcoming reservation notes aligned so they do not conflict with my ID or passport timing. ${audienceLine} ${readinessIntro} ${statusLine} ${blockingProofHopSentence} ${proofReadinessSummary} ${proofLine} ${proofChecklistLine} ${checklistGuidanceLine} ${readinessLine} ${requestLine}`,
     },
     {
       id: 'template-digital-identity',
@@ -886,7 +892,7 @@ function buildAccountUpdateTemplates(
         'Updated photo ID if identity verification is required',
         'Any lease / utility account numbers or recovery-email checkpoints to refresh',
       ],
-      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, statusLine: string, proofReadinessSummary: string, blockingProofHopSentence: string, checklistGuidanceLine: string, proofChecklistLine: string) => `Hi — I recently completed a legal name change and need my account holder name updated so billing, verification checks, and recovery/contact records stay consistent. ${readinessIntro} ${statusLine} ${blockingProofHopSentence} ${proofReadinessSummary} ${proofLine} ${proofChecklistLine} ${checklistGuidanceLine} ${readinessLine} ${requestLine}`,
+      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, audienceLine: string, statusLine: string, proofReadinessSummary: string, blockingProofHopSentence: string, checklistGuidanceLine: string, proofChecklistLine: string) => `Hi — I recently completed a legal name change and need my account holder name updated so billing, verification checks, and recovery/contact records stay consistent. ${audienceLine} ${readinessIntro} ${statusLine} ${blockingProofHopSentence} ${proofReadinessSummary} ${proofLine} ${proofChecklistLine} ${checklistGuidanceLine} ${readinessLine} ${requestLine}`,
     },
     {
       id: 'template-licenses',
@@ -898,7 +904,7 @@ function buildAccountUpdateTemplates(
         'Updated photo ID or license reissue receipt',
         'License number / renewal cycle details',
       ],
-      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, statusLine: string, proofReadinessSummary: string, blockingProofHopSentence: string, checklistGuidanceLine: string, proofChecklistLine: string) => `Hello — I need my professional license and credentialing records updated to my current legal name so renewals, verification, and employer matching stay clean. ${readinessIntro} ${statusLine} ${blockingProofHopSentence} ${proofReadinessSummary} ${proofLine} ${proofChecklistLine} ${checklistGuidanceLine} ${readinessLine} ${requestLine}`,
+      buildBody: (proofLine: string, readinessLine: string, requestLine: string, readinessIntro: string, audienceLine: string, statusLine: string, proofReadinessSummary: string, blockingProofHopSentence: string, checklistGuidanceLine: string, proofChecklistLine: string) => `Hello — I need my professional license and credentialing records updated to my current legal name so renewals, verification, and employer matching stay clean. ${audienceLine} ${readinessIntro} ${statusLine} ${blockingProofHopSentence} ${proofReadinessSummary} ${proofLine} ${proofChecklistLine} ${checklistGuidanceLine} ${readinessLine} ${requestLine}`,
     },
   ] as const;
 
@@ -1056,7 +1062,7 @@ function buildAccountUpdateTemplates(
       id: template.id,
       audience: template.audience,
       subject: getReadinessSubject(template.subject, readiness, blockingProofHopLabel),
-      body: compactTemplateBody(template.buildBody(proofLine, readinessLabel, requestLine, readinessIntro, getStatusLine(readiness, blockingProofHopLabel), proofReadinessSummary, blockingProofHopSentence, checklistGuidanceLine, proofChecklistLine)),
+      body: compactTemplateBody(template.buildBody(proofLine, readinessLabel, requestLine, readinessIntro, getAudienceLine(template.audience), getStatusLine(readiness, blockingProofHopLabel), proofReadinessSummary, blockingProofHopSentence, checklistGuidanceLine, proofChecklistLine)),
       readiness,
       readinessLabel,
       proofReadinessSummary,

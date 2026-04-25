@@ -3,6 +3,7 @@ import {
   buildNameChangePlan,
   evaluateCaliforniaNameChangeEligibility,
   formatAccountUpdateChecklistGuidanceLine,
+  getAccountUpdateTemplateAudienceLine,
   getAccountUpdateTemplateReadinessActionLabel,
   getAccountUpdateTemplateReadinessIntroLine,
   getAccountUpdateTemplateReadinessSubjectPrefix,
@@ -140,7 +141,9 @@ describe('name change engine', () => {
     expect(getAccountUpdateTemplateReadinessIntroLine('blocked', 'legal proof pending')).toBe('I am only collecting the intake rules for now until the proof chain is ready (legal proof pending).');
   });
 
-  it('shares template status labels across generated bodies and planner surfaces', () => {
+  it('shares template audience and status labels across generated bodies and planner surfaces', () => {
+    expect(getAccountUpdateTemplateAudienceLine('Bank accounts')).toBe('Audience: Bank accounts.');
+    expect(getAccountUpdateTemplateAudienceLine('   ')).toBe('');
     expect(getAccountUpdateTemplateStatusLabel('ready')).toBe('send now (proof packet ready)');
     expect(getAccountUpdateTemplateStatusLabel('complete')).toBe('confirm sync (proof chain complete)');
     expect(getAccountUpdateTemplateStatusLabel('upcoming', 'SSA pending')).toBe('ask before next proof hop · SSA pending');
@@ -247,6 +250,7 @@ describe('name change engine', () => {
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.body).toContain('Alex Marie Jordan');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.readinessLabel).toBe('Your legal proof is grounded, but this still depends on the next ID or agency hop before it is ready to send (SSA pending).');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.body).toContain('My legal proof is in hand, but SSA/payroll alignment is still upstream');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.body).toContain('Audience: Employer payroll / HR.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.body).toContain('I am prepping this ask now, but I am not sending the final packet until the next proof hop clears (SSA pending).');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.body).toContain('Status: ask before next proof hop · SSA pending.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.body).toContain('Blocked by: SSA pending.');
@@ -319,6 +323,7 @@ describe('name change engine', () => {
     });
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('I need your process first and will send the legal proof packet once it is ready');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('I am only collecting the intake rules for now until the proof chain is ready (legal proof pending).');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('Audience: Tax agency or payroll tax support.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('Status: ask intake rules now · legal proof pending.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('Blocked by: legal proof pending.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('Current blocker: legal proof pending.');
