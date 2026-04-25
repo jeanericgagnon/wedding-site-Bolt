@@ -103,6 +103,10 @@ describe('name change reminder suggestions', () => {
       dependsOnStepId: 'institution-phone-digital-identity',
       urgency: 'medium',
     });
+    expect(reminders.find((reminder) => reminder.id === 'reminder-milestone-confirm-milestone-professional-licenses')).toMatchObject({
+      dependsOnStepId: 'institution-professional-licenses',
+      urgency: 'medium',
+    });
     expect(reminders.find((reminder) => reminder.id === 'reminder-milestone-confirm-milestone-downstream-rollout')).toMatchObject({
       dependsOnStepId: 'institution-frequent-flyer-hotel-rail',
       urgency: 'medium',
@@ -218,6 +222,12 @@ describe('name change reminder suggestions', () => {
       section_key: 'institutional',
       planner_intent: 'open_execution_card',
       focus_target_id: 'execution-card-utilities',
+    });
+    expect(inputs.find((reminder) => reminder.reminder_key === 'reminder-milestone-confirm-milestone-professional-licenses')).toMatchObject({
+      depends_on_step_id: 'institution-professional-licenses',
+      section_key: 'work-identity',
+      planner_intent: 'open_execution_card',
+      focus_target_id: 'execution-card-licenses',
     });
     expect(inputs.find((reminder) => reminder.reminder_key === 'reminder-category-confirm-travel_mobility')).toMatchObject({
       depends_on_step_id: 'institution-frequent-flyer-hotel-rail',

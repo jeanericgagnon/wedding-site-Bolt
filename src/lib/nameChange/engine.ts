@@ -1506,6 +1506,14 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
       ),
       dependsOnStepIds: CORE_ACCOUNT_ROLLOUT_MILESTONE_STEP_IDS.filter((stepId) => hasStep(stepId)),
     },
+    hasStep('institution-professional-licenses')
+      ? {
+        id: 'milestone-professional-licenses',
+        label: 'Professional license records can be reissued cleanly',
+        status: resolvePlanSequenceStatus(['state-photo-id', 'institution-professional-licenses'], steps),
+        dependsOnStepIds: ['state-photo-id', 'institution-professional-licenses'],
+      }
+      : null,
     hasStep('institutions-rollout')
       ? {
         id: 'milestone-downstream-rollout',

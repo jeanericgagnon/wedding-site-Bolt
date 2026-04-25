@@ -88,6 +88,12 @@ const MILESTONE_CONFIRMATION_CONFIG: Record<string, {
     urgency: 'medium',
     suggestedOffsetDays: 7,
   },
+  'milestone-professional-licenses': {
+    label: 'Confirm professional licenses and credentials reflect the legal name',
+    reason: 'Verify that the board record, wallet card, and credential lookup all reflect the updated legal name before employers or renewals rely on them.',
+    urgency: 'medium',
+    suggestedOffsetDays: 7,
+  },
   'milestone-downstream-rollout': {
     label: 'Confirm the long-tail downstream rollout is actually finished',
     reason: 'Use this checkpoint to confirm that travel, loyalty, utilities, and the other long-tail accounts are no longer carrying the old name.',

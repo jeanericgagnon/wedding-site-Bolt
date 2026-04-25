@@ -284,6 +284,11 @@ describe('name change engine', () => {
           ],
         }),
         expect.objectContaining({
+          id: 'milestone-professional-licenses',
+          status: 'upcoming',
+          dependsOnStepIds: ['state-photo-id', 'institution-professional-licenses'],
+        }),
+        expect.objectContaining({
           id: 'milestone-downstream-rollout',
           status: 'upcoming',
           dependsOnStepIds: [
