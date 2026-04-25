@@ -172,7 +172,7 @@ describe('account update template surface helpers', () => {
     expect(getAccountUpdateTemplateStateLine(stagedTemplate)).toBe('Template state: draft now and wait for the current proof to clear before sending.');
     expect(getAccountUpdateTemplateBlockedByLine(upcomingTemplate)).toBe('Blocked by: SSA pending.');
     expect(getAccountUpdateTemplateCurrentBlockerLine(upcomingTemplate)).toBe('Current blocker: SSA pending.');
-    expect(getAccountUpdateTemplateStateLine(upcomingTemplate)).toBe('Template state: prep the ask now and wait for ssa pending to clear before sending.');
+    expect(getAccountUpdateTemplateStateLine(upcomingTemplate)).toBe('Template state: prep the ask now and wait for SSA pending to clear before sending.');
   });
 });
 
@@ -679,7 +679,7 @@ describe('name change action feed', () => {
       focusTargetId: 'account-update-template-template-tax',
       laneLabel: 'Tax and state agencies · draft now, send after current proof clears · SSA pending',
       urgencyReason: 'blocking_dependency',
-      action: expect.objectContaining({ detail: expect.stringContaining('Tax packet can be prepped now. Send only after ssa pending clears.') }),
+      action: expect.objectContaining({ detail: expect.stringContaining('Tax packet can be prepped now. Send only after SSA pending clears.') }),
     });
   });
 
@@ -815,8 +815,8 @@ describe('name change action feed', () => {
       urgencyTier: 'elevated',
     });
     expect(feed[0]?.action.label).toBe('Ask employer payroll / HR before next proof hop (SSA pending)');
-    expect(feed[0]?.action.detail).toContain('Template state: prep the ask now and wait for ssa pending to clear before sending.');
-    expect(feed[0]?.action.detail).toContain('Use this to prep the ask before ssa pending clears.');
+    expect(feed[0]?.action.detail).toContain('Template state: prep the ask now and wait for SSA pending to clear before sending.');
+    expect(feed[0]?.action.detail).toContain('Use this to prep the ask before SSA pending clears.');
     expect(feed[0]?.action.detail).toContain('Subject: Employer payroll / HR');
     expect(feed[0]?.action.detail).toContain('Subject: Employer payroll / HR\nTemplate message: I can provide certified legal proof.');
     expect(feed[0]?.action.detail).toContain('Template message: I can provide certified legal proof.');

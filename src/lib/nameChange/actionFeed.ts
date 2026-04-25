@@ -102,23 +102,34 @@ export function getAccountUpdateTemplateCurrentBlockerLine(template: AccountUpda
           : undefined;
 }
 
+function formatBlockingProofHopStatePhrase(blockingProofHopLabel: string) {
+  const trimmed = blockingProofHopLabel.trim();
+  if (!trimmed) return '';
+  return trimmed.charAt(0).toLowerCase() === trimmed.charAt(0)
+    ? trimmed
+    : trimmed;
+}
+
 export function getAccountUpdateTemplateStateLine(template: AccountUpdateTemplate) {
   const blockingProofHopLabel = template.blockingProofHopLabel?.trim();
+  const blockingProofHopStatePhrase = blockingProofHopLabel
+    ? formatBlockingProofHopStatePhrase(blockingProofHopLabel)
+    : undefined;
   return template.readiness === 'complete'
     ? 'Template state: proof chain complete; confirm the downstream sync only.'
     : template.readiness === 'ready'
       ? 'Template state: proof packet ready to send now.'
       : template.readiness === 'in_progress'
-        ? blockingProofHopLabel
-          ? `Template state: draft now and wait for ${blockingProofHopLabel.toLowerCase()} to clear before sending.`
+        ? blockingProofHopStatePhrase
+          ? `Template state: draft now and wait for ${blockingProofHopStatePhrase} to clear before sending.`
           : 'Template state: draft now and wait for the current proof to clear before sending.'
         : template.readiness === 'upcoming'
-          ? blockingProofHopLabel
-            ? `Template state: prep the ask now and wait for ${blockingProofHopLabel.toLowerCase()} to clear before sending.`
+          ? blockingProofHopStatePhrase
+            ? `Template state: prep the ask now and wait for ${blockingProofHopStatePhrase} to clear before sending.`
             : 'Template state: prep the ask now before the next proof hop clears.'
           : template.readiness === 'blocked'
-            ? blockingProofHopLabel
-              ? `Template state: intake-only until ${blockingProofHopLabel.toLowerCase()} clears.`
+            ? blockingProofHopStatePhrase
+              ? `Template state: intake-only until ${blockingProofHopStatePhrase} clears.`
               : 'Template state: intake-only until the proof chain is ready.'
             : undefined;
 }
@@ -126,6 +137,9 @@ export function getAccountUpdateTemplateStateLine(template: AccountUpdateTemplat
 function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemplate) {
   const blockedByLine = getAccountUpdateTemplateBlockedByLine(template);
   const blockingProofHopLabel = template.blockingProofHopLabel?.trim();
+  const blockingProofHopStatePhrase = blockingProofHopLabel
+    ? formatBlockingProofHopStatePhrase(blockingProofHopLabel)
+    : undefined;
   const currentBlockerLine = getAccountUpdateTemplateCurrentBlockerLine(template);
   const proofPhaseLine = getAccountUpdateTemplateStateLine(template);
   const readinessDetail = template.readiness === 'complete'
@@ -133,16 +147,16 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
     : template.readiness === 'ready'
       ? `${baseDetail} Send with the current proof packet now.`
       : template.readiness === 'in_progress'
-        ? blockingProofHopLabel
-          ? `${baseDetail} Send only after ${blockingProofHopLabel.toLowerCase()} clears.`
+        ? blockingProofHopStatePhrase
+          ? `${baseDetail} Send only after ${blockingProofHopStatePhrase} clears.`
           : `${baseDetail} Send only after the current proof clears.`
         : template.readiness === 'upcoming'
-          ? blockingProofHopLabel
-            ? `${baseDetail} Use this to prep the ask before ${blockingProofHopLabel.toLowerCase()} clears.`
+          ? blockingProofHopStatePhrase
+            ? `${baseDetail} Use this to prep the ask before ${blockingProofHopStatePhrase} clears.`
             : `${baseDetail} Use this to prep the ask before the next proof hop clears.`
           : template.readiness === 'blocked'
-            ? blockingProofHopLabel
-              ? `${baseDetail} Use this only to capture intake rules until ${blockingProofHopLabel.toLowerCase()} clears.`
+            ? blockingProofHopStatePhrase
+              ? `${baseDetail} Use this only to capture intake rules until ${blockingProofHopStatePhrase} clears.`
               : `${baseDetail} Use this only to capture intake rules until the proof chain is ready.`
             : baseDetail;
   const checklistLine = ensureTerminalPeriod(template.checklistHighlight);
