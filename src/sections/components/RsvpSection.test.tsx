@@ -76,4 +76,29 @@ describe('RsvpSection', () => {
 
     expect(screen.getByText('Join Alex in celebrating their wedding')).toBeInTheDocument();
   });
+
+  it('guards invalid persisted RSVP deadlines across both variants', () => {
+    const data = createWeddingData();
+    data.rsvp.deadlineISO = 'not-a-date';
+
+    const { rerender } = render(
+      <RsvpSection
+        data={data}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(screen.queryByText('Invalid Date')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Kindly respond by/)).not.toBeInTheDocument();
+
+    rerender(
+      <RsvpInline
+        data={data}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(screen.queryByText('Invalid Date')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Kindly respond by/)).not.toBeInTheDocument();
+  });
 });

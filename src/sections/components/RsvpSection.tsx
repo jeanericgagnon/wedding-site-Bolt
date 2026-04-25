@@ -14,7 +14,9 @@ interface Props {
 function formatDeadline(iso: string | undefined): string | null {
   if (!iso) return null;
   const dateStr = iso.includes('T') ? iso : iso + 'T12:00:00';
-  return new Date(dateStr).toLocaleDateString('en-US', {
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
