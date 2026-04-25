@@ -39,6 +39,20 @@ export function getVaultUnlockYear(weddingDate: string | null | undefined, durat
   return date.getFullYear() + durationYears;
 }
 
+export function getVaultUnlockAtIso(weddingDate: string | null | undefined, durationYears: number | null | undefined): string | null {
+  if (!weddingDate || durationYears == null) return null;
+  const date = new Date(weddingDate);
+  if (Number.isNaN(date.getTime())) return null;
+
+  const unlockDate = new Date(date);
+  unlockDate.setFullYear(unlockDate.getFullYear() + durationYears);
+  return Number.isNaN(unlockDate.getTime()) ? null : unlockDate.toISOString();
+}
+
+function formatVaultWindowDate(date: Date): string {
+  return date.toLocaleDateString();
+}
+
 function getContributionWindow(weddingDateRaw: string | null): { canSubmit: boolean; message: string | null } {
   if (!weddingDateRaw) return { canSubmit: true, message: null };
   const weddingDate = new Date(weddingDateRaw);
@@ -51,12 +65,12 @@ function getContributionWindow(weddingDateRaw: string | null): { canSubmit: bool
 
   const now = new Date();
   if (now < openAt) {
-    return { canSubmit: false, message: `Vault uploads open 3 days before the wedding (${openAt.toLocaleDateString()}).` };
+    return { canSubmit: false, message: `Vault uploads open 3 days before the wedding (${formatVaultWindowDate(openAt)}).` };
   }
   if (now > closeAt) {
-    return { canSubmit: false, message: `Vault uploads closed on ${closeAt.toLocaleDateString()} (7-day upload window complete).` };
+    return { canSubmit: false, message: `Vault uploads closed on ${formatVaultWindowDate(closeAt)} (7-day upload window complete).` };
   }
-  return { canSubmit: true, message: `Uploads are open now (window closes ${closeAt.toLocaleDateString()}).` };
+  return { canSubmit: true, message: `Uploads are open now (window closes ${formatVaultWindowDate(closeAt)}).` };
 }
 
 function ordinalLabel(years: number): string {
@@ -566,7 +580,7 @@ export const VaultContribute: React.FC = () => {
       storage_provider: item.storageProvider ?? storageProvider,
       external_file_id: item.externalFileId ?? null,
       external_file_url: item.storageProvider === 'google_drive' ? item.url : null,
-      unlock_at: site.wedding_date ? new Date(new Date(site.wedding_date).setFullYear(new Date(site.wedding_date).getFullYear() + vaultConfig.duration_years)).toISOString() : null,
+      unlock_at: getVaultUnlockAtIso(site.wedding_date, vaultConfig.duration_years),
     }));
 
     const { error } = await supabase.from('vault_entries').insert(rows);

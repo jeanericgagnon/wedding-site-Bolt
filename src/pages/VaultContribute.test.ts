@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getVaultCoupleName, getVaultUnlockYear } from './VaultContribute';
+import { getVaultCoupleName, getVaultUnlockAtIso, getVaultUnlockYear } from './VaultContribute';
 
 describe('getVaultCoupleName', () => {
   it('keeps a single partner name truthful instead of showing a broken ampersand', () => {
@@ -19,5 +19,16 @@ describe('getVaultUnlockYear', () => {
 
   it('returns the anniversary year when the wedding date is valid', () => {
     expect(getVaultUnlockYear('2026-02-23', 10)).toBe(2036);
+  });
+});
+
+describe('getVaultUnlockAtIso', () => {
+  it('skips invalid persisted wedding dates instead of throwing on toISOString', () => {
+    expect(getVaultUnlockAtIso('not-a-date', 5)).toBeNull();
+    expect(getVaultUnlockAtIso(null, 5)).toBeNull();
+  });
+
+  it('returns the matching anniversary unlock timestamp when the wedding date is valid', () => {
+    expect(getVaultUnlockAtIso('2026-02-23', 5)).toBe(new Date('2031-02-23T00:00:00.000Z').toISOString());
   });
 });
