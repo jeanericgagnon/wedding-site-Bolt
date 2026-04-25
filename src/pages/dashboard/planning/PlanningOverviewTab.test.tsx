@@ -35,7 +35,9 @@ describe('PlanningOverviewTab', () => {
     expect(tile).toBeTruthy();
     fireEvent.click(tile.closest('button') as HTMLButtonElement);
     expect(onTabChange).toHaveBeenCalledWith('nameChange');
-    expect(screen.getByText(plan.summary.nextBestAction)).toBeTruthy();
+    expect(screen.getByText('Start whenever you want, then come back whenever you need')).toBeTruthy();
+    expect(screen.getByText('The roadmap is already there, even if you have not started checking steps off yet, so you can come back without rebuilding the plan.')).toBeTruthy();
+    expect(screen.getByText(/Optional next step: Skim the roadmap first/i)).toBeTruthy();
     expect(screen.getByText(/reminder.*actionable now/i)).toBeTruthy();
     expect(screen.getByText(/blocked milestone/i)).toBeTruthy();
     expect(screen.getByText(/downstream categor/i)).toBeTruthy();

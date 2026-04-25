@@ -11,6 +11,7 @@ import {
 import { PlanningTask, PlanningBudgetItem, PlanningVendor } from './planningService';
 import { formatVendorDate, isVendorDateBetween } from './vendorDate';
 import { isTaskDueBetween, isTaskDueOnOrBefore } from './taskDueDate';
+import { buildNameChangeOverviewCardModel } from '../nameChangeOverviewCard';
 
 interface SeatingReadiness {
   attending: number;
@@ -30,6 +31,17 @@ interface Props {
 
 function fmt(n: number) {
   return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+}
+
+function derivePlanningOverviewWorkflowStatus(plan: NameChangePlan): 'ready' | 'in_progress' | 'complete' {
+  const executionCounts = plan.summary.executionCounts ?? { todo: plan.steps.length, in_progress: 0, complete: 0 };
+  if (executionCounts.complete > 0 && executionCounts.todo === 0 && executionCounts.in_progress === 0) {
+    return 'complete';
+  }
+  if (executionCounts.in_progress > 0 || executionCounts.complete > 0) {
+    return 'in_progress';
+  }
+  return 'ready';
 }
 
 export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendors, seatingReadiness, weddingDate, nameChangePlan, onTabChange }) => {
@@ -62,7 +74,12 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
   const isPostWedding = weddingDateValue ? weddingDateValue.getTime() <= today.getTime() : false;
   const nameChangeReadyCount = nameChangePlan.steps.filter((step) => step.status === 'ready').length;
   const nameChangeCompletedCount = nameChangePlan.steps.filter((step) => step.executionStatus === 'complete').length;
-  const nextNameChangeAction = nameChangePlan.summary.nextBestAction;
+  const nameChangeHasExecutionActivity = (nameChangePlan.summary.executionCounts?.in_progress ?? 0) > 0 || (nameChangePlan.summary.executionCounts?.complete ?? 0) > 0;
+  const nameChangeCard = buildNameChangeOverviewCardModel({
+    hasWorkspace: true,
+    workflowStatus: derivePlanningOverviewWorkflowStatus(nameChangePlan),
+    hasExecutionActivity: nameChangeHasExecutionActivity,
+  });
   const milestoneStatusLabels = {
     ready: 'ready',
     upcoming: 'up next',
@@ -177,7 +194,8 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-text-primary">Post-wedding name change assistant</p>
-                  <p className="mt-1 text-sm text-text-secondary">{nextNameChangeAction}</p>
+                  <p className="mt-1 text-sm font-medium text-text-primary">{nameChangeCard.headline}</p>
+                  <p className="mt-1 text-sm text-text-secondary">{nameChangeCard.helperCopy}</p>
                   <p className="mt-2 text-xs text-text-secondary">
                     {nameChangeCompletedCount} complete · {nameChangeReadyCount} ready now
                   </p>
@@ -211,6 +229,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
                       Next milestone: <span className="font-medium text-text-primary">{nextNameChangeMilestone.label}</span>
                     </p>
                   ) : null}
+                  <p className="mt-2 text-xs text-text-secondary">Optional next step: {nameChangeCard.optionalNextStep}</p>
                   <p className="mt-2 text-xs text-text-secondary">
                     {taxPayrollLabel}: <span className="font-medium text-text-primary">{taxPayrollStatus}</span>
                   </p>
