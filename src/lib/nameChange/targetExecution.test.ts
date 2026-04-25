@@ -3065,6 +3065,38 @@ describe('name change target execution snapshot', () => {
     });
   });
 
+  it('adds structured wait guidance for missing court-order proof uploads', () => {
+    expect(getExecutionNextActionGuidance({
+      targetKey: 'courtOrder',
+      nextAction: {
+        category: 'document',
+        label: 'Upload court-order proof',
+        detail: 'Court-order path is selected, but no court-order proof is represented in intake yet.',
+      },
+    })).toEqual({
+      overview: 'Court-order path is selected, but no court-order proof is represented in intake yet.',
+      doNow: 'Pull the petition, filing receipt, hearing details, or signed order draft into one place now.',
+      whyItHelps: 'That makes the court-order packet faster to review once the proof is actually in intake.',
+      canWait: 'Downstream SSA, DMV, and passport updates can safely wait until the court-order proof is uploaded.',
+    });
+  });
+
+  it('adds structured wait guidance for court-order path readiness reviews', () => {
+    expect(getExecutionNextActionGuidance({
+      targetKey: 'courtOrder',
+      nextAction: {
+        category: 'review',
+        label: 'Review Court-order path readiness',
+        detail: 'Court-order path is selected, but the modeled packet still needs a verified target legal name and active case path before downstream filing should trust it.',
+      },
+    })).toEqual({
+      overview: 'Court-order path is selected, but the modeled packet still needs a verified target legal name and active case path before downstream filing should trust it.',
+      doNow: 'Confirm the exact target legal name, case number, and hearing or signed-order status now.',
+      whyItHelps: 'That keeps the court-order packet grounded before downstream government and account updates depend on it.',
+      canWait: 'Actual downstream filing can safely wait until the court-order path is verified.',
+    });
+  });
+
   it('adds structured wait guidance for first-passport branch reviews', () => {
     expect(getExecutionNextActionGuidance({
       targetKey: 'passport',

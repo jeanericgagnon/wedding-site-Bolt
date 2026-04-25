@@ -112,6 +112,24 @@ function getSupportiveExecutionWaitGuidance(snapshot: Pick<NameChangeTargetExecu
     }
   }
 
+  if (snapshot.targetKey === 'courtOrder') {
+    if (/upload court-order proof/i.test(blockingLabel)) {
+      return {
+        doNow: 'Pull the petition, filing receipt, hearing details, or signed order draft into one place now.',
+        whyItHelps: 'That makes the court-order packet faster to review once the proof is actually in intake.',
+        canWait: 'Downstream SSA, DMV, and passport updates can safely wait until the court-order proof is uploaded.',
+      };
+    }
+
+    if (/review court-order proof|court-order path readiness|court-order target legal name|case reference fields/i.test(blockingLabel)) {
+      return {
+        doNow: 'Confirm the exact target legal name, case number, and hearing or signed-order status now.',
+        whyItHelps: 'That keeps the court-order packet grounded before downstream government and account updates depend on it.',
+        canWait: 'Actual downstream filing can safely wait until the court-order path is verified.',
+      };
+    }
+  }
+
   if (
     snapshot.targetKey === 'tsa'
     && /marriage-certificate county|certificate number/i.test(blockingLabel)
