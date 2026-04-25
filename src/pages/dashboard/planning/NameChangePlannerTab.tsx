@@ -9,6 +9,7 @@ import {
   ensureTerminalPeriod,
   getAccountUpdateTemplateAudienceLine,
   getAccountUpdateTemplateContextLines,
+  getAccountUpdateTemplateCopyButtonLabel,
   getAccountUpdateTemplateMessageLine,
   getAccountUpdateTemplateReadinessLine,
   getAccountUpdateTemplateStatusLabel,
@@ -176,18 +177,6 @@ function getEffectiveBlockingProofHopLabel(template: NonNullable<NameChangePlan[
 
 function getAccountUpdateTemplateStatusChip(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
   return getAccountUpdateTemplateStatusLabel(template);
-}
-
-function getAccountUpdateTemplateCopyButtonLabel(
-  template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number],
-  copiedTemplateId: string | null,
-) {
-  if (copiedTemplateId === template.id) return 'Copied';
-  if (template.readiness === 'ready') return 'Copy proof-ready send text';
-  if (template.readiness === 'complete') return 'Copy proof-complete confirmation';
-  if (template.readiness === 'in_progress') return 'Copy staged draft';
-  if (template.readiness === 'upcoming') return 'Copy next-step draft';
-  return 'Copy intake script';
 }
 
 function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {

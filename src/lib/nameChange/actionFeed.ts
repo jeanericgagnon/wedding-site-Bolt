@@ -212,6 +212,18 @@ export function getAccountUpdateTemplateReadinessLine(
   return prefix ? `Readiness: ${template.readinessLabel}` : template.readinessLabel;
 }
 
+export function getAccountUpdateTemplateCopyButtonLabel(
+  template: AccountUpdateTemplate,
+  copiedTemplateId: string | null,
+) {
+  if (copiedTemplateId === template.id) return 'Copied';
+  if (template.readiness === 'ready') return 'Copy proof-ready send text';
+  if (template.readiness === 'complete') return 'Copy proof-complete confirmation';
+  if (template.readiness === 'in_progress') return 'Copy staged draft';
+  if (template.readiness === 'upcoming') return 'Copy next-step draft';
+  return 'Copy intake script';
+}
+
 export function getAccountUpdateTemplateChecklistLine(template: AccountUpdateTemplate) {
   const checklistLine = ensureTerminalPeriod(template.checklistHighlight);
   return checklistLine ? `Checklist: ${checklistLine}` : undefined;

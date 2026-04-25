@@ -8,6 +8,7 @@ import {
   getAccountUpdateTemplateAudienceLine,
   getAccountUpdateTemplateBlockedByLine,
   getAccountUpdateTemplateContextLines,
+  getAccountUpdateTemplateCopyButtonLabel,
   getAccountUpdateTemplateStatusLabel,
   getAccountUpdateTemplateStatusLine,
   getAccountUpdateTemplateCurrentBlockerLine,
@@ -269,6 +270,15 @@ describe('account update template surface helpers', () => {
     expect(getAccountUpdateTemplateReadinessLabel('complete')).toBe(getEngineAccountUpdateTemplateStatusLabel('complete'));
     expect(getAccountUpdateTemplateReadinessLabel('upcoming')).toBe(getEngineAccountUpdateTemplateStatusLabel('upcoming'));
     expect(getAccountUpdateTemplateReadinessLabel('blocked')).toBe(getEngineAccountUpdateTemplateStatusLabel('blocked'));
+  });
+
+  it('shares copy-button labels for readiness-aware template states', () => {
+    expect(getAccountUpdateTemplateCopyButtonLabel(makeTemplate({ readiness: 'ready' }), null)).toBe('Copy proof-ready send text');
+    expect(getAccountUpdateTemplateCopyButtonLabel(makeTemplate({ readiness: 'complete' }), null)).toBe('Copy proof-complete confirmation');
+    expect(getAccountUpdateTemplateCopyButtonLabel(makeTemplate({ readiness: 'in_progress' }), null)).toBe('Copy staged draft');
+    expect(getAccountUpdateTemplateCopyButtonLabel(makeTemplate({ readiness: 'upcoming' }), null)).toBe('Copy next-step draft');
+    expect(getAccountUpdateTemplateCopyButtonLabel(makeTemplate({ readiness: 'blocked' }), null)).toBe('Copy intake script');
+    expect(getAccountUpdateTemplateCopyButtonLabel(makeTemplate({ id: 'template-payroll' }), 'template-payroll')).toBe('Copied');
   });
 
   it('keeps planner and feed blocker/state copy on the same helpers', () => {
