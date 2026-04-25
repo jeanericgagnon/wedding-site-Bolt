@@ -47,6 +47,9 @@ describe('PlanningOverviewTab', () => {
     expect(screen.getByText(/If you want a concrete place to pick back up,/i)).toBeTruthy();
     expect(screen.getByText('Milestones ready to confirm')).toBeTruthy();
     expect(screen.getByText('No open reminders')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Milestones ready to confirm' }));
+    expect(onTabChange).toHaveBeenLastCalledWith('nameChange');
+    expect(replaceState).toHaveBeenLastCalledWith(null, '', '/#name-change-roadmap');
     expect(screen.getByText(/reminder.*actionable now/i)).toBeTruthy();
     expect(screen.getByText(/blocked milestone/i)).toBeTruthy();
     expect(screen.getByText(/downstream categor/i)).toBeTruthy();

@@ -271,12 +271,26 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
                     </p>
                   ) : null}
                   <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-text-secondary">
-                    <span className="rounded-full bg-white px-2 py-1 text-text-secondary shadow-sm">
+                    <button
+                      type="button"
+                      className="rounded-full bg-white px-2 py-1 text-text-secondary shadow-sm"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        routeToNameChangeLane(nameChangeCard.primaryHref, onTabChange);
+                      }}
+                    >
                       {nameChangeInsights.milestoneSummaryLabel}
-                    </span>
-                    <span className="rounded-full bg-white px-2 py-1 text-text-secondary shadow-sm">
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded-full bg-white px-2 py-1 text-text-secondary shadow-sm"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        routeToNameChangeLane(nameChangeCard.primaryHref, onTabChange);
+                      }}
+                    >
                       {nameChangeInsights.reminderSummaryLabel}
-                    </span>
+                    </button>
                   </div>
                   <p className="mt-2 text-xs text-text-secondary">
                     {taxPayrollLabel}: <span className="font-medium text-text-primary">{taxPayrollStatus}</span>
