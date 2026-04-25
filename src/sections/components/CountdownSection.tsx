@@ -17,6 +17,12 @@ interface TimeLeft {
   seconds: number;
 }
 
+function getCountdownTarget(dateISO: string | undefined): number | null {
+  if (!dateISO) return null;
+  const target = new Date(dateISO.includes('T') ? dateISO : dateISO + 'T12:00:00').getTime();
+  return Number.isNaN(target) ? null : target;
+}
+
 function getCountdownDisplayName(couple: WeddingDataV1['couple']): string {
   return couple.displayName
     || buildCoupleDisplayName(couple.partner1Name, couple.partner2Name)
@@ -24,8 +30,8 @@ function getCountdownDisplayName(couple: WeddingDataV1['couple']): string {
 }
 
 function getTimeLeft(dateISO: string | undefined): TimeLeft | null {
-  if (!dateISO) return null;
-  const target = new Date(dateISO.includes('T') ? dateISO : dateISO + 'T12:00:00').getTime();
+  const target = getCountdownTarget(dateISO);
+  if (target === null) return null;
   const now = Date.now();
   const diff = target - now;
   if (diff <= 0) return null;
@@ -40,6 +46,7 @@ function getTimeLeft(dateISO: string | undefined): TimeLeft | null {
 export const CountdownSection: React.FC<Props> = ({ data, instance }) => {
   const { settings } = instance;
   const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(() => getTimeLeft(data.event.weddingDateISO));
+  const countdownTarget = getCountdownTarget(data.event.weddingDateISO);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -85,7 +92,7 @@ export const CountdownSection: React.FC<Props> = ({ data, instance }) => {
               </React.Fragment>
             ))}
           </div>
-        ) : data.event.weddingDateISO ? (
+        ) : countdownTarget !== null ? (
           <div className="py-8">
             <p className="text-2xl font-light text-primary">Today is the day!</p>
             <p className="text-text-secondary mt-2">Wishing {displayName} a beautiful wedding</p>

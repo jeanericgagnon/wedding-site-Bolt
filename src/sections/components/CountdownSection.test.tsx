@@ -64,4 +64,19 @@ describe('CountdownSection', () => {
     expect(screen.getByText('Alex')).toBeInTheDocument();
     expect(screen.queryByText(/&/)).not.toBeInTheDocument();
   });
+
+  it('falls back cleanly when the persisted wedding date is invalid', () => {
+    const data = createEmptyWeddingData();
+    data.event.weddingDateISO = 'not-a-date';
+
+    render(
+      <CountdownSection
+        data={data}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(screen.getByText('Set your wedding date to show the countdown here.')).toBeInTheDocument();
+    expect(screen.queryByText('NaN')).not.toBeInTheDocument();
+  });
 });
