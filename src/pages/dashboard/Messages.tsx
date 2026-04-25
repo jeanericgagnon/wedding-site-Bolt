@@ -17,6 +17,7 @@ import { buildEventReminderDraft } from '../../lib/eventReminderHelper';
 import { formatMessageEventOptionLabel } from './messageEventDate';
 import { formatMessageHistoryDate, formatMessageHistoryDateTime, getMessageHistoryTimestamp } from './messageHistoryTime';
 import { formatScheduledMessageDateTime, parseScheduleInputToIso, toScheduleInputValue } from './messageScheduleTime';
+import { getMessageTemplateCoupleLabel } from './messageTemplateVariables';
 
 const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bulk-message`;
 const DEMO_MESSAGES_STORAGE_KEY = 'dayof.demo.messages.history';
@@ -1459,7 +1460,7 @@ export const DashboardMessages: React.FC = () => {
   }, []);
 
   const applyTemplateVariables = (text: string) => {
-    const couple = [weddingSite?.couple_first_name, weddingSite?.couple_second_name].filter(Boolean).join(' & ') || 'our wedding';
+    const couple = getMessageTemplateCoupleLabel(weddingSite?.couple_first_name, weddingSite?.couple_second_name);
     const rsvpLink = `${window.location.origin}/rsvp`;
 
     let photoLink = `${window.location.origin}/photos/upload`;
