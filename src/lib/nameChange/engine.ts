@@ -38,6 +38,17 @@ export function normalizeAccountUpdateChecklistItems(items: string[]) {
   });
 }
 
+export function formatAccountUpdateChecklistGuidanceLine(checklistHighlight: string, checklistStatusNote: string) {
+  const normalizeChecklistSnippet = (value: string) => value.trim().replace(/[.\s]+$/u, '');
+  const ensureTerminalPeriod = (value: string) => {
+    const trimmed = value.trim();
+    if (normalizeChecklistSnippet(trimmed) === '') return '';
+    return trimmed.endsWith('.') ? trimmed : `${trimmed}.`;
+  };
+
+  return [ensureTerminalPeriod(checklistHighlight), ensureTerminalPeriod(checklistStatusNote)].filter(Boolean).join(' ');
+}
+
 function compactTemplateBody(body: string) {
   return body.replace(/\s{2,}/gu, ' ').trim();
 }
@@ -490,6 +501,7 @@ function buildAccountUpdateTemplates(
   const normalizeChecklistSnippet = (value: string) => value.trim().replace(/[.\s]+$/u, '');
   const ensureTerminalPeriod = (value: string) => {
     const trimmed = value.trim();
+    if (normalizeChecklistSnippet(trimmed) === '') return '';
     return trimmed.endsWith('.') ? trimmed : `${trimmed}.`;
   };
   const joinChecklistSnippets = (items: string[]) => {
@@ -982,7 +994,7 @@ function buildAccountUpdateTemplates(
     const proofChecklistLine = proofChecklistWithStatus.length > 0
       ? `Proof checklist I am tracking: ${joinChecklistSnippets(proofChecklistWithStatus)}`
       : '';
-    const checklistGuidanceLine = `${checklistHighlight} ${proofChecklistStatusNote}`;
+    const checklistGuidanceLine = formatAccountUpdateChecklistGuidanceLine(checklistHighlight, proofChecklistStatusNote);
 
     return {
       id: template.id,

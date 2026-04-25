@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildNameChangePlan,
   evaluateCaliforniaNameChangeEligibility,
+  formatAccountUpdateChecklistGuidanceLine,
   normalizeAccountUpdateChecklistItems,
   formatAccountUpdateProofLine,
   normalizeAccountUpdateProofItems,
@@ -85,6 +86,13 @@ describe('name change engine', () => {
       'Certified legal name-change proof',
       'Wait to send until SSA is the next cleared proof hop.',
     ]);
+  });
+
+  it('omits punctuation-only checklist guidance snippets when formatting engine template copy', () => {
+    expect(formatAccountUpdateChecklistGuidanceLine(' . ', '.')).toBe('');
+    expect(formatAccountUpdateChecklistGuidanceLine('Use this to learn the payroll intake path while SSA alignment is still upstream.', ' . ')).toBe(
+      'Use this to learn the payroll intake path while SSA alignment is still upstream.',
+    );
   });
 
   it('keeps straightforward california marriage surname updates on marriage path', () => {
