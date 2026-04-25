@@ -2022,6 +2022,24 @@ describe('name change action feed', () => {
     expect(feed[0]?.urgencyReason).toBe('review_queue');
   });
 
+  it('keeps deferred downstream urgency softened when execution detail is already labeled', () => {
+    const snapshot = makeExecutionSnapshot({
+      targetKey: 'banks',
+      targetLabel: 'Banks',
+      nextAction: {
+        category: 'dependency',
+        label: 'Unblock DMV completion',
+        detail: 'Wait for the DMV update before submitting bank changes. Do now: Gather account numbers, policy details, and contact routes now. Why it helps: That handoff moves faster once DMV completion clears. Can wait: Actual submission can safely wait.',
+      },
+      recommendedFormCode: 'BANK',
+    });
+
+    const feed = buildNameChangeActionFeed([snapshot], [], []);
+
+    expect(feed[0]?.action.detail).toBe(snapshot.nextAction.detail);
+    expect(feed[0]?.urgencyReason).toBe('review_queue');
+  });
+
   it('falls back to generic blocker text when the blocker label is blank whitespace', () => {
     const feed = buildNameChangeActionFeed(
       [makeExecutionSnapshot({ targetKey: 'banks', targetLabel: 'Banks', recommendedFormCode: 'BANK' })],

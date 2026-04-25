@@ -2674,6 +2674,7 @@ describe('name change target execution snapshot', () => {
       whyItHelps: 'That handoff moves faster once DMV completion clears.',
       canWait: 'Actual submission can safely wait.',
     });
+    expect(hasExecutionSupportiveWaitGuidance(snapshot)).toBe(true);
     expect(getExecutionNextActionDetail(snapshot)).toBe(snapshot.nextAction.detail);
   });
 

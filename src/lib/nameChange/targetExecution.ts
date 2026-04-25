@@ -118,7 +118,13 @@ function getSupportiveExecutionWaitGuidance(snapshot: Pick<NameChangeTargetExecu
 export function hasExecutionSupportiveWaitGuidance(
   snapshot: Pick<NameChangeTargetExecutionSnapshot, 'targetKey' | 'nextAction'>,
 ) {
-  return Boolean(getSupportiveExecutionWaitGuidance(snapshot));
+  const parsedGuidance = parseExecutionNextActionGuidance(snapshot.nextAction.detail);
+  return Boolean(
+    parsedGuidance.doNow
+    || parsedGuidance.whyItHelps
+    || parsedGuidance.canWait
+    || getSupportiveExecutionWaitGuidance(snapshot),
+  );
 }
 
 function parseExecutionNextActionGuidance(detail: string) {
