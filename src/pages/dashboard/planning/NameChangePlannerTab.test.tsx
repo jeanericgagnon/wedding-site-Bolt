@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { NameChangePlannerTab } from './NameChangePlannerTab';
 import { defaultNameChangeCaseInput } from './nameChangeService';
 import { buildNameChangePlan } from '../../../lib/nameChange/engine';
@@ -523,6 +523,46 @@ describe('NameChangePlannerTab', () => {
     expect(bankRequestSummary).toBeTruthy();
     expect(screen.getByText(`Next ask: ${payrollRequestSummary}`)).toBeInTheDocument();
     expect(screen.getByText(`Next ask: ${bankRequestSummary}`)).toBeInTheDocument();
+  });
+
+  it('copies the full readiness-aware template text from the planner card', async () => {
+    const clipboardWriteText = vi.fn().mockResolvedValue(undefined);
+    HTMLElement.prototype.scrollIntoView = vi.fn();
+    Object.defineProperty(window.navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: clipboardWriteText },
+    });
+
+    const draft = makeDraft();
+    const plan = buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] });
+    const payrollTemplate = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll');
+
+    render(
+      <NameChangePlannerTab
+        draft={draft}
+        documents={[]}
+        extractedFields={[]}
+        plan={plan}
+        reminders={[]}
+        saving={false}
+        onDraftChange={vi.fn()}
+        onStructuredIntakeChange={vi.fn()}
+        onDocumentsChange={vi.fn()}
+        onExtractedFieldsChange={vi.fn()}
+        onRemindersChange={vi.fn()}
+        onStepExecutionStatusChange={vi.fn()}
+        onStepExecutionNoteChange={vi.fn()}
+        onSave={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Copy text' })[0]!);
+
+    await waitFor(() => expect(clipboardWriteText).toHaveBeenCalledTimes(1));
+    expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Subject: ${payrollTemplate?.subject}`));
+    expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Next ask: ${payrollTemplate?.requestSummary}`));
+    expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(payrollTemplate?.body ?? ''));
+    expect(screen.getByRole('button', { name: 'Copied' })).toBeInTheDocument();
   });
 
   it('surfaces the most recently touched target first in the status vault list', () => {

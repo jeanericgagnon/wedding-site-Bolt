@@ -160,6 +160,19 @@ function getActionFeedCtaLabel(intent: 'open_execution_card' | 'open_document_re
   return 'Open execution card';
 }
 
+function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
+  return [
+    `Audience: ${template.audience}`,
+    `Subject: ${template.subject}`,
+    `Status: ${template.readiness.replace('_', ' ')}`,
+    `Readiness: ${template.readinessLabel}`,
+    `Next ask: ${template.requestSummary}`,
+    `Proof to have handy: ${template.proofChecklist.join(' · ')}`,
+    '',
+    template.body,
+  ].join('\n');
+}
+
 function getReminderCtaLabel(intent?: 'open_execution_card') {
   return intent === 'open_execution_card' ? 'Open linked execution' : 'Open linked step';
 }
@@ -554,6 +567,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     }
   });
   const [documentSnapshotDrafts, setDocumentSnapshotDrafts] = useState<Record<string, string>>({});
+  const [copiedTemplateId, setCopiedTemplateId] = useState<string | null>(null);
   const stepCounts = useMemo(() => ({
     ready: plan.steps.filter((step) => step.status === 'ready').length,
     blocked: plan.steps.filter((step) => step.status === 'blocked').length,
@@ -1096,6 +1110,16 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     });
   }, [documents]);
 
+  const copyAccountUpdateTemplate = async (template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) => {
+    if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) return;
+
+    await navigator.clipboard.writeText(formatAccountUpdateTemplateCopy(template));
+    setCopiedTemplateId(template.id);
+    window.setTimeout(() => {
+      setCopiedTemplateId((current) => (current === template.id ? null : current));
+    }, 2000);
+  };
+
   return (
     <div id="name-change-roadmap" className="space-y-6 scroll-mt-24">
       <div className="grid gap-4 md:grid-cols-3">
@@ -1456,9 +1480,14 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                     <p className="text-xs uppercase tracking-wide text-text-tertiary">{template.audience}</p>
                     <p className="mt-2 text-sm font-semibold text-text-primary">{template.subject}</p>
                   </div>
-                  <span className={`rounded-full px-2 py-1 text-xs ${getExecutionSummaryTone(template.readiness)}`}>
-                    {template.readiness.replace('_', ' ')}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`rounded-full px-2 py-1 text-xs ${getExecutionSummaryTone(template.readiness)}`}>
+                      {template.readiness.replace('_', ' ')}
+                    </span>
+                    <Button size="sm" variant="outline" onClick={() => void copyAccountUpdateTemplate(template)}>
+                      {copiedTemplateId === template.id ? 'Copied' : 'Copy text'}
+                    </Button>
+                  </div>
                 </div>
                 <p className="mt-2 text-xs text-text-secondary">{template.readinessLabel}</p>
                 <p className="mt-2 text-xs text-text-secondary">Next ask: {template.requestSummary}</p>
