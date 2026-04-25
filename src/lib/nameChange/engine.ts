@@ -279,16 +279,25 @@ function buildDualPartnerProofSteps(legalProofReady: boolean): NameChangePlanSte
   ];
 }
 
-function resolveInstitutionCoverageStatus(stepIds: string[], steps: NameChangePlanStep[]): 'ready' | 'blocked' | 'upcoming' | 'in_progress' | 'complete' {
+function resolvePlanSequenceStatus(stepIds: string[], steps: NameChangePlanStep[]): 'ready' | 'blocked' | 'upcoming' | 'in_progress' | 'complete' {
   const matchingSteps = stepIds
     .map((stepId) => steps.find((step) => step.id === stepId))
     .filter((step): step is NameChangePlanStep => Boolean(step));
 
   if (matchingSteps.length === 0) return 'upcoming';
   if (matchingSteps.every((step) => step.executionStatus === 'complete')) return 'complete';
-  if (matchingSteps.some((step) => step.executionStatus === 'in_progress' || step.executionStatus === 'complete')) return 'in_progress';
-  if (matchingSteps.some((step) => step.status === 'ready')) return 'ready';
-  if (matchingSteps.every((step) => step.status === 'blocked')) return 'blocked';
+
+  const firstIncompleteIndex = matchingSteps.findIndex((step) => step.executionStatus !== 'complete');
+  const firstIncomplete = matchingSteps[firstIncompleteIndex];
+  const priorSteps = matchingSteps.slice(0, firstIncompleteIndex);
+  const activeDependencyIsCurrentTarget = firstIncompleteIndex === matchingSteps.length - 1;
+
+  if (priorSteps.some((step) => step.executionStatus === 'in_progress')) return 'in_progress';
+  if (priorSteps.some((step) => step.status === 'blocked')) return 'blocked';
+  if (firstIncomplete?.status === 'blocked') return 'blocked';
+  if (firstIncomplete?.executionStatus === 'in_progress') return 'in_progress';
+  if (!activeDependencyIsCurrentTarget) return 'upcoming';
+  if (priorSteps.every((step) => step.executionStatus === 'complete') && firstIncomplete?.status === 'ready') return 'ready';
   return 'upcoming';
 }
 
@@ -402,7 +411,7 @@ function buildInstitutionCategoryCoverage(
     return {
       id: config.id,
       label: config.label,
-      status: resolveInstitutionCoverageStatus(dependsOnStepIds, steps),
+      status: resolvePlanSequenceStatus(dependsOnStepIds, steps),
       summary: `${categoryInstitutions.length} targets queued · ${labelSummary}`,
       targetCount: categoryInstitutions.length,
       dependsOnStepIds,
@@ -515,7 +524,7 @@ function buildAccountUpdateTemplates(
   ] as const;
 
   return templateConfig.map((template) => {
-    const readiness = resolveInstitutionCoverageStatus(template.dependsOnStepIds, steps);
+    const readiness = resolvePlanSequenceStatus(template.dependsOnStepIds, steps);
     const readinessLabel = readiness === 'ready'
       ? 'You have enough upstream proof to send this now.'
       : readiness === 'in_progress'
@@ -763,25 +772,25 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
     {
       id: 'milestone-legal-proof',
       label: 'Certified legal proof is grounded and reviewed',
-      status: legalProofReady ? 'ready' : 'blocked',
+      status: resolvePlanSequenceStatus(['eligibility-proof'], steps),
       dependsOnStepIds: ['eligibility-proof'],
     },
     {
       id: 'milestone-ssa',
       label: 'Social Security update is ready to file',
-      status: legalProofReady ? 'ready' : 'blocked',
+      status: resolvePlanSequenceStatus(['federal-ssa'], steps),
       dependsOnStepIds: ['eligibility-proof', 'federal-ssa'],
     },
     {
       id: 'milestone-photo-id',
       label: 'Primary photo ID can move right after SSA',
-      status: legalProofReady ? 'upcoming' : 'blocked',
+      status: resolvePlanSequenceStatus(['federal-ssa', 'state-dmv'], steps),
       dependsOnStepIds: ['federal-ssa', 'state-dmv'],
     },
     {
       id: 'milestone-account-rollout',
       label: 'Banks, payroll, insurance, and subscriptions can be updated from one packet',
-      status: legalProofReady ? 'upcoming' : 'blocked',
+      status: resolvePlanSequenceStatus(['state-dmv', 'institutions-rollout'], steps),
       dependsOnStepIds: ['state-dmv', 'institutions-rollout'],
     },
   ] as const;
@@ -798,21 +807,26 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
       {
         id: 'dual-partner-ssa-proof',
         label: 'SSA proof for both partners',
-        status: legalProofReady ? 'ready' as const : 'blocked' as const,
+        status: resolvePlanSequenceStatus(['dual-partner-ssa-partner-a-proof', 'dual-partner-ssa-partner-b-proof'], steps),
         dependsOnStepIds: ['dual-partner-ssa-partner-a-proof', 'dual-partner-ssa-partner-b-proof'],
         requiredProof: ['Partner A SSA confirmation', 'Partner B SSA confirmation'],
       },
       {
         id: 'dual-partner-dmv-proof',
         label: 'Photo ID proof for both partners',
-        status: legalProofReady ? 'upcoming' as const : 'blocked' as const,
+        status: resolvePlanSequenceStatus(['dual-partner-ssa-partner-a-proof', 'dual-partner-ssa-partner-b-proof', 'dual-partner-dmv-partner-a-proof', 'dual-partner-dmv-partner-b-proof'], steps),
         dependsOnStepIds: ['dual-partner-dmv-partner-a-proof', 'dual-partner-dmv-partner-b-proof'],
         requiredProof: ['Partner A updated photo ID', 'Partner B updated photo ID'],
       },
       {
         id: 'dual-partner-rollout-proof',
         label: 'Downstream account proof for both partners',
-        status: legalProofReady ? 'upcoming' as const : 'blocked' as const,
+        status: resolvePlanSequenceStatus([
+          'dual-partner-dmv-partner-a-proof',
+          'dual-partner-dmv-partner-b-proof',
+          'dual-partner-rollout-partner-a-proof',
+          'dual-partner-rollout-partner-b-proof',
+        ], steps),
         dependsOnStepIds: ['dual-partner-rollout-partner-a-proof', 'dual-partner-rollout-partner-b-proof'],
         requiredProof: ['Partner A account confirmations', 'Partner B account confirmations', 'mailed-notice or portal proof where available'],
       },

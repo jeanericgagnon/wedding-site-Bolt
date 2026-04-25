@@ -118,6 +118,8 @@ describe('name change engine', () => {
     expect(plan.summary.milestoneChecklist).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'milestone-legal-proof', status: 'ready', dependsOnStepIds: ['eligibility-proof'] }),
+        expect.objectContaining({ id: 'milestone-ssa', status: 'ready', dependsOnStepIds: ['eligibility-proof', 'federal-ssa'] }),
+        expect.objectContaining({ id: 'milestone-photo-id', status: 'upcoming' }),
         expect.objectContaining({ id: 'milestone-account-rollout', status: 'upcoming' }),
       ]),
     );
@@ -126,14 +128,14 @@ describe('name change engine', () => {
         expect.objectContaining({
           audience: 'Employer payroll / HR',
           subject: 'Name change update for payroll and benefits',
-          readiness: 'ready',
+          readiness: 'upcoming',
           dependsOnStepIds: expect.arrayContaining(['federal-ssa', 'institution-irs-employer']),
           proofChecklist: expect.arrayContaining(['Certified legal name-change proof', 'Updated Social Security record or SSA receipt']),
         }),
         expect.objectContaining({ audience: 'Bank or credit card support', proofChecklist: expect.arrayContaining(['Updated photo ID or DMV receipt']) }),
         expect.objectContaining({ audience: 'Insurance or subscription support' }),
         expect.objectContaining({ audience: 'Tax agency or payroll tax support', dependsOnStepIds: expect.arrayContaining(['institution-state-tax-agency']) }),
-        expect.objectContaining({ audience: 'Airline, hotel, loyalty, or travel support', readiness: 'ready' }),
+        expect.objectContaining({ audience: 'Airline, hotel, loyalty, or travel support', readiness: 'upcoming' }),
         expect.objectContaining({ audience: 'Phone, utilities, housing, or primary digital identity support', dependsOnStepIds: expect.arrayContaining(['institution-utilities-housing']) }),
         expect.objectContaining({ audience: 'Licensing board or credentialing support', dependsOnStepIds: ['state-photo-id', 'institution-professional-licenses'] }),
       ]),
@@ -142,11 +144,11 @@ describe('name change engine', () => {
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.body).toContain('Alex Marie Jordan');
     expect(plan.summary.institutionCategoryCoverage).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ id: 'legal_government', institutionKeys: expect.arrayContaining(['uscis-immigration-records', 'irs-records', 'state-tax-agency', 'county-recorder-property']) }),
-        expect.objectContaining({ id: 'financial', institutionKeys: expect.arrayContaining(['banks', 'investments-loans', 'student-loans-financial-aid', 'mortgage-property-records', 'credit-bureaus']) }),
-        expect.objectContaining({ id: 'work_insurance', institutionKeys: expect.arrayContaining(['irs-employer', 'retirement-benefits', 'insurance', 'workers-comp-leave']) }),
-        expect.objectContaining({ id: 'personal_lifestyle', institutionKeys: expect.arrayContaining(['phone-digital-identity', 'school-alumni-records', 'subscriptions-social']) }),
-        expect.objectContaining({ id: 'travel_mobility', institutionKeys: expect.arrayContaining(['tsa-precheck', 'travel-hospitality', 'dmv-registration-title', 'frequent-flyer-hotel-rail']) }),
+        expect.objectContaining({ id: 'legal_government', status: 'upcoming', institutionKeys: expect.arrayContaining(['uscis-immigration-records', 'irs-records', 'state-tax-agency', 'county-recorder-property']) }),
+        expect.objectContaining({ id: 'financial', status: 'upcoming', institutionKeys: expect.arrayContaining(['banks', 'investments-loans', 'student-loans-financial-aid', 'mortgage-property-records', 'credit-bureaus']) }),
+        expect.objectContaining({ id: 'work_insurance', status: 'upcoming', institutionKeys: expect.arrayContaining(['irs-employer', 'retirement-benefits', 'insurance', 'workers-comp-leave']) }),
+        expect.objectContaining({ id: 'personal_lifestyle', status: 'upcoming', institutionKeys: expect.arrayContaining(['phone-digital-identity', 'school-alumni-records', 'subscriptions-social']) }),
+        expect.objectContaining({ id: 'travel_mobility', status: 'upcoming', institutionKeys: expect.arrayContaining(['tsa-precheck', 'travel-hospitality', 'dmv-registration-title', 'frequent-flyer-hotel-rail']) }),
       ]),
     );
   });
