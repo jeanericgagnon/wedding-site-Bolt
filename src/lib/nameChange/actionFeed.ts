@@ -4,6 +4,7 @@ import {
   getAccountUpdateTemplateAudienceLine as getEngineAccountUpdateTemplateAudienceLine,
   getAccountUpdateTemplateReadinessActionLabel,
   getAccountUpdateTemplateStatusLabel as getEngineAccountUpdateTemplateStatusLabel,
+  getAccountUpdateTemplateStatusLine as getEngineAccountUpdateTemplateStatusLine,
   getFallbackBlockingProofHopLabel,
 } from './engine';
 import type { NameChangeGuidedAction, NameChangePlan, NameChangeReminderAttentionItem, NameChangeTargetExecutionSnapshot } from './types';
@@ -174,7 +175,7 @@ export function getAccountUpdateTemplateReadinessDetailLine(baseDetail: string, 
 }
 
 export function getAccountUpdateTemplateAudienceLine(template: AccountUpdateTemplate) {
-  return getEngineAccountUpdateTemplateAudienceLine(template.audience).replace(/\.$/, '');
+  return getEngineAccountUpdateTemplateAudienceLine(template.audience, { terminalPeriod: false });
 }
 
 export function getAccountUpdateTemplateSubjectLine(template: AccountUpdateTemplate) {
@@ -310,7 +311,7 @@ export function getAccountUpdateTemplateStatusLabel(template: AccountUpdateTempl
 }
 
 export function getAccountUpdateTemplateStatusLine(template: AccountUpdateTemplate) {
-  return `Status: ${getAccountUpdateTemplateStatusLabel(template)}`;
+  return getEngineAccountUpdateTemplateStatusLine(template.readiness, template.blockingProofHopLabel, { terminalPeriod: false });
 }
 
 function getTemplateLaneLabel(template: AccountUpdateTemplate) {

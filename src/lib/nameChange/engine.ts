@@ -530,9 +530,13 @@ export function getAccountUpdateTemplateReadinessSubjectPrefix(
           : 'Ask intake rules now';
 }
 
-export function getAccountUpdateTemplateAudienceLine(audience: string) {
+export function getAccountUpdateTemplateAudienceLine(
+  audience: string,
+  options?: { terminalPeriod?: boolean },
+) {
   const trimmedAudience = audience.trim();
-  return trimmedAudience ? `Audience: ${trimmedAudience}.` : '';
+  if (!trimmedAudience) return '';
+  return options?.terminalPeriod === false ? `Audience: ${trimmedAudience}` : `Audience: ${trimmedAudience}.`;
 }
 
 export function getAccountUpdateTemplateStatusLabel(
@@ -549,6 +553,15 @@ export function getAccountUpdateTemplateStatusLabel(
       : fallbackBlockingProofHopLabel
         ? `${actionLabel} · ${fallbackBlockingProofHopLabel}`
         : actionLabel;
+}
+
+export function getAccountUpdateTemplateStatusLine(
+  readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+  blockingProofHopLabel?: string,
+  options?: { terminalPeriod?: boolean },
+) {
+  const statusLabel = getAccountUpdateTemplateStatusLabel(readiness, blockingProofHopLabel);
+  return options?.terminalPeriod === false ? `Status: ${statusLabel}` : `Status: ${statusLabel}.`;
 }
 
 export function getAccountUpdateTemplateReadinessIntroLine(
@@ -630,7 +643,7 @@ function buildAccountUpdateTemplates(
   const getStatusLine = (
     readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
     blockingProofHopLabel?: string,
-  ) => `Status: ${getAccountUpdateTemplateStatusLabel(readiness, blockingProofHopLabel)}.`;
+  ) => getAccountUpdateTemplateStatusLine(readiness, blockingProofHopLabel);
   const getAudienceLine = (audience: string) => getAccountUpdateTemplateAudienceLine(audience);
   const getReadinessRequestLine = (
     templateId: string,

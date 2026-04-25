@@ -8,6 +8,7 @@ import {
   getAccountUpdateTemplateReadinessIntroLine,
   getAccountUpdateTemplateReadinessSubjectPrefix,
   getAccountUpdateTemplateStatusLabel,
+  getAccountUpdateTemplateStatusLine,
   getDefaultAccountUpdateBlockingProofHopLabel,
   getFallbackBlockingProofHopLabel,
   normalizeAccountUpdateChecklistItems,
@@ -141,13 +142,16 @@ describe('name change engine', () => {
     expect(getAccountUpdateTemplateReadinessIntroLine('blocked', 'legal proof pending')).toBe('I am only collecting the intake rules for now until the proof chain is ready (legal proof pending).');
   });
 
-  it('shares template audience and status labels across generated bodies and planner surfaces', () => {
+  it('shares template audience and status lines across generated bodies and planner surfaces', () => {
     expect(getAccountUpdateTemplateAudienceLine('Bank accounts')).toBe('Audience: Bank accounts.');
+    expect(getAccountUpdateTemplateAudienceLine('Bank accounts', { terminalPeriod: false })).toBe('Audience: Bank accounts');
     expect(getAccountUpdateTemplateAudienceLine('   ')).toBe('');
     expect(getAccountUpdateTemplateStatusLabel('ready')).toBe('send now (proof packet ready)');
     expect(getAccountUpdateTemplateStatusLabel('complete')).toBe('confirm sync (proof chain complete)');
     expect(getAccountUpdateTemplateStatusLabel('upcoming', 'SSA pending')).toBe('ask before next proof hop · SSA pending');
     expect(getAccountUpdateTemplateStatusLabel('blocked', 'legal proof pending')).toBe('ask intake rules now · legal proof pending');
+    expect(getAccountUpdateTemplateStatusLine('ready')).toBe('Status: send now (proof packet ready).');
+    expect(getAccountUpdateTemplateStatusLine('ready', undefined, { terminalPeriod: false })).toBe('Status: send now (proof packet ready)');
   });
 
   it('keeps straightforward california marriage surname updates on marriage path', () => {
