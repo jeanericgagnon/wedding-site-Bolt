@@ -1,6 +1,7 @@
 import { getNameChangeGuidedActionWeight } from './executionPrioritization';
 import type { NameChangeDocumentRepairQueueItem } from './documentRepairQueue';
 import {
+  getAccountUpdateTemplateActionLabel as getEngineAccountUpdateTemplateActionLabel,
   getAccountUpdateTemplateAudienceLine as getEngineAccountUpdateTemplateAudienceLine,
   getAccountUpdateTemplateStatusLabel as getEngineAccountUpdateTemplateStatusLabel,
   getAccountUpdateTemplateStatusLine as getEngineAccountUpdateTemplateStatusLine,
@@ -277,23 +278,12 @@ function formatTemplateAudienceForAction(audience: string) {
     .join('');
 }
 
-function getTemplateActionLabel(baseLabel: string, template: AccountUpdateTemplate) {
-  const audience = formatTemplateAudienceForAction(template.audience);
-  const blockingProofHopLabel = getEffectiveBlockingProofHopLabel(template);
-  const blockingProofHopSuffix = blockingProofHopLabel
-    ? ` (${blockingProofHopLabel})`
-    : template.readiness === 'in_progress'
-      ? ' (current proof pending)'
-      : template.readiness === 'upcoming'
-        ? ' (next proof hop pending)'
-        : template.readiness === 'blocked'
-          ? ' (proof chain pending)'
-          : '';
-  if (template.readiness === 'complete') return `Confirm ${audience} sync (proof chain complete)`;
-  if (template.readiness === 'ready') return `Send ${audience} update (proof packet ready)`;
-  if (template.readiness === 'in_progress') return `Draft ${audience} update${blockingProofHopSuffix}`;
-  if (template.readiness === 'upcoming') return `Ask ${audience} before next proof hop${blockingProofHopSuffix}`;
-  return `Ask ${audience} intake rules now${blockingProofHopSuffix}`;
+function getTemplateActionLabel(template: AccountUpdateTemplate) {
+  return getEngineAccountUpdateTemplateActionLabel(
+    template.readiness,
+    formatTemplateAudienceForAction(template.audience),
+    template.blockingProofHopLabel,
+  );
 }
 
 export function getAccountUpdateTemplateReadinessLabel(readiness: AccountUpdateTemplate['readiness']) {
@@ -555,7 +545,7 @@ export function buildNameChangeActionFeed(
       action: routesToTemplate
         ? {
             ...snapshot.nextAction,
-            label: getTemplateActionLabel(snapshot.nextAction.label, linkedTemplate),
+            label: getTemplateActionLabel(linkedTemplate),
             detail: getTemplateActionDetail(snapshot.nextAction.detail, linkedTemplate),
           }
         : snapshot.nextAction,

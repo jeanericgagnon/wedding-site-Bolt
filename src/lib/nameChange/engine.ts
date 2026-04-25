@@ -564,6 +564,30 @@ export function getAccountUpdateTemplateStatusLine(
   return options?.terminalPeriod === false ? `Status: ${statusLabel}` : `Status: ${statusLabel}.`;
 }
 
+export function getAccountUpdateTemplateActionLabel(
+  readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+  audience: string,
+  blockingProofHopLabel?: string,
+) {
+  const trimmedAudience = audience.trim();
+  const normalizedAudience = trimmedAudience ? trimmedAudience.charAt(0).toLowerCase() + trimmedAudience.slice(1) : 'account';
+  const fallbackBlockingProofHopLabel = getFallbackBlockingProofHopLabel(readiness, blockingProofHopLabel);
+  const blockingProofHopSuffix = fallbackBlockingProofHopLabel
+    ? ` (${fallbackBlockingProofHopLabel})`
+    : readiness === 'in_progress'
+      ? ' (current proof pending)'
+      : readiness === 'upcoming'
+        ? ' (next proof hop pending)'
+        : readiness === 'blocked'
+          ? ' (proof chain pending)'
+          : '';
+  if (readiness === 'complete') return `Confirm ${normalizedAudience} sync (proof chain complete)`;
+  if (readiness === 'ready') return `Send ${normalizedAudience} update (proof packet ready)`;
+  if (readiness === 'in_progress') return `Draft ${normalizedAudience} update${blockingProofHopSuffix}`;
+  if (readiness === 'upcoming') return `Ask ${normalizedAudience} before next proof hop${blockingProofHopSuffix}`;
+  return `Ask ${normalizedAudience} intake rules now${blockingProofHopSuffix}`;
+}
+
 export function getAccountUpdateTemplateReadinessIntroLine(
   readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
   blockingProofHopLabel?: string,

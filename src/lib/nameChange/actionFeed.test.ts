@@ -25,6 +25,7 @@ import {
   getAccountUpdateTemplateSubjectLine,
 } from './actionFeed';
 import {
+  getAccountUpdateTemplateActionLabel as getEngineAccountUpdateTemplateActionLabel,
   getAccountUpdateTemplateStatusLabel as getEngineAccountUpdateTemplateStatusLabel,
   getDefaultAccountUpdateBlockingProofHopLabel,
 } from './engine';
@@ -940,7 +941,9 @@ describe('name change action feed', () => {
       urgencyReason: 'blocking_dependency',
       urgencyTier: 'elevated',
     });
-    expect(feed[0]?.action.label).toBe('Ask employer payroll / HR before next proof hop (SSA pending)');
+    expect(feed[0]?.action.label).toBe(
+      getEngineAccountUpdateTemplateActionLabel('upcoming', 'employer payroll / HR', 'SSA pending'),
+    );
     expect(feed[0]?.action.detail).toContain('Template state: prep the ask now and wait for SSA pending to clear before sending.');
     expect(feed[0]?.action.detail).toContain('Prep this ask now, then send it only after SSA pending clears.');
     expect(feed[0]?.action.detail).toContain('Subject: Employer payroll / HR');
@@ -984,7 +987,9 @@ describe('name change action feed', () => {
       }),
     ]);
 
-    expect(feed[0]?.action.label).toBe('Send employer payroll / HR update (proof packet ready)');
+    expect(feed[0]?.action.label).toBe(
+      getEngineAccountUpdateTemplateActionLabel('ready', 'employer payroll / HR'),
+    );
   });
 
   it('uses blocking draft labels for in-progress template work that can be staged now', () => {
