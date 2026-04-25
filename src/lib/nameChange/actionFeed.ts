@@ -55,6 +55,11 @@ function getTemplateFocusTargetId(template: AccountUpdateTemplate | undefined) {
   return template ? `account-update-template-${template.id}` : 'account-update-templates';
 }
 
+function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemplate) {
+  const readinessChecklistItem = template.proofChecklist[template.proofChecklist.length - 1];
+  return [baseDetail, template.readinessLabel, readinessChecklistItem].filter(Boolean).join(' ').trim();
+}
+
 function getActionDocumentKind(item: NameChangeActionFeedItem) {
   return item.action.category === 'document' ? item.action.documentKind : undefined;
 }
@@ -241,7 +246,7 @@ export function buildNameChangeActionFeed(
       action: routesToTemplate
         ? {
             ...snapshot.nextAction,
-            detail: `${snapshot.nextAction.detail} ${linkedTemplate.readinessLabel}`.trim(),
+            detail: getTemplateActionDetail(snapshot.nextAction.detail, linkedTemplate),
           }
         : snapshot.nextAction,
     };

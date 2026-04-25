@@ -336,6 +336,10 @@ describe('name change action feed', () => {
         audience: 'Insurance carriers',
         readiness: 'blocked',
         readinessLabel: 'The legal-proof chain is still too early, so use this to learn the intake path now and wait to send documents until the upstream proof is real.',
+        proofChecklist: [
+          'Certified legal name-change proof',
+          'Hold policy changes for now and just gather the carrier evidence rules',
+        ],
       }),
     ]);
 
@@ -347,6 +351,7 @@ describe('name change action feed', () => {
         detail: expect.stringContaining('learn the intake path now'),
       }),
     });
+    expect(feed[0]?.action.detail).toContain('Hold policy changes for now and just gather the carrier evidence rules');
   });
 
   it('routes tax and voter follow-through into the tax template once proof is usable', () => {
@@ -447,6 +452,7 @@ describe('name change action feed', () => {
       focusTargetId: 'account-update-template-template-insurance',
       laneLabel: 'Insurance and medical · ready template',
     });
+    expect(feed[0]?.action.detail).toContain('Certified legal name-change proof');
   });
 
   it('routes utility follow-through into the blocked digital-identity template so intake rules are captured early', () => {
@@ -467,6 +473,10 @@ describe('name change action feed', () => {
         audience: 'Phone, utilities, housing, or primary digital identity support',
         readiness: 'blocked',
         readinessLabel: 'The proof chain is still upstream, so use this to gather verification rules first.',
+        proofChecklist: [
+          'Certified legal name-change proof',
+          'Hold identity changes for now and only gather verification rules',
+        ],
       }),
     ]);
 
@@ -478,6 +488,7 @@ describe('name change action feed', () => {
         detail: expect.stringContaining('gather verification rules first'),
       }),
     });
+    expect(feed[0]?.action.detail).toContain('Hold identity changes for now and only gather verification rules');
   });
 
   it('routes legal-name setup blockers to the planner case-setup section', () => {
