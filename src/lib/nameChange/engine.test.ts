@@ -218,9 +218,13 @@ describe('name change engine', () => {
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.blockingProofHopLabel).toBe('legal proof pending');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.subject).toBe('Ask intake rules now (legal proof pending): Name change update for payroll and benefits');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.requestSummary).toBe('Please just confirm the intake path and payroll timing for now so I can come back once the legal proof packet is grounded.');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-bank')?.requestSummary).toBe('Please just send the exact bank/card document rules and intake path for now so I can return once the legal proof packet is grounded.');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-bank')?.body).toContain('I need your exact document rules first and will send the legal proof packet once it is ready.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-digital-identity')?.blockingProofHopLabel).toBe('legal proof pending');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-digital-identity')?.body).toContain('Current blocker: legal proof pending.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-digital-identity')?.subject).toBe('Ask intake rules now (legal proof pending): Update my account holder name to match my legal records');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-licenses')?.requestSummary).toBe('Please just share the board submission rules for now so I can return once the legal proof packet is grounded.');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-licenses')?.body).toContain('I need the board submission rules first and will send the legal proof packet once it is ready.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.blockingProofHopLabel).toBe('legal proof pending');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.body).toContain('Current blocker: legal proof pending.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.subject).toBe('Ask intake rules now (legal proof pending): Please align my travel profile with my legal name change');

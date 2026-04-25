@@ -492,7 +492,7 @@ function buildAccountUpdateTemplates(
           in_progress: 'Please confirm the submission path now and whether you can start the rename while the updated ID or DMV proof is still landing.',
           complete: 'Please confirm cards, checks, statements, and my online profile already reflect the final legal name everywhere.',
           upcoming: 'Please confirm whether legal proof alone or an interim DMV receipt is enough to start, and whether cards or checks need a second pass later.',
-          blocked: 'Please just send the exact bank/card document rules and intake path for now so I do not trigger a rename with the wrong proof chain.',
+          blocked: 'Please just send the exact bank/card document rules and intake path for now so I can return once the legal proof packet is grounded.',
         })
       : templateId === 'template-insurance'
         ? getReadinessChecklistLine(readiness, {
@@ -531,7 +531,7 @@ function buildAccountUpdateTemplates(
                   in_progress: 'Please confirm the board submission path now so I can queue the record update and attach the updated ID or reissue receipt as soon as it clears.',
                   complete: 'Please confirm the board record, wallet card, renewal file, and public lookup already show the final legal name.',
                   upcoming: 'Please confirm the board-specific document rules now so I know whether the next ID/license hop is enough to start.',
-                  blocked: 'Please just share the board submission rules for now so I do not trigger public-record or renewal changes with the wrong proof.',
+                  blocked: 'Please just share the board submission rules for now so I can return once the legal proof packet is grounded.',
                 });
   const getProofReadinessSummary = (
     templateId: string,
@@ -780,7 +780,7 @@ function buildAccountUpdateTemplates(
             in_progress: 'My updated ID path is already moving, so I can draft this now and send the DMV/ID proof as soon as it lands.',
             complete: 'The bank rename should already be through the pipeline, so I mainly need confirmation that cards, statements, checks, and online banking all stayed aligned.',
             upcoming: 'My legal proof is ready, but the photo-ID update is still upstream, so I mainly need your exact submission requirements and whether an interim DMV receipt works.',
-            blocked: 'I am still waiting on the core legal-proof chain, so I need your exact document rules before I trigger the bank/card update.',
+            blocked: 'I am still waiting on the core legal-proof chain, so I need your exact document rules first and will send the legal proof packet once it is ready.',
           })
         : template.id === 'template-insurance'
           ? getReadinessChecklistLine(readiness, {
@@ -820,7 +820,7 @@ function buildAccountUpdateTemplates(
                       in_progress: 'The ID/license proof chain is already moving, so I can draft this now and attach the updated ID or receipt as soon as it clears.',
                       complete: 'The board-side rename should already be processing, so I mainly need confirmation that the license record, wallet card, and public lookup all show the final legal name.',
                       upcoming: 'My legal proof is ready, but the updated ID/license reissue path is still upstream, so I need the board-specific document rules first.',
-                      blocked: 'The proof chain is still upstream, so I need the board submission rules before I trigger public-record or renewal changes.',
+                      blocked: 'The proof chain is still upstream, so I need the board submission rules first and will send the legal proof packet once it is ready.',
                     })
                   : getReadinessChecklistLine(readiness, {
                       ready: 'I can send the current legal-proof packet now.',

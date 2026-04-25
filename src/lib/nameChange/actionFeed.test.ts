@@ -1145,6 +1145,47 @@ describe('name change action feed', () => {
     expect(feed[0]?.action.detail).toContain('Next ask: Please just confirm the tax/state process for now so I can return once the legal proof packet is grounded.');
   });
 
+  it('keeps blocked bank and license template next asks anchored to legal-proof readiness', () => {
+    const bankFeed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'banks',
+        targetLabel: 'Bank or credit card support',
+        recommendedFormCode: 'BANK',
+      }),
+    ], [], [], [
+      makeTemplate({
+        id: 'template-bank',
+        audience: 'Bank or credit card support',
+        readiness: 'blocked',
+        requestSummary: 'Please just send the exact bank/card document rules and intake path for now so I can return once the legal proof packet is grounded.',
+      }),
+    ]);
+    const licenseFeed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'licenses',
+        targetLabel: 'Licensing board or credentialing support',
+        recommendedFormCode: 'LICENSE',
+      }),
+    ], [], [], [
+      makeTemplate({
+        id: 'template-licenses',
+        audience: 'Licensing board or credentialing support',
+        readiness: 'blocked',
+        requestSummary: 'Please just share the board submission rules for now so I can return once the legal proof packet is grounded.',
+      }),
+    ]);
+
+    const bankTemplateItem = bankFeed.find((item) => item.plannerIntent === 'open_account_update_template');
+    const licenseTemplateItem = licenseFeed.find((item) => item.plannerIntent === 'open_account_update_template');
+
+    expect(bankTemplateItem?.laneLabel).toBe('Bank or credit card support · ask intake rules now · legal proof pending');
+    expect(bankTemplateItem?.action.label).toBe('Ask bank or credit card support intake rules now (legal proof pending)');
+    expect(bankTemplateItem?.action.detail).toContain('Next ask: Please just send the exact bank/card document rules and intake path for now so I can return once the legal proof packet is grounded.');
+    expect(licenseTemplateItem?.laneLabel).toBe('Licensing board or credentialing support · ask intake rules now · legal proof pending');
+    expect(licenseTemplateItem?.action.label).toBe('Ask licensing board or credentialing support intake rules now (legal proof pending)');
+    expect(licenseTemplateItem?.action.detail).toContain('Next ask: Please just share the board submission rules for now so I can return once the legal proof packet is grounded.');
+  });
+
   it('routes legal-name setup blockers to the planner case-setup section', () => {
     const feed = buildNameChangeActionFeed([
       makeExecutionSnapshot({
