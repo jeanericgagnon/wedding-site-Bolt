@@ -1144,6 +1144,10 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 </button>
               </p>
             ) : null}
+            <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-sky-900">
+              <span className="rounded-full border border-sky-300 bg-white px-2 py-1">{lifecycleInsights.milestoneSummaryLabel}</span>
+              <span className="rounded-full border border-sky-300 bg-white px-2 py-1">{lifecycleInsights.reminderSummaryLabel}</span>
+            </div>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button size="sm" onClick={() => scrollToPlannerHref(resumeCard.primaryHref)}>

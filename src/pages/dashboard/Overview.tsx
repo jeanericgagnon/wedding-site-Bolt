@@ -958,6 +958,10 @@ export const DashboardOverview: React.FC = () => {
                             </button>
                           </p>
                         ) : null}
+                        <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-sky-900">
+                          <span className="rounded-full border border-sky-300 bg-white px-2 py-1">{nameChangeInsights.milestoneSummaryLabel}</span>
+                          <span className="rounded-full border border-sky-300 bg-white px-2 py-1">{nameChangeInsights.reminderSummaryLabel}</span>
+                        </div>
                       </div>
                       <div className="rounded-xl border border-sky-200 bg-white px-4 py-3">
                         <p className="text-xs uppercase tracking-wide text-sky-700">{NAME_CHANGE_LIFECYCLE_LABELS.coreChain}</p>

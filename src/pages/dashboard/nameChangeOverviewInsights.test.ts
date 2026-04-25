@@ -30,6 +30,8 @@ describe('buildNameChangeOverviewInsights', () => {
     expect(insights.followOnLabel).toContain('Passport, payroll, and tax');
     expect(insights.downstreamLabel).toContain('long-tail rollout lane');
     expect(insights.concreteResumeLabel).toContain('Certified legal proof');
+    expect(insights.milestoneSummaryLabel).toBe('Milestones ready to confirm');
+    expect(insights.reminderSummaryLabel).toBe('No open reminders');
   });
 
   it('surfaces progress, milestone confirmations, and open reminders once the vault is active', () => {
@@ -63,5 +65,7 @@ describe('buildNameChangeOverviewInsights', () => {
     expect(insights.followOnLabel).toContain('1 milestone confirmed');
     expect(insights.downstreamLabel).toContain('1 reminder still open');
     expect(insights.concreteResumeLabel).toBeTruthy();
+    expect(insights.milestoneSummaryLabel).toBe('1 milestone confirmed');
+    expect(insights.reminderSummaryLabel).toBe('1 reminder open');
   });
 });

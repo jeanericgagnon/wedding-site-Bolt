@@ -5,6 +5,8 @@ export interface NameChangeOverviewInsights {
   followOnLabel: string;
   downstreamLabel: string;
   concreteResumeLabel: string | null;
+  milestoneSummaryLabel: string;
+  reminderSummaryLabel: string;
 }
 
 export function buildNameChangeOverviewInsights(workspace: Pick<HydratedNameChangeWorkspace, 'plan' | 'reminders'>): NameChangeOverviewInsights {
@@ -28,5 +30,13 @@ export function buildNameChangeOverviewInsights(workspace: Pick<HydratedNameChan
         ? `${openReminderCount} reminder${openReminderCount === 1 ? '' : 's'} still open for the long-tail bank, insurance, travel, and loyalty cleanup.`
         : 'Use the long-tail rollout lane for banks, insurance, travel, loyalty, and the rest of the account cleanup.',
     concreteResumeLabel: nextOpenMilestone?.label ?? null,
+    milestoneSummaryLabel:
+      milestoneCompleteCount > 0
+        ? `${milestoneCompleteCount} milestone${milestoneCompleteCount === 1 ? '' : 's'} confirmed`
+        : 'Milestones ready to confirm',
+    reminderSummaryLabel:
+      openReminderCount > 0
+        ? `${openReminderCount} reminder${openReminderCount === 1 ? '' : 's'} open`
+        : 'No open reminders',
   };
 }
