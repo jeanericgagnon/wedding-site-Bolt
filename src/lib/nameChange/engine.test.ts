@@ -3,6 +3,7 @@ import {
   buildNameChangePlan,
   evaluateCaliforniaNameChangeEligibility,
   formatAccountUpdateChecklistGuidanceLine,
+  getAccountUpdateTemplateReadinessActionLabel,
   getDefaultAccountUpdateBlockingProofHopLabel,
   getFallbackBlockingProofHopLabel,
   normalizeAccountUpdateChecklistItems,
@@ -113,6 +114,14 @@ describe('name change engine', () => {
     expect(getDefaultAccountUpdateBlockingProofHopLabel('template-travel', 'upcoming')).toBe('passport pending');
     expect(getDefaultAccountUpdateBlockingProofHopLabel('template-bank', 'blocked')).toBe('legal proof pending');
     expect(getDefaultAccountUpdateBlockingProofHopLabel('template-payroll', 'ready')).toBeUndefined();
+  });
+
+  it('shares the base readiness action labels across template surfaces', () => {
+    expect(getAccountUpdateTemplateReadinessActionLabel('ready')).toBe('send now');
+    expect(getAccountUpdateTemplateReadinessActionLabel('complete')).toBe('confirm sync');
+    expect(getAccountUpdateTemplateReadinessActionLabel('in_progress')).toBe('draft now, send after current proof clears');
+    expect(getAccountUpdateTemplateReadinessActionLabel('upcoming')).toBe('ask before next proof hop');
+    expect(getAccountUpdateTemplateReadinessActionLabel('blocked')).toBe('ask intake rules now');
   });
 
   it('keeps straightforward california marriage surname updates on marriage path', () => {

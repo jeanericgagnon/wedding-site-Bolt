@@ -1,6 +1,6 @@
 import { getNameChangeGuidedActionWeight } from './executionPrioritization';
 import type { NameChangeDocumentRepairQueueItem } from './documentRepairQueue';
-import { getFallbackBlockingProofHopLabel } from './engine';
+import { getAccountUpdateTemplateReadinessActionLabel, getFallbackBlockingProofHopLabel } from './engine';
 import type { NameChangeGuidedAction, NameChangePlan, NameChangeReminderAttentionItem, NameChangeTargetExecutionSnapshot } from './types';
 
 export interface NameChangeActionFeedItem {
@@ -231,15 +231,12 @@ function getTemplateActionLabel(baseLabel: string, template: AccountUpdateTempla
 }
 
 export function getAccountUpdateTemplateReadinessLabel(readiness: AccountUpdateTemplate['readiness']) {
+  const actionLabel = getAccountUpdateTemplateReadinessActionLabel(readiness);
   return readiness === 'ready'
-    ? 'send now (proof packet ready)'
+    ? `${actionLabel} (proof packet ready)`
     : readiness === 'complete'
-      ? 'confirm sync (proof chain complete)'
-      : readiness === 'in_progress'
-        ? 'draft now, send after current proof clears'
-        : readiness === 'upcoming'
-          ? 'ask before next proof hop'
-          : 'ask intake rules now';
+      ? `${actionLabel} (proof chain complete)`
+      : actionLabel;
 }
 
 function getTemplateLaneLabel(template: AccountUpdateTemplate) {

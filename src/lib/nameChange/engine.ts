@@ -502,6 +502,20 @@ export function getDefaultAccountUpdateBlockingProofHopLabel(
   return undefined;
 }
 
+export function getAccountUpdateTemplateReadinessActionLabel(
+  readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+) {
+  return readiness === 'ready'
+    ? 'send now'
+    : readiness === 'complete'
+      ? 'confirm sync'
+      : readiness === 'in_progress'
+        ? 'draft now, send after current proof clears'
+        : readiness === 'upcoming'
+          ? 'ask before next proof hop'
+          : 'ask intake rules now';
+}
+
 function buildAccountUpdateTemplates(
   input: NameChangeEngineInput,
   steps: NameChangePlanStep[],
@@ -553,16 +567,11 @@ function buildAccountUpdateTemplates(
     blockingProofHopLabel?: string,
   ) => {
     const fallbackBlockingProofHopLabel = getFallbackBlockingProofHopLabel(readiness, blockingProofHopLabel);
+    const readinessActionLabel = getAccountUpdateTemplateReadinessActionLabel(readiness);
+    const subjectPrefix = `${readinessActionLabel.charAt(0).toUpperCase()}${readinessActionLabel.slice(1)}`;
 
-    return readiness === 'complete'
-    ? `Confirm completed update: ${baseSubject}`
-    : readiness === 'ready'
-      ? `Send now: ${baseSubject}`
-      : readiness === 'in_progress'
-        ? `Draft now, send after current proof clears${fallbackBlockingProofHopLabel ? ` (${fallbackBlockingProofHopLabel})` : ''}: ${baseSubject}`
-        : readiness === 'upcoming'
-          ? `Ask before next proof hop${fallbackBlockingProofHopLabel ? ` (${fallbackBlockingProofHopLabel})` : ''}: ${baseSubject}`
-          : `Ask intake rules now${fallbackBlockingProofHopLabel ? ` (${fallbackBlockingProofHopLabel})` : ''}: ${baseSubject}`;
+    if (readiness === 'complete') return `Confirm completed update: ${baseSubject}`;
+    return `${subjectPrefix}${fallbackBlockingProofHopLabel ? ` (${fallbackBlockingProofHopLabel})` : ''}: ${baseSubject}`;
   };
   const getReadinessIntro = (
     readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
