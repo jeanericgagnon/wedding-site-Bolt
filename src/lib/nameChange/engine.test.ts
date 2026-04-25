@@ -146,6 +146,7 @@ describe('name change engine', () => {
     );
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.body).toContain('Alex Marie Rivera');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.body).toContain('Alex Marie Jordan');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.readinessLabel).toBe('Your legal proof is grounded, but this still depends on the next ID or agency hop before it is ready to send.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.body).toContain('My legal proof is in hand, but SSA/payroll alignment is still upstream');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-bank')?.body).toContain('whether an interim DMV receipt works');
     expect(plan.summary.institutionCategoryCoverage).toEqual(
@@ -174,7 +175,7 @@ describe('name change engine', () => {
     );
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')).toMatchObject({
       readiness: 'blocked',
-      readinessLabel: 'Hold this until the upstream proof chain is further along.',
+      readinessLabel: 'The legal-proof chain is still too early, so use this to learn the intake path now and wait to send documents until the upstream proof is real.',
       proofChecklist: expect.arrayContaining(['Certified legal name-change proof still needs review before most downstream updates will stick']),
     });
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('I need your process first and will send the SSA-backed packet once it is ready');
