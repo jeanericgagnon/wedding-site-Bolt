@@ -48,4 +48,20 @@ describe('CountdownSection', () => {
 
     expect(screen.getByText('Alex & Jordan')).toBeInTheDocument();
   });
+
+  it('keeps the countdown title truthful when one persisted partner name is whitespace only', () => {
+    const data = createEmptyWeddingData();
+    data.couple.partner1Name = '   ';
+    data.couple.partner2Name = ' Alex ';
+
+    render(
+      <CountdownSection
+        data={data}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(screen.getByText('Alex')).toBeInTheDocument();
+    expect(screen.queryByText(/&/)).not.toBeInTheDocument();
+  });
 });
