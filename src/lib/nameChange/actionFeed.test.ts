@@ -1,7 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import { buildNameChangeActionFeed } from './actionFeed';
 import type { NameChangeDocumentRepairQueueItem } from './documentRepairQueue';
+import type { NameChangePlan } from './types';
 import type { NameChangeReminderAttentionItem, NameChangeTargetExecutionSnapshot } from './types';
+
+function makeTemplate(overrides: Partial<NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]> = {}): NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number] {
+  return {
+    id: 'template-bank',
+    audience: 'Bank accounts',
+    subject: 'Name change update for banking profile',
+    body: 'I can provide certified legal proof.',
+    readiness: 'ready',
+    readinessLabel: 'The core proof chain is already complete, so this should be a clean confirmation/update pass.',
+    dependsOnStepIds: ['institution-banks'],
+    proofChecklist: ['Certified legal name-change proof'],
+    ...overrides,
+  };
+}
 
 function makeExecutionSnapshot(overrides: Partial<NameChangeTargetExecutionSnapshot> = {}): NameChangeTargetExecutionSnapshot {
   return {
@@ -263,6 +278,66 @@ describe('name change action feed', () => {
       origin: 'execution',
       plannerIntent: 'open_execution_card',
       focusTargetId: 'execution-card-dmv',
+    });
+  });
+
+  it('routes institutional execution work into the template section when copy-ready output is available', () => {
+    const feed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'banks',
+        targetLabel: 'Bank accounts',
+        recommendedFormCode: 'BANK',
+        nextAction: {
+          category: 'review',
+          label: 'Confirm bank update packet',
+          detail: 'Ready for final bank review.',
+        },
+        blockers: [],
+        ready: true,
+        readinessSummary: {
+          status: 'ready',
+          blockingFieldRisks: 0,
+          attentionFieldRisks: 0,
+          lowConfidenceFields: 0,
+          missingFields: 0,
+          documentRepairDebt: 0,
+          summaryLabel: 'Ready.',
+        },
+      }),
+    ], [], [], [
+      makeTemplate(),
+    ]);
+
+    expect(feed[0]).toMatchObject({
+      plannerIntent: 'open_account_update_template',
+      focusTargetId: 'account-update-templates',
+      laneLabel: 'Bank accounts · ready template',
+      action: expect.objectContaining({
+        detail: expect.stringContaining('clean confirmation/update pass'),
+      }),
+    });
+  });
+
+  it('keeps blocked institutional work on the execution card until the template proof chain is usable', () => {
+    const feed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'insurance',
+        targetLabel: 'Insurance carriers',
+        recommendedFormCode: 'INS',
+        nextAction: {
+          category: 'dependency',
+          label: 'Unblock insurance follow-through',
+          detail: 'Need legal proof first.',
+        },
+      }),
+    ], [], [], [
+      makeTemplate({ id: 'template-insurance', audience: 'Insurance carriers', readiness: 'blocked', readinessLabel: 'Hold this until the upstream proof chain is further along.' }),
+    ]);
+
+    expect(feed[0]).toMatchObject({
+      plannerIntent: 'open_execution_card',
+      focusTargetId: 'execution-card-insurance',
+      laneLabel: 'INS',
     });
   });
 

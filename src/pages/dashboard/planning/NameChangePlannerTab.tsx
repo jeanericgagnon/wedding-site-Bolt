@@ -154,8 +154,10 @@ function scrollToPlannerHref(href: string) {
   scrollToPlannerTarget(hash || 'name-change-roadmap');
 }
 
-function getActionFeedCtaLabel(intent: 'open_execution_card' | 'open_document_repair') {
-  return intent === 'open_execution_card' ? 'Open execution card' : 'Open document repair';
+function getActionFeedCtaLabel(intent: 'open_execution_card' | 'open_document_repair' | 'open_account_update_template') {
+  if (intent === 'open_document_repair') return 'Open document repair';
+  if (intent === 'open_account_update_template') return 'Open copy-ready template';
+  return 'Open execution card';
 }
 
 function getReminderCtaLabel(intent?: 'open_execution_card') {
@@ -650,8 +652,8 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   const reminderSummary = useMemo(() => summarizeNameChangeReminders(effectiveReminders), [effectiveReminders]);
   const reminderAttention = useMemo(() => deriveNameChangeReminderAttention(effectiveReminders, plan), [effectiveReminders, plan]);
   const actionFeed = useMemo(
-    () => buildNameChangeActionFeed(executionSnapshots, documentRepairQueue, reminderAttention),
-    [documentRepairQueue, executionSnapshots, reminderAttention],
+    () => buildNameChangeActionFeed(executionSnapshots, documentRepairQueue, reminderAttention, accountUpdateTemplates),
+    [accountUpdateTemplates, documentRepairQueue, executionSnapshots, reminderAttention],
   );
   const targetStatusVaultRows = useMemo<TargetStatusVaultRow[]>(() => executionSnapshots.map((snapshot) => {
     const targetReminders = effectiveReminders.filter((reminder) => reminder.focus_target_id === snapshot.targetKey && reminder.status !== 'dismissed');
@@ -1829,6 +1831,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
 
       <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
       <Card>
+        <div id="account-update-templates" className="scroll-mt-24" />
         <div className="flex items-start justify-between gap-3">
           <div>
             <h3 className="text-lg font-semibold text-text-primary">Guided action feed</h3>

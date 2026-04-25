@@ -1,6 +1,6 @@
 import { getNameChangeGuidedActionWeight } from './executionPrioritization';
 import type { NameChangeDocumentRepairQueueItem } from './documentRepairQueue';
-import type { NameChangeGuidedAction, NameChangeReminderAttentionItem, NameChangeTargetExecutionSnapshot } from './types';
+import type { NameChangeGuidedAction, NameChangePlan, NameChangeReminderAttentionItem, NameChangeTargetExecutionSnapshot } from './types';
 
 export interface NameChangeActionFeedItem {
   key: string;
@@ -12,9 +12,39 @@ export interface NameChangeActionFeedItem {
   urgencyTier: 'critical' | 'elevated' | 'normal';
   urgencyReason: 'blocking_dependency' | 'packet_trust' | 'document_gap' | 'review_queue';
   score: number;
-  plannerIntent: 'open_execution_card' | 'open_document_repair';
+  plannerIntent: 'open_execution_card' | 'open_document_repair' | 'open_account_update_template';
   focusTargetId: string;
   action: NameChangeGuidedAction;
+}
+
+type AccountUpdateTemplate = NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number];
+
+function getTemplateIdForTargetKey(targetKey: NameChangeTargetExecutionSnapshot['targetKey']) {
+  switch (targetKey) {
+    case 'employer':
+      return 'template-payroll';
+    case 'banks':
+      return 'template-bank';
+    case 'insurance':
+      return 'template-insurance';
+    case 'utilities':
+      return 'template-digital-identity';
+    case 'tsa':
+    case 'courtesy':
+      return 'template-travel';
+    case 'licenses':
+      return 'template-licenses';
+    default:
+      return null;
+  }
+}
+
+function getTemplateUrgencyBoost(template: AccountUpdateTemplate | undefined) {
+  if (!template) return 0;
+  if (template.readiness === 'ready' || template.readiness === 'complete') return 18;
+  if (template.readiness === 'in_progress') return 12;
+  if (template.readiness === 'upcoming') return 6;
+  return 0;
 }
 
 function getActionDocumentKind(item: NameChangeActionFeedItem) {
@@ -158,33 +188,54 @@ export function buildNameChangeActionFeed(
   executionSnapshots: NameChangeTargetExecutionSnapshot[],
   documentRepairQueue: NameChangeDocumentRepairQueueItem[],
   reminderAttention: NameChangeReminderAttentionItem[] = [],
+  accountUpdateTemplates: AccountUpdateTemplate[] = [],
 ): NameChangeActionFeedItem[] {
+  const templatesById = new Map(accountUpdateTemplates.map((template) => [template.id, template]));
   const executionItems: NameChangeActionFeedItem[] = executionSnapshots.map((snapshot) => {
     const severity = getExecutionSeverity(snapshot);
     const routesToDocumentRepair = snapshot.nextAction.category === 'document' && Boolean(snapshot.nextAction.documentKind);
     const routesToCaseSetup = isCaseSetupExecutionAction(snapshot.nextAction);
+    const linkedTemplate = (() => {
+      const templateId = getTemplateIdForTargetKey(snapshot.targetKey);
+      return templateId ? templatesById.get(templateId) : undefined;
+    })();
+    const routesToTemplate = !routesToDocumentRepair && !routesToCaseSetup && linkedTemplate && linkedTemplate.readiness !== 'blocked';
     const score =
       (getSeverityWeight(severity) * 100) +
       (snapshot.blockers.length * 10) +
       (snapshot.readinessSummary.blockingFieldRisks * 5) +
-      getNameChangeGuidedActionWeight(snapshot.nextAction.category);
+      getNameChangeGuidedActionWeight(snapshot.nextAction.category) +
+      getTemplateUrgencyBoost(linkedTemplate);
     return {
       key: `execution:${snapshot.targetKey}`,
       origin: 'execution',
       sectionKey: getExecutionSectionKey(snapshot.targetKey),
       title: snapshot.targetLabel,
-      laneLabel: snapshot.recommendedFormCode,
+      laneLabel: routesToTemplate
+        ? `${linkedTemplate.audience} · ${linkedTemplate.readiness.replace('_', ' ')} template`
+        : snapshot.recommendedFormCode,
       severity,
       urgencyTier: getActionFeedUrgencyTier(score, severity),
       urgencyReason: getActionFeedUrgencyReason(snapshot.nextAction, severity),
-      plannerIntent: routesToDocumentRepair ? 'open_document_repair' : 'open_execution_card',
+      plannerIntent: routesToDocumentRepair
+        ? 'open_document_repair'
+        : routesToTemplate
+          ? 'open_account_update_template'
+          : 'open_execution_card',
       focusTargetId: routesToDocumentRepair
         ? `document-${snapshot.nextAction.documentKind}`
         : routesToCaseSetup
           ? 'case-setup'
-          : `execution-card-${snapshot.targetKey}`,
+          : routesToTemplate
+            ? 'account-update-templates'
+            : `execution-card-${snapshot.targetKey}`,
       score,
-      action: snapshot.nextAction,
+      action: routesToTemplate
+        ? {
+            ...snapshot.nextAction,
+            detail: `${snapshot.nextAction.detail} ${linkedTemplate.readinessLabel}`.trim(),
+          }
+        : snapshot.nextAction,
     };
   });
 
