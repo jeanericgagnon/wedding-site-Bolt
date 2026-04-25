@@ -945,8 +945,8 @@ export const DashboardOverview: React.FC = () => {
                       <Button variant="outline" size="sm" onClick={() => navigate(nameChangeCard.secondaryHref)}>
                         {nameChangeCard.secondaryLabel}
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/planning?tab=nameChange')}>
-                        {nameChangeOverviewState.hasWorkspace ? 'Open full assistant' : 'Browse full assistant'}
+                      <Button variant="outline" size="sm" onClick={() => navigate(nameChangeCard.tertiaryHref)}>
+                        {nameChangeCard.tertiaryLabel}
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard/planning')}>
                         Open planning workspace instead
