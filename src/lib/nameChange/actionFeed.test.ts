@@ -312,6 +312,7 @@ describe('name change action feed', () => {
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-bank',
       laneLabel: 'Bank accounts · send now',
+      urgencyReason: 'packet_trust',
       action: expect.objectContaining({
         detail: expect.stringContaining('clean confirmation/update pass'),
       }),
@@ -347,6 +348,7 @@ describe('name change action feed', () => {
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-insurance',
       laneLabel: 'Insurance carriers · intake first',
+      urgencyReason: 'blocking_dependency',
       action: expect.objectContaining({
         detail: expect.stringContaining('learn the intake path now'),
       }),
@@ -411,6 +413,7 @@ describe('name change action feed', () => {
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-tax',
       laneLabel: 'Tax and state agencies · draft now',
+      urgencyReason: 'packet_trust',
       action: expect.objectContaining({ detail: expect.stringContaining('ready to draft') }),
     });
     expect(feed.find((item) => item.title === 'Voter registration')).toMatchObject({
@@ -484,6 +487,7 @@ describe('name change action feed', () => {
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-digital-identity',
       laneLabel: 'Phone, utilities, housing, or primary digital identity support · intake first',
+      urgencyReason: 'blocking_dependency',
       action: expect.objectContaining({
         detail: expect.stringContaining('gather verification rules first'),
       }),

@@ -130,7 +130,16 @@ function getActionFeedUrgencyTier(score: number, severity: NameChangeActionFeedI
   return 'normal';
 }
 
-function getActionFeedUrgencyReason(action: NameChangeGuidedAction, severity: NameChangeActionFeedItem['severity']): NameChangeActionFeedItem['urgencyReason'] {
+function getActionFeedUrgencyReason(
+  action: NameChangeGuidedAction,
+  severity: NameChangeActionFeedItem['severity'],
+  template?: AccountUpdateTemplate,
+): NameChangeActionFeedItem['urgencyReason'] {
+  if (template) {
+    if (template.readiness === 'blocked' || template.readiness === 'upcoming') return 'blocking_dependency';
+    return 'packet_trust';
+  }
+
   if (action.category === 'dependency' && severity === 'blocking') return 'blocking_dependency';
   if (action.category === 'packet') return 'packet_trust';
   if (action.category === 'document') return 'document_gap';
@@ -240,7 +249,7 @@ export function buildNameChangeActionFeed(
         : snapshot.recommendedFormCode,
       severity,
       urgencyTier: getActionFeedUrgencyTier(score, severity),
-      urgencyReason: getActionFeedUrgencyReason(snapshot.nextAction, severity),
+      urgencyReason: getActionFeedUrgencyReason(snapshot.nextAction, severity, linkedTemplate),
       plannerIntent: routesToDocumentRepair
         ? 'open_document_repair'
         : routesToTemplate
