@@ -588,6 +588,18 @@ export function getAccountUpdateTemplateActionLabel(
   return `Ask ${normalizedAudience} intake rules now${blockingProofHopSuffix}`;
 }
 
+export function getAccountUpdateTemplateCopyLabel(
+  readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+  copied = false,
+) {
+  if (copied) return 'Copied';
+  if (readiness === 'ready') return 'Copy proof-ready send text';
+  if (readiness === 'complete') return 'Copy proof-complete confirmation';
+  if (readiness === 'in_progress') return 'Copy staged draft';
+  if (readiness === 'upcoming') return 'Copy next-step draft';
+  return 'Copy intake script';
+}
+
 export function getAccountUpdateTemplateStateLine(
   readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
   blockingProofHopLabel?: string,

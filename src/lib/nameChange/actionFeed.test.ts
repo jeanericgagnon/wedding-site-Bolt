@@ -27,6 +27,7 @@ import {
 } from './actionFeed';
 import {
   getAccountUpdateTemplateActionLabel as getEngineAccountUpdateTemplateActionLabel,
+  getAccountUpdateTemplateCopyLabel as getEngineAccountUpdateTemplateCopyLabel,
   getAccountUpdateTemplateReadinessLabel as getEngineAccountUpdateTemplateReadinessLabel,
   getAccountUpdateTemplateStateLine as getEngineAccountUpdateTemplateStateLine,
   getAccountUpdateTemplateStatusLabel as getEngineAccountUpdateTemplateStatusLabel,
@@ -285,12 +286,24 @@ describe('account update template surface helpers', () => {
   });
 
   it('shares copy-button labels for readiness-aware template states', () => {
-    expect(getAccountUpdateTemplateCopyButtonLabel(makeTemplate({ readiness: 'ready' }), null)).toBe('Copy proof-ready send text');
-    expect(getAccountUpdateTemplateCopyButtonLabel(makeTemplate({ readiness: 'complete' }), null)).toBe('Copy proof-complete confirmation');
-    expect(getAccountUpdateTemplateCopyButtonLabel(makeTemplate({ readiness: 'in_progress' }), null)).toBe('Copy staged draft');
-    expect(getAccountUpdateTemplateCopyButtonLabel(makeTemplate({ readiness: 'upcoming' }), null)).toBe('Copy next-step draft');
-    expect(getAccountUpdateTemplateCopyButtonLabel(makeTemplate({ readiness: 'blocked' }), null)).toBe('Copy intake script');
-    expect(getAccountUpdateTemplateCopyButtonLabel(makeTemplate({ id: 'template-payroll' }), 'template-payroll')).toBe('Copied');
+    expect(getAccountUpdateTemplateCopyButtonLabel(makeTemplate({ readiness: 'ready' }), null)).toBe(
+      getEngineAccountUpdateTemplateCopyLabel('ready'),
+    );
+    expect(getAccountUpdateTemplateCopyButtonLabel(makeTemplate({ readiness: 'complete' }), null)).toBe(
+      getEngineAccountUpdateTemplateCopyLabel('complete'),
+    );
+    expect(getAccountUpdateTemplateCopyButtonLabel(makeTemplate({ readiness: 'in_progress' }), null)).toBe(
+      getEngineAccountUpdateTemplateCopyLabel('in_progress'),
+    );
+    expect(getAccountUpdateTemplateCopyButtonLabel(makeTemplate({ readiness: 'upcoming' }), null)).toBe(
+      getEngineAccountUpdateTemplateCopyLabel('upcoming'),
+    );
+    expect(getAccountUpdateTemplateCopyButtonLabel(makeTemplate({ readiness: 'blocked' }), null)).toBe(
+      getEngineAccountUpdateTemplateCopyLabel('blocked'),
+    );
+    expect(getAccountUpdateTemplateCopyButtonLabel(makeTemplate({ id: 'template-payroll' }), 'template-payroll')).toBe(
+      getEngineAccountUpdateTemplateCopyLabel('blocked', true),
+    );
   });
 
   it('keeps template state lines on the engine state helper', () => {
