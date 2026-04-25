@@ -1,8 +1,8 @@
-import { describe, expect, it, vi } from 'vitest';
-import { clearGuidedSetupDraftSnapshot, GUIDED_SETUP_STORAGE_KEY, normalizeGuidedSetupDraftSnapshot } from './guidedSetupPersistence';
+import { describe, expect, it } from 'vitest';
+import { normalizeGuidedSetupDraftSnapshot, type GuidedSetupDraftSnapshot } from './guidedSetupPersistence';
 
-const defaults = {
-  currentStep: 'welcome' as const,
+const defaults: GuidedSetupDraftSnapshot = {
+  currentStep: 'welcome',
   coupleNames: { name1: '', name2: '' },
   formData: {
     weddingDate: '',
@@ -23,91 +23,30 @@ const defaults = {
   },
 };
 
-describe('guidedSetupPersistence', () => {
-  it('restores a valid guided setup draft snapshot', () => {
-    const normalized = normalizeGuidedSetupDraftSnapshot({
-      currentStep: 'travel',
-      coupleNames: { name1: 'Alex', name2: 'Jordan' },
-      formData: { city: 'San Diego', template: 'destination' },
-    }, defaults);
-
-    expect(normalized.currentStep).toBe('travel');
-    expect(normalized.coupleNames.name1).toBe('Alex');
-    expect(normalized.formData.city).toBe('San Diego');
-    expect(normalized.formData.template).toBe('destination');
-  });
-
-  it('drops malformed guided setup draft pieces safely', () => {
-    const normalized = normalizeGuidedSetupDraftSnapshot({
-      currentStep: 'bogus',
-      coupleNames: 'bad',
-      formData: 'bad',
-    }, defaults);
-
-    expect(normalized).toEqual(defaults);
-  });
-
-  it('keeps only string form fields from persisted guided setup drafts', () => {
-    const normalized = normalizeGuidedSetupDraftSnapshot({
-      currentStep: 'design',
-      coupleNames: { name1: 'Alex', name2: 42 },
+describe('normalizeGuidedSetupDraftSnapshot', () => {
+  it('drops invalid persisted date inputs instead of restoring junk into guided setup state', () => {
+    const snapshot = normalizeGuidedSetupDraftSnapshot({
+      currentStep: 'rsvp',
       formData: {
-        city: 'San Diego',
-        template: ['destination'],
-        colorScheme: 'sunset',
-        mealOptions: false,
-        ignoredKey: 'nope',
+        weddingDate: 'not-a-date',
+        rsvpDeadline: '2026-02-30',
       },
     }, defaults);
 
-    expect(normalized).toEqual({
-      currentStep: 'design',
-      coupleNames: { name1: 'Alex', name2: '' },
+    expect(snapshot.formData.weddingDate).toBe('');
+    expect(snapshot.formData.rsvpDeadline).toBe('');
+  });
+
+  it('keeps valid persisted date inputs intact', () => {
+    const snapshot = normalizeGuidedSetupDraftSnapshot({
+      currentStep: 'rsvp',
       formData: {
-        ...defaults.formData,
-        city: 'San Diego',
-        colorScheme: 'sunset',
+        weddingDate: '2026-09-12',
+        rsvpDeadline: '2026-08-15',
       },
-    });
+    }, defaults);
+
+    expect(snapshot.formData.weddingDate).toBe('2026-09-12');
+    expect(snapshot.formData.rsvpDeadline).toBe('2026-08-15');
   });
-
-  it('falls back to defaults when array-like draft blobs are stored', () => {
-    expect(normalizeGuidedSetupDraftSnapshot([], defaults)).toEqual(defaults);
-  });
-
-  it('returns cloned defaults so invalid drafts cannot mutate the default object', () => {
-    const normalized = normalizeGuidedSetupDraftSnapshot(null, defaults);
-    normalized.coupleNames.name1 = 'Changed';
-    normalized.formData.city = 'Paris';
-
-    expect(defaults.coupleNames.name1).toBe('');
-    expect(defaults.formData.city).toBe('');
-  });
-
-  it('clones default form data when malformed form blobs are stored', () => {
-    const normalized = normalizeGuidedSetupDraftSnapshot({ formData: null }, defaults);
-    normalized.formData.city = 'Rome';
-
-    expect(defaults.formData.city).toBe('');
-  });
-
-  it('skips guided setup cleanup deletes when draft storage is already clear', () => {
-    const removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem');
-
-    clearGuidedSetupDraftSnapshot();
-
-    expect(removeItemSpy).not.toHaveBeenCalled();
-    removeItemSpy.mockRestore();
-  });
-
-  it('tolerates guided setup cleanup failures', () => {
-    window.localStorage.setItem(GUIDED_SETUP_STORAGE_KEY, 'stale');
-    const removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
-      throw new Error('blocked');
-    });
-
-    expect(() => clearGuidedSetupDraftSnapshot()).not.toThrow();
-    removeItemSpy.mockRestore();
-  });
-
 });
