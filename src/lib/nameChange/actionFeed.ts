@@ -61,6 +61,16 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
   return [baseDetail, template.readinessLabel, readinessChecklistItem].filter(Boolean).join(' ').trim();
 }
 
+function getTemplateLaneLabel(template: AccountUpdateTemplate) {
+  const readinessLabel = template.readiness === 'ready' || template.readiness === 'complete'
+    ? 'send now'
+    : template.readiness === 'in_progress'
+      ? 'draft now'
+      : 'intake first';
+
+  return `${template.audience} · ${readinessLabel}`;
+}
+
 function getActionDocumentKind(item: NameChangeActionFeedItem) {
   return item.action.category === 'document' ? item.action.documentKind : undefined;
 }
@@ -226,7 +236,7 @@ export function buildNameChangeActionFeed(
       sectionKey: getExecutionSectionKey(snapshot.targetKey),
       title: snapshot.targetLabel,
       laneLabel: routesToTemplate
-        ? `${linkedTemplate.audience} · ${linkedTemplate.readiness.replace('_', ' ')} template`
+        ? getTemplateLaneLabel(linkedTemplate)
         : snapshot.recommendedFormCode,
       severity,
       urgencyTier: getActionFeedUrgencyTier(score, severity),

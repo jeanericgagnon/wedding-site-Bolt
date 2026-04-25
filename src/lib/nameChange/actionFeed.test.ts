@@ -311,7 +311,7 @@ describe('name change action feed', () => {
     expect(feed[0]).toMatchObject({
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-bank',
-      laneLabel: 'Bank accounts · ready template',
+      laneLabel: 'Bank accounts · send now',
       action: expect.objectContaining({
         detail: expect.stringContaining('clean confirmation/update pass'),
       }),
@@ -346,7 +346,7 @@ describe('name change action feed', () => {
     expect(feed[0]).toMatchObject({
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-insurance',
-      laneLabel: 'Insurance carriers · blocked template',
+      laneLabel: 'Insurance carriers · intake first',
       action: expect.objectContaining({
         detail: expect.stringContaining('learn the intake path now'),
       }),
@@ -410,13 +410,13 @@ describe('name change action feed', () => {
     expect(feed.find((item) => item.title === 'Tax records')).toMatchObject({
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-tax',
-      laneLabel: 'Tax and state agencies · in progress template',
+      laneLabel: 'Tax and state agencies · draft now',
       action: expect.objectContaining({ detail: expect.stringContaining('ready to draft') }),
     });
     expect(feed.find((item) => item.title === 'Voter registration')).toMatchObject({
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-tax',
-      laneLabel: 'Tax and state agencies · in progress template',
+      laneLabel: 'Tax and state agencies · draft now',
     });
   });
 
@@ -450,7 +450,7 @@ describe('name change action feed', () => {
     expect(feed[0]).toMatchObject({
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-insurance',
-      laneLabel: 'Insurance and medical · ready template',
+      laneLabel: 'Insurance and medical · send now',
     });
     expect(feed[0]?.action.detail).toContain('Certified legal name-change proof');
   });
@@ -483,7 +483,7 @@ describe('name change action feed', () => {
     expect(feed[0]).toMatchObject({
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-digital-identity',
-      laneLabel: 'Phone, utilities, housing, or primary digital identity support · blocked template',
+      laneLabel: 'Phone, utilities, housing, or primary digital identity support · intake first',
       action: expect.objectContaining({
         detail: expect.stringContaining('gather verification rules first'),
       }),
@@ -549,7 +549,7 @@ describe('name change action feed', () => {
     expect(feed[0]).toMatchObject({
       title: 'Insurance carriers',
       plannerIntent: 'open_account_update_template',
-      laneLabel: 'Insurance carriers · blocked template',
+      laneLabel: 'Insurance carriers · intake first',
       urgencyTier: 'critical',
     });
     expect(feed[1]).toMatchObject({
