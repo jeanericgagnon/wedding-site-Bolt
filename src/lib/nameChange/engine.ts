@@ -590,6 +590,64 @@ function buildAccountUpdateTemplates(
                   upcoming: 'Do not send yet; legal proof is grounded, but the ID/license hop is still missing.',
                   blocked: 'Do not send yet; the legal proof chain still needs to clear before board-facing proof will hold.',
                 });
+  const getProofChecklistStatusNote = (
+    templateId: string,
+    readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+  ) => templateId === 'template-payroll'
+    ? getReadinessChecklistLine(readiness, {
+        ready: 'Attach the SSA receipt/confirmation now if payroll needs it.',
+        in_progress: 'Queue this now, then attach the SSA receipt/confirmation once it posts.',
+        complete: 'Use this to confirm payroll, benefits, and beneficiary records already match.',
+        upcoming: 'Wait to send until SSA is the next cleared proof hop.',
+        blocked: 'Gather the intake path only until legal proof and SSA work are real.',
+      })
+    : templateId === 'template-bank'
+      ? getReadinessChecklistLine(readiness, {
+          ready: 'Attach the updated photo ID or DMV receipt now if the bank requires it.',
+          in_progress: 'Queue this now, then attach the updated ID or DMV receipt once it lands.',
+          complete: 'Use this to confirm cards, checks, statements, and profile records already match.',
+          upcoming: 'Wait to send until the photo ID or DMV receipt is the next cleared proof hop.',
+          blocked: 'Gather the bank/card document rules only until legal proof is fully grounded.',
+        })
+      : templateId === 'template-insurance'
+        ? getReadinessChecklistLine(readiness, {
+            ready: 'Attach updated ID only if the carrier verification team asks for it now.',
+            in_progress: 'Queue this now, then attach updated ID once carrier verification proof clears.',
+            complete: 'Use this to confirm cards, billing, claims, and beneficiary records already match.',
+            upcoming: 'Wait to send until the carrier-safe ID proof hop clears.',
+            blocked: 'Gather the carrier evidence rules only until legal proof is fully grounded.',
+          })
+        : templateId === 'template-tax'
+          ? getReadinessChecklistLine(readiness, {
+              ready: 'Attach the SSA-backed confirmation path now so withholding and agency records can align.',
+              in_progress: 'Queue this now, then attach SSA-backed confirmation once the current proof step lands.',
+              complete: 'Use this to confirm payroll reporting, withholding, and agency records already match.',
+              upcoming: 'Wait to send until SSA is the next cleared proof hop.',
+              blocked: 'Gather the tax/state process only until legal proof and SSA work are real.',
+            })
+          : templateId === 'template-travel'
+            ? getReadinessChecklistLine(readiness, {
+                ready: 'Attach the passport-safe packet now and flag any live booking references.',
+                in_progress: 'Queue this now, then attach final passport-safe proof once it lands.',
+                complete: 'Use this to confirm traveler profiles, loyalty records, and live bookings already match.',
+                upcoming: 'Wait to send until passport-safe proof is the next cleared hop.',
+                blocked: 'Gather mismatch and booking rules only until the passport-safe proof chain is real.',
+              })
+            : templateId === 'template-digital-identity'
+              ? getReadinessChecklistLine(readiness, {
+                  ready: 'Attach updated ID only if the utility, phone, or housing flow asks for it now.',
+                  in_progress: 'Queue this now, then attach final ID evidence once the verification proof lands.',
+                  complete: 'Use this to confirm billing, housing, recovery, and caller-ID records already match.',
+                  upcoming: 'Wait to send until updated ID is the next cleared proof hop.',
+                  blocked: 'Gather verification rules only until legal proof is fully grounded.',
+                })
+              : getReadinessChecklistLine(readiness, {
+                  ready: 'Attach the updated ID or license reissue receipt now if the board requires it.',
+                  in_progress: 'Queue this now, then attach the updated ID or reissue receipt once it lands.',
+                  complete: 'Use this to confirm the board record, wallet card, and public lookup already match.',
+                  upcoming: 'Wait to send until the ID or license reissue hop clears.',
+                  blocked: 'Gather board submission rules only until legal proof is fully grounded.',
+                });
   const templateConfig = [
     {
       id: 'template-payroll',
@@ -812,9 +870,11 @@ function buildAccountUpdateTemplates(
                       complete: 'Confirm the final legal name is already showing across the account records you changed',
                     });
     const proofChecklist = [...template.proofChecklist, readinessSpecificChecklistItem];
-    const proofLine = `I can provide ${proofChecklist.join(', ')} ${readinessSpecificProof}`;
     const requestLine = getReadinessRequestLine(template.id, readiness);
     const proofReadinessSummary = getProofReadinessSummary(template.id, readiness);
+    const proofChecklistStatusNote = getProofChecklistStatusNote(template.id, readiness);
+    const proofChecklistWithStatus = [...proofChecklist, proofChecklistStatusNote];
+    const proofLine = `I can provide ${proofChecklistWithStatus.join(', ')} ${readinessSpecificProof}`;
 
     return {
       id: template.id,
@@ -826,7 +886,7 @@ function buildAccountUpdateTemplates(
       proofReadinessSummary,
       requestSummary: requestLine,
       dependsOnStepIds: [...template.dependsOnStepIds],
-      proofChecklist,
+      proofChecklist: proofChecklistWithStatus,
     };
   }).filter((template) => (hasPassport ? true : template.id !== 'template-travel' || needsPassport || template.readiness !== 'blocked'));
 }

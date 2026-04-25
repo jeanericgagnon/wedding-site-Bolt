@@ -500,6 +500,7 @@ describe('NameChangePlannerTab', () => {
     const payrollRequestSummary = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.requestSummary;
     const bankRequestSummary = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-bank')?.requestSummary;
     const payrollProofStatus = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.proofReadinessSummary;
+    const payrollProofChecklist = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.proofChecklist.join(' · ');
 
     render(
       <NameChangePlannerTab
@@ -525,6 +526,7 @@ describe('NameChangePlannerTab', () => {
     expect(screen.getByText(`Next ask: ${payrollRequestSummary}`)).toBeInTheDocument();
     expect(screen.getByText(`Next ask: ${bankRequestSummary}`)).toBeInTheDocument();
     expect(screen.getByText(`Proof status: ${payrollProofStatus}`)).toBeInTheDocument();
+    expect(screen.getByText(`Proof to have handy: ${payrollProofChecklist}`)).toBeInTheDocument();
   });
 
   it('copies the full readiness-aware template text from the planner card', async () => {
