@@ -553,7 +553,9 @@ function buildAccountUpdateTemplates(
   const getProofReadinessSummary = (
     templateId: string,
     readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
-  ) => templateId === 'template-payroll'
+    blockingProofHopLabel?: string,
+  ) => {
+    const summary = templateId === 'template-payroll'
     ? getReadinessChecklistLine(readiness, {
         ready: 'Send with certified legal proof plus the SSA receipt or confirmation now.',
         in_progress: 'Hold send until the SSA receipt posts, but prep payroll, benefits, and beneficiary routing now.',
@@ -608,6 +610,9 @@ function buildAccountUpdateTemplates(
                   upcoming: 'Do not send yet; legal proof is grounded, but the ID/license hop is still missing.',
                   blocked: 'Do not send yet; the legal proof chain still needs to clear before board-facing proof will hold.',
                 });
+    if (!blockingProofHopLabel || readiness === 'ready' || readiness === 'complete') return summary;
+    return `${summary} Blocking hop: ${blockingProofHopLabel}.`;
+  };
   const getProofChecklistStatusNote = (
     templateId: string,
     readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
@@ -908,7 +913,7 @@ function buildAccountUpdateTemplates(
     const proofDocuments = [...template.proofDocuments];
     const proofChecklist = [...proofDocuments, readinessSpecificChecklistItem];
     const requestLine = getReadinessRequestLine(template.id, readiness);
-    const proofReadinessSummary = getProofReadinessSummary(template.id, readiness);
+    const proofReadinessSummary = getProofReadinessSummary(template.id, readiness, blockingProofHopLabel);
     const proofChecklistStatusNote = getProofChecklistStatusNote(template.id, readiness);
     const readinessIntro = getReadinessIntro(readiness, blockingProofHopLabel);
     const blockingProofHopSentence = getBlockingProofHopSentence(blockingProofHopLabel);
