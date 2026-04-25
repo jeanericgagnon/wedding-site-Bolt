@@ -146,6 +146,8 @@ describe('name change engine', () => {
     );
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.body).toContain('Alex Marie Rivera');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.body).toContain('Alex Marie Jordan');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.body).toContain('My legal proof is in hand, but SSA/payroll alignment is still upstream');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-bank')?.body).toContain('whether an interim DMV receipt works');
     expect(plan.summary.institutionCategoryCoverage).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'legal_government', status: 'upcoming', institutionKeys: expect.arrayContaining(['uscis-immigration-records', 'irs-records', 'state-tax-agency', 'county-recorder-property']) }),
@@ -175,6 +177,7 @@ describe('name change engine', () => {
       readinessLabel: 'Hold this until the upstream proof chain is further along.',
       proofChecklist: expect.arrayContaining(['Certified legal name-change proof still needs review before most downstream updates will stick']),
     });
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.body).toContain('I need your process first and will send the SSA-backed packet once it is ready');
   });
 
   it('surfaces conditional middle-name gaps when middle-name truth is already in play', () => {
