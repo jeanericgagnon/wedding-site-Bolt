@@ -195,6 +195,24 @@ describe('name change reminder suggestions', () => {
       planner_intent: 'open_execution_card',
       focus_target_id: 'execution-card-legalGovernment',
     });
+    expect(inputs.find((reminder) => reminder.reminder_key === 'reminder-irs-employer')).toMatchObject({
+      depends_on_step_id: 'institution-irs-employer',
+      section_key: 'work-identity',
+      planner_intent: 'open_execution_card',
+      focus_target_id: 'execution-card-employer',
+    });
+    expect(inputs.find((reminder) => reminder.reminder_key === 'reminder-category-confirm-financial')).toMatchObject({
+      depends_on_step_id: 'institution-credit-bureaus',
+      section_key: 'institutional',
+      planner_intent: 'open_execution_card',
+      focus_target_id: 'execution-card-banks',
+    });
+    expect(inputs.find((reminder) => reminder.reminder_key === 'reminder-category-confirm-travel_mobility')).toMatchObject({
+      depends_on_step_id: 'institution-frequent-flyer-hotel-rail',
+      section_key: 'cleanup',
+      planner_intent: 'open_execution_card',
+      focus_target_id: 'execution-card-tsa',
+    });
     expect(inputs.find((reminder) => reminder.reminder_key === 'reminder-voter-registration')).toMatchObject({
       section_key: 'cleanup',
       planner_intent: 'open_execution_card',

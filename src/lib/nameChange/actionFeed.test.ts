@@ -1931,6 +1931,48 @@ describe('name change action feed', () => {
     expect(feed.find((item) => item.focusTargetId === 'execution-card-tsa')).toMatchObject({ sectionKey: 'cleanup' });
   });
 
+  it('routes granular institutional reminders to their owning execution cards', () => {
+    const feed = buildNameChangeActionFeed([], [], [
+      makeReminderAttention({
+        reminderKey: 'reminder-irs-employer',
+        label: 'Follow up on payroll records',
+        dependsOnStepId: 'institution-irs-employer',
+        dependentStepTitle: 'Payroll records',
+        plannerIntent: 'open_execution_card',
+        focusTargetId: 'execution-card-employer',
+      }),
+      makeReminderAttention({
+        reminderKey: 'reminder-financial-rollout',
+        label: 'Follow up on credit bureau updates',
+        dependsOnStepId: 'institution-credit-bureaus',
+        dependentStepTitle: 'Credit bureaus',
+        plannerIntent: 'open_execution_card',
+        focusTargetId: 'execution-card-banks',
+      }),
+      makeReminderAttention({
+        reminderKey: 'reminder-travel-rollout-granular',
+        label: 'Follow up on travel loyalty profiles',
+        dependsOnStepId: 'institution-frequent-flyer-hotel-rail',
+        dependentStepTitle: 'Travel loyalty profiles',
+        plannerIntent: 'open_execution_card',
+        focusTargetId: 'execution-card-tsa',
+      }),
+    ]);
+
+    expect(feed.find((item) => item.focusTargetId === 'execution-card-employer')).toMatchObject({
+      sectionKey: 'work-identity',
+      focusTargetId: 'execution-card-employer',
+    });
+    expect(feed.find((item) => item.focusTargetId === 'execution-card-banks')).toMatchObject({
+      sectionKey: 'institutional',
+      focusTargetId: 'execution-card-banks',
+    });
+    expect(feed.find((item) => item.focusTargetId === 'execution-card-tsa')).toMatchObject({
+      sectionKey: 'cleanup',
+      focusTargetId: 'execution-card-tsa',
+    });
+  });
+
   it('keeps critical reminder attention above lower-ranked ready execution work', () => {
     const feed = buildNameChangeActionFeed([
       makeExecutionSnapshot({

@@ -477,7 +477,10 @@ function getReminderSectionKey(dependsOnStepId: string): NameChangeActionFeedIte
 
   if (
     dependsOnStepId === 'institution-employer'
+    || dependsOnStepId === 'institution-irs-employer'
+    || dependsOnStepId === 'institution-retirement-benefits'
     || dependsOnStepId === 'institution-licenses'
+    || dependsOnStepId === 'institution-professional-licenses'
   ) {
     return 'work-identity';
   }
@@ -486,16 +489,31 @@ function getReminderSectionKey(dependsOnStepId: string): NameChangeActionFeedIte
     return 'institutional';
   }
 
-  if (dependsOnStepId === 'institution-voter-registration' || dependsOnStepId === 'institution-travel-hospitality') {
+  if (
+    dependsOnStepId === 'institution-voter-registration'
+    || dependsOnStepId === 'institution-travel-hospitality'
+    || dependsOnStepId === 'institution-dmv-registration-title'
+    || dependsOnStepId === 'institution-frequent-flyer-hotel-rail'
+  ) {
     return 'cleanup';
   }
 
   if (
     dependsOnStepId === 'institutions-rollout'
     || dependsOnStepId === 'institution-banks'
+    || dependsOnStepId === 'institution-investments-loans'
+    || dependsOnStepId === 'institution-student-loans-financial-aid'
+    || dependsOnStepId === 'institution-mortgage-property-records'
+    || dependsOnStepId === 'institution-credit-bureaus'
     || dependsOnStepId === 'institution-insurance'
+    || dependsOnStepId === 'institution-disability-insurance'
+    || dependsOnStepId === 'institution-workers-comp-leave'
     || dependsOnStepId === 'institution-medical-records'
     || dependsOnStepId === 'institution-utilities'
+    || dependsOnStepId === 'institution-utilities-housing'
+    || dependsOnStepId === 'institution-phone-digital-identity'
+    || dependsOnStepId === 'institution-subscriptions-social'
+    || dependsOnStepId === 'institution-school-alumni-records'
   ) {
     return 'institutional';
   }
@@ -517,6 +535,15 @@ function getReminderFocusTargetId(item: NameChangeReminderAttentionItem) {
   if (dependsOnStepId === 'federal-passport') return 'execution-card-passport';
   if (dependsOnStepId === 'institution-irs-records' || dependsOnStepId === 'institution-state-tax-agency') return 'execution-card-taxes';
   if (dependsOnStepId === 'institution-county-recorder-property' || dependsOnStepId === 'institution-uscis-immigration-records') return 'execution-card-legalGovernment';
+  if (dependsOnStepId === 'institution-employer' || dependsOnStepId === 'institution-irs-employer' || dependsOnStepId === 'institution-retirement-benefits') return 'execution-card-employer';
+  if (dependsOnStepId === 'institution-licenses' || dependsOnStepId === 'institution-professional-licenses') return 'execution-card-licenses';
+  if (dependsOnStepId === 'institution-voter-registration') return 'execution-card-voter';
+  if (dependsOnStepId === 'institution-travel-hospitality' || dependsOnStepId === 'institution-dmv-registration-title' || dependsOnStepId === 'institution-frequent-flyer-hotel-rail') return 'execution-card-tsa';
+  if (dependsOnStepId === 'institution-courtesy-notifications' || dependsOnStepId === 'institution-subscriptions-social' || dependsOnStepId === 'institution-school-alumni-records') return 'execution-card-courtesy';
+  if (dependsOnStepId === 'institution-banks' || dependsOnStepId === 'institution-investments-loans' || dependsOnStepId === 'institution-student-loans-financial-aid' || dependsOnStepId === 'institution-mortgage-property-records' || dependsOnStepId === 'institution-credit-bureaus' || dependsOnStepId === 'institutions-rollout') return 'execution-card-banks';
+  if (dependsOnStepId === 'institution-insurance' || dependsOnStepId === 'institution-disability-insurance' || dependsOnStepId === 'institution-workers-comp-leave') return 'execution-card-insurance';
+  if (dependsOnStepId === 'institution-medical-records') return 'execution-card-medical';
+  if (dependsOnStepId === 'institution-utilities' || dependsOnStepId === 'institution-utilities-housing' || dependsOnStepId === 'institution-phone-digital-identity') return 'execution-card-utilities';
   if (dependsOnStepId === 'institutions-rollout') return 'execution-card-banks';
   return 'reminder-attention';
 }

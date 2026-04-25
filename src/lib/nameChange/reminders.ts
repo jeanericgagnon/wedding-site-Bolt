@@ -335,13 +335,16 @@ function getReminderPlannerRoute(
 
   if (
     suggestion.dependsOnStepId === 'institution-employer'
+    || suggestion.dependsOnStepId === 'institution-irs-employer'
+    || suggestion.dependsOnStepId === 'institution-retirement-benefits'
     || suggestion.dependsOnStepId === 'institution-licenses'
+    || suggestion.dependsOnStepId === 'institution-professional-licenses'
   ) {
     return {
       sectionKey: 'work-identity',
       plannerIntent: 'open_execution_card',
       focusTargetId:
-        suggestion.dependsOnStepId === 'institution-licenses'
+        suggestion.dependsOnStepId === 'institution-licenses' || suggestion.dependsOnStepId === 'institution-professional-licenses'
           ? 'execution-card-licenses'
           : 'execution-card-employer',
     };
@@ -358,6 +361,8 @@ function getReminderPlannerRoute(
   if (
     suggestion.dependsOnStepId === 'institution-voter-registration'
     || suggestion.dependsOnStepId === 'institution-travel-hospitality'
+    || suggestion.dependsOnStepId === 'institution-dmv-registration-title'
+    || suggestion.dependsOnStepId === 'institution-frequent-flyer-hotel-rail'
   ) {
     return {
       sectionKey: 'cleanup',
@@ -372,21 +377,38 @@ function getReminderPlannerRoute(
   if (
     suggestion.dependsOnStepId === 'institutions-rollout'
     || suggestion.dependsOnStepId === 'institution-banks'
+    || suggestion.dependsOnStepId === 'institution-investments-loans'
+    || suggestion.dependsOnStepId === 'institution-student-loans-financial-aid'
+    || suggestion.dependsOnStepId === 'institution-mortgage-property-records'
+    || suggestion.dependsOnStepId === 'institution-credit-bureaus'
     || suggestion.dependsOnStepId === 'institution-insurance'
+    || suggestion.dependsOnStepId === 'institution-disability-insurance'
+    || suggestion.dependsOnStepId === 'institution-workers-comp-leave'
     || suggestion.dependsOnStepId === 'institution-medical-records'
     || suggestion.dependsOnStepId === 'institution-utilities'
+    || suggestion.dependsOnStepId === 'institution-utilities-housing'
+    || suggestion.dependsOnStepId === 'institution-phone-digital-identity'
+    || suggestion.dependsOnStepId === 'institution-subscriptions-social'
+    || suggestion.dependsOnStepId === 'institution-school-alumni-records'
   ) {
     return {
       sectionKey: 'institutional',
       plannerIntent: 'open_execution_card',
       focusTargetId:
         suggestion.dependsOnStepId === 'institution-insurance'
+          || suggestion.dependsOnStepId === 'institution-disability-insurance'
+          || suggestion.dependsOnStepId === 'institution-workers-comp-leave'
           ? 'execution-card-insurance'
           : suggestion.dependsOnStepId === 'institution-medical-records'
             ? 'execution-card-medical'
             : suggestion.dependsOnStepId === 'institution-utilities'
+              || suggestion.dependsOnStepId === 'institution-utilities-housing'
+              || suggestion.dependsOnStepId === 'institution-phone-digital-identity'
               ? 'execution-card-utilities'
-              : 'execution-card-banks',
+              : suggestion.dependsOnStepId === 'institution-subscriptions-social'
+                || suggestion.dependsOnStepId === 'institution-school-alumni-records'
+                ? 'execution-card-courtesy'
+                : 'execution-card-banks',
     };
   }
 
