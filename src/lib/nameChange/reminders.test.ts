@@ -348,6 +348,40 @@ describe('name change reminder suggestions', () => {
       dependsOnStepId: 'eligibility-proof',
       urgency: 'high',
       suggestedOffsetDays: 1,
+      sectionKey: 'cleanup',
+      plannerIntent: 'open_execution_card',
+      focusTargetId: 'case-setup',
+    });
+
+    expect(reminders.find((reminder) => reminder.id === 'reminder-mismatch-recovery')).toMatchObject({
+      label: 'Reset the legal-proof path before continuing downstream updates',
+      dependsOnStepId: 'eligibility-proof',
+      urgency: 'high',
+      suggestedOffsetDays: 1,
+      sectionKey: 'cleanup',
+      plannerIntent: 'open_execution_card',
+      focusTargetId: 'case-setup',
+    });
+  });
+
+  it('adds a separate-chain reminder when both partners are changing names', () => {
+    const reminders = buildNameChangeReminderSuggestions(buildNameChangePlan(makeInput({
+      legal_basis: 'marriage',
+      structured_intake: {
+        spouseLastName: 'Jordan',
+        bothPartnersChangeName: true,
+        wantsDocumentIntakeHelp: true,
+      },
+    })));
+
+    expect(reminders.find((reminder) => reminder.id === 'reminder-both-partners-changing')).toMatchObject({
+      label: 'Keep each partner on a separate name-change execution chain',
+      dependsOnStepId: 'eligibility-proof',
+      urgency: 'medium',
+      suggestedOffsetDays: 2,
+      sectionKey: 'cleanup',
+      plannerIntent: 'open_execution_card',
+      focusTargetId: 'case-setup',
     });
   });
 

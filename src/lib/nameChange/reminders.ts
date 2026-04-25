@@ -233,6 +233,28 @@ const CONTEXT_REMINDER_CONFIGS: NameChangeContextReminderConfig[] = [
     reason: 'If the requested target legal name falls outside the California marriage shortcut, confirm the right packet and sequence before filing.',
     includeWhen: (plan) => Boolean(plan.summary.edgeCaseGuidance?.some((item) => item.id === 'edge-marriage-name-mismatch')),
   },
+  {
+    id: 'reminder-mismatch-recovery',
+    label: 'Reset the legal-proof path before continuing downstream updates',
+    standardOffsetDays: 1,
+    expeditedOffsetDays: 0,
+    standardUrgency: 'high',
+    expeditedUrgency: 'high',
+    dependsOnStepId: 'eligibility-proof',
+    reason: 'When the target-name path no longer matches the marriage shortcut, pause SSA, DMV, passport, and account rollout until the court-order proof path is grounded.',
+    includeWhen: (plan) => Boolean(plan.summary.edgeCaseGuidance?.some((item) => item.id === 'edge-mismatch-recovery')),
+  },
+  {
+    id: 'reminder-both-partners-changing',
+    label: 'Keep each partner on a separate name-change execution chain',
+    standardOffsetDays: 2,
+    expeditedOffsetDays: 1,
+    standardUrgency: 'medium',
+    expeditedUrgency: 'high',
+    dependsOnStepId: 'eligibility-proof',
+    reason: 'If both partners are changing names, do not reuse reminders, confirmations, or proof assumptions across the two separate execution chains.',
+    includeWhen: (plan) => Boolean(plan.summary.edgeCaseGuidance?.some((item) => item.id === 'edge-both-partners-changing')),
+  },
 ];
 
 function raiseUrgency(
@@ -286,6 +308,18 @@ function getReminderPlannerRoute(
   suggestion: Pick<NameChangeReminderSuggestion, 'id' | 'dependsOnStepId'>,
 ): Pick<NameChangeReminderSuggestion, 'sectionKey' | 'plannerIntent' | 'focusTargetId'> {
   if (suggestion.id === 'reminder-case-legal-name-setup') {
+    return {
+      sectionKey: 'cleanup',
+      plannerIntent: 'open_execution_card',
+      focusTargetId: 'case-setup',
+    };
+  }
+
+  if (
+    suggestion.id === 'reminder-marriage-name-mismatch'
+    || suggestion.id === 'reminder-mismatch-recovery'
+    || suggestion.id === 'reminder-both-partners-changing'
+  ) {
     return {
       sectionKey: 'cleanup',
       plannerIntent: 'open_execution_card',
