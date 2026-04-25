@@ -15,6 +15,7 @@ describe('acceptCollaboratorInviteUtils', () => {
     expect(resolveInviteValidationState({ status: 'revoked' })).toBe('revoked');
     expect(resolveInviteValidationState({ status: 'accepted' })).toBe('accepted');
     expect(resolveInviteValidationState({ status: 'pending', expires_at: '2026-04-12T22:00:00.000Z' })).toBe('expired');
+    expect(resolveInviteValidationState({ status: 'pending', expires_at: 'not-a-date' })).toBe('expired');
     expect(resolveInviteValidationState({ status: 'pending', expires_at: '2026-04-14T22:00:00.000Z' })).toBe('valid');
     expect(resolveInviteValidationState({ status: 'mystery' })).toBe('invalid');
 

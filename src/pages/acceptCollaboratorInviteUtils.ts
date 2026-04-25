@@ -11,6 +11,7 @@ export function resolveInviteValidationState(invite: InviteRecord | null | undef
   if (invite.status === 'accepted') return 'accepted';
 
   const expiresAt = invite.expires_at ? new Date(invite.expires_at) : null;
+  if (expiresAt && Number.isNaN(expiresAt.getTime())) return 'expired';
   if (expiresAt && expiresAt.getTime() < Date.now()) return 'expired';
   if (invite.status !== 'pending') return 'invalid';
 
