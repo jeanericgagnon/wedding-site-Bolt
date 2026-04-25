@@ -14,6 +14,17 @@ import type {
   NameChangeReminderInput,
 } from './types';
 
+export function formatAccountUpdateProofLine(proofDocuments: string[], readinessSpecificProof: string) {
+  if (proofDocuments.length === 0) return '';
+  return readinessSpecificProof
+    ? `I can provide ${proofDocuments.join(', ')}. ${readinessSpecificProof}`
+    : `I can provide ${proofDocuments.join(', ')}.`;
+}
+
+function compactTemplateBody(body: string) {
+  return body.replace(/\s{2,}/gu, ' ').trim();
+}
+
 const INSTITUTION_CATEGORY_COVERAGE_CONFIG = [
   {
     id: 'legal_government',
@@ -950,9 +961,7 @@ function buildAccountUpdateTemplates(
     const blockingProofHopSentence = getBlockingProofHopSentence(readiness, blockingProofHopLabel);
     const proofChecklist = [...proofDocuments, checklistHighlight];
     const proofChecklistWithStatus = [...proofChecklist, proofChecklistStatusNote];
-    const proofLine = readinessSpecificProof
-      ? `I can provide ${proofDocuments.join(', ')}. ${readinessSpecificProof}`
-      : `I can provide ${proofDocuments.join(', ')}.`;
+    const proofLine = formatAccountUpdateProofLine(proofDocuments, readinessSpecificProof);
     const proofChecklistLine = `Proof checklist I am tracking: ${joinChecklistSnippets(proofChecklistWithStatus)}`;
     const checklistGuidanceLine = `${checklistHighlight} ${proofChecklistStatusNote}`;
 
@@ -960,7 +969,7 @@ function buildAccountUpdateTemplates(
       id: template.id,
       audience: template.audience,
       subject: getReadinessSubject(template.subject, readiness, blockingProofHopLabel),
-      body: template.buildBody(proofLine, readinessLabel, requestLine, readinessIntro, proofReadinessSummary, blockingProofHopSentence, checklistGuidanceLine, proofChecklistLine),
+      body: compactTemplateBody(template.buildBody(proofLine, readinessLabel, requestLine, readinessIntro, proofReadinessSummary, blockingProofHopSentence, checklistGuidanceLine, proofChecklistLine)),
       readiness,
       readinessLabel,
       proofReadinessSummary,

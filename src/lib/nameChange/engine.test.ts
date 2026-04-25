@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildNameChangePlan, evaluateCaliforniaNameChangeEligibility } from './engine';
+import { buildNameChangePlan, evaluateCaliforniaNameChangeEligibility, formatAccountUpdateProofLine } from './engine';
 import { NAME_CHANGE_EXECUTION_TARGETS } from './targets';
 import type { NameChangeEngineInput } from './types';
 
@@ -48,6 +48,17 @@ function makeInput(overrides: Partial<NameChangeEngineInput['profile']> = {}): N
 }
 
 describe('name change engine', () => {
+  it('omits empty proof-document lines from account-update template bodies', () => {
+    expect(formatAccountUpdateProofLine([], 'I am ready to send the current packet.')).toBe('');
+  });
+
+  it('keeps readiness-aware proof copy when account-update proof documents exist', () => {
+    expect(formatAccountUpdateProofLine(
+      ['Certified legal name-change proof', 'Updated photo ID or DMV receipt'],
+      'The updated ID is the current gating proof item.',
+    )).toBe('I can provide Certified legal name-change proof, Updated photo ID or DMV receipt. The updated ID is the current gating proof item.');
+  });
+
   it('keeps straightforward california marriage surname updates on marriage path', () => {
     const eligibility = evaluateCaliforniaNameChangeEligibility(makeInput());
     expect(eligibility.decision).toBe('approved_path');
