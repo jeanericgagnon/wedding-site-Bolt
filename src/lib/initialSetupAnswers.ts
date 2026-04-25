@@ -45,11 +45,22 @@ export const createEmptyInitialSetupAnswers = (): InitialSetupAnswers => ({
   optionalStory: '',
 });
 
+const normalizeInitialSetupDateInput = (value?: string): string => {
+  const trimmed = value?.trim() || '';
+  if (!trimmed) return '';
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return '';
+
+  const date = new Date(`${trimmed}T12:00:00Z`);
+  if (Number.isNaN(date.getTime())) return '';
+
+  return date.toISOString().slice(0, 10) === trimmed ? trimmed : '';
+};
+
 
 export const initialSetupAnswersToOnboardingFormShape = (answers: InitialSetupAnswers) => ({
   partnerNames: answers.names,
   partnerLabels: answers.labelPreference === 'bride-groom' ? 'groom|bride' : answers.labelPreference === 'bride-bride' ? 'bride|bride' : answers.labelPreference === 'groom-groom' ? 'groom|groom' : 'none|none',
-  weddingDate: answers.whenWhere.split(/\s+[—-]\s+/)[0] || '',
+  weddingDate: normalizeInitialSetupDateInput(answers.whenWhere.split(/\s+[—-]\s+/)[0]),
   venueLocation: answers.whenWhere.split(/\s+[—-]\s+/).slice(1).join(' — '),
   venueName: answers.venueNameOrTbd,
   theme: answers.style,
@@ -63,7 +74,7 @@ export const initialSetupAnswersToOnboardingFormShape = (answers: InitialSetupAn
   mealChoice: answers.mealChoice,
   registryIntent: answers.registryIntent,
   extraGuestNotes: '',
-  rsvpDeadline: answers.rsvpDeadline,
+  rsvpDeadline: normalizeInitialSetupDateInput(answers.rsvpDeadline),
   registryLink: '',
 });
 
