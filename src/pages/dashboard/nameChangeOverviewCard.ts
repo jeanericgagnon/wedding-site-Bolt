@@ -8,6 +8,8 @@ export interface NameChangeOverviewCardModel {
   secondaryLabel: string;
   tertiaryHref: string;
   tertiaryLabel: string;
+  plannerHref: string;
+  plannerLabel: string;
   optionalNextStep: string;
 }
 
@@ -29,6 +31,8 @@ export function buildNameChangeOverviewCardModel(input: {
       secondaryLabel: 'See roadmap first',
       tertiaryHref: `${base}#name-change-roadmap`,
       tertiaryLabel: 'Browse full assistant',
+      plannerHref: base,
+      plannerLabel: 'Open name change planner',
       optionalNextStep: 'Open case setup once, save the basics, and leave the rest for later if you are not ready to do the whole chain now.',
     };
   }
@@ -44,6 +48,8 @@ export function buildNameChangeOverviewCardModel(input: {
       secondaryLabel: 'See roadmap again',
       tertiaryHref: base,
       tertiaryLabel: 'Open full assistant',
+      plannerHref: base,
+      plannerLabel: 'Open name change planner',
       optionalNextStep: 'Nothing pushy here — just reopen the vault whenever you want a clean proof trail for the long-tail account cleanup.',
     };
   }
@@ -59,6 +65,8 @@ export function buildNameChangeOverviewCardModel(input: {
       secondaryLabel: 'Update case setup',
       tertiaryHref: base,
       tertiaryLabel: 'Open full assistant',
+      plannerHref: base,
+      plannerLabel: 'Open name change planner',
       optionalNextStep: 'Pick back up in the vault if you want progress and proof. If details changed, case setup is still one click away.',
     };
   }
@@ -73,6 +81,8 @@ export function buildNameChangeOverviewCardModel(input: {
     secondaryLabel: 'Update case setup',
     tertiaryHref: `${base}#name-change-roadmap`,
     tertiaryLabel: 'Browse full assistant',
+    plannerHref: base,
+    plannerLabel: 'Open name change planner',
     optionalNextStep: 'Skim the roadmap first if you just want the sequence. Jump into case setup only when you want to tighten the saved details.',
   };
 }

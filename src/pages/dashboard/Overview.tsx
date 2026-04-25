@@ -970,8 +970,8 @@ export const DashboardOverview: React.FC = () => {
                       <Button variant="outline" size="sm" onClick={() => navigate(nameChangeCard.tertiaryHref)}>
                         {nameChangeCard.tertiaryLabel}
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard/planning')}>
-                        Open planning workspace instead
+                      <Button variant="ghost" size="sm" onClick={() => navigate(nameChangeCard.plannerHref)}>
+                        {nameChangeCard.plannerLabel}
                       </Button>
                     </div>
                   </div>

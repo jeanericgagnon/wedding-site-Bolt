@@ -15,6 +15,8 @@ describe('buildNameChangeOverviewCardModel', () => {
     expect(model.statusLabel).toBe('Start free assistant');
     expect(model.tertiaryHref).toBe('/dashboard/planning?tab=nameChange#name-change-roadmap');
     expect(model.tertiaryLabel).toBe('Browse full assistant');
+    expect(model.plannerHref).toBe('/dashboard/planning?tab=nameChange');
+    expect(model.plannerLabel).toBe('Open name change planner');
   });
 
   it('resumes into the status vault once execution activity exists', () => {
@@ -28,6 +30,7 @@ describe('buildNameChangeOverviewCardModel', () => {
     expect(model.primaryHref).toBe('/dashboard/planning?tab=nameChange#target-status-tracking');
     expect(model.secondaryHref).toBe('/dashboard/planning?tab=nameChange#case-setup');
     expect(model.tertiaryLabel).toBe('Open full assistant');
+    expect(model.plannerHref).toBe('/dashboard/planning?tab=nameChange');
   });
 
   it('softens the card after the workflow is complete', () => {
