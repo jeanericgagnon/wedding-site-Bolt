@@ -198,6 +198,18 @@ describe('NameChangePlannerTab', () => {
       expect(screen.getByText('Optional next step: Pick back up in the vault if you want progress and proof. If details changed, case setup is still one click away.')).toBeInTheDocument();
       expect(screen.getByText('0 complete · 1 in progress across the legal identity chain.')).toBeInTheDocument();
 
+      fireEvent.click(
+        screen
+          .getByText((content) => content.includes('legal identity chain'))
+          .closest('button') as HTMLButtonElement,
+      );
+      expect(window.location.hash).toBe('#target-status-tracking');
+      fireEvent.click(
+        screen
+          .getByText((content) => content.includes('account cleanup'))
+          .closest('button') as HTMLButtonElement,
+      );
+      expect(window.location.hash).toBe('#name-change-roadmap');
       fireEvent.click(screen.getByRole('button', { name: 'Resume status vault' }));
       expect(window.location.hash).toBe('#target-status-tracking');
       fireEvent.click(screen.getByRole('button', { name: 'Update case setup' }));
@@ -205,7 +217,7 @@ describe('NameChangePlannerTab', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Open full assistant' }));
       expect(window.location.hash).toBe('#name-change-roadmap');
 
-      expect(scrollIntoView).toHaveBeenCalledTimes(3);
+      expect(scrollIntoView).toHaveBeenCalledTimes(5);
     } finally {
       HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
     }

@@ -975,18 +975,30 @@ export const DashboardOverview: React.FC = () => {
                           </button>
                         </div>
                       </div>
-                      <div className="rounded-xl border border-sky-200 bg-white px-4 py-3">
+                      <button
+                        type="button"
+                        className="rounded-xl border border-sky-200 bg-white px-4 py-3 text-left"
+                        onClick={() => navigate(nameChangeCard.primaryHref)}
+                      >
                         <p className="text-xs uppercase tracking-wide text-sky-700">{NAME_CHANGE_LIFECYCLE_LABELS.coreChain}</p>
                         <p className="mt-1 text-sm text-sky-950">{nameChangeInsights.coreChainLabel}</p>
-                      </div>
-                      <div className="rounded-xl border border-sky-200 bg-white px-4 py-3">
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded-xl border border-sky-200 bg-white px-4 py-3 text-left"
+                        onClick={() => navigate(nameChangeCard.primaryHref)}
+                      >
                         <p className="text-xs uppercase tracking-wide text-sky-700">{NAME_CHANGE_LIFECYCLE_LABELS.followOn}</p>
                         <p className="mt-1 text-sm text-sky-950">{nameChangeInsights.followOnLabel}</p>
-                      </div>
-                      <div className="rounded-xl border border-sky-200 bg-white px-4 py-3">
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded-xl border border-sky-200 bg-white px-4 py-3 text-left"
+                        onClick={() => navigate(nameChangeCard.tertiaryHref)}
+                      >
                         <p className="text-xs uppercase tracking-wide text-sky-700">{NAME_CHANGE_LIFECYCLE_LABELS.downstream}</p>
                         <p className="mt-1 text-sm text-sky-950">{nameChangeInsights.downstreamLabel}</p>
-                      </div>
+                      </button>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Button variant="accent" size="sm" onClick={() => navigate(nameChangeCard.primaryHref)}>

@@ -1175,18 +1175,30 @@ export const NameChangePlannerTab: React.FC<Props> = ({
           </div>
         </div>
         <div className="mt-4 grid gap-3 md:grid-cols-3">
-          <div className="rounded-xl border border-sky-200 bg-white/80 px-4 py-3">
+          <button
+            type="button"
+            className="rounded-xl border border-sky-200 bg-white/80 px-4 py-3 text-left"
+            onClick={() => scrollToPlannerHref(resumeCard.primaryHref)}
+          >
             <p className="text-xs uppercase tracking-wide text-sky-700">{NAME_CHANGE_LIFECYCLE_LABELS.coreChain}</p>
             <p className="mt-1 text-sm text-sky-950">{lifecycleInsights.coreChainLabel}</p>
-          </div>
-          <div className="rounded-xl border border-sky-200 bg-white/80 px-4 py-3">
+          </button>
+          <button
+            type="button"
+            className="rounded-xl border border-sky-200 bg-white/80 px-4 py-3 text-left"
+            onClick={() => scrollToPlannerHref(resumeCard.primaryHref)}
+          >
             <p className="text-xs uppercase tracking-wide text-sky-700">{NAME_CHANGE_LIFECYCLE_LABELS.followOn}</p>
             <p className="mt-1 text-sm text-sky-950">{lifecycleInsights.followOnLabel}</p>
-          </div>
-          <div className="rounded-xl border border-sky-200 bg-white/80 px-4 py-3">
+          </button>
+          <button
+            type="button"
+            className="rounded-xl border border-sky-200 bg-white/80 px-4 py-3 text-left"
+            onClick={() => scrollToPlannerHref(resumeCard.tertiaryHref)}
+          >
             <p className="text-xs uppercase tracking-wide text-sky-700">{NAME_CHANGE_LIFECYCLE_LABELS.downstream}</p>
             <p className="mt-1 text-sm text-sky-950">{lifecycleInsights.downstreamLabel}</p>
-          </div>
+          </button>
         </div>
       </Card>
 
