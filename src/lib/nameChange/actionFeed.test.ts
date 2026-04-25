@@ -501,6 +501,7 @@ describe('name change action feed', () => {
       }),
     });
     expect(feed[0]?.action.detail).toContain('Do not send yet; the legal proof chain still needs to clear before carrier evidence will stick.');
+    expect(feed[0]?.action.detail).toContain('Blocked by: legal proof pending.');
     expect(feed[0]?.action.detail).toContain('Please just share the carrier evidence rules and intake path for now so I can avoid touching cards or claims too early.');
     expect(feed[0]?.action.detail).toContain('Proof to have handy: Certified legal name-change proof · Hold policy changes for now and just gather the carrier evidence rules');
   });
@@ -894,6 +895,7 @@ describe('name change action feed', () => {
       laneLabel: 'Tax and state agencies · draft now · SSA pending',
       severity: 'attention',
     });
+    expect(feed[1]?.action.detail).toContain('Blocked by: SSA pending.');
   });
 
   it('routes utility follow-through into the blocked digital-identity template so intake rules are captured early', () => {
