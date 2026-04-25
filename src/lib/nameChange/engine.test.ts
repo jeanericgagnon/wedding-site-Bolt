@@ -300,7 +300,7 @@ describe('name change engine', () => {
         expect.objectContaining({
           id: 'milestone-professional-licenses',
           status: 'upcoming',
-          dependsOnStepIds: ['state-photo-id', 'institution-professional-licenses'],
+          dependsOnStepIds: ['state-dmv', 'institution-professional-licenses'],
         }),
         expect.objectContaining({
           id: 'milestone-downstream-rollout',
@@ -366,7 +366,7 @@ describe('name change engine', () => {
             'institution-courtesy-social-sync',
           ]),
         }),
-        expect.objectContaining({ audience: 'Licensing board or credentialing support', dependsOnStepIds: ['state-photo-id', 'institution-professional-licenses'] }),
+        expect.objectContaining({ audience: 'Licensing board or credentialing support', dependsOnStepIds: ['state-dmv', 'institution-professional-licenses'] }),
       ]),
     );
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.body).toContain('Alex Marie Rivera');

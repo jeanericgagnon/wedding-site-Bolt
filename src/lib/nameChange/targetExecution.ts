@@ -52,7 +52,7 @@ function isDualPartnerExecutionTarget(targetKey: NameChangeExecutionTargetKey) {
 const TARGET_STATUS_VAULT_STEP_IDS: Partial<Record<NameChangeExecutionTargetKey, string[]>> = {
   courtOrder: ['eligibility-proof', 'state-court-order'],
   ssa: ['federal-ssa'],
-  dmv: ['state-photo-id'],
+  dmv: ['state-dmv'],
   passport: ['federal-passport'],
   employer: ['institution-irs-employer', 'institution-retirement-benefits'],
   taxes: ['institution-irs-records', 'institution-state-tax-agency'],

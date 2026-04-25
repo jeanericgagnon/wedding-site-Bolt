@@ -974,7 +974,7 @@ function buildAccountUpdateTemplates(
       audience: 'Bank or credit card support',
       subject: 'Request to update account name after legal name change',
       dependsOnStepIds: [
-        'state-photo-id',
+        'state-dmv',
         'institution-banks',
         'institution-investments-loans',
         'institution-student-loans-financial-aid',
@@ -993,7 +993,7 @@ function buildAccountUpdateTemplates(
       audience: 'Insurance or subscription support',
       subject: 'Please update my account to my legal name',
       dependsOnStepIds: [
-        'state-photo-id',
+        'state-dmv',
         'institution-insurance',
         'institution-disability-insurance',
         'institution-workers-comp-leave',
@@ -1041,7 +1041,7 @@ function buildAccountUpdateTemplates(
       audience: 'Phone, utilities, housing, alumni, social/profile, or primary digital identity support',
       subject: 'Update my account holder name to match my legal records',
       dependsOnStepIds: [
-        'state-photo-id',
+        'state-dmv',
         'institution-utilities-housing',
         'institution-phone-digital-identity',
         'institution-subscriptions-social',
@@ -1059,7 +1059,7 @@ function buildAccountUpdateTemplates(
       id: 'template-licenses',
       audience: 'Licensing board or credentialing support',
       subject: 'Update my professional license to my legal name',
-      dependsOnStepIds: ['state-photo-id', 'institution-professional-licenses'],
+      dependsOnStepIds: ['state-dmv', 'institution-professional-licenses'],
       proofDocuments: [
         ...proofChecklistBase,
         'Updated photo ID or license reissue receipt',
@@ -1516,8 +1516,8 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
       ? {
         id: 'milestone-professional-licenses',
         label: 'Professional license records can be reissued cleanly',
-        status: resolvePlanSequenceStatus(['state-photo-id', 'institution-professional-licenses'], steps),
-        dependsOnStepIds: ['state-photo-id', 'institution-professional-licenses'],
+        status: resolvePlanSequenceStatus(['state-dmv', 'institution-professional-licenses'], steps),
+        dependsOnStepIds: ['state-dmv', 'institution-professional-licenses'],
       }
       : null,
     hasStep('institutions-rollout')
