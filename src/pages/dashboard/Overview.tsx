@@ -882,6 +882,40 @@ export const DashboardOverview: React.FC = () => {
                     </div>
                   </div>
                 )}
+
+                {archiveMode.isArchiveLike && (
+                  <div className="rounded-2xl border border-sky-200 bg-sky-50/70 px-4 py-4 space-y-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-sky-950">Post-wedding name change assistant</p>
+                        <p className="mt-1 text-sm text-sky-900">Now that the event is behind you, this is the right place to keep certificate, SSA, DMV, passport, payroll, tax, and downstream account updates moving from one status vault.</p>
+                      </div>
+                      <Badge variant="secondary">Post-wedding</Badge>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="rounded-xl border border-sky-200 bg-white px-4 py-3">
+                        <p className="text-xs uppercase tracking-wide text-sky-700">Core chain</p>
+                        <p className="mt-1 text-sm text-sky-950">Certificate, SSA, and DMV stay together so the legal identity chain does not drift.</p>
+                      </div>
+                      <div className="rounded-xl border border-sky-200 bg-white px-4 py-3">
+                        <p className="text-xs uppercase tracking-wide text-sky-700">Follow-on updates</p>
+                        <p className="mt-1 text-sm text-sky-950">Passport, payroll, and tax updates should reflect the same verified name once the first chain lands.</p>
+                      </div>
+                      <div className="rounded-xl border border-sky-200 bg-white px-4 py-3">
+                        <p className="text-xs uppercase tracking-wide text-sky-700">Downstream rollout</p>
+                        <p className="mt-1 text-sm text-sky-950">Use the long-tail rollout lane for banks, insurance, travel, loyalty, and the rest of the account cleanup.</p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button variant="accent" size="sm" onClick={() => navigate('/dashboard/planning?tab=nameChange')}>
+                        Open name change assistant
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/planning')}>
+                        Open planning workspace
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
