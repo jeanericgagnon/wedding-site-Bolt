@@ -90,11 +90,17 @@ export function ensureTerminalPeriod(line: string | undefined) {
   return trimmed.endsWith('.') ? trimmed : `${trimmed}.`;
 }
 
-function formatAccountUpdateTemplateTextLine(label: string, value: string | undefined) {
+export function sanitizeAccountUpdateTemplateText(value: string | undefined) {
   if (!value) return undefined;
   const trimmed = value.trim();
   if (!trimmed || !/[\p{L}\p{N}]/u.test(trimmed)) return undefined;
-  return `${label}: ${trimmed}`;
+  return trimmed;
+}
+
+function formatAccountUpdateTemplateTextLine(label: string, value: string | undefined) {
+  const sanitized = sanitizeAccountUpdateTemplateText(value);
+  if (!sanitized) return undefined;
+  return `${label}: ${sanitized}`;
 }
 
 function normalizeInlineProofListItem(item: string) {

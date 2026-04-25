@@ -24,6 +24,7 @@ import {
   getAccountUpdateTemplateReadinessLine,
   getAccountUpdateTemplateStateLine,
   getAccountUpdateTemplateSubjectLine,
+  sanitizeAccountUpdateTemplateText,
 } from './actionFeed';
 import {
   getAccountUpdateTemplateActionLabel as getEngineAccountUpdateTemplateActionLabel,
@@ -171,6 +172,12 @@ describe('account update template surface helpers', () => {
   it('normalizes checklist punctuation snippets through one shared helper', () => {
     expect(ensureTerminalPeriod('Already verified')).toBe('Already verified.');
     expect(ensureTerminalPeriod(' .  ')).toBeUndefined();
+  });
+
+  it('drops blank account-update template subject and message text through one shared helper', () => {
+    expect(sanitizeAccountUpdateTemplateText('  Ready to send  ')).toBe('Ready to send');
+    expect(sanitizeAccountUpdateTemplateText(' ... ')).toBeUndefined();
+    expect(sanitizeAccountUpdateTemplateText('   ')).toBeUndefined();
   });
 
   it('formats blocker lines through one shared helper', () => {

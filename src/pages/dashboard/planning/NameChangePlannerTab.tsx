@@ -14,6 +14,7 @@ import {
   getAccountUpdateTemplateReadinessLine,
   getAccountUpdateTemplateStatusLabel,
   getAccountUpdateTemplateStatusLine,
+  sanitizeAccountUpdateTemplateText,
 } from '../../../lib/nameChange/actionFeed';
 import { getFallbackBlockingProofHopLabel } from '../../../lib/nameChange/engine';
 import { createDraftNameChangeDocument, normalizeDraftNameChangeDocumentId, upsertDraftNameChangeExtractedField } from '../../../lib/nameChange/intakeDraft';
@@ -189,6 +190,14 @@ function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['s
     '',
     getAccountUpdateTemplateMessageLine(template),
   ].filter(Boolean).join('\n');
+}
+
+function getAccountUpdateTemplateSubjectText(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
+  return sanitizeAccountUpdateTemplateText(template.subject);
+}
+
+function getAccountUpdateTemplateBodyText(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
+  return sanitizeAccountUpdateTemplateText(template.body);
 }
 
 function getReminderCtaLabel(intent?: 'open_execution_card') {
@@ -1491,32 +1500,37 @@ export const NameChangePlannerTab: React.FC<Props> = ({
           </div>
 
           <div className="mt-4 space-y-3">
-            {accountUpdateTemplates.map((template) => (
-              <div id={`account-update-template-${template.id}`} key={template.id} className="scroll-mt-24 rounded-xl border border-border-subtle p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-text-tertiary">{template.audience}</p>
-                    <p className="mt-2 text-sm font-semibold text-text-primary">{template.subject}</p>
+            {accountUpdateTemplates.map((template) => {
+              const subjectText = getAccountUpdateTemplateSubjectText(template);
+              const bodyText = getAccountUpdateTemplateBodyText(template);
+
+              return (
+                <div id={`account-update-template-${template.id}`} key={template.id} className="scroll-mt-24 rounded-xl border border-border-subtle p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-text-tertiary">{template.audience}</p>
+                      {subjectText ? <p className="mt-2 text-sm font-semibold text-text-primary">{subjectText}</p> : null}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`rounded-full px-2 py-1 text-xs ${getExecutionSummaryTone(template.readiness)}`}>
+                        {getAccountUpdateTemplateStatusChip(template)}
+                      </span>
+                      <Button size="sm" variant="outline" onClick={() => void copyAccountUpdateTemplate(template)}>
+                        {getAccountUpdateTemplateCopyButtonLabel(template, copiedTemplateId)}
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`rounded-full px-2 py-1 text-xs ${getExecutionSummaryTone(template.readiness)}`}>
-                      {getAccountUpdateTemplateStatusChip(template)}
-                    </span>
-                    <Button size="sm" variant="outline" onClick={() => void copyAccountUpdateTemplate(template)}>
-                      {getAccountUpdateTemplateCopyButtonLabel(template, copiedTemplateId)}
-                    </Button>
-                  </div>
+                  {getAccountUpdateTemplateContextLines(template, {
+                    includeSubject: false,
+                    includeMessage: false,
+                    prefixReadiness: false,
+                  }).map((line) => (
+                    <p key={line} className="mt-2 text-xs text-text-secondary">{line}</p>
+                  ))}
+                  {bodyText ? <p className="mt-2 whitespace-pre-line text-sm text-text-secondary">{bodyText}</p> : null}
                 </div>
-                {getAccountUpdateTemplateContextLines(template, {
-                  includeSubject: false,
-                  includeMessage: false,
-                  prefixReadiness: false,
-                }).map((line) => (
-                  <p key={line} className="mt-2 text-xs text-text-secondary">{line}</p>
-                ))}
-                <p className="mt-2 whitespace-pre-line text-sm text-text-secondary">{template.body}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </Card>
       </div>
