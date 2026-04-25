@@ -1125,6 +1125,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-xs uppercase tracking-wide text-sky-700">Resume any time</p>
+            <p className="mt-1 text-xs uppercase tracking-wide text-sky-700">Free assistant · status vault · proof tracking</p>
             <p className="mt-2 text-sm font-medium text-sky-950">{resumeCard.statusLabel}</p>
             <h3 className="mt-2 text-lg font-semibold text-sky-950">{resumeCard.headline}</h3>
             <p className="mt-1 text-sm text-sky-900">

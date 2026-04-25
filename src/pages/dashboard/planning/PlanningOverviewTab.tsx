@@ -196,6 +196,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-text-primary">Post-wedding name change assistant</p>
+                  <p className="mt-1 text-[11px] uppercase tracking-wide text-text-secondary">Free assistant · status vault · proof tracking</p>
                   <p className="mt-1 text-sm font-medium text-text-primary">{nameChangeCard.headline}</p>
                   <p className="mt-1 text-sm text-text-secondary">{nameChangeCard.helperCopy}</p>
                   <p className="mt-2 text-xs text-text-secondary">

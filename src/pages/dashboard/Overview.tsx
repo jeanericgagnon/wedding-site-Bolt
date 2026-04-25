@@ -935,6 +935,7 @@ export const DashboardOverview: React.FC = () => {
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold text-sky-950">Post-wedding name change assistant</p>
+                        <p className="mt-1 text-xs uppercase tracking-wide text-sky-700">Free assistant · status vault · proof tracking</p>
                         <p className="mt-1 text-base font-semibold text-sky-950">{nameChangeCard.headline}</p>
                         <p className="mt-1 text-sm text-sky-900">{nameChangeCard.helperCopy}</p>
                       </div>
