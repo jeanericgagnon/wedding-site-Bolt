@@ -1867,6 +1867,20 @@ describe('name change action feed', () => {
     expect(feed.map((item) => item.sectionKey)).toEqual(['cleanup', 'cleanup']);
   });
 
+  it('routes name-format consistency reminders to the planner case-setup section', () => {
+    const feed = buildNameChangeActionFeed([], [], [
+      makeReminderAttention({
+        reminderKey: 'reminder-name-format-consistency',
+        dependsOnStepId: 'federal-ssa',
+      }),
+    ]);
+
+    expect(feed[0]).toMatchObject({
+      focusTargetId: 'case-setup',
+      sectionKey: 'cleanup',
+    });
+  });
+
   it('routes county-record proof reminders to the planner case-setup section', () => {
     const feed = buildNameChangeActionFeed([], [], [
       makeReminderAttention({

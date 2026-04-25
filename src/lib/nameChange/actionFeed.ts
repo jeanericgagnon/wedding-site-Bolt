@@ -527,6 +527,7 @@ function isCaseSetupReminder(item: NameChangeReminderAttentionItem) {
     || item.reminderKey === 'reminder-county-office-variation'
     || item.reminderKey === 'reminder-out-of-state-proof-grounding'
     || item.reminderKey === 'reminder-document-name-mismatch'
+    || item.reminderKey === 'reminder-name-format-consistency'
     || item.reminderKey === 'reminder-marriage-name-mismatch'
     || item.reminderKey === 'reminder-mismatch-recovery'
     || item.reminderKey === 'reminder-both-partners-changing';
@@ -558,7 +559,7 @@ function getReminderFocusTargetId(item: NameChangeReminderAttentionItem) {
 }
 
 function getReminderItemSectionKey(item: NameChangeReminderAttentionItem): NameChangeActionFeedItem['sectionKey'] {
-  if (item.reminderKey === 'reminder-travel-bookings') return 'cleanup';
+  if (item.reminderKey === 'reminder-travel-bookings' || item.reminderKey === 'reminder-name-format-consistency') return 'cleanup';
   return getReminderSectionKey(item.dependsOnStepId);
 }
 

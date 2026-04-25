@@ -381,6 +381,7 @@ function getReminderPlannerRoute(
     || suggestion.id === 'reminder-county-office-variation'
     || suggestion.id === 'reminder-out-of-state-proof-grounding'
     || suggestion.id === 'reminder-document-name-mismatch'
+    || suggestion.id === 'reminder-name-format-consistency'
   ) {
     return {
       sectionKey: 'cleanup',

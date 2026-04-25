@@ -331,6 +331,9 @@ describe('name change reminder suggestions', () => {
     expect(reminders.find((reminder) => reminder.id === 'reminder-name-format-consistency')).toMatchObject({
       dependsOnStepId: 'federal-ssa',
       urgency: 'high',
+      sectionKey: 'cleanup',
+      plannerIntent: 'open_execution_card',
+      focusTargetId: 'case-setup',
     });
   });
 
