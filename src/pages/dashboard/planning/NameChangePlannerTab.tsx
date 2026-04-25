@@ -204,7 +204,7 @@ function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['s
     template.checklistStatusNote ? `Checklist status: ${template.checklistStatusNote}` : undefined,
     `Proof status: ${template.proofReadinessSummary}`,
     `Next ask: ${template.requestSummary}`,
-    `Proof to have handy: ${template.proofChecklist.join(' · ')}`,
+    `Proof to have handy: ${template.proofDocuments.join(' · ')}`,
     '',
     template.body,
   ].filter(Boolean).join('\n');
@@ -1538,7 +1538,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 ) : null}
                 <p className="mt-2 text-xs text-text-secondary">Proof status: {template.proofReadinessSummary}</p>
                 <p className="mt-2 text-xs text-text-secondary">Next ask: {template.requestSummary}</p>
-                <p className="mt-2 text-xs text-text-secondary">Proof to have handy: {template.proofChecklist.join(' · ')}</p>
+                <p className="mt-2 text-xs text-text-secondary">Proof to have handy: {template.proofDocuments.join(' · ')}</p>
                 <p className="mt-2 whitespace-pre-line text-sm text-text-secondary">{template.body}</p>
               </div>
             ))}

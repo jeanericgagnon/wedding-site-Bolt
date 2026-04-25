@@ -65,7 +65,7 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
       : `${template.checklistStatusNote}.`
     : undefined;
   const proofChecklistSummary = template.proofChecklist.length > 0
-    ? `Proof to have handy: ${template.proofChecklist.join(' · ')}`
+    ? `Proof to have handy: ${template.proofDocuments.join(' · ')}`
     : undefined;
   return [
     baseDetail,

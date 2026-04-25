@@ -40,6 +40,7 @@ function makeTemplate(overrides: Partial<NonNullable<NameChangePlan['summary']['
     blockingProofHopLabel,
     requestSummary: 'Please tell me the fastest secure submission path and confirm whether cards, checks, statements, and my online profile will all update together.',
     dependsOnStepIds: ['institution-banks'],
+    proofDocuments: overrides.proofDocuments ?? [overrides.proofChecklist?.[0] ?? 'Certified legal name-change proof'],
     proofChecklist: ['Certified legal name-change proof'],
     checklistHighlight: overrides.checklistHighlight ?? overrides.proofChecklist?.[1],
     checklistStatusNote: overrides.checklistStatusNote,
@@ -404,7 +405,7 @@ describe('name change action feed', () => {
     expect(feed[0]?.action.detail).toContain('Next ask: Please confirm cards, checks, statements, and my online profile already reflect the final legal name everywhere.');
     expect(feed[0]?.action.detail).toContain('Use this as a confirmation pass that cards, checks, statements, and profile records already synced.');
     expect(feed[0]?.action.detail).toContain('Please confirm cards, checks, statements, and my online profile already reflect the final legal name everywhere.');
-    expect(feed[0]?.action.detail).toContain('Proof to have handy: Certified legal name-change proof · Confirm cards, statements, and online banking all reflect the final legal name');
+    expect(feed[0]?.action.detail).toContain('Proof to have handy: Certified legal name-change proof');
   });
 
   it('keeps ready send-now template work ahead of complete confirmation passes', () => {
@@ -523,7 +524,7 @@ describe('name change action feed', () => {
     expect(feed[0]?.action.detail).toContain('Proof status: Do not send yet; the legal proof chain still needs to clear before carrier evidence will stick.');
     expect(feed[0]?.action.detail).toContain('Next ask: Please just share the carrier evidence rules and intake path for now so I can return once the legal proof packet is grounded.');
     expect(feed[0]?.action.detail).toContain('Please just share the carrier evidence rules and intake path for now so I can return once the legal proof packet is grounded.');
-    expect(feed[0]?.action.detail).toContain('Proof to have handy: Certified legal name-change proof · Hold policy changes for now and just gather the carrier evidence rules');
+    expect(feed[0]?.action.detail).toContain('Proof to have handy: Certified legal name-change proof');
   });
 
   it('keeps real blocking execution work above complete template confirmation review', () => {
@@ -1130,7 +1131,7 @@ describe('name change action feed', () => {
     expect(travelTemplateItem?.action.detail).toContain('Checklist: Ask for mismatch policy and booking rules before the legal proof packet is ready.');
     expect(travelTemplateItem?.action.detail).toContain('Checklist status: Gather mismatch and booking rules only until legal proof is fully grounded.');
     expect(travelTemplateItem?.action.detail).toContain('Proof status: Do not send yet; the legal proof chain still needs to clear before travel-profile evidence will stick.');
-    expect(travelTemplateItem?.action.detail).toContain('Proof to have handy: Certified legal name-change proof · Ask for mismatch policy and booking rules before the legal proof packet is ready · Gather mismatch and booking rules only until legal proof is fully grounded.');
+    expect(travelTemplateItem?.action.detail).toContain('Proof to have handy: Certified legal name-change proof');
   });
 
   it('keeps blocked tax template next asks anchored to legal-proof readiness', () => {
@@ -1161,7 +1162,7 @@ describe('name change action feed', () => {
     expect(feed[0]?.action.detail).toContain('Checklist status: Gather the tax/state process only until legal proof is fully grounded.');
     expect(feed[0]?.action.detail).toContain('Next ask: Please just confirm the tax/state process for now so I can return once the legal proof packet is grounded.');
     expect(feed[0]?.action.detail).toContain('Proof status: Do not send yet; the legal proof chain still needs to clear before tax updates can stick.');
-    expect(feed[0]?.action.detail).toContain('Proof to have handy: Certified legal name-change proof · Gather the tax/state process only until legal proof is fully grounded.');
+    expect(feed[0]?.action.detail).toContain('Proof to have handy: Certified legal name-change proof');
   });
 
   it('keeps blocked payroll proof status anchored to legal-proof readiness', () => {
@@ -1192,7 +1193,7 @@ describe('name change action feed', () => {
     expect(payrollTemplateItem?.action.detail).toContain('Checklist status: Gather the intake path only until legal proof is fully grounded.');
     expect(payrollTemplateItem?.action.detail).toContain('Next ask: Please just confirm the intake path and payroll timing for now so I can come back once the legal proof packet is grounded.');
     expect(payrollTemplateItem?.action.detail).toContain('Proof status: Do not send yet; the legal proof chain still needs to clear before payroll updates can stick.');
-    expect(payrollTemplateItem?.action.detail).toContain('Proof to have handy: Certified legal name-change proof · Gather the intake path only until legal proof is fully grounded.');
+    expect(payrollTemplateItem?.action.detail).toContain('Proof to have handy: Certified legal name-change proof');
   });
 
   it('keeps blocked bank and license template next asks anchored to legal-proof readiness', () => {

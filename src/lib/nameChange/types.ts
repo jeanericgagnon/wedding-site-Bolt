@@ -247,6 +247,7 @@ export interface NameChangePlanSummary {
     checklistStatusNote?: string;
     requestSummary: string;
     dependsOnStepIds: string[];
+    proofDocuments: string[];
     proofChecklist: string[];
   }>;
   executionCounts?: {

@@ -502,7 +502,7 @@ describe('NameChangePlannerTab', () => {
     const payrollProofStatus = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.proofReadinessSummary;
     const payrollChecklistHighlight = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.checklistHighlight;
     const payrollChecklistStatus = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.checklistStatusNote;
-    const payrollProofChecklist = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.proofChecklist.join(' · ');
+    const payrollProofChecklist = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.proofDocuments.join(' · ');
     const payrollBlockingProofHop = plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')?.blockingProofHopLabel;
 
     render(

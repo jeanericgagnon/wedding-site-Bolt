@@ -894,14 +894,15 @@ function buildAccountUpdateTemplates(
                       in_progress: 'Draft now and attach the final proof packet as soon as it lands',
                       complete: 'Confirm the final legal name is already showing across the account records you changed',
                     });
-    const proofChecklist = [...template.proofChecklist, readinessSpecificChecklistItem];
+    const proofDocuments = [...template.proofChecklist];
+    const proofChecklist = [...proofDocuments, readinessSpecificChecklistItem];
     const requestLine = getReadinessRequestLine(template.id, readiness);
     const proofReadinessSummary = getProofReadinessSummary(template.id, readiness);
     const proofChecklistStatusNote = getProofChecklistStatusNote(template.id, readiness);
     const blockingProofHopLabel = getBlockingProofHopLabel(template.id, readiness);
     const blockingProofHopSentence = getBlockingProofHopSentence(blockingProofHopLabel);
     const proofChecklistWithStatus = [...proofChecklist, proofChecklistStatusNote];
-    const proofLine = `I can provide ${proofChecklistWithStatus.join(', ')} ${readinessSpecificProof}`;
+    const proofLine = `I can provide ${proofDocuments.join(', ')} ${readinessSpecificProof}`;
 
     return {
       id: template.id,
@@ -916,6 +917,7 @@ function buildAccountUpdateTemplates(
       checklistStatusNote: proofChecklistStatusNote,
       requestSummary: requestLine,
       dependsOnStepIds: [...template.dependsOnStepIds],
+      proofDocuments,
       proofChecklist: proofChecklistWithStatus,
     };
   }).filter((template) => (hasPassport ? true : template.id !== 'template-travel' || needsPassport || template.readiness !== 'blocked'));
