@@ -542,7 +542,7 @@ function buildAccountUpdateTemplates(
         in_progress: 'Hold send until the SSA receipt posts, but prep payroll, benefits, and beneficiary routing now.',
         complete: 'Use this as a confirmation pass that payroll, benefits, and beneficiary records already synced.',
         upcoming: 'Do not send yet; legal proof is grounded, but SSA is still the missing proof hop.',
-        blocked: 'Do not send yet; the legal proof chain still needs to clear before SSA-backed payroll updates can stick.',
+        blocked: 'Do not send yet; the legal proof chain still needs to clear before payroll updates can stick.',
       })
     : templateId === 'template-bank'
       ? getReadinessChecklistLine(readiness, {
@@ -566,7 +566,7 @@ function buildAccountUpdateTemplates(
               in_progress: 'Hold send until SSA confirmation lands, but lock the tax/state verification path now.',
               complete: 'Use this as a confirmation pass that payroll reporting, withholding, and agency records already synced.',
               upcoming: 'Do not send yet; legal proof is grounded, but SSA sync is still the missing proof hop.',
-              blocked: 'Do not send yet; the legal proof chain still needs to clear before SSA-backed tax updates can stick.',
+              blocked: 'Do not send yet; the legal proof chain still needs to clear before tax updates can stick.',
             })
           : templateId === 'template-travel'
           ? getReadinessChecklistLine(readiness, {
@@ -600,7 +600,7 @@ function buildAccountUpdateTemplates(
         in_progress: 'Queue this now, then attach the SSA receipt/confirmation once it posts.',
         complete: 'Use this to confirm payroll, benefits, and beneficiary records already match.',
         upcoming: 'Wait to send until SSA is the next cleared proof hop.',
-        blocked: 'Gather the intake path only until legal proof and SSA work are real.',
+          blocked: 'Gather the intake path only until legal proof is fully grounded.',
       })
     : templateId === 'template-bank'
       ? getReadinessChecklistLine(readiness, {
@@ -624,7 +624,7 @@ function buildAccountUpdateTemplates(
               in_progress: 'Queue this now, then attach SSA-backed confirmation once the current proof step lands.',
               complete: 'Use this to confirm payroll reporting, withholding, and agency records already match.',
               upcoming: 'Wait to send until SSA is the next cleared proof hop.',
-              blocked: 'Gather the tax/state process only until legal proof and SSA work are real.',
+              blocked: 'Gather the tax/state process only until legal proof is fully grounded.',
             })
           : templateId === 'template-travel'
           ? getReadinessChecklistLine(readiness, {

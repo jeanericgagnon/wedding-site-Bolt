@@ -1137,12 +1137,47 @@ describe('name change action feed', () => {
         audience: 'Tax agency or payroll tax support',
         readiness: 'blocked',
         requestSummary: 'Please just confirm the tax/state process for now so I can return once the legal proof packet is grounded.',
+        proofReadinessSummary: 'Do not send yet; the legal proof chain still needs to clear before tax updates can stick.',
+        proofChecklist: [
+          'Certified legal name-change proof',
+          'Gather the tax/state process only until legal proof is fully grounded.',
+        ],
       }),
     ]);
 
     expect(feed[0]?.laneLabel).toBe('Tax agency or payroll tax support · ask intake rules now · legal proof pending');
     expect(feed[0]?.action.label).toBe('Ask tax agency or payroll tax support intake rules now (legal proof pending)');
     expect(feed[0]?.action.detail).toContain('Next ask: Please just confirm the tax/state process for now so I can return once the legal proof packet is grounded.');
+    expect(feed[0]?.action.detail).toContain('Proof status: Do not send yet; the legal proof chain still needs to clear before tax updates can stick.');
+    expect(feed[0]?.action.detail).toContain('Proof to have handy: Certified legal name-change proof · Gather the tax/state process only until legal proof is fully grounded.');
+  });
+
+  it('keeps blocked payroll proof status anchored to legal-proof readiness', () => {
+    const feed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'employer',
+        targetLabel: 'Employer payroll / HR',
+        recommendedFormCode: 'PAYROLL',
+      }),
+    ], [], [], [
+      makeTemplate({
+        id: 'template-payroll',
+        audience: 'Employer payroll / HR',
+        readiness: 'blocked',
+        requestSummary: 'Please just confirm the intake path and payroll timing for now so I can come back once the legal proof packet is grounded.',
+        proofReadinessSummary: 'Do not send yet; the legal proof chain still needs to clear before payroll updates can stick.',
+        proofChecklist: [
+          'Certified legal name-change proof',
+          'Gather the intake path only until legal proof is fully grounded.',
+        ],
+      }),
+    ]);
+
+    const payrollTemplateItem = feed.find((item) => item.plannerIntent === 'open_account_update_template');
+
+    expect(payrollTemplateItem?.action.detail).toContain('Next ask: Please just confirm the intake path and payroll timing for now so I can come back once the legal proof packet is grounded.');
+    expect(payrollTemplateItem?.action.detail).toContain('Proof status: Do not send yet; the legal proof chain still needs to clear before payroll updates can stick.');
+    expect(payrollTemplateItem?.action.detail).toContain('Proof to have handy: Certified legal name-change proof · Gather the intake path only until legal proof is fully grounded.');
   });
 
   it('keeps blocked bank and license template next asks anchored to legal-proof readiness', () => {
