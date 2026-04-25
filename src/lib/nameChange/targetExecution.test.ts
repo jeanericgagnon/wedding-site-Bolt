@@ -3177,6 +3177,22 @@ describe('name change target execution snapshot', () => {
     });
   });
 
+  it('adds structured wait guidance for generic dual-partner downstream rollout branching', () => {
+    expect(getExecutionNextActionGuidance({
+      targetKey: 'legalGovernment',
+      nextAction: {
+        category: 'checklist',
+        label: 'Track downstream rollout separately for each partner',
+        detail: 'Both partners are changing names, so this rollout lane should keep separate account confirmations, mailed notices, and completion proof for each partner instead of collapsing everything into one checklist.',
+      },
+    })).toEqual({
+      overview: 'Both partners are changing names, so this rollout lane should keep separate account confirmations, mailed notices, and completion proof for each partner instead of collapsing everything into one checklist.',
+      doNow: 'Create one downstream checklist, mailed-notice log, and proof bucket per partner for this lane now.',
+      whyItHelps: 'That keeps a shared rollout lane from collapsing two different completion states into one fake finish.',
+      canWait: 'Actual submission can safely wait until both partner rollout tracks are separated.',
+    });
+  });
+
   it('adds structured wait guidance for first-passport branch reviews', () => {
     expect(getExecutionNextActionGuidance({
       targetKey: 'passport',

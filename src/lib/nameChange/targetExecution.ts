@@ -173,6 +173,14 @@ function getSupportiveExecutionWaitGuidance(snapshot: Pick<NameChangeTargetExecu
     };
   }
 
+  if (/track downstream rollout separately for each partner/i.test(blockingLabel)) {
+    return {
+      doNow: 'Create one downstream checklist, mailed-notice log, and proof bucket per partner for this lane now.',
+      whyItHelps: 'That keeps a shared rollout lane from collapsing two different completion states into one fake finish.',
+      canWait: 'Actual submission can safely wait until both partner rollout tracks are separated.',
+    };
+  }
+
   if (
     snapshot.targetKey === 'tsa'
     && /marriage-certificate county|certificate number/i.test(blockingLabel)
