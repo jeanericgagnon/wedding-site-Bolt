@@ -5,6 +5,7 @@ import { Button } from '../../../components/ui/Button';
 import { buildNameChangeBankExecutionSnapshot } from '../../../lib/nameChange/bankFlow';
 import { buildNameChangeAutofillPrepSnapshot } from '../../../lib/nameChange/autofill';
 import { buildNameChangeActionFeed } from '../../../lib/nameChange/actionFeed';
+import { getFallbackBlockingProofHopLabel } from '../../../lib/nameChange/engine';
 import { createDraftNameChangeDocument, normalizeDraftNameChangeDocumentId, upsertDraftNameChangeExtractedField } from '../../../lib/nameChange/intakeDraft';
 import { buildNameChangeCourtesyExecutionSnapshot } from '../../../lib/nameChange/courtesyFlow';
 import { NAME_CHANGE_DOCUMENT_CONTRACTS } from '../../../lib/nameChange/documentContract';
@@ -161,14 +162,7 @@ function getActionFeedCtaLabel(intent: 'open_execution_card' | 'open_document_re
 }
 
 function getEffectiveBlockingProofHopLabel(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
-  return template.blockingProofHopLabel?.trim()
-    || (template.readiness === 'in_progress'
-      ? 'current proof pending'
-      : template.readiness === 'upcoming'
-        ? 'next proof hop pending'
-        : template.readiness === 'blocked'
-          ? 'proof chain pending'
-          : undefined);
+  return getFallbackBlockingProofHopLabel(template.readiness, template.blockingProofHopLabel);
 }
 
 function getAccountUpdateTemplateStatusLabel(readiness: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]['readiness']) {
