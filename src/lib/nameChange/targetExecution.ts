@@ -482,7 +482,7 @@ function getTargetStatusVaultSnapshot(
     : latestReminder?.label
       ? `Reminder: ${latestReminder.label}`
       : null;
-  const executionNote = explicitNotes[0] ?? (nextAction ? getExecutionNextActionDetail({ targetKey, nextAction }) : blockers[0] ?? null);
+  const executionNote = explicitNotes[0] ?? nextAction?.detail ?? blockers[0] ?? null;
   const milestoneNote = milestoneNotes[0] ?? null;
   const proofNote = proofIssues ? `Proof needs: ${proofIssues}` : null;
   const primaryExecutionNote = explicitNotes[0] ?? null;
@@ -579,6 +579,9 @@ export function buildNameChangeTargetExecutionSnapshot(
   const firstBlockingFieldRisk = fieldRisks.find((risk) => risk.severity === 'blocking');
   const firstMissingFieldRisk = fieldRisks.find((risk) => risk.severity === 'attention');
   const firstBlockingDependency = sequence.dependencies.find((dependency) => dependency.blocksReady ?? (dependency.required && dependency.status === 'missing'));
+  const travelDmvDependency = targetKey === 'tsa' && profile.structured_intake.travelBookedSoon
+    ? sequence.dependencies.find((dependency) => dependency.key === 'dmv-progress' && dependency.status !== 'satisfied') ?? null
+    : null;
   const firstAttentionDependency = sequence.dependencies.find((dependency) => dependency.status === 'attention');
   const firstMissingChecklistItem = checklist.find((item) => item.status === 'missing');
   const firstBlockingAttentionChecklistItem = checklist.find((item) => item.status === 'attention' && item.blocksReady);
@@ -872,6 +875,12 @@ export function buildNameChangeTargetExecutionSnapshot(
           label: getBlockingDependencyLabel(firstBlockingDependency),
           detail: firstBlockingDependency.reason,
         }
+      : travelDmvDependency
+        ? {
+            category: getDependencyCategory(travelDmvDependency, 'dependency'),
+            label: getBlockingDependencyLabel(travelDmvDependency),
+            detail: travelDmvDependency.reason,
+          }
       : firstMissingChecklistItem
         ? {
             category: getChecklistCategory(firstMissingChecklistItem),

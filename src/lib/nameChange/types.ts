@@ -793,4 +793,5 @@ export interface NameChangeEngineInput {
   profile: NameChangeCaseInput;
   documents: NameChangeDocumentInput[];
   extractedFields: NameChangeExtractedFieldInput[];
+  reminders?: NameChangeReminderInput[];
 }

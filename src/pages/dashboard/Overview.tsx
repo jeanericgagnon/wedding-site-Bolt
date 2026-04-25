@@ -32,10 +32,22 @@ import { useToast } from '../../components/ui/Toast';
 import { calcOverviewDaysUntil, formatOverviewRelativeTime, formatOverviewWeddingDate, getOverviewTimestamp } from './overviewDate';
 import { getOverviewFallbackCoupleValue } from './overviewDraftBrief';
 import { buildNameChangeOverviewCardModel } from './nameChangeOverviewCard';
-import { buildNameChangeOverviewInsights } from './nameChangeOverviewInsights';
+import { buildNameChangeOverviewInsights, type NameChangeOverviewInsights } from './nameChangeOverviewInsights';
 import { NAME_CHANGE_LIFECYCLE_LABELS } from './nameChangeLifecycleLabels';
 import { deriveNameChangeLifecycleStatus } from './nameChangeLifecycleStatus';
 import { hydrateNameChangeWorkspace, loadNameChangeWorkspace } from './planning/nameChangeService';
+
+const DEFAULT_NAME_CHANGE_INSIGHTS: NameChangeOverviewInsights = {
+  coreChainLabel: 'Certificate, SSA, and DMV stay together so the legal identity chain does not drift.',
+  followOnLabel: 'Passport, payroll, and tax updates should reflect the same verified name once the first chain lands.',
+  downstreamLabel: 'Use the long-tail rollout lane for banks, insurance, travel, loyalty, and the rest of the account cleanup.',
+  downstreamHref: '/dashboard/planning?tab=nameChange#name-change-roadmap',
+  concreteResumeLabel: null,
+  milestoneSummaryHref: '/dashboard/planning?tab=nameChange#name-change-roadmap',
+  milestoneSummaryLabel: 'Milestones ready to confirm',
+  reminderSummaryHref: '/dashboard/planning?tab=nameChange#name-change-roadmap',
+  reminderSummaryLabel: 'No open reminders',
+};
 
 interface OverviewStats {
   siteId: string | null;
@@ -205,14 +217,7 @@ export const DashboardOverview: React.FC = () => {
   const [draftRefineTargets, setDraftRefineTargets] = useState<Array<{ id: string; label: string; questionIndex: number; value: string }>>([]);
   const [draftBriefDebug, setDraftBriefDebug] = useState<string>('init');
   const [nameChangeOverviewState, setNameChangeOverviewState] = useState<{ hasWorkspace: boolean; workflowStatus: 'draft' | 'ready' | 'in_progress' | 'complete' | null; hasExecutionActivity: boolean; }>({ hasWorkspace: false, workflowStatus: null, hasExecutionActivity: false });
-  const [nameChangeInsights, setNameChangeInsights] = useState({
-    coreChainLabel: 'Certificate, SSA, and DMV stay together so the legal identity chain does not drift.',
-    followOnLabel: 'Passport, payroll, and tax updates should reflect the same verified name once the first chain lands.',
-    downstreamLabel: 'Use the long-tail rollout lane for banks, insurance, travel, loyalty, and the rest of the account cleanup.',
-    downstreamHref: '/dashboard/planning?tab=nameChange#name-change-roadmap',
-    milestoneSummaryHref: '/dashboard/planning?tab=nameChange#name-change-roadmap',
-    reminderSummaryHref: '/dashboard/planning?tab=nameChange#name-change-roadmap',
-  });
+  const [nameChangeInsights, setNameChangeInsights] = useState<NameChangeOverviewInsights>(DEFAULT_NAME_CHANGE_INSIGHTS);
 
   useEffect(() => {
     if (!user) return;
@@ -309,8 +314,11 @@ export const DashboardOverview: React.FC = () => {
           followOnLabel: '1 milestone confirmed so passport, payroll, and tax follow-ons can stay in sync.',
           downstreamLabel: '2 reminders still open for the long-tail bank, insurance, travel, and loyalty cleanup.',
           downstreamHref: '/dashboard/planning?tab=nameChange#target-status-tracking',
+          concreteResumeLabel: 'Review the next milestone',
           milestoneSummaryHref: '/dashboard/planning?tab=nameChange#target-status-tracking',
+          milestoneSummaryLabel: '1 milestone confirmed',
           reminderSummaryHref: '/dashboard/planning?tab=nameChange#target-status-tracking',
+          reminderSummaryLabel: '2 reminders open',
         });
         return;
       }
@@ -432,23 +440,13 @@ export const DashboardOverview: React.FC = () => {
         } else {
           setNameChangeOverviewState({ hasWorkspace: false, workflowStatus: null, hasExecutionActivity: false });
           setNameChangeInsights({
-            coreChainLabel: 'Certificate, SSA, and DMV stay together so the legal identity chain does not drift.',
-            followOnLabel: 'Passport, payroll, and tax updates should reflect the same verified name once the first chain lands.',
-            downstreamLabel: 'Use the long-tail rollout lane for banks, insurance, travel, loyalty, and the rest of the account cleanup.',
-            downstreamHref: '/dashboard/planning?tab=nameChange#name-change-roadmap',
-            milestoneSummaryHref: '/dashboard/planning?tab=nameChange#name-change-roadmap',
-            reminderSummaryHref: '/dashboard/planning?tab=nameChange#name-change-roadmap',
+            ...DEFAULT_NAME_CHANGE_INSIGHTS,
           });
         }
       } else {
         setNameChangeOverviewState({ hasWorkspace: false, workflowStatus: null, hasExecutionActivity: false });
         setNameChangeInsights({
-          coreChainLabel: 'Certificate, SSA, and DMV stay together so the legal identity chain does not drift.',
-          followOnLabel: 'Passport, payroll, and tax updates should reflect the same verified name once the first chain lands.',
-          downstreamLabel: 'Use the long-tail rollout lane for banks, insurance, travel, loyalty, and the rest of the account cleanup.',
-          downstreamHref: '/dashboard/planning?tab=nameChange#name-change-roadmap',
-          milestoneSummaryHref: '/dashboard/planning?tab=nameChange#name-change-roadmap',
-          reminderSummaryHref: '/dashboard/planning?tab=nameChange#name-change-roadmap',
+          ...DEFAULT_NAME_CHANGE_INSIGHTS,
         });
       }
 

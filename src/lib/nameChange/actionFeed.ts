@@ -528,7 +528,6 @@ function isCaseSetupReminder(item: NameChangeReminderAttentionItem) {
     || item.reminderKey === 'reminder-out-of-state-proof-grounding'
     || item.reminderKey === 'reminder-document-name-mismatch'
     || item.reminderKey === 'reminder-name-format-consistency'
-    || item.reminderKey === 'reminder-marriage-name-mismatch'
     || item.reminderKey === 'reminder-mismatch-recovery'
     || item.reminderKey === 'reminder-both-partners-changing';
 }
@@ -585,43 +584,43 @@ export function buildNameChangeActionFeed(
       const templateId = getTemplateIdForTargetKey(snapshot.targetKey);
       return templateId ? templatesById.get(templateId) : undefined;
     })();
-    const routesToTemplate = !routesToDocumentRepair && !routesToCaseSetup && Boolean(linkedTemplate);
-    const severity = getExecutionSeverity(snapshot, linkedTemplate);
+    const templateItem = !routesToDocumentRepair && !routesToCaseSetup ? linkedTemplate : undefined;
+    const severity = getExecutionSeverity(snapshot, templateItem);
     const score =
-      getExecutionScoreBase(severity, linkedTemplate) +
+      getExecutionScoreBase(severity, templateItem) +
       (snapshot.blockers.length * 10) +
       (snapshot.readinessSummary.blockingFieldRisks * 5) +
       getNameChangeGuidedActionWeight(snapshot.nextAction.category) +
-      getTemplateUrgencyBoost(linkedTemplate);
+      getTemplateUrgencyBoost(templateItem);
     return {
       key: `execution:${snapshot.targetKey}`,
       origin: 'execution',
       sectionKey: getExecutionSectionKey(snapshot.targetKey),
-      title: routesToTemplate ? linkedTemplate.audience : snapshot.targetLabel,
-      laneLabel: routesToTemplate
-        ? getTemplateLaneLabel(linkedTemplate)
+      title: templateItem ? templateItem.audience : snapshot.targetLabel,
+      laneLabel: templateItem
+        ? getTemplateLaneLabel(templateItem)
         : snapshot.recommendedFormCode,
       severity,
       urgencyTier: getActionFeedUrgencyTier(score, severity),
-      urgencyReason: getActionFeedUrgencyReason(snapshot.nextAction, severity, snapshot, linkedTemplate),
+      urgencyReason: getActionFeedUrgencyReason(snapshot.nextAction, severity, snapshot, templateItem),
       plannerIntent: routesToDocumentRepair
         ? 'open_document_repair'
-        : routesToTemplate
+        : templateItem
           ? 'open_account_update_template'
           : 'open_execution_card',
       focusTargetId: routesToDocumentRepair
         ? `document-${snapshot.nextAction.documentKind}`
         : routesToCaseSetup
           ? 'case-setup'
-          : routesToTemplate
-            ? getTemplateFocusTargetId(linkedTemplate)
+          : templateItem
+            ? getTemplateFocusTargetId(templateItem)
             : `execution-card-${snapshot.targetKey}`,
       score,
-      action: routesToTemplate
+      action: templateItem
         ? {
             ...snapshot.nextAction,
-            label: getTemplateActionLabel(linkedTemplate),
-            detail: getTemplateActionDetail(linkedTemplate),
+            label: getTemplateActionLabel(templateItem),
+            detail: getTemplateActionDetail(templateItem),
           }
         : {
             ...snapshot.nextAction,

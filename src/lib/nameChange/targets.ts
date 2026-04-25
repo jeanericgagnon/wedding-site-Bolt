@@ -1041,7 +1041,7 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'courtOrder' | 'ssa' | 'dmv' 
       {
         key: 'dmv-progress',
         label: 'Primary photo ID underway before DMV title and travel-profile updates',
-        required: true,
+        required: false,
         requiredStepId: 'state-dmv',
         requiredStatuses: ['in_progress', 'complete'],
         missingReason: 'Travel and mobility follow-through should wait until DMV work is underway so vehicle title, registration, and auto-policy records can stay aligned with the same identity chain.',

@@ -50,7 +50,7 @@ function getCanonicalDocumentFieldKeys(
 
   return [...new Set(
     [...extractedFields, ...documentSnapshotFields]
-      .filter((field) => candidateDocumentIds.has(field.document_id) && field.is_verified)
+      .filter((field) => candidateDocumentIds.has(field.document_id ?? null) && field.is_verified)
       .map((field) => normalizeDraftFieldKey(field.field_key) as NameChangeExtractionFieldKey)
       .filter((fieldKey): fieldKey is NameChangeExtractionFieldKey => Boolean(fieldKey)),
   )];

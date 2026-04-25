@@ -86,6 +86,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
     ready: 'ready',
     upcoming: 'up next',
     blocked: 'blocked',
+    in_progress: 'in progress',
     complete: 'done',
   } as const;
   const milestoneHighlights = (nameChangePlan.summary.milestoneChecklist ?? []).filter((milestone) => [

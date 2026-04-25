@@ -14,6 +14,9 @@ import type {
   NameChangeReminderInput,
 } from './types';
 
+type AccountUpdateTemplate = NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number];
+type AccountUpdateTemplateReadiness = AccountUpdateTemplate['readiness'];
+
 export function formatAccountUpdateProofLine(proofDocuments: string[], readinessSpecificProof: string) {
   if (proofDocuments.length === 0) return '';
   return readinessSpecificProof
@@ -357,7 +360,7 @@ function buildDualPartnerProofSteps(legalProofReady: boolean): NameChangePlanSte
   ];
 }
 
-function resolvePlanSequenceStatus(stepIds: string[], steps: NameChangePlanStep[]): 'ready' | 'blocked' | 'upcoming' | 'in_progress' | 'complete' {
+function resolvePlanSequenceStatus(stepIds: readonly string[], steps: NameChangePlanStep[]): 'ready' | 'blocked' | 'upcoming' | 'in_progress' | 'complete' {
   const matchingSteps = stepIds
     .map((stepId) => steps.find((step) => step.id === stepId))
     .filter((step): step is NameChangePlanStep => Boolean(step));
@@ -500,7 +503,7 @@ function buildInstitutionCategoryCoverage(
 }
 
 export function getFallbackBlockingProofHopLabel(
-  readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+  readiness: AccountUpdateTemplateReadiness,
   blockingProofHopLabel?: string,
 ) {
   return blockingProofHopLabel?.trim()
@@ -515,7 +518,7 @@ export function getFallbackBlockingProofHopLabel(
 
 export function getDefaultAccountUpdateBlockingProofHopLabel(
   templateId: string,
-  readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+  readiness: AccountUpdateTemplateReadiness,
 ) {
   if (readiness === 'ready' || readiness === 'complete') return undefined;
   if (templateId === 'template-payroll' || templateId === 'template-tax') {
@@ -536,7 +539,7 @@ export function getDefaultAccountUpdateBlockingProofHopLabel(
 }
 
 export function getAccountUpdateTemplateReadinessActionLabel(
-  readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+  readiness: AccountUpdateTemplateReadiness,
 ) {
   return readiness === 'ready'
     ? 'send now'
@@ -550,7 +553,7 @@ export function getAccountUpdateTemplateReadinessActionLabel(
 }
 
 export function getAccountUpdateTemplateReadinessSubjectPrefix(
-  readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+  readiness: AccountUpdateTemplateReadiness,
 ) {
   return readiness === 'ready'
     ? 'Send now (proof packet ready)'
@@ -573,7 +576,7 @@ export function getAccountUpdateTemplateAudienceLine(
 }
 
 export function getAccountUpdateTemplateStatusLabel(
-  readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+  readiness: AccountUpdateTemplateReadiness,
   blockingProofHopLabel?: string,
 ) {
   const actionLabel = getAccountUpdateTemplateReadinessActionLabel(readiness);
@@ -589,7 +592,7 @@ export function getAccountUpdateTemplateStatusLabel(
 }
 
 export function getAccountUpdateTemplateStatusLine(
-  readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+  readiness: AccountUpdateTemplateReadiness,
   blockingProofHopLabel?: string,
   options?: { terminalPeriod?: boolean },
 ) {
@@ -598,7 +601,7 @@ export function getAccountUpdateTemplateStatusLine(
 }
 
 export function getAccountUpdateTemplateActionLabel(
-  readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+  readiness: AccountUpdateTemplateReadiness,
   audience: string,
   blockingProofHopLabel?: string,
 ) {
@@ -622,7 +625,7 @@ export function getAccountUpdateTemplateActionLabel(
 }
 
 export function getAccountUpdateTemplateCopyLabel(
-  readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+  readiness: AccountUpdateTemplateReadiness,
   copied = false,
 ) {
   if (copied) return 'Copied';
@@ -634,7 +637,7 @@ export function getAccountUpdateTemplateCopyLabel(
 }
 
 export function getAccountUpdateTemplateStateLine(
-  readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+  readiness: AccountUpdateTemplateReadiness,
   blockingProofHopLabel?: string,
 ) {
   const trimmedBlockingProofHopLabel = blockingProofHopLabel?.trim().replace(/\.+$/, '');
@@ -670,7 +673,7 @@ export function getAccountUpdateTemplateStateLine(
 }
 
 export function getAccountUpdateTemplateReadinessIntroLine(
-  readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+  readiness: AccountUpdateTemplateReadiness,
   blockingProofHopLabel?: string,
 ) {
   const fallbackBlockingProofHopLabel = getFallbackBlockingProofHopLabel(readiness, blockingProofHopLabel);
@@ -687,7 +690,7 @@ export function getAccountUpdateTemplateReadinessIntroLine(
 }
 
 export function getAccountUpdateTemplateReadinessLabel(
-  readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+  readiness: AccountUpdateTemplateReadiness,
   blockingProofHopLabel?: string,
 ) {
   const fallbackBlockingProofHopLabel = getFallbackBlockingProofHopLabel(readiness, blockingProofHopLabel);
@@ -720,7 +723,7 @@ function buildAccountUpdateTemplates(
     .filter((value) => hasMeaningfulValue(value))
     .join(' ');
   const getReadinessChecklistLine = (
-    readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+    readiness: AccountUpdateTemplateReadiness,
     lines: {
       ready: string;
       in_progress: string;
@@ -750,7 +753,7 @@ function buildAccountUpdateTemplates(
   };
   const getReadinessSubject = (
     baseSubject: string,
-    readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+    readiness: AccountUpdateTemplateReadiness,
     blockingProofHopLabel?: string,
   ) => {
     const fallbackBlockingProofHopLabel = getFallbackBlockingProofHopLabel(readiness, blockingProofHopLabel);
@@ -759,17 +762,17 @@ function buildAccountUpdateTemplates(
     return `${subjectPrefix}${fallbackBlockingProofHopLabel ? ` (${fallbackBlockingProofHopLabel})` : ''}: ${baseSubject}`;
   };
   const getReadinessIntro = (
-    readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+    readiness: AccountUpdateTemplateReadiness,
     blockingProofHopLabel?: string,
   ) => getAccountUpdateTemplateReadinessIntroLine(readiness, blockingProofHopLabel);
   const getStatusLine = (
-    readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+    readiness: AccountUpdateTemplateReadiness,
     blockingProofHopLabel?: string,
   ) => getAccountUpdateTemplateStatusLine(readiness, blockingProofHopLabel);
   const getAudienceLine = (audience: string) => getAccountUpdateTemplateAudienceLine(audience);
   const getReadinessRequestLine = (
     templateId: string,
-    readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+    readiness: AccountUpdateTemplateReadiness,
   ) => templateId === 'template-payroll'
     ? getReadinessChecklistLine(readiness, {
         ready: 'Please confirm the exact upload/form path and whether payroll, health coverage, retirement, and beneficiary records will all update together.',
@@ -827,7 +830,7 @@ function buildAccountUpdateTemplates(
                 });
   const getProofReadinessSummary = (
     templateId: string,
-    readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+    readiness: AccountUpdateTemplateReadiness,
     blockingProofHopLabel?: string,
   ) => {
     const summary = templateId === 'template-payroll'
@@ -891,7 +894,7 @@ function buildAccountUpdateTemplates(
   };
   const getProofChecklistStatusNote = (
     templateId: string,
-    readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+    readiness: AccountUpdateTemplateReadiness,
   ) => templateId === 'template-payroll'
     ? getReadinessChecklistLine(readiness, {
         ready: 'Attach the SSA receipt/confirmation now if payroll needs it.',
@@ -948,7 +951,7 @@ function buildAccountUpdateTemplates(
                   blocked: 'Gather board submission rules only until legal proof is fully grounded.',
                 });
   const getBlockingProofHopSentence = (
-    readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+    readiness: AccountUpdateTemplateReadiness,
     blockingProofHopLabel?: string,
   ) => {
     const fallbackBlockingProofHopLabel = getFallbackBlockingProofHopLabel(readiness, blockingProofHopLabel);
@@ -1682,7 +1685,7 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
       : []),
   ];
 
-  const plan = {
+  const plan: NameChangePlan = {
     engineVersion: NAME_CHANGE_ENGINE_VERSION,
     jurisdiction: {
       country: 'US',
@@ -1729,7 +1732,7 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
     steps,
   };
 
-  plan.summary.targetStatusOverview = buildTargetStatusOverview(input, plan, steps, input.reminders);
+  plan.summary.targetStatusOverview = buildTargetStatusOverview(input, plan, steps, input.reminders ?? []);
 
   return plan;
 }

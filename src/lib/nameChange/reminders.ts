@@ -256,7 +256,7 @@ const CONTEXT_REMINDER_CONFIGS: NameChangeContextReminderConfig[] = [
     includeWhen: (plan) => Boolean(
       plan.profile.passportNeedsUpdate
       && plan.profile.isUsCitizen
-      && !plan.profile.hasUsPassport
+      && !plan.profile.hasPassport
       && plan.summary.edgeCaseGuidance?.some((item) => item.id === 'edge-passport-branch')
     ),
   },
@@ -632,7 +632,10 @@ export function buildNameChangeReminderSuggestions(plan: NameChangePlan): NameCh
       suggestedOffsetDays,
       reason: `${category.summary}. Use this checkpoint to confirm the whole ${category.label.toLowerCase()} lane is no longer carrying the old name.`,
       dependsOnStepId: category.dependsOnStepIds[category.dependsOnStepIds.length - 1] ?? category.dependsOnStepIds[0] ?? 'institutions-rollout',
-      urgency: raiseUrgency(urgencyFromOffset(suggestedOffsetDays), category.id === 'travel_mobility' ? 'medium' : undefined),
+      urgency: raiseUrgency(
+        urgencyFromOffset(suggestedOffsetDays),
+        category.id === 'travel_mobility' || category.id === 'work_insurance' ? 'medium' : undefined,
+      ),
     } satisfies NameChangeReminderSuggestion;
 
     suggestions.push({
