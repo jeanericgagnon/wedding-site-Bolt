@@ -38,6 +38,8 @@ describe('PlanningOverviewTab', () => {
     expect(screen.getByText(plan.summary.nextBestAction)).toBeTruthy();
     expect(screen.getByText(/reminder.*actionable now/i)).toBeTruthy();
     expect(screen.getByText(/blocked milestone/i)).toBeTruthy();
+    expect(screen.getByText(/downstream categor/i)).toBeTruthy();
     expect(screen.getByText(/Next milestone:/i)).toBeTruthy();
+    expect(screen.getByText(/Legal \+ government \+ Work \+ insurance/i)).toBeTruthy();
   });
 });

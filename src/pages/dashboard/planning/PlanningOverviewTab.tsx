@@ -66,6 +66,23 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
   const rolloutMilestone = nameChangePlan.summary.milestoneChecklist?.find((milestone) => milestone.id === 'milestone-account-rollout') ?? null;
   const nextNameChangeMilestone = nameChangePlan.summary.milestoneChecklist?.find((milestone) => milestone.status !== 'complete') ?? null;
   const blockedNameChangeMilestones = nameChangePlan.summary.milestoneChecklist?.filter((milestone) => milestone.status === 'blocked').length ?? 0;
+  const downstreamCoverage = nameChangePlan.summary.institutionCategoryCoverage ?? [];
+  const downstreamReadyCount = downstreamCoverage.filter((category) => category.status === 'ready').length;
+  const downstreamInProgressCount = downstreamCoverage.filter((category) => category.status === 'in_progress').length;
+  const downstreamUpcomingCount = downstreamCoverage.filter((category) => category.status === 'upcoming').length;
+  const taxPayrollCoverage = downstreamCoverage.filter((category) => category.id === 'legal_government' || category.id === 'work_insurance');
+  const taxPayrollLabel = taxPayrollCoverage.length > 0
+    ? taxPayrollCoverage.map((category) => category.label).join(' + ')
+    : 'Tax and payroll rollout';
+  const taxPayrollStatus = taxPayrollCoverage.some((category) => category.status === 'in_progress')
+    ? 'in progress'
+    : taxPayrollCoverage.some((category) => category.status === 'ready')
+      ? 'ready'
+      : taxPayrollCoverage.some((category) => category.status === 'complete')
+        ? 'complete'
+        : taxPayrollCoverage.some((category) => category.status === 'blocked')
+          ? 'blocked'
+          : 'upcoming';
   const nameChangeReminderAttention = summarizeNameChangeReminderAttention(
     deriveNameChangeReminderAttention(
       mapReminderSuggestionsToInputs(buildNameChangeReminderSuggestions(nameChangePlan)),
@@ -158,6 +175,9 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
                     <span className="rounded-full bg-white px-2 py-1 text-text-secondary shadow-sm">
                       {blockedNameChangeMilestones} blocked milestone{blockedNameChangeMilestones === 1 ? '' : 's'}
                     </span>
+                    <span className="rounded-full bg-white px-2 py-1 text-text-secondary shadow-sm">
+                      {downstreamReadyCount} downstream categor{downstreamReadyCount === 1 ? 'y' : 'ies'} ready · {downstreamInProgressCount} in progress · {downstreamUpcomingCount} upcoming
+                    </span>
                     {nameChangeReminderAttention.stale > 0 ? (
                       <span className="rounded-full bg-amber-500/15 px-2 py-1 text-amber-200">
                         {nameChangeReminderAttention.stale} stale follow-up{nameChangeReminderAttention.stale === 1 ? '' : 's'}
@@ -169,6 +189,9 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
                       Next milestone: <span className="font-medium text-text-primary">{nextNameChangeMilestone.label}</span>
                     </p>
                   ) : null}
+                  <p className="mt-2 text-xs text-text-secondary">
+                    {taxPayrollLabel}: <span className="font-medium text-text-primary">{taxPayrollStatus}</span>
+                  </p>
                 </div>
               </div>
               <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-primary shadow-sm">Open lane</span>
