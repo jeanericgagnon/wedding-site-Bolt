@@ -302,6 +302,8 @@ function getExecutionScoreBase(
   if (template?.readiness === 'in_progress') {
     return getEffectiveBlockingProofHopLabel(template) ? 280 : 120;
   }
+  if (template?.readiness === 'upcoming') return 260;
+  if (template?.readiness === 'blocked') return 300;
   return getSeverityWeight(severity) * 100;
 }
 

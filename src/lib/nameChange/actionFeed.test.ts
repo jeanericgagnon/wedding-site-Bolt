@@ -742,7 +742,7 @@ describe('name change action feed', () => {
     expect(feed[0]?.action.detail).toContain('Certified legal name-change proof');
   });
 
-  it('shows upcoming template work as waiting on the next proof hop instead of looking send-ready', () => {
+  it('shows upcoming template work as elevated next-proof dependency work instead of looking send-ready', () => {
     const feed = buildNameChangeActionFeed([
       makeExecutionSnapshot({
         targetKey: 'employer',
@@ -774,7 +774,7 @@ describe('name change action feed', () => {
       laneLabel: 'Employer payroll / HR · ask before next proof hop · SSA pending',
       severity: 'blocking',
       urgencyReason: 'blocking_dependency',
-      urgencyTier: 'critical',
+      urgencyTier: 'elevated',
     });
     expect(feed[0]?.action.label).toBe('Ask employer payroll / HR before next proof hop (SSA pending)');
     expect(feed[0]?.action.detail).toContain('Template state: prep the ask now and wait for ssa pending to clear before sending.');
@@ -865,7 +865,7 @@ describe('name change action feed', () => {
     expect(feed[0]?.action.label).toBe('Draft tax and state agencies update (SSA pending)');
   });
 
-  it('keeps blocked template work above upcoming proof-hop asks', () => {
+  it('keeps blocked template work above upcoming proof-hop asks without promoting the upcoming ask to critical', () => {
     const feed = buildNameChangeActionFeed([
       makeExecutionSnapshot({
         targetKey: 'employer',
@@ -910,7 +910,7 @@ describe('name change action feed', () => {
       title: 'Employer payroll / HR',
       laneLabel: 'Employer payroll / HR · ask before next proof hop · SSA pending',
       severity: 'blocking',
-      urgencyTier: 'critical',
+      urgencyTier: 'elevated',
     });
     expect(feed[1]?.action.label).toBe('Ask employer payroll / HR before next proof hop (SSA pending)');
   });
