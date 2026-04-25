@@ -67,4 +67,14 @@ describe('getRegistryRepairStates', () => {
 
     expect(states).toContain('broken-import');
   });
+
+  it('treats invalid persisted next refresh dates as stale details instead of dropping the repair state', () => {
+    const states = getRegistryRepairStates(
+      makeItem({
+        next_refresh_at: 'not-a-date',
+      }),
+    );
+
+    expect(states).toContain('stale-details');
+  });
 });

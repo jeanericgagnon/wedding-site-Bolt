@@ -112,4 +112,16 @@ describe('RegistryItemCard', () => {
     fireEvent.click(screen.getByRole('button', { name: /edit/i }));
     expect(onEdit).toHaveBeenCalledWith(expect.objectContaining({ purchase_status: 'available', purchaser_name: null }));
   });
+
+  it('keeps stale details guidance visible when persisted metadata check time is invalid', () => {
+    render(
+      <RegistryItemCard
+        item={makeItem({ metadata_last_checked_at: 'not-a-date' })}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Check details')).toBeInTheDocument();
+  });
 });

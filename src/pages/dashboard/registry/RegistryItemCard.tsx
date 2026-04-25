@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { ExternalLink, Pencil, Trash2, GripVertical, Package, CheckCircle2, ShoppingBag, RefreshCw } from 'lucide-react';
 import { Badge } from '../../../components/ui';
-import { formatRegistryItemDate } from '../registryItemTime';
+import { ageExceedsMs, formatRegistryItemDate } from '../registryItemTime';
 import { getRegistryItemMetadataState, sanitizeRegistryQuantityState, type RegistryItem, type PurchaseStatus } from './registryTypes';
 
 interface Props {
@@ -135,7 +135,8 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
   const merchant = normalizedItem.merchant ?? normalizedItem.store_name ?? null;
   const isPurchased = normalizedItem.purchase_status === 'purchased';
   const canMarkPurchased = !isPurchased && !!onMarkPurchased;
-  const stale = !normalizedItem.metadata_last_checked_at || (Date.now() - new Date(normalizedItem.metadata_last_checked_at).getTime()) > 1000 * 60 * 60 * 24 * 7;
+  const stale = !normalizedItem.metadata_last_checked_at
+    || ageExceedsMs(normalizedItem.metadata_last_checked_at, 1000 * 60 * 60 * 24 * 7);
   const priceChanged = normalizedItem.previous_price_amount != null && normalizedItem.price_amount != null && normalizedItem.previous_price_amount !== normalizedItem.price_amount;
   const outOfStock = (normalizedItem.availability || '').toLowerCase().includes('out');
   const metadataState = getRegistryItemMetadataState(normalizedItem);
