@@ -523,7 +523,11 @@ function getReminderSectionKey(dependsOnStepId: string): NameChangeActionFeedIte
 }
 
 function isCaseSetupReminder(item: NameChangeReminderAttentionItem) {
-  return item.reminderKey === 'reminder-case-legal-name-setup';
+  return item.reminderKey === 'reminder-case-legal-name-setup'
+    || item.reminderKey === 'reminder-court-order-packet'
+    || item.reminderKey === 'reminder-marriage-name-mismatch'
+    || item.reminderKey === 'reminder-mismatch-recovery'
+    || item.reminderKey === 'reminder-both-partners-changing';
 }
 
 function getReminderFocusTargetId(item: NameChangeReminderAttentionItem) {

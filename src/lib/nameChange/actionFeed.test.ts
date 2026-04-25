@@ -1851,6 +1851,22 @@ describe('name change action feed', () => {
     });
   });
 
+  it('routes legal-proof edge reminders to the planner case-setup section', () => {
+    const feed = buildNameChangeActionFeed([], [], [
+      makeReminderAttention({
+        reminderKey: 'reminder-court-order-packet',
+        label: 'Check court-order packet and hearing progress',
+      }),
+      makeReminderAttention({
+        reminderKey: 'reminder-mismatch-recovery',
+        label: 'Reset the legal-proof path before continuing downstream updates',
+      }),
+    ]);
+
+    expect(feed.map((item) => item.focusTargetId)).toEqual(['case-setup', 'case-setup']);
+    expect(feed.map((item) => item.sectionKey)).toEqual(['cleanup', 'cleanup']);
+  });
+
   it('routes institution reminders to their institutional execution cards', () => {
     const feed = buildNameChangeActionFeed([], [], [
       makeReminderAttention({
