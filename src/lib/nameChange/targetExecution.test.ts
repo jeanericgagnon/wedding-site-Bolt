@@ -2517,10 +2517,10 @@ describe('name change target execution snapshot', () => {
 
     const snapshot = buildNameChangeTargetExecutionSnapshot('tsa', profile, [], [], plan);
     expect(snapshot.statusVault.executionCounts).toEqual({
-      todo: 1,
+      todo: 2,
       inProgress: 1,
       complete: 1,
-      total: 3,
+      total: 4,
     });
     expect(snapshot.statusVault.status).toBe('in_progress');
   });
