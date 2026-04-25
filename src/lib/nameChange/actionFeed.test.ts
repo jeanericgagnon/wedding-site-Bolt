@@ -6,6 +6,7 @@ import {
   formatBlockingProofHopStatePhrase,
   formatInlineProofList,
   getAccountUpdateTemplateBlockedByLine,
+  getAccountUpdateTemplateContextLines,
   getAccountUpdateTemplateCurrentBlockerLine,
   getAccountUpdateTemplateChecklistLine,
   getAccountUpdateTemplateChecklistStatusLine,
@@ -205,6 +206,18 @@ describe('account update template surface helpers', () => {
     expect(getAccountUpdateTemplateProofDocumentsLine(template)).toBe(
       'Proof to have handy: Certified legal name-change proof · Updated photo ID or DMV receipt',
     );
+    expect(getAccountUpdateTemplateContextLines(template)).toEqual([
+      getAccountUpdateTemplateStateLine(template)!,
+      getAccountUpdateTemplateSubjectLine(template),
+      getAccountUpdateTemplateMessageLine(template),
+      `Readiness: ${template.readinessLabel}`,
+      getAccountUpdateTemplateChecklistLine(template)!,
+      getAccountUpdateTemplateChecklistStatusLine(template)!,
+      getAccountUpdateTemplateProofStatusLine(template),
+      getAccountUpdateTemplateNextAskLine(template),
+      getAccountUpdateTemplateProofChecklistLine(template)!,
+      getAccountUpdateTemplateProofDocumentsLine(template)!,
+    ]);
   });
 
   it('keeps planner and feed readiness labels on the same copy map', () => {

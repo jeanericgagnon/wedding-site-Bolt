@@ -204,30 +204,26 @@ export function getAccountUpdateTemplateChecklistStatusLine(template: AccountUpd
   return checklistStatusLine ? `Checklist status: ${checklistStatusLine}` : undefined;
 }
 
-function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemplate) {
-  const blockedByLine = getAccountUpdateTemplateBlockedByLine(template);
-  const currentBlockerLine = getAccountUpdateTemplateCurrentBlockerLine(template);
-  const proofPhaseLine = getAccountUpdateTemplateStateLine(template);
-  const readinessDetail = getAccountUpdateTemplateReadinessDetailLine(baseDetail, template);
-  const checklistLine = getAccountUpdateTemplateChecklistLine(template);
-  const checklistStatusLine = getAccountUpdateTemplateChecklistStatusLine(template);
-  const proofChecklistSummary = getAccountUpdateTemplateProofChecklistLine(template);
-  const proofDocumentsSummary = getAccountUpdateTemplateProofDocumentsLine(template);
+export function getAccountUpdateTemplateContextLines(template: AccountUpdateTemplate) {
   return [
-    readinessDetail,
-    proofPhaseLine,
+    getAccountUpdateTemplateStateLine(template),
     getAccountUpdateTemplateSubjectLine(template),
     getAccountUpdateTemplateMessageLine(template),
     `Readiness: ${template.readinessLabel}`,
-    blockedByLine,
-    currentBlockerLine,
-    checklistLine,
-    checklistStatusLine,
+    getAccountUpdateTemplateBlockedByLine(template),
+    getAccountUpdateTemplateCurrentBlockerLine(template),
+    getAccountUpdateTemplateChecklistLine(template),
+    getAccountUpdateTemplateChecklistStatusLine(template),
     getAccountUpdateTemplateProofStatusLine(template),
     getAccountUpdateTemplateNextAskLine(template),
-    proofChecklistSummary,
-    proofDocumentsSummary,
-  ].filter(Boolean).join('\n').trim();
+    getAccountUpdateTemplateProofChecklistLine(template),
+    getAccountUpdateTemplateProofDocumentsLine(template),
+  ].filter(Boolean);
+}
+
+function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemplate) {
+  const readinessDetail = getAccountUpdateTemplateReadinessDetailLine(baseDetail, template);
+  return [readinessDetail, ...getAccountUpdateTemplateContextLines(template)].filter(Boolean).join('\n').trim();
 }
 
 function formatTemplateAudienceForAction(audience: string) {
