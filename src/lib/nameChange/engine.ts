@@ -459,6 +459,14 @@ function buildAccountUpdateTemplates(
     if (readiness === 'upcoming') return lines.upcoming ?? lines.in_progress;
     return lines.blocked ?? lines.upcoming ?? lines.in_progress;
   };
+  const normalizeChecklistSnippet = (value: string) => value.trim().replace(/[.\s]+$/u, '');
+  const joinChecklistSnippets = (items: string[]) => {
+    const normalized = items
+      .map((item) => normalizeChecklistSnippet(item))
+      .filter((item, index, array) => item.length > 0 && array.indexOf(item) === index);
+
+    return normalized.length > 0 ? `${normalized.join(', ')}.` : '';
+  };
   const getReadinessSubject = (
     baseSubject: string,
     readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
@@ -905,7 +913,7 @@ function buildAccountUpdateTemplates(
     const proofLine = readinessSpecificProof
       ? `I can provide ${proofDocuments.join(', ')}. ${readinessSpecificProof}`
       : `I can provide ${proofDocuments.join(', ')}.`;
-    const proofChecklistLine = `Proof checklist I am tracking: ${proofChecklistWithStatus.join(', ')}.`;
+    const proofChecklistLine = `Proof checklist I am tracking: ${joinChecklistSnippets(proofChecklistWithStatus)}`;
     const checklistGuidanceLine = `${readinessSpecificChecklistItem}. ${proofChecklistStatusNote}`;
 
     return {
