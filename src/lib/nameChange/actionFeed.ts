@@ -63,10 +63,10 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
     : undefined;
   return [
     baseDetail,
-    template.readinessLabel,
+    `Readiness: ${template.readinessLabel}`,
     template.blockingProofHopLabel ? `Blocked by: ${template.blockingProofHopLabel}.` : undefined,
-    template.proofReadinessSummary,
-    template.requestSummary,
+    `Proof status: ${template.proofReadinessSummary}`,
+    `Next ask: ${template.requestSummary}`,
     proofChecklistSummary,
   ].filter(Boolean).join(' ').trim();
 }
