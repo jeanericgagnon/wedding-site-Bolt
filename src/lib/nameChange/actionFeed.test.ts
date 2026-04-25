@@ -383,7 +383,7 @@ describe('name change action feed', () => {
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-bank',
       title: 'Bank accounts',
-      laneLabel: 'Bank accounts · confirm synced',
+      laneLabel: 'Bank accounts · confirm sync',
       severity: 'attention',
       urgencyReason: 'review_queue',
       urgencyTier: 'normal',
@@ -465,7 +465,7 @@ describe('name change action feed', () => {
     });
     expect(feed[1]).toMatchObject({
       title: 'Bank accounts',
-      laneLabel: 'Bank accounts · confirm synced',
+      laneLabel: 'Bank accounts · confirm sync',
       urgencyTier: 'normal',
     });
   });
@@ -564,7 +564,7 @@ describe('name change action feed', () => {
     expect(feed[1]).toMatchObject({
       title: 'Bank accounts',
       severity: 'attention',
-      laneLabel: 'Bank accounts · confirm synced',
+      laneLabel: 'Bank accounts · confirm sync',
     });
   });
 
@@ -1001,6 +1001,25 @@ describe('name change action feed', () => {
     });
     expect(feed[0]?.action.detail).toContain('Blocked by: legal proof pending.');
     expect(feed[0]?.action.detail).toContain('Hold identity changes for now and only gather verification rules');
+  });
+
+  it('uses confirm sync wording for completed template lane labels', () => {
+    const feed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'banks',
+        targetLabel: 'Banks',
+        recommendedFormCode: 'BANK',
+      }),
+    ], [], [], [
+      makeTemplate({
+        id: 'template-bank',
+        audience: 'Bank accounts',
+        readiness: 'complete',
+        blockingProofHopLabel: undefined,
+      }),
+    ]);
+
+    expect(feed[0]?.laneLabel).toBe('Bank accounts · confirm sync');
   });
 
   it('keeps blocked template intake work above lower-value ready execution follow-through', () => {

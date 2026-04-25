@@ -97,7 +97,7 @@ function getTemplateLaneLabel(template: AccountUpdateTemplate) {
   const readinessLabel = template.readiness === 'ready'
     ? 'send now'
     : template.readiness === 'complete'
-      ? 'confirm synced'
+      ? 'confirm sync'
       : template.readiness === 'in_progress'
         ? 'draft now'
         : template.readiness === 'upcoming'

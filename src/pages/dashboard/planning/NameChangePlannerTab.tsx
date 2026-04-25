@@ -176,6 +176,11 @@ function getAccountUpdateTemplateStatusLabel(readiness: NonNullable<NameChangePl
   }
 }
 
+function getAccountUpdateTemplateStatusChip(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
+  const baseLabel = getAccountUpdateTemplateStatusLabel(template.readiness);
+  return template.blockingProofHopLabel ? `${baseLabel} · ${template.blockingProofHopLabel}` : baseLabel;
+}
+
 function getAccountUpdateTemplateCopyButtonLabel(
   template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number],
   copiedTemplateId: string | null,
@@ -191,7 +196,7 @@ function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['s
   return [
     `Audience: ${template.audience}`,
     `Subject: ${template.subject}`,
-    `Status: ${getAccountUpdateTemplateStatusLabel(template.readiness)}`,
+    `Status: ${getAccountUpdateTemplateStatusChip(template)}`,
     `Readiness: ${template.readinessLabel}`,
     template.blockingProofHopLabel ? `Blocked by: ${template.blockingProofHopLabel}` : undefined,
     `Proof status: ${template.proofReadinessSummary}`,
@@ -1511,7 +1516,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`rounded-full px-2 py-1 text-xs ${getExecutionSummaryTone(template.readiness)}`}>
-                      {getAccountUpdateTemplateStatusLabel(template.readiness)}
+                      {getAccountUpdateTemplateStatusChip(template)}
                     </span>
                     <Button size="sm" variant="outline" onClick={() => void copyAccountUpdateTemplate(template)}>
                       {getAccountUpdateTemplateCopyButtonLabel(template, copiedTemplateId)}
