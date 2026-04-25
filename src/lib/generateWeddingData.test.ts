@@ -93,4 +93,28 @@ describe('fromOnboarding registry carryover', () => {
       ]),
     );
   });
+
+  it('drops impossible onboarding dates instead of baking fake public date truth into wedding data', () => {
+    const weddingData = fromOnboarding({
+      partner1Name: 'Alex',
+      partner2Name: 'Sam',
+      weddingDate: '2027-02-30',
+      rsvpDeadline: '2027-02-31',
+    });
+
+    expect(weddingData.event.weddingDateISO).toBeUndefined();
+    expect(weddingData.rsvp.deadlineISO).toBeUndefined();
+  });
+
+  it('keeps valid onboarding dates intact in generated wedding data', () => {
+    const weddingData = fromOnboarding({
+      partner1Name: 'Alex',
+      partner2Name: 'Sam',
+      weddingDate: '2027-02-28',
+      rsvpDeadline: '2027-02-14',
+    });
+
+    expect(weddingData.event.weddingDateISO).toBe('2027-02-28');
+    expect(weddingData.rsvp.deadlineISO).toBe('2027-02-14');
+  });
 });

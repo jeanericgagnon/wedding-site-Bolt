@@ -82,8 +82,21 @@ function hasSubstantiveAnswer(answer?: string): boolean {
   return !PLACEHOLDER_ANSWERS.includes(answer.trim().toLowerCase());
 }
 
+function normalizeOnboardingDateInput(value?: string): string | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return undefined;
+
+  const date = new Date(`${trimmed}T12:00:00Z`);
+  if (Number.isNaN(date.getTime())) return undefined;
+
+  return date.toISOString().slice(0, 10) === trimmed ? trimmed : undefined;
+}
+
 export function fromOnboarding(formData: OnboardingFormData): WeddingDataV1 {
   const now = new Date().toISOString();
+  const normalizedWeddingDate = normalizeOnboardingDateInput(formData.weddingDate);
+  const normalizedRsvpDeadline = normalizeOnboardingDateInput(formData.rsvpDeadline);
   const recovered = buildMigrationRecoveryDefaults({
     coupleName1: formData.partner1Name,
     coupleName2: formData.partner2Name,
@@ -189,13 +202,13 @@ export function fromOnboarding(formData: OnboardingFormData): WeddingDataV1 {
       story: recovered.story,
     },
     event: {
-      weddingDateISO: formData.weddingDate,
+      weddingDateISO: normalizedWeddingDate,
     },
     venues,
     schedule,
     rsvp: {
       enabled: true,
-      deadlineISO: formData.rsvpDeadline,
+      deadlineISO: normalizedRsvpDeadline,
     },
     travel: {
       parkingInfo: formData.parking,
