@@ -121,10 +121,54 @@ export function hasExecutionSupportiveWaitGuidance(
   return Boolean(getSupportiveExecutionWaitGuidance(snapshot));
 }
 
+function parseExecutionNextActionGuidance(detail: string) {
+  const trimmed = detail.trim();
+  const labelPattern = /(Do now|Why it helps|Can wait):\s*/g;
+  const firstLabelMatch = labelPattern.exec(trimmed);
+
+  if (!firstLabelMatch) {
+    return {
+      overview: trimmed,
+      doNow: null,
+      whyItHelps: null,
+      canWait: null,
+    };
+  }
+
+  const guidance = {
+    overview: trimmed.slice(0, firstLabelMatch.index).trim(),
+    doNow: null as string | null,
+    whyItHelps: null as string | null,
+    canWait: null as string | null,
+  };
+
+  let currentLabel = firstLabelMatch[1] as 'Do now' | 'Why it helps' | 'Can wait';
+  let currentIndex = labelPattern.lastIndex;
+  let nextMatch = labelPattern.exec(trimmed);
+
+  while (true) {
+    const value = trimmed.slice(currentIndex, nextMatch?.index ?? trimmed.length).trim();
+    if (currentLabel === 'Do now') guidance.doNow = value || null;
+    if (currentLabel === 'Why it helps') guidance.whyItHelps = value || null;
+    if (currentLabel === 'Can wait') guidance.canWait = value || null;
+    if (!nextMatch) break;
+    currentLabel = nextMatch[1] as 'Do now' | 'Why it helps' | 'Can wait';
+    currentIndex = labelPattern.lastIndex;
+    nextMatch = labelPattern.exec(trimmed);
+  }
+
+  return guidance;
+}
+
 export function getExecutionNextActionGuidance(
   snapshot: Pick<NameChangeTargetExecutionSnapshot, 'targetKey' | 'nextAction'>,
 ) {
-  const overview = snapshot.nextAction.detail.trim();
+  const parsedGuidance = parseExecutionNextActionGuidance(snapshot.nextAction.detail);
+  if (parsedGuidance.doNow || parsedGuidance.whyItHelps || parsedGuidance.canWait) {
+    return parsedGuidance;
+  }
+
+  const overview = parsedGuidance.overview;
   const supportiveWaitGuidance = getSupportiveExecutionWaitGuidance(snapshot);
   if (!supportiveWaitGuidance) {
     return {

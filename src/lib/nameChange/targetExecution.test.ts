@@ -2658,6 +2658,25 @@ describe('name change target execution snapshot', () => {
     });
   });
 
+  it('parses already-labeled execution guidance without folding it back into the overview', () => {
+    const snapshot = {
+      targetKey: 'banks',
+      nextAction: {
+        category: 'dependency',
+        label: 'Unblock DMV completion',
+        detail: 'Wait for the DMV update before submitting bank changes. Do now: Gather account numbers, policy details, and contact routes now. Why it helps: That handoff moves faster once DMV completion clears. Can wait: Actual submission can safely wait.',
+      },
+    } as const;
+
+    expect(getExecutionNextActionGuidance(snapshot)).toEqual({
+      overview: 'Wait for the DMV update before submitting bank changes.',
+      doNow: 'Gather account numbers, policy details, and contact routes now.',
+      whyItHelps: 'That handoff moves faster once DMV completion clears.',
+      canWait: 'Actual submission can safely wait.',
+    });
+    expect(getExecutionNextActionDetail(snapshot)).toBe(snapshot.nextAction.detail);
+  });
+
   it('hides guided next-action fallback notes from the visible status-vault stack', () => {
     const guidedDetail = getExecutionNextActionDetail({
       targetKey: 'banks',
