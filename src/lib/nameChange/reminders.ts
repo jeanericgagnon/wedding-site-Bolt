@@ -212,6 +212,28 @@ const CONTEXT_REMINDER_CONFIGS: NameChangeContextReminderConfig[] = [
     includeWhen: (plan) => plan.profile.legalBasis === 'court_order',
   },
   {
+    id: 'reminder-county-office-variation',
+    label: 'Confirm the issuing county record path before filing follow-through',
+    standardOffsetDays: 2,
+    expeditedOffsetDays: 1,
+    standardUrgency: 'medium',
+    expeditedUrgency: 'high',
+    dependsOnStepId: 'eligibility-proof',
+    reason: 'County clerk, recorder, and vital-records offices handle certified copies differently, so lock the issuing-office path before SSA or passport follow-through depends on it.',
+    includeWhen: (plan) => Boolean(plan.summary.edgeCaseGuidance?.some((item) => item.id === 'edge-county-office-variation')),
+  },
+  {
+    id: 'reminder-out-of-state-proof-grounding',
+    label: 'Ground the out-of-state certificate reference fields before downstream filing',
+    standardOffsetDays: 1,
+    expeditedOffsetDays: 0,
+    standardUrgency: 'high',
+    expeditedUrgency: 'high',
+    dependsOnStepId: 'eligibility-proof',
+    reason: 'Out-of-state marriage follow-through should pause until the certificate county and certificate number are grounded from the reviewed proof set.',
+    includeWhen: (plan) => Boolean(plan.summary.edgeCaseGuidance?.some((item) => item.id === 'edge-out-of-state-proof')),
+  },
+  {
     id: 'reminder-first-passport-branch',
     label: 'Prep the first-passport packet instead of a renewal shortcut',
     standardOffsetDays: 2,
@@ -335,6 +357,8 @@ function getReminderPlannerRoute(
     suggestion.id === 'reminder-marriage-name-mismatch'
     || suggestion.id === 'reminder-mismatch-recovery'
     || suggestion.id === 'reminder-both-partners-changing'
+    || suggestion.id === 'reminder-county-office-variation'
+    || suggestion.id === 'reminder-out-of-state-proof-grounding'
   ) {
     return {
       sectionKey: 'cleanup',

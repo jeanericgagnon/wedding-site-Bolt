@@ -1867,6 +1867,22 @@ describe('name change action feed', () => {
     expect(feed.map((item) => item.sectionKey)).toEqual(['cleanup', 'cleanup']);
   });
 
+  it('routes county-record proof reminders to the planner case-setup section', () => {
+    const feed = buildNameChangeActionFeed([], [], [
+      makeReminderAttention({
+        reminderKey: 'reminder-county-office-variation',
+        label: 'Confirm the issuing county record path before filing follow-through',
+      }),
+      makeReminderAttention({
+        reminderKey: 'reminder-out-of-state-proof-grounding',
+        label: 'Ground the out-of-state certificate reference fields before downstream filing',
+      }),
+    ]);
+
+    expect(feed.map((item) => item.focusTargetId)).toEqual(['case-setup', 'case-setup']);
+    expect(feed.map((item) => item.sectionKey)).toEqual(['cleanup', 'cleanup']);
+  });
+
   it('routes institution reminders to their institutional execution cards', () => {
     const feed = buildNameChangeActionFeed([], [], [
       makeReminderAttention({

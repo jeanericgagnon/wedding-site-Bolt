@@ -349,6 +349,41 @@ describe('name change reminder suggestions', () => {
     });
   });
 
+  it('adds county-record and out-of-state proof reminders when marriage proof handling needs grounding', () => {
+    const reminders = buildNameChangeReminderSuggestions(buildNameChangePlan({
+      ...makeInput({ marriage_state: 'Nevada' }),
+      documents: [
+        {
+          document_kind: 'marriage_certificate',
+          display_name: 'Certified marriage certificate',
+          storage_mode: 'metadata_only',
+          intake_status: 'reviewed',
+        },
+      ],
+      extractedFields: [],
+    }));
+
+    expect(reminders.find((reminder) => reminder.id === 'reminder-county-office-variation')).toMatchObject({
+      label: 'Confirm the issuing county record path before filing follow-through',
+      dependsOnStepId: 'eligibility-proof',
+      urgency: 'medium',
+      suggestedOffsetDays: 2,
+      sectionKey: 'cleanup',
+      plannerIntent: 'open_execution_card',
+      focusTargetId: 'case-setup',
+    });
+
+    expect(reminders.find((reminder) => reminder.id === 'reminder-out-of-state-proof-grounding')).toMatchObject({
+      label: 'Ground the out-of-state certificate reference fields before downstream filing',
+      dependsOnStepId: 'eligibility-proof',
+      urgency: 'high',
+      suggestedOffsetDays: 1,
+      sectionKey: 'cleanup',
+      plannerIntent: 'open_execution_card',
+      focusTargetId: 'case-setup',
+    });
+  });
+
   it('adds a packet-warning reminder when marriage intake target legal name does not fit the shortcut path', () => {
     const reminders = buildNameChangeReminderSuggestions(buildNameChangePlan(makeInput({
       legal_basis: 'marriage',
