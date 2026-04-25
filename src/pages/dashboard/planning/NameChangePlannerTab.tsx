@@ -138,6 +138,10 @@ const TARGET_STATUS_VAULT_STATUS_PRIORITY: Record<TargetStatusVaultRow['vaultSta
 };
 
 function scrollToPlannerTarget(targetId: string) {
+  if (typeof window !== 'undefined') {
+    const { pathname, search } = window.location;
+    window.history.replaceState(null, '', `${pathname}${search}#${targetId}`);
+  }
   document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 

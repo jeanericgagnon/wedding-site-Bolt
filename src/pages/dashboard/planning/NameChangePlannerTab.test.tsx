@@ -93,7 +93,9 @@ describe('NameChangePlannerTab', () => {
       expect(screen.getByText(/Optional next move:/i)).toBeInTheDocument();
 
       fireEvent.click(screen.getByRole('button', { name: 'Resume from status vault' }));
+      expect(window.location.hash).toBe('#target-status-tracking');
       fireEvent.click(screen.getByRole('button', { name: 'Update case setup' }));
+      expect(window.location.hash).toBe('#case-setup');
       fireEvent.click(screen.getByRole('button', { name: 'Save and come back later' }));
 
       expect(scrollIntoView).toHaveBeenCalledTimes(2);
