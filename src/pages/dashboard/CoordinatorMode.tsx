@@ -38,6 +38,7 @@ import { getCoordinatorTimelineBoardTargetId, getCoordinatorTimelineTargetState 
 import { getCoordinatorQnaTargetState } from '../../lib/coordinatorQnaTargetState';
 import { getCoordinatorTimelineTransitionLabel, syncCoordinatorAlertDraftForTimelineTransition } from '../../lib/coordinatorTimelineTransition';
 import { buildCoordinatorCommandSummary } from '../../lib/coordinatorCommandSummary';
+import { formatCoordinatorEventDateTime } from './coordinatorEventTime';
 import { getCoordinatorCommandSummaryTarget } from '../../lib/coordinatorCommandSummaryTarget';
 import { getCoordinatorCommandPriority } from '../../lib/coordinatorCommandPriority';
 import { getCoordinatorCommandPriorityReason } from '../../lib/coordinatorCommandPriorityReason';
@@ -503,7 +504,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
   const eventAudienceOptions: AudienceOption[] = events.map((e) => ({
     value: `event:${e.id}`,
-    label: `${e.event_name}${e.start_time ? ` — ${new Date(e.start_time).toLocaleString()}` : ''}`,
+    label: `${e.event_name}${e.start_time ? ` — ${formatCoordinatorEventDateTime(e.start_time)}` : ''}`,
     count: eventGuestIds[e.id]?.size ?? 0,
   }));
 
@@ -2213,7 +2214,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                       <p className="text-xs font-medium text-text-primary">Focused event</p>
                       <p className="text-sm text-text-primary">{activeTimelineEvent.event_name}</p>
                       <p className="text-[11px] text-text-tertiary">
-                        {activeTimelineEvent.start_time ? new Date(activeTimelineEvent.start_time).toLocaleString() : 'Time TBD'}
+                        {formatCoordinatorEventDateTime(activeTimelineEvent.start_time)}
                         {activeTimelineEventState ? ` · ${activeTimelineEventState === 'live' ? 'Live now' : activeTimelineEventState === 'done' ? 'Completed' : 'Up next'}` : ''}
                       </p>
                     </div>
@@ -2327,7 +2328,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                           </select>
                         </div>
                         <div className="mt-2 flex items-center justify-between gap-3">
-                          <p className="text-xs text-text-tertiary">{e.start_time ? new Date(e.start_time).toLocaleString() : 'Time TBD'}</p>
+                          <p className="text-xs text-text-tertiary">{formatCoordinatorEventDateTime(e.start_time)}</p>
                           <div className="flex items-center gap-2">
                             {correctionAction && (
                               <button
