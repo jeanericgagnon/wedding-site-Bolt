@@ -214,6 +214,9 @@ describe('name change engine', () => {
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.blockingProofHopLabel).toBe('SSA pending');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.proofChecklist.at(-1)).toBe('Gather the tax/state process only until legal proof and SSA work are real.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.subject).toBe('Ask intake rules now (SSA pending): Align my tax records with my legal name change');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-digital-identity')?.blockingProofHopLabel).toBe('legal proof pending');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-digital-identity')?.body).toContain('Current blocker: legal proof pending.');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-digital-identity')?.subject).toBe('Ask intake rules now (legal proof pending): Update my account holder name to match my legal records');
   });
 
   it('uses question-style subject framing for upcoming account-update templates', () => {

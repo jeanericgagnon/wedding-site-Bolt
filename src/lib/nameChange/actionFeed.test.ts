@@ -14,7 +14,9 @@ function makeTemplate(overrides: Partial<NonNullable<NameChangePlan['summary']['
       : id === 'template-payroll' || id === 'template-tax'
         ? 'SSA pending'
         : id === 'template-bank' || id === 'template-digital-identity' || id === 'template-licenses'
-          ? 'ID pending'
+          ? readiness === 'blocked'
+            ? 'legal proof pending'
+            : 'ID pending'
           : id === 'template-travel'
             ? 'passport pending'
             : id === 'template-insurance'
@@ -991,12 +993,13 @@ describe('name change action feed', () => {
     expect(feed[0]).toMatchObject({
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-digital-identity',
-      laneLabel: 'Phone, utilities, housing, or primary digital identity support · ask intake rules now · ID pending',
+      laneLabel: 'Phone, utilities, housing, or primary digital identity support · ask intake rules now · legal proof pending',
       urgencyReason: 'blocking_dependency',
       action: expect.objectContaining({
         detail: expect.stringContaining('gather verification rules first'),
       }),
     });
+    expect(feed[0]?.action.detail).toContain('Blocked by: legal proof pending.');
     expect(feed[0]?.action.detail).toContain('Hold identity changes for now and only gather verification rules');
   });
 

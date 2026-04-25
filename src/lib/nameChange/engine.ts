@@ -655,7 +655,9 @@ function buildAccountUpdateTemplates(
   ) => {
     if (readiness === 'ready' || readiness === 'complete') return undefined;
     if (templateId === 'template-payroll' || templateId === 'template-tax') return 'SSA pending';
-    if (templateId === 'template-bank' || templateId === 'template-digital-identity' || templateId === 'template-licenses') return 'ID pending';
+    if (templateId === 'template-bank' || templateId === 'template-digital-identity' || templateId === 'template-licenses') {
+      return readiness === 'blocked' ? 'legal proof pending' : 'ID pending';
+    }
     if (templateId === 'template-travel') return 'passport pending';
     if (templateId === 'template-insurance') return readiness === 'blocked' ? 'legal proof pending' : 'ID pending';
     return undefined;
