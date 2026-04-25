@@ -136,7 +136,7 @@ describe('NameChangePlannerTab', () => {
 
       expect(screen.getByText('Start whenever you want, then come back whenever you need')).toBeInTheDocument();
       expect(screen.getByText('Roadmap saved')).toBeInTheDocument();
-      expect(screen.getByText(/Optional next move:/i)).toBeInTheDocument();
+      expect(screen.getByText(/Optional next step:/i)).toBeInTheDocument();
       expect(screen.getByText('The roadmap is already there, even if you have not started checking steps off yet, so you can come back without rebuilding the plan.')).toBeInTheDocument();
       expect(screen.getByText('Certificate, SSA, and DMV stay together so the legal identity chain does not drift.')).toBeInTheDocument();
 
@@ -183,6 +183,7 @@ describe('NameChangePlannerTab', () => {
 
       expect(screen.getByText('Resume where you left off')).toBeInTheDocument();
       expect(screen.getByText('You already started the name-change flow, so the dashboard should bring you back to the status vault instead of making you hunt for your place again.')).toBeInTheDocument();
+      expect(screen.getByText('Optional next step: Pick back up in the vault if you want progress and proof. If details changed, case setup is still one click away.')).toBeInTheDocument();
       expect(screen.getByText('0 complete · 1 in progress across the legal identity chain.')).toBeInTheDocument();
 
       fireEvent.click(screen.getByRole('button', { name: 'Resume status vault' }));

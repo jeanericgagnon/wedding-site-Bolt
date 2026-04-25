@@ -1130,13 +1130,12 @@ export const NameChangePlannerTab: React.FC<Props> = ({
             <p className="mt-1 text-sm text-sky-900">
               {resumeCard.helperCopy}
             </p>
+            <p className="mt-2 text-sm text-sky-900">Optional next step: {resumeCard.optionalNextStep}</p>
             {nextOptionalMilestone ? (
-              <p className="mt-2 text-sm text-sky-900">
-                Optional next move: <span className="font-medium">{nextOptionalMilestone.label}</span>
+              <p className="mt-1 text-sm text-sky-900">
+                If you want a concrete place to pick back up, <span className="font-medium">{nextOptionalMilestone.label}</span>
               </p>
-            ) : (
-              <p className="mt-2 text-sm text-sky-900">Optional next move: {resumeCard.optionalNextStep}</p>
-            )}
+            ) : null}
           </div>
           <div className="flex flex-wrap gap-2">
             <Button size="sm" onClick={() => scrollToPlannerHref(resumeCard.primaryHref)}>
