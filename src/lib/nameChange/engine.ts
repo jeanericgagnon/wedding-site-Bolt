@@ -472,14 +472,7 @@ function buildAccountUpdateTemplates(
     readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
     blockingProofHopLabel?: string,
   ) => {
-    const fallbackBlockingProofHopLabel = blockingProofHopLabel
-      ?? (readiness === 'in_progress'
-        ? 'current proof pending'
-        : readiness === 'upcoming'
-          ? 'next proof hop pending'
-          : readiness === 'blocked'
-            ? 'proof chain pending'
-            : undefined);
+    const fallbackBlockingProofHopLabel = getFallbackBlockingProofHopLabel(readiness, blockingProofHopLabel);
 
     return readiness === 'complete'
     ? `Confirm completed update: ${baseSubject}`
@@ -495,14 +488,7 @@ function buildAccountUpdateTemplates(
     readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
     blockingProofHopLabel?: string,
   ) => {
-    const fallbackBlockingProofHopLabel = blockingProofHopLabel
-      ?? (readiness === 'in_progress'
-        ? 'current proof pending'
-        : readiness === 'upcoming'
-          ? 'next proof hop pending'
-          : readiness === 'blocked'
-            ? 'proof chain pending'
-            : undefined);
+    const fallbackBlockingProofHopLabel = getFallbackBlockingProofHopLabel(readiness, blockingProofHopLabel);
 
     return readiness === 'ready'
     ? 'I am ready to submit the update now.'
@@ -632,14 +618,7 @@ function buildAccountUpdateTemplates(
                   upcoming: 'Do not send yet; legal proof is grounded, but the ID/license hop is still missing.',
                   blocked: 'Do not send yet; the legal proof chain still needs to clear before board-facing proof will hold.',
                 });
-    const fallbackBlockingProofHopLabel = blockingProofHopLabel
-      ?? (readiness === 'in_progress'
-        ? 'current proof pending'
-        : readiness === 'upcoming'
-          ? 'next proof hop pending'
-          : readiness === 'blocked'
-            ? 'proof chain pending'
-            : undefined);
+    const fallbackBlockingProofHopLabel = getFallbackBlockingProofHopLabel(readiness, blockingProofHopLabel);
     if (!fallbackBlockingProofHopLabel || readiness === 'ready' || readiness === 'complete') return summary;
     return `${summary} Blocking hop: ${fallbackBlockingProofHopLabel}.`;
   };
@@ -716,9 +695,24 @@ function buildAccountUpdateTemplates(
     if (templateId === 'template-insurance') return readiness === 'blocked' ? 'legal proof pending' : 'ID pending';
     return undefined;
   };
-  const getBlockingProofHopSentence = (blockingProofHopLabel: string | undefined) => blockingProofHopLabel
-    ? `Current blocker: ${blockingProofHopLabel}.`
-    : '';
+  const getFallbackBlockingProofHopLabel = (
+    readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+    blockingProofHopLabel?: string,
+  ) => blockingProofHopLabel
+    ?? (readiness === 'in_progress'
+      ? 'current proof pending'
+      : readiness === 'upcoming'
+        ? 'next proof hop pending'
+        : readiness === 'blocked'
+          ? 'proof chain pending'
+          : undefined);
+  const getBlockingProofHopSentence = (
+    readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+    blockingProofHopLabel?: string,
+  ) => {
+    const fallbackBlockingProofHopLabel = getFallbackBlockingProofHopLabel(readiness, blockingProofHopLabel);
+    return fallbackBlockingProofHopLabel ? `Current blocker: ${fallbackBlockingProofHopLabel}.` : '';
+  };
   const templateConfig = [
     {
       id: 'template-payroll',
@@ -809,14 +803,7 @@ function buildAccountUpdateTemplates(
   return templateConfig.map((template) => {
     const readiness = resolvePlanSequenceStatus(template.dependsOnStepIds, steps);
     const blockingProofHopLabel = getBlockingProofHopLabel(template.id, readiness);
-    const fallbackBlockingProofHopLabel = blockingProofHopLabel
-      ?? (readiness === 'in_progress'
-        ? 'current proof pending'
-        : readiness === 'upcoming'
-          ? 'next proof hop pending'
-          : readiness === 'blocked'
-            ? 'proof chain pending'
-            : undefined);
+    const fallbackBlockingProofHopLabel = getFallbackBlockingProofHopLabel(readiness, blockingProofHopLabel);
     const readinessLabel = readiness === 'ready'
       ? 'You have enough upstream proof to send this now.'
       : readiness === 'in_progress'
@@ -954,7 +941,7 @@ function buildAccountUpdateTemplates(
     const proofReadinessSummary = getProofReadinessSummary(template.id, readiness, blockingProofHopLabel);
     const proofChecklistStatusNote = getProofChecklistStatusNote(template.id, readiness);
     const readinessIntro = getReadinessIntro(readiness, blockingProofHopLabel);
-    const blockingProofHopSentence = getBlockingProofHopSentence(blockingProofHopLabel);
+    const blockingProofHopSentence = getBlockingProofHopSentence(readiness, blockingProofHopLabel);
     const proofChecklistWithStatus = [...proofChecklist, proofChecklistStatusNote];
     const proofLine = readinessSpecificProof
       ? `I can provide ${proofDocuments.join(', ')}. ${readinessSpecificProof}`
