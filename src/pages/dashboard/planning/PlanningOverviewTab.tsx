@@ -286,7 +286,7 @@ export const PlanningOverviewTab: React.FC<Props> = ({ tasks, budgetItems, vendo
                       className="rounded-full bg-white px-2 py-1 text-text-secondary shadow-sm"
                       onClick={(event) => {
                         event.stopPropagation();
-                        routeToNameChangeLane(nameChangeCard.primaryHref, onTabChange);
+                        routeToNameChangeLane(nameChangeCard.secondaryHref, onTabChange);
                       }}
                     >
                       {nameChangeInsights.reminderSummaryLabel}

@@ -969,7 +969,7 @@ export const DashboardOverview: React.FC = () => {
                           <button
                             type="button"
                             className="rounded-full border border-sky-300 bg-white px-2 py-1 font-medium"
-                            onClick={() => navigate(nameChangeCard.primaryHref)}
+                            onClick={() => navigate(nameChangeCard.secondaryHref)}
                           >
                             {nameChangeInsights.reminderSummaryLabel}
                           </button>

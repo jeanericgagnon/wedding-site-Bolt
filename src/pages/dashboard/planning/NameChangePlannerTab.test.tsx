@@ -145,16 +145,19 @@ describe('NameChangePlannerTab', () => {
 
       const roadmapButtons = screen.getAllByRole('button', { name: 'See roadmap first' });
       const milestoneChip = screen.getByRole('button', { name: 'Milestones ready to confirm' });
+      const reminderChip = screen.getByRole('button', { name: 'No open reminders' });
 
       fireEvent.click(roadmapButtons[roadmapButtons.length - 1]);
       expect(window.location.hash).toBe('#name-change-roadmap');
       fireEvent.click(milestoneChip);
       expect(window.location.hash).toBe('#name-change-roadmap');
+      fireEvent.click(reminderChip);
+      expect(window.location.hash).toBe('#case-setup');
       fireEvent.click(roadmapButtons[roadmapButtons.length - 1]);
       expect(window.location.hash).toBe('#name-change-roadmap');
       fireEvent.click(screen.getByRole('button', { name: 'Save and come back later' }));
 
-      expect(scrollIntoView).toHaveBeenCalledTimes(3);
+      expect(scrollIntoView).toHaveBeenCalledTimes(4);
       expect(onSave).toHaveBeenCalled();
     } finally {
       HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
