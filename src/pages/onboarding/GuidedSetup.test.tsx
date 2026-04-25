@@ -2,6 +2,8 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GUIDED_SETUP_STORAGE_KEY } from '../../lib/guidedSetupPersistence';
+import { supabase } from '../../lib/supabase';
+import { resolvePrimaryWeddingSiteId } from '../../lib/guidedSetupSiteResolver';
 
 const navigateMock = vi.fn();
 
@@ -25,6 +27,13 @@ vi.mock('../../lib/supabase', () => ({
     auth: {
       getUser: vi.fn(async () => ({ data: { user: null } })),
     },
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          maybeSingle: vi.fn(async () => ({ data: null })),
+        })),
+      })),
+    })),
   },
 }));
 
@@ -48,6 +57,8 @@ describe('GuidedSetup starter draft wording truth', () => {
   beforeEach(() => {
     navigateMock.mockReset();
     window.localStorage.clear();
+    vi.mocked(supabase.auth.getUser).mockResolvedValue({ data: { user: null } } as any);
+    vi.mocked(resolvePrimaryWeddingSiteId).mockResolvedValue(null);
   });
 
   it('keeps the completion state framed as a starter draft that still needs review before publish', async () => {
@@ -82,5 +93,37 @@ describe('GuidedSetup starter draft wording truth', () => {
     expect(screen.getByText("We drafted the core pages from what you shared. Review the starter draft in your dashboard, tighten the details, and only publish once you're ready to share it with guests.")).toBeInTheDocument();
     expect(screen.queryByText(/you'?re all set/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/starter wedding site is ready/i)).not.toBeInTheDocument();
+  });
+
+  it('ignores invalid persisted wedding dates when hydrating from the saved site record', async () => {
+    vi.mocked(supabase.auth.getUser).mockResolvedValue({ data: { user: { id: 'user-1' } } } as any);
+    vi.mocked(resolvePrimaryWeddingSiteId).mockResolvedValue('site-1');
+
+    const maybeSingle = vi.fn(async () => ({
+      data: {
+        id: 'site-1',
+        couple_name_1: 'Alex',
+        couple_name_2: 'Jordan',
+        wedding_date: 'not-a-date',
+        venue_date: '2026-02-30',
+        venue_name: 'Sunset Gardens',
+        venue_address: '123 Ocean Ave, San Diego, CA 92101',
+        wedding_location: 'San Diego',
+      },
+    }));
+    const eq = vi.fn(() => ({ maybeSingle }));
+    const select = vi.fn(() => ({ eq }));
+    vi.mocked((supabase as any).from).mockReturnValue({ select });
+
+    render(<GuidedSetup />);
+
+    await waitFor(() => {
+      expect(maybeSingle).toHaveBeenCalled();
+    });
+
+    await waitFor(() => {
+      const saved = JSON.parse(window.localStorage.getItem(GUIDED_SETUP_STORAGE_KEY) || '{}');
+      expect(saved.formData?.weddingDate).toBe('');
+    });
   });
 });

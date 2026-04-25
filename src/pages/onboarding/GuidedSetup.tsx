@@ -52,6 +52,16 @@ const deriveCityFromAddress = (address?: string | null): string => {
   return '';
 };
 
+const normalizeHydratedDateInput = (value?: string | null): string => {
+  const trimmed = value?.trim() ?? '';
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return '';
+
+  const date = new Date(`${trimmed}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return '';
+
+  return date.toISOString().slice(0, 10) === trimmed ? trimmed : '';
+};
+
 export const GuidedSetup: React.FC = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState<Step>('welcome');
@@ -191,10 +201,12 @@ export const GuidedSetup: React.FC = () => {
           name2: prev.name2 || data.couple_name_2 || '',
         }));
         const hydratedCity = data.wedding_location || deriveCityFromAddress(data.venue_address);
+        const hydratedWeddingDate = normalizeHydratedDateInput(data.wedding_date)
+          || normalizeHydratedDateInput(data.venue_date);
 
           setFormData(prev => ({
             ...prev,
-            weddingDate: prev.weddingDate || data.wedding_date || data.venue_date || '',
+            weddingDate: prev.weddingDate || hydratedWeddingDate,
             venue: prev.venue || data.venue_name || '',
             city: prev.city || hydratedCity || '',
           }));
