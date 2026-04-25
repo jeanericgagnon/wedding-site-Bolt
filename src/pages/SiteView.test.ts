@@ -62,7 +62,7 @@ vi.mock('../lib/publicSiteProject', () => ({
   getPublicWeddingData: vi.fn(() => null),
 }));
 
-import { createAlexJordanDemoWeddingData } from './SiteView';
+import { combineDateAndTime, createAlexJordanDemoWeddingData, toIsoDateOrUndefined } from './SiteView';
 
 describe('createAlexJordanDemoWeddingData', () => {
   it('skips invalid demo wedding dates instead of crashing public demo hydration', () => {
@@ -71,5 +71,22 @@ describe('createAlexJordanDemoWeddingData', () => {
     const data = createAlexJordanDemoWeddingData({ wedding_date: 'not-a-date' });
 
     expect(data.event.weddingDateISO).toBeUndefined();
+  });
+
+  it('skips impossible demo wedding dates instead of rolling them into fake public dates', () => {
+    const data = createAlexJordanDemoWeddingData({ wedding_date: '2027-02-30' });
+
+    expect(data.event.weddingDateISO).toBeUndefined();
+    expect(toIsoDateOrUndefined('2027-02-30')).toBeUndefined();
+  });
+});
+
+describe('combineDateAndTime', () => {
+  it('drops impossible persisted itinerary dates instead of rolling them forward', () => {
+    expect(combineDateAndTime('2027-02-30', '16:30')).toBeUndefined();
+  });
+
+  it('drops malformed persisted itinerary times instead of producing broken schedule timestamps', () => {
+    expect(combineDateAndTime('2027-02-17', '4:30 PM')).toBeUndefined();
   });
 });

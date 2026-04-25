@@ -39,11 +39,28 @@ interface PublicItineraryRow {
   is_visible?: boolean | null;
 }
 
-function combineDateAndTime(date?: string, time?: string | null): string | undefined {
-  if (!date) return undefined;
+export function toIsoDateOrUndefined(value?: string | null): string | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return undefined;
+
+  const date = new Date(`${trimmed}T12:00:00Z`);
+  if (Number.isNaN(date.getTime())) return undefined;
+
+  return date.toISOString().slice(0, 10) === trimmed ? date.toISOString() : undefined;
+}
+
+export function combineDateAndTime(date?: string, time?: string | null): string | undefined {
+  const safeDateIso = toIsoDateOrUndefined(date);
+  if (!safeDateIso) return undefined;
   if (!time) return undefined;
-  const t = time.length === 5 ? `${time}:00` : time;
-  const iso = `${date}T${t}`;
+  const trimmedTime = time.trim();
+  if (!trimmedTime) return undefined;
+  if (!/^\d{2}:\d{2}(:\d{2})?$/.test(trimmedTime)) return undefined;
+
+  const safeDate = safeDateIso.slice(0, 10);
+  const normalizedTime = trimmedTime.length === 5 ? `${trimmedTime}:00` : trimmedTime;
+  const iso = `${safeDate}T${normalizedTime}`;
   const dt = new Date(iso);
   return Number.isNaN(dt.getTime()) ? undefined : dt.toISOString();
 }
@@ -165,11 +182,6 @@ function normalizeSectionVariants(sections: BuilderSectionInstance[]): BuilderSe
     return { ...section, variant: nextVariant };
   });
 }
-
-const toIsoDateOrUndefined = (value: string): string | undefined => {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
-};
 
 export function createAlexJordanDemoWeddingData(overrides: Partial<typeof demoWeddingSite> = {}): WeddingDataV1 {
   const site = { ...demoWeddingSite, ...overrides };
