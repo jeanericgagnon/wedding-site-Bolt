@@ -356,6 +356,7 @@ describe('name change action feed', () => {
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-bank',
       laneLabel: 'Bank accounts · confirm synced',
+      severity: 'attention',
       urgencyReason: 'review_queue',
       urgencyTier: 'normal',
     });
@@ -461,12 +462,61 @@ describe('name change action feed', () => {
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-insurance',
       laneLabel: 'Insurance carriers · intake first',
+      severity: 'blocking',
       urgencyReason: 'blocking_dependency',
       action: expect.objectContaining({
         detail: expect.stringContaining('learn the intake path now'),
       }),
     });
     expect(feed[0]?.action.detail).toContain('Hold policy changes for now and just gather the carrier evidence rules');
+  });
+
+  it('keeps real blocking execution work above complete template confirmation review', () => {
+    const feed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'banks',
+        targetLabel: 'Bank accounts',
+        recommendedFormCode: 'BANK',
+        nextAction: {
+          category: 'review',
+          label: 'Confirm bank rename landed',
+          detail: 'Check whether the rename already synced across statements and cards.',
+        },
+        blockers: [],
+        ready: true,
+        readinessSummary: {
+          status: 'ready',
+          blockingFieldRisks: 0,
+          attentionFieldRisks: 0,
+          lowConfidenceFields: 0,
+          missingFields: 0,
+          documentRepairDebt: 0,
+          summaryLabel: 'Ready.',
+        },
+      }),
+      makeExecutionSnapshot({
+        targetKey: 'ssa',
+        targetLabel: 'Social Security Administration',
+        ready: false,
+        blockers: ['Need legal proof'],
+      }),
+    ], [], [], [
+      makeTemplate({
+        id: 'template-bank',
+        audience: 'Bank accounts',
+        readiness: 'complete',
+      }),
+    ]);
+
+    expect(feed[0]).toMatchObject({
+      title: 'Social Security Administration',
+      severity: 'blocking',
+    });
+    expect(feed[1]).toMatchObject({
+      title: 'Bank accounts',
+      severity: 'attention',
+      laneLabel: 'Bank accounts · confirm synced',
+    });
   });
 
   it('dedupes shared tax-template follow-through into one highest-priority template action once proof is usable', () => {

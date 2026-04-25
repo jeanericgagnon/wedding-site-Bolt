@@ -147,9 +147,22 @@ function getSeverityWeight(severity: NameChangeActionFeedItem['severity']) {
   }
 }
 
-function getExecutionSeverity(snapshot: NameChangeTargetExecutionSnapshot): NameChangeActionFeedItem['severity'] {
+function getExecutionSeverity(
+  snapshot: NameChangeTargetExecutionSnapshot,
+  template?: AccountUpdateTemplate,
+): NameChangeActionFeedItem['severity'] {
+  if (template?.readiness === 'complete') return 'attention';
+  if (template && (template.readiness === 'blocked' || template.readiness === 'upcoming')) return 'blocking';
   if (!snapshot.ready) return snapshot.blockers.length > 0 || snapshot.readinessSummary.blockingFieldRisks > 0 ? 'blocking' : 'attention';
   return 'ready';
+}
+
+function getExecutionScoreBase(
+  severity: NameChangeActionFeedItem['severity'],
+  template?: AccountUpdateTemplate,
+) {
+  if (template?.readiness === 'complete') return 80;
+  return getSeverityWeight(severity) * 100;
 }
 
 function getActionFeedUrgencyTier(score: number, severity: NameChangeActionFeedItem['severity']): NameChangeActionFeedItem['urgencyTier'] {
@@ -254,7 +267,6 @@ export function buildNameChangeActionFeed(
 ): NameChangeActionFeedItem[] {
   const templatesById = new Map(accountUpdateTemplates.map((template) => [template.id, template]));
   const executionItems: NameChangeActionFeedItem[] = executionSnapshots.map((snapshot) => {
-    const severity = getExecutionSeverity(snapshot);
     const routesToDocumentRepair = snapshot.nextAction.category === 'document' && Boolean(snapshot.nextAction.documentKind);
     const routesToCaseSetup = isCaseSetupExecutionAction(snapshot.nextAction);
     const linkedTemplate = (() => {
@@ -262,8 +274,9 @@ export function buildNameChangeActionFeed(
       return templateId ? templatesById.get(templateId) : undefined;
     })();
     const routesToTemplate = !routesToDocumentRepair && !routesToCaseSetup && Boolean(linkedTemplate);
+    const severity = getExecutionSeverity(snapshot, linkedTemplate);
     const score =
-      (getSeverityWeight(severity) * 100) +
+      getExecutionScoreBase(severity, linkedTemplate) +
       (snapshot.blockers.length * 10) +
       (snapshot.readinessSummary.blockingFieldRisks * 5) +
       getNameChangeGuidedActionWeight(snapshot.nextAction.category) +
