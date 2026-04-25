@@ -711,7 +711,9 @@ function buildAccountUpdateTemplates(
     blockingProofHopLabel?: string,
   ) => {
     const fallbackBlockingProofHopLabel = getFallbackBlockingProofHopLabel(readiness, blockingProofHopLabel);
-    return fallbackBlockingProofHopLabel ? `Current blocker: ${fallbackBlockingProofHopLabel}.` : '';
+    return fallbackBlockingProofHopLabel
+      ? `Blocked by: ${fallbackBlockingProofHopLabel}. Current blocker: ${fallbackBlockingProofHopLabel}.`
+      : '';
   };
   const templateConfig = [
     {
