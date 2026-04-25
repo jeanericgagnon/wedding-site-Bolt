@@ -219,10 +219,16 @@ describe('account update template surface helpers', () => {
       'Proof to have handy: Certified legal name-change proof · Updated photo ID or DMV receipt',
     );
     expect(getAccountUpdateTemplateReadinessLine(template)).toBe(
-      `Readiness: ${getAccountUpdateTemplateReadinessDetailLine(template.readinessLabel, template)}`,
+      `Readiness: ${getAccountUpdateTemplateReadinessDetailLine(
+        getEngineAccountUpdateTemplateReadinessLabel(template.readiness, template.blockingProofHopLabel),
+        template,
+      )}`,
     );
     expect(getAccountUpdateTemplateReadinessLine(template, { prefix: false })).toBe(
-      getAccountUpdateTemplateReadinessDetailLine(template.readinessLabel, template),
+      getAccountUpdateTemplateReadinessDetailLine(
+        getEngineAccountUpdateTemplateReadinessLabel(template.readiness, template.blockingProofHopLabel),
+        template,
+      ),
     );
     expect(getAccountUpdateTemplateStatusLabel(template)).toBe('send now (proof packet ready)');
     expect(getAccountUpdateTemplateStatusLine(template)).toBe('Status: send now (proof packet ready)');
@@ -301,13 +307,14 @@ describe('account update template surface helpers', () => {
   it('preserves engine readiness narrative labels on linked templates', () => {
     const template = makeTemplate({
       readiness: 'upcoming',
-      readinessLabel: getEngineAccountUpdateTemplateReadinessLabel('upcoming', 'SSA pending'),
+      readinessLabel: 'stale readiness copy',
       blockingProofHopLabel: 'SSA pending',
     });
 
     expect(getAccountUpdateTemplateReadinessLine(template, { prefix: false })).toContain(
       getEngineAccountUpdateTemplateReadinessLabel('upcoming', 'SSA pending'),
     );
+    expect(getAccountUpdateTemplateReadinessLine(template, { prefix: false })).not.toContain('stale readiness copy');
   });
 
   it('keeps planner and feed blocker/state copy on the same helpers', () => {
@@ -722,7 +729,9 @@ describe('name change action feed', () => {
         detail: expect.stringContaining('learn the intake path now'),
       }),
     });
-    expect(feed[0]?.action.detail).toContain('Readiness: The legal-proof chain is still too early, so use this to learn the intake path now and wait to send documents until the upstream proof is real.');
+    expect(feed[0]?.action.detail).toContain(
+      'Readiness: The legal-proof chain is still too early, so use this to learn the intake path now and wait to send documents until the upstream proof is real (legal proof pending).',
+    );
     expect(feed[0]?.action.detail).toContain('Subject: Insurance carriers');
     expect(feed[0]?.action.detail).toContain('Subject: Insurance carriers\nTemplate message: I can provide certified legal proof.');
     expect(feed[0]?.action.detail).toContain('Template message: I can provide certified legal proof.');
@@ -1288,7 +1297,7 @@ describe('name change action feed', () => {
       laneLabel: 'Phone, utilities, housing, or primary digital identity support · ask intake rules now · legal proof pending',
       urgencyReason: 'blocking_dependency',
       action: expect.objectContaining({
-        detail: expect.stringContaining('gather verification rules first'),
+        detail: expect.stringContaining('gather verification rules'),
       }),
     });
     expect(feed[0]?.action.detail).toContain('Blocked by: legal proof pending.');

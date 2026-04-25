@@ -3,6 +3,7 @@ import type { NameChangeDocumentRepairQueueItem } from './documentRepairQueue';
 import {
   getAccountUpdateTemplateActionLabel as getEngineAccountUpdateTemplateActionLabel,
   getAccountUpdateTemplateAudienceLine as getEngineAccountUpdateTemplateAudienceLine,
+  getAccountUpdateTemplateReadinessLabel as getEngineAccountUpdateTemplateReadinessLabel,
   getAccountUpdateTemplateStateLine as getEngineAccountUpdateTemplateStateLine,
   getAccountUpdateTemplateStatusLabel as getEngineAccountUpdateTemplateStatusLabel,
   getAccountUpdateTemplateStatusLine as getEngineAccountUpdateTemplateStatusLine,
@@ -190,7 +191,11 @@ export function getAccountUpdateTemplateReadinessLine(
   options: { prefix?: boolean } = {},
 ) {
   const { prefix = true } = options;
-  const detail = getAccountUpdateTemplateReadinessDetailLine(template.readinessLabel, template);
+  const readinessLabel = getEngineAccountUpdateTemplateReadinessLabel(
+    template.readiness,
+    template.blockingProofHopLabel,
+  );
+  const detail = getAccountUpdateTemplateReadinessDetailLine(readinessLabel, template);
   return prefix ? `Readiness: ${detail}` : detail;
 }
 
