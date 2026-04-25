@@ -230,4 +230,21 @@ describe('QuickStart flow guards', () => {
     expect(await screen.findByDisplayValue('La Valencia')).toBeInTheDocument();
     expect(screen.queryByDisplayValue('tons')).not.toBeInTheDocument();
   });
+
+  it('keeps seeded couple names truthful when saved site partner names contain only whitespace', async () => {
+    authUser = { id: 'user-1' };
+    weddingSiteRow = {
+      couple_name_1: '   ',
+      couple_name_2: ' Alex ',
+      wedding_date: null,
+      venue_name: null,
+      venue_location: null,
+      onboarding_answers: null,
+    };
+
+    render(<QuickStart />);
+
+    expect(await screen.findByDisplayValue('Alex')).toBeInTheDocument();
+    expect(screen.queryByDisplayValue(/&/)).not.toBeInTheDocument();
+  });
 });

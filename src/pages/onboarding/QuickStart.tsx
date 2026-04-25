@@ -21,6 +21,7 @@ import { createClarifyingDecisionFromInitialSetup, createClarifyingPersistenceFr
 import { buildClarifyingAnswerPatchSet } from '../../lib/aiClarifyingFlow';
 import { mapClarifyingPersistenceToTemplateSeed } from '../../lib/aiClarifyingMapper';
 import { buildOnboardingUpdateWithClarifying } from '../../lib/buildOnboardingUpdateWithClarifying';
+import { buildCoupleDisplayName } from '../../lib/coupleDisplayName';
 import { applyQuickStartAnswer, mergeClarifyingAnswer, type ConciergeQuestion } from '../../lib/quickStartFlow';
 import { writeSignupReturnPath } from '../../lib/signupContinuation';
 import { clearOnboardingEntryReturnPath } from '../../lib/onboardingEntryCleanup';
@@ -273,7 +274,7 @@ export const QuickStart: React.FC = () => {
         });
         return;
       }
-      const seededNames = [data?.couple_name_1, data?.couple_name_2].filter(Boolean).join(' & ');
+      const seededNames = buildCoupleDisplayName(data?.couple_name_1, data?.couple_name_2);
       if (seededNames || data?.wedding_date || data?.venue_name || data?.venue_location) {
         const seededAnswers = {
           ...createEmptyInitialSetupAnswers(),
