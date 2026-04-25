@@ -667,6 +667,7 @@ describe('NameChangePlannerTab', () => {
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Blocked by: ${payrollTemplate?.blockingProofHopLabel}`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Checklist: ${payrollTemplate?.checklistHighlight}`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Checklist status: ${payrollTemplate?.checklistStatusNote}`));
+    expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining('Template state: intake-only until legal proof pending clears.'));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Current blocker: ${payrollTemplate?.blockingProofHopLabel}.`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Proof status: ${payrollTemplate?.proofReadinessSummary}`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Proof checklist: ${payrollTemplate?.proofChecklist.join(' · ')}`));

@@ -193,6 +193,25 @@ function getAccountUpdateTemplateCopyButtonLabel(
   return 'Copy intake script';
 }
 
+function getAccountUpdateTemplateStateLine(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
+  if (template.readiness === 'ready') return 'Template state: proof packet ready to send now.';
+  if (template.readiness === 'complete') return 'Template state: proof chain complete; confirm the downstream sync only.';
+  if (template.readiness === 'in_progress') {
+    return template.blockingProofHopLabel
+      ? `Template state: draft now and wait for ${template.blockingProofHopLabel.toLowerCase()} to clear before sending.`
+      : 'Template state: draft now and wait for the current proof to clear before sending.';
+  }
+  if (template.readiness === 'upcoming') {
+    return template.blockingProofHopLabel
+      ? `Template state: prep the ask now and wait for ${template.blockingProofHopLabel.toLowerCase()} to clear before sending.`
+      : 'Template state: prep the ask now before the next proof hop clears.';
+  }
+
+  return template.blockingProofHopLabel
+    ? `Template state: intake-only until ${template.blockingProofHopLabel.toLowerCase()} clears.`
+    : 'Template state: intake-only until the proof chain is ready.';
+}
+
 function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
   return [
     `Audience: ${template.audience}`,
@@ -202,6 +221,7 @@ function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['s
     template.blockingProofHopLabel ? `Blocked by: ${template.blockingProofHopLabel}` : undefined,
     template.checklistHighlight ? `Checklist: ${template.checklistHighlight}` : undefined,
     template.checklistStatusNote ? `Checklist status: ${template.checklistStatusNote}` : undefined,
+    getAccountUpdateTemplateStateLine(template),
     `Proof status: ${template.proofReadinessSummary}`,
     `Next ask: ${template.requestSummary}`,
     template.proofChecklist.length > 0 ? `Proof checklist: ${template.proofChecklist.join(' · ')}` : undefined,
