@@ -131,7 +131,7 @@ describe('name change engine', () => {
       expect.arrayContaining([
         expect.objectContaining({
           audience: 'Employer payroll / HR',
-          subject: 'Ask before next proof hop: Name change update for payroll and benefits',
+          subject: 'Ask before next proof hop (SSA pending): Name change update for payroll and benefits',
           readiness: 'upcoming',
           dependsOnStepIds: expect.arrayContaining(['federal-ssa', 'institution-irs-employer']),
           proofChecklist: expect.arrayContaining(['Certified legal name-change proof', 'Updated Social Security record or SSA receipt']),
@@ -213,7 +213,7 @@ describe('name change engine', () => {
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.proofReadinessSummary).toBe('Do not send yet; the legal proof chain still needs to clear before SSA-backed tax updates can stick.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.blockingProofHopLabel).toBe('SSA pending');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.proofChecklist.at(-1)).toBe('Gather the tax/state process only until legal proof and SSA work are real.');
-    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.subject).toBe('Ask intake rules now: Align my tax records with my legal name change');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-tax')?.subject).toBe('Ask intake rules now (SSA pending): Align my tax records with my legal name change');
   });
 
   it('uses question-style subject framing for upcoming account-update templates', () => {
@@ -221,7 +221,7 @@ describe('name change engine', () => {
 
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-payroll')).toMatchObject({
       readiness: 'upcoming',
-      subject: 'Ask before next proof hop: Name change update for payroll and benefits',
+      subject: 'Ask before next proof hop (SSA pending): Name change update for payroll and benefits',
     });
   });
 

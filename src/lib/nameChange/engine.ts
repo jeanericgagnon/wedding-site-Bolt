@@ -456,6 +456,7 @@ function buildAccountUpdateTemplates(
   const getReadinessSubject = (
     baseSubject: string,
     readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+    blockingProofHopLabel?: string,
   ) => readiness === 'complete'
     ? `Confirm completed update: ${baseSubject}`
     : readiness === 'ready'
@@ -463,8 +464,8 @@ function buildAccountUpdateTemplates(
       : readiness === 'in_progress'
         ? `Draft now, send after current proof clears: ${baseSubject}`
         : readiness === 'upcoming'
-          ? `Ask before next proof hop: ${baseSubject}`
-          : `Ask intake rules now: ${baseSubject}`;
+          ? `Ask before next proof hop${blockingProofHopLabel ? ` (${blockingProofHopLabel})` : ''}: ${baseSubject}`
+          : `Ask intake rules now${blockingProofHopLabel ? ` (${blockingProofHopLabel})` : ''}: ${baseSubject}`;
   const getReadinessIntro = (readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness']) => readiness === 'ready'
     ? 'I am ready to submit the update now.'
     : readiness === 'in_progress'
@@ -895,7 +896,7 @@ function buildAccountUpdateTemplates(
     return {
       id: template.id,
       audience: template.audience,
-      subject: getReadinessSubject(template.subject, readiness),
+      subject: getReadinessSubject(template.subject, readiness, blockingProofHopLabel),
       body: template.buildBody(proofLine, readinessLabel, requestLine, readinessIntro, proofReadinessSummary, blockingProofHopSentence),
       readiness,
       readinessLabel,
