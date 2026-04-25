@@ -71,7 +71,7 @@ const TARGET_STATUS_VAULT_STEP_IDS: Partial<Record<NameChangeExecutionTargetKey,
   utilities: ['institution-utilities-housing', 'institution-phone-digital-identity'],
   courtesy: ['institution-credit-bureaus', 'institution-subscriptions-social', 'institution-school-alumni-records'],
   voter: ['institution-voter-registration'],
-  tsa: ['institution-tsa-precheck', 'institution-frequent-flyer-hotel-rail'],
+  tsa: ['institution-tsa-precheck', 'institution-travel-hospitality', 'institution-frequent-flyer-hotel-rail'],
   licenses: ['institution-professional-licenses'],
 };
 
