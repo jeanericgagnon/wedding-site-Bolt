@@ -100,6 +100,17 @@ export function getExecutionNextActionDetail(snapshot: Pick<NameChangeTargetExec
   return `${snapshot.nextAction.detail} ${supportiveWaitLine}`;
 }
 
+export function getExecutionStatusVaultNotes(
+  snapshot: Pick<NameChangeTargetExecutionSnapshot, 'targetKey' | 'nextAction' | 'statusVault'>,
+) {
+  if (!snapshot.nextAction) {
+    return snapshot.statusVault.notes;
+  }
+
+  const guidedNextActionDetail = getExecutionNextActionDetail(snapshot);
+  return snapshot.statusVault.notes.filter((note) => note !== guidedNextActionDetail);
+}
+
 function getTargetStatusVaultSnapshot(
   targetKey: NameChangeExecutionTargetKey,
   plan: NameChangePlan | null | undefined,

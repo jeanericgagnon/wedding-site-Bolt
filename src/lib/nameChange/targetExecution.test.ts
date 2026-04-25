@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { buildNameChangeTargetExecutionSnapshot, getExecutionNextActionDetail } from './targetExecution';
+import {
+  buildNameChangeTargetExecutionSnapshot,
+  getExecutionNextActionDetail,
+  getExecutionStatusVaultNotes,
+} from './targetExecution';
 import { buildNameChangePlan } from './engine';
 import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput } from './types';
 
@@ -2643,5 +2647,28 @@ describe('name change target execution snapshot', () => {
     } as const;
 
     expect(getExecutionNextActionDetail(snapshot)).toContain('Actual submission can safely wait.');
+  });
+
+  it('hides guided next-action fallback notes from the visible status-vault stack', () => {
+    const guidedDetail = getExecutionNextActionDetail({
+      targetKey: 'banks',
+      nextAction: {
+        category: 'dependency',
+        label: 'Unblock DMV completion',
+        detail: 'Wait for the DMV update before submitting bank changes.',
+      },
+    });
+
+    expect(getExecutionStatusVaultNotes({
+      targetKey: 'banks',
+      nextAction: {
+        category: 'dependency',
+        label: 'Unblock DMV completion',
+        detail: 'Wait for the DMV update before submitting bank changes.',
+      },
+      statusVault: {
+        notes: [guidedDetail, 'Proof needs: Bring a certified marriage certificate.'],
+      },
+    } as const)).toEqual(['Proof needs: Bring a certified marriage certificate.']);
   });
 });

@@ -39,6 +39,7 @@ import { buildNameChangeSsaExecutionSnapshot } from '../../../lib/nameChange/ssa
 import { buildNameChangeTsaExecutionSnapshot } from '../../../lib/nameChange/tsaFlow';
 import { buildNameChangeUtilitiesExecutionSnapshot } from '../../../lib/nameChange/utilitiesFlow';
 import { buildNameChangeVoterExecutionSnapshot } from '../../../lib/nameChange/voterFlow';
+import { getExecutionStatusVaultNotes } from '../../../lib/nameChange/targetExecution';
 import { formatNameChangeExecutionDateTime, getNameChangeExecutionTimestamp } from './nameChangeExecutionTime';
 import { buildNameChangeOverviewCardModel } from '../nameChangeOverviewCard';
 import { buildNameChangeOverviewInsights } from '../nameChangeOverviewInsights';
@@ -369,7 +370,10 @@ const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
   payloadTitle,
   payloadDescription,
   snapshot,
-}) => (
+}) => {
+  const visibleStatusVaultNotes = getExecutionStatusVaultNotes(snapshot);
+
+  return (
   <Card>
     <div id={anchorId} className="scroll-mt-24" />
     <div className="flex items-center justify-between gap-3">
@@ -428,9 +432,9 @@ const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
         </div>
       </div>
       <p className="mt-3 text-sm text-text-secondary">{snapshot.statusVault.proofSummary}</p>
-      {snapshot.statusVault.notes.length > 0 ? (
+      {visibleStatusVaultNotes.length > 0 ? (
         <ul className="mt-3 space-y-1 text-sm text-text-secondary">
-          {snapshot.statusVault.notes.slice(0, 3).map((note, noteIndex) => (
+          {visibleStatusVaultNotes.slice(0, 3).map((note, noteIndex) => (
             <li key={`${snapshot.targetKey}-status-vault-note-${noteIndex}`}>• {note}</li>
           ))}
         </ul>
@@ -547,7 +551,8 @@ const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
       ) : null}
     </div>
   </Card>
-);
+  );
+};
 
 const ReminderPostureCard: React.FC<ReminderPostureCardConfig> = ({ title, value, detail, tone = 'neutral' }) => {
   const toneClass = tone === 'danger'
@@ -706,6 +711,8 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     [accountUpdateTemplates, documentRepairQueue, executionSnapshots, reminderAttention],
   );
   const targetStatusVaultRows = useMemo<TargetStatusVaultRow[]>(() => executionSnapshots.map((snapshot) => {
+    const visibleStatusVaultNotes = getExecutionStatusVaultNotes(snapshot);
+    const guidedNextActionDetail = snapshot.nextAction ? getExecutionNextActionDetail(snapshot) : null;
     const targetReminders = effectiveReminders.filter((reminder) => reminder.focus_target_id === snapshot.targetKey && reminder.status !== 'dismissed');
     const openReminderCount = targetReminders.filter((reminder) => reminder.status === 'pending' || reminder.status === 'scheduled').length;
     const highUrgencyCount = targetReminders.filter((reminder) => reminder.urgency === 'high' && reminder.status !== 'sent').length;
@@ -732,9 +739,9 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       milestoneTotalCount: snapshot.statusVault.milestoneCounts.total,
       reminderOpenCount: snapshot.statusVault.reminderSummary.openCount,
       reminderHighUrgencyCount: snapshot.statusVault.reminderSummary.highUrgencyCount,
-      note: snapshot.statusVault.notes[0] ?? null,
-      additionalNotes: snapshot.statusVault.notes.slice(1, 4),
-      executionNote: snapshot.statusVault.executionNote,
+      note: visibleStatusVaultNotes[0] ?? null,
+      additionalNotes: visibleStatusVaultNotes.slice(1, 4),
+      executionNote: snapshot.statusVault.executionNote === guidedNextActionDetail ? null : snapshot.statusVault.executionNote,
       milestoneNote: snapshot.statusVault.milestoneNote,
       proofNote: snapshot.statusVault.proofNote,
       reminderNote: snapshot.statusVault.reminderNote,

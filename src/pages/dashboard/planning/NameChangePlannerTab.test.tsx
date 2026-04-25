@@ -2,7 +2,9 @@ import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { NameChangePlannerTab } from './NameChangePlannerTab';
 import { defaultNameChangeCaseInput } from './nameChangeService';
+import { buildNameChangeBankExecutionSnapshot } from '../../../lib/nameChange/bankFlow';
 import { buildNameChangePlan } from '../../../lib/nameChange/engine';
+import { getExecutionNextActionDetail } from '../../../lib/nameChange/actionFeed';
 import type { NameChangeCaseInput, NameChangePlan } from '../../../lib/nameChange/types';
 
 function makeDraft(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseInput {
@@ -42,6 +44,10 @@ function makePlanWithExecutionActivity(draft: NameChangeCaseInput): NameChangePl
       },
     },
   };
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function makeCompletedPlan(draft: NameChangeCaseInput): NameChangePlan {
@@ -344,6 +350,35 @@ describe('NameChangePlannerTab', () => {
 
     expect(screen.getAllByText('Guided next action').length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Actual submission can safely wait\./).length).toBeGreaterThan(0);
+  });
+
+  it('does not duplicate guided next-action fallback detail inside status-vault rows', () => {
+    const draft = makeDraft();
+    const plan = buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] });
+    const bankSnapshot = buildNameChangeBankExecutionSnapshot(draft, [], [], plan);
+    const bankGuidedDetail = getExecutionNextActionDetail(bankSnapshot);
+
+    render(
+      <NameChangePlannerTab
+        draft={draft}
+        documents={[]}
+        extractedFields={[]}
+        plan={plan}
+        reminders={[]}
+        saving={false}
+        onDraftChange={vi.fn()}
+        onStructuredIntakeChange={vi.fn()}
+        onDocumentsChange={vi.fn()}
+        onExtractedFieldsChange={vi.fn()}
+        onRemindersChange={vi.fn()}
+        onStepExecutionStatusChange={vi.fn()}
+        onStepExecutionNoteChange={vi.fn()}
+        onSave={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    expect(screen.queryByText(new RegExp(`^Execution note: ${escapeRegExp(bankGuidedDetail)}$`))).not.toBeInTheDocument();
+    expect(screen.queryByText(new RegExp(`^• ${escapeRegExp(bankGuidedDetail)}$`))).not.toBeInTheDocument();
   });
 
   it('resumes directly into the status vault when the route hash points there', async () => {
