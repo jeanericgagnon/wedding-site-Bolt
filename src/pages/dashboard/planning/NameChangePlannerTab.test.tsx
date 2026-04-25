@@ -535,7 +535,7 @@ describe('NameChangePlannerTab', () => {
     expect(screen.getByText(`Proof status: ${payrollProofStatus}`)).toBeInTheDocument();
     expect(screen.getByText(`Proof checklist: ${payrollProofChecklistSummary}`)).toBeInTheDocument();
     expect(screen.getByText(`Proof to have handy: ${payrollProofChecklist}`)).toBeInTheDocument();
-    expect(screen.getAllByText('intake first · legal proof pending').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('ask intake rules now · legal proof pending').length).toBeGreaterThan(0);
     expect(screen.getAllByRole('button', { name: 'Copy intake script' }).length).toBeGreaterThan(0);
     expect(screen.getByText('Copy, stage, or send when the proof chain is ready. Payroll, bank, insurance, and other downstream updates should not require fresh writing every time.')).toBeInTheDocument();
     expect(screen.queryByText('Open copy-ready template →')).not.toBeInTheDocument();
@@ -581,6 +581,7 @@ describe('NameChangePlannerTab', () => {
     );
 
     expect(screen.getAllByRole('button', { name: 'Copy next-step draft' }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText('ask before next proof hop · ID pending').length).toBeGreaterThan(0);
   });
 
   it('makes ready and complete planner labels explicit about proof readiness', () => {
@@ -661,7 +662,7 @@ describe('NameChangePlannerTab', () => {
 
     await waitFor(() => expect(clipboardWriteText).toHaveBeenCalledTimes(1));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Subject: ${payrollTemplate?.subject}`));
-    expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Status: intake first · ${payrollTemplate?.blockingProofHopLabel}`));
+    expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Status: ask intake rules now · ${payrollTemplate?.blockingProofHopLabel}`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Next ask: ${payrollTemplate?.requestSummary}`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Blocked by: ${payrollTemplate?.blockingProofHopLabel}`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Checklist: ${payrollTemplate?.checklistHighlight}`));

@@ -165,14 +165,14 @@ function getAccountUpdateTemplateStatusLabel(readiness: NonNullable<NameChangePl
     case 'ready':
       return 'send now (proof packet ready)';
     case 'in_progress':
-      return 'draft now';
+      return 'draft now, send after current proof clears';
     case 'complete':
       return 'confirm sync (proof chain complete)';
     case 'upcoming':
-      return 'ask next';
+      return 'ask before next proof hop';
     case 'blocked':
     default:
-      return 'intake first';
+      return 'ask intake rules now';
   }
 }
 
