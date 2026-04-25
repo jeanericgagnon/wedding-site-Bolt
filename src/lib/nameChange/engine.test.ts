@@ -217,6 +217,9 @@ describe('name change engine', () => {
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-digital-identity')?.blockingProofHopLabel).toBe('legal proof pending');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-digital-identity')?.body).toContain('Current blocker: legal proof pending.');
     expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-digital-identity')?.subject).toBe('Ask intake rules now (legal proof pending): Update my account holder name to match my legal records');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.blockingProofHopLabel).toBe('legal proof pending');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.body).toContain('Current blocker: legal proof pending.');
+    expect(plan.summary.accountUpdateTemplates?.find((template) => template.id === 'template-travel')?.subject).toBe('Ask intake rules now (legal proof pending): Please align my travel profile with my legal name change');
   });
 
   it('uses question-style subject framing for upcoming account-update templates', () => {

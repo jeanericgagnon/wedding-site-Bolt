@@ -658,7 +658,7 @@ function buildAccountUpdateTemplates(
     if (templateId === 'template-bank' || templateId === 'template-digital-identity' || templateId === 'template-licenses') {
       return readiness === 'blocked' ? 'legal proof pending' : 'ID pending';
     }
-    if (templateId === 'template-travel') return 'passport pending';
+    if (templateId === 'template-travel') return readiness === 'blocked' ? 'legal proof pending' : 'passport pending';
     if (templateId === 'template-insurance') return readiness === 'blocked' ? 'legal proof pending' : 'ID pending';
     return undefined;
   };

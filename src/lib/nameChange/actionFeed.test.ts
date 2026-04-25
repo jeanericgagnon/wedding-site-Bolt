@@ -18,7 +18,9 @@ function makeTemplate(overrides: Partial<NonNullable<NameChangePlan['summary']['
             ? 'legal proof pending'
             : 'ID pending'
           : id === 'template-travel'
-            ? 'passport pending'
+            ? readiness === 'blocked'
+              ? 'legal proof pending'
+              : 'passport pending'
             : id === 'template-insurance'
               ? readiness === 'blocked'
                 ? 'legal proof pending'
@@ -1087,6 +1089,33 @@ describe('name change action feed', () => {
       title: 'Travel profile support',
       plannerIntent: 'open_account_update_template',
     });
+  });
+
+  it('marks blocked travel templates with legal-proof blockers instead of passport blockers', () => {
+    const feed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'tsa',
+        targetLabel: 'Travel profile support',
+        recommendedFormCode: 'TRAVEL',
+      }),
+    ], [], [], [
+      makeTemplate({
+        id: 'template-travel',
+        audience: 'Travel profile support',
+        readiness: 'blocked',
+        readinessLabel: 'The legal-proof chain is still too early, so use this to learn the intake path now and wait to send documents until the upstream proof is real.',
+        proofChecklist: [
+          'Certified legal name-change proof',
+          'Gather mismatch and hold policies only until legal proof is grounded',
+        ],
+      }),
+    ]);
+
+    const travelTemplateItem = feed.find((item) => item.plannerIntent === 'open_account_update_template');
+
+    expect(travelTemplateItem?.laneLabel).toBe('Travel profile support · ask intake rules now · legal proof pending');
+    expect(travelTemplateItem?.action.label).toBe('Ask travel profile support intake rules now (legal proof pending)');
+    expect(travelTemplateItem?.action.detail).toContain('Blocked by: legal proof pending.');
   });
 
   it('routes legal-name setup blockers to the planner case-setup section', () => {
