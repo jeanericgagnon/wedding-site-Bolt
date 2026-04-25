@@ -215,8 +215,9 @@ describe('account update template surface helpers', () => {
     expect(getAccountUpdateTemplateReadinessLine(template, { prefix: false })).toBe(template.readinessLabel);
     expect(getAccountUpdateTemplateStatusLabel(template)).toBe('send now (proof packet ready)');
     expect(getAccountUpdateTemplateStatusLine(template)).toBe('Status: send now (proof packet ready)');
-    expect(getAccountUpdateTemplateContextLines(template, { includeAudience: true })).toEqual([
+    expect(getAccountUpdateTemplateContextLines(template, { includeAudience: true, includeStatus: true })).toEqual([
       getAccountUpdateTemplateAudienceLine(template),
+      getAccountUpdateTemplateStatusLine(template),
       getAccountUpdateTemplateReadinessLine(template),
       getAccountUpdateTemplateChecklistLine(template)!,
       getAccountUpdateTemplateChecklistStatusLine(template)!,
@@ -556,6 +557,7 @@ describe('name change action feed', () => {
     });
     expect(feed[0]?.action.label).toBe('Confirm bank accounts sync (proof chain complete)');
     expect(feed[0]?.action.detail).toContain('Audience: Bank accounts');
+    expect(feed[0]?.action.detail).toContain('Status: confirm sync (proof chain complete)');
     expect(feed[0]?.action.detail).toContain('Template state: proof chain complete; confirm the downstream sync only.');
     expect(feed[0]?.action.detail).toContain('Subject: Confirm sync (proof chain complete): Name change update for banking profile');
     expect(feed[0]?.action.detail).toContain('Use this only to confirm the downstream sync already landed.');

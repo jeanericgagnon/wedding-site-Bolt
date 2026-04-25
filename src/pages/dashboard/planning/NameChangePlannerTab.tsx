@@ -192,9 +192,11 @@ function getAccountUpdateTemplateCopyButtonLabel(
 
 function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
   return [
-    getAccountUpdateTemplateAudienceLine(template),
-    getAccountUpdateTemplateStatusLine(template),
-    ...getAccountUpdateTemplateContextLines(template, { includeMessage: false }),
+    ...getAccountUpdateTemplateContextLines(template, {
+      includeAudience: true,
+      includeStatus: true,
+      includeMessage: false,
+    }),
     '',
     getAccountUpdateTemplateMessageLine(template),
   ].filter(Boolean).join('\n');

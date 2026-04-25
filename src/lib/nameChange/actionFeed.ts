@@ -218,6 +218,7 @@ export function getAccountUpdateTemplateChecklistStatusLine(template: AccountUpd
 
 type AccountUpdateTemplateContextOptions = {
   includeAudience?: boolean;
+  includeStatus?: boolean;
   includeSubject?: boolean;
   includeMessage?: boolean;
   prefixReadiness?: boolean;
@@ -229,6 +230,7 @@ export function getAccountUpdateTemplateContextLines(
 ) {
   const {
     includeAudience = false,
+    includeStatus = false,
     includeSubject = true,
     includeMessage = true,
     prefixReadiness = true,
@@ -236,6 +238,7 @@ export function getAccountUpdateTemplateContextLines(
 
   return [
     includeAudience ? getAccountUpdateTemplateAudienceLine(template) : undefined,
+    includeStatus ? getAccountUpdateTemplateStatusLine(template) : undefined,
     getAccountUpdateTemplateReadinessLine(template, { prefix: prefixReadiness }),
     getAccountUpdateTemplateBlockedByLine(template),
     getAccountUpdateTemplateCurrentBlockerLine(template),
@@ -255,7 +258,7 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
   const readinessDetail = getAccountUpdateTemplateReadinessDetailLine(baseDetail, template);
   return [
     readinessDetail,
-    ...getAccountUpdateTemplateContextLines(template, { includeAudience: true }),
+    ...getAccountUpdateTemplateContextLines(template, { includeAudience: true, includeStatus: true }),
   ].filter(Boolean).join('\n').trim();
 }
 
