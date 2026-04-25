@@ -773,15 +773,16 @@ function buildAccountUpdateTemplates(
 
   return templateConfig.map((template) => {
     const readiness = resolvePlanSequenceStatus(template.dependsOnStepIds, steps);
+    const blockingProofHopLabel = getBlockingProofHopLabel(template.id, readiness);
     const readinessLabel = readiness === 'ready'
       ? 'You have enough upstream proof to send this now.'
       : readiness === 'in_progress'
-        ? 'The upstream identity work is already moving, so this outreach can be drafted now and sent as soon as the current step lands.'
+        ? `The upstream identity work is already moving, so this outreach can be drafted now and sent as soon as the current step lands${blockingProofHopLabel ? ` (${blockingProofHopLabel})` : ''}.`
         : readiness === 'complete'
           ? 'The core proof chain is already complete, so this should be a clean confirmation/update pass.'
           : readiness === 'upcoming'
-            ? 'Your legal proof is grounded, but this still depends on the next ID or agency hop before it is ready to send.'
-            : 'The legal-proof chain is still too early, so use this to learn the intake path now and wait to send documents until the upstream proof is real.';
+            ? `Your legal proof is grounded, but this still depends on the next ID or agency hop before it is ready to send${blockingProofHopLabel ? ` (${blockingProofHopLabel})` : ''}.`
+            : `The legal-proof chain is still too early, so use this to learn the intake path now and wait to send documents until the upstream proof is real${blockingProofHopLabel ? ` (${blockingProofHopLabel})` : ''}.`;
     const readinessSpecificProof = template.id === 'template-payroll'
       ? getReadinessChecklistLine(readiness, {
           ready: 'SSA is already far enough along that I can attach the receipt/confirmation with my legal proof now.',
@@ -909,7 +910,6 @@ function buildAccountUpdateTemplates(
     const requestLine = getReadinessRequestLine(template.id, readiness);
     const proofReadinessSummary = getProofReadinessSummary(template.id, readiness);
     const proofChecklistStatusNote = getProofChecklistStatusNote(template.id, readiness);
-    const blockingProofHopLabel = getBlockingProofHopLabel(template.id, readiness);
     const readinessIntro = getReadinessIntro(readiness, blockingProofHopLabel);
     const blockingProofHopSentence = getBlockingProofHopSentence(blockingProofHopLabel);
     const proofChecklistWithStatus = [...proofChecklist, proofChecklistStatusNote];
