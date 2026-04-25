@@ -312,6 +312,28 @@ function getReminderPlannerRoute(
   }
 
   if (
+    suggestion.dependsOnStepId === 'institution-irs-records'
+    || suggestion.dependsOnStepId === 'institution-state-tax-agency'
+  ) {
+    return {
+      sectionKey: 'core-government',
+      plannerIntent: 'open_execution_card',
+      focusTargetId: 'execution-card-taxes',
+    };
+  }
+
+  if (
+    suggestion.dependsOnStepId === 'institution-county-recorder-property'
+    || suggestion.dependsOnStepId === 'institution-uscis-immigration-records'
+  ) {
+    return {
+      sectionKey: 'core-government',
+      plannerIntent: 'open_execution_card',
+      focusTargetId: 'execution-card-legalGovernment',
+    };
+  }
+
+  if (
     suggestion.dependsOnStepId === 'institution-employer'
     || suggestion.dependsOnStepId === 'institution-licenses'
     || suggestion.dependsOnStepId === 'institution-voter-registration'

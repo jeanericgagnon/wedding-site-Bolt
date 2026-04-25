@@ -189,6 +189,12 @@ describe('name change reminder suggestions', () => {
       section_key: 'core-government',
       focus_target_id: 'execution-card-ssa',
     });
+    expect(inputs.find((reminder) => reminder.reminder_key === 'reminder-milestone-confirm-milestone-tax')).toMatchObject({
+      depends_on_step_id: 'institution-uscis-immigration-records',
+      section_key: 'core-government',
+      planner_intent: 'open_execution_card',
+      focus_target_id: 'execution-card-legalGovernment',
+    });
   });
 
   it('applies institution-family reminder tuning for downstream lanes', () => {

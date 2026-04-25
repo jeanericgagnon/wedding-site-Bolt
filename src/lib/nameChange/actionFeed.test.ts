@@ -1872,6 +1872,32 @@ describe('name change action feed', () => {
     });
   });
 
+  it('routes tax and legal-government reminders to their government execution cards', () => {
+    const feed = buildNameChangeActionFeed([], [], [
+      makeReminderAttention({
+        reminderKey: 'reminder-tax-followup',
+        label: 'Follow up on tax records',
+        dependsOnStepId: 'institution-state-tax-agency',
+        dependentStepTitle: 'State tax agency',
+        sectionKey: 'core-government',
+        plannerIntent: 'open_execution_card',
+        focusTargetId: 'execution-card-taxes',
+      }),
+      makeReminderAttention({
+        reminderKey: 'reminder-legal-government-followup',
+        label: 'Follow up on county and immigration records',
+        dependsOnStepId: 'institution-uscis-immigration-records',
+        dependentStepTitle: 'USCIS immigration records',
+        sectionKey: 'core-government',
+        plannerIntent: 'open_execution_card',
+        focusTargetId: 'execution-card-legalGovernment',
+      }),
+    ]);
+
+    expect(feed.map((item) => item.focusTargetId)).toEqual(expect.arrayContaining(['execution-card-taxes', 'execution-card-legalGovernment']));
+    expect(feed.map((item) => item.sectionKey)).toEqual(expect.arrayContaining(['core-government']));
+  });
+
   it('keeps critical reminder attention above lower-ranked ready execution work', () => {
     const feed = buildNameChangeActionFeed([
       makeExecutionSnapshot({
@@ -1931,6 +1957,21 @@ describe('name change action feed', () => {
 
     expect(feed[0]).toMatchObject({
       focusTargetId: 'account-update-template-template-tax',
+      sectionKey: 'core-government',
+    });
+  });
+
+  it('keeps tax execution work in core-government', () => {
+    const feed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'taxes',
+        targetLabel: 'Tax records',
+        recommendedFormCode: 'TAX',
+      }),
+    ], [], []);
+
+    expect(feed[0]).toMatchObject({
+      focusTargetId: 'execution-card-taxes',
       sectionKey: 'core-government',
     });
   });

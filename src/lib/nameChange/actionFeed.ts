@@ -448,7 +448,7 @@ function getActionFeedUrgencyReason(
 }
 
 function getExecutionSectionKey(targetKey: NameChangeTargetExecutionSnapshot['targetKey']): NameChangeActionFeedItem['sectionKey'] {
-  if (targetKey === 'ssa' || targetKey === 'dmv' || targetKey === 'passport' || targetKey === 'legalGovernment') return 'core-government';
+  if (targetKey === 'ssa' || targetKey === 'dmv' || targetKey === 'passport' || targetKey === 'taxes' || targetKey === 'legalGovernment') return 'core-government';
   if (targetKey === 'employer' || targetKey === 'licenses') return 'work-identity';
   if (targetKey === 'banks' || targetKey === 'insurance' || targetKey === 'medical' || targetKey === 'utilities') return 'institutional';
   return 'cleanup';
@@ -510,6 +510,8 @@ function getReminderFocusTargetId(item: NameChangeReminderAttentionItem) {
   if (dependsOnStepId === 'federal-ssa') return 'execution-card-ssa';
   if (dependsOnStepId === 'state-dmv') return 'execution-card-dmv';
   if (dependsOnStepId === 'federal-passport') return 'execution-card-passport';
+  if (dependsOnStepId === 'institution-irs-records' || dependsOnStepId === 'institution-state-tax-agency') return 'execution-card-taxes';
+  if (dependsOnStepId === 'institution-county-recorder-property' || dependsOnStepId === 'institution-uscis-immigration-records') return 'execution-card-legalGovernment';
   if (dependsOnStepId === 'institutions-rollout') return 'execution-card-banks';
   return 'reminder-attention';
 }
