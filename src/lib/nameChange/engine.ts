@@ -1479,8 +1479,11 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
       ? {
         id: 'milestone-payroll',
         label: 'Payroll and HR can use the verified SSA identity',
-        status: resolvePlanSequenceStatus(['federal-ssa', 'institution-irs-employer'], steps),
-        dependsOnStepIds: ['federal-ssa', 'institution-irs-employer'],
+        status: resolvePlanSequenceStatus(
+          ['federal-ssa', 'institution-irs-employer', 'institution-retirement-benefits'].filter((stepId) => hasStep(stepId)),
+          steps,
+        ),
+        dependsOnStepIds: ['federal-ssa', 'institution-irs-employer', 'institution-retirement-benefits'].filter((stepId) => hasStep(stepId)),
       }
       : null,
     (hasStep('institution-irs-records') || hasStep('institution-state-tax-agency') || hasStep('institution-county-recorder-property') || hasStep('institution-uscis-immigration-records'))

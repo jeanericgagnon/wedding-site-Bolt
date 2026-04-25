@@ -90,7 +90,7 @@ describe('name change reminder suggestions', () => {
       urgency: 'medium',
     });
     expect(reminders.find((reminder) => reminder.id === 'reminder-milestone-confirm-milestone-payroll')).toMatchObject({
-      dependsOnStepId: 'institution-irs-employer',
+      dependsOnStepId: 'institution-retirement-benefits',
       urgency: 'high',
     });
     expect(reminders.find((reminder) => reminder.id === 'reminder-milestone-confirm-milestone-tax')).toMatchObject({
@@ -197,6 +197,12 @@ describe('name change reminder suggestions', () => {
     });
     expect(inputs.find((reminder) => reminder.reminder_key === 'reminder-irs-employer')).toMatchObject({
       depends_on_step_id: 'institution-irs-employer',
+      section_key: 'work-identity',
+      planner_intent: 'open_execution_card',
+      focus_target_id: 'execution-card-employer',
+    });
+    expect(inputs.find((reminder) => reminder.reminder_key === 'reminder-milestone-confirm-milestone-payroll')).toMatchObject({
+      depends_on_step_id: 'institution-retirement-benefits',
       section_key: 'work-identity',
       planner_intent: 'open_execution_card',
       focus_target_id: 'execution-card-employer',

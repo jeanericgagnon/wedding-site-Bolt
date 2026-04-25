@@ -258,7 +258,7 @@ describe('name change engine', () => {
         expect.objectContaining({ id: 'milestone-ssa', status: 'ready', dependsOnStepIds: ['eligibility-proof', 'federal-ssa'] }),
         expect.objectContaining({ id: 'milestone-photo-id', status: 'upcoming' }),
         expect.objectContaining({ id: 'milestone-passport', status: 'upcoming', dependsOnStepIds: ['federal-ssa', 'state-dmv', 'federal-passport'] }),
-        expect.objectContaining({ id: 'milestone-payroll', status: 'upcoming', dependsOnStepIds: ['federal-ssa', 'institution-irs-employer'] }),
+        expect.objectContaining({ id: 'milestone-payroll', status: 'upcoming', dependsOnStepIds: ['federal-ssa', 'institution-irs-employer', 'institution-retirement-benefits'] }),
         expect.objectContaining({
           id: 'milestone-tax',
           status: 'upcoming',
