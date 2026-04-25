@@ -528,6 +528,7 @@ function isCaseSetupReminder(item: NameChangeReminderAttentionItem) {
 
 function getReminderFocusTargetId(item: NameChangeReminderAttentionItem) {
   if (isCaseSetupReminder(item)) return 'case-setup';
+  if (item.reminderKey === 'reminder-travel-bookings') return 'execution-card-tsa';
 
   const { dependsOnStepId } = item;
   if (dependsOnStepId === 'eligibility-proof') return 'execution-card-ssa';
@@ -547,6 +548,11 @@ function getReminderFocusTargetId(item: NameChangeReminderAttentionItem) {
   if (dependsOnStepId === 'institution-utilities' || dependsOnStepId === 'institution-utilities-housing' || dependsOnStepId === 'institution-phone-digital-identity') return 'execution-card-utilities';
   if (dependsOnStepId === 'institutions-rollout') return 'execution-card-banks';
   return 'reminder-attention';
+}
+
+function getReminderItemSectionKey(item: NameChangeReminderAttentionItem): NameChangeActionFeedItem['sectionKey'] {
+  if (item.reminderKey === 'reminder-travel-bookings') return 'cleanup';
+  return getReminderSectionKey(item.dependsOnStepId);
 }
 
 function getReminderScore(item: NameChangeReminderAttentionItem) {
@@ -638,7 +644,7 @@ export function buildNameChangeActionFeed(
     return {
       key: `reminder:${item.reminderKey}`,
       origin: 'reminder',
-      sectionKey: item.sectionKey ?? getReminderSectionKey(item.dependsOnStepId),
+      sectionKey: item.sectionKey ?? getReminderItemSectionKey(item),
       title: item.label,
       laneLabel: item.dependentStepTitle,
       severity: item.priorityTier === 'critical' || item.actionability === 'blocked_by_untouched_step' ? 'blocking' : 'attention',

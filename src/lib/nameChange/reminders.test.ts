@@ -276,9 +276,9 @@ describe('name change reminder suggestions', () => {
 
     expect(mapReminderSuggestionsToInputs(buildNameChangeReminderSuggestions(plan)).find((reminder) => reminder.reminder_key === 'reminder-travel-bookings')).toMatchObject({
       depends_on_step_id: 'federal-passport',
-      section_key: 'core-government',
+      section_key: 'cleanup',
       planner_intent: 'open_execution_card',
-      focus_target_id: 'execution-card-passport',
+      focus_target_id: 'execution-card-tsa',
     });
   });
 

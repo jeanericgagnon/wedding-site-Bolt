@@ -2008,8 +2008,8 @@ describe('name change action feed', () => {
 
     expect(feed[0]).toMatchObject({
       origin: 'reminder',
-      focusTargetId: 'execution-card-passport',
-      sectionKey: 'core-government',
+      focusTargetId: 'execution-card-tsa',
+      sectionKey: 'cleanup',
     });
   });
 

@@ -293,6 +293,14 @@ function getReminderPlannerRoute(
     };
   }
 
+  if (suggestion.id === 'reminder-travel-bookings') {
+    return {
+      sectionKey: 'cleanup',
+      plannerIntent: 'open_execution_card',
+      focusTargetId: 'execution-card-tsa',
+    };
+  }
+
   if (suggestion.dependsOnStepId === 'federal-ssa') {
     return {
       sectionKey: 'core-government',
