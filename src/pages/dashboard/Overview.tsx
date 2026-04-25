@@ -888,7 +888,7 @@ export const DashboardOverview: React.FC = () => {
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold text-sky-950">Post-wedding name change assistant</p>
-                        <p className="mt-1 text-sm text-sky-900">Now that the event is behind you, this is the right place to keep certificate, SSA, DMV, passport, payroll, tax, and downstream account updates moving from one status vault.</p>
+                        <p className="mt-1 text-sm text-sky-900">Keep the free assistant handy after the wedding so certificate, SSA, DMV, passport, payroll, tax, and downstream account updates stay easy to find whenever you want to resume.</p>
                       </div>
                       <Badge variant="secondary">Post-wedding</Badge>
                     </div>
@@ -906,12 +906,16 @@ export const DashboardOverview: React.FC = () => {
                         <p className="mt-1 text-sm text-sky-950">Use the long-tail rollout lane for banks, insurance, travel, loyalty, and the rest of the account cleanup.</p>
                       </div>
                     </div>
+                    <div className="rounded-xl border border-sky-200 bg-white px-4 py-3">
+                      <p className="text-xs uppercase tracking-wide text-sky-700">Optional next step</p>
+                      <p className="mt-1 text-sm text-sky-950">Open the assistant if you want the next recommended move. Skip it if nothing needs attention right now.</p>
+                    </div>
                     <div className="flex flex-wrap gap-2">
                       <Button variant="accent" size="sm" onClick={() => navigate('/dashboard/planning?tab=nameChange')}>
-                        Open name change assistant
+                        Resume free name change assistant
                       </Button>
                       <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/planning')}>
-                        Open planning workspace
+                        Open planning workspace instead
                       </Button>
                     </div>
                   </div>

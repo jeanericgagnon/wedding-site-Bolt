@@ -62,6 +62,46 @@ describe('NameChangePlannerTab', () => {
     expect(document.getElementById('case-setup')).not.toBeNull();
   });
 
+  it('keeps post-wedding resume copy soft and resumable', () => {
+    const draft = makeDraft();
+    const scrollIntoView = vi.fn();
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+    HTMLElement.prototype.scrollIntoView = scrollIntoView;
+
+    try {
+      render(
+        <NameChangePlannerTab
+          draft={draft}
+          documents={[]}
+          extractedFields={[]}
+          plan={buildNameChangePlan({ profile: draft, documents: [], extractedFields: [] })}
+          reminders={[]}
+          saving={false}
+          onDraftChange={vi.fn()}
+          onStructuredIntakeChange={vi.fn()}
+          onDocumentsChange={vi.fn()}
+          onExtractedFieldsChange={vi.fn()}
+          onRemindersChange={vi.fn()}
+          onStepExecutionStatusChange={vi.fn()}
+          onStepExecutionNoteChange={vi.fn()}
+          onSave={onSave}
+        />,
+      );
+
+      expect(screen.getByText('Soft next steps, not a checklist you have to clear')).toBeInTheDocument();
+      expect(screen.getByText(/Optional next move:/i)).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Open status vault' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Save and come back later' }));
+
+      expect(scrollIntoView).toHaveBeenCalled();
+      expect(onSave).toHaveBeenCalled();
+    } finally {
+      HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+    }
+  });
+
   it('lets persisted reminder routing jump straight to the linked planner target', () => {
     const draft = makeDraft();
     const scrollIntoView = vi.fn();

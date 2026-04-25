@@ -1218,7 +1218,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
             )}
           </div>
 
-          <div className="mt-6 border-t border-border-subtle pt-4">
+          <div id="target-status-tracking" className="mt-6 scroll-mt-24 border-t border-border-subtle pt-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h4 className="text-sm font-semibold text-text-primary">Target status tracking</h4>
