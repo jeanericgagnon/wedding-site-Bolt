@@ -209,7 +209,8 @@ export function getAccountUpdateTemplateReadinessLine(
   options: { prefix?: boolean } = {},
 ) {
   const { prefix = true } = options;
-  return prefix ? `Readiness: ${template.readinessLabel}` : template.readinessLabel;
+  const detail = getAccountUpdateTemplateReadinessDetailLine(template.readinessLabel, template);
+  return prefix ? `Readiness: ${detail}` : detail;
 }
 
 export function getAccountUpdateTemplateCopyButtonLabel(

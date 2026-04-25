@@ -216,8 +216,12 @@ describe('account update template surface helpers', () => {
     expect(getAccountUpdateTemplateProofDocumentsLine(template)).toBe(
       'Proof to have handy: Certified legal name-change proof · Updated photo ID or DMV receipt',
     );
-    expect(getAccountUpdateTemplateReadinessLine(template)).toBe(`Readiness: ${template.readinessLabel}`);
-    expect(getAccountUpdateTemplateReadinessLine(template, { prefix: false })).toBe(template.readinessLabel);
+    expect(getAccountUpdateTemplateReadinessLine(template)).toBe(
+      `Readiness: ${getAccountUpdateTemplateReadinessDetailLine(template.readinessLabel, template)}`,
+    );
+    expect(getAccountUpdateTemplateReadinessLine(template, { prefix: false })).toBe(
+      getAccountUpdateTemplateReadinessDetailLine(template.readinessLabel, template),
+    );
     expect(getAccountUpdateTemplateStatusLabel(template)).toBe('send now (proof packet ready)');
     expect(getAccountUpdateTemplateStatusLine(template)).toBe('Status: send now (proof packet ready)');
     expect(getAccountUpdateTemplateContextLines(template, { includeAudience: true, includeStatus: true })).toEqual([
