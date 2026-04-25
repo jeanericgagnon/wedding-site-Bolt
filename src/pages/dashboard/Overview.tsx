@@ -986,7 +986,7 @@ export const DashboardOverview: React.FC = () => {
                       <button
                         type="button"
                         className="rounded-xl border border-sky-200 bg-white px-4 py-3 text-left"
-                        onClick={() => navigate(nameChangeCard.primaryHref)}
+                        onClick={() => navigate(nameChangeCard.plannerHref)}
                       >
                         <p className="text-xs uppercase tracking-wide text-sky-700">{NAME_CHANGE_LIFECYCLE_LABELS.followOn}</p>
                         <p className="mt-1 text-sm text-sky-950">{nameChangeInsights.followOnLabel}</p>
