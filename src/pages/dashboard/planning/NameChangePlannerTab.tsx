@@ -1557,6 +1557,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 {template.checklistStatusNote ? (
                   <p className="mt-2 text-xs text-text-secondary">Checklist status: {template.checklistStatusNote}</p>
                 ) : null}
+                <p className="mt-2 text-xs text-text-secondary">{getAccountUpdateTemplateStateLine(template)}</p>
                 <p className="mt-2 text-xs text-text-secondary">Proof status: {template.proofReadinessSummary}</p>
                 <p className="mt-2 text-xs text-text-secondary">Next ask: {template.requestSummary}</p>
                 {template.proofChecklist.length > 0 ? (

@@ -625,6 +625,8 @@ describe('NameChangePlannerTab', () => {
     expect(screen.getAllByText('confirm sync (proof chain complete)').length).toBeGreaterThan(0);
     expect(screen.getAllByRole('button', { name: 'Copy proof-ready send text' }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('button', { name: 'Copy proof-complete confirmation' }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Template state: proof packet ready to send now.').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Template state: proof chain complete; confirm the downstream sync only.').length).toBeGreaterThan(0);
   });
 
   it('copies the full readiness-aware template text from the planner card', async () => {
@@ -661,6 +663,7 @@ describe('NameChangePlannerTab', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'Copy intake script' })[0]!);
 
     await waitFor(() => expect(clipboardWriteText).toHaveBeenCalledTimes(1));
+    expect(screen.getAllByText('Template state: intake-only until legal proof pending clears.').length).toBeGreaterThan(0);
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Subject: ${payrollTemplate?.subject}`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Status: ask intake rules now · ${payrollTemplate?.blockingProofHopLabel}`));
     expect(clipboardWriteText).toHaveBeenCalledWith(expect.stringContaining(`Next ask: ${payrollTemplate?.requestSummary}`));
