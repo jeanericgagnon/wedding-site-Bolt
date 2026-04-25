@@ -2413,6 +2413,41 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.statusVault.status).toBe('in_progress');
   });
 
+  it('keeps courtesy rollout scoped to social and alumni follow-through', () => {
+    const basePlan = buildNameChangePlan({ profile: makeCase(), documents: [], extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => {
+        if (step.id === 'institution-credit-bureaus') {
+          return {
+            ...step,
+            executionStatus: 'complete' as const,
+            completedAt: '2026-04-24T18:10:00.000Z',
+          };
+        }
+
+        if (step.id === 'institution-subscriptions-social') {
+          return {
+            ...step,
+            executionStatus: 'in_progress' as const,
+            executionUpdatedAt: '2026-04-24T20:10:00.000Z',
+          };
+        }
+
+        return step;
+      }),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('courtesy', makeCase(), [], [], plan);
+    expect(snapshot.statusVault.executionCounts).toEqual({
+      todo: 1,
+      inProgress: 1,
+      complete: 0,
+      total: 2,
+    });
+    expect(snapshot.statusVault.status).toBe('in_progress');
+  });
+
   it('tracks employer rollout through payroll and retirement follow-through', () => {
     const basePlan = buildNameChangePlan({ profile: makeCase(), documents: [], extractedFields: [] });
     const plan = {
