@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { PLANNER_ROLE_OPTIONS, canEditPlannerSurface, derivePlannerRoleFromPermissions, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
-import { formatGuestOpsDateTime, formatGuestOpsRelativeTime, getGuestOpsTimestamp } from './guestOpsTime';
+import { formatGuestOpsDate, formatGuestOpsDateTime, formatGuestOpsRelativeTime, getGuestOpsTimestamp } from './guestOpsTime';
 import { formatGuestEventDate } from './guestEventDate';
 import { getDaysUntilGuestWedding } from './guestWeddingDate';
 import { getRsvpFallbackState } from '../../lib/rsvpFallbackState';
@@ -2089,7 +2089,7 @@ Proceed with send?`)) return;
       guest.rsvp_status,
       guest.plus_one_allowed ? 'Yes' : 'No',
       guest.rsvp?.meal_choice || '',
-      guest.rsvp_received_at ? new Date(guest.rsvp_received_at).toLocaleDateString() : '',
+      guest.rsvp_received_at ? formatGuestOpsDate(guest.rsvp_received_at, undefined, '') : '',
       guest.invite_token || '',
       formatCustomAnswers(guest.rsvp?.custom_answers || null),
     ]);
@@ -4387,7 +4387,7 @@ Proceed with send?`)) return;
                               {getStatusBadge(guest.rsvp_status)}
                               {guest.rsvp_received_at && hasRespondedRsvpStatus(guest.rsvp_status) && (
                                 <span className="text-xs text-text-tertiary break-words">
-                                  {new Date(guest.rsvp_received_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                  {formatGuestOpsDate(guest.rsvp_received_at)}
                                 </span>
                               )}
                               {(() => {

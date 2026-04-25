@@ -26,3 +26,13 @@ export function formatGuestOpsDateTime(
   if (!Number.isFinite(timestamp)) return 'Unknown time';
   return new Date(timestamp).toLocaleString('en-US', options);
 }
+
+export function formatGuestOpsDate(
+  value: string | null | undefined,
+  options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' },
+  fallback = 'Unknown date',
+): string {
+  const timestamp = getGuestOpsTimestamp(value);
+  if (!Number.isFinite(timestamp)) return fallback;
+  return new Date(timestamp).toLocaleDateString('en-US', options);
+}
