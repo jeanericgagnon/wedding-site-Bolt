@@ -207,7 +207,7 @@ export function buildNameChangeActionFeed(
       const templateId = getTemplateIdForTargetKey(snapshot.targetKey);
       return templateId ? templatesById.get(templateId) : undefined;
     })();
-    const routesToTemplate = !routesToDocumentRepair && !routesToCaseSetup && linkedTemplate && linkedTemplate.readiness !== 'blocked';
+    const routesToTemplate = !routesToDocumentRepair && !routesToCaseSetup && Boolean(linkedTemplate);
     const score =
       (getSeverityWeight(severity) * 100) +
       (snapshot.blockers.length * 10) +

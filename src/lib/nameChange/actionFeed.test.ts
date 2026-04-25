@@ -318,7 +318,7 @@ describe('name change action feed', () => {
     });
   });
 
-  it('keeps blocked institutional work on the execution card until the template proof chain is usable', () => {
+  it('routes blocked institutional work into the readiness-aware template when intake guidance is still useful', () => {
     const feed = buildNameChangeActionFeed([
       makeExecutionSnapshot({
         targetKey: 'insurance',
@@ -331,13 +331,21 @@ describe('name change action feed', () => {
         },
       }),
     ], [], [], [
-      makeTemplate({ id: 'template-insurance', audience: 'Insurance carriers', readiness: 'blocked', readinessLabel: 'Hold this until the upstream proof chain is further along.' }),
+      makeTemplate({
+        id: 'template-insurance',
+        audience: 'Insurance carriers',
+        readiness: 'blocked',
+        readinessLabel: 'The legal-proof chain is still too early, so use this to learn the intake path now and wait to send documents until the upstream proof is real.',
+      }),
     ]);
 
     expect(feed[0]).toMatchObject({
-      plannerIntent: 'open_execution_card',
-      focusTargetId: 'execution-card-insurance',
-      laneLabel: 'INS',
+      plannerIntent: 'open_account_update_template',
+      focusTargetId: 'account-update-template-template-insurance',
+      laneLabel: 'Insurance carriers · blocked template',
+      action: expect.objectContaining({
+        detail: expect.stringContaining('learn the intake path now'),
+      }),
     });
   });
 
@@ -438,6 +446,37 @@ describe('name change action feed', () => {
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-insurance',
       laneLabel: 'Insurance and medical · ready template',
+    });
+  });
+
+  it('routes utility follow-through into the blocked digital-identity template so intake rules are captured early', () => {
+    const feed = buildNameChangeActionFeed([
+      makeExecutionSnapshot({
+        targetKey: 'utilities',
+        targetLabel: 'Utilities and phone',
+        recommendedFormCode: 'UTIL',
+        nextAction: {
+          category: 'dependency',
+          label: 'Prep utility name-change request',
+          detail: 'Need the verification rules before changing billing records.',
+        },
+      }),
+    ], [], [], [
+      makeTemplate({
+        id: 'template-digital-identity',
+        audience: 'Phone, utilities, housing, or primary digital identity support',
+        readiness: 'blocked',
+        readinessLabel: 'The proof chain is still upstream, so use this to gather verification rules first.',
+      }),
+    ]);
+
+    expect(feed[0]).toMatchObject({
+      plannerIntent: 'open_account_update_template',
+      focusTargetId: 'account-update-template-template-digital-identity',
+      laneLabel: 'Phone, utilities, housing, or primary digital identity support · blocked template',
+      action: expect.objectContaining({
+        detail: expect.stringContaining('gather verification rules first'),
+      }),
     });
   });
 
