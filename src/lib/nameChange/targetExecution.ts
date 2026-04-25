@@ -87,6 +87,14 @@ function getSupportiveExecutionWaitGuidance(snapshot: Pick<NameChangeTargetExecu
   if (!blockingLabel) return undefined;
 
   if (snapshot.targetKey === 'passport') {
+    if (/marriage-certificate county|certificate number/i.test(blockingLabel)) {
+      return {
+        doNow: 'Pull the reviewed marriage certificate, issuing county name, and certificate number into one proof note now.',
+        whyItHelps: 'That gives the passport packet the exact out-of-state reference details it needs once filing moves.',
+        canWait: 'Actual submission can safely wait until the marriage-certificate grounding is complete.',
+      };
+    }
+
     if (/non-u\.s\.|non-us/i.test(blockingLabel)) {
       return {
         doNow: 'Gather your current passport, citizenship record, and the country-specific change instructions now.',
@@ -102,6 +110,17 @@ function getSupportiveExecutionWaitGuidance(snapshot: Pick<NameChangeTargetExecu
         canWait: 'Actual submission can safely wait until the first-passport branch is confirmed.',
       };
     }
+  }
+
+  if (
+    snapshot.targetKey === 'tsa'
+    && /marriage-certificate county|certificate number/i.test(blockingLabel)
+  ) {
+    return {
+      doNow: 'Pull the reviewed marriage certificate, issuing county name, and certificate number into one proof note now.',
+      whyItHelps: 'That keeps travel, title, and loyalty follow-through aligned once the out-of-state proof details are grounded.',
+      canWait: 'Actual submission can safely wait until the marriage-certificate grounding is complete.',
+    };
   }
 
   if (snapshot.nextAction.category !== 'dependency') return undefined;

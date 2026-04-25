@@ -3049,6 +3049,22 @@ describe('name change target execution snapshot', () => {
     });
   });
 
+  it('adds structured wait guidance for out-of-state passport proof grounding blockers', () => {
+    expect(getExecutionNextActionGuidance({
+      targetKey: 'passport',
+      nextAction: {
+        category: 'document',
+        label: 'Capture marriage-certificate county + certificate number',
+        detail: 'Marriage certificate is present, but no grounded county or certificate-number extraction is represented yet for out-of-state follow-through.',
+      },
+    })).toEqual({
+      overview: 'Marriage certificate is present, but no grounded county or certificate-number extraction is represented yet for out-of-state follow-through.',
+      doNow: 'Pull the reviewed marriage certificate, issuing county name, and certificate number into one proof note now.',
+      whyItHelps: 'That gives the passport packet the exact out-of-state reference details it needs once filing moves.',
+      canWait: 'Actual submission can safely wait until the marriage-certificate grounding is complete.',
+    });
+  });
+
   it('adds structured wait guidance for first-passport branch reviews', () => {
     expect(getExecutionNextActionGuidance({
       targetKey: 'passport',
@@ -3062,6 +3078,22 @@ describe('name change target execution snapshot', () => {
       doNow: 'Gather citizenship proof, photo ID, and the in-person acceptance packet details now.',
       whyItHelps: 'That keeps the first-passport packet ready once the initial application path is confirmed.',
       canWait: 'Actual submission can safely wait until the first-passport branch is confirmed.',
+    });
+  });
+
+  it('adds structured wait guidance for out-of-state travel proof grounding blockers', () => {
+    expect(getExecutionNextActionGuidance({
+      targetKey: 'tsa',
+      nextAction: {
+        category: 'document',
+        label: 'Capture marriage-certificate county',
+        detail: 'Marriage certificate is present, but verified county and certificate-number extraction are still incomplete for out-of-state follow-through.',
+      },
+    })).toEqual({
+      overview: 'Marriage certificate is present, but verified county and certificate-number extraction are still incomplete for out-of-state follow-through.',
+      doNow: 'Pull the reviewed marriage certificate, issuing county name, and certificate number into one proof note now.',
+      whyItHelps: 'That keeps travel, title, and loyalty follow-through aligned once the out-of-state proof details are grounded.',
+      canWait: 'Actual submission can safely wait until the marriage-certificate grounding is complete.',
     });
   });
 
