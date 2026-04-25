@@ -387,6 +387,7 @@ describe('name change action feed', () => {
       urgencyTier: 'normal',
     });
     expect(feed[0]?.action.label).toBe('Confirm bank accounts sync');
+    expect(feed[0]?.action.detail).toContain('Subject: Confirm completed update: Name change update for banking profile');
     expect(feed[0]?.action.detail).toContain('Readiness: The core proof chain is already complete, so this should be a clean confirmation/update pass.');
     expect(feed[0]?.action.detail).toContain('clean confirmation/update pass');
     expect(feed[0]?.action.detail).toContain('Proof status: Use this as a confirmation pass that cards, checks, statements, and profile records already synced.');
@@ -504,6 +505,7 @@ describe('name change action feed', () => {
       }),
     });
     expect(feed[0]?.action.detail).toContain('Readiness: The legal-proof chain is still too early, so use this to learn the intake path now and wait to send documents until the upstream proof is real.');
+    expect(feed[0]?.action.detail).toContain('Subject: Insurance carriers');
     expect(feed[0]?.action.detail).toContain('Do not send yet; the legal proof chain still needs to clear before carrier evidence will stick.');
     expect(feed[0]?.action.detail).toContain('Blocked by: legal proof pending.');
     expect(feed[0]?.action.detail).toContain('Proof status: Do not send yet; the legal proof chain still needs to clear before carrier evidence will stick.');
@@ -756,6 +758,7 @@ describe('name change action feed', () => {
       urgencyReason: 'blocking_dependency',
     });
     expect(feed[0]?.action.label).toBe('Ask employer payroll / HR before next proof hop (SSA pending)');
+    expect(feed[0]?.action.detail).toContain('Subject: Employer payroll / HR');
     expect(feed[0]?.action.detail).toContain('still depends on the next ID or agency hop');
   });
 

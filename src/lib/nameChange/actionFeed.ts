@@ -63,6 +63,7 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
     : undefined;
   return [
     baseDetail,
+    `Subject: ${template.subject}`,
     `Readiness: ${template.readinessLabel}`,
     template.blockingProofHopLabel ? `Blocked by: ${template.blockingProofHopLabel}.` : undefined,
     `Proof status: ${template.proofReadinessSummary}`,
