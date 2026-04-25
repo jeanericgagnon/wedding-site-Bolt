@@ -118,9 +118,9 @@ function getTemplateActionLabel(baseLabel: string, template: AccountUpdateTempla
 
 function getTemplateLaneLabel(template: AccountUpdateTemplate) {
   const readinessLabel = template.readiness === 'ready'
-    ? 'send now'
+    ? 'send now (proof packet ready)'
     : template.readiness === 'complete'
-      ? 'confirm sync'
+      ? 'confirm sync (proof chain complete)'
       : template.readiness === 'in_progress'
         ? 'draft now, send after current proof clears'
         : template.readiness === 'upcoming'

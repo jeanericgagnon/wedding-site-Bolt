@@ -341,7 +341,7 @@ describe('name change action feed', () => {
     expect(feed[0]).toMatchObject({
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-bank',
-      laneLabel: 'Bank accounts · send now',
+      laneLabel: 'Bank accounts · send now (proof packet ready)',
       urgencyReason: 'packet_trust',
       action: expect.objectContaining({
         label: 'Send bank accounts update (proof packet ready)',
@@ -390,7 +390,7 @@ describe('name change action feed', () => {
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-bank',
       title: 'Bank accounts',
-      laneLabel: 'Bank accounts · confirm sync',
+      laneLabel: 'Bank accounts · confirm sync (proof chain complete)',
       severity: 'attention',
       urgencyReason: 'review_queue',
       urgencyTier: 'normal',
@@ -468,12 +468,12 @@ describe('name change action feed', () => {
 
     expect(feed[0]).toMatchObject({
       title: 'Insurance carriers',
-      laneLabel: 'Insurance carriers · send now',
+      laneLabel: 'Insurance carriers · send now (proof packet ready)',
       urgencyTier: 'elevated',
     });
     expect(feed[1]).toMatchObject({
       title: 'Bank accounts',
-      laneLabel: 'Bank accounts · confirm sync',
+      laneLabel: 'Bank accounts · confirm sync (proof chain complete)',
       urgencyTier: 'normal',
     });
   });
@@ -572,7 +572,7 @@ describe('name change action feed', () => {
     expect(feed[1]).toMatchObject({
       title: 'Bank accounts',
       severity: 'attention',
-      laneLabel: 'Bank accounts · confirm sync',
+      laneLabel: 'Bank accounts · confirm sync (proof chain complete)',
     });
   });
 
@@ -699,7 +699,7 @@ describe('name change action feed', () => {
     expect(templateItems).toHaveLength(1);
     expect(templateItems[0]).toMatchObject({
       title: 'Airline, hotel, loyalty, or travel support',
-      laneLabel: 'Airline, hotel, loyalty, or travel support · send now',
+      laneLabel: 'Airline, hotel, loyalty, or travel support · send now (proof packet ready)',
       plannerIntent: 'open_account_update_template',
     });
   });
@@ -734,7 +734,7 @@ describe('name change action feed', () => {
     expect(feed[0]).toMatchObject({
       plannerIntent: 'open_account_update_template',
       focusTargetId: 'account-update-template-template-insurance',
-      laneLabel: 'Insurance and medical · send now',
+      laneLabel: 'Insurance and medical · send now (proof packet ready)',
     });
     expect(feed[0]?.action.detail).toContain('Certified legal name-change proof');
   });
@@ -967,7 +967,7 @@ describe('name change action feed', () => {
 
     expect(feed[0]).toMatchObject({
       title: 'Insurance carriers',
-      laneLabel: 'Insurance carriers · send now',
+      laneLabel: 'Insurance carriers · send now (proof packet ready)',
       severity: 'ready',
     });
     expect(feed[1]).toMatchObject({
@@ -1032,7 +1032,7 @@ describe('name change action feed', () => {
       }),
     ]);
 
-    expect(feed[0]?.laneLabel).toBe('Bank accounts · confirm sync');
+    expect(feed[0]?.laneLabel).toBe('Bank accounts · confirm sync (proof chain complete)');
   });
 
   it('keeps blocked template intake work above lower-value ready execution follow-through', () => {
