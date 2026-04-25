@@ -27,6 +27,7 @@ import {
 } from './actionFeed';
 import {
   getAccountUpdateTemplateActionLabel as getEngineAccountUpdateTemplateActionLabel,
+  getAccountUpdateTemplateReadinessLabel as getEngineAccountUpdateTemplateReadinessLabel,
   getAccountUpdateTemplateStateLine as getEngineAccountUpdateTemplateStateLine,
   getAccountUpdateTemplateStatusLabel as getEngineAccountUpdateTemplateStatusLabel,
   getDefaultAccountUpdateBlockingProofHopLabel,
@@ -294,6 +295,18 @@ describe('account update template surface helpers', () => {
 
     expect(getAccountUpdateTemplateStateLine(template)).toBe(
       getEngineAccountUpdateTemplateStateLine('in_progress', 'Legal proof pending'),
+    );
+  });
+
+  it('preserves engine readiness narrative labels on linked templates', () => {
+    const template = makeTemplate({
+      readiness: 'upcoming',
+      readinessLabel: getEngineAccountUpdateTemplateReadinessLabel('upcoming', 'SSA pending'),
+      blockingProofHopLabel: 'SSA pending',
+    });
+
+    expect(getAccountUpdateTemplateReadinessLine(template, { prefix: false })).toContain(
+      getEngineAccountUpdateTemplateReadinessLabel('upcoming', 'SSA pending'),
     );
   });
 

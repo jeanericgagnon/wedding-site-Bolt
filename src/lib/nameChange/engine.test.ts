@@ -7,6 +7,7 @@ import {
   getAccountUpdateTemplateAudienceLine,
   getAccountUpdateTemplateReadinessActionLabel,
   getAccountUpdateTemplateReadinessIntroLine,
+  getAccountUpdateTemplateReadinessLabel,
   getAccountUpdateTemplateReadinessSubjectPrefix,
   getAccountUpdateTemplateStateLine,
   getAccountUpdateTemplateStatusLabel,
@@ -152,6 +153,16 @@ describe('name change engine', () => {
     expect(getAccountUpdateTemplateActionLabel('complete', 'Bank accounts')).toBe('Confirm bank accounts sync (proof chain complete)');
     expect(getAccountUpdateTemplateActionLabel('upcoming', 'Employer payroll / HR', 'SSA pending')).toBe('Ask employer payroll / HR before next proof hop (SSA pending)');
     expect(getAccountUpdateTemplateActionLabel('blocked', 'Tax agencies')).toBe('Ask tax agencies intake rules now (proof chain pending)');
+    expect(getAccountUpdateTemplateReadinessLabel('ready')).toBe('You have enough upstream proof to send this now.');
+    expect(getAccountUpdateTemplateReadinessLabel('in_progress', 'SSA pending')).toBe(
+      'The upstream identity work is already moving, so this outreach can be drafted now and sent as soon as the current step lands (SSA pending).',
+    );
+    expect(getAccountUpdateTemplateReadinessLabel('complete')).toBe(
+      'The core proof chain is already complete, so this should be a clean confirmation/update pass.',
+    );
+    expect(getAccountUpdateTemplateReadinessLabel('blocked')).toBe(
+      'The legal-proof chain is still too early, so use this to learn the intake path now and wait to send documents until the upstream proof is real (proof chain pending).',
+    );
     expect(getAccountUpdateTemplateStatusLabel('ready')).toBe('send now (proof packet ready)');
     expect(getAccountUpdateTemplateStatusLabel('complete')).toBe('confirm sync (proof chain complete)');
     expect(getAccountUpdateTemplateStatusLabel('upcoming', 'SSA pending')).toBe('ask before next proof hop · SSA pending');

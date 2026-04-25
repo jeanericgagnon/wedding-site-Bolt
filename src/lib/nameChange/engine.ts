@@ -641,6 +641,23 @@ export function getAccountUpdateTemplateReadinessIntroLine(
           : `I am only collecting the intake rules for now until the proof chain is ready${fallbackBlockingProofHopLabel ? ` (${fallbackBlockingProofHopLabel})` : ''}.`;
 }
 
+export function getAccountUpdateTemplateReadinessLabel(
+  readiness: NameChangePlan['summary']['accountUpdateTemplates'][number]['readiness'],
+  blockingProofHopLabel?: string,
+) {
+  const fallbackBlockingProofHopLabel = getFallbackBlockingProofHopLabel(readiness, blockingProofHopLabel);
+
+  return readiness === 'ready'
+    ? 'You have enough upstream proof to send this now.'
+    : readiness === 'in_progress'
+      ? `The upstream identity work is already moving, so this outreach can be drafted now and sent as soon as the current step lands${fallbackBlockingProofHopLabel ? ` (${fallbackBlockingProofHopLabel})` : ''}.`
+      : readiness === 'complete'
+        ? 'The core proof chain is already complete, so this should be a clean confirmation/update pass.'
+        : readiness === 'upcoming'
+          ? `Your legal proof is grounded, but this still depends on the next ID or agency hop before it is ready to send${fallbackBlockingProofHopLabel ? ` (${fallbackBlockingProofHopLabel})` : ''}.`
+          : `The legal-proof chain is still too early, so use this to learn the intake path now and wait to send documents until the upstream proof is real${fallbackBlockingProofHopLabel ? ` (${fallbackBlockingProofHopLabel})` : ''}.`;
+}
+
 function buildAccountUpdateTemplates(
   input: NameChangeEngineInput,
   steps: NameChangePlanStep[],
@@ -985,15 +1002,7 @@ function buildAccountUpdateTemplates(
     const readiness = resolvePlanSequenceStatus(template.dependsOnStepIds, steps);
     const blockingProofHopLabel = getDefaultAccountUpdateBlockingProofHopLabel(template.id, readiness);
     const fallbackBlockingProofHopLabel = getFallbackBlockingProofHopLabel(readiness, blockingProofHopLabel);
-    const readinessLabel = readiness === 'ready'
-      ? 'You have enough upstream proof to send this now.'
-      : readiness === 'in_progress'
-        ? `The upstream identity work is already moving, so this outreach can be drafted now and sent as soon as the current step lands${fallbackBlockingProofHopLabel ? ` (${fallbackBlockingProofHopLabel})` : ''}.`
-        : readiness === 'complete'
-          ? 'The core proof chain is already complete, so this should be a clean confirmation/update pass.'
-          : readiness === 'upcoming'
-            ? `Your legal proof is grounded, but this still depends on the next ID or agency hop before it is ready to send${fallbackBlockingProofHopLabel ? ` (${fallbackBlockingProofHopLabel})` : ''}.`
-            : `The legal-proof chain is still too early, so use this to learn the intake path now and wait to send documents until the upstream proof is real${fallbackBlockingProofHopLabel ? ` (${fallbackBlockingProofHopLabel})` : ''}.`;
+    const readinessLabel = getAccountUpdateTemplateReadinessLabel(readiness, blockingProofHopLabel);
     const readinessSpecificProof = template.id === 'template-payroll'
       ? getReadinessChecklistLine(readiness, {
           ready: 'SSA is already far enough along that I can attach the receipt/confirmation with my legal proof now.',
