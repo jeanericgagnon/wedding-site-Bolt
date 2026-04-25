@@ -772,6 +772,7 @@ describe('name change action feed', () => {
       urgencyReason: 'blocking_dependency',
     });
     expect(feed[0]?.action.label).toBe('Ask employer payroll / HR before next proof hop (SSA pending)');
+    expect(feed[0]?.action.detail).toContain('Use this to prep the ask before ssa pending clears.');
     expect(feed[0]?.action.detail).toContain('Subject: Employer payroll / HR');
     expect(feed[0]?.action.detail).toContain('Subject: Employer payroll / HR\nTemplate message: I can provide certified legal proof.');
     expect(feed[0]?.action.detail).toContain('Template message: I can provide certified legal proof.');
@@ -1159,6 +1160,7 @@ describe('name change action feed', () => {
 
     expect(feed[0]?.laneLabel).toBe('Tax agency or payroll tax support · ask intake rules now · legal proof pending');
     expect(feed[0]?.action.label).toBe('Ask tax agency or payroll tax support intake rules now (legal proof pending)');
+    expect(feed[0]?.action.detail).toContain('Use this only to capture intake rules until legal proof pending clears.');
     expect(feed[0]?.action.detail).toContain('Checklist: Gather the tax/state process only until legal proof is fully grounded.');
     expect(feed[0]?.action.detail).toContain('Checklist status: Gather the tax/state process only until legal proof is fully grounded.');
     expect(feed[0]?.action.detail).toContain('Next ask: Please just confirm the tax/state process for now so I can return once the legal proof packet is grounded.');

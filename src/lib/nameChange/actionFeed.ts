@@ -60,7 +60,11 @@ function getTemplateFocusTargetId(template: AccountUpdateTemplate | undefined) {
 function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemplate) {
   const readinessDetail = template.readiness === 'in_progress' && template.blockingProofHopLabel
     ? `${baseDetail} Send only after ${template.blockingProofHopLabel.toLowerCase()} clears.`
-    : baseDetail;
+    : template.readiness === 'upcoming' && template.blockingProofHopLabel
+      ? `${baseDetail} Use this to prep the ask before ${template.blockingProofHopLabel.toLowerCase()} clears.`
+      : template.readiness === 'blocked' && template.blockingProofHopLabel
+        ? `${baseDetail} Use this only to capture intake rules until ${template.blockingProofHopLabel.toLowerCase()} clears.`
+        : baseDetail;
   const checklistLine = template.checklistHighlight;
   const checklistStatusLine = template.checklistStatusNote
     ? template.checklistStatusNote.endsWith('.')
