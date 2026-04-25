@@ -7,9 +7,11 @@ import {
   formatInlineProofList,
   getAccountUpdateTemplateBlockedByLine,
   getAccountUpdateTemplateCurrentBlockerLine,
+  getAccountUpdateTemplateMessageLine,
   getAccountUpdateTemplateReadinessDetailLine,
   getAccountUpdateTemplateReadinessLabel,
   getAccountUpdateTemplateStateLine,
+  getAccountUpdateTemplateSubjectLine,
 } from './actionFeed';
 import { getDefaultAccountUpdateBlockingProofHopLabel } from './engine';
 import type { NameChangeDocumentRepairQueueItem } from './documentRepairQueue';
@@ -169,6 +171,15 @@ describe('account update template surface helpers', () => {
     expect(getAccountUpdateTemplateReadinessDetailLine('Base detail.', makeTemplate({ readiness: 'complete' }))).toBe(
       'Base detail. Use this only to confirm the downstream sync already landed.',
     );
+  });
+
+  it('formats subject and template message lines through shared helpers', () => {
+    const template = makeTemplate({ subject: 'Send now (proof packet ready): Name change update for banking profile', body: 'My proof packet is ready.' });
+
+    expect(getAccountUpdateTemplateSubjectLine(template)).toBe(
+      'Subject: Send now (proof packet ready): Name change update for banking profile',
+    );
+    expect(getAccountUpdateTemplateMessageLine(template)).toBe('Template message: My proof packet is ready.');
   });
 
   it('keeps planner and feed readiness labels on the same copy map', () => {

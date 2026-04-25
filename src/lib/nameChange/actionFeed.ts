@@ -168,6 +168,14 @@ export function getAccountUpdateTemplateReadinessDetailLine(baseDetail: string, 
             : baseDetail;
 }
 
+export function getAccountUpdateTemplateSubjectLine(template: AccountUpdateTemplate) {
+  return `Subject: ${template.subject}`;
+}
+
+export function getAccountUpdateTemplateMessageLine(template: AccountUpdateTemplate) {
+  return `Template message: ${template.body}`;
+}
+
 function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemplate) {
   const blockedByLine = getAccountUpdateTemplateBlockedByLine(template);
   const currentBlockerLine = getAccountUpdateTemplateCurrentBlockerLine(template);
@@ -182,8 +190,8 @@ function getTemplateActionDetail(baseDetail: string, template: AccountUpdateTemp
   return [
     readinessDetail,
     proofPhaseLine,
-    `Subject: ${template.subject}`,
-    `Template message: ${template.body}`,
+    getAccountUpdateTemplateSubjectLine(template),
+    getAccountUpdateTemplateMessageLine(template),
     `Readiness: ${template.readinessLabel}`,
     blockedByLine,
     currentBlockerLine,

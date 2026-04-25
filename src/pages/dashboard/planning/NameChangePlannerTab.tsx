@@ -10,8 +10,10 @@ import {
   formatInlineProofList,
   getAccountUpdateTemplateBlockedByLine,
   getAccountUpdateTemplateCurrentBlockerLine,
+  getAccountUpdateTemplateMessageLine,
   getAccountUpdateTemplateReadinessLabel,
   getAccountUpdateTemplateStateLine,
+  getAccountUpdateTemplateSubjectLine,
 } from '../../../lib/nameChange/actionFeed';
 import { getFallbackBlockingProofHopLabel } from '../../../lib/nameChange/engine';
 import { createDraftNameChangeDocument, normalizeDraftNameChangeDocumentId, upsertDraftNameChangeExtractedField } from '../../../lib/nameChange/intakeDraft';
@@ -200,7 +202,7 @@ function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['s
 
   return [
     `Audience: ${template.audience}`,
-    `Subject: ${template.subject}`,
+    getAccountUpdateTemplateSubjectLine(template),
     `Status: ${getAccountUpdateTemplateStatusChip(template)}`,
     `Readiness: ${template.readinessLabel}`,
     getAccountUpdateTemplateBlockedByLine(template),
@@ -213,7 +215,7 @@ function formatAccountUpdateTemplateCopy(template: NonNullable<NameChangePlan['s
     formattedProofChecklist ? `Proof checklist: ${formattedProofChecklist}` : undefined,
     formattedProofDocuments ? `Proof to have handy: ${formattedProofDocuments}` : undefined,
     '',
-    template.body,
+    getAccountUpdateTemplateMessageLine(template),
   ].filter(Boolean).join('\n');
 }
 
