@@ -5,6 +5,7 @@ import { PLANNER_ROLE_OPTIONS, canEditPlannerSurface, derivePlannerRoleFromPermi
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { formatGuestOpsDateTime, formatGuestOpsRelativeTime, getGuestOpsTimestamp } from './guestOpsTime';
 import { formatGuestEventDate } from './guestEventDate';
+import { getDaysUntilGuestWedding } from './guestWeddingDate';
 import { getRsvpFallbackState } from '../../lib/rsvpFallbackState';
 import { getInviteLifecycleState } from '../../lib/inviteLifecycle';
 import { getGuestLifecycleStage } from '../../lib/guestLifecycleStage';
@@ -2830,9 +2831,7 @@ Proceed with send?`)) return;
   const emailableFilteredGuests = filteredGuests.filter(g => !!g.email && !!g.invite_token);
 
 
-  const daysToWedding = weddingSiteInfo?.wedding_date
-    ? Math.ceil((new Date(weddingSiteInfo.wedding_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-    : null;
+  const daysToWedding = getDaysUntilGuestWedding(weddingSiteInfo?.wedding_date);
 
 
   const issueCountForGuest = (guest: GuestWithRSVP) => {
