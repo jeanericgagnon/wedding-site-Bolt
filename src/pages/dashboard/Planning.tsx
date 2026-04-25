@@ -35,6 +35,12 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'nameChange', label: 'Name change' },
 ];
 
+export function resolvePlanningTabFromSearch(search: string): Tab | null {
+  const params = new URLSearchParams(search);
+  const tab = params.get('tab');
+  return TABS.some((candidate) => candidate.id === tab) ? (tab as Tab) : null;
+}
+
 export const DashboardPlanning: React.FC = () => {
   const { user, isDemoMode } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
@@ -60,6 +66,13 @@ export const DashboardPlanning: React.FC = () => {
   useEffect(() => {
     loadAll();
   }, [isDemoMode, user]);
+
+  useEffect(() => {
+    const tabFromSearch = resolvePlanningTabFromSearch(window.location.search);
+    if (tabFromSearch) {
+      setActiveTab(tabFromSearch);
+    }
+  }, []);
 
   useEffect(() => {
     if (!siteId) return;
