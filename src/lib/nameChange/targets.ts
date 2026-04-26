@@ -573,6 +573,17 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'courtOrder' | 'ssa' | 'dmv' 
         missingReason: 'No employer-supporting identity document is represented in intake yet.',
         satisfiedReason: 'An employer-supporting identity document exists in intake.',
       },
+      {
+        key: 'benefits-account-record',
+        label: 'Benefits / retirement account record intake',
+        kind: 'document_support',
+        documentKinds: ['benefits_account_record'],
+        blocksReady: false,
+        nextActionCategory: 'document',
+        missingReason: 'No retirement, benefits, or beneficiary record is represented in intake yet for downstream employer follow-through.',
+        attentionReason: 'Employer rollout can start, but benefits and retirement follow-through will still need an uploaded account or beneficiary record.',
+        satisfiedReason: 'A retirement, benefits, or beneficiary record is represented in intake for employer follow-through.',
+      },
     ],
   },
   taxes: {

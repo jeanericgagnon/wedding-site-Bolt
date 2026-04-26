@@ -632,6 +632,14 @@ describe('name change intake draft helpers', () => {
       id: 'draft-social_security_card',
       document_kind: 'social_security_card',
     });
+    expect(createDraftNameChangeDocument('401k statement' as never, ' 401k statement ')).toMatchObject({
+      id: 'draft-benefits_account_record',
+      document_kind: 'benefits_account_record',
+    });
+    expect(createDraftNameChangeDocument('beneficiary form' as never, ' Beneficiary form ')).toMatchObject({
+      id: 'draft-benefits_account_record',
+      document_kind: 'benefits_account_record',
+    });
     expect(createDraftNameChangeDocument('birth cert' as never, ' Birth cert ')).toMatchObject({
       id: 'draft-birth_certificate',
       document_kind: 'birth_certificate',

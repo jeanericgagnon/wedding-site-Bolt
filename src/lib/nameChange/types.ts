@@ -8,6 +8,7 @@ export type NameChangeDocumentKind =
   | 'current_drivers_license'
   | 'current_passport'
   | 'social_security_card'
+  | 'benefits_account_record'
   | 'birth_certificate'
   | 'proof_of_address'
   | 'other';

@@ -570,6 +570,48 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.targetLabel).toContain('Employer');
     expect(snapshot.recommendedFormCode).toBe('EMPLOYER-HR-PACKET');
     expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'employment-context')).toMatchObject({ status: 'satisfied' });
+    expect(snapshot.checklist.find((item) => item.key === 'benefits-account-record')).toMatchObject({
+      status: 'attention',
+      blocksReady: false,
+      nextActionCategory: 'document',
+    });
+  });
+
+  it('clears employer benefits follow-through intake once a retirement record is uploaded', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'social_security_card',
+        display_name: 'Social Security card',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+      {
+        document_kind: 'benefits_account_record',
+        display_name: '401(k) beneficiary designation',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+
+    const basePlan = buildNameChangePlan({ profile: makeCase(), documents, extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-ssa'
+        ? { ...step, executionStatus: 'complete' as const }
+        : step),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('employer', makeCase(), documents, [], plan);
+    expect(snapshot.checklist.find((item) => item.key === 'benefits-account-record')).toMatchObject({
+      status: 'ready',
+      blocksReady: false,
+    });
   });
 
   it('builds shared bank execution snapshots with primary-id gating', () => {

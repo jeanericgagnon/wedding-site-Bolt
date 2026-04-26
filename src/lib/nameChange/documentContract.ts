@@ -61,6 +61,14 @@ export const NAME_CHANGE_DOCUMENT_CONTRACTS: NameChangeDocumentContractDefinitio
     acceptedSignals: ['ssa card metadata'],
   },
   {
+    kind: 'benefits_account_record',
+    label: 'Benefits / retirement account record',
+    requiredFor: [],
+    preferredForAutofill: false,
+    extractionFields: [],
+    acceptedSignals: ['401k statement metadata', 'beneficiary designation metadata', 'retirement account metadata'],
+  },
+  {
     kind: 'birth_certificate',
     label: 'Birth certificate',
     requiredFor: ['all'],
