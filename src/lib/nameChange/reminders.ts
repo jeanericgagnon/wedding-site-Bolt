@@ -198,7 +198,11 @@ const CONTEXT_REMINDER_CONFIGS: NameChangeContextReminderConfig[] = [
     expeditedUrgency: 'high',
     dependsOnStepId: 'federal-passport',
     reason: 'Non-U.S. passport handling is country-specific, so pinning down that rule set early keeps the rest of the identity chain honest.',
-    includeWhen: (plan) => !plan.profile.isUsCitizen && plan.profile.passportNeedsUpdate,
+    includeWhen: (plan) => Boolean(
+      !plan.profile.isUsCitizen
+      && plan.profile.passportNeedsUpdate
+      && plan.summary.edgeCaseGuidance?.some((item) => item.id === 'edge-non-us-passport')
+    ),
   },
   {
     id: 'reminder-court-order-packet',
@@ -209,7 +213,10 @@ const CONTEXT_REMINDER_CONFIGS: NameChangeContextReminderConfig[] = [
     expeditedUrgency: 'high',
     dependsOnStepId: 'eligibility-proof',
     reason: 'On the court-order path, nothing downstream matters until the packet, hearing, and signed order are actually moving.',
-    includeWhen: (plan) => plan.profile.legalBasis === 'court_order',
+    includeWhen: (plan) => Boolean(
+      plan.profile.legalBasis === 'court_order'
+      && plan.summary.edgeCaseGuidance?.some((item) => item.id === 'edge-court-order-path')
+    ),
   },
   {
     id: 'reminder-county-office-variation',

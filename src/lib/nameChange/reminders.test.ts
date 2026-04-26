@@ -337,6 +337,37 @@ describe('name change reminder suggestions', () => {
     });
   });
 
+  it('keys international-passport and court-order reminders off edge-case guidance', () => {
+    const plan = buildNameChangePlan(makeInput({
+      legal_basis: 'court_order',
+      is_us_citizen: false,
+      passport_needs_update: true,
+    }));
+
+    expect(plan.summary.edgeCaseGuidance?.map((item) => item.id)).toEqual(expect.arrayContaining([
+      'edge-non-us-passport',
+      'edge-court-order-path',
+    ]));
+
+    const reminders = buildNameChangeReminderSuggestions(plan);
+    expect(reminders.find((reminder) => reminder.id === 'reminder-international-passport')).toBeTruthy();
+    expect(reminders.find((reminder) => reminder.id === 'reminder-court-order-packet')).toBeTruthy();
+
+    const planWithoutEdgeGuidance = {
+      ...plan,
+      summary: {
+        ...plan.summary,
+        edgeCaseGuidance: plan.summary.edgeCaseGuidance?.filter(
+          (item) => item.id !== 'edge-non-us-passport' && item.id !== 'edge-court-order-path',
+        ) ?? [],
+      },
+    };
+
+    const remindersWithoutEdgeGuidance = buildNameChangeReminderSuggestions(planWithoutEdgeGuidance);
+    expect(remindersWithoutEdgeGuidance.find((reminder) => reminder.id === 'reminder-international-passport')).toBeUndefined();
+    expect(remindersWithoutEdgeGuidance.find((reminder) => reminder.id === 'reminder-court-order-packet')).toBeUndefined();
+  });
+
   it('adds a first-passport branch reminder when the case needs a new passport packet', () => {
     const reminders = buildNameChangeReminderSuggestions(buildNameChangePlan(makeInput({
       passport_needs_update: true,
