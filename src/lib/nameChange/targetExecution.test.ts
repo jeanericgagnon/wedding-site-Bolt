@@ -684,6 +684,36 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'primary-photo-id-progress')).toMatchObject({ status: 'satisfied' });
   });
 
+  it('accepts an insurance member card as insurance-lane support intake', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'insurance_card',
+        display_name: 'Insurance member ID card',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const basePlan = buildNameChangePlan({ profile: makeCase(), documents, extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'state-dmv'
+        ? { ...step, executionStatus: 'in_progress' as const }
+        : step),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('insurance', makeCase(), documents, [], plan);
+    expect(snapshot.checklist.find((item) => item.key === 'insurance-support-doc')).toMatchObject({
+      status: 'ready',
+      label: 'Insurance-supporting document intake',
+    });
+  });
+
   it('builds shared voter execution snapshots with post-DMV gating', () => {
     const documents: NameChangeDocumentInput[] = [
       {

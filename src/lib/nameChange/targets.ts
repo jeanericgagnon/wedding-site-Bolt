@@ -828,7 +828,7 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'courtOrder' | 'ssa' | 'dmv' 
     formBuilderKey: 'insurance',
     supportKey: 'insurance-support-doc',
     supportLabel: 'Insurance-supporting document intake',
-    supportDocumentKinds: ['current_drivers_license', 'current_passport', 'proof_of_address'],
+    supportDocumentKinds: ['current_drivers_license', 'current_passport', 'proof_of_address', 'insurance_card'],
     primaryRule: {
       key: 'primary-photo-id-progress',
       label: 'Primary photo ID underway before insurance rollout',
