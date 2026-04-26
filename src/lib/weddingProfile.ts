@@ -338,8 +338,8 @@ export const buildSiteContentPatchFromProfile = (profile: WeddingProfile) => ({
   home: {
     hero: {
       title: profile.couple.displayNames || 'Our Wedding',
-      subtitle: profile.event.date
-        ? `Join us on ${profile.event.date}${profile.event.venueLocation ? ` in ${profile.event.venueLocation}` : ''}`
+      subtitle: normalizeWeddingDate(profile.event.date)
+        ? `Join us on ${normalizeWeddingDate(profile.event.date)}${profile.event.venueLocation ? ` in ${profile.event.venueLocation}` : ''}`
         : 'Celebrate with us',
     },
     story: {
@@ -348,7 +348,7 @@ export const buildSiteContentPatchFromProfile = (profile: WeddingProfile) => ({
     },
     event: {
       title: 'Wedding Details',
-      date: profile.event.date || '',
+      date: normalizeWeddingDate(profile.event.date) || '',
       venueName: profile.event.venueName || '',
       venueLocation: profile.event.venueLocation || '',
       ceremonyTime: profile.event.ceremonyTime || '',
@@ -356,7 +356,7 @@ export const buildSiteContentPatchFromProfile = (profile: WeddingProfile) => ({
       guestExperience: '',
       weekendEvents: profile.event.weekendEvents || '',
       structuredWeekendEvents: profile.event.structuredWeekendEvents || [],
-      rsvpDeadline: profile.event.rsvpDeadline || '',
+      rsvpDeadline: normalizeWeddingDate(profile.event.rsvpDeadline) || '',
     },
   },
   schedule: buildWeddingScheduleFromStructuredEvents(profile),

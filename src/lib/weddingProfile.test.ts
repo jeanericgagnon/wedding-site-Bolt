@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyInitialSetupAnswersToWeddingProfile, buildWeddingDataPatchFromProfile } from './weddingProfile';
+import { applyInitialSetupAnswersToWeddingProfile, buildSiteContentPatchFromProfile, buildWeddingDataPatchFromProfile } from './weddingProfile';
 
 describe('applyInitialSetupAnswersToWeddingProfile', () => {
   it('maps the baseline intake shape into a draft-ready profile', () => {
@@ -97,5 +97,33 @@ describe('applyInitialSetupAnswersToWeddingProfile', () => {
     profile.event.date = '2027-02-30';
 
     expect(buildWeddingDataPatchFromProfile(profile).event.weddingDateISO).toBe('');
+  });
+
+  it('drops impossible profile content dates instead of patching fake site copy truth', () => {
+    const profile = applyInitialSetupAnswersToWeddingProfile({
+      names: 'Alex & Jordan',
+      labelPreference: 'names-only',
+      whenWhere: '2026-06-20 — Puerto Vallarta, Mexico',
+      venueNameOrTbd: 'Narwhal Pickleball Club',
+      style: 'playful, tropical',
+      weekendEventsRaw: 'Welcome drinks and pool time.',
+      ceremonyArrivalTime: '5:00 PM',
+      guestCountBand: 'under-50',
+      plusOnePolicy: 'all',
+      childrenAllowed: 'yes',
+      rsvpDeadline: '2026-04-15',
+      mealChoice: 'no',
+      registryIntent: 'none-for-now',
+      optionalStory: 'We met online. First date was chaotic in the best way.',
+    });
+
+    profile.event.date = '2027-02-30';
+    profile.event.rsvpDeadline = '2027-02-31';
+
+    const patch = buildSiteContentPatchFromProfile(profile);
+
+    expect(patch.home.hero.subtitle).toBe('Celebrate with us');
+    expect(patch.home.event.date).toBe('');
+    expect(patch.home.event.rsvpDeadline).toBe('');
   });
 });
