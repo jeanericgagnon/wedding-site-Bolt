@@ -2804,6 +2804,53 @@ describe('name change target execution snapshot', () => {
     });
   });
 
+  it('flags traveler-profile timing review for tsa execution when travel is booked soon', () => {
+    const profile = makeCase({
+      structured_intake: {
+        travelBookedSoon: true,
+        wantsDocumentIntakeHelp: true,
+      },
+    });
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        field_key: 'issuance_date',
+        field_label: 'Passport issue date',
+        field_value_masked: '2024-06-01',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+    const basePlan = buildNameChangePlan({ profile, documents, extractedFields });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => (
+        step.id === 'federal-passport' || step.id === 'state-dmv' || step.id === 'institution-tsa-precheck'
+          ? { ...step, executionStatus: 'in_progress' as const }
+          : step
+      )),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('tsa', profile, documents, extractedFields, plan);
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'review',
+      label: 'Review traveler-profile timing before TSA updates',
+    });
+  });
+
   it('only marks a target complete when every tracked step is complete', () => {
     const basePlan = buildNameChangePlan({ profile: makeCase(), documents: [], extractedFields: [] });
     const plan = {

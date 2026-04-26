@@ -730,6 +730,20 @@ export function buildNameChangeTargetExecutionSnapshot(
 
     return null;
   };
+  const buildTravelTimingNextAction = () => {
+    const hasTravelTimingGuidance = Boolean(profile.structured_intake.travelBookedSoon);
+    if (!hasTravelTimingGuidance) return null;
+
+    if (targetKey === 'tsa') {
+      return {
+        category: 'review' as const,
+        label: 'Review traveler-profile timing before TSA updates',
+        detail: 'Upcoming travel is already booked, so line up TSA, airline traveler profiles, loyalty accounts, and booking-name changes with the same passport and DMV identity chain. Do not switch travel profiles onto the new name while booked trips still depend on the old-name documents.',
+      };
+    }
+
+    return null;
+  };
   const buildDualPartnerExecutionNextAction = () => {
     if (!hasDualPartnerNameChange(profile) || !isDualPartnerExecutionTarget(targetKey)) return null;
 
@@ -766,6 +780,7 @@ export function buildNameChangeTargetExecutionSnapshot(
   const courtOrderNextAction = targetKey === 'courtOrder' ? buildCourtOrderNextAction() : null;
   const marriageCertificateGroundingNextAction = buildMarriageCertificateGroundingNextAction();
   const passportBranchNextAction = buildPassportBranchNextAction();
+  const travelTimingNextAction = buildTravelTimingNextAction();
   const dualPartnerExecutionNextAction = buildDualPartnerExecutionNextAction();
   const blockingFieldConflict = primaryCanonicalConflict && firstBlockingFieldRisk
     && primaryCanonicalConflict.documentKind === firstBlockingFieldRisk.sourceDocumentKind
@@ -881,6 +896,8 @@ export function buildNameChangeTargetExecutionSnapshot(
             label: getBlockingDependencyLabel(travelDmvDependency),
             detail: travelDmvDependency.reason,
           }
+      : travelTimingNextAction && targetKey === 'tsa'
+        ? travelTimingNextAction
       : firstMissingChecklistItem
         ? {
             category: getChecklistCategory(firstMissingChecklistItem),
@@ -918,15 +935,15 @@ export function buildNameChangeTargetExecutionSnapshot(
                 label: `Review ${firstAttentionDependency.label}`,
                 detail: firstAttentionDependency.reason,
               }
-            : firstAttentionChecklistItem
-              ? {
-                  category: getAttentionChecklistCategory(firstAttentionChecklistItem),
-                  label: getAttentionChecklistLabel(firstAttentionChecklistItem),
-                  detail: firstAttentionChecklistItem.reason,
-                  documentKind: getAttentionChecklistCategory(firstAttentionChecklistItem) === 'document'
-                    ? getChecklistDocumentKind(firstAttentionChecklistItem)
-                    : undefined,
-                }
+          : firstAttentionChecklistItem
+            ? {
+                    category: getAttentionChecklistCategory(firstAttentionChecklistItem),
+                    label: getAttentionChecklistLabel(firstAttentionChecklistItem),
+                    detail: firstAttentionChecklistItem.reason,
+                    documentKind: getAttentionChecklistCategory(firstAttentionChecklistItem) === 'document'
+                      ? getChecklistDocumentKind(firstAttentionChecklistItem)
+                      : undefined,
+                  }
               : {
                   category: 'review' as const,
                   label: `Prepare ${formPayload.formCode || target.recommendedFormCode}`,
