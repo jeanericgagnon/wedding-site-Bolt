@@ -335,6 +335,13 @@ describe('name change reminder suggestions', () => {
       plannerIntent: 'open_execution_card',
       focusTargetId: 'case-setup',
     });
+    expect(reminders.find((reminder) => reminder.id === 'reminder-travel-name-format-consistency')).toMatchObject({
+      dependsOnStepId: 'institution-frequent-flyer-hotel-rail',
+      urgency: 'high',
+      sectionKey: 'cleanup',
+      plannerIntent: 'open_execution_card',
+      focusTargetId: 'execution-card-tsa',
+    });
   });
 
   it('keys international-passport and court-order reminders off edge-case guidance', () => {
@@ -366,6 +373,7 @@ describe('name change reminder suggestions', () => {
     const remindersWithoutEdgeGuidance = buildNameChangeReminderSuggestions(planWithoutEdgeGuidance);
     expect(remindersWithoutEdgeGuidance.find((reminder) => reminder.id === 'reminder-international-passport')).toBeUndefined();
     expect(remindersWithoutEdgeGuidance.find((reminder) => reminder.id === 'reminder-court-order-packet')).toBeUndefined();
+    expect(remindersWithoutEdgeGuidance.find((reminder) => reminder.id === 'reminder-travel-name-format-consistency')).toBeUndefined();
   });
 
   it('adds a first-passport branch reminder when the case needs a new passport packet', () => {

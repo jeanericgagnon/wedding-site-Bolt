@@ -279,6 +279,17 @@ const CONTEXT_REMINDER_CONFIGS: NameChangeContextReminderConfig[] = [
     includeWhen: (plan) => Boolean(plan.summary.edgeCaseGuidance?.some((item) => item.id === 'edge-hyphenated-name' || item.id === 'edge-dual-name-path')),
   },
   {
+    id: 'reminder-travel-name-format-consistency',
+    label: 'Keep travel profiles on the exact same surname format',
+    standardOffsetDays: 4,
+    expeditedOffsetDays: 2,
+    standardUrgency: 'medium',
+    expeditedUrgency: 'high',
+    dependsOnStepId: 'institution-frequent-flyer-hotel-rail',
+    reason: 'Hyphenated or dual-surname cases need the exact same surname punctuation and order across passports, TSA/airline traveler profiles, loyalty accounts, and booked-trip follow-through.',
+    includeWhen: (plan) => Boolean(plan.summary.edgeCaseGuidance?.some((item) => item.id === 'edge-hyphenated-name' || item.id === 'edge-dual-name-path')),
+  },
+  {
     id: 'reminder-marriage-name-mismatch',
     label: 'Resolve the target legal-name path before filing',
     standardOffsetDays: 1,
