@@ -851,6 +851,36 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'primary-photo-id-progress')).toMatchObject({ status: 'satisfied' });
   });
 
+  it('accepts an insurance member card as medical-lane support intake', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'insurance_card',
+        display_name: 'Insurance member ID card',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const basePlan = buildNameChangePlan({ profile: makeCase(), documents, extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'state-dmv'
+        ? { ...step, executionStatus: 'in_progress' as const }
+        : step),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('medical', makeCase(), documents, [], plan);
+    expect(snapshot.checklist.find((item) => item.key === 'medical-support-doc')).toMatchObject({
+      status: 'ready',
+      label: 'Medical-provider-supporting document intake',
+    });
+  });
+
   it('builds legal-government execution snapshots for county recorder and immigration follow-through', () => {
     const documents: NameChangeDocumentInput[] = [
       {

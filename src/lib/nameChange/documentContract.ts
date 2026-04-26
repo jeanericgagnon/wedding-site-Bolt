@@ -69,6 +69,14 @@ export const NAME_CHANGE_DOCUMENT_CONTRACTS: NameChangeDocumentContractDefinitio
     acceptedSignals: ['401k statement metadata', 'beneficiary designation metadata', 'retirement account metadata'],
   },
   {
+    kind: 'insurance_card',
+    label: 'Insurance card',
+    requiredFor: [],
+    preferredForAutofill: false,
+    extractionFields: [],
+    acceptedSignals: ['member ID card metadata', 'insurance card metadata', 'payer card metadata'],
+  },
+  {
     kind: 'birth_certificate',
     label: 'Birth certificate',
     requiredFor: ['all'],

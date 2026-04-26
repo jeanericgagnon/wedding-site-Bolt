@@ -857,7 +857,7 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'courtOrder' | 'ssa' | 'dmv' 
     formBuilderKey: 'medical',
     supportKey: 'medical-support-doc',
     supportLabel: 'Medical-provider-supporting document intake',
-    supportDocumentKinds: ['current_drivers_license', 'current_passport', 'proof_of_address'],
+    supportDocumentKinds: ['current_drivers_license', 'current_passport', 'proof_of_address', 'insurance_card'],
     primaryRule: {
       key: 'primary-photo-id-progress',
       label: 'Primary photo ID underway before medical record rollout',

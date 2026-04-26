@@ -32,6 +32,7 @@ const DOCUMENT_KINDS: NameChangeDocumentKind[] = [
   'current_passport',
   'social_security_card',
   'benefits_account_record',
+  'insurance_card',
   'birth_certificate',
   'proof_of_address',
   'other',
