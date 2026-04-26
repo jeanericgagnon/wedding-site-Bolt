@@ -77,6 +77,14 @@ export const NAME_CHANGE_DOCUMENT_CONTRACTS: NameChangeDocumentContractDefinitio
     acceptedSignals: ['member ID card metadata', 'insurance card metadata', 'payer card metadata'],
   },
   {
+    kind: 'professional_license_record',
+    label: 'Professional license / certification record',
+    requiredFor: [],
+    preferredForAutofill: false,
+    extractionFields: [],
+    acceptedSignals: ['license card metadata', 'license certificate metadata', 'credential record metadata'],
+  },
+  {
     kind: 'birth_certificate',
     label: 'Birth certificate',
     requiredFor: ['all'],

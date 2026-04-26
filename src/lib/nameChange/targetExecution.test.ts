@@ -816,6 +816,36 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'employment-context')).toMatchObject({ status: 'satisfied' });
   });
 
+  it('accepts a professional license record as license-lane support intake', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'professional_license_record',
+        display_name: 'Board license renewal notice',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const basePlan = buildNameChangePlan({ profile: makeCase(), documents, extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'state-dmv'
+        ? { ...step, executionStatus: 'in_progress' as const }
+        : step),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('licenses', makeCase(), documents, [], plan);
+    expect(snapshot.checklist.find((item) => item.key === 'license-support-doc')).toMatchObject({
+      status: 'ready',
+      label: 'Professional-license-supporting intake',
+    });
+  });
+
   it('builds tax execution snapshots gated behind SSA and jurisdiction context', () => {
     const documents: NameChangeDocumentInput[] = [
       {

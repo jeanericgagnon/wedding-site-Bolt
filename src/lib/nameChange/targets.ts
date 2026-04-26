@@ -1251,7 +1251,7 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'courtOrder' | 'ssa' | 'dmv' 
         key: 'license-support-doc',
         label: 'Professional-license-supporting intake',
         kind: 'document_support',
-        documentKinds: ['current_drivers_license', 'current_passport'],
+        documentKinds: ['current_drivers_license', 'current_passport', 'professional_license_record'],
         missingReason: 'No current ID document is represented in intake yet for professional license updates.',
         satisfiedReason: 'A current ID document exists in intake for professional license updates.',
       },

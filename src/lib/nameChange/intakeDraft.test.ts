@@ -644,6 +644,10 @@ describe('name change intake draft helpers', () => {
       id: 'draft-insurance_card',
       document_kind: 'insurance_card',
     });
+    expect(createDraftNameChangeDocument('license renewal notice' as never, ' License renewal notice ')).toMatchObject({
+      id: 'draft-professional_license_record',
+      document_kind: 'professional_license_record',
+    });
     expect(createDraftNameChangeDocument('birth cert' as never, ' Birth cert ')).toMatchObject({
       id: 'draft-birth_certificate',
       document_kind: 'birth_certificate',
