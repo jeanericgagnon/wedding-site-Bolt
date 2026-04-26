@@ -750,7 +750,7 @@ export function buildNameChangeTargetExecutionSnapshot(
     const activeGuidance = hyphenatedGuidance ?? dualNameGuidance;
     if (!activeGuidance) return null;
 
-    if (!['ssa', 'dmv', 'passport', 'employer'].includes(targetKey)) return null;
+    if (!['ssa', 'dmv', 'passport', 'employer', 'tsa'].includes(targetKey)) return null;
 
     const label = hyphenatedGuidance
       ? 'Review surname formatting before submission'

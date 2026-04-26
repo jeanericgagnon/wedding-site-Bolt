@@ -2859,6 +2859,50 @@ describe('name change target execution snapshot', () => {
     });
   });
 
+  it('flags surname formatting review before tsa traveler-profile updates for hyphenated names', () => {
+    const profile = makeCase({
+      target_last_name: 'Jordan-Rivera',
+    });
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        field_key: 'issuance_date',
+        field_label: 'Passport issue date',
+        field_value_masked: '2024-06-01',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+    const basePlan = buildNameChangePlan({ profile, documents, extractedFields });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => (
+        step.id === 'federal-passport' || step.id === 'state-dmv' || step.id === 'institution-tsa-precheck'
+          ? { ...step, executionStatus: 'in_progress' as const }
+          : step
+      )),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('tsa', profile, documents, extractedFields, plan);
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'review',
+      label: 'Review surname formatting before submission',
+    });
+  });
+
   it('flags surname formatting review for hyphenated name execution before employer rollout', () => {
     const profile = makeCase({
       target_last_name: 'Jordan-Rivera',
