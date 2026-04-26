@@ -205,6 +205,21 @@ const CONTEXT_REMINDER_CONFIGS: NameChangeContextReminderConfig[] = [
     ),
   },
   {
+    id: 'reminder-travel-passport-branch',
+    label: 'Keep TSA and travel profiles on your passport-specific identity path',
+    standardOffsetDays: 3,
+    expeditedOffsetDays: 1,
+    standardUrgency: 'high',
+    expeditedUrgency: 'high',
+    dependsOnStepId: 'institution-frequent-flyer-hotel-rail',
+    reason: 'When the passport chain is country-specific, TSA, airline traveler profiles, loyalty accounts, and booking-name changes should follow that same document path instead of assuming a standard U.S. passport update.',
+    includeWhen: (plan) => Boolean(
+      !plan.profile.isUsCitizen
+      && plan.profile.passportNeedsUpdate
+      && plan.summary.edgeCaseGuidance?.some((item) => item.id === 'edge-non-us-passport')
+    ),
+  },
+  {
     id: 'reminder-court-order-packet',
     label: 'Check court-order packet and hearing progress',
     standardOffsetDays: 3,

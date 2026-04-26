@@ -321,6 +321,13 @@ describe('name change reminder suggestions', () => {
       dependsOnStepId: 'federal-passport',
       urgency: 'high',
     });
+    expect(reminders.find((reminder) => reminder.id === 'reminder-travel-passport-branch')).toMatchObject({
+      dependsOnStepId: 'institution-frequent-flyer-hotel-rail',
+      urgency: 'high',
+      sectionKey: 'cleanup',
+      plannerIntent: 'open_execution_card',
+      focusTargetId: 'execution-card-tsa',
+    });
     expect(reminders.find((reminder) => reminder.id === 'reminder-court-order-packet')).toMatchObject({
       dependsOnStepId: 'eligibility-proof',
       urgency: 'high',
@@ -372,6 +379,7 @@ describe('name change reminder suggestions', () => {
 
     const remindersWithoutEdgeGuidance = buildNameChangeReminderSuggestions(planWithoutEdgeGuidance);
     expect(remindersWithoutEdgeGuidance.find((reminder) => reminder.id === 'reminder-international-passport')).toBeUndefined();
+    expect(remindersWithoutEdgeGuidance.find((reminder) => reminder.id === 'reminder-travel-passport-branch')).toBeUndefined();
     expect(remindersWithoutEdgeGuidance.find((reminder) => reminder.id === 'reminder-court-order-packet')).toBeUndefined();
     expect(remindersWithoutEdgeGuidance.find((reminder) => reminder.id === 'reminder-travel-name-format-consistency')).toBeUndefined();
   });
