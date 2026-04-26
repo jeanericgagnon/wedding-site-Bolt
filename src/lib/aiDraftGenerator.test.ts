@@ -82,6 +82,25 @@ describe('aiDraftGenerator', () => {
     expect(draft.weddingPartyIntro).toContain('lucky to have beside us');
   });
 
+  it('drops impossible persisted profile dates instead of leaking fake deterministic draft truth', async () => {
+    const profile = {
+      ...baseProfile,
+      event: {
+        ...baseProfile.event,
+        date: '2027-02-30',
+        rsvpDeadline: '2027-02-31',
+      },
+    };
+
+    const draft = await generateDraftFromWeddingProfile(profile);
+
+    expect(draft.heroSubtitle).toContain('our celebration weekend');
+    expect(draft.heroSubtitle).not.toContain('2027-02-30');
+    expect(draft.eventHeadline).toContain('San Diego, CA');
+    expect(draft.eventHeadline).not.toContain('2027-02-30');
+    expect(draft.rsvpCallToAction).toBe('We would love to hear from you');
+  });
+
   it('keeps sparse fallback rails against placeholder-like event copy', async () => {
     const sparse = createEmptyWeddingProfile();
     sparse.couple.displayNames = 'Taylor & Sam';

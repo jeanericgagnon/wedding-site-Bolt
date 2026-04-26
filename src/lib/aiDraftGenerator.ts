@@ -75,10 +75,22 @@ export const draftGenerationSchema = z.object({
   rsvpCallToAction: z.string().min(1),
 });
 
+const normalizeDraftDateInput = (value?: string | null): string => {
+  const trimmed = value?.trim() || '';
+  if (!trimmed) return '';
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return '';
+
+  const date = new Date(`${trimmed}T12:00:00Z`);
+  if (Number.isNaN(date.getTime())) return '';
+
+  return date.toISOString().slice(0, 10) === trimmed ? trimmed : '';
+};
+
 const deterministicDraftFromWeddingProfile = (profile: WeddingProfile): DraftGenerationResult => {
   const names = profile.couple.displayNames || 'Our Wedding';
   const location = profile.event.venueLocation || profile.event.venueName || 'the place we love most';
-  const date = profile.event.date || 'our celebration weekend';
+  const date = normalizeDraftDateInput(profile.event.date) || 'our celebration weekend';
+  const rsvpDeadline = normalizeDraftDateInput(profile.event.rsvpDeadline);
   const storyBody = profile.story.summary?.trim()
     ? profile.story.summary.trim()
     : `${names} are excited to gather everyone they love for a celebration that feels warm, personal, and easy to enjoy.`;
@@ -88,7 +100,7 @@ const deterministicDraftFromWeddingProfile = (profile: WeddingProfile): DraftGen
       ? `${profile.event.venueLocation} · ${date}`
       : `Celebration details to come`;
   const hasVenue = Boolean(profile.event.venueName || profile.event.venueLocation);
-  const hasDeadline = Boolean(profile.event.rsvpDeadline);
+  const hasDeadline = Boolean(rsvpDeadline);
   const hasRegistry = Boolean(profile.registry.url);
   const hasTravelSupport = profile.guestExperience.travelSupportLevel === 'high';
   const hasStory = Boolean(profile.story.summary?.trim());
@@ -138,7 +150,7 @@ const deterministicDraftFromWeddingProfile = (profile: WeddingProfile): DraftGen
       : 'The people we are lucky to have beside us on this day.',
     eventHeadline,
     rsvpCallToAction: hasDeadline
-      ? `Please reply by ${profile.event.rsvpDeadline}`
+      ? `Please reply by ${rsvpDeadline}`
       : 'We would love to hear from you',
     weddingDataPatch: buildWeddingDataPatchFromProfile(profile),
   };
