@@ -2846,8 +2846,10 @@ describe('name change target execution snapshot', () => {
     const plan = {
       ...basePlan,
       steps: basePlan.steps.map((step) => (
-        step.id === 'federal-passport' || step.id === 'state-dmv' || step.id === 'institution-tsa-precheck'
-          ? { ...step, executionStatus: 'in_progress' as const }
+        step.id === 'federal-passport'
+          ? { ...step, executionStatus: 'complete' as const }
+          : step.id === 'state-dmv' || step.id === 'institution-tsa-precheck'
+            ? { ...step, executionStatus: 'in_progress' as const }
           : step
       )),
     };
@@ -2856,6 +2858,45 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.nextAction).toMatchObject({
       category: 'review',
       label: 'Review traveler-profile timing before TSA updates',
+    });
+  });
+
+  it('routes tsa traveler-profile follow-through through the non-us passport chain', () => {
+    const profile = makeCase({
+      is_us_citizen: false,
+      passport_needs_update: false,
+      structured_intake: {
+        wantsDocumentIntakeHelp: true,
+      },
+    });
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const basePlan = buildNameChangePlan({ profile, documents, extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => (
+        step.id === 'federal-passport' || step.id === 'state-dmv' || step.id === 'institution-tsa-precheck'
+          ? { ...step, executionStatus: 'in_progress' as const }
+          : step
+      )),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('tsa', profile, documents, [], plan);
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'review',
+      label: 'Route travel-profile updates through the non-U.S. passport chain',
     });
   });
 

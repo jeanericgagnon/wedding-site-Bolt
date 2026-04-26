@@ -744,6 +744,19 @@ export function buildNameChangeTargetExecutionSnapshot(
 
     return null;
   };
+  const buildInternationalTravelIdentityNextAction = () => {
+    const hasInternationalPassportGuidance = Boolean(
+      !profile.is_us_citizen
+      || plan?.summary.edgeCaseGuidance?.some((item) => item.id === 'edge-non-us-passport'),
+    );
+    if (!hasInternationalPassportGuidance || targetKey !== 'tsa') return null;
+
+    return {
+      category: 'review' as const,
+      label: 'Route travel-profile updates through the non-U.S. passport chain',
+      detail: 'This case depends on a non-U.S. passport or immigration identity path, so keep TSA, airline traveler profiles, loyalty accounts, and booking-name updates aligned with that same international document chain instead of assuming the standard U.S. passport flow.',
+    };
+  };
   const buildNameFormatConsistencyNextAction = () => {
     const hyphenatedGuidance = plan?.summary.edgeCaseGuidance?.find((item) => item.id === 'edge-hyphenated-name');
     const dualNameGuidance = plan?.summary.edgeCaseGuidance?.find((item) => item.id === 'edge-dual-name-path');
@@ -799,6 +812,7 @@ export function buildNameChangeTargetExecutionSnapshot(
   const marriageCertificateGroundingNextAction = buildMarriageCertificateGroundingNextAction();
   const passportBranchNextAction = buildPassportBranchNextAction();
   const travelTimingNextAction = buildTravelTimingNextAction();
+  const internationalTravelIdentityNextAction = buildInternationalTravelIdentityNextAction();
   const nameFormatConsistencyNextAction = buildNameFormatConsistencyNextAction();
   const dualPartnerExecutionNextAction = buildDualPartnerExecutionNextAction();
   const blockingFieldConflict = primaryCanonicalConflict && firstBlockingFieldRisk
@@ -897,6 +911,8 @@ export function buildNameChangeTargetExecutionSnapshot(
       ? marriageCertificateGroundingNextAction
     : passportBranchNextAction
       ? passportBranchNextAction
+    : internationalTravelIdentityNextAction
+      ? internationalTravelIdentityNextAction
     : firstBlockingFieldRisk
       ? {
           category: 'packet' as const,
