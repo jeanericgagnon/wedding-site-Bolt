@@ -744,6 +744,24 @@ export function buildNameChangeTargetExecutionSnapshot(
 
     return null;
   };
+  const buildNameFormatConsistencyNextAction = () => {
+    const hyphenatedGuidance = plan?.summary.edgeCaseGuidance?.find((item) => item.id === 'edge-hyphenated-name');
+    const dualNameGuidance = plan?.summary.edgeCaseGuidance?.find((item) => item.id === 'edge-dual-name-path');
+    const activeGuidance = hyphenatedGuidance ?? dualNameGuidance;
+    if (!activeGuidance) return null;
+
+    if (!['ssa', 'dmv', 'passport', 'employer'].includes(targetKey)) return null;
+
+    const label = hyphenatedGuidance
+      ? 'Review surname formatting before submission'
+      : 'Review dual-surname order before submission';
+
+    return {
+      category: 'review' as const,
+      label,
+      detail: activeGuidance.detail,
+    };
+  };
   const buildDualPartnerExecutionNextAction = () => {
     if (!hasDualPartnerNameChange(profile) || !isDualPartnerExecutionTarget(targetKey)) return null;
 
@@ -781,6 +799,7 @@ export function buildNameChangeTargetExecutionSnapshot(
   const marriageCertificateGroundingNextAction = buildMarriageCertificateGroundingNextAction();
   const passportBranchNextAction = buildPassportBranchNextAction();
   const travelTimingNextAction = buildTravelTimingNextAction();
+  const nameFormatConsistencyNextAction = buildNameFormatConsistencyNextAction();
   const dualPartnerExecutionNextAction = buildDualPartnerExecutionNextAction();
   const blockingFieldConflict = primaryCanonicalConflict && firstBlockingFieldRisk
     && primaryCanonicalConflict.documentKind === firstBlockingFieldRisk.sourceDocumentKind
@@ -929,6 +948,8 @@ export function buildNameChangeTargetExecutionSnapshot(
               detail: firstMissingFieldRisk.reason,
               documentKind: firstMissingFieldRisk.sourceDocumentKind,
             }
+          : nameFormatConsistencyNextAction
+            ? nameFormatConsistencyNextAction
           : firstAttentionDependency
             ? {
                 category: getDependencyCategory(firstAttentionDependency, 'review'),

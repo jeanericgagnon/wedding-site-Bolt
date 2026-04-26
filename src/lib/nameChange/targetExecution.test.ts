@@ -87,6 +87,10 @@ describe('name change target execution snapshot', () => {
         display_name: 'Certified marriage certificate',
         storage_mode: 'metadata_only',
         intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'San Diego County Clerk',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
       },
     ];
     const extractedFields: NameChangeExtractedFieldInput[] = [
@@ -138,6 +142,10 @@ describe('name change target execution snapshot', () => {
         display_name: 'Certified marriage certificate',
         storage_mode: 'metadata_only',
         intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'San Diego County Clerk',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
       },
     ], []);
 
@@ -2848,6 +2856,107 @@ describe('name change target execution snapshot', () => {
     expect(snapshot.nextAction).toMatchObject({
       category: 'review',
       label: 'Review traveler-profile timing before TSA updates',
+    });
+  });
+
+  it('flags surname formatting review for hyphenated name execution before employer rollout', () => {
+    const profile = makeCase({
+      target_last_name: 'Jordan-Rivera',
+    });
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+        file_name_masked: 'license-•••.pdf',
+        issuing_authority: 'California DMV',
+        issued_on: '2025-03-01',
+        extraction_confidence: 0.92,
+      },
+      {
+        document_kind: 'benefits_account_record',
+        display_name: '401k statement',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const basePlan = buildNameChangePlan({ profile, documents, extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      summary: {
+        ...basePlan.summary,
+        milestoneChecklist: (basePlan.summary.milestoneChecklist ?? []).map((milestone) => milestone.id === 'milestone-legal-proof'
+          ? { ...milestone, status: 'complete' as const }
+          : milestone),
+      },
+      steps: basePlan.steps.map((step) => (
+        step.id === 'federal-ssa'
+          ? { ...step, executionStatus: 'complete' as const }
+          : step
+      )),
+    };
+    const snapshot = buildNameChangeTargetExecutionSnapshot('employer', profile, documents, [], plan);
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'review',
+      label: 'Review surname formatting before submission',
+    });
+  });
+
+  it('flags dual-surname order review before employer rollout', () => {
+    const profile = makeCase({
+      target_last_name: 'Rivera Jordan',
+    });
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+        file_name_masked: 'license-•••.pdf',
+        issuing_authority: 'California DMV',
+        issued_on: '2025-03-01',
+        extraction_confidence: 0.9,
+      },
+      {
+        document_kind: 'benefits_account_record',
+        display_name: '401k statement',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const basePlan = buildNameChangePlan({ profile, documents, extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      summary: {
+        ...basePlan.summary,
+        milestoneChecklist: (basePlan.summary.milestoneChecklist ?? []).map((milestone) => milestone.id === 'milestone-legal-proof'
+          ? { ...milestone, status: 'complete' as const }
+          : milestone),
+      },
+      steps: basePlan.steps.map((step) => (
+        step.id === 'federal-ssa'
+          ? { ...step, executionStatus: 'complete' as const }
+          : step
+      )),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('employer', profile, documents, [], plan);
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'review',
+      label: 'Review dual-surname order before submission',
     });
   });
 
