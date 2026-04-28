@@ -5,7 +5,9 @@ import { formatItineraryEventDate, toValidItineraryEventDateOrNull } from './iti
 describe('itineraryEventDate', () => {
   it('drops invalid persisted itinerary dates instead of leaking Invalid Date', () => {
     expect(toValidItineraryEventDateOrNull('not-a-date')).toBeNull();
+    expect(toValidItineraryEventDateOrNull('2027-02-30')).toBeNull();
     expect(formatItineraryEventDate('not-a-date')).toBe('Unknown date');
+    expect(formatItineraryEventDate('2027-02-30')).toBe('Unknown date');
   });
 
   it('keeps valid persisted itinerary dates truthful', () => {
