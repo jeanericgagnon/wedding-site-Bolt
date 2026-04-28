@@ -5,8 +5,11 @@ import { formatErrorLogDateTime, getErrorLogTimestamp, toValidErrorLogDateOrNull
 describe('error log time guards', () => {
   it('drops invalid persisted log timestamps instead of rendering Invalid Date', () => {
     expect(toValidErrorLogDateOrNull('not-a-date')).toBeNull();
+    expect(toValidErrorLogDateOrNull('2027-02-30')).toBeNull();
     expect(getErrorLogTimestamp('not-a-date')).toBe(Number.NEGATIVE_INFINITY);
+    expect(getErrorLogTimestamp('2027-02-30')).toBe(Number.NEGATIVE_INFINITY);
     expect(formatErrorLogDateTime('not-a-date')).toBe('Unknown time');
+    expect(formatErrorLogDateTime('2027-02-30')).toBe('Unknown time');
   });
 
   it('keeps valid log timestamps truthful', () => {
