@@ -220,6 +220,14 @@ describe('name change autofill prep snapshot', () => {
         source_type: 'document_extract',
         is_verified: true,
       },
+      {
+        document_id: 'doc-marriage',
+        field_key: 'certificate_number',
+        field_label: 'Marriage certificate number',
+        field_value_masked: 'MC-2026-7781',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
     ];
 
     const snapshot = buildNameChangeAutofillPrepSnapshot(makeCase(), documents, extractedFields);
@@ -227,6 +235,15 @@ describe('name change autofill prep snapshot', () => {
       value: expect.objectContaining({
         source: 'extracted_field',
         value: '2026-04-05',
+        confidence: 'medium',
+      }),
+    });
+    expect(snapshot.fields.find((field) => field.targetField === 'legal.marriage_certificate_number')).toMatchObject({
+      value: expect.objectContaining({
+        source: 'extracted_field',
+        value: 'MC-2026-7781',
+        sourceDocumentKind: 'marriage_certificate',
+        sourceFieldKey: 'certificate_number',
         confidence: 'medium',
       }),
     });

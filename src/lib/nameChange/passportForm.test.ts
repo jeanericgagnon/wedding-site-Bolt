@@ -45,6 +45,13 @@ describe('name change passport form snapshot', () => {
         storage_mode: 'metadata_only',
         intake_status: 'uploaded',
       },
+      {
+        id: 'marriage-doc',
+        document_kind: 'marriage_certificate',
+        display_name: 'Marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
     ];
     const extractedFields: NameChangeExtractedFieldInput[] = [
       {
@@ -52,6 +59,14 @@ describe('name change passport form snapshot', () => {
         field_key: 'issuance_date',
         field_label: 'Passport issue date',
         field_value_masked: '2024-06-01',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'marriage-doc',
+        field_key: 'certificate_number',
+        field_label: 'Marriage certificate number',
+        field_value_masked: 'MC-2026-7781',
         source_type: 'document_extract',
         is_verified: true,
       },
@@ -75,11 +90,23 @@ describe('name change passport form snapshot', () => {
       sourceDocumentKind: 'current_passport',
       sourceFieldKey: 'issuance_date',
     });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'legal.marriageCertificateNumber')).toMatchObject({
+      value: 'MC-2026-7781',
+      source: 'extracted_field',
+      sourceDocumentKind: 'marriage_certificate',
+      sourceFieldKey: 'certificate_number',
+      required: false,
+    });
   });
 
   it('uses DS-11 when the user does not already have a passport', () => {
     const snapshot = buildNameChangePassportFormSnapshot(makeCase({ has_us_passport: false }), [], []);
     expect(snapshot.formCode).toBe('DS-11');
+    expect(snapshot.fields.find((field) => field.fieldKey === 'legal.marriageCertificateNumber')).toMatchObject({
+      value: null,
+      confidence: 'low',
+      required: false,
+    });
   });
 
   it('uses DS-5504 when the existing passport was issued recently', () => {

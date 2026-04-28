@@ -72,6 +72,11 @@ describe('name change SS-5 form snapshot', () => {
       source: 'canonical_case',
       sourceFieldKey: 'spouse_last_name',
     });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'legal.marriageCertificateNumber')).toMatchObject({
+      value: null,
+      confidence: 'low',
+      required: false,
+    });
     expect(snapshot.summary.ready).toBeGreaterThan(0);
   });
 

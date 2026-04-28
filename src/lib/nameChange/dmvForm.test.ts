@@ -84,6 +84,11 @@ describe('name change DMV form snapshot', () => {
       source: 'canonical_case',
       sourceFieldKey: 'county',
     });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'legal.marriageCertificateNumber')).toMatchObject({
+      value: null,
+      confidence: 'low',
+      required: false,
+    });
   });
 
   it('keeps missing DMV payload fields explicit', () => {
