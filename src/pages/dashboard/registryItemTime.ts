@@ -1,8 +1,24 @@
 const FALLBACK_TIME = Number.NEGATIVE_INFINITY;
 
+function normalizeRegistryItemTimeInput(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    const date = new Date(`${trimmed}T12:00:00Z`);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toISOString().slice(0, 10) === trimmed ? `${trimmed}T00:00:00.000Z` : null;
+  }
+
+  const date = new Date(trimmed);
+  return Number.isNaN(date.getTime()) ? null : trimmed;
+}
+
 function toValidRegistryItemDateOrNull(value: string | null | undefined): Date | null {
-  if (!value) return null;
-  const date = new Date(value);
+  const normalized = normalizeRegistryItemTimeInput(value);
+  if (!normalized) return null;
+
+  const date = new Date(normalized);
   return Number.isNaN(date.getTime()) ? null : date;
 }
 

@@ -10,9 +10,13 @@ import {
 describe('registry item time guards', () => {
   it('treats invalid persisted timestamps as due/stale without leaking Invalid Date', () => {
     expect(getRegistryItemTimestamp('not-a-date')).toBe(Number.NEGATIVE_INFINITY);
+    expect(getRegistryItemTimestamp('2027-02-30')).toBe(Number.NEGATIVE_INFINITY);
     expect(isRegistryItemDue('not-a-date')).toBe(true);
+    expect(isRegistryItemDue('2027-02-30')).toBe(true);
     expect(ageExceedsMs('not-a-date', 60_000)).toBe(true);
+    expect(ageExceedsMs('2027-02-30', 60_000)).toBe(true);
     expect(formatRegistryItemDate('not-a-date')).toBe('Unknown date');
+    expect(formatRegistryItemDate('2027-02-30')).toBe('Unknown date');
   });
 
   it('keeps valid persisted timestamps truthful', () => {
