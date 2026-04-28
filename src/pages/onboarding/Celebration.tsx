@@ -10,6 +10,20 @@ interface LocationState {
   coupleNames?: string;
 }
 
+const normalizeCelebrationWeddingDate = (value: string): string | null => {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    const date = new Date(`${trimmed}T12:00:00Z`);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toISOString().slice(0, 10) === trimmed ? `${trimmed}T00:00:00Z` : null;
+  }
+
+  const date = new Date(trimmed);
+  return Number.isNaN(date.getTime()) ? null : trimmed;
+};
+
 export const Celebration: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -17,10 +31,12 @@ export const Celebration: React.FC = () => {
   const [showConfetti, setShowConfetti] = useState(true);
 
   const calculateDaysUntil = (weddingDate: string): number | null => {
+    const normalizedWeddingDate = normalizeCelebrationWeddingDate(weddingDate);
+    if (!normalizedWeddingDate) return null;
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const wedding = new Date(weddingDate);
-    if (Number.isNaN(wedding.getTime())) return null;
+    const wedding = new Date(normalizedWeddingDate);
     wedding.setHours(0, 0, 0, 0);
     const diffTime = wedding.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));

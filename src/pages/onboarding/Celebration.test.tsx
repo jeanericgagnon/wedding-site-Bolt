@@ -42,6 +42,16 @@ describe('Celebration', () => {
     expect(screen.queryByText(/Your big day is here!/i)).not.toBeInTheDocument();
   });
 
+  it('falls back to generic completion copy when the wedding date is impossible', () => {
+    locationState = { weddingDate: '2027-02-30' };
+
+    render(<Celebration />);
+
+    expect(screen.getByText('Your account is ready. Choose the fastest way to get your wedding website where you want it.')).toBeInTheDocument();
+    expect(screen.queryByText(/days until the big day!/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Your big day is here!/i)).not.toBeInTheDocument();
+  });
+
   it('shows the countdown badge when the wedding date is valid and in the future', () => {
     const future = new Date();
     future.setDate(future.getDate() + 10);
