@@ -5,6 +5,7 @@ import { formatCoordinatorEventDateTime } from './coordinatorEventTime';
 describe('coordinator event time guards', () => {
   it('drops invalid persisted event start times instead of leaking Invalid Date', () => {
     expect(formatCoordinatorEventDateTime('not-a-date')).toBe('Time TBD');
+    expect(formatCoordinatorEventDateTime('2027-02-30')).toBe('Time TBD');
     expect(formatCoordinatorEventDateTime(undefined)).toBe('Time TBD');
   });
 
