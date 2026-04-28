@@ -5,6 +5,7 @@ import { getDaysUntilGuestWedding } from './guestWeddingDate';
 describe('guestWeddingDate', () => {
   it('drops invalid persisted wedding dates instead of leaking NaN day counts', () => {
     expect(getDaysUntilGuestWedding('not-a-date')).toBeNull();
+    expect(getDaysUntilGuestWedding('2027-02-30')).toBeNull();
     expect(getDaysUntilGuestWedding(null)).toBeNull();
   });
 
