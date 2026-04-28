@@ -5,8 +5,11 @@ import { formatMessageHistoryDate, formatMessageHistoryDateTime, getMessageHisto
 describe('message history time guards', () => {
   it('drops invalid persisted message history timestamps instead of leaking Invalid Date', () => {
     expect(getMessageHistoryTimestamp('not-a-date')).toBe(Number.NEGATIVE_INFINITY);
+    expect(getMessageHistoryTimestamp('2027-02-30')).toBe(Number.NEGATIVE_INFINITY);
     expect(formatMessageHistoryDateTime('not-a-date')).toBe('Unknown time');
+    expect(formatMessageHistoryDateTime('2027-02-30')).toBe('Unknown time');
     expect(formatMessageHistoryDate('not-a-date')).toBe('Unknown date');
+    expect(formatMessageHistoryDate('2027-02-30')).toBe('Unknown date');
   });
 
   it('keeps valid message history timestamps truthful', () => {
