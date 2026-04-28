@@ -5,10 +5,12 @@ import { formatVaultUnlockDate, getVaultUnlockDate, toValidDateOrNull } from './
 describe('vaultDate guards', () => {
   it('drops invalid persisted wedding dates instead of keeping Invalid Date state', () => {
     expect(toValidDateOrNull('not-a-date')).toBeNull();
+    expect(toValidDateOrNull('2027-02-30')).toBeNull();
   });
 
   it('skips unlock date generation when the persisted wedding date is invalid', () => {
     expect(getVaultUnlockDate('not-a-date', 5)).toBeNull();
+    expect(getVaultUnlockDate('2027-02-30', 5)).toBeNull();
   });
 
   it('builds a valid unlock date when the wedding date is valid', () => {
