@@ -585,16 +585,22 @@ describe('name change engine', () => {
       extractedFields: [],
     });
 
-    expect(plan.summary.blockers).toContain('Marriage certificate is present, but no grounded county or certificate-number extraction is represented yet for out-of-state follow-through.');
-    expect(plan.summary.missingInputs).toContain('Out-of-state marriage certificate reference fields');
+    expect(plan.summary.blockers).toContain('Marriage certificate is present, but no grounded county, certificate-number extraction, or issuing-authority metadata is represented yet for out-of-state follow-through.');
+    expect(plan.summary.missingInputs).toContain('Out-of-state marriage certificate county, certificate number, and issuing authority');
     expect(plan.steps.find((step) => step.id === 'eligibility-proof')).toMatchObject({
       status: 'blocked',
-      blockers: ['Marriage certificate is present, but no grounded county or certificate-number extraction is represented yet for out-of-state follow-through.'],
+      blockers: ['Marriage certificate is present, but no grounded county, certificate-number extraction, or issuing-authority metadata is represented yet for out-of-state follow-through.'],
     });
     expect(plan.steps.find((step) => step.id === 'federal-ssa')).toMatchObject({
       status: 'blocked',
       blockers: ['Legal proof needs to be ready before SSA.'],
     });
+    expect(plan.summary.edgeCaseGuidance).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: 'edge-out-of-state-proof',
+        detail: 'County, certificate-number, and issuing-authority proof still need to be grounded before the free assistant can safely treat the marriage certificate as execution-ready proof.',
+      }),
+    ]));
   });
 
   it('pushes travel-sensitive caution notes when upcoming travel is flagged', () => {

@@ -220,7 +220,7 @@ function collectMissingInputs(
     if (!hasMeaningfulValue(profile.marriage_date)) missing.push('Marriage date');
     if (!hasMeaningfulValue(String(profile.structured_intake.spouseLastName ?? ''))) missing.push('Spouse last name');
     if (!legalProofReady) missing.push(hasLegalProofInIntake ? 'Certified marriage certificate review' : 'Certified marriage certificate metadata');
-    if (outOfStateMarriageCertificateGroundingMissing) missing.push('Out-of-state marriage certificate reference fields');
+    if (outOfStateMarriageCertificateGroundingMissing) missing.push('Out-of-state marriage certificate county, certificate number, and issuing authority');
   }
 
   if (legalBasis === 'court_order' && !legalProofReady) {
@@ -1622,7 +1622,7 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
       ? [{
         id: 'edge-out-of-state-proof',
         label: 'Out-of-state certificate grounding gap',
-        detail: 'County / certificate reference fields still need to be grounded before the free assistant can safely treat the marriage certificate as execution-ready proof.',
+        detail: 'County, certificate-number, and issuing-authority proof still need to be grounded before the free assistant can safely treat the marriage certificate as execution-ready proof.',
         severity: 'warning' as const,
       }]
       : []),
