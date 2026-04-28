@@ -762,12 +762,6 @@ export const DashboardCoordinatorMode: React.FC = () => {
   }), [sortedGuests, activeCheckInGuest]);
   const timelineTargetEvent = useMemo(() => events.find((event) => event.id === timelineBoardTargetId) ?? null, [events, timelineBoardTargetId]);
   const qnaTargetItem = useMemo(() => qnaItems.find((item) => item.id === qnaBoardTargetId) ?? null, [qnaItems, qnaBoardTargetId]);
-  const commandSummaryItems = useMemo(() => buildCoordinatorCommandSummary({
-    checkInLabel: checkInTargetState.label,
-    timelineLabel: timelineTargetState.label,
-    qnaLabel: qnaTargetState.label,
-    alertLabel: alertSummaryStateLabel,
-  }), [checkInTargetState.label, timelineTargetState.label, qnaTargetState.label, alertSummaryStateLabel]);
   const priorityCommandLabel = useMemo(() => getCoordinatorCommandPriority({
     checkInLabel: checkInTargetState.label,
     timelineLabel: timelineTargetState.label,
@@ -789,6 +783,27 @@ export const DashboardCoordinatorMode: React.FC = () => {
     qnaTargetQuestion: qnaTargetItem?.question ?? null,
   }), [priorityCommandLabel, checkInTargetGuest?.name, timelineTargetEvent?.event_name, qnaTargetItem?.question]);
   const priorityCommandCta = useMemo(() => getCoordinatorCommandPriorityCta(priorityCommandLabel), [priorityCommandLabel]);
+  const commandSummaryItems = useMemo(() => buildCoordinatorCommandSummary({
+    checkInLabel: checkInTargetState.label,
+    timelineLabel: timelineTargetState.label,
+    qnaLabel: qnaTargetState.label,
+    alertLabel: alertSummaryStateLabel,
+    priorityLabel: priorityCommandLabel,
+    checkInTargetName: checkInTargetGuest?.name ?? null,
+    timelineTargetName: timelineTargetEvent?.event_name ?? null,
+    qnaTargetQuestion: qnaTargetItem?.question ?? null,
+    alertLaneLabel,
+  }), [
+    checkInTargetState.label,
+    timelineTargetState.label,
+    qnaTargetState.label,
+    alertSummaryStateLabel,
+    priorityCommandLabel,
+    checkInTargetGuest?.name,
+    timelineTargetEvent?.event_name,
+    qnaTargetItem?.question,
+    alertLaneLabel,
+  ]);
   const commandDeckItems = useMemo(() => buildCoordinatorCommandDeck({
     items: commandSummaryItems,
     priorityLabel: priorityCommandLabel,
@@ -1952,23 +1967,29 @@ export const DashboardCoordinatorMode: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
             {commandSummaryItems.map((item) => (
               <button
                 key={item.label}
                 type="button"
-                onClick={() => jumpToCommandSummaryItem(item.label as 'Check-in' | 'Timeline' | 'Q&A' | 'Alerting')}
-                className={`rounded-full border px-2.5 py-1 text-left hover:border-primary/35 hover:bg-primary/[0.04] ${priorityCommandLabel === item.label ? 'border-primary/30 bg-primary/[0.06]' : 'border-border/50 bg-surface-subtle/40'}`}
+                onClick={() => jumpToCommandSummaryItem(item.label)}
+                className={`rounded-xl border px-3 py-2.5 text-left transition hover:border-primary/35 hover:bg-primary/[0.04] ${item.tone === 'priority' ? 'border-primary/30 bg-primary/[0.06]' : item.tone === 'ready' ? 'border-emerald-200 bg-emerald-50/60' : 'border-border/50 bg-surface-subtle/35'}`}
               >
-                <span className="text-[10px] font-medium text-text-primary">{item.label}</span>
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-[11px] font-medium text-text-primary">{item.label}</p>
+                  <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${item.tone === 'priority' ? 'border-primary/20 bg-white text-primary' : item.tone === 'ready' ? 'border-emerald-200 bg-white text-emerald-700' : 'border-border bg-white text-text-tertiary'}`}>
+                    {item.statusLabel}
+                  </span>
+                </div>
+                <p className="mt-2 text-[10px] uppercase tracking-[0.12em] text-text-tertiary">Target</p>
+                <p className="mt-1 text-[11px] text-text-primary">{item.targetLabel}</p>
+                <p className="mt-2 text-[10px] text-text-secondary">{item.detail}</p>
                 {priorityCommandLabel === item.label && (
-                  <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-primary/20 bg-white/80 px-1.5 py-0.5 text-[9px] font-medium text-primary">
+                  <div className="mt-2 inline-flex flex-wrap items-center gap-1 rounded-full border border-primary/20 bg-white/80 px-2 py-1 text-[9px] font-medium text-primary">
                     <span>Priority — {priorityCommandReason}{priorityCommandTargetReason ? ` ${priorityCommandTargetReason}` : ''}</span>
                     <span className="rounded-full border border-primary/15 bg-primary/[0.05] px-1.5 py-0.5">{priorityCommandCta}</span>
-                  </span>
+                  </div>
                 )}
-                <span className="mx-1 text-[10px] text-text-tertiary">·</span>
-                <span className="text-[10px] text-text-secondary">{item.detail}</span>
               </button>
             ))}
           </div>
