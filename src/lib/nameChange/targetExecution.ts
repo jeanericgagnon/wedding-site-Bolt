@@ -189,6 +189,14 @@ function getSupportiveExecutionWaitGuidance(snapshot: Pick<NameChangeTargetExecu
     };
   }
 
+  if (/split travel-profile follow-through by partner/i.test(blockingLabel)) {
+    return {
+      doNow: 'Break TSA, airline, loyalty, and booked-trip follow-through into one proof checklist per partner now.',
+      whyItHelps: 'That keeps one partner’s travel timing or traveler-profile change from hiding incomplete rollout for the other partner.',
+      canWait: 'Actual travel-profile submissions can safely wait until each partner has a separate travel rollout track.',
+    };
+  }
+
   if (/track downstream rollout separately for each partner/i.test(blockingLabel)) {
     return {
       doNow: 'Create one downstream checklist, mailed-notice log, and proof bucket per partner for this lane now.',
@@ -794,6 +802,14 @@ export function buildNameChangeTargetExecutionSnapshot(
       };
     }
 
+    if (targetKey === 'tsa') {
+      return {
+        category: 'checklist' as const,
+        label: 'Split travel-profile follow-through by partner',
+        detail: 'Both partners are changing names, so TSA, airline traveler profiles, loyalty accounts, and booking-name updates should keep separate completion proof and booked-trip timing for each partner instead of one shared travel rollout.',
+      };
+    }
+
     if (isDualPartnerDownstreamExecutionTarget(targetKey)) {
       return {
         category: 'checklist' as const,
@@ -986,6 +1002,10 @@ export function buildNameChangeTargetExecutionSnapshot(
                   label: `Prepare ${formPayload.formCode || target.recommendedFormCode}`,
                   detail: 'Packet is execution-ready. Final review and submission prep can move now.',
                 };
+  const hasStartedTargetExecution = (plan?.steps ?? []).some((step) => {
+    const trackedStepIds = TARGET_STATUS_VAULT_STEP_IDS[targetKey] ?? [];
+    return trackedStepIds.includes(step.id) && (step.executionStatus === 'in_progress' || step.executionStatus === 'complete');
+  });
   const nextActionWithDualPartnerBranch = dualPartnerExecutionNextAction
     && nextAction.category === 'review'
     && nextAction.label === `Prepare ${formPayload.formCode || target.recommendedFormCode}`
@@ -996,7 +1016,13 @@ export function buildNameChangeTargetExecutionSnapshot(
         && targetKey !== 'courtOrder'
         && nextAction.label.startsWith('Review ')
           ? dualPartnerExecutionNextAction
-          : nextAction;
+          : dualPartnerExecutionNextAction
+            && (targetKey === 'tsa' || isDualPartnerDownstreamExecutionTarget(targetKey))
+            && hasStartedTargetExecution
+            && nextAction.category === 'document'
+            && nextAction.label === 'Review Identity document coverage'
+              ? dualPartnerExecutionNextAction
+              : nextAction;
   const statusVault = getTargetStatusVaultSnapshot(
     targetKey,
     plan,

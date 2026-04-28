@@ -1912,6 +1912,59 @@ describe('name change target execution snapshot', () => {
     });
   });
 
+  it('splits dual-partner tsa rollout into separate travel-profile proof tracks', () => {
+    const profile = makeCase({ change_reasons: ['marriage', 'both_partners_change_name'] });
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issuing_authority: 'San Diego County Clerk',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
+      },
+      {
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'license-•••.pdf',
+        issuing_authority: 'California DMV',
+        issued_on: '2025-03-01',
+        extraction_confidence: 0.96,
+      },
+      {
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'passport-•••.pdf',
+        issuing_authority: 'U.S. Department of State',
+        issued_on: '2024-06-01',
+        extraction_confidence: 0.95,
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [];
+    const basePlan = buildNameChangePlan({ profile, documents, extractedFields });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => (
+        step.id === 'federal-ssa' || step.id === 'state-dmv' || step.id === 'federal-passport' || step.id === 'institution-tsa-precheck'
+          ? { ...step, executionStatus: 'in_progress' as const }
+          : step
+      )),
+    };
+
+    const snapshot = buildNameChangeTargetExecutionSnapshot('tsa', profile, documents, extractedFields, plan);
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'checklist',
+      label: 'Split travel-profile follow-through by partner',
+      detail: 'Both partners are changing names, so TSA, airline traveler profiles, loyalty accounts, and booking-name updates should keep separate completion proof and booked-trip timing for each partner instead of one shared travel rollout.',
+    });
+  });
+
   it('gives a concrete marriage-certificate grounding next action when county is the last missing out-of-state field', () => {
     const profile = makeCase({ marriage_state: 'Nevada' });
     const documents: NameChangeDocumentInput[] = [
@@ -3563,6 +3616,22 @@ describe('name change target execution snapshot', () => {
       doNow: 'Create one completion checklist and proof bucket per partner for this downstream lane now.',
       whyItHelps: 'That prevents shared account rollout from looking done when only one partner’s update actually cleared.',
       canWait: 'Actual submission can safely wait until both partner proof tracks are separated.',
+    });
+  });
+
+  it('adds structured wait guidance for dual-partner tsa travel rollout branching', () => {
+    expect(getExecutionNextActionGuidance({
+      targetKey: 'tsa',
+      nextAction: {
+        category: 'checklist',
+        label: 'Split travel-profile follow-through by partner',
+        detail: 'Both partners are changing names, so TSA, airline traveler profiles, loyalty accounts, and booking-name updates should keep separate completion proof and booked-trip timing for each partner instead of one shared travel rollout.',
+      },
+    })).toEqual({
+      overview: 'Both partners are changing names, so TSA, airline traveler profiles, loyalty accounts, and booking-name updates should keep separate completion proof and booked-trip timing for each partner instead of one shared travel rollout.',
+      doNow: 'Break TSA, airline, loyalty, and booked-trip follow-through into one proof checklist per partner now.',
+      whyItHelps: 'That keeps one partner’s travel timing or traveler-profile change from hiding incomplete rollout for the other partner.',
+      canWait: 'Actual travel-profile submissions can safely wait until each partner has a separate travel rollout track.',
     });
   });
 
