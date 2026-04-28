@@ -207,6 +207,41 @@ describe('name change passport execution snapshot', () => {
     expect(snapshot.blockers).toContain('Travel is already booked, but no current passport or Real ID support is represented in intake yet.');
   });
 
+  it('blocks booked-travel passport work until current passport expiration grounding exists', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+        issued_on: '2024-06-01',
+      },
+    ];
+    const profile = makeCase({
+      structured_intake: {
+        spouseLastName: 'Jordan',
+        travelBookedSoon: true,
+        wantsDocumentIntakeHelp: true,
+      },
+    });
+
+    const snapshot = buildNameChangePassportExecutionSnapshot(profile, documents, []);
+    expect(snapshot.ready).toBe(false);
+    expect(snapshot.blockers).toContain('Booked-travel passport follow-through needs the current passport expiration date grounded in intake before timing can be trusted.');
+    expect(snapshot.checklist.find((item) => item.key === 'passport-expiration-grounding')).toMatchObject({ status: 'missing' });
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'document',
+      label: 'Add passport expiration date before passport travel review',
+      documentKind: 'current_passport',
+    });
+  });
+
   it('keeps expedited travel passport cases on the fast path as attention, not routine satisfied', () => {
     const documents: NameChangeDocumentInput[] = [
       {

@@ -19,6 +19,7 @@ type RequirementBag = {
   countyContext: NameChangeRequirementResult | undefined;
   launchStateAlignment: NameChangeRequirementResult | undefined;
   passportTimingRisk: NameChangeRequirementResult | undefined;
+  passportExpirationGrounding: NameChangeRequirementResult | undefined;
   expeditedTravelSequencing: NameChangeRequirementResult | undefined;
   citizenshipProofIntake: NameChangeRequirementResult | undefined;
   passportEligibilityPath: NameChangeRequirementResult | undefined;
@@ -187,6 +188,7 @@ const buildPassportDependencies: NameChangeDependencyRecipe = ({ profile, requir
       : 'Current modeled passport flow assumes U.S. citizenship eligibility.',
   },
   buildRequirementDependency(requirements.passportTimingRisk, 'passport-timing-risk', 'Passport timing risk reviewed', false, 'Passport timing risk has not been evaluated.', false, 'review'),
+  buildRequirementDependency(requirements.passportExpirationGrounding, 'passport-expiration-grounding', 'Passport expiration date grounded for travel work', true, 'Passport expiration grounding has not been evaluated.', true, 'document'),
   buildRequirementDependency(requirements.expeditedTravelSequencing, 'expedited-travel-sequencing', 'Expedited travel sequencing ready', false, 'Expedited travel sequencing has not been evaluated.', false, 'review'),
   buildRequirementDependency(requirements.citizenshipProofIntake, 'citizenship-proof-intake', 'Citizenship proof intake ready for first-passport work', true, 'Citizenship proof intake has not been evaluated.', true, 'document'),
   buildRequirementDependency(requirements.passportEligibilityPath, 'passport-eligibility-path', 'Passport eligibility path is clear', true, 'Passport eligibility path has not been evaluated.', true),
@@ -273,6 +275,7 @@ const buildTsaDependencies: NameChangeDependencyRecipe = ({ profile, intake, req
   buildRequirementDependency(requirements.outOfStateMarriageCertificateGrounding, 'out-of-state-marriage-certificate-grounding', 'Out-of-state marriage certificate grounding', true, 'Out-of-state marriage certificate grounding has not been evaluated.', true, 'document'),
   buildRequirementDependency(requirements.identityCoverage, 'identity-document-coverage', 'Identity document coverage', true, 'Identity coverage requirement not evaluated.', false, 'document'),
   buildRequirementDependency(requirements.passportTimingRisk, 'passport-timing-risk', 'Passport timing risk reviewed', false, 'Passport timing risk has not been evaluated.', false, 'review'),
+  buildRequirementDependency(requirements.passportExpirationGrounding, 'passport-expiration-grounding', 'Passport expiration date grounded for travel work', true, 'Passport expiration grounding has not been evaluated.', true, 'document'),
   buildRequirementDependency(requirements.expeditedTravelSequencing, 'expedited-travel-sequencing', 'Expedited travel sequencing ready', false, 'Expedited travel sequencing has not been evaluated.', false, 'review'),
   buildRequirementDependency(requirements.citizenshipProofIntake, 'citizenship-proof-intake', 'Citizenship proof intake ready for first-passport travel work', true, 'Citizenship proof intake has not been evaluated.', true, 'document'),
   buildRequirementDependency(requirements.passportEligibilityPath, 'passport-eligibility-path', 'Passport eligibility path is clear', true, 'Passport eligibility path has not been evaluated.', true),

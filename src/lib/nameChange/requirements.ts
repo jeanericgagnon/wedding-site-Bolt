@@ -18,6 +18,12 @@ function getDocumentIssuingAuthority(document: NameChangeDocumentInput | undefin
   return document.issuing_authority?.trim() || snapshotMetadata.issuingAuthority?.trim() || null;
 }
 
+function getDocumentExpirationDate(document: NameChangeDocumentInput | undefined) {
+  if (!document) return null;
+  const snapshotMetadata = buildDraftNameChangeDocumentMetadataFromSnapshot(document.extracted_snapshot);
+  return document.expires_on?.trim() || snapshotMetadata.expiresOn?.trim() || null;
+}
+
 export const NAME_CHANGE_REQUIREMENT_DEFINITIONS: NameChangeRequirementDefinition[] = [
   {
     key: 'case-legal-name-completeness',
@@ -92,6 +98,12 @@ export const NAME_CHANGE_REQUIREMENT_DEFINITIONS: NameChangeRequirementDefinitio
     description: 'Travel-facing passport timing should be reviewed when passport updates are relevant.',
   },
   {
+    key: 'passport-expiration-grounding',
+    label: 'Passport expiration date grounded for travel work',
+    stage: 'proof',
+    description: 'Booked-travel passport and TSA follow-through should not act grounded until the current passport expiration date is represented in intake metadata.',
+  },
+  {
     key: 'citizenship-proof-intake',
     label: 'Citizenship proof is in intake for first-passport work',
     stage: 'proof',
@@ -127,6 +139,8 @@ export function evaluateNameChangeRequirements(
   const hasIdentityCoverage = identityCoverageKinds.some((kind) => canonicalCase.documents[kind].intakeStatus !== 'not_started');
   const hasIdentityMetadataReady = intakeSnapshot.documents.some((document) => identityCoverageKinds.includes(document.kind) && document.metadataMissing.length === 0 && document.intakeStatus !== 'not_started');
   const hasTravelIdentitySupport = ['current_passport', 'current_drivers_license'].some((kind) => canonicalCase.documents[kind as NameChangeDocumentKind].intakeStatus !== 'not_started');
+  const currentPassportDocument = documents.find((document) => document.document_kind === 'current_passport');
+  const hasPassportExpirationGrounding = Boolean(getDocumentExpirationDate(currentPassportDocument));
   const hasCourtOrderProof = canonicalCase.documents.court_order.intakeStatus !== 'not_started';
   const hasAnyCourtOrderCaseNumber = hasAnyLinkedDocumentFieldValue(documents, mergedExtractedFields, 'court_order', 'case_number');
   const hasAnyCourtOrderSignedDate = hasAnyLinkedDocumentFieldValue(documents, mergedExtractedFields, 'court_order', 'court_order_date');
@@ -362,6 +376,19 @@ export function evaluateNameChangeRequirements(
           ? 'Travel is already booked and passport updates still need to be sequenced carefully.'
           : 'Travel is already booked, but no current passport or Real ID support is represented in intake yet.'
         : 'No immediate travel-facing passport timing risk is currently flagged.',
+    },
+    {
+      key: 'passport-expiration-grounding',
+      label: 'Passport expiration date grounded for travel work',
+      stage: 'proof',
+      status: canonicalCase.identity.passportNeedsUpdate && canonicalCase.lifeContext.travelBookedSoon && canonicalCase.identity.hasUsPassport
+        ? hasPassportExpirationGrounding ? 'satisfied' : 'missing'
+        : 'satisfied',
+      reason: canonicalCase.identity.passportNeedsUpdate && canonicalCase.lifeContext.travelBookedSoon && canonicalCase.identity.hasUsPassport
+        ? hasPassportExpirationGrounding
+          ? 'Current passport expiration grounding is present for booked-travel sequencing.'
+          : 'Booked-travel passport follow-through needs the current passport expiration date grounded in intake before timing can be trusted.'
+        : 'No standalone passport-expiration grounding requirement is currently needed.',
     },
     {
       key: 'citizenship-proof-intake',

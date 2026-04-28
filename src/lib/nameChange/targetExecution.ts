@@ -32,6 +32,12 @@ function getDocumentIssuingAuthority(document: NameChangeDocumentInput | undefin
   return document.issuing_authority?.trim() || snapshotMetadata.issuingAuthority?.trim() || null;
 }
 
+function getDocumentExpirationDate(document: NameChangeDocumentInput | undefined) {
+  if (!document) return null;
+  const snapshotMetadata = buildDraftNameChangeDocumentMetadataFromSnapshot(document.extracted_snapshot);
+  return document.expires_on?.trim() || snapshotMetadata.expiresOn?.trim() || null;
+}
+
 function hasDualPartnerNameChange(profile: NameChangeCaseInput) {
   return profile.structured_intake.bothPartnersChangeName === true
     || profile.change_reasons.some((reason) => /both_partners_change_name|dual/i.test(reason));
@@ -743,6 +749,19 @@ export function buildNameChangeTargetExecutionSnapshot(
         category: 'review' as const,
         label: profile.has_us_passport ? 'Confirm passport amendment or renewal path' : 'Confirm first-passport eligibility path',
         detail: passportEligibilityDependency.reason,
+      };
+    }
+
+    const passportExpirationDependency = sequence.dependencies.find((dependency) => dependency.key === 'passport-expiration-grounding' && dependency.status === 'missing');
+    const currentPassportDocument = documents.find((document) => document.document_kind === 'current_passport');
+    if (profile.has_us_passport && profile.structured_intake.travelBookedSoon && passportExpirationDependency && !getDocumentExpirationDate(currentPassportDocument)) {
+      return {
+        category: 'document' as const,
+        label: targetKey === 'tsa'
+          ? 'Add passport expiration date before TSA travel updates'
+          : 'Add passport expiration date before passport travel review',
+        detail: passportExpirationDependency.reason,
+        documentKind: 'current_passport' as const,
       };
     }
 

@@ -246,6 +246,48 @@ describe('name change TSA execution snapshot', () => {
     });
   });
 
+  it('blocks TSA travel updates until current passport expiration grounding exists for booked travel', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+        issued_on: '2024-06-01',
+      },
+    ];
+    const profile = makeCase({
+      structured_intake: {
+        spouseLastName: 'Jordan',
+        travelBookedSoon: true,
+        wantsDocumentIntakeHelp: true,
+      },
+    });
+    const basePlan = buildNameChangePlan({ profile, documents, extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-passport'
+        ? { ...step, executionStatus: 'in_progress' as const }
+        : step),
+    };
+
+    const snapshot = buildNameChangeTsaExecutionSnapshot(profile, documents, [], plan);
+    expect(snapshot.ready).toBe(false);
+    expect(snapshot.blockers).toContain('Booked-travel passport follow-through needs the current passport expiration date grounded in intake before timing can be trusted.');
+    expect(snapshot.checklist.find((item) => item.key === 'passport-expiration-grounding')).toMatchObject({ status: 'missing' });
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'document',
+      label: 'Add passport expiration date before TSA travel updates',
+      documentKind: 'current_passport',
+    });
+  });
+
   it('blocks TSA update when out-of-state marriage handling has no certificate intake support', () => {
     const profile = makeCase({ marriage_state: 'Nevada' });
     const basePlan = buildNameChangePlan({ profile, documents: [], extractedFields: [] });

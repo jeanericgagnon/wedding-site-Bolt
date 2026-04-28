@@ -113,7 +113,7 @@ describe('name change requirements skeleton', () => {
 
     const snapshot = evaluateNameChangeRequirements(makeCase(), documents, []);
     expect(snapshot.summary).toEqual({
-      satisfied: 16,
+      satisfied: 17,
       missing: 0,
       attention: 1,
     });
@@ -413,6 +413,56 @@ describe('name change requirements skeleton', () => {
     expect(snapshot.results.find((result) => result.key === 'citizenship-proof-intake')).toMatchObject({
       status: 'satisfied',
       reason: 'Citizenship proof is represented in intake for the modeled first-passport branch.',
+    });
+  });
+
+  it('marks passport expiration grounding missing for booked-travel passport work without an expiration date in intake', () => {
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase({
+        structured_intake: {
+          spouseLastName: 'Jordan',
+          travelBookedSoon: true,
+          wantsDocumentIntakeHelp: true,
+        },
+      }),
+      [{
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+        issued_on: '2024-06-01',
+      }],
+      [],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'passport-expiration-grounding')).toMatchObject({
+      status: 'missing',
+      reason: 'Booked-travel passport follow-through needs the current passport expiration date grounded in intake before timing can be trusted.',
+    });
+  });
+
+  it('marks passport expiration grounding satisfied once booked-travel passport work has expiration metadata', () => {
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase({
+        structured_intake: {
+          spouseLastName: 'Jordan',
+          travelBookedSoon: true,
+          wantsDocumentIntakeHelp: true,
+        },
+      }),
+      [{
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+        expires_on: '2034-06-01',
+      }],
+      [],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'passport-expiration-grounding')).toMatchObject({
+      status: 'satisfied',
+      reason: 'Current passport expiration grounding is present for booked-travel sequencing.',
     });
   });
 
