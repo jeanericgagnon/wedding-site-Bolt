@@ -1984,6 +1984,10 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 <p className="mt-2 text-[10px] uppercase tracking-[0.12em] text-text-tertiary">Target</p>
                 <p className="mt-1 text-[11px] text-text-primary">{item.targetLabel}</p>
                 <p className="mt-2 text-[10px] text-text-secondary">{item.detail}</p>
+                <div className="mt-2 inline-flex items-center gap-1 rounded-full border border-border/60 bg-white/80 px-2 py-1 text-[9px] font-medium text-text-secondary">
+                  <span className="text-text-tertiary">Next</span>
+                  <span>{item.actionLabel}</span>
+                </div>
                 {priorityCommandLabel === item.label && (
                   <div className="mt-2 inline-flex flex-wrap items-center gap-1 rounded-full border border-primary/20 bg-white/80 px-2 py-1 text-[9px] font-medium text-primary">
                     <span>Priority — {priorityCommandReason}{priorityCommandTargetReason ? ` ${priorityCommandTargetReason}` : ''}</span>

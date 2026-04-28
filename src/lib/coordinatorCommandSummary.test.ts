@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { buildCoordinatorCommandSummary } from './coordinatorCommandSummary';
 
 describe('coordinatorCommandSummary', () => {
-  it('surfaces live priority, targets, and ready signals for command row items', () => {
+  it('surfaces live priority, targets, and next actions for command row items', () => {
     expect(buildCoordinatorCommandSummary({
       checkInLabel: 'Working board target',
       timelineLabel: 'Board event available',
@@ -19,6 +19,7 @@ describe('coordinatorCommandSummary', () => {
         detail: 'Working board target',
         targetLabel: 'Alex Rivera',
         statusLabel: 'Live priority',
+        actionLabel: 'Review Alex Rivera now',
         tone: 'priority',
       },
       {
@@ -26,6 +27,7 @@ describe('coordinatorCommandSummary', () => {
         detail: 'Board event available',
         targetLabel: 'Ceremony seating',
         statusLabel: 'Queued',
+        actionLabel: 'Prep Ceremony seating',
         tone: 'ready',
       },
       {
@@ -33,6 +35,7 @@ describe('coordinatorCommandSummary', () => {
         detail: 'No board question',
         targetLabel: 'No guest question selected',
         statusLabel: 'Monitoring',
+        actionLabel: 'Monitor guest questions',
         tone: 'neutral',
       },
       {
@@ -40,12 +43,13 @@ describe('coordinatorCommandSummary', () => {
         detail: 'Board-aligned sms lane',
         targetLabel: 'SMS lane',
         statusLabel: 'Ready to send',
+        actionLabel: 'Review SMS lane draft',
         tone: 'ready',
       },
     ]);
   });
 
-  it('marks manual alerting as needing review when it is not the priority', () => {
+  it('marks manual alerting as needing review and exposes the recovery action', () => {
     expect(buildCoordinatorCommandSummary({
       checkInLabel: null,
       timelineLabel: null,
@@ -62,6 +66,7 @@ describe('coordinatorCommandSummary', () => {
         detail: 'Manual override on email lane',
         targetLabel: 'Email lane',
         statusLabel: 'Needs review',
+        actionLabel: 'Realign Email lane',
         tone: 'neutral',
       },
     ]);
