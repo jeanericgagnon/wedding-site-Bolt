@@ -18,6 +18,20 @@ function startOfDay(date: Date): Date {
   return next;
 }
 
+function normalizeArchiveModeWeddingDate(value?: string | null): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    const date = new Date(`${trimmed}T12:00:00Z`);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toISOString().slice(0, 10) === trimmed ? `${trimmed}T00:00:00Z` : null;
+  }
+
+  const date = new Date(trimmed);
+  return Number.isNaN(date.getTime()) ? null : trimmed;
+}
+
 export function getArchiveModeDescriptor(input: ArchiveModeInput): ArchiveModeDescriptor {
   if (input.archivedAt) {
     return {
@@ -28,7 +42,9 @@ export function getArchiveModeDescriptor(input: ArchiveModeInput): ArchiveModeDe
     };
   }
 
-  if (!input.weddingDate) {
+  const normalizedWeddingDate = normalizeArchiveModeWeddingDate(input.weddingDate);
+
+  if (!normalizedWeddingDate) {
     return {
       state: 'planning',
       label: 'Planning mode',
@@ -38,7 +54,7 @@ export function getArchiveModeDescriptor(input: ArchiveModeInput): ArchiveModeDe
   }
 
   const today = startOfDay(new Date());
-  const weddingDay = startOfDay(new Date(input.weddingDate));
+  const weddingDay = startOfDay(new Date(normalizedWeddingDate));
   const diffDays = Math.round((weddingDay.getTime() - today.getTime()) / 86400000);
 
   if (diffDays <= 7 && diffDays >= -1) {
