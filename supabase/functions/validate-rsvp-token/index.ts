@@ -13,6 +13,11 @@ interface LookupPayload {
   searchValue: string;
 }
 
+interface EventLookupPayload {
+  action: "event_lookup";
+  inviteToken: string;
+}
+
 interface SubmitPayload {
   action: "submit";
   guestId: string;
@@ -32,7 +37,15 @@ interface SubmitPayload {
   hp_field?: string;
 }
 
-type Payload = LookupPayload | SubmitPayload;
+interface EventSubmitPayload {
+  action: "event_submit";
+  guestId: string;
+  inviteToken: string;
+  eventInvitationId: string;
+  attending: boolean;
+}
+
+type Payload = LookupPayload | EventLookupPayload | SubmitPayload | EventSubmitPayload;
 
 const RATE_LIMIT_WINDOW_MINUTES = 15;
 const RATE_LIMIT_MAX_ATTEMPTS = 10;
@@ -153,6 +166,104 @@ Deno.serve(async (req: Request) => {
       }
 
       return json({ guest: null, existingRsvp: null, guests: byName, rsvpDeadline: null, rsvpQuestions: [], rsvpMealConfig: { enabled: true, options: ["Chicken", "Beef", "Fish", "Vegetarian", "Vegan"] }, householdGuests: [] });
+    }
+
+    if (payload.action === "event_lookup") {
+      const { inviteToken } = payload;
+      if (!inviteToken?.trim()) return json({ error: "inviteToken is required" }, 400);
+
+      const { data: guest, error: guestErr } = await adminClient
+        .from("guests")
+        .select("id, first_name, last_name, name, invite_token, wedding_site_id")
+        .eq("invite_token", inviteToken.trim())
+        .maybeSingle();
+
+      if (guestErr || !guest) {
+        return json({ error: "No invitation link found. Please use your invite email link or ask the couple for help." }, 404);
+      }
+
+      const { data: invitations, error: invitationsError } = await adminClient
+        .from("event_invitations")
+        .select(`
+          id,
+          guest_id,
+          event_id,
+          itinerary_events (
+            id,
+            event_name,
+            event_date,
+            start_time,
+            location,
+            description
+          ),
+          event_rsvps (
+            id,
+            attending,
+            responded_at
+          )
+        `)
+        .eq("guest_id", guest.id)
+        .order("event_date", {
+          foreignTable: "itinerary_events",
+          ascending: true,
+        });
+
+      if (invitationsError) throw invitationsError;
+
+      return json({ guest, invitations: invitations || [] });
+    }
+
+    if (payload.action === "event_submit") {
+      const { guestId, inviteToken, eventInvitationId, attending } = payload;
+      if (!guestId || !inviteToken || !eventInvitationId) {
+        return json({ error: "guestId, inviteToken, and eventInvitationId are required" }, 400);
+      }
+      if (typeof attending !== "boolean") {
+        return json({ error: "Please indicate whether you will be attending." }, 400);
+      }
+
+      const { data: guest, error: guestErr } = await adminClient
+        .from("guests")
+        .select("id, invite_token")
+        .eq("id", guestId)
+        .maybeSingle();
+
+      if (guestErr || !guest || guest.invite_token !== inviteToken) {
+        return json({ error: "This RSVP link isn't valid. Please use the original link from your invitation email, or ask the couple for a new one." }, 403);
+      }
+
+      const { data: invitation, error: invitationError } = await adminClient
+        .from("event_invitations")
+        .select("id, guest_id")
+        .eq("id", eventInvitationId)
+        .maybeSingle();
+
+      if (invitationError || !invitation || invitation.guest_id !== guestId) {
+        return json({ error: "We couldn't find that event invitation for this guest." }, 404);
+      }
+
+      const respondedAt = new Date().toISOString();
+      const eventRsvpPayload = {
+        event_invitation_id: eventInvitationId,
+        attending,
+        responded_at: respondedAt,
+      };
+
+      const { error: eventRsvpError } = await adminClient
+        .from("event_rsvps")
+        .upsert(eventRsvpPayload, { onConflict: "event_invitation_id" });
+
+      if (eventRsvpError) throw eventRsvpError;
+
+      await adminClient
+        .from("guests")
+        .update({
+          rsvp_status: attending ? "confirmed" : "declined",
+          rsvp_received_at: respondedAt,
+        })
+        .eq("id", guestId);
+
+      return json({ success: true, respondedAt });
     }
 
     if (payload.action === "submit") {

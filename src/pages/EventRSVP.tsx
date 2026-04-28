@@ -9,6 +9,10 @@ import { Textarea } from '../components/ui/Textarea';
 import { Header, Footer } from '../components/layout';
 import { formatEventRsvpDate } from './eventRsvpDate';
 
+const RSVP_FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/validate-rsvp-token`;
+const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const CAN_USE_EVENT_RSVP_FUNCTION = import.meta.env.MODE !== 'test' && Boolean(import.meta.env.VITE_SUPABASE_URL) && Boolean(ANON_KEY);
+
 interface Guest {
   id: string;
   name: string;
@@ -73,6 +77,36 @@ function notifyRsvpContinuityUpdate() {
   }
 
   window.dispatchEvent(new CustomEvent(RSVP_CONTINUITY_EVENT, { detail: { updatedAt } }));
+}
+
+async function eventRsvpCall(body: object): Promise<{ data?: Record<string, unknown>; error?: string; status?: number }> {
+  if (!CAN_USE_EVENT_RSVP_FUNCTION) {
+    return { error: 'missing-config', status: 0 };
+  }
+
+  const response = await fetch(RSVP_FN_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${ANON_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  const json = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    return { error: (json as { error?: string })?.error ?? `Error ${response.status}`, status: response.status };
+  }
+
+  if ((json as { error?: string })?.error) {
+    return { error: (json as { error?: string }).error };
+  }
+
+  return { data: json as Record<string, unknown> };
+}
+
+function shouldFallbackToDirectEventQueries(error?: string, status?: number) {
+  return error === 'missing-config' || status === 401;
 }
 
 function resetEventRsvpModalTransientState(
@@ -175,8 +209,6 @@ export default function EventRSVP() {
     submitInFlightRef.current = false;
     pendingContinuityRefreshRef.current = false;
     ignoreNextLocalContinuityEventRef.current = false;
-    let eventRsvpSupportKnown: boolean | null = null;
-    let eventRsvpSupportAvailable = true;
     const shouldPreserveVisibleState = preserveVisibleState && !selectedEvent && guest !== null;
     if (!shouldPreserveVisibleState) {
       tokenLinkedSessionRef.current = false;
@@ -200,14 +232,127 @@ export default function EventRSVP() {
     }
 
     try {
-      const { data: guestData, error: guestError } = await supabase
-        .from('guests')
-        .select('id, name, email')
-        .eq('invite_token', token)
-        .maybeSingle();
+      const edgeLookup = CAN_USE_EVENT_RSVP_FUNCTION
+        ? await eventRsvpCall({
+            action: 'event_lookup',
+            inviteToken: token,
+          })
+        : { error: 'missing-config', status: 0 };
+      const { data, error: lookupError, status: lookupStatus } = edgeLookup;
 
-      if (guestError) throw guestError;
-      if (!guestData) {
+      if (shouldFallbackToDirectEventQueries(lookupError, lookupStatus)) {
+        const { data: guestData, error: guestError } = await supabase
+          .from('guests')
+          .select('id, name, email')
+          .eq('invite_token', token)
+          .maybeSingle();
+
+        if (guestError) throw guestError;
+        if (!guestData) {
+          if (activeLoadRequestRef.current !== requestId) return;
+          if (shouldPreserveVisibleState) {
+            tokenLinkedSessionRef.current = true;
+            setLoading(false);
+            return;
+          }
+
+          tokenLinkedSessionRef.current = false;
+          setGuest(null);
+          setInvitations([]);
+          setSelectedEvent(null);
+          setRsvpForm(buildDefaultEventRsvpFormState());
+          setHasEventRsvpSupport(null);
+          setError("This invitation link isn't valid. Please use the link from your invitation email, or ask the couple for a new one.");
+          setLoading(false);
+          return;
+        }
+
+        if (activeLoadRequestRef.current !== requestId) return;
+        tokenLinkedSessionRef.current = true;
+        setGuest(guestData);
+
+        const { data: invitationsData, error: invitationsError } = await supabase
+          .from('event_invitations')
+          .select(`
+            id,
+            event_id,
+            itinerary_events (
+              id,
+              event_name,
+              description,
+              event_date,
+              start_time,
+              end_time,
+              location_name,
+              location_address,
+              dress_code,
+              notes
+            )
+          `)
+          .eq('guest_id', guestData.id);
+
+        if (invitationsError) throw invitationsError;
+
+        let eventRsvpSupportKnown: boolean | null = null;
+        let eventRsvpSupportAvailable = true;
+        const invitationsWithRsvps = await Promise.all(
+          (invitationsData || []).map(async (invitation) => {
+            let rsvpData: { attending: boolean | null; dietary_restrictions: string | null; notes: string | null } | null = null;
+            if (eventRsvpSupportAvailable) {
+              const { data, error } = await supabase
+                .from('event_rsvps')
+                .select('attending, dietary_restrictions, notes')
+                .eq('event_invitation_id', invitation.id)
+                .maybeSingle();
+
+              if (error) {
+                const msg = error.message || '';
+                if (isMissingEventRsvpSupportError(msg)) {
+                  if (activeLoadRequestRef.current !== requestId) return {
+                    id: invitation.id,
+                    event_id: invitation.event_id,
+                    event: invitation.itinerary_events as unknown as ItineraryEvent,
+                    rsvp: undefined,
+                  };
+                  eventRsvpSupportAvailable = false;
+                  eventRsvpSupportKnown = false;
+                } else {
+                  throw error;
+                }
+              } else {
+                if (activeLoadRequestRef.current !== requestId) return {
+                  id: invitation.id,
+                  event_id: invitation.event_id,
+                  event: invitation.itinerary_events as unknown as ItineraryEvent,
+                  rsvp: undefined,
+                };
+                eventRsvpSupportKnown = true;
+                rsvpData = (data as { attending: boolean | null; dietary_restrictions: string | null; notes: string | null } | null) ?? null;
+              }
+            }
+
+            return {
+              id: invitation.id,
+              event_id: invitation.event_id,
+              event: invitation.itinerary_events as unknown as ItineraryEvent,
+              rsvp: rsvpData
+                ? buildInvitationRsvp({
+                    attending: rsvpData.attending ?? true,
+                    dietary_restrictions: rsvpData.dietary_restrictions || '',
+                    notes: rsvpData.notes || '',
+                  })
+                : undefined,
+            };
+          })
+        );
+
+        if (activeLoadRequestRef.current !== requestId) return;
+        setInvitations(invitationsWithRsvps);
+        setHasEventRsvpSupport(eventRsvpSupportKnown);
+        return;
+      }
+
+      if (lookupError || !data?.guest) {
         if (activeLoadRequestRef.current !== requestId) return;
         if (shouldPreserveVisibleState) {
           tokenLinkedSessionRef.current = true;
@@ -219,91 +364,41 @@ export default function EventRSVP() {
         setSelectedEvent(null);
         setRsvpForm(buildDefaultEventRsvpFormState());
         setHasEventRsvpSupport(null);
-        setError("This invitation link isn't valid. Please use the link from your invitation email, or ask the couple for a new one.");
+        setError(lookupError || "This invitation link isn't valid. Please use the link from your invitation email, or ask the couple for a new one.");
         setLoading(false);
         return;
       }
 
       if (activeLoadRequestRef.current !== requestId) return;
       tokenLinkedSessionRef.current = true;
+      const guestData = data.guest as Guest;
+      const invitationsData = Array.isArray(data.invitations) ? data.invitations : [];
       setGuest(guestData);
 
-      const { data: invitationsData, error: invitationsError } = await supabase
-        .from('event_invitations')
-        .select(`
-          id,
-          event_id,
-          itinerary_events (
-            id,
-            event_name,
-            description,
-            event_date,
-            start_time,
-            end_time,
-            location_name,
-            location_address,
-            dress_code,
-            notes
-          )
-        `)
-        .eq('guest_id', guestData.id);
+      const invitationsWithRsvps = invitationsData.map((invitation) => {
+        const row = invitation as EventInvitation & {
+          itinerary_events?: ItineraryEvent;
+          event_rsvps?: Array<{ attending: boolean | null; dietary_restrictions: string | null; notes: string | null }>;
+        };
+        const rsvpData = Array.isArray(row.event_rsvps) ? row.event_rsvps[0] ?? null : null;
 
-      if (invitationsError) throw invitationsError;
-
-      const invitationsWithRsvps = await Promise.all(
-        (invitationsData || []).map(async (invitation) => {
-          let rsvpData: { attending: boolean | null; dietary_restrictions: string | null; notes: string | null } | null = null;
-          if (eventRsvpSupportAvailable) {
-            const { data, error } = await supabase
-              .from('event_rsvps')
-              .select('attending, dietary_restrictions, notes')
-              .eq('event_invitation_id', invitation.id)
-              .maybeSingle();
-
-            if (error) {
-              const msg = error.message || '';
-              if (isMissingEventRsvpSupportError(msg)) {
-                if (activeLoadRequestRef.current !== requestId) return {
-                  id: invitation.id,
-                  event_id: invitation.event_id,
-                  event: invitation.itinerary_events as unknown as ItineraryEvent,
-                  rsvp: undefined,
-                };
-                eventRsvpSupportAvailable = false;
-                eventRsvpSupportKnown = false;
-              } else {
-                throw error;
-              }
-            } else {
-              if (activeLoadRequestRef.current !== requestId) return {
-                id: invitation.id,
-                event_id: invitation.event_id,
-                event: invitation.itinerary_events as unknown as ItineraryEvent,
-                rsvp: undefined,
-              };
-              eventRsvpSupportKnown = true;
-              rsvpData = (data as { attending: boolean | null; dietary_restrictions: string | null; notes: string | null } | null) ?? null;
-            }
-          }
-
-          return {
-            id: invitation.id,
-            event_id: invitation.event_id,
-            event: invitation.itinerary_events as unknown as ItineraryEvent,
-            rsvp: rsvpData
-              ? buildInvitationRsvp({
-                  attending: rsvpData.attending ?? true,
-                  dietary_restrictions: rsvpData.dietary_restrictions || '',
-                  notes: rsvpData.notes || '',
-                })
-              : undefined,
-          };
-        })
-      );
+        return {
+          id: row.id,
+          event_id: row.event_id,
+          event: (row.itinerary_events ?? row.event) as ItineraryEvent,
+          rsvp: rsvpData
+            ? buildInvitationRsvp({
+                attending: rsvpData.attending ?? true,
+                dietary_restrictions: rsvpData.dietary_restrictions || '',
+                notes: rsvpData.notes || '',
+              })
+            : undefined,
+        };
+      });
 
       if (activeLoadRequestRef.current !== requestId) return;
       setInvitations(invitationsWithRsvps);
-      setHasEventRsvpSupport(eventRsvpSupportKnown);
+      setHasEventRsvpSupport(true);
     } catch {
       if (activeLoadRequestRef.current !== requestId) return;
       tokenLinkedSessionRef.current = shouldPreserveVisibleState;
@@ -502,48 +597,73 @@ export default function EventRSVP() {
         return;
       }
 
-      if (invitation.rsvp) {
-        const { error } = await supabase
-          .from('event_rsvps')
-          .update({
-            ...buildInvitationRsvp(normalizedForm),
-            responded_at: new Date().toISOString(),
-          })
-          .eq('event_invitation_id', selectedEvent);
-
-        if (error) {
-          const msg = error.message || '';
-          if (isMissingEventRsvpSupportError(msg)) {
-            if (activeSubmitRequestRef.current === requestId) {
-              setHasEventRsvpSupport(false);
-              setSubmitError('Event-specific RSVP is temporarily unavailable for this site.');
-            }
-            return;
-          }
-          throw error;
+      if (!guest?.id) {
+        if (activeSubmitRequestRef.current === requestId) {
+          setSubmitError("This invitation link isn't valid. Please use the link from your invitation email, or ask the couple for a new one.");
         }
-      } else {
-        const { error } = await supabase
-          .from('event_rsvps')
-          .insert([
-            {
-              event_invitation_id: selectedEvent,
+        return;
+      }
+
+      const edgeSubmit = CAN_USE_EVENT_RSVP_FUNCTION
+        ? await eventRsvpCall({
+            action: 'event_submit',
+            guestId: guest.id,
+            inviteToken: token,
+            eventInvitationId: selectedEvent,
+            attending: normalizedForm.attending,
+          })
+        : { error: 'missing-config', status: 0 };
+      const { error, status } = edgeSubmit;
+
+      if (shouldFallbackToDirectEventQueries(error, status)) {
+        if (invitation.rsvp) {
+          const { error } = await supabase
+            .from('event_rsvps')
+            .update({
               ...buildInvitationRsvp(normalizedForm),
               responded_at: new Date().toISOString(),
-            },
-          ]);
+            })
+            .eq('event_invitation_id', selectedEvent);
 
-        if (error) {
-          const msg = error.message || '';
-          if (isMissingEventRsvpSupportError(msg)) {
-            if (activeSubmitRequestRef.current === requestId) {
-              setHasEventRsvpSupport(false);
-              setSubmitError('Event-specific RSVP is temporarily unavailable for this site.');
+          if (error) {
+            const msg = error.message || '';
+            if (isMissingEventRsvpSupportError(msg)) {
+              if (activeSubmitRequestRef.current === requestId) {
+                setHasEventRsvpSupport(false);
+                setSubmitError('Event-specific RSVP is temporarily unavailable for this site.');
+              }
+              return;
             }
-            return;
+            throw error;
           }
-          throw error;
+        } else {
+          const { error } = await supabase
+            .from('event_rsvps')
+            .insert([
+              {
+                event_invitation_id: selectedEvent,
+                ...buildInvitationRsvp(normalizedForm),
+                responded_at: new Date().toISOString(),
+              },
+            ]);
+
+          if (error) {
+            const msg = error.message || '';
+            if (isMissingEventRsvpSupportError(msg)) {
+              if (activeSubmitRequestRef.current === requestId) {
+                setHasEventRsvpSupport(false);
+                setSubmitError('Event-specific RSVP is temporarily unavailable for this site.');
+              }
+              return;
+            }
+            throw error;
+          }
         }
+      } else if (error) {
+        if (activeSubmitRequestRef.current === requestId) {
+          setSubmitError(error);
+        }
+        return;
       }
 
       if (activeSubmitRequestRef.current !== requestId) return;
