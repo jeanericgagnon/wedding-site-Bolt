@@ -49,5 +49,10 @@ describe('name change voter packet snapshot', () => {
       confidence: 'low',
       required: false,
     });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'legal.marriageIssuingAuthority')).toMatchObject({
+      value: null,
+      confidence: 'low',
+      required: false,
+    });
   });
 });
