@@ -51,6 +51,7 @@ describe('name change passport form snapshot', () => {
         display_name: 'Marriage certificate',
         storage_mode: 'metadata_only',
         intake_status: 'reviewed',
+        issuing_authority: 'San Diego County Clerk',
       },
     ];
     const extractedFields: NameChangeExtractedFieldInput[] = [
@@ -97,12 +98,23 @@ describe('name change passport form snapshot', () => {
       sourceFieldKey: 'certificate_number',
       required: false,
     });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'legal.marriageIssuingAuthority')).toMatchObject({
+      value: 'San Diego County Clerk',
+      source: 'extracted_field',
+      sourceDocumentKind: 'marriage_certificate',
+      required: false,
+    });
   });
 
   it('uses DS-11 when the user does not already have a passport', () => {
     const snapshot = buildNameChangePassportFormSnapshot(makeCase({ has_us_passport: false }), [], []);
     expect(snapshot.formCode).toBe('DS-11');
     expect(snapshot.fields.find((field) => field.fieldKey === 'legal.marriageCertificateNumber')).toMatchObject({
+      value: null,
+      confidence: 'low',
+      required: false,
+    });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'legal.marriageIssuingAuthority')).toMatchObject({
       value: null,
       confidence: 'low',
       required: false,

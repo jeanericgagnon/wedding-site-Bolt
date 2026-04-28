@@ -1,7 +1,11 @@
 import { buildNameChangeCanonicalCase } from './canonical';
 import { buildNameChangeDocumentIntakeSnapshot } from './documentContract';
 import { buildNameChangeExtractionContractSnapshot, getVerifiedDocumentLinkedFieldValue } from './extractionContract';
-import { buildDraftNameChangeExtractedFieldsFromSnapshot, normalizeDraftNameChangeDocumentId } from './intakeDraft';
+import {
+  buildDraftNameChangeDocumentMetadataFromSnapshot,
+  buildDraftNameChangeExtractedFieldsFromSnapshot,
+  normalizeDraftNameChangeDocumentId,
+} from './intakeDraft';
 import type {
   NameChangeAutofillFieldMapping,
   NameChangeAutofillPrepSnapshot,
@@ -16,6 +20,11 @@ interface ExtractionLookupResult {
   value: string | null;
   sourceDocumentKind?: NameChangeDocumentKind;
   sourceFieldKey?: NameChangeExtractionFieldKey;
+}
+
+interface MetadataLookupResult {
+  value: string | null;
+  sourceDocumentKind?: NameChangeDocumentKind;
 }
 
 function normalizeValue(value: string | null | undefined) {
@@ -103,6 +112,33 @@ function buildExtractionLookup(
       value: null,
       sourceFieldKey: fieldKey,
     };
+  };
+}
+
+function buildMetadataLookup(documents: NameChangeDocumentInput[]) {
+  return (preferredDocumentKinds: NameChangeDocumentKind[] = []): MetadataLookupResult => {
+    for (const kind of preferredDocumentKinds) {
+      const matchingDocuments = documents
+        .filter((document) => document.document_kind === kind)
+        .sort((left, right) => {
+          if (left.intake_status === 'reviewed' && right.intake_status !== 'reviewed') return -1;
+          if (left.intake_status !== 'reviewed' && right.intake_status === 'reviewed') return 1;
+          return 0;
+        });
+
+      for (const document of matchingDocuments) {
+        const snapshotMetadata = buildDraftNameChangeDocumentMetadataFromSnapshot(document.extracted_snapshot);
+        const issuingAuthority = normalizeValue(document.issuing_authority ?? snapshotMetadata.issuingAuthority);
+        if (issuingAuthority) {
+          return {
+            value: issuingAuthority,
+            sourceDocumentKind: kind,
+          };
+        }
+      }
+    }
+
+    return { value: null };
   };
 }
 
@@ -210,6 +246,7 @@ export function buildNameChangeAutofillPrepSnapshot(
   const intakeSnapshot = buildNameChangeDocumentIntakeSnapshot(profile, documents, autofillExtractedFields);
   const extraction = buildNameChangeExtractionContractSnapshot(profile, documents, autofillExtractedFields);
   const lookup = buildExtractionLookup(documents, autofillExtractedFields);
+  const lookupMetadata = buildMetadataLookup(documents);
   const isDocumentMetadataReady = (kind: NameChangeDocumentKind | undefined) => {
     if (!kind) return true;
     const contract = intakeSnapshot.documents.find((document) => document.kind === kind);
@@ -256,6 +293,7 @@ export function buildNameChangeAutofillPrepSnapshot(
     directField('applicant.county', 'County', canonicalCase.countyResidence, lookup('county', ['marriage_certificate'])),
     directField('legal.marriage_date', 'Marriage date', canonicalCase.legalContext.marriageDate, lookup('issuance_date', ['marriage_certificate'])),
     directField('legal.marriage_certificate_number', 'Marriage certificate number', null, lookup('certificate_number', ['marriage_certificate'])),
+    directField('legal.marriage_issuing_authority', 'Marriage certificate issuing authority', null, lookupMetadata(['marriage_certificate'])),
     directField('legal.court_order_case_number', 'Court-order case number', null, lookup('case_number', ['court_order'])),
     directField('legal.court_order_date', 'Court order date', null, lookup('court_order_date', ['court_order'])),
     directField('identity.passport_issue_date', 'Passport issue date', null, lookup('issuance_date', ['current_passport'])),

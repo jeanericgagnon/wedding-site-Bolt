@@ -247,6 +247,14 @@ describe('name change autofill prep snapshot', () => {
         confidence: 'medium',
       }),
     });
+    expect(snapshot.fields.find((field) => field.targetField === 'legal.marriage_issuing_authority')).toMatchObject({
+      value: expect.objectContaining({
+        source: 'extracted_field',
+        value: 'San Diego County Clerk',
+        sourceDocumentKind: 'marriage_certificate',
+        confidence: 'medium',
+      }),
+    });
   });
 
   it('feeds autofill from canonicalized upload aliases when verified extraction is no longer keyed to the persisted document id', () => {
