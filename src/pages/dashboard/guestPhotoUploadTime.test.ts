@@ -11,13 +11,18 @@ import {
 describe('guest photo upload timestamp guards', () => {
   it('drops invalid persisted upload timestamps instead of crashing csv export or rendering Invalid Date', () => {
     expect(toValidGuestPhotoDateOrNull('not-a-date')).toBeNull();
+    expect(toValidGuestPhotoDateOrNull('2027-02-30')).toBeNull();
     expect(toGuestPhotoCsvTimestamp('not-a-date')).toBe('');
+    expect(toGuestPhotoCsvTimestamp('2027-02-30')).toBe('');
     expect(formatGuestPhotoDate('not-a-date')).toBe('Unknown date');
+    expect(formatGuestPhotoDate('2027-02-30')).toBe('Unknown date');
     expect(formatGuestPhotoDateTime('not-a-date')).toBe('Unknown date');
+    expect(formatGuestPhotoDateTime('2027-02-30')).toBe('Unknown date');
   });
 
   it('sends invalid upload timestamps to the end of time-based ordering', () => {
     expect(getGuestPhotoSortTime('not-a-date')).toBe(Number.NEGATIVE_INFINITY);
+    expect(getGuestPhotoSortTime('2027-02-30')).toBe(Number.NEGATIVE_INFINITY);
   });
 
   it('keeps valid upload timestamps truthful', () => {
