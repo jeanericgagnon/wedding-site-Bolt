@@ -17,6 +17,7 @@ export const NAME_CHANGE_BANK_PACKET_CONTRACT: NameChangeFormContractDefinition 
     { fieldKey: 'accountHolder.newMiddleName', label: 'New middle name', sourceTargetField: 'applicant.target_middle_name', required: false },
     { fieldKey: 'accountHolder.newLastName', label: 'New last name', sourceTargetField: 'applicant.target_last_name' },
     { fieldKey: 'legal.marriageDate', label: 'Marriage date', sourceTargetField: 'legal.marriage_date', required: false },
+    { fieldKey: 'legal.marriageCertificateNumber', label: 'Marriage certificate number', sourceTargetField: 'legal.marriage_certificate_number', required: false },
     { fieldKey: 'residence.county', label: 'County', sourceTargetField: 'applicant.county', required: false },
   ],
 };

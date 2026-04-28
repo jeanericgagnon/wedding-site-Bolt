@@ -43,5 +43,10 @@ describe('name change medical packet snapshot', () => {
     expect(snapshot.fields.find((field) => field.fieldKey === 'patient.newFirstName')).toMatchObject({ value: 'Alex' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'patient.newMiddleName')).toMatchObject({ value: 'Marie' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'patient.newLastName')).toMatchObject({ value: 'Jordan' });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'legal.marriageCertificateNumber')).toMatchObject({
+      value: null,
+      confidence: 'low',
+      required: false,
+    });
   });
 });

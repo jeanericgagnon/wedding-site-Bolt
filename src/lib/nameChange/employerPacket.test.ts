@@ -43,5 +43,10 @@ describe('name change employer packet snapshot', () => {
     expect(snapshot.fields.find((field) => field.fieldKey === 'employee.newFirstName')).toMatchObject({ value: 'Alex' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'employee.newMiddleName')).toMatchObject({ value: 'Marie' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'employee.newLastName')).toMatchObject({ value: 'Jordan' });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'legal.marriageCertificateNumber')).toMatchObject({
+      value: null,
+      confidence: 'low',
+      required: false,
+    });
   });
 });

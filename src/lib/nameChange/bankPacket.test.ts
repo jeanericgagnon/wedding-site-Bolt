@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildNameChangeBankPacketSnapshot } from './bankPacket';
-import type { NameChangeCaseInput } from './types';
+import type { NameChangeCaseInput, NameChangeDocumentInput, NameChangeExtractedFieldInput } from './types';
 
 function makeCase(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseInput {
   return {
@@ -37,11 +37,38 @@ function makeCase(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseI
 
 describe('name change bank packet snapshot', () => {
   it('builds a structured bank update packet payload', () => {
-    const snapshot = buildNameChangeBankPacketSnapshot(makeCase(), [], []);
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'marriage-doc',
+        document_kind: 'marriage_certificate',
+        display_name: 'Marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const extractedFields: NameChangeExtractedFieldInput[] = [
+      {
+        document_id: 'marriage-doc',
+        field_key: 'certificate_number',
+        field_label: 'Marriage certificate number',
+        field_value_masked: 'MC-2026-7781',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+    ];
+
+    const snapshot = buildNameChangeBankPacketSnapshot(makeCase(), documents, extractedFields);
     expect(snapshot.formCode).toBe('BANK-ACCOUNT-UPDATE-PACKET');
     expect(snapshot.fields.find((field) => field.fieldKey === 'accountHolder.currentMiddleName')).toMatchObject({ value: 'Marie' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'accountHolder.newFirstName')).toMatchObject({ value: 'Alex' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'accountHolder.newMiddleName')).toMatchObject({ value: 'Marie' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'accountHolder.newLastName')).toMatchObject({ value: 'Jordan' });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'legal.marriageCertificateNumber')).toMatchObject({
+      value: 'MC-2026-7781',
+      source: 'extracted_field',
+      sourceDocumentKind: 'marriage_certificate',
+      sourceFieldKey: 'certificate_number',
+      required: false,
+    });
   });
 });
