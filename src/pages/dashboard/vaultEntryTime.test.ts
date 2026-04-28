@@ -9,8 +9,11 @@ import {
 describe('vault entry time guards', () => {
   it('drops invalid persisted vault entry timestamps instead of leaking Invalid Date', () => {
     expect(toValidVaultEntryDateOrNull('not-a-date')).toBeNull();
+    expect(toValidVaultEntryDateOrNull('2027-02-30')).toBeNull();
     expect(getVaultEntryTimestamp('not-a-date')).toBe(Number.NEGATIVE_INFINITY);
+    expect(getVaultEntryTimestamp('2027-02-30')).toBe(Number.NEGATIVE_INFINITY);
     expect(formatVaultEntryDate('not-a-date')).toBe('Unknown date');
+    expect(formatVaultEntryDate('2027-02-30')).toBe('Unknown date');
   });
 
   it('keeps valid vault entry timestamps truthful', () => {
