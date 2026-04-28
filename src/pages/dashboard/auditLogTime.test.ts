@@ -5,7 +5,9 @@ import { formatAuditLogDateTime, toValidAuditLogDateOrNull } from './auditLogTim
 describe('audit log time guards', () => {
   it('drops invalid persisted audit timestamps instead of rendering Invalid Date', () => {
     expect(toValidAuditLogDateOrNull('not-a-date')).toBeNull();
+    expect(toValidAuditLogDateOrNull('2027-02-30')).toBeNull();
     expect(formatAuditLogDateTime('not-a-date')).toBe('Unknown time');
+    expect(formatAuditLogDateTime('2027-02-30')).toBe('Unknown time');
   });
 
   it('keeps valid audit timestamps truthful', () => {
