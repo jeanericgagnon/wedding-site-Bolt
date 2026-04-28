@@ -5,7 +5,9 @@ import { formatSeatingEventDate, formatSeatingEventLabel } from './seatingEventD
 describe('seating event date guards', () => {
   it('drops invalid persisted event dates instead of leaking Invalid Date into seating labels', () => {
     expect(formatSeatingEventDate('not-a-date')).toBe('Unknown date');
+    expect(formatSeatingEventDate('2027-02-30')).toBe('Unknown date');
     expect(formatSeatingEventLabel('Ceremony', 'not-a-date')).toBe('Ceremony — Unknown date');
+    expect(formatSeatingEventLabel('Ceremony', '2027-02-30')).toBe('Ceremony — Unknown date');
   });
 
   it('keeps valid seating event labels truthful', () => {
