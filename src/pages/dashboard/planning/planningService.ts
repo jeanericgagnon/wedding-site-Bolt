@@ -254,11 +254,25 @@ const MILESTONE_TEMPLATES: MilestoneTask[] = [
   { title: 'Rehearsal dinner', description: 'Host rehearsal and rehearsal dinner', monthsBefore: 0.25, priority: 'high' },
 ];
 
+const normalizeMilestoneWeddingDate = (value: string): string | null => {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return null;
+
+  const date = new Date(`${trimmed}T12:00:00Z`);
+  if (Number.isNaN(date.getTime())) return null;
+
+  return date.toISOString().slice(0, 10) === trimmed ? trimmed : null;
+};
+
 export function generateMilestoneTasks(weddingSiteId: string, weddingDateISO: string): Partial<PlanningTask>[] {
-  const weddingDate = new Date(weddingDateISO);
+  const normalizedWeddingDate = normalizeMilestoneWeddingDate(weddingDateISO);
+  if (!normalizedWeddingDate) return [];
+
+  const weddingDate = new Date(`${normalizedWeddingDate}T12:00:00Z`);
   return MILESTONE_TEMPLATES.map((t) => {
     const dueDate = new Date(weddingDate);
-    dueDate.setDate(dueDate.getDate() - Math.round(t.monthsBefore * 30));
+    dueDate.setUTCDate(dueDate.getUTCDate() - Math.round(t.monthsBefore * 30));
     return {
       wedding_site_id: weddingSiteId,
       title: t.title,
