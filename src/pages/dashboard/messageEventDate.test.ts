@@ -5,7 +5,9 @@ import { formatMessageEventDate, formatMessageEventOptionLabel } from './message
 describe('message event date guards', () => {
   it('drops invalid persisted event dates instead of leaking Invalid Date into audience labels', () => {
     expect(formatMessageEventDate('not-a-date')).toBe('');
+    expect(formatMessageEventDate('2027-02-30')).toBe('');
     expect(formatMessageEventOptionLabel('Ceremony', 'not-a-date')).toBe('Ceremony');
+    expect(formatMessageEventOptionLabel('Ceremony', '2027-02-30')).toBe('Ceremony');
   });
 
   it('keeps valid event-date labels truthful', () => {
