@@ -27,25 +27,38 @@ const MAX_UPLOAD_MB_BY_TYPE: Record<'photo' | 'video' | 'voice', number> = { pho
 const VAULT_SUBMITTED_KEY_PREFIX = 'vault_submitted_years_';
 const DEMO_WEDDING_DATE = '2026-02-23';
 
+function normalizeVaultWeddingDate(value: string | null | undefined): string | null {
+  const trimmed = value?.trim() || '';
+  if (!trimmed) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return null;
+
+  const date = new Date(`${trimmed}T12:00:00Z`);
+  if (Number.isNaN(date.getTime())) return null;
+
+  return date.toISOString().slice(0, 10) === trimmed ? trimmed : null;
+}
+
 export function getVaultCoupleName(site: Pick<SiteInfo, 'couple_name_1' | 'couple_name_2'> | null): string {
   if (!site) return '';
   return buildCoupleDisplayName(site.couple_name_1, site.couple_name_2, 'the couple');
 }
 
 export function getVaultUnlockYear(weddingDate: string | null | undefined, durationYears: number | null | undefined): number | null {
-  if (!weddingDate || durationYears == null) return null;
-  const date = new Date(weddingDate);
-  if (Number.isNaN(date.getTime())) return null;
+  const normalizedWeddingDate = normalizeVaultWeddingDate(weddingDate);
+  if (!normalizedWeddingDate || durationYears == null) return null;
+
+  const date = new Date(`${normalizedWeddingDate}T00:00:00Z`);
   return date.getFullYear() + durationYears;
 }
 
 export function getVaultUnlockAtIso(weddingDate: string | null | undefined, durationYears: number | null | undefined): string | null {
-  if (!weddingDate || durationYears == null) return null;
-  const date = new Date(weddingDate);
-  if (Number.isNaN(date.getTime())) return null;
+  const normalizedWeddingDate = normalizeVaultWeddingDate(weddingDate);
+  if (!normalizedWeddingDate || durationYears == null) return null;
+
+  const date = new Date(`${normalizedWeddingDate}T00:00:00Z`);
 
   const unlockDate = new Date(date);
-  unlockDate.setFullYear(unlockDate.getFullYear() + durationYears);
+  unlockDate.setUTCFullYear(unlockDate.getUTCFullYear() + durationYears);
   return Number.isNaN(unlockDate.getTime()) ? null : unlockDate.toISOString();
 }
 
@@ -53,15 +66,16 @@ function formatVaultWindowDate(date: Date): string {
   return date.toLocaleDateString();
 }
 
-function getContributionWindow(weddingDateRaw: string | null): { canSubmit: boolean; message: string | null } {
-  if (!weddingDateRaw) return { canSubmit: true, message: null };
-  const weddingDate = new Date(weddingDateRaw);
-  if (Number.isNaN(weddingDate.getTime())) return { canSubmit: true, message: null };
+export function getContributionWindow(weddingDateRaw: string | null): { canSubmit: boolean; message: string | null } {
+  const normalizedWeddingDate = normalizeVaultWeddingDate(weddingDateRaw);
+  if (!normalizedWeddingDate) return { canSubmit: true, message: null };
+
+  const weddingDate = new Date(`${normalizedWeddingDate}T00:00:00Z`);
 
   const openAt = new Date(weddingDate);
-  openAt.setDate(openAt.getDate() - 3);
+  openAt.setUTCDate(openAt.getUTCDate() - 3);
   const closeAt = new Date(weddingDate);
-  closeAt.setDate(closeAt.getDate() + 3);
+  closeAt.setUTCDate(closeAt.getUTCDate() + 3);
 
   const now = new Date();
   if (now < openAt) {
