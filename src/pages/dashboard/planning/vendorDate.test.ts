@@ -6,9 +6,13 @@ describe('vendor date guards', () => {
   it('drops invalid persisted vendor dates instead of leaking Invalid Date', () => {
     const compareTo = new Date('2026-06-21T00:00:00.000Z');
     expect(toValidVendorDateOrNull('not-a-date')).toBeNull();
+    expect(toValidVendorDateOrNull('2027-02-30')).toBeNull();
     expect(isVendorDateOnOrBefore('not-a-date', compareTo)).toBe(false);
+    expect(isVendorDateOnOrBefore('2027-02-30', compareTo)).toBe(false);
     expect(isVendorDateBetween('not-a-date', new Date('2026-06-20T00:00:00.000Z'), new Date('2026-06-28T00:00:00.000Z'))).toBe(false);
+    expect(isVendorDateBetween('2027-02-30', new Date('2026-06-20T00:00:00.000Z'), new Date('2026-06-28T00:00:00.000Z'))).toBe(false);
     expect(formatVendorDate('not-a-date')).toBe('Unknown date');
+    expect(formatVendorDate('2027-02-30')).toBe('Unknown date');
   });
 
   it('keeps valid vendor dates truthful', () => {
