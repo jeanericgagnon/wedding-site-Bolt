@@ -5,10 +5,15 @@ import { formatGuestOpsDate, formatGuestOpsDateTime, formatGuestOpsRelativeTime,
 describe('guest ops time guards', () => {
   it('drops invalid persisted timestamps instead of leaking NaN relative times', () => {
     expect(getGuestOpsTimestamp('not-a-date')).toBe(Number.NEGATIVE_INFINITY);
+    expect(getGuestOpsTimestamp('2027-02-30')).toBe(Number.NEGATIVE_INFINITY);
     expect(formatGuestOpsRelativeTime('not-a-date')).toBe('Unknown time');
+    expect(formatGuestOpsRelativeTime('2027-02-30')).toBe('Unknown time');
     expect(formatGuestOpsDateTime('not-a-date')).toBe('Unknown time');
+    expect(formatGuestOpsDateTime('2027-02-30')).toBe('Unknown time');
     expect(formatGuestOpsDateTime('not-a-date', { hour: 'numeric', minute: '2-digit' })).toBe('Unknown time');
+    expect(formatGuestOpsDateTime('2027-02-30', { hour: 'numeric', minute: '2-digit' })).toBe('Unknown time');
     expect(formatGuestOpsDate('not-a-date')).toBe('Unknown date');
+    expect(formatGuestOpsDate('2027-02-30')).toBe('Unknown date');
   });
 
   it('keeps valid relative times truthful', () => {
