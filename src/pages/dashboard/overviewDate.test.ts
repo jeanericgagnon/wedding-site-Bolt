@@ -10,9 +10,13 @@ import {
 describe('overviewDate', () => {
   it('guards invalid persisted overview dates', () => {
     expect(getOverviewTimestamp('not-a-date')).toBe(Number.NEGATIVE_INFINITY);
+    expect(getOverviewTimestamp('2027-02-30')).toBe(Number.NEGATIVE_INFINITY);
     expect(formatOverviewRelativeTime('not-a-date')).toBe('Unknown time');
+    expect(formatOverviewRelativeTime('2027-02-30')).toBe('Unknown time');
     expect(formatOverviewWeddingDate('not-a-date')).toBe('Unknown date');
+    expect(formatOverviewWeddingDate('2027-02-30')).toBe('Unknown date');
     expect(calcOverviewDaysUntil('not-a-date')).toBeNull();
+    expect(calcOverviewDaysUntil('2027-02-30')).toBeNull();
   });
 
   it('keeps valid overview dates truthful', () => {
