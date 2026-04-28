@@ -59,7 +59,7 @@ export const NAME_CHANGE_REQUIREMENT_DEFINITIONS: NameChangeRequirementDefinitio
     key: 'out-of-state-marriage-certificate-grounding',
     label: 'Out-of-state marriage certificate grounding',
     stage: 'proof',
-    description: 'Out-of-state marriage follow-through should carry grounded certificate reference fields from the certificate itself.',
+    description: 'Out-of-state marriage follow-through should carry grounded county, certificate-number extraction, and issuing-authority metadata from the certificate itself.',
   },
   {
     key: 'legal-basis-path-alignment',

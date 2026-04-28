@@ -640,7 +640,7 @@ describe('name change execution sequence snapshot', () => {
     expect(snapshot.ready).toBe(false);
     expect(snapshot.dependencies.find((dependency) => dependency.key === 'out-of-state-marriage-certificate-grounding')).toMatchObject({
       status: 'missing',
-      reason: 'Marriage certificate is present, but no grounded county or certificate-number extraction is represented yet for out-of-state follow-through.',
+      reason: 'Marriage certificate is present, but no grounded county, certificate-number extraction, or issuing-authority metadata is represented yet for out-of-state follow-through.',
     });
   });
 
@@ -667,7 +667,7 @@ describe('name change execution sequence snapshot', () => {
     expect(snapshot.ready).toBe(false);
     expect(snapshot.dependencies.find((dependency) => dependency.key === 'out-of-state-marriage-certificate-grounding')).toMatchObject({
       status: 'missing',
-      reason: 'Marriage certificate is present, but no grounded county or certificate-number extraction is represented yet for out-of-state follow-through.',
+      reason: 'Marriage certificate is present, but no grounded county, certificate-number extraction, or issuing-authority metadata is represented yet for out-of-state follow-through.',
     });
   });
 
