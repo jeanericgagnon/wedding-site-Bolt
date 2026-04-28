@@ -246,13 +246,13 @@ const CONTEXT_REMINDER_CONFIGS: NameChangeContextReminderConfig[] = [
   },
   {
     id: 'reminder-out-of-state-proof-grounding',
-    label: 'Ground the out-of-state certificate reference fields before downstream filing',
+    label: 'Ground the out-of-state certificate county, number, and issuing authority before downstream filing',
     standardOffsetDays: 1,
     expeditedOffsetDays: 0,
     standardUrgency: 'high',
     expeditedUrgency: 'high',
     dependsOnStepId: 'eligibility-proof',
-    reason: 'Out-of-state marriage follow-through should pause until the certificate county and certificate number are grounded from the reviewed proof set.',
+    reason: 'Out-of-state marriage follow-through should pause until the certificate county, certificate number, and issuing authority are grounded from the reviewed proof set.',
     includeWhen: (plan) => Boolean(plan.summary.edgeCaseGuidance?.some((item) => item.id === 'edge-out-of-state-proof')),
   },
   {

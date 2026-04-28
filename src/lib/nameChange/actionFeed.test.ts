@@ -1889,7 +1889,7 @@ describe('name change action feed', () => {
       }),
       makeReminderAttention({
         reminderKey: 'reminder-out-of-state-proof-grounding',
-        label: 'Ground the out-of-state certificate reference fields before downstream filing',
+        label: 'Ground the out-of-state certificate county, number, and issuing authority before downstream filing',
       }),
     ]);
 

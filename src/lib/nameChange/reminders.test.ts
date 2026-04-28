@@ -427,7 +427,7 @@ describe('name change reminder suggestions', () => {
     });
 
     expect(reminders.find((reminder) => reminder.id === 'reminder-out-of-state-proof-grounding')).toMatchObject({
-      label: 'Ground the out-of-state certificate reference fields before downstream filing',
+      label: 'Ground the out-of-state certificate county, number, and issuing authority before downstream filing',
       dependsOnStepId: 'eligibility-proof',
       urgency: 'high',
       suggestedOffsetDays: 1,
