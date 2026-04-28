@@ -118,6 +118,41 @@ describe('name change passport execution snapshot', () => {
     });
   });
 
+  it('holds first-passport cases on an eligibility review branch instead of marking the path clear', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'birth_certificate',
+        display_name: 'Birth certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+    const profile = makeCase({ has_us_passport: false, passport_needs_update: true });
+    const basePlan = buildNameChangePlan({ profile, documents, extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-ssa'
+        ? { ...step, executionStatus: 'in_progress' as const }
+        : step),
+    };
+
+    const snapshot = buildNameChangePassportExecutionSnapshot(profile, documents, [], plan);
+    expect(snapshot.ready).toBe(false);
+    expect(snapshot.recommendedFormCode).toBe('DS-11');
+    expect(snapshot.blockers).toContain('Passport follow-through is on a first-passport branch, so confirm DS-11 eligibility and supporting proof before treating it like a standard update path.');
+    expect(snapshot.checklist.find((item) => item.key === 'passport-eligibility-path')).toMatchObject({ status: 'attention' });
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'review',
+      label: 'Confirm first-passport eligibility path',
+    });
+  });
+
   it('blocks passport execution when travel is booked soon but no travel identity support is in intake', () => {
     const documents: NameChangeDocumentInput[] = [
       {

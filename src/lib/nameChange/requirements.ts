@@ -384,12 +384,18 @@ export function evaluateNameChangeRequirements(
       label: 'Passport eligibility path is clear',
       stage: 'institutional',
       status: canonicalCase.identity.passportNeedsUpdate
-        ? (canonicalCase.identity.isUsCitizen ? 'satisfied' : 'missing')
+        ? (!canonicalCase.identity.isUsCitizen
+          ? 'missing'
+          : canonicalCase.identity.hasUsPassport
+            ? 'satisfied'
+            : 'attention')
         : 'satisfied',
       reason: canonicalCase.identity.passportNeedsUpdate
-        ? (canonicalCase.identity.isUsCitizen
-          ? 'Current modeled passport path matches a U.S.-citizen passport update flow.'
-          : 'Current passport follow-through is not modeled for non-citizen or passport-ineligible cases yet.')
+        ? (!canonicalCase.identity.isUsCitizen
+          ? 'Current passport follow-through is not modeled for non-citizen or passport-ineligible cases yet.'
+          : canonicalCase.identity.hasUsPassport
+            ? 'Current modeled passport path matches a U.S.-citizen passport update flow.'
+            : 'Passport follow-through is on a first-passport branch, so confirm DS-11 eligibility and supporting proof before treating it like a standard update path.')
         : 'No passport eligibility path review is currently needed.',
     },
     {

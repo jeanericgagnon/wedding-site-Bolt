@@ -170,6 +170,46 @@ describe('name change TSA execution snapshot', () => {
     expect(snapshot.blockers).toContain('Current passport follow-through is not modeled for non-citizen or passport-ineligible cases yet.');
   });
 
+  it('blocks TSA update on first-passport travel cases until the DS-11 branch is confirmed', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+      {
+        document_kind: 'birth_certificate',
+        display_name: 'Birth certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+    const profile = makeCase({ has_us_passport: false, passport_needs_update: true });
+    const basePlan = buildNameChangePlan({ profile, documents, extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-passport'
+        ? { ...step, executionStatus: 'in_progress' as const }
+        : step),
+    };
+
+    const snapshot = buildNameChangeTsaExecutionSnapshot(profile, documents, [], plan);
+    expect(snapshot.ready).toBe(false);
+    expect(snapshot.blockers).toContain('Passport follow-through is on a first-passport branch, so confirm DS-11 eligibility and supporting proof before treating it like a standard update path.');
+    expect(snapshot.checklist.find((item) => item.key === 'passport-eligibility-path')).toMatchObject({ status: 'attention' });
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'review',
+      label: 'Confirm first-passport eligibility path',
+    });
+  });
+
   it('blocks TSA update when out-of-state marriage handling has no certificate intake support', () => {
     const profile = makeCase({ marriage_state: 'Nevada' });
     const basePlan = buildNameChangePlan({ profile, documents: [], extractedFields: [] });

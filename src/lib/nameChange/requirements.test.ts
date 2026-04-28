@@ -355,6 +355,28 @@ describe('name change requirements skeleton', () => {
     });
   });
 
+  it('marks passport eligibility path attention for first-passport follow-through', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'birth_certificate',
+        display_name: 'Birth certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase({ has_us_passport: false, passport_needs_update: true }),
+      documents,
+      [],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'passport-eligibility-path')).toMatchObject({
+      status: 'attention',
+      reason: 'Passport follow-through is on a first-passport branch, so confirm DS-11 eligibility and supporting proof before treating it like a standard update path.',
+    });
+  });
+
   it('marks launch state alignment missing when the modeled downstream state path is not California', () => {
     const snapshot = evaluateNameChangeRequirements(
       makeCase({ launch_state: 'texas' as never }),

@@ -706,7 +706,7 @@ export function buildNameChangeTargetExecutionSnapshot(
     };
   };
   const buildPassportBranchNextAction = () => {
-    if (targetKey !== 'passport') return null;
+    if (targetKey !== 'passport' && targetKey !== 'tsa') return null;
 
     const citizenshipDependency = sequence.dependencies.find((dependency) => dependency.key === 'citizenship-eligibility' && dependency.status === 'missing');
     if (citizenshipDependency) {
@@ -721,7 +721,9 @@ export function buildNameChangeTargetExecutionSnapshot(
       return {
         category: 'review' as const,
         label: 'Confirm first-passport eligibility path',
-        detail: 'This passport update is really a first-passport branch, so confirm the initial application path and packet before treating it like a standard renewal.',
+        detail: targetKey === 'tsa'
+          ? 'Travel-profile follow-through depends on a first-passport branch, so confirm the initial application path and packet before treating TSA updates like a standard passport-renewal chain.'
+          : 'This passport update is really a first-passport branch, so confirm the initial application path and packet before treating it like a standard renewal.',
       };
     }
 
