@@ -153,6 +153,29 @@ describe('name change passport execution snapshot', () => {
     });
   });
 
+  it('blocks first-passport cases on citizenship-proof intake before the DS-11 branch is treated as grounded', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+    ];
+    const profile = makeCase({ has_us_passport: false, passport_needs_update: true });
+
+    const snapshot = buildNameChangePassportExecutionSnapshot(profile, documents, []);
+    expect(snapshot.ready).toBe(false);
+    expect(snapshot.recommendedFormCode).toBe('DS-11');
+    expect(snapshot.blockers).toContain('First-passport follow-through needs citizenship proof in intake before the DS-11 path can be grounded.');
+    expect(snapshot.checklist.find((item) => item.key === 'passport-eligibility-path')).toMatchObject({ status: 'missing' });
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'document',
+      label: 'Add citizenship proof for first-passport branch',
+      documentKind: 'birth_certificate',
+    });
+  });
+
   it('blocks passport execution when travel is booked soon but no travel identity support is in intake', () => {
     const documents: NameChangeDocumentInput[] = [
       {

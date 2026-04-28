@@ -210,6 +210,41 @@ describe('name change TSA execution snapshot', () => {
     });
   });
 
+  it('routes TSA first-passport travel cases to citizenship-proof intake before relying on the DS-11 branch', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+    const profile = makeCase({ has_us_passport: false, passport_needs_update: true });
+    const basePlan = buildNameChangePlan({ profile, documents, extractedFields: [] });
+    const plan = {
+      ...basePlan,
+      steps: basePlan.steps.map((step) => step.id === 'federal-passport'
+        ? { ...step, executionStatus: 'in_progress' as const }
+        : step),
+    };
+
+    const snapshot = buildNameChangeTsaExecutionSnapshot(profile, documents, [], plan);
+    expect(snapshot.ready).toBe(false);
+    expect(snapshot.blockers).toContain('First-passport follow-through needs citizenship proof in intake before the DS-11 path can be grounded.');
+    expect(snapshot.checklist.find((item) => item.key === 'passport-eligibility-path')).toMatchObject({ status: 'missing' });
+    expect(snapshot.nextAction).toMatchObject({
+      category: 'document',
+      label: 'Add citizenship proof for first-passport branch',
+      documentKind: 'birth_certificate',
+    });
+  });
+
   it('blocks TSA update when out-of-state marriage handling has no certificate intake support', () => {
     const profile = makeCase({ marriage_state: 'Nevada' });
     const basePlan = buildNameChangePlan({ profile, documents: [], extractedFields: [] });

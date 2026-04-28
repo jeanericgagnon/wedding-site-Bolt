@@ -377,6 +377,19 @@ describe('name change requirements skeleton', () => {
     });
   });
 
+  it('marks passport eligibility path missing for first-passport follow-through without citizenship proof intake', () => {
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase({ has_us_passport: false, passport_needs_update: true }),
+      [],
+      [],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'passport-eligibility-path')).toMatchObject({
+      status: 'missing',
+      reason: 'First-passport follow-through needs citizenship proof in intake before the DS-11 path can be grounded.',
+    });
+  });
+
   it('marks launch state alignment missing when the modeled downstream state path is not California', () => {
     const snapshot = evaluateNameChangeRequirements(
       makeCase({ launch_state: 'texas' as never }),

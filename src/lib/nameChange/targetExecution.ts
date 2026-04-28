@@ -717,6 +717,17 @@ export function buildNameChangeTargetExecutionSnapshot(
       };
     }
 
+    const passportEligibilityDependency = sequence.dependencies.find((dependency) => dependency.key === 'passport-eligibility-path' && dependency.status !== 'satisfied');
+
+    if (!profile.has_us_passport && passportEligibilityDependency?.status === 'missing') {
+      return {
+        category: 'document' as const,
+        label: 'Add citizenship proof for first-passport branch',
+        detail: passportEligibilityDependency.reason,
+        documentKind: 'birth_certificate' as const,
+      };
+    }
+
     if (!profile.has_us_passport) {
       return {
         category: 'review' as const,
@@ -727,7 +738,6 @@ export function buildNameChangeTargetExecutionSnapshot(
       };
     }
 
-    const passportEligibilityDependency = sequence.dependencies.find((dependency) => dependency.key === 'passport-eligibility-path' && dependency.status !== 'satisfied');
     if (passportEligibilityDependency) {
       return {
         category: 'review' as const,

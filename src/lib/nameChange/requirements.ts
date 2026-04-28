@@ -388,14 +388,18 @@ export function evaluateNameChangeRequirements(
           ? 'missing'
           : canonicalCase.identity.hasUsPassport
             ? 'satisfied'
-            : 'attention')
+            : canonicalCase.documents.birth_certificate.intakeStatus === 'not_started'
+              ? 'missing'
+              : 'attention')
         : 'satisfied',
       reason: canonicalCase.identity.passportNeedsUpdate
         ? (!canonicalCase.identity.isUsCitizen
           ? 'Current passport follow-through is not modeled for non-citizen or passport-ineligible cases yet.'
           : canonicalCase.identity.hasUsPassport
             ? 'Current modeled passport path matches a U.S.-citizen passport update flow.'
-            : 'Passport follow-through is on a first-passport branch, so confirm DS-11 eligibility and supporting proof before treating it like a standard update path.')
+            : canonicalCase.documents.birth_certificate.intakeStatus === 'not_started'
+              ? 'First-passport follow-through needs citizenship proof in intake before the DS-11 path can be grounded.'
+              : 'Passport follow-through is on a first-passport branch, so confirm DS-11 eligibility and supporting proof before treating it like a standard update path.')
         : 'No passport eligibility path review is currently needed.',
     },
     {
