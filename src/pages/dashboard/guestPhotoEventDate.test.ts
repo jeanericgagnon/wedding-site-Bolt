@@ -11,8 +11,11 @@ describe('guest photo event date guards', () => {
     const fallback = new Date('2026-06-01T12:00:00.000Z');
 
     expect(toValidGuestPhotoEventDateOrNull('not-a-date')).toBeNull();
+    expect(toValidGuestPhotoEventDateOrNull('2027-02-30')).toBeNull();
     expect(formatGuestPhotoEventDate('not-a-date')).toBe('Unknown date');
+    expect(formatGuestPhotoEventDate('2027-02-30')).toBe('Unknown date');
     expect(getSuggestedGuestPhotoWindowStart('not-a-date', fallback)).toBe(fallback);
+    expect(getSuggestedGuestPhotoWindowStart('2027-02-30', fallback)).toBe(fallback);
   });
 
   it('keeps valid event dates truthful for suggested windows', () => {
