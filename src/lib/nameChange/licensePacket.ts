@@ -16,6 +16,7 @@ export const NAME_CHANGE_LICENSE_PACKET_CONTRACT: NameChangeFormContractDefiniti
     { fieldKey: 'licenseHolder.newFirstName', label: 'New first name', sourceTargetField: 'applicant.target_first_name' },
     { fieldKey: 'licenseHolder.newMiddleName', label: 'New middle name', sourceTargetField: 'applicant.target_middle_name', required: false },
     { fieldKey: 'licenseHolder.newLastName', label: 'New last name', sourceTargetField: 'applicant.target_last_name' },
+    { fieldKey: 'legal.marriageCertificateNumber', label: 'Marriage certificate number', sourceTargetField: 'legal.marriage_certificate_number', required: false },
     { fieldKey: 'residence.county', label: 'County', sourceTargetField: 'applicant.county', required: false },
   ],
 };

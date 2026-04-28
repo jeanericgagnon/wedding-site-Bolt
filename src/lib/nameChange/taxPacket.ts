@@ -17,6 +17,7 @@ export const NAME_CHANGE_TAX_PACKET_CONTRACT: NameChangeFormContractDefinition =
     { fieldKey: 'taxpayer.newMiddleName', label: 'New middle name', sourceTargetField: 'applicant.target_middle_name', required: false },
     { fieldKey: 'taxpayer.newLastName', label: 'New last name', sourceTargetField: 'applicant.target_last_name' },
     { fieldKey: 'legal.marriageDate', label: 'Marriage date', sourceTargetField: 'legal.marriage_date', required: false },
+    { fieldKey: 'legal.marriageCertificateNumber', label: 'Marriage certificate number', sourceTargetField: 'legal.marriage_certificate_number', required: false },
     { fieldKey: 'residence.county', label: 'County / state tax jurisdiction context', sourceTargetField: 'applicant.county', required: false },
   ],
 };

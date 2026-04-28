@@ -43,5 +43,10 @@ describe('name change professional license packet snapshot', () => {
     expect(snapshot.fields.find((field) => field.fieldKey === 'licenseHolder.newFirstName')).toMatchObject({ value: 'Alex' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'licenseHolder.newMiddleName')).toMatchObject({ value: 'Marie' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'licenseHolder.newLastName')).toMatchObject({ value: 'Jordan' });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'legal.marriageCertificateNumber')).toMatchObject({
+      value: null,
+      confidence: 'low',
+      required: false,
+    });
   });
 });

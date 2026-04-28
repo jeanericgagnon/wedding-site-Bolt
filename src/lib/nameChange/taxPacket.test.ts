@@ -44,6 +44,7 @@ describe('name change tax packet', () => {
       expect.arrayContaining([
         expect.objectContaining({ fieldKey: 'taxpayer.currentFirstName', value: 'Alex' }),
         expect.objectContaining({ fieldKey: 'taxpayer.newLastName', value: 'Jordan' }),
+        expect.objectContaining({ fieldKey: 'legal.marriageCertificateNumber', value: null, confidence: 'low', required: false }),
         expect.objectContaining({ fieldKey: 'residence.county', value: 'San Diego' }),
       ]),
     );
