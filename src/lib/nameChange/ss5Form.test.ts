@@ -39,10 +39,12 @@ describe('name change SS-5 form snapshot', () => {
   it('builds a structured SS-5 payload from autofill prep values', () => {
     const documents: NameChangeDocumentInput[] = [
       {
+        id: 'marriage-doc',
         document_kind: 'marriage_certificate',
         display_name: 'Certified marriage certificate',
         storage_mode: 'metadata_only',
         intake_status: 'reviewed',
+        issuing_authority: 'San Diego County Clerk',
       },
     ];
     const extractedFields: NameChangeExtractedFieldInput[] = [
@@ -77,6 +79,12 @@ describe('name change SS-5 form snapshot', () => {
       confidence: 'low',
       required: false,
     });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'legal.marriageIssuingAuthority')).toMatchObject({
+      value: 'San Diego County Clerk',
+      source: 'extracted_field',
+      sourceDocumentKind: 'marriage_certificate',
+      required: false,
+    });
     expect(snapshot.summary.ready).toBeGreaterThan(0);
   });
 
@@ -84,5 +92,6 @@ describe('name change SS-5 form snapshot', () => {
     const snapshot = buildNameChangeSs5FormSnapshot(makeCase({ current_first_name: '', current_last_name: '', marriage_date: null }), [], []);
     expect(snapshot.fields.find((field) => field.fieldKey === 'applicant.currentFirstName')).toMatchObject({ value: null, confidence: 'low' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'legal.marriageDate')).toMatchObject({ value: null, confidence: 'low' });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'legal.marriageIssuingAuthority')).toMatchObject({ value: null, confidence: 'low', required: false });
   });
 });

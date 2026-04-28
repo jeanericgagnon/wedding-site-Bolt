@@ -39,10 +39,12 @@ describe('name change DMV form snapshot', () => {
   it('builds a structured DMV payload from autofill prep values', () => {
     const documents: NameChangeDocumentInput[] = [
       {
+        id: 'marriage-doc',
         document_kind: 'marriage_certificate',
         display_name: 'Certified marriage certificate',
         storage_mode: 'metadata_only',
         intake_status: 'reviewed',
+        issuing_authority: 'Orange County Clerk-Recorder',
       },
     ];
     const extractedFields: NameChangeExtractedFieldInput[] = [
@@ -54,6 +56,7 @@ describe('name change DMV form snapshot', () => {
         is_verified: true,
       },
       {
+        document_id: 'marriage-doc',
         field_key: 'county',
         field_label: 'County',
         field_value_masked: 'Orange County',
@@ -80,13 +83,20 @@ describe('name change DMV form snapshot', () => {
       sourceFieldKey: 'spouse_last_name',
     });
     expect(snapshot.fields.find((field) => field.fieldKey === 'applicant.county')).toMatchObject({
-      value: 'San Diego',
-      source: 'canonical_case',
+      value: 'Orange County',
+      source: 'extracted_field',
       sourceFieldKey: 'county',
+      sourceDocumentKind: 'marriage_certificate',
     });
     expect(snapshot.fields.find((field) => field.fieldKey === 'legal.marriageCertificateNumber')).toMatchObject({
       value: null,
       confidence: 'low',
+      required: false,
+    });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'legal.marriageIssuingAuthority')).toMatchObject({
+      value: 'Orange County Clerk-Recorder',
+      source: 'extracted_field',
+      sourceDocumentKind: 'marriage_certificate',
       required: false,
     });
   });
@@ -95,5 +105,6 @@ describe('name change DMV form snapshot', () => {
     const snapshot = buildNameChangeDmvFormSnapshot(makeCase({ county_residence: null, marriage_date: null }), [], []);
     expect(snapshot.fields.find((field) => field.fieldKey === 'applicant.county')).toMatchObject({ value: null, confidence: 'low' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'legal.marriageDate')).toMatchObject({ value: null, confidence: 'low' });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'legal.marriageIssuingAuthority')).toMatchObject({ value: null, confidence: 'low', required: false });
   });
 });

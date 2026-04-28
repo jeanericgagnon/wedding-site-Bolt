@@ -19,6 +19,7 @@ export const NAME_CHANGE_DMV_FORM_CONTRACT: NameChangeFormContractDefinition = {
     { fieldKey: 'applicant.county', label: 'County', sourceTargetField: 'applicant.county' },
     { fieldKey: 'legal.marriageDate', label: 'Marriage date', sourceTargetField: 'legal.marriage_date' },
     { fieldKey: 'legal.marriageCertificateNumber', label: 'Marriage certificate number', sourceTargetField: 'legal.marriage_certificate_number', required: false },
+    { fieldKey: 'legal.marriageIssuingAuthority', label: 'Marriage certificate issuing authority', sourceTargetField: 'legal.marriage_issuing_authority', required: false },
   ],
 };
 
