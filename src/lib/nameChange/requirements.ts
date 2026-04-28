@@ -91,6 +91,12 @@ export const NAME_CHANGE_REQUIREMENT_DEFINITIONS: NameChangeRequirementDefinitio
     stage: 'proof',
     description: 'Structured case truth should not quietly disagree with extracted document values that downstream packets rely on.',
   },
+  {
+    key: 'dual-partner-proof-branching',
+    label: 'Dual-partner proof branching is planned',
+    stage: 'institutional',
+    description: 'When both partners are changing names, downstream packets and completion proof should stay split per partner instead of one shared rollout.',
+  },
 ];
 
 export function evaluateNameChangeRequirements(
@@ -139,6 +145,7 @@ export function evaluateNameChangeRequirements(
   const hasReviewedCourtOrderProof = legalProof.intakeStatus === 'reviewed';
   const hasCurrentMiddleNameInPlay = Boolean(canonicalCase.currentName.middle || canonicalCase.targetName.middle);
   const hasTargetMiddleNameInPlay = Boolean(canonicalCase.targetName.middle || canonicalCase.currentName.middle);
+  const isDualPartnerCase = canonicalCase.lifeContext.bothPartnersChangeName;
   const missingCaseLegalNameFields = [
     !canonicalCase.currentName.first ? 'current first name' : null,
     hasCurrentMiddleNameInPlay && !canonicalCase.currentName.middle ? 'current middle name' : null,
@@ -373,6 +380,21 @@ export function evaluateNameChangeRequirements(
           ? 'Current modeled passport path matches a U.S.-citizen passport update flow.'
           : 'Current passport follow-through is not modeled for non-citizen or passport-ineligible cases yet.')
         : 'No passport eligibility path review is currently needed.',
+    },
+    {
+      key: 'dual-partner-proof-branching',
+      label: 'Dual-partner proof branching is planned',
+      stage: 'institutional',
+      status: !isDualPartnerCase
+        ? 'satisfied'
+        : hasIdentityCoverage
+          ? 'attention'
+          : 'missing',
+      reason: !isDualPartnerCase
+        ? 'Only one partner is currently changing names, so per-partner downstream proof branching is not needed.'
+        : hasIdentityCoverage
+          ? 'Both partners are changing names, so downstream packets, travel follow-through, and completion proof should stay split per partner instead of one shared rollout.'
+          : 'Both partners are changing names, but identity coverage is still too thin to ground separate downstream proof tracks yet.',
     },
   ];
 

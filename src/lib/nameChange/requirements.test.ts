@@ -81,6 +81,7 @@ describe('name change canonical case', () => {
     expect(canonical.documents.current_passport.intakeStatus).toBe('uploaded');
     expect(canonical.documents.current_passport.extractedFieldKeys).toEqual(['issuance_date']);
     expect(canonical.lifeContext.travelBookedSoon).toBe(true);
+    expect(canonical.lifeContext.bothPartnersChangeName).toBe(false);
   });
 });
 
@@ -112,7 +113,7 @@ describe('name change requirements skeleton', () => {
 
     const snapshot = evaluateNameChangeRequirements(makeCase(), documents, []);
     expect(snapshot.summary).toEqual({
-      satisfied: 14,
+      satisfied: 15,
       missing: 0,
       attention: 1,
     });
@@ -251,6 +252,46 @@ describe('name change requirements skeleton', () => {
     expect(snapshot.results.find((result) => result.key === 'legal-proof-document')).toMatchObject({ status: 'missing' });
     expect(snapshot.results.find((result) => result.key === 'identity-document-coverage')).toMatchObject({ status: 'missing' });
     expect(snapshot.results.find((result) => result.key === 'county-context')).toMatchObject({ status: 'missing' });
+  });
+
+  it('flags dual-partner cases for separate downstream proof branching once identity support exists', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'current_passport',
+        display_name: 'Passport',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'passport-•••.pdf',
+        issuing_authority: 'U.S. Department of State',
+        issued_on: '2024-06-01',
+        expires_on: '2034-06-01',
+        extraction_confidence: 0.92,
+      },
+    ];
+
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase({ structured_intake: { spouseLastName: 'Jordan', travelBookedSoon: true, wantsDocumentIntakeHelp: true, bothPartnersChangeName: true } }),
+      documents,
+      [],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'dual-partner-proof-branching')).toMatchObject({
+      status: 'attention',
+      reason: 'Both partners are changing names, so downstream packets, travel follow-through, and completion proof should stay split per partner instead of one shared rollout.',
+    });
+  });
+
+  it('marks dual-partner proof branching missing when separate rollout truth is ungrounded by identity coverage', () => {
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase({ structured_intake: { spouseLastName: 'Jordan', travelBookedSoon: false, wantsDocumentIntakeHelp: true, bothPartnersChangeName: true } }),
+      [],
+      [],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'dual-partner-proof-branching')).toMatchObject({
+      status: 'missing',
+      reason: 'Both partners are changing names, but identity coverage is still too thin to ground separate downstream proof tracks yet.',
+    });
   });
 
   it('escalates passport timing risk to missing when travel is booked soon but travel identity support is missing', () => {

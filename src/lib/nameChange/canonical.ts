@@ -125,6 +125,7 @@ export function buildNameChangeCanonicalCase(
       urgencyLevel: profile.urgency_level,
       employmentStatus: profile.employment_status,
       travelBookedSoon: Boolean(profile.structured_intake.travelBookedSoon),
+      bothPartnersChangeName: Boolean(profile.structured_intake.bothPartnersChangeName),
     },
     legalContext: {
       marriageDate: profile.marriage_date ?? null,

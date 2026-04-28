@@ -327,6 +327,7 @@ export interface NameChangeCanonicalCase {
     urgencyLevel: NameChangeCaseInput['urgency_level'];
     employmentStatus: NameChangeCaseInput['employment_status'];
     travelBookedSoon: boolean;
+    bothPartnersChangeName: boolean;
   };
   legalContext: {
     marriageDate: string | null;
