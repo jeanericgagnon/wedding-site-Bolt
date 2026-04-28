@@ -20,6 +20,7 @@ type RequirementBag = {
   launchStateAlignment: NameChangeRequirementResult | undefined;
   passportTimingRisk: NameChangeRequirementResult | undefined;
   expeditedTravelSequencing: NameChangeRequirementResult | undefined;
+  citizenshipProofIntake: NameChangeRequirementResult | undefined;
   passportEligibilityPath: NameChangeRequirementResult | undefined;
 };
 
@@ -187,6 +188,7 @@ const buildPassportDependencies: NameChangeDependencyRecipe = ({ profile, requir
   },
   buildRequirementDependency(requirements.passportTimingRisk, 'passport-timing-risk', 'Passport timing risk reviewed', false, 'Passport timing risk has not been evaluated.', false, 'review'),
   buildRequirementDependency(requirements.expeditedTravelSequencing, 'expedited-travel-sequencing', 'Expedited travel sequencing ready', false, 'Expedited travel sequencing has not been evaluated.', false, 'review'),
+  buildRequirementDependency(requirements.citizenshipProofIntake, 'citizenship-proof-intake', 'Citizenship proof intake ready for first-passport work', true, 'Citizenship proof intake has not been evaluated.', true, 'document'),
   buildRequirementDependency(requirements.passportEligibilityPath, 'passport-eligibility-path', 'Passport eligibility path is clear', true, 'Passport eligibility path has not been evaluated.', true),
   ...prerequisiteDependencies,
 ];
@@ -272,6 +274,7 @@ const buildTsaDependencies: NameChangeDependencyRecipe = ({ profile, intake, req
   buildRequirementDependency(requirements.identityCoverage, 'identity-document-coverage', 'Identity document coverage', true, 'Identity coverage requirement not evaluated.', false, 'document'),
   buildRequirementDependency(requirements.passportTimingRisk, 'passport-timing-risk', 'Passport timing risk reviewed', false, 'Passport timing risk has not been evaluated.', false, 'review'),
   buildRequirementDependency(requirements.expeditedTravelSequencing, 'expedited-travel-sequencing', 'Expedited travel sequencing ready', false, 'Expedited travel sequencing has not been evaluated.', false, 'review'),
+  buildRequirementDependency(requirements.citizenshipProofIntake, 'citizenship-proof-intake', 'Citizenship proof intake ready for first-passport travel work', true, 'Citizenship proof intake has not been evaluated.', true, 'document'),
   buildRequirementDependency(requirements.passportEligibilityPath, 'passport-eligibility-path', 'Passport eligibility path is clear', true, 'Passport eligibility path has not been evaluated.', true),
   buildDocumentSupportDependency(intake, {
     key: 'travel-profile-support',

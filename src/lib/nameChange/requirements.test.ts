@@ -113,7 +113,7 @@ describe('name change requirements skeleton', () => {
 
     const snapshot = evaluateNameChangeRequirements(makeCase(), documents, []);
     expect(snapshot.summary).toEqual({
-      satisfied: 15,
+      satisfied: 16,
       missing: 0,
       attention: 1,
     });
@@ -387,6 +387,32 @@ describe('name change requirements skeleton', () => {
     expect(snapshot.results.find((result) => result.key === 'passport-eligibility-path')).toMatchObject({
       status: 'missing',
       reason: 'First-passport follow-through needs citizenship proof in intake before the DS-11 path can be grounded.',
+    });
+  });
+
+  it('marks citizenship-proof intake missing for first-passport follow-through without a birth certificate in intake', () => {
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase({ has_us_passport: false, passport_needs_update: true }),
+      [],
+      [],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'citizenship-proof-intake')).toMatchObject({
+      status: 'missing',
+      reason: 'First-passport follow-through needs citizenship proof in intake before the DS-11 branch can actually run.',
+    });
+  });
+
+  it('marks citizenship-proof intake satisfied once first-passport citizenship proof is represented in intake', () => {
+    const snapshot = evaluateNameChangeRequirements(
+      makeCase({ has_us_passport: false, passport_needs_update: true }),
+      [{ document_kind: 'birth_certificate', display_name: 'Birth certificate', storage_mode: 'metadata_only', intake_status: 'uploaded' }],
+      [],
+    );
+
+    expect(snapshot.results.find((result) => result.key === 'citizenship-proof-intake')).toMatchObject({
+      status: 'satisfied',
+      reason: 'Citizenship proof is represented in intake for the modeled first-passport branch.',
     });
   });
 

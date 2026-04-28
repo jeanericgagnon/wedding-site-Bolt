@@ -239,6 +239,38 @@ describe('name change target checklist', () => {
     });
   });
 
+  it('keeps first-passport checklist support missing until citizenship proof exists in intake', () => {
+    const documents: NameChangeDocumentInput[] = [
+      {
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
+      {
+        document_kind: 'current_drivers_license',
+        display_name: 'Driver license',
+        storage_mode: 'metadata_only',
+        intake_status: 'uploaded',
+      },
+    ];
+
+    const checklist = buildNameChangeTargetChecklist(
+      NAME_CHANGE_EXECUTION_TARGETS.passport,
+      makeCase({ has_us_passport: false, passport_needs_update: true }),
+      documents,
+      [],
+    );
+
+    expect(checklist.find((item) => item.key === 'passport-support-doc')).toMatchObject({
+      kind: 'requirement',
+      nextActionCategory: 'document',
+      blocksReady: true,
+      status: 'missing',
+      reason: 'First-passport follow-through needs citizenship proof in intake before the DS-11 branch can actually run.',
+    });
+  });
+
   it('treats target middle name as part of target legal-name readiness when canonical truth includes one', () => {
     const documents: NameChangeDocumentInput[] = [
       {

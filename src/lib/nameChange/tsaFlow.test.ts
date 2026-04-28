@@ -236,6 +236,7 @@ describe('name change TSA execution snapshot', () => {
 
     const snapshot = buildNameChangeTsaExecutionSnapshot(profile, documents, [], plan);
     expect(snapshot.ready).toBe(false);
+    expect(snapshot.blockers).toContain('First-passport follow-through needs citizenship proof in intake before the DS-11 branch can actually run.');
     expect(snapshot.blockers).toContain('First-passport follow-through needs citizenship proof in intake before the DS-11 path can be grounded.');
     expect(snapshot.checklist.find((item) => item.key === 'passport-eligibility-path')).toMatchObject({ status: 'missing' });
     expect(snapshot.nextAction).toMatchObject({

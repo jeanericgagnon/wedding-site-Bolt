@@ -42,6 +42,7 @@ export function buildNameChangeExecutionSequenceSnapshot(
       launchStateAlignment: results.find((result) => result.key === 'launch-state-alignment'),
       passportTimingRisk: results.find((result) => result.key === 'passport-timing-risk'),
       expeditedTravelSequencing: results.find((result) => result.key === 'expedited-travel-sequencing'),
+      citizenshipProofIntake: results.find((result) => result.key === 'citizenship-proof-intake'),
       passportEligibilityPath: results.find((result) => result.key === 'passport-eligibility-path'),
     },
     prerequisiteDependencies,

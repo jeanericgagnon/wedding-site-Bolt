@@ -92,6 +92,12 @@ export const NAME_CHANGE_REQUIREMENT_DEFINITIONS: NameChangeRequirementDefinitio
     description: 'Travel-facing passport timing should be reviewed when passport updates are relevant.',
   },
   {
+    key: 'citizenship-proof-intake',
+    label: 'Citizenship proof is in intake for first-passport work',
+    stage: 'proof',
+    description: 'First-passport follow-through should not act grounded until citizenship proof is actually represented in intake.',
+  },
+  {
     key: 'canonical-extraction-alignment',
     label: 'Canonical vs extracted values aligned',
     stage: 'proof',
@@ -356,6 +362,19 @@ export function evaluateNameChangeRequirements(
           ? 'Travel is already booked and passport updates still need to be sequenced carefully.'
           : 'Travel is already booked, but no current passport or Real ID support is represented in intake yet.'
         : 'No immediate travel-facing passport timing risk is currently flagged.',
+    },
+    {
+      key: 'citizenship-proof-intake',
+      label: 'Citizenship proof is in intake for first-passport work',
+      stage: 'proof',
+      status: canonicalCase.identity.passportNeedsUpdate && canonicalCase.identity.isUsCitizen && !canonicalCase.identity.hasUsPassport
+        ? canonicalCase.documents.birth_certificate.intakeStatus === 'not_started' ? 'missing' : 'satisfied'
+        : 'satisfied',
+      reason: canonicalCase.identity.passportNeedsUpdate && canonicalCase.identity.isUsCitizen && !canonicalCase.identity.hasUsPassport
+        ? canonicalCase.documents.birth_certificate.intakeStatus === 'not_started'
+          ? 'First-passport follow-through needs citizenship proof in intake before the DS-11 branch can actually run.'
+          : 'Citizenship proof is represented in intake for the modeled first-passport branch.'
+        : 'No standalone first-passport citizenship-proof intake requirement is currently needed.',
     },
     {
       key: 'canonical-extraction-alignment',
