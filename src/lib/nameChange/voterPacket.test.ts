@@ -43,5 +43,11 @@ describe('name change voter packet snapshot', () => {
     expect(snapshot.fields.find((field) => field.fieldKey === 'voter.newFirstName')).toMatchObject({ value: 'Alex' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'voter.newMiddleName')).toMatchObject({ value: 'Marie' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'voter.newLastName')).toMatchObject({ value: 'Jordan' });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'legal.marriageDate')).toMatchObject({ value: '2026-04-05' });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'legal.marriageCertificateNumber')).toMatchObject({
+      value: null,
+      confidence: 'low',
+      required: false,
+    });
   });
 });

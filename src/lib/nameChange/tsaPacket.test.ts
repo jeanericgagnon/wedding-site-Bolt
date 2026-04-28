@@ -39,17 +39,34 @@ describe('name change TSA packet snapshot', () => {
   it('builds a structured TSA / travel profile update packet payload', () => {
     const documents: NameChangeDocumentInput[] = [
       {
+        id: 'passport-doc',
         document_kind: 'current_passport',
         display_name: 'Passport',
         storage_mode: 'metadata_only',
         intake_status: 'uploaded',
       },
+      {
+        id: 'marriage-doc',
+        document_kind: 'marriage_certificate',
+        display_name: 'Marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+      },
     ];
     const extractedFields: NameChangeExtractedFieldInput[] = [
       {
+        document_id: 'passport-doc',
         field_key: 'issuance_date',
         field_label: 'Passport issue date',
         field_value_masked: '2024-06-01',
+        source_type: 'document_extract',
+        is_verified: true,
+      },
+      {
+        document_id: 'marriage-doc',
+        field_key: 'certificate_number',
+        field_label: 'Marriage certificate number',
+        field_value_masked: 'MC-2026-7781',
         source_type: 'document_extract',
         is_verified: true,
       },
@@ -60,5 +77,13 @@ describe('name change TSA packet snapshot', () => {
     expect(snapshot.fields.find((field) => field.fieldKey === 'traveler.newFirstName')).toMatchObject({ value: 'Alex' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'traveler.newMiddleName')).toMatchObject({ value: 'Marie' });
     expect(snapshot.fields.find((field) => field.fieldKey === 'traveler.newLastName')).toMatchObject({ value: 'Jordan' });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'legal.marriageDate')).toMatchObject({ value: '2026-04-05' });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'legal.marriageCertificateNumber')).toMatchObject({
+      value: 'MC-2026-7781',
+      source: 'extracted_field',
+      sourceDocumentKind: 'marriage_certificate',
+      sourceFieldKey: 'certificate_number',
+      required: false,
+    });
   });
 });
