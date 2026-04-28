@@ -7,7 +7,7 @@ import {
   hasVerifiedLinkedDocumentFieldValue,
 } from './extractionContract';
 import { NAME_CHANGE_FORM_BUILDERS } from './formRegistry';
-import { buildNameChangeSnapshotBackedExtractedFields } from './intakeDraft';
+import { buildDraftNameChangeDocumentMetadataFromSnapshot, buildNameChangeSnapshotBackedExtractedFields } from './intakeDraft';
 import { buildNameChangeTargetChecklist } from './targetChecklist';
 import { NAME_CHANGE_EXECUTION_TARGETS } from './targets';
 import type {
@@ -24,6 +24,12 @@ function getNameChangeTargetExecutionTimestamp(value: string | null | undefined)
   if (!value) return Number.NEGATIVE_INFINITY;
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? Number.NEGATIVE_INFINITY : date.getTime();
+}
+
+function getDocumentIssuingAuthority(document: NameChangeDocumentInput | undefined) {
+  if (!document) return null;
+  const snapshotMetadata = buildDraftNameChangeDocumentMetadataFromSnapshot(document.extracted_snapshot);
+  return document.issuing_authority?.trim() || snapshotMetadata.issuingAuthority?.trim() || null;
 }
 
 function hasDualPartnerNameChange(profile: NameChangeCaseInput) {
@@ -87,9 +93,9 @@ function getSupportiveExecutionWaitGuidance(snapshot: Pick<NameChangeTargetExecu
   if (!blockingLabel) return undefined;
 
   if (snapshot.targetKey === 'passport') {
-    if (/marriage-certificate county|certificate number/i.test(blockingLabel)) {
+    if (/marriage-certificate county|certificate number|issuing authority/i.test(blockingLabel)) {
       return {
-        doNow: 'Pull the reviewed marriage certificate, issuing county name, and certificate number into one proof note now.',
+        doNow: 'Pull the reviewed marriage certificate, issuing county name, certificate number, and issuing office into one proof note now.',
         whyItHelps: 'That gives the passport packet the exact out-of-state reference details it needs once filing moves.',
         canWait: 'Actual submission can safely wait until the marriage-certificate grounding is complete.',
       };
@@ -207,10 +213,10 @@ function getSupportiveExecutionWaitGuidance(snapshot: Pick<NameChangeTargetExecu
 
   if (
     snapshot.targetKey === 'tsa'
-    && /marriage-certificate county|certificate number/i.test(blockingLabel)
+    && /marriage-certificate county|certificate number|issuing authority/i.test(blockingLabel)
   ) {
     return {
-      doNow: 'Pull the reviewed marriage certificate, issuing county name, and certificate number into one proof note now.',
+      doNow: 'Pull the reviewed marriage certificate, issuing county name, certificate number, and issuing office into one proof note now.',
       whyItHelps: 'That keeps travel, title, and loyalty follow-through aligned once the out-of-state proof details are grounded.',
       canWait: 'Actual submission can safely wait until the marriage-certificate grounding is complete.',
     };
@@ -668,6 +674,7 @@ export function buildNameChangeTargetExecutionSnapshot(
     const hasReviewedMarriageCertificate = marriageCertificateDocuments.some((document) => document.intake_status === 'reviewed');
     const hasVerifiedMarriageCertificateCounty = hasVerifiedLinkedDocumentFieldValue(documents, mergedExtractedFields, 'marriage_certificate', 'county');
     const hasVerifiedMarriageCertificateNumber = hasVerifiedLinkedDocumentFieldValue(documents, mergedExtractedFields, 'marriage_certificate', 'certificate_number');
+    const hasMarriageCertificateIssuingAuthority = marriageCertificateDocuments.some((document) => Boolean(getDocumentIssuingAuthority(document)));
 
     if (groundingDependency.status !== 'missing' && groundingDependency.status !== 'attention') return null;
 
@@ -675,13 +682,21 @@ export function buildNameChangeTargetExecutionSnapshot(
       ? 'Upload marriage certificate'
       : !hasReviewedMarriageCertificate
         ? 'Review marriage certificate'
-        : !hasVerifiedMarriageCertificateCounty && !hasVerifiedMarriageCertificateNumber
-          ? 'Capture marriage-certificate county + certificate number'
-          : !hasVerifiedMarriageCertificateCounty
-            ? 'Capture marriage-certificate county'
-            : !hasVerifiedMarriageCertificateNumber
-              ? 'Capture marriage-certificate certificate number'
-              : 'Review marriage-certificate grounding';
+        : !hasVerifiedMarriageCertificateCounty && !hasVerifiedMarriageCertificateNumber && !hasMarriageCertificateIssuingAuthority
+          ? 'Capture marriage-certificate county + certificate number + issuing authority'
+          : !hasVerifiedMarriageCertificateCounty && !hasVerifiedMarriageCertificateNumber
+            ? 'Capture marriage-certificate county + certificate number'
+            : !hasVerifiedMarriageCertificateCounty && !hasMarriageCertificateIssuingAuthority
+              ? 'Capture marriage-certificate county + issuing authority'
+              : !hasVerifiedMarriageCertificateNumber && !hasMarriageCertificateIssuingAuthority
+                ? 'Capture marriage-certificate certificate number + issuing authority'
+                : !hasVerifiedMarriageCertificateCounty
+                  ? 'Capture marriage-certificate county'
+                  : !hasVerifiedMarriageCertificateNumber
+                    ? 'Capture marriage-certificate certificate number'
+                    : !hasMarriageCertificateIssuingAuthority
+                      ? 'Capture marriage-certificate issuing authority'
+                      : 'Review marriage-certificate grounding';
 
     return {
       category: 'document' as const,

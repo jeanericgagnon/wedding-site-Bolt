@@ -1030,11 +1030,11 @@ describe('name change requirements skeleton', () => {
 
     expect(snapshot.results.find((result) => result.key === 'out-of-state-marriage-certificate-grounding')).toMatchObject({
       status: 'missing',
-      reason: 'Marriage certificate is present, but no grounded county or certificate-number extraction is represented yet for out-of-state follow-through.',
+      reason: 'Marriage certificate is present, but no grounded county, certificate-number extraction, or issuing-authority metadata is represented yet for out-of-state follow-through.',
     });
   });
 
-  it('satisfies out-of-state marriage certificate grounding once county and certificate number are verified on the certificate', () => {
+  it('satisfies out-of-state marriage certificate grounding once county, certificate number, and issuing authority are grounded on the certificate', () => {
     const snapshot = evaluateNameChangeRequirements(
       makeCase({ marriage_state: 'Nevada' }),
       [
@@ -1044,6 +1044,7 @@ describe('name change requirements skeleton', () => {
           display_name: 'Marriage certificate',
           storage_mode: 'metadata_only',
           intake_status: 'reviewed',
+          issuing_authority: 'Clark County Clerk',
         },
       ],
       [
@@ -1068,7 +1069,7 @@ describe('name change requirements skeleton', () => {
 
     expect(snapshot.results.find((result) => result.key === 'out-of-state-marriage-certificate-grounding')).toMatchObject({
       status: 'satisfied',
-      reason: 'Verified marriage-certificate county and certificate-number extraction are present for out-of-state follow-through.',
+      reason: 'Verified marriage-certificate county and certificate-number extraction plus issuing-authority metadata are present for out-of-state follow-through.',
     });
   });
 

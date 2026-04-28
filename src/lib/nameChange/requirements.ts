@@ -1,7 +1,7 @@
 import { buildNameChangeCanonicalCase } from './canonical';
 import { buildNameChangeDocumentIntakeSnapshot } from './documentContract';
 import { buildNameChangeExtractionContractSnapshot, hasAnyLinkedDocumentFieldValue, hasVerifiedLinkedDocumentFieldValue } from './extractionContract';
-import { buildNameChangeSnapshotBackedExtractedFields } from './intakeDraft';
+import { buildDraftNameChangeDocumentMetadataFromSnapshot, buildNameChangeSnapshotBackedExtractedFields } from './intakeDraft';
 import type {
   NameChangeCaseInput,
   NameChangeDocumentInput,
@@ -11,6 +11,12 @@ import type {
   NameChangeRequirementResult,
   NameChangeRequirementSnapshot,
 } from './types';
+
+function getDocumentIssuingAuthority(document: NameChangeDocumentInput | undefined) {
+  if (!document) return null;
+  const snapshotMetadata = buildDraftNameChangeDocumentMetadataFromSnapshot(document.extracted_snapshot);
+  return document.issuing_authority?.trim() || snapshotMetadata.issuingAuthority?.trim() || null;
+}
 
 export const NAME_CHANGE_REQUIREMENT_DEFINITIONS: NameChangeRequirementDefinition[] = [
   {
@@ -136,11 +142,16 @@ export function evaluateNameChangeRequirements(
     && canonicalCase.launchState === 'california'
     && Boolean(canonicalCase.legalContext.marriageState)
     && canonicalCase.legalContext.marriageState !== 'California';
+  const marriageCertificateDocument = documents.find((document) => document.document_kind === 'marriage_certificate');
   const hasAnyOutOfStateMarriageCertificateGrounding = hasAnyLinkedDocumentFieldValue(documents, mergedExtractedFields, 'marriage_certificate', 'certificate_number')
-    || hasAnyLinkedDocumentFieldValue(documents, mergedExtractedFields, 'marriage_certificate', 'county');
+    || hasAnyLinkedDocumentFieldValue(documents, mergedExtractedFields, 'marriage_certificate', 'county')
+    || Boolean(getDocumentIssuingAuthority(marriageCertificateDocument));
   const hasVerifiedOutOfStateMarriageCertificateNumber = hasVerifiedLinkedDocumentFieldValue(documents, mergedExtractedFields, 'marriage_certificate', 'certificate_number');
   const hasVerifiedOutOfStateMarriageCertificateCounty = hasVerifiedLinkedDocumentFieldValue(documents, mergedExtractedFields, 'marriage_certificate', 'county');
-  const hasVerifiedOutOfStateMarriageCertificateGrounding = hasVerifiedOutOfStateMarriageCertificateNumber && hasVerifiedOutOfStateMarriageCertificateCounty;
+  const hasOutOfStateMarriageCertificateIssuingAuthority = Boolean(getDocumentIssuingAuthority(marriageCertificateDocument));
+  const hasVerifiedOutOfStateMarriageCertificateGrounding = hasVerifiedOutOfStateMarriageCertificateNumber
+    && hasVerifiedOutOfStateMarriageCertificateCounty
+    && hasOutOfStateMarriageCertificateIssuingAuthority;
   const legalBasisLabel = canonicalCase.legalBasis === 'court_order' ? 'court-order proof' : legalProofKind.replace(/_/g, ' ');
   const hasReviewedCourtOrderProof = legalProof.intakeStatus === 'reviewed';
   const hasCurrentMiddleNameInPlay = Boolean(canonicalCase.currentName.middle || canonicalCase.targetName.middle);
@@ -245,11 +256,11 @@ export function evaluateNameChangeRequirements(
           ? `Marriage occurred in ${canonicalCase.legalContext.marriageState}, but no marriage certificate is represented in intake for grounded out-of-state certificate follow-through.`
           : hasVerifiedOutOfStateMarriageCertificateGrounding
             ? canonicalCase.documents.marriage_certificate.intakeStatus === 'reviewed'
-              ? 'Verified marriage-certificate county and certificate-number extraction are present for out-of-state follow-through.'
-              : 'Marriage-certificate reference extraction is present, but document review is still incomplete for grounded out-of-state follow-through.'
+              ? 'Verified marriage-certificate county and certificate-number extraction plus issuing-authority metadata are present for out-of-state follow-through.'
+              : 'Marriage-certificate reference grounding is present, but document review is still incomplete for grounded out-of-state follow-through.'
             : hasAnyOutOfStateMarriageCertificateGrounding
-              ? 'Marriage certificate is present, but verified county and certificate-number extraction are still incomplete for out-of-state follow-through.'
-              : 'Marriage certificate is present, but no grounded county or certificate-number extraction is represented yet for out-of-state follow-through.',
+              ? 'Marriage certificate is present, but verified county, certificate-number extraction, and issuing-authority metadata are still incomplete for out-of-state follow-through.'
+              : 'Marriage certificate is present, but no grounded county, certificate-number extraction, or issuing-authority metadata is represented yet for out-of-state follow-through.',
     },
     {
       key: 'legal-basis-path-alignment',
