@@ -44,6 +44,7 @@ describe('name change bank packet snapshot', () => {
         display_name: 'Marriage certificate',
         storage_mode: 'metadata_only',
         intake_status: 'reviewed',
+        issuing_authority: 'Clark County Clerk',
       },
     ];
     const extractedFields: NameChangeExtractedFieldInput[] = [
@@ -68,6 +69,12 @@ describe('name change bank packet snapshot', () => {
       source: 'extracted_field',
       sourceDocumentKind: 'marriage_certificate',
       sourceFieldKey: 'certificate_number',
+      required: false,
+    });
+    expect(snapshot.fields.find((field) => field.fieldKey === 'legal.marriageIssuingAuthority')).toMatchObject({
+      value: 'Clark County Clerk',
+      source: 'extracted_field',
+      sourceDocumentKind: 'marriage_certificate',
       required: false,
     });
   });

@@ -19,6 +19,7 @@ export const NAME_CHANGE_MEDICAL_PACKET_CONTRACT: NameChangeFormContractDefiniti
     { fieldKey: 'residence.county', label: 'County', sourceTargetField: 'applicant.county', required: false },
     { fieldKey: 'legal.marriageDate', label: 'Marriage date', sourceTargetField: 'legal.marriage_date', required: false },
     { fieldKey: 'legal.marriageCertificateNumber', label: 'Marriage certificate number', sourceTargetField: 'legal.marriage_certificate_number', required: false },
+    { fieldKey: 'legal.marriageIssuingAuthority', label: 'Marriage certificate issuing authority', sourceTargetField: 'legal.marriage_issuing_authority', required: false },
   ],
 };
 
