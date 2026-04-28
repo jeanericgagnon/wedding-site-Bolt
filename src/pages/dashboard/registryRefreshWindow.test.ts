@@ -11,10 +11,13 @@ describe('registry refresh window guards', () => {
   it('drops invalid persisted refresh-window timestamps instead of hydrating broken date inputs', () => {
     expect(toDateInputValueOrEmpty('not-a-date')).toBe('');
     expect(toValidDateOrNull('not-a-date')).toBeNull();
+    expect(toDateInputValueOrEmpty('2027-02-30')).toBe('');
+    expect(toValidDateOrNull('2027-02-30')).toBeNull();
   });
 
   it('rejects malformed owner refresh-window drafts instead of throwing Invalid time value', () => {
     expect(parseRefreshWindowEndIso('not-a-date')).toBeUndefined();
+    expect(parseRefreshWindowEndIso('2027-02-30')).toBeUndefined();
   });
 
   it('keeps valid wedding-based refresh windows truthful', () => {
