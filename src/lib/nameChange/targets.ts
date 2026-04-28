@@ -424,7 +424,7 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'courtOrder' | 'ssa' | 'dmv' 
         kind: 'requirement',
         requirementKey: 'out-of-state-marriage-certificate-grounding',
         missingReason: 'Out-of-state marriage certificate grounding has not been evaluated yet.',
-        attentionReason: 'Passport follow-through still needs grounded certificate reference fields from the out-of-state marriage certificate.',
+        attentionReason: 'Passport follow-through still needs grounded county, certificate-number extraction, and issuing-authority metadata from the out-of-state marriage certificate.',
         satisfiedReason: 'Out-of-state marriage certificate grounding is ready for passport prep.',
       },
       {
@@ -1114,7 +1114,7 @@ export const NAME_CHANGE_EXECUTION_TARGETS: Record<'courtOrder' | 'ssa' | 'dmv' 
         kind: 'requirement',
         requirementKey: 'out-of-state-marriage-certificate-grounding',
         missingReason: 'Out-of-state marriage certificate grounding has not been evaluated yet.',
-        attentionReason: 'TSA / travel-profile follow-through still needs grounded certificate reference fields from the out-of-state marriage certificate.',
+        attentionReason: 'TSA / travel-profile follow-through still needs grounded county, certificate-number extraction, and issuing-authority metadata from the out-of-state marriage certificate.',
         satisfiedReason: 'Out-of-state marriage certificate grounding is ready for TSA / travel-profile follow-through.',
       },
       {

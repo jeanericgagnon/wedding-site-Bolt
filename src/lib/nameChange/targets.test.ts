@@ -141,5 +141,21 @@ describe('name change execution targets', () => {
       requiredStepId: 'state-dmv',
       requiredStatuses: ['in_progress', 'complete'],
     });
+    expect(
+      NAME_CHANGE_EXECUTION_TARGETS.passport.checklistSpecs.find(
+        (check) => check.key === 'out-of-state-marriage-certificate-grounding',
+      ),
+    ).toMatchObject({
+      attentionReason:
+        'Passport follow-through still needs grounded county, certificate-number extraction, and issuing-authority metadata from the out-of-state marriage certificate.',
+    });
+    expect(
+      NAME_CHANGE_EXECUTION_TARGETS.tsa.checklistSpecs.find(
+        (check) => check.key === 'out-of-state-marriage-certificate-grounding',
+      ),
+    ).toMatchObject({
+      attentionReason:
+        'TSA / travel-profile follow-through still needs grounded county, certificate-number extraction, and issuing-authority metadata from the out-of-state marriage certificate.',
+    });
   });
 });
