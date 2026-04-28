@@ -51,16 +51,45 @@ function prioritizeDocumentRepairActions(actions: NameChangeGuidedAction[]) {
 function buildExtractionRepairAction(
   document: Pick<NameChangeDocumentRepairQueueItem, 'kind' | 'label'>,
   actionableMissingExtractionFields: NameChangeExtractionFieldKey[],
+  metadataMissing: string[],
 ): NameChangeGuidedAction {
   if (document.kind === 'marriage_certificate') {
     const missingCounty = actionableMissingExtractionFields.includes('county');
     const missingCertificateNumber = actionableMissingExtractionFields.includes('certificate_number');
+    const missingIssuingAuthority = metadataMissing.includes('issuing authority');
+
+    if (missingCounty && missingCertificateNumber && missingIssuingAuthority) {
+      return {
+        category: 'document',
+        label: 'Capture county + certificate number + issuing authority for certified marriage certificate',
+        detail: 'Out-of-state marriage follow-through needs grounded county, certificate-number extraction, and issuing-authority metadata from the marriage certificate.',
+        documentKind: 'marriage_certificate',
+      };
+    }
 
     if (missingCounty && missingCertificateNumber) {
       return {
         category: 'document',
         label: 'Capture county + certificate number for certified marriage certificate',
         detail: 'Out-of-state marriage follow-through needs grounded county and certificate-number extraction from the marriage certificate.',
+        documentKind: 'marriage_certificate',
+      };
+    }
+
+    if (missingCounty && missingIssuingAuthority) {
+      return {
+        category: 'document',
+        label: 'Capture county + issuing authority for certified marriage certificate',
+        detail: 'Out-of-state marriage follow-through still needs grounded county extraction and issuing-authority metadata from the marriage certificate.',
+        documentKind: 'marriage_certificate',
+      };
+    }
+
+    if (missingCertificateNumber && missingIssuingAuthority) {
+      return {
+        category: 'document',
+        label: 'Capture certificate number + issuing authority for certified marriage certificate',
+        detail: 'Out-of-state marriage follow-through still needs grounded certificate-number extraction and issuing-authority metadata from the marriage certificate.',
         documentKind: 'marriage_certificate',
       };
     }
@@ -79,6 +108,15 @@ function buildExtractionRepairAction(
         category: 'document',
         label: 'Capture certificate number for certified marriage certificate',
         detail: 'Out-of-state marriage follow-through still needs grounded certificate-number extraction from the marriage certificate.',
+        documentKind: 'marriage_certificate',
+      };
+    }
+
+    if (missingIssuingAuthority) {
+      return {
+        category: 'document',
+        label: 'Capture issuing authority for certified marriage certificate',
+        detail: 'Out-of-state marriage follow-through still needs issuing-authority metadata from the marriage certificate.',
         documentKind: 'marriage_certificate',
       };
     }
@@ -175,7 +213,13 @@ export function buildNameChangeDocumentRepairQueue(
         });
       }
       if (actionableMissingExtractionFields.length > 0) {
-        nextActions.push(buildExtractionRepairAction(document, actionableMissingExtractionFields as NameChangeExtractionFieldKey[]));
+        nextActions.push(buildExtractionRepairAction(
+          document,
+          actionableMissingExtractionFields as NameChangeExtractionFieldKey[],
+          document.metadataMissing,
+        ));
+      } else if (document.kind === 'marriage_certificate' && document.metadataMissing.includes('issuing authority')) {
+        nextActions.push(buildExtractionRepairAction(document, [], document.metadataMissing));
       }
       if (canonicalConflictCount > 0) {
         const preview = document.canonicalConflicts.slice(0, 2).map((conflict) => conflict.label).join(', ');

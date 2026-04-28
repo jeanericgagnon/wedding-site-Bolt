@@ -304,4 +304,33 @@ describe('name change document repair queue', () => {
       documentKind: 'marriage_certificate',
     });
   });
+
+  it('pulls issuing authority into the top repair action when out-of-state marriage proof is still missing it', () => {
+    const profile = makeCase({ marriage_state: 'Nevada' });
+    const documents: NameChangeDocumentInput[] = [
+      {
+        id: 'doc-marriage',
+        document_kind: 'marriage_certificate',
+        display_name: 'Certified marriage certificate',
+        storage_mode: 'metadata_only',
+        intake_status: 'reviewed',
+        file_name_masked: 'marriage-certificate-•••.pdf',
+        issued_on: '2026-04-05',
+        extraction_confidence: 0.97,
+      },
+    ];
+
+    const intake = buildNameChangeDocumentIntakeSnapshot(profile, documents, []);
+    const queue = buildNameChangeDocumentRepairQueue(intake, [
+      buildNameChangeTargetExecutionSnapshot('passport', profile, documents, []),
+    ]);
+
+    const marriageCertificateItem = queue.find((item) => item.kind === 'marriage_certificate');
+    expect(marriageCertificateItem?.nextActions[0]).toMatchObject({
+      category: 'document',
+      label: 'Capture county + certificate number + issuing authority for certified marriage certificate',
+      detail: 'Out-of-state marriage follow-through needs grounded county, certificate-number extraction, and issuing-authority metadata from the marriage certificate.',
+      documentKind: 'marriage_certificate',
+    });
+  });
 });
