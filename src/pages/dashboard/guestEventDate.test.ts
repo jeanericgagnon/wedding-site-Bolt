@@ -5,7 +5,9 @@ import { formatGuestEventDate, toValidGuestEventDateOrNull } from './guestEventD
 describe('guest event date guards', () => {
   it('drops invalid persisted event dates instead of leaking Invalid Date', () => {
     expect(toValidGuestEventDateOrNull('not-a-date')).toBeNull();
+    expect(toValidGuestEventDateOrNull('2027-02-30')).toBeNull();
     expect(formatGuestEventDate('not-a-date')).toBe('Unknown date');
+    expect(formatGuestEventDate('2027-02-30')).toBe('Unknown date');
   });
 
   it('keeps valid guest event dates truthful', () => {
