@@ -1,8 +1,15 @@
 import { supabase } from '../../../lib/supabase';
 import { resolveActiveSiteForUser } from '../../../lib/activeSite';
 import { isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../../lib/rsvpStatus';
+import { toSafeCsv } from '../../../lib/csvExport';
 
 let hasEventRsvpsTable: boolean | null = null;
+
+const SEATING_EVENT_SELECT = 'id, wedding_site_id, itinerary_event_id, default_table_capacity, notes, created_at' as const;
+const SEATING_TABLE_SELECT = 'id, seating_event_id, table_name, capacity, sort_order, notes, table_shape, layout_width, layout_height, layout_x, layout_y, rotation_deg' as const;
+const SEATING_ASSIGNMENT_SELECT = 'id, seating_event_id, table_id, guest_id, seat_index, is_valid, checked_in_at, checked_in_by' as const;
+const SEATING_ELIGIBLE_GUEST_SELECT = 'id, name, first_name, last_name, email, rsvp_status, household_id, group_name, meal_preference, notes' as const;
+const SEATING_LAYOUT_VERSION_SELECT = 'id, wedding_site_id, seating_event_id, itinerary_event_id, label, tables, assignments, created_by, restored_at, created_at' as const;
 
 export interface ItineraryEvent {
   id: string;
@@ -156,7 +163,7 @@ export async function loadItineraryEvents(weddingSiteId: string): Promise<Itiner
 export async function getOrCreateSeatingEvent(weddingSiteId: string, itineraryEventId: string): Promise<SeatingEvent> {
   const { data: existing } = await supabase
     .from('seating_events')
-    .select('*')
+    .select(SEATING_EVENT_SELECT)
     .eq('wedding_site_id', weddingSiteId)
     .eq('itinerary_event_id', itineraryEventId)
     .maybeSingle();
@@ -165,7 +172,7 @@ export async function getOrCreateSeatingEvent(weddingSiteId: string, itineraryEv
   const { data, error } = await supabase
     .from('seating_events')
     .insert({ wedding_site_id: weddingSiteId, itinerary_event_id: itineraryEventId })
-    .select()
+    .select(SEATING_EVENT_SELECT)
     .single();
   if (error) throw error;
   return data as SeatingEvent;
@@ -182,7 +189,7 @@ export async function updateSeatingEvent(id: string, updates: Partial<SeatingEve
 export async function loadTables(seatingEventId: string): Promise<SeatingTable[]> {
   const { data, error } = await supabase
     .from('seating_tables')
-    .select('*')
+    .select(SEATING_TABLE_SELECT)
     .eq('seating_event_id', seatingEventId)
     .order('sort_order', { ascending: true });
   if (error) throw error;
@@ -193,7 +200,7 @@ export async function createTable(table: Partial<SeatingTable>): Promise<Seating
   const { data, error } = await supabase
     .from('seating_tables')
     .insert(table)
-    .select()
+    .select(SEATING_TABLE_SELECT)
     .single();
   if (error) throw error;
   return data as SeatingTable;
@@ -215,7 +222,7 @@ export async function deleteTable(id: string): Promise<void> {
 export async function loadAssignments(seatingEventId: string): Promise<SeatingAssignment[]> {
   const { data, error } = await supabase
     .from('seating_assignments')
-    .select('*')
+    .select(SEATING_ASSIGNMENT_SELECT)
     .eq('seating_event_id', seatingEventId);
   if (error) throw error;
   return (data ?? []) as SeatingAssignment[];
@@ -239,7 +246,7 @@ export async function assignGuestToTable(
       .from('seating_assignments')
       .update({ table_id: tableId, seat_index: seatIndex ?? null, is_valid: true, updated_at: new Date().toISOString() })
       .eq('id', existing.id)
-      .select()
+      .select(SEATING_ASSIGNMENT_SELECT)
       .single();
     if (error) throw error;
     return data as SeatingAssignment;
@@ -248,7 +255,7 @@ export async function assignGuestToTable(
   const { data, error } = await supabase
     .from('seating_assignments')
     .insert({ seating_event_id: seatingEventId, table_id: tableId, guest_id: guestId, seat_index: seatIndex ?? null })
-    .select()
+    .select(SEATING_ASSIGNMENT_SELECT)
     .single();
   if (error) throw error;
   return data as SeatingAssignment;
@@ -295,7 +302,7 @@ export async function getEligibleGuests(
 ): Promise<EligibleGuest[]> {
   const { data: allGuests, error } = await supabase
     .from('guests')
-    .select('*')
+    .select(SEATING_ELIGIBLE_GUEST_SELECT)
     .eq('wedding_site_id', weddingSiteId);
   if (error) throw error;
   if (!allGuests) return [];
@@ -359,11 +366,11 @@ export async function getEligibleGuests(
       is_attending: isAttending,
       is_invited_to_event: hasEventInvitations ? isInvitedToEvent : true,
       event_rsvp_attending: hasEventInvitations ? (eventRsvp ?? null) : undefined,
-      meal_choice: (g.meal_choice as string | null) ?? null,
+      meal_choice: null,
       meal_preference: (g.meal_preference as string | null) ?? null,
-      dietary_restrictions: (g.dietary_restrictions as string | null) ?? null,
-      dietary_notes: (g.dietary_notes as string | null) ?? null,
-      allergies: (g.allergies as string | null) ?? null,
+      dietary_restrictions: null,
+      dietary_notes: null,
+      allergies: null,
       notes: (g.notes as string | null) ?? null,
     };
   });
@@ -382,7 +389,7 @@ export async function getEventCounters(
 export async function loadSeatingVersions(seatingEventId: string): Promise<SeatingLayoutVersion[]> {
   const { data, error } = await supabase
     .from('seating_layout_versions')
-    .select('*')
+    .select(SEATING_LAYOUT_VERSION_SELECT)
     .eq('seating_event_id', seatingEventId)
     .order('created_at', { ascending: false })
     .limit(12);
@@ -410,7 +417,7 @@ export async function createSeatingVersion(input: {
       assignments: input.assignments,
       created_by: user?.id ?? null,
     })
-    .select()
+    .select(SEATING_LAYOUT_VERSION_SELECT)
     .single();
   if (error) throw error;
   return data as SeatingLayoutVersion;
@@ -443,7 +450,7 @@ export async function autoCreateTables(
   const { data, error } = await supabase
     .from('seating_tables')
     .insert(tables)
-    .select();
+    .select(SEATING_TABLE_SELECT);
   if (error) throw error;
   return (data ?? []) as SeatingTable[];
 }
@@ -539,7 +546,7 @@ export async function autoSeatGuests(
   const { data, error } = await supabase
     .from('seating_assignments')
     .upsert(assignments, { onConflict: 'seating_event_id,guest_id' })
-    .select();
+    .select(SEATING_ASSIGNMENT_SELECT);
   if (error) throw error;
   return (data ?? []) as SeatingAssignment[];
 }
@@ -568,7 +575,7 @@ export function exportSeatingCSV(
     ]);
   }
 
-  return rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+  return toSafeCsv(rows);
 }
 
 export function exportPlaceCardsCSV(
@@ -593,7 +600,7 @@ export function exportPlaceCardsCSV(
     ]);
   }
 
-  return rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+  return toSafeCsv(rows);
 }
 
 export function downloadCSV(content: string, filename: string) {

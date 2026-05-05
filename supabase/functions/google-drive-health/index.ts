@@ -44,6 +44,7 @@ async function refreshAccessToken(refreshToken: string) {
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
+  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   try {
     const authHeader = req.headers.get("Authorization");
@@ -115,7 +116,7 @@ Deno.serve(async (req: Request) => {
       message: refreshed ? "Drive token refreshed and healthy." : "Drive connection healthy.",
     });
   } catch (err) {
-    console.error("GOOGLE_DRIVE_HEALTH_CHECK_FAILED", err);
+    console.error("GOOGLE_DRIVE_HEALTH_CHECK_FAILED", { reason: "DRIVE_HEALTH_CHECK_FAILED" });
     return json({
       connected: true,
       healthy: false,

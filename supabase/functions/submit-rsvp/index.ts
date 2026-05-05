@@ -28,6 +28,9 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
+  if (req.method !== "POST") {
+    return json({ error: "Method not allowed" }, 405);
+  }
 
   try {
     const adminClient = createClient(
@@ -274,7 +277,7 @@ Deno.serve(async (req: Request) => {
         : null,
     });
   } catch (err) {
-    console.error("SUBMIT_RSVP_UNEXPECTED_FAILED", err);
+    console.error("SUBMIT_RSVP_UNEXPECTED_FAILED", { reason: "UNEXPECTED_RSVP_SUBMIT_FAILURE" });
     return json({ error: "Could not submit this RSVP. Please try again." }, 500);
   }
 });

@@ -667,7 +667,7 @@ Deno.serve(async (req: Request) => {
     });
   } catch (err) {
     console.error("ONBOARDING_AI_ORCHESTRATE_UNEXPECTED_FAILED", {
-      message: err instanceof Error ? err.message : String(err ?? "unknown error"),
+      reason: "UNEXPECTED_ONBOARDING_AI_FAILURE",
     });
     return fail("INTERNAL_ERROR", safeOnboardingAiApiError("INTERNAL_ERROR"), 500);
   }

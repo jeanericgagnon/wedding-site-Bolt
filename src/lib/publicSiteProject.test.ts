@@ -185,6 +185,41 @@ describe('publicSiteProject', () => {
     expect(data?.event.rsvpCallToAction).toBe('Please reply by April 30.');
   });
 
+  it('rebases stale same-day schedule and venue snapshots to canonical row identity', () => {
+    const row = {
+      is_published: true,
+      couple_name_1: 'Maya',
+      couple_name_2: 'Leo',
+      wedding_date: '2027-06-06',
+      venue_name: 'The Maples Estate',
+      wedding_location: 'Hudson Valley, NY',
+      site_json: {
+        ...draftProject,
+        weddingDataSnapshot: {
+          ...liveWeddingData,
+          event: {
+            weddingDateISO: '2027-01-17T23:00:00.000Z',
+          },
+          venues: [{ id: 'venue-1', name: 'Villa Amor', address: 'Sayulita, Mexico' }],
+          schedule: [
+            { id: 's1', label: 'Ceremony', startTimeISO: '2027-01-17T17:00:00.000Z', endTimeISO: '2027-01-17T18:00:00.000Z', venueId: 'venue-1' },
+            { id: 's2', label: 'Reception', startTimeISO: '2027-01-17T19:00:00.000Z', venueId: 'venue-1' },
+          ],
+        },
+      },
+      wedding_data: liveWeddingData,
+    };
+
+    const data = getPublicWeddingData(row);
+    expect(data?.event.weddingDateISO).toBe('2027-06-06T12:00:00.000Z');
+    expect(data?.venues[0]).toMatchObject({ name: 'The Maples Estate', address: 'Hudson Valley, NY' });
+    expect(data?.schedule.map((item) => item.startTimeISO)).toEqual([
+      '2027-06-06T17:00:00.000Z',
+      '2027-06-06T19:00:00.000Z',
+    ]);
+    expect(data?.schedule[0].endTimeISO).toBe('2027-06-06T18:00:00.000Z');
+  });
+
   it('prefers the canonical row wedding date over midnight snapshot timestamps', () => {
     const row = {
       is_published: true,

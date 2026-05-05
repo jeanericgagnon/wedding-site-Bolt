@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { deriveEventCountersFromGuests, deriveGuestEventAttendance, type EligibleGuest, type SeatingAssignment } from './seatingService';
+import { deriveEventCountersFromGuests, deriveGuestEventAttendance, exportPlaceCardsCSV, exportSeatingCSV, type EligibleGuest, type SeatingAssignment, type SeatingTable } from './seatingService';
 
 describe('deriveGuestEventAttendance', () => {
   it('requires an explicit positive event RSVP when event invitations exist', () => {
@@ -223,5 +223,46 @@ describe('deriveEventCountersFromGuests', () => {
       seated: 0,
       unassigned: 1,
     });
+  });
+});
+
+describe('seating CSV exports', () => {
+  it('neutralizes spreadsheet formulas in guest and table fields', () => {
+    const guests: EligibleGuest[] = [
+      {
+        id: 'g1',
+        full_name: '=HYPERLINK("https://bad.example")',
+        email: '+bad@example.com',
+        rsvp_status: 'attending',
+        household_id: null,
+        group_name: null,
+        is_attending: true,
+        is_invited_to_event: true,
+      },
+    ];
+    const tables: SeatingTable[] = [
+      {
+        id: 't1',
+        seating_event_id: 'se1',
+        table_name: '@Head Table',
+        capacity: 8,
+        sort_order: 1,
+        notes: '',
+      },
+    ];
+    const assignments: SeatingAssignment[] = [
+      {
+        id: 'a1',
+        seating_event_id: 'se1',
+        table_id: 't1',
+        guest_id: 'g1',
+        seat_index: 1,
+        is_valid: true,
+      },
+    ];
+
+    expect(exportSeatingCSV(guests, tables, assignments, '-Ceremony')).toContain('"\'=HYPERLINK(""https://bad.example"")"');
+    expect(exportSeatingCSV(guests, tables, assignments, '-Ceremony')).toContain('"\'@Head Table"');
+    expect(exportPlaceCardsCSV(guests, tables, assignments)).toContain('"\'@Head Table"');
   });
 });

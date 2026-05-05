@@ -40,6 +40,18 @@ const toCanonicalRowWeddingDateISO = (value: unknown): string => {
   return date.toISOString().slice(0, 10) === raw ? date.toISOString() : '';
 };
 
+const getIsoDatePart = (value: unknown): string => {
+  const raw = asTrimmedString(value);
+  const match = raw.match(/^(\d{4}-\d{2}-\d{2})/);
+  return match?.[1] ?? '';
+};
+
+const rebaseIsoDatePart = (value: unknown, nextDatePart: string): string | undefined => {
+  const raw = asTrimmedString(value);
+  if (!raw || !nextDatePart || !/^\d{4}-\d{2}-\d{2}/.test(raw)) return typeof value === 'string' ? value : undefined;
+  return `${nextDatePart}${raw.slice(10)}`;
+};
+
 const withCanonicalRowCoupleNames = (data: WeddingDataV1, row: Record<string, unknown>): WeddingDataV1 => {
   const partner1Name = asTrimmedString(row.couple_name_1);
   const partner2Name = asTrimmedString(row.couple_name_2);
@@ -76,8 +88,45 @@ const withCanonicalRowEventData = (data: WeddingDataV1, row: Record<string, unkn
     || asTrimmedString(canonical?.event.weddingDateISO);
   const canonicalHeadline = asTrimmedString(canonical?.event.headline);
   const canonicalRsvpCallToAction = asTrimmedString(canonical?.event.rsvpCallToAction);
-  const hasCanonicalEvent = Boolean(canonicalDate || canonicalHeadline || canonicalRsvpCallToAction);
+  const canonicalVenueName = asTrimmedString(row.venue_name);
+  const canonicalVenueAddress = asTrimmedString(row.wedding_location);
+  const hasCanonicalVenue = Boolean(canonicalVenueName || canonicalVenueAddress);
+  const sourceDatePart = getIsoDatePart(data.event.weddingDateISO ?? data.event.date);
+  const canonicalDatePart = getIsoDatePart(canonicalDate);
+  const scheduleSharesSourceDate = Boolean(sourceDatePart)
+    && data.schedule.length > 0
+    && data.schedule.every((item) => {
+      const startDate = getIsoDatePart(item.startTimeISO);
+      const endDate = getIsoDatePart(item.endTimeISO);
+      return (!startDate || startDate === sourceDatePart) && (!endDate || endDate === sourceDatePart);
+    });
+  const shouldRebaseSchedule = Boolean(canonicalDatePart && sourceDatePart && canonicalDatePart !== sourceDatePart && scheduleSharesSourceDate);
+  const hasCanonicalEvent = Boolean(canonicalDate || canonicalHeadline || canonicalRsvpCallToAction || hasCanonicalVenue || shouldRebaseSchedule);
   if (!hasCanonicalEvent) return data;
+
+  const venues = hasCanonicalVenue
+    ? data.venues.length > 0
+      ? data.venues.map((venue, index) => index === 0
+        ? {
+            ...venue,
+            ...(canonicalVenueName ? { name: canonicalVenueName } : {}),
+            ...(canonicalVenueAddress ? { address: canonicalVenueAddress } : {}),
+          }
+        : venue)
+      : [{
+          id: 'primary',
+          ...(canonicalVenueName ? { name: canonicalVenueName } : {}),
+          ...(canonicalVenueAddress ? { address: canonicalVenueAddress } : {}),
+        }]
+    : data.venues;
+
+  const schedule = shouldRebaseSchedule
+    ? data.schedule.map((item) => ({
+        ...item,
+        startTimeISO: rebaseIsoDatePart(item.startTimeISO, canonicalDatePart),
+        endTimeISO: rebaseIsoDatePart(item.endTimeISO, canonicalDatePart),
+      }))
+    : data.schedule;
 
   return {
     ...data,
@@ -87,6 +136,8 @@ const withCanonicalRowEventData = (data: WeddingDataV1, row: Record<string, unkn
       ...(canonicalDate ? { weddingDateISO: canonicalDate } : {}),
       ...(canonicalRsvpCallToAction ? { rsvpCallToAction: canonicalRsvpCallToAction } : {}),
     },
+    venues,
+    schedule,
   };
 };
 

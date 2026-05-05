@@ -67,11 +67,24 @@ const aiPhotoMigrationCleared = proofLogText.includes('migration_applied_and_rea
 const secureModelProofCleared = proofLogText.includes('V1_AI_SECURE_MODEL_LIVE=1 npm run proof:v1:ai-secure-model`: PASS')
   && proofLogText.includes('17/17 secure model-backed AI checks passed');
 const liveBugFixesPendingDeploy = proofLogText.includes('LIVE_SITEWIDE_BUG_FIXES_PENDING_DEPLOY');
+const strictProductionHardeningP0Open = proofLogText.includes('Local P0 Production-Hardening Access-Control Batch')
+  && (
+    proofLogText.includes('Remaining strict P0 work includes deploy/function-deploy/live proof')
+    || proofLogText.includes('Remaining strict P0 blockers are now live deploy/function proof')
+    || proofLogText.includes('Active strict P0 items are live deploy/function proof')
+  );
 
 const proofBoard = {
   generatedAt: formatPacificTimestamp(),
   purpose: 'Executable map of the current DayOf v1 proof gate.',
-  activeUngatedLaunchBlockers: aiPhotoMigrationCleared ? [] : ['ai-photo-column-privilege-migration-readback'],
+  activeUngatedLaunchBlockers: [
+    ...(!aiPhotoMigrationCleared ? ['ai-photo-column-privilege-migration-readback'] : []),
+    ...(strictProductionHardeningP0Open ? [
+      'strict-p0-production-hardening-live-proof-after-local-access-control-changes',
+      'strict-p0-service-role-rls-live-proof-after-static-disposition',
+      'strict-p0-email-messaging-live-authorization-proof-after-local-queue-lockdown',
+    ] : []),
+  ],
   blockedOrApprovalGatedLaunchItems: [
     ...(liveBugFixesPendingDeploy ? ['approved deploy/postdeploy proof for local live bug-sweep fixes'] : []),
     ...(!secureModelProofCleared ? ['secure-env model-backed AI success/failure/fallback proof without exposing secrets'] : []),

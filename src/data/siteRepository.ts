@@ -8,6 +8,8 @@ export interface SectionReorderItem {
   order: number;
 }
 
+const PERSISTED_SECTION_SELECT = 'id, site_id, type, variant, data, order, visible, schema_version, style_overrides, bindings, created_at, updated_at' as const;
+
 function builderToPersistedSection(s: BuilderSectionInstance, siteId: string): Omit<PersistedSection, 'created_at' | 'updated_at'> {
   return {
     id: s.id,
@@ -43,8 +45,6 @@ export const siteRepository = {
       'wedding_data',
       'layout_config',
       'default_language',
-      'privacy_mode',
-      'hide_from_search',
     ];
     const publicSiteSelect = [...basePublicSiteColumns, 'published_json'].join(',');
     const legacyPublicSiteSelect = [
@@ -82,30 +82,6 @@ export const siteRepository = {
       if (bySiteUrl.data) return bySiteUrl.data as unknown as Record<string, unknown>;
     }
 
-    // Last-pass fallback for legacy rows that stored full URLs with extra path/query/trailing slash.
-    let fuzzy = await supabase
-      .from('wedding_sites')
-      .select(publicSiteSelect)
-      .ilike('site_url', `%${slug}%`)
-      .limit(20);
-
-    if (fuzzy.error?.code === '42703') {
-      fuzzy = await supabase
-        .from('wedding_sites')
-        .select(legacyPublicSiteSelect)
-        .ilike('site_url', `%${slug}%`)
-        .limit(20);
-    }
-
-    if (fuzzy.error) throw fuzzy.error;
-    const match = (fuzzy.data ?? []).find((row) => {
-      const rowRecord = row as unknown as Record<string, unknown>;
-      const siteUrl = typeof rowRecord.site_url === 'string' ? rowRecord.site_url : null;
-      const candidate = normalizePublicSiteSlug(siteUrl);
-      return candidate === slug;
-    });
-    if (match) return match as unknown as Record<string, unknown>;
-
     return null;
   },
 
@@ -128,7 +104,7 @@ export const siteRepository = {
   async fetchSections(siteId: string): Promise<PersistedSection[]> {
     const { data, error } = await supabase
       .from('sections')
-      .select('*')
+      .select(PERSISTED_SECTION_SELECT)
       .eq('site_id', siteId)
       .order('order', { ascending: true });
 
@@ -139,7 +115,7 @@ export const siteRepository = {
   async fetchPublishedSections(siteId: string): Promise<PersistedSection[]> {
     const { data, error } = await supabase
       .from('sections')
-      .select('*')
+      .select(PERSISTED_SECTION_SELECT)
       .eq('site_id', siteId)
       .eq('visible', true)
       .order('order', { ascending: true });
@@ -153,7 +129,7 @@ export const siteRepository = {
     const { data, error } = await supabase
       .from('sections')
       .upsert({ ...rest, updated_at: new Date().toISOString() })
-      .select()
+      .select(PERSISTED_SECTION_SELECT)
       .single();
 
     if (error) throw error;
@@ -234,7 +210,7 @@ export const siteRepository = {
     const { data, error } = await supabase
       .from('sections')
       .insert({ ...section, site_id: siteId, created_at: now, updated_at: now })
-      .select()
+      .select(PERSISTED_SECTION_SELECT)
       .single();
 
     if (error) throw error;

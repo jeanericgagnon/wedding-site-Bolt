@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { enforcePublicSubmissionRateLimit } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,6 +13,40 @@ const json = (data: unknown, status = 200) =>
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+
+const MAX_GOOGLE_DRIVE_UPLOAD_BYTES = 35 * 1024 * 1024;
+const MAX_GOOGLE_DRIVE_UPLOAD_BASE64_CHARS = Math.ceil((MAX_GOOGLE_DRIVE_UPLOAD_BYTES * 4) / 3) + 8;
+const ALLOWED_VAULT_UPLOAD_MIME_PREFIXES = ["image/", "video/", "audio/"];
+
+function sanitizeDriveFileName(value: string) {
+  const withoutControls = Array.from(value)
+    .map((char) => {
+      const code = char.charCodeAt(0);
+      return code < 32 || code === 127 ? " " : char;
+    })
+    .join("");
+  return withoutControls
+    .replace(/[\\/]+/g, "-")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 160) || "vault-upload";
+}
+
+function isAllowedVaultMimeType(value: string) {
+  return (
+    value !== "image/svg+xml" &&
+    ALLOWED_VAULT_UPLOAD_MIME_PREFIXES.some((prefix) => value.startsWith(prefix))
+  );
+}
+
+function estimateBase64Bytes(value: string) {
+  const padding = value.endsWith("==") ? 2 : value.endsWith("=") ? 1 : 0;
+  return Math.floor((value.length * 3) / 4) - padding;
+}
+
+function isLikelyBase64File(value: string) {
+  return value.length > 0 && value.length <= MAX_GOOGLE_DRIVE_UPLOAD_BASE64_CHARS && /^[A-Za-z0-9+/]+={0,2}$/.test(value);
+}
 
 async function refreshAccessToken(refreshToken: string) {
   const clientId = Deno.env.get("GOOGLE_DRIVE_CLIENT_ID");
@@ -81,22 +116,41 @@ async function ensureFolder(accessToken: string, name: string, parentId?: string
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
+  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   try {
     const body = await req.json().catch(() => ({}));
     const siteId = typeof body.siteId === "string" ? body.siteId : null;
     const vaultYear = typeof body.vaultYear === "number" ? body.vaultYear : null;
-    const fileName = typeof body.fileName === "string" ? body.fileName : null;
-    const mimeType = typeof body.mimeType === "string" ? body.mimeType : "application/octet-stream";
-    const base64 = typeof body.base64 === "string" ? body.base64 : null;
+    const fileName = typeof body.fileName === "string" ? sanitizeDriveFileName(body.fileName) : null;
+    const mimeType = typeof body.mimeType === "string" ? body.mimeType.trim().toLowerCase() : "application/octet-stream";
+    const base64 = typeof body.base64 === "string" ? body.base64.trim() : null;
 
     if (!siteId || !vaultYear || !fileName || !base64) {
       return json({ error: "siteId, vaultYear, fileName, and base64 are required." }, 400);
+    }
+    if (!isAllowedVaultMimeType(mimeType)) {
+      return json({ error: "Unsupported file type." }, 400);
+    }
+    if (!isLikelyBase64File(base64) || estimateBase64Bytes(base64) > MAX_GOOGLE_DRIVE_UPLOAD_BYTES) {
+      return json({ error: "File is too large for vault uploads." }, 400);
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const adminClient = createClient(supabaseUrl, serviceRole);
+
+    const rateLimit = await enforcePublicSubmissionRateLimit({
+      admin: adminClient,
+      request: req,
+      scope: "vault_google_drive_upload",
+      subject: `${siteId}:${vaultYear}`,
+      siteId,
+      maxIp: 12,
+      maxSubject: 40,
+      windowMinutes: 10,
+    });
+    if (!rateLimit.ok) return json({ error: rateLimit.message }, rateLimit.status);
 
     // public-safe gate: site must be published and have an enabled vault for this year
     const { data: site } = await adminClient
@@ -171,7 +225,7 @@ Deno.serve(async (req: Request) => {
 
     const uploadJson = await uploadRes.json();
     if (!uploadRes.ok || !uploadJson.id) {
-      console.error("VAULT_UPLOAD_GOOGLE_DRIVE_UPLOAD_FAILED", uploadJson);
+      console.error("VAULT_UPLOAD_GOOGLE_DRIVE_UPLOAD_FAILED", { status: uploadRes.status });
       return json({ error: "Could not upload this file to Google Drive. Please try again." }, 400);
     }
 
@@ -182,7 +236,7 @@ Deno.serve(async (req: Request) => {
       folderId: yearFolderId,
     });
   } catch (err) {
-    console.error("VAULT_UPLOAD_GOOGLE_DRIVE_UNEXPECTED_FAILED", err);
+    console.error("VAULT_UPLOAD_GOOGLE_DRIVE_UNEXPECTED_FAILED", { reason: "UNEXPECTED_VAULT_DRIVE_UPLOAD_FAILURE" });
     return json({ error: "Could not upload this file to Google Drive. Please try again." }, 500);
   }
 });

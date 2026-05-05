@@ -67,6 +67,9 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
+  if (req.method !== "POST") {
+    return json({ error: "Method not allowed" }, 405);
+  }
 
   try {
     const authHeader = req.headers.get("Authorization");
@@ -151,7 +154,7 @@ Deno.serve(async (req: Request) => {
       .eq("user_id", user.id);
 
     if (updateError) {
-      console.error("STRIPE_VERIFY_CHECKOUT_UPDATE_FAILED", updateError);
+      console.error("STRIPE_VERIFY_CHECKOUT_UPDATE_FAILED", { reason: "CHECKOUT_STATUS_UPDATE_FAILED" });
       return json({ error: "Could not confirm payment yet. Please try again." }, 500);
     }
 
@@ -159,7 +162,7 @@ Deno.serve(async (req: Request) => {
 
     return json({ paid: true, session_id: session.id });
   } catch (err) {
-    console.error("STRIPE_VERIFY_CHECKOUT_UNEXPECTED_FAILED", err);
+    console.error("STRIPE_VERIFY_CHECKOUT_UNEXPECTED_FAILED", { reason: "UNEXPECTED_CHECKOUT_VERIFY_FAILURE" });
     return json({ error: "Could not confirm payment yet. Please try again." }, 500);
   }
 });

@@ -1,5 +1,12 @@
 const demoModeRaw = String(import.meta.env.VITE_DEMO_MODE ?? '').trim().toLowerCase();
-export const DEMO_MODE = demoModeRaw === 'true' || demoModeRaw === '1' || demoModeRaw === 'yes';
+const isProductionBuild = import.meta.env.PROD;
+
+export function resolveDemoModeAllowed(raw: unknown, productionBuild: boolean): boolean {
+  const normalized = String(raw ?? '').trim().toLowerCase();
+  return !productionBuild && (normalized === 'true' || normalized === '1' || normalized === 'yes');
+}
+
+export const DEMO_MODE = resolveDemoModeAllowed(demoModeRaw, isProductionBuild);
 
 const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim();
 const supabaseAnon = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim();

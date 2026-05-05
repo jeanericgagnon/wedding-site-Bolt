@@ -67,29 +67,34 @@ export function combineDateAndTime(date?: string, time?: string | null): string 
   return Number.isNaN(dt.getTime()) ? undefined : dt.toISOString();
 }
 
-async function fetchPublicItineraryRows(siteId: string, siteSlug: string): Promise<PublicItineraryRow[]> {
+async function fetchPublicItineraryRows(
+  siteId: string,
+  siteSlug: string,
+  access: { inviteToken?: string | null; passwordSession?: string | null } = {},
+): Promise<PublicItineraryRow[]> {
   const { data: fnData, error: fnError } = await supabase.functions.invoke('public-itinerary-by-slug', {
-    body: { slug: siteSlug },
+    body: {
+      slug: siteSlug,
+      inviteToken: access.inviteToken ?? null,
+      passwordSession: access.passwordSession ?? null,
+    },
   });
 
-  if (!fnError && Array.isArray(fnData?.events) && fnData.events.length > 0) {
+  if (!fnError && Array.isArray(fnData?.events)) {
     return fnData.events as PublicItineraryRow[];
   }
 
-  const { data, error } = await supabase
-    .from('itinerary_events')
-    .select('id,event_name,description,event_date,start_time,end_time,location_name,location_address')
-    .eq('wedding_site_id', siteId)
-    .order('event_date', { ascending: true })
-    .order('start_time', { ascending: true });
-
-  if (error || !Array.isArray(data)) return [];
-  return data as PublicItineraryRow[];
+  return [];
 }
 
-async function hydrateWeddingDataFromItinerary(siteId: string, siteSlug: string, base: WeddingDataV1): Promise<WeddingDataV1> {
+async function hydrateWeddingDataFromItinerary(
+  siteId: string,
+  siteSlug: string,
+  base: WeddingDataV1,
+  access: { inviteToken?: string | null; passwordSession?: string | null } = {},
+): Promise<WeddingDataV1> {
   try {
-    const rows = (await fetchPublicItineraryRows(siteId, siteSlug)).filter((row) => row.is_visible !== false);
+    const rows = (await fetchPublicItineraryRows(siteId, siteSlug, access)).filter((row) => row.is_visible !== false);
     if (rows.length === 0) return base;
 
     const derivedVenues: WeddingDataV1['venues'] = [];
@@ -189,20 +194,21 @@ function hasRegistryBuilderSection(sections: BuilderSectionInstance[]): boolean 
   return sections.some((section) => section.type.trim().toLowerCase().replace(/[^a-z0-9-]/g, '') === 'registry');
 }
 
-async function hasLiveRegistryItems(siteId: string): Promise<boolean> {
+async function hasLiveRegistryItems(
+  siteId: string,
+  access: { inviteToken?: string | null; passwordSession?: string | null } = {},
+): Promise<boolean> {
   try {
     const { data: fnData } = await supabase.functions.invoke('public-registry-items', {
-      body: { wedding_site_id: siteId, limit: 1 },
+      body: {
+        wedding_site_id: siteId,
+        limit: 1,
+        inviteToken: access.inviteToken ?? null,
+        passwordSession: access.passwordSession ?? null,
+      },
     });
     if (Array.isArray(fnData?.items)) return fnData.items.length > 0;
-
-    const { data, error } = await supabase
-      .from('registry_items')
-      .select('id')
-      .eq('wedding_site_id', siteId)
-      .limit(1);
-
-    return !error && Array.isArray(data) && data.length > 0;
+    return false;
   } catch {
     return false;
   }
@@ -442,7 +448,12 @@ const fallbackRegistryInstance: SectionInstance = {
   },
 };
 
-const PageRendererFromDB: React.FC<{ siteId: string; siteSlug: string; weddingData?: WeddingDataV1 | null }> = ({ siteId, siteSlug, weddingData }) => {
+const PageRendererFromDB: React.FC<{
+  siteId: string;
+  siteSlug: string;
+  weddingData?: WeddingDataV1 | null;
+  access?: { inviteToken?: string | null; passwordSession?: string | null };
+}> = ({ siteId, siteSlug, weddingData, access }) => {
   const [sections, setSections] = useState<import('../sections/schemas').PersistedSection[]>([]);
   const [appendRegistry, setAppendRegistry] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -453,13 +464,13 @@ const PageRendererFromDB: React.FC<{ siteId: string; siteSlug: string; weddingDa
       setLoading(true);
       try {
         const loadedSections = await siteRepository.fetchPublishedSections(siteId);
-        const shouldAppendRegistry = !hasRegistryPersistedSection(loadedSections) && await hasLiveRegistryItems(siteId);
+        const shouldAppendRegistry = !hasRegistryPersistedSection(loadedSections) && await hasLiveRegistryItems(siteId, access);
         if (!cancelled) {
           setSections(loadedSections);
           setAppendRegistry(shouldAppendRegistry);
         }
       } catch {
-        const shouldAppendRegistry = await hasLiveRegistryItems(siteId);
+        const shouldAppendRegistry = await hasLiveRegistryItems(siteId, access);
         if (!cancelled) {
           setSections([]);
           setAppendRegistry(shouldAppendRegistry);
@@ -471,7 +482,7 @@ const PageRendererFromDB: React.FC<{ siteId: string; siteSlug: string; weddingDa
 
     loadSections();
     return () => { cancelled = true; };
-  }, [siteId]);
+  }, [access, siteId]);
 
   if (loading) {
     return (
@@ -662,6 +673,7 @@ export const SiteView: React.FC = () => {
 
   const [privacyGate, setPrivacyGate] = useState<PrivacyGateState>('loading');
   const [hideFromSearch, setHideFromSearch] = useState(false);
+  const [publicSubresourceAccess, setPublicSubresourceAccess] = useState<{ inviteToken?: string | null; passwordSession?: string | null }>({});
   const [passwordGateError, setPasswordGateError] = useState<string | null>(null);
   const [passwordGateChecking, setPasswordGateChecking] = useState(false);
   const [privacyUnlockNonce, setPrivacyUnlockNonce] = useState(0);
@@ -720,6 +732,7 @@ export const SiteView: React.FC = () => {
         setBuilderSections(null);
         setUseNewRenderer(false);
         setHideFromSearch(false);
+        setPublicSubresourceAccess({});
       };
 
       setPrivacyGate('loading');
@@ -738,6 +751,7 @@ export const SiteView: React.FC = () => {
         const urlToken = searchParams.get('token');
         const inviteToken = urlToken ?? sessionStorage.getItem(INVITE_TOKEN_KEY);
         const passwordSession = sessionStorage.getItem(PASSWORD_SESSION_KEY);
+        const subresourceAccess = { inviteToken, passwordSession };
         const access = await fetchPublicSiteAccess({
           slug: resolvedSlug,
           inviteToken,
@@ -773,6 +787,7 @@ export const SiteView: React.FC = () => {
         if (urlToken) {
           sessionStorage.setItem(INVITE_TOKEN_KEY, urlToken);
         }
+        setPublicSubresourceAccess(subresourceAccess);
 
         const data = access.site as unknown as Record<string, unknown>;
         setWeddingSiteId(data.id as string);
@@ -830,7 +845,7 @@ export const SiteView: React.FC = () => {
               getPublicWeddingData(renderRow) ?? createEmptyWeddingData()
             )
           );
-          const wData = withSlugDerivedCoupleNames(await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData), resolvedSlug);
+          const wData = withSlugDerivedCoupleNames(await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData, subresourceAccess), resolvedSlug);
           if (isDemoSite && isPublicWeddingDataSparse(wData)) {
             const demoSections = createDemoFallbackSections('modern-luxe');
             if (demoSections.length > 0) {
@@ -857,14 +872,14 @@ export const SiteView: React.FC = () => {
         if (siteJson && siteJson.pages?.length > 0) {
           const homePage = siteJson.pages.find(p => p.id === 'home') ?? siteJson.pages[0];
           const sections = normalizeSectionVariants(homePage.sections.filter(s => s.enabled));
-          const shouldAppendRegistry = await hasLiveRegistryItems(data.id as string);
+          const shouldAppendRegistry = await hasLiveRegistryItems(data.id as string, subresourceAccess);
           const publicSections = appendRegistrySectionWhenNeeded(sections, shouldAppendRegistry);
           const rawWData = normalizeWeddingData(
             rewriteSignedMediaUrlsToPublicDeep(
               getPublicWeddingData(renderRow) ?? createEmptyWeddingData()
             )
           );
-          const wData = withSlugDerivedCoupleNames(await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData), resolvedSlug);
+          const wData = withSlugDerivedCoupleNames(await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData, subresourceAccess), resolvedSlug);
           const sparsePublicData = isPublicWeddingDataSparse(wData);
 
           if (publicSections.length === 0 || (isDemoSite && sparsePublicData)) {
@@ -915,7 +930,7 @@ export const SiteView: React.FC = () => {
             return;
           }
 
-          const wData = withSlugDerivedCoupleNames(await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData), resolvedSlug);
+          const wData = withSlugDerivedCoupleNames(await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData, subresourceAccess), resolvedSlug);
           if (isDemoSite && isPublicWeddingDataSparse(wData)) {
             const demoData = createAlexJordanDemoWeddingData();
             const demoSections = createDemoFallbackSections('modern-luxe');
@@ -1017,10 +1032,10 @@ export const SiteView: React.FC = () => {
 
   if (useNewRenderer && weddingSiteId) {
     return (
-      <SiteViewContext.Provider value={{ weddingSiteId }}>
+      <SiteViewContext.Provider value={{ weddingSiteId, ...publicSubresourceAccess }}>
         <div onErrorCapture={handleImageErrorCapture}>
           <OwnerPreviewBanner />
-          <PageRendererFromDB siteId={weddingSiteId} siteSlug={resolvedSlug ?? ''} weddingData={weddingData} />
+          <PageRendererFromDB siteId={weddingSiteId} siteSlug={resolvedSlug ?? ''} weddingData={weddingData} access={publicSubresourceAccess} />
         </div>
       </SiteViewContext.Provider>
     );
@@ -1028,7 +1043,7 @@ export const SiteView: React.FC = () => {
 
   if (builderSections && builderSections.length > 0 && weddingData) {
     return (
-      <SiteViewContext.Provider value={{ weddingSiteId }}>
+      <SiteViewContext.Provider value={{ weddingSiteId, ...publicSubresourceAccess }}>
         <div className="builder-themed-canvas min-h-screen bg-background" onErrorCapture={handleImageErrorCapture}>
           <OwnerPreviewBanner />
           {builderSections.map(section => (
@@ -1063,7 +1078,7 @@ export const SiteView: React.FC = () => {
   const enabledSections = homePage.sections.filter(section => section.enabled);
 
   return (
-    <SiteViewContext.Provider value={{ weddingSiteId }}>
+    <SiteViewContext.Provider value={{ weddingSiteId, ...publicSubresourceAccess }}>
       <div className="min-h-screen bg-background" onErrorCapture={handleImageErrorCapture}>
         <OwnerPreviewBanner />
         {enabledSections.map((sectionInstance) => {

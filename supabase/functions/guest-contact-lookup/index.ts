@@ -1,13 +1,31 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { enforcePublicSubmissionRateLimit } from "../_shared/rateLimit.ts";
+import { signSessionToken } from "../_shared/signedSession.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const CONTACT_SESSION_TTL_MS = 1000 * 60 * 20;
+
+type ContactSessionPayload = {
+  scope: "guest_contact_update";
+  siteId: string;
+  guestId: string;
+  exp: number;
+};
+
+function normalizeName(value: string) {
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function displayName(guest: { name?: string | null; first_name?: string | null; last_name?: string | null }) {
+  return guest.name || [guest.first_name, guest.last_name].filter(Boolean).join(" ");
+}
 
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), {
@@ -17,17 +35,22 @@ const json = (data: unknown, status = 200) =>
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
+  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   try {
     const body = await req.json().catch(() => ({}));
     const siteRef = String(body.site_ref ?? "").trim();
     const query = String(body.query ?? "").trim();
+    const normalizedQuery = normalizeName(query);
+    const queryParts = normalizedQuery.split(" ").filter(Boolean);
 
-    if (!siteRef || query.length < 2) {
+    if (!siteRef || normalizedQuery.length < 5 || queryParts.length < 2) {
       return json({ matches: [] });
     }
 
-    const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const admin = createClient(supabaseUrl, serviceRole);
 
     const siteQuery = admin
       .from("wedding_sites")
@@ -40,12 +63,43 @@ Deno.serve(async (req: Request) => {
       return json({ matches: [] });
     }
 
-    const { data: guests } = await admin
+    const rateLimit = await enforcePublicSubmissionRateLimit({
+      admin,
+      request: req,
+      scope: "guest_contact_lookup",
+      subject: `${site.id}:${normalizedQuery.slice(0, 80)}`,
+      siteId: site.id,
+      siteSlug: UUID_RE.test(siteRef) ? null : siteRef,
+      maxIp: 20,
+      maxSubject: 4,
+      windowMinutes: 10,
+    });
+    if (!rateLimit.ok) {
+      return json({ error: rateLimit.message }, rateLimit.status);
+    }
+
+    const lastName = queryParts.at(-1) ?? "";
+    const { data: exactNameCandidates } = await admin
       .from("guests")
       .select("id, name, first_name, last_name, household_id")
       .eq("wedding_site_id", site.id)
-      .or(`name.ilike.%${query}%,first_name.ilike.%${query}%,last_name.ilike.%${query}%`)
+      .ilike("name", normalizedQuery)
       .limit(10);
+    const { data: lastNameCandidates } = await admin
+      .from("guests")
+      .select("id, name, first_name, last_name, household_id")
+      .eq("wedding_site_id", site.id)
+      .ilike("last_name", lastName)
+      .limit(25);
+
+    const candidateById = new Map<string, any>();
+    for (const candidate of [...(exactNameCandidates ?? []), ...(lastNameCandidates ?? [])] as any[]) {
+      if (candidate?.id) candidateById.set(candidate.id, candidate);
+    }
+
+    const guests = Array.from(candidateById.values())
+      .filter((guest: any) => normalizeName(displayName(guest)) === normalizedQuery)
+      .slice(0, 5);
 
     const householdIds = Array.from(new Set((guests ?? []).map((g: any) => g.household_id).filter(Boolean)));
     const householdCounts: Record<string, number> = {};
@@ -62,16 +116,20 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    const matches = (guests ?? []).map((g: any) => ({
-      id: g.id,
+    const matches = await Promise.all((guests ?? []).map(async (g: any) => ({
+      contact_session: await signSessionToken<ContactSessionPayload>({
+        scope: "guest_contact_update",
+        siteId: site.id,
+        guestId: g.id,
+        exp: Date.now() + CONTACT_SESSION_TTL_MS,
+      }, serviceRole),
       name: g.name || [g.first_name, g.last_name].filter(Boolean).join(" "),
-      household_id: g.household_id,
       household_size: g.household_id ? (householdCounts[g.household_id] ?? 1) : 1,
-    }));
+    })));
 
     return json({ matches });
   } catch (err) {
-    console.error("GUEST_CONTACT_LOOKUP_UNEXPECTED_FAILED", err);
+    console.error("GUEST_CONTACT_LOOKUP_UNEXPECTED_FAILED", { reason: "UNEXPECTED_GUEST_CONTACT_LOOKUP_FAILURE" });
     return json({ error: "Could not look up guests. Please try again." }, 500);
   }
 });

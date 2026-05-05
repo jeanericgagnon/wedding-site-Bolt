@@ -36,6 +36,7 @@ function safeSetupBootstrapError(code: "SERVER_CONFIG_ERROR" | "SAVE_FAILED" | "
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
+  if (req.method !== "POST") return fail("METHOD_NOT_ALLOWED", "Method not allowed.", 405);
 
   try {
     const authHeader = req.headers.get("Authorization");
@@ -143,13 +144,13 @@ Deno.serve(async (req: Request) => {
 
     const { error: updateErr } = await admin.from("wedding_sites").update(updatePayload).eq("id", site.id);
     if (updateErr) {
-      console.error("SETUP_BOOTSTRAP_SAVE_FAILED", updateErr);
+      console.error("SETUP_BOOTSTRAP_SAVE_FAILED", { reason: "SITE_UPDATE_FAILED" });
       return fail("DB_ERROR", safeSetupBootstrapError("SAVE_FAILED"), 400);
     }
 
     return json({ success: true, weddingSiteId: site.id });
   } catch (err) {
-    console.error("SETUP_BOOTSTRAP_UNEXPECTED_FAILED", err);
+    console.error("SETUP_BOOTSTRAP_UNEXPECTED_FAILED", { reason: "UNEXPECTED_SETUP_BOOTSTRAP_FAILURE" });
     return fail("INTERNAL_ERROR", safeSetupBootstrapError("INTERNAL_ERROR"), 500);
   }
 });

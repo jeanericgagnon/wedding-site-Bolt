@@ -98,18 +98,18 @@ export function groupByStore(items: RegistryItem[]): Array<{ store: string; coun
 }
 
 const RegistryCards: React.FC<SectionComponentProps<RegistryCardsData>> = ({ data }) => {
-  const { weddingSiteId } = useSiteView();
+  const { weddingSiteId, inviteToken, passwordSession } = useSiteView();
   const [liveItems, setLiveItems] = useState<RegistryItem[] | null>(null);
 
   useEffect(() => {
     if (!weddingSiteId) return;
-    publicFetchRegistryItems(weddingSiteId)
+    publicFetchRegistryItems(weddingSiteId, { inviteToken, passwordSession })
       .then((items) => {
         const safeItems = normalizeRegistryStoreGroupItems(Array.isArray(items) ? items : []);
         setLiveItems(safeItems.filter((i) => !i.hide_when_purchased || i.purchase_status !== 'purchased'));
       })
       .catch(() => setLiveItems(null));
-  }, [weddingSiteId]);
+  }, [inviteToken, passwordSession, weddingSiteId]);
 
   const safeLinks = Array.isArray(data.links)
     ? data.links.map(link => ({

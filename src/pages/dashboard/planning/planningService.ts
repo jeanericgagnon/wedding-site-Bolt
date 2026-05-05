@@ -4,13 +4,14 @@ import { resolveActiveSiteForUser } from '../../../lib/activeSite';
 async function insertWithDriftFallback<T extends Record<string, unknown>>(
   table: string,
   payload: T,
-  driftFields: string[]
+  driftFields: string[],
+  select: string,
 ) {
   const mutablePayload: Record<string, unknown> = { ...payload };
   let error: { message?: string } | null = null;
 
   for (let i = 0; i <= driftFields.length; i += 1) {
-    const result = await supabase.from(table).insert(mutablePayload).select().single();
+    const result = await supabase.from(table).insert(mutablePayload).select(select).single();
     error = result.error;
     if (!error) return result.data;
 
@@ -21,6 +22,10 @@ async function insertWithDriftFallback<T extends Record<string, unknown>>(
 
   throw error;
 }
+
+const PLANNING_TASK_SELECT = 'id, wedding_site_id, title, description, category, due_date, status, priority, owner_name, linked_event_id, linked_vendor_id, sort_order, created_at, updated_at' as const;
+const PLANNING_VENDOR_SELECT = 'id, wedding_site_id, vendor_type, name, contact_name, email, phone, website, contract_total, amount_paid, balance_due, next_payment_due, document_url, document_label, notes, created_at, updated_at' as const;
+const PLANNING_BUDGET_ITEM_SELECT = 'id, wedding_site_id, category, item_name, estimated_amount, actual_amount, paid_amount, due_date, vendor_id, notes, created_at, updated_at' as const;
 
 async function updateWithDriftFallback<T extends Record<string, unknown>>(
   table: string,
@@ -121,7 +126,7 @@ export async function getWeddingDate(): Promise<string | null> {
 export async function loadTasks(weddingSiteId: string): Promise<PlanningTask[]> {
   const { data, error } = await supabase
     .from('planning_tasks')
-    .select('*')
+    .select(PLANNING_TASK_SELECT)
     .eq('wedding_site_id', weddingSiteId)
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true });
@@ -133,9 +138,10 @@ export async function createTask(weddingSiteId: string, task: Partial<PlanningTa
   const data = await insertWithDriftFallback(
     'planning_tasks',
     { ...task, wedding_site_id: weddingSiteId },
-    ['category']
+    ['category'],
+    PLANNING_TASK_SELECT,
   );
-  return data as PlanningTask;
+  return data as unknown as PlanningTask;
 }
 
 export async function updateTask(id: string, updates: Partial<PlanningTask>): Promise<void> {
@@ -155,7 +161,7 @@ export async function deleteTask(id: string): Promise<void> {
 export async function loadVendors(weddingSiteId: string): Promise<PlanningVendor[]> {
   const { data, error } = await supabase
     .from('planning_vendors')
-    .select('*')
+    .select(PLANNING_VENDOR_SELECT)
     .eq('wedding_site_id', weddingSiteId)
     .order('name', { ascending: true });
   if (error) throw error;
@@ -166,9 +172,10 @@ export async function createVendor(weddingSiteId: string, vendor: Partial<Planni
   const data = await insertWithDriftFallback(
     'planning_vendors',
     { ...vendor, wedding_site_id: weddingSiteId },
-    ['vendor_type', 'email', 'contract_total', 'balance_due', 'next_payment_due', 'document_url', 'document_label', 'notes', 'phone']
+    ['vendor_type', 'email', 'contract_total', 'balance_due', 'next_payment_due', 'document_url', 'document_label', 'notes', 'phone'],
+    PLANNING_VENDOR_SELECT,
   );
-  return data as PlanningVendor;
+  return data as unknown as PlanningVendor;
 }
 
 export async function updateVendor(id: string, updates: Partial<PlanningVendor>): Promise<void> {
@@ -188,7 +195,7 @@ export async function deleteVendor(id: string): Promise<void> {
 export async function loadBudgetItems(weddingSiteId: string): Promise<PlanningBudgetItem[]> {
   const { data, error } = await supabase
     .from('planning_budget_items')
-    .select('*')
+    .select(PLANNING_BUDGET_ITEM_SELECT)
     .eq('wedding_site_id', weddingSiteId)
     .order('category', { ascending: true })
     .order('item_name', { ascending: true });
@@ -200,9 +207,10 @@ export async function createBudgetItem(weddingSiteId: string, item: Partial<Plan
   const data = await insertWithDriftFallback(
     'planning_budget_items',
     { ...item, wedding_site_id: weddingSiteId },
-    ['estimated_amount', 'actual_amount', 'vendor_id', 'due_date', 'notes']
+    ['estimated_amount', 'actual_amount', 'vendor_id', 'due_date', 'notes'],
+    PLANNING_BUDGET_ITEM_SELECT,
   );
-  return data as PlanningBudgetItem;
+  return data as unknown as PlanningBudgetItem;
 }
 
 export async function updateBudgetItem(id: string, updates: Partial<PlanningBudgetItem>): Promise<void> {

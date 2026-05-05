@@ -1,6 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { buildEventRsvpSyncRows } from "../../../src/lib/eventRsvpSync.ts";
 import { sha256Hex, signSessionToken, verifySessionToken } from "../_shared/signedSession.ts";
 
 const corsHeaders = {
@@ -22,6 +21,7 @@ interface EventLookupPayload {
 interface GuestLookupPayload {
   action: "lookup_guest";
   guestId: string;
+  rsvpSession?: string | null;
 }
 
 interface SubmitPayload {
@@ -64,6 +64,7 @@ interface RsvpSessionPayload {
 
 const RATE_LIMIT_WINDOW_MINUTES = 15;
 const RATE_LIMIT_MAX_ATTEMPTS = 10;
+const LOOKUP_RATE_LIMIT_MAX_ATTEMPTS = 8;
 
 function isMissingEventRsvpTableError(error: unknown) {
   const typed = error as { code?: string; message?: string } | null;
@@ -73,6 +74,66 @@ function isMissingEventRsvpTableError(error: unknown) {
     || message.includes("schema cache")
     || message.includes("does not exist")
     || message.includes("relation");
+}
+
+function normalizeEventName(value: string | null | undefined): string {
+  return (value || "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function isCeremonyEvent(eventName: string | null | undefined): boolean {
+  const normalized = normalizeEventName(eventName);
+  return normalized.includes("ceremony") || normalized.includes("wedding ceremony");
+}
+
+function isReceptionEvent(eventName: string | null | undefined): boolean {
+  const normalized = normalizeEventName(eventName);
+  return normalized.includes("reception") || normalized.includes("cocktail hour") || normalized.includes("dinner and dancing");
+}
+
+function buildEventRsvpSyncRows(params: {
+  invitations: Array<{ event_invitation_id: string; event_name: string | null }>;
+  attending: boolean;
+  attendCeremony: boolean;
+  attendReception: boolean;
+  respondedAt: string;
+}) {
+  const { invitations, attending, attendCeremony, attendReception, respondedAt } = params;
+
+  if (!attending) {
+    return invitations.map((invitation) => ({
+      event_invitation_id: invitation.event_invitation_id,
+      attending: false,
+      responded_at: respondedAt,
+    }));
+  }
+
+  return invitations.map((invitation) => {
+    if (isCeremonyEvent(invitation.event_name)) {
+      return {
+        event_invitation_id: invitation.event_invitation_id,
+        attending: attendCeremony,
+        responded_at: respondedAt,
+      };
+    }
+
+    if (isReceptionEvent(invitation.event_name)) {
+      return {
+        event_invitation_id: invitation.event_invitation_id,
+        attending: attendReception,
+        responded_at: respondedAt,
+      };
+    }
+
+    return {
+      event_invitation_id: invitation.event_invitation_id,
+      attending: true,
+      responded_at: respondedAt,
+    };
+  });
 }
 
 async function hashIp(ip: string): Promise<string> {
@@ -140,6 +201,10 @@ Deno.serve(async (req: Request) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
+  if (req.method !== "POST") {
+    return json({ error: "Method not allowed" }, 405);
+  }
+
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -197,6 +262,39 @@ Deno.serve(async (req: Request) => {
       }
     };
 
+    const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? req.headers.get("x-real-ip") ?? "unknown";
+
+    const enforceRateLimit = async (
+      scope: string,
+      subject: string | null,
+      maxAttempts = RATE_LIMIT_MAX_ATTEMPTS,
+    ) => {
+      const ipHash = await hashIp(`${scope}:${clientIp}`);
+      const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MINUTES * 60 * 1000).toISOString();
+      const { data: existingLimit } = await adminClient
+        .from("rsvp_rate_limit")
+        .select("id, attempts, last_attempt_at")
+        .eq("ip_hash", ipHash)
+        .gte("last_attempt_at", windowStart)
+        .maybeSingle();
+
+      if (existingLimit) {
+        if (existingLimit.attempts >= maxAttempts) {
+          return false;
+        }
+        await adminClient
+          .from("rsvp_rate_limit")
+          .update({ attempts: existingLimit.attempts + 1, last_attempt_at: new Date().toISOString() })
+          .eq("id", existingLimit.id);
+        return true;
+      }
+
+      await adminClient
+        .from("rsvp_rate_limit")
+        .insert({ ip_hash: ipHash, guest_token: (subject ?? scope).slice(0, 16), attempts: 1 });
+      return true;
+    };
+
     let payload: Payload;
     try {
       payload = await req.json();
@@ -209,6 +307,10 @@ Deno.serve(async (req: Request) => {
       if (!searchValue?.trim()) return json({ error: "searchValue is required" }, 400);
 
       const trimmed = searchValue.trim();
+      if (!(await enforceRateLimit("rsvp_lookup", trimmed, LOOKUP_RATE_LIMIT_MAX_ATTEMPTS))) {
+        return json({ error: "Too many lookup attempts. Please wait a few minutes and try again." }, 429);
+      }
+
       const guestSelect = "id, first_name, last_name, name, plus_one_allowed, invited_to_ceremony, invited_to_reception, wedding_site_id, household_id, children_allowed, max_children, max_additional_guests";
       const guestLookupSelect = `${guestSelect}, invite_token`;
 
@@ -292,37 +394,22 @@ Deno.serve(async (req: Request) => {
         return buildLookupSuccess(byToken);
       }
 
-      const lower = trimmed.toLowerCase();
-      const { data: byName } = await adminClient.from("guests").select(guestLookupSelect).or(`name.ilike.%${lower}%,first_name.ilike.%${lower}%,last_name.ilike.%${lower}%`).limit(10);
-      if (!byName || byName.length === 0) return json({ error: "We couldn't find an invitation matching that name or code. Please double-check the spelling or use the invitation code from your email." }, 404);
-
-      if (byName.length === 1) {
-        return buildLookupSuccess(byName[0]);
-      }
-
-      return json({
-        guest: null,
-        existingRsvp: null,
-        guests: byName.map((guest) => sanitizeGuest(guest)),
-        rsvpDeadline: null,
-        rsvpQuestions: [],
-        rsvpMealConfig: { enabled: true, options: ["Chicken", "Beef", "Fish", "Vegetarian", "Vegan"] },
-        householdGuests: [],
-      });
+      return json({ error: "We couldn't verify that invitation. Please use the private RSVP link or code from your invitation." }, 404);
     }
 
     if (payload.action === "lookup_guest") {
-      const { guestId } = payload;
-      if (!guestId?.trim()) return json({ error: "guestId is required" }, 400);
+      const { guestId, rsvpSession } = payload;
+      if (!guestId?.trim() || !rsvpSession?.trim()) {
+        return json({ error: "Please use the private RSVP link or code from your invitation." }, 403);
+      }
+      if (!(await enforceRateLimit("rsvp_lookup_guest", guestId, LOOKUP_RATE_LIMIT_MAX_ATTEMPTS))) {
+        return json({ error: "Too many lookup attempts. Please wait a few minutes and try again." }, 429);
+      }
 
-      const { data: guest } = await adminClient
-        .from("guests")
-        .select("id, first_name, last_name, name, plus_one_allowed, invited_to_ceremony, invited_to_reception, wedding_site_id, household_id, children_allowed, max_children, max_additional_guests, invite_token")
-        .eq("id", guestId.trim())
-        .maybeSingle();
+      const guest = await validateRsvpSession(guestId.trim(), rsvpSession);
 
-      if (!guest?.invite_token) {
-        return json({ error: "We couldn't find that invitation. Please search again." }, 404);
+      if (!guest) {
+        return json({ error: "Please use the private RSVP link or code from your invitation." }, 403);
       }
 
       const fetchRsvpConfig = async (siteId: string): Promise<{ rsvpDeadline: string | null; rsvpQuestions: unknown[]; rsvpMealConfig: { enabled: boolean; options: string[] }; musicPlaylistUrl: string | null }> => {
@@ -385,6 +472,9 @@ Deno.serve(async (req: Request) => {
     if (payload.action === "event_lookup") {
       const { inviteToken } = payload;
       if (!inviteToken?.trim()) return json({ error: "inviteToken is required" }, 400);
+      if (!(await enforceRateLimit("rsvp_event_lookup", inviteToken.trim(), LOOKUP_RATE_LIMIT_MAX_ATTEMPTS))) {
+        return json({ error: "Too many lookup attempts. Please wait a few minutes and try again." }, 429);
+      }
 
       const { data: guest, error: guestErr } = await adminClient
         .from("guests")
@@ -549,16 +639,8 @@ Deno.serve(async (req: Request) => {
       if (!guestId || !rsvpSession) return json({ error: "guestId and rsvpSession are required" }, 400);
       if (typeof attending !== "boolean") return json({ error: "Please indicate whether you will be attending." }, 400);
 
-      const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? req.headers.get("x-real-ip") ?? "unknown";
-      const ipHash = await hashIp(clientIp);
-      const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MINUTES * 60 * 1000).toISOString();
-
-      const { data: existingLimit } = await adminClient.from("rsvp_rate_limit").select("id, attempts, last_attempt_at").eq("ip_hash", ipHash).gte("last_attempt_at", windowStart).maybeSingle();
-      if (existingLimit) {
-        if (existingLimit.attempts >= RATE_LIMIT_MAX_ATTEMPTS) return json({ error: "Too many requests. Please try again later." }, 429);
-        await adminClient.from("rsvp_rate_limit").update({ attempts: existingLimit.attempts + 1, last_attempt_at: new Date().toISOString() }).eq("id", existingLimit.id);
-      } else {
-        await adminClient.from("rsvp_rate_limit").insert({ ip_hash: ipHash, guest_token: guestId.slice(0, 16), attempts: 1 });
+      if (!(await enforceRateLimit("rsvp_submit", guestId))) {
+        return json({ error: "Too many requests. Please try again later." }, 429);
       }
 
       const guest = await validateRsvpSession(guestId, rsvpSession);
@@ -756,7 +838,7 @@ Deno.serve(async (req: Request) => {
 
     return json({ error: "Unknown action" }, 400);
   } catch (err) {
-    console.error("VALIDATE_RSVP_TOKEN_UNEXPECTED_FAILED", err);
+    console.error("VALIDATE_RSVP_TOKEN_UNEXPECTED_FAILED", { reason: "UNEXPECTED_RSVP_TOKEN_VALIDATION_FAILURE" });
     return json({ error: "Could not update this RSVP. Please try again." }, 500);
   }
 });

@@ -4,7 +4,7 @@ import Stripe from "npm:stripe@14";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
@@ -37,6 +37,7 @@ function isAllowedCheckoutRedirect(url: string): boolean {
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
+  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   try {
     if (Deno.env.get("ENABLE_SMS_CREDIT_PURCHASES") !== "true") {
@@ -133,7 +134,7 @@ Deno.serve(async (req: Request) => {
 
     return json({ url: session.url, session_id: session.id });
   } catch (err) {
-    console.error("STRIPE_CREATE_SMS_CREDITS_UNEXPECTED_FAILED", err);
+    console.error("STRIPE_CREATE_SMS_CREDITS_UNEXPECTED_FAILED", { reason: "UNEXPECTED_SMS_CREDITS_CHECKOUT_FAILURE" });
     return json({ error: "Could not start SMS credit checkout. Please try again." }, 500);
   }
 });

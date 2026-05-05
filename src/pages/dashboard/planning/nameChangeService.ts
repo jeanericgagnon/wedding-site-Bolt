@@ -51,6 +51,88 @@ export const defaultNameChangeCaseInput: NameChangeCaseInput = {
   structured_intake: defaultNameChangeStructuredIntake,
 };
 
+const NAME_CHANGE_CASE_SELECT = [
+  'id',
+  'wedding_site_id',
+  'workflow_status',
+  'launch_state',
+  'legal_basis',
+  'current_first_name',
+  'current_middle_name',
+  'current_last_name',
+  'target_first_name',
+  'target_middle_name',
+  'target_last_name',
+  'email',
+  'phone_last4',
+  'county_residence',
+  'marriage_state',
+  'marriage_date',
+  'urgency_level',
+  'has_us_passport',
+  'passport_needs_update',
+  'has_real_id_license',
+  'is_us_citizen',
+  'employment_status',
+  'change_reasons',
+  'structured_intake',
+  'latest_plan_summary',
+  'created_at',
+  'updated_at',
+].join(', ');
+
+const NAME_CHANGE_DOCUMENT_SELECT = [
+  'id',
+  'name_change_case_id',
+  'document_kind',
+  'display_name',
+  'storage_mode',
+  'intake_status',
+  'file_name_masked',
+  'issuing_authority',
+  'issued_on',
+  'expires_on',
+  'extraction_confidence',
+  'extracted_snapshot',
+  'created_at',
+  'updated_at',
+].join(', ');
+
+const NAME_CHANGE_EXTRACTED_FIELD_SELECT = [
+  'id',
+  'name_change_case_id',
+  'document_id',
+  'field_key',
+  'field_label',
+  'field_value_masked',
+  'source_type',
+  'is_verified',
+  'created_at',
+  'updated_at',
+].join(', ');
+
+const NAME_CHANGE_PLAN_SNAPSHOT_SELECT = [
+  'id',
+  'name_change_case_id',
+  'engine_version',
+  'plan_payload',
+  'created_at',
+].join(', ');
+
+const NAME_CHANGE_REMINDER_SELECT = [
+  'id',
+  'name_change_case_id',
+  'reminder_key',
+  'label',
+  'reason',
+  'depends_on_step_id',
+  'suggested_offset_days',
+  'urgency',
+  'status',
+  'created_at',
+  'updated_at',
+].join(', ');
+
 function normalizeText(value: string | null | undefined) {
   return (value ?? '').trim();
 }
@@ -67,6 +149,19 @@ function normalizePhoneLast4(value: string | null | undefined) {
 
 function uniqueStrings(values: string[]) {
   return [...new Set(values.map((value) => normalizeText(value)).filter(Boolean))];
+}
+
+function toPersistedNameChangeReminderRow(reminder: NameChangeReminderInput, caseId: string) {
+  return {
+    name_change_case_id: caseId,
+    reminder_key: reminder.reminder_key,
+    label: reminder.label,
+    reason: reminder.reason,
+    depends_on_step_id: reminder.depends_on_step_id ?? '',
+    suggested_offset_days: reminder.suggested_offset_days ?? 0,
+    urgency: reminder.urgency === 'normal' ? 'medium' : reminder.urgency,
+    status: reminder.status,
+  };
 }
 
 export function normalizeNameChangeStructuredIntake(
@@ -151,7 +246,7 @@ export async function loadNameChangeWorkspace(weddingSiteId: string): Promise<{
   latestSnapshot: NameChangePlanSnapshotRecord | null;
   reminders: NameChangeReminderRecord[];
 }> {
-  const { data: caseRecord } = await supabase.from('name_change_cases').select('*').eq('wedding_site_id', weddingSiteId).maybeSingle();
+  const { data: caseRecord } = await supabase.from('name_change_cases').select(NAME_CHANGE_CASE_SELECT).eq('wedding_site_id', weddingSiteId).maybeSingle();
   const caseId = (caseRecord as NameChangeCaseRecord | null)?.id;
 
   if (!caseId) {
@@ -165,19 +260,19 @@ export async function loadNameChangeWorkspace(weddingSiteId: string): Promise<{
   }
 
   const [{ data: documents }, { data: extractedFields }, { data: snapshots }, remindersResult] = await Promise.all([
-    supabase.from('name_change_documents').select('*').eq('name_change_case_id', caseId).order('created_at', { ascending: true }),
-    supabase.from('name_change_extracted_fields').select('*').eq('name_change_case_id', caseId).order('created_at', { ascending: true }),
-    supabase.from('name_change_plan_snapshots').select('*').eq('name_change_case_id', caseId).order('created_at', { ascending: false }).limit(1),
-    supabase.from('name_change_reminders').select('*').eq('name_change_case_id', caseId).order('suggested_offset_days', { ascending: true }),
+    supabase.from('name_change_documents').select(NAME_CHANGE_DOCUMENT_SELECT).eq('name_change_case_id', caseId).order('created_at', { ascending: true }),
+    supabase.from('name_change_extracted_fields').select(NAME_CHANGE_EXTRACTED_FIELD_SELECT).eq('name_change_case_id', caseId).order('created_at', { ascending: true }),
+    supabase.from('name_change_plan_snapshots').select(NAME_CHANGE_PLAN_SNAPSHOT_SELECT).eq('name_change_case_id', caseId).order('created_at', { ascending: false }).limit(1),
+    supabase.from('name_change_reminders').select(NAME_CHANGE_REMINDER_SELECT).eq('name_change_case_id', caseId).order('suggested_offset_days', { ascending: true }),
   ]);
 
-  const reminders = remindersResult.error ? [] : ((remindersResult.data as NameChangeReminderRecord[] | null) ?? []);
+  const reminders = remindersResult.error ? [] : ((remindersResult.data as unknown as NameChangeReminderRecord[] | null) ?? []);
 
   return {
-    caseRecord: (caseRecord as NameChangeCaseRecord | null) ?? null,
-    documents: (documents as NameChangeDocumentRecord[] | null) ?? [],
-    extractedFields: (extractedFields as NameChangeExtractedFieldRecord[] | null) ?? [],
-    latestSnapshot: ((snapshots as NameChangePlanSnapshotRecord[] | null) ?? [])[0] ?? null,
+    caseRecord: (caseRecord as unknown as NameChangeCaseRecord | null) ?? null,
+    documents: (documents as unknown as NameChangeDocumentRecord[] | null) ?? [],
+    extractedFields: (extractedFields as unknown as NameChangeExtractedFieldRecord[] | null) ?? [],
+    latestSnapshot: ((snapshots as unknown as NameChangePlanSnapshotRecord[] | null) ?? [])[0] ?? null,
     reminders,
   };
 }
@@ -706,11 +801,11 @@ export async function upsertNameChangeCase(weddingSiteId: string, input: NameCha
   const { data, error } = await supabase
     .from('name_change_cases')
     .upsert(payload, { onConflict: 'wedding_site_id' })
-    .select()
+    .select(NAME_CHANGE_CASE_SELECT)
     .single();
 
   if (error) throw error;
-  return data as NameChangeCaseRecord;
+  return data as unknown as NameChangeCaseRecord;
 }
 
 export async function replaceNameChangeDocuments(caseId: string, documents: NameChangeDocumentInput[]): Promise<NameChangeDocumentRecord[]> {
@@ -722,10 +817,10 @@ export async function replaceNameChangeDocuments(caseId: string, documents: Name
   const { data, error } = await supabase
     .from('name_change_documents')
     .insert(normalizedDocuments.map(({ id: _id, ...document }) => ({ ...document, name_change_case_id: caseId })))
-    .select();
+    .select(NAME_CHANGE_DOCUMENT_SELECT);
 
   if (error) throw error;
-  return (data as NameChangeDocumentRecord[] | null) ?? [];
+  return (data as unknown as NameChangeDocumentRecord[] | null) ?? [];
 }
 
 export function remapNameChangeExtractedFieldsToPersistedDocuments(
@@ -766,10 +861,10 @@ export async function replaceNameChangeExtractedFields(caseId: string, fields: N
   const { data, error } = await supabase
     .from('name_change_extracted_fields')
     .insert(normalizedFields.map((field) => ({ ...field, name_change_case_id: caseId, document_id: field.document_id ?? null })))
-    .select();
+    .select(NAME_CHANGE_EXTRACTED_FIELD_SELECT);
 
   if (error) throw error;
-  return (data as NameChangeExtractedFieldRecord[] | null) ?? [];
+  return (data as unknown as NameChangeExtractedFieldRecord[] | null) ?? [];
 }
 
 export async function createNameChangePlanSnapshot(caseId: string, plan: NameChangePlan): Promise<NameChangePlanSnapshotRecord> {
@@ -780,11 +875,11 @@ export async function createNameChangePlanSnapshot(caseId: string, plan: NameCha
       engine_version: NAME_CHANGE_ENGINE_VERSION,
       plan_payload: plan,
     })
-    .select()
+    .select(NAME_CHANGE_PLAN_SNAPSHOT_SELECT)
     .single();
 
   if (error) throw error;
-  return data as NameChangePlanSnapshotRecord;
+  return data as unknown as NameChangePlanSnapshotRecord;
 }
 
 export async function replaceNameChangeReminders(caseId: string, reminders: NameChangeReminderInput[]): Promise<NameChangeReminderRecord[]> {
@@ -795,11 +890,11 @@ export async function replaceNameChangeReminders(caseId: string, reminders: Name
 
   const { data, error } = await supabase
     .from('name_change_reminders')
-    .insert(normalizedReminders.map((reminder) => ({ ...reminder, name_change_case_id: caseId })))
-    .select();
+    .insert(normalizedReminders.map((reminder) => toPersistedNameChangeReminderRow(reminder, caseId)))
+    .select(NAME_CHANGE_REMINDER_SELECT);
 
   if (error) throw error;
-  return (data as NameChangeReminderRecord[] | null) ?? [];
+  return (data as unknown as NameChangeReminderRecord[] | null) ?? [];
 }
 
 export function buildNameChangeWorkspaceBundle(

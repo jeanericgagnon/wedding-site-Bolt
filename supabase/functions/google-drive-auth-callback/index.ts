@@ -31,7 +31,8 @@ Deno.serve(async (req: Request) => {
 
       const oauthErr = url.searchParams.get("error");
       if (oauthErr) {
-        return json({ error: `Google OAuth error: ${oauthErr}` }, 400);
+        console.error("GOOGLE_DRIVE_AUTH_PROVIDER_DECLINED", { reason: "oauth_error" });
+        return json({ error: "Could not connect Google Drive. Please try again." }, 400);
       }
     } else {
       const body = await req.json().catch(() => ({}));
@@ -55,7 +56,7 @@ Deno.serve(async (req: Request) => {
     const googleClientSecret = Deno.env.get("GOOGLE_DRIVE_CLIENT_SECRET");
     const redirectUri = Deno.env.get("GOOGLE_DRIVE_REDIRECT_URI");
     if (!googleClientId || !googleClientSecret || !redirectUri) {
-      return json({ error: "Google Drive OAuth is not configured on server env." }, 500);
+      return json({ error: "Google Drive connection is not ready yet." }, 500);
     }
 
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
@@ -72,7 +73,7 @@ Deno.serve(async (req: Request) => {
 
     const tokenJson = await tokenRes.json();
     if (!tokenRes.ok || !tokenJson.access_token) {
-      console.error("GOOGLE_DRIVE_AUTH_TOKEN_EXCHANGE_FAILED", tokenJson);
+      console.error("GOOGLE_DRIVE_AUTH_TOKEN_EXCHANGE_FAILED", { status: tokenRes.status });
       return json({ error: "Could not connect Google Drive. Please try again." }, 400);
     }
 
@@ -109,7 +110,7 @@ Deno.serve(async (req: Request) => {
 
     return json({ success: true, connected: true });
   } catch (err) {
-    console.error("GOOGLE_DRIVE_AUTH_CALLBACK_UNEXPECTED_FAILED", err);
+    console.error("GOOGLE_DRIVE_AUTH_CALLBACK_UNEXPECTED_FAILED", { reason: "UNEXPECTED_GOOGLE_DRIVE_CALLBACK_FAILURE" });
     return json({ error: "Could not connect Google Drive. Please try again." }, 500);
   }
 });

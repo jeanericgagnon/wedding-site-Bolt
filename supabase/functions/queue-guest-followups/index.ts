@@ -27,7 +27,7 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
     const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!supabaseUrl || !anonKey || !serviceRole) return json({ error: "Supabase not configured" }, 500);
+    if (!supabaseUrl || !anonKey || !serviceRole) return json({ error: "Could not queue follow-ups. Please try again." }, 500);
 
     const authHeader = req.headers.get("Authorization") ?? "";
     const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
@@ -64,7 +64,7 @@ Deno.serve(async (req: Request) => {
         .eq("user_id", user.id)
         .maybeSingle();
       if (collaboratorError) throw collaboratorError;
-      allowed = hasPermissionKey(collaborator?.permissions, "photos") || hasPermissionKey(collaborator?.permissions, "messages");
+      allowed = hasPermissionKey(collaborator?.permissions, "messages");
     }
     if (!allowed) return json({ error: "Forbidden" }, 403);
 
@@ -122,7 +122,7 @@ Deno.serve(async (req: Request) => {
         .single();
 
       if (queueError || !queueRow?.id) {
-        if (queueError) console.error("QUEUE_GUEST_FOLLOWUPS_INSERT_FAILED", queueError);
+        if (queueError) console.error("QUEUE_GUEST_FOLLOWUPS_INSERT_FAILED", { reason: "FOLLOWUP_QUEUE_INSERT_FAILED" });
         failures.push({ id: optin.id, error: "Could not queue this follow-up." });
         continue;
       }
@@ -136,7 +136,7 @@ Deno.serve(async (req: Request) => {
         .eq("id", optin.id);
 
       if (updateError) {
-        console.error("QUEUE_GUEST_FOLLOWUPS_MARK_FAILED", updateError);
+        console.error("QUEUE_GUEST_FOLLOWUPS_MARK_FAILED", { reason: "FOLLOWUP_OPTIN_MARK_FAILED" });
         failures.push({ id: optin.id, error: "Could not mark this follow-up queued." });
         continue;
       }
@@ -146,7 +146,7 @@ Deno.serve(async (req: Request) => {
 
     return json({ queued, scanned: optins?.length ?? 0, failures });
   } catch (error) {
-    console.error("QUEUE_GUEST_FOLLOWUPS_UNEXPECTED_FAILED", error);
+    console.error("QUEUE_GUEST_FOLLOWUPS_UNEXPECTED_FAILED", { reason: "UNEXPECTED_QUEUE_GUEST_FOLLOWUPS_FAILURE" });
     return json({ error: "Could not queue follow-ups. Please try again." }, 500);
   }
 });

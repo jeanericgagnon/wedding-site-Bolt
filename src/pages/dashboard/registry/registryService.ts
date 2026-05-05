@@ -7,6 +7,8 @@ const REGISTRY_SAVE_ERROR_COPY = 'Couldn’t save this gift. Please try again.';
 const REGISTRY_DELETE_ERROR_COPY = 'Couldn’t remove that gift. Please try again.';
 const REGISTRY_PURCHASE_ERROR_COPY = 'Couldn’t update that gift right now. Please try again.';
 
+const REGISTRY_ITEM_SELECT = 'id, wedding_site_id, item_type, item_name, price_label, price_amount, store_name, merchant, item_url, canonical_url, image_url, description, notes, quantity_needed, quantity_purchased, purchaser_name, purchase_status, hide_when_purchased, sort_order, priority, availability, metadata_last_checked_at, metadata_fetch_status, metadata_confidence_score, metadata_source_method, metadata_retailer, previous_price_amount, price_last_changed_at, next_refresh_at, last_auto_refreshed_at, refresh_fail_count, fund_goal_amount, fund_received_amount, fund_venmo_url, fund_paypal_url, fund_zelle_handle, fund_custom_url, fund_custom_label, created_at, updated_at' as const;
+
 function normalizeRegistryItem(item: RegistryItem): RegistryItem {
   const quantityState = sanitizeRegistryQuantityState(item.quantity_purchased, item.quantity_needed);
   return {
@@ -20,7 +22,7 @@ function normalizeRegistryItem(item: RegistryItem): RegistryItem {
 export async function fetchRegistryItems(weddingSiteId: string): Promise<RegistryItem[]> {
   const { data, error } = await supabase
     .from('registry_items')
-    .select('*')
+    .select(REGISTRY_ITEM_SELECT)
     .eq('wedding_site_id', weddingSiteId)
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true });
@@ -55,7 +57,7 @@ export async function createRegistryItem(
       priority: 'medium',
       ...fields,
     })
-    .select()
+    .select(REGISTRY_ITEM_SELECT)
     .single();
 
   if (error) throw new Error(REGISTRY_SAVE_ERROR_COPY);
@@ -70,7 +72,7 @@ export async function updateRegistryItem(
     .from('registry_items')
     .update({ ...fields, updated_at: new Date().toISOString() })
     .eq('id', id)
-    .select()
+    .select(REGISTRY_ITEM_SELECT)
     .single();
 
   if (error) throw new Error(REGISTRY_SAVE_ERROR_COPY);
@@ -142,7 +144,10 @@ export async function fetchUrlPreview(url: string, forceRefresh = false): Promis
   return result;
 }
 
-export async function publicFetchRegistryItems(weddingSiteId: string): Promise<RegistryItem[]> {
+export async function publicFetchRegistryItems(
+  weddingSiteId: string,
+  access: { inviteToken?: string | null; passwordSession?: string | null } = {},
+): Promise<RegistryItem[]> {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
   const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
@@ -155,7 +160,11 @@ export async function publicFetchRegistryItems(weddingSiteId: string): Promise<R
           Apikey: anonKey,
           Authorization: `Bearer ${anonKey}`,
         },
-        body: JSON.stringify({ wedding_site_id: weddingSiteId }),
+        body: JSON.stringify({
+          wedding_site_id: weddingSiteId,
+          inviteToken: access.inviteToken ?? null,
+          passwordSession: access.passwordSession ?? null,
+        }),
       });
 
       if (response.ok) {
@@ -169,7 +178,7 @@ export async function publicFetchRegistryItems(weddingSiteId: string): Promise<R
 
   const { data, error } = await supabase
     .from('registry_items')
-    .select('*')
+    .select(REGISTRY_ITEM_SELECT)
     .eq('wedding_site_id', weddingSiteId)
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true });

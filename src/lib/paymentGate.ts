@@ -1,5 +1,6 @@
 const paymentRaw = import.meta.env.VITE_REQUIRE_PAYMENT;
 const bypassRaw = import.meta.env.VITE_ALLOW_PAYMENT_BYPASS;
+const isProductionBuild = import.meta.env.PROD;
 
 const isEnabled = (raw: unknown, defaultValue: boolean): boolean => {
   if (raw === undefined) return defaultValue;
@@ -9,4 +10,8 @@ const isEnabled = (raw: unknown, defaultValue: boolean): boolean => {
 
 export const isPaymentGateEnabled = (): boolean => isEnabled(paymentRaw, true);
 
-export const isPaymentBypassAllowed = (): boolean => isEnabled(bypassRaw, false);
+export const resolvePaymentBypassAllowed = (raw: unknown, productionBuild: boolean): boolean => (
+  isEnabled(raw, false) && !productionBuild
+);
+
+export const isPaymentBypassAllowed = (): boolean => resolvePaymentBypassAllowed(bypassRaw, isProductionBuild);

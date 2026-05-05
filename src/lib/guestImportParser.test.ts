@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { buildDefaultCsvFieldMap, buildGuestImportPreview, detectCsvDelimiter, GUEST_IMPORT_MAX_ROWS, isCsvNameMappingValid, parseCsvRows, readGuestImportRows } from './guestImportParser';
+import { buildDefaultCsvFieldMap, buildGuestImportPreview, detectCsvDelimiter, GUEST_IMPORT_MAX_ROWS, isCsvNameMappingValid, normalizeImportedInviteToken, parseCsvRows, readGuestImportRows } from './guestImportParser';
 
 const events = [
   { id: 'event-ceremony', event_name: 'Ceremony' },
@@ -89,6 +89,18 @@ describe('guestImportParser', () => {
     expect(fieldMap.plus_one).toBe(-1);
     expect(fieldMap.plus_one_name).toBe(2);
     expect(fieldMap.plus_one_count).toBe(3);
+  });
+
+  it('only imports deliberate invitation links or token columns', () => {
+    const broadTokenMap = buildDefaultCsvFieldMap(['first name', 'last name', 'token']);
+    const inviteLinkMap = buildDefaultCsvFieldMap(['first name', 'last name', 'existing invitation link']);
+    const safeToken = 'inviteToken_1234567890';
+
+    expect(broadTokenMap.invite_token).toBe(-1);
+    expect(inviteLinkMap.invite_token).toBe(2);
+    expect(normalizeImportedInviteToken(`https://dayof.love/rsvp?token=${safeToken}`)).toBe(safeToken);
+    expect(normalizeImportedInviteToken('=HYPERLINK("https://dayof.love/rsvp?token=bad")')).toBe('');
+    expect(normalizeImportedInviteToken('short')).toBe('');
   });
 
   it('builds household-aware previews with plus-one names and event invites', () => {

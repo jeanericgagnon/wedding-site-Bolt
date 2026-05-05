@@ -53,6 +53,7 @@ async function refreshAccessToken(refreshToken: string) {
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
+  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   try {
     const authHeader = req.headers.get("Authorization");
@@ -153,7 +154,7 @@ Deno.serve(async (req: Request) => {
     });
     const fileJson = await fileRes.json();
     if (!fileRes.ok) {
-      console.error("VAULT_RESOLVE_ENTRY_GOOGLE_DRIVE_FAILED", fileJson);
+      console.error("VAULT_RESOLVE_ENTRY_GOOGLE_DRIVE_FAILED", { status: fileRes.status });
       return json({ error: "Could not open this vault attachment. Please try again." }, 400);
     }
 
@@ -164,7 +165,7 @@ Deno.serve(async (req: Request) => {
 
     return json({ url: safeVaultAttachmentUrl(url) });
   } catch (err) {
-    console.error("VAULT_RESOLVE_ENTRY_LINK_UNEXPECTED_FAILED", err);
+    console.error("VAULT_RESOLVE_ENTRY_LINK_UNEXPECTED_FAILED", { reason: "UNEXPECTED_VAULT_RESOLVE_FAILURE" });
     return json({ error: "Could not open this vault attachment. Please try again." }, 500);
   }
 });

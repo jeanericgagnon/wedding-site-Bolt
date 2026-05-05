@@ -5,6 +5,7 @@ import { hasRespondedRsvpStatus } from './rsvpStatus';
 export const GUEST_IMPORT_MAX_FILE_BYTES = 5 * 1024 * 1024;
 export const GUEST_IMPORT_MAX_ROWS = 2000;
 export const GUEST_IMPORT_MAX_COLUMNS = 80;
+const IMPORTED_INVITE_TOKEN_RE = /^[A-Za-z0-9_-]{16,160}$/;
 
 export interface CsvFieldMap {
   first_name: number;
@@ -224,7 +225,7 @@ export function buildDefaultCsvFieldMap(headers: string[]): CsvFieldMap {
     status: findIdx('status', 'rsvp_status', 'rsvp status', 'rsvp'),
     meal_choice: findIdx('meal choice', 'meal_choice', 'meal', 'meal option', 'meal selection'),
     rsvp_date: findIdx('rsvp date', 'rsvp_date', 'responded_at', 'response date', 'responded', 'submitted at'),
-    invite_token: findIdx('invite token', 'invite_token', 'token', 'invite code'),
+    invite_token: findExactIdx('existing invitation link', 'rsvp link', 'invitation link', 'invite token', 'invite_token'),
     household_id: findStrictIdx('household_id', 'household id', 'household key', 'family_id', 'party_id', 'group id'),
     household_name: findIdx('household_name', 'household name', 'household', 'family', 'family name', 'group_name', 'group', 'group name', 'household group', 'party name'),
     invited_events: (() => {
@@ -270,6 +271,19 @@ function normalizeEventName(value: string) {
 
 function cell(values: string[], index: number): string {
   return index >= 0 ? String(values[index] ?? '').trim() : '';
+}
+
+export function normalizeImportedInviteToken(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+
+  try {
+    const parsed = new URL(trimmed);
+    const token = parsed.searchParams.get('token')?.trim() ?? '';
+    return IMPORTED_INVITE_TOKEN_RE.test(token) ? token : '';
+  } catch {
+    return IMPORTED_INVITE_TOKEN_RE.test(trimmed) ? trimmed : '';
+  }
 }
 
 export function buildGuestImportPreview(input: {
@@ -351,7 +365,7 @@ export function buildGuestImportPreview(input: {
     const mealChoice = cell(values, fieldMap.meal_choice);
     const rsvpDateRaw = cell(values, fieldMap.rsvp_date);
     const parsedRsvpDate = rsvpDateRaw ? new Date(rsvpDateRaw) : null;
-    const inviteTokenRaw = cell(values, fieldMap.invite_token);
+    const inviteTokenRaw = normalizeImportedInviteToken(cell(values, fieldMap.invite_token));
     const householdIdRaw = cell(values, fieldMap.household_id);
     const householdNameRaw = cell(values, fieldMap.household_name);
     const householdKey = householdIdRaw ? `id:${householdIdRaw.toLowerCase()}` : householdNameRaw ? `name:${householdNameRaw.toLowerCase()}` : '';

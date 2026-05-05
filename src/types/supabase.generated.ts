@@ -1129,6 +1129,7 @@ export type Database = {
           created_at: string
           description: string | null
           display_order: number
+          dress_code: string | null
           end_time: string | null
           event_date: string | null
           event_name: string | null
@@ -1137,6 +1138,7 @@ export type Database = {
           is_visible: boolean
           location_address: string | null
           location_name: string | null
+          notes: string | null
           sort_order: number
           start_time: string | null
           title: string
@@ -1147,6 +1149,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           display_order?: number
+          dress_code?: string | null
           end_time?: string | null
           event_date?: string | null
           event_name?: string | null
@@ -1155,6 +1158,7 @@ export type Database = {
           is_visible?: boolean
           location_address?: string | null
           location_name?: string | null
+          notes?: string | null
           sort_order?: number
           start_time?: string | null
           title?: string
@@ -1165,6 +1169,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           display_order?: number
+          dress_code?: string | null
           end_time?: string | null
           event_date?: string | null
           event_name?: string | null
@@ -1173,6 +1178,7 @@ export type Database = {
           is_visible?: boolean
           location_address?: string | null
           location_name?: string | null
+          notes?: string | null
           sort_order?: number
           start_time?: string | null
           title?: string

@@ -33,6 +33,39 @@ export interface PublicSiteAccessResponse {
 const PUBLIC_SITE_ACCESS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-site-access`;
 const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+function nullableString(value: unknown): string | null {
+  return typeof value === "string" ? value : null;
+}
+
+function nullableBoolean(value: unknown): boolean | null {
+  return typeof value === "boolean" ? value : null;
+}
+
+export function sanitizePublicSiteSafeRow(site: unknown): PublicSiteSafeRow | null {
+  if (!site || typeof site !== "object" || Array.isArray(site)) return null;
+  const row = site as Record<string, unknown>;
+  if (typeof row.id !== "string") return null;
+
+  return {
+    id: row.id,
+    site_slug: nullableString(row.site_slug),
+    site_url: nullableString(row.site_url),
+    is_published: nullableBoolean(row.is_published),
+    site_json: row.site_json ?? null,
+    published_json: row.published_json ?? null,
+    couple_name_1: nullableString(row.couple_name_1),
+    couple_name_2: nullableString(row.couple_name_2),
+    wedding_date: nullableString(row.wedding_date),
+    venue_name: nullableString(row.venue_name),
+    wedding_location: nullableString(row.wedding_location),
+    template_id: nullableString(row.template_id),
+    wedding_data: row.wedding_data ?? null,
+    layout_config: row.layout_config ?? null,
+    default_language: nullableString(row.default_language),
+    allow_search_indexing: nullableBoolean(row.allow_search_indexing),
+  };
+}
+
 async function callPublicSiteAccess(
   body: Record<string, unknown>,
 ): Promise<PublicSiteAccessResponse> {
@@ -63,7 +96,7 @@ async function callPublicSiteAccess(
 
   return {
     status,
-    site: ((json as { site?: unknown }).site ?? null) as PublicSiteSafeRow | null,
+    site: sanitizePublicSiteSafeRow((json as { site?: unknown }).site ?? null),
     passwordSession: ((json as { passwordSession?: unknown }).passwordSession ?? null) as string | null,
   };
 }

@@ -143,6 +143,7 @@ export async function sendWeddingInvitation(opts: {
 }
 
 export async function sendAnniversaryReminder(opts: {
+  weddingSiteId?: string | null;
   to: string;
   coupleName1: string;
   coupleName2: string;
@@ -153,6 +154,7 @@ export async function sendAnniversaryReminder(opts: {
   reminderKind?: 'upcoming' | 'unlock' | 'nudge';
 }): Promise<void> {
   if (!opts.to) throw new Error('Recipient email is required');
+  if (!opts.weddingSiteId) throw new Error('Wedding site is required');
   if (!opts.coupleName1 || !opts.coupleName2) throw new Error('Couple names are required');
   if (!opts.vaultLabel) throw new Error('Vault label is required');
 
@@ -160,6 +162,7 @@ export async function sendAnniversaryReminder(opts: {
     type: 'anniversary_reminder',
     to: opts.to,
     data: {
+      weddingSiteId: opts.weddingSiteId,
       coupleName1: opts.coupleName1,
       coupleName2: opts.coupleName2,
       vaultLabel: opts.vaultLabel,

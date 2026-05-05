@@ -1,14 +1,22 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { enforcePublicSubmissionRateLimit } from "../_shared/rateLimit.ts";
+import { verifySessionToken } from "../_shared/signedSession.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+type ContactSessionPayload = {
+  scope: "guest_contact_update";
+  siteId: string;
+  guestId: string;
+  exp: number;
+};
 
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), {
@@ -18,11 +26,12 @@ const json = (data: unknown, status = 200) =>
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
+  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   try {
     const body = await req.json().catch(() => ({}));
     const siteRef = String(body.site_ref ?? "").trim();
-    const guestId = String(body.guest_id ?? "").trim();
+    const contactSession = String(body.contact_session ?? "").trim();
     const applyHousehold = Boolean(body.apply_household ?? false);
     const email = String(body.email ?? "").trim() || null;
     const phone = String(body.phone ?? "").trim() || null;
@@ -35,11 +44,24 @@ Deno.serve(async (req: Request) => {
     const mailingPostalCode = String(body.mailing_postal_code ?? '').trim() || null;
     const mailingCountry = String(body.mailing_country ?? '').trim() || null;
 
-    if (!siteRef || !guestId) {
-      return json({ error: "Missing site/guest" }, 400);
+    if (!siteRef || !contactSession) {
+      return json({ error: "Missing contact update link" }, 400);
     }
 
-    const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const admin = createClient(supabaseUrl, serviceRole);
+
+    const contactPayload = await verifySessionToken<ContactSessionPayload>(contactSession, serviceRole);
+    if (
+      !contactPayload ||
+      contactPayload.scope !== "guest_contact_update" ||
+      !contactPayload.siteId ||
+      !contactPayload.guestId ||
+      contactPayload.exp <= Date.now()
+    ) {
+      return json({ error: "This contact update link has expired. Please search your full name again." }, 403);
+    }
 
     const siteQuery = admin
       .from("wedding_sites")
@@ -52,10 +74,14 @@ Deno.serve(async (req: Request) => {
       return json({ error: "Invalid site" }, 404);
     }
 
+    if (site.id !== contactPayload.siteId) {
+      return json({ error: "This contact update link is not valid for this site." }, 403);
+    }
+
     const { data: guest } = await admin
       .from("guests")
       .select("id, household_id")
-      .eq("id", guestId)
+      .eq("id", contactPayload.guestId)
       .eq("wedding_site_id", site.id)
       .maybeSingle();
 
@@ -103,13 +129,13 @@ Deno.serve(async (req: Request) => {
 
     const { error: updateError } = await query;
     if (updateError) {
-      console.error("GUEST_CONTACT_SUBMIT_UPDATE_FAILED", updateError);
+      console.error("GUEST_CONTACT_SUBMIT_UPDATE_FAILED", { reason: "CONTACT_UPDATE_FAILED" });
       return json({ error: "Could not save this contact update. Please try again." }, 500);
     }
 
     return json({ ok: true });
   } catch (err) {
-    console.error("GUEST_CONTACT_SUBMIT_UNEXPECTED_FAILED", err);
+    console.error("GUEST_CONTACT_SUBMIT_UNEXPECTED_FAILED", { reason: "UNEXPECTED_GUEST_CONTACT_SUBMIT_FAILURE" });
     return json({ error: "Could not save this contact update. Please try again." }, 500);
   }
 });

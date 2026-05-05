@@ -79,7 +79,7 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
 
     if (siteError) {
-      console.error("TRANSLATE_SITE_CONTENT_LOAD_FAILED", siteError);
+      console.error("TRANSLATE_SITE_CONTENT_LOAD_FAILED", { reason: "SITE_LOAD_FAILED" });
       return json({ error: safeTranslateSiteContentError("LOAD_FAILED") }, 500);
     }
     if (!site || site.user_id !== userData.user.id) return json({ error: "Wedding site not found" }, 404);
@@ -175,12 +175,12 @@ Deno.serve(async (req: Request) => {
       .single();
 
     if (saveError) {
-      console.error("TRANSLATE_SITE_CONTENT_SAVE_FAILED", saveError);
+      console.error("TRANSLATE_SITE_CONTENT_SAVE_FAILED", { reason: "TRANSLATION_SAVE_FAILED" });
       return json({ error: safeTranslateSiteContentError("SAVE_FAILED") }, 500);
     }
     return json({ success: true, translation: saved });
   } catch (err) {
-    console.error("TRANSLATE_SITE_CONTENT_UNEXPECTED_FAILED", err);
+    console.error("TRANSLATE_SITE_CONTENT_UNEXPECTED_FAILED", { reason: "UNEXPECTED_TRANSLATION_FAILURE" });
     return json({ error: safeTranslateSiteContentError("INTERNAL_ERROR") }, 500);
   }
 });

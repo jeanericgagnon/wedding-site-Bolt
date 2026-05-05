@@ -58,6 +58,19 @@ function countSmsSegments(body: string): number {
   return Math.ceil(length / SMS_SEGMENT_SIZE);
 }
 
+function sanitizeEmailSubject(value: unknown): string {
+  const normalized = String(value ?? "")
+    .split("")
+    .map((char) => {
+      const code = char.charCodeAt(0);
+      return code < 32 || code === 127 ? " " : char;
+    })
+    .join("")
+    .replace(/\s+/g, " ")
+    .trim();
+  return (normalized || "DayOf update").slice(0, 180);
+}
+
 async function sendViaTwilio(opts: {
   accountSid: string;
   authToken: string;
@@ -82,15 +95,14 @@ async function sendViaTwilio(opts: {
     });
 
     if (!res.ok) {
-      const body = await res.text();
-      console.error("SEND_BULK_MESSAGE_SMS_PROVIDER_FAILED", { status: res.status, body });
+      console.error("SEND_BULK_MESSAGE_SMS_PROVIDER_FAILED", { status: res.status });
       return { error: safeDeliveryFailureMessage("sms") };
     }
 
     const data = await res.json();
     return { id: data.sid };
   } catch (err) {
-    console.error("SEND_BULK_MESSAGE_SMS_NETWORK_FAILED", err);
+    console.error("SEND_BULK_MESSAGE_SMS_NETWORK_FAILED", { reason: "SMS_NETWORK_FAILED" });
     return { error: safeDeliveryFailureMessage("sms") };
   }
 }
@@ -147,19 +159,18 @@ async function sendViaResend(opts: {
       body: JSON.stringify({
         from: opts.from,
         to: [opts.to],
-        subject: opts.subject,
+        subject: sanitizeEmailSubject(opts.subject),
         html: opts.html,
       }),
     });
     if (!res.ok) {
-      const body = await res.text();
-      console.error("SEND_BULK_MESSAGE_EMAIL_PROVIDER_FAILED", { status: res.status, body });
+      console.error("SEND_BULK_MESSAGE_EMAIL_PROVIDER_FAILED", { status: res.status });
       return { error: safeDeliveryFailureMessage("email") };
     }
     const data = await res.json();
     return { id: data.id };
   } catch (err) {
-    console.error("SEND_BULK_MESSAGE_EMAIL_NETWORK_FAILED", err);
+    console.error("SEND_BULK_MESSAGE_EMAIL_NETWORK_FAILED", { reason: "EMAIL_NETWORK_FAILED" });
     return { error: safeDeliveryFailureMessage("email") };
   }
 }
@@ -386,7 +397,7 @@ async function deliverMessage(opts: {
     }
 
     if (!twilioSid || !twilioToken || !twilioFrom) {
-      return { ok: false, status: 500, body: { error: "SMS provider credentials are not configured yet." } };
+      return { ok: false, status: 500, body: { error: "SMS sending is not available right now. Please try again later." } };
     }
 
     const nowIso = new Date().toISOString();
@@ -398,7 +409,7 @@ async function deliverMessage(opts: {
       .order("created_at", { ascending: true });
 
     if (lotsError) {
-      console.error("SEND_BULK_MESSAGE_SMS_CREDITS_LOAD_FAILED", lotsError);
+      console.error("SEND_BULK_MESSAGE_SMS_CREDITS_LOAD_FAILED", { reason: "SMS_CREDITS_LOAD_FAILED" });
       return { ok: false, status: 500, body: { error: safeSendBulkError("SMS_CREDITS_FAILED") } };
     }
 
@@ -488,7 +499,7 @@ async function deliverMessage(opts: {
     .delete()
     .eq("message_id", messageId);
   if (clearDeliveriesResult.error && !isMissingDeliveriesTableError(clearDeliveriesResult.error)) {
-    console.error("SEND_BULK_MESSAGE_DELIVERY_CLEAR_FAILED", clearDeliveriesResult.error);
+    console.error("SEND_BULK_MESSAGE_DELIVERY_CLEAR_FAILED", { reason: "DELIVERY_CLEAR_FAILED" });
     return { ok: false, status: 500, body: { error: safeSendBulkError("DELIVERY_LOG_FAILED") } };
   }
   const canWriteDeliveryLog = !clearDeliveriesResult.error;
@@ -591,7 +602,7 @@ async function deliverMessage(opts: {
   if (deliveryInserts.length > 0 && canWriteDeliveryLog) {
     const insertDeliveriesResult = await adminClient.from("message_deliveries").insert(deliveryInserts);
     if (insertDeliveriesResult.error && !isMissingDeliveriesTableError(insertDeliveriesResult.error)) {
-      console.error("SEND_BULK_MESSAGE_DELIVERY_INSERT_FAILED", insertDeliveriesResult.error);
+      console.error("SEND_BULK_MESSAGE_DELIVERY_INSERT_FAILED", { reason: "DELIVERY_INSERT_FAILED" });
       return { ok: false, status: 500, body: { error: safeSendBulkError("DELIVERY_LOG_FAILED") } };
     }
   }
@@ -613,7 +624,7 @@ async function deliverMessage(opts: {
     .eq("id", messageId);
 
   if (finalStatusUpdate.error) {
-    console.error("SEND_BULK_MESSAGE_STATUS_UPDATE_FAILED", finalStatusUpdate.error);
+    console.error("SEND_BULK_MESSAGE_STATUS_UPDATE_FAILED", { reason: "STATUS_UPDATE_FAILED" });
     return { ok: false, status: 500, body: { error: safeSendBulkError("MESSAGE_UPDATE_FAILED") } };
   }
 
@@ -650,6 +661,10 @@ async function deliverMessage(opts: {
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
+  }
+
+  if (req.method !== "POST") {
+    return jsonResponse(405, { error: "METHOD_NOT_ALLOWED" });
   }
 
   try {
@@ -710,7 +725,7 @@ Deno.serve(async (req: Request) => {
         .limit(limit);
 
       if (dueMessagesError) {
-        console.error("SEND_BULK_MESSAGE_DUE_MESSAGES_LOAD_FAILED", dueMessagesError);
+        console.error("SEND_BULK_MESSAGE_DUE_MESSAGES_LOAD_FAILED", { reason: "DUE_MESSAGES_LOAD_FAILED" });
         return jsonResponse(500, { error: safeSendBulkError("AUDIENCE_LOAD_FAILED") });
       }
 
@@ -788,7 +803,7 @@ Deno.serve(async (req: Request) => {
 
     return jsonResponse(result.status, result.body);
   } catch (err) {
-    console.error("SEND_BULK_MESSAGE_UNEXPECTED_FAILED", err);
+    console.error("SEND_BULK_MESSAGE_UNEXPECTED_FAILED", { reason: "UNEXPECTED_SEND_BULK_FAILURE" });
     return jsonResponse(500, { error: "Could not process this message. Please try again." });
   }
 });

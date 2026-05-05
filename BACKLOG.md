@@ -2,6 +2,197 @@
 
 This backlog is organized by launch priority and is meant to drive focused production hardening work. It is intentionally implementation-oriented: each item includes the problem, risk, likely inspection areas, acceptance criteria, and a suggested approach.
 
+## Current Production-Hardening Status - 2026-05-04 5:43 PM PT
+
+Canonical proof document for this pass: `docs/PRODUCTION_HARDENING_REVIEW_2026-05-05.md`.
+
+Launch claim is intentionally conservative: the first P0 execution batch improved the highest-risk public access, RSVP, cache, AI exposure, settings, registry, and public subresource boundaries, but the product is not being marked production-ready until the remaining P0/P1 audits are completed and live/deployed proof is rerun.
+
+### P0 batch fixed/proven locally in this pass
+
+- Public site privacy gate now selects `privacy_mode` and `hide_from_search` inside the server resolver, while keeping those fields out of `SAFE_PUBLIC_SITE_COLUMNS` and the browser-safe payload.
+- Public site slug lookup no longer uses fuzzy `site_url` matching that could resolve the wrong site.
+- Public site password unlock attempts now use the durable `rsvp_rate_limit` table for scoped rate limiting before password verification.
+- Public registry and itinerary Edge Functions now select privacy gate fields server-side and require public, valid password-session, or valid invite-token access before returning subresource data.
+- Public registry subresource output no longer uses `select("*")`; it returns an explicit public item projection.
+- Public SiteView now passes the earned invite/password access state to itinerary and registry subresource calls and no longer falls back to direct anonymous itinerary/registry selects when the gated function returns empty.
+- RSVP lookup no longer issues sessions from broad name search, no longer returns ambiguous guest lists for enumeration, and `lookup_guest` now requires a valid short-lived RSVP session instead of guest ID alone.
+- RSVP lookup, event lookup, guest lookup, submit, and public-site password attempts now have scoped durable rate-limit checks.
+- Focused static proof remains green for frontend OpenAI/provider-key exposure, service worker cache safety, settings field selection, and launch Edge Function contracts.
+
+### P0 still open or requiring later proof
+
+- Static service-role authorization disposition is now documented and test-guarded; live RLS/service-role proof remains open.
+- Email/messaging authorization is improved with service-role gating on queue processing; live send/scheduled-message authorization proof remains open.
+- Public-site, RSVP, public registry, and public itinerary changes are local only in this pass. They need deploy approval, Supabase Edge Function deploys, and live postdeploy proof before production status changes.
+- Registry preview SSRF remains covered by existing static tests, but the full hostile-target matrix should still be expanded before paid launch.
+- Settings privacy controls have local static proof, but owner/collaborator live permission proof remains open.
+- SMS/Telnyx remains out of launch scope until provider/compliance readiness.
+
+### Validation run in this pass
+
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/serviceWorkerSafety.test.ts src/lib/aiProviderKeySecurity.test.ts src/lib/aiExposureProofScript.test.ts src/lib/settingsErrorSafety.test.ts`: PASS, 5 files, 33 tests.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS after sandbox escalation for Vite temp-file writes.
+- `npm run smoke:registry`: PASS, `ok: true`.
+- `npm run smoke:rsvp`: PASS after network escalation, `ok: true`, 0 failures.
+- `npm run proof:v1:ai-exposure`: PASS static-only, 53/53; live mode not run.
+- `npm run guard:file-size`: PASS.
+- `npm run proof:v1:board:md`: PASS; proof board now lists the strict P0 blockers instead of claiming none.
+- `npm test -- --run src/lib/proofBoardFreshness.test.ts`: PASS, 1/1.
+- `git diff --check`: PASS.
+
+### 2026-05-04 5:48 PM PT continuation
+
+- `process-email-queue` is now service-role bearer gated before it creates the service-role client or reads pending queue rows.
+- `registry-preview` now validates AAAA records, blocks private IPv6 targets, and uses a durable `rsvp_rate_limit`-backed rate limit in addition to the existing in-memory limiter.
+- Added `docs/service-role-authorization-disposition-2026-05-05.md` so every current service-role Edge Function is classified and no new service-role function can appear undocumented.
+- Added `src/lib/serviceRoleAuthorizationDisposition.test.ts` to enforce that service-role inventory.
+- `npm test -- --run src/lib/serviceRoleAuthorizationDisposition.test.ts src/lib/launchEdgeFunctions.test.ts`: PASS, 18/18.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- Remaining strict P0 blockers are narrowed to deploy/function-deploy/live proof for local access-control changes, live RLS/service-role proof after static disposition, and live messaging authorization proof after local queue lockdown.
+
+### 2026-05-04 5:56 PM PT P1 guest import/export safety continuation
+
+- Added shared CSV export escaping in `src/lib/csvExport.ts` so guest and seating exports neutralize spreadsheet formula payloads while still escaping quotes.
+- Guest exports and seating/place-card exports now use the shared safe CSV renderer.
+- Guest import no longer auto-maps broad `token` / `invite code` headers as invitation tokens; imported tokens must come from deliberate invitation-link/token columns and must parse as a safe RSVP URL token or bounded token string.
+- Added regression coverage for CSV formula neutralization, quote escaping, safer invite-token import mapping, and seating CSV export safety.
+- `npm test -- --run src/lib/csvExport.test.ts src/lib/guestImportParser.test.ts src/pages/dashboard/seating/seatingService.test.ts`: PASS, 18/18.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run build`: PASS after sandbox escalation for Vite temp-file writes.
+- `npm run smoke:csvmapper`: PASS, `ok: true`.
+- Launch status did not change. This closes a focused P1 import/export hardening slice locally, but live/deploy proof and the remaining P0/P1 security, role, messaging, payment, data retention, backup, asset, and architecture work remain open.
+
+### 2026-05-04 6:00 PM PT P1/P2 CI guardrail and payment-bypass continuation
+
+- CI hardpass now runs `npm run guard:file-size` before the core test/build/smoke lane.
+- File-size guard baselines were lowered to the current oversized-file counts, so legacy dashboard/page files cannot grow past today's line counts while the split work remains open.
+- Production builds now ignore `VITE_ALLOW_PAYMENT_BYPASS`, preventing `?bypassPayment=1` from becoming a paid-feature bypass in production. Local/preview bypass remains explicit and opt-in.
+- Added `src/lib/paymentGate.test.ts` to prove production payment bypass is blocked while local preview bypass remains opt-in.
+- `npm test -- --run src/lib/paymentGate.test.ts`: PASS, 2/2.
+- `npm test -- --run src/lib/proofBoardFreshness.test.ts src/lib/serviceRoleAuthorizationDisposition.test.ts src/lib/launchEdgeFunctions.test.ts src/lib/csvExport.test.ts src/lib/guestImportParser.test.ts src/pages/dashboard/seating/seatingService.test.ts src/lib/paymentGate.test.ts`: PASS, 39/39.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS with current baselines.
+- `npm run build`: PASS after sandbox escalation for Vite temp-file writes.
+- Launch status did not change. This improves paid-launch guardrails locally; full billing/webhook/subscription proof remains open before paid launch.
+
+### 2026-05-04 6:06 PM PT P0/P1 data-boundary continuation
+
+- `Messages.tsx` no longer loads dashboard message rows with `select('*')`; it uses a named explicit projection from `src/pages/dashboard/messages/messageSelect.ts`.
+- Legacy `siteRepository.fetchPublicSiteBySlug` no longer selects `privacy_mode` / `hide_from_search` and no longer uses fuzzy `.ilike('site_url', %slug%)` fallback matching.
+- `registry-preview` cache reads now use a named explicit cache projection instead of `select("*")`.
+- Added `src/lib/dashboardDataBoundary.test.ts` to prevent the broad message select and legacy public-site private-gate/fuzzy fallback from returning.
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/lib/publicSiteProject.test.ts`: PASS, 35/35.
+- `npm test -- --run src/lib/proofBoardFreshness.test.ts src/lib/serviceRoleAuthorizationDisposition.test.ts src/lib/launchEdgeFunctions.test.ts src/lib/csvExport.test.ts src/lib/guestImportParser.test.ts src/pages/dashboard/seating/seatingService.test.ts src/lib/paymentGate.test.ts src/lib/dashboardDataBoundary.test.ts src/lib/publicSiteProject.test.ts`: PASS, 74/74.
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts`: PASS, 17/17 after the registry-preview cache projection guard was added.
+- `npm run typecheck -- --pretty false`: PASS after fixing the narrowed message projection typing.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS; the guard correctly caught an intermediate `Messages.tsx` growth and the projection was moved to a small module instead of raising the baseline.
+- `npm run build`: PASS after sandbox escalation for Vite temp-file writes.
+- Launch status did not change. This closes another local data-boundary slice, but live/deploy proof and broader direct-Supabase/service-layer cleanup remain open.
+
+### 2026-05-04 6:12 PM PT P1 guest dashboard projection continuation
+
+- Guest dashboard no longer loads guest rows with `select('*')`; the read now uses an explicit projection for the guest fields that the page actually renders/exports/updates.
+- Guest dashboard RSVP attachment no longer loads RSVP rows with `select('*')`; it selects the scoped RSVP fields needed for status, meals, plus-ones, event RSVP, notes, and custom answers.
+- Extended `src/lib/dashboardDataBoundary.test.ts` so future changes fail if the broad guest or RSVP selects return.
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 3/3.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run build`: PASS after sandbox escalation for Vite temp-file writes.
+- Launch status did not change. This closes one more local direct-Supabase projection slice; broader dashboard service extraction remains open.
+
+### 2026-05-04 6:18 PM PT P1 itinerary dashboard projection continuation
+
+- Itinerary dashboard event reads no longer load event rows with `select('*')`; they now use an explicit projection for the timeline fields the page renders and syncs.
+- Event guest picker reads no longer load full guest rows with `select('*')`; they now select only guest identity/contact fields needed to invite/remove guests for a specific event.
+- Supabase generated types now include the migration-backed itinerary `dress_code` and `notes` columns so the typed projection matches the runtime schema instead of relying on broad reads.
+- Extended `src/lib/dashboardDataBoundary.test.ts` so future changes fail if itinerary event or event guest-picker broad selects return.
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 4/4 after sandbox escalation for Vite temp-file writes.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run build`: PASS after sandbox escalation for Vite temp-file writes.
+- Launch status did not change. This closes another local direct-Supabase projection slice; broad dashboard service extraction, role proof, live deploy/function proof, and paid-launch P1 work remain open.
+
+### 2026-05-04 6:20 PM PT P0/P1 public section projection continuation
+
+- Builder/public section reads in `siteRepository.fetchSections` and `siteRepository.fetchPublishedSections` no longer use `select('*')`; they now select the exact persisted section contract parsed by `PersistedSectionSchema`.
+- Extended `src/lib/dashboardDataBoundary.test.ts` to guard section reads against returning to broad table projections.
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/lib/publicSiteProject.test.ts`: PASS, 38/38 after sandbox escalation for Vite temp-file writes.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run build`: PASS after sandbox escalation for Vite temp-file writes.
+- Launch status did not change. This narrows another local public/builder data boundary; strict P0 live deploy/function proof and broader service extraction remain open.
+
+### 2026-05-04 6:23 PM PT P1 registry service projection continuation
+
+- Dashboard registry item reads and public direct-fallback registry reads no longer use `select('*')`; they now use a named registry item projection.
+- Registry create/update readbacks now use the same explicit registry item projection instead of default full-row readback.
+- Extended `src/lib/dashboardDataBoundary.test.ts` to guard registry service reads against returning to broad table projections.
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/registry/registryService.test.ts`: PASS, 26/26 after sandbox escalation for Vite temp-file writes.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run build`: PASS after sandbox escalation for Vite temp-file writes.
+- Launch status did not change. This narrows registry data access locally; full live registry/public gate proof and broader repository/service extraction remain open.
+
+### 2026-05-04 6:26 PM PT P1 planning service projection continuation
+
+- Planning service task, vendor, and budget item reads no longer use `select('*')`; they now use explicit projections matching the service contracts.
+- Planning service create readbacks now use the relevant explicit projection instead of default full-row readback.
+- Extended `src/lib/dashboardDataBoundary.test.ts` to guard planning service reads and insert readbacks against broad projections.
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/planning/planningService.test.ts src/pages/dashboard/planning/planningServiceStarterSuite.test.ts`: PASS, 11/11 after sandbox escalation for Vite temp-file writes.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run build`: PASS after sandbox escalation for Vite temp-file writes.
+- Launch status did not change. This narrows planning data access locally; broader dashboard service extraction, collaborator role proof, and live deploy proof remain open.
+
+### 2026-05-04 6:30 PM PT P1 builder/media projection continuation
+
+- Builder project service wedding-site reads no longer use `select('*')`; project and wedding-data loaders now use explicit site projections for the exact builder fields they need.
+- Builder page entry lookup now uses an explicit site identity/name projection instead of loading the full site row.
+- Builder media list and save readbacks now use an explicit media asset projection instead of broad/default full-row projections.
+- Extended `src/lib/dashboardDataBoundary.test.ts` to guard builder editor and media reads against broad projections.
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/lib/publicSiteProject.test.ts`: PASS, 41/41 after sandbox escalation for Vite temp-file writes.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run build`: PASS after sandbox escalation for Vite temp-file writes.
+- Launch status did not change. This narrows builder/media data access locally; broader service extraction and live deploy proof remain open.
+
+### 2026-05-04 6:33 PM PT P1 vendor profile projection continuation
+
+- Vendor profile create readback and public slug lookup no longer use `select('*')`; they now use an explicit public vendor profile projection.
+- Extended `src/lib/dashboardDataBoundary.test.ts` to guard vendor profile reads against broad projections.
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 9/9 after sandbox escalation for Vite temp-file writes.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run build`: PASS after sandbox escalation for Vite temp-file writes.
+- Launch status did not change. This narrows vendor profile data access locally; live deploy proof and broader service extraction remain open.
+
+### 2026-05-04 6:37 PM PT P1 seating service projection continuation
+
+- Seating service event, table, assignment, eligible guest, and layout-version reads no longer use `select('*')`; they now use explicit projections.
+- Seating create/update readbacks now use matching explicit projections instead of default full-row readbacks.
+- Eligible guest loading no longer pulls full guest rows, which avoids loading invite tokens into the seating surface.
+- Extended `src/lib/dashboardDataBoundary.test.ts` to guard seating service reads against broad projections.
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/seating/seatingService.test.ts`: PASS, 16/16 after sandbox escalation for Vite temp-file writes.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run build`: PASS after sandbox escalation for Vite temp-file writes.
+- Launch status did not change. This narrows seating data access locally; live deploy proof, collaborator role proof, and broader service extraction remain open.
+
 ## P0 - Must fix before real users
 
 ### Public site access leaks private gate data
@@ -500,6 +691,92 @@ Write a short architecture note after the highest-risk hardening lanes are imple
 
 ## Execution Notes
 
+- 2026-05-04 6:47 PM PT - No-deploy data-boundary hardening batch:
+  - Resolved in this batch: name-change planner case/document/extracted-field/snapshot/reminder reads and readbacks now use explicit projections; reminder persistence now writes only schema-backed reminder fields; section repository insert/upsert readbacks now use the persisted-section projection; seating auto-table/auto-seat readbacks now use table/assignment projections; vault dashboard config/entry reads and readbacks now use explicit projections; photo AI analysis service-role upsert readback now uses an explicit analysis projection.
+  - Proof added/updated: `src/lib/dashboardDataBoundary.test.ts` now guards name-change, seating, vault, and section readback projections; `src/lib/launchEdgeFunctions.test.ts` now guards the photo AI analysis explicit readback projection.
+  - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/lib/launchEdgeFunctions.test.ts src/pages/dashboard/seating/seatingService.test.ts src/pages/dashboard/planning/nameChangeService.test.ts src/pages/dashboard/vaultDate.test.ts src/pages/dashboard/vaultEntryTime.test.ts` (83/83), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, and `npm run build` after the known Vite temp-file sandbox escalation.
+  - Launch status: unchanged. This reduces accidental payload drift and broad data reads locally, but production status still requires deploy/function-deploy approval and live P0 proof where applicable.
+  - Remaining from this lane: broader dashboard service extraction, live service-role/RLS proof, live email/messaging authorization proof, and paid-launch architecture cleanup remain open.
+- 2026-05-04 6:52 PM PT - No-deploy email/messaging authorization hardening batch:
+  - Resolved in this batch: direct RSVP notification/confirmation emails are now service-role-only; direct signup welcome sends require the authenticated user's own email; anniversary reminder sends require authenticated site access plus a `weddingSiteId`; Vault now passes that site id into the reminder payload; direct wedding email, queued email, and bulk-message provider failures no longer read/store/log raw provider response bodies.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now guards direct email authorization boundaries, anniversary site scoping, service-role-only RSVP email types, safe queue error persistence, and status-only provider diagnostics.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (18/18), targeted provider-body scan for the touched email functions, `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, and `npm run build` after the known Vite temp-file sandbox escalation.
+  - Launch status: unchanged. This narrows local messaging relay/provider-error risk, but live email/messaging authorization proof after deploy/function deploy remains open.
+- 2026-05-04 6:56 PM PT - No-deploy email runtime hardening continuation:
+  - Resolved in this batch: `send-wedding-email`, `send-bulk-message`, and `process-email-queue` now reject non-POST runtime requests with `METHOD_NOT_ALLOWED`; all three email-provider paths sanitize subject strings to strip control characters, collapse whitespace, cap length, and provide a safe fallback before calling Resend.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now guards POST-only method enforcement and subject sanitization across direct, bulk, and queued email functions.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (18/18), targeted method/subject source scan, `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, and `npm run build` after the known Vite temp-file sandbox escalation.
+  - Launch status: unchanged. This closes another local email runtime safety slice, but live email/messaging authorization proof after deploy/function deploy remains open.
+- 2026-05-04 7:05 PM PT - No-deploy guest contact access hardening batch:
+  - Resolved in this batch: public guest contact lookup is now POST-only and rate-limited; lookup requires a full-name match instead of partial name enumeration; lookup returns short-lived signed `contact_session` values instead of guest ids or household ids; guest contact submit now verifies that signed session, expiry, site scope, and guest scope before any service-role write. `submit-rsvp`, `validate-rsvp-token`, and `submit-contact-request` now also reject non-POST runtime requests after CORS preflight.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now guards guest contact lookup/session scoping, removal of browser-trusted guest id submit, full-name lookup behavior, POST-only method gates, and the frontend `contact_session` contract.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (19/19 after known Vite temp-file sandbox escalation), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run build` after the known Vite temp-file sandbox escalation, `npm run proof:v1:board:md`, `npm test -- --run src/lib/proofBoardFreshness.test.ts`, and `git diff --check`.
+  - Launch status: unchanged. This removes a local service-role/public guest-contact trust gap, but production status still depends on approved deploy/function deploy and live P0 proof.
+- 2026-05-04 7:09 PM PT - No-deploy service-role method-boundary hardening batch:
+  - Resolved in this batch: all current service-role Edge Functions now have an explicit runtime method gate before privileged work. The batch added POST-only gates to token generation, Google Drive auth/health, photo album create/moderate, public itinerary/registry subresources, setup bootstrap, Stripe checkout/subscription/SMS-credit/verify/webhook paths, and vault resolve/upload paths. Stripe checkout/SMS/subscription CORS method allowlists were narrowed to `POST, OPTIONS`.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now guards the service-role POST-only inventory and Stripe CORS method allowlists.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (20/20 after known Vite temp-file sandbox escalation), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, targeted service-role method inventory scan, `npm run guard:file-size`, `npm run build` after the known Vite temp-file sandbox escalation, `npm run proof:v1:board:md`, `npm test -- --run src/lib/proofBoardFreshness.test.ts`, and `git diff --check`.
+  - Launch status: unchanged. This narrows local privileged-function runtime exposure, but production status still depends on approved deploy/function deploy and live P0 proof.
+- 2026-05-04 7:14 PM PT - No-deploy provider/webhook diagnostic hardening batch:
+  - Resolved in this batch: Google Drive OAuth callback failures no longer return raw OAuth query errors or server-env wording; Google Drive token-exchange failures, vault Google Drive upload failures, and vault Google Drive file-resolve failures now log status-only diagnostics instead of raw provider JSON; Stripe webhook signature failures now return fixed safe copy instead of provider/library exception text.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now guards status-only Google Drive/vault diagnostics, fixed OAuth callback copy, and fixed Stripe webhook signature failure copy.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (20/20 after known Vite temp-file sandbox escalation), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run build` after the known Vite temp-file sandbox escalation, `npm run proof:v1:board:md`, `npm test -- --run src/lib/proofBoardFreshness.test.ts`, and `git diff --check`.
+  - Launch status: unchanged. This narrows local provider diagnostic leakage risk, but production status still depends on approved deploy/function deploy and live P0 proof.
+- 2026-05-04 7:17 PM PT - No-deploy public Edge Function error-safety hardening batch:
+  - Resolved in this batch: public guest hub config/track, guest recap config, public itinerary, public registry, queue guest followups, and client-error logging paths no longer return raw `Supabase not configured`, `server misconfigured`, or raw exception-message responses to callers. Public itinerary/registry misconfiguration now fails closed with empty public subresource payloads.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now guards fixed public config/recap copy, empty public itinerary/registry fail-closed responses, queue followup safe config copy, and fixed client-error logger unexpected-failure copy.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (20/20 after known Vite temp-file sandbox escalation), targeted raw config/error string scan, `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run build` after the known Vite temp-file sandbox escalation, `npm run proof:v1:board:md`, `npm test -- --run src/lib/proofBoardFreshness.test.ts`, and `git diff --check`.
+  - Launch status: unchanged. This narrows local public/internal error wording leakage risk, but production status still depends on approved deploy/function deploy and live P0 proof.
+- 2026-05-04 7:23 PM PT - No-deploy messaging permission and public vault upload abuse hardening batch:
+  - Resolved in this batch: `queue-guest-followups` now requires collaborator `messages` permission instead of accepting `photos` permission for an email-queue action. `vault-upload-google-drive` now rate-limits public Drive upload attempts, restricts uploads to image/video/audio MIME types excluding SVG, caps base64 payload size to the existing 35MB vault video ceiling, validates base64 shape before provider work, and sanitizes Drive file names before upload metadata is sent.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now guards the queue followup messages-only permission boundary and the Vault Drive upload rate limit, MIME, SVG, size, and filename validation controls.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (20/20 after known Vite temp-file sandbox escalation), targeted source scan for the queue permission and Vault upload controls, `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run build` after the known Vite temp-file sandbox escalation, `npm run proof:v1:board:md`, `npm test -- --run src/lib/proofBoardFreshness.test.ts`, and `git diff --check`.
+  - Launch status: unchanged. This closes two local P0/P1 authorization/abuse gaps, but production status still depends on approved deploy/function deploy and live P0 proof.
+- 2026-05-04 7:27 PM PT - No-deploy provider-missing copy cleanup:
+  - Resolved in this batch: direct email, queued email, and SMS-provider-missing branches no longer return implementation wording such as `Email service not configured` or SMS credential configuration text to callers.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now blocks those provider/config wording regressions.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (20/20 after known Vite temp-file sandbox escalation), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, and `npm run build` after the known Vite temp-file sandbox escalation.
+  - Launch status: unchanged. This narrows local provider/config wording exposure, but production status still depends on approved deploy/function deploy and live proof.
+- 2026-05-04 7:30 PM PT - No-deploy AI/preview diagnostic log hardening:
+  - Resolved in this batch: photo AI analysis, onboarding AI orchestration, and registry preview unexpected-failure paths no longer log raw exception messages that could include provider, token, storage, parser, or fetch internals. Photo AI usage-event insert failures now log a fixed reason instead of database error text.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now guards fixed diagnostic reasons for photo AI, onboarding AI, and registry preview failure logs.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (21/21 after known Vite temp-file sandbox escalation), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, and `npm run build` after the known Vite temp-file sandbox escalation.
+  - Launch status: unchanged. This narrows local internal diagnostic retention risk, but production status still depends on approved deploy/function deploy and live proof.
+- 2026-05-04 7:35 PM PT - No-deploy service-role diagnostic log sweep:
+  - Resolved in this batch: setup bootstrap, site translation, bulk messaging, email queue, direct wedding email, guest contact lookup/submit, Vault attachment resolve/upload, and Google Drive auth/health unexpected/error paths no longer log raw caught error objects or database/provider error objects in the hardened branches. They now log fixed reason codes.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now guards the hardened function set against `console.error(..., err/error/DB error object)` regressions and checks the fixed reason codes.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (22/22 after known Vite temp-file sandbox escalation), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, and `npm run build` after the known Vite temp-file sandbox escalation.
+  - Launch status: unchanged. This narrows local internal diagnostic retention risk, but production status still depends on approved deploy/function deploy and live proof.
+- 2026-05-04 7:39 PM PT - No-deploy Stripe/payment diagnostic hardening:
+  - Resolved in this batch: Stripe checkout, subscription checkout, SMS-credit checkout, checkout verification, and webhook update/unexpected paths no longer log raw Stripe/library or database error objects in the hardened branches. They now log fixed reason codes.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now guards fixed Stripe diagnostic reasons and blocks raw Stripe/payment update error-object logging regressions.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (23/23 after known Vite temp-file sandbox escalation), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, and `npm run build` after the known Vite temp-file sandbox escalation.
+  - Launch status: unchanged. This narrows local billing/provider diagnostic retention risk, but production status still depends on approved deploy/function deploy and live billing proof before paid launch.
+- 2026-05-04 7:43 PM PT - No-deploy photo album/moderation diagnostic hardening:
+  - Resolved in this batch: photo album create/manage and photo upload moderation save/unexpected paths no longer log raw database or caught error objects in the hardened branches. They now log fixed reason codes.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now guards fixed photo album/moderation diagnostic reasons and blocks raw error-object logging regressions.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (23/23 after known Vite temp-file sandbox escalation), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, and `npm run build` after the known Vite temp-file sandbox escalation.
+  - Launch status: unchanged. This narrows local media/service-role diagnostic retention risk, but production status still depends on approved deploy/function deploy and live proof.
+- 2026-05-04 7:48 PM PT - No-deploy guest/public diagnostic hardening:
+  - Resolved in this batch: client error logging, contact request submit, guest followup queue marking/unexpected failures, public-site access, RSVP validate/submit, guest recap config, and token generation hardened branches no longer log raw caught error objects or database error objects. They now log fixed reason codes.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now includes those public/guest functions in the fixed diagnostic guard set and checks the new reason codes.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (23/23 after known Vite temp-file sandbox escalation), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run build` after the known Vite temp-file sandbox escalation, `npm run proof:v1:board:md`, `npm test -- --run src/lib/proofBoardFreshness.test.ts` (1/1 after known Vite temp-file sandbox escalation), and `git diff --check`.
+  - Launch status: unchanged. This narrows local guest/public diagnostic retention risk, but production status still depends on approved deploy/function deploy and live proof.
+- 2026-05-04 7:54 PM PT - No-deploy residual Edge Function diagnostic sweep:
+  - Resolved in this batch: remaining concrete raw database/provider diagnostic logs in bulk messaging SMS credit/scheduled-message loads, photo moderation collaborator load, site translation load, photo album parent/collaborator loads, Stripe SMS-credit webhook writes, queue guest followup inserts, and Stripe webhook signature handling now use fixed reason codes instead of raw error objects or exception-derived branches.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now blocks those raw diagnostic-object regressions and checks the new fixed reason codes.
+  - Validation passed: focused raw diagnostic scan across `supabase/functions`, `src/lib`, and `src/pages`; `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (23/23 after known Vite temp-file sandbox escalation), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run build` after the known Vite temp-file sandbox escalation, `npm run proof:v1:board:md`, `npm test -- --run src/lib/proofBoardFreshness.test.ts` (1/1 after known Vite temp-file sandbox escalation), and `git diff --check`.
+  - Launch status: unchanged. This reduces local internal diagnostic retention risk, but production status still depends on approved deploy/function deploy and live proof.
+- 2026-05-04 7:59 PM PT - No-deploy public-safe client contract hardening:
+  - Resolved in this batch: the browser-side public-site access client now sanitizes the resolver `site` payload into an explicit public-safe shape instead of casting the Edge Function response through unchanged. Unexpected fields such as password hashes, guest access tokens, owner ids, notification settings, billing ids, privacy mode, and hidden/search internals are dropped before `SiteView` can consume the row.
+  - Proof added/updated: `src/lib/publicSiteAccess.test.ts` now proves the client sanitizer keeps only the public-safe fields and rejects malformed site payloads.
+  - Validation passed: `npm test -- --run src/lib/publicSiteAccess.test.ts src/lib/launchEdgeFunctions.test.ts` (25/25 after known Vite temp-file sandbox escalation), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run build` after the known Vite temp-file sandbox escalation, `npm run proof:v1:board:md`, `npm test -- --run src/lib/proofBoardFreshness.test.ts` (1/1 after known Vite temp-file sandbox escalation), and `git diff --check`.
+  - Launch status: unchanged. This reduces local client-side payload leak blast radius, but production status still depends on approved deploy/function deploy and live proof.
+- 2026-05-04 8:02 PM PT - No-deploy production demo-mode safety hardening:
+  - Resolved in this batch: production builds now ignore `VITE_DEMO_MODE`, preventing an accidentally enabled production env flag from activating local demo auth behavior. Local and preview proof builds still support explicit demo mode.
+  - Proof added/updated: `src/config/env.test.ts` now proves demo mode is blocked in production builds and remains opt-in outside production.
+  - Validation passed: `npm test -- --run src/config/env.test.ts src/lib/paymentGate.test.ts src/lib/publicSiteAccess.test.ts` (6/6 after known Vite temp-file sandbox escalation), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run build` after the known Vite temp-file sandbox escalation, `npm run proof:v1:board:md`, `npm test -- --run src/lib/proofBoardFreshness.test.ts` (1/1 after known Vite temp-file sandbox escalation), and `git diff --check`.
+  - Launch status: unchanged. This reduces local demo/bypass production risk, but production status still depends on approved deploy/function deploy and live proof.
 - Do not start broad refactors from this file alone.
 - Execute this backlog top-down by risk, beginning with the P0 public data, gating, RSVP, AI key, service worker, email escaping, SSRF, and settings contract issues.
 - Update proof logs and launch docs only after concrete verification passes.

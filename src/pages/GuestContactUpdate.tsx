@@ -4,9 +4,8 @@ import { demoGuests, demoWeddingSite } from '../lib/demoData';
 import { customerSafeErrorMessage } from '../lib/customerSafeError';
 
 type Match = {
-  id: string;
+  contact_session: string;
   name: string;
-  household_id?: string | null;
   household_size?: number;
 };
 
@@ -41,7 +40,7 @@ export const GuestContactUpdate: React.FC = () => {
 
   const [query, setQuery] = useState('');
   const [matches, setMatches] = useState<Match[]>([]);
-  const [selectedGuestId, setSelectedGuestId] = useState<string>('');
+  const [selectedContactSession, setSelectedContactSession] = useState<string>('');
   const [selectedHouseholdSize, setSelectedHouseholdSize] = useState<number>(1);
   const [applyHousehold, setApplyHousehold] = useState(false);
 
@@ -59,7 +58,7 @@ export const GuestContactUpdate: React.FC = () => {
   const [searching, setSearching] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
 
-  const canSubmit = useMemo(() => !!selectedGuestId && (
+  const canSubmit = useMemo(() => !!selectedContactSession && (
     !!email.trim() ||
     !!phone.trim() ||
     !!rsvpStatus ||
@@ -67,21 +66,21 @@ export const GuestContactUpdate: React.FC = () => {
     !!mailingCity.trim() ||
     !!mailingPostalCode.trim() ||
     !!mailingCountry.trim()
-  ), [selectedGuestId, email, phone, rsvpStatus, mailingAddressLine1, mailingCity, mailingPostalCode, mailingCountry]);
+  ), [selectedContactSession, email, phone, rsvpStatus, mailingAddressLine1, mailingCity, mailingPostalCode, mailingCountry]);
 
   async function handleSearch() {
     if (query.trim().length < 2) return;
     setSearching(true);
     setResult(null);
     setMatches([]);
-    setSelectedGuestId('');
+    setSelectedContactSession('');
     setSelectedHouseholdSize(1);
     try {
       const data = await callPublicFn('guest-contact-lookup', { site_ref: siteRef, query: query.trim() });
       const rows = ((data as any)?.matches ?? []) as Match[];
       setMatches(rows);
       if (rows.length > 0) {
-        setSelectedGuestId(rows[0].id);
+        setSelectedContactSession(rows[0].contact_session);
         setSelectedHouseholdSize(rows[0].household_size ?? 1);
       } else {
         setResult({ ok: false, message: 'No guest record matched that search. Try your full name as it appears on the invitation.' });
@@ -92,10 +91,10 @@ export const GuestContactUpdate: React.FC = () => {
         const rows = demoGuests
           .filter((g) => (g.name || '').toLowerCase().includes(q))
           .slice(0, 10)
-          .map((g) => ({ id: g.id, name: g.name, household_id: (g as any).household_id ?? null, household_size: ((g as any).household_size as number | undefined) ?? 1 }));
+          .map((g) => ({ contact_session: g.id, name: g.name, household_size: ((g as any).household_size as number | undefined) ?? 1 }));
         setMatches(rows);
         if (rows.length > 0) {
-          setSelectedGuestId(rows[0].id);
+          setSelectedContactSession(rows[0].contact_session);
           setSelectedHouseholdSize(rows[0].household_size ?? 1);
         } else {
           setResult({ ok: false, message: 'No demo guest matched that search. Try a full name from the sample guest list.' });
@@ -117,7 +116,7 @@ export const GuestContactUpdate: React.FC = () => {
       if (!isDemoSiteRef) {
         const data = await callPublicFn('guest-contact-submit', {
           site_ref: siteRef,
-          guest_id: selectedGuestId,
+          contact_session: selectedContactSession,
           apply_household: applyHousehold,
           email: email.trim() || null,
           phone: phone.trim() || null,
@@ -169,17 +168,17 @@ export const GuestContactUpdate: React.FC = () => {
             <label htmlFor="guest-contact-match" className="block text-sm font-medium text-text-primary">Select your name</label>
             <select
               id="guest-contact-match"
-              value={selectedGuestId}
+              value={selectedContactSession}
               onChange={(e) => {
-                const id = e.target.value;
-                setSelectedGuestId(id);
-                const hit = matches.find((m) => m.id === id);
+                const contactSession = e.target.value;
+                setSelectedContactSession(contactSession);
+                const hit = matches.find((m) => m.contact_session === contactSession);
                 setSelectedHouseholdSize(hit?.household_size ?? 1);
               }}
               className="w-full px-3 py-2 border border-border rounded-lg bg-surface-subtle"
             >
               {matches.map((m) => (
-                <option key={m.id} value={m.id}>{m.name}{(m.household_size ?? 1) > 1 ? ` (party of ${m.household_size})` : ''}</option>
+                <option key={m.contact_session} value={m.contact_session}>{m.name}{(m.household_size ?? 1) > 1 ? ` (party of ${m.household_size})` : ''}</option>
               ))}
             </select>
             {(selectedHouseholdSize ?? 1) > 1 && (

@@ -38,7 +38,7 @@ Deno.serve(async (req: Request) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!supabaseUrl || !serviceRole) return json({ error: "Supabase not configured" }, 500);
+    if (!supabaseUrl || !serviceRole) return json({ error: "Could not load this recap. Please try again." }, 500);
 
     const admin = createClient(supabaseUrl, serviceRole);
     const url = new URL(req.url);
@@ -172,7 +172,7 @@ Deno.serve(async (req: Request) => {
       })),
     });
   } catch (error) {
-    console.error("GUEST_RECAP_CONFIG_UNEXPECTED_FAILED", error);
+    console.error("GUEST_RECAP_CONFIG_UNEXPECTED_FAILED", { reason: "UNEXPECTED_GUEST_RECAP_CONFIG_FAILURE" });
     return json({ error: "Could not load this recap. Please try again." }, 500);
   }
 });

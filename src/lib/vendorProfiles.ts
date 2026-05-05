@@ -53,6 +53,8 @@ export interface VendorProfileDraft {
   source_payload: Record<string, unknown>;
 }
 
+const VENDOR_PROFILE_SELECT = 'id, slug, vendor_name, descriptor, about, hero_image_url, image_urls, instagram_url, website_url, contact_email, source_payload' as const;
+
 function normalizeUrl(value: string | undefined): string | null {
   if (!value?.trim()) return null;
   const raw = value.trim();
@@ -143,7 +145,7 @@ export async function createVendorProfile(draft: VendorProfileDraft): Promise<Ve
     const { data, error } = await supabase
       .from('vendor_profiles')
       .insert({ ...draft, slug: nextSlug, created_by: user?.id ?? null })
-      .select('*')
+      .select(VENDOR_PROFILE_SELECT)
       .single();
 
     if (!error) return normalizeVendorProfile(data);
@@ -159,7 +161,7 @@ export async function createVendorProfile(draft: VendorProfileDraft): Promise<Ve
 export async function getVendorProfileBySlug(slug: string): Promise<VendorProfile | null> {
   const { data, error } = await supabase
     .from('vendor_profiles')
-    .select('*')
+    .select(VENDOR_PROFILE_SELECT)
     .eq('slug', slug)
     .maybeSingle();
   if (error) throw error;

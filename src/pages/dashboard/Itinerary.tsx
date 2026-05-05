@@ -36,6 +36,10 @@ interface ItineraryEvent {
   is_visible: boolean;
 }
 
+const ITINERARY_EVENT_SELECT = 'id, event_name, title, description, event_date, start_time, end_time, location_name, location_address, dress_code, notes, display_order, sort_order, is_visible' as const;
+
+const EVENT_GUEST_PICKER_SELECT = 'id, name, first_name, last_name, email' as const;
+
 const DEMO_ITINERARY_STORAGE_KEY = 'dayof.demo.itinerary.events';
 // Optional table: detect once at runtime so older environments degrade quietly.
 let hasEventRsvpsTable: boolean | null = null;
@@ -269,7 +273,7 @@ export const DashboardItinerary: React.FC = () => {
 
       const { data: eventsData, error } = await supabase
         .from('itinerary_events')
-        .select('*')
+        .select(ITINERARY_EVENT_SELECT)
         .eq('wedding_site_id', sites.id)
         .order('event_date', { ascending: true })
         .order('start_time', { ascending: true });
@@ -1271,7 +1275,7 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
 
       const { data: guests, error: guestsError } = await supabase
         .from('guests')
-        .select('*')
+        .select(EVENT_GUEST_PICKER_SELECT)
         .eq('wedding_site_id', site.id)
         .order('name');
       if (guestsError) throw guestsError;

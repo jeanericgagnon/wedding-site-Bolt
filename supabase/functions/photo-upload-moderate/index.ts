@@ -15,6 +15,7 @@ function safePhotoModerationError(code: "LOAD" | "PERMISSION" | "SAVE" | "INTERN
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
+  if (req.method !== "POST") return fail("METHOD_NOT_ALLOWED", "Method not allowed.", 405);
 
   try {
     const authHeader = req.headers.get("Authorization");
@@ -67,7 +68,7 @@ Deno.serve(async (req: Request) => {
         .eq("user_id", user.id)
         .in("wedding_site_id", remainingSiteIds);
       if (collaboratorError) {
-        console.error("PHOTO_UPLOAD_MODERATE_COLLABORATOR_FAILED", collaboratorError);
+        console.error("PHOTO_UPLOAD_MODERATE_COLLABORATOR_FAILED", { reason: "COLLABORATOR_LOAD_FAILED" });
         return fail("DB_ERROR", safePhotoModerationError("PERMISSION"), 400);
       }
       const allowedSiteIds = new Set(
@@ -99,13 +100,13 @@ Deno.serve(async (req: Request) => {
       .in("id", uploadIds);
 
     if (updateErr) {
-      console.error("PHOTO_UPLOAD_MODERATE_SAVE_FAILED", updateErr);
+      console.error("PHOTO_UPLOAD_MODERATE_SAVE_FAILED", { reason: "PHOTO_MODERATION_SAVE_FAILED" });
       return fail("DB_ERROR", safePhotoModerationError("SAVE"), 400);
     }
 
     return json({ success: true, updated: uploadIds.length });
   } catch (err) {
-    console.error("PHOTO_UPLOAD_MODERATE_UNEXPECTED_FAILED", err);
+    console.error("PHOTO_UPLOAD_MODERATE_UNEXPECTED_FAILED", { reason: "UNEXPECTED_PHOTO_MODERATION_FAILURE" });
     return fail("INTERNAL_ERROR", safePhotoModerationError("INTERNAL"), 500);
   }
 });

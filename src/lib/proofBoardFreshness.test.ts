@@ -65,7 +65,11 @@ describe('proof board freshness', () => {
     const publicSiteTrust = board.slices?.find((slice) => slice.id === 'public-site-trust');
 
     expect(board.summary?.secondaryTrustGap).toContain(expectedDeploy);
-    expect(board.activeUngatedLaunchBlockers).toEqual([]);
+    expect(board.activeUngatedLaunchBlockers).toEqual([
+      'strict-p0-production-hardening-live-proof-after-local-access-control-changes',
+      'strict-p0-service-role-rls-live-proof-after-static-disposition',
+      'strict-p0-email-messaging-live-authorization-proof-after-local-queue-lockdown',
+    ]);
     expect(board.blockedOrApprovalGatedLaunchItems?.join('\n')).not.toContain('secure-env model-backed AI');
     expect(board.blockedOrApprovalGatedLaunchItems?.join('\n')).toContain('external OpenAI key rotation');
     expect(board.blockedOrApprovalGatedLaunchItems?.join('\n')).not.toContain('secure service-role storage');

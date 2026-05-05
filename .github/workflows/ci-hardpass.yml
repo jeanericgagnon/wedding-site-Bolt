@@ -37,6 +37,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: File-size guard
+        run: npm run guard:file-size
+
       - name: Hardpass core (tests/build/csv/checkin)
         run: npm test && npm run build && npm run smoke:csvmapper && npm run smoke:checkin
 

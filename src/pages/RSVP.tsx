@@ -25,7 +25,7 @@ const RSVP_CONTINUITY_STORAGE_KEY = 'dayof.rsvp.updatedAt';
 const DEFAULT_MEAL_CONFIG: RSVPMealConfig = { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] };
 const USE_DEMO_RSVP = DEMO_MODE && !SUPABASE_CONFIGURED;
 const RSVP_SUBMIT_ERROR_COPY = 'Couldn’t send your RSVP. Please try again.';
-const RSVP_LOOKUP_ERROR_COPY = 'Invitation not recognized. Please search by name below.';
+const RSVP_LOOKUP_ERROR_COPY = 'Invitation not recognized. Please use the private RSVP link or code from your invitation.';
 const INTERNAL_RSVP_ERROR_COPY =
   /\b(supabase|configuration|request\s*failed|functions?\/v1|edge\s*function|function|jwt|permission(?:s)?|policy|database|provider|network|fetch|token|secret|service\s*role|storage|bucket|metadata|missing-config|status\s*code|error_message|failed\s*to\s*submit)\b/i;
 
@@ -771,7 +771,7 @@ export default function RSVP() {
           return;
         }
         tokenLinkedSessionRef.current = false;
-        setError('Couldn’t load that invitation. Please search by name below.');
+        setError('Couldn’t load that invitation. Please use the private RSVP link or code from your invitation.');
       })
       .finally(() => {
         if (activeLookupRequestRef.current !== requestId) return;
@@ -1275,7 +1275,7 @@ export default function RSVP() {
             onClick={() => resetToSearch(false)}
             className="text-sm text-gray-500 hover:text-gray-700"
           >
-            Search by name instead
+            Enter invitation code instead
           </button>
         </div>
       </div>
@@ -1417,9 +1417,8 @@ export default function RSVP() {
                       <span>{error}</span>
                     </div>
                     <ul className="pl-6 space-y-1 text-xs text-text-tertiary list-disc">
-                      <li>Make sure you're using the invitation link from your email</li>
-                      <li>Try searching by your first and last name</li>
-                      <li>Check the spelling matches what the couple has on file</li>
+                      <li>Make sure you're using the invitation link or code from your email</li>
+                      <li>Check that the full code was copied without extra spaces</li>
                       <li>Contact the couple if you're still having trouble</li>
                     </ul>
                   </div>

@@ -123,17 +123,18 @@ function rememberRegistryPurchase(itemId: string): string[] {
 }
 
 function usePublicRegistryItems(weddingSiteId: string | null) {
+  const { inviteToken, passwordSession } = useSiteView();
   const [items, setItems] = useState<RegistryItem[] | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!weddingSiteId) return;
     setLoading(true);
-    publicFetchRegistryItems(weddingSiteId)
+    publicFetchRegistryItems(weddingSiteId, { inviteToken, passwordSession })
       .then(data => setItems(data))
       .catch(() => setItems([]))
       .finally(() => setLoading(false));
-  }, [weddingSiteId]);
+  }, [inviteToken, passwordSession, weddingSiteId]);
 
   function updateItem(updated: RegistryItem) {
     setItems(prev => prev?.map(i => (i.id === updated.id ? updated : i)) ?? prev);

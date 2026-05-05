@@ -17,6 +17,9 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
+  if (req.method !== "POST") {
+    return json({ error: "Method not allowed" }, 405);
+  }
 
   try {
     const authHeader = req.headers.get("Authorization");
@@ -70,7 +73,7 @@ Deno.serve(async (req: Request) => {
 
     return json({ tokens });
   } catch (err) {
-    console.error("GENERATE_TOKEN_UNEXPECTED_FAILED", err);
+    console.error("GENERATE_TOKEN_UNEXPECTED_FAILED", { reason: "UNEXPECTED_TOKEN_GENERATION_FAILURE" });
     return json({ error: "Could not generate token. Please try again." }, 500);
   }
 });

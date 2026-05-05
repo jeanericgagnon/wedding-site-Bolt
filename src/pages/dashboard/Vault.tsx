@@ -24,6 +24,38 @@ const DEMO_VAULT_STORAGE_KEY = 'dayof_demo_vault_state_v1';
 const VAULT_RELEASE_NOTICE_KEY = 'dayof_vault_release_notified_v1';
 const DEMO_WEDDING_DATE = '2026-02-23';
 const E2E_FORCE_UNLOCK_KEY = 'dayof_e2e_force_vault_unlock';
+const VAULT_CONFIG_SELECT = [
+  'id',
+  'wedding_site_id',
+  'vault_index',
+  'label',
+  'duration_years',
+  'is_enabled',
+  'unlock_at',
+  'unlock_schedule_finalized_at',
+  'created_at',
+  'updated_at',
+].join(', ');
+const VAULT_ENTRY_SELECT = [
+  'id',
+  'wedding_site_id',
+  'vault_config_id',
+  'vault_year',
+  'title',
+  'content',
+  'author_name',
+  'attachment_url',
+  'attachment_name',
+  'media_type',
+  'storage_provider',
+  'external_file_id',
+  'external_file_url',
+  'unlock_at',
+  'mime_type',
+  'size_bytes',
+  'duration_seconds',
+  'created_at',
+].join(', ');
 
 function safeVaultDashboardError(err: unknown, fallback: string): string {
   return customerSafeErrorMessage(err, fallback);
@@ -1056,23 +1088,23 @@ if (demoSite.wedding_date) setWeddingDate(toValidDateOrNull(demoSite.wedding_dat
 
           const { data: configData, error: configError } = await supabase
             .from('vault_configs')
-            .select('*')
+            .select(VAULT_CONFIG_SELECT)
             .eq('wedding_site_id', demoSite.id)
             .order('duration_years', { ascending: true });
           if (configError) throw configError;
 
-          const configs = (configData ?? []) as VaultConfig[];
+          const configs = (configData ?? []) as unknown as VaultConfig[];
           setVaultConfigs(configs);
 
           if (configs.length > 0) {
             const configIds = configs.map(c => c.id);
             const { data: entryData, error: entryError } = await supabase
               .from('vault_entries')
-              .select('*')
+              .select(VAULT_ENTRY_SELECT)
               .in('vault_config_id', configIds)
               .order('created_at', { ascending: true });
             if (entryError) throw entryError;
-            setEntries((entryData ?? []) as VaultEntry[]);
+            setEntries((entryData ?? []) as unknown as VaultEntry[]);
           } else {
             setEntries([]);
           }
@@ -1126,24 +1158,24 @@ setWeddingSiteId('demo-site-id');
 
       const { data: configData, error: configError } = await supabase
         .from('vault_configs')
-        .select('*')
+        .select(VAULT_CONFIG_SELECT)
         .eq('wedding_site_id', site.id)
         .order('duration_years', { ascending: true });
       if (configError) throw configError;
 
-      const configs = (configData ?? []) as VaultConfig[];
+      const configs = (configData ?? []) as unknown as VaultConfig[];
       setVaultConfigs(configs);
 
       if (configs.length > 0) {
         const configIds = configs.map(c => c.id);
         const { data: entryData, error } = await supabase
           .from('vault_entries')
-          .select('*')
+          .select(VAULT_ENTRY_SELECT)
           .in('vault_config_id', configIds)
           .order('created_at', { ascending: true });
 
         if (error) throw error;
-        setEntries((entryData ?? []) as VaultEntry[]);
+        setEntries((entryData ?? []) as unknown as VaultEntry[]);
       }
     } catch {
       setWeddingSiteId(null);
@@ -1265,6 +1297,7 @@ setWeddingSiteId('demo-site-id');
       const vaultUrl = siteSlug ? `${window.location.origin}/vault/${siteSlug}/${config.duration_years}` : null;
 
       await sendAnniversaryReminder({
+        weddingSiteId,
         to: coupleEmail,
         coupleName1,
         coupleName2,
@@ -1320,11 +1353,11 @@ setWeddingSiteId('demo-site-id');
           duration_years: years,
           is_enabled: true,
         })
-        .select()
+        .select(VAULT_CONFIG_SELECT)
         .single();
 
       if (error) throw error;
-      setVaultConfigs(prev => [...prev, data as VaultConfig].sort((a, b) => a.duration_years - b.duration_years));
+      setVaultConfigs(prev => [...prev, data as unknown as VaultConfig].sort((a, b) => a.duration_years - b.duration_years));
       toast('Vault added');
     } catch {
       toast('Couldn’t add that vault right now. Please try again.', 'error');
@@ -1355,10 +1388,10 @@ setWeddingSiteId('demo-site-id');
           starter.map((v) => ({ ...v, wedding_site_id: weddingSiteId, is_enabled: true })),
           { onConflict: 'wedding_site_id,vault_index' }
         )
-        .select('*');
+        .select(VAULT_CONFIG_SELECT);
 
       if (error) throw error;
-      setVaultConfigs((data ?? []) as VaultConfig[]);
+      setVaultConfigs((data ?? []) as unknown as VaultConfig[]);
       toast('Starter vault set loaded (1/5/10)');
       await loadData();
     } catch {
@@ -1465,11 +1498,11 @@ setWeddingSiteId('demo-site-id');
     const { data, error } = await supabase
       .from('vault_entries')
       .insert({ ...entry, wedding_site_id: weddingSiteId })
-      .select()
+      .select(VAULT_ENTRY_SELECT)
       .single();
 
     if (error) throw new Error('Couldn’t save this vault entry. Please try again.');
-    setEntries(prev => [...prev, data as VaultEntry]);
+    setEntries(prev => [...prev, data as unknown as VaultEntry]);
     setActiveFormConfigId(null);
     toast('Entry added to vault');
   }

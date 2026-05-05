@@ -60,6 +60,12 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   try {
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
@@ -80,9 +86,9 @@ Deno.serve(async (req: Request) => {
     let event: Stripe.Event;
     try {
       event = await stripe.webhooks.constructEventAsync(body, sig, webhookSecret);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Webhook signature verification failed";
-      return new Response(JSON.stringify({ error: msg }), {
+    } catch {
+      console.error("STRIPE_WEBHOOK_SIGNATURE_FAILED", { reason: "SIGNATURE_VERIFICATION_FAILED" });
+      return new Response(JSON.stringify({ error: "Could not process Stripe webhook." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -159,7 +165,7 @@ Deno.serve(async (req: Request) => {
             });
 
           if (txError) {
-            console.error("STRIPE_WEBHOOK_SMS_CREDIT_TX_FAILED", txError);
+            console.error("STRIPE_WEBHOOK_SMS_CREDIT_TX_FAILED", { reason: "SMS_CREDIT_TRANSACTION_INSERT_FAILED" });
             return new Response(JSON.stringify({ error: "Could not record SMS credit purchase." }), {
               status: 500,
               headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -173,7 +179,7 @@ Deno.serve(async (req: Request) => {
             .eq("user_id", supabaseUserId);
 
           if (balError) {
-            console.error("STRIPE_WEBHOOK_SMS_BALANCE_FAILED", balError);
+            console.error("STRIPE_WEBHOOK_SMS_BALANCE_FAILED", { reason: "SMS_CREDIT_BALANCE_UPDATE_FAILED" });
             return new Response(JSON.stringify({ error: "Could not update SMS credit balance." }), {
               status: 500,
               headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -206,7 +212,7 @@ Deno.serve(async (req: Request) => {
           .eq("user_id", supabaseUserId);
 
         if (updateError) {
-          console.error("STRIPE_WEBHOOK_SUBSCRIPTION_UPDATE_FAILED", updateError);
+          console.error("STRIPE_WEBHOOK_SUBSCRIPTION_UPDATE_FAILED", { reason: "SUBSCRIPTION_STATUS_UPDATE_FAILED" });
           return new Response(JSON.stringify({ error: "Could not update payment status." }), {
             status: 500,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -228,7 +234,7 @@ Deno.serve(async (req: Request) => {
           .eq("user_id", supabaseUserId);
 
         if (updateError) {
-          console.error("STRIPE_WEBHOOK_PAYMENT_UPDATE_FAILED", updateError);
+          console.error("STRIPE_WEBHOOK_PAYMENT_UPDATE_FAILED", { reason: "PAYMENT_STATUS_UPDATE_FAILED" });
           return new Response(JSON.stringify({ error: "Could not update payment status." }), {
             status: 500,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -295,7 +301,7 @@ Deno.serve(async (req: Request) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    console.error("STRIPE_WEBHOOK_UNEXPECTED_FAILED", err);
+    console.error("STRIPE_WEBHOOK_UNEXPECTED_FAILED", { reason: "UNEXPECTED_STRIPE_WEBHOOK_FAILURE" });
     return new Response(JSON.stringify({ error: "Could not process Stripe webhook." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

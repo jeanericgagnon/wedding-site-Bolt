@@ -4,7 +4,7 @@ import { enforcePublicSubmissionRateLimit } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
@@ -16,6 +16,7 @@ const json = (data: unknown, status = 200) =>
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
+  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   try {
     const body = await req.json().catch(() => ({}));
@@ -90,7 +91,7 @@ Deno.serve(async (req: Request) => {
 
     return json({ ok: true });
   } catch (err) {
-    console.error("SUBMIT_CONTACT_REQUEST_UNEXPECTED_FAILED", err);
+    console.error("SUBMIT_CONTACT_REQUEST_UNEXPECTED_FAILED", { reason: "UNEXPECTED_CONTACT_REQUEST_SUBMIT_FAILURE" });
     return json({ error: "Could not save this contact update. Please try again." }, 500);
   }
 });

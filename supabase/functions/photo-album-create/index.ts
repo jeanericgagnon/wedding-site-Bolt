@@ -146,6 +146,7 @@ async function tryEnsureDriveFolder(options: {
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
+  if (req.method !== "POST") return fail("METHOD_NOT_ALLOWED", "Method not allowed.", 405);
 
   try {
     const authHeader = req.headers.get("Authorization");
@@ -197,7 +198,7 @@ Deno.serve(async (req: Request) => {
         .eq("id", parentAlbumId)
         .maybeSingle();
       if (parentError) {
-        console.error("PHOTO_ALBUM_CREATE_PARENT_FAILED", parentError);
+        console.error("PHOTO_ALBUM_CREATE_PARENT_FAILED", { reason: "PARENT_ALBUM_LOAD_FAILED" });
         return fail("PARENT_BUCKET_ERROR", safePhotoAlbumCreateError("PARENT"), 400);
       }
       if (!parent || parent.wedding_site_id !== siteId) {
@@ -237,7 +238,7 @@ Deno.serve(async (req: Request) => {
       .single();
 
     if (error) {
-      console.error("PHOTO_ALBUM_CREATE_SAVE_FAILED", error);
+      console.error("PHOTO_ALBUM_CREATE_SAVE_FAILED", { reason: "ALBUM_CREATE_SAVE_FAILED" });
       return fail("DB_ERROR", safePhotoAlbumCreateError("SAVE"), 400);
     }
 
@@ -251,7 +252,7 @@ Deno.serve(async (req: Request) => {
       driveBackupStatus: driveBackup.backupStatus,
     });
   } catch (err) {
-    console.error("PHOTO_ALBUM_CREATE_UNEXPECTED_FAILED", err);
+    console.error("PHOTO_ALBUM_CREATE_UNEXPECTED_FAILED", { reason: "UNEXPECTED_PHOTO_ALBUM_CREATE_FAILURE" });
     return fail("INTERNAL_ERROR", safePhotoAlbumCreateError("INTERNAL"), 500);
   }
 });

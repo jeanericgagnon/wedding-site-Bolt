@@ -41,6 +41,7 @@ import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
 import { copyTextOrDownload } from '../../lib/copyText';
 import { logAppAction } from '../../lib/actionAudit';
 import { customerSafeErrorMessage } from '../../lib/customerSafeError';
+import { toSafeCsv } from '../../lib/csvExport';
 
 function safeGuestsDashboardError(err: unknown, fallback: string): string {
   return customerSafeErrorMessage(err, fallback);
@@ -638,7 +639,7 @@ export const DashboardGuests: React.FC = () => {
 
       const { data: guestsData, error: guestsError } = await supabase
         .from('guests')
-        .select('*')
+        .select('id, first_name, last_name, name, email, phone, plus_one_allowed, plus_one_name, children_allowed, max_children, max_additional_guests, invited_to_ceremony, invited_to_reception, invite_token, rsvp_status, rsvp_received_at, checked_in_at, checkin_notes, thank_you_sent_at, thank_you_notes, household_id, group_name, notes, mailing_address_line1, mailing_address_line2, mailing_city, mailing_state, mailing_postal_code, mailing_country')
         .eq('wedding_site_id', weddingSiteId)
         .order('created_at', { ascending: false });
 
@@ -648,7 +649,7 @@ export const DashboardGuests: React.FC = () => {
         const guestIds = guestsData.map(g => g.id);
         const windowStartIso = new Date(Date.now() - (7 * 24 * 60 * 60 * 1000)).toISOString();
         const [{ data: rsvpsData, error: rsvpsError }, { data: conflictsData, error: conflictsError }, { data: conflictHistoryData, error: conflictHistoryError }] = await Promise.all([
-          supabase.from('rsvps').select('*').in('guest_id', guestIds),
+          supabase.from('rsvps').select('guest_id, attending, attending_ceremony, attending_reception, meal_choice, plus_one_name, plus_one_count, children_count, notes, custom_answers').in('guest_id', guestIds),
           supabase
             .from('rsvp_conflicts')
             .select('id, guest_id, conflict_code, message, severity, created_at, resolved, resolved_at')
@@ -2204,9 +2205,7 @@ const handleSendBulkInvitations = async () => {
       formatCustomAnswers(guest.rsvp?.custom_answers || null),
     ]);
 
-    const csvContent = [headers, ...rows]
-      .map(row => row.map(cell => `"${cell}"`).join(','))
-      .join('\n');
+    const csvContent = toSafeCsv([headers, ...rows]);
 
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -2254,9 +2253,7 @@ const handleSendBulkInvitations = async () => {
       guest.rsvp_status,
       (guest as GuestWithRSVP & { thank_you_sent_at?: string | null }).thank_you_sent_at || '',
     ]);
-    const csvContent = [headers, ...rows]
-      .map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
-      .join('\n');
+    const csvContent = toSafeCsv([headers, ...rows]);
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -2276,9 +2273,7 @@ const handleSendBulkInvitations = async () => {
       guest.phone || '',
       (guest as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at || '',
     ]);
-    const csvContent = [headers, ...rows]
-      .map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
-      .join('\n');
+    const csvContent = toSafeCsv([headers, ...rows]);
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -2351,9 +2346,7 @@ const handleSendBulkInvitations = async () => {
       ];
     });
 
-    const csvContent = [headers, ...rows]
-      .map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
-      .join('\n');
+    const csvContent = toSafeCsv([headers, ...rows]);
 
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -2409,9 +2402,7 @@ const handleSendBulkInvitations = async () => {
       ];
     });
 
-    const csvContent = [headers, ...rows]
-      .map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
-      .join('\n');
+    const csvContent = toSafeCsv([headers, ...rows]);
 
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -2962,9 +2953,7 @@ const handleSendBulkInvitations = async () => {
       });
     });
 
-    const csvContent = [headers, ...rows]
-      .map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
-      .join('\n');
+    const csvContent = toSafeCsv([headers, ...rows]);
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');

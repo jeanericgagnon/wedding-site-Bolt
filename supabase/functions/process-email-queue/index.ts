@@ -15,6 +15,7 @@ const json = (data: unknown, status = 200) =>
 
 const BATCH_SIZE = 20;
 const MAX_ATTEMPTS = 3;
+const SAFE_DELIVERY_ERROR = "Email delivery did not complete. Please try again.";
 
 function escapeHtml(value: unknown): string {
   return String(value ?? "")
@@ -39,6 +40,19 @@ function safeEmailUrl(value: unknown): string {
 
 function safeEmailHref(value: unknown): string {
   return escapeHtml(safeEmailUrl(value));
+}
+
+function sanitizeEmailSubject(value: unknown): string {
+  const normalized = String(value ?? "")
+    .split("")
+    .map((char) => {
+      const code = char.charCodeAt(0);
+      return code < 32 || code === 127 ? " " : char;
+    })
+    .join("")
+    .replace(/\s+/g, " ")
+    .trim();
+  return (normalized || "DayOf update").slice(0, 180);
 }
 
 function buildEmailHtml(type: string, payload: Record<string, unknown>): { subject: string; html: string } | null {
@@ -149,15 +163,26 @@ Deno.serve(async (req: Request) => {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
 
+  if (req.method !== "POST") {
+    return json({ error: "METHOD_NOT_ALLOWED" }, 405);
+  }
+
   try {
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const authHeader = req.headers.get("Authorization");
+    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+    if (token !== serviceRoleKey) {
+      return json({ error: "Unauthorized" }, 401);
+    }
+
     const adminClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      serviceRoleKey,
     );
 
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     if (!resendApiKey) {
-      return json({ error: "Email service not configured" }, 500);
+      return json({ error: "Could not process email queue. Please try again." }, 500);
     }
 
     const { data: items, error: fetchErr } = await adminClient
@@ -214,7 +239,7 @@ Deno.serve(async (req: Request) => {
           body: JSON.stringify({
             from: "DayOf <onboarding@resend.dev>",
             to: [to],
-            subject: built.subject,
+            subject: sanitizeEmailSubject(built.subject),
             html: built.html,
           }),
         });
@@ -226,18 +251,18 @@ Deno.serve(async (req: Request) => {
             .eq("id", item.id);
           delivered++;
         } else {
-          const errBody = await res.text();
+          console.error("PROCESS_EMAIL_QUEUE_PROVIDER_FAILED", { status: res.status });
           await adminClient
             .from("email_queue")
-            .update({ status: item.attempts + 1 >= MAX_ATTEMPTS ? "failed" : "pending", error: errBody })
+            .update({ status: item.attempts + 1 >= MAX_ATTEMPTS ? "failed" : "pending", error: SAFE_DELIVERY_ERROR })
             .eq("id", item.id);
           failed++;
         }
       } catch (sendErr) {
-        const msg = sendErr instanceof Error ? sendErr.message : "Send error";
+        console.error("PROCESS_EMAIL_QUEUE_SEND_FAILED", { reason: "QUEUE_SEND_FAILED" });
         await adminClient
           .from("email_queue")
-          .update({ status: item.attempts + 1 >= MAX_ATTEMPTS ? "failed" : "pending", error: msg })
+          .update({ status: item.attempts + 1 >= MAX_ATTEMPTS ? "failed" : "pending", error: SAFE_DELIVERY_ERROR })
           .eq("id", item.id);
         failed++;
       }
@@ -245,7 +270,7 @@ Deno.serve(async (req: Request) => {
 
     return json({ processed: items.length, delivered, failed });
   } catch (err) {
-    console.error("PROCESS_EMAIL_QUEUE_UNEXPECTED_FAILED", err);
+    console.error("PROCESS_EMAIL_QUEUE_UNEXPECTED_FAILED", { reason: "UNEXPECTED_EMAIL_QUEUE_FAILURE" });
     return json({ error: "Could not process email queue. Please try again." }, 500);
   }
 });

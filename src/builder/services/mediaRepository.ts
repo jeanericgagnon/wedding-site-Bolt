@@ -2,6 +2,7 @@ import { supabase } from '../../lib/supabase';
 import { BuilderMediaAsset } from '../../types/builder/media';
 
 const STORAGE_BUCKET = 'wedding-media';
+const BUILDER_MEDIA_ASSET_SELECT = 'id, wedding_site_id, filename, original_filename, mime_type, asset_type, status, url, thumbnail_url, width, height, size_bytes, alt_text, caption, tags, attached_section_ids, uploaded_at, updated_at' as const;
 
 export interface MediaRepositoryUploadResult {
   url: string;
@@ -51,7 +52,7 @@ export const mediaRepository = {
   async list(weddingId: string): Promise<BuilderMediaAsset[]> {
     const { data, error } = await supabase
       .from('builder_media_assets')
-      .select('*')
+      .select(BUILDER_MEDIA_ASSET_SELECT)
       .eq('wedding_site_id', weddingId)
       .order('uploaded_at', { ascending: false });
 
@@ -82,7 +83,7 @@ export const mediaRepository = {
         tags: asset.tags,
         attached_section_ids: asset.attachedSectionIds,
       })
-      .select()
+      .select(BUILDER_MEDIA_ASSET_SELECT)
       .single();
 
     if (error) throw error;

@@ -25,7 +25,7 @@ import { logAppAction } from '../../lib/actionAudit';
 import { customerSafeErrorMessage } from '../../lib/customerSafeError';
 import { buildMessageAudienceOptions, filterMessageAudienceGuests, getMessageAudienceDetail } from '../../lib/messageAudienceSegments';
 import { buildGuestMessageLanguagePreviews } from '../../lib/guestMessageLanguagePreview';
-
+import { MESSAGES_DASHBOARD_SELECT } from './messages/messageSelect';
 const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bulk-message`;
 const DEMO_MESSAGES_STORAGE_KEY = 'dayof.demo.messages.history';
 const RSVP_CONTINUITY_EVENT = 'dayof:rsvp-updated';
@@ -1167,11 +1167,11 @@ export const DashboardMessages: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('messages')
-        .select('*')
+        .select(MESSAGES_DASHBOARD_SELECT)
         .eq('wedding_site_id', weddingSite.id)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      setMessages(data || []);
+      setMessages((data ?? []) as unknown as Message[]);
     } catch {
       setMessages([]);
       setDeliveries([]);

@@ -105,12 +105,12 @@ Deno.serve(async (req: Request) => {
     });
 
     if (error) {
-      console.error("LOG_CLIENT_ERROR_INSERT_FAILED", error);
+      console.error("LOG_CLIENT_ERROR_INSERT_FAILED", { reason: "CLIENT_ERROR_INSERT_FAILED" });
       return json({ error: "Could not save error report." }, 500);
     }
     return json({ ok: true });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Internal error";
-    return json({ error: msg }, 500);
+    console.error("LOG_CLIENT_ERROR_UNEXPECTED_FAILED", { reason: "UNEXPECTED_CLIENT_ERROR_LOG_FAILURE" });
+    return json({ error: "Could not save error report." }, 500);
   }
 });

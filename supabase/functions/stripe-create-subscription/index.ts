@@ -4,7 +4,7 @@ import Stripe from "npm:stripe@14";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
@@ -32,6 +32,9 @@ function isAllowedCheckoutRedirect(url: string): boolean {
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
+  }
+  if (req.method !== "POST") {
+    return json({ error: "Method not allowed" }, 405);
   }
 
   try {
@@ -116,7 +119,7 @@ Deno.serve(async (req: Request) => {
 
     return json({ url: session.url, session_id: session.id });
   } catch (err) {
-    console.error("STRIPE_CREATE_SUBSCRIPTION_UNEXPECTED_FAILED", err);
+    console.error("STRIPE_CREATE_SUBSCRIPTION_UNEXPECTED_FAILED", { reason: "UNEXPECTED_SUBSCRIPTION_CREATE_FAILURE" });
     return json({ error: "Could not start checkout. Please try again." }, 500);
   }
 });

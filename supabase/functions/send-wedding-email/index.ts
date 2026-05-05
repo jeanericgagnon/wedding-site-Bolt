@@ -39,6 +39,19 @@ function safeText(value: unknown, fallback = ""): string {
   return escapeHtml(raw || fallback);
 }
 
+function sanitizeEmailSubject(value: unknown): string {
+  const normalized = String(value ?? "")
+    .split("")
+    .map((char) => {
+      const code = char.charCodeAt(0);
+      return code < 32 || code === 127 ? " " : char;
+    })
+    .join("")
+    .replace(/\s+/g, " ")
+    .trim();
+  return (normalized || "DayOf update").slice(0, 180);
+}
+
 function anniversaryReminderHtml(data: Record<string, unknown>): string {
   const coupleName1 = safeText(data.coupleName1, "Partner");
   const coupleName2 = safeText(data.coupleName2, "Partner");
@@ -273,7 +286,8 @@ function weddingInvitationHtml(data: Record<string, unknown>): string {
 </html>`;
 }
 
-const OWNER_ONLY_TYPES = new Set(["wedding_invitation", "signup_welcome"]);
+const AUTHENTICATED_EMAIL_TYPES = new Set(["wedding_invitation", "signup_welcome", "anniversary_reminder"]);
+const SERVICE_ROLE_ONLY_TYPES = new Set(["rsvp_notification", "rsvp_confirmation"]);
 
 function hasPermissionKey(permissions: unknown, key: string): boolean {
   return Array.isArray(permissions) && permissions.includes(key);
@@ -324,9 +338,43 @@ async function canSendWeddingInvitation(opts: {
   return String(guest.email ?? "").trim().toLowerCase() === recipientEmail.trim().toLowerCase();
 }
 
+async function canSendSiteScopedEmail(opts: {
+  adminClient: ReturnType<typeof createClient>;
+  weddingSiteId: string;
+  userId: string;
+}): Promise<boolean> {
+  const { adminClient, weddingSiteId, userId } = opts;
+  const { data: ownedSite, error: ownedError } = await adminClient
+    .from("wedding_sites")
+    .select("id")
+    .eq("id", weddingSiteId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (ownedError) throw ownedError;
+  if (ownedSite?.id) return true;
+
+  const { data: collaborator, error: collaboratorError } = await adminClient
+    .from("wedding_site_collaborators")
+    .select("permissions")
+    .eq("wedding_site_id", weddingSiteId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (collaboratorError) throw collaboratorError;
+  return hasPermissionKey(collaborator?.permissions, "messages");
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
+  }
+
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "METHOD_NOT_ALLOWED" }), {
+      status: 405,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   try {
@@ -354,10 +402,18 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    let authedUserId: string | null = null;
+    if (SERVICE_ROLE_ONLY_TYPES.has(type) && !isServiceRole) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-    // Owner-only types (invitations, welcome) require authenticated user or service role.
-    if (OWNER_ONLY_TYPES.has(type) && !isServiceRole) {
+    let authedUserId: string | null = null;
+    let authedUserEmail: string | null = null;
+
+    // Direct send types require an authenticated user or the server-side queue/service role.
+    if (AUTHENTICATED_EMAIL_TYPES.has(type) && !isServiceRole) {
       if (!token) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
           status: 401,
@@ -377,6 +433,7 @@ Deno.serve(async (req: Request) => {
         });
       }
       authedUserId = user.id;
+      authedUserEmail = user.email ?? null;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -385,6 +442,22 @@ Deno.serve(async (req: Request) => {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    const adminClient = AUTHENTICATED_EMAIL_TYPES.has(type) && !isServiceRole
+      ? createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        serviceRoleKey,
+      )
+      : null;
+
+    if (type === "signup_welcome" && !isServiceRole) {
+      if (!authedUserEmail || authedUserEmail.trim().toLowerCase() !== to.trim().toLowerCase()) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     if (type === "wedding_invitation" && !isServiceRole) {
@@ -396,12 +469,8 @@ Deno.serve(async (req: Request) => {
         });
       }
 
-      const adminClient = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        serviceRoleKey,
-      );
       const allowed = await canSendWeddingInvitation({
-        adminClient,
+        adminClient: adminClient!,
         weddingSiteId,
         userId: authedUserId!,
         inviteToken: typeof data.inviteToken === "string" ? data.inviteToken : null,
@@ -416,9 +485,32 @@ Deno.serve(async (req: Request) => {
       }
     }
 
+    if (type === "anniversary_reminder" && !isServiceRole) {
+      const weddingSiteId = typeof data.weddingSiteId === "string" ? data.weddingSiteId.trim() : "";
+      if (!weddingSiteId) {
+        return new Response(JSON.stringify({ error: "Wedding site is required to send this reminder" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const allowed = await canSendSiteScopedEmail({
+        adminClient: adminClient!,
+        weddingSiteId,
+        userId: authedUserId!,
+      });
+
+      if (!allowed) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     if (!resendApiKey) {
-      return new Response(JSON.stringify({ error: "Email service not configured" }), {
+      return new Response(JSON.stringify({ error: "Could not send this email. Please try again." }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -472,14 +564,13 @@ Deno.serve(async (req: Request) => {
       body: JSON.stringify({
         from: `${fromName} <${sender}>`,
         to: [to],
-        subject,
+        subject: sanitizeEmailSubject(subject),
         html,
       }),
     });
 
     if (!resendResponse.ok) {
-      const errorBody = await resendResponse.text();
-      console.error("Resend error:", errorBody);
+      console.error("SEND_WEDDING_EMAIL_PROVIDER_FAILED", { status: resendResponse.status });
       return new Response(JSON.stringify({ error: "Could not send this email. Please try again." }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -493,7 +584,7 @@ Deno.serve(async (req: Request) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    console.error("SEND_WEDDING_EMAIL_UNEXPECTED_FAILED", err);
+    console.error("SEND_WEDDING_EMAIL_UNEXPECTED_FAILED", { reason: "UNEXPECTED_SEND_EMAIL_FAILURE" });
     return new Response(JSON.stringify({ error: "Could not send this email. Please try again." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

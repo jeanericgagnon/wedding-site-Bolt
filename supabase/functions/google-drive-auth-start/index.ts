@@ -15,6 +15,7 @@ const json = (data: unknown, status = 200) =>
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
+  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   try {
     const authHeader = req.headers.get("Authorization");
@@ -59,7 +60,7 @@ Deno.serve(async (req: Request) => {
 
     return json({ authUrl });
   } catch (err) {
-    console.error("GOOGLE_DRIVE_AUTH_START_UNEXPECTED_FAILED", err);
+    console.error("GOOGLE_DRIVE_AUTH_START_UNEXPECTED_FAILED", { reason: "UNEXPECTED_GOOGLE_DRIVE_AUTH_START_FAILURE" });
     return json({ error: "Could not start Google Drive connection. Please try again." }, 500);
   }
 });

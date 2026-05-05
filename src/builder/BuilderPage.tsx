@@ -16,6 +16,8 @@ import { readSetupDraft } from '../lib/setupDraft';
 import { resolveActiveSiteForUser } from '../lib/activeSite';
 import { applySetupDraftToWeddingData, hasMeaningfulSetupDraft } from './utils/setupDraftHydration';
 
+const BUILDER_ENTRY_SITE_SELECT = 'id, couple_name_1, couple_name_2, couple_first_name, couple_second_name' as const;
+
 function createDemoBuilderProject(): BuilderProject {
   const templateId = 'modern-luxe';
   const project = createEmptyBuilderProject(demoWeddingSite.id, templateId);
@@ -176,7 +178,7 @@ export const BuilderPage: React.FC = () => {
       const activeSite = await resolveActiveSiteForUser(userId);
       const { data: siteData, error: siteError } = await supabase
         .from('wedding_sites')
-        .select('*')
+        .select(BUILDER_ENTRY_SITE_SELECT)
         .eq('id', activeSite?.id ?? '')
         .maybeSingle();
 

@@ -36,6 +36,9 @@ interface PasswordSessionPayload {
   exp: number;
 }
 
+const PUBLIC_SITE_PASSWORD_RATE_LIMIT_WINDOW_MINUTES = 15;
+const PUBLIC_SITE_PASSWORD_RATE_LIMIT_MAX_ATTEMPTS = 8;
+
 const SAFE_PUBLIC_SITE_COLUMNS = [
   "id",
   "site_slug",
@@ -56,6 +59,8 @@ const SAFE_PUBLIC_SITE_COLUMNS = [
 
 const PRIVATE_PUBLIC_SITE_COLUMNS = [
   ...SAFE_PUBLIC_SITE_COLUMNS,
+  "privacy_mode",
+  "hide_from_search",
   "site_password_hash",
   "guest_access_token",
 ];
@@ -109,6 +114,11 @@ function buildSiteUrlLookupCandidates(slug: string): string[] {
     `https://www.${bare}`,
     `http://www.${bare}`,
   ];
+}
+
+async function hashRateLimitKey(value: string): Promise<string> {
+  const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(hashBuffer)).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -190,6 +200,36 @@ async function hasValidPasswordSession(
   );
 }
 
+async function enforcePasswordAttemptRateLimit(
+  adminClient: ReturnType<typeof createClient>,
+  req: Request,
+  slug: string,
+): Promise<boolean> {
+  const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? req.headers.get("x-real-ip") ?? "unknown";
+  const ipHash = await hashRateLimitKey(`public-site-password:${slug}:${clientIp}:${Deno.env.get("SUPABASE_URL") ?? ""}`);
+  const windowStart = new Date(Date.now() - PUBLIC_SITE_PASSWORD_RATE_LIMIT_WINDOW_MINUTES * 60 * 1000).toISOString();
+  const { data: existingLimit } = await adminClient
+    .from("rsvp_rate_limit")
+    .select("id, attempts, last_attempt_at")
+    .eq("ip_hash", ipHash)
+    .gte("last_attempt_at", windowStart)
+    .maybeSingle();
+
+  if (existingLimit) {
+    if (existingLimit.attempts >= PUBLIC_SITE_PASSWORD_RATE_LIMIT_MAX_ATTEMPTS) return false;
+    await adminClient
+      .from("rsvp_rate_limit")
+      .update({ attempts: existingLimit.attempts + 1, last_attempt_at: new Date().toISOString() })
+      .eq("id", existingLimit.id);
+    return true;
+  }
+
+  await adminClient
+    .from("rsvp_rate_limit")
+    .insert({ ip_hash: ipHash, guest_token: slug.slice(0, 16), attempts: 1 });
+  return true;
+}
+
 async function queryPublicSiteRow(
   adminClient: ReturnType<typeof createClient>,
   slugInput: string,
@@ -217,20 +257,7 @@ async function queryPublicSiteRow(
     if (byUrl) return byUrl;
   }
 
-  const fuzzy = await adminClient
-    .from("wedding_sites")
-    .select(select)
-    .ilike("site_url", `%${slug}%`)
-    .limit(20);
-  if (fuzzy.error) throw fuzzy.error;
-
-  const match = (fuzzy.data ?? []).find((entry) => {
-    const row = entry as Record<string, unknown>;
-    const siteUrl = typeof row.site_url === "string" ? row.site_url : null;
-    return normalizePublicSiteSlug(siteUrl) === slug;
-  });
-
-  return (match as Record<string, unknown> | undefined) ?? null;
+  return null;
 }
 
 Deno.serve(async (req: Request) => {
@@ -275,6 +302,10 @@ Deno.serve(async (req: Request) => {
         return json({ status: "password_required", site: null }, 200);
       }
 
+      if (!(await enforcePasswordAttemptRateLimit(adminClient, req, slug))) {
+        return json({ status: "password_required", site: null, error: "Too many password attempts. Please wait a few minutes and try again." }, 429);
+      }
+
       const { data: passwordOk, error } = await adminClient.rpc("check_site_password", {
         p_slug: slug,
         p_password: password,
@@ -308,7 +339,7 @@ Deno.serve(async (req: Request) => {
 
     return json({ status: "open", site: buildSafePublicSite(row) }, 200);
   } catch (error) {
-    console.error("PUBLIC_SITE_ACCESS_FAILED", error);
+    console.error("PUBLIC_SITE_ACCESS_FAILED", { reason: "UNEXPECTED_PUBLIC_SITE_ACCESS_FAILURE" });
     return json({ error: "Could not load this site right now." }, 500);
   }
 });

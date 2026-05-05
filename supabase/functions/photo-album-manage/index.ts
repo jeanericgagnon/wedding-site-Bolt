@@ -99,7 +99,7 @@ Deno.serve(async (req: Request) => {
         .eq("user_id", user.id)
         .maybeSingle();
       if (collaboratorError) {
-        console.error("PHOTO_ALBUM_MANAGE_COLLABORATOR_FAILED", collaboratorError);
+        console.error("PHOTO_ALBUM_MANAGE_COLLABORATOR_FAILED", { reason: "COLLABORATOR_LOAD_FAILED" });
         return json({ error: safePhotoAlbumManageError("COLLABORATOR_FAILED") }, 400);
       }
       allowed = hasPermissionKey(collaborator?.permissions, "photos");
@@ -113,7 +113,7 @@ Deno.serve(async (req: Request) => {
         .update({ is_active: isActive })
         .eq("id", albumId);
       if (error) {
-        console.error("PHOTO_ALBUM_MANAGE_SET_ACTIVE_FAILED", error);
+        console.error("PHOTO_ALBUM_MANAGE_SET_ACTIVE_FAILED", { reason: "ALBUM_ACTIVE_UPDATE_FAILED" });
         return json({ error: safePhotoAlbumManageError("UPDATE_FAILED") }, 400);
       }
       return json({ success: true, albumId, isActive });
@@ -125,7 +125,7 @@ Deno.serve(async (req: Request) => {
         .update({ opens_at: opensAt, closes_at: closesAt })
         .eq("id", albumId);
       if (error) {
-        console.error("PHOTO_ALBUM_MANAGE_SET_WINDOW_FAILED", error);
+        console.error("PHOTO_ALBUM_MANAGE_SET_WINDOW_FAILED", { reason: "ALBUM_WINDOW_UPDATE_FAILED" });
         return json({ error: safePhotoAlbumManageError("UPDATE_FAILED") }, 400);
       }
       return json({ success: true, albumId, opensAt, closesAt });
@@ -141,7 +141,7 @@ Deno.serve(async (req: Request) => {
           .eq("id", parentAlbumId)
           .maybeSingle();
         if (parentError) {
-          console.error("PHOTO_ALBUM_MANAGE_PARENT_FAILED", parentError);
+          console.error("PHOTO_ALBUM_MANAGE_PARENT_FAILED", { reason: "PARENT_ALBUM_LOAD_FAILED" });
           return json({ error: safePhotoAlbumManageError("PARENT_FAILED") }, 400);
         }
         if (!parent || parent.wedding_site_id !== album.wedding_site_id) {
@@ -159,7 +159,7 @@ Deno.serve(async (req: Request) => {
         .update({ parent_album_id: parentAlbumId, hierarchy_label: hierarchyLabel })
         .eq("id", albumId);
       if (error) {
-        console.error("PHOTO_ALBUM_MANAGE_SET_PARENT_FAILED", error);
+        console.error("PHOTO_ALBUM_MANAGE_SET_PARENT_FAILED", { reason: "ALBUM_PARENT_UPDATE_FAILED" });
         return json({ error: safePhotoAlbumManageError("UPDATE_FAILED") }, 400);
       }
       return json({ success: true, albumId, parentAlbumId });
@@ -174,7 +174,7 @@ Deno.serve(async (req: Request) => {
         .eq("id", albumId);
 
       if (error) {
-        console.error("PHOTO_ALBUM_MANAGE_REGENERATE_LINK_FAILED", error);
+        console.error("PHOTO_ALBUM_MANAGE_REGENERATE_LINK_FAILED", { reason: "ALBUM_LINK_REGENERATION_FAILED" });
         return json({ error: safePhotoAlbumManageError("UPDATE_FAILED") }, 400);
       }
 
@@ -184,7 +184,7 @@ Deno.serve(async (req: Request) => {
 
     return json({ error: "Unsupported action" }, 400);
   } catch (err) {
-    console.error("PHOTO_ALBUM_MANAGE_UNEXPECTED_FAILED", err);
+    console.error("PHOTO_ALBUM_MANAGE_UNEXPECTED_FAILED", { reason: "UNEXPECTED_PHOTO_ALBUM_MANAGE_FAILURE" });
     return json({ error: safePhotoAlbumManageError("INTERNAL_ERROR") }, 500);
   }
 });

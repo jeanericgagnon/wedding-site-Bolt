@@ -20,7 +20,7 @@ Deno.serve(async (req: Request) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!supabaseUrl || !serviceRole) return json({ error: "Supabase not configured" }, 500);
+    if (!supabaseUrl || !serviceRole) return json({ ok: true, tracked: false });
 
     const admin = createClient(supabaseUrl, serviceRole);
     const body = await req.json().catch(() => ({}));

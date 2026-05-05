@@ -9,6 +9,9 @@ import { getBuilderRevision, listBuilderRevisions, recordBuilderRevision } from 
 import { rewriteSignedMediaUrlsToPublicDeep } from '../../lib/mediaUrl';
 import { buildCoupleDisplayName } from '../../lib/coupleDisplayName';
 
+const BUILDER_PROJECT_SITE_SELECT = 'id, active_template_id, template_id, site_json, layout_config' as const;
+const BUILDER_WEDDING_DATA_SITE_SELECT = 'id, wedding_data, couple_name_1, couple_name_2, couple_first_name, couple_second_name, wedding_date, venue_date, venue_name, wedding_location, venue_location' as const;
+
 const toIsoDateOrUndefined = (value: unknown): string | undefined => {
   if (typeof value !== 'string' || !value.trim()) return undefined;
   const date = new Date(value);
@@ -78,7 +81,7 @@ export const builderProjectService = {
   async loadProject(weddingSiteId: string): Promise<BuilderProject | null> {
     const { data, error } = await supabase
       .from('wedding_sites')
-      .select('*')
+      .select(BUILDER_PROJECT_SITE_SELECT)
       .eq('id', weddingSiteId)
       .maybeSingle();
 
@@ -108,7 +111,7 @@ export const builderProjectService = {
   async loadWeddingData(weddingSiteId: string): Promise<WeddingDataV1> {
     const { data, error } = await supabase
       .from('wedding_sites')
-      .select('*')
+      .select(BUILDER_WEDDING_DATA_SITE_SELECT)
       .eq('id', weddingSiteId)
       .maybeSingle();
 

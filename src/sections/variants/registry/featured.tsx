@@ -296,18 +296,18 @@ export function registryItemToGift(item: RegistryItem): z.infer<typeof FeaturedG
 }
 
 const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = ({ data }) => {
-  const { weddingSiteId } = useSiteView();
+  const { weddingSiteId, inviteToken, passwordSession } = useSiteView();
   const [liveItems, setLiveItems] = useState<RegistryItem[] | null>(null);
 
   useEffect(() => {
     if (!weddingSiteId) return;
-    publicFetchRegistryItems(weddingSiteId)
+    publicFetchRegistryItems(weddingSiteId, { inviteToken, passwordSession })
       .then((items) => {
         const safeItems = normalizeRegistryFeaturedItems(Array.isArray(items) ? items : []);
         setLiveItems(safeItems.filter((i) => !i.hide_when_purchased || i.purchase_status !== 'purchased'));
       })
       .catch(() => setLiveItems(null));
-  }, [weddingSiteId]);
+  }, [inviteToken, passwordSession, weddingSiteId]);
 
   const safeFeaturedGifts = Array.isArray(data.featuredGifts) ? data.featuredGifts : [];
   const safeStoreLinks = Array.isArray(data.storeLinks)

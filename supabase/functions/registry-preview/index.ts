@@ -31,6 +31,21 @@ const genericAdapter = new GenericAdapter();
 const MAX_PREVIEW_REDIRECTS = 3;
 const MAX_PREVIEW_BYTES = 2_000_000;
 const PREVIEW_FETCH_TIMEOUT_MS = 10_000;
+const REGISTRY_URL_CACHE_SELECT = [
+  "title",
+  "image_url",
+  "price_label",
+  "price_amount",
+  "currency",
+  "availability",
+  "store_name",
+  "canonical_url",
+  "confidence_score",
+  "source_method",
+  "partial",
+  "missing_fields",
+  "last_fetched_at",
+].join(",");
 const METADATA_HOSTS = new Set([
   "169.254.169.254",
   "metadata.google.internal",
@@ -64,6 +79,21 @@ function isPrivateIpv4(hostname: string): boolean {
     || (a === 192 && b === 168);
 }
 
+function isPrivateIpv6(address: string): boolean {
+  const normalized = address.toLowerCase().replace(/^\[|\]$/g, "");
+  if (!normalized) return false;
+  return normalized === "::"
+    || normalized === "::1"
+    || normalized.startsWith("fc")
+    || normalized.startsWith("fd")
+    || normalized.startsWith("fe80:")
+    || normalized.startsWith("::ffff:10.")
+    || normalized.startsWith("::ffff:127.")
+    || normalized.startsWith("::ffff:169.254.")
+    || normalized.startsWith("::ffff:192.168.")
+    || /^::ffff:172\.(1[6-9]|2\d|3[01])\./.test(normalized);
+}
+
 function isBlockedPreviewHostname(hostname: string): boolean {
   const normalized = hostname.toLowerCase().replace(/\.$/, '');
   if (!normalized) return true;
@@ -91,6 +121,16 @@ async function assertPublicPreviewTarget(url: string): Promise<URL> {
   try {
     const addresses = await Deno.resolveDns(parsed.hostname, "A");
     if (addresses.some(isPrivateIpv4)) {
+      throw new Error("Enter a public product URL.");
+    }
+  } catch (err) {
+    if (err instanceof Error && err.message === "Enter a public product URL.") throw err;
+    // DNS resolution may be unavailable for some edge runtimes; hostname rules above still apply.
+  }
+
+  try {
+    const addresses = await Deno.resolveDns(parsed.hostname, "AAAA");
+    if (addresses.some(isPrivateIpv6)) {
       throw new Error("Enter a public product URL.");
     }
   } catch (err) {
@@ -172,6 +212,41 @@ async function hashUrl(url: string): Promise<string> {
 // Cache management
 const CACHE_TTL_DAYS = 7;
 
+async function hashRateLimitKey(value: string): Promise<string> {
+  const data = new TextEncoder().encode(value);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hashBuffer)).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
+}
+
+async function enforceDurableRegistryPreviewRateLimit(
+  db: ReturnType<typeof createClient>,
+  userId: string,
+  ip: string,
+): Promise<boolean> {
+  const ipHash = await hashRateLimitKey(`registry-preview:${userId}:${ip}:${Deno.env.get("SUPABASE_URL") ?? ""}`);
+  const windowStart = new Date(Date.now() - 60_000).toISOString();
+  const { data: existingLimit } = await db
+    .from("rsvp_rate_limit")
+    .select("id, attempts, last_attempt_at")
+    .eq("ip_hash", ipHash)
+    .gte("last_attempt_at", windowStart)
+    .maybeSingle();
+
+  if (existingLimit) {
+    if (existingLimit.attempts >= 30) return false;
+    await db
+      .from("rsvp_rate_limit")
+      .update({ attempts: existingLimit.attempts + 1, last_attempt_at: new Date().toISOString() })
+      .eq("id", existingLimit.id);
+    return true;
+  }
+
+  await db
+    .from("rsvp_rate_limit")
+    .insert({ ip_hash: ipHash, guest_token: userId.slice(0, 16), attempts: 1 });
+  return true;
+}
+
 async function getCached(
   db: ReturnType<typeof createClient>,
   hash: string
@@ -179,7 +254,7 @@ async function getCached(
   try {
     const { data } = await db
       .from("registry_url_cache")
-      .select("*")
+      .select(REGISTRY_URL_CACHE_SELECT)
       .eq("normalized_url_hash", hash)
       .maybeSingle();
 
@@ -577,6 +652,15 @@ Deno.serve(async (req: Request) => {
         }
       );
     }
+    if (!(await enforceDurableRegistryPreviewRateLimit(supabaseAdmin, user.id, ip))) {
+      return new Response(
+        JSON.stringify({ error: "Rate limit exceeded. Please try again in a minute." }),
+        {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
 
     // Parse request
     const body = await req.json();
@@ -620,9 +704,8 @@ Deno.serve(async (req: Request) => {
     return new Response(JSON.stringify({ ...result, cached: false }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Internal error";
-    console.error("registry-preview error:", msg);
+  } catch (_err: unknown) {
+    console.error("REGISTRY_PREVIEW_UNEXPECTED_FAILED", { reason: "PREVIEW_FETCH_FAILED" });
     return new Response(
       JSON.stringify({
         error: "Preview service unavailable. Please fill in details manually.",

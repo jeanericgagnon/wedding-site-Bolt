@@ -6,6 +6,33 @@ const HOSTED_BUCKET = "photo-uploads";
 const DEFAULT_LIMIT = 40;
 const MAX_LIMIT = 80;
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
+const PHOTO_UPLOAD_AI_ANALYSIS_SELECT = [
+  "id",
+  "upload_id",
+  "wedding_site_id",
+  "photo_album_id",
+  "source_hash",
+  "analyzed_at",
+  "error_message",
+  "status",
+  "provider",
+  "model",
+  "detected_moment",
+  "suggested_bucket_id",
+  "suggested_bucket_name",
+  "bucket_confidence",
+  "quality_score",
+  "blur_score",
+  "people_count_range",
+  "is_video",
+  "slideshow_priority",
+  "caption",
+  "tags",
+  "warnings",
+  "raw_result",
+  "created_at",
+  "updated_at",
+].join(", ");
 
 type PhotoUpload = {
   id: string;
@@ -1009,7 +1036,7 @@ Deno.serve(async (req: Request) => {
       const { data: upserted, error: saveError } = await admin
         .from("photo_upload_ai_analysis")
         .upsert(row, { onConflict: "upload_id" })
-        .select("*")
+        .select(PHOTO_UPLOAD_AI_ANALYSIS_SELECT)
         .single();
       if (saveError) return fail("SAVE_FAILED", safePhotoAnalyzeApiError("SAVE_FAILED"), 500);
       if (result.internal_usage) {
@@ -1030,7 +1057,7 @@ Deno.serve(async (req: Request) => {
           console.error("Failed to record internal AI usage", {
             upload_id: upload.id,
             wedding_site_id: upload.wedding_site_id,
-            message: usageError.message,
+            reason: "USAGE_EVENT_INSERT_FAILED",
           });
         }
       }
@@ -1040,7 +1067,7 @@ Deno.serve(async (req: Request) => {
     return json({ success: true, analyzed: saved.length, skipped: skipped.length, results: saved });
   } catch (err) {
     console.error("photo-analyze-batch failed", {
-      message: err instanceof Error ? err.message : String(err ?? "unknown error"),
+      reason: "UNEXPECTED_PHOTO_ANALYSIS_FAILURE",
     });
     return fail("INTERNAL_ERROR", safePhotoAnalyzeApiError("INTERNAL_ERROR"), 500);
   }
