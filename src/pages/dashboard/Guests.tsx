@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
-import { PLANNER_ROLE_OPTIONS, canEditPlannerSurface, derivePlannerRoleFromPermissions, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
+import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
+import { PLANNER_ROLE_OPTIONS, canManageGuests, derivePlannerRoleFromPermissions, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole, type PlannerPermissionKey } from '../../lib/plannerAccess';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { formatGuestOpsDate, formatGuestOpsDateTime, formatGuestOpsRelativeTime, getGuestOpsTimestamp } from './guestOpsTime';
 import { formatGuestEventDate } from './guestEventDate';
@@ -12,22 +13,49 @@ import { getGuestLifecycleStage } from '../../lib/guestLifecycleStage';
 import { getPlusOneState } from '../../lib/plusOneState';
 import { getPerEventRsvpState } from '../../lib/perEventRsvpState';
 import { getRsvpExceptionStates } from '../../lib/rsvpExceptionState';
+import { buildGuestVisibilityPreview } from '../../lib/guestVisibilityPreview';
+import {
+  RSVP_QUESTION_TEMPLATES,
+  buildRsvpAccessModePlan,
+  buildRsvpQuestionTemplateCoverage,
+  buildRsvpSetupChecklist,
+  createRsvpQuestionFromTemplate,
+  type RsvpQuestionTemplate,
+} from '../../lib/rsvpAccessPlanner';
 import { hasRespondedRsvpStatus, isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 import { extractDietaryNote } from '../../lib/dietaryNotes';
 import { deriveInviteEvents } from '../../lib/rsvpEventFallback';
 import { deleteEventRsvpByInvitationId, deleteEventRsvpsByInvitationIds, getEventRsvpSnapshotsByInvitationIds, restoreEventRsvpSnapshots, type EventRsvpSnapshot } from '../../lib/eventRsvpCleanup';
-import { findCsvHeaderIndex, normalizeCsvHeader } from '../../lib/csvHeaderMatcher';
+import { GUEST_IMPORT_MAX_FILE_BYTES, GUEST_IMPORT_MAX_ROWS, buildDefaultCsvFieldMap, buildGuestImportPreview, isCsvNameMappingValid, readGuestImportRows, type CsvFieldMap } from '../../lib/guestImportParser';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, Button, Badge, Input, Select, Textarea } from '../../components/ui';
-import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home, CalendarDays, ChevronRight, Loader2, Copy, ChevronDown, PlusCircle, Pencil, Trash2 } from 'lucide-react';
+import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home, CalendarDays, ChevronRight, Loader2, Copy, ChevronDown, PlusCircle, Pencil, Trash2, ExternalLink, Eye } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/ui/Toast';
+import { ConfirmDialog, type ConfirmDialogProps } from '../../components/ui/ConfirmDialog';
 import { demoWeddingSite, demoGuests, demoRSVPs } from '../../lib/demoData';
 import { buildQuickStartPhotosPath, readQuickStartDashboardContinuation } from '../../lib/quickStartContinuation';
 import { sendWeddingInvitation } from '../../lib/emailService';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
-import * as XLSX from 'xlsx';
+import { copyTextOrDownload } from '../../lib/copyText';
+import { logAppAction } from '../../lib/actionAudit';
+import { customerSafeErrorMessage } from '../../lib/customerSafeError';
+
+function safeGuestsDashboardError(err: unknown, fallback: string): string {
+  return customerSafeErrorMessage(err, fallback);
+}
+
+function safeGuestImportReadError(err: unknown): string {
+  return customerSafeErrorMessage(err, 'Couldn’t read that guest file. Please check the format and try again.', {
+    allow: [
+      /^Guest import files must be 5MB or smaller\.$/i,
+      /^Please save legacy \.xls files as \.xlsx or CSV before importing\.$/i,
+      /^Guest import is limited to [\d,]+ rows at a time\. Split the spreadsheet and import in batches\.$/i,
+      /^Guest import is limited to \d+ columns\. Remove unused columns and try again\.$/i,
+    ],
+  });
+}
 
 interface Guest {
   id: string;
@@ -89,22 +117,6 @@ interface RsvpConflict {
   resolved_at?: string | null;
 }
 
-interface CsvFieldMap {
-  first_name: number;
-  last_name: number;
-  full_name: number;
-  email: number;
-  phone: number;
-  plus_one: number;
-  status: number;
-  meal_choice: number;
-  rsvp_date: number;
-  invite_token: number;
-  household_id: number;
-  household_name: number;
-  invited_events: number[];
-}
-
 interface RsvpConflictStats {
   openNow: number;
   opened24h: number;
@@ -151,7 +163,7 @@ function summarizeAuditEntry(entry: GuestAuditEntry): string {
 
 function getAuditActionTone(action: GuestAuditEntry['action']): string {
   if (action === 'insert') return 'bg-success-light text-success border-success/20';
-  if (action === 'delete') return 'bg-error-light text-error border-error/20';
+  if (action === 'delete') return 'bg-surface-subtle text-text-secondary border-border-subtle';
   return 'bg-primary-light text-primary border-primary/20';
 }
 
@@ -216,12 +228,14 @@ function formatCustomAnswers(customAnswers: Record<string, string | string[]> | 
 }
 
 interface WeddingSiteInfo {
+  id: string;
   couple_name_1: string;
   couple_name_2: string;
   wedding_date: string | null;
   venue_name: string | null;
   venue_address: string | null;
   site_url: string | null;
+  site_slug: string | null;
 }
 
 const RSVP_CAMPAIGN_LOG_KEY = 'dayof_rsvp_campaign_log_v1';
@@ -264,6 +278,21 @@ export const DashboardGuests: React.FC = () => {
   const { fromQuickStart, nextStep } = readQuickStartDashboardContinuation(searchParams);
   const { user, isDemoMode } = useAuth();
   const { toast } = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<null | Omit<ConfirmDialogProps, 'open'>>(null);
+  const requestConfirmation = (options: Pick<ConfirmDialogProps, 'title' | 'description' | 'confirmLabel' | 'tone'>) =>
+    new Promise<boolean>((resolve) => {
+      setConfirmDialog({
+        ...options,
+        onCancel: () => {
+          setConfirmDialog(null);
+          resolve(false);
+        },
+        onConfirm: () => {
+          setConfirmDialog(null);
+          resolve(true);
+        },
+      });
+    });
   const [guests, setGuests] = useState<GuestWithRSVP[]>([]);
   const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);
   const [weddingSiteInfo, setWeddingSiteInfo] = useState<WeddingSiteInfo | null>(null);
@@ -294,6 +323,7 @@ export const DashboardGuests: React.FC = () => {
   const [savedSegments, setSavedSegments] = useState<Array<{ id: number; label: string; filter: string; createdAt: string }>>([]);
   const [guestsTab, setGuestsTab] = useState<'ops' | 'rsvp-config'>('ops');
   const [guestsRole, setGuestsRole] = useState<PlannerAccessRole>('owner');
+  const [guestsPermissions, setGuestsPermissions] = useState<PlannerPermissionKey[] | null>(null);
   const [rsvpQuestions, setRsvpQuestions] = useState<RSVPQuestionSetting[]>([]);
   const [rsvpMealEnabled, setRsvpMealEnabled] = useState(true);
   const [rsvpMealOptions, setRsvpMealOptions] = useState<string[]>(['Chicken','Beef','Fish','Vegetarian','Vegan']);
@@ -303,10 +333,56 @@ export const DashboardGuests: React.FC = () => {
   const [rsvpConflicts, setRsvpConflicts] = useState<RsvpConflict[]>([]);
   const [rsvpConflictHistory, setRsvpConflictHistory] = useState<RsvpConflict[]>([]);
   const [conflictFilter, setConflictFilter] = useState<'all' | 'error' | 'warning'>('all');
-  const isGuestsReadOnly = !canEditPlannerSurface(guestsRole);
+  const isGuestsReadOnly = !canManageGuests(guestsRole, guestsPermissions);
   const [showConflictDetails, setShowConflictDetails] = useState(false);
   const [resolvingConflictId, setResolvingConflictId] = useState<string | null>(null);
   const rsvpConfigLoadedRef = useRef(false);
+
+  const rsvpAccessModePlan = useMemo(() => buildRsvpAccessModePlan({
+    guestCount: guests.length,
+    inviteTokenCount: guests.filter((guest) => Boolean(guest.invite_token)).length,
+    householdCount: new Set(guests.map((guest) => guest.household_id).filter(Boolean)).size,
+    eventCount: effectiveItineraryEvents.length,
+  }), [effectiveItineraryEvents.length, guests]);
+
+  const recommendedRsvpAccessMode = rsvpAccessModePlan.find((mode) => mode.status === 'recommended') ?? rsvpAccessModePlan[0];
+  const rsvpQuestionTemplateCoverage = useMemo(() => buildRsvpQuestionTemplateCoverage(rsvpQuestions), [rsvpQuestions]);
+  const rsvpSetupChecklist = useMemo(() => buildRsvpSetupChecklist({
+    guestCount: guests.length,
+    inviteTokenCount: guests.filter((guest) => Boolean(guest.invite_token)).length,
+    householdCount: new Set(guests.map((guest) => guest.household_id).filter(Boolean)).size,
+    eventCount: effectiveItineraryEvents.length,
+    questions: rsvpQuestions,
+    mealEnabled: rsvpMealEnabled,
+    mealOptionCount: rsvpMealOptions.filter((option) => option.trim().length > 0).length,
+  }), [effectiveItineraryEvents.length, guests, rsvpMealEnabled, rsvpMealOptions, rsvpQuestions]);
+
+  const addRsvpQuestionTemplate = useCallback((template: RsvpQuestionTemplate) => {
+    const alreadyExists = rsvpQuestions.some((question) => question.label.trim().toLowerCase() === template.label.toLowerCase());
+    if (alreadyExists) {
+      toast('That RSVP question is already in your list.', 'info');
+      return;
+    }
+
+    setRsvpQuestions((prev) => [
+      ...prev,
+      createRsvpQuestionFromTemplate(template, `q_${Date.now().toString(36)}_${template.key}`),
+    ]);
+    setRsvpConfigDirty(true);
+  }, [rsvpQuestions, toast]);
+
+  const logGuestAction = (type: string, summary: string, metadata?: Record<string, unknown>, targetId?: string | null, targetLabel?: string | null) => {
+    if (!weddingSiteId) return;
+    void logAppAction({
+      weddingSiteId,
+      area: 'guests',
+      type,
+      summary,
+      targetId,
+      targetLabel,
+      metadata,
+    });
+  };
 
 
   useEffect(() => {
@@ -418,7 +494,7 @@ export const DashboardGuests: React.FC = () => {
   const csvFileInputRef = useRef<HTMLInputElement | null>(null);
   const [showInsights, setShowInsights] = useState(false);
   const cleanGuestsView = !showInsights;
-  const csvNameMappingValid = !!csvFieldMap && csvFieldMap.first_name >= 0 && csvFieldMap.last_name >= 0;
+  const csvNameMappingValid = isCsvNameMappingValid(csvFieldMap);
   const csvColumnLetter = (index: number) => {
     let n = index + 1;
     let out = '';
@@ -485,9 +561,10 @@ export const DashboardGuests: React.FC = () => {
       const activeSite = await resolveActiveSiteForUser(user.id);
       const activeSiteId = activeSite?.id ?? null;
       setGuestsRole(activeSite?.role ?? 'owner');
+      setGuestsPermissions(activeSite?.permissions ?? null);
       const { data, error } = activeSiteId ? await supabase
         .from('wedding_sites')
-        .select('id, couple_name_1, couple_name_2, wedding_date, venue_name, venue_address, site_url, rsvp_custom_questions, rsvp_meal_config')
+        .select('id, couple_name_1, couple_name_2, wedding_date, venue_name, venue_address, site_url, site_slug, rsvp_custom_questions, rsvp_meal_config')
         .eq('id', activeSiteId)
         .maybeSingle() : { data: null, error: null };
 
@@ -496,12 +573,14 @@ export const DashboardGuests: React.FC = () => {
       if (data) {
         setWeddingSiteId(data.id);
         setWeddingSiteInfo({
+          id: data.id,
           couple_name_1: data.couple_name_1 ?? '',
           couple_name_2: data.couple_name_2 ?? '',
           wedding_date: data.wedding_date ?? null,
           venue_name: data.venue_name ?? null,
           venue_address: data.venue_address ?? null,
           site_url: data.site_url ?? null,
+          site_slug: (data as { site_slug?: string | null }).site_slug ?? null,
         });
         const loadedQuestions = Array.isArray((data as { rsvp_custom_questions?: unknown }).rsvp_custom_questions) ? ((data as { rsvp_custom_questions?: unknown[] }).rsvp_custom_questions || []) : [];
         const normalized = loadedQuestions
@@ -652,6 +731,7 @@ export const DashboardGuests: React.FC = () => {
 
         const seededEvents = (((siteRes.data?.wedding_data as { meta?: { rsvpEventSeeds?: Array<{ id: string; label: string; dateLabel?: string; locationName?: string | null }> } } | null)?.meta?.rsvpEventSeeds) ?? []);
         const siteEvents = (eventsRes.data ?? []) as ItineraryEvent[];
+        setItineraryEvents(siteEvents);
         const eventIds = siteEvents.map((event) => event.id);
 
         const invitesRes = eventIds.length > 0
@@ -727,7 +807,7 @@ export const DashboardGuests: React.FC = () => {
       } catch {
         if (!cancelled) {
           setRsvpAuditFeed([]);
-          toast('Couldn’t load RSVP audit history right now. Please try again.', 'error');
+          toast('Couldn’t load RSVP history right now. Please try again.', 'error');
         }
       } finally {
         if (!cancelled) setRsvpAuditLoading(false);
@@ -790,9 +870,9 @@ export const DashboardGuests: React.FC = () => {
       if (error) throw error;
       setRsvpConflicts((prev) => prev.filter((c) => c.id !== conflictId));
       setRsvpConflictHistory((prev) => prev.map((c) => c.id === conflictId ? { ...c, resolved: true, resolved_at: new Date().toISOString() } : c));
-      toast('RSVP conflict marked resolved', 'success');
+      toast('RSVP item marked done', 'success');
     } catch {
-      toast('Failed to resolve RSVP conflict', 'error');
+      toast('Couldn’t mark that RSVP item done.', 'error');
     } finally {
       setResolvingConflictId(null);
     }
@@ -812,9 +892,9 @@ export const DashboardGuests: React.FC = () => {
       }
       setRsvpConflicts((prev) => prev.filter((c) => !ids.includes(c.id)));
       setRsvpConflictHistory((prev) => prev.map((c) => ids.includes(c.id) ? { ...c, resolved: true, resolved_at: new Date().toISOString() } : c));
-      toast(`${ids.length} RSVP conflict${ids.length === 1 ? '' : 's'} resolved`, 'success');
+      toast(`${ids.length} RSVP item${ids.length === 1 ? '' : 's'} marked done`, 'success');
     } catch {
-      toast('Failed to resolve RSVP conflicts', 'error');
+      toast('Couldn’t mark those RSVP items done.', 'error');
     } finally {
       setResolvingConflictId(null);
     }
@@ -848,7 +928,7 @@ export const DashboardGuests: React.FC = () => {
         localStorage.setItem('dayof_demo_rsvp_custom_questions_v1', JSON.stringify(cleanedQuestions));
         localStorage.setItem('dayof_demo_rsvp_meal_config_v1', JSON.stringify({ enabled: rsvpMealEnabled, options: mealOptions }));
         setRsvpQuestions(cleanedQuestions);
-        toast('RSVP config saved (demo).', 'success');
+      toast('RSVP settings saved (demo).', 'success');
         setRsvpAutoSaveState('saved');
         setRsvpConfigDirty(false);
         return;
@@ -860,12 +940,12 @@ export const DashboardGuests: React.FC = () => {
         .eq('id', weddingSiteId);
       if (error) throw error;
       setRsvpQuestions(cleanedQuestions);
-      toast('RSVP config saved.', 'success');
+      toast('RSVP settings saved.', 'success');
       setRsvpAutoSaveState('saved');
       setRsvpConfigDirty(false);
     } catch (err) {
       setRsvpAutoSaveState('error');
-      toast(err instanceof Error ? err.message : 'Failed to save RSVP config.', 'error');
+      toast(safeGuestsDashboardError(err, 'Couldn’t save RSVP settings.'), 'error');
     } finally {
       setRsvpConfigSaving(false);
     }
@@ -986,8 +1066,7 @@ export const DashboardGuests: React.FC = () => {
       if (createdGuestId) {
         await supabase.from('guests').delete().eq('id', createdGuestId);
       }
-      const msg = err instanceof Error ? err.message : 'Failed to add guest. Please try again.';
-      toast(msg, 'error');
+      toast(safeGuestsDashboardError(err, 'Couldn’t add guest. Please try again.'), 'error');
     }
   };
 
@@ -1104,7 +1183,7 @@ export const DashboardGuests: React.FC = () => {
           await supabase.from('guests').update(previousGuestValues).eq('id', editingGuest.id);
         }
       }
-      toast('Failed to update guest. Please try again.', 'error');
+      toast('Couldn’t update guest. Please try again.', 'error');
     }
   };
 
@@ -1124,6 +1203,7 @@ export const DashboardGuests: React.FC = () => {
 
     setDeletingGuestId(guestId);
     setConfirmDeleteId(null);
+    const guest = guests.find((candidate) => candidate.id === guestId);
     try {
       if (isDemoMode) {
         setGuests(prev => prev.filter(guest => guest.id !== guestId));
@@ -1161,9 +1241,15 @@ export const DashboardGuests: React.FC = () => {
       if (error) throw error;
 
       await fetchGuests();
+      logGuestAction('guest_deleted', 'Guest was deleted from the guest list.', {
+        hadRsvp: Boolean(guest?.rsvp),
+        hadEmail: Boolean(guest?.email),
+        hadPhone: Boolean(guest?.phone),
+        invitationCount: invitationIds.length,
+      }, guestId, guest?.name || 'Guest');
       toast('Guest removed', 'success');
     } catch {
-      toast('Failed to remove guest. Please try again.', 'error');
+      toast('Couldn’t remove guest. Please try again.', 'error');
     } finally {
       setDeletingGuestId(null);
     }
@@ -1186,7 +1272,7 @@ export const DashboardGuests: React.FC = () => {
       toast(`Undid check-in for ${lastCheckIn.guestName}`, 'success');
       setLastCheckIn(null);
     } catch {
-      toast('Failed to undo last check-in', 'error');
+      toast('Couldn’t undo last check-in.', 'error');
     }
   };
 
@@ -1208,7 +1294,7 @@ export const DashboardGuests: React.FC = () => {
       await fetchGuests();
       toast(nextValue ? 'Marked thank-you sent' : 'Cleared thank-you status', 'success');
     } catch {
-      toast('Failed to update thank-you status', 'error');
+      toast('Couldn’t update thank-you status.', 'error');
     }
   };
 
@@ -1223,7 +1309,12 @@ export const DashboardGuests: React.FC = () => {
       toast('No guests currently due for thank-you.', 'error');
       return;
     }
-    if (!window.confirm(`Mark thank-you sent for ${ids.length} guest(s)?`)) return;
+    const confirmed = await requestConfirmation({
+      title: 'Mark thank-you notes sent?',
+      description: `This will mark thank-you sent for ${ids.length} ${ids.length === 1 ? 'guest' : 'guests'}.`,
+      confirmLabel: 'Mark sent',
+    });
+    if (!confirmed) return;
     try {
       const { error } = await supabase
         .from('guests')
@@ -1234,7 +1325,7 @@ export const DashboardGuests: React.FC = () => {
       await fetchGuests();
       toast(`Marked ${ids.length} thank-you sent`, 'success');
     } catch {
-      toast('Failed to mark thank-you statuses', 'error');
+      toast('Couldn’t mark thank-you notes sent.', 'error');
     }
   };
 
@@ -1249,7 +1340,13 @@ export const DashboardGuests: React.FC = () => {
       toast('No checked-in guests to clear.', 'error');
       return;
     }
-    if (!window.confirm(`Clear check-in for ${checkedInCount} guest(s)?`)) return;
+    const confirmed = await requestConfirmation({
+      title: 'Clear all check-ins?',
+      description: `This will clear check-in status and notes for ${checkedInCount} ${checkedInCount === 1 ? 'guest' : 'guests'}.`,
+      confirmLabel: 'Clear check-ins',
+      tone: 'danger',
+    });
+    if (!confirmed) return;
     try {
       const { error } = await supabase
         .from('guests')
@@ -1261,7 +1358,7 @@ export const DashboardGuests: React.FC = () => {
       setLastCheckIn(null);
       toast('Cleared all check-ins', 'success');
     } catch {
-      toast('Failed to clear check-ins', 'error');
+      toast('Couldn’t clear check-ins.', 'error');
     }
   };
 
@@ -1311,7 +1408,7 @@ export const DashboardGuests: React.FC = () => {
           // fall through to canonical error toast
         }
       }
-      toast('Failed to update check-in status', 'error');
+      toast('Couldn’t update check-in status.', 'error');
     }
   };
 
@@ -1336,6 +1433,7 @@ export const DashboardGuests: React.FC = () => {
         : guest.name;
 
       await sendWeddingInvitation({
+        weddingSiteId: weddingSiteInfo?.id ?? weddingSiteId ?? '',
         guestEmail: guest.email,
         guestName,
         coupleName1: weddingSiteInfo?.couple_name_1 ?? '',
@@ -1354,7 +1452,7 @@ export const DashboardGuests: React.FC = () => {
 
       toast(`Invitation sent to ${guestName}`, 'success');
     } catch {
-      toast('Failed to send invitation. Please try again.', 'error');
+      toast('Couldn’t send invitation. Please try again.', 'error');
     } finally {
       setSendingInviteId(null);
     }
@@ -1364,21 +1462,21 @@ export const DashboardGuests: React.FC = () => {
 
   const handleCopyOpsSummary = async () => {
     const summary = [
-      `RSVP Ops Summary (${new Date().toLocaleString()})`,
+      `RSVP Follow-up Summary (${new Date().toLocaleString()})`,
       `Segment: ${segmentLabelMap[filterStatus] || filterStatus}`,
       `Eligible reminders: ${reminderCandidates.length}`,
       `No response: ${rsvpOps.noResponse}`,
       `Missing meal: ${rsvpOps.missingMeal}`,
       `Plus-one missing: ${rsvpOps.plusOneMissingName}`,
       `Pending no email: ${rsvpOps.pendingNoEmail}`,
-      `No contact: ${contactStats.withNoContact}`,
+      `Missing contact info: ${contactStats.withNoContact}`,
     ].join('\n');
 
-    try {
-      await navigator.clipboard.writeText(summary);
-      toast('Copied RSVP ops summary', 'success');
-    } catch {
-      window.prompt('Copy RSVP ops summary:', summary);
+    const result = await copyTextOrDownload(summary, 'dayof-rsvp-follow-up-summary.txt');
+    if (result === 'copied') {
+      toast('Copied RSVP follow-up summary', 'success');
+    } else {
+      toast('Clipboard was blocked, so the RSVP follow-up summary downloaded.', 'success');
     }
   };
 
@@ -1394,11 +1492,11 @@ export const DashboardGuests: React.FC = () => {
       return;
     }
     const payload = lines.join('\n');
-    try {
-      await navigator.clipboard.writeText(payload);
+    const result = await copyTextOrDownload(payload, 'dayof-rsvp-exception-checklist.txt');
+    if (result === 'copied') {
       toast(`Copied RSVP exception checklist for ${lines.length} guest${lines.length === 1 ? '' : 's'}`, 'success');
-    } catch {
-      window.prompt('Copy RSVP exception checklist:', payload);
+    } else {
+      toast('Clipboard was blocked, so the exception checklist downloaded.', 'success');
     }
   };
 
@@ -1409,26 +1507,26 @@ export const DashboardGuests: React.FC = () => {
       return;
     }
     const payload = guestsNeedingMeals.map((guest) => `- ${guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name}: confirm meal choice`).join('\n');
-    try {
-      await navigator.clipboard.writeText(payload);
+    const result = await copyTextOrDownload(payload, 'dayof-meal-follow-up-checklist.txt');
+    if (result === 'copied') {
       toast(`Copied meal follow-up checklist for ${guestsNeedingMeals.length} guest${guestsNeedingMeals.length === 1 ? '' : 's'}`, 'success');
-    } catch {
-      window.prompt('Copy meal follow-up checklist:', payload);
+    } else {
+      toast('Clipboard was blocked, so the meal checklist downloaded.', 'success');
     }
   };
 
   const handleCopyNoContactChecklist = async () => {
     const noContactGuests = filteredGuests.filter((guest) => !guest.email && !guest.phone);
     if (noContactGuests.length === 0) {
-      toast('No no-contact guests in this segment.', 'error');
+      toast('Everyone in this group has a contact path.', 'error');
       return;
     }
     const payload = noContactGuests.map((guest) => `- ${guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name}: get phone or email, then resend invite`).join('\n');
-    try {
-      await navigator.clipboard.writeText(payload);
-      toast(`Copied no-contact checklist for ${noContactGuests.length} guest${noContactGuests.length === 1 ? '' : 's'}`, 'success');
-    } catch {
-      window.prompt('Copy no-contact checklist:', payload);
+    const result = await copyTextOrDownload(payload, 'dayof-missing-contact-list.txt');
+    if (result === 'copied') {
+      toast(`Copied missing-contact list for ${noContactGuests.length} guest${noContactGuests.length === 1 ? '' : 's'}`, 'success');
+    } else {
+      toast('Clipboard was blocked, so the missing-contact list downloaded.', 'success');
     }
   };
 
@@ -1439,11 +1537,11 @@ export const DashboardGuests: React.FC = () => {
       return;
     }
     const payload = emails.join(', ');
-    try {
-      await navigator.clipboard.writeText(payload);
+    const result = await copyTextOrDownload(payload, 'dayof-filtered-guest-emails.txt');
+    if (result === 'copied') {
       toast(`Copied ${emails.length} email${emails.length === 1 ? '' : 's'}`, 'success');
-    } catch {
-      window.prompt('Copy filtered emails:', payload);
+    } else {
+      toast('Clipboard was blocked, so the filtered emails downloaded.', 'success');
     }
   };
 
@@ -1475,7 +1573,7 @@ export const DashboardGuests: React.FC = () => {
     if (rsvpOps.missingMeal > 0) tasks.push(`Collect ${rsvpOps.missingMeal} missing meal choice(s)`);
     if (rsvpOps.plusOneMissingName > 0) tasks.push(`Collect ${rsvpOps.plusOneMissingName} plus-one name(s)`);
     if (rsvpOps.pendingNoEmail > 0) tasks.push(`Add contact details for ${rsvpOps.pendingNoEmail} pending guest(s)`);
-    if (contactStats.withNoContact > 0) tasks.push(`Resolve no-contact info for ${contactStats.withNoContact} guest(s)`);
+    if (contactStats.withNoContact > 0) tasks.push(`Add contact info for ${contactStats.withNoContact} guest(s)`);
 
     if (tasks.length === 0) {
       toast('No blockers right now. Great shape!', 'success');
@@ -1495,11 +1593,16 @@ export const DashboardGuests: React.FC = () => {
   const handleSendSelectedInvitations = async () => {
     const selectedRecipients = guests.filter(g => selectedGuestIds.has(g.id) && !!g.email && !!g.invite_token);
     if (selectedRecipients.length === 0) {
-      toast('No selected guests with email + invite token.', 'error');
+      toast('No selected guests with email and RSVP link.', 'error');
       return;
     }
 
-    if (!window.confirm(`Send reminders to ${selectedRecipients.length} selected guest(s)?`)) return;
+    const confirmed = await requestConfirmation({
+      title: 'Send selected reminders?',
+      description: `This will email RSVP reminders to ${selectedRecipients.length} selected ${selectedRecipients.length === 1 ? 'guest' : 'guests'}. You can review and edit the message before sending.`,
+      confirmLabel: 'Send reminders',
+    });
+    if (!confirmed) return;
 
     if (isDemoMode) {
       toast(`Demo: simulated reminders for ${selectedRecipients.length} selected guests`, 'success');
@@ -1517,6 +1620,7 @@ export const DashboardGuests: React.FC = () => {
           : guest.name;
         try {
           await sendWeddingInvitation({
+            weddingSiteId: weddingSiteInfo?.id ?? weddingSiteId ?? '',
             guestEmail: guest.email,
             guestName,
             coupleName1: weddingSiteInfo?.couple_name_1 ?? '',
@@ -1545,10 +1649,10 @@ export const DashboardGuests: React.FC = () => {
       toast(
         successCount > 0
           ? (failedCount > 0
-              ? `Sent ${successCount} selected reminder${successCount === 1 ? '' : 's'}, failed ${failedCount}`
+              ? `Sent ${successCount} selected reminder${successCount === 1 ? '' : 's'}. ${failedCount} need review.`
               : `Sent ${successCount} selected reminder${successCount === 1 ? '' : 's'}`)
           : (failedCount > 0
-              ? `All ${failedCount} selected reminder${failedCount === 1 ? '' : 's'} failed.`
+              ? `${failedCount} selected reminder${failedCount === 1 ? '' : 's'} need review.`
               : 'No selected reminders were sent.'),
         successCount > 0 ? (failedCount > 0 ? 'info' : 'success') : 'error',
       );
@@ -1569,13 +1673,13 @@ const handleSendBulkInvitations = async () => {
 
     const previewNames = reminderCandidates.slice(0, 3).map((g) => (g.first_name || g.last_name) ? `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim() : g.name);
     const previewText = previewNames.length ? `\n\nFirst recipients: ${previewNames.join(', ')}${reminderCandidates.length > 3 ? ` +${reminderCandidates.length - 3} more` : ''}` : '';
-    const noContactWarning = contactStats.withNoContact > 0 ? `\nNo-contact guests in database: ${contactStats.withNoContact} (not included in send)` : '';
-    if (!window.confirm(`Reminder dry-run:
-Segment: ${segmentLabelMap[filterStatus] || filterStatus}
-Recipients: ${reminderCandidates.length}
-Skip recent (${reminderCadenceDays}d cadence): ${skipRecentlyInvited ? "On" : "Off"}${noContactWarning}${previewText}
-
-Proceed with send?`)) return;
+    const noContactWarning = contactStats.withNoContact > 0 ? `\nGuests without contact info: ${contactStats.withNoContact} (not included)` : '';
+    const confirmed = await requestConfirmation({
+      title: 'Send RSVP reminder campaign?',
+      description: `Group: ${segmentLabelMap[filterStatus] || filterStatus}. Recipients: ${reminderCandidates.length}. Skip recent reminders: ${skipRecentlyInvited ? 'On' : 'Off'}.${noContactWarning ? ` ${noContactWarning.trim()}` : ''}${previewText ? ` ${previewText.trim()}` : ''}`,
+      confirmLabel: 'Send campaign',
+    });
+    if (!confirmed) return;
 
     if (isDemoMode) {
       const sentAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -1597,6 +1701,7 @@ Proceed with send?`)) return;
 
         try {
           await sendWeddingInvitation({
+            weddingSiteId: weddingSiteInfo?.id ?? weddingSiteId ?? '',
             guestEmail: guest.email,
             guestName,
             coupleName1: weddingSiteInfo?.couple_name_1 ?? '',
@@ -1627,13 +1732,13 @@ Proceed with send?`)) return;
         setCampaignLog(prev => [{ id: Date.now(), segment: segmentLabelMap[filterStatus] || filterStatus, count: successCount, sentAt }, ...prev].slice(0, 6));
         toast(
           failedCount > 0
-            ? `Sent ${successCount} reminder${successCount === 1 ? '' : 's'}, failed ${failedCount}`
+            ? `Sent ${successCount} reminder${successCount === 1 ? '' : 's'}. ${failedCount} need review.`
             : `Sent ${successCount} reminder${successCount === 1 ? '' : 's'}`,
           failedCount > 0 ? 'info' : 'success',
         );
         await fetchGuests();
       } else {
-        toast(failedCount > 0 ? `All ${failedCount} reminder${failedCount === 1 ? '' : 's'} failed.` : 'No reminders were sent. Please try again.', 'error');
+        toast(failedCount > 0 ? `${failedCount} reminder${failedCount === 1 ? '' : 's'} need review.` : 'No reminders were sent. Please try again.', 'error');
       }
     } finally {
       setBulkSending(false);
@@ -1650,7 +1755,12 @@ Proceed with send?`)) return;
       return;
     }
 
-    if (!window.confirm(`Send due reminders now?\nRecipients: ${dueReminderCandidatesGlobal.length}\nCadence: ${reminderCadenceDays} day(s)`)) return;
+    const confirmed = await requestConfirmation({
+      title: 'Send due reminders now?',
+      description: `This will email ${dueReminderCandidatesGlobal.length} ${dueReminderCandidatesGlobal.length === 1 ? 'guest' : 'guests'} who are ready for another reminder after ${reminderCadenceDays} days.`,
+      confirmLabel: 'Send due reminders',
+    });
+    if (!confirmed) return;
 
     if (isDemoMode) {
       const sentAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -1668,6 +1778,7 @@ Proceed with send?`)) return;
         const guestName = guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name;
         try {
           await sendWeddingInvitation({
+            weddingSiteId: weddingSiteInfo?.id ?? weddingSiteId ?? '',
             guestEmail: guest.email,
             guestName,
             coupleName1: weddingSiteInfo?.couple_name_1 ?? '',
@@ -1695,13 +1806,13 @@ Proceed with send?`)) return;
         setCampaignLog(prev => [{ id: Date.now(), segment: 'Due Reminder', count: successCount, sentAt }, ...prev].slice(0, 6));
         toast(
           failedCount > 0
-            ? `Sent ${successCount} due reminder${successCount === 1 ? '' : 's'}, failed ${failedCount}`
+            ? `Sent ${successCount} due reminder${successCount === 1 ? '' : 's'}. ${failedCount} need review.`
             : `Sent ${successCount} due reminder${successCount === 1 ? '' : 's'}`,
           failedCount > 0 ? 'info' : 'success',
         );
         await fetchGuests();
       } else {
-        toast(failedCount > 0 ? `All ${failedCount} due reminder${failedCount === 1 ? '' : 's'} failed.` : 'No due reminders were sent. Please try again.', 'error');
+        toast(failedCount > 0 ? `${failedCount} due reminder${failedCount === 1 ? '' : 's'} need review.` : 'No due reminders were sent. Please try again.', 'error');
       }
     } finally {
       setBulkSending(false);
@@ -1724,7 +1835,7 @@ Proceed with send?`)) return;
       setSelectedGuestIds(new Set());
       toast(`${ids.length} guests merged into one household`, 'success');
     } catch {
-      toast('Failed to merge guests', 'error');
+      toast('Couldn’t merge guests.', 'error');
     } finally {
       setHouseholdBusy(false);
     }
@@ -1743,7 +1854,7 @@ Proceed with send?`)) return;
       await fetchGuests();
       toast('Guest removed from household', 'success');
     } catch {
-      toast('Failed to remove from household', 'error');
+      toast('Couldn’t remove guest from household.', 'error');
     } finally {
       setHouseholdBusy(false);
     }
@@ -1761,7 +1872,7 @@ Proceed with send?`)) return;
       await fetchGuests();
       toast('Guest reassigned', 'success');
     } catch {
-      toast('Failed to reassign guest', 'error');
+      toast('Couldn’t move guest to that household.', 'error');
     }
   }
 
@@ -1793,11 +1904,11 @@ Proceed with send?`)) return;
     }
 
     const url = `https://${publicSlug}.dayof.love/guest-contact/${publicSlug}`;
-    try {
-      await navigator.clipboard.writeText(url);
+    const result = await copyTextOrDownload(url, 'dayof-guest-update-link.txt');
+    if (result === 'copied') {
       toast('Guest update link copied', 'success');
-    } catch {
-      window.prompt('Copy contact link:', url);
+    } else {
+      toast('Clipboard was blocked, so the guest update link downloaded.', 'success');
     }
   }
 
@@ -1887,7 +1998,7 @@ Proceed with send?`)) return;
         setGuestEventIds(prev => new Set([...prev, eventId]));
       }
     } catch {
-      toast('Failed to update event invitation', 'error');
+      toast('Couldn’t update that event invite.', 'error');
     } finally {
       setTogglingEventId(null);
     }
@@ -2032,8 +2143,7 @@ Proceed with send?`)) return;
           })
           .eq('id', assistedRsvpGuest.id);
       }
-      console.error(error);
-      toast('Failed to save assisted RSVP', 'error');
+      toast('Couldn’t save assisted RSVP.', 'error');
     } finally {
       setAssistedRsvpSaving(false);
     }
@@ -2080,7 +2190,7 @@ Proceed with send?`)) return;
   };
 
   const exportCSV = (rowsSource: GuestWithRSVP[] = guests, suffix = 'guests') => {
-    const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Status', 'Plus One', 'Meal Choice', 'RSVP Date', 'Invite Token', 'Custom Answers'];
+    const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Status', 'Plus One', 'Meal Choice', 'RSVP Date', 'RSVP Link', 'Custom Answers'];
     const rows = rowsSource.map(guest => [
       guest.first_name || '',
       guest.last_name || '',
@@ -2090,7 +2200,7 @@ Proceed with send?`)) return;
       guest.plus_one_allowed ? 'Yes' : 'No',
       guest.rsvp?.meal_choice || '',
       guest.rsvp_received_at ? formatGuestOpsDate(guest.rsvp_received_at, undefined, '') : '',
-      guest.invite_token || '',
+      guest.invite_token ? `${window.location.origin}/rsvp?token=${encodeURIComponent(guest.invite_token)}` : '',
       formatCustomAnswers(guest.rsvp?.custom_answers || null),
     ]);
 
@@ -2208,11 +2318,11 @@ Proceed with send?`)) return;
     }
 
     const payload = rows.join('\n');
-    try {
-      await navigator.clipboard.writeText(payload);
-      toast(`Copied ${rows.length} SMS RSVP link${rows.length === 1 ? '' : 's'}`, 'success');
-    } catch {
-      window.prompt('Copy SMS RSVP links:', payload);
+    const result = await copyTextOrDownload(payload, 'dayof-text-rsvp-links.txt');
+    if (result === 'copied') {
+      toast(`Copied ${rows.length} text RSVP link${rows.length === 1 ? '' : 's'}`, 'success');
+    } else {
+      toast('Clipboard was blocked, so the text RSVP links downloaded.', 'success');
     }
   };
 
@@ -2254,19 +2364,77 @@ Proceed with send?`)) return;
     URL.revokeObjectURL(url);
   };
 
-  const handleNuclearDeleteAllGuests = async () => {
+  const exportHouseholdLabelsCSV = () => {
+    const headers = ['Household ID', 'Recipient Names', 'Primary Email', 'Primary Phone', 'Address Line 1', 'Address Line 2', 'City', 'State/Province', 'ZIP/Postal', 'Country', 'Guest Count', 'RSVP Links'];
+    const grouped = new Map<string, GuestWithRSVP[]>();
+    guests.forEach((guest) => {
+      const key = guest.household_id || `guest:${guest.id}`;
+      grouped.set(key, [...(grouped.get(key) ?? []), guest]);
+    });
+
+    const rows = Array.from(grouped.entries()).map(([householdId, members]) => {
+      const sortedMembers = [...members].sort((a, b) => (a.last_name || a.name || '').localeCompare(b.last_name || b.name || ''));
+      const primary = sortedMembers.find((guest) => {
+        const row = guest as GuestWithRSVP & { mailing_address_line1?: string | null };
+        return Boolean(row.mailing_address_line1 || guest.email || guest.phone);
+      }) ?? sortedMembers[0];
+      const primaryAddress = primary as GuestWithRSVP & {
+        mailing_address_line1?: string | null;
+        mailing_address_line2?: string | null;
+        mailing_city?: string | null;
+        mailing_state?: string | null;
+        mailing_postal_code?: string | null;
+        mailing_country?: string | null;
+      };
+      const recipientNames = sortedMembers
+        .map((guest) => [guest.first_name, guest.last_name].filter(Boolean).join(' ').trim() || guest.name)
+        .filter(Boolean)
+        .join(' and ');
+      return [
+        householdId.startsWith('guest:') ? '' : householdId,
+        recipientNames,
+        primary?.email || '',
+        primary?.phone || '',
+        primaryAddress?.mailing_address_line1 || '',
+        primaryAddress?.mailing_address_line2 || '',
+        primaryAddress?.mailing_city || '',
+        primaryAddress?.mailing_state || '',
+        primaryAddress?.mailing_postal_code || '',
+        primaryAddress?.mailing_country || '',
+        String(sortedMembers.length),
+        sortedMembers
+          .map((guest) => guest.invite_token ? `${window.location.origin}/rsvp?token=${encodeURIComponent(guest.invite_token)}` : '')
+          .filter(Boolean)
+          .join('; '),
+      ];
+    });
+
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `household-labels_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDeleteAllGuests = async () => {
     if (!weddingSiteId || isDemoMode) {
-      toast('Nuclear delete is unavailable in demo mode.', 'error');
+      toast('Deleting the full guest list is unavailable in demo mode.', 'error');
       return;
     }
 
     const required = String(guests.length);
-    if (nuclearConfirmInput.trim() !== required) {
+    if (deleteAllConfirmInput.trim() !== required) {
       toast(`Type ${required} to confirm deletion.`, 'error');
       return;
     }
 
-    setNuclearDeleting(true);
+    setDeleteAllBusy(true);
     try {
       const { data: guestRows, error: guestReadError } = await supabase
         .from('guests')
@@ -2302,207 +2470,63 @@ Proceed with send?`)) return;
 
       await fetchGuests();
       setSelectedGuestIds(new Set());
-      setShowNuclearDeleteModal(false);
-      setNuclearConfirmInput('');
+      setShowDeleteAllModal(false);
+      setDeleteAllConfirmInput('');
+      logGuestAction('guest_list_deleted_bulk', 'All guests were deleted from the guest list.', {
+        guestCount: guestIds.length,
+      }, weddingSiteId, 'Guest list');
       toast(`Deleted ${required} guests.`, 'success');
     } catch (err) {
-      const errObj = err as { message?: string; details?: string; code?: string } | null;
-      const msg = errObj?.message || errObj?.details || 'Failed to delete all guests. Please try again.';
-      const code = errObj?.code ? ` (${errObj.code})` : '';
-      toast(`${msg}${code}`, 'error');
+      toast(safeGuestsDashboardError(err, 'Couldn’t delete all guests. Please try again.'), 'error');
     } finally {
-      setNuclearDeleting(false);
+      setDeleteAllBusy(false);
     }
   };
 
   const buildCsvPreviewFromMapping = useCallback(async (headers: string[], dataRows: string[][], fieldMap: CsvFieldMap) => {
-    if (fieldMap.first_name < 0 || fieldMap.last_name < 0) {
-      toast('Please map both First Name and Last Name.', 'error');
+    if (!isCsvNameMappingValid(fieldMap)) {
+      toast('Please map First Name + Last Name, or use Full Name instead.', 'error');
       return;
     }
 
     let resolvedSiteId = weddingSiteId;
     if (!resolvedSiteId && !isDemoMode) {
-      const { data: site } = await supabase
-        .from('wedding_sites')
-        .select('id')
-        .eq('user_id', user?.id)
-        .maybeSingle();
-      resolvedSiteId = (site?.id as string | null) ?? null;
+      const activeSite = user?.id ? await resolveActiveSiteForUser(user.id) : null;
+      resolvedSiteId = activeSite?.id ?? null;
       if (resolvedSiteId) setWeddingSiteId(resolvedSiteId);
     }
     if (!resolvedSiteId && !isDemoMode) {
-      toast('Could not find your website right now. Refresh and try again.', 'error');
+      toast('Couldn’t find your website right now. Refresh and try again.', 'error');
       return;
     }
 
-    const normalizeEventName = (value: string) => value.trim().toLowerCase().replace(/\s+/g, ' ');
-    const itineraryByNormalizedName = new Map(itineraryEvents.map((ev) => [normalizeEventName(ev.event_name), ev.id] as const));
-    const inviteEventColumns = headers
-      .map((h, idx) => ({ h, idx }))
-      .filter(({ h }) => {
-        if (h.startsWith('invite:')) return true;
-        return itineraryByNormalizedName.has(normalizeEventName(h));
-      });
-
-    const weakMappings = [
-      fieldMap.full_name >= 0 && (fieldMap.first_name < 0 || fieldMap.last_name < 0) ? 'Full name is carrying first/last split' : '',
-      fieldMap.household_name >= 0 && fieldMap.household_id < 0 ? 'Households rely on name/group matching only' : '',
-      fieldMap.email < 0 && fieldMap.phone < 0 ? 'No direct contact column mapped' : '',
-      inviteEventColumns.length === 0 && fieldMap.invited_events.length === 0 ? 'No event-invite mapping detected' : '',
-    ].filter(Boolean);
-
-    setCsvMappingSummary({
-      core: [
-        fieldMap.first_name >= 0 ? 'First Name' : '',
-        fieldMap.last_name >= 0 ? 'Last Name' : '',
-        fieldMap.email >= 0 ? 'Email' : '',
-        fieldMap.phone >= 0 ? 'Phone' : '',
-        fieldMap.plus_one >= 0 ? 'Plus One' : '',
-      ].filter(Boolean),
-      rsvp: [
-        fieldMap.status >= 0 ? 'Status → RSVP status' : '',
-        fieldMap.meal_choice >= 0 ? 'Meal Choice → RSVP meal' : '',
-        fieldMap.rsvp_date >= 0 ? 'RSVP Date → RSVP responded_at' : '',
-        fieldMap.invite_token >= 0 ? 'Invite Token → guest token' : '',
-      ].filter(Boolean),
-      household: [
-        fieldMap.household_id >= 0 ? 'household_id' : '',
-        fieldMap.household_name >= 0 ? 'household_name / group_name' : '',
-      ].filter(Boolean),
-      eventCols: inviteEventColumns.map(({ h }) => h),
-      weak: weakMappings,
+    const result = buildGuestImportPreview({
+      headers,
+      dataRows,
+      fieldMap,
+      itineraryEvents,
+      weddingSiteId: resolvedSiteId,
     });
-
-    const skipped: string[] = [];
-    const unknownEvents = new Set<string>();
-    const parsed: Record<string, unknown>[] = [];
-
-    dataRows.forEach((row, idx) => {
-      const values = (row || []).map((v) => String(v ?? '').trim());
-      const firstName = fieldMap.first_name >= 0 ? (values[fieldMap.first_name] || '') : '';
-      const lastName = fieldMap.last_name >= 0 ? (values[fieldMap.last_name] || '') : '';
-
-      const email = fieldMap.email >= 0 ? (values[fieldMap.email] || null) : null;
-      const phone = fieldMap.phone >= 0 ? (values[fieldMap.phone] || null) : null;
-      const plusRaw = fieldMap.plus_one >= 0 ? (values[fieldMap.plus_one] || '') : '';
-      const plusOneAllowed = ['yes', 'true', '1', 'y'].includes(plusRaw.toLowerCase());
-      const statusRaw = fieldMap.status >= 0 ? (values[fieldMap.status] || '').toLowerCase().trim() : '';
-      const normalizedStatus: 'pending' | 'confirmed' | 'declined' =
-        ['confirmed', 'attending', 'accepted', 'yes'].includes(statusRaw)
-          ? 'confirmed'
-          : ['declined', 'no', 'not attending', 'rejected'].includes(statusRaw)
-            ? 'declined'
-            : 'pending';
-      const mealChoice = fieldMap.meal_choice >= 0 ? (values[fieldMap.meal_choice] || '').trim() : '';
-      const rsvpDateRaw = fieldMap.rsvp_date >= 0 ? (values[fieldMap.rsvp_date] || '').trim() : '';
-      const parsedRsvpDate = rsvpDateRaw ? new Date(rsvpDateRaw) : null;
-      const inviteTokenRaw = fieldMap.invite_token >= 0 ? (values[fieldMap.invite_token] || '').trim() : '';
-      const householdIdRaw = fieldMap.household_id >= 0 ? (values[fieldMap.household_id] || '').trim() : '';
-      const householdNameRaw = fieldMap.household_name >= 0 ? (values[fieldMap.household_name] || '').trim() : '';
-      const householdKey = householdIdRaw ? `id:${householdIdRaw.toLowerCase()}` : householdNameRaw ? `name:${householdNameRaw.toLowerCase()}` : '';
-
-      const invitedEventIds = new Set<string>();
-      if (fieldMap.invited_events.length > 0) {
-        fieldMap.invited_events.forEach((colIdx) => {
-          const raw = values[colIdx] || '';
-          raw.split(/[|,;]/).map((x) => x.trim()).filter(Boolean).forEach((eventName) => {
-            const eventId = itineraryByNormalizedName.get(normalizeEventName(eventName));
-            if (eventId) invitedEventIds.add(eventId);
-            else unknownEvents.add(eventName);
-          });
-        });
-      }
-
-      inviteEventColumns.forEach(({ h, idx: colIdx }) => {
-        const eventName = (h.startsWith('invite:') ? h.replace(/^invite:/, '') : h).trim();
-        const eventId = itineraryByNormalizedName.get(normalizeEventName(eventName));
-        if (!eventId) {
-          unknownEvents.add(eventName);
-          return;
-        }
-        const raw = (values[colIdx] || '').toLowerCase().trim();
-        const truthy = ['yes', 'true', '1', 'y', 'invited', 'include'].includes(raw);
-        const falsey = ['no', 'false', '0', 'n', 'not invited', 'exclude'].includes(raw);
-        if (truthy) invitedEventIds.add(eventId);
-        if (falsey) invitedEventIds.delete(eventId);
-      });
-
-      if (!firstName || !lastName) {
-        skipped.push(`Row ${idx + 2}: missing first or last name`);
-        return;
-      }
-
-      parsed.push({
-        wedding_site_id: resolvedSiteId,
-        first_name: firstName || null,
-        last_name: lastName || null,
-        name: `${firstName || ''} ${lastName || ''}`.trim() || (email || 'Guest'),
-        email,
-        phone,
-        group_name: householdNameRaw || null,
-        plus_one_allowed: plusOneAllowed,
-        rsvp_status: normalizedStatus,
-        rsvp_received_at: hasRespondedRsvpStatus(normalizedStatus)
-          ? (parsedRsvpDate && !Number.isNaN(parsedRsvpDate.getTime()) ? parsedRsvpDate.toISOString() : new Date().toISOString())
-          : null,
-        invite_token: inviteTokenRaw || null,
-        invited_to_ceremony: true,
-        invited_to_reception: true,
-        __household_key: householdKey || null,
-        __invited_event_ids: Array.from(invitedEventIds),
-        __meal_choice: mealChoice || null,
-        __rsvp_date: parsedRsvpDate && !Number.isNaN(parsedRsvpDate.getTime()) ? parsedRsvpDate.toISOString() : null,
-      });
-    });
-
-    const householdWarnings = new Set<string>();
-    const householdGroups = new Map<string, Array<{ lastName: string; label: string }>>();
-    parsed.forEach((row) => {
-      const key = String((row.__household_key as string | null | undefined) || '');
-      if (!key) return;
-      const lastName = String(row.last_name || '').trim().toLowerCase();
-      const label = String(row.group_name || key.replace(/^name:/, ''));
-      const existing = householdGroups.get(key) ?? [];
-      existing.push({ lastName, label });
-      householdGroups.set(key, existing);
-    });
-    householdGroups.forEach((members, key) => {
-      if (!key.startsWith('name:')) return;
-      const lastNames = Array.from(new Set(members.map((m) => m.lastName).filter(Boolean)));
-      if (members.length > 1 && lastNames.length > 1) householdWarnings.add(`${members[0]?.label || key}: mixed last names under name-only household key`);
-    });
-
-    const duplicateNameCounts = new Map<string, number>();
-    parsed.forEach((row) => {
-      const key = `${String(row.first_name || '').trim().toLowerCase()}|${String(row.last_name || '').trim().toLowerCase()}`;
-      if (!key || key === '|') return;
-      duplicateNameCounts.set(key, (duplicateNameCounts.get(key) || 0) + 1);
-    });
-    const duplicateNames = Array.from(duplicateNameCounts.entries())
-      .filter(([, count]) => count > 1)
-      .map(([key, count]) => {
-        const [first, last] = key.split('|');
-        return `${first} ${last} (${count})`;
-      });
+    const parsed = result.parsed;
 
     if (parsed.length === 0) {
       setCsvUnknownEvents([]);
       setCsvDuplicateNames([]);
-      toast('No valid guests found in the file. All rows were skipped.', 'error');
+      toast('No guests could be read from this file. Check the name columns and try again.', 'error');
       return;
     }
 
     setCsvPreview(parsed);
-    setCsvSkipped(skipped);
-    setCsvUnknownEvents(Array.from(unknownEvents));
-    setCsvDuplicateNames(duplicateNames);
+    setCsvSkipped(result.skipped);
+    setCsvUnknownEvents(result.unknownEvents);
+    setCsvDuplicateNames(result.duplicateNames);
     setCsvShowMapper(false);
-    setCsvHouseholdWarnings(Array.from(householdWarnings));
-    const skippedMsg = skipped.length > 0 ? ` (${skipped.length} skipped)` : '';
-    const unknownMsg = unknownEvents.size > 0 ? `, ${unknownEvents.size} unknown event name${unknownEvents.size === 1 ? '' : 's'}` : '';
-    const dupMsg = duplicateNames.length > 0 ? `, ${duplicateNames.length} duplicate name${duplicateNames.length === 1 ? '' : 's'} flagged` : '';
-    const householdMsg = householdWarnings.size > 0 ? `, ${householdWarnings.size} household merge warning${householdWarnings.size === 1 ? '' : 's'}` : '';
+    setCsvHouseholdWarnings(result.householdWarnings);
+    setCsvMappingSummary(result.mappingSummary);
+    const skippedMsg = result.skipped.length > 0 ? ` (${result.skipped.length} row${result.skipped.length === 1 ? '' : 's'} need review)` : '';
+    const unknownMsg = result.unknownEvents.length > 0 ? `, ${result.unknownEvents.length} event name${result.unknownEvents.length === 1 ? '' : 's'} need review` : '';
+    const dupMsg = result.duplicateNames.length > 0 ? `, ${result.duplicateNames.length} possible repeat${result.duplicateNames.length === 1 ? '' : 's'}` : '';
+    const householdMsg = result.householdWarnings.length > 0 ? `, ${result.householdWarnings.length} household match${result.householdWarnings.length === 1 ? '' : 'es'} need review` : '';
     toast(`${parsed.length} guest${parsed.length !== 1 ? 's' : ''} ready to import${skippedMsg}${unknownMsg}${dupMsg}${householdMsg}.`, 'success');
   }, [isDemoMode, itineraryEvents, supabase, user?.id, weddingSiteId, toast]);
 
@@ -2515,94 +2539,33 @@ Proceed with send?`)) return;
 
     const file = e.target.files?.[0];
     if (!file) {
-      toast('Please choose a CSV or Excel file to import.', 'error');
+      toast('Please choose a CSV file to import.', 'error');
       return;
     }
     setCsvSelectedFilename(file.name);
     toast(`Parsing ${file.name}…`, 'success');
 
     try {
-      const lowerName = file.name.toLowerCase();
-      let rows: string[][] = [];
+      const { headers, dataRows, samples } = await readGuestImportRows(file);
 
-      if (lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls')) {
-        const buffer = await file.arrayBuffer();
-        const workbook = XLSX.read(buffer, { type: 'array' });
-        const firstSheetName = workbook.SheetNames[0];
-        if (!firstSheetName) {
-          toast('Spreadsheet has no sheets to import.', 'error');
-          return;
-        }
-        const firstSheet = workbook.Sheets[firstSheetName];
-        rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' }) as string[][];
-      } else {
-        const text = await file.text();
-        rows = text
-          .split('\n')
-          .map(l => l.trim())
-          .filter(Boolean)
-          .map(l => l.split(',').map(v => v.replace(/"/g, '').trim()));
-      }
-
-      if (rows.length < 2) {
+      if (headers.length === 0 || dataRows.length === 0) {
         setCsvUnknownEvents([]);
         setCsvDuplicateNames([]);
         toast('File appears to be empty or missing a header row.', 'error');
         return;
       }
 
-      const headers = (rows[0] || []).map((h) => String(h ?? '').trim().toLowerCase());
-
-      const findIdx = (...candidates: string[]) => {
-        for (const c of candidates) {
-          const i = headers.indexOf(c);
-          if (i >= 0) return i;
-        }
-        for (const c of candidates) {
-          const i = headers.findIndex((h) => h.includes(c));
-          if (i >= 0) return i;
-        }
-        return -1;
-      };
-
-      const defaultMap: CsvFieldMap = {
-        first_name: findIdx('first name', 'first_name', 'firstname', 'given name', 'given_name', 'first'),
-        last_name: findIdx('last name', 'last_name', 'lastname', 'surname', 'family_name', 'family name', 'last'),
-        full_name: findIdx('name', 'full name', 'full_name', 'guest_name', 'guest name'),
-        email: findIdx('email', 'email address', 'email_address', 'e mail', 'primary email', 'guest email', 'mail'),
-        phone: findIdx('phone', 'phone number', 'phone_number', 'mobile', 'mobile number', 'cell', 'telephone', 'guest phone'),
-        plus_one: findIdx('plus one', 'plus_one', 'plus_one_allowed', 'plus one allowed'),
-        status: findIdx('status', 'rsvp_status', 'rsvp status', 'rsvp'),
-        meal_choice: findIdx('meal choice', 'meal_choice', 'meal', 'meal option', 'meal selection'),
-        rsvp_date: findIdx('rsvp date', 'rsvp_date', 'responded_at', 'response date', 'responded', 'submitted at'),
-        invite_token: findIdx('invite token', 'invite_token', 'token', 'invite code'),
-        household_id: findIdx('household_id', 'household id', 'household key', 'family_id', 'party_id', 'group id'),
-        household_name: findIdx('household_name', 'household name', 'household', 'family', 'family name', 'group_name', 'group', 'group name', 'household group', 'party name'),
-        invited_events: (() => {
-          const i = findIdx('invited_events', 'invited events', 'events', 'event_invites', 'event invites list');
-          return i >= 0 ? [i] : [];
-        })(),
-      };
-
-      const filteredRows = rows.slice(1).filter((r) => r.some((v) => String(v ?? '').trim().length > 0));
-      const samples = headers.map((_, idx) => {
-        for (const row of filteredRows) {
-          const sample = String(row?.[idx] ?? '').trim();
-          if (sample.length > 0) return sample;
-        }
-        return '';
-      });
+      const defaultMap = buildDefaultCsvFieldMap(headers);
 
       setCsvHeaders(headers);
-      setCsvDataRows(filteredRows);
+      setCsvDataRows(dataRows);
       setCsvColumnSamples(samples);
       setCsvFieldMap(defaultMap);
       setCsvShowMapper(true);
     } catch (err) {
       setCsvUnknownEvents([]);
       setCsvDuplicateNames([]);
-      const msg = err instanceof Error ? err.message : 'Failed to parse guest file';
-      toast(msg, 'error');
+      toast(safeGuestImportReadError(err), 'error');
     } finally {
       e.target.value = '';
     }
@@ -2619,7 +2582,7 @@ Proceed with send?`)) return;
         if (resolvedSiteId) setWeddingSiteId(resolvedSiteId);
       }
       if (!resolvedSiteId && !isDemoMode) {
-        toast('Could not find your wedding site. Refresh and try again.', 'error');
+        toast('Couldn’t find your wedding site. Refresh and try again.', 'error');
         return;
       }
       if (isDemoMode) {
@@ -2632,6 +2595,9 @@ Proceed with send?`)) return;
           phone: g.phone ? String(g.phone) : null,
           plus_one_allowed: Boolean(g.plus_one_allowed),
           plus_one_name: null,
+          children_allowed: Boolean(g.children_allowed),
+          max_children: Number(g.max_children ?? 0),
+          max_additional_guests: Number(g.max_additional_guests ?? 0),
           invited_to_ceremony: true,
           invited_to_reception: true,
           invite_token: generateLocalInviteToken(),
@@ -2643,7 +2609,7 @@ Proceed with send?`)) return;
 
         setGuests(prev => [...importedGuests, ...prev]);
         setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: 0, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
-        const skippedMsg = csvSkipped.length > 0 ? `, ${csvSkipped.length} skipped` : '';
+        const skippedMsg = csvSkipped.length > 0 ? `, ${csvSkipped.length} row${csvSkipped.length === 1 ? '' : 's'} need review` : '';
         toast(`${csvPreview.length} guest${csvPreview.length !== 1 ? 's' : ''} imported${skippedMsg}`, 'success');
         setCsvPreview(null);
         if (fromQuickStart && nextStep === 'photos') {
@@ -2674,6 +2640,9 @@ Proceed with send?`)) return;
         delete row.__household_key;
         delete row.__invited_event_ids;
         delete row.__meal_choice;
+        delete row.__plus_one_name;
+        delete row.__plus_one_count;
+        delete row.__children_count;
         delete row.__rsvp_date;
         return row;
       });
@@ -2718,7 +2687,7 @@ Proceed with send?`)) return;
       }
 
       const eventInviteRows: Array<{ event_id: string; guest_id: string }> = [];
-      const rsvpRows: Array<{ guest_id: string; attending: boolean; meal_choice: string | null; responded_at: string | null }> = [];
+      const rsvpRows: Array<{ guest_id: string; attending: boolean; meal_choice: string | null; plus_one_name: string | null; plus_one_count: number; children_count: number; responded_at: string | null }> = [];
       guestsWithTokens.forEach((row, idx) => {
         const guestId = inserted[idx]?.id as string | undefined;
         if (!guestId) return;
@@ -2733,6 +2702,9 @@ Proceed with send?`)) return;
             guest_id: guestId,
             attending,
             meal_choice: (row.__meal_choice as string | null | undefined) ?? null,
+            plus_one_name: (row.__plus_one_name as string | null | undefined) ?? null,
+            plus_one_count: Number(row.__plus_one_count ?? 0),
+            children_count: Number(row.__children_count ?? 0),
             responded_at: (row.__rsvp_date as string | null | undefined)
               || (row.rsvp_received_at as string | null | undefined)
               || new Date().toISOString(),
@@ -2755,12 +2727,12 @@ Proceed with send?`)) return;
       }
 
       await fetchGuests();
-      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds: 0, householdKeys: 0 });
-      const skippedMsg = csvSkipped.length > 0 ? `, ${csvSkipped.length} skipped` : '';
-      const householdsMsg = keyToGuestIds.size > 0 ? `, ${keyToGuestIds.size} household key${keyToGuestIds.size === 1 ? '' : 's'}` : '';
-      const guardedMsg = guardedHouseholds > 0 ? `, ${guardedHouseholds} risky household merge${guardedHouseholds === 1 ? '' : 's'} skipped` : '';
+      setCsvImportSummary({ imported: csvPreview?.length ?? 0, skipped: csvSkipped.length, unknownEvents: csvUnknownEvents.length, duplicateNames: csvDuplicateNames.length, guardedHouseholds, householdKeys: keyToGuestIds.size });
+      const skippedMsg = csvSkipped.length > 0 ? `, ${csvSkipped.length} row${csvSkipped.length === 1 ? '' : 's'} need review` : '';
+      const householdsMsg = keyToGuestIds.size > 0 ? `, ${keyToGuestIds.size} household group${keyToGuestIds.size === 1 ? '' : 's'}` : '';
+      const guardedMsg = guardedHouseholds > 0 ? `, ${guardedHouseholds} household match${guardedHouseholds === 1 ? '' : 'es'} left separate` : '';
       const eventsMsg = eventInviteRows.length > 0 ? `, ${eventInviteRows.length} event invite${eventInviteRows.length === 1 ? '' : 's'}` : '';
-      const unknownEventsMsg = csvUnknownEvents.length > 0 ? `, ${csvUnknownEvents.length} unknown event name${csvUnknownEvents.length === 1 ? '' : 's'}` : '';
+      const unknownEventsMsg = csvUnknownEvents.length > 0 ? `, ${csvUnknownEvents.length} event name${csvUnknownEvents.length === 1 ? '' : 's'} need review` : '';
       toast(`${csvPreview.length} guest${csvPreview.length !== 1 ? 's' : ''} imported${skippedMsg}${householdsMsg}${guardedMsg}${eventsMsg}${unknownEventsMsg}`, 'success');
       setCsvPreview(null);
       if (fromQuickStart && nextStep === 'photos') {
@@ -2774,10 +2746,7 @@ Proceed with send?`)) return;
       setCsvSelectedFilename(null);
       setCsvMappingSummary({ core: [], rsvp: [], household: [], eventCols: [], weak: [] });
     } catch (err) {
-      const errObj = err as { message?: string; details?: string; hint?: string; code?: string } | null;
-      const msg = errObj?.message || errObj?.details || errObj?.hint || (err instanceof Error ? err.message : 'Unknown error');
-      const code = errObj?.code ? ` (${errObj.code})` : '';
-      toast(`Import failed: ${msg}${code}`, 'error');
+      toast(safeGuestsDashboardError(err, 'Couldn’t import guests. Please try again.'), 'error');
     } finally {
       setCsvImporting(false);
     }
@@ -2962,6 +2931,48 @@ Proceed with send?`)) return;
       pending: Math.max(invitedGuests.length - attendingCount - declinedCount, 0),
     };
   });
+
+  const exportEventAttendanceCSV = () => {
+    const headers = ['Event', 'Guest Name', 'Email', 'Phone', 'Invited', 'Event RSVP', 'Overall RSVP', 'Meal Choice', 'Custom Answers'];
+    const rows = effectiveItineraryEvents.flatMap((event) => {
+      const invitedGuests = guests.filter((guest) => {
+        if (event.id === 'legacy-ceremony') return guest.invited_to_ceremony;
+        if (event.id === 'legacy-reception') return guest.invited_to_reception;
+        return eventInviteGuestMap.get(event.id)?.has(guest.id) ?? false;
+      });
+      return invitedGuests.map((guest) => {
+        const eventSelections = parseRsvpEventSelections(guest.rsvp?.notes ?? null);
+        const eventRsvp =
+          event.id === 'legacy-ceremony'
+            ? eventSelections?.ceremony
+            : event.id === 'legacy-reception'
+              ? eventSelections?.reception
+              : null;
+        return [
+          event.event_name,
+          [guest.first_name, guest.last_name].filter(Boolean).join(' ').trim() || guest.name,
+          guest.email || '',
+          guest.phone || '',
+          'Yes',
+          eventRsvp === true ? 'Yes' : eventRsvp === false ? 'No' : 'Not captured',
+          guest.rsvp_status,
+          guest.rsvp?.meal_choice || '',
+          formatCustomAnswers(guest.rsvp?.custom_answers || null),
+        ];
+      });
+    });
+
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `event-attendance_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   const mealChoiceRollup = Array.from(
     guests.reduce((map, guest) => {
@@ -3169,9 +3180,9 @@ Proceed with send?`)) return;
     'missing-meal': 'Missing Meal',
     'plusone-missing': 'Plus-one Missing Name',
     'pending-no-email': 'Pending, No Email',
-    'manual-follow-up': 'Manual Follow-up',
-    'manual-handled': 'Handled Manually',
-    'no-contact': 'No Contact Info',
+    'manual-follow-up': 'Personal follow-up',
+    'manual-handled': 'Handled personally',
+    'no-contact': 'Missing contact info',
   };
 
   const labelForFilter = (filter: string) => {
@@ -3207,7 +3218,7 @@ Proceed with send?`)) return;
     <>
       <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} aria-hidden="true" />
       <div className="fixed inset-0 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="guest-modal-title">
-        <div className="bg-surface rounded-xl shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto border border-border-subtle">
+        <div className="bg-surface rounded-lg max-w-md w-full p-6 max-h-[90vh] overflow-y-auto border border-border-subtle">
           <div className="flex justify-between items-center mb-5">
             <h2 id="guest-modal-title" className="text-xl font-semibold text-text-primary">{title}</h2>
             <button onClick={onClose} className="p-1.5 text-text-secondary hover:text-text-primary hover:bg-surface-subtle rounded-lg transition-colors" aria-label="Close">
@@ -3320,9 +3331,9 @@ Proceed with send?`)) return;
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showOpsMenu, setShowOpsMenu] = useState(false);
   const [showCampaignModal, setShowCampaignModal] = useState(false);
-  const [showNuclearDeleteModal, setShowNuclearDeleteModal] = useState(false);
-  const [nuclearConfirmInput, setNuclearConfirmInput] = useState('');
-  const [nuclearDeleting, setNuclearDeleting] = useState(false);
+  const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
+  const [deleteAllConfirmInput, setDeleteAllConfirmInput] = useState('');
+  const [deleteAllBusy, setDeleteAllBusy] = useState(false);
 
   const reminderCadenceMs = reminderCadenceDays * 24 * 60 * 60 * 1000;
   const isDueReminder = (g: GuestWithRSVP) => {
@@ -3358,7 +3369,7 @@ Proceed with send?`)) return;
   if (loading) {
     return (
       <DashboardLayout currentPage="guests">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-[1100px] mx-auto">
           <DashboardStateBlock title="Loading guests…" description="Preparing your guest list and RSVP status." />
         </div>
       </DashboardLayout>
@@ -3368,16 +3379,71 @@ Proceed with send?`)) return;
   if (guestsTab === 'rsvp-config') {
     return (
       <DashboardLayout currentPage="guests">
-        <div className="max-w-7xl mx-auto space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold text-text-primary mb-2">Guests & RSVP</h1>
-            <p className="text-text-secondary">Manage your guest list and see responses</p>
-            <a href="/dashboard/rsvp-board" className="text-xs text-primary hover:text-primary-hover">Open RSVP view</a>
-            <div className="mt-4 inline-flex rounded-lg border border-border-subtle bg-surface-subtle p-1">
-              <button className="px-3 py-1.5 text-sm rounded-md text-text-secondary" onClick={() => setGuestsTab('ops')}>Guest Ops</button>
-              <button className="px-3 py-1.5 text-sm rounded-md bg-white text-text-primary shadow-sm" onClick={() => setGuestsTab('rsvp-config')}>RSVP Config</button>
+        <div className="max-w-[1100px] mx-auto space-y-5">
+          <DashboardPageHero
+            eyebrow="RSVP settings"
+            title="Ask only what you truly need from guests."
+            description="Meal choices, custom questions, and event-specific answers stay editable before guests see them."
+            stats={[
+              { label: 'Questions', value: rsvpQuestions.length, detail: 'custom prompts' },
+              { label: 'Meal choices', value: rsvpMealEnabled ? rsvpMealOptions.length : 'Off', detail: rsvpMealEnabled ? 'shown on RSVP' : 'hidden from guests' },
+              { label: 'Responses', value: stats.confirmed + stats.declined, detail: `${stats.pending} still pending` },
+            ]}
+            actions={<a href="/dashboard/rsvp-board" className="rounded-lg bg-primary px-3 py-2 text-sm font-medium text-white no-underline hover:bg-primary/90">Open RSVP view</a>}
+          >
+            <div className="inline-flex rounded-lg border border-border-subtle bg-white p-1">
+              <button className="px-3 py-1.5 text-sm rounded-md text-text-secondary" onClick={() => setGuestsTab('ops')}>Guests</button>
+              <button className="px-3 py-1.5 text-sm rounded-md bg-surface-subtle text-text-primary border border-border-subtle" onClick={() => setGuestsTab('rsvp-config')}>RSVP questions</button>
             </div>
-          </div>
+          </DashboardPageHero>
+
+          <Card variant="bordered" padding="lg">
+            <div className="space-y-4">
+              <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-text-primary">RSVP access mode</h3>
+                  <p className="text-sm text-text-secondary">Current guest access uses private guest links with name lookup as the backup.</p>
+                </div>
+                <Badge variant="success">Recommended: {recommendedRsvpAccessMode.label}</Badge>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                {rsvpAccessModePlan.map((mode) => (
+                  <div
+                    key={mode.id}
+                    className={`rounded-lg border p-4 ${
+                      mode.status === 'recommended'
+                        ? 'border-primary/40 bg-primary/5'
+                        : mode.status === 'future'
+                          ? 'border-border-subtle bg-surface-subtle/50'
+                          : 'border-border-subtle bg-white'
+                    }`}
+                  >
+                    <div className="mb-2 flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold text-text-primary">{mode.label}</p>
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                        mode.status === 'recommended'
+                          ? 'bg-primary/10 text-primary'
+                          : mode.status === 'needs-setup'
+                            ? 'bg-warning/10 text-warning'
+                            : mode.status === 'future'
+                              ? 'bg-surface-subtle text-text-tertiary'
+                              : 'bg-success/10 text-success'
+                      }`}>
+                        {mode.status === 'recommended' ? 'Recommended' : mode.status === 'needs-setup' ? 'Needs setup' : mode.status === 'future' ? 'Planned' : 'Ready'}
+                      </span>
+                    </div>
+                    <p className="text-sm text-text-secondary">{mode.detail}</p>
+                    <p className="mt-2 text-xs text-text-tertiary">{mode.tradeoff}</p>
+                  </div>
+                ))}
+              </div>
+
+              <p className="text-xs text-text-tertiary">
+                Guest codes, shared passwords, and open RSVP stay planned until recovery, privacy, and capacity rules are fully proven.
+              </p>
+            </div>
+          </Card>
 
           <Card variant="bordered" padding="lg">
             <div className="space-y-5">
@@ -3386,7 +3452,74 @@ Proceed with send?`)) return;
                           <p className="text-sm text-text-secondary">Choose what guests answer when they reply on the RSVP page.</p>
               </div>
 
-              <div className="space-y-3 p-4 border border-border rounded-xl">
+              <div className="rounded-lg border border-border-subtle bg-white p-4">
+                <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-text-primary">Setup proof checklist</p>
+                    <p className="text-sm text-text-secondary">Use this before publishing RSVP changes so launch modes stay clear.</p>
+                  </div>
+                  <Badge variant="neutral">Owner readback</Badge>
+                </div>
+                <div className="grid gap-2 md:grid-cols-2">
+                  {rsvpSetupChecklist.map((item) => (
+                    <div key={item.id} className="rounded-md border border-border-subtle bg-surface-subtle/30 p-3">
+                      <div className="mb-1 flex items-center justify-between gap-3">
+                        <p className="text-sm font-medium text-text-primary">{item.label}</p>
+                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                          item.status === 'ready'
+                            ? 'bg-success/10 text-success'
+                            : item.status === 'planned'
+                              ? 'bg-surface-subtle text-text-tertiary'
+                              : 'bg-warning/10 text-warning'
+                        }`}>
+                          {item.status === 'ready' ? 'Ready' : item.status === 'planned' ? 'Planned' : 'Needs setup'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-text-tertiary">{item.detail}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4">
+                <div className="mb-3">
+                  <p className="text-sm font-semibold text-text-primary">Question templates</p>
+                  <p className="text-sm text-text-secondary">Add common wedding questions, then edit the wording before guests see them.</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {RSVP_QUESTION_TEMPLATES.map((template) => {
+                    const templateAdded = rsvpQuestionTemplateCoverage.find((item) => item.key === template.key)?.added ?? false;
+                    const templateLabel = template.key === 'dietary'
+                      ? 'Dietary notes'
+                      : template.key === 'song'
+                        ? 'Song request'
+                        : template.key === 'shuttle'
+                          ? 'Shuttle'
+                          : template.key === 'lodging'
+                            ? 'Lodging'
+                            : template.key === 'childcare'
+                              ? 'Childcare'
+                              : template.key === 'plus_one_note'
+                                ? 'Plus-one note'
+                                : 'Event attendance';
+
+                    return (
+                      <Button
+                        key={template.key}
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={templateAdded}
+                        onClick={() => addRsvpQuestionTemplate(template)}
+                      >
+                        {templateAdded ? `${templateLabel} added` : templateLabel}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-3 p-4 border border-border rounded-lg">
                 <label className="flex items-center gap-2 text-sm text-text-primary">
                   <input type="checkbox" checked={rsvpMealEnabled} onChange={(e) => { setRsvpMealEnabled(e.target.checked); setRsvpConfigDirty(true); }} className="w-4 h-4" />
                   Collect meal choice on the RSVP form
@@ -3406,18 +3539,27 @@ Proceed with send?`)) return;
 
               <div className="space-y-3">
                 {rsvpQuestions.map((q, idx) => (
-                  <div key={q.id} className="p-4 border border-border rounded-xl space-y-3">
+                  <div key={q.id} className="p-4 border border-border rounded-lg space-y-3">
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-semibold">Question {idx + 1}</p>
                       <button
                         type="button"
                         aria-label="Delete question"
                         title="Delete question"
-                        className="p-1.5 rounded-md text-text-tertiary hover:text-error hover:bg-error-light"
+                        className="p-1.5 rounded-md text-text-tertiary hover:text-text-primary hover:bg-surface-subtle"
                         onClick={() => {
-                          if (!window.confirm('Delete this question?')) return;
-                          setRsvpQuestions((prev) => prev.filter((x) => x.id !== q.id));
-                          setRsvpConfigDirty(true);
+                          setConfirmDialog({
+                            title: 'Delete this RSVP question?',
+                            description: 'Guests will no longer see this question. Existing saved answers stay in response history.',
+                            confirmLabel: 'Delete question',
+                            tone: 'danger',
+                            onCancel: () => setConfirmDialog(null),
+                            onConfirm: () => {
+                              setRsvpQuestions((prev) => prev.filter((x) => x.id !== q.id));
+                              setRsvpConfigDirty(true);
+                              setConfirmDialog(null);
+                            },
+                          });
                         }}
                       >
                         <Trash2 className="w-4 h-4" />
@@ -3446,7 +3588,7 @@ Proceed with send?`)) return;
                   <Button type="button" variant="outline" onClick={() => { setRsvpQuestions((prev) => [...prev, makeRsvpQuestion()]); setRsvpConfigDirty(true); }}>Add question</Button>
                   <div className="flex items-center gap-3">
                     <Button type="button" variant="primary" onClick={handleSaveRsvpConfig} disabled={rsvpConfigSaving}>{rsvpConfigSaving ? 'Saving…' : 'Save Now'}</Button>
-                    <span className="text-xs text-text-tertiary">{rsvpAutoSaveState === 'saving' ? 'Auto-saving…' : rsvpAutoSaveState === 'saved' ? 'Auto-saved' : rsvpAutoSaveState === 'error' ? 'Auto-save failed' : 'Auto-save on'}</span>
+                    <span className="text-xs text-text-tertiary">{rsvpAutoSaveState === 'saving' ? 'Auto-saving…' : rsvpAutoSaveState === 'saved' ? 'Auto-saved' : rsvpAutoSaveState === 'error' ? 'Auto-save needs retry' : 'Auto-save on'}</span>
                   </div>
                 </div>
               </div>
@@ -3458,7 +3600,7 @@ Proceed with send?`)) return;
               <summary className="cursor-pointer list-none flex items-center justify-between gap-3">
                 <div>
                   <h3 className="text-lg font-semibold text-text-primary">Guest change history</h3>
-                  <p className="text-sm text-text-secondary">Recent guest updates so you can track what changed without leaving RSVP config.</p>
+                  <p className="text-sm text-text-secondary">Recent guest updates so you can track what changed without leaving RSVP settings.</p>
                 </div>
                 <span className="text-xs text-text-tertiary">{rsvpAuditFeed.length} recent</span>
               </summary>
@@ -3470,14 +3612,14 @@ Proceed with send?`)) return;
                   <div className="text-sm text-text-secondary">No recent guest changes yet.</div>
                 ) : (
                   rsvpAuditFeed.slice(0, 8).map((entry) => (
-                    <div key={entry.id} className="rounded-xl border border-border-subtle bg-surface-subtle/40 px-3 py-2.5">
+                    <div key={entry.id} className="rounded-lg border border-border-subtle bg-surface-subtle/40 px-3 py-2.5">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             {(() => {
                               const ActionIcon = getAuditActionIcon(entry.action);
                               return (
-                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-full border ${getAuditActionTone(entry.action)}`}>
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-lg border ${getAuditActionTone(entry.action)}`}>
                                   <ActionIcon className="w-3 h-3" />
                                   <span>{entry.action === 'insert' ? 'Created' : entry.action === 'delete' ? 'Removed' : 'Updated'}</span>
                                 </span>
@@ -3504,14 +3646,32 @@ Proceed with send?`)) return;
 
   return (
     <DashboardLayout currentPage="guests">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-text-primary mb-2">Guests & RSVP</h1>
-          <p className="text-text-secondary">Manage your guest list and see responses</p>
-          <a href="/dashboard/rsvp-board" className="text-xs text-primary hover:text-primary-hover">Open RSVP Board</a>
-          <div className="mt-4 flex flex-wrap items-end gap-2">
-            <div className="inline-flex rounded-lg border border-border-subtle bg-surface-subtle p-1">
-              <button className="px-3 py-1.5 text-sm rounded-md bg-white text-text-primary shadow-sm" onClick={() => setGuestsTab('ops')}>Guests</button>
+      <div className="max-w-[1100px] mx-auto space-y-5">
+        <DashboardPageHero
+          eyebrow="Guests & RSVP"
+          title="Know who is coming and who still needs a gentle nudge."
+          description="Households, plus-ones, event invites, meal choices, and custom answers stay together without making the guest list feel heavy."
+          stats={[
+            { label: 'Invited', value: stats.total, detail: `${contactStats.contactCoverage}% reachable` },
+            { label: 'Coming', value: stats.confirmed, detail: `${stats.rsvpRate}% replied` },
+            { label: 'Still pending', value: stats.pending, detail: rsvpOps.noResponse > 0 ? 'ready for a reminder' : 'no reminder needed' },
+          ]}
+          actions={
+            <>
+              <a href="/dashboard/rsvp-board" className="rounded-lg border border-border-subtle bg-white px-3 py-2 text-sm font-medium text-text-primary no-underline hover:bg-surface-subtle">RSVP view</a>
+              <button
+                onClick={() => setShowAddModal(true)}
+                disabled={!canEditGuests}
+                className="rounded-lg bg-primary px-3 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50"
+              >
+                Add guest
+              </button>
+            </>
+          }
+        >
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="inline-flex rounded-lg border border-border-subtle bg-white p-1">
+              <button className="px-3 py-1.5 text-sm rounded-md bg-surface-subtle text-text-primary border border-border-subtle" onClick={() => setGuestsTab('ops')}>Guests</button>
               <button className="px-3 py-1.5 text-sm rounded-md text-text-secondary" onClick={() => setGuestsTab('rsvp-config')}>RSVP Settings</button>
             </div>
             <button
@@ -3521,20 +3681,20 @@ Proceed with send?`)) return;
               {showInsights ? 'Hide insights' : 'Show insights'}
             </button>
           </div>
-        </div>
+        </DashboardPageHero>
 
         {csvImportSummary && (
           <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-3 py-3 text-sm space-y-2">
             <p className="font-medium text-text-primary">Last import summary</p>
-            <p className="text-text-secondary">Imported {csvImportSummary.imported} guest{csvImportSummary.imported === 1 ? '' : 's'} · skipped {csvImportSummary.skipped} · household keys {csvImportSummary.householdKeys} · risky merges skipped {csvImportSummary.guardedHouseholds} · unknown events {csvImportSummary.unknownEvents} · duplicate names flagged {csvImportSummary.duplicateNames}</p>
+            <p className="text-text-secondary">Imported {csvImportSummary.imported} guest{csvImportSummary.imported === 1 ? '' : 's'} · rows needing review {csvImportSummary.skipped} · household groups {csvImportSummary.householdKeys} · household matches left separate {csvImportSummary.guardedHouseholds} · event names to review {csvImportSummary.unknownEvents} · possible repeats {csvImportSummary.duplicateNames}</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
-              <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-800">
+              <div className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2 text-text-secondary">
                 <p className="font-medium">What came through</p>
                 <p className="mt-1">Guest rows imported, event links mapped where possible, and safer household grouping applied when the keys looked trustworthy.</p>
               </div>
-              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800">
+              <div className="rounded-lg border border-border-subtle bg-white px-3 py-2 text-text-secondary">
                 <p className="font-medium">Still review</p>
-                <p className="mt-1">Check skipped rows, duplicate names, risky household merges, unknown events, and any guests still missing direct contact info.</p>
+                <p className="mt-1">Check rows that need names, possible repeats, household matches left separate, event names to review, and any guests still missing direct contact info.</p>
               </div>
             </div>
           </div>
@@ -3542,13 +3702,13 @@ Proceed with send?`)) return;
 
         {guestsRole === 'planner' && (
           <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
-            Planner view is on — this workspace stays focused on guest readiness, response cleanup, and who still needs follow-up.
+            Planner view is on. This view stays focused on guest follow-up, response cleanup, and who still needs a nudge.
           </div>
         )}
 
 
         {!cleanGuestsView && (
-        <details className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-3">
+        <details className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-3">
           <summary className="cursor-pointer list-none flex items-center justify-between gap-3">
             <span className="text-sm font-semibold text-text-primary">Snapshot & RSVP insights</span>
             <span className="text-xs text-text-tertiary">View details</span>
@@ -3569,22 +3729,22 @@ Proceed with send?`)) return;
                   <CheckCircle2 className="w-5 h-5 text-success" aria-hidden="true" />
                   <div>
                     <p className="text-xl font-bold text-text-primary">{stats.confirmed}</p>
-                    <p className="text-xs text-text-secondary">RSVP Yes</p>
+                    <p className="text-xs text-text-secondary">Coming</p>
                   </div>
                 </div>
               </Card>
               <Card variant="bordered" padding="md">
                 <div className="flex items-center gap-3">
-                  <XCircle className="w-5 h-5 text-error" aria-hidden="true" />
+                  <XCircle className="w-5 h-5 text-text-tertiary" aria-hidden="true" />
                   <div>
                     <p className="text-xl font-bold text-text-primary">{stats.declined}</p>
-                    <p className="text-xs text-text-secondary">RSVP No</p>
+                    <p className="text-xs text-text-secondary">Cannot make it</p>
                   </div>
                 </div>
               </Card>
               <Card variant="bordered" padding="md">
                 <div className="flex items-center gap-3">
-                  <Clock className="w-5 h-5 text-warning" aria-hidden="true" />
+                  <Clock className="w-5 h-5 text-text-tertiary" aria-hidden="true" />
                   <div>
                     <p className="text-xl font-bold text-text-primary">{stats.pending}</p>
                     <p className="text-xs text-text-secondary">Pending</p>
@@ -3595,22 +3755,22 @@ Proceed with send?`)) return;
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               <Card variant="bordered" padding="md">
-                <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Response rate</p>
+                <p className="text-xs font-medium text-text-tertiary">Replies</p>
                 <p className="mt-1 text-xl font-bold text-text-primary">{stats.rsvpRate}%</p>
                 <p className="mt-1 text-xs text-text-secondary">Guests who already replied</p>
               </Card>
               <Card variant="bordered" padding="md">
-                <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Meal coverage</p>
+                <p className="text-xs font-medium text-text-tertiary">Meal choices</p>
                 <p className="mt-1 text-xl font-bold text-text-primary">{mealSummary.withMealChoice}</p>
                 <p className="mt-1 text-xs text-text-secondary">Guests with a meal choice saved</p>
               </Card>
               <Card variant="bordered" padding="md">
-                <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Dietary notes</p>
+                <p className="text-xs font-medium text-text-tertiary">Dietary notes</p>
                 <p className="mt-1 text-xl font-bold text-text-primary">{mealSummary.withDietaryNote}</p>
                 <p className="mt-1 text-xs text-text-secondary">Guests with dietary detail captured</p>
               </Card>
               <Card variant="bordered" padding="md">
-                <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Contact coverage</p>
+                <p className="text-xs font-medium text-text-tertiary">Reachable guests</p>
                 <p className="mt-1 text-xl font-bold text-text-primary">{contactStats.contactCoverage}%</p>
                 <p className="mt-1 text-xs text-text-secondary">Guests with email or phone on file</p>
               </Card>
@@ -3619,7 +3779,7 @@ Proceed with send?`)) return;
             {(eventReport.length > 0 || mealChoiceRollup.length > 0 || customAnswerRollup.length > 0) && (
               <div className="grid gap-3 lg:grid-cols-3">
                 <Card variant="bordered" padding="md">
-                  <p className="text-sm font-semibold text-text-primary">Event breakdown</p>
+                  <p className="text-sm font-semibold text-text-primary">By event</p>
                   <div className="mt-3 space-y-2.5">
                     {eventReport.length === 0 ? (
                       <p className="text-sm text-text-secondary">No event-level reporting yet.</p>
@@ -3636,7 +3796,7 @@ Proceed with send?`)) return;
                 </Card>
 
                 <Card variant="bordered" padding="md">
-                  <p className="text-sm font-semibold text-text-primary">Meal rollup</p>
+                  <p className="text-sm font-semibold text-text-primary">Meals</p>
                   <div className="mt-3 space-y-2.5">
                     {mealChoiceRollup.length === 0 ? (
                       <p className="text-sm text-text-secondary">No meal data yet.</p>
@@ -3656,7 +3816,7 @@ Proceed with send?`)) return;
                       <p className="text-sm text-text-secondary">No custom answers captured yet.</p>
                     ) : customAnswerRollup.map((entry, index) => (
                       <div key={`${entry.question}-${entry.answer}-${index}`} className="rounded-lg border border-border-subtle bg-white px-3 py-2.5">
-                        <p className="text-xs uppercase tracking-wide text-text-tertiary">{entry.question}</p>
+                        <p className="text-xs text-text-tertiary">{entry.question}</p>
                         <div className="mt-1 flex items-center justify-between gap-3">
                           <span className="text-sm text-text-primary">{entry.answer}</span>
                           <span className="text-sm font-semibold text-text-primary">{entry.count}</span>
@@ -3677,7 +3837,7 @@ Proceed with send?`)) return;
                           <p className="text-sm font-medium text-text-primary">{entry.answer}</p>
                           <span className="text-xs text-text-tertiary">{entry.guestName}</span>
                         </div>
-                        <p className="mt-1 text-xs uppercase tracking-wide text-text-tertiary">{entry.question}</p>
+                        <p className="mt-1 text-xs text-text-tertiary">{entry.question}</p>
                       </div>
                     ))}
                   </div>
@@ -3733,22 +3893,22 @@ Proceed with send?`)) return;
           });
           if (conflicts.length === 0) return null;
           return (
-            <div className="p-4 bg-warning-light border border-warning/20 rounded-xl space-y-2">
+            <div className="p-4 bg-surface-subtle/60 border border-border-subtle rounded-lg space-y-2">
               <div className="flex items-center justify-between gap-2 mb-1">
                 <div className="flex items-center gap-2 flex-wrap min-w-0">
-                  <AlertCircle className="w-4 h-4 text-warning flex-shrink-0" />
-                  <p className="text-sm font-medium text-warning">{conflicts.length} RSVP {conflicts.length === 1 ? 'issue' : 'issues'} detected</p>
+                  <AlertCircle className="w-4 h-4 text-text-tertiary flex-shrink-0" />
+                  <p className="text-sm font-medium text-text-primary">{conflicts.length} RSVP {conflicts.length === 1 ? 'item' : 'items'} to review</p>
                 </div>
                 <button
                   onClick={() => { setFilterStatus('pending'); setViewMode('list'); }}
-                  className="text-xs px-2 py-1 rounded-md border border-warning/30 text-warning hover:bg-warning/10"
+                  className="text-xs px-2 py-1 rounded-md border border-border-subtle text-text-secondary hover:bg-white"
                 >
                   Review pending
                 </button>
               </div>
               <ul className="space-y-0.5">
                 {conflicts.map((c, i) => (
-                  <li key={i} className="text-xs text-warning/90">• {c}</li>
+                  <li key={i} className="text-xs text-text-secondary">• {c}</li>
                 ))}
               </ul>
             </div>
@@ -3756,11 +3916,11 @@ Proceed with send?`)) return;
         })()}
 
         {!cleanGuestsView && rsvpConflicts.length > 0 && (
-          <div className="p-4 bg-error-light border border-error/20 rounded-xl space-y-3">
+          <div className="p-4 bg-surface-subtle/60 border border-border-subtle rounded-lg space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div className="flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-error" />
-                <p className="text-sm font-medium text-error">{rsvpConflicts.length} RSVP {rsvpConflicts.length === 1 ? 'item' : 'items'} to review</p>
+                <AlertCircle className="w-4 h-4 text-text-tertiary" />
+                <p className="text-sm font-medium text-text-primary">{rsvpConflicts.length} RSVP {rsvpConflicts.length === 1 ? 'item' : 'items'} to review</p>
               </div>
               <div className="flex items-center gap-2">
                 <Select
@@ -3782,7 +3942,7 @@ Proceed with send?`)) return;
                 </Button>
               </div>
             </div>
-            <div className="text-xs text-error/90">
+            <div className="text-xs text-text-secondary">
               {rsvpConflictStats.unresolvedOver72h > 0
                 ? `${rsvpConflictStats.unresolvedOver72h} item${rsvpConflictStats.unresolvedOver72h === 1 ? '' : 's'} have been waiting over 3 days.`
                 : rsvpConflictStats.unresolvedOver24h > 0
@@ -3803,22 +3963,22 @@ Proceed with send?`)) return;
             {showConflictDetails && (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <div className="bg-white/80 border border-error/20 rounded-md px-2.5 py-2">
-                    <p className="text-[10px] uppercase text-error/70">Open now</p>
-                    <p className="text-sm font-semibold text-error">{rsvpConflictStats.openNow}</p>
+                  <div className="bg-white/80 border border-border-subtle rounded-md px-2.5 py-2">
+                    <p className="text-[10px] text-text-tertiary">Open now</p>
+                    <p className="text-sm font-semibold text-text-primary">{rsvpConflictStats.openNow}</p>
                   </div>
-                  <div className="bg-white/80 border border-error/20 rounded-md px-2.5 py-2">
-                    <p className="text-[10px] uppercase text-error/70">Opened (24h)</p>
-                    <p className="text-sm font-semibold text-error">{rsvpConflictStats.opened24h}</p>
+                  <div className="bg-white/80 border border-border-subtle rounded-md px-2.5 py-2">
+                    <p className="text-[10px] text-text-tertiary">Opened (24h)</p>
+                    <p className="text-sm font-semibold text-text-primary">{rsvpConflictStats.opened24h}</p>
                   </div>
-                  <div className="bg-white/80 border border-error/20 rounded-md px-2.5 py-2">
-                    <p className="text-[10px] uppercase text-error/70">Resolved (24h)</p>
-                    <p className="text-sm font-semibold text-error">{rsvpConflictStats.resolved24h}</p>
+                  <div className="bg-white/80 border border-border-subtle rounded-md px-2.5 py-2">
+                    <p className="text-[10px] text-text-tertiary">Resolved (24h)</p>
+                    <p className="text-sm font-semibold text-text-primary">{rsvpConflictStats.resolved24h}</p>
                   </div>
                 </div>
 
                 {rsvpConflictStats.topCodes.length > 0 && (
-                  <div className="text-[11px] text-error/90">
+                  <div className="text-[11px] text-text-secondary">
                     <span className="font-semibold">Top reasons:</span>{' '}
                     {rsvpConflictStats.topCodes.map((c) => `${c.code} (${c.count})`).join(' · ')}
                   </div>
@@ -3830,7 +3990,7 @@ Proceed with send?`)) return;
               {visibleRsvpConflicts.slice(0, 8).map((c) => {
                 const guestName = guests.find((g) => g.id === c.guest_id)?.name || 'Unknown guest';
                 return (
-                  <li key={c.id} className="text-xs text-error/90 flex items-start justify-between gap-3">
+                  <li key={c.id} className="text-xs text-text-secondary flex items-start justify-between gap-3">
                     <span>
                       • {guestName}: {c.message}
                     </span>
@@ -3853,7 +4013,7 @@ Proceed with send?`)) return;
           <div className="space-y-6">
 
             {!cleanGuestsView && recommendedAction && (
-              <div className="p-3.5 rounded-xl border border-primary/20 bg-primary/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="p-3.5 rounded-lg border border-primary/20 bg-primary/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-text-primary">Recommended next action: {recommendedAction.title}</p>
                   <p className="text-xs text-text-secondary mt-0.5">{recommendedAction.detail}</p>
@@ -3878,10 +4038,10 @@ Proceed with send?`)) return;
             )}
 
             {!cleanGuestsView && opsQueue.length > 0 && (
-              <div className="p-3.5 rounded-xl border border-border-subtle bg-white space-y-2">
+              <div className="p-3.5 rounded-lg border border-border-subtle bg-white space-y-2">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-text-primary">Priority RSVP queue</p>
-                  <span className="text-xs text-text-tertiary break-words">Top {opsQueue.length}</span>
+                  <p className="text-sm font-semibold text-text-primary">RSVP follow-up list</p>
+                  <span className="text-xs text-text-tertiary break-words">{opsQueue.length} to review</span>
                 </div>
                 <div className="space-y-1.5">
                   {opsQueue.map((item, idx) => (
@@ -3904,7 +4064,7 @@ Proceed with send?`)) return;
             </div>
 
             {fromQuickStart && nextStep === 'photos' && (
-              <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-text-primary">Next up: import guests, then add photos</p>
                   <p className="text-xs text-text-secondary mt-1">Import your guest list here. If you want to skip this for now, jump straight to photos and come back later.</p>
@@ -3927,7 +4087,7 @@ Proceed with send?`)) return;
                 <input
                   ref={csvFileInputRef}
                   type="file"
-                  accept=".csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                  accept=".csv,text/csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                   onChange={importCSV}
                   className="hidden"
                 />
@@ -3940,6 +4100,9 @@ Proceed with send?`)) return;
                   <Upload className="w-4 h-4 mr-2" />
                   {csvImporting ? 'Parsing…' : 'Import Guests'}
                 </Button>
+                <p className="basis-full text-[11px] text-text-tertiary">
+                  CSV or .xlsx, first sheet only, up to {GUEST_IMPORT_MAX_ROWS.toLocaleString()} rows and {Math.round(GUEST_IMPORT_MAX_FILE_BYTES / 1024 / 1024)}MB.
+                </p>
 
 
                 <Button variant="primary" size="md" onClick={() => { resetForm(); setShowAddModal(true); }} disabled={!canEditGuests}>
@@ -3953,7 +4116,7 @@ Proceed with send?`)) return;
                     <ChevronDown className="w-4 h-4 ml-1" />
                   </Button>
                   {showOpsMenu && (
-                    <div className="absolute right-0 z-20 mt-1 w-64 bg-white border border-border rounded-lg shadow-lg p-1 max-h-96 overflow-auto">
+                    <div className="absolute right-0 z-20 mt-1 w-64 bg-white border border-border rounded-lg p-1 max-h-96 overflow-auto">
                       <fieldset disabled={!canEditGuests} className="disabled:opacity-50">
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportCSV(); setShowOpsMenu(false); }}>Export all guests</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportFilteredCSV(); setShowOpsMenu(false); }}>Export filtered guests</button>
@@ -3963,22 +4126,25 @@ Proceed with send?`)) return;
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportPendingGuestsCSV(); setShowOpsMenu(false); }}>Export pending RSVP</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportMissingMealCSV(); setShowOpsMenu(false); }}>Export missing meal choices</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportAddressCollectionCSV(); setShowOpsMenu(false); }}>Export addresses (mailing)</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportHouseholdLabelsCSV(); setShowOpsMenu(false); }}>Export household labels</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportEventAttendanceCSV(); setShowOpsMenu(false); }}>Export event attendance</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportCheckedInCSV(); setShowOpsMenu(false); }}>Export checked-in guests</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { exportThankYouDueCSV(); setShowOpsMenu(false); }}>Export thank-you due</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { copyContactRequestLink(); setShowOpsMenu(false); }}>Copy address collection link</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { handleCopyNoContactChecklist(); setShowOpsMenu(false); }}>Copy no-contact checklist</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={reminderCandidates.length === 0} onClick={() => { copySmsRsvpLinksForFiltered(); setShowOpsMenu(false); }}>Copy SMS RSVP links</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { handleCopyNoContactChecklist(); setShowOpsMenu(false); }}>Copy missing-contact list</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={reminderCandidates.length === 0} onClick={() => { copySmsRsvpLinksForFiltered(); setShowOpsMenu(false); }}>Copy text RSVP links</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={reminderCandidates.length === 0} onClick={() => { handleCopyFilteredEmails(); setShowOpsMenu(false); }}>Copy filtered emails</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={bulkSending || reminderCandidates.length === 0} onClick={() => { handleSendBulkInvitations(); setShowOpsMenu(false); }} title={reminderCandidates.length === 0 ? 'No eligible recipients in this segment' : undefined}>{bulkSending ? 'Sending…' : `Remind filtered (${reminderCandidates.length})`}</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={bulkSending || dueReminderCandidatesGlobal.length === 0} onClick={() => { handleSendDueRemindersNow(); setShowOpsMenu(false); }} title={dueReminderCandidatesGlobal.length === 0 ? 'No guests due for reminders' : undefined}>{bulkSending ? 'Sending…' : `Send due reminders (${dueReminderCandidatesGlobal.length})`}</button>
-                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={async () => { const previous = autoRemindersEnabled; const next = !previous; try { setAutoRemindersEnabled(next); await persistReminderSettings({ auto_reminders_enabled: next }); toast(next ? 'Auto reminders enabled' : 'Auto reminders paused', 'success'); } catch { setAutoRemindersEnabled(previous); toast('Failed to save auto reminder setting', 'error'); } setShowOpsMenu(false); }}>{autoRemindersEnabled ? '✓ ' : ''}{autoRemindersEnabled ? 'Auto reminders: On' : 'Auto reminders: Off'}</button>
+                      <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={async () => { const previous = autoRemindersEnabled; const next = !previous; try { setAutoRemindersEnabled(next); await persistReminderSettings({ auto_reminders_enabled: next }); toast(next ? 'Auto reminders enabled' : 'Auto reminders paused', 'success'); } catch { setAutoRemindersEnabled(previous); toast('Couldn’t save auto reminder setting.', 'error'); } setShowOpsMenu(false); }}>{autoRemindersEnabled ? '✓ ' : ''}{autoRemindersEnabled ? 'Auto reminders: On' : 'Auto reminders: Off'}</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={async () => { await handleMarkAllDueThankYous(); setShowOpsMenu(false); }}>Mark all thank-you due as sent</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={async () => { await handleClearAllCheckIns(); setShowOpsMenu(false); }}>Clear all check-ins</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { generateChecklistTasks(); setShowOpsMenu(false); }}>Create checklist</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => {
                         const lines = followUpTasks.map((t) => `- [ ] ${t.text}`);
                         const text = lines.length ? lines.join('\n') : '- [ ] No follow-up tasks yet';
-                        navigator.clipboard.writeText(text).then(() => toast('Copied checklist markdown', 'success')).catch(() => window.prompt('Copy checklist:', text));
+                        void copyTextOrDownload(text, 'dayof-guest-checklist.md', 'text/markdown;charset=utf-8')
+                          .then((result) => toast(result === 'copied' ? 'Copied checklist markdown' : 'Clipboard was blocked, so the checklist downloaded.', 'success'));
                         setShowOpsMenu(false);
                       }}>Copy checklist</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded" onClick={() => { selectUnresolvedGuests(); setShowOpsMenu(false); }}>Select unresolved</button>
@@ -3993,20 +4159,24 @@ Proceed with send?`)) return;
                         setShowOpsMenu(false);
                       }}>Next unresolved</button>
                       <button className="w-full text-left px-3 py-2 text-sm hover:bg-surface-subtle rounded disabled:opacity-50" disabled={reminderCandidates.length === 0} onClick={() => {
-                        window.alert(`Campaign dry run (${segmentLabelMap[filterStatus] || filterStatus})\nRecipients: ${reminderCandidates.length}\n\n${dryRunRecipientPreview.join('\n')}${reminderCandidates.length > dryRunRecipientPreview.length ? `\n+${reminderCandidates.length - dryRunRecipientPreview.length} more` : ''}`);
+                        toast(`Dry run ready for ${reminderCandidates.length} ${reminderCandidates.length === 1 ? 'recipient' : 'recipients'}.`);
+                        void copyTextOrDownload(
+                          `Campaign dry run (${segmentLabelMap[filterStatus] || filterStatus})\nRecipients: ${reminderCandidates.length}\n\n${dryRunRecipientPreview.join('\n')}${reminderCandidates.length > dryRunRecipientPreview.length ? `\n+${reminderCandidates.length - dryRunRecipientPreview.length} more` : ''}`,
+                          'dayof-campaign-dry-run.txt',
+                        );
                         setShowOpsMenu(false);
                       }}>Dry run</button>
                       <div className="my-1 border-t border-border-subtle" />
                       <button
-                        className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded disabled:opacity-50"
+                        className="w-full text-left px-3 py-2 text-sm text-text-secondary hover:bg-surface-subtle hover:text-text-primary rounded disabled:opacity-50"
                         disabled={guests.length === 0 || isDemoMode}
                         onClick={() => {
                           setShowOpsMenu(false);
-                          setNuclearConfirmInput('');
-                          setShowNuclearDeleteModal(true);
+                          setDeleteAllConfirmInput('');
+                          setShowDeleteAllModal(true);
                         }}
                       >
-                        Nuclear delete all guests
+                        Delete all guests
                       </button>
                       </fieldset>
                     </div>
@@ -4020,7 +4190,7 @@ Proceed with send?`)) return;
             )}
 
             {!cleanGuestsView && (
-            <div className="p-3 rounded-xl border border-border-subtle bg-surface-subtle">
+            <div className="p-3 rounded-lg border border-border-subtle bg-surface-subtle">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-text-primary">Campaign insights & reminders</p>
@@ -4035,7 +4205,7 @@ Proceed with send?`)) return;
 
             {!cleanGuestsView && showCampaignModal && (
               <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[1px] flex items-end sm:items-center justify-center p-3">
-                <div className="w-full max-w-2xl max-h-[88vh] overflow-auto rounded-2xl border border-border bg-white shadow-2xl">
+                <div className="w-full max-w-2xl max-h-[88vh] overflow-auto rounded-lg border border-border bg-white">
                   <div className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-border px-4 py-3 flex items-center justify-between">
                     <div>
                       <p className="text-sm font-semibold text-text-primary">Campaign insights & reminders</p>
@@ -4045,9 +4215,9 @@ Proceed with send?`)) return;
                   </div>
 
                   <div className="p-4 space-y-3">
-                    <div className="text-xs text-text-secondary">Top blockers: <span className="font-medium text-text-primary">No response ({rsvpOps.noResponse})</span> · <span className="font-medium text-text-primary">Manual follow-up ({filteredGuests.filter((g) => fallbackByGuest.get(g.id)?.state === 'manual-follow-up').length})</span> · <span className="font-medium text-text-primary">Handled manually ({filteredGuests.filter((g) => fallbackByGuest.get(g.id)?.state === 'manual-handled').length})</span> · <span className="font-medium text-text-primary">Pending w/o email ({rsvpOps.pendingNoEmail})</span> · <span className="font-medium text-text-primary">No contact ({contactStats.withNoContact})</span></div>
+                    <div className="text-xs text-text-secondary">Worth checking: <span className="font-medium text-text-primary">No response ({rsvpOps.noResponse})</span> · <span className="font-medium text-text-primary">Personal follow-up ({filteredGuests.filter((g) => fallbackByGuest.get(g.id)?.state === 'manual-follow-up').length})</span> · <span className="font-medium text-text-primary">Handled personally ({filteredGuests.filter((g) => fallbackByGuest.get(g.id)?.state === 'manual-handled').length})</span> · <span className="font-medium text-text-primary">Pending without email ({rsvpOps.pendingNoEmail})</span> · <span className="font-medium text-text-primary">Missing contact info ({contactStats.withNoContact})</span></div>
                     {daysToWedding !== null && (
-                      <div className={`text-xs rounded-md px-2 py-1 inline-flex items-center gap-1 ${daysToWedding <= 30 ? 'bg-warning/10 text-warning border border-warning/30' : 'bg-primary/5 text-primary border border-primary/20'}`}>
+                      <div className={`text-xs rounded-md px-2 py-1 inline-flex items-center gap-1 ${daysToWedding <= 30 ? 'bg-surface-subtle text-text-secondary border border-border-subtle' : 'bg-primary/5 text-primary border border-primary/20'}`}>
                         Wedding in {daysToWedding} day{daysToWedding === 1 ? '' : 's'}
                       </div>
                     )}
@@ -4055,7 +4225,7 @@ Proceed with send?`)) return;
                       <p className="text-xs text-text-secondary">
                         Segment: <span className="font-semibold text-text-primary">{segmentLabelMap[filterStatus] || filterStatus}</span> ·
                         Eligible reminders: <span className="font-semibold text-text-primary">{reminderCandidates.length}</span> ·
-                        Campaign readiness: <span className="font-semibold text-text-primary">{campaignReadiness}%</span>
+                        Reminder detail: <span className="font-semibold text-text-primary">{campaignReadiness}%</span>
                       </p>
                       <label className="inline-flex items-center gap-2 text-xs text-text-secondary">
                         <input type="checkbox" checked={skipRecentlyInvited} onChange={(e) => setSkipRecentlyInvited(e.target.checked)} />
@@ -4076,7 +4246,7 @@ Proceed with send?`)) return;
                         <option value="ceremony-no">Ceremony: No ({rsvpOps.ceremonyNo})</option>
                         <option value="reception-no">Reception: No ({rsvpOps.receptionNo})</option>
                         <option value="pending-no-email">Pending, no email ({rsvpOps.pendingNoEmail})</option>
-                        <option value="manual-handled">Handled manually ({filteredGuests.filter((g) => fallbackByGuest.get(g.id)?.state === 'manual-handled').length})</option>
+                        <option value="manual-handled">Handled personally ({filteredGuests.filter((g) => fallbackByGuest.get(g.id)?.state === 'manual-handled').length})</option>
                       </select>
                     </div>
 
@@ -4104,14 +4274,14 @@ Proceed with send?`)) return;
                       </div>
                     )}
                     <div className="flex flex-wrap gap-2">
-                      <button onClick={() => { setFilterStatus('pending'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus pending</button>
-                      <button onClick={() => { setFilterStatus('missing-meal'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus missing meal</button>
-                      <button onClick={() => { setFilterStatus('plusone-missing'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus plus-one names</button>
-                      <button onClick={() => { setFilterStatus('pending-no-email'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus pending no-email</button>
-                      <button onClick={() => { setFilterStatus('manual-handled'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus manual-handled</button>
-                      <button onClick={() => { setFilterStatus('missing-meal'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus missing meal</button>
-                      <button onClick={() => { setFilterStatus('all'); setViewMode('list'); setSearchQuery(''); setSortByPriority(true); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus high-risk first</button>
-                      <button onClick={() => { setSearchQuery(''); setFilterStatus('no-contact'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Review no-contact ({contactStats.withNoContact})</button>
+                      <button onClick={() => { setFilterStatus('pending'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus pending</button>
+                      <button onClick={() => { setFilterStatus('missing-meal'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus missing meal</button>
+                      <button onClick={() => { setFilterStatus('plusone-missing'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus plus-one names</button>
+                      <button onClick={() => { setFilterStatus('pending-no-email'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus pending without email</button>
+                      <button onClick={() => { setFilterStatus('manual-handled'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus handled personally</button>
+                      <button onClick={() => { setFilterStatus('missing-meal'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus missing meal</button>
+                      <button onClick={() => { setFilterStatus('all'); setViewMode('list'); setSearchQuery(''); setSortByPriority(true); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Focus high-risk first</button>
+                      <button onClick={() => { setSearchQuery(''); setFilterStatus('no-contact'); setViewMode('list'); setShowCampaignModal(false); }} className="text-[11px] px-2 py-1 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Review missing contact ({contactStats.withNoContact})</button>
                     </div>
                   </div>
                 </div>
@@ -4135,35 +4305,35 @@ Proceed with send?`)) return;
             </div>
 
             {filteredGuests.some((guest) => (exceptionStateByGuest.get(guest.id) || []).length > 0) && filterStatus === 'all' && (
-              <div className="p-2.5 rounded-lg border border-warning/30 bg-warning/10 text-warning text-xs space-y-2">
-                <p>Some guests have RSVP exception states that need a manual decision.</p>
+              <div className="p-2.5 rounded-lg border border-border-subtle bg-surface-subtle/60 text-text-secondary text-xs space-y-2">
+                <p>Some guests have RSVP details that are worth reviewing personally.</p>
                 <div className="flex flex-wrap gap-2">
-                  <button onClick={() => handleCopyExceptionChecklist()} className="px-2 py-1 rounded-md border border-warning/30 bg-white text-warning hover:bg-warning/5">Copy exception checklist</button>
+                  <button onClick={() => handleCopyExceptionChecklist()} className="px-2 py-1 rounded-md border border-border-subtle bg-white text-text-secondary hover:bg-surface-subtle">Copy exception checklist</button>
                 </div>
               </div>
             )}
 
             {filterStatus === 'missing-meal' && (
-              <div className="p-2.5 rounded-lg border border-warning/30 bg-warning/10 text-warning text-xs space-y-2">
+              <div className="p-2.5 rounded-lg border border-border-subtle bg-surface-subtle/60 text-text-secondary text-xs space-y-2">
                 <p>These guests are attending but still need a meal choice.</p>
                 <div className="flex flex-wrap gap-2">
-                  <button onClick={() => handleCopyMissingMealChecklist()} className="px-2 py-1 rounded-md border border-warning/30 bg-white text-warning hover:bg-warning/5">Copy meal follow-up checklist</button>
-                  <button onClick={() => setShowCampaignModal(true)} className="px-2 py-1 rounded-md border border-warning/30 bg-white text-warning hover:bg-warning/5">Send follow-up</button>
+                  <button onClick={() => handleCopyMissingMealChecklist()} className="px-2 py-1 rounded-md border border-border-subtle bg-white text-text-secondary hover:bg-surface-subtle">Copy meal follow-up checklist</button>
+                  <button onClick={() => setShowCampaignModal(true)} className="px-2 py-1 rounded-md border border-border-subtle bg-white text-text-secondary hover:bg-surface-subtle">Send follow-up</button>
                 </div>
               </div>
             )}
 
             {filterStatus === 'no-contact' && (
-              <div className="p-2.5 rounded-lg border border-warning/30 bg-warning/10 text-warning text-xs space-y-2">
+              <div className="p-2.5 rounded-lg border border-border-subtle bg-surface-subtle/60 text-text-secondary text-xs space-y-2">
                 <p>These guests have no email or phone. Add contact info before reminder campaigns.</p>
                 <div className="flex flex-wrap gap-2">
-                  <button onClick={() => handleCopyNoContactChecklist()} className="px-2 py-1 rounded-md border border-warning/30 bg-white text-warning hover:bg-warning/5">Copy follow-up checklist</button>
-                  <button onClick={() => copyContactRequestLink()} className="px-2 py-1 rounded-md border border-warning/30 bg-white text-warning hover:bg-warning/5">Copy guest update link</button>
+                  <button onClick={() => handleCopyNoContactChecklist()} className="px-2 py-1 rounded-md border border-border-subtle bg-white text-text-secondary hover:bg-surface-subtle">Copy follow-up checklist</button>
+                  <button onClick={() => copyContactRequestLink()} className="px-2 py-1 rounded-md border border-border-subtle bg-white text-text-secondary hover:bg-surface-subtle">Copy guest update link</button>
                 </div>
               </div>
             )}
 
-            <div className="sticky top-2 z-10 flex gap-2 flex-wrap items-start justify-between bg-white/95 backdrop-blur p-2.5 rounded-xl border border-border/50">
+            <div className="sticky top-2 z-10 flex gap-2 flex-wrap items-start justify-between bg-white/95 backdrop-blur p-2.5 rounded-lg border border-border/50">
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   {([
@@ -4176,9 +4346,9 @@ Proceed with send?`)) return;
                       key={value}
                       type="button"
                       onClick={() => { setFilterStatus(value); setExtraFilters([]); }}
-                      className={`text-xs px-3.5 py-1.5 rounded-full border transition-colors whitespace-nowrap ${
+                      className={`text-xs px-3.5 py-1.5 rounded-lg border transition-colors whitespace-nowrap ${
                         filterStatus === value
-                          ? 'bg-primary text-white border-primary shadow-sm'
+                          ? 'bg-primary text-white border-primary'
                           : 'bg-white text-text-secondary border-border/70 hover:border-primary/35 hover:text-primary'
                       }`}
                     >
@@ -4213,7 +4383,7 @@ Proceed with send?`)) return;
 
 
             {checkInMode && (
-              <div className="mb-3 flex items-center justify-between px-4 py-2.5 bg-success/10 border border-success/25 rounded-xl">
+              <div className="mb-3 flex items-center justify-between px-4 py-2.5 bg-success/10 border border-success/25 rounded-lg">
                 <span className="text-sm font-medium text-success">Check-in mode active · {guests.filter((g) => !!(g as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at).length} checked in</span>
                 <button
                   onClick={() => setFilterStatus('checked-in')}
@@ -4225,7 +4395,7 @@ Proceed with send?`)) return;
             )}
 
             {checkInMode && lastCheckIn && (
-              <div className="mb-3 flex items-center justify-between px-4 py-2 bg-surface-subtle border border-border rounded-xl">
+              <div className="mb-3 flex items-center justify-between px-4 py-2 bg-surface-subtle border border-border rounded-lg">
                 <span className="text-xs text-text-secondary">Last check-in: <span className="font-medium text-text-primary">{lastCheckIn.guestName}</span></span>
                 <button
                   onClick={handleUndoLastCheckIn}
@@ -4237,7 +4407,7 @@ Proceed with send?`)) return;
             )}
 
             {selectedGuestIds.size > 0 && viewMode === 'list' && (
-              <div className="mb-3 flex items-center justify-between px-4 py-2 bg-primary/8 border border-primary/20 rounded-xl">
+              <div className="mb-3 flex items-center justify-between px-4 py-2 bg-primary/8 border border-primary/20 rounded-lg">
                 <span className="text-sm font-medium text-primary">{selectedGuestIds.size} selected · {filteredGuests.filter((g) => selectedGuestIds.has(g.id)).length} visible</span>
                 <div className="flex items-center gap-2">
                   <button onClick={keepOnlyVisibleSelection} className="text-xs px-2 py-1 rounded-md border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Keep visible only</button>
@@ -4247,7 +4417,7 @@ Proceed with send?`)) return;
             )}
 
             {filteredGuests.length === 0 && viewMode === 'list' ? (
-              <div className="p-6 border border-dashed border-border rounded-xl text-center bg-surface-subtle">
+              <div className="p-6 border border-dashed border-border rounded-lg text-center bg-surface-subtle">
                 <p className="text-sm text-text-secondary">No guests in this segment right now.</p>
                 <button
                   onClick={() => { setFilterStatus('all'); setExtraFilters([]); setSearchQuery(''); }}
@@ -4259,7 +4429,7 @@ Proceed with send?`)) return;
             ) : viewMode === 'households' ? (
               <div className="space-y-6">
                 {selectedGuestIds.size >= 2 && (
-                  <div className="flex items-center justify-between px-4 py-3 bg-primary/8 border border-primary/20 rounded-xl">
+                  <div className="flex items-center justify-between px-4 py-3 bg-primary/8 border border-primary/20 rounded-lg">
                     <span className="text-sm font-medium text-primary">{selectedGuestIds.size} guests selected</span>
                     <Button
                       variant="primary"
@@ -4283,7 +4453,7 @@ Proceed with send?`)) return;
 
                 {households.grouped.map(([householdId, members]) => {
                   return (
-                    <div key={householdId} className="border border-border/30 rounded-2xl overflow-hidden bg-white shadow-[0_6px_20px_rgba(15,23,42,0.06)] hover:shadow-[0_10px_26px_rgba(15,23,42,0.09)] transition-shadow">
+                    <div key={householdId} className="overflow-hidden rounded-lg border border-border-subtle bg-white transition-colors hover:border-primary/25">
                       <div className="divide-y divide-border-subtle/60 bg-white">
                         {members.map(guest => {
                             const name = guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name;
@@ -4305,7 +4475,7 @@ Proceed with send?`)) return;
                 })}
 
                 {households.ungrouped.length > 0 && (
-                  <div className="border border-border rounded-xl overflow-hidden">
+                  <div className="border border-border rounded-lg overflow-hidden">
                     <div className="flex items-center justify-between px-5 py-3 bg-surface-subtle border-b border-border">
                       <div className="flex items-center gap-2">
                         <Users className="w-4 h-4 text-text-tertiary" />
@@ -4324,7 +4494,11 @@ Proceed with send?`)) return;
                             className={`flex items-center gap-3 px-5 py-3 transition-colors cursor-pointer ${isSelected ? 'bg-primary/5' : 'hover:bg-surface-subtle'}`}
                             onClick={() => setSelectedGuestIds(prev => {
                               const next = new Set(prev);
-                              isSelected ? next.delete(guest.id) : next.add(guest.id);
+                              if (isSelected) {
+                                next.delete(guest.id);
+                              } else {
+                                next.add(guest.id);
+                              }
                               return next;
                             })}
                           >
@@ -4353,12 +4527,11 @@ Proceed with send?`)) return;
                   <table className="w-full text-sm">
                     <thead className="bg-surface-subtle border-b border-border">
                       <tr>
-                        <th className="text-left px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-text-tertiary">Guest</th>
-                        <th className="text-left px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-text-tertiary">Status</th>
-                        <th className="text-left px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-text-tertiary hidden md:table-cell">Plus One</th>
-                        <th className="text-left px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-text-tertiary hidden lg:table-cell">Meal Choice</th>
-                        <th className="text-left px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-text-tertiary hidden xl:table-cell">Invite Code</th>
-                        <th className="text-right px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-text-tertiary">Actions</th>
+                        <th className="text-left px-4 py-2 text-[11px] font-semibold text-text-tertiary">Guest</th>
+                        <th className="text-left px-4 py-2 text-[11px] font-semibold text-text-tertiary">Status</th>
+                        <th className="text-left px-4 py-2 text-[11px] font-semibold text-text-tertiary hidden md:table-cell">Plus One</th>
+                        <th className="text-left px-4 py-2 text-[11px] font-semibold text-text-tertiary hidden lg:table-cell">Meal Choice</th>
+                        <th className="text-right px-4 py-2 text-[11px] font-semibold text-text-tertiary">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border-subtle">
@@ -4398,7 +4571,7 @@ Proceed with send?`)) return;
                                   manualHandled: typeof guest.notes === 'string' && guest.notes.toLowerCase().includes('[manual rsvp]'),
                                 });
                                 return (
-                                  <span className="text-[10px] px-2 py-0.5 rounded-full border bg-surface-subtle text-text-tertiary border-border">
+                                  <span className="text-[10px] px-2 py-0.5 rounded-lg border bg-surface-subtle text-text-tertiary border-border">
                                     {lifecycle.label}
                                   </span>
                                 );
@@ -4407,7 +4580,7 @@ Proceed with send?`)) return;
                                 const issues = issueCountForGuest(guest);
                                 if (issues <= 0) return null;
                                 return (
-                                  <span className={`text-[10px] px-2 py-0.5 rounded-full border ${issues >= 3 ? 'bg-warning/10 text-warning border-warning/30' : 'bg-primary/5 text-primary border-primary/20'}`}>
+                                  <span className={`text-[10px] px-2 py-0.5 rounded-lg border ${issues >= 3 ? 'bg-surface-subtle text-text-secondary border-border-subtle' : 'bg-primary/5 text-primary border-primary/20'}`}>
                                     {issues >= 3 ? 'High risk' : 'Needs review'} · {issues}
                                   </span>
                                 );
@@ -4418,12 +4591,12 @@ Proceed with send?`)) return;
                                 return (
                                   <div className="flex flex-wrap gap-1 pt-1">
                                     {typeof events.ceremony === 'boolean' && (
-                                      <span className={`text-[10px] px-2 py-0.5 rounded-full border ${events.ceremony ? 'bg-success-light text-success border-success/20' : 'bg-surface-subtle text-text-tertiary border-border'}`}>
+                                      <span className={`text-[10px] px-2 py-0.5 rounded-lg border ${events.ceremony ? 'bg-success-light text-success border-success/20' : 'bg-surface-subtle text-text-tertiary border-border'}`}>
                                         Ceremony: {events.ceremony ? 'Yes' : 'No'}
                                       </span>
                                     )}
                                     {typeof events.reception === 'boolean' && (
-                                      <span className={`text-[10px] px-2 py-0.5 rounded-full border ${events.reception ? 'bg-success-light text-success border-success/20' : 'bg-surface-subtle text-text-tertiary border-border'}`}>
+                                      <span className={`text-[10px] px-2 py-0.5 rounded-lg border ${events.reception ? 'bg-success-light text-success border-success/20' : 'bg-surface-subtle text-text-tertiary border-border'}`}>
                                         Reception: {events.reception ? 'Yes' : 'No'}
                                       </span>
                                     )}
@@ -4446,11 +4619,6 @@ Proceed with send?`)) return;
                           </td>
                           <td className="px-4 py-2.5 text-text-secondary hidden lg:table-cell">
                             {guest.rsvp?.meal_choice || '—'}
-                          </td>
-                          <td className="px-4 py-2.5 hidden xl:table-cell">
-                            <code className="text-xs bg-surface-subtle px-2 py-1 rounded font-mono">
-                              {guest.invite_token?.slice(0, 12) || '—'}
-                            </code>
                           </td>
                           <td className="px-4 py-2.5 text-right" onClick={e => e.stopPropagation()}>
                             <div className="flex justify-end gap-1.5">
@@ -4477,6 +4645,18 @@ Proceed with send?`)) return;
                                     <CalendarDays className="w-4 h-4 mr-1" />
                                     Events
                                   </Button>
+                                  {guest.invite_token && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="px-2 py-1 text-xs"
+                                      onClick={() => window.open(`/rsvp?token=${encodeURIComponent(guest.invite_token ?? '')}&previewGuest=${encodeURIComponent(guest.id)}`, '_blank', 'noopener,noreferrer')}
+                                      title="Preview the RSVP flow as this guest"
+                                    >
+                                      <ExternalLink className="w-4 h-4 mr-1" />
+                                      Preview
+                                    </Button>
+                                  )}
                                   {guest.email && (
                                     <Button
                                       variant="ghost"
@@ -4522,7 +4702,7 @@ Proceed with send?`)) return;
                                     size="sm"
                                     onClick={() => handleDeleteGuest(guest.id)}
                                     disabled={deletingGuestId === guest.id || isGuestsReadOnly}
-                                    className={`px-2 py-1 text-xs ${confirmDeleteId === guest.id ? 'text-error hover:text-error' : ''}`}
+                                    className={`px-2 py-1 text-xs ${confirmDeleteId === guest.id ? 'text-text-primary' : ''}`}
                                   >
                                     {deletingGuestId === guest.id
                                       ? 'Removing…'
@@ -4561,7 +4741,7 @@ Proceed with send?`)) return;
         <>
           <div className="fixed inset-0 z-40 bg-black/30" onClick={() => !assistedRsvpSaving && setAssistedRsvpGuest(null)} />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="w-full max-w-lg rounded-2xl border border-border bg-white shadow-2xl">
+            <div className="w-full max-w-lg rounded-lg border border-border bg-white">
               <div className="flex items-center justify-between border-b border-border px-5 py-4">
                 <div>
                   <h3 className="text-lg font-semibold text-text-primary">Record RSVP for guest</h3>
@@ -4572,9 +4752,9 @@ Proceed with send?`)) return;
                 </button>
               </div>
               <div className="p-5 space-y-4">
-                <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 p-4">
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
                   <p className="text-sm font-medium text-text-primary">{assistedRsvpGuest.first_name && assistedRsvpGuest.last_name ? `${assistedRsvpGuest.first_name} ${assistedRsvpGuest.last_name}` : assistedRsvpGuest.name}</p>
-                  <p className="mt-1 text-xs text-text-secondary">This keeps manual handling explicit instead of pretending the guest self-submitted.</p>
+                  <p className="mt-1 text-xs text-text-secondary">This keeps assisted responses clear without pretending the guest submitted it themselves.</p>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
@@ -4594,7 +4774,7 @@ Proceed with send?`)) return;
               <div className="flex justify-end gap-2 border-t border-border px-5 py-4">
                 <Button variant="outline" size="sm" onClick={() => setAssistedRsvpGuest(null)} disabled={assistedRsvpSaving}>Cancel</Button>
                 <Button variant="primary" size="md" onClick={handleSaveAssistedRsvp} disabled={assistedRsvpSaving}>
-                  {assistedRsvpSaving ? 'Saving…' : 'Save manual RSVP'}
+                  {assistedRsvpSaving ? 'Saving…' : 'Save assisted RSVP'}
                 </Button>
               </div>
             </div>
@@ -4622,7 +4802,7 @@ Proceed with send?`)) return;
             className="fixed inset-0 bg-black/30 z-40"
             onClick={() => { setItineraryDrawerGuest(null); setGuestAuditEntries([]); }}
           />
-          <div className="fixed right-0 top-0 h-full w-full max-w-sm bg-surface shadow-2xl z-50 flex flex-col border-l border-border">
+          <div className="fixed right-0 top-0 h-full w-full max-w-sm bg-surface z-50 flex flex-col border-l border-border">
             <div className="flex items-center justify-between px-5 py-4 border-b border-border">
               <div>
                 <h2 className="text-base font-semibold text-text-primary">
@@ -4642,12 +4822,13 @@ Proceed with send?`)) return;
                   {itineraryDrawerGuest.invite_token && (
                     <button
                       onClick={async () => {
-                        const inviteLink = `${window.location.origin}/rsvp/${itineraryDrawerGuest.invite_token}`;
-                        try {
-                          await navigator.clipboard.writeText(inviteLink);
+                        const inviteToken = itineraryDrawerGuest.invite_token ?? '';
+                        const inviteLink = `${window.location.origin}/rsvp?token=${encodeURIComponent(inviteToken)}`;
+                        const result = await copyTextOrDownload(inviteLink, 'dayof-rsvp-link.txt');
+                        if (result === 'copied') {
                           toast('Copied RSVP link', 'success');
-                        } catch {
-                          window.prompt('Copy RSVP link:', inviteLink);
+                        } else {
+                          toast('Clipboard was blocked, so the RSVP link downloaded.', 'success');
                         }
                       }}
                       className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg border border-border hover:border-primary hover:text-primary transition-colors"
@@ -4676,11 +4857,114 @@ Proceed with send?`)) return;
                 const householdMembers = itineraryDrawerGuest.household_id
                   ? guests.filter((guest) => guest.household_id === itineraryDrawerGuest.household_id)
                   : [];
+                const visibilityPreview = buildGuestVisibilityPreview({
+                  guest: {
+                    id: itineraryDrawerGuest.id,
+                    firstName: itineraryDrawerGuest.first_name,
+                    lastName: itineraryDrawerGuest.last_name,
+                    name: itineraryDrawerGuest.name,
+                    inviteToken: itineraryDrawerGuest.invite_token,
+                    invitedToCeremony: itineraryDrawerGuest.invited_to_ceremony,
+                    invitedToReception: itineraryDrawerGuest.invited_to_reception,
+                    plusOneAllowed: itineraryDrawerGuest.plus_one_allowed,
+                    householdId: itineraryDrawerGuest.household_id,
+                  },
+                  events: itineraryEvents.map((event) => ({
+                    id: event.id,
+                    eventName: event.event_name,
+                    eventDate: event.event_date,
+                    startTime: event.start_time,
+                    locationName: event.location_name,
+                  })),
+                  invitedEventIds: guestEventIds,
+                  householdMembers: householdMembers.map((member) => ({
+                    id: member.id,
+                    firstName: member.first_name,
+                    lastName: member.last_name,
+                    name: member.name,
+                    rsvpStatus: member.rsvp_status,
+                  })),
+                  publicSiteSlug: resolvePublicSiteSlugFromRow({
+                    site_slug: weddingSiteInfo?.site_slug ?? null,
+                    site_url: weddingSiteInfo?.site_url ?? null,
+                  }),
+                });
 
                 return (
                   <>
-                    <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-xl space-y-2">
-                      <p className="text-xs uppercase updates-wide text-text-tertiary">RSVP details</p>
+                    <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-lg space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-xs text-text-tertiary">Visibility preview</p>
+                          <p className="text-sm font-medium text-text-primary">{visibilityPreview.bannerLabel}</p>
+                          <p className="text-sm text-text-secondary">{visibilityPreview.accessSummary}</p>
+                        </div>
+                        <span className="inline-flex items-center gap-1 rounded-lg border border-primary/20 bg-primary/5 px-2 py-1 text-[10px] font-medium text-primary">
+                          <Eye className="w-3 h-3" />
+                          Guest view
+                        </span>
+                      </div>
+                      <p className="text-sm text-text-secondary">{visibilityPreview.accessDetail}</p>
+                      <p className="text-xs text-text-tertiary">{visibilityPreview.householdSummary}</p>
+                      {visibilityPreview.visibleEvents.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {visibilityPreview.visibleEvents.slice(0, 4).map((event) => (
+                            <span key={event.id} className="rounded-lg border border-primary/20 bg-white px-2 py-1 text-[11px] text-primary">
+                              {event.eventName}
+                            </span>
+                          ))}
+                          {visibilityPreview.visibleEvents.length > 4 && (
+                            <span className="rounded-lg border border-border bg-white px-2 py-1 text-[11px] text-text-tertiary">
+                              +{visibilityPreview.visibleEvents.length - 4} more
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      {visibilityPreview.hiddenEvents.length > 0 && (
+                        <p className="text-xs text-text-tertiary">
+                          Hidden from this guest: {visibilityPreview.hiddenEvents.slice(0, 3).map((event) => event.eventName).join(', ')}
+                          {visibilityPreview.hiddenEvents.length > 3 ? `, and ${visibilityPreview.hiddenEvents.length - 3} more` : ''}
+                        </p>
+                      )}
+                      {visibilityPreview.links.length > 0 && (
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          {visibilityPreview.links.map((link) => (
+                            <button
+                              key={`${link.kind}-${link.href}`}
+                              onClick={() => window.open(link.href, '_blank', 'noopener,noreferrer')}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg border border-border bg-white hover:border-primary hover:text-primary transition-colors"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                              {link.label}
+                            </button>
+                          ))}
+                          {visibilityPreview.links.find((link) => link.kind === 'rsvp') && (
+                            <button
+                              onClick={async () => {
+                                const rsvpLink = visibilityPreview.links.find((link) => link.kind === 'rsvp');
+                                if (!rsvpLink) return;
+                                const result = await copyTextOrDownload(`${window.location.origin}${rsvpLink.href}`, 'dayof-guest-preview-link.txt');
+                                toast(result === 'copied' ? 'Copied guest preview link' : 'Clipboard was blocked, so the preview link downloaded.', 'success');
+                              }}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-lg border border-border bg-white hover:border-primary hover:text-primary transition-colors"
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                              Copy preview link
+                            </button>
+                          )}
+                        </div>
+                      )}
+                      {visibilityPreview.warnings.length > 0 && (
+                        <div className="space-y-1">
+                          {visibilityPreview.warnings.map((warning) => (
+                            <p key={warning} className="text-xs text-text-tertiary">• {warning}</p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-lg space-y-2">
+                      <p className="text-xs text-text-tertiary">RSVP details</p>
                       <div className="text-sm text-text-primary">
                         <span className="font-medium">Status:</span>{' '}
                         <span className="capitalize">{status}</span>
@@ -4695,6 +4979,16 @@ Proceed with send?`)) return;
                           <span className="font-medium">Plus-one guest:</span> {plusOne}
                         </div>
                       )}
+                      {Number(itineraryDrawerGuest.rsvp?.children_count ?? 0) > 0 && (
+                        <div className="text-sm text-text-primary">
+                          <span className="font-medium">Children:</span> {Number(itineraryDrawerGuest.rsvp?.children_count ?? 0)}
+                        </div>
+                      )}
+                      {itineraryDrawerGuest.rsvp?.notes && (
+                        <div className="text-sm text-text-primary">
+                          <span className="font-medium">RSVP notes:</span> {itineraryDrawerGuest.rsvp.notes}
+                        </div>
+                      )}
                       {dietaryNote && (
                         <div className="text-sm text-text-primary">
                           <span className="font-medium">Dietary note:</span> {dietaryNote}
@@ -4702,7 +4996,7 @@ Proceed with send?`)) return;
                       )}
                       {entries.length > 0 && (
                         <div className="pt-1 space-y-1.5">
-                          <p className="text-xs uppercase updates-wide text-text-tertiary">Custom answers</p>
+                          <p className="text-xs text-text-tertiary">Custom answers</p>
                           {entries.map((entry) => (
                             <div key={entry.key} className="text-sm text-text-primary flex items-start justify-between gap-3">
                               <span className="text-text-secondary truncate">{entry.key}</span>
@@ -4713,24 +5007,24 @@ Proceed with send?`)) return;
                       )}
                     </div>
 
-                    <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-xl space-y-2">
-                      <p className="text-xs uppercase updates-wide text-text-tertiary">Per-event RSVP structure</p>
+                    <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-lg space-y-2">
+                      <p className="text-xs text-text-tertiary">Per-event RSVP structure</p>
                       {(() => { const eventState = getPerEventRsvpState({ invitedToCeremony: itineraryDrawerGuest.invited_to_ceremony, invitedToReception: itineraryDrawerGuest.invited_to_reception, invitedEventIds: itineraryDrawerGuest.invited_event_ids as string[] | null | undefined }); return (<>
                         <p className="text-sm text-text-primary">{eventState.summary}</p>
                         <p className="text-sm text-text-secondary">{eventState.detail}</p>
                       </>); })()}
                     </div>
 
-                    <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-xl space-y-2">
-                      <p className="text-xs uppercase updates-wide text-text-tertiary">Plus-one truth</p>
+                    <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-lg space-y-2">
+                      <p className="text-xs text-text-tertiary">Plus-one truth</p>
                       {(() => { const plusOneState = getPlusOneState({ plusOneAllowed: itineraryDrawerGuest.plus_one_allowed, plusOneName: itineraryDrawerGuest.rsvp?.plus_one_name, attending: itineraryDrawerGuest.rsvp?.attending }); return (<>
                         <p className="text-sm text-text-primary">{plusOneState.label}</p>
                         <p className="text-sm text-text-secondary">{plusOneState.detail}</p>
                       </>); })()}
                     </div>
 
-                    <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-xl space-y-2">
-                      <p className="text-xs uppercase updates-wide text-text-tertiary">RSVP exceptions</p>
+                    <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-lg space-y-2">
+                      <p className="text-xs text-text-tertiary">RSVP exceptions</p>
                       {(() => {
                         const states = getRsvpExceptionStates({
                           householdStatuses: householdMembers.map((member) => member.rsvp_status),
@@ -4752,12 +5046,12 @@ Proceed with send?`)) return;
                       })()}
                     </div>
 
-                    <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-xl space-y-2">
-                      <p className="text-xs uppercase updates-wide text-text-tertiary">Household context</p>
+                    <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-lg space-y-2">
+                      <p className="text-xs text-text-tertiary">Household context</p>
                       {householdMembers.length > 1 ? (
                         <>
                           <p className="text-sm text-text-secondary">This guest is grouped with {householdMembers.length - 1} other household member{householdMembers.length === 2 ? '' : 's'}.</p>
-                          <p className={`text-xs ${new Set(householdMembers.map((member) => member.rsvp_status)).size > 1 ? 'text-amber-700' : 'text-text-tertiary'}`}>{new Set(householdMembers.map((member) => member.rsvp_status)).size > 1 ? 'Household responses are mixed right now.' : 'Household responses are aligned right now.'}</p>
+                          <p className={`text-xs ${new Set(householdMembers.map((member) => member.rsvp_status)).size > 1 ? 'text-primary' : 'text-text-tertiary'}`}>{new Set(householdMembers.map((member) => member.rsvp_status)).size > 1 ? 'Household responses are mixed right now.' : 'Household responses are aligned right now.'}</p>
                           <div className="space-y-1">
                             {householdMembers.map((member) => (
                               <p key={member.id} className="text-sm text-text-primary">• {member.first_name && member.last_name ? `${member.first_name} ${member.last_name}` : member.name}</p>
@@ -4772,9 +5066,9 @@ Proceed with send?`)) return;
                 );
               })()}
 
-              <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-xl">
+              <div className="mb-4 p-4 bg-surface-subtle border border-border rounded-lg">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs uppercase updates-wide text-text-tertiary">Recent guest updates</p>
+                  <p className="text-xs text-text-tertiary">Recent guest updates</p>
                   <span className="text-[11px] text-text-tertiary">Last {guestAuditEntries.length} updates</span>
                 </div>
                 {guestAuditEntries.length === 0 ? (
@@ -4828,13 +5122,13 @@ Proceed with send?`)) return;
                         key={event.id}
                         onClick={() => handleToggleEventInvite(event.id, invited)}
                         disabled={isToggling}
-                        className={`w-full flex items-center gap-3 p-3.5 rounded-xl border text-left transition-all ${
+                        className={`w-full flex items-center gap-3 p-3.5 rounded-lg border text-left transition-all ${
                           invited
                             ? 'border-primary/30 bg-primary/5'
                             : 'border-border hover:border-border hover:bg-surface-subtle'
                         } ${isToggling ? 'opacity-50' : ''}`}
                       >
-                        <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
+                        <div className={`w-5 h-5 rounded-sm border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
                           invited ? 'border-primary bg-primary' : 'border-border'
                         }`}>
                           {isToggling
@@ -4877,40 +5171,40 @@ Proceed with send?`)) return;
         </>
       )}
 
-      {showNuclearDeleteModal && (
+      {showDeleteAllModal && (
         <>
-          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => !nuclearDeleting && setShowNuclearDeleteModal(false)} />
+          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => !deleteAllBusy && setShowDeleteAllModal(false)} />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="bg-surface rounded-lg border border-border-subtle w-full max-w-md">
               <div className="p-6 border-b border-border-subtle">
-                <h2 className="text-lg font-semibold text-text-primary">Nuclear delete all guests</h2>
+                <h2 className="text-lg font-semibold text-text-primary">Delete all guests</h2>
                 <p className="text-sm text-text-secondary mt-1">This permanently deletes every guest in this site.</p>
               </div>
               <div className="p-6 space-y-3">
-                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2 text-sm text-text-secondary">
                   Type <span className="font-semibold">{guests.length}</span> to confirm deletion.
                 </div>
                 <input
                   type="text"
-                  value={nuclearConfirmInput}
-                  onChange={(e) => setNuclearConfirmInput(e.target.value)}
+                  value={deleteAllConfirmInput}
+                  onChange={(e) => setDeleteAllConfirmInput(e.target.value)}
                   placeholder={`Type ${guests.length}`}
                   className="w-full rounded-md border border-border px-3 py-2 text-sm"
-                  disabled={nuclearDeleting}
+                  disabled={deleteAllBusy}
                 />
               </div>
               <div className="p-6 pt-0 flex gap-2">
-                <Button variant="outline" fullWidth disabled={nuclearDeleting} onClick={() => setShowNuclearDeleteModal(false)}>
+                <Button variant="outline" fullWidth disabled={deleteAllBusy} onClick={() => setShowDeleteAllModal(false)}>
                   Cancel
                 </Button>
                 <Button
                   variant="primary"
                   fullWidth
-                  className="!bg-red-600 hover:!bg-red-700"
-                  disabled={nuclearDeleting || nuclearConfirmInput.trim() !== String(guests.length)}
-                  onClick={handleNuclearDeleteAllGuests}
+                  className="!bg-text-primary hover:!bg-text-secondary"
+                  disabled={deleteAllBusy || deleteAllConfirmInput.trim() !== String(guests.length)}
+                  onClick={handleDeleteAllGuests}
                 >
-                  {nuclearDeleting ? 'Deleting…' : 'Delete all guests'}
+                  {deleteAllBusy ? 'Deleting…' : 'Delete all guests'}
                 </Button>
               </div>
             </div>
@@ -4922,11 +5216,11 @@ Proceed with send?`)) return;
         <>
           <div className="fixed inset-0 bg-black/50 z-40" onClick={() => { if (!csvImporting) setCsvShowMapper(false); }} />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+            <div className="bg-surface rounded-lg border border-border-subtle w-full max-w-2xl max-h-[80vh] flex flex-col">
               <div className="flex items-center justify-between p-6 border-b border-border-subtle">
                 <div>
-                  <h2 className="text-lg font-semibold text-text-primary">Map Columns</h2>
-                  <p className="text-sm text-text-secondary mt-0.5">Map your file columns before preview/import{csvSelectedFilename ? ` · ${csvSelectedFilename}` : ''}</p>
+                  <h2 className="text-lg font-semibold text-text-primary">Match columns</h2>
+                  <p className="text-sm text-text-secondary mt-0.5">Confirm how this file should become your guest list{csvSelectedFilename ? ` · ${csvSelectedFilename}` : ''}</p>
                 </div>
                 <button onClick={() => setCsvShowMapper(false)} className="p-2 hover:bg-surface-subtle rounded-lg transition-colors">
                   <X className="w-5 h-5 text-text-secondary" />
@@ -4934,21 +5228,26 @@ Proceed with send?`)) return;
               </div>
               <div className="overflow-y-auto flex-1 p-6 space-y-3">
                 {!csvNameMappingValid && (
-                  <div className="rounded-lg border border-warning/30 bg-warning-light px-3 py-2 text-xs text-warning">
-                    Map both First Name and Last Name before continuing.
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2 text-xs text-text-secondary">
+                    Map First Name + Last Name, or use Full Name instead.
                   </div>
                 )}
                 {([
                   ['first_name', 'First Name (recommended)'],
                   ['last_name', 'Last Name (recommended)'],
-                  ['full_name', 'Full Name (optional fallback)'],
+                  ['full_name', 'Full Name (optional)'],
                   ['email', 'Email'],
                   ['phone', 'Phone'],
                   ['plus_one', 'Plus One Allowed'],
+                  ['plus_one_name', 'Plus One Name'],
+                  ['plus_one_count', 'Plus One Count'],
+                  ['children_allowed', 'Children Allowed'],
+                  ['children_count', 'Children Count'],
+                  ['max_additional_guests', 'Max Additional Guests'],
                   ['status', 'RSVP Status'],
                   ['meal_choice', 'Meal Choice'],
                   ['rsvp_date', 'RSVP Date'],
-                  ['invite_token', 'Invite Token'],
+                  ['invite_token', 'Existing invitation link'],
                   ['household_id', 'Household ID'],
                   ['household_name', 'Household Name / Group Name'],
                   ['invited_events', 'Invited Events (list)'],
@@ -5013,13 +5312,13 @@ Proceed with send?`)) return;
         <>
           <div className="fixed inset-0 bg-black/50 z-40" onClick={() => { if (!csvImporting) { setCsvPreview(null); setCsvUnknownEvents([]); setCsvDuplicateNames([]); setCsvMappingSummary({ core: [], rsvp: [], household: [], eventCols: [], weak: [] }); } }} />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+            <div className="bg-surface rounded-lg border border-border-subtle w-full max-w-2xl max-h-[80vh] flex flex-col">
               <div className="flex items-center justify-between p-6 border-b border-border-subtle">
                 <div>
                   <h2 className="text-lg font-semibold text-text-primary">Review Import</h2>
                   <p className="text-sm text-text-secondary mt-0.5">
                     {csvPreview.length} guest{csvPreview.length !== 1 ? 's' : ''} ready to import
-                    {csvSkipped.length > 0 && ` · ${csvSkipped.length} row${csvSkipped.length !== 1 ? 's' : ''} skipped`}
+                    {csvSkipped.length > 0 && ` · ${csvSkipped.length} row${csvSkipped.length !== 1 ? 's' : ''} need review`}
                   </p>
                 </div>
                 {!csvImporting && (
@@ -5037,16 +5336,16 @@ Proceed with send?`)) return;
                     {csvMappingSummary.rsvp.length > 0 && <p className="text-xs text-text-secondary"><span className="font-medium text-text-primary">RSVP:</span> {csvMappingSummary.rsvp.join(', ')}</p>}
                     {csvMappingSummary.household.length > 0 && <p className="text-xs text-text-secondary"><span className="font-medium text-text-primary">Households:</span> {csvMappingSummary.household.join(', ')}</p>}
                     {csvMappingSummary.eventCols.length > 0 && <p className="text-xs text-text-secondary"><span className="font-medium text-text-primary">Itinerary columns:</span> {csvMappingSummary.eventCols.join(', ')}</p>}
-                    {csvMappingSummary.weak.length > 0 && <p className="text-xs text-amber-700"><span className="font-medium text-amber-800">Review closely:</span> {csvMappingSummary.weak.join(' · ')}</p>}
+                    {csvMappingSummary.weak.length > 0 && <p className="text-xs text-primary"><span className="font-medium text-primary">Review closely:</span> {csvMappingSummary.weak.join(' · ')}</p>}
                     <p className="text-[11px] text-text-tertiary">Invite values: Yes/Y/1/True/Included/Invited = invited · No/N/0/False/Excluded/Not Invited = not invited</p>
                   </div>
                 )}
 
                 {csvSkipped.length > 0 && (
-                  <div className="mb-4 p-3 bg-warning-light border border-warning/20 rounded-lg">
-                    <p className="text-xs font-medium text-warning mb-1">{csvSkipped.length} row{csvSkipped.length !== 1 ? 's' : ''} will be skipped (missing name)</p>
+                  <div className="mb-4 p-3 bg-surface-subtle border border-border-subtle rounded-lg">
+                    <p className="text-xs font-medium text-text-primary mb-1">{csvSkipped.length} row{csvSkipped.length !== 1 ? 's' : ''} need a guest name</p>
                     <ul className="space-y-0.5">
-                      {csvSkipped.map((s, i) => <li key={i} className="text-xs text-warning/80">• {s}</li>)}
+                      {csvSkipped.map((s, i) => <li key={i} className="text-xs text-text-secondary">• {s}</li>)}
                     </ul>
                   </div>
                 )}
@@ -5054,7 +5353,7 @@ Proceed with send?`)) return;
                 {csvUnknownEvents.length > 0 && (
                   <div className="mb-4 p-3 bg-surface-subtle border border-border rounded-lg">
                     <p className="text-xs font-medium text-text-primary mb-1">Unmatched itinerary event names ({csvUnknownEvents.length})</p>
-                    <p className="text-xs text-text-secondary mb-1">These names were not found in your itinerary and will be ignored for event invites.</p>
+                    <p className="text-xs text-text-secondary mb-1">Match these names to a schedule event when you are ready. Those event invites will stay unassigned for now.</p>
                     <ul className="space-y-0.5">
                       {csvUnknownEvents.slice(0, 10).map((name, i) => <li key={i} className="text-xs text-text-secondary">• {name}</li>)}
                     </ul>
@@ -5062,21 +5361,21 @@ Proceed with send?`)) return;
                 )}
 
                 {csvHouseholdWarnings.length > 0 && (
-                  <div className="mb-4 p-3 bg-warning-light border border-warning/20 rounded-lg">
-                    <p className="text-xs font-medium text-warning mb-1">Household merge warnings ({csvHouseholdWarnings.length})</p>
-                    <p className="text-xs text-warning/80 mb-1">These name-only household groups mix last names, so auto-merge will be skipped unless you clean the import.</p>
+                  <div className="mb-4 p-3 bg-surface-subtle border border-border-subtle rounded-lg">
+                    <p className="text-xs font-medium text-text-primary mb-1">Household matches to review ({csvHouseholdWarnings.length})</p>
+                    <p className="text-xs text-text-secondary mb-1">These name-only groups mix last names, so they will stay separate until you confirm them.</p>
                     <ul className="space-y-0.5">
-                      {csvHouseholdWarnings.slice(0, 10).map((name, i) => <li key={i} className="text-xs text-warning/80">• {name}</li>)}
+                      {csvHouseholdWarnings.slice(0, 10).map((name, i) => <li key={i} className="text-xs text-text-secondary">• {name}</li>)}
                     </ul>
                   </div>
                 )}
 
                 {csvDuplicateNames.length > 0 && (
-                  <div className="mb-4 p-3 bg-warning-light border border-warning/20 rounded-lg">
-                    <p className="text-xs font-medium text-warning mb-1">Duplicate full names flagged ({csvDuplicateNames.length})</p>
-                    <p className="text-xs text-warning/80 mb-1">These guests share the same First + Last name. Import will continue, but review to avoid unintended duplicates.</p>
+                  <div className="mb-4 p-3 bg-surface-subtle border border-border-subtle rounded-lg">
+                    <p className="text-xs font-medium text-text-primary mb-1">Possible repeated names ({csvDuplicateNames.length})</p>
+                    <p className="text-xs text-text-secondary mb-1">These guests share the same First + Last name. Import will continue, but they are worth checking.</p>
                     <ul className="space-y-0.5">
-                      {csvDuplicateNames.slice(0, 10).map((name, i) => <li key={i} className="text-xs text-warning/80">• {name}</li>)}
+                      {csvDuplicateNames.slice(0, 10).map((name, i) => <li key={i} className="text-xs text-text-secondary">• {name}</li>)}
                     </ul>
                   </div>
                 )}
@@ -5084,7 +5383,7 @@ Proceed with send?`)) return;
                 <div className="divide-y divide-border-subtle">
                   {csvPreview.slice(0, 50).map((g, i) => (
                     <div key={i} className="py-2.5 flex items-center gap-4">
-                      <div className="w-7 h-7 rounded-full bg-surface-subtle flex items-center justify-center text-xs font-medium text-text-secondary flex-shrink-0">
+                      <div className="w-7 h-7 rounded-lg bg-surface-subtle flex items-center justify-center text-xs font-medium text-text-secondary flex-shrink-0">
                         {i + 1}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -5094,13 +5393,15 @@ Proceed with send?`)) return;
                         {Boolean(g.email) && <p className="text-xs text-text-secondary truncate">{String(g.email)}</p>}
                         {Boolean(g.group_name) && <p className="text-[11px] text-text-tertiary truncate">Household: {String(g.group_name)}</p>}
                         <div className="mt-1 flex flex-wrap gap-1">
-                          {Boolean(g.rsvp_status) && <span className="text-[10px] px-1.5 py-0.5 rounded-full border border-border text-text-tertiary">{String(g.rsvp_status)}</span>}
-                          {Boolean(g.__meal_choice) && <span className="text-[10px] px-1.5 py-0.5 rounded-full border border-border text-text-tertiary">Meal: {String(g.__meal_choice)}</span>}
-                          {Array.isArray(g.__invited_event_ids) && (g.__invited_event_ids as unknown[]).length > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded-full border border-primary/30 text-primary">{(g.__invited_event_ids as unknown[]).length} event invites</span>}
+                          {Boolean(g.rsvp_status) && <span className="text-[10px] px-1.5 py-0.5 rounded-lg border border-border text-text-tertiary">{String(g.rsvp_status)}</span>}
+                          {Boolean(g.__meal_choice) && <span className="text-[10px] px-1.5 py-0.5 rounded-lg border border-border text-text-tertiary">Meal: {String(g.__meal_choice)}</span>}
+                          {Boolean(g.__plus_one_name) && <span className="text-[10px] px-1.5 py-0.5 rounded-lg border border-border text-text-tertiary">+1: {String(g.__plus_one_name)}</span>}
+                          {Number(g.__children_count ?? 0) > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded-lg border border-border text-text-tertiary">Children: {String(g.__children_count)}</span>}
+                          {Array.isArray(g.__invited_event_ids) && (g.__invited_event_ids as unknown[]).length > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded-lg border border-primary/30 text-primary">{(g.__invited_event_ids as unknown[]).length} event invites</span>}
                         </div>
                       </div>
                       {Boolean(g.plus_one_allowed) && (
-                        <span className="text-xs px-2 py-0.5 bg-surface-subtle rounded-full text-text-secondary flex-shrink-0">+1</span>
+                        <span className="text-xs px-2 py-0.5 bg-surface-subtle rounded-lg text-text-secondary flex-shrink-0">+1</span>
                       )}
                     </div>
                   ))}
@@ -5123,6 +5424,17 @@ Proceed with send?`)) return;
             </div>
           </div>
         </>
+      )}
+      {confirmDialog && (
+        <ConfirmDialog
+          open
+          title={confirmDialog.title}
+          description={confirmDialog.description}
+          confirmLabel={confirmDialog.confirmLabel}
+          tone={confirmDialog.tone}
+          onConfirm={confirmDialog.onConfirm}
+          onCancel={confirmDialog.onCancel}
+        />
       )}
     </DashboardLayout>
   );

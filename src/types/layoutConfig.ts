@@ -26,7 +26,7 @@ export interface SectionInstance {
   type: SectionType;
   variant: string;
   enabled: boolean;
-  bindings: {
+  bindings?: {
     venueIds?: string[];
     scheduleItemIds?: string[];
     linkIds?: string[];
@@ -34,8 +34,8 @@ export interface SectionInstance {
   };
   settings: {
     showTitle?: boolean;
-    title?: string;
-    subtitle?: string;
+    title?: any;
+    subtitle?: any;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [key: string]: any;
   };

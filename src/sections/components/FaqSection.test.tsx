@@ -2,6 +2,11 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { FaqAccordion, FaqIconGrid, FaqSection } from './FaqSection';
+import {
+  faqIconGridDefinition,
+  faqNumberedDefinition,
+  faqTabbedDefinition,
+} from '../variants/faq/accordion';
 import type { SectionInstance } from '../../types/layoutConfig';
 import type { WeddingDataV1 } from '../../types/weddingData';
 
@@ -19,6 +24,7 @@ function createWeddingData(faq: WeddingDataV1['faq'] = [{ id: 'faq-1', q: 'Where
     rsvp: { enabled: true },
     theme: {},
     media: { gallery: [] },
+    meta: { createdAtISO: '', updatedAtISO: '' },
   };
 }
 
@@ -98,5 +104,35 @@ describe('FaqSection', () => {
     );
 
     expect(screen.getByText('FAQ')).toBeInTheDocument();
+  });
+
+  it('renders distinct registry FAQ layouts for tabs, icon cards, and numbered rows', () => {
+    const faqData = {
+      eyebrow: 'Guest guide',
+      headline: 'Everything to know',
+      subheadline: 'A polished set of answers.',
+      expandFirstByDefault: false,
+      layoutStyle: 'tabbed' as const,
+      items: [
+        { id: 'attire', question: 'What should we wear?', answer: 'Cocktail attire.' },
+        { id: 'travel', question: 'Where should we park?', answer: 'Use valet or rideshare.' },
+        { id: 'dining', question: 'Can you handle dietary restrictions?', answer: 'Yes, note them in the RSVP.' },
+      ],
+    };
+
+    const { container, rerender } = render(<faqTabbedDefinition.Component data={faqData} />);
+
+    expect(screen.getByRole('button', { name: 'Attire' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Travel' })).toBeInTheDocument();
+    expect(container.querySelector('.lg\\:sticky')).toBeInTheDocument();
+
+    rerender(<faqIconGridDefinition.Component data={{ ...faqData, layoutStyle: 'iconGrid' }} />);
+
+    expect(container.querySelector('.bg-stone-950')).toBeInTheDocument();
+
+    rerender(<faqNumberedDefinition.Component data={{ ...faqData, layoutStyle: 'numbered' }} />);
+
+    expect(screen.getByText('01')).toBeInTheDocument();
+    expect(screen.getByText('02')).toBeInTheDocument();
   });
 });

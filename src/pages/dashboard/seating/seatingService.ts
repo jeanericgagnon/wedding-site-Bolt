@@ -56,6 +56,13 @@ export interface EligibleGuest {
   group_name: string | null;
   is_attending: boolean;
   is_invited_to_event: boolean;
+  event_rsvp_attending?: boolean | null;
+  meal_choice?: string | null;
+  meal_preference?: string | null;
+  dietary_restrictions?: string | null;
+  dietary_notes?: string | null;
+  allergies?: string | null;
+  notes?: string | null;
 }
 
 export interface GuestWithAssignment extends EligibleGuest {
@@ -71,6 +78,19 @@ export interface EventCounters {
   pending: number;
   seated: number;
   unassigned: number;
+}
+
+export interface SeatingLayoutVersion {
+  id: string;
+  wedding_site_id: string;
+  seating_event_id: string;
+  itinerary_event_id: string | null;
+  label: string;
+  tables: SeatingTable[];
+  assignments: SeatingAssignment[];
+  created_by: string | null;
+  restored_at: string | null;
+  created_at: string;
 }
 
 export function deriveGuestEventAttendance(args: {
@@ -98,8 +118,13 @@ export function deriveEventCountersFromGuests(
 
   const invited = invitedGuests.length;
   const attending = invitedGuests.filter(g => g.is_attending).length;
-  const declined = invitedGuests.filter(g => isDeclinedRsvpStatus(g.rsvp_status)).length;
-  const pending = invitedGuests.filter(g => isPendingRsvpStatus(g.rsvp_status)).length;
+  const hasEventScopedResponses = invitedGuests.some(g => g.event_rsvp_attending !== undefined);
+  const declined = invitedGuests.filter(g => hasEventScopedResponses
+    ? g.event_rsvp_attending === false
+    : isDeclinedRsvpStatus(g.rsvp_status)).length;
+  const pending = invitedGuests.filter(g => hasEventScopedResponses
+    ? g.event_rsvp_attending == null
+    : isPendingRsvpStatus(g.rsvp_status)).length;
   const seated = invitedGuests.filter(g => g.is_attending && validAssignmentGuestIds.has(g.id)).length;
   const unassigned = attending - seated;
 
@@ -333,6 +358,13 @@ export async function getEligibleGuests(
       group_name: g.group_name,
       is_attending: isAttending,
       is_invited_to_event: hasEventInvitations ? isInvitedToEvent : true,
+      event_rsvp_attending: hasEventInvitations ? (eventRsvp ?? null) : undefined,
+      meal_choice: (g.meal_choice as string | null) ?? null,
+      meal_preference: (g.meal_preference as string | null) ?? null,
+      dietary_restrictions: (g.dietary_restrictions as string | null) ?? null,
+      dietary_notes: (g.dietary_notes as string | null) ?? null,
+      allergies: (g.allergies as string | null) ?? null,
+      notes: (g.notes as string | null) ?? null,
     };
   });
 }
@@ -345,6 +377,51 @@ export async function getEventCounters(
   const guests = await getEligibleGuests(weddingSiteId, itineraryEventId);
   const assignments = await loadAssignments(seatingEventId);
   return deriveEventCountersFromGuests(guests, assignments);
+}
+
+export async function loadSeatingVersions(seatingEventId: string): Promise<SeatingLayoutVersion[]> {
+  const { data, error } = await supabase
+    .from('seating_layout_versions')
+    .select('*')
+    .eq('seating_event_id', seatingEventId)
+    .order('created_at', { ascending: false })
+    .limit(12);
+  if (error) throw error;
+  return (data ?? []) as SeatingLayoutVersion[];
+}
+
+export async function createSeatingVersion(input: {
+  weddingSiteId: string;
+  seatingEventId: string;
+  itineraryEventId: string | null;
+  label: string;
+  tables: SeatingTable[];
+  assignments: SeatingAssignment[];
+}): Promise<SeatingLayoutVersion> {
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data, error } = await supabase
+    .from('seating_layout_versions')
+    .insert({
+      wedding_site_id: input.weddingSiteId,
+      seating_event_id: input.seatingEventId,
+      itinerary_event_id: input.itineraryEventId,
+      label: input.label,
+      tables: input.tables,
+      assignments: input.assignments,
+      created_by: user?.id ?? null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data as SeatingLayoutVersion;
+}
+
+export async function markSeatingVersionRestored(versionId: string): Promise<void> {
+  const { error } = await supabase
+    .from('seating_layout_versions')
+    .update({ restored_at: new Date().toISOString() })
+    .eq('id', versionId);
+  if (error) throw error;
 }
 
 export async function autoCreateTables(

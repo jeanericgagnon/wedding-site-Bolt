@@ -5,6 +5,7 @@ import { Button, Card, Input, AddressInput } from '../../components/ui';
 import { supabase } from '../../lib/supabase';
 import { parseExpectedGuestCount } from '../../lib/weddingStatusGuestCount';
 import { clearOnboardingEntryReturnPath } from '../../lib/onboardingEntryCleanup';
+import { resolveActiveSiteForUser } from '../../lib/activeSite';
 
 type PlanningStatus = 'not_engaged' | 'just_engaged' | 'venue_booked' | 'invitations_sent';
 
@@ -80,6 +81,8 @@ export const WeddingStatus: React.FC = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
+      const activeSite = await resolveActiveSiteForUser(user.id);
+      if (!activeSite?.id) throw new Error('Couldn’t find your wedding site right now.');
 
       const updateData: Record<string, unknown> = {
         planning_status: selectedStatus,
@@ -113,6 +116,7 @@ export const WeddingStatus: React.FC = () => {
       const { error: updateError } = await supabase
         .from('wedding_sites')
         .update(updateData)
+        .eq('id', activeSite.id)
         .eq('user_id', user.id);
 
       if (updateError) throw updateError;
@@ -127,8 +131,8 @@ export const WeddingStatus: React.FC = () => {
           weddingDate,
         }
       });
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to update status. Please try again.');
+    } catch {
+      setError('Couldn’t update your status. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -356,18 +360,18 @@ export const WeddingStatus: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background via-surface-subtle to-surface p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
       <div className="w-full max-w-2xl">
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-6">
-            <Heart className="w-8 h-8 text-accent" aria-hidden="true" />
-            <span className="text-2xl font-semibold text-text-primary">WeddingSite</span>
+            <Heart className="w-8 h-8 text-primary" aria-hidden="true" />
+            <span className="text-2xl font-semibold text-text-primary">dayof</span>
           </div>
-          <h1 className="text-3xl font-bold text-text-primary mb-2">Where are you in your journey?</h1>
-          <p className="text-text-secondary">Help us customize your experience</p>
+          <h1 className="text-3xl font-semibold text-text-primary mb-2">Where are you in the planning?</h1>
+          <p className="text-text-secondary">We’ll start from the details that matter right now.</p>
         </div>
 
-        <Card variant="default" padding="lg" className="shadow-lg">
+        <Card variant="default" padding="lg">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-3">
               {statusOptions.map((option) => (
@@ -386,14 +390,14 @@ export const WeddingStatus: React.FC = () => {
                 >
                   <div className="flex items-center gap-3">
                     <div
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                      className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
                         selectedStatus === option.id
                           ? 'border-primary'
                           : 'border-border'
                       }`}
                     >
                       {selectedStatus === option.id && (
-                        <div className="w-3 h-3 rounded-full bg-primary" />
+                        <div className="w-3 h-3 rounded-sm bg-primary" />
                       )}
                     </div>
                     <span className="text-base font-medium text-text-primary">
@@ -407,7 +411,7 @@ export const WeddingStatus: React.FC = () => {
             {renderDetailsForm()}
 
             {error && (
-              <div className="p-3 bg-error-light text-error rounded-lg text-sm">
+              <div className="p-3 bg-surface-secondary border border-border-subtle text-text-secondary rounded-lg text-sm">
                 {error}
               </div>
             )}
@@ -419,7 +423,7 @@ export const WeddingStatus: React.FC = () => {
               fullWidth
               disabled={loading || !selectedStatus}
             >
-              {loading ? 'Saving...' : 'Continue to Dashboard'}
+              {loading ? 'Saving...' : 'Continue to your wedding home'}
             </Button>
           </form>
         </Card>

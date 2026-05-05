@@ -362,10 +362,10 @@ export const NAME_CHANGE_SEQUENCE_PROFILE_RECIPES: Record<NameChangeExecutionSeq
   }),
   medical: buildPhotoIdPacketDependencies({
     supportKey: 'medical-identity-support',
-    supportLabel: 'Medical/provider identity support exists',
+    supportLabel: 'Medical-office identity support exists',
     supportDocumentKinds: ['current_drivers_license', 'current_passport', 'proof_of_address'],
-    supportSatisfiedReason: 'Medical/provider identity support exists in intake.',
-    supportMissingReason: 'No medical/provider identity support exists in intake yet.',
+    supportSatisfiedReason: 'Medical-office identity support exists in intake.',
+    supportMissingReason: 'No medical-office identity support exists in intake yet.',
   }),
   utilities: buildPhotoIdPacketDependencies({
     supportKey: 'utilities-identity-support',

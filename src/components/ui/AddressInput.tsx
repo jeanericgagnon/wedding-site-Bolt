@@ -28,17 +28,12 @@ export const AddressInput: React.FC<AddressInputProps> = ({
   useEffect(() => {
     const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
-    if (!apiKey) {
-      console.warn('Google Maps API key not found. Address autocomplete will not work.');
-      return;
-    }
+    if (!apiKey) return;
 
     setOptions({ key: apiKey, v: 'weekly' });
     importLibrary('places').then(() => {
       setIsLoaded(true);
-    }).catch((err: unknown) => {
-      console.error('Error loading Google Maps API:', err);
-    });
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {

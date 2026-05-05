@@ -5,7 +5,7 @@ describe('coordinatorCommandPriorityReason', () => {
   it('explains why each surface won command priority', () => {
     expect(getCoordinatorCommandPriorityReason({
       priority: 'Check-in',
-      checkInLabel: 'Board target available',
+      checkInLabel: 'Suggested guest waiting',
       timelineLabel: null,
       qnaLabel: null,
       alertAligned: true,
@@ -15,7 +15,7 @@ describe('coordinatorCommandPriorityReason', () => {
     expect(getCoordinatorCommandPriorityReason({
       priority: 'Timeline',
       checkInLabel: null,
-      timelineLabel: 'Working board event',
+      timelineLabel: 'Suggested event in progress',
       qnaLabel: null,
       alertAligned: true,
       alertLaneLabel: 'Live event update',
@@ -25,7 +25,7 @@ describe('coordinatorCommandPriorityReason', () => {
       priority: 'Q&A',
       checkInLabel: null,
       timelineLabel: null,
-      qnaLabel: 'Board question available',
+      qnaLabel: 'Suggested question waiting',
       alertAligned: true,
       alertLaneLabel: 'Live event update',
     })).toBe('an unresolved guest question is waiting');

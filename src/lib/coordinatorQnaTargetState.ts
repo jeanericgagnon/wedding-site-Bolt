@@ -12,11 +12,11 @@ export const getCoordinatorQnaTargetState = ({
     activeQnaId,
     isBoardTargetActive,
     label: isBoardTargetActive
-      ? 'Working board question'
+      ? 'Suggested question in progress'
       : boardTargetId
-        ? 'Board question available'
+        ? 'Suggested question waiting'
         : activeQnaId
-          ? 'Working custom question'
+          ? 'Selected question in progress'
           : null,
   };
 };

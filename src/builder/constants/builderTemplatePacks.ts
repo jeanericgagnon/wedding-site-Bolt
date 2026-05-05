@@ -1,8 +1,122 @@
 import { BuilderTemplateDefinition, TemplateMoodTag } from '../../types/builder/template';
 import { getAllTemplates } from '../../templates/registry';
 import { BuilderSectionType } from '../../types/builder/section';
+import { getTemplateLaunchOrder, getTemplateLaunchTier, isLaunchVisibleTemplateId } from './templateLaunchQuality';
 
 const withBasePath = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\/+/, '')}`;
+
+const SAYULITA_TRAVEL_LIST_SETTINGS = {
+  showTitle: true,
+  flightInfo: 'Fly into Puerto Vallarta (PVR). From there, Sayulita is usually a 55 to 75 minute drive depending on traffic.',
+  drivingInfo: 'Pre-booked shuttles and rideshare are easiest. The town is walkable once you arrive, so most guests will not need a rental car.',
+  parkingInfo: 'Street parking is limited near the hotel. If you drive, plan to park once and walk or use local taxis for the weekend.',
+  generalNote: 'Stay near the town square, north beach, or the hotel zone so you can walk to most wedding-weekend plans.',
+  hotels: [
+    {
+      id: 'sayulita-casa',
+      name: 'Casa Selva Sayulita',
+      distance: '7 minute walk to the welcome dinner',
+      price: 'Boutique rooms and suites',
+      bookingCode: 'KARAERIC',
+      phone: '+52 329 291 3000',
+      url: '',
+      notes: 'Quiet, central, and easy for guests who want to be close to town.',
+    },
+    {
+      id: 'sayulita-playa',
+      name: 'Playa Escondida',
+      distance: 'Short taxi ride to Amor Boutique Hotel',
+      price: 'Ocean-view casitas',
+      bookingCode: '',
+      phone: '+52 329 291 3641',
+      url: '',
+      notes: 'Best for guests who want a more secluded stay.',
+    },
+  ],
+};
+
+const SAYULITA_HOTELS = [
+  {
+    id: 'amor',
+    name: 'Amor Boutique Hotel',
+    stars: 4,
+    distance: 'Wedding home base',
+    priceRange: 'Casitas and villas',
+    bookingCode: 'KARAERIC',
+    bookingDeadline: 'Book early for January weekend availability',
+    phone: '+52 329 291 3010',
+    url: '',
+    image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=85',
+    amenities: ['Ocean views', 'Walkable to beach', 'Pool'],
+    shuttleInfo: 'Most wedding events are walkable from here.',
+    notes: 'Best fit for guests who want to stay closest to the celebration.',
+    recommended: true,
+  },
+  {
+    id: 'casa-selva',
+    name: 'Casa Selva Sayulita',
+    stars: 4,
+    distance: '7 minute walk to town',
+    priceRange: 'Boutique rooms',
+    bookingCode: '',
+    bookingDeadline: '',
+    phone: '+52 329 291 3000',
+    url: '',
+    image: 'https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?auto=format&fit=crop&w=1200&q=85',
+    amenities: ['Central', 'Quiet courtyard', 'Breakfast nearby'],
+    shuttleInfo: '',
+    notes: 'A calm option for guests who want town access without late-night noise.',
+    recommended: false,
+  },
+  {
+    id: 'playa-escondida',
+    name: 'Playa Escondida',
+    stars: 4,
+    distance: 'Short taxi ride to events',
+    priceRange: 'Ocean-view casitas',
+    bookingCode: '',
+    bookingDeadline: '',
+    phone: '+52 329 291 3641',
+    url: '',
+    image: 'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&w=1200&q=85',
+    amenities: ['Beachfront', 'Restaurant', 'Secluded'],
+    shuttleInfo: 'Plan for taxis to town and wedding events.',
+    notes: '',
+    recommended: false,
+  },
+];
+
+const SAYULITA_HOTEL_BLOCK_SETTINGS = {
+  showTitle: true,
+  subheadline: 'A few guest-friendly stays near the weekend events.',
+  deadlineNote: 'Book early if you want to stay close to town. January rooms in Sayulita can fill quickly.',
+  generalNote: 'Mention the wedding when booking where a room note or group code is available.',
+  hotels: SAYULITA_HOTELS,
+};
+
+const SAYULITA_TRAVEL_TIERS_SETTINGS = {
+  showTitle: true,
+  headline: 'Where to stay in Sayulita',
+  intro: 'Choose what fits your trip. The easiest weekend is anywhere walkable to town or a short taxi ride from Amor Boutique Hotel.',
+  closest: [
+    { id: 'closest-amor', name: 'Amor Boutique Hotel', distance: 'Wedding home base', price: 'Casitas and villas', note: 'Best for the fewest transfers.', url: '' },
+  ],
+  value: [
+    { id: 'value-casa', name: 'Casa Selva Sayulita', distance: '7 minute walk to town', price: 'Boutique rooms', note: 'Central without feeling too busy.', url: '' },
+  ],
+  budget: [
+    { id: 'budget-villas', name: 'Local villas and guesthouses', distance: 'Town center or north beach', price: 'Varies by group size', note: 'Great for friend groups sharing a stay.', url: '' },
+  ],
+};
+
+const SAYULITA_ACCOMMODATIONS_SETTINGS = {
+  showTitle: true,
+  headline: 'Accommodations',
+  generalNote: 'We suggest staying near the town square, north beach, or Amor Boutique Hotel so the weekend feels easy on foot.',
+  blockNote: 'January weekends can book quickly in Sayulita. Reserve early if you want to stay close to the events.',
+  shuttleNote: 'Most guests can walk or take a short taxi. We will share any group shuttle details closer to the weekend.',
+  hotels: SAYULITA_HOTELS,
+};
 
 export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> = {
   'modern-luxe': {
@@ -13,11 +127,11 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
     previewThumbnailPath: withBasePath('/template-previews/luxury-opulent.webp'),
     defaultThemeId: 'elegant',
     sectionComposition: [
-      { type: 'hero', variant: 'fullbleed', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'hero', variant: 'fullbleed', enabled: true, locked: false, settings: { showTitle: true, textAlign: 'left', overlayOpacity: 58, eyebrow: 'Black tie in Sayulita', ctaLabel: 'RSVP' } },
       { type: 'story', variant: 'split', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'venue', variant: 'splitMap', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'schedule', variant: 'timeline', enabled: true, locked: false, settings: { showTitle: true } },
-      { type: 'travel', variant: 'hotelBlock', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'travel', variant: 'hotelBlock', enabled: true, locked: false, settings: SAYULITA_HOTEL_BLOCK_SETTINGS },
       { type: 'rsvp', variant: 'card', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'gallery', variant: 'filmStrip', enabled: true, locked: false, settings: { showTitle: false } },
       { type: 'registry', variant: 'featured', enabled: true, locked: false, settings: { showTitle: true } },
@@ -41,17 +155,17 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
     previewThumbnailPath: withBasePath('/template-previews/editorial-impact.webp'),
     defaultThemeId: 'editorial',
     sectionComposition: [
-      { type: 'hero', variant: 'fullbleed', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'hero', variant: 'split', enabled: true, locked: false, settings: { showTitle: true, layoutStyle: 'split', textAlign: 'left', eyebrow: 'A weekend in chapters', ctaLabel: 'Read the weekend' } },
       { type: 'story', variant: 'centered', enabled: true, locked: false, settings: { showTitle: false } },
       { type: 'venue', variant: 'card', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'schedule', variant: 'agendaCards', enabled: true, locked: false, settings: { showTitle: true } },
-      { type: 'travel', variant: 'list', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'travel', variant: 'list', enabled: true, locked: false, settings: SAYULITA_TRAVEL_LIST_SETTINGS },
       { type: 'rsvp', variant: 'inline', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'gallery', variant: 'masonry', enabled: true, locked: false, settings: { showTitle: false } },
       { type: 'registry', variant: 'minimal', enabled: true, locked: false, settings: { showTitle: true } },
     ],
     sectionVariantMap: {
-      hero: 'fullbleed', story: 'centered', venue: 'card', schedule: 'agendaCards', travel: 'list', rsvp: 'inline', gallery: 'masonry', registry: 'minimal',
+      hero: 'split', story: 'centered', venue: 'card', schedule: 'agendaCards', travel: 'list', rsvp: 'inline', gallery: 'masonry', registry: 'minimal',
     },
     suggestedFonts: { heading: 'Cormorant Garamond', body: 'Lato' },
     spacingProfile: 'spacious',
@@ -67,11 +181,11 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
     previewThumbnailPath: withBasePath('/template-previews/timeless-classic.webp'),
     defaultThemeId: 'classic',
     sectionComposition: [
-      { type: 'hero', variant: 'minimal', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'hero', variant: 'minimal', enabled: true, locked: false, settings: { showTitle: true, layoutStyle: 'minimal', eyebrow: 'Together with their families', ctaLabel: 'RSVP' } },
       { type: 'story', variant: 'split', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'venue', variant: 'detailsFirst', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'schedule', variant: 'agendaCards', enabled: true, locked: false, settings: { showTitle: true } },
-      { type: 'travel', variant: 'hotelBlock', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'travel', variant: 'hotelBlock', enabled: true, locked: false, settings: SAYULITA_HOTEL_BLOCK_SETTINGS },
       { type: 'rsvp', variant: 'default', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'faq', variant: 'accordion', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'gallery', variant: 'grid', enabled: true, locked: false, settings: { showTitle: true } },
@@ -94,11 +208,11 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
     previewThumbnailPath: withBasePath('/template-previews/destination-adventure.webp'),
     defaultThemeId: 'ocean',
     sectionComposition: [
-      { type: 'hero', variant: 'fullbleed', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'hero', variant: 'fullbleed', enabled: true, locked: false, settings: { showTitle: true, textAlign: 'left', overlayOpacity: 42, eyebrow: 'Pack for the Pacific', ctaLabel: 'Plan your trip' } },
       { type: 'venue', variant: 'mapFirst', enabled: true, locked: false, settings: { showTitle: true } },
-      { type: 'travel', variant: 'cards', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'travel', variant: 'cards', enabled: true, locked: false, settings: SAYULITA_TRAVEL_TIERS_SETTINGS },
       { type: 'schedule', variant: 'timeline', enabled: true, locked: false, settings: { showTitle: true } },
-      { type: 'accommodations', variant: 'cards', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'accommodations', variant: 'cards', enabled: true, locked: false, settings: SAYULITA_ACCOMMODATIONS_SETTINGS },
       { type: 'rsvp', variant: 'inline', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'faq', variant: 'accordion', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'story', variant: 'centered', enabled: true, locked: false, settings: { showTitle: false } },
@@ -120,10 +234,10 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
     previewThumbnailPath: withBasePath('/template-previews/bold-statement.webp'),
     defaultThemeId: 'elegant',
     sectionComposition: [
-      { type: 'hero', variant: 'fullbleed', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'hero', variant: 'countdown', enabled: true, locked: false, settings: { showTitle: true, layoutStyle: 'countdown', textAlign: 'left', overlayOpacity: 58, eyebrow: 'The weekend starts soon', ctaLabel: 'See the events' } },
       { type: 'schedule', variant: 'dayTabs', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'venue', variant: 'splitMap', enabled: true, locked: false, settings: { showTitle: true } },
-      { type: 'travel', variant: 'list', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'travel', variant: 'list', enabled: true, locked: false, settings: SAYULITA_TRAVEL_LIST_SETTINGS },
       { type: 'rsvp', variant: 'multiEvent', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'story', variant: 'split', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'gallery', variant: 'filmStrip', enabled: true, locked: false, settings: { showTitle: false } },
@@ -131,7 +245,7 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
       { type: 'faq', variant: 'twoColumn', enabled: true, locked: false, settings: { showTitle: true } },
     ],
     sectionVariantMap: {
-      hero: 'fullbleed', schedule: 'dayTabs', venue: 'splitMap', travel: 'list', rsvp: 'multiEvent', story: 'split', gallery: 'filmStrip', registry: 'featured', faq: 'twoColumn',
+      hero: 'countdown', schedule: 'dayTabs', venue: 'splitMap', travel: 'list', rsvp: 'multiEvent', story: 'split', gallery: 'filmStrip', registry: 'featured', faq: 'twoColumn',
     },
     suggestedFonts: { heading: 'Syne', body: 'Instrument Sans' },
     spacingProfile: 'spacious',
@@ -148,11 +262,11 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
     previewThumbnailPath: withBasePath('/template-previews/photo-storytelling.webp'),
     defaultThemeId: 'romantic',
     sectionComposition: [
-      { type: 'hero', variant: 'fullbleed', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'hero', variant: 'fullbleed', enabled: true, locked: false, settings: { showTitle: true, textAlign: 'center', overlayOpacity: 34, eyebrow: 'A love story in photographs', ctaLabel: 'View the story' } },
       { type: 'story', variant: 'centered', enabled: true, locked: false, settings: { showTitle: false } },
       { type: 'venue', variant: 'mapFirst', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'schedule', variant: 'agendaCards', enabled: true, locked: false, settings: { showTitle: true } },
-      { type: 'travel', variant: 'list', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'travel', variant: 'list', enabled: true, locked: false, settings: SAYULITA_TRAVEL_LIST_SETTINGS },
       { type: 'rsvp', variant: 'card', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'gallery', variant: 'masonry', enabled: true, locked: false, settings: { showTitle: false } },
       { type: 'registry', variant: 'cards', enabled: true, locked: false, settings: { showTitle: true } },
@@ -174,11 +288,11 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
     previewThumbnailPath: withBasePath('/template-previews/garden-escape.webp'),
     defaultThemeId: 'garden',
     sectionComposition: [
-      { type: 'hero', variant: 'fullbleed', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'hero', variant: 'botanical', enabled: true, locked: false, settings: { showTitle: true, layoutStyle: 'botanical', eyebrow: 'An open-air celebration', ctaLabel: 'RSVP' } },
       { type: 'story', variant: 'split', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'venue', variant: 'card', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'schedule', variant: 'agendaCards', enabled: true, locked: false, settings: { showTitle: true } },
-      { type: 'travel', variant: 'list', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'travel', variant: 'list', enabled: true, locked: false, settings: SAYULITA_TRAVEL_LIST_SETTINGS },
       { type: 'dress-code', variant: 'moodBoard', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'rsvp', variant: 'default', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'gallery', variant: 'polaroid', enabled: true, locked: false, settings: { showTitle: false } },
@@ -186,7 +300,7 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
       { type: 'faq', variant: 'accordion', enabled: true, locked: false, settings: { showTitle: true } },
     ],
     sectionVariantMap: {
-      hero: 'fullbleed', story: 'split', venue: 'card', schedule: 'agendaCards', travel: 'list', 'dress-code': 'moodBoard', rsvp: 'default', gallery: 'polaroid', registry: 'cards', faq: 'accordion',
+      hero: 'botanical', story: 'split', venue: 'card', schedule: 'agendaCards', travel: 'list', 'dress-code': 'moodBoard', rsvp: 'default', gallery: 'polaroid', registry: 'cards', faq: 'accordion',
     },
     suggestedFonts: { heading: 'Gilda Display', body: 'Nunito' },
     spacingProfile: 'balanced',
@@ -206,7 +320,7 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
       { type: 'story', variant: 'centered', enabled: true, locked: false, settings: { showTitle: false } },
       { type: 'venue', variant: 'card', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'schedule', variant: 'agendaCards', enabled: true, locked: false, settings: { showTitle: true } },
-      { type: 'travel', variant: 'list', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'travel', variant: 'list', enabled: true, locked: false, settings: SAYULITA_TRAVEL_LIST_SETTINGS },
       { type: 'rsvp', variant: 'inline', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'gallery', variant: 'masonry', enabled: true, locked: false, settings: { showTitle: false } },
       { type: 'registry', variant: 'minimal', enabled: true, locked: false, settings: { showTitle: true } },
@@ -233,7 +347,7 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
       { type: 'story', variant: 'split', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'venue', variant: 'splitMap', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'schedule', variant: 'timeline', enabled: true, locked: false, settings: { showTitle: true } },
-      { type: 'travel', variant: 'hotelBlock', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'travel', variant: 'hotelBlock', enabled: true, locked: false, settings: SAYULITA_HOTEL_BLOCK_SETTINGS },
       { type: 'rsvp', variant: 'card', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'gallery', variant: 'filmStrip', enabled: true, locked: false, settings: { showTitle: false } },
       { type: 'registry', variant: 'featured', enabled: true, locked: false, settings: { showTitle: true } },
@@ -260,7 +374,7 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
       { type: 'story', variant: 'split', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'venue', variant: 'card', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'schedule', variant: 'agendaCards', enabled: true, locked: false, settings: { showTitle: true } },
-      { type: 'travel', variant: 'list', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'travel', variant: 'list', enabled: true, locked: false, settings: SAYULITA_TRAVEL_LIST_SETTINGS },
       { type: 'rsvp', variant: 'default', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'gallery', variant: 'polaroid', enabled: true, locked: false, settings: { showTitle: false } },
       { type: 'registry', variant: 'cards', enabled: true, locked: false, settings: { showTitle: true } },
@@ -288,7 +402,7 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
       { type: 'story', variant: 'centered', enabled: true, locked: false, settings: { showTitle: false } },
       { type: 'venue', variant: 'detailsFirst', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'schedule', variant: 'agendaCards', enabled: true, locked: false, settings: { showTitle: true } },
-      { type: 'travel', variant: 'list', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'travel', variant: 'list', enabled: true, locked: false, settings: SAYULITA_TRAVEL_LIST_SETTINGS },
       { type: 'rsvp', variant: 'inline', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'gallery', variant: 'masonry', enabled: true, locked: false, settings: { showTitle: false } },
       { type: 'registry', variant: 'cards', enabled: true, locked: false, settings: { showTitle: true } },
@@ -315,7 +429,7 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
       { type: 'story', variant: 'split', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'venue', variant: 'splitMap', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'schedule', variant: 'timeline', enabled: true, locked: false, settings: { showTitle: true } },
-      { type: 'travel', variant: 'hotelBlock', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'travel', variant: 'hotelBlock', enabled: true, locked: false, settings: SAYULITA_HOTEL_BLOCK_SETTINGS },
       { type: 'rsvp', variant: 'card', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'gallery', variant: 'filmStrip', enabled: true, locked: false, settings: { showTitle: false } },
       { type: 'registry', variant: 'featured', enabled: true, locked: false, settings: { showTitle: true } },
@@ -342,7 +456,7 @@ export const BUILDER_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> =
       { type: 'story', variant: 'split', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'venue', variant: 'detailsFirst', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'schedule', variant: 'agendaCards', enabled: true, locked: false, settings: { showTitle: true } },
-      { type: 'travel', variant: 'hotelBlock', enabled: true, locked: false, settings: { showTitle: true } },
+      { type: 'travel', variant: 'hotelBlock', enabled: true, locked: false, settings: SAYULITA_HOTEL_BLOCK_SETTINGS },
       { type: 'rsvp', variant: 'default', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'faq', variant: 'accordion', enabled: true, locked: false, settings: { showTitle: true } },
       { type: 'gallery', variant: 'grid', enabled: true, locked: false, settings: { showTitle: true } },
@@ -424,10 +538,24 @@ const MERGED_TEMPLATE_PACKS: Record<string, BuilderTemplateDefinition> = {
   ...BUILDER_TEMPLATE_PACKS,
 };
 
+function withLaunchTier(template: BuilderTemplateDefinition): BuilderTemplateDefinition {
+  return {
+    ...template,
+    launchTier: getTemplateLaunchTier(template.id),
+  };
+}
+
 export function getAllTemplatePacks(): BuilderTemplateDefinition[] {
-  return Object.values(MERGED_TEMPLATE_PACKS);
+  return Object.values(MERGED_TEMPLATE_PACKS).map(withLaunchTier);
+}
+
+export function getLaunchTemplatePacks(): BuilderTemplateDefinition[] {
+  return getAllTemplatePacks()
+    .filter((template) => isLaunchVisibleTemplateId(template.id))
+    .sort((a, b) => getTemplateLaunchOrder(a.id) - getTemplateLaunchOrder(b.id));
 }
 
 export function getTemplatePack(id: string): BuilderTemplateDefinition | null {
-  return MERGED_TEMPLATE_PACKS[id] ?? null;
+  const template = MERGED_TEMPLATE_PACKS[id];
+  return template ? withLaunchTier(template) : null;
 }

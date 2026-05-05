@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { z } from 'zod';
 import { Play, Film, PlayCircle } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
+import { getSafePublicImageUrl, getSafePublicVideoEmbedUrl } from '../../publicLinks';
 
 const VideoItemSchema = z.object({
   id: z.string(),
@@ -31,7 +32,7 @@ export const defaultVideoCardData: VideoCardData = {
       title: 'Save the Date',
       description: 'A little sneak peek before the big day.',
       videoUrl: '',
-      thumbnailUrl: 'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg?auto=compress&cs=tinysrgb&w=800',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1000&q=85',
       videoType: 'youtube',
     },
     {
@@ -39,25 +40,11 @@ export const defaultVideoCardData: VideoCardData = {
       title: 'Our Engagement Film',
       description: 'How we got here — the story of our proposal.',
       videoUrl: '',
-      thumbnailUrl: 'https://images.pexels.com/photos/2959192/pexels-photo-2959192.jpeg?auto=compress&cs=tinysrgb&w=800',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=1000&q=85',
       videoType: 'youtube',
     },
   ],
 };
-
-function getEmbedUrl(url: string, type: z.infer<typeof VideoItemSchema>['videoType']): string | null {
-  if (!url) return null;
-  if (type === 'youtube') {
-    const match = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-    if (match) return `https://www.youtube.com/embed/${match[1]}?autoplay=1&rel=0`;
-  }
-  if (type === 'vimeo') {
-    const match = url.match(/vimeo\.com\/(\d+)/);
-    if (match) return `https://player.vimeo.com/video/${match[1]}?autoplay=1`;
-  }
-  if (type === 'direct') return url;
-  return null;
-}
 
 const VideoCard: React.FC<SectionComponentProps<VideoCardData>> = ({ data }) => {
   const [playingId, setPlayingId] = useState<string | null>(null);
@@ -68,7 +55,7 @@ const VideoCard: React.FC<SectionComponentProps<VideoCardData>> = ({ data }) => 
       <div className="max-w-5xl mx-auto px-6 md:px-12">
         <div className="text-center mb-14">
           {data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">{data.eyebrow}</p>
+            <p className="text-sm text-stone-400 font-light mb-4">{data.eyebrow}</p>
           )}
           <h2 className="text-4xl md:text-5xl font-light text-stone-900">{data.headline}</h2>
         </div>
@@ -82,7 +69,8 @@ const VideoCard: React.FC<SectionComponentProps<VideoCardData>> = ({ data }) => 
 
         <div className={`grid grid-cols-1 ${data.videos.length > 1 ? 'md:grid-cols-2' : ''} gap-8`}>
           {data.videos.map(video => {
-            const embedUrl = getEmbedUrl(video.videoUrl, video.videoType);
+            const embedUrl = getSafePublicVideoEmbedUrl(video.videoUrl, video.videoType, true);
+            const thumbnailUrl = getSafePublicImageUrl(video.thumbnailUrl);
             const isPlaying = playingId === video.id;
 
             return (
@@ -96,9 +84,9 @@ const VideoCard: React.FC<SectionComponentProps<VideoCardData>> = ({ data }) => 
                       allowFullScreen
                       className="w-full h-full border-0"
                     />
-                  ) : video.thumbnailUrl ? (
+                  ) : thumbnailUrl ? (
                     <>
-                      <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover" />
+                      <img src={thumbnailUrl} alt={video.title} className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors" />
                       {embedUrl ? (
                         <div className="absolute inset-0 flex items-center justify-center">
@@ -115,7 +103,7 @@ const VideoCard: React.FC<SectionComponentProps<VideoCardData>> = ({ data }) => 
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center gap-2">
                       <Film size={24} className="text-stone-600" />
-                      <p className="text-stone-500 text-xs">Video coming soon</p>
+                      <p className="text-stone-500 text-xs">Video not added yet</p>
                     </div>
                   )}
                 </div>

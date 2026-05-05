@@ -8,25 +8,25 @@ describe('coordinatorNavigationBoard', () => {
       boardTargetName: 'Alex Rivera',
       reviewOnly: true,
     })).toEqual({
-      statusLabel: 'Navigation target is armed',
+      statusLabel: 'Next stop is ready',
       tone: 'warning',
       destinationLabel: 'Check-in',
       boardTargetLabel: 'Alex Rivera',
-      modeLabel: 'Review-only route',
+      modeLabel: 'Review-only path',
     });
   });
 
-  it('shows neutral board mode when no panel is targeted', () => {
+  it('shows neutral summary mode when no panel is targeted', () => {
     expect(buildCoordinatorNavigationBoard({
       panelFocus: null,
       boardTargetName: null,
       reviewOnly: false,
     })).toEqual({
-      statusLabel: 'Navigation is staying on the board',
+      statusLabel: 'Staying on the day-of summary',
       tone: 'neutral',
-      destinationLabel: 'Board overview',
-      boardTargetLabel: 'No board target selected',
-      modeLabel: 'Neutral board mode',
+      destinationLabel: 'Day-of summary',
+      boardTargetLabel: 'No suggested item selected',
+      modeLabel: 'Summary view',
     });
   });
 });

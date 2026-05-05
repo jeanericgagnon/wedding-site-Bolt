@@ -17,16 +17,13 @@ CREATE TABLE IF NOT EXISTS sms_inbound_rsvp_events (
   process_error text,
   created_at timestamptz NOT NULL DEFAULT now()
 );
-
 ALTER TABLE sms_inbound_rsvp_events ENABLE ROW LEVEL SECURITY;
-
 DROP POLICY IF EXISTS "Service role only sms inbound events" ON sms_inbound_rsvp_events;
 CREATE POLICY "Service role only sms inbound events"
   ON sms_inbound_rsvp_events FOR ALL
   TO service_role
   USING (true)
   WITH CHECK (true);
-
 CREATE INDEX IF NOT EXISTS idx_sms_inbound_rsvp_events_from ON sms_inbound_rsvp_events(from_number);
 CREATE INDEX IF NOT EXISTS idx_sms_inbound_rsvp_events_site ON sms_inbound_rsvp_events(wedding_site_id);
 CREATE INDEX IF NOT EXISTS idx_sms_inbound_rsvp_events_created ON sms_inbound_rsvp_events(created_at DESC);

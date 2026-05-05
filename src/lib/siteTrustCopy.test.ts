@@ -27,22 +27,24 @@ describe('SITE_TRUST_COPY starter draft truth', () => {
   });
 
   it('keeps messaging trust framed around review-before-send states instead of fake success claims', () => {
-    expect(SITE_TRUST_COPY.reviewBeforeSendMessaging).toBe('Review-before-send messaging should stay honest about drafts, scheduled sends, and delivery states before broader launch claims.');
+    expect(SITE_TRUST_COPY.reviewBeforeSendMessaging).toBe('Review-before-send messaging should stay honest about drafts, scheduled sends, and delivery states before broader promises.');
     expect(SITE_TRUST_COPY.reviewBeforeSendMessaging.toLowerCase()).not.toContain('ready-to-send');
+    expect(SITE_TRUST_COPY.reviewBeforeSendMessaging.toLowerCase()).not.toContain('launch claims');
   });
 
-  it('keeps the launch story core framed around starter draft + guest ops + calm execution', () => {
-    expect(SITE_TRUST_COPY.launchStoryCore).toBe('starter draft + guest ops + calm execution');
-    expect(SITE_TRUST_COPY.launchStoryCore).not.toContain('website + guest ops');
+  it('keeps the launch story core framed around couple-facing planning language', () => {
+    expect(SITE_TRUST_COPY.launchStoryCore).toBe('a polished draft, clear guest flow, and calm planning');
+    expect(SITE_TRUST_COPY.launchStoryCore).not.toContain('guest ops');
+    expect(SITE_TRUST_COPY.launchStoryCore).not.toContain('execution');
   });
 
   it('keeps the shared launch-story core ready for trust surfaces to reuse verbatim', () => {
-    expect(`The hard launch line is ${SITE_TRUST_COPY.launchStoryCore}`).toBe('The hard launch line is starter draft + guest ops + calm execution');
+    expect(`The share-ready story is ${SITE_TRUST_COPY.launchStoryCore}`).toBe('The share-ready story is a polished draft, clear guest flow, and calm planning');
   });
 
-  it('keeps custom URL copy framed around sharing a DayOf link instead of implying a separate domain product', () => {
-    expect(SITE_TRUST_COPY.customWeddingUrl).toBe('Share-ready DayOf URL. No separate-domain upsell.');
-    expect(SITE_TRUST_COPY.customWeddingUrlExplainer).toBe('Every site includes a personalized DayOf URL, so you can share a polished DayOf link with guests without a separate domain upsell.');
+  it('keeps custom URL copy framed around sharing a dayof link instead of implying a separate domain product', () => {
+    expect(SITE_TRUST_COPY.customWeddingUrl).toBe('Share-ready dayof URL. No separate-domain upsell.');
+    expect(SITE_TRUST_COPY.customWeddingUrlExplainer).toBe('Every site includes a personalized dayof URL, so you can share a polished dayof link with guests without a separate domain upsell.');
     expect(SITE_TRUST_COPY.customWeddingUrlExplainer.toLowerCase()).not.toContain('separate domain product');
   });
 });

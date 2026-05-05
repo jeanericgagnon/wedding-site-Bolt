@@ -5,6 +5,7 @@ import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { Card } from '../../components/ui/Card';
 import { useAuth } from '../../hooks/useAuth';
 import { formatAuditLogDateTime } from './auditLogTime';
+import { listAppActionAuditLogs, type AppActionAuditRow } from '../../lib/actionAudit';
 
 interface GuestAuditRow {
   id: string;
@@ -16,24 +17,42 @@ interface GuestAuditRow {
 }
 
 const actionLabelMap: Record<GuestAuditRow['action'], string> = {
-  insert: 'Guest record created',
-  update: 'Guest record updated',
-  delete: 'Guest record removed',
+  insert: 'Guest added',
+  update: 'Guest updated',
+  delete: 'Guest removed',
+};
+
+type UnifiedAuditRow =
+  | { id: string; kind: 'guest'; createdAt: string; title: string; detail: string; actor: string | null; area: 'guests' }
+  | { id: string; kind: 'action'; createdAt: string; title: string; detail: string; actor: string | null; area: string };
+
+const appActionTitle = (row: AppActionAuditRow) => {
+  const area = String(row.action_area || 'app').replace(/[-_]+/g, ' ');
+  return `${area.charAt(0).toUpperCase()}${area.slice(1)} update`;
 };
 
 export const DashboardAuditLogs: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, isDemoMode } = useAuth();
   const [rows, setRows] = useState<GuestAuditRow[]>([]);
+  const [actionRows, setActionRows] = useState<AppActionAuditRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [logsLoading, setLogsLoading] = useState(true);
-  const [actionFilter, setActionFilter] = useState<'all' | 'insert' | 'update' | 'delete'>('all');
-  const [searchGuestId, setSearchGuestId] = useState('');
+  const [actionFilter, setActionFilter] = useState<'all' | 'insert' | 'update' | 'delete' | 'app_action'>('all');
+  const [searchText, setSearchText] = useState('');
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       if (!user?.id) {
         if (mounted) setLogsLoading(false);
+        return;
+      }
+      if (isDemoMode) {
+        if (mounted) {
+          setRows([]);
+          setActionRows([]);
+          setLogsLoading(false);
+        }
         return;
       }
       try {
@@ -49,14 +68,30 @@ export const DashboardAuditLogs: React.FC = () => {
           return;
         }
 
-        const { data, error } = await supabase
+        const [{ data, error }, actionLogs] = await Promise.all([
+          supabase
           .from('guest_audit_logs')
-          .select('id, action, changed_at, changed_by, guest_id, guest:guest_id(name, first_name, last_name)')
+          .select('id, action, changed_at, changed_by, guest_id')
           .eq('wedding_site_id', siteId)
           .order('changed_at', { ascending: false })
-          .limit(50);
+            .limit(50),
+          listAppActionAuditLogs(siteId, 50),
+        ]);
 
         if (error) throw error;
+        const guestIds = Array.from(new Set((data ?? []).map((row: any) => row.guest_id).filter(Boolean)));
+        const guestNames = new Map<string, string>();
+        if (guestIds.length > 0) {
+          const { data: guestRows } = await supabase
+            .from('guests')
+            .select('id, name, first_name, last_name')
+            .in('id', guestIds);
+
+          (guestRows ?? []).forEach((guest: any) => {
+            const name = guest.name || [guest.first_name, guest.last_name].filter(Boolean).join(' ');
+            if (name) guestNames.set(guest.id, name);
+          });
+        }
         if (mounted) {
           const normalized = (data ?? []).map((row: any) => ({
             id: row.id,
@@ -64,12 +99,13 @@ export const DashboardAuditLogs: React.FC = () => {
             changed_at: row.changed_at,
             changed_by: row.changed_by,
             guest_id: row.guest_id,
-            guest_name: row.guest?.name || [row.guest?.first_name, row.guest?.last_name].filter(Boolean).join(' ') || undefined,
+            guest_name: guestNames.get(row.guest_id),
           })) as GuestAuditRow[];
           setRows(normalized);
+          setActionRows(actionLogs);
         }
-      } catch (err) {
-        if (mounted) setError(err instanceof Error ? err.message : 'Could not load audit logs.');
+      } catch {
+        if (mounted) setError('Couldn’t load activity history right now.');
       } finally {
         if (mounted) setLogsLoading(false);
       }
@@ -78,56 +114,83 @@ export const DashboardAuditLogs: React.FC = () => {
     return () => {
       mounted = false;
     };
-  }, [user?.id]);
+  }, [isDemoMode, user?.id]);
 
-  const filteredRows = rows.filter((row) => {
-    const actionOk = actionFilter === 'all' ? true : row.action === actionFilter;
-    const guestOk = searchGuestId.trim().length === 0 ? true : row.guest_id.toLowerCase().includes(searchGuestId.trim().toLowerCase());
-    return actionOk && guestOk;
+  const unifiedRows: UnifiedAuditRow[] = [
+    ...rows.map((row): UnifiedAuditRow => ({
+      id: row.id,
+      kind: 'guest',
+      createdAt: row.changed_at,
+      title: actionLabelMap[row.action],
+      detail: row.guest_name || `Guest ${row.guest_id}`,
+      actor: row.changed_by,
+      area: 'guests',
+    })),
+    ...actionRows.map((row): UnifiedAuditRow => ({
+      id: row.id,
+      kind: 'action',
+      createdAt: row.created_at,
+      title: appActionTitle(row),
+      detail: row.target_label ? `${row.summary} · ${row.target_label}` : row.summary,
+      actor: row.actor_user_id,
+      area: row.action_area,
+    })),
+  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  const filteredRows = unifiedRows.filter((row) => {
+    const actionOk = actionFilter === 'all'
+      ? true
+      : actionFilter === 'app_action'
+        ? row.kind === 'action'
+        : row.kind === 'guest' && rows.find((guestRow) => guestRow.id === row.id)?.action === actionFilter;
+    const q = searchText.trim().toLowerCase();
+    const searchOk = q.length === 0 ? true : [row.title, row.detail, row.actor, row.area].filter(Boolean).join(' ').toLowerCase().includes(q);
+    return actionOk && searchOk;
   });
 
   return (
     <DashboardLayout currentPage="settings">
       <div className="max-w-6xl mx-auto space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-text-primary">Audit logs</h1>
-          <p className="mt-2 text-sm text-text-secondary">Guest audit trail v1. This is the first real product audit-log screen, separate from error logs.</p>
+          <h1 className="text-3xl font-bold text-text-primary">Activity history</h1>
+          <p className="mt-2 text-sm text-text-secondary">A private record of guest updates and important changes across your wedding tools.</p>
         </div>
 
         <Card padding="lg">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-text-tertiary mb-1">Action</label>
-              <select value={actionFilter} onChange={(e) => setActionFilter(e.target.value as 'all' | 'insert' | 'update' | 'delete')} className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-sm text-text-primary">
-                <option value="all">All actions</option>
-                <option value="insert">Insert</option>
-                <option value="update">Update</option>
-                <option value="delete">Delete</option>
+              <label className="block text-xs text-text-tertiary mb-1">Change</label>
+              <select value={actionFilter} onChange={(e) => setActionFilter(e.target.value as 'all' | 'insert' | 'update' | 'delete' | 'app_action')} className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-sm text-text-primary">
+                <option value="all">All changes</option>
+                <option value="insert">Added</option>
+                <option value="update">Updated</option>
+                <option value="delete">Removed</option>
+                <option value="app_action">Wedding tool changes</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs text-text-tertiary mb-1">Guest id search</label>
-              <input value={searchGuestId} onChange={(e) => setSearchGuestId(e.target.value)} placeholder="Filter by guest id" className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-sm text-text-primary" />
+              <label className="block text-xs text-text-tertiary mb-1">Search</label>
+              <input value={searchText} onChange={(e) => setSearchText(e.target.value)} placeholder="Search by area, change, person, or detail" className="w-full px-3 py-2 rounded-lg border border-border bg-surface text-sm text-text-primary" />
             </div>
           </div>
         </Card>
 
         {loading || logsLoading ? (
-          <Card padding="lg"><p className="text-sm text-text-secondary">Loading audit logs…</p></Card>
+          <Card padding="lg"><p className="text-sm text-text-secondary">Loading activity…</p></Card>
         ) : error ? (
           <Card padding="lg"><p className="text-sm text-error">{error}</p></Card>
         ) : filteredRows.length === 0 ? (
-          <Card padding="lg"><p className="text-sm text-text-secondary">No guest audit activity yet.</p></Card>
+          <Card padding="lg"><p className="text-sm text-text-secondary">No activity yet.</p></Card>
         ) : (
           <Card padding="lg">
             <div className="space-y-3">
               {filteredRows.map((row) => (
-                <div key={row.id} className="rounded-xl border border-border-subtle bg-white px-4 py-3">
+                <div key={row.id} className="rounded-lg border border-border-subtle bg-white px-4 py-3">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-sm font-medium text-text-primary">{actionLabelMap[row.action]}</p>
-                      <p className="mt-1 text-xs text-text-secondary">{row.guest_name || `Guest ${row.guest_id}`}</p>
-                      <p className="mt-1 text-xs text-text-secondary">{formatAuditLogDateTime(row.changed_at)} · actor {row.changed_by || 'unknown'}</p>
+                      <p className="text-sm font-medium text-text-primary">{row.title}</p>
+                      <p className="mt-1 text-xs text-text-secondary">{row.detail}</p>
+                      <p className="mt-1 text-xs text-text-secondary">{formatAuditLogDateTime(row.createdAt)} · {row.actor || 'Someone'} · {row.area}</p>
                     </div>
                   </div>
                 </div>

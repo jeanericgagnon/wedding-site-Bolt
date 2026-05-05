@@ -2,6 +2,7 @@ import { BuilderProject } from '../../types/builder/project';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { builderProjectService } from './builderProjectService';
 import { serializeBuilderProject } from '../serializers/projectSerializer';
+import { customerSafeErrorMessage } from '../../lib/customerSafeError';
 
 export type PublishResult = {
   success: boolean;
@@ -27,7 +28,7 @@ export const publishService = {
         success: false,
         publishedAt: '',
         version: project.publishedVersion ?? 0,
-        error: err instanceof Error ? err.message : 'Unknown publish error',
+        error: customerSafeErrorMessage(err, 'Couldn’t update the live site yet.'),
       };
     }
   },

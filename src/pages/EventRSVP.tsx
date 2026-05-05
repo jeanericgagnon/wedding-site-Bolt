@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Calendar, Clock, MapPin, Check, X, ExternalLink, AlertCircle, Loader2 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
@@ -11,12 +10,11 @@ import { formatEventRsvpDate } from './eventRsvpDate';
 
 const RSVP_FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/validate-rsvp-token`;
 const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const CAN_USE_EVENT_RSVP_FUNCTION = import.meta.env.MODE !== 'test' && Boolean(import.meta.env.VITE_SUPABASE_URL) && Boolean(ANON_KEY);
+const CAN_USE_EVENT_RSVP_FUNCTION = Boolean(import.meta.env.VITE_SUPABASE_URL) && Boolean(ANON_KEY);
 
 interface Guest {
   id: string;
   name: string;
-  email: string;
 }
 
 interface ItineraryEvent {
@@ -49,6 +47,13 @@ interface EventRsvpFormState {
   notes: string;
 }
 
+interface EventLookupResponse {
+  guest?: Guest | null;
+  invitations?: unknown[];
+  eventRsvpSupport?: boolean;
+  rsvpSession?: string | null;
+}
+
 function buildDefaultEventRsvpFormState(): EventRsvpFormState {
   return {
     attending: true,
@@ -60,11 +65,16 @@ function buildDefaultEventRsvpFormState(): EventRsvpFormState {
 const RSVP_CONTINUITY_EVENT = 'dayof:rsvp-updated';
 const RSVP_CONTINUITY_STORAGE_KEY = 'dayof.rsvp.updatedAt';
 
-function isMissingEventRsvpSupportError(message: string) {
-  const normalized = message.toLowerCase();
-  return normalized.includes('does not exist')
-    || normalized.includes('relation "event_rsvps"')
-    || normalized.includes('404');
+const INVALID_EVENT_INVITATION_MESSAGE =
+  "This invitation link isn't valid. Please use the link from your invitation email, or ask the couple for a new one.";
+
+const INTERNAL_EVENT_RSVP_ERROR_COPY =
+  /\b(supabase|configuration|request\s*failed|functions?\/v1|edge\s*function|function|jwt|permission(?:s)?|policy|database|provider|network|fetch|token|secret|service\s*role|storage|bucket|metadata|relation\s+"?event_rsvps"?|missing-config|status\s*code|error_message)\b/i;
+
+export function safeEventRsvpGuestError(value: string | null | undefined, fallback = INVALID_EVENT_INVITATION_MESSAGE): string {
+  const cleaned = String(value ?? '').replace(/\s+/g, ' ').trim();
+  if (!cleaned || INTERNAL_EVENT_RSVP_ERROR_COPY.test(cleaned)) return fallback;
+  return cleaned;
 }
 
 function notifyRsvpContinuityUpdate() {
@@ -105,10 +115,6 @@ async function eventRsvpCall(body: object): Promise<{ data?: Record<string, unkn
   return { data: json as Record<string, unknown> };
 }
 
-function shouldFallbackToDirectEventQueries(error?: string, status?: number) {
-  return error === 'missing-config' || status === 401;
-}
-
 function resetEventRsvpModalTransientState(
   setSubmitting: React.Dispatch<React.SetStateAction<boolean>>,
   setSubmitError: React.Dispatch<React.SetStateAction<string>>,
@@ -144,6 +150,7 @@ export default function EventRSVP() {
   const token = searchParams.get('token');
 
   const [guest, setGuest] = useState<Guest | null>(null);
+  const [rsvpSessionToken, setRsvpSessionToken] = useState<string | null>(null);
   const [invitations, setInvitations] = useState<EventInvitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -178,6 +185,7 @@ export default function EventRSVP() {
         postSubmitResetTimeoutRef.current = null;
       }
       setGuest(null);
+      setRsvpSessionToken(null);
       setInvitations([]);
       setSelectedEvent(null);
       setRsvpForm({ attending: true, dietary_restrictions: '', notes: '' });
@@ -222,6 +230,7 @@ export default function EventRSVP() {
     setError('');
     if (!shouldPreserveVisibleState) {
       setGuest(null);
+      setRsvpSessionToken(null);
       setInvitations([]);
       setSelectedEvent(null);
       setRsvpForm(buildDefaultEventRsvpFormState());
@@ -240,115 +249,13 @@ export default function EventRSVP() {
         : { error: 'missing-config', status: 0 };
       const { data, error: lookupError, status: lookupStatus } = edgeLookup;
 
-      if (shouldFallbackToDirectEventQueries(lookupError, lookupStatus)) {
-        const { data: guestData, error: guestError } = await supabase
-          .from('guests')
-          .select('id, name, email')
-          .eq('invite_token', token)
-          .maybeSingle();
-
-        if (guestError) throw guestError;
-        if (!guestData) {
-          if (activeLoadRequestRef.current !== requestId) return;
-          if (shouldPreserveVisibleState) {
-            tokenLinkedSessionRef.current = true;
-            setLoading(false);
-            return;
-          }
-
-          tokenLinkedSessionRef.current = false;
-          setGuest(null);
-          setInvitations([]);
-          setSelectedEvent(null);
-          setRsvpForm(buildDefaultEventRsvpFormState());
-          setHasEventRsvpSupport(null);
-          setError("This invitation link isn't valid. Please use the link from your invitation email, or ask the couple for a new one.");
+      if (lookupStatus === 401 || lookupError === 'missing-config') {
+        if (activeLoadRequestRef.current !== requestId) return;
+        tokenLinkedSessionRef.current = shouldPreserveVisibleState;
+        if (!shouldPreserveVisibleState) {
+          setError(INVALID_EVENT_INVITATION_MESSAGE);
           setLoading(false);
-          return;
         }
-
-        if (activeLoadRequestRef.current !== requestId) return;
-        tokenLinkedSessionRef.current = true;
-        setGuest(guestData);
-
-        const { data: invitationsData, error: invitationsError } = await supabase
-          .from('event_invitations')
-          .select(`
-            id,
-            event_id,
-            itinerary_events (
-              id,
-              event_name,
-              description,
-              event_date,
-              start_time,
-              end_time,
-              location_name,
-              location_address,
-              dress_code,
-              notes
-            )
-          `)
-          .eq('guest_id', guestData.id);
-
-        if (invitationsError) throw invitationsError;
-
-        let eventRsvpSupportKnown: boolean | null = null;
-        let eventRsvpSupportAvailable = true;
-        const invitationsWithRsvps = await Promise.all(
-          (invitationsData || []).map(async (invitation) => {
-            let rsvpData: { attending: boolean | null; dietary_restrictions: string | null; notes: string | null } | null = null;
-            if (eventRsvpSupportAvailable) {
-              const { data, error } = await supabase
-                .from('event_rsvps')
-                .select('attending, dietary_restrictions, notes')
-                .eq('event_invitation_id', invitation.id)
-                .maybeSingle();
-
-              if (error) {
-                const msg = error.message || '';
-                if (isMissingEventRsvpSupportError(msg)) {
-                  if (activeLoadRequestRef.current !== requestId) return {
-                    id: invitation.id,
-                    event_id: invitation.event_id,
-                    event: invitation.itinerary_events as unknown as ItineraryEvent,
-                    rsvp: undefined,
-                  };
-                  eventRsvpSupportAvailable = false;
-                  eventRsvpSupportKnown = false;
-                } else {
-                  throw error;
-                }
-              } else {
-                if (activeLoadRequestRef.current !== requestId) return {
-                  id: invitation.id,
-                  event_id: invitation.event_id,
-                  event: invitation.itinerary_events as unknown as ItineraryEvent,
-                  rsvp: undefined,
-                };
-                eventRsvpSupportKnown = true;
-                rsvpData = (data as { attending: boolean | null; dietary_restrictions: string | null; notes: string | null } | null) ?? null;
-              }
-            }
-
-            return {
-              id: invitation.id,
-              event_id: invitation.event_id,
-              event: invitation.itinerary_events as unknown as ItineraryEvent,
-              rsvp: rsvpData
-                ? buildInvitationRsvp({
-                    attending: rsvpData.attending ?? true,
-                    dietary_restrictions: rsvpData.dietary_restrictions || '',
-                    notes: rsvpData.notes || '',
-                  })
-                : undefined,
-            };
-          })
-        );
-
-        if (activeLoadRequestRef.current !== requestId) return;
-        setInvitations(invitationsWithRsvps);
-        setHasEventRsvpSupport(eventRsvpSupportKnown);
         return;
       }
 
@@ -360,20 +267,23 @@ export default function EventRSVP() {
         }
         tokenLinkedSessionRef.current = false;
         setGuest(null);
+        setRsvpSessionToken(null);
         setInvitations([]);
         setSelectedEvent(null);
         setRsvpForm(buildDefaultEventRsvpFormState());
         setHasEventRsvpSupport(null);
-        setError(lookupError || "This invitation link isn't valid. Please use the link from your invitation email, or ask the couple for a new one.");
+        setError(safeEventRsvpGuestError(lookupError));
         setLoading(false);
         return;
       }
 
       if (activeLoadRequestRef.current !== requestId) return;
       tokenLinkedSessionRef.current = true;
-      const guestData = data.guest as Guest;
+      const lookupData = data as EventLookupResponse;
+      const guestData = lookupData.guest as Guest;
       const invitationsData = Array.isArray(data.invitations) ? data.invitations : [];
       setGuest(guestData);
+      setRsvpSessionToken(lookupData.rsvpSession ?? null);
 
       const invitationsWithRsvps = invitationsData.map((invitation) => {
         const row = invitation as EventInvitation & {
@@ -398,27 +308,28 @@ export default function EventRSVP() {
 
       if (activeLoadRequestRef.current !== requestId) return;
       setInvitations(invitationsWithRsvps);
-      setHasEventRsvpSupport(true);
+      setHasEventRsvpSupport(data.eventRsvpSupport === false ? false : true);
     } catch {
       if (activeLoadRequestRef.current !== requestId) return;
       tokenLinkedSessionRef.current = shouldPreserveVisibleState;
       if (!shouldPreserveVisibleState) {
-        setError('Failed to load your event invitations. Please try again or contact the couple.');
+        setError('Couldn’t load your event invitations. Please try again or contact the couple.');
       }
     } finally {
-      if (activeLoadRequestRef.current !== requestId) return;
-      loadInFlightRef.current = false;
-      setLoading(false);
-      if (
-        pendingContinuityRefreshRef.current
-        && token
-        && tokenLinkedSessionRef.current
-        && !selectedEvent
-        && !submitting
-        && !submitInFlightRef.current
-      ) {
-        pendingContinuityRefreshRef.current = false;
-        void loadGuestAndEvents({ preserveVisibleState: true });
+      if (activeLoadRequestRef.current === requestId) {
+        loadInFlightRef.current = false;
+        setLoading(false);
+        if (
+          pendingContinuityRefreshRef.current
+          && token
+          && tokenLinkedSessionRef.current
+          && !selectedEvent
+          && !submitting
+          && !submitInFlightRef.current
+        ) {
+          pendingContinuityRefreshRef.current = false;
+          void loadGuestAndEvents({ preserveVisibleState: true });
+        }
       }
     }
   }, [guest, selectedEvent, token]);
@@ -599,7 +510,14 @@ export default function EventRSVP() {
 
       if (!guest?.id) {
         if (activeSubmitRequestRef.current === requestId) {
-          setSubmitError("This invitation link isn't valid. Please use the link from your invitation email, or ask the couple for a new one.");
+          setSubmitError(INVALID_EVENT_INVITATION_MESSAGE);
+        }
+        return;
+      }
+
+      if (!rsvpSessionToken) {
+        if (activeSubmitRequestRef.current === requestId) {
+          setSubmitError(INVALID_EVENT_INVITATION_MESSAGE);
         }
         return;
       }
@@ -608,60 +526,25 @@ export default function EventRSVP() {
         ? await eventRsvpCall({
             action: 'event_submit',
             guestId: guest.id,
-            inviteToken: token,
+            rsvpSession: rsvpSessionToken,
             eventInvitationId: selectedEvent,
             attending: normalizedForm.attending,
+            dietaryRestrictions: normalizedForm.dietary_restrictions || null,
+            notes: normalizedForm.notes || null,
           })
         : { error: 'missing-config', status: 0 };
       const { error, status } = edgeSubmit;
 
-      if (shouldFallbackToDirectEventQueries(error, status)) {
-        if (invitation.rsvp) {
-          const { error } = await supabase
-            .from('event_rsvps')
-            .update({
-              ...buildInvitationRsvp(normalizedForm),
-              responded_at: new Date().toISOString(),
-            })
-            .eq('event_invitation_id', selectedEvent);
-
-          if (error) {
-            const msg = error.message || '';
-            if (isMissingEventRsvpSupportError(msg)) {
-              if (activeSubmitRequestRef.current === requestId) {
-                setHasEventRsvpSupport(false);
-                setSubmitError('Event-specific RSVP is temporarily unavailable for this site.');
-              }
-              return;
-            }
-            throw error;
-          }
-        } else {
-          const { error } = await supabase
-            .from('event_rsvps')
-            .insert([
-              {
-                event_invitation_id: selectedEvent,
-                ...buildInvitationRsvp(normalizedForm),
-                responded_at: new Date().toISOString(),
-              },
-            ]);
-
-          if (error) {
-            const msg = error.message || '';
-            if (isMissingEventRsvpSupportError(msg)) {
-              if (activeSubmitRequestRef.current === requestId) {
-                setHasEventRsvpSupport(false);
-                setSubmitError('Event-specific RSVP is temporarily unavailable for this site.');
-              }
-              return;
-            }
-            throw error;
-          }
-        }
-      } else if (error) {
+      if (status === 401 || error === 'missing-config') {
         if (activeSubmitRequestRef.current === requestId) {
-          setSubmitError(error);
+          setSubmitError(INVALID_EVENT_INVITATION_MESSAGE);
+        }
+        return;
+      }
+
+      if (error) {
+        if (activeSubmitRequestRef.current === requestId) {
+          setSubmitError(safeEventRsvpGuestError(error, 'Couldn’t save your RSVP. Please try again.'));
         }
         return;
       }
@@ -684,13 +567,14 @@ export default function EventRSVP() {
       }, 2000);
     } catch {
       if (activeSubmitRequestRef.current !== requestId) return;
-      setSubmitError('Failed to save your RSVP. Please try again.');
+      setSubmitError('Couldn’t save your RSVP. Please try again.');
     } finally {
-      if (activeSubmitRequestRef.current !== requestId) return;
-      if (!submittedSuccessfully) {
-        submitInFlightRef.current = false;
+      if (activeSubmitRequestRef.current === requestId) {
+        if (!submittedSuccessfully) {
+          submitInFlightRef.current = false;
+        }
+        setSubmitting(false);
       }
-      setSubmitting(false);
     }
   }
 
@@ -711,8 +595,8 @@ export default function EventRSVP() {
       <div className="min-h-screen bg-background">
         <Header />
         <div className="max-w-2xl mx-auto px-4 py-20 text-center">
-          <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-6">
-            <AlertCircle className="w-8 h-8 text-red-500" />
+          <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-lg border border-border-subtle bg-surface-secondary">
+            <AlertCircle className="w-8 h-8 text-text-tertiary" />
           </div>
           <h1 className="text-2xl font-bold text-neutral-900 mb-3">Link Not Recognized</h1>
           <p className="text-neutral-600 max-w-md mx-auto">{error}</p>
@@ -757,9 +641,9 @@ export default function EventRSVP() {
                       </h2>
                       {invitation.rsvp && (
                         <span
-                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${
+                          className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-sm font-medium ${
                             invitation.rsvp.attending
-                              ? 'bg-green-100 text-green-700'
+                              ? 'bg-surface-secondary text-text-primary border border-border-subtle'
                               : 'bg-neutral-100 text-neutral-600'
                           }`}
                         >
@@ -850,8 +734,8 @@ export default function EventRSVP() {
           <Card className="w-full max-w-lg">
             {submitSuccess ? (
               <div className="p-8 text-center">
-                <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-                  <Check className="w-9 h-9 text-green-600" />
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg border border-border-subtle bg-surface-secondary">
+                  <Check className="w-9 h-9 text-primary" />
                 </div>
                 <h3 className="text-2xl font-bold text-neutral-900 mb-2">
                   {rsvpForm.attending ? "You're in!" : "Response saved"}
@@ -885,9 +769,9 @@ export default function EventRSVP() {
                       <button
                         type="button"
                         onClick={() => updateRsvpForm((current) => ({ ...current, attending: true }))}
-                        className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium transition-all ${
+                        className={`flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-colors ${
                           rsvpForm.attending
-                            ? 'bg-green-600 text-white shadow-sm'
+                            ? 'bg-primary text-white'
                             : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
                         }`}
                       >
@@ -897,9 +781,9 @@ export default function EventRSVP() {
                       <button
                         type="button"
                         onClick={() => updateRsvpForm((current) => ({ ...current, attending: false }))}
-                        className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium transition-all ${
+                        className={`flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-colors ${
                           !rsvpForm.attending
-                            ? 'bg-neutral-700 text-white shadow-sm'
+                            ? 'bg-neutral-700 text-white border border-neutral-700'
                             : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
                         }`}
                       >
@@ -939,7 +823,7 @@ export default function EventRSVP() {
                   )}
 
                   {submitError && (
-                    <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                    <div className="flex items-start gap-2 p-3 bg-surface-secondary border border-border-subtle rounded-lg text-sm text-text-secondary">
                       <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                       {submitError}
                     </div>

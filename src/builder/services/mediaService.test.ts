@@ -25,7 +25,7 @@ describe('mediaService', () => {
     vi.clearAllMocks();
   });
 
-  it('surfaces asset-type-specific save failures after storage upload succeeds', async () => {
+  it('keeps asset-type-specific save recovery customer safe after upload succeeds', async () => {
     const file = new File(['pdf'], 'timeline.pdf', { type: 'application/pdf' });
     upload.mockResolvedValue({
       url: 'https://cdn.example.com/timeline.pdf',
@@ -34,16 +34,16 @@ describe('mediaService', () => {
     save.mockRejectedValue(new Error('row insert failed'));
 
     await expect(mediaService.uploadAsset('w1', file)).rejects.toThrow(
-      'Document uploaded, but saving it to your media library failed: row insert failed',
+      'Document uploaded, but couldn’t be added to your library yet. Please try again in a moment.',
     );
   });
 
-  it('surfaces storage upload failures before any media row is saved', async () => {
+  it('keeps upload failures customer safe before any media row is saved', async () => {
     const file = new File(['img'], 'photo.jpg', { type: 'image/jpeg' });
     upload.mockRejectedValue(new Error('bucket offline'));
 
     await expect(mediaService.uploadAsset('w1', file)).rejects.toThrow(
-      'Upload to storage failed: bucket offline',
+      'Couldn’t add that file. Please try again in a moment.',
     );
     expect(save).not.toHaveBeenCalled();
   });

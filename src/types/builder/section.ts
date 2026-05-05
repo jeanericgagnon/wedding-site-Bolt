@@ -51,6 +51,7 @@ export interface BuilderSectionDefinition {
 export interface BuilderSectionInstance {
   id: string;
   type: BuilderSectionType;
+  displayName?: string;
   variant: string;
   enabled: boolean;
   locked: boolean;
@@ -76,12 +77,15 @@ export interface BuilderSectionStyleOverrides {
   paddingTop?: string;
   paddingBottom?: string;
   fontFamily?: string;
+  styleRecipeId?: string;
+  styleRecipeCss?: string;
+  customClassName?: string;
   customCss?: string;
   sideImage?: string;
   sideImagePosition?: 'left' | 'right';
   sideImageSize?: 'sm' | 'md' | 'lg';
   sideImageFit?: 'cover' | 'contain';
-  animationPreset?: 'none' | 'fade-in' | 'fade-up' | 'slide-up' | 'zoom-in' | 'stagger';
+  animationPreset?: 'none' | 'fade-in' | 'fade-up' | 'slide-up' | 'zoom-in' | 'stagger' | 'reveal-left' | 'reveal-right' | 'blur-in' | 'float-in' | 'scale-up';
 }
 
 export interface BuilderDropZoneModel {

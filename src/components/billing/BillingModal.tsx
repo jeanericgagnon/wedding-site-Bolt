@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { X, Check, Sparkles, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '../ui';
 import { useAuth } from '../../hooks/useAuth';
-import { supabase } from '../../lib/supabase';
 import { createCheckoutSession } from '../../lib/stripeService';
+import { resolveActiveSiteForUser } from '../../lib/activeSite';
+import { logAppAction } from '../../lib/actionAudit';
 
 interface BillingModalProps {
   onClose: () => void;
@@ -12,13 +13,22 @@ interface BillingModalProps {
 
 const PRO_FEATURES = [
   'Unlimited guests and RSVPs',
-  'Personalized DayOf wedding URL',
+  'Personalized dayof wedding URL',
   'Photo & video vault (5 GB)',
-  'Guest messaging workflows',
-  'Remove Dayof branding',
+  'Guest message templates',
+  'Remove dayof branding',
   'Seating chart tools',
   'Planner collaboration access',
 ];
+
+function safeBillingError(err: unknown): string {
+  const fallback = 'Couldn’t start checkout. Please try again.';
+  const raw = err instanceof Error ? err.message : '';
+  if (raw === 'No wedding site found. Complete setup first.') {
+    return 'No wedding site found. Complete setup first.';
+  }
+  return fallback;
+}
 
 export const BillingModal: React.FC<BillingModalProps> = ({ onClose, currentPlan = 'free' }) => {
   const { user } = useAuth();
@@ -34,11 +44,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({ onClose, currentPlan
     setLoading(true);
     setError(null);
     try {
-      const { data: site } = await supabase
-        .from('wedding_sites')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      const site = await resolveActiveSiteForUser(user.id);
 
       if (!site?.id) throw new Error('No wedding site found. Complete setup first.');
 
@@ -48,9 +54,20 @@ export const BillingModal: React.FC<BillingModalProps> = ({ onClose, currentPlan
         `${origin}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
         `${origin}/dashboard/overview`
       );
+      void logAppAction({
+        weddingSiteId: site.id,
+        area: 'billing',
+        type: 'one_time_checkout_started',
+        summary: 'One-time checkout was started.',
+        targetId: site.id,
+        targetLabel: 'Full access checkout',
+        metadata: {
+          currentPlan,
+        },
+      });
       window.location.href = url;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not start checkout. Please try again.');
+      setError(safeBillingError(err));
       setLoading(false);
     }
   };
@@ -64,14 +81,14 @@ export const BillingModal: React.FC<BillingModalProps> = ({ onClose, currentPlan
       aria-modal="true"
       aria-labelledby="billing-modal-title"
     >
-      <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div className="bg-surface rounded-lg border border-border-subtle w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b border-border-subtle">
           <div>
             <h2 id="billing-modal-title" className="text-xl font-bold text-text-primary">
-              Unlock Full Access
+              Unlock full access
             </h2>
             <p className="text-sm text-text-secondary mt-0.5">
-              Access the core wedding site + guest ops product for one flat payment.
+              Get the full wedding site, guest tools, memories, and planning suite for one flat payment.
             </p>
           </div>
           <button
@@ -84,9 +101,9 @@ export const BillingModal: React.FC<BillingModalProps> = ({ onClose, currentPlan
         </div>
 
         <div className="p-6 space-y-5">
-          <div className="rounded-xl border-2 border-accent/30 bg-accent/3 p-5 relative">
+          <div className="rounded-lg border border-border-subtle bg-surface-secondary/40 p-5 relative">
             <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-              <span className="flex items-center gap-1 px-3 py-1 bg-accent text-white text-xs font-semibold rounded-full shadow-sm">
+              <span className="flex items-center gap-1 rounded-lg border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
                 <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
                 One-time payment
               </span>
@@ -107,8 +124,8 @@ export const BillingModal: React.FC<BillingModalProps> = ({ onClose, currentPlan
           </div>
 
           {error && (
-            <div className="flex items-start gap-2 p-3 bg-error-light border border-error/20 rounded-lg text-error text-sm">
-              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+            <div className="flex items-start gap-2 p-3 bg-surface-secondary border border-border-subtle rounded-lg text-text-secondary text-sm">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-text-tertiary" />
               <span>{error}</span>
             </div>
           )}
@@ -137,14 +154,14 @@ export const BillingModal: React.FC<BillingModalProps> = ({ onClose, currentPlan
               ) : (
                 <>
                   <Sparkles className="w-4 h-4 mr-2" aria-hidden="true" />
-                  Get Full Access — $49
+                  Get full access for $49
                 </>
               )}
             </Button>
           </div>
 
           <p className="text-center text-xs text-text-tertiary">
-            Secure checkout via Stripe. No subscription required.
+            Secure checkout. No subscription required.
           </p>
         </div>
       </div>

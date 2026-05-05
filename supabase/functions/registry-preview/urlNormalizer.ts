@@ -36,6 +36,40 @@ const RETAILER_PATTERNS: Record<string, RegExp> = {
   sur_la_table: /surlatable\.com$/i,
 };
 
+function isPrivateIpv4(hostname: string): boolean {
+  const parts = hostname.split('.').map((part) => Number(part));
+  if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) {
+    return false;
+  }
+
+  const [a, b] = parts;
+  return (
+    a === 10 ||
+    a === 127 ||
+    (a === 169 && b === 254) ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 168) ||
+    a === 0
+  );
+}
+
+function isBlockedHostname(hostname: string): boolean {
+  const normalized = hostname.toLowerCase().replace(/\.$/, '');
+  if (!normalized) return true;
+  if (
+    normalized === 'localhost' ||
+    normalized.endsWith('.localhost') ||
+    normalized.endsWith('.local') ||
+    normalized.endsWith('.internal') ||
+    normalized.endsWith('.test') ||
+    normalized === 'metadata.google.internal'
+  ) {
+    return true;
+  }
+  if (normalized.includes(':')) return true;
+  return isPrivateIpv4(normalized);
+}
+
 /**
  * Extract Target TCIN (Target.com Item Number) from URL
  * Format: /p/product-name/-/A-12345678
@@ -72,6 +106,16 @@ function detectRetailer(hostname: string): string | null {
 export function normalizeUrl(url: string): NormalizedUrl {
   try {
     const parsed = new URL(url);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      throw new Error('URL must use http or https');
+    }
+    if (parsed.username || parsed.password) {
+      throw new Error('URL cannot include credentials');
+    }
+    if (isBlockedHostname(parsed.hostname)) {
+      throw new Error('URL must be a public product page');
+    }
+
     const hostname = parsed.hostname.toLowerCase().replace(/^www\./, '');
     const retailer = detectRetailer(hostname);
     const metadata: Record<string, string> = {};
@@ -118,15 +162,8 @@ export function normalizeUrl(url: string): NormalizedUrl {
       retailer,
       metadata,
     };
-  } catch (error) {
-    // If URL parsing fails, return original
-    return {
-      canonical: url,
-      hostname: '',
-      pathname: '',
-      retailer: null,
-      metadata: {},
-    };
+  } catch {
+    throw new Error('Enter a public product URL.');
   }
 }
 

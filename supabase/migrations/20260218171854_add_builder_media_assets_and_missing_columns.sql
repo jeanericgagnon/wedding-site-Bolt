@@ -56,10 +56,8 @@ CREATE TABLE IF NOT EXISTS builder_media_assets (
   uploaded_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
-
 -- Enable RLS
 ALTER TABLE builder_media_assets ENABLE ROW LEVEL SECURITY;
-
 -- SELECT policy: users can view assets belonging to their wedding site
 CREATE POLICY "Users can view own media assets"
   ON builder_media_assets
@@ -72,7 +70,6 @@ CREATE POLICY "Users can view own media assets"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 -- INSERT policy: users can upload assets to their own wedding site
 CREATE POLICY "Users can insert own media assets"
   ON builder_media_assets
@@ -85,7 +82,6 @@ CREATE POLICY "Users can insert own media assets"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 -- UPDATE policy: users can update their own assets
 CREATE POLICY "Users can update own media assets"
   ON builder_media_assets
@@ -105,7 +101,6 @@ CREATE POLICY "Users can update own media assets"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 -- DELETE policy: users can delete their own assets
 CREATE POLICY "Users can delete own media assets"
   ON builder_media_assets
@@ -118,14 +113,11 @@ CREATE POLICY "Users can delete own media assets"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 -- Indexes for builder_media_assets
 CREATE INDEX IF NOT EXISTS idx_builder_media_assets_wedding_site_id
   ON builder_media_assets(wedding_site_id);
-
 CREATE INDEX IF NOT EXISTS idx_builder_media_assets_status
   ON builder_media_assets(status);
-
 -- Add is_published and published_at to wedding_sites if not already present
 DO $$
 BEGIN
@@ -143,11 +135,9 @@ BEGIN
     ALTER TABLE wedding_sites ADD COLUMN published_at timestamptz;
   END IF;
 END $$;
-
 -- Indexes for wedding_sites
 CREATE INDEX IF NOT EXISTS idx_wedding_sites_user_id
   ON wedding_sites(user_id);
-
 CREATE UNIQUE INDEX IF NOT EXISTS idx_wedding_sites_site_slug_unique
   ON wedding_sites(site_slug)
   WHERE site_slug IS NOT NULL;

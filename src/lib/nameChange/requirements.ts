@@ -51,9 +51,9 @@ export const NAME_CHANGE_REQUIREMENT_DEFINITIONS: NameChangeRequirementDefinitio
   },
   {
     key: 'launch-state-alignment',
-    label: 'Launch-state alignment',
+    label: 'State setup alignment',
     stage: 'government',
-    description: 'Downstream state-specific execution should stay aligned with the currently modeled launch state.',
+    description: 'Downstream state-specific steps should stay aligned with the currently selected state.',
   },
   {
     key: 'marriage-jurisdiction-alignment',
@@ -65,7 +65,7 @@ export const NAME_CHANGE_REQUIREMENT_DEFINITIONS: NameChangeRequirementDefinitio
     key: 'out-of-state-marriage-certificate-grounding',
     label: 'Out-of-state marriage certificate grounding',
     stage: 'proof',
-    description: 'Out-of-state marriage follow-through should carry grounded county, certificate-number extraction, and issuing-authority metadata from the certificate itself.',
+    description: 'Out-of-state marriage follow-through should include the county, certificate number, and issuing authority from the certificate itself.',
   },
   {
     key: 'legal-basis-path-alignment',
@@ -101,7 +101,7 @@ export const NAME_CHANGE_REQUIREMENT_DEFINITIONS: NameChangeRequirementDefinitio
     key: 'passport-expiration-grounding',
     label: 'Passport expiration date grounded for travel work',
     stage: 'proof',
-    description: 'Booked-travel passport and TSA follow-through should not act grounded until the current passport expiration date is represented in intake metadata.',
+    description: 'Booked-travel passport and TSA follow-through should not act grounded until the current passport expiration date is represented in saved details.',
   },
   {
     key: 'citizenship-proof-intake',
@@ -205,7 +205,7 @@ export function evaluateNameChangeRequirements(
         : legalProof.intakeStatus === 'uploaded' ? 'attention' : 'missing',
       reason: legalProof.intakeStatus === 'reviewed'
         ? (legalProofContract && legalProofContract.metadataMissing.length > 0
-          ? `The ${legalBasisLabel} is reviewed, but metadata is still missing: ${legalProofContract.metadataMissing.join(', ')}.`
+          ? `The ${legalBasisLabel} is reviewed, but details are still missing: ${legalProofContract.metadataMissing.join(', ')}.`
           : `The ${legalBasisLabel} is reviewed and ready for downstream use.`)
         : legalProof.intakeStatus === 'uploaded'
           ? `The ${legalBasisLabel} exists but still needs review.`
@@ -220,8 +220,8 @@ export function evaluateNameChangeRequirements(
         : 'missing',
       reason: hasIdentityCoverage
         ? (hasIdentityMetadataReady
-          ? 'At least one current identity document is represented in the case intake with enough metadata for downstream use.'
-          : 'Identity documents exist in intake, but metadata is still too thin for confident downstream use.')
+          ? 'At least one current identity document is represented in the case intake with enough saved details for downstream use.'
+          : 'Identity documents exist in intake, but saved details are still too thin for confident downstream use.')
         : 'No current passport, driver license, or social security card has been represented in the case intake yet.',
     },
     {
@@ -235,12 +235,12 @@ export function evaluateNameChangeRequirements(
     },
     {
       key: 'launch-state-alignment',
-      label: 'Launch-state alignment',
+      label: 'State setup alignment',
       stage: 'government',
       status: canonicalCase.launchState === 'california' ? 'satisfied' : 'missing',
       reason: canonicalCase.launchState === 'california'
-        ? 'Current modeled downstream state execution matches the California launch scope.'
-        : `Current modeled downstream state execution assumes California, but launch state is ${canonicalCase.launchState}.`,
+        ? 'Current downstream state steps match the California setup.'
+        : `Current downstream state steps assume California, but the selected state is ${canonicalCase.launchState}.`,
     },
     {
       key: 'marriage-jurisdiction-alignment',
@@ -276,11 +276,11 @@ export function evaluateNameChangeRequirements(
           ? `Marriage occurred in ${canonicalCase.legalContext.marriageState}, but no marriage certificate is represented in intake for grounded out-of-state certificate follow-through.`
           : hasVerifiedOutOfStateMarriageCertificateGrounding
             ? canonicalCase.documents.marriage_certificate.intakeStatus === 'reviewed'
-              ? 'Verified marriage-certificate county and certificate-number extraction plus issuing-authority metadata are present for out-of-state follow-through.'
+              ? 'Verified marriage-certificate county, certificate number, and issuing authority are present for out-of-state follow-through.'
               : 'Marriage-certificate reference grounding is present, but document review is still incomplete for grounded out-of-state follow-through.'
             : hasAnyOutOfStateMarriageCertificateGrounding
-              ? 'Marriage certificate is present, but verified county, certificate-number extraction, and issuing-authority metadata are still incomplete for out-of-state follow-through.'
-              : 'Marriage certificate is present, but no grounded county, certificate-number extraction, or issuing-authority metadata is represented yet for out-of-state follow-through.',
+              ? 'Marriage certificate is present, but the verified county, certificate number, and issuing authority are still incomplete for out-of-state follow-through.'
+              : 'Marriage certificate is present, but the county, certificate number, or issuing authority is not ready yet for out-of-state follow-through.',
     },
     {
       key: 'legal-basis-path-alignment',

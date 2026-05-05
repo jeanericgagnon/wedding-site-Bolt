@@ -8,7 +8,7 @@ import type {
 
 export const NAME_CHANGE_MEDICAL_PACKET_CONTRACT: NameChangeFormContractDefinition = {
   formCode: 'MEDICAL-PROVIDER-RECORD-UPDATE',
-  label: 'Medical provider / insurance card record update packet',
+  label: 'Medical office / insurance card record update packet',
   fieldSpecs: [
     { fieldKey: 'patient.currentFirstName', label: 'Current first name', sourceTargetField: 'applicant.current_first_name' },
     { fieldKey: 'patient.currentMiddleName', label: 'Current middle name', sourceTargetField: 'applicant.current_middle_name', required: false },

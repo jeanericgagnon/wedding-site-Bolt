@@ -71,4 +71,21 @@ describe('StorySection media parity', () => {
     const image = screen.getByAltText('Couple') as HTMLImageElement;
     expect(image.src).toContain('https://example.com/object-story.jpg');
   });
+
+  it('drops unsafe story image values before legacy public render', () => {
+    const data = createEmptyWeddingData();
+    data.couple.story = 'We met.';
+
+    const { container } = render(
+      <StorySection
+        data={data}
+        instance={makeInstance({
+          photo: 'javascript:alert(1)',
+        })}
+      />
+    );
+
+    expect(container.querySelector('img')).not.toBeInTheDocument();
+    expect(container.innerHTML).not.toContain('javascript:alert');
+  });
 });

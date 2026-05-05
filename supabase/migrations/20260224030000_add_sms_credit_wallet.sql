@@ -1,7 +1,6 @@
 -- SMS credit wallet + ledger
 alter table wedding_sites
   add column if not exists sms_credits_balance integer not null default 0;
-
 create table if not exists sms_credit_transactions (
   id uuid primary key default gen_random_uuid(),
   wedding_site_id uuid not null references wedding_sites(id) on delete cascade,
@@ -12,16 +11,12 @@ create table if not exists sms_credit_transactions (
   metadata jsonb,
   created_at timestamptz not null default now()
 );
-
 create unique index if not exists sms_credit_transactions_session_unique
   on sms_credit_transactions(stripe_checkout_session_id)
   where stripe_checkout_session_id is not null;
-
 create index if not exists sms_credit_transactions_site_created_idx
   on sms_credit_transactions(wedding_site_id, created_at desc);
-
 alter table sms_credit_transactions enable row level security;
-
 do $$ begin
   if not exists (
     select 1 from pg_policies

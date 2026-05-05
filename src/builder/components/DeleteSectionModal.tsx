@@ -32,13 +32,13 @@ export const DeleteSectionModal: React.FC<DeleteSectionModalProps> = ({
       className="fixed inset-0 z-[9999] flex items-center justify-center"
       onClick={e => { if (e.target === e.currentTarget) onCancel(); }}
     >
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" aria-hidden="true" />
+      <div className="absolute inset-0 bg-black/35 backdrop-blur-sm" aria-hidden="true" />
 
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
+      <div className="relative mx-4 w-full max-w-sm overflow-hidden rounded-lg border border-[var(--color-border-subtle)] bg-white shadow-md">
         <div className="p-6">
           <div className="flex items-start justify-between mb-4">
-            <div className="w-10 h-10 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center flex-shrink-0">
-              <Trash2 size={18} className="text-red-500" />
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg border border-neutral-200 bg-neutral-50">
+              <Trash2 size={18} className="text-neutral-700" />
             </div>
             <button
               onClick={onCancel}
@@ -59,14 +59,14 @@ This will remove the section and its content from this page. If you are unsure, 
         <div className="flex gap-2.5 px-6 pb-5">
           <button
             onClick={onCancel}
-            className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            className="flex-1 rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
           >
             Cancel
           </button>
           <button
             ref={confirmButtonRef}
             onClick={onConfirm}
-            className="flex-1 px-4 py-2.5 rounded-xl bg-red-500 text-white text-sm font-medium hover:bg-red-600 transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2"
+            className="flex-1 rounded-lg border border-neutral-900 bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2"
           >
 Remove it
           </button>

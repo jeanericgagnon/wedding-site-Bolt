@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { ContactMinimal, ContactSection } from './ContactSection';
+import { contactFormDefinition } from '../variants/contact/form';
 import type { SectionInstance } from '../../types/layoutConfig';
 import type { WeddingDataV1 } from '../../types/weddingData';
 
@@ -9,6 +10,7 @@ function createEmptyWeddingData(): WeddingDataV1 {
   return {
     couple: { partner1: '', partner2: '', displayName: '' },
     event: { date: '', venue: '', location: '' },
+    venues: [],
     story: { proposalStory: '', howWeMet: '' },
     schedule: [],
     travel: { accommodations: [], transportation: [], airports: [] },
@@ -23,6 +25,7 @@ function createEmptyWeddingData(): WeddingDataV1 {
     design: { template: 'classic-romance', colorScheme: 'soft-blush', fontPairing: 'elegant-serif' },
     customSections: [],
     media: { gallery: [] },
+    meta: { createdAtISO: '', updatedAtISO: '' },
   };
 }
 
@@ -84,5 +87,56 @@ describe('ContactSection', () => {
       'href',
       'mailto:jordan@example.com?subject=Guest%20question',
     );
+  });
+
+  it('drops unsafe contact hrefs before public render', () => {
+    render(
+      <ContactSection
+        data={createEmptyWeddingData()}
+        instance={makeInstance({
+          emailSubject: { value: 'Guest question' },
+          contacts: [
+            { name: 'Bad Email', email: 'bad@example.com?bcc=secret@example.com' },
+            { name: 'Bad Phone', phone: 'javascript:alert(1)' },
+            { name: 'Safe Phone', phone: '+1 (212) 555-0102' },
+          ],
+        })}
+      />,
+    );
+
+    expect(screen.getByText('Bad Email')).toBeInTheDocument();
+    expect(screen.getByText('Bad Phone')).toBeInTheDocument();
+    expect(document.querySelector('a[href^="mailto:bad"]')).not.toBeInTheDocument();
+    expect(document.querySelector('a[href^="javascript:"]')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '+1 (212) 555-0102' })).toHaveAttribute('href', 'tel:+12125550102');
+  });
+
+  it('drops unsafe contact variant email, phone, and Instagram hrefs', () => {
+    const VariantContact = contactFormDefinition.Component;
+
+    render(
+      <VariantContact
+        data={{
+          eyebrow: 'Help',
+          headline: 'Questions',
+          subheadline: '',
+          introText: '',
+          closingNote: '',
+          emailSubject: 'Wedding question',
+          contacts: [
+            { id: 'bad', name: 'Bad Contact', role: '', email: 'bad@example.com?bcc=secret@example.com', phone: '555', instagram: '../bad' },
+            { id: 'safe', name: 'Safe Contact', role: '', email: 'safe@example.com', phone: '+1 (212) 555-0102', instagram: '@dayof.love' },
+          ],
+        }}
+      />,
+    );
+
+    expect(screen.getByText('Bad Contact')).toBeInTheDocument();
+    expect(document.querySelector('a[href^="mailto:bad"]')).not.toBeInTheDocument();
+    expect(document.querySelector('a[href="tel:555"]')).not.toBeInTheDocument();
+    expect(document.querySelector('a[href*="../bad"]')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'safe@example.com' })).toHaveAttribute('href', 'mailto:safe@example.com?subject=Wedding%20question');
+    expect(screen.getByRole('link', { name: '+1 (212) 555-0102' })).toHaveAttribute('href', 'tel:+12125550102');
+    expect(screen.getByRole('link', { name: '@dayof.love' })).toHaveAttribute('href', 'https://instagram.com/dayof.love');
   });
 });

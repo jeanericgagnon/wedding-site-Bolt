@@ -9,11 +9,11 @@ import { buildWelcomeNoteDraft } from '../../lib/welcomeNoteHelper';
 import { findCsvHeaderIndex, normalizeCsvHeader } from '../../lib/csvHeaderMatcher';
 import { GUIDED_SETUP_STORAGE_KEY, normalizeGuidedSetupDraftSnapshot, type GuidedSetupDraftSnapshot } from '../../lib/guidedSetupPersistence';
 import { clearAllOnboardingContinuationState } from '../../lib/onboardingContinuationCleanup';
-import * as XLSX from 'xlsx';
 import { resolvePrimaryWeddingSiteId } from '../../lib/guidedSetupSiteResolver';
 import { writeSignupReturnPath } from '../../lib/signupContinuation';
 import { clearOnboardingEntryReturnPath } from '../../lib/onboardingEntryCleanup';
 import { buildGuidedSetupHydrationErrorMessage, buildGuidedSetupSaveErrorMessage } from '../../lib/guidedSetupErrorCopy';
+import { customerSafeErrorMessage } from '../../lib/customerSafeError';
 
 type Step =
   | 'welcome'
@@ -60,6 +60,12 @@ const normalizeHydratedDateInput = (value?: string | null): string => {
   if (Number.isNaN(date.getTime())) return '';
 
   return date.toISOString().slice(0, 10) === trimmed ? trimmed : '';
+};
+
+export const safeGuidedSetupCsvError = (err: unknown): string => {
+  return customerSafeErrorMessage(err, 'Couldn’t import that guest file. Please check the CSV and try again.', {
+    allow: [/^Please export your spreadsheet as CSV before importing\.$/i],
+  });
 };
 
 export const GuidedSetup: React.FC = () => {
@@ -213,7 +219,7 @@ export const GuidedSetup: React.FC = () => {
         }
       } catch (err: unknown) {
         if (!hasLocalDraft) {
-          setError(buildGuidedSetupHydrationErrorMessage((err as Error).message));
+          setError(buildGuidedSetupHydrationErrorMessage(err));
         }
       }
     };
@@ -272,7 +278,7 @@ export const GuidedSetup: React.FC = () => {
     });
 
     const resolvedSiteId = siteId || await resolvePrimaryWeddingSiteId(user.id);
-    if (!resolvedSiteId) throw new Error('Wedding site not found');
+    if (!resolvedSiteId) throw new Error('Couldn’t find your wedding site right now.');
 
     const { error: updateError } = await supabase
       .from('wedding_sites')
@@ -299,7 +305,7 @@ export const GuidedSetup: React.FC = () => {
         setCurrentStep(nextStep);
       }
     } catch (err: unknown) {
-        setError(buildGuidedSetupSaveErrorMessage((err as Error).message));
+        setError(buildGuidedSetupSaveErrorMessage(err));
     }
   };
 
@@ -342,7 +348,7 @@ export const GuidedSetup: React.FC = () => {
       });
 
       const resolvedSiteId = siteId || await resolvePrimaryWeddingSiteId(user.id);
-      if (!resolvedSiteId) throw new Error('Wedding site not found');
+      if (!resolvedSiteId) throw new Error('Couldn’t find your wedding site right now.');
 
       const { error: updateError } = await supabase
         .from('wedding_sites')
@@ -359,7 +365,7 @@ export const GuidedSetup: React.FC = () => {
         }
       });
     } catch (err: unknown) {
-        setError(buildGuidedSetupSaveErrorMessage((err as Error).message || 'Could not finish setup right now.'));
+        setError(buildGuidedSetupSaveErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -388,22 +394,16 @@ export const GuidedSetup: React.FC = () => {
     try {
       const lowerName = file.name.toLowerCase();
 
-      let rows: string[][] = [];
       if (lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls')) {
-        const buffer = await file.arrayBuffer();
-        const workbook = XLSX.read(buffer, { type: 'array' });
-        const firstSheetName = workbook.SheetNames[0];
-        if (!firstSheetName) throw new Error('Spreadsheet has no sheets');
-        const firstSheet = workbook.Sheets[firstSheetName];
-        rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' }) as string[][];
-      } else {
-        const text = await file.text();
-        rows = text
-          .split('\n')
-          .map(l => l.trim())
-          .filter(Boolean)
-          .map(l => l.split(',').map(v => v.trim().replace(/^"|"$/g, '')));
+        throw new Error('Please export your spreadsheet as CSV before importing.');
       }
+
+      const text = await file.text();
+      const rows = text
+        .split('\n')
+        .map(l => l.trim())
+        .filter(Boolean)
+        .map(l => l.split(',').map(v => v.trim().replace(/^"|"$/g, '')));
 
       if (rows.length < 2) throw new Error('File must have a header row and at least one guest row');
 
@@ -411,7 +411,7 @@ export const GuidedSetup: React.FC = () => {
       if (!user) throw new Error('Not authenticated');
 
       const resolvedSiteId = siteId || await resolvePrimaryWeddingSiteId(user.id);
-      if (!resolvedSiteId) throw new Error('Wedding site not found');
+      if (!resolvedSiteId) throw new Error('Couldn’t find your wedding site right now.');
 
       const cols = (rows[0] || []).map((h) => normalizeCsvHeader(String(h ?? '')));
 
@@ -472,15 +472,16 @@ export const GuidedSetup: React.FC = () => {
         const name = [firstName, lastName].filter(Boolean).join(' ') || email || 'Guest';
 
         if (email) {
-          const { data: existing } = await supabase
+          const { data: existing, error: existingError } = await supabase
             .from('guests')
             .select('id')
             .eq('wedding_site_id', resolvedSiteId)
             .eq('email', email)
             .maybeSingle();
+          if (existingError) throw existingError;
 
           if (existing) {
-            await supabase.from('guests').update({
+            const { error: updateGuestError } = await supabase.from('guests').update({
               first_name: firstName || null,
               last_name: lastName || null,
               phone: phone || null,
@@ -489,12 +490,13 @@ export const GuidedSetup: React.FC = () => {
               invited_to_ceremony: toCeremony,
               invited_to_reception: toReception,
             }).eq('id', existing.id);
+            if (updateGuestError) throw updateGuestError;
             updated++;
             continue;
           }
         }
 
-        await supabase.from('guests').insert({
+        const { error: insertGuestError } = await supabase.from('guests').insert({
           wedding_site_id: resolvedSiteId,
           name,
           first_name: firstName || null,
@@ -507,12 +509,13 @@ export const GuidedSetup: React.FC = () => {
           invited_to_reception: toReception,
           rsvp_status: 'pending',
         });
+        if (insertGuestError) throw insertGuestError;
         created++;
       }
 
       setCsvImportResult({ created, updated, invalid });
     } catch (err: unknown) {
-      setCsvError((err as Error).message || 'Failed to import guest file');
+      setCsvError(safeGuidedSetupCsvError(err));
     } finally {
       setCsvImporting(false);
       if (e.target) e.target.value = '';
@@ -525,8 +528,8 @@ export const GuidedSetup: React.FC = () => {
         return (
           <div className="space-y-6">
             <div className="text-center">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-primary/10 rounded-full mb-4">
-                <Heart className="w-10 h-10 text-primary" fill="currentColor" aria-hidden="true" />
+              <div className="inline-flex h-16 w-16 items-center justify-center rounded-lg border border-border-subtle bg-surface-raised mb-4">
+                <Heart className="w-8 h-8 text-primary" fill="currentColor" aria-hidden="true" />
               </div>
               <h2 className="text-2xl font-bold text-text-primary mb-3">
                 Let’s build your wedding website
@@ -536,11 +539,11 @@ export const GuidedSetup: React.FC = () => {
               </p>
             </div>
 
-            <div className="bg-surface-subtle rounded-lg p-6">
+            <div className="bg-surface-subtle rounded-lg border border-border-subtle p-6">
               <h3 className="font-semibold text-text-primary mb-4">What we'll cover:</h3>
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-lg bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-xs font-bold text-primary">1</span>
                   </div>
                   <div>
@@ -549,7 +552,7 @@ export const GuidedSetup: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-lg bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-xs font-bold text-primary">2</span>
                   </div>
                   <div>
@@ -558,7 +561,7 @@ export const GuidedSetup: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-lg bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-xs font-bold text-primary">3</span>
                   </div>
                   <div>
@@ -567,7 +570,7 @@ export const GuidedSetup: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-lg bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-xs font-bold text-primary">4</span>
                   </div>
                   <div>
@@ -576,7 +579,7 @@ export const GuidedSetup: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-lg bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-xs font-bold text-primary">5</span>
                   </div>
                   <div>
@@ -585,7 +588,7 @@ export const GuidedSetup: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-lg bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-xs font-bold text-primary">6</span>
                   </div>
                   <div>
@@ -594,7 +597,7 @@ export const GuidedSetup: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-lg bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-xs font-bold text-primary">7</span>
                   </div>
                   <div>
@@ -603,7 +606,7 @@ export const GuidedSetup: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-lg bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-xs font-bold text-primary">8</span>
                   </div>
                   <div>
@@ -704,7 +707,7 @@ export const GuidedSetup: React.FC = () => {
               name="ceremonyTime"
               value={formData.ceremonyTime}
               onChange={handleChange}
-              helperText="Optional — skip if you’re not ready yet"
+              helperText="Optional. Skip if you’re not ready yet."
             />
 
             <Input
@@ -726,9 +729,9 @@ export const GuidedSetup: React.FC = () => {
               helperText="Optional"
             />
 
-            <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+            <div className="p-4 bg-surface-subtle rounded-lg border border-border-subtle">
               <p className="text-sm text-text-secondary">
-                <span className="font-medium text-primary">Tip:</span> You can add more events and details from your dashboard later
+                <span className="font-medium text-primary">Tip:</span> You can add more events and details from Schedule later
               </p>
             </div>
           </div>
@@ -749,7 +752,7 @@ export const GuidedSetup: React.FC = () => {
               onChange={handleChange}
               placeholder="List recommended hotels or add booking links..."
               rows={4}
-              helperText="Optional — you can skip this for now"
+              helperText="Optional. You can skip this for now."
             />
 
             <Textarea
@@ -764,7 +767,7 @@ export const GuidedSetup: React.FC = () => {
 
             <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
               <p className="text-sm text-text-secondary">
-                <span className="font-medium text-primary">Note:</span> You can add airport info, transportation options, and local attractions from your dashboard
+                <span className="font-medium text-primary">Note:</span> You can add airport info, transportation options, and local favorites from Travel later
               </p>
             </div>
           </div>
@@ -799,7 +802,7 @@ export const GuidedSetup: React.FC = () => {
 
             <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
               <p className="text-sm text-text-secondary">
-                <span className="font-medium text-primary">Tip:</span> You can manage all RSVPs and review the latest responses from your guest list dashboard
+                <span className="font-medium text-primary">Tip:</span> You can manage RSVPs and review the latest responses from Guests later
               </p>
             </div>
           </div>
@@ -850,7 +853,7 @@ export const GuidedSetup: React.FC = () => {
               onChange={handleChange}
               placeholder="Add any extra questions you want to answer for guests..."
               rows={4}
-              helperText="You can edit all FAQs from your dashboard"
+              helperText="You can edit all FAQs from the site editor"
             />
           </div>
         );
@@ -879,7 +882,7 @@ export const GuidedSetup: React.FC = () => {
                     key={tpl.id}
                     type="button"
                     onClick={() => setFormData(prev => ({ ...prev, template: tpl.id }))}
-                    className={`p-4 rounded-xl border-2 text-left transition-all ${
+                    className={`p-4 rounded-lg border-2 text-left transition-all ${
                       formData.template === tpl.id
                         ? 'border-primary bg-primary/10'
                         : 'border-border hover:border-primary/50'
@@ -887,11 +890,11 @@ export const GuidedSetup: React.FC = () => {
                   >
                     <div className="aspect-[3/4] bg-surface-subtle rounded-lg mb-3 flex items-center justify-center overflow-hidden">
                       <div className="space-y-1.5 w-full px-3">
-                        <div className="h-2 bg-primary/20 rounded-full w-full" />
-                        <div className="h-1.5 bg-border rounded-full w-3/4" />
+                        <div className="h-2 bg-primary/20 rounded w-full" />
+                        <div className="h-1.5 bg-border rounded w-3/4" />
                         <div className="h-4 bg-primary/10 rounded mt-2" />
-                        <div className="h-1.5 bg-border rounded-full w-full" />
-                        <div className="h-1.5 bg-border rounded-full w-2/3" />
+                        <div className="h-1.5 bg-border rounded w-full" />
+                        <div className="h-1.5 bg-border rounded w-2/3" />
                       </div>
                     </div>
                     <p className="text-sm font-medium text-text-primary">{tpl.name}</p>
@@ -943,7 +946,7 @@ export const GuidedSetup: React.FC = () => {
               {formData.colorScheme === 'custom' && (
                 <div className="mt-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
                   <p className="text-sm text-text-secondary">
-                    <span className="font-medium text-primary">Custom palette:</span> You'll be able to choose your own colors from the builder after setup
+                    <span className="font-medium text-primary">Custom palette:</span> You'll be able to choose your own colors from the site editor after setup
                   </p>
                 </div>
               )}
@@ -956,7 +959,7 @@ export const GuidedSetup: React.FC = () => {
           <div className="space-y-6">
             <div>
               <h2 className="text-2xl font-bold text-text-primary mb-2">Import Your Guest List</h2>
-              <p className="text-text-secondary">Start with a CSV, or skip and add guests manually later</p>
+              <p className="text-text-secondary">Start with a CSV, or skip and add guests yourself later</p>
             </div>
 
             <div className="p-4 bg-surface-subtle rounded-lg space-y-3">
@@ -979,18 +982,18 @@ export const GuidedSetup: React.FC = () => {
             <div className="space-y-3">
               <h3 className="font-semibold text-text-primary flex items-center gap-2">
                 <Upload className="w-4 h-4 text-primary" aria-hidden="true" />
-                Step 2: Upload your guest file (CSV or XLSX)
+                Step 2: Upload your guest file (CSV)
               </h3>
               {csvImportResult ? (
-                <div className="p-4 bg-success/10 border border-success/30 rounded-lg space-y-2">
-                  <div className="flex items-center gap-2 font-medium text-success">
+                <div className="p-4 bg-surface-secondary border border-border-subtle rounded-lg space-y-2">
+                  <div className="flex items-center gap-2 font-medium text-text-primary">
                     <CheckCircle2 className="w-5 h-5" aria-hidden="true" />
                     Import complete
                   </div>
                   <ul className="text-sm text-text-secondary space-y-1">
                     <li>{csvImportResult.created} guests added</li>
                     {csvImportResult.updated > 0 && <li>{csvImportResult.updated} guests updated</li>}
-                    {csvImportResult.invalid > 0 && <li className="text-warning">{csvImportResult.invalid} rows skipped (missing name/email)</li>}
+                    {csvImportResult.invalid > 0 && <li className="text-text-secondary">{csvImportResult.invalid} rows need a name or email before import</li>}
                   </ul>
                   <button
                     type="button"
@@ -1005,20 +1008,20 @@ export const GuidedSetup: React.FC = () => {
                   <div className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${csvImporting ? 'border-primary/50 bg-primary/5' : 'border-border hover:border-primary/50'}`}>
                     {csvImporting ? (
                       <div className="space-y-2">
-                        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-lg animate-spin mx-auto" />
                         <p className="text-sm text-text-secondary">Importing guests...</p>
                       </div>
                     ) : (
                       <>
                         <Upload className="w-8 h-8 text-text-tertiary mx-auto mb-3" aria-hidden="true" />
-                        <p className="text-sm font-medium text-text-primary mb-1">Click to upload CSV or XLSX</p>
-                        <p className="text-xs text-text-tertiary">Supports template CSV/XLSX or most common guest file headers (name/email/phone/group, etc.)</p>
+                        <p className="text-sm font-medium text-text-primary mb-1">Click to upload CSV</p>
+                        <p className="text-xs text-text-tertiary">Supports the template CSV or most common guest file headers (name/email/phone/group, etc.)</p>
                       </>
                     )}
                   </div>
                   <input
                     type="file"
-                    accept=".csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                    accept=".csv,text/csv"
                     className="hidden"
                     onChange={handleCsvUpload}
                     disabled={csvImporting}
@@ -1026,8 +1029,8 @@ export const GuidedSetup: React.FC = () => {
                 </label>
               )}
               {csvError && (
-                <div className="flex items-start gap-2 p-3 bg-error/10 border border-error/30 rounded-lg text-sm text-error">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                <div className="flex items-start gap-2 p-3 bg-surface-secondary border border-border-subtle rounded-lg text-sm text-text-secondary">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-text-tertiary" aria-hidden="true" />
                   {csvError}
                 </div>
               )}
@@ -1035,7 +1038,7 @@ export const GuidedSetup: React.FC = () => {
 
             <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
               <p className="text-sm text-text-secondary">
-                <span className="font-medium text-primary">Skip this step</span> if you’re not ready. You can always add and manage guests later from the Guests dashboard.
+                <span className="font-medium text-text-primary">Skip this step</span> if you’re not ready. You can always add and manage guests later from Guests.
               </p>
             </div>
           </div>
@@ -1044,21 +1047,21 @@ export const GuidedSetup: React.FC = () => {
       case 'complete':
         return (
           <div className="space-y-6 text-center">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-accent/20 rounded-full mb-4">
-              <Check className="w-10 h-10 text-accent" aria-hidden="true" />
+            <div className="inline-flex h-16 w-16 items-center justify-center rounded-lg border border-border-subtle bg-surface-raised mb-4">
+              <Check className="w-8 h-8 text-primary" aria-hidden="true" />
             </div>
             <h2 className="text-2xl font-bold text-text-primary mb-3">
               Your starter draft is ready to review
             </h2>
             <p className="text-text-secondary max-w-md mx-auto mb-6">
-              We drafted the core pages from what you shared. Review the starter draft in your dashboard, tighten the details, and only publish once you're ready to share it with guests.
+              We drafted the core pages from what you shared. Review the starter draft in your wedding home, tighten the details, and only publish once you're ready to share it with guests.
             </p>
 
             <div className="bg-surface-subtle rounded-lg p-6 text-left">
               <h3 className="font-semibold text-text-primary mb-4">What's next?</h3>
               <ul className="space-y-3">
                 <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-lg bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-xs font-bold text-primary">1</span>
                   </div>
                   <div>
@@ -1067,7 +1070,7 @@ export const GuidedSetup: React.FC = () => {
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-lg bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-xs font-bold text-primary">2</span>
                   </div>
                   <div>
@@ -1076,11 +1079,11 @@ export const GuidedSetup: React.FC = () => {
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-lg bg-surface-raised border border-border-subtle flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-xs font-bold text-primary">3</span>
                   </div>
                   <div>
-                    <p className="font-medium text-text-primary">Refine access, preview, and go live when ready</p>
+                    <p className="font-medium text-text-primary">Review access, preview, and share when ready</p>
                     <p className="text-sm text-text-secondary">Set the guest-facing access you want, then share once the site feels solid</p>
                   </div>
                 </li>
@@ -1088,7 +1091,7 @@ export const GuidedSetup: React.FC = () => {
             </div>
 
             {error && (
-              <div className="p-3 bg-error-light text-error rounded-lg text-sm">
+              <div className="p-3 bg-surface-secondary border border-border-subtle text-text-secondary rounded-lg text-sm">
                 {error}
               </div>
             )}
@@ -1100,7 +1103,7 @@ export const GuidedSetup: React.FC = () => {
               onClick={handleComplete}
               disabled={loading}
             >
-              {loading ? 'Creating your starter site...' : 'Go to dashboard'}
+              {loading ? 'Creating your starter site...' : 'Go to wedding home'}
             </Button>
           </div>
         );
@@ -1111,7 +1114,7 @@ export const GuidedSetup: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background via-surface-subtle to-surface p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
       <div className="w-full max-w-2xl">
         {currentStep !== 'welcome' && (
           <div className="mb-4 flex items-center justify-start">
@@ -1148,7 +1151,7 @@ export const GuidedSetup: React.FC = () => {
                 {Math.round(progress)}% complete
               </span>
             </div>
-            <div className="w-full h-2 bg-surface-subtle rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-surface-subtle rounded-lg overflow-hidden">
               <div
                 className="h-full bg-primary transition-all duration-300"
                 style={{ width: `${progress}%` }}
@@ -1157,7 +1160,7 @@ export const GuidedSetup: React.FC = () => {
           </div>
         )}
 
-        <Card variant="default" padding="lg" className="shadow-lg">
+        <Card variant="default" padding="lg">
           {renderStep()}
 
           {currentStep !== 'welcome' && currentStep !== 'complete' && (

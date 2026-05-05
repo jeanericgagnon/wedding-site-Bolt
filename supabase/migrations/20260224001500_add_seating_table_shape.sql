@@ -1,7 +1,6 @@
 -- Add visual shape metadata for seating tables
 ALTER TABLE seating_tables
   ADD COLUMN IF NOT EXISTS table_shape text NOT NULL DEFAULT 'round';
-
 DO $$
 BEGIN
   IF NOT EXISTS (

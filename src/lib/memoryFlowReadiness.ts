@@ -1,0 +1,144 @@
+export type MemoryFlowReadinessStatus = 'ready' | 'needs-action' | 'empty' | 'planned';
+
+export interface MemoryFlowReadinessInput {
+  albumCount: number;
+  activeAlbumCount: number;
+  uploadCount: number;
+  videoUploadCount?: number;
+  guestbookEnabled: boolean;
+  guestbookCount: number;
+  photoUploadEnabled: boolean;
+  flaggedUploadCount: number;
+  reviewQueueCount: number;
+  recapStatus: 'draft' | 'private_link' | 'published' | 'closed';
+  recapFeaturedCount: number;
+  recapStoryCount: number;
+  slideshowFrameCount?: number;
+  slideshowReadyAlbumCount?: number;
+  guestHubActionCount: number;
+  guestProspectCount: number;
+}
+
+export interface MemoryFlowReadinessStep {
+  id: 'guest-hub' | 'album-links' | 'guestbook' | 'video-capture' | 'moderation' | 'slideshow' | 'recap' | 'follow-up' | 'export';
+  label: string;
+  detail: string;
+  status: MemoryFlowReadinessStatus;
+}
+
+export interface MemoryFlowReadiness {
+  readyCount: number;
+  steps: MemoryFlowReadinessStep[];
+  blockers: string[];
+}
+
+const countLabel = (count: number, singular: string, plural = `${singular}s`) =>
+  `${count} ${count === 1 ? singular : plural}`;
+
+export function buildMemoryFlowReadiness(input: MemoryFlowReadinessInput): MemoryFlowReadiness {
+  const hasAlbums = input.albumCount > 0;
+  const hasActiveAlbum = input.activeAlbumCount > 0;
+  const hasUploads = input.uploadCount > 0;
+  const needsReview = input.flaggedUploadCount > 0 || input.reviewQueueCount > 0;
+  const recapHasPicks = input.recapFeaturedCount > 0 || input.recapStoryCount > 0;
+  const recapShareable = input.recapStatus === 'private_link' || input.recapStatus === 'published';
+  const videoUploadCount = Math.max(input.videoUploadCount ?? 0, 0);
+  const slideshowFrameCount = Math.max(input.slideshowFrameCount ?? 0, 0);
+  const slideshowReadyAlbumCount = Math.max(input.slideshowReadyAlbumCount ?? 0, 0);
+  const handoffExportReady = hasUploads && !needsReview;
+
+  const steps: MemoryFlowReadinessStep[] = [
+    {
+      id: 'guest-hub',
+      label: 'No-app guest hub',
+      detail: input.guestHubActionCount > 0
+        ? `${countLabel(input.guestHubActionCount, 'guest action')} enabled from the QR hub.`
+        : 'Turn on at least one guest action before printing the hub QR.',
+      status: input.guestHubActionCount > 0 ? 'ready' : 'needs-action',
+    },
+    {
+      id: 'album-links',
+      label: 'Photo upload links',
+      detail: hasActiveAlbum
+        ? `${countLabel(input.activeAlbumCount, 'active album')} can receive uploads.`
+        : hasAlbums
+          ? 'Albums exist, but none are active for guest uploads.'
+          : 'Create an album before sharing photo upload links.',
+      status: hasActiveAlbum && input.photoUploadEnabled ? 'ready' : hasAlbums ? 'needs-action' : 'empty',
+    },
+    {
+      id: 'guestbook',
+      label: 'Guestbook notes',
+      detail: input.guestbookEnabled
+        ? `${countLabel(input.guestbookCount, 'guestbook note')} captured.`
+        : 'Guestbook notes are off in the guest hub controls.',
+      status: input.guestbookEnabled ? 'ready' : 'needs-action',
+    },
+    {
+      id: 'video-capture',
+      label: 'Video memories',
+      detail: videoUploadCount > 0
+        ? `${countLabel(videoUploadCount, 'video')} captured for the memory flow.`
+        : 'Video upload is supported, but live video capture still needs a proof pass.',
+      status: videoUploadCount > 0 ? 'ready' : 'planned',
+    },
+    {
+      id: 'moderation',
+      label: 'Moderation queue',
+      detail: needsReview
+        ? `${countLabel(input.flaggedUploadCount, 'flagged upload')} and ${countLabel(input.reviewQueueCount, 'review item')} need a look.`
+        : hasUploads
+          ? 'No flagged uploads or review items are blocking the current recap.'
+          : 'No uploads to moderate yet.',
+      status: needsReview ? 'needs-action' : hasUploads ? 'ready' : 'empty',
+    },
+    {
+      id: 'slideshow',
+      label: 'Slideshow draft',
+      detail: slideshowFrameCount > 0
+        ? `${countLabel(slideshowFrameCount, 'slide')} ready from ${countLabel(slideshowReadyAlbumCount, 'album')}.`
+        : hasUploads
+          ? 'Needs at least three visible, unflagged uploads in an active album.'
+          : 'Guest uploads will unlock the slideshow draft.',
+      status: slideshowFrameCount >= 3 ? 'ready' : hasUploads ? 'needs-action' : 'empty',
+    },
+    {
+      id: 'recap',
+      label: 'Guest recap',
+      detail: recapShareable && recapHasPicks
+        ? `Recap is ${input.recapStatus === 'private_link' ? 'private-link ready' : 'published'} with curated picks.`
+        : recapHasPicks
+          ? 'Curated picks exist, but the recap is not shareable yet.'
+          : 'Feature photos or mark story picks before sharing the recap.',
+      status: recapShareable && recapHasPicks ? 'ready' : recapHasPicks ? 'needs-action' : 'empty',
+    },
+    {
+      id: 'follow-up',
+      label: 'Guest follow-up',
+      detail: input.guestProspectCount > 0
+        ? `${countLabel(input.guestProspectCount, 'guest opt-in')} available for recap or future-event follow-up.`
+        : 'No guest follow-up opt-ins captured yet.',
+      status: input.guestProspectCount > 0 ? 'ready' : 'empty',
+    },
+    {
+      id: 'export',
+      label: 'Photo handoff export',
+      detail: handoffExportReady
+        ? 'Owner handoff sheets can be saved from reviewed guest uploads; full-resolution job packaging remains planned.'
+        : needsReview
+          ? 'Review flagged uploads before relying on photo handoff exports.'
+          : 'Guest uploads will unlock owner handoff exports; full-resolution job packaging remains planned.',
+      status: handoffExportReady ? 'ready' : needsReview ? 'needs-action' : 'empty',
+    },
+  ];
+
+  const blockers = steps
+    .filter((step) => step.status === 'needs-action')
+    .map((step) => step.detail);
+
+  return {
+    readyCount: steps.filter((step) => step.status === 'ready').length,
+    steps,
+    blockers,
+  };
+}

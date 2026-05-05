@@ -2,6 +2,7 @@ import React from 'react';
 import { z } from 'zod';
 import { MapPin, Clock, ExternalLink } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
+import { getSafePublicImageUrl, getSafePublicWebUrl } from '../../publicLinks';
 
 const VenueItemSchema = z.object({
   id: z.string(),
@@ -47,24 +48,27 @@ const VenueCard: React.FC<SectionComponentProps<VenueCardData>> = ({ data }) => 
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-16">
           {data.eyebrow && (
-            <p className="text-[11px] uppercase tracking-[0.32em] text-stone-400 font-semibold mb-5">
+            <p className="text-sm text-stone-400 font-light mb-5">
               {data.eyebrow}
             </p>
           )}
-          <h2 className="text-4xl md:text-6xl font-light text-stone-900 tracking-tight">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-stone-900">{data.headline}</h2>
         </div>
 
         <div className={`grid gap-8 ${data.venues.length === 1 ? 'max-w-2xl mx-auto' : 'grid-cols-1 md:grid-cols-2'}`}>
-          {data.venues.map(venue => (
+          {data.venues.map(venue => {
+            const safeMapUrl = getSafePublicWebUrl(venue.mapUrl);
+            const safeVenueImage = getSafePublicImageUrl(venue.image);
+            return (
             <div key={venue.id} className="bg-white rounded-[1.5rem] overflow-hidden shadow-sm border border-stone-100/80 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-              {venue.image && (
+              {safeVenueImage && (
                 <div className="aspect-[16/9] overflow-hidden">
-                  <img src={venue.image} alt={venue.name} className="w-full h-full object-cover" />
+                  <img src={safeVenueImage} alt={venue.name} className="w-full h-full object-cover" />
                 </div>
               )}
               <div className="p-7 md:p-9 space-y-5">
                 {venue.role && (
-                  <p className="text-xs uppercase tracking-[0.2em] text-rose-500 font-medium">{venue.role}</p>
+                  <p className="text-sm text-rose-500 font-medium">{venue.role}</p>
                 )}
                 <h3 className="text-2xl font-light text-stone-900">{venue.name}</h3>
 
@@ -90,9 +94,9 @@ const VenueCard: React.FC<SectionComponentProps<VenueCardData>> = ({ data }) => 
                   <p className="text-sm text-stone-400 leading-relaxed border-t border-stone-100 pt-4">{venue.notes}</p>
                 )}
 
-                {venue.mapUrl && (
+                {safeMapUrl && (
                   <a
-                    href={venue.mapUrl}
+                    href={safeMapUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-900 transition-colors mt-2"
@@ -103,7 +107,8 @@ const VenueCard: React.FC<SectionComponentProps<VenueCardData>> = ({ data }) => 
                 )}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

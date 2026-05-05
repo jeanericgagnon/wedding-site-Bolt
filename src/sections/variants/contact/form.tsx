@@ -2,6 +2,7 @@ import React from 'react';
 import { z } from 'zod';
 import { Mail, Instagram, Phone } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
+import { getSafePublicEmailHref, getSafePublicInstagramUrl, getSafePublicTelHref } from '../../publicLinks';
 
 const ContactPersonSchema = z.object({
   id: z.string(),
@@ -57,11 +58,11 @@ const ContactForm: React.FC<SectionComponentProps<ContactFormData>> = ({ data })
       <div className="max-w-4xl mx-auto px-6 md:px-12">
         <div className="text-center mb-14">
           {data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">
+            <p className="text-sm text-stone-400 font-light mb-4">
               {data.eyebrow}
             </p>
           )}
-          <h2 className="text-4xl md:text-6xl font-light text-stone-900 mb-3 tracking-tight">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-stone-900 mb-3">{data.headline}</h2>
           {data.subheadline && (
             <p className="text-stone-500 font-light text-lg leading-relaxed">{data.subheadline}</p>
           )}
@@ -72,19 +73,23 @@ const ContactForm: React.FC<SectionComponentProps<ContactFormData>> = ({ data })
 
         {data.contacts.length > 0 && (
           <div className={`grid gap-5 ${data.contacts.length === 1 ? 'max-w-sm mx-auto' : 'grid-cols-1 md:grid-cols-2'}`}>
-            {data.contacts.map(contact => (
+            {data.contacts.map(contact => {
+              const safeEmailHref = getSafePublicEmailHref(contact.email, data.emailSubject);
+              const safeTelHref = getSafePublicTelHref(contact.phone);
+              const safeInstagramUrl = getSafePublicInstagramUrl(contact.instagram);
+              return (
               <div key={contact.id} className="bg-white rounded-[1.5rem] p-7 border border-stone-100 shadow-sm hover:shadow-lg transition-shadow">
                 <div className="mb-4">
                   <h3 className="font-medium text-stone-900 text-base">{contact.name}</h3>
                   {contact.role && (
-                    <p className="text-xs text-stone-400 uppercase tracking-wide mt-0.5">{contact.role}</p>
+                    <p className="text-xs text-stone-400 mt-0.5">{contact.role}</p>
                   )}
                 </div>
 
                 <div className="space-y-3">
-                  {contact.email && (
+                  {safeEmailHref && (
                     <a
-                      href={`mailto:${contact.email}?subject=${encodeURIComponent(data.emailSubject)}`}
+                      href={safeEmailHref}
                       className="flex items-center gap-3 text-sm text-stone-600 hover:text-stone-900 group transition-colors"
                     >
                       <div className="w-7 h-7 rounded-lg bg-stone-50 border border-stone-100 flex items-center justify-center group-hover:border-stone-300 transition-colors flex-shrink-0">
@@ -93,9 +98,9 @@ const ContactForm: React.FC<SectionComponentProps<ContactFormData>> = ({ data })
                       {contact.email}
                     </a>
                   )}
-                  {contact.phone && (
+                  {safeTelHref && (
                     <a
-                      href={`tel:${contact.phone}`}
+                      href={safeTelHref}
                       className="flex items-center gap-3 text-sm text-stone-600 hover:text-stone-900 group transition-colors"
                     >
                       <div className="w-7 h-7 rounded-lg bg-stone-50 border border-stone-100 flex items-center justify-center group-hover:border-stone-300 transition-colors flex-shrink-0">
@@ -104,9 +109,9 @@ const ContactForm: React.FC<SectionComponentProps<ContactFormData>> = ({ data })
                       {contact.phone}
                     </a>
                   )}
-                  {contact.instagram && (
+                  {safeInstagramUrl && (
                     <a
-                      href={`https://instagram.com/${contact.instagram.replace('@', '')}`}
+                      href={safeInstagramUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-3 text-sm text-stone-600 hover:text-stone-900 group transition-colors"
@@ -119,7 +124,8 @@ const ContactForm: React.FC<SectionComponentProps<ContactFormData>> = ({ data })
                   )}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
 

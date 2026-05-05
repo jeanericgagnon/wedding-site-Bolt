@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { z } from 'zod';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
+import { sanitizePublicGalleryImages, type PublicGalleryImage } from './publicGallery';
 
 const GalleryImageSchema = z.object({
   id: z.string(),
@@ -61,7 +62,7 @@ function useIntersection(ref: React.RefObject<Element | null>, threshold = 0.1) 
 }
 
 const PolaroidCard: React.FC<{
-  image: GalleryPolaroidData['images'][number];
+  image: PublicGalleryImage;
   idx: number;
   animation: string;
   showCaptions: boolean;
@@ -111,15 +112,16 @@ const PolaroidCard: React.FC<{
 
 const SECTION_SHELL = "py-32 md:py-40";
 const CONTAINER_SHELL = "max-w-6xl mx-auto px-6 md:px-12";
-const SECTION_TITLE = "text-4xl md:text-6xl font-light text-stone-900 tracking-tight";
+const SECTION_TITLE = "text-4xl md:text-6xl font-light text-stone-900";
 const PHOTO_IMG = "w-full h-full object-cover saturate-[1.03] contrast-[1.02] transition-transform duration-500 group-hover:scale-105";
 
 const GalleryPolaroid: React.FC<SectionComponentProps<GalleryPolaroidData>> = ({ data }) => {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const images = sanitizePublicGalleryImages(data.images);
 
   const closeLightbox = () => setLightboxIndex(null);
-  const prevImage = () => setLightboxIndex(i => i === null ? null : (i - 1 + data.images.length) % data.images.length);
-  const nextImage = () => setLightboxIndex(i => i === null ? null : (i + 1) % data.images.length);
+  const prevImage = () => setLightboxIndex(i => i === null ? null : (i - 1 + images.length) % images.length);
+  const nextImage = () => setLightboxIndex(i => i === null ? null : (i + 1) % images.length);
 
   useEffect(() => {
     if (lightboxIndex === null) return;
@@ -137,14 +139,14 @@ const GalleryPolaroid: React.FC<SectionComponentProps<GalleryPolaroidData>> = ({
       <div className={CONTAINER_SHELL}>
         <div className="text-center mb-16">
           {data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">{data.eyebrow}</p>
+            <p className="text-sm text-stone-400 font-light mb-4">{data.eyebrow}</p>
           )}
           <h2 className={SECTION_TITLE}>{data.headline}</h2>
         </div>
 
-        {data.images.length > 0 ? (
+        {images.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 md:gap-10" style={{ paddingTop: '12px', paddingBottom: '12px' }}>
-            {data.images.map((image, idx) => (
+            {images.map((image, idx) => (
               <PolaroidCard
                 key={image.id}
                 image={image}
@@ -158,7 +160,7 @@ const GalleryPolaroid: React.FC<SectionComponentProps<GalleryPolaroidData>> = ({
           </div>
         ) : (
           <div className="text-center py-20 text-stone-400">
-            <p className="text-sm">No photos yet</p>
+            <p className="text-sm">Photos will appear once they’re added.</p>
           </div>
         )}
       </div>
@@ -172,15 +174,15 @@ const GalleryPolaroid: React.FC<SectionComponentProps<GalleryPolaroidData>> = ({
             <ChevronLeft size={20} />
           </button>
           <div className="max-w-5xl max-h-[85vh] px-16" onClick={e => e.stopPropagation()}>
-            <img src={data.images[lightboxIndex].url} alt={data.images[lightboxIndex].alt} className="max-w-full max-h-[85vh] object-contain rounded-lg" />
-            {data.showCaptions && data.images[lightboxIndex].caption && (
-              <p className="text-white/70 text-sm text-center mt-3 italic">{data.images[lightboxIndex].caption}</p>
+            <img src={images[lightboxIndex]?.url} alt={images[lightboxIndex]?.alt ?? 'Gallery photo'} className="max-w-full max-h-[85vh] object-contain rounded-lg" />
+            {data.showCaptions && images[lightboxIndex]?.caption && (
+              <p className="text-white/70 text-sm text-center mt-3 italic">{images[lightboxIndex]?.caption}</p>
             )}
           </div>
           <button onClick={e => { e.stopPropagation(); nextImage(); }} className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors">
             <ChevronRight size={20} />
           </button>
-          <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/40 text-xs">{lightboxIndex + 1} / {data.images.length}</p>
+          <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/40 text-xs">{lightboxIndex + 1} / {images.length}</p>
         </div>
       )}
     </section>

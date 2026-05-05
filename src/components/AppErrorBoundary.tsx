@@ -78,10 +78,10 @@ export class AppErrorBoundary extends React.Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-gray-50 flex items-start justify-center p-4 pt-20">
-          <div className="max-w-md w-full bg-white border border-gray-200 rounded-xl shadow-sm p-4">
+        <div className="flex min-h-screen items-start justify-center bg-surface-subtle p-4 pt-20">
+          <div className="w-full max-w-md rounded-lg border border-border-subtle bg-white p-4 shadow-sm">
             <div className="flex items-center gap-2 text-sm text-gray-700">
-              <AlertTriangle className="w-4 h-4 text-amber-500" />
+              <AlertTriangle className="h-4 w-4 text-text-tertiary" />
               <span>Please refresh to continue.</span>
             </div>
             <div className="mt-3 flex gap-2">

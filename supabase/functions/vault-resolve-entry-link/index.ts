@@ -13,6 +13,17 @@ const json = (data: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
+function safeVaultAttachmentUrl(value: unknown): string | null {
+  const raw = typeof value === "string" ? value.trim() : "";
+  if (!raw) return null;
+  try {
+    const parsed = new URL(raw);
+    return parsed.protocol === "https:" || parsed.protocol === "http:" ? parsed.href : null;
+  } catch {
+    return null;
+  }
+}
+
 async function refreshAccessToken(refreshToken: string) {
   const clientId = Deno.env.get("GOOGLE_DRIVE_CLIENT_ID");
   const clientSecret = Deno.env.get("GOOGLE_DRIVE_CLIENT_SECRET");
@@ -107,17 +118,20 @@ Deno.serve(async (req: Request) => {
         path = rawUrl;
       }
 
-      if (!path) return json({ url: rawUrl });
+      if (!path) return json({ url: safeVaultAttachmentUrl(rawUrl) });
 
       const { data: signed, error: signedErr } = await adminClient.storage
         .from('vault-attachments')
         .createSignedUrl(path, 60 * 5);
-      if (signedErr) return json({ error: signedErr.message }, 400);
+      if (signedErr) {
+        console.error("VAULT_RESOLVE_ENTRY_SIGNED_URL_FAILED", signedErr);
+        return json({ error: "Could not open this vault attachment. Please try again." }, 400);
+      }
       return json({ url: signed?.signedUrl ?? null });
     }
 
     if (!entry.external_file_id) {
-      return json({ url: entry.external_file_url ?? entry.attachment_url ?? null });
+      return json({ url: safeVaultAttachmentUrl(entry.external_file_url ?? entry.attachment_url) });
     }
 
     let accessToken = site.vault_google_drive_access_token as string | null;
@@ -138,15 +152,19 @@ Deno.serve(async (req: Request) => {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     const fileJson = await fileRes.json();
-    if (!fileRes.ok) return json({ error: "Failed to resolve Google Drive link", details: fileJson }, 400);
+    if (!fileRes.ok) {
+      console.error("VAULT_RESOLVE_ENTRY_GOOGLE_DRIVE_FAILED", fileJson);
+      return json({ error: "Could not open this vault attachment. Please try again." }, 400);
+    }
 
     const url = fileJson.webViewLink ?? fileJson.webContentLink ?? null;
     if (url) {
       await adminClient.from("vault_entries").update({ external_file_url: url }).eq("id", entry.id);
     }
 
-    return json({ url });
+    return json({ url: safeVaultAttachmentUrl(url) });
   } catch (err) {
-    return json({ error: err instanceof Error ? err.message : "Internal server error" }, 500);
+    console.error("VAULT_RESOLVE_ENTRY_LINK_UNEXPECTED_FAILED", err);
+    return json({ error: "Could not open this vault attachment. Please try again." }, 500);
   }
 });

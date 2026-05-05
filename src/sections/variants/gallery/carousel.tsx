@@ -2,6 +2,7 @@ import React from 'react';
 import { z } from 'zod';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
+import { sanitizePublicGalleryImages } from './publicGallery';
 
 const GalleryImageSchema = z.object({
   id: z.string(),
@@ -43,7 +44,7 @@ export const defaultGalleryCarouselData: GalleryCarouselData = {
 };
 
 const GalleryCarousel: React.FC<SectionComponentProps<GalleryCarouselData>> = ({ data }) => {
-  const slides = data.images.filter((img) => !!img.url);
+  const slides = sanitizePublicGalleryImages(data.images);
   const [index, setIndex] = React.useState(0);
   const total = slides.length;
 
@@ -68,9 +69,9 @@ const GalleryCarousel: React.FC<SectionComponentProps<GalleryCarouselData>> = ({
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-10">
           {data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.24em] text-stone-400 font-medium mb-3">{data.eyebrow}</p>
+            <p className="text-sm text-stone-400 font-light mb-3">{data.eyebrow}</p>
           )}
-          <h2 className="text-4xl md:text-6xl font-light text-stone-900 tracking-tight">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-stone-900">{data.headline}</h2>
         </div>
 
         {total > 0 ? (
@@ -131,7 +132,7 @@ const GalleryCarousel: React.FC<SectionComponentProps<GalleryCarouselData>> = ({
           </div>
         ) : (
           <div className="rounded-2xl border border-stone-200 py-16 text-center text-stone-400 text-sm">
-            No photos yet
+            Photos will appear once they’re added.
           </div>
         )}
       </div>

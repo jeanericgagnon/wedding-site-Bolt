@@ -109,6 +109,7 @@ export async function sendSignupWelcome(opts: {
 }
 
 export async function sendWeddingInvitation(opts: {
+  weddingSiteId: string;
   guestEmail: string;
   guestName: string;
   coupleName1: string;
@@ -121,6 +122,7 @@ export async function sendWeddingInvitation(opts: {
 }): Promise<void> {
   if (!opts.guestEmail) throw new Error('Guest email is required');
   if (!opts.guestName) throw new Error('Guest name is required');
+  if (!opts.weddingSiteId) throw new Error('Wedding site is required');
   if (!opts.coupleName1 || !opts.coupleName2) throw new Error('Couple names are required');
 
   await callEmailFunction({
@@ -128,6 +130,7 @@ export async function sendWeddingInvitation(opts: {
     to: opts.guestEmail,
     data: {
       guestName: opts.guestName,
+      weddingSiteId: opts.weddingSiteId,
       coupleName1: opts.coupleName1,
       coupleName2: opts.coupleName2,
       weddingDate: opts.weddingDate ?? null,

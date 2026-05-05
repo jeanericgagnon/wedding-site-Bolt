@@ -1,10 +1,19 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { enforcePublicSubmissionRateLimit } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
+
+function json(body: Record<string, unknown>, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
 
 function slugify(input: string): string {
   return input
@@ -14,11 +23,42 @@ function slugify(input: string): string {
     .slice(0, 64);
 }
 
-function normalizeUrl(url: string | null | undefined): string | null {
+function isPrivateIpv4(hostname: string): boolean {
+  const parts = hostname.split('.').map((part) => Number(part));
+  if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) return false;
+  const [a, b] = parts;
+  return (
+    a === 0 ||
+    a === 10 ||
+    a === 127 ||
+    (a === 100 && b >= 64 && b <= 127) ||
+    (a === 169 && b === 254) ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 168) ||
+    a >= 224
+  );
+}
+
+function isBlockedHostname(hostname: string): boolean {
+  const normalized = hostname.toLowerCase().replace(/^\[|\]$/g, '');
+  if (!normalized) return true;
+  if (normalized === 'localhost' || normalized.endsWith('.localhost')) return true;
+  if (normalized.includes(':')) return true;
+  if (isPrivateIpv4(normalized)) return true;
+  return false;
+}
+
+function normalizeUrl(url: string | null | undefined, allowedHost?: RegExp): string | null {
   if (!url?.trim()) return null;
   const raw = url.trim();
   try {
-    return new URL(raw.startsWith('http') ? raw : `https://${raw}`).toString();
+    const parsed = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return null;
+    if (parsed.username || parsed.password) return null;
+    if (isBlockedHostname(parsed.hostname)) return null;
+    if (allowedHost && !allowedHost.test(parsed.hostname.toLowerCase())) return null;
+    parsed.hash = '';
+    return parsed.toString();
   } catch {
     return null;
   }
@@ -79,7 +119,7 @@ function extractTitle(html: string): string | null {
 }
 
 function extractInstagramUrlFromHtml(html: string): string | null {
-  return normalizeUrl(extractFirstMatch(html, /href=["'](https?:\/\/(?:www\.)?instagram\.com\/[^"'#?]+(?:\/)?)["']/i));
+  return normalizeUrl(extractFirstMatch(html, /href=["'](https?:\/\/(?:www\.)?instagram\.com\/[^"'#?]+(?:\/)?)["']/i), /(^|\.)instagram\.com$/);
 }
 
 function extractSocialUrlFromHtml(html: string, network: 'pinterest' | 'tiktok' | 'facebook' | 'youtube'): string | null {
@@ -89,7 +129,13 @@ function extractSocialUrlFromHtml(html: string, network: 'pinterest' | 'tiktok' 
     facebook: /href=["'](https?:\/\/(?:www\.)?facebook\.com\/[^"'#?]+(?:\/)?)["']/i,
     youtube: /href=["'](https?:\/\/(?:www\.)?(?:youtube\.com|youtu\.be)\/[^"'#?]+(?:\/)?)["']/i,
   };
-  return normalizeUrl(extractFirstMatch(html, patterns[network]));
+  const allowedHosts: Record<typeof network, RegExp> = {
+    pinterest: /(^|\.)pinterest\.[a-z.]+$/,
+    tiktok: /(^|\.)tiktok\.com$/,
+    facebook: /(^|\.)facebook\.com$/,
+    youtube: /(^|\.)youtube\.com$|^youtu\.be$/,
+  };
+  return normalizeUrl(extractFirstMatch(html, patterns[network]), allowedHosts[network]);
 }
 
 function extractMailtoEmail(html: string): string | null {
@@ -186,25 +232,54 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
+  const requestUrl = new URL(req.url);
+  if (requestUrl.searchParams.get("readiness") === "1") {
+    return json({ success: true, function: "vendor-profile-preview", readiness: "ok" });
+  }
+  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   try {
     const { vendorName, instagramUrl, websiteUrl, pinterestUrl, tiktokUrl, facebookUrl, youtubeUrl } = await req.json();
     if (!vendorName || typeof vendorName !== 'string') {
-      return new Response(JSON.stringify({ error: 'vendorName is required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return json({ error: 'vendorName is required' }, 400);
     }
     if (!instagramUrl && !websiteUrl) {
-      return new Response(JSON.stringify({ error: 'Add at least an Instagram URL or website URL.' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return json({ error: 'Add at least an Instagram URL or website URL.' }, 400);
     }
 
     const normalizedWebsite = normalizeUrl(websiteUrl);
-    const normalizedInstagram = normalizeUrl(instagramUrl);
-    const normalizedPinterest = normalizeUrl(pinterestUrl);
-    const normalizedTiktok = normalizeUrl(tiktokUrl);
-    const normalizedFacebook = normalizeUrl(facebookUrl);
-    const normalizedYoutube = normalizeUrl(youtubeUrl);
+    const normalizedInstagram = normalizeUrl(instagramUrl, /(^|\.)instagram\.com$/);
+    const normalizedPinterest = normalizeUrl(pinterestUrl, /(^|\.)pinterest\.[a-z.]+$/);
+    const normalizedTiktok = normalizeUrl(tiktokUrl, /(^|\.)tiktok\.com$/);
+    const normalizedFacebook = normalizeUrl(facebookUrl, /(^|\.)facebook\.com$/);
+    const normalizedYoutube = normalizeUrl(youtubeUrl, /(^|\.)youtube\.com$|^youtu\.be$/);
+    if (websiteUrl && !normalizedWebsite) {
+      return json({ error: 'Enter a public website URL.' }, 400);
+    }
+    if (instagramUrl && !normalizedInstagram) {
+      return json({ error: 'Enter a public Instagram URL.' }, 400);
+    }
     const instagramHandle = extractInstagramHandle(normalizedInstagram);
     const websiteLabel = extractDomainLabel(normalizedWebsite);
     const sourceLabel = instagramHandle ? `@${instagramHandle}` : websiteLabel ? titleCase(websiteLabel) : 'public source';
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (supabaseUrl && serviceRole) {
+      const admin = createClient(supabaseUrl, serviceRole);
+      const rateLimit = await enforcePublicSubmissionRateLimit({
+        admin,
+        request: req,
+        scope: "vendor_profile_preview",
+        subject: normalizedWebsite || normalizedInstagram || vendorName.trim().toLowerCase(),
+        maxIp: 12,
+        maxSubject: 4,
+        windowMinutes: 10,
+      });
+      if (!rateLimit.ok) {
+        return json({ error: rateLimit.message }, rateLimit.status);
+      }
+    }
 
     let websiteTitle: string | null = null;
     let websiteDescription: string | null = null;
@@ -292,7 +367,7 @@ Deno.serve(async (req) => {
       ?? null;
     const galleryImages = images.filter((image) => image !== heroImage);
 
-    return new Response(JSON.stringify({
+    return json({
       slug: slugify(vendorName),
       vendor_name: vendorName.trim(),
       descriptor: descriptor || null,
@@ -320,8 +395,8 @@ Deno.serve(async (req) => {
         websiteYoutubeUrl,
         websiteContactEmail,
       },
-    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to generate vendor preview' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    return json({ error: 'Could not prepare vendor preview. Please try again.' }, 500);
   }
 });

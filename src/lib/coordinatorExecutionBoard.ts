@@ -13,10 +13,10 @@ export const buildCoordinatorExecutionBoard = (
 ): CoordinatorExecutionBoard => {
   if (!feedback) {
     return {
-      statusLabel: 'No recent execution feedback',
+      statusLabel: 'No recent board update',
       tone: 'neutral',
-      lastMoveLabel: 'Board is waiting for the next operator move',
-      laneLabel: 'No active execution lane',
+      lastMoveLabel: 'Board is waiting for the next move',
+      laneLabel: 'No active focus yet',
       effectLabel: 'Run a board action to stamp the latest move here',
     };
   }
@@ -41,9 +41,9 @@ export const buildCoordinatorExecutionBoard = (
     lastMoveLabel: feedback.label,
     laneLabel,
     effectLabel: feedback.kind === 'transition'
-      ? 'Execution changed live state'
+      ? 'Live state changed'
       : feedback.kind === 'realignment'
-        ? 'Execution returned to the board target'
-        : 'Execution shifted operator focus',
+        ? 'Board returned to target'
+        : 'Board focus shifted',
   };
 };

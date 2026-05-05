@@ -14,6 +14,49 @@ interface SendBulkPayload {
 }
 
 type SiteMessagingRole = "owner" | "planner" | "coordinator" | "viewer";
+const SMS_SEGMENT_SIZE = 160;
+
+function escapeHtml(value: unknown): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function safeSendBulkError(code: string): string {
+  switch (code) {
+    case "AUDIENCE_LOAD_FAILED":
+      return "Could not load this message audience. Please try again.";
+    case "DELIVERY_LOG_FAILED":
+      return "Could not save delivery history. Please try again.";
+    case "MESSAGE_UPDATE_FAILED":
+      return "Could not update this message. Please try again.";
+    case "DELIVERY_PROVIDER_FAILED":
+      return "Delivery did not complete. Please review the recipient and try again.";
+    case "SMS_CREDITS_FAILED":
+      return "Could not verify SMS credits. Please try again.";
+    default:
+      return "Could not process this message. Please try again.";
+  }
+}
+
+function safeDeliveryFailureMessage(channel: string): string {
+  return channel === "sms"
+    ? "Text delivery did not complete. Please review the recipient and try again."
+    : "Email delivery did not complete. Please review the recipient and try again.";
+}
+
+function hasPermissionKey(permissions: unknown, key: string): boolean {
+  return Array.isArray(permissions) && permissions.includes(key);
+}
+
+function countSmsSegments(body: string): number {
+  const length = body.trim().length;
+  if (length <= 0) return 0;
+  return Math.ceil(length / SMS_SEGMENT_SIZE);
+}
 
 async function sendViaTwilio(opts: {
   accountSid: string;
@@ -40,13 +83,15 @@ async function sendViaTwilio(opts: {
 
     if (!res.ok) {
       const body = await res.text();
-      return { error: `Twilio ${res.status}: ${body}` };
+      console.error("SEND_BULK_MESSAGE_SMS_PROVIDER_FAILED", { status: res.status, body });
+      return { error: safeDeliveryFailureMessage("sms") };
     }
 
     const data = await res.json();
     return { id: data.sid };
   } catch (err) {
-    return { error: err instanceof Error ? err.message : "Network error" };
+    console.error("SEND_BULK_MESSAGE_SMS_NETWORK_FAILED", err);
+    return { error: safeDeliveryFailureMessage("sms") };
   }
 }
 
@@ -58,7 +103,11 @@ function buildEmailHtml(opts: {
   guestName?: string;
 }): string {
   const { subject, body, coupleName1, coupleName2, guestName } = opts;
-  const greeting = guestName ? `<p style="margin:0 0 16px;font-size:16px;color:#333;">Dear ${guestName},</p>` : "";
+  const safeSubject = escapeHtml(subject);
+  const safeCoupleName1 = escapeHtml(coupleName1);
+  const safeCoupleName2 = escapeHtml(coupleName2);
+  const greeting = guestName ? `<p style="margin:0 0 16px;font-size:16px;color:#333;">Dear ${escapeHtml(guestName)},</p>` : "";
+  const safeBody = escapeHtml(body);
 
   return `<!DOCTYPE html>
 <html>
@@ -66,12 +115,12 @@ function buildEmailHtml(opts: {
 <body style="margin:0;padding:0;background:#f9f7f4;font-family:Georgia,serif;">
   <div style="max-width:560px;margin:40px auto;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,0.08);">
     <div style="background:#1a1a1a;padding:32px 40px;text-align:center;">
-      <p style="margin:0;color:#c8a97e;font-size:13px;letter-spacing:3px;text-transform:uppercase;">${subject}</p>
-      <h1 style="margin:8px 0 0;color:#ffffff;font-size:28px;font-weight:400;">${coupleName1} &amp; ${coupleName2}</h1>
+      <p style="margin:0;color:#c8a97e;font-size:13px;letter-spacing:3px;text-transform:uppercase;">${safeSubject}</p>
+      <h1 style="margin:8px 0 0;color:#ffffff;font-size:28px;font-weight:400;">${safeCoupleName1} &amp; ${safeCoupleName2}</h1>
     </div>
     <div style="padding:40px;">
       ${greeting}
-      <div style="font-size:15px;color:#444;line-height:1.8;white-space:pre-wrap;">${body.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>
+      <div style="font-size:15px;color:#444;line-height:1.8;white-space:pre-wrap;">${safeBody}</div>
     </div>
     <div style="padding:20px 40px;background:#f9f7f4;text-align:center;border-top:1px solid #ede9e0;">
       <p style="margin:0;font-size:12px;color:#aaa;">Powered by DayOf</p>
@@ -104,12 +153,14 @@ async function sendViaResend(opts: {
     });
     if (!res.ok) {
       const body = await res.text();
-      return { error: `Resend ${res.status}: ${body}` };
+      console.error("SEND_BULK_MESSAGE_EMAIL_PROVIDER_FAILED", { status: res.status, body });
+      return { error: safeDeliveryFailureMessage("email") };
     }
     const data = await res.json();
     return { id: data.id };
   } catch (err) {
-    return { error: err instanceof Error ? err.message : "Network error" };
+    console.error("SEND_BULK_MESSAGE_EMAIL_NETWORK_FAILED", err);
+    return { error: safeDeliveryFailureMessage("email") };
   }
 }
 
@@ -144,14 +195,16 @@ async function resolveSiteMessagingRole(adminClient: ReturnType<typeof createCli
 
   const { data: collaboratorRow, error: collaboratorError } = await adminClient
     .from("wedding_site_collaborators")
-    .select("role")
+    .select("role, permissions")
     .eq("wedding_site_id", weddingSiteId)
     .eq("user_id", userId)
     .maybeSingle();
 
   if (collaboratorError) throw collaboratorError;
   const role = collaboratorRow?.role;
-  if (role === "planner" || role === "coordinator" || role === "viewer") return role;
+  if ((role === "planner" || role === "coordinator" || role === "viewer") && hasPermissionKey(collaboratorRow?.permissions, "messages")) {
+    return role;
+  }
   return null;
 }
 
@@ -163,9 +216,8 @@ async function listMessageManageableSiteIds(adminClient: ReturnType<typeof creat
       .eq("user_id", userId),
     adminClient
       .from("wedding_site_collaborators")
-      .select("wedding_site_id, role")
+      .select("wedding_site_id, role, permissions")
       .eq("user_id", userId)
-      .eq("role", "planner"),
   ]);
 
   if (ownedError) throw ownedError;
@@ -173,7 +225,9 @@ async function listMessageManageableSiteIds(adminClient: ReturnType<typeof creat
 
   return Array.from(new Set([
     ...(ownedSites ?? []).map((row: { id: string }) => row.id),
-    ...(collaboratorSites ?? []).map((row: { wedding_site_id: string }) => row.wedding_site_id),
+    ...(collaboratorSites ?? [])
+      .filter((row: { permissions?: unknown }) => hasPermissionKey(row.permissions, "messages"))
+      .map((row: { wedding_site_id: string }) => row.wedding_site_id),
   ].filter(Boolean)));
 }
 
@@ -199,7 +253,7 @@ async function deliverMessage(opts: {
   }
 
   const siteRole = await resolveSiteMessagingRole(adminClient, message.wedding_sites.id, userId);
-  if (siteRole !== "owner" && siteRole !== "planner") {
+  if (!siteRole) {
     return { ok: false, status: 403, body: { error: "Forbidden" } };
   }
 
@@ -218,7 +272,7 @@ async function deliverMessage(opts: {
   const channel: string = message.channel ?? "email";
   let guestQuery = adminClient
     .from("guests")
-    .select("id, first_name, last_name, name, email, phone, rsvp_status")
+    .select("id, first_name, last_name, name, email, phone, sms_consent, rsvp_status")
     .eq("wedding_site_id", message.wedding_sites.id);
 
   if (channel === "sms") {
@@ -261,11 +315,11 @@ async function deliverMessage(opts: {
 
   const allGuests = guests ?? [];
   const eligibleGuests = allGuests.filter((g) => {
-    if (channel === "sms") return !!g.phone;
+    if (channel === "sms") return !!g.phone && g.sms_consent === true;
     return g.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(g.email);
   });
   const skippedGuests = allGuests.filter((g) => {
-    if (channel === "sms") return !g.phone;
+    if (channel === "sms") return !g.phone || g.sms_consent !== true;
     return !(g.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(g.email));
   });
 
@@ -291,7 +345,8 @@ async function deliverMessage(opts: {
       .eq("channel", "email");
 
     if (sentErr) {
-      return { ok: false, status: 500, body: { error: sentErr.message } };
+      console.error("SEND_BULK_MESSAGE_EMAIL_CAP_LOAD_FAILED", sentErr);
+      return { ok: false, status: 500, body: { error: safeSendBulkError("AUDIENCE_LOAD_FAILED") } };
     }
 
     const used = (sentRows ?? [])
@@ -318,11 +373,20 @@ async function deliverMessage(opts: {
     recipient_count: allGuests.length,
     reachable_count: eligibleGuests.length,
     skipped_count: skippedGuests.length,
+    sms_segment_count: channel === "sms" ? countSmsSegments(message.body ?? "") : null,
+    sms_credit_cost: channel === "sms" ? eligibleGuests.length * countSmsSegments(message.body ?? "") : null,
   };
 
   if (channel === "sms") {
+    const smsSegmentCount = countSmsSegments(message.body ?? "");
+    const smsCreditCost = eligibleGuests.length * smsSegmentCount;
+
+    if (Deno.env.get("ENABLE_SMS_PROVIDER") !== "true") {
+      return { ok: false, status: 503, body: { error: "SMS provider setup pending. Telnyx sending is not enabled yet." } };
+    }
+
     if (!twilioSid || !twilioToken || !twilioFrom) {
-      return { ok: false, status: 500, body: { error: "SMS provider not configured (Twilio env missing)" } };
+      return { ok: false, status: 500, body: { error: "SMS provider credentials are not configured yet." } };
     }
 
     const nowIso = new Date().toISOString();
@@ -330,11 +394,12 @@ async function deliverMessage(opts: {
       .from("sms_credit_transactions")
       .select("id, remaining_credits, expires_at, created_at")
       .eq("wedding_site_id", message.wedding_sites.id)
-      .eq("reason", "purchase")
+      .in("reason", ["purchase", "included"])
       .order("created_at", { ascending: true });
 
     if (lotsError) {
-      return { ok: false, status: 500, body: { error: lotsError.message } };
+      console.error("SEND_BULK_MESSAGE_SMS_CREDITS_LOAD_FAILED", lotsError);
+      return { ok: false, status: 500, body: { error: safeSendBulkError("SMS_CREDITS_FAILED") } };
     }
 
     const lots = (purchaseLots ?? []).map((l: any) => ({
@@ -357,11 +422,11 @@ async function deliverMessage(opts: {
       .sort((a, b) => (a.expiresAt || "").localeCompare(b.expiresAt || ""));
     const availableCredits = usableLots.reduce((sum, l) => sum + l.remaining, 0);
 
-    if (availableCredits < eligibleGuests.length) {
-      return { ok: false, status: 400, body: { error: `Insufficient SMS credits: need ${eligibleGuests.length}, have ${availableCredits}` } };
+    if (availableCredits < smsCreditCost) {
+      return { ok: false, status: 400, body: { error: `Insufficient SMS credits: need ${smsCreditCost}, have ${availableCredits}` } };
     }
 
-    let remainingToConsume = eligibleGuests.length;
+    let remainingToConsume = smsCreditCost;
     for (const lot of usableLots) {
       if (remainingToConsume <= 0) break;
       const take = Math.min(lot.remaining, remainingToConsume);
@@ -377,7 +442,7 @@ async function deliverMessage(opts: {
       .eq("id", message.wedding_sites.id)
       .maybeSingle();
     const currentCredits = Number(siteWallet?.sms_credits_balance ?? 0);
-    const nextCredits = Math.max(currentCredits - eligibleGuests.length - expiredCredits, 0);
+    const nextCredits = Math.max(currentCredits - smsCreditCost - expiredCredits, 0);
 
     await adminClient
       .from("wedding_sites")
@@ -386,9 +451,9 @@ async function deliverMessage(opts: {
 
     await adminClient.from("sms_credit_transactions").insert({
       wedding_site_id: message.wedding_sites.id,
-      credits_delta: -eligibleGuests.length,
+      credits_delta: -smsCreditCost,
       reason: "usage",
-      metadata: { message_id: messageId, audience, channel },
+      metadata: { message_id: messageId, audience, channel, sms_segment_count: smsSegmentCount, recipient_count: eligibleGuests.length },
     });
 
     if (expiredCredits > 0) {
@@ -423,7 +488,8 @@ async function deliverMessage(opts: {
     .delete()
     .eq("message_id", messageId);
   if (clearDeliveriesResult.error && !isMissingDeliveriesTableError(clearDeliveriesResult.error)) {
-    return { ok: false, status: 500, body: { error: clearDeliveriesResult.error.message } };
+    console.error("SEND_BULK_MESSAGE_DELIVERY_CLEAR_FAILED", clearDeliveriesResult.error);
+    return { ok: false, status: 500, body: { error: safeSendBulkError("DELIVERY_LOG_FAILED") } };
   }
   const canWriteDeliveryLog = !clearDeliveriesResult.error;
 
@@ -439,7 +505,7 @@ async function deliverMessage(opts: {
       recipient_name: guestName,
       status: "skipped",
       error_message: channel === "sms"
-        ? "Skipped: guest is missing a phone number"
+        ? "Skipped: guest is missing a phone number or SMS consent"
         : "Skipped: guest is missing a valid email address",
       attempted_at: new Date().toISOString(),
     });
@@ -470,7 +536,7 @@ async function deliverMessage(opts: {
           recipient_email: guest.email,
           recipient_name: guestName,
           status: "failed",
-          error_message: "Email provider not configured (RESEND_API_KEY missing)",
+          error_message: safeDeliveryFailureMessage("email"),
           attempted_at: attemptedAt,
         });
         failedCount++;
@@ -525,7 +591,8 @@ async function deliverMessage(opts: {
   if (deliveryInserts.length > 0 && canWriteDeliveryLog) {
     const insertDeliveriesResult = await adminClient.from("message_deliveries").insert(deliveryInserts);
     if (insertDeliveriesResult.error && !isMissingDeliveriesTableError(insertDeliveriesResult.error)) {
-      return { ok: false, status: 500, body: { error: insertDeliveriesResult.error.message } };
+      console.error("SEND_BULK_MESSAGE_DELIVERY_INSERT_FAILED", insertDeliveriesResult.error);
+      return { ok: false, status: 500, body: { error: safeSendBulkError("DELIVERY_LOG_FAILED") } };
     }
   }
 
@@ -546,7 +613,8 @@ async function deliverMessage(opts: {
     .eq("id", messageId);
 
   if (finalStatusUpdate.error) {
-    return { ok: false, status: 500, body: { error: finalStatusUpdate.error.message } };
+    console.error("SEND_BULK_MESSAGE_STATUS_UPDATE_FAILED", finalStatusUpdate.error);
+    return { ok: false, status: 500, body: { error: safeSendBulkError("MESSAGE_UPDATE_FAILED") } };
   }
 
   await adminClient
@@ -642,7 +710,8 @@ Deno.serve(async (req: Request) => {
         .limit(limit);
 
       if (dueMessagesError) {
-        return jsonResponse(500, { error: dueMessagesError.message });
+        console.error("SEND_BULK_MESSAGE_DUE_MESSAGES_LOAD_FAILED", dueMessagesError);
+        return jsonResponse(500, { error: safeSendBulkError("AUDIENCE_LOAD_FAILED") });
       }
 
       const messageIds = (dueMessages ?? []).map((row: any) => row.id as string).filter(Boolean);
@@ -719,7 +788,7 @@ Deno.serve(async (req: Request) => {
 
     return jsonResponse(result.status, result.body);
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Internal server error";
-    return jsonResponse(500, { error: message });
+    console.error("SEND_BULK_MESSAGE_UNEXPECTED_FAILED", err);
+    return jsonResponse(500, { error: "Could not process this message. Please try again." });
   }
 });

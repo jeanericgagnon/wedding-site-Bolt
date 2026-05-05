@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { SectionInstance } from '../../types/layoutConfig';
 import { Calendar } from 'lucide-react';
@@ -38,6 +38,7 @@ interface FormState {
 }
 
 function RsvpForm({ onSuccess, dark }: { onSuccess: (attending: boolean) => void; dark?: boolean }) {
+  const formId = useId();
   const [form, setForm] = useState<FormState>({
     guestName: '',
     attending: 'attending',
@@ -85,8 +86,9 @@ function RsvpForm({ onSuccess, dark }: { onSuccess: (attending: boolean) => void
   return (
     <form onSubmit={handleSubmit} className="space-y-4 text-left">
       <div>
-        <label className={labelBase}>Your name</label>
+        <label htmlFor={`${formId}-guest-name`} className={labelBase}>Your name</label>
         <input
+          id={`${formId}-guest-name`}
           type="text"
           required
           value={form.guestName}
@@ -96,8 +98,9 @@ function RsvpForm({ onSuccess, dark }: { onSuccess: (attending: boolean) => void
         />
       </div>
       <div>
-        <label className={labelBase}>Will you be joining us?</label>
+        <label htmlFor={`${formId}-attending`} className={labelBase}>Will you be joining us?</label>
         <select
+          id={`${formId}-attending`}
           value={form.attending}
           onChange={e => setForm(f => ({ ...f, attending: e.target.value as 'attending' | 'declined' }))}
           className={inputBase}
@@ -108,8 +111,9 @@ function RsvpForm({ onSuccess, dark }: { onSuccess: (attending: boolean) => void
       </div>
       {form.attending === 'attending' && (
         <div>
-          <label className={labelBase}>Number of guests</label>
+          <label htmlFor={`${formId}-guest-count`} className={labelBase}>Number of guests</label>
           <input
+            id={`${formId}-guest-count`}
             type="number"
             min={1}
             max={10}
@@ -120,8 +124,9 @@ function RsvpForm({ onSuccess, dark }: { onSuccess: (attending: boolean) => void
         </div>
       )}
       <div>
-        <label className={labelBase}>Dietary notes <span className={dark ? 'text-white/40' : 'text-text-secondary'}>(optional)</span></label>
+        <label htmlFor={`${formId}-dietary-notes`} className={labelBase}>Dietary notes <span className={dark ? 'text-white/40' : 'text-text-secondary'}>(optional)</span></label>
         <textarea
+          id={`${formId}-dietary-notes`}
           value={form.dietaryNotes}
           onChange={e => setForm(f => ({ ...f, dietaryNotes: e.target.value }))}
           placeholder="Any dietary restrictions or allergies we should know about?"
@@ -154,6 +159,7 @@ export const RsvpSection: React.FC<Props> = ({ data, instance }) => {
   const { rsvp } = data;
   const { settings } = instance;
   const deadline = formatDeadline(rsvp.deadlineISO);
+  const sectionTitle = readBuilderValue(settings.title as string | { value: string } | undefined, 'RSVP').trim() || 'RSVP';
   const [submitted, setSubmitted] = useState(false);
   const [attending, setAttending] = useState(false);
 
@@ -167,8 +173,8 @@ export const RsvpSection: React.FC<Props> = ({ data, instance }) => {
       <div className="max-w-lg mx-auto text-center">
         {settings.showTitle !== false && (
           <>
-            <p className="text-xs uppercase tracking-[0.3em] text-primary/80 mb-3 font-medium">Kindly reply</p>
-            <h2 className="text-3xl md:text-5xl font-light text-text-primary mb-4 leading-tight">{readBuilderValue(settings.title as string | { value: string } | undefined, 'RSVP')}</h2>
+            <p className="text-sm text-primary/80 mb-3 font-light">Kindly reply</p>
+            <h2 className="text-3xl md:text-5xl font-light text-text-primary mb-4 leading-tight">{sectionTitle}</h2>
           </>
         )}
         {deadline && (
@@ -204,6 +210,7 @@ export const RsvpInline: React.FC<Props> = ({ data, instance }) => {
   const { rsvp, couple } = data;
   const { settings } = instance;
   const deadline = formatDeadline(rsvp.deadlineISO);
+  const sectionTitle = readBuilderValue(settings.title as string | { value: string } | undefined, 'RSVP').trim() || 'RSVP';
   const displayName = couple.displayName || buildCoupleDisplayName(couple.partner1Name, couple.partner2Name) || 'the couple';
   const [submitted, setSubmitted] = useState(false);
   const [attending, setAttending] = useState(false);
@@ -218,8 +225,8 @@ export const RsvpInline: React.FC<Props> = ({ data, instance }) => {
       <div className="max-w-2xl mx-auto text-center">
         {settings.showTitle !== false && (
           <>
-            <p className="text-xs uppercase tracking-[0.3em] text-white/60 mb-4 font-medium">You’re invited</p>
-            <h2 className="text-3xl md:text-5xl font-light text-white mb-3 leading-tight">{readBuilderValue(settings.title as string | { value: string } | undefined, 'RSVP')}</h2>
+            <p className="text-sm text-white/65 mb-4 font-light">You’re invited</p>
+            <h2 className="text-3xl md:text-5xl font-light text-white mb-3 leading-tight">{sectionTitle}</h2>
             <p className="text-white/80 mb-8">Join {displayName} in celebrating their wedding</p>
           </>
         )}

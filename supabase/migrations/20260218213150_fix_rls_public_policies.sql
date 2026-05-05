@@ -23,7 +23,6 @@
 
 -- 1. Fix wedding_sites public SELECT: only expose published sites to anon
 DROP POLICY IF EXISTS "Public can view published wedding sites by slug" ON public.wedding_sites;
-
 CREATE POLICY "Public can view published wedding sites by slug"
   ON public.wedding_sites
   FOR SELECT
@@ -32,10 +31,8 @@ CREATE POLICY "Public can view published wedding sites by slug"
     is_published = true
     AND site_slug IS NOT NULL
   );
-
 -- 2. Fix rsvps open INSERT: require the guest to be on a published site
 DROP POLICY IF EXISTS "Anyone can submit RSVP" ON public.rsvps;
-
 CREATE POLICY "Public can submit RSVP on published sites"
   ON public.rsvps
   FOR INSERT
@@ -47,10 +44,8 @@ CREATE POLICY "Public can submit RSVP on published sites"
       WHERE ws.is_published = true
     )
   );
-
 -- 3. Fix site_rsvps open INSERT: require wedding site to be published
 DROP POLICY IF EXISTS "Anyone can submit an RSVP" ON public.site_rsvps;
-
 CREATE POLICY "Public can submit RSVP on published sites"
   ON public.site_rsvps
   FOR INSERT
@@ -60,7 +55,6 @@ CREATE POLICY "Public can submit RSVP on published sites"
       SELECT id FROM public.wedding_sites WHERE is_published = true
     )
   );
-
 -- Also allow authenticated users to submit RSVPs on published sites (for their own guests)
 CREATE POLICY "Authenticated can submit RSVP on published sites"
   ON public.site_rsvps

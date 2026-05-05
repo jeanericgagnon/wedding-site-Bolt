@@ -62,7 +62,7 @@ export const CountdownSection: React.FC<Props> = ({ data, instance }) => {
       <div className="max-w-4xl mx-auto text-center">
         {settings.showTitle !== false && (
           <div className="mb-10">
-            <p className="text-xs uppercase tracking-[0.3em] text-primary mb-3 font-medium">
+            <p className="text-sm text-primary mb-3 font-light">
               {readBuilderValue(settings.eyebrow as string | { value: string } | undefined, 'Counting down to')}
             </p>
             <h2 className="text-3xl md:text-4xl font-light text-text-primary leading-tight">
@@ -85,7 +85,7 @@ export const CountdownSection: React.FC<Props> = ({ data, instance }) => {
                   <span className="text-4xl md:text-7xl font-light tabular-nums text-text-primary leading-none">
                     {String(value).padStart(2, '0')}
                   </span>
-                  <span className="text-xs uppercase tracking-[0.2em] text-text-tertiary mt-2 font-medium">
+                  <span className="text-xs text-text-tertiary mt-2 font-medium">
                     {label}
                   </span>
                 </div>
@@ -131,7 +131,7 @@ export const CountdownBanner: React.FC<Props> = ({ data, instance }) => {
       <div className="max-w-5xl mx-auto">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-white/60 mb-1">
+            <p className="text-sm text-white/65 mb-1">
               {readBuilderValue(settings.eyebrow as string | { value: string } | undefined, 'Time remaining')}
             </p>
             <h2 className="text-xl font-medium text-white">
@@ -149,7 +149,7 @@ export const CountdownBanner: React.FC<Props> = ({ data, instance }) => {
                 <div className="text-4xl font-light tabular-nums text-white leading-none">
                   {String(value).padStart(2, '0')}
                 </div>
-                <div className="text-[10px] uppercase tracking-widest text-white/60 mt-1">{label}</div>
+                <div className="text-xs text-white/65 mt-1">{label}</div>
               </div>
             ))}
           </div>

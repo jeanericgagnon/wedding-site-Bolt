@@ -15,11 +15,11 @@ Provide a narrow provider layer for model-backed intelligence while keeping loca
   - `runOpenAiStructuredPrompt(...)`
 
 ## Configuration
-Set:
-- `VITE_OPENAI_API_KEY`
+Set model-provider keys only in server-side environments:
+- Supabase Edge Function secret `OPENAI_API_KEY`
+- Optional server-side model names such as `ONBOARDING_AI_MODEL`, `PHOTO_AI_MODEL`, or `OPENAI_MODEL`
 
-Optional later:
-- `VITE_OPENAI_MODEL`
+Do not use browser-visible `VITE_` variables for provider API keys.
 
 ## Intended usage pattern
 Use OpenAI only for:
@@ -35,4 +35,4 @@ Keep local deterministic logic for:
 - fallbacks when OpenAI is unavailable
 
 ## Next step
-Wire this provider into draft generation first, behind a graceful fallback to the current deterministic generator.
+Keep model-backed production calls behind Edge Functions or server-only runtime code. Browser-facing helpers should fall back deterministically unless a server route is explicitly added.

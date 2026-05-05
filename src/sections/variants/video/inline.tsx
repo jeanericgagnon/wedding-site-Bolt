@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { z } from 'zod';
 import { Play, Film } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
+import { getSafePublicImageUrl, getSafePublicVideoEmbedUrl } from '../../publicLinks';
 
 export const videoInlineSchema = z.object({
   eyebrow: z.string().default('Watch'),
@@ -20,35 +21,22 @@ export const defaultVideoInlineData: VideoInlineData = {
   headline: 'Our Story in Motion',
   bodyText: 'Before the big day, we wanted to share a little glimpse into our journey together. From the first hello to this moment, every step has led us here.',
   videoUrl: '',
-  thumbnailUrl: 'https://images.pexels.com/photos/355465/pexels-photo-355465.jpeg?auto=compress&cs=tinysrgb&w=1200',
+  thumbnailUrl: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1400&q=85',
   videoType: 'youtube',
   contentPosition: 'left',
 };
 
-function getEmbedUrl(url: string, type: VideoInlineData['videoType'], autoplay: boolean): string | null {
-  if (!url) return null;
-  const auto = autoplay ? '1' : '0';
-  if (type === 'youtube') {
-    const match = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-    if (match) return `https://www.youtube.com/embed/${match[1]}?autoplay=${auto}&rel=0`;
-  }
-  if (type === 'vimeo') {
-    const match = url.match(/vimeo\.com\/(\d+)/);
-    if (match) return `https://player.vimeo.com/video/${match[1]}?autoplay=${auto}`;
-  }
-  if (type === 'direct') return url;
-  return null;
-}
-
 const VideoInline: React.FC<SectionComponentProps<VideoInlineData>> = ({ data }) => {
   const [playing, setPlaying] = useState(false);
-  const embedUrl = getEmbedUrl(data.videoUrl, data.videoType, playing);
+  const embedUrl = getSafePublicVideoEmbedUrl(data.videoUrl, data.videoType, playing);
+  const thumbnailUrl = getSafePublicImageUrl(data.thumbnailUrl);
+  const safeDirectVideoUrl = data.videoType === 'direct' ? getSafePublicVideoEmbedUrl(data.videoUrl, 'direct') : '';
   const isLeft = data.contentPosition === 'left';
 
   const content = (
     <div className="flex flex-col justify-center">
       {data.eyebrow && (
-        <p className="text-xs uppercase tracking-[0.25em] text-rose-400 font-medium mb-4">{data.eyebrow}</p>
+        <p className="text-sm text-rose-400 font-light mb-4">{data.eyebrow}</p>
       )}
       <h2 className="text-3xl md:text-4xl font-light text-stone-900 mb-6">{data.headline}</h2>
       {data.bodyText && (
@@ -59,13 +47,13 @@ const VideoInline: React.FC<SectionComponentProps<VideoInlineData>> = ({ data })
 
   const videoPlayer = (
     <div className="relative aspect-video rounded-[1.75rem] overflow-hidden bg-stone-900 shadow-xl">
-      {!playing && data.thumbnailUrl ? (
+      {!playing && thumbnailUrl ? (
         <div
           className="absolute inset-0 cursor-pointer group"
           onClick={() => embedUrl && setPlaying(true)}
         >
           <img
-            src={data.thumbnailUrl}
+            src={thumbnailUrl}
             alt="Video thumbnail"
             className="w-full h-full object-cover"
           />
@@ -86,9 +74,9 @@ const VideoInline: React.FC<SectionComponentProps<VideoInlineData>> = ({ data })
           allowFullScreen
           className="w-full h-full border-0"
         />
-      ) : data.videoType === 'direct' && data.videoUrl ? (
+      ) : safeDirectVideoUrl ? (
         <video
-          src={data.videoUrl}
+          src={safeDirectVideoUrl}
           controls
           className="w-full h-full object-cover"
         />

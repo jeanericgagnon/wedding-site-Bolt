@@ -8,7 +8,7 @@ describe('getVariantPreviewSource', () => {
     expect(getVariantPreviewSource('registry', 'playful')).toBe('cards');
     expect(getVariantPreviewSource('registry', 'luxury')).toBe('featured');
     expect(getVariantPreviewSource('registry', 'experiences')).toBe('featured');
-    expect(getVariantPreviewSource('registry', 'fundHighlight')).toBe('featured');
+    expect(getVariantPreviewSource('registry', 'fundHighlight')).toBe('fundHighlight');
   });
 
   it('leaves non-registry previews untouched', () => {
@@ -18,10 +18,10 @@ describe('getVariantPreviewSource', () => {
   it('maps legacy registry aliases onto canonical public preview fixtures', () => {
     expect(getVariantPreviewSource('registry', 'default')).toBe('cards');
     expect(getVariantPreviewSource('registry', 'grid')).toBe('cards');
-    expect(getVariantPreviewSource('registry', 'tabs')).toBe('cards');
-    expect(getVariantPreviewSource('registry', 'illustrated')).toBe('cards');
+    expect(getVariantPreviewSource('registry', 'tabs')).toBe('tabs');
+    expect(getVariantPreviewSource('registry', 'illustrated')).toBe('illustrated');
     expect(getVariantPreviewSource('registry', 'featured')).toBe('featured');
-    expect(getVariantPreviewSource('registry', 'honeymoon')).toBe('featured');
+    expect(getVariantPreviewSource('registry', 'honeymoon')).toBe('honeymoon');
   });
 
   it('maps drifted registry section types onto canonical public preview fixtures', () => {

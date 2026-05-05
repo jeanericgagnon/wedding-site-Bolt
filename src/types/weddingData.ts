@@ -1,18 +1,27 @@
 export interface WeddingDataV1 {
-  version: '1';
+  // Legacy imported/demo site configs still carry older top-level keys.
+  // Runtime normalizers decide which of these are meaningful.
+  [key: string]: any;
+  version?: '1';
   couple: {
-    partner1Name: string;
-    partner2Name: string;
+    [key: string]: any;
+    partner1Name?: string;
+    partner2Name?: string;
+    partner1?: string;
+    partner2?: string;
     displayName?: string;
     story?: string;
     lastNameDisplay?: string;
   };
   event: {
+    [key: string]: any;
     weddingDateISO?: string;
+    date?: string;
     timezone?: string;
   };
   venues: Array<{
     id: string;
+    orderIndex?: number;
     name?: string;
     address?: string;
     placeId?: string;
@@ -29,30 +38,28 @@ export interface WeddingDataV1 {
     notes?: string;
   }>;
   rsvp: {
+    [key: string]: any;
     enabled: boolean;
     deadlineISO?: string;
   };
   travel: {
+    [key: string]: any;
     notes?: string;
+    accommodations?: string | unknown[];
     parkingInfo?: string;
     hotelInfo?: string;
     flightInfo?: string;
   };
-  registry: {
-    links: Array<{
-      id: string;
-      label?: string;
-      url: string;
-    }>;
-    notes?: string;
-  };
+  registry: any;
   faq: Array<{
     id: string;
     q: string;
     a: string;
   }>;
   theme: {
+    [key: string]: any;
     preset?: string;
+    primaryColor?: string;
     tokens?: Record<string, string>;
   };
   media: {
@@ -63,6 +70,7 @@ export interface WeddingDataV1 {
       caption?: string;
     }>;
   };
+  weddingParty?: unknown;
   meta: {
     createdAtISO: string;
     updatedAtISO: string;

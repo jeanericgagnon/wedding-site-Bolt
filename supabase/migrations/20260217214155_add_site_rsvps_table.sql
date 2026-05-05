@@ -26,15 +26,12 @@ CREATE TABLE IF NOT EXISTS site_rsvps (
   dietary_notes text,
   created_at timestamptz DEFAULT now()
 );
-
 ALTER TABLE site_rsvps ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Anyone can submit an RSVP"
   ON site_rsvps
   FOR INSERT
   TO anon, authenticated
   WITH CHECK (true);
-
 CREATE POLICY "Site owners can view RSVPs for their wedding site"
   ON site_rsvps
   FOR SELECT
@@ -46,5 +43,4 @@ CREATE POLICY "Site owners can view RSVPs for their wedding site"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE INDEX IF NOT EXISTS site_rsvps_wedding_site_id_idx ON site_rsvps(wedding_site_id);

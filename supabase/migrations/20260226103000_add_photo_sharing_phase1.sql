@@ -1,7 +1,6 @@
 -- Phase 1: guest photo sharing albums + uploads
 
 create extension if not exists pgcrypto;
-
 create table if not exists public.photo_albums (
   id uuid primary key default gen_random_uuid(),
   wedding_site_id uuid not null references public.wedding_sites(id) on delete cascade,
@@ -19,13 +18,10 @@ create table if not exists public.photo_albums (
   updated_at timestamptz not null default now(),
   unique (upload_token_hash)
 );
-
 create unique index if not exists idx_photo_albums_site_slug_unique
   on public.photo_albums (wedding_site_id, slug);
-
 create index if not exists idx_photo_albums_site on public.photo_albums (wedding_site_id);
 create index if not exists idx_photo_albums_event on public.photo_albums (itinerary_event_id);
-
 create table if not exists public.photo_uploads (
   id uuid primary key default gen_random_uuid(),
   photo_album_id uuid not null references public.photo_albums(id) on delete cascade,
@@ -40,13 +36,10 @@ create table if not exists public.photo_uploads (
   uploaded_at timestamptz not null default now(),
   created_at timestamptz not null default now()
 );
-
 create index if not exists idx_photo_uploads_album_uploaded
   on public.photo_uploads (photo_album_id, uploaded_at desc);
-
 create index if not exists idx_photo_uploads_site_uploaded
   on public.photo_uploads (wedding_site_id, uploaded_at desc);
-
 -- update timestamp trigger
 create or replace function public.update_photo_albums_updated_at()
 returns trigger
@@ -57,16 +50,13 @@ begin
   return new;
 end;
 $$;
-
 drop trigger if exists trg_photo_albums_updated_at on public.photo_albums;
 create trigger trg_photo_albums_updated_at
 before update on public.photo_albums
 for each row execute function public.update_photo_albums_updated_at();
-
 -- RLS
 alter table public.photo_albums enable row level security;
 alter table public.photo_uploads enable row level security;
-
 -- owner CRUD on albums
 create policy "photo_albums_owner_select"
 on public.photo_albums for select
@@ -77,7 +67,6 @@ using (
     where ws.id = photo_albums.wedding_site_id and ws.user_id = auth.uid()
   )
 );
-
 create policy "photo_albums_owner_insert"
 on public.photo_albums for insert
 to authenticated
@@ -87,7 +76,6 @@ with check (
     where ws.id = photo_albums.wedding_site_id and ws.user_id = auth.uid()
   ) and created_by = auth.uid()
 );
-
 create policy "photo_albums_owner_update"
 on public.photo_albums for update
 to authenticated
@@ -103,7 +91,6 @@ with check (
     where ws.id = photo_albums.wedding_site_id and ws.user_id = auth.uid()
   )
 );
-
 create policy "photo_albums_owner_delete"
 on public.photo_albums for delete
 to authenticated
@@ -113,7 +100,6 @@ using (
     where ws.id = photo_albums.wedding_site_id and ws.user_id = auth.uid()
   )
 );
-
 -- owner CRUD on uploads
 create policy "photo_uploads_owner_select"
 on public.photo_uploads for select
@@ -124,7 +110,6 @@ using (
     where ws.id = photo_uploads.wedding_site_id and ws.user_id = auth.uid()
   )
 );
-
 create policy "photo_uploads_owner_insert"
 on public.photo_uploads for insert
 to authenticated
@@ -134,7 +119,6 @@ with check (
     where ws.id = photo_uploads.wedding_site_id and ws.user_id = auth.uid()
   )
 );
-
 create policy "photo_uploads_owner_update"
 on public.photo_uploads for update
 to authenticated
@@ -150,7 +134,6 @@ with check (
     where ws.id = photo_uploads.wedding_site_id and ws.user_id = auth.uid()
   )
 );
-
 create policy "photo_uploads_owner_delete"
 on public.photo_uploads for delete
 to authenticated

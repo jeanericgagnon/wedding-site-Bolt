@@ -3,11 +3,11 @@ import type { CoordinatorPanelFocus } from './coordinatorPanelFocus';
 export const getCoordinatorManualOverrideLabel = (panelFocus: CoordinatorPanelFocus | null) => {
   switch (panelFocus) {
     case 'check-in':
-      return 'Manual override: working a different guest than the board target';
+      return 'Different guest selected';
     case 'timeline':
-      return 'Manual override: working a different event than the board target';
+      return 'Different event selected';
     case 'qna':
-      return 'Manual override: working a different question than the board target';
+      return 'Different question selected';
     default:
       return null;
   }

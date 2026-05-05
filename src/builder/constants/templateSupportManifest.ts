@@ -27,11 +27,11 @@ export function getTemplateSupportManifest(templateId: string): TemplateSupportM
   const previewStatus = pack?.previewThumbnailPath ? 'verified' : 'fallback';
 
   const supportNotes = [
-    'Populated preview is available before you choose it.',
-    'You can switch templates later without losing core wedding details.',
+    'A filled-in preview is available before you choose it.',
+    'You can switch designs later without losing core wedding details.',
     pack
       ? `${pack.sectionComposition.filter((section) => section.enabled).length} starter sections are preloaded in the first draft.`
-      : 'This template currently relies on catalog metadata only.',
+      : 'This design starts with the standard wedding details.',
   ];
 
   return {
@@ -39,10 +39,10 @@ export function getTemplateSupportManifest(templateId: string): TemplateSupportM
     templateName: template.name,
     templateExistsInBuilder: Boolean(pack),
     previewStatus,
-    previewLabel: previewStatus === 'verified' ? 'Preview verified' : 'Fallback preview',
+    previewLabel: previewStatus === 'verified' ? 'Preview ready' : 'Sample preview',
     previewDetail: previewStatus === 'verified'
-      ? 'This template has a mapped preview asset tied to the builder pack.'
-      : 'This template is currently falling back to generic preview coverage, so treat the screenshot as directional.',
+      ? 'This design has a preview image matched to its starter layout.'
+      : 'This design uses a sample image, so treat the screenshot as a starting point.',
     sectionsIncluded: pack?.sectionComposition.filter((section) => section.enabled).length ?? template.defaultSectionOrder.length,
     modulesIncluded: template.includedModules.length,
     highlightedSections,

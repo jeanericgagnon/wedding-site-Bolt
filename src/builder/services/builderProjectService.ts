@@ -1,7 +1,7 @@
 import { supabase } from '../../lib/supabase';
 import { BuilderProject, createEmptyBuilderProject } from '../../types/builder/project';
 import { LayoutConfigV1 } from '../../types/layoutConfig';
-import { WeddingDataV1, createEmptyWeddingData } from '../../types/weddingData';
+import { WeddingDataV1, createEmptyWeddingData, normalizeWeddingData } from '../../types/weddingData';
 import { safeJsonParse } from '../../lib/jsonUtils';
 import { fromExistingLayoutToBuilderProject, fromBuilderProjectToExistingLayout } from '../adapters/layoutAdapter';
 import { serializeBuilderProject } from '../serializers/projectSerializer';
@@ -13,6 +13,65 @@ const toIsoDateOrUndefined = (value: unknown): string | undefined => {
   if (typeof value !== 'string' || !value.trim()) return undefined;
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+};
+
+const cleanRowString = (value: unknown): string => {
+  return typeof value === 'string' ? value.trim() : '';
+};
+
+const hydrateWeddingDataFromSiteRow = (
+  weddingData: WeddingDataV1,
+  siteRow: Record<string, unknown>,
+): WeddingDataV1 => {
+  const partner1 = cleanRowString(siteRow.couple_name_1) || cleanRowString(siteRow.couple_first_name);
+  const partner2 = cleanRowString(siteRow.couple_name_2) || cleanRowString(siteRow.couple_second_name);
+  const hasRowNames = Boolean(partner1 || partner2);
+  const displayName = hasRowNames
+    ? buildCoupleDisplayName(partner1, partner2)
+    : buildCoupleDisplayName(
+        weddingData.couple?.partner1Name,
+        weddingData.couple?.partner2Name,
+        weddingData.couple?.displayName,
+      );
+
+  const weddingDateISO = toIsoDateOrUndefined(siteRow.wedding_date)
+    ?? toIsoDateOrUndefined(siteRow.venue_date)
+    ?? weddingData.event?.weddingDateISO;
+
+  const venueName = cleanRowString(siteRow.venue_name);
+  const venueAddress = cleanRowString(siteRow.wedding_location) || cleanRowString(siteRow.venue_location);
+  const venues = Array.isArray(weddingData.venues) ? [...weddingData.venues] : [];
+
+  if (venueName || venueAddress) {
+    if (venues.length === 0) {
+      venues.push({
+        id: 'primary',
+        ...(venueName ? { name: venueName } : {}),
+        ...(venueAddress ? { address: venueAddress } : {}),
+      });
+    } else {
+      venues[0] = {
+        ...venues[0],
+        ...(venueName ? { name: venueName } : {}),
+        ...(venueAddress ? { address: venueAddress } : {}),
+      };
+    }
+  }
+
+  return {
+    ...weddingData,
+    couple: {
+      ...weddingData.couple,
+      partner1Name: partner1 || weddingData.couple?.partner1Name || '',
+      partner2Name: partner2 || weddingData.couple?.partner2Name || '',
+      displayName,
+    },
+    event: {
+      ...weddingData.event,
+      weddingDateISO,
+    },
+    venues,
+  };
 };
 
 export const builderProjectService = {
@@ -58,7 +117,12 @@ export const builderProjectService = {
 
     if (data.wedding_data) {
       const parsed = safeJsonParse<WeddingDataV1>(data.wedding_data, null as unknown as WeddingDataV1);
-      if (parsed && parsed.version === '1') return rewriteSignedMediaUrlsToPublicDeep(parsed);
+      if (parsed && parsed.version === '1') {
+        return hydrateWeddingDataFromSiteRow(
+          rewriteSignedMediaUrlsToPublicDeep(normalizeWeddingData(parsed)),
+          data as Record<string, unknown>,
+        );
+      }
     }
 
     const row = data as Record<string, unknown>;

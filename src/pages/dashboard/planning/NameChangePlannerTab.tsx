@@ -33,6 +33,7 @@ import { buildNameChangeLicenseExecutionSnapshot } from '../../../lib/nameChange
 import { buildNameChangeMedicalExecutionSnapshot } from '../../../lib/nameChange/medicalFlow';
 import { buildNameChangePassportExecutionSnapshot } from '../../../lib/nameChange/passportFlow';
 import { NAME_CHANGE_FORM_REGISTRY, NAME_CHANGE_INSTITUTION_LIBRARY } from '../../../lib/nameChange/registry';
+import { copyTextOrDownload } from '../../../lib/copyText';
 import { evaluateNameChangeRequirements } from '../../../lib/nameChange/requirements';
 import { bulkUpdateNameChangeReminderStatus, deriveNameChangeReminderAttention, summarizeNameChangeReminderAttention, summarizeNameChangeReminders, updateNameChangeReminderStatus } from '../../../lib/nameChange/reminders';
 import { buildNameChangeSsaExecutionSnapshot } from '../../../lib/nameChange/ssaFlow';
@@ -174,9 +175,9 @@ function scrollToPlannerHref(href: string) {
 }
 
 function getActionFeedCtaLabel(intent: 'open_execution_card' | 'open_document_repair' | 'open_account_update_template') {
-  if (intent === 'open_document_repair') return 'Open document repair';
+  if (intent === 'open_document_repair') return 'Check document details';
   if (intent === 'open_account_update_template') return 'Open update template';
-  return 'Open execution card';
+  return 'Open next step';
 }
 
 function getEffectiveBlockingProofHopLabel(template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) {
@@ -208,7 +209,66 @@ function getAccountUpdateTemplateBodyText(template: NonNullable<NameChangePlan['
 }
 
 function getReminderCtaLabel(intent?: 'open_execution_card') {
-  return intent === 'open_execution_card' ? 'Open linked execution' : 'Open linked step';
+  return intent === 'open_execution_card' ? 'Open linked step' : 'Open linked step';
+}
+
+function getExecutionStatusLabel(status: 'todo' | 'in_progress' | 'complete' | null | undefined) {
+  if (status === 'complete') return 'Complete';
+  if (status === 'in_progress') return 'In progress';
+  return 'To do';
+}
+
+function getWorkflowStatusLabel(status: string | null | undefined) {
+  if (status === 'complete') return 'Complete';
+  if (status === 'in_progress') return 'In progress';
+  if (status === 'ready') return 'Ready';
+  if (status === 'blocked') return 'Needs attention';
+  return 'Draft';
+}
+
+function getIntakeStatusLabel(status: string | null | undefined) {
+  if (status === 'reviewed') return 'Reviewed';
+  if (status === 'uploaded') return 'Added';
+  if (status === 'blocked') return 'Needs attention';
+  return 'Not started';
+}
+
+function getRepairSeverityLabel(severity: string | null | undefined) {
+  if (severity === 'blocking') return 'Needed';
+  if (severity === 'attention') return 'Worth checking';
+  return 'Optional';
+}
+
+function getNameChangeStatusChipLabel(status: string | null | undefined) {
+  if (status === 'ready' || status === 'satisfied') return 'Ready';
+  if (status === 'attention') return 'Worth checking';
+  if (status === 'missing') return 'Missing';
+  if (status === 'blocked' || status === 'blocking') return 'Needed';
+  if (status === 'critical') return 'Time-sensitive';
+  if (status === 'elevated') return 'Worth checking';
+  if (status === 'normal') return 'On track';
+  return status ? status.replace(/_/g, ' ') : 'On track';
+}
+
+function getDocumentDetailLabel(kind: string | null | undefined) {
+  if (!kind) return 'Saved details';
+  return kind
+    .split(/[_-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+function getDocumentStorageModeLabel(mode: string | null | undefined) {
+  if (mode === 'metadata_only') return 'Details only';
+  return 'No file stored';
+}
+
+function getActivitySourceLabel(source: string | null | undefined) {
+  if (source === 'reminder') return 'Reminder';
+  if (source === 'milestone') return 'Milestone';
+  if (source === 'execution') return 'Step';
+  return 'Update';
 }
 
 function getActionFeedSectionLabel(sectionKey: 'core-government' | 'work-identity' | 'institutional' | 'cleanup' | 'documents') {
@@ -250,14 +310,14 @@ function getActionFeedUrgencyClass(urgencyTier: 'critical' | 'elevated' | 'norma
 function getActionFeedUrgencyReasonLabel(reason: 'blocking_dependency' | 'packet_trust' | 'document_gap' | 'review_queue') {
   switch (reason) {
     case 'blocking_dependency':
-      return 'blocking dependency';
+      return 'needs another step first';
     case 'packet_trust':
-      return 'packet trust';
+      return 'makes the packet easier to trust';
     case 'document_gap':
-      return 'document gap';
+      return 'missing document detail';
     case 'review_queue':
     default:
-      return 'review queue';
+      return 'worth a quick look';
   }
 }
 
@@ -276,6 +336,7 @@ interface Props {
   onStepExecutionStatusChange: (stepId: string, executionStatus: 'todo' | 'in_progress' | 'complete') => void;
   onStepExecutionNoteChange: (stepId: string, note: string) => void;
   onSave: () => Promise<void>;
+  initialTargetId?: string;
 }
 
 const documentOptions: Array<{ key: NameChangeDocumentInput['document_kind']; label: string }> = [
@@ -388,38 +449,38 @@ const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
         <p className="text-sm text-text-secondary">{description}</p>
         <p className="mt-2 text-xs text-text-secondary">{snapshot.readinessSummary.summaryLabel}</p>
       </div>
-      <span className={`rounded-full px-2 py-1 text-xs ${snapshot.ready ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
+      <span className={`rounded-md px-2 py-1 text-xs ${snapshot.ready ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
         {snapshot.ready ? readyLabel : notReadyLabel}
       </span>
     </div>
 
     <div className="mt-4 grid gap-3 md:grid-cols-5">
-      <div className="rounded-xl border border-border-subtle p-3">
-        <p className="text-xs uppercase tracking-wide text-text-tertiary">Status</p>
+      <div className="rounded-lg border border-border-subtle p-3">
+        <p className="text-xs text-text-tertiary">Status</p>
         <p className="mt-2 text-sm font-semibold text-text-primary">{snapshot.readinessSummary.status}</p>
       </div>
-      <div className="rounded-xl border border-border-subtle p-3">
-        <p className="text-xs uppercase tracking-wide text-text-tertiary">Blocking fields</p>
+      <div className="rounded-lg border border-border-subtle p-3">
+        <p className="text-xs text-text-tertiary">Needs first</p>
         <p className="mt-2 text-sm font-semibold text-text-primary">{snapshot.readinessSummary.blockingFieldRisks}</p>
       </div>
-      <div className="rounded-xl border border-border-subtle p-3">
-        <p className="text-xs uppercase tracking-wide text-text-tertiary">Attention fields</p>
+      <div className="rounded-lg border border-border-subtle p-3">
+        <p className="text-xs text-text-tertiary">Worth checking</p>
         <p className="mt-2 text-sm font-semibold text-text-primary">{snapshot.readinessSummary.attentionFieldRisks}</p>
       </div>
-      <div className="rounded-xl border border-border-subtle p-3">
-        <p className="text-xs uppercase tracking-wide text-text-tertiary">Low-confidence</p>
+      <div className="rounded-lg border border-border-subtle p-3">
+        <p className="text-xs text-text-tertiary">Needs review</p>
         <p className="mt-2 text-sm font-semibold text-text-primary">{snapshot.readinessSummary.lowConfidenceFields}</p>
       </div>
-      <div className="rounded-xl border border-border-subtle p-3">
-        <p className="text-xs uppercase tracking-wide text-text-tertiary">Doc repair debt</p>
+      <div className="rounded-lg border border-border-subtle p-3">
+        <p className="text-xs text-text-tertiary">Document checks</p>
         <p className="mt-2 text-sm font-semibold text-text-primary">{snapshot.readinessSummary.documentRepairDebt}</p>
       </div>
     </div>
 
-    <div className="mt-4 rounded-xl border border-border-subtle p-4">
+    <div className="mt-4 rounded-lg border border-border-subtle p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-xs uppercase tracking-wide text-text-tertiary">Status vault</p>
+          <p className="text-xs text-text-tertiary">Saved status</p>
           <p className="mt-2 text-sm font-semibold text-text-primary">{snapshot.statusVault.status.replace(/_/g, ' ')}</p>
         </div>
         <div className="space-y-1 text-right">
@@ -430,7 +491,7 @@ const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
             </p>
           ) : null}
           {snapshot.statusVault.lastUpdatedAt && snapshot.statusVault.lastUpdatedAt !== snapshot.statusVault.lastTouchedAt ? (
-            <p className="text-xs text-text-secondary">Execution updated {formatNameChangeExecutionDateTime(snapshot.statusVault.lastUpdatedAt)}</p>
+            <p className="text-xs text-text-secondary">Step updated {formatNameChangeExecutionDateTime(snapshot.statusVault.lastUpdatedAt)}</p>
           ) : null}
           {snapshot.statusVault.reminderSummary.latestReminderAt && snapshot.statusVault.reminderSummary.latestReminderAt !== snapshot.statusVault.lastTouchedAt ? (
             <p className="text-xs text-text-secondary">Reminder updated {formatNameChangeExecutionDateTime(snapshot.statusVault.reminderSummary.latestReminderAt)}</p>
@@ -449,11 +510,11 @@ const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
 
     <div className="mt-4 grid gap-3 md:grid-cols-2">
       {snapshot.checklist.map((item) => (
-        <div key={item.label} className="rounded-xl border border-border-subtle p-4">
+        <div key={item.label} className="rounded-lg border border-border-subtle p-4">
           <div className="flex items-start justify-between gap-3">
             <p className="text-sm font-semibold text-text-primary">{item.label}</p>
-            <span className={`rounded-full px-2 py-1 text-xs ${item.status === 'ready' ? 'bg-success/10 text-success' : item.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
-              {item.status}
+            <span className={`rounded-md px-2 py-1 text-xs ${item.status === 'ready' ? 'bg-success/10 text-success' : item.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
+              {getNameChangeStatusChipLabel(item.status)}
             </span>
           </div>
           <p className="mt-3 text-sm text-text-secondary">{item.reason}</p>
@@ -461,15 +522,15 @@ const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
       ))}
     </div>
 
-    <div className="mt-4 rounded-xl border border-border-subtle p-4">
+    <div className="mt-4 rounded-lg border border-border-subtle p-4">
       <h4 className="text-sm font-semibold text-text-primary">{sequenceTitle}</h4>
       <div className="mt-3 grid gap-3 md:grid-cols-2">
         {snapshot.sequence.dependencies.map((dependency) => (
-          <div key={dependency.key} className="rounded-xl border border-border-subtle p-4">
+          <div key={dependency.key} className="rounded-lg border border-border-subtle p-4">
             <div className="flex items-start justify-between gap-3">
               <p className="text-sm font-semibold text-text-primary">{dependency.label}</p>
-              <span className={`rounded-full px-2 py-1 text-xs ${dependency.status === 'satisfied' ? 'bg-success/10 text-success' : dependency.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
-                {dependency.status}
+              <span className={`rounded-md px-2 py-1 text-xs ${dependency.status === 'satisfied' ? 'bg-success/10 text-success' : dependency.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
+                {getNameChangeStatusChipLabel(dependency.status)}
               </span>
             </div>
             <p className="mt-3 text-sm text-text-secondary">{dependency.reason}</p>
@@ -480,7 +541,7 @@ const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
 
     <div className="mt-4 grid gap-3 md:grid-cols-2">
       {snapshot.autofillFields.map((field) => (
-        <div key={field.targetField} className="rounded-xl border border-border-subtle p-4">
+        <div key={field.targetField} className="rounded-lg border border-border-subtle p-4">
           <p className="text-sm font-semibold text-text-primary">{field.label}</p>
           <p className="mt-2 text-sm text-text-secondary">{field.value.value ?? 'Missing'}</p>
           <p className="mt-2 text-xs text-text-secondary">{field.targetField} · {field.value.source} · {field.value.confidence}</p>
@@ -488,10 +549,10 @@ const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
       ))}
     </div>
 
-    <div className="mt-4 rounded-xl border border-border-subtle p-4">
+    <div className="mt-4 rounded-lg border border-border-subtle p-4">
       {snapshot.nextAction ? (
-        <div className="mb-4 rounded-xl border border-border-subtle p-4">
-          <p className="text-xs uppercase tracking-wide text-text-tertiary">Guided next action</p>
+        <div className="mb-4 rounded-lg border border-border-subtle p-4">
+          <p className="text-xs text-text-tertiary">Next best step</p>
           <p className="mt-2 text-sm font-semibold text-text-primary">{snapshot.nextAction.label}</p>
           <div className="mt-2 space-y-1 text-sm text-text-secondary">
             <p>{guidedNextAction?.overview ?? getExecutionNextActionDetail(snapshot)}</p>
@@ -507,14 +568,14 @@ const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
           <h4 className="text-sm font-semibold text-text-primary">{payloadTitle}</h4>
           <p className="text-xs text-text-secondary">{payloadDescription}</p>
         </div>
-        <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+        <span className="rounded-md bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
           {snapshot.formPayload.summary.ready} filled · {snapshot.formPayload.summary.trustedReady} trusted · {snapshot.formPayload.summary.lowConfidence} low-confidence · {snapshot.formPayload.summary.missing} missing
         </span>
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         {snapshot.formPayload.fields.map((field) => (
-          <div key={field.fieldKey} className="rounded-xl border border-border-subtle p-4">
+          <div key={field.fieldKey} className="rounded-lg border border-border-subtle p-4">
             <p className="text-sm font-semibold text-text-primary">{field.label}</p>
             <p className="mt-2 text-sm text-text-secondary">{field.value ?? 'Missing'}</p>
             <p className="mt-2 text-xs text-text-secondary">
@@ -528,24 +589,24 @@ const ExecutionSnapshotCard: React.FC<ExecutionCardConfig> = ({
       </div>
 
       {snapshot.fieldRisks.length > 0 ? (
-        <div className="mt-4 rounded-xl border border-border-subtle p-4">
+        <div className="mt-4 rounded-lg border border-border-subtle p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h4 className="text-sm font-semibold text-text-primary">Field-level execution risks</h4>
-              <p className="text-xs text-text-secondary">Exactly which packet fields are still blocking or weakening execution readiness.</p>
+              <h4 className="text-sm font-semibold text-text-primary">Details to check</h4>
+              <p className="text-xs text-text-secondary">The specific fields that still need a quick look before this packet feels ready.</p>
             </div>
-            <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
-              {snapshot.fieldRisks.filter((risk) => risk.severity === 'blocking').length} blocking · {snapshot.fieldRisks.filter((risk) => risk.severity === 'attention').length} attention
+            <span className="rounded-md bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+              {snapshot.fieldRisks.filter((risk) => risk.severity === 'blocking').length} needed · {snapshot.fieldRisks.filter((risk) => risk.severity === 'attention').length} worth checking
             </span>
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {snapshot.fieldRisks.map((risk) => (
-              <div key={`${risk.fieldKey}-${risk.severity}`} className="rounded-xl border border-border-subtle p-4">
+              <div key={`${risk.fieldKey}-${risk.severity}`} className="rounded-lg border border-border-subtle p-4">
                 <div className="flex items-start justify-between gap-3">
                   <p className="text-sm font-semibold text-text-primary">{risk.label}</p>
-                  <span className={`rounded-full px-2 py-1 text-xs ${risk.severity === 'blocking' ? 'bg-danger/10 text-danger' : 'bg-warning/10 text-warning'}`}>
-                    {risk.severity}
+                  <span className={`rounded-md px-2 py-1 text-xs ${risk.severity === 'blocking' ? 'bg-danger/10 text-danger' : 'bg-warning/10 text-warning'}`}>
+                    {getNameChangeStatusChipLabel(risk.severity)}
                   </span>
                 </div>
                 <p className="mt-3 text-sm text-text-secondary">{risk.reason}</p>
@@ -575,8 +636,8 @@ const ReminderPostureCard: React.FC<ReminderPostureCardConfig> = ({ title, value
         : 'border-border-subtle bg-white/60';
 
   return (
-    <div className={`rounded-xl border p-4 ${toneClass}`}>
-      <p className="text-xs uppercase tracking-wide text-text-tertiary">{title}</p>
+    <div className={`rounded-lg border p-4 ${toneClass}`}>
+      <p className="text-xs text-text-tertiary">{title}</p>
       <p className="mt-2 text-sm font-semibold text-text-primary">{value}</p>
       <p className="mt-2 text-xs text-text-secondary">{detail}</p>
     </div>
@@ -758,11 +819,11 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       proofNote: snapshot.statusVault.proofNote,
       reminderNote: snapshot.statusVault.reminderNote,
       updatedLabel: snapshot.statusVault.lastTouchedAt
-        ? `Latest touch ${formatNameChangeExecutionDateTime(snapshot.statusVault.lastTouchedAt)}${snapshot.statusVault.lastTouchedSource === 'reminder' ? ' · reminder' : snapshot.statusVault.lastTouchedSource === 'milestone' ? ' · milestone' : snapshot.statusVault.lastTouchedSource === 'execution' ? ' · execution' : ''}`
+        ? `Latest touch ${formatNameChangeExecutionDateTime(snapshot.statusVault.lastTouchedAt)}${snapshot.statusVault.lastTouchedSource === 'reminder' ? ' · reminder' : snapshot.statusVault.lastTouchedSource === 'milestone' ? ' · milestone' : snapshot.statusVault.lastTouchedSource === 'execution' ? ' · step' : ''}`
         : null,
       executionUpdatedLabel: snapshot.statusVault.lastUpdatedAt
         && snapshot.statusVault.lastUpdatedAt !== snapshot.statusVault.lastTouchedAt
-        ? `Execution updated ${formatNameChangeExecutionDateTime(snapshot.statusVault.lastUpdatedAt)}`
+        ? `Step updated ${formatNameChangeExecutionDateTime(snapshot.statusVault.lastUpdatedAt)}`
         : null,
       milestoneUpdatedLabel: snapshot.statusVault.milestoneUpdatedAt
         && snapshot.statusVault.milestoneUpdatedAt !== snapshot.statusVault.lastTouchedAt
@@ -834,7 +895,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     return [
       {
         key: 'risk-lane',
-        title: 'Dominant risk lane',
+        title: 'Main area to watch',
         value: reminderAttentionSummary.dominantRiskLane,
         detail: `${reminderAttentionSummary.critical} critical · ${reminderAttentionSummary.elevated} elevated · ${reminderAttentionSummary.normal} normal`,
         tone: reminderAttentionSummary.critical > 0 ? 'danger' : reminderAttentionSummary.elevated > 0 ? 'warning' : 'neutral',
@@ -843,19 +904,19 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         key: 'actionability',
         title: 'Attention posture',
         value: reminderAttentionSummary.attentionPosture,
-        detail: `${reminderAttentionSummary.actionableNow} actionable now · ${reminderAttentionSummary.blockedByUntouchedStep} blocked by untouched step`,
+        detail: `${reminderAttentionSummary.actionableNow} ready now · ${reminderAttentionSummary.blockedByUntouchedStep} waiting on an earlier step`,
         tone: reminderAttentionSummary.attentionPosture === 'blocked-heavy' ? 'warning' : 'primary',
       },
       {
         key: 'stale',
-        title: 'Stale follow-up',
-        value: `${reminderAttentionSummary.stale} stale`,
-        detail: `${reminderAttentionSummary.staleTodo} untouched stale · ${reminderAttentionSummary.staleInProgress} stale but moving`,
+        title: 'Old follow-up',
+        value: `${reminderAttentionSummary.stale} old`,
+        detail: `${reminderAttentionSummary.staleTodo} untouched · ${reminderAttentionSummary.staleInProgress} still moving`,
         tone: reminderAttentionSummary.stale > 0 ? 'warning' : 'neutral',
       },
       {
         key: 'aging',
-        title: 'Aging without execution',
+        title: 'Waiting too long',
         value: reminderAttentionSummary.agingWithoutExecution ? 'yes' : 'no',
         detail: `${reminderAttentionSummary.agingWithoutExecutionLane} · ${reminderAttentionSummary.agingWithoutExecutionPosture}`,
         tone: reminderAttentionSummary.agingWithoutExecution ? 'warning' : 'neutral',
@@ -866,24 +927,24 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     const coreGovernmentCards: ExecutionCardConfig[] = [
       {
         key: 'ssa',
-        title: 'Guided execution: SSA first',
-        description: 'First real guided execution slice. Uses canonical case truth, intake contract, requirements, and autofill prep to judge SS-5 readiness.',
+        title: 'Social Security first',
+        description: 'Start here so federal records, payroll, and tax details stay aligned.',
         readyLabel: 'ready for SS-5 prep',
         notReadyLabel: 'not ready',
-        sequenceTitle: 'SSA sequencing dependencies',
-        payloadTitle: 'SS-5 form payload snapshot',
-        payloadDescription: 'Structured downstream form contract for the first real execution target.',
+        sequenceTitle: 'What should happen first',
+        payloadTitle: 'SS-5 form details',
+        payloadDescription: 'The saved details to keep ready for the Social Security update.',
         snapshot: ssaExecutionSnapshot,
       },
       {
         key: 'dmv',
-        title: 'Guided execution: California DMV next',
-        description: 'Second guided execution slice. Reuses the same canonical/intake/autofill layers to judge DMV readiness after SSA.',
+        title: 'California DMV next',
+        description: 'Handle California ID next once Social Security is moving.',
         readyLabel: 'ready for DL-44 prep',
         notReadyLabel: 'not ready',
-        sequenceTitle: 'DMV sequencing dependencies',
-        payloadTitle: 'DMV form payload snapshot',
-        payloadDescription: 'Structured downstream form contract for the California DMV execution target.',
+        sequenceTitle: 'What should happen first',
+        payloadTitle: 'DMV form details',
+        payloadDescription: 'The saved details to keep ready for the California DMV update.',
         snapshot: dmvExecutionSnapshot,
       },
     ];
@@ -892,13 +953,13 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       coreGovernmentCards.push(
         {
           key: 'passport',
-          title: 'Guided execution: passport follow-through',
-          description: 'Third guided execution slice. Reuses the shared execution builder for passport packet prep once SSA is underway.',
+          title: 'Passport follow-through',
+          description: 'Keep travel documents aligned once the core ID steps are underway.',
           readyLabel: `ready for ${passportExecutionSnapshot.recommendedFormCode} prep`,
           notReadyLabel: 'not ready',
-          sequenceTitle: 'Passport sequencing dependencies',
-          payloadTitle: 'Passport form payload snapshot',
-          payloadDescription: 'Structured downstream form contract for the passport execution target.',
+          sequenceTitle: 'What should happen first',
+          payloadTitle: 'Passport form details',
+          payloadDescription: 'The saved details to keep ready for the passport update.',
           snapshot: passportExecutionSnapshot,
         },
       );
@@ -910,24 +971,24 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       workIdentityCards.push(
         {
           key: 'employer',
-          title: 'Guided execution: employer / payroll follow-through',
-          description: 'Institutional execution slice for payroll / HR updates after SSA is complete and primary ID is moving.',
+          title: 'Employer and payroll follow-through',
+          description: 'Payroll and HR updates to handle after Social Security and primary ID are moving.',
           readyLabel: 'ready for HR packet prep',
           notReadyLabel: 'not ready',
-          sequenceTitle: 'Employer sequencing dependencies',
-          payloadTitle: 'Employer packet snapshot',
-          payloadDescription: 'Structured downstream packet for payroll / HR updates.',
+          sequenceTitle: 'What should happen first',
+          payloadTitle: 'Employer update details',
+          payloadDescription: 'The details to keep ready for payroll and HR updates.',
           snapshot: employerExecutionSnapshot,
         },
         {
           key: 'licenses',
-          title: 'Guided execution: professional licenses / certifications',
-          description: 'Employment-linked execution slice for professional licenses and certifications once primary ID is moving.',
+          title: 'Professional licenses and certifications',
+          description: 'Professional license and certification updates to handle once primary ID is moving.',
           readyLabel: 'ready for license packet prep',
           notReadyLabel: 'not ready',
-          sequenceTitle: 'Professional-license sequencing dependencies',
-          payloadTitle: 'Professional-license packet snapshot',
-          payloadDescription: 'Structured downstream packet for professional license and certification updates.',
+          sequenceTitle: 'What should happen first',
+          payloadTitle: 'Professional license update details',
+          payloadDescription: 'The details to keep ready for professional license and certification updates.',
           snapshot: licenseExecutionSnapshot,
         },
       );
@@ -936,57 +997,57 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     const institutionCards: ExecutionCardConfig[] = [
       {
         key: 'banks',
-        title: 'Guided execution: banks / credit cards',
-        description: 'Institutional execution slice for bank and card account updates once primary photo ID is moving.',
+        title: 'Banks and credit cards',
+        description: 'Bank and card account updates to handle once your primary photo ID is moving.',
         readyLabel: 'ready for bank packet prep',
         notReadyLabel: 'not ready',
-        sequenceTitle: 'Bank sequencing dependencies',
-        payloadTitle: 'Bank packet snapshot',
-        payloadDescription: 'Structured downstream packet for bank and credit-card account updates.',
+        sequenceTitle: 'What should happen first',
+        payloadTitle: 'Bank update details',
+        payloadDescription: 'The details to keep ready for bank and credit-card updates.',
         snapshot: bankExecutionSnapshot,
       },
       {
         key: 'insurance',
-        title: 'Guided execution: insurance follow-through',
-        description: 'Institutional execution slice for health, auto, renters, and life insurance once primary photo ID is moving.',
+        title: 'Insurance follow-through',
+        description: 'Health, auto, renters, and life insurance updates to handle once your primary photo ID is moving.',
         readyLabel: 'ready for insurance packet prep',
         notReadyLabel: 'not ready',
-        sequenceTitle: 'Insurance sequencing dependencies',
-        payloadTitle: 'Insurance packet snapshot',
-        payloadDescription: 'Structured downstream packet for insurance policyholder updates.',
+        sequenceTitle: 'What should happen first',
+        payloadTitle: 'Insurance update details',
+        payloadDescription: 'The details to keep ready for insurance policyholder updates.',
         snapshot: insuranceExecutionSnapshot,
       },
       {
         key: 'medical',
-        title: 'Guided execution: medical providers / insurance cards',
-        description: 'Healthcare execution slice for provider rosters, patient portals, and member-card records once primary photo ID is moving.',
+        title: 'Medical offices and insurance cards',
+        description: 'Healthcare records, patient portals, and member cards to handle once your primary photo ID is moving.',
         readyLabel: 'ready for medical record prep',
         notReadyLabel: 'not ready',
-        sequenceTitle: 'Medical/provider sequencing dependencies',
-        payloadTitle: 'Medical/provider packet snapshot',
-        payloadDescription: 'Structured downstream packet for provider, patient-portal, and insurance-card record updates.',
+        sequenceTitle: 'What should happen first',
+        payloadTitle: 'Medical update details',
+        payloadDescription: 'The details to keep ready for care-office, patient-portal, and insurance-card updates.',
         snapshot: medicalExecutionSnapshot,
       },
       {
         key: 'utilities',
-        title: 'Guided execution: utilities / lease / landlord records',
-        description: 'Household-admin execution slice for utilities, lease portals, and landlord records once primary photo ID is moving.',
+        title: 'Utilities, lease, and landlord records',
+        description: 'Household records to handle once your primary photo ID is moving.',
         readyLabel: 'ready for utilities/lease prep',
         notReadyLabel: 'not ready',
-        sequenceTitle: 'Utilities/lease sequencing dependencies',
-        payloadTitle: 'Utilities/lease packet snapshot',
-        payloadDescription: 'Structured downstream packet for utilities, lease, and landlord record updates.',
+        sequenceTitle: 'What should happen first',
+        payloadTitle: 'Household record details',
+        payloadDescription: 'The details to keep ready for utilities, lease, and landlord updates.',
         snapshot: utilitiesExecutionSnapshot,
       },
       {
         key: 'courtesy',
-        title: 'Guided execution: courtesy / social identity sync',
+        title: 'Courtesy and social identity updates',
         description: 'Tail-end cleanup slice for display names, loyalty profiles, and other lower-stakes account identity updates.',
         readyLabel: 'ready for courtesy sync',
         notReadyLabel: 'not ready',
         sequenceTitle: 'Courtesy/social sync dependencies',
-        payloadTitle: 'Courtesy/social sync packet snapshot',
-        payloadDescription: 'Structured downstream packet for display-name and lightweight social/account identity updates.',
+        payloadTitle: 'Courtesy update details',
+        payloadDescription: 'The details to keep ready for display-name and lightweight account updates.',
         snapshot: courtesyExecutionSnapshot,
       },
     ];
@@ -994,13 +1055,13 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     const cleanupCards: ExecutionCardConfig[] = [
       {
         key: 'voter',
-        title: 'Guided execution: California voter registration',
-        description: 'California-specific post-DMV execution slice for voter registration follow-through.',
+        title: 'California voter registration',
+        description: 'California-specific voter registration follow-through after DMV updates.',
         readyLabel: 'ready for voter update prep',
         notReadyLabel: 'not ready',
-        sequenceTitle: 'Voter sequencing dependencies',
-        payloadTitle: 'Voter packet snapshot',
-        payloadDescription: 'Structured downstream packet for California voter registration updates.',
+        sequenceTitle: 'What should happen first',
+        payloadTitle: 'Voter update details',
+        payloadDescription: 'The details to keep ready for California voter registration updates.',
         snapshot: voterExecutionSnapshot,
       },
     ];
@@ -1008,13 +1069,13 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     if (draft.passport_needs_update) {
       cleanupCards.push({
         key: 'tsa',
-        title: 'Guided execution: TSA / travel profiles',
-        description: 'Travel-facing execution slice for TSA PreCheck and loyalty/travel profile follow-through once passport work is underway.',
+        title: 'TSA and travel profiles',
+        description: 'TSA PreCheck and loyalty profile updates to handle once passport work is underway.',
         readyLabel: 'ready for travel profile prep',
         notReadyLabel: 'not ready',
-        sequenceTitle: 'TSA / travel sequencing dependencies',
-        payloadTitle: 'TSA / travel packet snapshot',
-        payloadDescription: 'Structured downstream packet for TSA PreCheck and travel profile updates.',
+        sequenceTitle: 'What should happen first',
+        payloadTitle: 'Travel profile details',
+        payloadDescription: 'The details to keep ready for TSA PreCheck and travel profile updates.',
         snapshot: tsaExecutionSnapshot,
       });
     }
@@ -1023,7 +1084,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       {
         key: 'core-government',
         title: 'Core government path',
-        description: 'The federal/state backbone. This is the sequence that makes the rest of the name-change system easier instead of messier.',
+        description: 'The federal and state path. This is the order that makes the rest of the name-change process easier instead of messier.',
         cards: coreGovernmentCards,
       },
       {
@@ -1035,13 +1096,13 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       {
         key: 'institutional',
         title: 'Institutional follow-through',
-        description: 'The long-tail admin lanes where mismatched records get annoying fast if they lag behind the identity backbone.',
+        description: 'The record updates that get annoying fast if they lag behind your main identity changes.',
         cards: institutionCards,
       },
       {
         key: 'cleanup',
         title: 'Cleanup and tail-end identity sync',
-        description: 'Lower-volume but still real updates that round out the workflow once the major lanes are already in motion.',
+        description: 'Lower-volume but still real updates that round things out once the major pieces are already moving.',
         cards: cleanupCards,
       },
     ].filter((section) => section.cards.length > 0);
@@ -1067,10 +1128,10 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       const blockedCount = section.cards.filter((card) => !card.snapshot.ready).length;
       const attentionCount = section.cards.reduce((sum, card) => sum + card.snapshot.checklist.filter((item) => item.status === 'attention').length, 0);
       const progressPercent = Math.round((readyCount / section.cards.length) * 100);
-      const progressLabel = `${readyCount}/${section.cards.length} cards ready`;
+      const progressLabel = `${readyCount}/${section.cards.length} ready`;
       const highestRiskCardConfig = getHighestPriorityNameChangeExecutionCard(section.cards) as ExecutionCardConfig | null;
       const highestRiskCardKey = highestRiskCardConfig?.key ?? null;
-      const highestRiskCard = highestRiskCardConfig?.title ?? 'No major risk in this section';
+      const highestRiskCard = highestRiskCardConfig?.title ?? 'Nothing urgent in this section';
       const nextActionLabel = highestRiskCardConfig
         ? highestRiskCardConfig.snapshot.nextAction.label
         : 'No immediate action needed';
@@ -1181,9 +1242,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
   }, [documents]);
 
   const copyAccountUpdateTemplate = async (template: NonNullable<NameChangePlan['summary']['accountUpdateTemplates']>[number]) => {
-    if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) return;
-
-    await navigator.clipboard.writeText(formatAccountUpdateTemplateCopy(template));
+    await copyTextOrDownload(formatAccountUpdateTemplateCopy(template), `dayof-name-change-${template.id}.txt`);
     setCopiedTemplateId(template.id);
     window.setTimeout(() => {
       setCopiedTemplateId((current) => (current === template.id ? null : current));
@@ -1194,15 +1253,15 @@ export const NameChangePlannerTab: React.FC<Props> = ({
     <div id="name-change-roadmap" className="space-y-6 scroll-mt-24">
       <div className="grid gap-4 md:grid-cols-3">
         <Card padding="sm">
-          <p className="text-xs uppercase tracking-wide text-text-tertiary">Path</p>
+          <p className="text-xs text-text-tertiary">Path</p>
           <p className="mt-2 text-sm font-semibold text-text-primary">{plan.summary.legalPathLabel}</p>
-          <p className="mt-2 text-xs text-text-secondary">Case status: {draft.workflow_status.replace('_', ' ')}</p>
+          <p className="mt-2 text-xs text-text-secondary">Case status: {getWorkflowStatusLabel(draft.workflow_status)}</p>
           <p className="mt-2 text-xs text-text-secondary">Next best action: {plan.summary.nextBestAction}</p>
         </Card>
         <Card padding="sm">
-          <p className="text-xs uppercase tracking-wide text-text-tertiary">Workflow health</p>
+          <p className="text-xs text-text-tertiary">Plan health</p>
           <p className="mt-2 text-sm text-text-primary">{stepCounts.ready} ready · {stepCounts.blocked} blocked · {stepCounts.later} later</p>
-          <p className="mt-2 text-xs text-text-secondary">Execution: {plan.summary.executionCounts?.todo ?? 0} todo · {plan.summary.executionCounts?.in_progress ?? 0} in progress · {plan.summary.executionCounts?.complete ?? 0} complete</p>
+          <p className="mt-2 text-xs text-text-secondary">Steps: {plan.summary.executionCounts?.todo ?? 0} to do · {plan.summary.executionCounts?.in_progress ?? 0} started · {plan.summary.executionCounts?.complete ?? 0} complete</p>
           <p className="mt-2 text-sm font-semibold text-text-primary">{plan.summary.readinessPercent}% intake-ready</p>
           <p className="mt-2 text-xs text-text-secondary">Federal-first, California-second, institutions after primary ID.</p>
         </Card>
@@ -1210,47 +1269,47 @@ export const NameChangePlannerTab: React.FC<Props> = ({
           <div className="flex items-start gap-2">
             <Lock className="mt-0.5 h-4 w-4 text-primary" />
             <div>
-              <p className="text-xs uppercase tracking-wide text-primary">Privacy rule</p>
-              <p className="mt-2 text-sm text-text-primary">Raw uploads are optional. Structured fields are the truth.</p>
+              <p className="text-xs text-primary">Privacy rule</p>
+              <p className="mt-2 text-sm text-text-primary">Uploads are optional. You can save only the details you want to track.</p>
             </div>
           </div>
         </Card>
       </div>
 
-      <Card className="border-sky-200 bg-sky-50/70">
+      <Card className="border-border-subtle bg-white">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-wide text-sky-700">Resume any time</p>
-            <p className="mt-1 text-xs uppercase tracking-wide text-sky-700">Free assistant · status vault · proof tracking</p>
-            <p className="mt-2 text-sm font-medium text-sky-950">{resumeCard.statusLabel}</p>
-            <h3 className="mt-2 text-lg font-semibold text-sky-950">{resumeCard.headline}</h3>
-            <p className="mt-1 text-sm text-sky-900">
+            <p className="text-xs text-primary">Resume any time</p>
+            <p className="mt-1 text-xs text-text-secondary">Free assistant · saved status · document checklist</p>
+            <p className="mt-2 text-sm font-medium text-text-primary">{resumeCard.statusLabel}</p>
+            <h3 className="mt-2 text-lg font-semibold text-text-primary">{resumeCard.headline}</h3>
+            <p className="mt-1 text-sm text-text-secondary">
               {resumeCard.helperCopy}
             </p>
-            <p className="mt-2 text-sm text-sky-900">Optional next step: {resumeCard.optionalNextStep}</p>
+            <p className="mt-2 text-sm text-text-secondary">Optional next step: {resumeCard.optionalNextStep}</p>
             {nextOptionalMilestone ? (
-              <p className="mt-1 text-sm text-sky-900">
+              <p className="mt-1 text-sm text-text-secondary">
                 If you want a concrete place to pick back up,{' '}
                 <button
                   type="button"
-                  className="font-medium text-sky-950 underline underline-offset-2"
+                  className="font-medium text-primary underline underline-offset-2"
                   onClick={() => scrollToPlannerHref(resumeCard.primaryHref)}
                 >
                   {nextOptionalMilestone.label}
                 </button>
               </p>
             ) : null}
-            <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-sky-900">
+            <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-text-secondary">
               <button
                 type="button"
-                className="rounded-full border border-sky-300 bg-white px-2 py-1 font-medium"
+                className="rounded-md border border-border-subtle bg-surface-subtle px-2 py-1 font-medium hover:border-primary/25"
                 onClick={() => scrollToPlannerHref(lifecycleInsights.milestoneSummaryHref)}
               >
                 {lifecycleInsights.milestoneSummaryLabel}
               </button>
               <button
                 type="button"
-                className="rounded-full border border-sky-300 bg-white px-2 py-1 font-medium"
+                className="rounded-md border border-border-subtle bg-surface-subtle px-2 py-1 font-medium hover:border-primary/25"
                 onClick={() => scrollToPlannerHref(lifecycleInsights.reminderSummaryHref)}
               >
                 {lifecycleInsights.reminderSummaryLabel}
@@ -1276,27 +1335,27 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         <div className="mt-4 grid gap-3 md:grid-cols-3">
           <button
             type="button"
-            className="rounded-xl border border-sky-200 bg-white/80 px-4 py-3 text-left"
+            className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-3 text-left hover:border-primary/25"
             onClick={() => scrollToPlannerHref(resumeCard.primaryHref)}
           >
-            <p className="text-xs uppercase tracking-wide text-sky-700">{NAME_CHANGE_LIFECYCLE_LABELS.coreChain}</p>
-            <p className="mt-1 text-sm text-sky-950">{lifecycleInsights.coreChainLabel}</p>
+            <p className="text-xs text-primary">{NAME_CHANGE_LIFECYCLE_LABELS.coreChain}</p>
+            <p className="mt-1 text-sm text-text-primary">{lifecycleInsights.coreChainLabel}</p>
           </button>
           <button
             type="button"
-            className="rounded-xl border border-sky-200 bg-white/80 px-4 py-3 text-left"
+            className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-3 text-left hover:border-primary/25"
             onClick={() => scrollToPlannerHref(resumeCard.plannerHref)}
           >
-            <p className="text-xs uppercase tracking-wide text-sky-700">{NAME_CHANGE_LIFECYCLE_LABELS.followOn}</p>
-            <p className="mt-1 text-sm text-sky-950">{lifecycleInsights.followOnLabel}</p>
+            <p className="text-xs text-primary">{NAME_CHANGE_LIFECYCLE_LABELS.followOn}</p>
+            <p className="mt-1 text-sm text-text-primary">{lifecycleInsights.followOnLabel}</p>
           </button>
           <button
             type="button"
-            className="rounded-xl border border-sky-200 bg-white/80 px-4 py-3 text-left"
+            className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-3 text-left hover:border-primary/25"
             onClick={() => scrollToPlannerHref(lifecycleInsights.downstreamHref)}
           >
-            <p className="text-xs uppercase tracking-wide text-sky-700">{NAME_CHANGE_LIFECYCLE_LABELS.downstream}</p>
-            <p className="mt-1 text-sm text-sky-950">{lifecycleInsights.downstreamLabel}</p>
+            <p className="text-xs text-primary">{NAME_CHANGE_LIFECYCLE_LABELS.downstream}</p>
+            <p className="mt-1 text-sm text-text-primary">{lifecycleInsights.downstreamLabel}</p>
           </button>
         </div>
       </Card>
@@ -1308,33 +1367,33 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               <h3 className="text-lg font-semibold text-text-primary">Post-wedding name change roadmap</h3>
               <p className="mt-1 text-sm text-text-secondary">Free, no-upsell guidance. Start with the core identity chain, then pick off the rest whenever you want to resume.</p>
             </div>
-            <span className="rounded-full bg-primary/10 px-2 py-1 text-xs text-primary">Day of Love free assistant</span>
+            <span className="rounded-md bg-primary/10 px-2 py-1 text-xs text-primary">Day of Love free assistant</span>
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {executionTracks.map((track) => (
-              <div key={track.id} className="rounded-xl border border-border-subtle bg-white/60 p-4">
+              <div key={track.id} className="rounded-lg border border-border-subtle bg-white/60 p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-text-tertiary">{track.sequenceLabel}</p>
+                    <p className="text-xs text-text-tertiary">{track.sequenceLabel}</p>
                     <p className="mt-2 text-sm font-semibold text-text-primary">{track.title}</p>
                   </div>
-                  <span className={`rounded-full px-2 py-1 text-xs ${track.featureTag === 'travel' ? 'bg-primary/10 text-primary' : track.featureTag === 'rollout' ? 'bg-success/10 text-success' : 'bg-surface-subtle text-text-secondary'}`}>
+                  <span className={`rounded-md px-2 py-1 text-xs ${track.featureTag === 'travel' ? 'bg-primary/10 text-primary' : track.featureTag === 'rollout' ? 'bg-success/10 text-success' : 'bg-surface-subtle text-text-secondary'}`}>
                     {track.featureTag}
                   </span>
                 </div>
                 <p className="mt-3 text-sm text-text-secondary">{track.summary}</p>
                 <div className="mt-3 flex items-center justify-between gap-3">
                   <p className="text-xs text-text-secondary">Depends on: {track.dependsOnStepIds.join(' → ')}</p>
-                  <span className={`rounded-full px-2 py-1 text-xs ${getExecutionSummaryTone(track.status)}`}>
+                  <span className={`rounded-md px-2 py-1 text-xs ${getExecutionSummaryTone(track.status)}`}>
                     {track.status}
                   </span>
                 </div>
               </div>
             ))}
             {plan.summary.recommendedOrder.map((stepLabel, index) => (
-              <div key={stepLabel} className="rounded-xl border border-border-subtle p-4">
-                <p className="text-xs uppercase tracking-wide text-text-tertiary">Step {index + 1}</p>
+              <div key={stepLabel} className="rounded-lg border border-border-subtle p-4">
+                <p className="text-xs text-text-tertiary">Step {index + 1}</p>
                 <p className="mt-2 text-sm font-semibold text-text-primary">{stepLabel}</p>
                 {index === 0 && <p className="mt-2 text-xs text-text-secondary">Get certified proof grounded before anything else moves.</p>}
                 {index === 1 && <p className="mt-2 text-xs text-text-secondary">SSA is the first real filing move because tax, payroll, and federal identity depend on it.</p>}
@@ -1349,47 +1408,47 @@ export const NameChangePlannerTab: React.FC<Props> = ({
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="text-lg font-semibold text-text-primary">Milestones and progress</h3>
-              <p className="mt-1 text-sm text-text-secondary">Track the hard gates that decide whether the rest of the rollout is actually safe to start.</p>
+              <p className="mt-1 text-sm text-text-secondary">Track the few important pieces that decide what can move next.</p>
             </div>
-            <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{plan.summary.readinessPercent}% ready</span>
+            <span className="rounded-md bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{plan.summary.readinessPercent}% ready</span>
           </div>
 
           <div className="mt-4 space-y-3">
             {edgeCaseGuidance.map((item) => (
-              <div key={item.id} className={`rounded-xl border p-4 ${item.severity === 'warning' ? 'border-warning/30 bg-warning/5' : 'border-border-subtle bg-white/50'}`}>
+              <div key={item.id} className={`rounded-lg border p-4 ${item.severity === 'warning' ? 'border-warning/30 bg-warning/5' : 'border-border-subtle bg-white/50'}`}>
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-text-primary">{item.label}</p>
                     <p className="mt-1 text-xs text-text-secondary">{item.detail}</p>
                   </div>
-                  <span className={`rounded-full px-2 py-1 text-xs ${item.severity === 'warning' ? 'bg-warning/10 text-warning' : 'bg-surface-subtle text-text-secondary'}`}>
-                    {item.severity}
+                  <span className={`rounded-md px-2 py-1 text-xs ${item.severity === 'warning' ? 'bg-warning/10 text-warning' : 'bg-surface-subtle text-text-secondary'}`}>
+                    {item.severity === 'warning' ? 'Worth checking' : 'On track'}
                   </span>
                 </div>
               </div>
             ))}
             {milestoneChecklist.map((milestone) => (
-              <div key={milestone.id} className="rounded-xl border border-border-subtle p-4">
+              <div key={milestone.id} className="rounded-lg border border-border-subtle p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-text-primary">{milestone.label}</p>
                     <p className="mt-1 text-xs text-text-secondary">Depends on: {milestone.dependsOnStepIds.join(' → ')}</p>
                   </div>
-                  <span className={`rounded-full px-2 py-1 text-xs ${getExecutionSummaryTone(milestone.status)}`}>
+                  <span className={`rounded-md px-2 py-1 text-xs ${getExecutionSummaryTone(milestone.status)}`}>
                     {milestone.status}
                   </span>
                 </div>
               </div>
             ))}
             {dualPartnerProofTracks.map((track) => (
-              <div key={track.id} className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+              <div key={track.id} className="rounded-lg border border-primary/20 bg-primary/5 p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-text-primary">{track.label}</p>
                     <p className="mt-1 text-xs text-text-secondary">Depends on: {track.dependsOnStepIds.join(' → ')}</p>
                     <p className="mt-2 text-xs text-text-secondary">Proof: {track.requiredProof.join(' · ')}</p>
                   </div>
-                  <span className={`rounded-full px-2 py-1 text-xs ${getExecutionSummaryTone(track.status)}`}>
+                  <span className={`rounded-md px-2 py-1 text-xs ${getExecutionSummaryTone(track.status)}`}>
                     {track.status}
                   </span>
                 </div>
@@ -1404,66 +1463,66 @@ export const NameChangePlannerTab: React.FC<Props> = ({
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="text-lg font-semibold text-text-primary">Lightweight document and status vault</h3>
-              <p className="mt-1 text-sm text-text-secondary">Only status, linkage, and extraction counts live here. No sensitive raw document storage required.</p>
+              <p className="mt-1 text-sm text-text-secondary">Save status and document details without storing sensitive files.</p>
             </div>
-            <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{documentVaultRows.length} tracked docs</span>
+            <span className="rounded-md bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{documentVaultRows.length} tracked docs</span>
           </div>
 
           <div className="mt-4 space-y-3">
             {documentVaultRows.length > 0 ? documentVaultRows.map((row) => (
-              <div key={row.key} className="rounded-xl border border-border-subtle p-4">
+              <div key={row.key} className="rounded-lg border border-border-subtle p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-text-primary">{row.label}</p>
-                    <p className="mt-1 text-xs text-text-secondary">{row.linkedFieldCount}/{row.expectedFieldCount} grounded fields · {row.storageMode.replace('_', ' ')}</p>
+                    <p className="mt-1 text-xs text-text-secondary">{row.linkedFieldCount}/{row.expectedFieldCount} grounded fields · {getDocumentStorageModeLabel(row.storageMode)}</p>
                   </div>
-                  <span className={`rounded-full px-2 py-1 text-xs ${row.status === 'reviewed' ? 'bg-success/10 text-success' : row.status === 'uploaded' ? 'bg-warning/10 text-warning' : 'bg-surface-subtle text-text-secondary'}`}>
+                  <span className={`rounded-md px-2 py-1 text-xs ${row.status === 'reviewed' ? 'bg-success/10 text-success' : row.status === 'uploaded' ? 'bg-warning/10 text-warning' : 'bg-surface-subtle text-text-secondary'}`}>
                     {row.status}
                   </span>
                 </div>
               </div>
             )) : (
-              <div className="rounded-xl border border-dashed border-border-subtle p-4 text-sm text-text-secondary">Add a certificate, ID, or proof document and the vault will track readiness without holding raw files.</div>
+              <div className="rounded-lg border border-dashed border-border-subtle p-4 text-sm text-text-secondary">Add a certificate, ID, or proof document and the vault will track readiness without holding raw files.</div>
             )}
           </div>
 
           <div id="target-status-tracking" className="mt-6 scroll-mt-24 border-t border-border-subtle pt-4">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h4 className="text-sm font-semibold text-text-primary">Target status tracking</h4>
-                <p className="mt-1 text-xs text-text-secondary">Per-target status, proof summary, note, and last movement across the filing workflow.</p>
+                <h4 className="text-sm font-semibold text-text-primary">Status tracking</h4>
+                <p className="mt-1 text-xs text-text-secondary">See what is ready, what needs proof, and what moved most recently.</p>
               </div>
               <div className="flex flex-wrap items-center justify-end gap-2 text-xs text-text-secondary">
-                <span className="rounded-full bg-surface-subtle px-2 py-1">{targetStatusVaultRows.length} tracked targets</span>
-                <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.missingProofTargets ?? targetStatusVaultSummary.missingProofTargets} with missing proof</span>
-                <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.attentionProofTargets ?? targetStatusVaultSummary.attentionProofTargets} with proof attention</span>
-                <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.ready ?? 0} ready</span>
-                <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.blocked ?? 0} blocked</span>
-                <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.touchedByExecution ?? 0} with execution activity</span>
-                <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.touchedByReminder ?? 0} with reminder follow-up</span>
-                <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.inProgress ?? 0} in progress</span>
-                <span className="rounded-full bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.complete ?? 0} complete</span>
+                <span className="rounded-md bg-surface-subtle px-2 py-1">{targetStatusVaultRows.length} tracked targets</span>
+                <span className="rounded-md bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.missingProofTargets ?? targetStatusVaultSummary.missingProofTargets} with missing proof</span>
+                <span className="rounded-md bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.attentionProofTargets ?? targetStatusVaultSummary.attentionProofTargets} proof details worth checking</span>
+                <span className="rounded-md bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.ready ?? 0} ready</span>
+                <span className="rounded-md bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.blocked ?? 0} blocked</span>
+                <span className="rounded-md bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.touchedByExecution ?? 0} recently updated</span>
+                <span className="rounded-md bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.touchedByReminder ?? 0} with reminder follow-up</span>
+                <span className="rounded-md bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.inProgress ?? 0} in progress</span>
+                <span className="rounded-md bg-surface-subtle px-2 py-1">{plan.summary.targetStatusOverview?.complete ?? 0} complete</span>
                 {plan.summary.targetStatusOverview?.latestTouchedAt ? (
-                  <span className="rounded-full bg-surface-subtle px-2 py-1">
+                  <span className="rounded-md bg-surface-subtle px-2 py-1">
                     Latest move {formatNameChangeExecutionDateTime(plan.summary.targetStatusOverview.latestTouchedAt)}
-                    {plan.summary.targetStatusOverview.latestTouchedSource === 'reminder' ? ' · reminder' : plan.summary.targetStatusOverview.latestTouchedSource === 'milestone' ? ' · milestone' : plan.summary.targetStatusOverview.latestTouchedSource === 'execution' ? ' · execution' : ''}
+                    {plan.summary.targetStatusOverview.latestTouchedSource === 'reminder' ? ' · reminder' : plan.summary.targetStatusOverview.latestTouchedSource === 'milestone' ? ' · milestone' : plan.summary.targetStatusOverview.latestTouchedSource === 'execution' ? ' · step' : ''}
                   </span>
                 ) : null}
                 {plan.summary.targetStatusOverview?.latestUpdatedAt
                 && plan.summary.targetStatusOverview.latestUpdatedAt !== plan.summary.targetStatusOverview.latestTouchedAt ? (
-                  <span className="rounded-full bg-surface-subtle px-2 py-1">
-                    Latest execution {formatNameChangeExecutionDateTime(plan.summary.targetStatusOverview.latestUpdatedAt)}
+                  <span className="rounded-md bg-surface-subtle px-2 py-1">
+                    Latest step {formatNameChangeExecutionDateTime(plan.summary.targetStatusOverview.latestUpdatedAt)}
                   </span>
                   ) : null}
                 {plan.summary.targetStatusOverview?.latestMilestoneAt
                 && plan.summary.targetStatusOverview.latestMilestoneAt !== plan.summary.targetStatusOverview.latestTouchedAt ? (
-                  <span className="rounded-full bg-surface-subtle px-2 py-1">
+                  <span className="rounded-md bg-surface-subtle px-2 py-1">
                     Latest milestone {formatNameChangeExecutionDateTime(plan.summary.targetStatusOverview.latestMilestoneAt)}
                   </span>
                   ) : null}
                 {plan.summary.targetStatusOverview?.latestReminderAt
                 && plan.summary.targetStatusOverview.latestReminderAt !== plan.summary.targetStatusOverview.latestTouchedAt ? (
-                  <span className="rounded-full bg-surface-subtle px-2 py-1">
+                  <span className="rounded-md bg-surface-subtle px-2 py-1">
                     Latest reminder {formatNameChangeExecutionDateTime(plan.summary.targetStatusOverview.latestReminderAt)}
                   </span>
                   ) : null}
@@ -1472,41 +1531,41 @@ export const NameChangePlannerTab: React.FC<Props> = ({
 
             <div className="mt-4 space-y-3">
               {targetStatusVaultRows.map((row) => (
-                <div key={row.key} className="rounded-xl border border-border-subtle p-4">
+                <div key={row.key} className="rounded-lg border border-border-subtle p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold text-text-primary">{row.title}</p>
                       <p className="mt-1 text-xs text-text-secondary">{row.proofSummary}</p>
                     </div>
                     <div className="flex flex-wrap items-center justify-end gap-2">
-                      <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">Vault: {row.vaultStatus.replace(/_/g, ' ')}</span>
-                      <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">Ready: {row.ready ? 'yes' : 'no'}</span>
-                      <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+                      <span className="rounded-md bg-surface-subtle px-2 py-1 text-xs text-text-secondary">Saved: {row.vaultStatus.replace(/_/g, ' ')}</span>
+                      <span className="rounded-md bg-surface-subtle px-2 py-1 text-xs text-text-secondary">Ready: {row.ready ? 'yes' : 'no'}</span>
+                      <span className="rounded-md bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
                         Proof {row.proofReadyCount}/{row.proofTotalCount}
                       </span>
                       {row.executionTotalCount > 0 ? (
-                        <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
-                          Steps {row.executionCompleteCount} done • {row.executionInProgressCount} active • {row.executionTodoCount} todo
+                        <span className="rounded-md bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+                          Steps {row.executionCompleteCount} done • {row.executionInProgressCount} started • {row.executionTodoCount} to do
                         </span>
                       ) : null}
                       {row.milestoneTotalCount > 0 ? (
-                        <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+                        <span className="rounded-md bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
                           Milestones {row.milestoneCompleteCount} confirmed • {row.milestoneInProgressCount} tracking
                         </span>
                       ) : null}
                       {row.reminderOpenCount > 0 ? (
-                        <span className={`rounded-full px-2 py-1 text-xs ${row.reminderHighUrgencyCount > 0 ? 'bg-amber-50 text-amber-700' : 'bg-surface-subtle text-text-secondary'}`}>
-                          Reminders {row.reminderOpenCount} open{row.reminderHighUrgencyCount > 0 ? ` • ${row.reminderHighUrgencyCount} high urgency` : ''}
+                        <span className={`rounded-md px-2 py-1 text-xs ${row.reminderHighUrgencyCount > 0 ? 'border border-primary/25 bg-surface-subtle text-primary' : 'bg-surface-subtle text-text-secondary'}`}>
+                          Reminders {row.reminderOpenCount} open{row.reminderHighUrgencyCount > 0 ? ` • ${row.reminderHighUrgencyCount} time-sensitive` : ''}
                         </span>
                       ) : null}
                       {row.proofMissingCount > 0 ? (
-                        <span className="rounded-full bg-rose-50 px-2 py-1 text-xs text-rose-700">
+                        <span className="rounded-md bg-surface-subtle px-2 py-1 text-xs text-primary">
                           {row.proofMissingCount} missing
                         </span>
                       ) : null}
                       {row.proofAttentionCount > 0 ? (
-                        <span className="rounded-full bg-amber-50 px-2 py-1 text-xs text-amber-700">
-                          {row.proofAttentionCount} attention
+                        <span className="rounded-md border border-primary/25 bg-surface-subtle px-2 py-1 text-xs text-primary">
+                          {row.proofAttentionCount} worth checking
                         </span>
                       ) : null}
                     </div>
@@ -1517,7 +1576,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                       {row.additionalNotes.map((note) => <li key={note}>• {note}</li>)}
                     </ul>
                   ) : null}
-                  {row.executionNote && row.executionNote !== row.note ? <p className="mt-2 text-xs text-text-secondary">Execution note: {row.executionNote}</p> : null}
+                  {row.executionNote && row.executionNote !== row.note ? <p className="mt-2 text-xs text-text-secondary">Step note: {row.executionNote}</p> : null}
                   {row.milestoneNote && row.milestoneNote !== row.note && row.milestoneNote !== row.executionNote ? <p className="mt-2 text-xs text-text-secondary">Milestone note: {row.milestoneNote}</p> : null}
                   {row.proofNote && row.proofNote !== row.note && row.proofNote !== row.executionNote && row.proofNote !== row.milestoneNote ? <p className="mt-2 text-xs text-text-secondary">Proof note: {row.proofNote}</p> : null}
                   {row.reminderNote && row.reminderNote !== row.note ? <p className="mt-2 text-xs text-text-secondary">Reminder note: {row.reminderNote}</p> : null}
@@ -1544,7 +1603,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               <h3 className="text-lg font-semibold text-text-primary">Prewritten update templates</h3>
               <p className="mt-1 text-sm text-text-secondary">Copy, stage, or send when the proof chain is ready. Payroll, bank, insurance, and other downstream updates should not require fresh writing every time.</p>
             </div>
-            <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{accountUpdateTemplates.length} templates</span>
+            <span className="rounded-md bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{accountUpdateTemplates.length} templates</span>
           </div>
 
           <div className="mt-4 space-y-3">
@@ -1553,14 +1612,14 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               const bodyText = getAccountUpdateTemplateBodyText(template);
 
               return (
-                <div id={`account-update-template-${template.id}`} key={template.id} className="scroll-mt-24 rounded-xl border border-border-subtle p-4">
+                <div id={`account-update-template-${template.id}`} key={template.id} className="scroll-mt-24 rounded-lg border border-border-subtle p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-xs uppercase tracking-wide text-text-tertiary">{template.audience}</p>
+                      <p className="text-xs text-text-tertiary">{template.audience}</p>
                       {subjectText ? <p className="mt-2 text-sm font-semibold text-text-primary">{subjectText}</p> : null}
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className={`rounded-full px-2 py-1 text-xs ${getExecutionSummaryTone(template.readiness)}`}>
+                      <span className={`rounded-md px-2 py-1 text-xs ${getExecutionSummaryTone(template.readiness)}`}>
                         {getAccountUpdateTemplateStatusChip(template)}
                       </span>
                       <Button size="sm" variant="outline" onClick={() => void copyAccountUpdateTemplate(template)}>
@@ -1703,23 +1762,23 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       <Card>
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h3 className="text-lg font-semibold text-text-primary">Canonical case requirements</h3>
-            <p className="text-sm text-text-secondary">Early skeleton for the real name-change system contract: canonical case truth plus requirement evaluation.</p>
+            <h3 className="text-lg font-semibold text-text-primary">Core filing details</h3>
+            <p className="text-sm text-text-secondary">The core details this plan uses to keep filings and updates consistent.</p>
           </div>
-          <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
-            {requirementSnapshot.summary.satisfied} satisfied · {requirementSnapshot.summary.attention} attention · {requirementSnapshot.summary.missing} missing
+          <span className="rounded-md bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+            {requirementSnapshot.summary.satisfied} ready · {requirementSnapshot.summary.attention} worth checking · {requirementSnapshot.summary.missing} missing
           </span>
         </div>
 
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           {requirementSnapshot.results.map((result) => (
-            <div key={result.key} className="rounded-xl border border-border-subtle p-4">
+            <div key={result.key} className="rounded-lg border border-border-subtle p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-text-primary">{result.label}</p>
                   <p className="mt-1 text-xs text-text-secondary">{result.stage}</p>
                 </div>
-                <span className={`rounded-full px-2 py-1 text-xs ${result.status === 'satisfied' ? 'bg-success/10 text-success' : result.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
+                <span className={`rounded-md px-2 py-1 text-xs ${result.status === 'satisfied' ? 'bg-success/10 text-success' : result.status === 'attention' ? 'bg-warning/10 text-warning' : 'bg-danger/10 text-danger'}`}>
                   {result.status}
                 </span>
               </div>
@@ -1732,28 +1791,28 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       <Card>
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h3 className="text-lg font-semibold text-text-primary">Document intake contract</h3>
-            <p className="text-sm text-text-secondary">Real system slice for required documents, extraction expectations, and autofill-readiness prep.</p>
+            <h3 className="text-lg font-semibold text-text-primary">Document details</h3>
+            <p className="text-sm text-text-secondary">The documents and fields that make later forms easier to prepare.</p>
           </div>
-          <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
-            {documentIntakeSnapshot.summary.requiredReady} required ready · {documentIntakeSnapshot.summary.requiredMissing} required missing · {documentIntakeSnapshot.summary.extractionGaps} extraction gaps
+          <span className="rounded-md bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+            {documentIntakeSnapshot.summary.requiredReady} required ready · {documentIntakeSnapshot.summary.requiredMissing} required missing · {documentIntakeSnapshot.summary.extractionGaps} detail gaps
           </span>
         </div>
 
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           {documentIntakeSnapshot.documents.map((document) => (
-            <div key={document.kind} className="rounded-xl border border-border-subtle p-4">
+            <div key={document.kind} className="rounded-lg border border-border-subtle p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-text-primary">{document.label}</p>
-                  <p className="mt-1 text-xs text-text-secondary">{document.required ? 'required' : 'optional'} · {document.preferredForAutofill ? 'autofill-preferred' : 'supporting'}</p>
+                  <p className="mt-1 text-xs text-text-secondary">{document.required ? 'required' : 'optional'} · {document.preferredForAutofill ? 'helps with forms' : 'supporting'}</p>
                 </div>
-                <span className={`rounded-full px-2 py-1 text-xs ${document.intakeStatus === 'reviewed' ? 'bg-success/10 text-success' : document.intakeStatus === 'uploaded' ? 'bg-warning/10 text-warning' : 'bg-surface-subtle text-text-secondary'}`}>
+                <span className={`rounded-md px-2 py-1 text-xs ${document.intakeStatus === 'reviewed' ? 'bg-success/10 text-success' : document.intakeStatus === 'uploaded' ? 'bg-warning/10 text-warning' : 'bg-surface-subtle text-text-secondary'}`}>
                   {document.intakeStatus}
                 </span>
               </div>
-              <p className="mt-3 text-sm text-text-secondary">Captured fields: {document.capturedExtractionFields.length > 0 ? document.capturedExtractionFields.join(', ') : 'none yet'}</p>
-              <p className="mt-2 text-xs text-text-secondary">Missing extraction fields: {document.missingExtractionFields.length > 0 ? document.missingExtractionFields.join(', ') : 'none'}</p>
+              <p className="mt-3 text-sm text-text-secondary">Saved fields: {document.capturedExtractionFields.length > 0 ? document.capturedExtractionFields.join(', ') : 'none yet'}</p>
+              <p className="mt-2 text-xs text-text-secondary">Missing fields: {document.missingExtractionFields.length > 0 ? document.missingExtractionFields.join(', ') : 'none'}</p>
             </div>
           ))}
         </div>
@@ -1762,23 +1821,23 @@ export const NameChangePlannerTab: React.FC<Props> = ({
       <Card>
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h3 className="text-lg font-semibold text-text-primary">Autofill prep snapshot</h3>
-            <p className="text-sm text-text-secondary">First real form/autofill-prep slice: canonical values plus extracted-field-backed candidates for downstream execution.</p>
+              <h3 className="text-lg font-semibold text-text-primary">Form helper</h3>
+              <p className="text-sm text-text-secondary">Saved answers and document details that can make later forms quicker to prepare.</p>
           </div>
-          <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
-            {autofillPrepSnapshot.summary.ready} ready · {autofillPrepSnapshot.summary.missing} missing · {autofillPrepSnapshot.summary.extractedBacked} extracted-backed
+          <span className="rounded-md bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+            {autofillPrepSnapshot.summary.ready} ready · {autofillPrepSnapshot.summary.missing} missing · {autofillPrepSnapshot.summary.extractedBacked} document-backed
           </span>
         </div>
 
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           {autofillPrepSnapshot.fields.map((field) => (
-            <div key={field.targetField} className="rounded-xl border border-border-subtle p-4">
+            <div key={field.targetField} className="rounded-lg border border-border-subtle p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-text-primary">{field.label}</p>
                   <p className="mt-1 text-xs text-text-secondary">{field.targetField}</p>
                 </div>
-                <span className={`rounded-full px-2 py-1 text-xs ${field.value.confidence === 'high' ? 'bg-success/10 text-success' : field.value.confidence === 'medium' ? 'bg-warning/10 text-warning' : 'bg-surface-subtle text-text-secondary'}`}>
+                <span className={`rounded-md px-2 py-1 text-xs ${field.value.confidence === 'high' ? 'bg-success/10 text-success' : field.value.confidence === 'medium' ? 'bg-warning/10 text-warning' : 'bg-surface-subtle text-text-secondary'}`}>
                   {field.value.confidence}
                 </span>
               </div>
@@ -1793,10 +1852,10 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         <Card>
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h3 className="text-lg font-semibold text-text-primary">Execution section index</h3>
-              <p className="text-sm text-text-secondary">Jump straight to the right lane instead of scrolling through the whole planner stack.</p>
+              <h3 className="text-lg font-semibold text-text-primary">Quick jump</h3>
+              <p className="text-sm text-text-secondary">Jump straight to the part you want to handle next.</p>
             </div>
-            <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+            <span className="rounded-md bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
               {executionSectionSummaries.length} section{executionSectionSummaries.length === 1 ? '' : 's'}
             </span>
           </div>
@@ -1807,11 +1866,11 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 key={section.key}
                 type="button"
                 onClick={() => scrollToPlannerTarget(`execution-section-${section.key}`)}
-                className="rounded-xl border border-border-subtle bg-white/60 p-4 text-left transition hover:border-primary/30 hover:bg-primary/5"
+                className="rounded-lg border border-border-subtle bg-white/60 p-4 text-left transition hover:border-primary/30 hover:bg-primary/5"
               >
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-semibold text-text-primary">{section.title}</p>
-                  <span className={`rounded-full px-2 py-1 text-xs ${section.postureTone === 'danger' ? 'bg-danger/10 text-danger' : section.postureTone === 'warning' ? 'bg-warning/10 text-warning' : section.postureTone === 'primary' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-secondary'}`}>
+                  <span className={`rounded-md px-2 py-1 text-xs ${section.postureTone === 'danger' ? 'bg-danger/10 text-danger' : section.postureTone === 'warning' ? 'bg-warning/10 text-warning' : section.postureTone === 'primary' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-secondary'}`}>
                     {section.postureLabel}
                   </span>
                 </div>
@@ -1830,7 +1889,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               <h3 className="text-lg font-semibold text-text-primary">{section.title}</h3>
               <p className="text-sm text-text-secondary">{section.description}</p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                <span className={`rounded-full px-2 py-1 text-xs ${section.postureTone === 'danger' ? 'bg-danger/10 text-danger' : section.postureTone === 'warning' ? 'bg-warning/10 text-warning' : section.postureTone === 'primary' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-secondary'}`}>
+                <span className={`rounded-md px-2 py-1 text-xs ${section.postureTone === 'danger' ? 'bg-danger/10 text-danger' : section.postureTone === 'warning' ? 'bg-warning/10 text-warning' : section.postureTone === 'primary' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-secondary'}`}>
                   {section.postureLabel}
                 </span>
                 <span className="text-xs text-text-secondary">{section.postureDetail}</span>
@@ -1840,9 +1899,9 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                   <span>Section progress</span>
                   <span>{section.progressPercent}% · {section.progressLabel}</span>
                 </div>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface-subtle">
+                <div className="mt-2 h-2 overflow-hidden rounded-md bg-surface-subtle">
                   <div
-                    className={`h-full rounded-full ${section.postureTone === 'danger' ? 'bg-danger' : section.postureTone === 'warning' ? 'bg-warning' : section.postureTone === 'primary' ? 'bg-primary' : 'bg-text-secondary'}`}
+                    className={`h-full rounded-md ${section.postureTone === 'danger' ? 'bg-danger' : section.postureTone === 'warning' ? 'bg-warning' : section.postureTone === 'primary' ? 'bg-primary' : 'bg-text-secondary'}`}
                     style={{ width: `${section.progressPercent}%` }}
                   />
                 </div>
@@ -1862,7 +1921,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                   variant="outline"
                   onClick={() => section.highestRiskCardKey && scrollToPlannerTarget(`execution-card-${section.highestRiskCardKey}`)}
                 >
-                  Focus highest-risk card
+                  Focus next card
                 </Button>
               )}
               {section.staleReminderKeys.length > 0 && (
@@ -1874,7 +1933,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                     { action: 'schedule-stale' },
                   )}
                 >
-                  Schedule {section.staleReminderKeys.length} stale reminder{section.staleReminderKeys.length === 1 ? '' : 's'}
+                  Schedule {section.staleReminderKeys.length} old reminder{section.staleReminderKeys.length === 1 ? '' : 's'}
                 </Button>
               )}
               {section.reminderKeys.length > 0 && (
@@ -1893,32 +1952,32 @@ export const NameChangePlannerTab: React.FC<Props> = ({
           )}
 
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-xl border border-border-subtle bg-white/60 p-4">
-              <p className="text-xs uppercase tracking-wide text-text-tertiary">Section readiness</p>
-              <p className="mt-2 text-sm font-semibold text-text-primary">{section.readyCount} ready · {section.blockedCount} blocked</p>
-              <p className="mt-2 text-xs text-text-secondary">Cards in this section that can move now vs still need work.</p>
+            <div className="rounded-lg border border-border-subtle bg-white/60 p-4">
+                <p className="text-xs text-text-tertiary">This part</p>
+              <p className="mt-2 text-sm font-semibold text-text-primary">{section.readyCount} ready · {section.blockedCount} need details</p>
+                <p className="mt-2 text-xs text-text-secondary">Items that can move now versus items that still need details.</p>
             </div>
-            <div className="rounded-xl border border-border-subtle bg-white/60 p-4">
-              <p className="text-xs uppercase tracking-wide text-text-tertiary">Attention load</p>
-              <p className="mt-2 text-sm font-semibold text-text-primary">{section.attentionCount} attention markers</p>
-              <p className="mt-2 text-xs text-text-secondary">Checklist items that are not outright blocked but still need eyes.</p>
+            <div className="rounded-lg border border-border-subtle bg-white/60 p-4">
+                <p className="text-xs text-text-tertiary">Worth checking</p>
+              <p className="mt-2 text-sm font-semibold text-text-primary">{section.attentionCount} worth checking</p>
+                <p className="mt-2 text-xs text-text-secondary">Items that are not blocked but deserve a quick look.</p>
             </div>
-            <div className="rounded-xl border border-border-subtle bg-white/60 p-4">
-              <p className="text-xs uppercase tracking-wide text-text-tertiary">Highest-risk card</p>
+            <div className="rounded-lg border border-border-subtle bg-white/60 p-4">
+                <p className="text-xs text-text-tertiary">Most useful next card</p>
               <p className="mt-2 text-sm font-semibold text-text-primary">{section.highestRiskCard}</p>
-              <p className="mt-2 text-xs text-text-secondary">The card in this section carrying the most blockers / unresolved attention.</p>
+                <p className="mt-2 text-xs text-text-secondary">The card with the most useful next details to finish.</p>
             </div>
-            <div className="rounded-xl border border-border-subtle bg-white/60 p-4">
-              <p className="text-xs uppercase tracking-wide text-text-tertiary">Stale reminder overlap</p>
-              <p className="mt-2 text-sm font-semibold text-text-primary">{section.staleReminderOverlap} stale overlaps</p>
-              <p className="mt-2 text-xs text-text-secondary">How much stale reminder follow-up still seems to be pooling around this section.</p>
+            <div className="rounded-lg border border-border-subtle bg-white/60 p-4">
+                <p className="text-xs text-text-tertiary">Old reminders</p>
+                <p className="mt-2 text-sm font-semibold text-text-primary">{section.staleReminderOverlap} old reminder{section.staleReminderOverlap === 1 ? '' : 's'}</p>
+                <p className="mt-2 text-xs text-text-secondary">Follow-ups that may need to be rescheduled or dismissed.</p>
             </div>
           </div>
 
-          <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+          <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs uppercase tracking-wide text-primary">Section next action</p>
+                <p className="text-xs text-primary">Next best step</p>
                 <p className="mt-2 text-sm font-semibold text-text-primary">{section.nextActionLabel}</p>
                 <div className="mt-2 space-y-1 text-xs text-text-secondary">
                   <p>{section.nextActionOverview ?? section.nextActionDetail}</p>
@@ -1953,10 +2012,10 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         <div id="account-update-templates" className="scroll-mt-24" />
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h3 className="text-lg font-semibold text-text-primary">Guided action feed</h3>
-            <p className="text-sm text-text-secondary">One ordered worklist that merges execution next steps with document-repair actions.</p>
+            <h3 className="text-lg font-semibold text-text-primary">Next steps</h3>
+            <p className="text-sm text-text-secondary">A simple order for what to handle next, including any document details worth checking.</p>
           </div>
-          <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+          <span className="rounded-md bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
             {actionFeed.length} action{actionFeed.length === 1 ? '' : 's'}
           </span>
         </div>
@@ -1967,7 +2026,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               key={item.key}
               type="button"
               onClick={() => scrollToPlannerTarget(item.focusTargetId)}
-              className="rounded-xl border border-border-subtle p-4 text-left transition hover:border-primary/30 hover:bg-primary/5"
+              className="rounded-lg border border-border-subtle p-4 text-left transition hover:border-primary/30 hover:bg-primary/5"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -1975,16 +2034,16 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                   <p className="mt-1 text-xs text-text-secondary">{item.title} · {item.laneLabel}</p>
                 </div>
                 <div className="flex flex-col items-end gap-1">
-                  <span className={`rounded-full px-2 py-1 text-xs ${item.severity === 'blocking' ? 'bg-danger/10 text-danger' : item.severity === 'attention' ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'}`}>
-                    {item.severity}
+                  <span className={`rounded-md px-2 py-1 text-xs ${item.severity === 'blocking' ? 'bg-danger/10 text-danger' : item.severity === 'attention' ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'}`}>
+                    {getNameChangeStatusChipLabel(item.severity)}
                   </span>
-                  <span className={`rounded-full px-2 py-1 text-xs ${getActionFeedUrgencyClass(item.urgencyTier)}`}>
-                    {item.urgencyTier}
+                  <span className={`rounded-md px-2 py-1 text-xs ${getActionFeedUrgencyClass(item.urgencyTier)}`}>
+                    {getNameChangeStatusChipLabel(item.urgencyTier)}
                   </span>
                 </div>
               </div>
               <p className="mt-3 whitespace-pre-line text-sm text-text-secondary">{item.action.detail}</p>
-              <p className="mt-2 text-xs text-text-secondary">{getActionFeedSectionLabel(item.sectionKey)} · {item.origin === 'execution' ? 'execution lane' : 'document repair'} · {item.action.category} · {getActionFeedUrgencyReasonLabel(item.urgencyReason)} · score {item.score}</p>
+              <p className="mt-2 text-xs text-text-secondary">{getActionFeedSectionLabel(item.sectionKey)} · {item.origin === 'execution' ? 'next step' : 'document check'} · {item.action.category} · {getActionFeedUrgencyReasonLabel(item.urgencyReason)}</p>
               <p className="mt-3 text-xs font-medium text-primary">{getActionFeedCtaLabel(item.plannerIntent)} →</p>
             </button>
           ))}
@@ -1995,8 +2054,8 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         <div className="flex items-center gap-2">
           <FileStack className="h-5 w-5 text-primary" />
             <div>
-              <h3 className="text-lg font-semibold text-text-primary">Document intake accelerator</h3>
-              <p className="text-sm text-text-secondary">Optional metadata only. No raw-document dependency in the engine.</p>
+              <h3 className="text-lg font-semibold text-text-primary">Document details</h3>
+              <p className="text-sm text-text-secondary">Add only the details you want to track. No file upload is required.</p>
             </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
@@ -2009,7 +2068,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                   onClick={() => present
                     ? onDocumentsChange(documents.filter((document) => document.document_kind !== option.key))
                     : onDocumentsChange(ensureDocument(documents, option.key, option.label))}
-                  className={`rounded-full border px-3 py-1.5 text-sm ${present ? 'border-primary bg-primary/10 text-primary' : 'border-border-subtle text-text-secondary'}`}
+                  className={`rounded-md border px-3 py-1.5 text-sm ${present ? 'border-primary bg-primary/10 text-primary' : 'border-border-subtle text-text-secondary'}`}
                 >
                   {present ? 'Added · ' : 'Add · '}{option.label}
                 </button>
@@ -2018,69 +2077,69 @@ export const NameChangePlannerTab: React.FC<Props> = ({
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-xl border border-border-subtle p-3">
-              <p className="text-xs uppercase tracking-wide text-text-tertiary">Required ready</p>
+            <div className="rounded-lg border border-border-subtle p-3">
+              <p className="text-xs text-text-tertiary">Required ready</p>
               <p className="mt-2 text-sm font-semibold text-text-primary">{documentIntakeSnapshot.summary.requiredReady}</p>
             </div>
-            <div className="rounded-xl border border-border-subtle p-3">
-              <p className="text-xs uppercase tracking-wide text-text-tertiary">Required missing</p>
+            <div className="rounded-lg border border-border-subtle p-3">
+              <p className="text-xs text-text-tertiary">Required missing</p>
               <p className="mt-2 text-sm font-semibold text-text-primary">{documentIntakeSnapshot.summary.requiredMissing}</p>
             </div>
-            <div className="rounded-xl border border-border-subtle p-3">
-              <p className="text-xs uppercase tracking-wide text-text-tertiary">Metadata ready</p>
+            <div className="rounded-lg border border-border-subtle p-3">
+              <p className="text-xs text-text-tertiary">Document details ready</p>
               <p className="mt-2 text-sm font-semibold text-text-primary">{documentIntakeSnapshot.summary.metadataReady}</p>
             </div>
-            <div className="rounded-xl border border-border-subtle p-3">
-              <p className="text-xs uppercase tracking-wide text-text-tertiary">Metadata gaps</p>
+            <div className="rounded-lg border border-border-subtle p-3">
+              <p className="text-xs text-text-tertiary">Document details to add</p>
               <p className="mt-2 text-sm font-semibold text-text-primary">{documentIntakeSnapshot.summary.metadataGaps}</p>
             </div>
           </div>
 
           {documentRepairQueue.length > 0 ? (
-            <div className="mt-4 rounded-xl border border-border-subtle p-4">
+            <div className="mt-4 rounded-lg border border-border-subtle p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <h4 className="text-sm font-semibold text-text-primary">Document repair queue</h4>
-                  <p className="text-xs text-text-secondary">Highest-leverage artifact fixes based on current metadata gaps, extraction gaps, and field-level execution risk.</p>
+                  <h4 className="text-sm font-semibold text-text-primary">Document check list</h4>
+                  <p className="text-xs text-text-secondary">The document details most worth checking before you keep going.</p>
                 </div>
-                <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
-                  {documentRepairQueue.filter((item) => item.severity === 'blocking').length} blocking · {documentRepairQueue.filter((item) => item.severity === 'attention').length} attention
+                <span className="rounded-md bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+                  {documentRepairQueue.filter((item) => item.severity === 'blocking').length} needed · {documentRepairQueue.filter((item) => item.severity === 'attention').length} worth checking
                 </span>
               </div>
 
               <div className="mt-4 grid gap-3 lg:grid-cols-2">
                 {documentRepairQueue.slice(0, 6).map((item) => (
-                  <div id={`document-${item.kind}`} key={item.kind} className="rounded-xl border border-border-subtle p-4">
+                  <div id={`document-${item.kind}`} key={item.kind} className="rounded-lg border border-border-subtle p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold text-text-primary">{item.label}</p>
-                        <p className="mt-1 text-xs text-text-secondary">score {item.score} · {item.required ? 'required' : 'supporting'} · {item.intakeStatus}</p>
+                        <p className="mt-1 text-xs text-text-secondary">{item.required ? 'Required' : 'Helpful'} · {getIntakeStatusLabel(item.intakeStatus)}</p>
                       </div>
-                      <span className={`rounded-full px-2 py-1 text-xs ${item.severity === 'blocking' ? 'bg-danger/10 text-danger' : 'bg-warning/10 text-warning'}`}>
-                        {item.severity}
+                      <span className={`rounded-md px-2 py-1 text-xs ${item.severity === 'blocking' ? 'bg-danger/10 text-danger' : 'bg-warning/10 text-warning'}`}>
+                        {getRepairSeverityLabel(item.severity)}
                       </span>
                     </div>
 
                     <p className="mt-3 text-sm text-text-secondary">{item.impactSummary}</p>
                     <p className="mt-2 text-xs text-text-secondary">Payoff: {item.payoffSummary}</p>
 
-                    {item.metadataMissing.length > 0 ? (
-                      <p className="mt-2 text-xs text-text-secondary">Metadata missing: {item.metadataMissing.join(', ')}</p>
+                    {(item.metadataMissing ?? []).length > 0 ? (
+                      <p className="mt-2 text-xs text-text-secondary">Details to add: {(item.metadataMissing ?? []).join(', ')}</p>
                     ) : null}
                     {item.missingExtractionFields.length > 0 ? (
-                      <p className="mt-2 text-xs text-text-secondary">Extraction missing: {item.missingExtractionFields.join(', ')}</p>
+                      <p className="mt-2 text-xs text-text-secondary">Saved fields missing: {item.missingExtractionFields.join(', ')}</p>
                     ) : null}
                     {item.impactedTargets.length > 0 ? (
                       <p className="mt-2 text-xs text-text-secondary">Unblocks: {item.impactedTargets.join(', ')}</p>
                     ) : null}
-                    {item.impactedFields.length > 0 ? (
+                    {(item.impactedFields ?? []).length > 0 ? (
                       <p className="mt-2 text-xs text-text-secondary">
-                        Repairs fields: {item.impactedFields.slice(0, 4).map((field) => `${field.label} (${field.targetLabel})`).join(', ')}
+                        Helps with: {(item.impactedFields ?? []).slice(0, 4).map((field) => `${field.label} (${field.targetLabel})`).join(', ')}
                       </p>
                     ) : null}
                     {item.nextActions.length > 0 ? (
                       <div className="mt-3 rounded-lg bg-surface-subtle/60 p-3">
-                        <p className="text-xs uppercase tracking-wide text-text-tertiary">Next repair actions</p>
+                        <p className="text-xs text-text-tertiary">Next details to check</p>
                         <ul className="mt-2 space-y-2 text-xs text-text-secondary">
                           {item.nextActions.map((action) => (
                             <li key={`${action.category}:${action.label}`} className="rounded-lg border border-border-subtle bg-white/70 px-3 py-2">
@@ -2099,16 +2158,16 @@ export const NameChangePlannerTab: React.FC<Props> = ({
 
           <div className="mt-4 space-y-3">
             {documents.length === 0 ? (
-              <p className="text-sm text-text-tertiary">No document metadata yet. That is fine — the planner can still work off manual structured fields.</p>
+              <p className="text-sm text-text-tertiary">No document details yet. That is fine. The planner can still work from what you enter here.</p>
             ) : documents.map((document) => (
-              <div key={document.document_kind} className="rounded-xl border border-border-subtle p-4">
+              <div key={document.document_kind} className="rounded-lg border border-border-subtle p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-medium text-text-primary">{document.display_name}</p>
-                    <p className="text-xs text-text-secondary">{document.storage_mode === 'metadata_only' ? 'Metadata only' : 'No file stored'} · {document.document_kind}</p>
+                    <p className="text-xs text-text-secondary">{getDocumentStorageModeLabel(document.storage_mode)} · {getDocumentDetailLabel(document.document_kind)}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`rounded-full px-2 py-1 text-xs ${document.intake_status === 'reviewed' ? 'bg-success/10 text-success' : document.intake_status === 'uploaded' ? 'bg-warning/10 text-warning' : 'bg-surface-subtle text-text-secondary'}`}>{document.intake_status}</span>
+                    <span className={`rounded-md px-2 py-1 text-xs ${document.intake_status === 'reviewed' ? 'bg-success/10 text-success' : document.intake_status === 'uploaded' ? 'bg-warning/10 text-warning' : 'bg-surface-subtle text-text-secondary'}`}>{getIntakeStatusLabel(document.intake_status)}</span>
                     <Button variant="ghost" size="sm" onClick={() => onDocumentsChange(documents.filter((item) => item.document_kind !== document.document_kind))}>Remove</Button>
                   </div>
                 </div>
@@ -2120,18 +2179,18 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                   return (
                     <div className="mt-3 grid gap-3 md:grid-cols-2">
                       <div className="rounded-lg bg-surface-subtle/60 p-3">
-                        <p className="text-xs uppercase tracking-wide text-text-tertiary">Metadata completeness</p>
+                        <p className="text-xs text-text-tertiary">Detail completeness</p>
                         <p className="mt-2 text-xs text-text-secondary">
                           {contractStatus.metadataMissing.length === 0
-                            ? 'Ready for downstream use.'
+                            ? 'Ready for the next steps.'
                             : `Missing: ${contractStatus.metadataMissing.join(', ')}`}
                         </p>
                       </div>
                       <div className="rounded-lg bg-surface-subtle/60 p-3">
-                        <p className="text-xs uppercase tracking-wide text-text-tertiary">Extraction coverage</p>
+                        <p className="text-xs text-text-tertiary">Saved fields</p>
                         <p className="mt-2 text-xs text-text-secondary">
                           {contractStatus.missingExtractionFields.length === 0
-                            ? 'All expected extraction fields captured.'
+                            ? 'All expected fields are saved.'
                             : `Missing: ${contractStatus.missingExtractionFields.join(', ')}`}
                         </p>
                       </div>
@@ -2141,7 +2200,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
 
                 <div className="mt-4 grid gap-3 md:grid-cols-2">
                   <label className="text-sm">
-                    <span className="mb-1 block text-xs font-medium text-text-secondary">Document label</span>
+                    <span className="mb-1 block text-xs font-medium text-text-secondary">Document name</span>
                     <input
                       className="w-full rounded-lg border border-border px-3 py-2"
                       value={document.display_name}
@@ -2200,7 +2259,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
 
                 <div className="mt-4 grid gap-3 md:grid-cols-2">
                   <label className="text-sm">
-                    <span className="mb-1 block text-xs font-medium text-text-secondary">Extraction confidence</span>
+                    <span className="mb-1 block text-xs font-medium text-text-secondary">Confidence</span>
                     <input
                       type="number"
                       min="0"
@@ -2215,20 +2274,20 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                     />
                   </label>
                   <label className="text-sm">
-                    <span className="mb-1 block text-xs font-medium text-text-secondary">Storage mode</span>
+                    <span className="mb-1 block text-xs font-medium text-text-secondary">How this is saved</span>
                     <select
                       className="w-full rounded-lg border border-border px-3 py-2"
                       value={document.storage_mode}
                       onChange={(e) => onDocumentsChange(updateDocument(documents, document.document_kind, { storage_mode: e.target.value as NameChangeDocumentInput['storage_mode'] }))}
                     >
-                      <option value="metadata_only">Metadata only</option>
+                      <option value="metadata_only">Details only</option>
                       <option value="none">No file stored</option>
                     </select>
                   </label>
                 </div>
 
                 <label className="mt-4 block text-sm">
-                  <span className="mb-1 block text-xs font-medium text-text-secondary">Structured extraction notes / snapshot JSON</span>
+                  <span className="mb-1 block text-xs font-medium text-text-secondary">Saved detail notes</span>
                   <textarea
                     className="min-h-[92px] w-full rounded-lg border border-border px-3 py-2 text-sm"
                     value={documentSnapshotDrafts[document.document_kind] ?? ''}
@@ -2263,19 +2322,19 @@ export const NameChangePlannerTab: React.FC<Props> = ({
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
             <div>
-              <h3 className="text-lg font-semibold text-text-primary">Extraction contract workspace</h3>
-              <p className="text-sm text-text-secondary">Document-specific structured fields the broader name-change system actually reads.</p>
+              <h3 className="text-lg font-semibold text-text-primary">Saved document fields</h3>
+              <p className="text-sm text-text-secondary">Document-specific fields this planner can use to help prepare later forms.</p>
             </div>
           </div>
 
           {extractionContractSnapshot.summary.conflictCount > 0 && (
-            <div className="mt-4 rounded-xl border border-warning/30 bg-warning/5 p-4">
+            <div className="mt-4 rounded-lg border border-warning/30 bg-warning/5 p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <h4 className="text-sm font-semibold text-text-primary">Canonical conflicts to resolve</h4>
-                  <p className="text-xs text-text-secondary">Structured case truth and extracted document values are disagreeing. Fix this before treating autofill as trustworthy.</p>
+                  <h4 className="text-sm font-semibold text-text-primary">Conflicting details to resolve</h4>
+                  <p className="text-xs text-text-secondary">Saved answers and document details do not match yet. Check this before using them on forms.</p>
                 </div>
-                <span className="rounded-full bg-warning/10 px-2 py-1 text-xs text-warning">
+                <span className="rounded-md bg-warning/10 px-2 py-1 text-xs text-warning">
                   {extractionContractSnapshot.summary.conflictCount} conflict{extractionContractSnapshot.summary.conflictCount === 1 ? '' : 's'}
                 </span>
               </div>
@@ -2283,7 +2342,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 {extractionContractSnapshot.conflicts.map((conflict) => (
                   <div key={conflict.key} className="rounded-lg border border-warning/20 bg-white/70 p-3">
                     <p className="text-sm font-medium text-text-primary">{conflict.label}</p>
-                    <p className="mt-2 text-xs text-text-secondary">Structured: {conflict.canonicalValue ?? 'missing'} · Extracted: {conflict.extractedValue}</p>
+                    <p className="mt-2 text-xs text-text-secondary">Saved answer: {conflict.canonicalValue ?? 'missing'} · Document detail: {conflict.extractedValue}</p>
                     <p className="mt-2 text-xs text-text-secondary">{conflict.documentKind} · {conflict.fieldKey}</p>
                   </div>
                 ))}
@@ -2309,15 +2368,15 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                         : null;
 
                 return (
-                  <div key={contract.kind} className="rounded-xl border border-border-subtle p-4">
+                  <div key={contract.kind} className="rounded-lg border border-border-subtle p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold text-text-primary">{contract.label}</p>
                         <p className="mt-1 text-xs text-text-secondary">
-                          {status?.required ? 'required' : 'supporting'} · {status?.preferredForAutofill ? 'autofill-driving' : 'reference-only'}
+                          {status?.required ? 'required' : 'supporting'} · {status?.preferredForAutofill ? 'helps with forms' : 'reference only'}
                         </p>
                       </div>
-                      <span className={`rounded-full px-2 py-1 text-xs ${status?.intakeStatus === 'reviewed' ? 'bg-success/10 text-success' : status?.intakeStatus === 'uploaded' ? 'bg-warning/10 text-warning' : 'bg-surface-subtle text-text-secondary'}`}>
+                      <span className={`rounded-md px-2 py-1 text-xs ${status?.intakeStatus === 'reviewed' ? 'bg-success/10 text-success' : status?.intakeStatus === 'uploaded' ? 'bg-warning/10 text-warning' : 'bg-surface-subtle text-text-secondary'}`}>
                         {status?.intakeStatus ?? 'not started'}
                       </span>
                     </div>
@@ -2330,7 +2389,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                           <label key={`${contract.kind}-${fieldKey}`} className="block text-sm">
                             <span className="mb-1 flex items-center justify-between gap-2 text-xs font-medium text-text-secondary">
                               <span>{extractionFieldLabels[fieldKey]}</span>
-                              <span className={`rounded-full px-2 py-0.5 text-[10px] ${isCaptured ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
+                              <span className={`rounded-md px-2 py-0.5 text-[10px] ${isCaptured ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
                                 {isCaptured ? 'captured' : 'missing'}
                               </span>
                             </span>
@@ -2344,7 +2403,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                                 extractionFieldLabels[fieldKey],
                                 e.target.value,
                               ))}
-                              placeholder={extractionFieldPlaceholders[fieldKey] ?? 'Masked structured value'}
+                              placeholder={extractionFieldPlaceholders[fieldKey] ?? 'Saved document value'}
                             />
                           </label>
                         );
@@ -2353,13 +2412,13 @@ export const NameChangePlannerTab: React.FC<Props> = ({
 
                     <div className="mt-3 grid gap-3 md:grid-cols-2">
                       <div className="rounded-lg bg-surface-subtle/60 p-3">
-                        <p className="text-xs uppercase tracking-wide text-text-tertiary">Accepted signals</p>
+                        <p className="text-xs text-text-tertiary">Accepted signals</p>
                         <p className="mt-2 text-xs text-text-secondary">{contract.acceptedSignals.join(' · ')}</p>
                       </div>
                       <div className="rounded-lg bg-surface-subtle/60 p-3">
-                        <p className="text-xs uppercase tracking-wide text-text-tertiary">Typed extraction snapshot</p>
+                        <p className="text-xs text-text-tertiary">Saved field preview</p>
                         <p className="mt-2 text-xs text-text-secondary break-words">
-                          {typedSnapshot ? JSON.stringify(typedSnapshot) : 'No typed extraction view for this document kind yet.'}
+                          {typedSnapshot ? JSON.stringify(typedSnapshot) : 'No saved field preview for this document yet.'}
                         </p>
                       </div>
                     </div>
@@ -2374,13 +2433,13 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         <div className="flex items-center gap-2">
           <MapPinned className="h-5 w-5 text-primary" />
           <div>
-            <h3 className="text-lg font-semibold text-text-primary">Engine-generated workflow</h3>
-            <p className="text-sm text-text-secondary">Registry-driven steps, not a static checklist.</p>
+            <h3 className="text-lg font-semibold text-text-primary">Generated checklist</h3>
+            <p className="text-sm text-text-secondary">Steps tailored from your saved details.</p>
           </div>
         </div>
 
         {plan.summary.blockers.length > 0 && (
-          <div className="mt-4 rounded-xl border border-warning/30 bg-warning/5 p-4">
+          <div className="mt-4 rounded-lg border border-warning/30 bg-warning/5 p-4">
             <div className="flex items-start gap-2">
               <AlertTriangle className="mt-0.5 h-4 w-4 text-warning" />
               <div>
@@ -2395,14 +2454,14 @@ export const NameChangePlannerTab: React.FC<Props> = ({
 
         <div className="mt-4 space-y-4">
           {plan.steps.map((step) => (
-            <div key={step.id} className="rounded-xl border border-border-subtle p-4">
+            <div key={step.id} className="rounded-lg border border-border-subtle p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-text-tertiary">{step.phase}</p>
+                  <p className="text-xs text-text-tertiary">{step.phase}</p>
                   <p className="mt-1 text-sm font-semibold text-text-primary">{step.title}</p>
                   <p className="mt-1 text-sm text-text-secondary">{step.description}</p>
                 </div>
-                <span className={`rounded-full px-2 py-1 text-xs ${step.status === 'ready' ? 'bg-success/10 text-success' : step.status === 'blocked' ? 'bg-warning/10 text-warning' : 'bg-surface-subtle text-text-secondary'}`}>{step.status}</span>
+                <span className={`rounded-md px-2 py-1 text-xs ${step.status === 'ready' ? 'bg-success/10 text-success' : step.status === 'blocked' ? 'bg-warning/10 text-warning' : 'bg-surface-subtle text-text-secondary'}`}>{step.status}</span>
               </div>
               <div className="mt-3 grid gap-3 md:grid-cols-3 text-sm">
                 <div>
@@ -2416,13 +2475,13 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 <div>
                   <p className="font-medium text-text-primary">Forms / institutions</p>
                   <ul className="mt-1 space-y-1 text-text-secondary">
-                    {step.forms.map((form) => <li key={form.code}>• {form.code} — {form.title}</li>)}
+                    {step.forms.map((form) => <li key={form.code}>• {form.code}: {form.title}</li>)}
                     {step.institutions.map((institution) => <li key={institution}>• {institution}</li>)}
                   </ul>
                 </div>
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">Execution: {step.executionStatus ?? 'todo'}</span>
+                <span className="rounded-md bg-surface-subtle px-2 py-1 text-xs text-text-secondary">Status: {getExecutionStatusLabel(step.executionStatus)}</span>
                 {step.executionStatus !== 'in_progress' && step.status !== 'blocked' && (
                   <Button variant="ghost" size="sm" onClick={() => onStepExecutionStatusChange(step.id, 'in_progress')}>Mark in progress</Button>
                 )}
@@ -2434,7 +2493,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                 )}
               </div>
               <div className="mt-3 grid gap-2">
-                <label className="text-xs font-medium text-text-secondary">Execution note</label>
+                <label className="text-xs font-medium text-text-secondary">Step note</label>
                 <textarea
                   className="min-h-[84px] w-full rounded-lg border border-border px-3 py-2 text-sm"
                   value={step.executionNote ?? ''}
@@ -2459,36 +2518,40 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         <Card>
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h3 className="text-lg font-semibold text-text-primary">Recent execution activity</h3>
-              <p className="text-sm text-text-secondary">Latest name-change workflow updates captured from step execution notes and status changes.</p>
+              <h3 className="text-lg font-semibold text-text-primary">Recent activity</h3>
+              <p className="text-sm text-text-secondary">Latest name-change updates from step notes and status changes.</p>
               <p className="mt-2 text-xs text-text-secondary">{plan.summary.activitySourceCounts?.step ?? 0} step updates · {plan.summary.activitySourceCounts?.reminder ?? 0} reminder actions</p>
-              <p className="mt-1 text-xs text-text-secondary">Latest movement posture: {plan.summary.latestMovementPosture ?? 'mixed'}</p>
-              <p className="mt-1 text-xs text-text-secondary">Dominant movement lane: {plan.summary.dominantMovementLane ?? 'mixed'}</p>
-              {plan.summary.mixedMovementReason && <p className="mt-1 text-xs text-text-secondary">Mixed movement reason: {plan.summary.mixedMovementReason}</p>}
-              {plan.summary.mixedMovementReason && <p className="mt-1 text-xs text-text-secondary">Mixed window still shows untouched risk: {plan.summary.mixedMovementHasUntouchedRisk ? 'yes' : 'no'}</p>}
-              {plan.summary.mixedMovementReason && <p className="mt-1 text-xs text-text-secondary">Mixed window reminder-heavy: {plan.summary.mixedMovementReminderHeavy ? 'yes' : 'no'}</p>}
-              <p className="mt-1 text-xs text-text-secondary">Reminder churn risk: {plan.summary.reminderChurnRisk ?? 'low'}</p>
-              <p className="mt-1 text-xs text-text-secondary">Recent completion: {plan.summary.hasRecentCompletion ? 'yes' : 'no'}</p>
-              <p className="mt-1 text-xs text-text-secondary">Recent start: {plan.summary.hasRecentStart ? 'yes' : 'no'}</p>
-              <p className="mt-1 text-xs text-text-secondary">Untouched risk still visible: {plan.summary.hasRecentUntouchedRisk ? 'yes' : 'no'}</p>
-              <p className="mt-1 text-xs text-text-secondary">Zero recent step movement: {plan.summary.hasZeroRecentStepMovement ? 'yes' : 'no'}</p>
+              {showAdmin && (
+                <div className="mt-2 space-y-1">
+                  <p className="text-xs text-text-secondary">Latest movement posture: {plan.summary.latestMovementPosture ?? 'mixed'}</p>
+                  <p className="text-xs text-text-secondary">Dominant movement lane: {plan.summary.dominantMovementLane ?? 'mixed'}</p>
+                  {plan.summary.mixedMovementReason && <p className="text-xs text-text-secondary">Mixed movement reason: {plan.summary.mixedMovementReason}</p>}
+                  {plan.summary.mixedMovementReason && <p className="text-xs text-text-secondary">Mixed window still shows untouched risk: {plan.summary.mixedMovementHasUntouchedRisk ? 'yes' : 'no'}</p>}
+                  {plan.summary.mixedMovementReason && <p className="text-xs text-text-secondary">Mixed window reminder-heavy: {plan.summary.mixedMovementReminderHeavy ? 'yes' : 'no'}</p>}
+                  <p className="text-xs text-text-secondary">Reminder churn risk: {plan.summary.reminderChurnRisk ?? 'low'}</p>
+                  <p className="text-xs text-text-secondary">Recent completion: {plan.summary.hasRecentCompletion ? 'yes' : 'no'}</p>
+                  <p className="text-xs text-text-secondary">Recent start: {plan.summary.hasRecentStart ? 'yes' : 'no'}</p>
+                  <p className="text-xs text-text-secondary">Untouched risk still visible: {plan.summary.hasRecentUntouchedRisk ? 'yes' : 'no'}</p>
+                  <p className="text-xs text-text-secondary">Zero recent step movement: {plan.summary.hasZeroRecentStepMovement ? 'yes' : 'no'}</p>
+                </div>
+              )}
             </div>
-            <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
+            <span className="rounded-md bg-surface-subtle px-2 py-1 text-xs text-text-secondary">
               {plan.summary.recentExecutionActivity?.length ?? 0} recent updates
             </span>
           </div>
 
           <div className="mt-4 space-y-3">
             {plan.summary.recentExecutionActivity?.map((item) => (
-              <div key={`${item.stepId}-${item.timestamp}`} className="rounded-xl border border-border-subtle p-4">
+              <div key={`${item.stepId}-${item.timestamp}`} className="rounded-lg border border-border-subtle p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-text-primary">{item.title}</p>
                     <p className="mt-1 text-xs text-text-secondary">{formatNameChangeExecutionDateTime(item.timestamp)}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{item.source}</span>
-                    <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{item.executionStatus}</span>
+                    <span className="rounded-md bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{getActivitySourceLabel(item.source)}</span>
+                    <span className="rounded-md bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{getExecutionStatusLabel(item.executionStatus)}</span>
                   </div>
                 </div>
                 {item.note && <p className="mt-3 text-sm text-text-secondary">{item.note}</p>}
@@ -2502,12 +2565,12 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         <Card className="border-warning/30 bg-warning/5">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h3 className="text-lg font-semibold text-text-primary">Reminder attention needed</h3>
-              <p className="text-sm text-text-secondary">Open reminders still tied to incomplete workflow steps.</p>
-              <p className="mt-2 text-xs text-text-secondary">{reminderAttentionSummary.highUrgency} high urgency · {reminderAttentionSummary.actionablePriority} actionable priority · {reminderAttentionSummary.blockedAndStale} blocked + stale</p>
+              <h3 className="text-lg font-semibold text-text-primary">Reminders worth checking</h3>
+              <p className="text-sm text-text-secondary">Open reminders still tied to unfinished steps.</p>
+              <p className="mt-2 text-xs text-text-secondary">{reminderAttentionSummary.highUrgency} high urgency · {reminderAttentionSummary.actionablePriority} ready to handle · {reminderAttentionSummary.blockedAndStale} waiting and old</p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="rounded-full bg-white/70 px-2 py-1 text-xs text-text-secondary">{reminderAttention.length} attention item{reminderAttention.length === 1 ? '' : 's'}</span>
+              <span className="rounded-md bg-white/70 px-2 py-1 text-xs text-text-secondary">{reminderAttention.length} item{reminderAttention.length === 1 ? '' : 's'}</span>
               <Button
                 variant="ghost"
                 size="sm"
@@ -2528,7 +2591,7 @@ export const NameChangePlannerTab: React.FC<Props> = ({
                   size="sm"
                   onClick={() => onRemindersChange(bulkUpdateNameChangeReminderStatus(effectiveReminders, reminderAttention.filter((item) => item.isStale).map((item) => item.reminderKey), 'scheduled'), { action: 'schedule-stale' })}
                 >
-                  Schedule stale
+                  Schedule old
                 </Button>
               )}
             </div>
@@ -2541,18 +2604,18 @@ export const NameChangePlannerTab: React.FC<Props> = ({
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            <div className="rounded-xl border border-warning/20 bg-white/60 p-4">
-              <p className="text-xs uppercase tracking-wide text-text-tertiary">Actionable split</p>
+            <div className="rounded-lg border border-warning/20 bg-white/60 p-4">
+              <p className="text-xs text-text-tertiary">Actionable split</p>
               <p className="mt-2 text-sm font-semibold text-text-primary">{reminderAttentionSummary.actionablePriority} priority · {reminderAttentionSummary.actionableNormal} normal</p>
               <p className="mt-2 text-xs text-text-secondary">{reminderAttentionSummary.actionableAndStale} actionable + stale · posture {reminderAttentionSummary.actionableFreshPosture}</p>
             </div>
-            <div className="rounded-xl border border-warning/20 bg-white/60 p-4">
-              <p className="text-xs uppercase tracking-wide text-text-tertiary">Stale actionable split</p>
+            <div className="rounded-lg border border-warning/20 bg-white/60 p-4">
+              <p className="text-xs text-text-tertiary">Old ready reminders</p>
               <p className="mt-2 text-sm font-semibold text-text-primary">{reminderAttentionSummary.actionableStalePriority} priority · {reminderAttentionSummary.actionableStaleNormal} normal</p>
               <p className="mt-2 text-xs text-text-secondary">Posture {reminderAttentionSummary.staleActionablePosture}</p>
             </div>
-            <div className="rounded-xl border border-warning/20 bg-white/60 p-4">
-              <p className="text-xs uppercase tracking-wide text-text-tertiary">Blocked stale split</p>
+            <div className="rounded-lg border border-warning/20 bg-white/60 p-4">
+              <p className="text-xs text-text-tertiary">Old waiting reminders</p>
               <p className="mt-2 text-sm font-semibold text-text-primary">{reminderAttentionSummary.blockedStalePriority} priority · {reminderAttentionSummary.blockedStaleNormal} normal</p>
               <p className="mt-2 text-xs text-text-secondary">Posture {reminderAttentionSummary.blockedStalePosture} · stale priority {reminderAttentionSummary.stalePriority}</p>
             </div>
@@ -2560,22 +2623,22 @@ export const NameChangePlannerTab: React.FC<Props> = ({
 
           <div className="mt-4 space-y-3">
             {reminderAttention.map((item) => (
-              <div key={item.reminderKey} className="rounded-xl border border-warning/20 bg-white/60 p-4">
+              <div key={item.reminderKey} className="rounded-lg border border-warning/20 bg-white/60 p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-text-primary">{item.label}</p>
                     <p className="mt-1 text-xs text-text-secondary">Depends on {item.dependentStepTitle}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    {item.priorityTier && <span className={`rounded-full px-2 py-1 text-xs ${item.priorityTier === 'critical' ? 'bg-danger/10 text-danger' : item.priorityTier === 'elevated' ? 'bg-warning/10 text-warning' : 'bg-surface-subtle text-text-secondary'}`}>{item.priorityTier}</span>}
-                    {item.actionability && <span className={`rounded-full px-2 py-1 text-xs ${item.actionability === 'blocked_by_untouched_step' ? 'bg-surface-subtle text-text-secondary' : 'bg-primary/10 text-primary'}`}>{item.actionability === 'blocked_by_untouched_step' ? 'blocked' : 'actionable'}</span>}
-                    {item.isStale && <span className="rounded-full bg-warning/10 px-2 py-1 text-xs text-warning">stale</span>}
-                    <span className={`rounded-full px-2 py-1 text-xs ${item.urgency === 'high' ? 'bg-warning/10 text-warning' : item.urgency === 'medium' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-secondary'}`}>{item.urgency}</span>
+                    {item.priorityTier && <span className={`rounded-md px-2 py-1 text-xs ${item.priorityTier === 'critical' ? 'bg-danger/10 text-danger' : item.priorityTier === 'elevated' ? 'bg-warning/10 text-warning' : 'bg-surface-subtle text-text-secondary'}`}>{item.priorityTier}</span>}
+                    {item.actionability && <span className={`rounded-md px-2 py-1 text-xs ${item.actionability === 'blocked_by_untouched_step' ? 'bg-surface-subtle text-text-secondary' : 'bg-primary/10 text-primary'}`}>{item.actionability === 'blocked_by_untouched_step' ? 'blocked' : 'actionable'}</span>}
+                    {item.isStale && <span className="rounded-md bg-warning/10 px-2 py-1 text-xs text-warning">old</span>}
+                    <span className={`rounded-md px-2 py-1 text-xs ${item.urgency === 'high' ? 'bg-warning/10 text-warning' : item.urgency === 'medium' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-secondary'}`}>{item.urgency}</span>
                   </div>
                 </div>
                 <p className="mt-3 text-sm text-text-secondary">Step is still {item.dependentStepExecutionStatus.replace('_', ' ')} · reminder is {item.reminderStatus}</p>
                 <p className="mt-2 text-xs font-medium text-text-primary">Follow-up target: {item.suggestedOffsetDays} day{item.suggestedOffsetDays === 1 ? '' : 's'} after the triggering step</p>
-                <p className="mt-2 text-xs text-text-secondary">Last workflow touch: {item.lastTouchedAt ? formatNameChangeExecutionDateTime(item.lastTouchedAt) : 'No execution updates yet'}</p>
+                <p className="mt-2 text-xs text-text-secondary">Last update: {item.lastTouchedAt ? formatNameChangeExecutionDateTime(item.lastTouchedAt) : 'No step updates yet'}</p>
                 <div className="mt-3 flex gap-2">
                   {item.focusTargetId && (
                     <Button variant="ghost" size="sm" onClick={() => scrollToPlannerTarget(item.focusTargetId!)}>
@@ -2600,28 +2663,28 @@ export const NameChangePlannerTab: React.FC<Props> = ({
           <div className="flex items-center justify-between gap-3">
             <div>
               <h3 className="text-lg font-semibold text-text-primary">Suggested follow-up reminders</h3>
-              <p className="text-sm text-text-secondary">Scaffolding for planner/admin follow-up timing based on the generated workflow.</p>
+              <p className="text-sm text-text-secondary">Suggested reminders based on the steps in this plan.</p>
               <p className="mt-2 text-xs text-text-secondary">{reminderSummary.pending} pending · {reminderSummary.highUrgencyOpen} high-urgency open</p>
             </div>
-            <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{effectiveReminders.length} reminders</span>
+            <span className="rounded-md bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{effectiveReminders.length} reminders</span>
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {effectiveReminders.map((reminder) => (
-              <div key={reminder.reminder_key} className="rounded-xl border border-border-subtle p-4">
+              <div key={reminder.reminder_key} className="rounded-lg border border-border-subtle p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-text-primary">{reminder.label}</p>
                     <p className="mt-1 text-xs text-text-secondary">Depends on: {reminder.depends_on_step_id}</p>
                   </div>
-                  <span className={`rounded-full px-2 py-1 text-xs ${reminder.urgency === 'high' ? 'bg-warning/10 text-warning' : reminder.urgency === 'medium' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-secondary'}`}>
+                  <span className={`rounded-md px-2 py-1 text-xs ${reminder.urgency === 'high' ? 'bg-warning/10 text-warning' : reminder.urgency === 'medium' ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-secondary'}`}>
                     {reminder.urgency}
                   </span>
                 </div>
                 <p className="mt-3 text-sm text-text-secondary">{reminder.reason}</p>
                 <p className="mt-3 text-xs font-medium text-text-primary">Target follow-up: {reminder.suggested_offset_days} day{reminder.suggested_offset_days === 1 ? '' : 's'} after the triggering step</p>
                 <div className="mt-3 flex items-center justify-between gap-3">
-                  <span className="rounded-full bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{reminder.status}</span>
+                  <span className="rounded-md bg-surface-subtle px-2 py-1 text-xs text-text-secondary">{reminder.status}</span>
                   <div className="flex gap-2">
                     {reminder.focus_target_id && (
                       <Button variant="ghost" size="sm" onClick={() => scrollToPlannerTarget(reminder.focus_target_id!)}>
@@ -2646,14 +2709,14 @@ export const NameChangePlannerTab: React.FC<Props> = ({
         <div className="flex items-center justify-between gap-3">
           <div>
             <h3 className="text-lg font-semibold text-text-primary">Rules + registry review</h3>
-            <p className="text-sm text-text-secondary">Basic admin tooling for this phase: review what drives the engine.</p>
+            <p className="text-sm text-text-secondary">Review the rules and lists that shape this plan.</p>
           </div>
           <Button variant="ghost" size="sm" onClick={() => setShowAdmin((value) => !value)}>{showAdmin ? 'Hide review' : 'Show review'}</Button>
         </div>
 
         {showAdmin && (
           <div className="mt-4 grid gap-4 xl:grid-cols-2">
-            <div className="rounded-xl border border-border-subtle p-4">
+            <div className="rounded-lg border border-border-subtle p-4">
               <div className="flex items-center gap-2">
                 <FileCheck2 className="h-4 w-4 text-primary" />
                 <p className="text-sm font-semibold text-text-primary">Seeded forms ({NAME_CHANGE_FORM_REGISTRY.length})</p>
@@ -2661,14 +2724,14 @@ export const NameChangePlannerTab: React.FC<Props> = ({
               <div className="mt-3 space-y-3">
                 {NAME_CHANGE_FORM_REGISTRY.map((form) => (
                   <div key={form.code} className="rounded-lg bg-surface-subtle/50 p-3">
-                    <p className="text-sm font-medium text-text-primary">{form.code} — {form.title}</p>
+                    <p className="text-sm font-medium text-text-primary">{form.code}: {form.title}</p>
                     <p className="mt-1 text-xs text-text-secondary">{form.authority} · {form.jurisdiction}</p>
                     <p className="mt-1 text-xs text-text-secondary">Triggers: {form.appliesWhen.join(', ')}</p>
                   </div>
                 ))}
               </div>
             </div>
-            <div className="rounded-xl border border-border-subtle p-4">
+            <div className="rounded-lg border border-border-subtle p-4">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-primary" />
                 <p className="text-sm font-semibold text-text-primary">Institution library ({NAME_CHANGE_INSTITUTION_LIBRARY.length})</p>

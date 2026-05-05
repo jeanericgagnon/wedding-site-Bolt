@@ -64,7 +64,7 @@ describe('PlanningOverviewTab', () => {
     expect(screen.getByText('Roadmap saved')).toBeTruthy();
     expect(screen.getByText('See roadmap first')).toBeTruthy();
     expect(screen.getByText('Post-wedding')).toBeTruthy();
-    expect(screen.getByText('Free assistant · status vault · proof tracking')).toBeTruthy();
+    expect(screen.getByText('Saved progress · document checklist')).toBeTruthy();
     expect(screen.getByText(/Optional next step: Skim the roadmap first/i)).toBeTruthy();
     expect(screen.getByText(/If you want a concrete place to pick back up,/i)).toBeTruthy();
     expect(screen.getByText('Milestones ready to confirm')).toBeTruthy();
@@ -76,9 +76,9 @@ describe('PlanningOverviewTab', () => {
     expect(onTabChange).toHaveBeenLastCalledWith('nameChange');
     expect(replaceState).toHaveBeenLastCalledWith(null, '', '/#name-change-roadmap');
     expect(screen.getByText(/reminder.*actionable now/i)).toBeTruthy();
-    expect(screen.getByText(/blocked milestone/i)).toBeTruthy();
-    expect(screen.getByText(/downstream categor/i)).toBeTruthy();
-    expect(screen.getByText(/Concrete resume point:/i)).toBeTruthy();
+    expect(screen.getByText(/milestone.*waiting on details/i)).toBeTruthy();
+    expect(screen.getByText(/place.*ready/i)).toBeTruthy();
+    expect(screen.getByText(/Best place to pick back up:/i)).toBeTruthy();
     fireEvent.click(screen.getAllByRole('button', { name: 'Certified legal proof is grounded and ready to reuse' })[0]);
     expect(onTabChange).toHaveBeenLastCalledWith('nameChange');
     expect(replaceState).toHaveBeenLastCalledWith(null, '', '/#name-change-roadmap');
@@ -88,7 +88,7 @@ describe('PlanningOverviewTab', () => {
     expect(screen.getByText(/Primary photo ID is ready to move after SSA:/i)).toBeTruthy();
     expect(screen.getByText(/Passport update is lined up from the live ID chain:/i)).toBeTruthy();
     expect(screen.getByText(/Payroll and HR can use the verified SSA identity:/i)).toBeTruthy();
-    expect(screen.getByText(/Tax records are ready to align with SSA and payroll:/i)).toBeTruthy();
+    expect(screen.getByText(/Tax and government records are ready to align with SSA and legal proof:/i)).toBeTruthy();
     expect(screen.getByText(/Downstream rollout is ready for the long-tail accounts:/i)).toBeTruthy();
   });
 
@@ -116,5 +116,34 @@ describe('PlanningOverviewTab', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'Certified legal proof is grounded and ready to reuse' })[0]);
     expect(onTabChange).toHaveBeenLastCalledWith('nameChange');
     expect(replaceState).toHaveBeenLastCalledWith(null, '', '/#target-status-tracking');
+  });
+
+  it('shows an undo action after generated starter suite changes are applied', () => {
+    const onUndoStarterSuite = vi.fn().mockResolvedValue(undefined);
+    const plan = buildNameChangePlan({ profile: makeDraft(), documents: [], extractedFields: [] });
+
+    render(
+      <PlanningOverviewTab
+        tasks={[]}
+        budgetItems={[]}
+        vendors={[]}
+        seatingReadiness={{ attending: 0, seated: 0, unassigned: 0 }}
+        weddingDate="2026-06-20"
+        nameChangePlan={plan}
+        onTabChange={vi.fn()}
+        lastStarterSuiteRun={{
+          taskIds: ['task-1', 'task-2'],
+          budgetItemIds: ['budget-1'],
+          vendorIds: ['vendor-1'],
+          createdAt: '2026-05-01T12:00:00.000Z',
+        }}
+        onUndoStarterSuite={onUndoStarterSuite}
+      />,
+    );
+
+    expect(screen.getByText('Starter suite added')).toBeTruthy();
+    expect(screen.getByText('2 tasks, 1 budget lines, and 1 vendors were created from your wedding details.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Undo starter suite' }));
+    expect(onUndoStarterSuite).toHaveBeenCalledTimes(1);
   });
 });

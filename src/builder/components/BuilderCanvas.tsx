@@ -129,7 +129,7 @@ export const BuilderCanvas: React.FC = () => {
 
         <DragOverlay>
           {dragActiveSection && (
-            <div className="bg-white shadow-2xl rounded-lg opacity-90 p-4 text-sm font-medium text-gray-700">
+            <div className="bg-white shadow-sm rounded-lg opacity-90 p-4 text-sm font-medium text-gray-700">
               Moving: {getSectionManifest(dragActiveSection.type).label}
             </div>
           )}

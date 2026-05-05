@@ -72,7 +72,7 @@ export const SECTION_MOCK_DATA_BY_TYPE: Record<string, SectionMockData> = {
   },
   custom: {
     title: 'Custom Section',
-    body: 'Preview placeholder content.',
+    body: 'Add a personal note, weekend detail, or favorite local recommendation.',
   },
   quotes: {
     title: 'Quotes & Wishes',

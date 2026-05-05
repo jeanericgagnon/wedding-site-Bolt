@@ -2,6 +2,7 @@ import React from 'react';
 import { z } from 'zod';
 import { MapPin, Clock, Navigation, CalendarDays } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
+import { getSafePublicImageUrl, getSafePublicWebUrl } from '../../publicLinks';
 
 const VenueItemSchema = z.object({
   id: z.string(),
@@ -57,11 +58,11 @@ const VenueSplitMap: React.FC<SectionComponentProps<VenueSplitMapData>> = ({ dat
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-16">
           {data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">
+            <p className="text-sm text-stone-400 font-light mb-4">
               {data.eyebrow}
             </p>
           )}
-          <h2 className="text-4xl md:text-6xl font-light text-stone-900 mb-2 tracking-tight">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-stone-900 mb-2">{data.headline}</h2>
           {data.subheadline && (
             <p className="text-stone-400 font-light">{data.subheadline}</p>
           )}
@@ -71,7 +72,9 @@ const VenueSplitMap: React.FC<SectionComponentProps<VenueSplitMapData>> = ({ dat
           {data.venues.map((venue, idx) => {
             const imgRight = idx % 2 === 0 ? data.imagePosition === 'right' : data.imagePosition === 'left';
             const mapsQuery = [venue.name, venue.address, venue.city].filter(Boolean).join(', ');
-            const embedUrl = venue.mapEmbedUrl || (mapsQuery ? `https://www.google.com/maps?q=${encodeURIComponent(mapsQuery)}&output=embed` : '');
+            const safeMapUrl = getSafePublicWebUrl(venue.mapUrl);
+            const safeVenueImage = getSafePublicImageUrl(venue.image);
+            const embedUrl = getSafePublicWebUrl(venue.mapEmbedUrl) || (mapsQuery ? `https://www.google.com/maps?q=${encodeURIComponent(mapsQuery)}&output=embed` : '');
             return (
               <div
                 key={venue.id}
@@ -79,7 +82,7 @@ const VenueSplitMap: React.FC<SectionComponentProps<VenueSplitMapData>> = ({ dat
               >
                 <div className="flex flex-col justify-center p-8 md:p-12 bg-white">
                   {venue.role && (
-                    <p className="text-xs uppercase tracking-[0.2em] text-rose-500 font-medium mb-4">{venue.role}</p>
+                    <p className="text-sm text-rose-500 font-medium mb-4">{venue.role}</p>
                   )}
                   <h3 className="text-2xl md:text-3xl font-light text-stone-900 mb-6">{venue.name}</h3>
 
@@ -117,9 +120,9 @@ const VenueSplitMap: React.FC<SectionComponentProps<VenueSplitMapData>> = ({ dat
                     <p className="text-sm text-stone-400 leading-relaxed mb-6">{venue.notes}</p>
                   )}
 
-                  {venue.mapUrl && (
+                  {safeMapUrl && (
                     <a
-                      href={venue.mapUrl}
+                      href={safeMapUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="self-start flex items-center gap-2 px-5 py-2.5 bg-stone-900 text-white text-sm font-medium rounded-xl hover:bg-stone-800 transition-colors"
@@ -140,9 +143,9 @@ const VenueSplitMap: React.FC<SectionComponentProps<VenueSplitMapData>> = ({ dat
                       referrerPolicy="no-referrer-when-downgrade"
                       title={`Map of ${venue.name}`}
                     />
-                  ) : venue.image ? (
+                  ) : safeVenueImage ? (
                     <img
-                      src={venue.image}
+                      src={safeVenueImage}
                       alt={venue.name}
                       className="absolute inset-0 w-full h-full object-cover saturate-[1.03] contrast-[1.02]"
                     />

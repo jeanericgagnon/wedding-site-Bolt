@@ -128,7 +128,7 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
         onMouseLeave={() => dispatch(builderActions.hoverSection(null))}
       >
         <div className={`flex items-center justify-between px-3 py-2 border border-dashed transition-colors ${
-          isHighlighted ? 'border-blue-300 bg-blue-50' : 'border-gray-200 bg-gray-50 hover:border-gray-300'
+          isHighlighted ? 'border-[#cdbfae] bg-[#fbf7f1]' : 'border-gray-200 bg-gray-50 hover:border-gray-300'
         }`}>
           <div className="flex items-center gap-2">
             {manifest.capabilities.draggable && !section.locked && (
@@ -145,7 +145,7 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
             <EyeOff size={12} className="text-gray-400" />
             <span className="text-xs font-medium text-gray-400">{manifest.label}</span>
             {section.variant !== 'default' && (
-              <span className="text-[10px] px-1.5 py-0.5 bg-gray-200 text-gray-500 rounded">{section.variant}</span>
+              <span className="rounded bg-gray-200 px-1.5 py-0.5 text-[10px] text-gray-500">Alt style</span>
             )}
             <span className="text-[10px] text-gray-400">Hidden</span>
           </div>
@@ -162,7 +162,7 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
               <button
                 onClick={handleDelete}
                 title="Delete section"
-                className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                className="rounded p-1 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-700"
               >
                 <Trash2 size={11} />
               </button>
@@ -181,7 +181,7 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
       style={style}
       data-section-id={section.id}
       className={`relative group scroll-mt-24 transition-all duration-150 cursor-pointer ${
-        isHighlighted ? 'ring-2 ring-blue-500 ring-inset' : ''
+        isHighlighted ? 'ring-2 ring-[#8b7a67] ring-inset' : ''
       }`}
       onClick={handleSelect}
       onMouseEnter={() => dispatch(builderActions.hoverSection(section.id))}
@@ -189,13 +189,13 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
     >
 
       {isHighlighted && (
-        <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-3 py-1.5 bg-blue-600 text-white text-xs font-medium">
+        <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-3 py-1.5 bg-[#2f261d] text-white text-xs font-medium shadow-sm">
           <div className="flex items-center gap-2">
             {manifest.capabilities.draggable && !section.locked && (
               <button
                 {...attributes}
                 {...listeners}
-                className="cursor-grab active:cursor-grabbing p-0.5 hover:bg-blue-700 rounded"
+                className="cursor-grab active:cursor-grabbing p-0.5 hover:bg-white/10 rounded"
                 onClick={e => e.stopPropagation()}
                 aria-label="Drag to reorder"
               >
@@ -204,7 +204,7 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
             )}
             <span>{manifest.label}</span>
             {section.variant !== 'default' && (
-              <span className="bg-blue-700 px-1.5 py-0.5 rounded text-[10px]">{section.variant}</span>
+              <span className="rounded bg-white/12 px-1.5 py-0.5 text-[10px] text-white/80">Alt style</span>
             )}
           </div>
 
@@ -214,18 +214,18 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
                 onClick={e => { e.stopPropagation(); setInlineEditOpen(v => !v); }}
                 title="Quick edit text"
                 className={`flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium transition-colors ${
-                  inlineEditOpen ? 'bg-white text-blue-600' : 'hover:bg-blue-700'
+                  inlineEditOpen ? 'bg-white text-[#2f261d]' : 'hover:bg-white/10'
                 }`}
               >
                 <Pencil size={11} />
-                Edit Text
+                Edit text
                 {inlineEditOpen ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
               </button>
             )}
             <button
               onClick={handleToggleVisibility}
               title="Hide section"
-              className="p-1 hover:bg-blue-700 rounded transition-colors"
+              className="p-1 hover:bg-white/10 rounded transition-colors"
             >
               <Eye size={12} />
             </button>
@@ -233,7 +233,7 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
               <button
                 onClick={handleDuplicate}
                 title="Duplicate section"
-                className="p-1 hover:bg-blue-700 rounded transition-colors"
+                className="p-1 hover:bg-white/10 rounded transition-colors"
               >
                 <Copy size={12} />
               </button>
@@ -241,7 +241,7 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
             <button
               onClick={handleSelect}
               title="Section settings"
-              className="p-1 hover:bg-blue-700 rounded transition-colors"
+              className="p-1 hover:bg-white/10 rounded transition-colors"
             >
               <Settings2 size={12} />
             </button>
@@ -249,7 +249,7 @@ export const BuilderSectionFrame: React.FC<BuilderSectionFrameProps> = ({
               <button
                 onClick={handleDelete}
                 title="Delete section"
-                className="p-1 hover:bg-red-700 rounded transition-colors"
+                className="rounded p-1 transition-colors hover:bg-white/10"
               >
                 <Trash2 size={12} />
               </button>
@@ -297,18 +297,18 @@ const InlineEditPanel: React.FC<{
 
   return (
     <div
-      className="border-t-2 border-rose-400 bg-white shadow-xl z-10 relative"
+      className="relative z-10 border-t border-border-subtle bg-white shadow-sm"
       onClick={e => e.stopPropagation()}
     >
-      <div className="flex items-center justify-between px-4 py-2.5 bg-rose-50 border-b border-rose-100">
+      <div className="flex items-center justify-between px-4 py-2.5 bg-surface-subtle/70 border-b border-border-subtle">
         <div className="flex items-center gap-2">
-          <Pencil size={12} className="text-rose-500" />
-          <span className="text-xs font-semibold text-rose-700">Quick Edit</span>
-          <span className="text-[10px] text-rose-400">— changes apply live</span>
+          <Pencil size={12} className="text-primary" />
+          <span className="text-xs font-semibold text-text-primary">Quick edit</span>
+          <span className="text-[10px] text-text-tertiary">Changes apply in the preview</span>
         </div>
         <button
           onClick={onClose}
-          className="text-rose-400 hover:text-blue-600 transition-colors p-1 rounded hover:bg-rose-100"
+          className="text-text-tertiary hover:text-text-primary transition-colors p-1 rounded hover:bg-white"
         >
           <ChevronUp size={14} />
         </button>
@@ -318,7 +318,7 @@ const InlineEditPanel: React.FC<{
           const inputId = `inline-edit-${section.id}-${field.key}`;
           return (
             <div key={field.key}>
-              <label htmlFor={inputId} className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider block mb-1">
+              <label htmlFor={inputId} className="text-[10px] font-semibold text-gray-500 block mb-1">
                 {field.label}
               </label>
               {field.type === 'textarea' ? (
@@ -328,7 +328,7 @@ const InlineEditPanel: React.FC<{
                   onChange={e => handleChange(field.key, e.target.value)}
                   placeholder={field.placeholder ?? `Enter ${field.label.toLowerCase()}...`}
                   rows={3}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-rose-400 resize-none bg-gray-50 focus:bg-white transition-colors"
+                  className="w-full border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/25 resize-none bg-surface-subtle focus:bg-white transition-colors"
                   autoFocus={fields[0].key === field.key}
                 />
               ) : (
@@ -338,7 +338,7 @@ const InlineEditPanel: React.FC<{
                   value={readBuilderValue(section.settings[field.key] as string | { value: string } | undefined, (field.defaultValue as string) ?? '')}
                   onChange={e => handleChange(field.key, e.target.value)}
                   placeholder={field.placeholder ?? `Enter ${field.label.toLowerCase()}...`}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-rose-400 bg-gray-50 focus:bg-white transition-colors"
+                  className="w-full border border-border-subtle rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/25 bg-surface-subtle focus:bg-white transition-colors"
                   autoFocus={fields[0].key === field.key}
                 />
               )}

@@ -32,6 +32,8 @@ const STATUS_LABELS: Record<string, string> = {
   done: 'Done',
 };
 
+const TASK_CATEGORIES = ['Logistics', 'Guests', 'Vendors', 'Design', 'Ceremony', 'Reception', 'Travel', 'Legal', 'Other'];
+
 function TaskForm({ initial, onSave, onCancel }: {
   initial?: Partial<PlanningTask>;
   onSave: (t: Partial<PlanningTask>) => Promise<void>;
@@ -40,6 +42,7 @@ function TaskForm({ initial, onSave, onCancel }: {
   const [form, setForm] = useState({
     title: initial?.title ?? '',
     description: initial?.description ?? '',
+    category: initial?.category ?? '',
     due_date: initial?.due_date ?? '',
     status: initial?.status ?? 'todo',
     priority: initial?.priority ?? 'medium',
@@ -51,12 +54,12 @@ function TaskForm({ initial, onSave, onCancel }: {
     e.preventDefault();
     if (!form.title.trim()) return;
     setSaving(true);
-    await onSave({ ...form, due_date: form.due_date || null });
+    await onSave({ ...form, category: form.category || null, due_date: form.due_date || null });
     setSaving(false);
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-4 bg-surface-subtle rounded-xl border border-border-subtle">
+    <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-border-subtle bg-surface-subtle p-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="sm:col-span-2">
           <label className="block text-xs font-medium text-text-secondary mb-1">Title *</label>
@@ -78,6 +81,17 @@ function TaskForm({ initial, onSave, onCancel }: {
             placeholder="Optional details"
             rows={2}
           />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-text-secondary mb-1">Category</label>
+          <select
+            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            value={form.category ?? ''}
+            onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
+          >
+            <option value="">No category</option>
+            {TASK_CATEGORIES.map(category => <option key={category} value={category}>{category}</option>)}
+          </select>
         </div>
         <div>
           <label className="block text-xs font-medium text-text-secondary mb-1">Due Date</label>
@@ -142,7 +156,7 @@ function TaskCard({ task, onUpdate, onDelete, onEdit, canEdit = true }: {
   const isOverdue = task.status !== 'done' && isTaskDueOnOrBefore(task.due_date, today);
 
   return (
-    <div className={`p-3 bg-white rounded-xl border transition-shadow ${isOverdue ? 'border-error/30 bg-error/5 shadow-[0_4px_14px_rgba(220,38,38,0.06)]' : 'border-border/35 shadow-[0_4px_14px_rgba(15,23,42,0.05)] hover:shadow-[0_8px_20px_rgba(15,23,42,0.08)]'}`}>
+    <div className={`rounded-lg border bg-white p-3 transition-colors ${isOverdue ? 'border-error/25 bg-error/5' : 'border-border-subtle hover:border-primary/25'}`}>
       <div className="flex items-start gap-2">
         <button
           onClick={() => canEdit && onUpdate(task.id, { status: task.status === 'done' ? 'todo' : 'done' })}
@@ -160,6 +174,7 @@ function TaskCard({ task, onUpdate, onDelete, onEdit, canEdit = true }: {
           )}
           <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
             <Badge variant={PRIORITY_COLORS[task.priority]}>{task.priority}</Badge>
+            {task.category && <Badge variant="neutral">{task.category}</Badge>}
             {task.due_date && (
               <span className={`text-xs ${isOverdue ? 'text-error font-medium' : 'text-text-tertiary'}`}>
                 {isOverdue ? 'Overdue: ' : ''}{formatTaskDueDate(task.due_date)}
@@ -253,16 +268,16 @@ export const TasksTab: React.FC<Props> = ({ tasks, weddingDate, onAdd, onUpdate,
             <option value="medium">Medium</option>
             <option value="low">Low</option>
           </select>
-          <div className="flex items-center gap-1 p-1 bg-surface-subtle rounded-lg border border-border-subtle">
+          <div className="flex items-center gap-1 rounded-lg border border-border-subtle bg-surface-subtle p-1">
             <button
               onClick={() => setView('list')}
-              className={`p-1.5 rounded transition-colors ${view === 'list' ? 'bg-surface shadow-sm text-primary' : 'text-text-tertiary hover:text-text-primary'}`}
+              className={`rounded-md p-1.5 transition-colors ${view === 'list' ? 'bg-surface text-primary ring-1 ring-border-subtle' : 'text-text-tertiary hover:text-text-primary'}`}
             >
               <List className="w-4 h-4" />
             </button>
             <button
               onClick={() => setView('kanban')}
-              className={`p-1.5 rounded transition-colors ${view === 'kanban' ? 'bg-surface shadow-sm text-primary' : 'text-text-tertiary hover:text-text-primary'}`}
+              className={`rounded-md p-1.5 transition-colors ${view === 'kanban' ? 'bg-surface text-primary ring-1 ring-border-subtle' : 'text-text-tertiary hover:text-text-primary'}`}
             >
               <Columns className="w-4 h-4" />
             </button>
@@ -295,7 +310,7 @@ export const TasksTab: React.FC<Props> = ({ tasks, weddingDate, onAdd, onUpdate,
       </div>
 
       {confirmCreate && (
-        <div className="p-4 bg-primary-light border border-primary/20 rounded-xl flex items-start justify-between gap-4">
+        <div className="flex items-start justify-between gap-4 rounded-lg border border-primary/20 bg-primary-light p-4">
           <div>
             <p className="text-sm font-medium text-text-primary">Build a wedding checklist?</p>
             <p className="text-xs text-text-secondary mt-0.5">This adds a suggested planning checklist based on your wedding date. Anything you already added stays in place.</p>
@@ -328,7 +343,7 @@ export const TasksTab: React.FC<Props> = ({ tasks, weddingDate, onAdd, onUpdate,
         <Card padding="lg" className="text-center">
           <p className="text-text-secondary mb-2">No planning items yet.</p>
           {weddingDate ? (
-            <p className="text-sm text-text-tertiary">Add your own items or let Dayof build a starting checklist from your wedding date.</p>
+            <p className="text-sm text-text-tertiary">Add your own items or let dayof build a starting checklist from your wedding date.</p>
           ) : (
             <p className="text-sm text-text-tertiary">Add your first planning item to get started.</p>
           )}
@@ -370,10 +385,10 @@ export const TasksTab: React.FC<Props> = ({ tasks, weddingDate, onAdd, onUpdate,
           {kanbanColumns.map(col => {
             const colTasks = tasks.filter(t => t.status === col.status);
             return (
-              <div key={col.status} className="bg-surface-subtle rounded-xl p-3 space-y-2">
+              <div key={col.status} className="space-y-2 rounded-lg border border-border-subtle bg-surface-subtle p-3">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-semibold text-text-primary">{col.label}</h3>
-                  <span className="text-xs text-text-tertiary bg-surface px-2 py-0.5 rounded-full">{colTasks.length}</span>
+                  <span className="rounded-md border border-border-subtle bg-surface px-2 py-0.5 text-xs text-text-tertiary">{colTasks.length}</span>
                 </div>
                 {colTasks.map(task => (
                   <TaskCard

@@ -11,11 +11,11 @@ export const getCoordinatorManualOverrideTargetLabel = ({
 
   switch (panelFocus) {
     case 'check-in':
-      return `Board guest: ${boardTargetName}`;
+      return `Suggested guest: ${boardTargetName}`;
     case 'timeline':
-      return `Board event: ${boardTargetName}`;
+      return `Suggested event: ${boardTargetName}`;
     case 'qna':
-      return `Board question: ${boardTargetName}`;
+      return `Suggested question: ${boardTargetName}`;
     default:
       return null;
   }

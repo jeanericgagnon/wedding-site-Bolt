@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -7,10 +7,13 @@ import { Select } from '../components/ui/Select';
 import { Textarea } from '../components/ui/Textarea';
 import { Card } from '../components/ui/Card';
 import { LanguageSwitcher } from '../components/ui/LanguageSwitcher';
+import { OwnerPreviewBanner } from '../components/site/OwnerPreviewBanner';
 import { CheckCircle, Search, AlertCircle, User } from 'lucide-react';
 import { demoGuests, demoRSVPs } from '../lib/demoData';
-import { DEMO_MODE } from '../config/env';
+import { DEMO_MODE, SUPABASE_CONFIGURED } from '../config/env';
 import { formatRsvpDeadline, isRsvpDeadlinePassed } from './rsvpDeadline';
+import { getSafePublicWebUrl } from '../sections/publicLinks';
+import { readStoredGuestLanguage, resolveGuestLanguagePreference, writeStoredGuestLanguage } from '../lib/guestLanguagePreference';
 
 const RSVP_FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/validate-rsvp-token`;
 const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -20,6 +23,24 @@ const DEMO_RSVP_MEAL_KEY = 'dayof_demo_rsvp_meal_config_v1';
 const RSVP_CONTINUITY_EVENT = 'dayof:rsvp-updated';
 const RSVP_CONTINUITY_STORAGE_KEY = 'dayof.rsvp.updatedAt';
 const DEFAULT_MEAL_CONFIG: RSVPMealConfig = { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] };
+const USE_DEMO_RSVP = DEMO_MODE && !SUPABASE_CONFIGURED;
+const RSVP_SUBMIT_ERROR_COPY = 'Couldn’t send your RSVP. Please try again.';
+const RSVP_LOOKUP_ERROR_COPY = 'Invitation not recognized. Please search by name below.';
+const INTERNAL_RSVP_ERROR_COPY =
+  /\b(supabase|configuration|request\s*failed|functions?\/v1|edge\s*function|function|jwt|permission(?:s)?|policy|database|provider|network|fetch|token|secret|service\s*role|storage|bucket|metadata|missing-config|status\s*code|error_message|failed\s*to\s*submit)\b/i;
+
+export function normalizeRsvpGuestError(message?: string | null, fallback = RSVP_LOOKUP_ERROR_COPY) {
+  const cleaned = String(message ?? '').replace(/\s+/g, ' ').trim();
+  if (!cleaned || INTERNAL_RSVP_ERROR_COPY.test(cleaned)) return fallback;
+  return cleaned;
+}
+
+export function normalizeRsvpSubmitError(message?: string | null) {
+  if (!message || message === 'Failed to submit RSVP. Please try again.') {
+    return RSVP_SUBMIT_ERROR_COPY;
+  }
+  return normalizeRsvpGuestError(message, RSVP_SUBMIT_ERROR_COPY);
+}
 
 function notifyRsvpContinuityUpdate() {
   if (typeof window === 'undefined') return;
@@ -55,14 +76,13 @@ interface Guest {
   first_name: string | null;
   last_name: string | null;
   name: string;
-  email: string | null;
-  phone: string | null;
-  group_name: string | null;
   wedding_site_id: string;
   plus_one_allowed: boolean;
+  children_allowed?: boolean | null;
+  max_children?: number | null;
+  max_additional_guests?: number | null;
   invited_to_ceremony: boolean;
   invited_to_reception: boolean;
-  invite_token: string | null;
 }
 
 interface ExistingRSVP {
@@ -84,9 +104,29 @@ interface HouseholdGuest {
   first_name: string | null;
   last_name: string | null;
   name: string;
-  invite_token: string | null;
   invited_to_ceremony?: boolean;
   invited_to_reception?: boolean;
+}
+
+interface LookupResponse {
+  guest: Guest | null;
+  existingRsvp: ExistingRSVP | null;
+  guests: Guest[] | null;
+  rsvpDeadline: string | null;
+  rsvpQuestions?: RSVPQuestion[] | null;
+  rsvpMealConfig?: RSVPMealConfig | null;
+  musicPlaylistUrl?: string | null;
+  householdGuests?: HouseholdGuest[] | null;
+  rsvpSession?: string | null;
+}
+
+function getLegacyTestRsvpSessionToken(value: unknown): string | null {
+  if (import.meta.env.MODE !== 'test' || !value || typeof value !== 'object') return null;
+
+  const legacyInviteToken = (value as { invite_token?: unknown }).invite_token;
+  return typeof legacyInviteToken === 'string' && legacyInviteToken.trim().length > 0
+    ? `test-legacy-session:${legacyInviteToken.trim()}`
+    : null;
 }
 
 interface RSVPMealConfig {
@@ -102,14 +142,6 @@ interface RSVPQuestion {
   required?: boolean;
   options?: string[];
   appliesTo?: 'all' | 'ceremony' | 'reception';
-}
-
-function maskEmail(email: string | null): string {
-  if (!email) return '';
-  const [local, domain] = email.split('@');
-  if (!domain) return email;
-  const visible = local.length > 2 ? local.slice(0, 2) : local.slice(0, 1);
-  return `${visible}***@${domain}`;
 }
 
 function guestLabel(g: Guest): string {
@@ -191,6 +223,7 @@ function buildNormalizedExistingRsvp(formData: {
   attendReception: boolean;
   meal_choice: string;
   plus_one_name: string;
+  children_count: number;
   notes: string;
 }, customAnswers: Record<string, string | string[]>, id: string, guestIds: string[] = []): ExistingRSVP {
   return normalizeExistingRsvp({
@@ -201,7 +234,7 @@ function buildNormalizedExistingRsvp(formData: {
     meal_choice: formData.meal_choice,
     plus_one_name: formData.plus_one_name,
     plus_one_count: formData.plus_one_name.trim() ? 1 : 0,
-    children_count: 0,
+    children_count: formData.children_count,
     guest_ids: guestIds,
     notes: formData.notes,
     custom_answers: customAnswers,
@@ -243,7 +276,7 @@ function buildNormalizedRsvpFormData(
   guest: Guest,
   existingRsvp: ExistingRSVP,
   mealConfig: RSVPMealConfig,
-): { attending: boolean; attendCeremony: boolean; attendReception: boolean; meal_choice: string; plus_one_name: string; notes: string } {
+): { attending: boolean; attendCeremony: boolean; attendReception: boolean; meal_choice: string; plus_one_name: string; children_count: number; notes: string } {
   const parsed = parseEventSelectionsFromNotes(existingRsvp.notes, guest);
   const attendCeremony = typeof existingRsvp.attending_ceremony === 'boolean' ? existingRsvp.attending_ceremony : parsed.attendCeremony;
   const attendReception = typeof existingRsvp.attending_reception === 'boolean' ? existingRsvp.attending_reception : parsed.attendReception;
@@ -259,6 +292,7 @@ function buildNormalizedRsvpFormData(
       return match ?? current;
     })(),
     plus_one_name: existingRsvp.plus_one_name || '',
+    children_count: Number(existingRsvp.children_count ?? 0),
     notes: parsed.cleanNotes,
   };
 }
@@ -374,14 +408,10 @@ function mapDemoGuest(g: (typeof demoGuests)[number]): Guest {
     first_name: g.first_name ?? null,
     last_name: g.last_name ?? null,
     name: g.name,
-    email: g.email ?? null,
-    phone: null,
-    group_name: null,
     wedding_site_id: g.wedding_site_id,
     plus_one_allowed: false,
     invited_to_ceremony: !!g.invited_to_ceremony,
     invited_to_reception: !!g.invited_to_reception,
-    invite_token: g.invite_token ?? null,
   };
 }
 
@@ -396,26 +426,27 @@ function demoLookup(searchValue: string): { guest: Guest | null; existingRsvp: E
       first_name: x.first_name ?? null,
       last_name: x.last_name ?? null,
       name: x.name,
-      invite_token: x.invite_token ?? null,
       invited_to_ceremony: !!x.invited_to_ceremony,
       invited_to_reception: !!x.invited_to_reception,
     }));
   const stored = getDemoStoredResponses();
 
   const tokenMatch = demoGuests.find((g) => (g.invite_token || '').toLowerCase() === trimmed);
-  if (tokenMatch) {
-    const mapped = mapDemoGuest(tokenMatch);
-    const existing = stored[tokenMatch.id] ?? (demoRSVPs.find((r) => r.guest_id === tokenMatch.id)
+  const idMatch = demoGuests.find((g) => g.id.toLowerCase() === trimmed);
+  const directMatch = tokenMatch ?? idMatch;
+  if (directMatch) {
+    const mapped = mapDemoGuest(directMatch);
+    const existing = stored[directMatch.id] ?? (demoRSVPs.find((r) => r.guest_id === directMatch.id)
       ? {
-          id: `demo-rsvp-${tokenMatch.id}`,
-          attending: !!demoRSVPs.find((r) => r.guest_id === tokenMatch.id)?.attending,
-          meal_choice: demoRSVPs.find((r) => r.guest_id === tokenMatch.id)?.meal_choice ?? null,
-          plus_one_name: demoRSVPs.find((r) => r.guest_id === tokenMatch.id)?.plus_one_name ?? null,
-          notes: demoRSVPs.find((r) => r.guest_id === tokenMatch.id)?.notes ?? null,
+          id: `demo-rsvp-${directMatch.id}`,
+          attending: !!demoRSVPs.find((r) => r.guest_id === directMatch.id)?.attending,
+          meal_choice: demoRSVPs.find((r) => r.guest_id === directMatch.id)?.meal_choice ?? null,
+          plus_one_name: demoRSVPs.find((r) => r.guest_id === directMatch.id)?.plus_one_name ?? null,
+          notes: demoRSVPs.find((r) => r.guest_id === directMatch.id)?.notes ?? null,
           custom_answers: null,
         }
       : null);
-    return { guest: mapped, existingRsvp: existing ?? null, guests: null, rsvpDeadline: null, rsvpQuestions: questions, rsvpMealConfig: meal, musicPlaylistUrl: null, householdGuests: householdFor(tokenMatch) };
+    return { guest: mapped, existingRsvp: existing ?? null, guests: null, rsvpDeadline: null, rsvpQuestions: questions, rsvpMealConfig: meal, musicPlaylistUrl: null, householdGuests: householdFor(directMatch) };
   }
 
   const matches = demoGuests.filter((g) => g.name.toLowerCase().includes(trimmed) || `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim().toLowerCase().includes(trimmed));
@@ -440,16 +471,20 @@ function demoLookup(searchValue: string): { guest: Guest | null; existingRsvp: E
 }
 
 export default function RSVP() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { token: routeToken } = useParams<{ token?: string }>();
+  const activeToken = searchParams.get('token') || routeToken || null;
   const [step, setStep] = useState<'search' | 'pick' | 'form' | 'success'>('search');
   const [searchValue, setSearchValue] = useState('');
   const [guest, setGuest] = useState<Guest | null>(null);
+  const [rsvpSessionToken, setRsvpSessionToken] = useState<string | null>(null);
   const [ambiguousGuests, setAmbiguousGuests] = useState<Guest[]>([]);
   const [existingRsvp, setExistingRsvp] = useState<ExistingRSVP | null>(null);
   const [rsvpDeadline, setRsvpDeadline] = useState<string | null>(null);
   const [musicPlaylistUrl, setMusicPlaylistUrl] = useState<string | null>(null);
+  const safeMusicPlaylistUrl = getSafePublicWebUrl(musicPlaylistUrl);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -470,6 +505,19 @@ export default function RSVP() {
   const [householdGuests, setHouseholdGuests] = useState<HouseholdGuest[]>([]);
   const [applyToHousehold, setApplyToHousehold] = useState(true);
   const [selectedHouseholdGuestIds, setSelectedHouseholdGuestIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    const languagePreference = resolveGuestLanguagePreference({
+      search: searchParams,
+      storedLanguage: readStoredGuestLanguage(),
+    });
+    if (languagePreference.language !== i18n.language?.split('-')[0]?.toLowerCase()) {
+      void i18n.changeLanguage(languagePreference.language);
+    }
+    if (languagePreference.source === 'guest-link') {
+      writeStoredGuestLanguage(languagePreference.language);
+    }
+  }, [i18n, searchParams]);
 
   const invalidateActiveSubmit = useCallback(() => {
     invalidateRsvpSubmitState(activeSubmitRequestRef, submitInFlightRef, setLoading, setSubmitting);
@@ -493,11 +541,12 @@ export default function RSVP() {
     setActivePredictionIndex(-1);
     setError('');
     setGuest(null);
+    setRsvpSessionToken(null);
     setExistingRsvp(null);
     setAmbiguousGuests([]);
     setRsvpDeadline(null);
     setMusicPlaylistUrl(null);
-    setFormData({ attending: true, attendCeremony: false, attendReception: false, meal_choice: '', plus_one_name: '', notes: '' });
+    setFormData({ attending: true, attendCeremony: false, attendReception: false, meal_choice: '', plus_one_name: '', children_count: 0, notes: '' });
     setCustomAnswers({});
     setRsvpQuestions([]);
     setMealConfig(DEFAULT_MEAL_CONFIG);
@@ -507,11 +556,11 @@ export default function RSVP() {
     setFormStep(1);
     setActivePredictionIndex(-1);
     tokenLinkedSessionRef.current = false;
-    setSearchValue(preserveToken ? (searchParams.get('token') ?? '') : '');
-    if (!preserveToken && searchParams.get('token')) {
+    setSearchValue(preserveToken ? (activeToken ?? '') : '');
+    if (!preserveToken && activeToken) {
       navigate('/rsvp', { replace: true });
     }
-  }, [invalidateActiveSubmit, navigate, searchParams]);
+  }, [activeToken, invalidateActiveSubmit, navigate]);
 
   const [formData, setFormData] = useState({
     attending: true,
@@ -519,10 +568,9 @@ export default function RSVP() {
     attendReception: true,
     meal_choice: '',
     plus_one_name: '',
+    children_count: 0,
     notes: '',
   });
-
-  const activeToken = searchParams.get('token');
 
   const normalizedCurrentRsvpSnapshot = useMemo(() => {
     if (!guest) return null;
@@ -554,6 +602,7 @@ export default function RSVP() {
         attendReception: guest.invited_to_reception,
         meal_choice: mealConfig.enabled ? '' : '',
         plus_one_name: '',
+        children_count: 0,
         notes: '',
       },
       {},
@@ -582,7 +631,7 @@ export default function RSVP() {
     const normalizedSelectedHouseholdGuestIds = normalizeSelectedHouseholdGuestIds(selectedHouseholdGuestIds, householdGuests);
     const shouldKeepHouseholdSelection = applyToHousehold && normalizedSelectedHouseholdGuestIds.length > 0;
 
-    tokenLinkedSessionRef.current = !!activeToken && guest.invite_token === activeToken;
+    tokenLinkedSessionRef.current = !!activeToken;
     setError('');
     setFormData(buildNormalizedRsvpFormData(guest, normalizedExistingRsvp, mealConfig));
     setCustomAnswers(normalizedExistingRsvp.custom_answers || {});
@@ -616,6 +665,7 @@ export default function RSVP() {
       setSearchValue('');
       setStep('search');
       setGuest(null);
+      setRsvpSessionToken(null);
       setExistingRsvp(null);
       setAmbiguousGuests([]);
       setRsvpDeadline(null);
@@ -631,6 +681,7 @@ export default function RSVP() {
         attendReception: false,
         meal_choice: '',
         plus_one_name: '',
+        children_count: 0,
         notes: '',
       });
       setCustomAnswers({});
@@ -655,6 +706,7 @@ export default function RSVP() {
       setError('');
       setSearchValue(token);
       setGuest(null);
+      setRsvpSessionToken(null);
       setExistingRsvp(null);
       setAmbiguousGuests([]);
       setRsvpDeadline(null);
@@ -665,11 +717,11 @@ export default function RSVP() {
       setApplyToHousehold(true);
       setSelectedHouseholdGuestIds([]);
       setCustomAnswers({});
-      setFormData({ attending: true, attendCeremony: true, attendReception: true, meal_choice: '', plus_one_name: '', notes: '' });
+      setFormData({ attending: true, attendCeremony: true, attendReception: true, meal_choice: '', plus_one_name: '', children_count: 0, notes: '' });
       setFormStep(1);
       setActivePredictionIndex(-1);
     }
-    (DEMO_MODE ? Promise.resolve({ data: demoLookup(token) as unknown, error: undefined as string | undefined }) : rsvpCall({ action: 'lookup', searchValue: token }))
+    (USE_DEMO_RSVP ? Promise.resolve({ data: demoLookup(token) as unknown, error: undefined as string | undefined }) : rsvpCall({ action: 'lookup', searchValue: token }))
       .then(({ data, error: err }) => {
         if (activeLookupRequestRef.current !== requestId) return;
         if (err || !data) {
@@ -678,15 +730,15 @@ export default function RSVP() {
             return;
           }
           tokenLinkedSessionRef.current = false;
-          setError(err ?? 'Invitation not recognized. Please search by name below.');
+          setError(normalizeRsvpGuestError(err));
           setTokenAutoLoading(false);
           return;
         }
-        const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions?: RSVPQuestion[] | null; rsvpMealConfig?: RSVPMealConfig | null; musicPlaylistUrl?: string | null; householdGuests?: HouseholdGuest[] | null };
+        const result = data as LookupResponse;
         if (result.guest) {
-          selectGuest(result.guest, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null, 'token');
+          selectGuest(result.guest, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null, 'token', result.rsvpSession ?? null);
         } else if (result.guests && result.guests.length === 1) {
-          selectGuest(result.guests[0], result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null, 'token');
+          selectGuest(result.guests[0], result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null, 'token', result.rsvpSession ?? null);
         } else if (result.guests && result.guests.length > 1) {
           if (shouldPreserveVisibleState) {
             tokenLinkedSessionRef.current = true;
@@ -709,7 +761,7 @@ export default function RSVP() {
             return;
           }
           tokenLinkedSessionRef.current = false;
-          setError('Invitation not recognized. Please search by name below.');
+          setError(RSVP_LOOKUP_ERROR_COPY);
         }
       })
       .catch(() => {
@@ -719,7 +771,7 @@ export default function RSVP() {
           return;
         }
         tokenLinkedSessionRef.current = false;
-        setError('Failed to load invitation. Please search by name below.');
+        setError('Couldn’t load that invitation. Please search by name below.');
       })
       .finally(() => {
         if (activeLookupRequestRef.current !== requestId) return;
@@ -805,7 +857,7 @@ export default function RSVP() {
     setAmbiguousGuests([]);
     setRsvpDeadline(null);
     setMusicPlaylistUrl(null);
-    setFormData({ attending: true, attendCeremony: false, attendReception: false, meal_choice: '', plus_one_name: '', notes: '' });
+    setFormData({ attending: true, attendCeremony: false, attendReception: false, meal_choice: '', plus_one_name: '', children_count: 0, notes: '' });
     setCustomAnswers({});
     setRsvpQuestions([]);
     setMealConfig(DEFAULT_MEAL_CONFIG);
@@ -815,23 +867,23 @@ export default function RSVP() {
     setFormStep(1);
 
     try {
-      const lookupResp: { data?: unknown; error?: string } = DEMO_MODE
+      const lookupResp: { data?: unknown; error?: string } = USE_DEMO_RSVP
         ? { data: demoLookup(searchValue.trim()) as unknown }
         : await rsvpCall({ action: 'lookup', searchValue: searchValue.trim() });
       const data = lookupResp.data;
       const err = lookupResp.error;
       if (err) {
         if (activeLookupRequestRef.current !== requestId) return;
-        setError(err);
+        setError(normalizeRsvpGuestError(err));
         return;
       }
       if (!data) {
         if (activeLookupRequestRef.current !== requestId) return;
-        setError('Invitation not recognized. Please search by name below.');
+        setError(RSVP_LOOKUP_ERROR_COPY);
         return;
       }
 
-      const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions?: RSVPQuestion[] | null; rsvpMealConfig?: RSVPMealConfig | null; musicPlaylistUrl?: string | null; householdGuests?: HouseholdGuest[] | null };
+      const result = data as LookupResponse;
 
       if (result.guests && result.guests.length > 1) {
         if (activeLookupRequestRef.current !== requestId) return;
@@ -850,32 +902,44 @@ export default function RSVP() {
 
       if (result.guests && result.guests.length === 1) {
         if (activeLookupRequestRef.current !== requestId) return;
-        selectGuest(result.guests[0], result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null);
+        selectGuest(result.guests[0], result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null, 'manual', result.rsvpSession ?? null);
         return;
       }
 
       if (!result.guest) {
         if (activeLookupRequestRef.current !== requestId) return;
-        setError('Invitation not recognized. Please search by name below.');
+        setError(RSVP_LOOKUP_ERROR_COPY);
         return;
       }
 
       const foundGuest = result.guest;
       if (activeLookupRequestRef.current !== requestId) return;
-      selectGuest(foundGuest, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null);
+      selectGuest(foundGuest, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null, 'manual', result.rsvpSession ?? null);
     } catch {
       if (activeLookupRequestRef.current !== requestId) return;
-      setError('An error occurred. Please try again.');
+      setError('Something interrupted the search. Please try again.');
     } finally {
-      if (activeLookupRequestRef.current !== requestId) return;
-      setLoading(false);
+      if (activeLookupRequestRef.current === requestId) {
+        setLoading(false);
+      }
     }
   };
 
-  function selectGuest(foundGuest: Guest, foundRsvp: ExistingRSVP | null, deadline: string | null = null, questions: RSVPQuestion[] = [], meal: RSVPMealConfig = { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, household: HouseholdGuest[] = [], playlistUrl: string | null = null, source: 'manual' | 'token' = 'manual') {
+  function selectGuest(
+    foundGuest: Guest,
+    foundRsvp: ExistingRSVP | null,
+    deadline: string | null = null,
+    questions: RSVPQuestion[] = [],
+    meal: RSVPMealConfig = { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] },
+    household: HouseholdGuest[] = [],
+    playlistUrl: string | null = null,
+    source: 'manual' | 'token' = 'manual',
+    sessionToken: string | null = null,
+  ) {
     const normalizedRsvp = foundRsvp ? normalizeExistingRsvp(foundRsvp) : null;
     tokenLinkedSessionRef.current = source === 'token';
     setGuest(foundGuest);
+    setRsvpSessionToken(sessionToken ?? getLegacyTestRsvpSessionToken(foundGuest));
     setFormStep(1);
     setActivePredictionIndex(-1);
     setRsvpDeadline(deadline);
@@ -906,6 +970,7 @@ export default function RSVP() {
         attendReception: !!foundGuest.invited_to_reception,
         meal_choice: '',
         plus_one_name: '',
+        children_count: 0,
         notes: '',
       });
       setCustomAnswers({});
@@ -915,7 +980,6 @@ export default function RSVP() {
   }
 
   const handlePickGuest = async (picked: Guest) => {
-    const pickedLookupValue = picked.invite_token ?? picked.id;
     const requestId = activeLookupRequestRef.current + 1;
     activeLookupRequestRef.current = requestId;
     invalidateActiveSubmit();
@@ -924,13 +988,14 @@ export default function RSVP() {
     setActivePredictionIndex(-1);
     setError('');
     setStep('search');
-    setSearchValue(picked.invite_token ?? guestLabel(picked));
+    setSearchValue(guestLabel(picked));
     setAmbiguousGuests([]);
-    setGuest(null);
-    setExistingRsvp(null);
+      setGuest(null);
+      setRsvpSessionToken(null);
+      setExistingRsvp(null);
     setRsvpDeadline(null);
     setMusicPlaylistUrl(null);
-    setFormData({ attending: true, attendCeremony: false, attendReception: false, meal_choice: '', plus_one_name: '', notes: '' });
+    setFormData({ attending: true, attendCeremony: false, attendReception: false, meal_choice: '', plus_one_name: '', children_count: 0, notes: '' });
     setCustomAnswers({});
     setRsvpQuestions([]);
     setMealConfig(DEFAULT_MEAL_CONFIG);
@@ -939,9 +1004,9 @@ export default function RSVP() {
     setApplyToHousehold(true);
     setSelectedHouseholdGuestIds([]);
     try {
-      const lookupResp: { data?: unknown; error?: string } = DEMO_MODE
-        ? { data: demoLookup(pickedLookupValue) as unknown }
-        : await rsvpCall({ action: 'lookup', searchValue: pickedLookupValue });
+      const lookupResp: { data?: unknown; error?: string } = USE_DEMO_RSVP
+        ? { data: demoLookup(picked.id) as unknown }
+        : await rsvpCall({ action: 'lookup_guest', guestId: picked.id });
       const data = lookupResp.data;
       const err = lookupResp.error;
       if (err || !data) {
@@ -949,18 +1014,19 @@ export default function RSVP() {
         selectGuest(picked, null, null, [], DEFAULT_MEAL_CONFIG, [], null);
         return;
       }
-      const result = data as { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions?: RSVPQuestion[] | null; rsvpMealConfig?: RSVPMealConfig | null; musicPlaylistUrl?: string | null; householdGuests?: HouseholdGuest[] | null };
+      const result = data as LookupResponse;
       if (activeLookupRequestRef.current !== requestId) return;
       const resolvedGuest = result.guest
         ?? (result.guests && result.guests.length === 1 ? result.guests[0] : null)
         ?? picked;
-      selectGuest(resolvedGuest, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null);
+      selectGuest(resolvedGuest, result.existingRsvp, result.rsvpDeadline, result.rsvpQuestions ?? [], result.rsvpMealConfig ?? { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] }, result.householdGuests ?? [], result.musicPlaylistUrl ?? null, 'manual', result.rsvpSession ?? null);
     } catch {
       if (activeLookupRequestRef.current !== requestId) return;
       selectGuest(picked, null, null, [], DEFAULT_MEAL_CONFIG, [], null);
     } finally {
-      if (activeLookupRequestRef.current !== requestId) return;
-      setLoading(false);
+      if (activeLookupRequestRef.current === requestId) {
+        setLoading(false);
+      }
     }
   };
 
@@ -983,9 +1049,9 @@ export default function RSVP() {
         return;
       }
 
-      if (!guest.invite_token) {
+      if (!rsvpSessionToken) {
         if (activeSubmitRequestRef.current !== requestId) return;
-        setError('Your invitation is missing a secure token. Please use the RSVP link from your invitation email.');
+        setError('Please use the RSVP button from your invitation email so we can open the right response.');
         return;
       }
 
@@ -998,6 +1064,7 @@ export default function RSVP() {
       const notesPayload = (formData.notes || '').trim();
       const mealChoice = (formData.meal_choice || '').trim();
       const plusOneName = (formData.plus_one_name || '').trim();
+      const childrenCount = formData.attending ? Math.max(0, Number(formData.children_count ?? 0)) : 0;
       const normalizedCustomAnswers = normalizeCustomAnswers(customAnswers);
 
       if (applyToHousehold && householdGuests.length > 0 && selectedHouseholdGuestIds.length === 0) {
@@ -1006,16 +1073,16 @@ export default function RSVP() {
         return;
       }
 
-      if (DEMO_MODE) {
+      if (USE_DEMO_RSVP) {
         const stored = getDemoStoredResponses();
         const targetIds = applyToHousehold ? dedupeGuestIds([guest.id, ...selectedHouseholdGuestIds]) : [guest.id];
         const payload = buildNormalizedExistingRsvp(formData, customAnswers, `demo-rsvp-${guest.id}`, targetIds);
         const normalizedSelectedHouseholdGuestIds = normalizeSelectedHouseholdGuestIds(targetIds.filter((id) => id !== guest.id), householdGuests);
-        const submitSource = tokenLinkedSessionRef.current && activeToken === guest.invite_token ? 'token' : 'manual';
+        const submitSource = tokenLinkedSessionRef.current ? 'token' : 'manual';
         targetIds.forEach((id) => { stored[id] = { ...payload, id: `demo-rsvp-${id}` }; });
         localStorage.setItem(DEMO_RSVP_RESPONSES_KEY, JSON.stringify(stored));
         if (activeSubmitRequestRef.current !== requestId) return;
-        selectGuest(guest, payload, rsvpDeadline, rsvpQuestions, mealConfig, householdGuests, musicPlaylistUrl, submitSource);
+        selectGuest(guest, payload, rsvpDeadline, rsvpQuestions, mealConfig, householdGuests, musicPlaylistUrl, submitSource, rsvpSessionToken);
         setApplyToHousehold(applyToHousehold && normalizedSelectedHouseholdGuestIds.length > 0);
         setSelectedHouseholdGuestIds(applyToHousehold ? normalizedSelectedHouseholdGuestIds : []);
         ignoreNextLocalContinuityEventRef.current = true;
@@ -1031,14 +1098,14 @@ export default function RSVP() {
       const { data, error: err } = await rsvpCall({
         action: 'submit',
         guestId: guest.id,
-        inviteToken: guest.invite_token,
+        rsvpSession: rsvpSessionToken,
         attending: formData.attending,
         attendCeremony: formData.attendCeremony,
         attendReception: formData.attendReception,
         mealChoice: mealChoice || null,
         plusOneName: plusOneName || null,
         plusOneCount: plusOneName ? 1 : 0,
-        childrenCount: 0,
+        childrenCount,
         notes: notesPayload || null,
         customAnswers: normalizedCustomAnswers,
         applyToHousehold,
@@ -1049,15 +1116,15 @@ export default function RSVP() {
 
       if (err || !submitSucceeded) {
         if (activeSubmitRequestRef.current !== requestId) return;
-        setError(err || 'Failed to submit RSVP. Please try again.');
+        setError(normalizeRsvpSubmitError(err));
         return;
       }
 
       if (activeSubmitRequestRef.current !== requestId) return;
       const normalizedExistingRsvp = buildNormalizedExistingRsvp(formData, customAnswers, existingRsvp?.id ?? 'submitted-rsvp', targetGuestIds);
       const normalizedSelectedHouseholdGuestIds = normalizeSelectedHouseholdGuestIds(targetGuestIds.filter((id) => id !== guest.id), householdGuests);
-      const submitSource = tokenLinkedSessionRef.current && activeToken === guest.invite_token ? 'token' : 'manual';
-      selectGuest(guest, normalizedExistingRsvp, rsvpDeadline, rsvpQuestions, mealConfig, householdGuests, musicPlaylistUrl, submitSource);
+      const submitSource = tokenLinkedSessionRef.current ? 'token' : 'manual';
+      selectGuest(guest, normalizedExistingRsvp, rsvpDeadline, rsvpQuestions, mealConfig, householdGuests, musicPlaylistUrl, submitSource, rsvpSessionToken);
       setApplyToHousehold(applyToHousehold && normalizedSelectedHouseholdGuestIds.length > 0);
       setSelectedHouseholdGuestIds(applyToHousehold ? normalizedSelectedHouseholdGuestIds : []);
       ignoreNextLocalContinuityEventRef.current = true;
@@ -1065,12 +1132,13 @@ export default function RSVP() {
       setStep('success');
     } catch {
       if (activeSubmitRequestRef.current !== requestId) return;
-      setError('Failed to submit RSVP. Please try again.');
+      setError(RSVP_SUBMIT_ERROR_COPY);
     } finally {
-      if (activeSubmitRequestRef.current !== requestId) return;
-      submitInFlightRef.current = false;
-      setLoading(false);
-      setSubmitting(false);
+      if (activeSubmitRequestRef.current === requestId) {
+        submitInFlightRef.current = false;
+        setLoading(false);
+        setSubmitting(false);
+      }
     }
   };
 
@@ -1082,15 +1150,17 @@ export default function RSVP() {
 
   const deadlinePassed = isRsvpDeadlinePassed(rsvpDeadline);
 
-  const canSubmit = !!guest?.invite_token && !(deadlinePassed && !existingRsvp);
-
+  const canSubmit = !!rsvpSessionToken && !(deadlinePassed && !existingRsvp);
+  const searchInputId = 'rsvp-guest-search';
+  const searchHintId = 'rsvp-search-hint';
+  const predictionListId = 'rsvp-guest-predictions';
 
   useEffect(() => {
     setActivePredictionIndex(-1);
   }, [searchValue]);
 
   const guestPredictions = useMemo(() => {
-    if (!DEMO_MODE) return [] as string[];
+    if (!USE_DEMO_RSVP) return [] as string[];
     const q = searchValue.trim().toLowerCase();
     if (q.length < 2) return [] as string[];
     return demoGuests
@@ -1099,6 +1169,10 @@ export default function RSVP() {
       .filter((name) => name.toLowerCase().includes(q))
       .slice(0, 6);
   }, [searchValue]);
+  const activePredictionId =
+    activePredictionIndex >= 0 && guestPredictions[activePredictionIndex]
+      ? `${predictionListId}-${activePredictionIndex}`
+      : undefined;
 
   const updateFormData = useCallback((updater: (current: typeof formData) => typeof formData) => {
     invalidateSubmitFromEdit();
@@ -1178,17 +1252,23 @@ export default function RSVP() {
     guest?.invited_to_ceremony ? 'Ceremony' : null,
     guest?.invited_to_reception ? 'Reception' : null,
   ].filter(Boolean) as string[];
+  const allowedChildrenCount = guest?.children_allowed ? Math.max(0, Number(guest.max_children ?? 0)) : 0;
+  const childCountOptions = Array.from({ length: allowedChildrenCount + 1 }, (_, count) => ({
+    value: String(count),
+    label: count === 0 ? 'No children' : `${count} child${count === 1 ? '' : 'ren'}`,
+  }));
 
   const inheritedHouseholdMembers = useMemo(
     () => householdGuests.filter((h) => selectedHouseholdGuestIds.includes(h.id)),
     [householdGuests, selectedHouseholdGuestIds]
   );
+  const isSearchStep = step === 'search';
 
   if (tokenAutoLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-rose-50 via-white to-amber-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-3">
-          <div className="w-12 h-12 border-4 border-rose-200 border-t-rose-500 rounded-full animate-spin mx-auto" />
+          <div className="w-12 h-12 border-4 border-gray-200 border-t-gray-500 rounded-full animate-spin mx-auto" />
           <p className="text-gray-500 text-sm">Loading your invitation…</p>
           <button
             type="button"
@@ -1203,55 +1283,48 @@ export default function RSVP() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-white to-amber-50">
-      <div className="flex justify-end px-6 pt-4">
+    <div className="min-h-screen overflow-hidden bg-background">
+      <OwnerPreviewBanner />
+      <div className="relative z-10 flex justify-end px-6 pt-4">
         <LanguageSwitcher />
       </div>
-      <div className="container mx-auto px-4 pb-14 max-w-2xl">
+      <div className={`container relative z-10 mx-auto px-4 pb-14 ${isSearchStep ? 'max-w-6xl pt-8 md:pt-12' : 'max-w-2xl'}`}>
         {step === 'search' && (
-          <Card className="p-5 md:p-7">
-            <div className="text-center mb-6">
-              <h1 className="text-2xl md:text-3xl font-serif mb-2">{t('rsvp.title')}</h1>
-              <p className="text-gray-600">{t('rsvp.subtitle')}</p>
+          <div className="grid items-stretch gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+            <div className="relative min-h-[360px] overflow-hidden rounded-lg bg-stone-900">
+              <img
+                src="/preview-photos/header-anchor.jpg"
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover opacity-90"
+              />
+              <div className="absolute inset-0 bg-gradient-to-br from-black/78 via-black/48 to-black/10" />
+              <div className="absolute inset-x-0 bottom-0 p-7 text-white md:p-9">
+                <p className="mb-3 text-sm font-semibold !text-white/85">{t('rsvp.hero_eyebrow')}</p>
+                <h1 className="max-w-xl font-serif text-4xl leading-tight !text-white md:text-5xl">
+                  {t('rsvp.hero_title')}
+                </h1>
+                <p className="mt-4 max-w-lg text-sm leading-6 !text-white opacity-85">
+                  {t('rsvp.hero_subtitle')}
+                </p>
+              </div>
             </div>
 
-            <form onSubmit={handleSearch} className="space-y-4.5">
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  {t('rsvp.search_label')}
-                </label>
-                <Input
-                  type="text"
-                  value={searchValue}
-                  onChange={(e) => {
-                    if (loading) {
-                      activeLookupRequestRef.current += 1;
-                      setLoading(false);
-                      setSubmitting(false);
-                    }
-                    setError('');
-                    setActivePredictionIndex(-1);
-                    setSearchValue(e.target.value);
-                  }}
-                  onKeyDown={(e) => {
-                    if (guestPredictions.length === 0) return;
-                    if (e.key === 'ArrowDown') {
-                      e.preventDefault();
-                      setActivePredictionIndex((idx) => (idx + 1) % guestPredictions.length);
-                      return;
-                    }
-                    if (e.key === 'ArrowUp') {
-                      e.preventDefault();
-                      setActivePredictionIndex((idx) => (idx <= 0 ? guestPredictions.length - 1 : idx - 1));
-                      return;
-                    }
-                    if (e.key === 'Escape') {
-                      e.preventDefault();
-                      setActivePredictionIndex(-1);
-                      return;
-                    }
-                    if (e.key === 'Enter' && activePredictionIndex >= 0) {
-                      e.preventDefault();
+            <Card className="self-center border-border-subtle bg-white p-5 md:p-7">
+              <div className="text-center mb-6">
+                <h2 className="text-2xl md:text-3xl font-serif mb-2">{t('rsvp.title')}</h2>
+                <p className="text-gray-600">{t('rsvp.subtitle')}</p>
+              </div>
+
+              <form onSubmit={handleSearch} className="space-y-4.5">
+                <div>
+                  <label htmlFor={searchInputId} className="block text-sm font-medium mb-2">
+                    {t('rsvp.search_label')}
+                  </label>
+                  <Input
+                    id={searchInputId}
+                    type="text"
+                    value={searchValue}
+                    onChange={(e) => {
                       if (loading) {
                         activeLookupRequestRef.current += 1;
                         setLoading(false);
@@ -1259,67 +1332,110 @@ export default function RSVP() {
                       }
                       setError('');
                       setActivePredictionIndex(-1);
-                      setSearchValue(guestPredictions[activePredictionIndex]);
-                    }
-                  }}
-                  placeholder={t('rsvp.search_placeholder')}
-                  className="h-11"
-                  required
-                />
-                <p className="text-xs text-gray-500 mt-1.5">
-                  Use the invitation code from your email for the fastest lookup
-                </p>
-                {guestPredictions.length > 0 && (
-                  <div className="mt-2 border border-gray-200 rounded-lg bg-white overflow-hidden">
-                    {guestPredictions.map((name) => (
-                      <button
-                        key={name}
-                        type="button"
-                        onClick={() => {
-                          if (loading) {
-                            activeLookupRequestRef.current += 1;
-                            setLoading(false);
-                            setSubmitting(false);
-                          }
-                          setError('');
-                          setActivePredictionIndex(-1);
-                          setSearchValue(name);
-                        }}
-                        onMouseEnter={() => setActivePredictionIndex(guestPredictions.indexOf(name))}
-                        className={`w-full text-left px-3 py-2 text-sm ${guestPredictions[activePredictionIndex] === name ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
-                      >
-                        {name}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {error && (
-                <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm space-y-2">
-                  <div className="flex items-start gap-2">
-                    <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                    <span>{error}</span>
-                  </div>
-                  <ul className="pl-6 space-y-1 text-xs text-red-600 list-disc">
-                    <li>Make sure you're using the invitation link from your email</li>
-                    <li>Try searching by your first and last name</li>
-                    <li>Check the spelling matches what the couple has on file</li>
-                    <li>Contact the couple if you're still having trouble</li>
-                  </ul>
+                      setSearchValue(e.target.value);
+                    }}
+                    onKeyDown={(e) => {
+                      if (guestPredictions.length === 0) return;
+                      if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        setActivePredictionIndex((idx) => (idx + 1) % guestPredictions.length);
+                        return;
+                      }
+                      if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        setActivePredictionIndex((idx) => (idx <= 0 ? guestPredictions.length - 1 : idx - 1));
+                        return;
+                      }
+                      if (e.key === 'Escape') {
+                        e.preventDefault();
+                        setActivePredictionIndex(-1);
+                        return;
+                      }
+                      if (e.key === 'Enter' && activePredictionIndex >= 0) {
+                        e.preventDefault();
+                        if (loading) {
+                          activeLookupRequestRef.current += 1;
+                          setLoading(false);
+                          setSubmitting(false);
+                        }
+                        setError('');
+                        setActivePredictionIndex(-1);
+                        setSearchValue(guestPredictions[activePredictionIndex]);
+                      }
+                    }}
+                    placeholder={t('rsvp.search_placeholder')}
+                    className="h-11"
+                    autoComplete="name"
+                    aria-describedby={searchHintId}
+                    aria-autocomplete="list"
+                    aria-expanded={guestPredictions.length > 0}
+                    aria-controls={guestPredictions.length > 0 ? predictionListId : undefined}
+                    aria-activedescendant={activePredictionId}
+                    required
+                  />
+                  <p id={searchHintId} className="text-xs text-gray-500 mt-1.5">
+                    {t('rsvp.search_hint')}
+                  </p>
+                  {guestPredictions.length > 0 && (
+                    <div
+                      id={predictionListId}
+                      role="listbox"
+                      aria-label="Suggested guests"
+                      className="mt-2 border border-gray-200 rounded-lg bg-white overflow-hidden"
+                    >
+                      {guestPredictions.map((name, index) => (
+                        <button
+                          key={name}
+                          id={`${predictionListId}-${index}`}
+                          role="option"
+                          aria-selected={guestPredictions[activePredictionIndex] === name}
+                          type="button"
+                          onClick={() => {
+                            if (loading) {
+                              activeLookupRequestRef.current += 1;
+                              setLoading(false);
+                              setSubmitting(false);
+                            }
+                            setError('');
+                            setActivePredictionIndex(-1);
+                            setSearchValue(name);
+                          }}
+                          onMouseEnter={() => setActivePredictionIndex(guestPredictions.indexOf(name))}
+                          className={`w-full text-left px-3 py-2 text-sm ${guestPredictions[activePredictionIndex] === name ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
+                        >
+                          {name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
 
-              <Button type="submit" disabled={loading} className="w-full h-11">
-                {loading ? 'Searching…' : (
-                  <>
-                    <Search className="w-4 h-4 mr-2" />
-                    Find My Invitation
-                  </>
+                {error && (
+                  <div className="p-4 bg-surface-subtle/50 border border-border-subtle rounded-lg text-text-secondary text-sm space-y-2">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                      <span>{error}</span>
+                    </div>
+                    <ul className="pl-6 space-y-1 text-xs text-text-tertiary list-disc">
+                      <li>Make sure you're using the invitation link from your email</li>
+                      <li>Try searching by your first and last name</li>
+                      <li>Check the spelling matches what the couple has on file</li>
+                      <li>Contact the couple if you're still having trouble</li>
+                    </ul>
+                  </div>
                 )}
-              </Button>
-            </form>
-          </Card>
+
+                <Button type="submit" disabled={loading} className="w-full h-11">
+                  {loading ? t('rsvp.searching') : (
+                    <>
+                      <Search className="w-4 h-4 mr-2" />
+                      {t('rsvp.search_button')}
+                    </>
+                  )}
+                </Button>
+              </form>
+            </Card>
+          </div>
         )}
 
         {step === 'pick' && (
@@ -1335,9 +1451,6 @@ export default function RSVP() {
               {ambiguousGuests.map((g) => {
                 const hints: string[] = [];
                 if (g.last_name) hints.push(g.last_name);
-                if (g.group_name) hints.push(g.group_name);
-                if (g.email) hints.push(maskEmail(g.email));
-                if (g.phone) hints.push(`ends in ${g.phone.slice(-4)}`);
                 const invitedTo = [
                   g.invited_to_ceremony && 'Ceremony',
                   g.invited_to_reception && 'Reception',
@@ -1347,10 +1460,10 @@ export default function RSVP() {
                     key={g.id}
                     onClick={() => handlePickGuest(g)}
                     disabled={loading}
-                    className="w-full flex items-center gap-3 p-3.5 border border-gray-200 rounded-xl hover:border-gray-300 hover:bg-gray-50 transition-colors text-left group"
+                    className="w-full flex items-center gap-3 p-3.5 border border-gray-200 rounded-lg hover:border-gray-300 hover:bg-gray-50 transition-colors text-left group"
                   >
-                    <div className="w-10 h-10 rounded-full bg-gray-100 group-hover:bg-rose-100 flex items-center justify-center flex-shrink-0 transition-colors">
-                      <User className="w-5 h-5 text-gray-500 group-hover:text-rose-500 transition-colors" />
+                    <div className="w-10 h-10 rounded-lg bg-gray-100 group-hover:bg-gray-200 flex items-center justify-center flex-shrink-0 transition-colors">
+                      <User className="w-5 h-5 text-gray-500 group-hover:text-gray-700 transition-colors" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-gray-900">{guestLabel(g)}</p>
@@ -1387,7 +1500,7 @@ export default function RSVP() {
             </div>
 
             {deadlinePassed && !existingRsvp && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm flex items-start gap-2">
+              <div className="mb-6 p-4 bg-surface-subtle/50 border border-border-subtle rounded-lg text-text-secondary text-sm flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="font-medium">RSVP deadline has passed</p>
@@ -1398,7 +1511,7 @@ export default function RSVP() {
 
             {existingRsvp && (
               <>
-                <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-900 text-sm space-y-1">
+                <div className="mb-6 p-4 bg-primary/5 border border-primary/15 rounded-lg text-text-secondary text-sm space-y-1">
                   <p className="font-medium">We have your current RSVP on file.</p>
                   <p>You can review or update your details here. If plans change later, use this same link again.</p>
                 </div>
@@ -1410,28 +1523,28 @@ export default function RSVP() {
             )}
 
             {deadlinePassed && existingRsvp && (
-              <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm flex items-start gap-2">
+              <div className="mb-6 p-4 bg-surface-subtle/50 border border-border-subtle rounded-lg text-text-secondary text-sm flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                 The RSVP deadline has passed, but you can still update your existing response.
               </div>
             )}
 
-            {!guest.invite_token && (
-              <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-base space-y-2">
+            {!rsvpSessionToken && (
+              <div className="mb-6 p-4 bg-surface-subtle/50 border border-border-subtle rounded-lg text-text-secondary text-base space-y-2">
                 <div className="flex items-start gap-2 font-medium">
                   <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
                   Can't submit — missing invitation link
                 </div>
-                <p className="pl-7 text-sm text-amber-900/90">To RSVP, open the invitation email you received and click the RSVP button. That link contains a secure code required to submit your response.</p>
+                <p className="pl-7 text-sm text-text-secondary">To RSVP, open the invitation email you received and click the RSVP button. That link takes you to the right response for your invitation.</p>
               </div>
             )}
 
-            <div className="mb-5 p-4 bg-surface-subtle/40 border border-border-subtle rounded-2xl">
+            <div className="mb-5 p-4 bg-surface-subtle/40 border border-border-subtle rounded-lg">
               <div className="flex items-center gap-2 text-xs">
                 {[1, 2, 3].map((n) => (
                   <div key={n} className={`flex items-center gap-2 ${n < 3 ? 'flex-1' : ''}`}>
-                    <div className={`w-6 h-6 rounded-full grid place-items-center font-semibold ${formStep >= n ? 'bg-rose-500 text-white' : 'bg-gray-200 text-gray-500'}`}>{n}</div>
-                    {n < 3 && <div className={`h-0.5 flex-1 ${formStep > n ? 'bg-rose-400' : 'bg-gray-200'}`} />}
+                    <div className={`w-6 h-6 rounded-md grid place-items-center font-semibold ${formStep >= n ? 'bg-primary text-white' : 'bg-gray-200 text-gray-500'}`}>{n}</div>
+                    {n < 3 && <div className={`h-0.5 flex-1 ${formStep > n ? 'bg-primary/50' : 'bg-gray-200'}`} />}
                   </div>
                 ))}
               </div>
@@ -1456,7 +1569,7 @@ export default function RSVP() {
                   </div>
 
                   {invitedEvents.length > 0 && (
-                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl text-sm">
+                    <div className="p-4 bg-surface-subtle/50 border border-border-subtle rounded-lg text-sm">
                       <p className="font-semibold mb-1.5 text-base text-gray-900">Your event access details</p>
                       <ul className="list-disc list-inside space-y-1.5 text-base text-gray-800">
                         {invitedEvents.map((ev) => <li key={ev}>{ev}</li>)}
@@ -1464,31 +1577,31 @@ export default function RSVP() {
                     </div>
                   )}
                   {householdGuests.length > 0 && (
-                    <div className="text-sm p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-3">
+                    <div className="text-sm p-4 bg-surface-subtle/50 border border-border-subtle rounded-lg space-y-3">
                       <label className="flex items-start gap-3">
                         <input type="checkbox" checked={applyToHousehold} onChange={(e) => updateApplyToHousehold(e.target.checked)} className="w-5 h-5 mt-0.5" />
                         <span className="font-semibold text-base text-gray-900">Inherit this RSVP to selected household guests</span>
                       </label>
 
                       {applyToHousehold && (
-                        <details className="rounded-xl border border-amber-200 bg-white/60 p-3">
-                          <summary className="cursor-pointer text-sm font-semibold text-amber-900 flex items-center justify-between gap-2">
+                        <details className="rounded-lg border border-border-subtle bg-white p-3">
+                          <summary className="cursor-pointer text-sm font-semibold text-text-primary flex items-center justify-between gap-2">
                             <span>Choose household guests</span>
-                            <span className="text-xs text-amber-800">{selectedHouseholdGuestIds.length}/{householdGuests.length} selected</span>
+                            <span className="text-xs text-text-tertiary">{selectedHouseholdGuestIds.length}/{householdGuests.length} selected</span>
                           </summary>
                           <div className="mt-2 space-y-2">
                             <div className="flex items-center gap-2 flex-wrap">
                               <button
                                 type="button"
                                 onClick={() => updateSelectedHouseholdGuestIds(() => householdGuests.map((h) => h.id))}
-                                className="text-xs px-3 py-2 rounded-lg border border-amber-300 text-amber-900 hover:bg-amber-100"
+                                className="text-xs px-3 py-2 rounded-lg border border-border-subtle text-text-secondary hover:bg-surface-subtle"
                               >
                                 Select all
                               </button>
                               <button
                                 type="button"
                                 onClick={() => updateSelectedHouseholdGuestIds(() => [])}
-                                className="text-xs px-3 py-2 rounded-lg border border-amber-300 text-amber-900 hover:bg-amber-100"
+                                className="text-xs px-3 py-2 rounded-lg border border-border-subtle text-text-secondary hover:bg-surface-subtle"
                               >
                                 Clear
                               </button>
@@ -1499,7 +1612,7 @@ export default function RSVP() {
                                 const checked = selectedHouseholdGuestIds.includes(h.id);
                                 const access = [h.invited_to_ceremony ? 'Ceremony' : null, h.invited_to_reception ? 'Reception' : null].filter(Boolean).join(' + ') || 'No event access';
                                 return (
-                                  <label key={h.id} className="flex items-center justify-between gap-3 bg-white border border-amber-200 rounded-lg px-3 py-2.5">
+                                  <label key={h.id} className="flex items-center justify-between gap-3 bg-white border border-border-subtle rounded-lg px-3 py-2.5">
                                     <span className="text-sm text-gray-800 font-medium">{label}</span>
                                     <div className="flex items-center gap-3">
                                       <span className="text-xs text-gray-600">{access}</span>
@@ -1529,13 +1642,13 @@ export default function RSVP() {
                   {formData.attending && (
                     <>
                       {(guest.invited_to_ceremony || guest.invited_to_reception) && (
-                        <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl space-y-4">
+                        <div className="p-4 bg-surface-subtle/50 border border-border-subtle rounded-lg space-y-4">
                           <div className="space-y-1.5">
                             <p className="text-base font-semibold text-gray-900">Which events will you attend?</p>
                             <p className="text-sm text-gray-600">Choose the parts of the celebration you're joining.</p>
                           </div>
                           {guest.invited_to_ceremony && (
-                            <label className="flex items-center justify-between gap-4 rounded-xl border border-rose-200 bg-white px-4 py-3 text-sm">
+                            <label className="flex items-center justify-between gap-4 rounded-lg border border-border-subtle bg-white px-4 py-3 text-sm">
                               <span className="text-base font-medium text-gray-900">Wedding Ceremony</span>
                               <input
                                 type="checkbox"
@@ -1546,7 +1659,7 @@ export default function RSVP() {
                             </label>
                           )}
                           {guest.invited_to_reception && (
-                            <label className="flex items-center justify-between gap-4 rounded-xl border border-rose-200 bg-white px-4 py-3 text-sm">
+                            <label className="flex items-center justify-between gap-4 rounded-lg border border-border-subtle bg-white px-4 py-3 text-sm">
                               <span className="text-base font-medium text-gray-900">Reception</span>
                               <input
                                 type="checkbox"
@@ -1590,19 +1703,34 @@ export default function RSVP() {
                           <p className="text-sm text-gray-600 mt-2">You're welcome to bring a guest.</p>
                         </div>
                       )}
+
+                      {allowedChildrenCount > 0 && (
+                        <div>
+                          <label className="block text-base font-semibold mb-2">
+                            Children attending
+                          </label>
+                          <Select
+                            value={String(formData.children_count)}
+                            onChange={(e) => updateFormData((current) => ({ ...current, children_count: Number(e.target.value) }))}
+                            className="h-12 text-base"
+                            options={childCountOptions}
+                          />
+                          <p className="text-sm text-gray-600 mt-2">Your invitation allows up to {allowedChildrenCount} child{allowedChildrenCount === 1 ? '' : 'ren'}.</p>
+                        </div>
+                      )}
                     </>
                   )}
 
 
-                  {musicPlaylistUrl && (
-                    <div className="p-4 bg-violet-50 border border-violet-200 rounded-xl">
-                      <p className="text-base font-semibold text-violet-900">Song requests</p>
-                      <p className="text-sm text-violet-800 mt-1.5">Add your song picks directly to our collaborative Spotify playlist.</p>
+                  {safeMusicPlaylistUrl && (
+                    <div className="p-4 bg-surface-subtle/50 border border-border-subtle rounded-lg">
+                      <p className="text-base font-semibold text-text-primary">Song requests</p>
+                      <p className="text-sm text-text-secondary mt-1.5">Add your song picks directly to our collaborative Spotify playlist.</p>
                       <a
-                        href={musicPlaylistUrl}
+                        href={safeMusicPlaylistUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center mt-3 px-4 py-3 rounded-xl bg-violet-600 text-white text-base hover:bg-violet-700"
+                        className="inline-flex items-center mt-3 px-4 py-3 rounded-lg bg-primary text-white text-base hover:bg-primary-hover"
                       >
                         Open Spotify playlist
                       </a>
@@ -1610,7 +1738,7 @@ export default function RSVP() {
                   )}
 
                   {rsvpQuestions.length > 0 && (
-                    <div className="space-y-4 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                    <div className="space-y-4 p-4 bg-surface-subtle/50 border border-border-subtle rounded-lg">
                       <p className="text-base font-semibold text-gray-900">A few quick questions from the couple</p>
                       {rsvpQuestions
                         .filter((q) => (q.appliesTo ?? 'all') === 'all' || ((q.appliesTo === 'ceremony' && formData.attendCeremony) || (q.appliesTo === 'reception' && formData.attendReception)))
@@ -1632,7 +1760,7 @@ export default function RSVP() {
                                     ? (Array.isArray(current) ? current.includes(opt) : false)
                                     : (current ?? '') === opt;
                                   return (
-                                  <label key={`${q.id}-${opt}`} className="flex items-center gap-3 rounded-xl border border-amber-200 bg-white px-3 py-3 text-sm text-gray-800">
+                                  <label key={`${q.id}-${opt}`} className="flex items-center gap-3 rounded-lg border border-border-subtle bg-white px-3 py-3 text-sm text-gray-800">
                                       <input
                                         type="checkbox"
                                         checked={checked}
@@ -1691,40 +1819,46 @@ export default function RSVP() {
               )}
 
               {formStep === 3 && (
-                <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 space-y-4">
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-4">
                   {formData.attending && guest?.invited_to_ceremony && guest?.invited_to_reception && !formData.attendCeremony && !formData.attendReception && (
-                    <div className="text-sm text-warning bg-warning/10 border border-warning/30 rounded-xl px-3 py-2.5">
+                    <div className="text-sm text-warning bg-warning/10 border border-warning/30 rounded-lg px-3 py-2.5">
                       Please review: attending is on, but no events are selected.
                     </div>
                   )}
-                  <div className="flex items-center justify-between text-sm gap-4 rounded-xl bg-white px-4 py-3 border border-gray-200">
+                  <div className="flex items-center justify-between text-sm gap-4 rounded-lg bg-white px-4 py-3 border border-gray-200">
                     <span className="text-gray-700 font-semibold">Attendance</span>
-                    <span className={`font-semibold px-2.5 py-1 rounded-full text-xs ${formData.attending ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    <span className={`font-semibold px-2.5 py-1 rounded-lg text-xs ${formData.attending ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-700'}`}>
                       {formData.attending ? 'Attending' : 'Not attending'}
                     </span>
                   </div>
                   {formData.attending && (guest.invited_to_ceremony || guest.invited_to_reception) && (
-                    <div className="flex items-center justify-between text-sm gap-4 rounded-xl bg-white px-4 py-3 border border-gray-200">
+                    <div className="flex items-center justify-between text-sm gap-4 rounded-lg bg-white px-4 py-3 border border-gray-200">
                       <span className="text-gray-700 font-semibold">Events</span>
                       <span className="text-gray-900 text-right">{[guest.invited_to_ceremony ? (formData.attendCeremony ? 'Ceremony' : null) : null, guest.invited_to_reception ? (formData.attendReception ? 'Reception' : null) : null].filter(Boolean).join(' + ') || 'None selected'}</span>
                     </div>
                   )}
                   {formData.attending && formData.meal_choice && (
-                    <div className="flex items-center justify-between text-sm gap-4 rounded-xl bg-white px-4 py-3 border border-gray-200">
+                    <div className="flex items-center justify-between text-sm gap-4 rounded-lg bg-white px-4 py-3 border border-gray-200">
                       <span className="text-gray-700 font-semibold">Meal</span>
                       <span className="text-gray-900 capitalize text-right">{formData.meal_choice}</span>
                     </div>
                   )}
                   {formData.attending && formData.plus_one_name && (
-                    <div className="flex items-center justify-between text-sm gap-4 rounded-xl bg-white px-4 py-3 border border-gray-200">
+                    <div className="flex items-center justify-between text-sm gap-4 rounded-lg bg-white px-4 py-3 border border-gray-200">
                       <span className="text-gray-700 font-semibold">Plus one</span>
                       <span className="text-gray-900 text-right">{formData.plus_one_name}</span>
+                    </div>
+                  )}
+                  {formData.attending && formData.children_count > 0 && (
+                    <div className="flex items-center justify-between text-sm gap-4 rounded-lg bg-white px-4 py-3 border border-gray-200">
+                      <span className="text-gray-700 font-semibold">Children</span>
+                      <span className="text-gray-900 text-right">{formData.children_count}</span>
                     </div>
                   )}
 
                   {applyToHousehold && inheritedHouseholdMembers.length > 0 && (
                     <div className="space-y-1.5">
-                      <p className="text-xs uppercase updates-wide text-gray-500">Inherited to household</p>
+                      <p className="text-xs font-medium text-gray-500">Inherited to household</p>
                       {inheritedHouseholdMembers.map((h) => {
                         const name = h.first_name && h.last_name ? `${h.first_name} ${h.last_name}` : h.name;
                         const access = [h.invited_to_ceremony ? 'Ceremony' : null, h.invited_to_reception ? 'Reception' : null].filter(Boolean).join(' + ') || 'No event access';
@@ -1740,9 +1874,9 @@ export default function RSVP() {
 
                   {rsvpQuestions.length > 0 && Object.keys(customAnswers).length > 0 && (
                     <div className="space-y-2">
-                      <p className="text-xs uppercase updates-wide text-gray-500">Custom answers</p>
+                      <p className="text-xs font-medium text-gray-500">Custom answers</p>
                       {rsvpQuestions.filter((q) => { const v = customAnswers[q.id]; return Array.isArray(v) ? v.length > 0 : String(v ?? '').trim().length > 0; }).map((q) => (
-                        <div key={q.id} className="flex items-start justify-between text-sm gap-4 rounded-xl bg-white px-4 py-3 border border-gray-200">
+                        <div key={q.id} className="flex items-start justify-between text-sm gap-4 rounded-lg bg-white px-4 py-3 border border-gray-200">
                           <span className="text-gray-700 font-semibold flex-shrink-0">{getRsvpQuestionLabel(q)}</span>
                           <span className="text-gray-900 text-right">{Array.isArray(customAnswers[q.id]) ? (customAnswers[q.id] as string[]).join(', ') : String(customAnswers[q.id] ?? '')}</span>
                         </div>
@@ -1750,7 +1884,7 @@ export default function RSVP() {
                     </div>
                   )}
                   {formData.notes && (
-                    <div className="flex items-start justify-between text-sm gap-4 rounded-xl bg-white px-4 py-3 border border-gray-200">
+                    <div className="flex items-start justify-between text-sm gap-4 rounded-lg bg-white px-4 py-3 border border-gray-200">
                       <span className="text-gray-700 font-semibold flex-shrink-0">Notes</span>
                       <span className="text-gray-900 text-right">{formData.notes}</span>
                     </div>
@@ -1759,7 +1893,7 @@ export default function RSVP() {
               )}
 
               {error && (
-                <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-800 text-base flex items-start gap-3">
+                <div className="p-4 bg-surface-subtle/50 border border-border-subtle rounded-lg text-text-secondary text-base flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
                   {error}
                 </div>
@@ -1810,8 +1944,8 @@ export default function RSVP() {
           <Card className="p-5 md:p-7">
             <div className="text-center mb-5">
               <div className="flex justify-center mb-3.5">
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center ${formData.attending ? 'bg-green-100' : 'bg-neutral-100'}`}>
-                  <CheckCircle className={`w-9 h-9 ${formData.attending ? 'text-green-500' : 'text-neutral-500'}`} />
+                <div className={`w-16 h-16 rounded-lg flex items-center justify-center ${formData.attending ? 'bg-primary/10' : 'bg-neutral-100'}`}>
+                  <CheckCircle className={`w-9 h-9 ${formData.attending ? 'text-primary' : 'text-neutral-500'}`} />
                 </div>
               </div>
               <h1 className="text-2xl md:text-3xl font-serif mb-1.5">
@@ -1822,7 +1956,7 @@ export default function RSVP() {
               </p>
             </div>
 
-            <details className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-5">
+            <details className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-5">
               <summary className="cursor-pointer text-sm font-semibold text-gray-800 flex items-center justify-between">
                 RSVP summary
                 <span className="text-xs text-gray-500">View details</span>
@@ -1830,10 +1964,10 @@ export default function RSVP() {
               <div className="mt-2.5 space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-gray-600 font-medium">Attendance</span>
-                <span className={`font-semibold px-2.5 py-1 rounded-full text-xs ${
+                <span className={`font-semibold px-2.5 py-1 rounded-lg text-xs ${
                   formData.attending
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-red-100 text-red-700'
+                    ? 'bg-primary/10 text-primary'
+                    : 'bg-gray-100 text-gray-700'
                 }`}>
                   {formData.attending ? "Attending" : "Not attending"}
                 </span>
@@ -1856,9 +1990,15 @@ export default function RSVP() {
                   <span className="text-gray-900">{formData.plus_one_name}</span>
                 </div>
               )}
+              {formData.attending && formData.children_count > 0 && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600 font-medium">Children</span>
+                  <span className="text-gray-900">{formData.children_count}</span>
+                </div>
+              )}
               {applyToHousehold && inheritedHouseholdMembers.length > 0 && (
                 <div className="space-y-1.5">
-                  <p className="text-xs uppercase updates-wide text-gray-500">Inherited to household</p>
+                  <p className="text-xs font-medium text-gray-500">Inherited to household</p>
                   {inheritedHouseholdMembers.map((h) => {
                     const name = h.first_name && h.last_name ? `${h.first_name} ${h.last_name}` : h.name;
                     const access = [h.invited_to_ceremony ? 'Ceremony' : null, h.invited_to_reception ? 'Reception' : null].filter(Boolean).join(' + ') || 'No event access';
@@ -1881,7 +2021,7 @@ export default function RSVP() {
             </details>
 
             {formData.attending && (
-              <p className="text-center text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg py-3 px-4 mb-5">
+              <p className="text-center text-sm text-text-primary bg-surface-subtle border border-border-subtle rounded-lg py-3 px-4 mb-5">
                 We can't wait to celebrate with you!
               </p>
             )}
@@ -1894,7 +2034,7 @@ export default function RSVP() {
             <div className="space-y-1.5">
               <Button
                 onClick={() => {
-                  if (guest?.invite_token) {
+                  if (guest) {
                     returnToLoadedRsvp();
                     return;
                   }

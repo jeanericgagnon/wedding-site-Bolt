@@ -83,16 +83,16 @@ describe('name change document repair queue', () => {
       kind: 'marriage_certificate',
       severity: 'blocking',
     });
-    expect(marriageCertificateItem?.impactSummary).toContain('metadata gaps');
+    expect(marriageCertificateItem?.impactSummary).toContain('detail gaps');
     expect(marriageCertificateItem?.payoffSummary).toContain('removes');
     expect(marriageCertificateItem?.nextActions).toEqual(expect.arrayContaining([
       expect.objectContaining({
         category: 'document',
-        label: expect.stringContaining('Fill metadata'),
+        label: expect.stringContaining('Fill details'),
       }),
       expect.objectContaining({
         category: 'document',
-        label: 'Capture county + certificate number for certified marriage certificate',
+        label: 'Capture county + certificate number + issuing authority for certified marriage certificate',
       }),
     ]));
   });
@@ -244,7 +244,7 @@ describe('name change document repair queue', () => {
       expect.objectContaining({
         category: 'document',
         label: 'Capture county + certificate number for certified marriage certificate',
-        detail: 'Out-of-state marriage follow-through needs grounded county and certificate-number extraction from the marriage certificate.',
+        detail: 'Out-of-state marriage follow-through needs the county and certificate number from the marriage certificate.',
       }),
     ]));
     expect(marriageCertificateItem?.nextActions[0]).toMatchObject({
@@ -295,7 +295,7 @@ describe('name change document repair queue', () => {
       expect.objectContaining({
         category: 'document',
         label: 'Capture county for certified marriage certificate',
-        detail: 'Out-of-state marriage follow-through still needs grounded county extraction from the marriage certificate.',
+        detail: 'Out-of-state marriage follow-through still needs the county from the marriage certificate.',
       }),
     ]));
     expect(marriageCertificateItem?.nextActions[0]).toMatchObject({
@@ -329,7 +329,7 @@ describe('name change document repair queue', () => {
     expect(marriageCertificateItem?.nextActions[0]).toMatchObject({
       category: 'document',
       label: 'Capture county + certificate number + issuing authority for certified marriage certificate',
-      detail: 'Out-of-state marriage follow-through needs grounded county, certificate-number extraction, and issuing-authority metadata from the marriage certificate.',
+      detail: 'Out-of-state marriage follow-through needs the county, certificate number, and issuing authority from the marriage certificate.',
       documentKind: 'marriage_certificate',
     });
   });

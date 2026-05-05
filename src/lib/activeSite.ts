@@ -1,12 +1,23 @@
 import { supabase } from './supabase';
 import { getStoredActiveSiteId } from './activeSiteStorage';
+import type { PlannerPermissionKey } from './plannerAccess';
+import { DEMO_MODE } from '../config/env';
 
 export type ActiveSiteSummary = {
   id: string;
   role: 'owner' | 'planner' | 'coordinator' | 'viewer';
+  permissions: PlannerPermissionKey[] | null;
 };
 
 export async function resolveActiveSiteForUser(userId: string): Promise<ActiveSiteSummary | null> {
+  if (DEMO_MODE && userId === 'demo-local-user') {
+    return {
+      id: 'demo-site-id',
+      role: 'owner',
+      permissions: null,
+    };
+  }
+
   const preferredSiteId = getStoredActiveSiteId();
 
   if (preferredSiteId) {
@@ -22,12 +33,13 @@ export async function resolveActiveSiteForUser(userId: string): Promise<ActiveSi
       return {
         id: preferredOwnedSite.id,
         role: 'owner',
+        permissions: null,
       };
     }
 
     const { data: preferredCollaboratorSite, error: preferredCollaboratorError } = await supabase
       .from('wedding_site_collaborators')
-      .select('wedding_site_id, role')
+      .select('wedding_site_id, role, permissions')
       .eq('wedding_site_id', preferredSiteId)
       .eq('user_id', userId)
       .maybeSingle();
@@ -37,6 +49,7 @@ export async function resolveActiveSiteForUser(userId: string): Promise<ActiveSi
       return {
         id: preferredCollaboratorSite.wedding_site_id,
         role: (preferredCollaboratorSite.role as ActiveSiteSummary['role']) || 'viewer',
+        permissions: Array.isArray(preferredCollaboratorSite.permissions) ? preferredCollaboratorSite.permissions as PlannerPermissionKey[] : [],
       };
     }
   }
@@ -54,12 +67,13 @@ export async function resolveActiveSiteForUser(userId: string): Promise<ActiveSi
     return {
       id: ownedSite.id,
       role: 'owner',
+      permissions: null,
     };
   }
 
   const { data: collaboratorSite, error: collaboratorError } = await supabase
     .from('wedding_site_collaborators')
-    .select('wedding_site_id, role')
+    .select('wedding_site_id, role, permissions')
     .eq('user_id', userId)
     .order('created_at', { ascending: true })
     .limit(1)
@@ -71,6 +85,7 @@ export async function resolveActiveSiteForUser(userId: string): Promise<ActiveSi
   return {
     id: collaboratorSite.wedding_site_id,
     role: (collaboratorSite.role as ActiveSiteSummary['role']) || 'viewer',
+    permissions: Array.isArray(collaboratorSite.permissions) ? collaboratorSite.permissions as PlannerPermissionKey[] : [],
   };
 }
 

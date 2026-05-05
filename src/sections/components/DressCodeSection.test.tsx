@@ -9,6 +9,7 @@ function createWeddingData(): WeddingDataV1 {
   return {
     couple: { partner1: '', partner2: '', displayName: '' },
     event: { date: '', venue: '', location: '' },
+    venues: [],
     story: { proposalStory: '', howWeMet: '' },
     schedule: [],
     travel: { accommodations: [], transportation: [], airports: [] },
@@ -23,6 +24,7 @@ function createWeddingData(): WeddingDataV1 {
     design: { template: 'classic-romance', colorScheme: 'soft-blush', fontPairing: 'elegant-serif' },
     customSections: [],
     media: { gallery: [] },
+    meta: { createdAtISO: '', updatedAtISO: '' },
   };
 }
 

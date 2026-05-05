@@ -2,6 +2,7 @@ import React from 'react';
 import { z } from 'zod';
 import { SectionDefinition, SectionComponentProps } from '../../types';
 import { Coffee, Utensils, Landmark, MoonStar, ExternalLink } from 'lucide-react';
+import { getSafePublicWebUrl } from '../../publicLinks';
 
 const GuideItemSchema = z.object({
   id: z.string(),
@@ -48,25 +49,28 @@ const GuideColumn: React.FC<{ title: string; icon: React.ReactNode; items: z.inf
   <div className="rounded-2xl border border-border/30 bg-white p-4 md:p-5 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
     <div className="flex items-center gap-2 mb-3">
       {icon}
-      <h3 className="text-sm font-semibold text-text-primary uppercase tracking-wide">{title}</h3>
+      <h3 className="text-sm font-semibold text-text-primary">{title}</h3>
     </div>
     <div className="space-y-2.5">
       {items.length === 0 ? (
         <p className="text-xs text-text-tertiary">No recommendations yet.</p>
       ) : (
-        items.map((item) => (
+        items.map((item) => {
+          const safeItemUrl = getSafePublicWebUrl(item.url);
+          return (
           <div key={item.id} className="rounded-xl border border-border/35 px-3 py-2.5">
             <div className="flex items-center justify-between gap-2">
               <p className="text-sm text-text-primary font-medium">{item.name}</p>
-              {item.url ? (
-                <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-text-tertiary hover:text-primary">
+              {safeItemUrl ? (
+                <a href={safeItemUrl} target="_blank" rel="noopener noreferrer" className="text-text-tertiary hover:text-primary">
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               ) : null}
             </div>
             {item.note ? <p className="text-xs text-text-secondary mt-1">{item.note}</p> : null}
           </div>
-        ))
+          );
+        })
       )}
     </div>
   </div>
@@ -77,7 +81,7 @@ const TravelLocalGuide: React.FC<SectionComponentProps<TravelLocalGuideData>> = 
     <section className="py-20 md:py-28 bg-surface" id="travel-guide">
       <div className="max-w-6xl mx-auto px-5 md:px-10">
         <div className="text-center mb-10 md:mb-12">
-          <p className="text-xs uppercase tracking-[0.24em] text-text-tertiary mb-3">{data.eyebrow}</p>
+          <p className="text-sm text-text-tertiary mb-3">{data.eyebrow}</p>
           <h2 className="text-3xl md:text-5xl font-light text-text-primary">{data.headline}</h2>
           {data.intro ? <p className="mt-3 text-sm md:text-base text-text-secondary max-w-2xl mx-auto">{data.intro}</p> : null}
         </div>

@@ -25,7 +25,7 @@ export const MessagingFeature: React.FC = () => {
       <section className="py-16 md:py-24 bg-gradient-to-b from-paper to-white">
         <div className="container-custom">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center justify-center p-4 bg-brand/10 rounded-2xl mb-6">
+            <div className="inline-flex items-center justify-center p-4 bg-brand/10 rounded-lg mb-6">
               <Mail className="w-12 h-12 text-brand" />
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-ink mb-6 leading-tight">
@@ -42,7 +42,7 @@ export const MessagingFeature: React.FC = () => {
               </Link>
               <Link to="/product">
                 <Button variant="outline" size="lg">
-                  See how Dayof works
+                  See how dayof works
                 </Button>
               </Link>
             </div>
@@ -55,12 +55,12 @@ export const MessagingFeature: React.FC = () => {
         <div className="container-custom max-w-6xl">
           <div className="text-center mb-10">
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-4">One communication flow, not four disconnected tools</h2>
-            <p className="text-lg text-ink/70 max-w-3xl mx-auto">DayOf should help couples move guests through the whole communication arc clearly: early notice, invitation, reminder, and day-of help.</p>
+            <p className="text-lg text-ink/70 max-w-3xl mx-auto">dayof should help couples move guests through the whole communication arc clearly: early notice, invitation, reminder, and day-of help.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {GUEST_COMMUNICATION_FLOW.map((stage) => (
-              <div key={stage.id} className="rounded-2xl border border-border-subtle bg-paper p-5">
-                <p className="text-xs uppercase tracking-wide text-brand font-semibold">{stage.label}</p>
+              <div key={stage.id} className="rounded-lg border border-border-subtle bg-paper p-5">
+                <p className="text-sm text-brand font-semibold">{stage.label}</p>
                 <p className="mt-2 text-sm text-ink/70 leading-relaxed">{stage.detail}</p>
               </div>
             ))}
@@ -79,8 +79,8 @@ export const MessagingFeature: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="bg-paper rounded-2xl p-8">
-              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
+            <div className="bg-paper rounded-lg p-8">
+              <div className="p-3 bg-brand/10 rounded-lg w-fit mb-4">
                 <Mail className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Email included</h3>
@@ -94,8 +94,8 @@ export const MessagingFeature: React.FC = () => {
               </ul>
             </div>
 
-            <div className="bg-paper rounded-2xl p-8">
-              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
+            <div className="bg-paper rounded-lg p-8">
+              <div className="p-3 bg-brand/10 rounded-lg w-fit mb-4">
                 <MessageSquare className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Text credits</h3>
@@ -109,8 +109,8 @@ export const MessagingFeature: React.FC = () => {
               </ul>
             </div>
 
-            <div className="bg-paper rounded-2xl p-8">
-              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
+            <div className="bg-paper rounded-lg p-8">
+              <div className="p-3 bg-brand/10 rounded-lg w-fit mb-4">
                 <Users className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Guest Segmentation</h3>
@@ -124,8 +124,8 @@ export const MessagingFeature: React.FC = () => {
               </ul>
             </div>
 
-            <div className="bg-paper rounded-2xl p-8">
-              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
+            <div className="bg-paper rounded-lg p-8">
+              <div className="p-3 bg-brand/10 rounded-lg w-fit mb-4">
                 <Clock className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Schedule Sends</h3>
@@ -139,13 +139,13 @@ export const MessagingFeature: React.FC = () => {
               </ul>
             </div>
 
-            <div className="bg-paper rounded-2xl p-8">
-              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
+            <div className="bg-paper rounded-lg p-8">
+              <div className="p-3 bg-brand/10 rounded-lg w-fit mb-4">
                 <BarChart className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Open Tracking</h3>
               <p className="text-ink/70 mb-4">
-                See practical delivery signals first, then use them to decide who still needs follow-up. Measured counts matter more than fake certainty.
+                See practical delivery signals first, then use them to decide who still needs follow-up. Measured counts matter more than guesswork.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• Delivery-oriented status view</li>
@@ -154,8 +154,8 @@ export const MessagingFeature: React.FC = () => {
               </ul>
             </div>
 
-            <div className="bg-paper rounded-2xl p-8">
-              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
+            <div className="bg-paper rounded-lg p-8">
+              <div className="p-3 bg-brand/10 rounded-lg w-fit mb-4">
                 <Shield className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Consent Management</h3>
@@ -182,9 +182,9 @@ export const MessagingFeature: React.FC = () => {
             </div>
 
             <div className="space-y-8">
-              <div className="bg-white rounded-2xl p-8 border border-brand/20">
+              <div className="bg-white rounded-lg p-8 border border-brand/20">
                 <div className="flex items-start gap-6">
-                  <div className="p-3 bg-brand/10 rounded-xl flex-shrink-0">
+                  <div className="p-3 bg-brand/10 rounded-lg flex-shrink-0">
                     <Send className="w-6 h-6 text-brand" />
                   </div>
                   <div>
@@ -196,9 +196,9 @@ export const MessagingFeature: React.FC = () => {
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl p-8 border border-brand/20">
+              <div className="bg-white rounded-lg p-8 border border-brand/20">
                 <div className="flex items-start gap-6">
-                  <div className="p-3 bg-brand/10 rounded-xl flex-shrink-0">
+                  <div className="p-3 bg-brand/10 rounded-lg flex-shrink-0">
                     <Filter className="w-6 h-6 text-brand" />
                   </div>
                   <div>
@@ -210,9 +210,9 @@ export const MessagingFeature: React.FC = () => {
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl p-8 border border-brand/20">
+              <div className="bg-white rounded-lg p-8 border border-brand/20">
                 <div className="flex items-start gap-6">
-                  <div className="p-3 bg-brand/10 rounded-xl flex-shrink-0">
+                  <div className="p-3 bg-brand/10 rounded-lg flex-shrink-0">
                     <Bell className="w-6 h-6 text-brand" />
                   </div>
                   <div>
@@ -235,7 +235,7 @@ export const MessagingFeature: React.FC = () => {
               Core wedding messaging, together in one place
               </h2>
               <p className="text-xl text-ink/70 mb-8">
-              A strong core messaging flow for wedding updates, without pretending this is a full communications suite.
+              A strong core messaging flow for wedding updates, with text sending saved until sender setup is ready.
               </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12 text-left">
@@ -254,7 +254,7 @@ export const MessagingFeature: React.FC = () => {
                 'International support',
               ].map((feature, idx) => (
                 <div key={idx} className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                  <CheckCircle2 className="w-5 h-5 text-brand mt-0.5 flex-shrink-0" />
                   <span className="text-ink/70">{feature}</span>
                 </div>
               ))}

@@ -39,7 +39,7 @@ export const defaultTravelTiersData: TravelTiersData = {
 
 const TierColumn: React.FC<{ title: string; hotels: z.infer<typeof TierHotelSchema>[]; accent?: boolean }> = ({ title, hotels, accent }) => (
   <div className={`rounded-2xl border p-4 md:p-5 shadow-[0_8px_24px_rgba(15,23,42,0.05)] ${accent ? 'bg-primary/5 border-primary/20' : 'bg-white border-border/30'}`}>
-    <p className="text-xs uppercase tracking-[0.2em] text-text-tertiary mb-3">{title}</p>
+    <p className="text-sm text-text-tertiary mb-3">{title}</p>
     <div className="space-y-2.5">
       {hotels.length === 0 ? (
         <p className="text-xs text-text-tertiary">No hotels yet.</p>
@@ -61,7 +61,7 @@ const TravelTiers: React.FC<SectionComponentProps<TravelTiersData>> = ({ data })
     <section className="py-20 md:py-28 bg-surface" id="travel">
       <div className="max-w-6xl mx-auto px-5 md:px-10">
         <div className="text-center mb-10 md:mb-12">
-          <p className="text-xs uppercase tracking-[0.24em] text-text-tertiary mb-3">{data.eyebrow}</p>
+          <p className="text-sm text-text-tertiary mb-3">{data.eyebrow}</p>
           <h2 className="text-3xl md:text-5xl font-light text-text-primary">{data.headline}</h2>
           {data.intro ? <p className="mt-3 text-sm md:text-base text-text-secondary max-w-2xl mx-auto">{data.intro}</p> : null}
         </div>

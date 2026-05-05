@@ -5,6 +5,7 @@ import { SectionDefinition, SectionComponentProps } from '../../types';
 import { useSiteView } from '../../../contexts/SiteViewContext';
 import { publicFetchRegistryItems } from '../../../pages/dashboard/registry/registryService';
 import { RegistryItem, sanitizeRegistryQuantityState } from '../../../pages/dashboard/registry/registryTypes';
+import { RegistryItemsDisplay, isUsableRegistryImageUrl, sanitizePublicRegistryItems } from '../../components/RegistrySection';
 
 const FeaturedGiftSchema = z.object({
   id: z.string(),
@@ -117,6 +118,18 @@ export const defaultRegistryFeaturedData: RegistryFeaturedData = {
 
 const TITLE_MAX = 88;
 
+export function getSafePublicRegistryUrl(value?: string | null): string {
+  const trimmed = value?.trim();
+  if (!trimmed || trimmed === '#') return '';
+  try {
+    const parsed = new URL(trimmed);
+    if (!['http:', 'https:'].includes(parsed.protocol)) return '';
+    return parsed.toString();
+  } catch {
+    return '';
+  }
+}
+
 const cleanGiftTitle = (value: string): string => {
   const normalized = (value || '')
     .replace(/\s+/g, ' ')
@@ -152,12 +165,14 @@ const normalizePriceLabel = (priceLabel?: string | null, amount?: number | null)
 
 const GiftCard: React.FC<{ gift: z.infer<typeof FeaturedGiftSchema>; compact?: boolean }> = ({ gift, compact }) => (
   <a
-    href={gift.isClaimed ? undefined : (gift.url || '#')}
+    href={gift.isClaimed || !gift.url ? undefined : gift.url}
     target={gift.url && !gift.isClaimed ? '_blank' : undefined}
     rel="noopener noreferrer"
     className={`group flex flex-col bg-white rounded-2xl overflow-hidden border transition-all duration-300 hover:-translate-y-0.5 ${
       gift.isClaimed
         ? 'border-stone-100 opacity-60 cursor-default'
+        : !gift.url
+        ? 'border-stone-100 cursor-default'
         : gift.isPriority
         ? 'border-rose-100 hover:border-rose-200 hover:shadow-md shadow-sm'
         : 'border-stone-100 hover:border-stone-200 hover:shadow-sm'
@@ -176,18 +191,18 @@ const GiftCard: React.FC<{ gift: z.infer<typeof FeaturedGiftSchema>; compact?: b
       <div className="flex items-start justify-between gap-2 mb-1">
         <div className="min-w-0">
           {gift.category && (
-            <p className="text-[10px] uppercase tracking-wide text-stone-400 font-medium mb-1">{gift.category}</p>
+            <p className="text-xs text-stone-400 font-medium mb-1">{gift.category}</p>
           )}
           <h3 className="font-semibold text-stone-900 text-sm leading-tight">{gift.name}</h3>
         </div>
         <div className="flex flex-col items-end gap-1 flex-shrink-0">
           {gift.isClaimed && (
-            <span className="text-[10px] px-2 py-0.5 bg-green-50 text-green-600 border border-green-100 rounded-full font-medium uppercase tracking-wide">
+            <span className="text-xs px-2 py-0.5 bg-green-50 text-green-600 border border-green-100 rounded-full font-medium">
               Claimed
             </span>
           )}
           {gift.isPartiallyClaimed && !gift.isClaimed && (
-            <span className="text-[10px] px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-100 rounded-full font-medium uppercase tracking-wide">
+            <span className="text-xs px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-100 rounded-full font-medium">
               Partially claimed
             </span>
           )}
@@ -205,7 +220,7 @@ const GiftCard: React.FC<{ gift: z.infer<typeof FeaturedGiftSchema>; compact?: b
           <span className="text-sm font-semibold text-stone-800">{gift.price}</span>
         )}
         {!gift.isClaimed && gift.url && (
-          <span className="text-[10px] text-stone-400 group-hover:text-stone-700 transition-colors uppercase tracking-wide font-medium flex items-center gap-1">
+          <span className="text-xs text-stone-400 group-hover:text-stone-700 transition-colors font-medium flex items-center gap-1">
             <ShoppingBag size={10} />
             {gift.isPartiallyClaimed ? 'Gift remaining' : 'Gift this'}
           </span>
@@ -216,7 +231,7 @@ const GiftCard: React.FC<{ gift: z.infer<typeof FeaturedGiftSchema>; compact?: b
 );
 
 export function getRegistryItemPublicUrl(item: Pick<RegistryItem, 'item_url' | 'canonical_url'>): string {
-  return item.item_url ?? item.canonical_url ?? '';
+  return getSafePublicRegistryUrl(item.item_url) || getSafePublicRegistryUrl(item.canonical_url);
 }
 
 export function shouldUseLiveRegistryFeaturedData(liveItems: RegistryItem[] | null): boolean {
@@ -224,7 +239,7 @@ export function shouldUseLiveRegistryFeaturedData(liveItems: RegistryItem[] | nu
 }
 
 export function normalizeRegistryFeaturedItems(items: RegistryItem[]): RegistryItem[] {
-  return items.map((item) => {
+  return sanitizePublicRegistryItems(items).map((item) => {
     const quantityState = sanitizeRegistryQuantityState(item.quantity_purchased, item.quantity_needed);
     return {
       ...item,
@@ -240,7 +255,7 @@ export function groupRegistryStoreLinks(items: RegistryItem[]): z.infer<typeof R
   const grouped = new Map<string, z.infer<typeof RegistryStoreLinkSchema>>();
 
   for (const item of normalizeRegistryFeaturedItems(items)) {
-    const store = item.store_name ?? item.merchant ?? 'Registry';
+    const store = String(item.store_name ?? item.merchant ?? '').replace(/\s+/g, ' ').trim() || 'Registry';
     const publicUrl = getRegistryItemPublicUrl(item);
     const existing = grouped.get(store);
 
@@ -262,16 +277,17 @@ export function groupRegistryStoreLinks(items: RegistryItem[]): z.infer<typeof R
   return Array.from(grouped.values());
 }
 
-function registryItemToGift(item: RegistryItem): z.infer<typeof FeaturedGiftSchema> {
+export function registryItemToGift(item: RegistryItem): z.infer<typeof FeaturedGiftSchema> {
   const normalizedItem = normalizeRegistryFeaturedItems([item])[0] ?? item;
+  const publicUrl = getRegistryItemPublicUrl(normalizedItem);
   return {
     id: normalizedItem.id,
     name: cleanGiftTitle(normalizedItem.item_name),
     store: normalizedItem.store_name ?? normalizedItem.merchant ?? '',
     price: normalizePriceLabel(normalizedItem.price_label, normalizedItem.price_amount),
     description: normalizedItem.description ?? normalizedItem.notes ?? '',
-    image: normalizedItem.image_url ?? '',
-    url: normalizedItem.item_url ?? normalizedItem.canonical_url ?? '',
+    image: isUsableRegistryImageUrl(normalizedItem.image_url) ? normalizedItem.image_url ?? '' : '',
+    url: publicUrl,
     category: '',
     isPriority: normalizedItem.priority === 'high',
     isClaimed: normalizedItem.purchase_status === 'purchased',
@@ -294,7 +310,13 @@ const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = 
   }, [weddingSiteId]);
 
   const safeFeaturedGifts = Array.isArray(data.featuredGifts) ? data.featuredGifts : [];
-  const safeStoreLinks = Array.isArray(data.storeLinks) ? data.storeLinks : [];
+  const safeStoreLinks = Array.isArray(data.storeLinks)
+    ? data.storeLinks.map(link => ({
+        ...link,
+        store: String(link.store || 'Registry').replace(/\s+/g, ' ').trim() || 'Registry',
+        url: getSafePublicRegistryUrl(link.url),
+      }))
+    : [];
 
   const shouldUseLiveData = shouldUseLiveRegistryFeaturedData(liveItems);
 
@@ -305,9 +327,12 @@ const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = 
     ...gift,
     name: cleanGiftTitle(gift.name),
     price: normalizePriceLabel(gift.price),
+    url: getSafePublicRegistryUrl(gift.url),
+    image: isUsableRegistryImageUrl(gift.image) ? gift.image : '',
   }));
 
-  const displayStoreLinks = shouldUseLiveData ? groupRegistryStoreLinks(liveItems ?? []) : safeStoreLinks;
+  const displayStoreLinks = (shouldUseLiveData ? groupRegistryStoreLinks(liveItems ?? []) : safeStoreLinks)
+    .filter(link => getSafePublicRegistryUrl(link.url));
 
   const colClass = data.layout === '3col'
     ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3'
@@ -318,16 +343,31 @@ const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = 
   const heroGift = data.layout === 'hero' && displayGifts[0];
   const restGifts = data.layout === 'hero' ? displayGifts.slice(1) : displayGifts;
 
+  if (shouldUseLiveData) {
+    return (
+      <section className="py-32 md:py-40 bg-gradient-to-b from-white to-stone-50/35" id="registry">
+        <div className="max-w-6xl mx-auto px-6 md:px-12">
+          <RegistryItemsDisplay
+            items={liveItems ?? []}
+            settings={{ title: data.headline, showTitle: true }}
+            notes={data.message}
+            updateItem={(updated) => setLiveItems(prev => prev?.map(item => item.id === updated.id ? updated : item) ?? prev)}
+          />
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-32 md:py-40 bg-gradient-to-b from-white to-stone-50/35" id="registry">
       <div className="max-w-5xl mx-auto px-6 md:px-12">
         <div className="text-center mb-12">
           {data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">
+            <p className="text-sm text-stone-400 font-light mb-4">
               {data.eyebrow}
             </p>
           )}
-          <h2 className="text-4xl md:text-6xl font-light text-stone-900 mb-4 tracking-tight">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-stone-900 mb-4">{data.headline}</h2>
           {data.message && (
             <p className="text-stone-500 text-base font-light leading-relaxed max-w-2xl mx-auto">{data.message}</p>
           )}
@@ -338,10 +378,10 @@ const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = 
             {heroGift && (
               <div className="mb-6">
                 <a
-                  href={heroGift.isClaimed ? undefined : (heroGift.url || '#')}
+                  href={heroGift.isClaimed || !heroGift.url ? undefined : heroGift.url}
                   target={heroGift.url && !heroGift.isClaimed ? '_blank' : undefined}
                   rel="noopener noreferrer"
-                  className="group grid grid-cols-1 md:grid-cols-2 gap-0 bg-white rounded-[1.7rem] overflow-hidden border border-rose-100 shadow-sm hover:shadow-xl transition-shadow"
+                  className={`group grid grid-cols-1 md:grid-cols-2 gap-0 bg-white rounded-[1.7rem] overflow-hidden border border-rose-100 shadow-sm transition-shadow ${heroGift.url && !heroGift.isClaimed ? 'hover:shadow-xl' : ''}`}
                 >
                   {heroGift.image && (
                     <div className="aspect-[4/3] md:aspect-auto overflow-hidden bg-stone-100">
@@ -351,20 +391,20 @@ const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = 
                   <div className="p-8 flex flex-col justify-center">
                     <div className="flex items-center gap-2 mb-3">
                       <Heart size={14} className="text-rose-400 fill-rose-400" />
-                      <span className="text-xs text-rose-500 font-medium uppercase tracking-wide">Top Pick</span>
+                      <span className="text-xs text-rose-500 font-medium">Top pick</span>
                       {heroGift.isPartiallyClaimed && !heroGift.isClaimed && (
-                        <span className="text-[10px] px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-100 rounded-full font-medium uppercase tracking-wide">
+                        <span className="text-xs px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-100 rounded-full font-medium">
                           Partially claimed
                         </span>
                       )}
                     </div>
-                    {heroGift.category && <p className="text-xs text-stone-400 uppercase tracking-wide mb-1">{heroGift.category}</p>}
+                    {heroGift.category && <p className="text-xs text-stone-400 mb-1">{heroGift.category}</p>}
                     <h3 className="text-xl font-semibold text-stone-900 mb-1">{heroGift.name}</h3>
                     <p className="text-sm text-stone-400 mb-3">{heroGift.store}</p>
                     {heroGift.description && <p className="text-sm text-stone-500 font-light leading-relaxed mb-4">{heroGift.description}</p>}
                     <div className="flex items-center justify-between">
                       {heroGift.price && <span className="text-lg font-bold text-stone-900">{heroGift.price}</span>}
-                      {!heroGift.isClaimed && <span className="text-xs text-stone-400 group-hover:text-stone-700 transition-colors flex items-center gap-1.5 uppercase tracking-wide font-medium"><ExternalLink size={12} />{heroGift.isPartiallyClaimed ? 'View remaining gift' : 'View gift'}</span>}
+                      {!heroGift.isClaimed && heroGift.url && <span className="text-xs text-stone-400 group-hover:text-stone-700 transition-colors flex items-center gap-1.5 font-medium"><ExternalLink size={12} />{heroGift.isPartiallyClaimed ? 'View remaining gift' : 'View gift'}</span>}
                     </div>
                   </div>
                 </a>
@@ -386,7 +426,7 @@ const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = 
             <div className="flex items-center gap-4 mb-5">
               <div className="flex items-center gap-2">
                 <Gift size={14} className="text-stone-400" />
-                <p className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Browse the full registry</p>
+                <p className="text-sm font-medium text-stone-500">Browse the full registry</p>
               </div>
               <div className="flex-1 h-px bg-stone-100" />
             </div>
@@ -394,7 +434,7 @@ const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = 
               {displayStoreLinks.map(link => (
                 <a
                   key={link.id}
-                  href={link.url || '#'}
+                  href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group flex items-center gap-2 px-5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm font-medium text-stone-700 hover:bg-white hover:border-stone-400 hover:shadow-sm transition-all"
@@ -404,9 +444,9 @@ const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = 
                   <ExternalLink size={11} className="text-stone-300 group-hover:text-stone-500 transition-colors" />
                 </a>
               ))}
-              {data.viewAllUrl && data.showAllLabel && (
+              {getSafePublicRegistryUrl(data.viewAllUrl) && data.showAllLabel && (
                 <a
-                  href={data.viewAllUrl}
+                  href={getSafePublicRegistryUrl(data.viewAllUrl)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 px-5 py-2.5 bg-stone-900 text-white rounded-xl text-sm font-medium hover:bg-stone-800 transition-colors"
@@ -419,9 +459,9 @@ const RegistryFeatured: React.FC<SectionComponentProps<RegistryFeaturedData>> = 
           </div>
         )}
 
-        {data.cashFundEnabled && data.cashFundUrl && (
+        {data.cashFundEnabled && getSafePublicRegistryUrl(data.cashFundUrl) && (
           <a
-            href={data.cashFundUrl}
+            href={getSafePublicRegistryUrl(data.cashFundUrl)}
             target="_blank"
             rel="noopener noreferrer"
             className="group flex items-center justify-between p-6 bg-rose-50 border border-rose-100 rounded-2xl hover:bg-rose-100 hover:border-rose-200 transition-all"

@@ -58,14 +58,11 @@ CREATE TABLE IF NOT EXISTS planning_tasks (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS planning_tasks_site_idx ON planning_tasks(wedding_site_id);
 CREATE INDEX IF NOT EXISTS planning_tasks_status_idx ON planning_tasks(status);
 CREATE INDEX IF NOT EXISTS planning_tasks_due_date_idx ON planning_tasks(due_date);
 CREATE INDEX IF NOT EXISTS planning_tasks_priority_idx ON planning_tasks(priority);
-
 ALTER TABLE planning_tasks ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Owner can view planning tasks"
   ON planning_tasks FOR SELECT
   TO authenticated
@@ -76,7 +73,6 @@ CREATE POLICY "Owner can view planning tasks"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Owner can insert planning tasks"
   ON planning_tasks FOR INSERT
   TO authenticated
@@ -87,7 +83,6 @@ CREATE POLICY "Owner can insert planning tasks"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Owner can update planning tasks"
   ON planning_tasks FOR UPDATE
   TO authenticated
@@ -105,7 +100,6 @@ CREATE POLICY "Owner can update planning tasks"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Owner can delete planning tasks"
   ON planning_tasks FOR DELETE
   TO authenticated
@@ -116,7 +110,6 @@ CREATE POLICY "Owner can delete planning tasks"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 -- planning_vendors
 CREATE TABLE IF NOT EXISTS planning_vendors (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -135,12 +128,9 @@ CREATE TABLE IF NOT EXISTS planning_vendors (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS planning_vendors_site_idx ON planning_vendors(wedding_site_id);
 CREATE INDEX IF NOT EXISTS planning_vendors_payment_due_idx ON planning_vendors(next_payment_due);
-
 ALTER TABLE planning_vendors ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Owner can view planning vendors"
   ON planning_vendors FOR SELECT
   TO authenticated
@@ -151,7 +141,6 @@ CREATE POLICY "Owner can view planning vendors"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Owner can insert planning vendors"
   ON planning_vendors FOR INSERT
   TO authenticated
@@ -162,7 +151,6 @@ CREATE POLICY "Owner can insert planning vendors"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Owner can update planning vendors"
   ON planning_vendors FOR UPDATE
   TO authenticated
@@ -180,7 +168,6 @@ CREATE POLICY "Owner can update planning vendors"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Owner can delete planning vendors"
   ON planning_vendors FOR DELETE
   TO authenticated
@@ -191,7 +178,6 @@ CREATE POLICY "Owner can delete planning vendors"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 -- planning_budget_items
 CREATE TABLE IF NOT EXISTS planning_budget_items (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -207,12 +193,9 @@ CREATE TABLE IF NOT EXISTS planning_budget_items (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS planning_budget_site_idx ON planning_budget_items(wedding_site_id);
 CREATE INDEX IF NOT EXISTS planning_budget_category_idx ON planning_budget_items(category);
-
 ALTER TABLE planning_budget_items ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Owner can view budget items"
   ON planning_budget_items FOR SELECT
   TO authenticated
@@ -223,7 +206,6 @@ CREATE POLICY "Owner can view budget items"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Owner can insert budget items"
   ON planning_budget_items FOR INSERT
   TO authenticated
@@ -234,7 +216,6 @@ CREATE POLICY "Owner can insert budget items"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Owner can update budget items"
   ON planning_budget_items FOR UPDATE
   TO authenticated
@@ -252,7 +233,6 @@ CREATE POLICY "Owner can update budget items"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Owner can delete budget items"
   ON planning_budget_items FOR DELETE
   TO authenticated
@@ -263,7 +243,6 @@ CREATE POLICY "Owner can delete budget items"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 -- seating_events (one per itinerary_event per wedding site)
 CREATE TABLE IF NOT EXISTS seating_events (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -275,12 +254,9 @@ CREATE TABLE IF NOT EXISTS seating_events (
   updated_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE(wedding_site_id, itinerary_event_id)
 );
-
 CREATE INDEX IF NOT EXISTS seating_events_site_idx ON seating_events(wedding_site_id);
 CREATE INDEX IF NOT EXISTS seating_events_itinerary_idx ON seating_events(itinerary_event_id);
-
 ALTER TABLE seating_events ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Owner can view seating events"
   ON seating_events FOR SELECT
   TO authenticated
@@ -291,7 +267,6 @@ CREATE POLICY "Owner can view seating events"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Owner can insert seating events"
   ON seating_events FOR INSERT
   TO authenticated
@@ -302,7 +277,6 @@ CREATE POLICY "Owner can insert seating events"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Owner can update seating events"
   ON seating_events FOR UPDATE
   TO authenticated
@@ -320,7 +294,6 @@ CREATE POLICY "Owner can update seating events"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Owner can delete seating events"
   ON seating_events FOR DELETE
   TO authenticated
@@ -331,7 +304,6 @@ CREATE POLICY "Owner can delete seating events"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 -- seating_tables
 CREATE TABLE IF NOT EXISTS seating_tables (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -343,11 +315,8 @@ CREATE TABLE IF NOT EXISTS seating_tables (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS seating_tables_event_idx ON seating_tables(seating_event_id);
-
 ALTER TABLE seating_tables ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Owner can view seating tables"
   ON seating_tables FOR SELECT
   TO authenticated
@@ -359,7 +328,6 @@ CREATE POLICY "Owner can view seating tables"
       AND ws.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Owner can insert seating tables"
   ON seating_tables FOR INSERT
   TO authenticated
@@ -371,7 +339,6 @@ CREATE POLICY "Owner can insert seating tables"
       AND ws.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Owner can update seating tables"
   ON seating_tables FOR UPDATE
   TO authenticated
@@ -391,7 +358,6 @@ CREATE POLICY "Owner can update seating tables"
       AND ws.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Owner can delete seating tables"
   ON seating_tables FOR DELETE
   TO authenticated
@@ -403,7 +369,6 @@ CREATE POLICY "Owner can delete seating tables"
       AND ws.user_id = auth.uid()
     )
   );
-
 -- seating_assignments
 CREATE TABLE IF NOT EXISTS seating_assignments (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -416,13 +381,10 @@ CREATE TABLE IF NOT EXISTS seating_assignments (
   updated_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE(seating_event_id, guest_id)
 );
-
 CREATE INDEX IF NOT EXISTS seating_assignments_event_idx ON seating_assignments(seating_event_id);
 CREATE INDEX IF NOT EXISTS seating_assignments_table_idx ON seating_assignments(table_id);
 CREATE INDEX IF NOT EXISTS seating_assignments_guest_idx ON seating_assignments(guest_id);
-
 ALTER TABLE seating_assignments ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Owner can view seating assignments"
   ON seating_assignments FOR SELECT
   TO authenticated
@@ -434,7 +396,6 @@ CREATE POLICY "Owner can view seating assignments"
       AND ws.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Owner can insert seating assignments"
   ON seating_assignments FOR INSERT
   TO authenticated
@@ -446,7 +407,6 @@ CREATE POLICY "Owner can insert seating assignments"
       AND ws.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Owner can update seating assignments"
   ON seating_assignments FOR UPDATE
   TO authenticated
@@ -466,7 +426,6 @@ CREATE POLICY "Owner can update seating assignments"
       AND ws.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Owner can delete seating assignments"
   ON seating_assignments FOR DELETE
   TO authenticated

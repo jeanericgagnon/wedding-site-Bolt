@@ -2,6 +2,7 @@ import React from 'react';
 import { z } from 'zod';
 import { MapPin, Car, Navigation, ExternalLink, Phone } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
+import { getSafePublicMapsEmbedUrl, getSafePublicMapsUrl, getSafePublicTelHref } from '../../publicLinks';
 
 export const directionsCardSchema = z.object({
   eyebrow: z.string().default('Find Us'),
@@ -33,7 +34,9 @@ export const defaultDirectionsCardData: DirectionsCardData = {
 
 const DirectionsCard: React.FC<SectionComponentProps<DirectionsCardData>> = ({ data }) => {
   const mapsQuery = [data.venueName, data.address, data.city].filter(Boolean).join(', ');
-  const mapsHref = data.mapUrl || (mapsQuery ? `https://maps.google.com/?q=${encodeURIComponent(mapsQuery)}` : '');
+  const mapsHref = getSafePublicMapsUrl(data.mapUrl, mapsQuery);
+  const mapsEmbedUrl = getSafePublicMapsEmbedUrl(data.mapUrl, mapsQuery);
+  const safePhoneHref = getSafePublicTelHref(data.phone);
   const bg = data.background === 'soft' ? 'bg-stone-50' : 'bg-white';
 
   return (
@@ -41,13 +44,13 @@ const DirectionsCard: React.FC<SectionComponentProps<DirectionsCardData>> = ({ d
       <div className="max-w-4xl mx-auto px-6 md:px-12">
         <div className="text-center mb-12">
           {data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">{data.eyebrow}</p>
+            <p className="text-sm text-stone-400 font-light mb-4">{data.eyebrow}</p>
           )}
           <h2 className="text-4xl md:text-5xl font-light text-stone-900">{data.headline}</h2>
         </div>
 
         <div className="bg-white rounded-[2rem] overflow-hidden shadow-xl border border-stone-100">
-          {mapsHref && (
+          {mapsEmbedUrl && (
             <div className="aspect-[2/1] bg-stone-100 relative">
               <iframe
                 title="Venue map"
@@ -56,7 +59,7 @@ const DirectionsCard: React.FC<SectionComponentProps<DirectionsCardData>> = ({ d
                 className="border-0 w-full h-full"
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
-                src={`https://www.google.com/maps?q=${encodeURIComponent(mapsQuery)}&output=embed`}
+                src={mapsEmbedUrl}
               />
             </div>
           )}
@@ -70,8 +73,8 @@ const DirectionsCard: React.FC<SectionComponentProps<DirectionsCardData>> = ({ d
                 {data.venueName && <p className="font-semibold text-stone-900 text-lg mb-1">{data.venueName}</p>}
                 {data.address && <p className="text-stone-600">{data.address}</p>}
                 {data.city && <p className="text-stone-600">{data.city}</p>}
-                {data.phone && (
-                  <a href={`tel:${data.phone}`} className="inline-flex items-center gap-1.5 text-sm text-rose-500 hover:text-rose-600 mt-2 transition-colors">
+                {safePhoneHref && (
+                  <a href={safePhoneHref} className="inline-flex items-center gap-1.5 text-sm text-rose-500 hover:text-rose-600 mt-2 transition-colors">
                     <Phone size={12} />
                     {data.phone}
                   </a>
@@ -86,7 +89,7 @@ const DirectionsCard: React.FC<SectionComponentProps<DirectionsCardData>> = ({ d
                     <Car size={14} className="text-stone-500" />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-1">Parking</p>
+                    <p className="text-sm font-medium text-stone-400 mb-1">Parking</p>
                     <p className="text-stone-600 text-sm leading-relaxed">{data.parkingNote}</p>
                   </div>
                 </div>
@@ -98,7 +101,7 @@ const DirectionsCard: React.FC<SectionComponentProps<DirectionsCardData>> = ({ d
                     <Navigation size={14} className="text-stone-500" />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-1">Rideshare</p>
+                    <p className="text-sm font-medium text-stone-400 mb-1">Rideshare</p>
                     <p className="text-stone-600 text-sm leading-relaxed">{data.rideshareNote}</p>
                   </div>
                 </div>

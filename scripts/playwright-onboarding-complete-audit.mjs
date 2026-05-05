@@ -85,7 +85,7 @@ try {
   result.sawCsvCta = /import guest csv/i.test(bodyText);
   result.sawReviewWebsite = /review website first/i.test(bodyText);
   result.finalUrl = page.url();
-  result.completed = /your website is ready to shape/i.test(bodyText) && result.sawCsvCta && result.sawReviewWebsite;
+  result.completed = /your (?:website|starter draft) is ready to shape/i.test(bodyText) && result.sawCsvCta && result.sawReviewWebsite;
 } catch (error) {
   result.error = error instanceof Error ? error.message : String(error);
 } finally {

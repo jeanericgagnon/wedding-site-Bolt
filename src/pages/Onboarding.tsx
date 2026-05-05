@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Heart, ArrowRight, Check } from 'lucide-react';
 import { Button, Input, Textarea, Select, Card } from '../components/ui';
+import { useToast } from '../components/ui/Toast';
 import { supabase } from '../lib/supabase';
 import { SITE_TRUST_COPY } from '../lib/siteTrustCopy';
 import { SITE_VISIBILITY_COPY } from '../lib/siteVisibilityCopy';
@@ -23,6 +24,7 @@ import { writeSignupReturnPath } from '../lib/signupContinuation';
 import { clearAllOnboardingDraftStorage, ONBOARDING_DRAFT_STORAGE_KEY as ONBOARDING_STORAGE_KEY } from '../lib/onboardingDraftCleanup';
 import { clearAllOnboardingContinuationState } from '../lib/onboardingContinuationCleanup';
 import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
+import { resolveActiveSiteForUser } from '../lib/activeSite';
 
 type ConciergeQuestion = 'partnerNames' | 'partnerLabels' | 'venueLocation' | 'venueName' | 'theme' | 'weekendEvents' | 'ceremonyTime' | 'guestCount' | 'plusOnePolicy' | 'childrenAllowed' | 'rsvpDeadline' | 'mealChoice' | 'story';
 
@@ -60,6 +62,7 @@ export const Onboarding: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user, isDemoMode } = useAuth();
+  const { toast } = useToast();
   const [step, setStep] = useState<OnboardingStep>('choice');
   const [conversationIndex, setConversationIndex] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -69,6 +72,7 @@ export const Onboarding: React.FC = () => {
   const [showFollowUpReview, setShowFollowUpReview] = useState(false);
   const [followUpAnswers, setFollowUpAnswers] = useState<Record<string, string>>({});
   const [initialSetupFollowUps, setInitialSetupFollowUps] = useState(createEmptyInitialSetupFollowUps());
+  const hasSeededDemoDraftRef = useRef(false);
   const formData = initialSetupAnswersToOnboardingFormShape(initialSetupAnswers);
   const forceShowChooser = searchParams.get('showChooser') === '1';
 
@@ -82,7 +86,7 @@ export const Onboarding: React.FC = () => {
   }> = [
     { key: 'partnerNames', label: 'Who’s getting married?', prompt: 'Who’s getting married?', helper: 'Use the names exactly how you want guests to see them on the site.', placeholder: 'Alex & Jordan' },
     { key: 'partnerLabels', label: 'Labels', prompt: 'How should we refer to each of you on the site?', helper: 'Choose the simplest option that fits best.', placeholder: 'groom|bride' },
-    { key: 'venueLocation', label: 'When + where', prompt: 'When and where are you getting married?', helper: 'Use the date and city or region together so we can anchor the whole site in one step.', placeholder: 'January 17, 2027 — Sayulita, Mexico' },
+    { key: 'venueLocation', label: 'When and where', prompt: 'When and where are you getting married?', helper: 'Use the date and city or region together so we can anchor the whole site in one step.', placeholder: 'January 17, 2027 in Sayulita, Mexico' },
     { key: 'venueName', label: 'Venue', prompt: 'What venue are you getting married at?', helper: 'Use the venue name or write TBD if you are still deciding.', placeholder: 'Amor Boutique Hotel or TBD' },
     { key: 'theme', label: 'Style', prompt: 'What style should the site lean into?', helper: 'A few words is enough. Tropical, modern, editorial, classic, relaxed.', placeholder: 'Tropical, relaxed' },
     { key: 'weekendEvents', label: 'Events', prompt: 'What events are happening over the wedding weekend?', type: 'textarea', helper: 'Use one short line or sentence. We will turn it into structured events.', placeholder: 'Friday pickleball tournament and welcome dinner, Saturday rehearsal dinner, Sunday wedding' },
@@ -325,7 +329,7 @@ export const Onboarding: React.FC = () => {
     const nextAnswers = {
       ...initialSetupAnswers,
       names: nextForm.partnerNames,
-      whenWhere: nextForm.weddingDate && nextForm.venueLocation ? `${nextForm.weddingDate} — ${nextForm.venueLocation}` : nextForm.venueLocation,
+      whenWhere: nextForm.weddingDate && nextForm.venueLocation ? `${nextForm.weddingDate} in ${nextForm.venueLocation}` : nextForm.venueLocation,
       venueNameOrTbd: nextForm.venueName,
       style: nextForm.theme,
       weekendEventsRaw: nextForm.weekendEvents,
@@ -351,16 +355,17 @@ export const Onboarding: React.FC = () => {
   };
 
   const fetchExistingSite = useCallback(async () => {
-    if (!user) return null;
+    if (!user || isDemoMode) return null;
 
+    const activeSite = await resolveActiveSiteForUser(user.id);
     const { data } = await supabase
       .from('wedding_sites')
       .select('id, onboarding_answers, wedding_data')
-      .eq('user_id', user.id)
+      .eq('id', activeSite?.id ?? '')
       .maybeSingle();
 
     return data;
-  }, [user]);
+  }, [isDemoMode, user]);
 
   useEffect(() => {
     void (async () => {
@@ -375,7 +380,8 @@ export const Onboarding: React.FC = () => {
   }, [fetchExistingSite]);
 
   useEffect(() => {
-    if (!isDemoMode) return;
+    if (!isDemoMode || hasSeededDemoDraftRef.current) return;
+    hasSeededDemoDraftRef.current = true;
 
     const prevFormData = initialSetupAnswersToOnboardingFormShape(initialSetupAnswers);
 
@@ -393,7 +399,7 @@ export const Onboarding: React.FC = () => {
       childrenAllowed: (prevFormData.childrenAllowed || 'unsure') as InitialSetupAnswers['childrenAllowed'],
       mealChoice: prevFormData.mealChoice || 'yes',
     });
-  }, [hydrateProfile, isDemoMode, weddingProfile]);
+  }, [hydrateProfile, initialSetupAnswers, isDemoMode]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -404,7 +410,7 @@ export const Onboarding: React.FC = () => {
     if (e.target.name === 'venueLocation' && !formData.weddingDate) {
       const parts = e.target.value.split(/\s+[—-]\s+/);
       if (parts.length >= 2) {
-        hydrateProfile({ weddingDate: parts[0].trim(), venueLocation: parts.slice(1).join(' — ').trim() });
+        hydrateProfile({ weddingDate: parts[0].trim(), venueLocation: parts.slice(1).join(' in ').trim() });
         return;
       }
     }
@@ -512,7 +518,7 @@ export const Onboarding: React.FC = () => {
       .eq('user_id', user.id);
 
     if (error) {
-      alert('Failed to update onboarding brief. Please try again.');
+      toast('Couldn’t update your setup brief. Please try again.', 'error');
       return false;
     }
 
@@ -603,7 +609,7 @@ export const Onboarding: React.FC = () => {
       if (createdSite?.id) await syncOnboardingEventSeeds(createdSite.id, itinerarySeeds);
       return true;
     } catch {
-      alert('Failed to create wedding site. Please try again.');
+      toast('Couldn’t create your wedding site. Please try again.', 'error');
       return false;
     }
   };
@@ -673,9 +679,8 @@ export const Onboarding: React.FC = () => {
         clearSavedOnboardingDraft();
         setStep('complete');
       }
-    } catch (error) {
-      console.error('ONBOARDING_NEXT_STEP_FAILED', error);
-      alert('Something went wrong while finishing setup. Please try again.');
+    } catch {
+      toast('Something went wrong while finishing setup. Please try again.', 'error');
     } finally {
       setLoading(false);
     }
@@ -709,7 +714,7 @@ export const Onboarding: React.FC = () => {
         ))}
       </div>
       <div className="mt-3 flex items-center justify-between gap-3 text-xs">
-        <p className="text-text-secondary">Publish becomes available after you finish setup and enter the dashboard/builder.</p>
+        <p className="text-text-secondary">Publishing opens after setup, once your site editor has enough detail for a first draft.</p>
         {nextSetupItem && (
           <button type="button" onClick={nextSetupItem.action} className="text-primary font-medium hover:text-primary-hover">
             Next: {nextSetupItem.label}
@@ -741,19 +746,19 @@ export const Onboarding: React.FC = () => {
                 Quick Setup
               </h2>
               <p className="text-text-secondary mb-6">
-                Answer a few questions and we will generate a strong starting draft. You can keep refining it in the dashboard before you decide to publish.
+                Answer a few questions and we will generate a strong starting draft. You can keep refining it in your wedding home before you decide to publish.
               </p>
               <ul className="space-y-3 mb-8">
                 <li className="flex items-start gap-3">
-                  <Check className="w-5 h-5 text-success mt-0.5 flex-shrink-0" aria-hidden="true" />
+                  <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
                   <span className="text-text-secondary">Pre-fill the main site sections from your answers</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <Check className="w-5 h-5 text-success mt-0.5 flex-shrink-0" aria-hidden="true" />
+                  <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
                   <span className="text-text-secondary">Use guided defaults instead of starting from a blank page</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <Check className="w-5 h-5 text-success mt-0.5 flex-shrink-0" aria-hidden="true" />
+                  <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
                   <span className="text-text-secondary">Edit anything later</span>
                 </li>
               </ul>
@@ -773,28 +778,28 @@ export const Onboarding: React.FC = () => {
           <div className="flex flex-col h-full">
             <div className="flex-grow">
               <h2 className="text-2xl font-semibold text-text-primary mb-4">
-                Manual Setup
+                Open the editor
               </h2>
               <p className="text-text-secondary mb-6">
-                Jump straight to the builder and shape the site yourself from the beginning.
+                Go straight to the site editor and shape the details at your own pace.
               </p>
               <ul className="space-y-3 mb-8">
                 <li className="flex items-start gap-3">
-                  <Check className="w-5 h-5 text-success mt-0.5 flex-shrink-0" aria-hidden="true" />
+                  <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
                   <span className="text-text-secondary">Start with a blank canvas</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <Check className="w-5 h-5 text-success mt-0.5 flex-shrink-0" aria-hidden="true" />
-                  <span className="text-text-secondary">Add and arrange sections manually</span>
+                  <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
+                  <span className="text-text-secondary">Choose and arrange each section yourself</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <Check className="w-5 h-5 text-success mt-0.5 flex-shrink-0" aria-hidden="true" />
+                  <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
                   <span className="text-text-secondary">Complete creative freedom</span>
                 </li>
               </ul>
             </div>
             <Button variant="outline" size="lg" fullWidth onClick={handleManualSetup} disabled={loading}>
-              {loading ? 'Setting up...' : 'Go to Builder'}
+              {loading ? 'Setting up...' : 'Go to site editor'}
             </Button>
           </div>
         </Card>
@@ -821,10 +826,10 @@ export const Onboarding: React.FC = () => {
           ? `${formData.venueName.trim()} will be called out in the event details and story sections.`
           : 'Venue name is optional right now. We can still build a solid draft without it.';
       case 'theme':
-        return `The draft styling will lean ${formData.theme || 'garden'} so the whole site feels intentional from the start. Right now the system would nudge toward ${getThemeHint()}.`;
+        return `The draft styling will lean ${formData.theme || 'garden'} so the whole site feels intentional from the start. Based on what you have shared, ${getThemeHint()} looks like the best starting direction.`;
       case 'story':
         return formData.story.trim()
-          ? 'Nice — we can turn that into warmer story copy instead of generic filler.'
+          ? 'Nice. We can turn that into warmer story copy instead of generic filler.'
           : `You can skip this for now, or use a quick starting angle like: ${getStoryPrompt()}`;
       case 'guestCount':
         return formData.guestCount?.trim()
@@ -836,18 +841,18 @@ export const Onboarding: React.FC = () => {
           : 'Plus-one policy sets the RSVP defaults.';
       case 'weekendEvents':
         return formData.weekendEvents.trim()
-          ? 'Nice — we can frame the weekend as an experience, not just a single ceremony.'
+          ? 'Nice. We can frame the weekend as an experience, not just a single ceremony.'
           : 'A quick outline helps us draft a more useful schedule and guest flow.';
       case 'rsvpDeadline':
         return formData.rsvpDeadline
           ? `Guests will see ${formData.rsvpDeadline} as the RSVP target.`
-          : 'RSVP timing helps the draft feel operational, not just pretty.';
+          : 'RSVP timing helps the draft feel useful for guests, not just pretty.';
       case 'mealChoice':
         return formData.mealChoice?.trim()
           ? `RSVP meal collection is set to ${formData.mealChoice.trim()}.`
           : 'Meal collection can be switched on or off here.';
       default:
-        return 'Each answer tightens the draft before you ever touch the builder.';
+        return 'Each answer tightens the draft before you ever touch the site editor.';
     }
   };
 
@@ -855,19 +860,19 @@ export const Onboarding: React.FC = () => {
     <Card variant="bordered" padding="lg">
       <div className="flex items-center justify-between gap-3 mb-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Draft progress</p>
+          <p className="text-sm text-text-tertiary">Draft progress</p>
           <h3 className="text-lg font-semibold text-text-primary">We’re shaping your first draft live</h3>
         </div>
         <span className="text-sm font-medium text-primary">{conversationProgress}%</span>
       </div>
-      <div className="h-2 rounded-full bg-border overflow-hidden mb-4">
-        <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${conversationProgress}%` }} />
+      <div className="h-2 rounded-lg bg-border overflow-hidden mb-4">
+        <div className="h-full rounded-lg bg-primary transition-all" style={{ width: `${conversationProgress}%` }} />
       </div>
-      <div className="mb-4 rounded-2xl border border-border bg-surface px-4 py-3">
+      <div className="mb-4 rounded-lg border border-border bg-surface px-4 py-3">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Draft readiness</p>
-            <p className="mt-1 text-sm font-medium text-text-primary">{readiness.hasEnoughToDraft ? 'Enough detail to draft' : 'Still missing a few critical inputs'}</p>
+            <p className="text-sm text-text-tertiary">Draft detail</p>
+            <p className="mt-1 text-sm font-medium text-text-primary">{readiness.hasEnoughToDraft ? 'Enough detail to draft' : 'A few details would make this stronger'}</p>
           </div>
           <span className="text-sm font-semibold text-primary">{readiness.score}%</span>
         </div>
@@ -878,7 +883,7 @@ export const Onboarding: React.FC = () => {
           {fieldStatuses.map((field) => (
             <span
               key={field.path}
-              className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${field.complete ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : field.requiredForDraft ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-surface text-text-secondary border border-border'}`}
+              className={`rounded-md px-2.5 py-1 text-[11px] font-medium ${field.complete ? 'bg-surface-secondary text-text-primary border border-border-subtle' : field.requiredForDraft ? 'bg-surface text-text-secondary border border-border' : 'bg-surface text-text-secondary border border-border'}`}
             >
               {field.label}
             </span>
@@ -888,7 +893,7 @@ export const Onboarding: React.FC = () => {
       <div className="space-y-3">
         {draftMilestones.map((milestone) => (
           <div key={milestone.id} className="flex items-start gap-3">
-            <div className={`mt-0.5 flex h-5 w-5 items-center justify-center rounded-full border ${milestone.done ? 'border-success bg-success-light text-success' : 'border-border bg-surface text-text-tertiary'}`}>
+            <div className={`mt-0.5 flex h-5 w-5 items-center justify-center rounded border ${milestone.done ? 'border-primary bg-surface-secondary text-primary' : 'border-border bg-surface text-text-tertiary'}`}>
               {milestone.done ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : <span className="text-[10px] font-semibold">•</span>}
             </div>
             <div>
@@ -904,7 +909,7 @@ export const Onboarding: React.FC = () => {
   const renderQuestionCard = (stepLabel: string, title: string, subtitle: string) => (
     <div className="max-w-2xl mx-auto space-y-6">
       <Card variant="bordered" padding="lg">
-        <p className="text-xs uppercase tracking-[0.22em] text-text-tertiary mb-2">{stepLabel}</p>
+        <p className="text-sm text-text-tertiary mb-2">{stepLabel}</p>
         <h2 className="text-2xl font-bold text-text-primary">{title}</h2>
         <p className="mt-2 text-text-secondary">{subtitle}</p>
       </Card>
@@ -912,35 +917,35 @@ export const Onboarding: React.FC = () => {
       {renderSetupChecklist()}
       {renderDraftProgress()}
 
-      <Card variant="default" padding="lg" className="border-0 shadow-[0_24px_80px_rgba(0,0,0,0.08)] bg-white/85 backdrop-blur-xl">
+      <Card variant="default" padding="lg" className="border border-border bg-white/90">
         {showFollowUpReview ? (
           <div className="space-y-6">
             <div>
-              <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Optional refinement</p>
+              <p className="text-sm text-text-tertiary">Optional refinement</p>
               <h3 className="mt-2 text-2xl font-bold text-text-primary">A few smart follow-ups before we build</h3>
               <p className="mt-2 text-text-secondary">We already have enough to generate a strong baseline site. These are the highest-leverage details that would make it feel more personal.</p>
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl bg-surface px-4 py-3 border border-border">
-                  <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary mb-1">This round</p>
+                <div className="rounded-lg bg-surface px-4 py-3 border border-border">
+                  <p className="text-xs text-text-tertiary mb-1">This round</p>
                   <p className="text-sm font-medium text-text-primary">Up to {Math.min(3, remainingFollowUpBudget)} questions</p>
                 </div>
-                <div className="rounded-2xl bg-surface px-4 py-3 border border-border">
-                  <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary mb-1">Asked so far</p>
+                <div className="rounded-lg bg-surface px-4 py-3 border border-border">
+                  <p className="text-xs text-text-tertiary mb-1">Asked so far</p>
                   <p className="text-sm font-medium text-text-primary">{answeredFollowUpCount} of 5</p>
                 </div>
-                <div className="rounded-2xl bg-surface px-4 py-3 border border-border">
-                  <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary mb-1">Stop rule</p>
-                  <p className="text-sm font-medium text-text-primary">Build once it feels write-ready</p>
+                <div className="rounded-lg bg-surface px-4 py-3 border border-border">
+                  <p className="text-xs text-text-tertiary mb-1">When we stop</p>
+                  <p className="text-sm font-medium text-text-primary">Build once it feels ready</p>
                 </div>
               </div>
             </div>
             <div className="space-y-3">
               {onboardingSession.suggestedFollowUps.slice(0, 3).map((question, index) => (
-                <div key={question.key} className="rounded-2xl border border-border bg-surface px-4 py-4">
+                <div key={question.key} className="rounded-lg border border-border bg-surface px-4 py-4">
                   <p className="text-sm font-medium text-text-primary">{index + 1}. {question.variants[0]}</p>
-                  <p className="mt-1 text-xs text-text-secondary">Alternate phrasings: {question.variants[1]} / {question.variants[2]}</p>
+                  <p className="mt-1 text-xs text-text-secondary">Other gentle ways to ask: {question.variants[1]} / {question.variants[2]}</p>
                   <Textarea
-                    className="mt-3 min-h-[132px] rounded-2xl border-border/70 bg-white/90 text-base shadow-sm"
+                    className="mt-3 min-h-[132px] rounded-lg border-border/70 bg-white/90 text-base"
                     placeholder="Optional answer"
                     value={followUpAnswers[question.key] || ''}
                     onChange={(event) => {
@@ -977,7 +982,7 @@ export const Onboarding: React.FC = () => {
             <div className="flex flex-wrap justify-between gap-3 border-t border-border/60 pt-6">
               <div className="flex flex-wrap gap-3">
                 <Button variant="ghost" size="lg" onClick={() => setShowFollowUpReview(false)}>Back to answers</Button>
-                <Button variant="outline" size="lg" onClick={handleManualSetup} disabled={loading}>Switch to manual setup</Button>
+                <Button variant="outline" size="lg" onClick={handleManualSetup} disabled={loading}>Open the editor instead</Button>
               </div>
               <div className="flex flex-wrap gap-3">
                 <Button variant="outline" size="lg" onClick={nextStep} disabled={loading}>
@@ -992,24 +997,24 @@ export const Onboarding: React.FC = () => {
         ) : currentQuestion ? (
           <div className="space-y-6">
             <div>
-              <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">{currentQuestion.label}</p>
+              <p className="text-sm text-text-tertiary">{currentQuestion.label}</p>
               <h3 className="mt-2 text-2xl font-bold text-text-primary">{currentQuestion.prompt}</h3>
               {currentQuestion.helper && <p className="mt-2 text-text-secondary">{currentQuestion.helper}</p>}
               <div className="mt-4 space-y-3">
-                <div className="rounded-2xl bg-primary-light/60 px-4 py-3">
-                  <p className="text-xs uppercase tracking-[0.18em] text-primary mb-1">What this shapes</p>
+                <div className="rounded-lg bg-surface-secondary border border-border-subtle px-4 py-3">
+                  <p className="text-xs text-text-tertiary mb-1">What this shapes</p>
                   <p className="text-sm text-text-primary">{getQuestionPreview()}</p>
                 </div>
-                <div className="rounded-2xl border border-border bg-surface px-4 py-3">
-                  <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary mb-1">AI guidance state</p>
-                  <p className="text-sm text-text-primary">Intent: {onboardingSession.currentIntent}</p>
-                  <p className="mt-1 text-xs text-text-secondary">Confidence: {Math.round(onboardingSession.confidence * 100)}%</p>
+                <div className="rounded-lg border border-border bg-surface px-4 py-3">
+                  <p className="text-xs text-text-tertiary mb-1">Draft guidance</p>
+                  <p className="text-sm text-text-primary">Focus: {onboardingSession.currentIntent}</p>
+                  <p className="mt-1 text-xs text-text-secondary">Enough detail to draft: {Math.round(onboardingSession.confidence * 100)}%</p>
                   {onboardingSession.suggestedPrompt && (
                     <p className="mt-1 text-xs text-text-secondary">Suggested next ask: {onboardingSession.suggestedPrompt}</p>
                   )}
                   {onboardingSession.suggestedFollowUps.length > 0 && (
-                    <div className="mt-3 rounded-2xl bg-primary-light/30 px-3 py-3">
-                      <p className="text-xs uppercase tracking-[0.18em] text-primary mb-2">High-leverage follow-ups</p>
+                    <div className="mt-3 rounded-lg bg-surface-secondary border border-border-subtle px-3 py-3">
+                      <p className="text-xs text-text-tertiary mb-2">Helpful follow-ups</p>
                       <ul className="space-y-2">
                         {onboardingSession.suggestedFollowUps.map((question, index) => (
                           <li key={question.key} className="text-xs text-text-secondary">
@@ -1023,14 +1028,14 @@ export const Onboarding: React.FC = () => {
                   )}
                 </div>
                 {currentQuestion.key === 'partnerNames' && (
-                  <div className="rounded-2xl bg-surface px-4 py-3 border border-border">
-                    <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary mb-1">Suggested URL</p>
+                  <div className="rounded-lg bg-surface px-4 py-3 border border-border">
+                    <p className="text-xs text-text-tertiary mb-1">Suggested URL</p>
                     <p className="text-sm font-medium text-text-primary">{suggestedSiteSlug}.dayof.love</p>
                   </div>
                 )}
                 {currentQuestion.key === 'theme' && getThemeHint() !== formData.theme && (
-                  <div className="rounded-2xl bg-surface px-4 py-3 border border-border">
-                    <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary mb-1">Smart default</p>
+                  <div className="rounded-lg bg-surface px-4 py-3 border border-border">
+                    <p className="text-xs text-text-tertiary mb-1">Suggested starting point</p>
                     <p className="text-sm text-text-primary">Based on the venue details so far, <span className="font-medium">{getThemeHint()}</span> looks like the best starting direction.</p>
                   </div>
                 )}
@@ -1046,10 +1051,10 @@ export const Onboarding: React.FC = () => {
                   const parts = (formData.partnerLabels || 'none|none').split('|');
                   const value = parts[index] || 'none';
                   return (
-                    <label key={field.key} className="rounded-2xl border border-border bg-surface p-4">
+                    <label key={field.key} className="rounded-lg border border-border bg-surface p-4">
                       <p className="mb-2 text-sm font-medium text-text-primary">{field.label}</p>
                       <select
-                        className="w-full rounded-2xl border border-border/70 bg-white/90 px-4 py-3 text-sm text-text-primary shadow-sm"
+                        className="w-full rounded-lg border border-border/70 bg-white/90 px-4 py-3 text-sm text-text-primary"
                         value={value}
                         onChange={(event) => {
                           const next = [...parts];
@@ -1068,7 +1073,7 @@ export const Onboarding: React.FC = () => {
               </div>
             ) : currentQuestion.type === 'textarea' ? (
               <Textarea
-                className="min-h-[132px] rounded-2xl border-border/70 bg-white/90 text-base shadow-sm"
+                className="min-h-[132px] rounded-lg border-border/70 bg-white/90 text-base"
                 name={currentQuestion.key}
                 placeholder={currentQuestion.key === 'story' ? getStoryPrompt() : (currentQuestion.placeholder || '')}
                 value={formData[currentQuestion.key as keyof typeof formData]}
@@ -1077,7 +1082,7 @@ export const Onboarding: React.FC = () => {
               />
             ) : (
               <Input
-                className="h-14 rounded-2xl border-border/70 bg-white/90 text-base shadow-sm"
+                className="h-14 rounded-lg border-border/70 bg-white/90 text-base"
                 type={currentQuestion.type === 'date' || currentQuestion.type === 'time' ? currentQuestion.type : 'text'}
                 name={currentQuestion.key}
                 placeholder={currentQuestion.placeholder || ''}
@@ -1109,7 +1114,7 @@ export const Onboarding: React.FC = () => {
               </div>
               <div className="flex flex-wrap gap-3">
                 <Button variant="outline" size="lg" onClick={handleManualSetup} disabled={loading}>
-                  Switch to manual setup
+                  Open the editor instead
                 </Button>
                 <Button variant="accent" size="lg" onClick={nextStep} disabled={loading}>
                   {conversationIndex >= conciergeQuestions.length - 1 ? (loading ? 'Saving...' : (readiness.hasEnoughToDraft ? 'Save brief' : 'Save draft anyway')) : 'Continue'}
@@ -1138,7 +1143,7 @@ export const Onboarding: React.FC = () => {
   const renderQuickStep3 = () => renderQuestionCard(
     'Step 3 of 3',
     'Finish the first draft inputs',
-    "We're using these details to create a strong starting point instead of dropping you into a blank builder."
+    "We're using these details to create a strong starting point instead of dropping you into a blank editor."
   );
 
 
@@ -1147,8 +1152,8 @@ export const Onboarding: React.FC = () => {
 
     return (
       <div className="max-w-2xl mx-auto text-center">
-        <div className="inline-flex items-center justify-center w-20 h-20 bg-success-light rounded-full mb-6">
-          <Check className="w-10 h-10 text-success" aria-hidden="true" />
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-surface-secondary border border-border-subtle rounded-lg mb-6">
+          <Check className="w-8 h-8 text-primary" aria-hidden="true" />
         </div>
 
         <h1 className="text-4xl font-bold text-text-primary mb-4">
@@ -1168,21 +1173,21 @@ export const Onboarding: React.FC = () => {
         <Card variant="bordered" padding="lg" className="mb-8 text-left">
           <div className="space-y-4">
             <div className="flex items-start gap-3">
-              <Check className="w-5 h-5 text-success mt-1 flex-shrink-0" aria-hidden="true" />
+              <Check className="w-5 h-5 text-primary mt-1 flex-shrink-0" aria-hidden="true" />
               <div>
                 <p className="font-medium text-text-primary">A strong first draft is in place</p>
                 <p className="text-sm text-text-secondary">Your main pages and sections are already set up</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <Check className="w-5 h-5 text-success mt-1 flex-shrink-0" aria-hidden="true" />
+              <Check className="w-5 h-5 text-primary mt-1 flex-shrink-0" aria-hidden="true" />
               <div>
                 <p className="font-medium text-text-primary">A design direction is already applied</p>
                 <p className="text-sm text-text-secondary">{formData.theme || getThemeHint()} styling is already carrying the look</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <Check className="w-5 h-5 text-success mt-1 flex-shrink-0" aria-hidden="true" />
+              <Check className="w-5 h-5 text-primary mt-1 flex-shrink-0" aria-hidden="true" />
               <div>
                 <p className="font-medium text-text-primary">The draft tone is already anchored</p>
                 <p className="text-sm text-text-secondary">{formData.guestCount || 'Your guest count'} and {formData.weekendEvents ? 'your weekend plans are already informing the draft.' : 'your weekend flow can be layered in next.'}</p>
@@ -1194,7 +1199,7 @@ export const Onboarding: React.FC = () => {
       <Card variant="bordered" padding="lg" className="mb-8 text-left">
         <div className="space-y-3">
           <p className="text-sm font-medium text-text-primary">Recommended next step</p>
-          <p className="text-sm text-text-secondary">Bring in your guest list now so invites, RSVP events, and event-specific guest flows are ready to go.</p>
+          <p className="text-sm text-text-secondary">Bring in your guest list now so invites, RSVP events, and guest-specific links are ready to go.</p>
           <div className="flex flex-col sm:flex-row gap-3">
             <Button variant="accent" size="lg" onClick={() => navigate('/dashboard/guests')}>
               Import guest CSV
@@ -1208,7 +1213,7 @@ export const Onboarding: React.FC = () => {
 
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <Button variant="outline" size="lg" onClick={() => navigate('/dashboard')}>
-          Go to Dashboard
+          Go to wedding home
         </Button>
       </div>
     </div>
@@ -1216,11 +1221,11 @@ export const Onboarding: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-light to-accent-light p-4 py-12">
+    <div className="min-h-screen bg-app p-4 py-12">
       <div className="container-custom">
         <div className="flex items-center justify-center mb-12">
           <Heart className="w-8 h-8 text-accent" aria-hidden="true" />
-          <span className="text-2xl font-semibold text-text-primary ml-2">WeddingSite</span>
+          <span className="text-2xl font-semibold text-text-primary ml-2">dayof</span>
         </div>
 
         {step === 'choice' && renderChoice()}

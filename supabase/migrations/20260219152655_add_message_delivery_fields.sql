@@ -75,7 +75,6 @@ BEGIN
     ALTER TABLE messages ADD COLUMN recipient_count integer DEFAULT 0;
   END IF;
 END $$;
-
 -- Per-recipient delivery log
 CREATE TABLE IF NOT EXISTS message_deliveries (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -90,9 +89,7 @@ CREATE TABLE IF NOT EXISTS message_deliveries (
   delivered_at timestamptz,
   created_at timestamptz DEFAULT now()
 );
-
 ALTER TABLE message_deliveries ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Couples can view deliveries for their messages"
   ON message_deliveries FOR SELECT
   TO authenticated
@@ -104,7 +101,6 @@ CREATE POLICY "Couples can view deliveries for their messages"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE INDEX IF NOT EXISTS idx_message_deliveries_message_id ON message_deliveries(message_id);
 CREATE INDEX IF NOT EXISTS idx_message_deliveries_status ON message_deliveries(status);
 CREATE INDEX IF NOT EXISTS idx_messages_status_scheduled ON messages(status, scheduled_for) WHERE status IN ('queued', 'scheduled');

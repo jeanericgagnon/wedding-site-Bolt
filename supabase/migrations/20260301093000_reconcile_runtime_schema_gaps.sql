@@ -7,11 +7,9 @@ ALTER TABLE public.wedding_sites
   ADD COLUMN IF NOT EXISTS venue_name text,
   ADD COLUMN IF NOT EXISTS venue_address text,
   ADD COLUMN IF NOT EXISTS wedding_data jsonb DEFAULT '{}'::jsonb;
-
 UPDATE public.wedding_sites
 SET active_template_id = COALESCE(active_template_id, template_id)
 WHERE active_template_id IS NULL;
-
 -- 2) itinerary_events table (if missing)
 CREATE TABLE IF NOT EXISTS public.itinerary_events (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -30,7 +28,6 @@ CREATE TABLE IF NOT EXISTS public.itinerary_events (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
-
 DO $$
 BEGIN
   IF EXISTS (
@@ -47,9 +44,7 @@ BEGIN
     EXECUTE 'CREATE INDEX IF NOT EXISTS idx_itinerary_events_site_only ON public.itinerary_events(wedding_site_id)';
   END IF;
 END $$;
-
 ALTER TABLE public.itinerary_events ENABLE ROW LEVEL SECURITY;
-
 DO $$ BEGIN
   CREATE POLICY itinerary_events_owner_select
     ON public.itinerary_events FOR SELECT
@@ -61,7 +56,6 @@ DO $$ BEGIN
       )
     );
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
 DO $$ BEGIN
   CREATE POLICY itinerary_events_owner_insert
     ON public.itinerary_events FOR INSERT
@@ -73,7 +67,6 @@ DO $$ BEGIN
       )
     );
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
 DO $$ BEGIN
   CREATE POLICY itinerary_events_owner_update
     ON public.itinerary_events FOR UPDATE
@@ -92,7 +85,6 @@ DO $$ BEGIN
       )
     );
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
 DO $$ BEGIN
   CREATE POLICY itinerary_events_owner_delete
     ON public.itinerary_events FOR DELETE
@@ -104,7 +96,6 @@ DO $$ BEGIN
       )
     );
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
 -- 3) event_invitations table (if missing)
 CREATE TABLE IF NOT EXISTS public.event_invitations (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -113,12 +104,9 @@ CREATE TABLE IF NOT EXISTS public.event_invitations (
   created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE(event_id, guest_id)
 );
-
 CREATE INDEX IF NOT EXISTS idx_event_invitations_event_id ON public.event_invitations(event_id);
 CREATE INDEX IF NOT EXISTS idx_event_invitations_guest_id ON public.event_invitations(guest_id);
-
 ALTER TABLE public.event_invitations ENABLE ROW LEVEL SECURITY;
-
 DO $$ BEGIN
   CREATE POLICY event_invitations_owner_select
     ON public.event_invitations FOR SELECT
@@ -132,7 +120,6 @@ DO $$ BEGIN
       )
     );
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
 DO $$ BEGIN
   CREATE POLICY event_invitations_owner_insert
     ON public.event_invitations FOR INSERT
@@ -146,7 +133,6 @@ DO $$ BEGIN
       )
     );
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
 DO $$ BEGIN
   CREATE POLICY event_invitations_owner_delete
     ON public.event_invitations FOR DELETE
@@ -160,7 +146,6 @@ DO $$ BEGIN
       )
     );
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
 -- 4) sections table (if missing) used by builder/public render
 CREATE TABLE IF NOT EXISTS public.sections (
   id text PRIMARY KEY,
@@ -176,11 +161,8 @@ CREATE TABLE IF NOT EXISTS public.sections (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS idx_sections_site_order ON public.sections(site_id, "order");
-
 ALTER TABLE public.sections ENABLE ROW LEVEL SECURITY;
-
 DO $$ BEGIN
   CREATE POLICY sections_owner_select
     ON public.sections FOR SELECT
@@ -192,7 +174,6 @@ DO $$ BEGIN
       )
     );
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
 DO $$ BEGIN
   CREATE POLICY sections_owner_insert
     ON public.sections FOR INSERT
@@ -204,7 +185,6 @@ DO $$ BEGIN
       )
     );
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
 DO $$ BEGIN
   CREATE POLICY sections_owner_update
     ON public.sections FOR UPDATE
@@ -223,7 +203,6 @@ DO $$ BEGIN
       )
     );
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
 DO $$ BEGIN
   CREATE POLICY sections_owner_delete
     ON public.sections FOR DELETE
@@ -235,7 +214,6 @@ DO $$ BEGIN
       )
     );
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
 -- Public read for visible sections on published sites
 DO $$ BEGIN
   CREATE POLICY sections_public_visible_read

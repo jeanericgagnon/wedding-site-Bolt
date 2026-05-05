@@ -247,7 +247,7 @@ describe('court-order path review execution snapshot', () => {
     });
   });
 
-  it('blocks when launch state is not aligned to the modeled California court-order review path', () => {
+  it('blocks when selected state is not aligned to the modeled California court-order review path', () => {
     const documents: NameChangeDocumentInput[] = [
       {
         document_kind: 'court_order_name_change',
@@ -265,6 +265,6 @@ describe('court-order path review execution snapshot', () => {
 
     const snapshot = buildNameChangeCourtOrderExecutionSnapshot(makeCase({ launch_state: 'texas' as never }), documents, []);
     expect(snapshot.ready).toBe(false);
-    expect(snapshot.blockers).toContain('Current modeled downstream state execution assumes California, but launch state is texas.');
+    expect(snapshot.blockers).toContain('Current downstream state steps assume California, but the selected state is texas.');
   });
 });

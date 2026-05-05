@@ -29,10 +29,10 @@ const ICONS: Record<ToastType, React.ReactNode> = {
 };
 
 const STYLES: Record<ToastType, string> = {
-  success: 'bg-success-light text-success border-success/20',
-  error: 'bg-error-light text-error border-error/20',
-  info: 'bg-primary-light text-primary border-primary/20',
-  warning: 'bg-warning-light text-warning border-warning/20',
+  success: 'bg-white text-text-primary border-success/20',
+  error: 'bg-white text-text-primary border-error/20',
+  info: 'bg-white text-text-primary border-primary/20',
+  warning: 'bg-white text-text-primary border-warning/20',
 };
 
 const DURATION = 4000;
@@ -68,7 +68,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         {toasts.map(t => (
           <div
             key={t.id}
-            className={`flex items-start gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium border pointer-events-auto max-w-sm ${STYLES[t.type]}`}
+            className={`pointer-events-auto flex max-w-sm items-start gap-3 rounded-lg border px-4 py-3 text-sm font-medium ${STYLES[t.type]}`}
             role="alert"
           >
             {ICONS[t.type]}

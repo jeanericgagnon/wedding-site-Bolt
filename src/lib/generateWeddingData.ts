@@ -39,6 +39,9 @@ const PLACEHOLDER_ANSWERS = [
   'dress code details will be shared here closer to the wedding.',
   'parking details and arrival notes will be shared here closer to the wedding.',
   'recommended places to stay will be shared here.',
+  'dress code details are coming together.',
+  'parking details and arrival notes are coming together.',
+  'we will add recommended places to stay.',
 ];
 
 
@@ -214,7 +217,7 @@ export function fromOnboarding(formData: OnboardingFormData): WeddingDataV1 {
       parkingInfo: formData.parking,
       hotelInfo: formData.hotelRecommendations,
       notes: isDestination ? 'Travel details, airport timing, and weekend logistics matter early for this celebration.' : undefined,
-      flightInfo: isDestination ? 'Flight timing and airport guidance will be shared here for traveling guests.' : undefined,
+      flightInfo: isDestination ? 'We will add flight timing and airport guidance for traveling guests.' : undefined,
     },
     registry,
     faq,

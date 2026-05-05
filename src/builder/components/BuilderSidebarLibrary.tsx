@@ -92,7 +92,7 @@ const PREVIEW_FIXTURES_BY_VARIANT: Record<string, Record<string, unknown>> = {
 };
 
 function hasLivePreviewSupport(sectionType: BuilderSectionType, variantId: string): boolean {
-  if (Boolean(getDefinition(sectionType, variantId))) return true;
+  if (getDefinition(sectionType, variantId)) return true;
   if (LEGACY_PLACEHOLDER_TYPES.has(sectionType)) return false;
   return Boolean(LEGACY_SECTION_REGISTRY[sectionType]);
 }
@@ -365,9 +365,9 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
   return (
     <>
     <aside
-      className={`flex-shrink-0 h-full min-h-0 bg-white border-b lg:border-b-0 lg:border-r border-gray-200 flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${sidebarExpanded ? 'w-full lg:w-96' : 'w-full lg:w-64'}`}
+      className={`flex-shrink-0 h-full min-h-0 bg-white border-b lg:border-b-0 lg:border-r border-[var(--color-border-subtle)] flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${sidebarExpanded ? 'w-full lg:w-96' : 'w-full lg:w-64'}`}
     >
-      <div className="sticky top-0 z-20 flex border-b border-gray-200 bg-white">
+      <div className="sticky top-0 z-20 flex border-b border-[var(--color-border-subtle)] bg-white">
         {([
           { id: 'layers', icon: Layers, label: 'Sections' },
           { id: 'sections', icon: Plus, label: 'Add' },
@@ -383,8 +383,8 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
             }}
             className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors ${
               activeTab === tab.id
-                ? 'text-rose-600 border-b-2 border-rose-600'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'text-[var(--color-text-primary)] border-b-2 border-[var(--color-accent)]'
+                : 'text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)]'
             }`}
           >
             <tab.icon size={16} />
@@ -397,12 +397,12 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
         {activeTab === 'layers' && (
           <div className="p-3">
             <div className="flex items-center justify-between px-1 mb-2">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+              <p className="text-xs font-semibold text-gray-400">
                 {sections.length} {sections.length === 1 ? 'Section' : 'Sections'}
               </p>
               <button
                 onClick={() => { setActiveTab('sections'); setExpandedType(null); }}
-                className="flex items-center gap-1 text-xs text-rose-600 font-medium hover:text-rose-700 transition-colors"
+                className="flex items-center gap-1 text-xs text-[var(--color-accent)] font-medium hover:text-[var(--color-accent-hover)] transition-colors"
               >
                 <Plus size={12} />
                 Add
@@ -415,7 +415,7 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                 <p className="text-xs mt-1 text-gray-300 mb-4">Start building your wedding site</p>
                 <button
                   onClick={() => { setActiveTab('sections'); setExpandedType(null); }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500 text-white text-xs font-medium rounded-lg hover:bg-rose-600 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-accent)] text-white text-xs font-medium rounded-lg hover:bg-[var(--color-accent-hover)] transition-colors"
                 >
                   <Plus size={12} />
                   Add your first section
@@ -454,8 +454,8 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
 
         {activeTab === 'sections' && !expandedManifest && (
           <div className="p-3">
-            <div className="mb-3 rounded-lg border border-rose-100 bg-rose-50/60 p-2">
-              <p className="px-1 text-[11px] font-semibold uppercase tracking-wide text-rose-700 mb-2">Quick presets</p>
+            <div className="mb-3 rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)]/70 p-2">
+              <p className="px-1 text-[11px] font-semibold text-[var(--color-text-primary)] mb-2">Quick presets</p>
               <button
                 onClick={() => {
                   const starter: BuilderSectionType[] = ['hero', 'story', 'schedule', 'travel', 'rsvp', 'gallery', 'faq'];
@@ -464,23 +464,23 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                     if (manifest) addSection(manifest.type, manifest.defaultVariant);
                   });
                 }}
-                className="mb-2 w-full rounded border border-rose-300 bg-white px-2 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition-colors"
+                className="mb-2 w-full rounded border border-[var(--color-border-subtle)] bg-white px-2 py-1.5 text-xs font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)] transition-colors"
               >
                 Add starter pack
               </button>
 
-              <div className="mb-2 flex items-center gap-1 rounded-md border border-rose-200 bg-white p-1">
+              <div className="mb-2 flex items-center gap-1 rounded-md border border-[var(--color-border-subtle)] bg-white p-1">
                 <button
                   type="button"
                   onClick={() => setQuickPresetGroup('essentials')}
-                  className={`flex-1 rounded px-2 py-1 text-[11px] font-medium ${quickPresetGroup === 'essentials' ? 'bg-rose-600 text-white' : 'text-rose-700 hover:bg-rose-50'}`}
+                  className={`flex-1 rounded px-2 py-1 text-[11px] font-medium ${quickPresetGroup === 'essentials' ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)]'}`}
                 >
                   Essentials
                 </button>
                 <button
                   type="button"
                   onClick={() => setQuickPresetGroup('extras')}
-                  className={`flex-1 rounded px-2 py-1 text-[11px] font-medium ${quickPresetGroup === 'extras' ? 'bg-rose-600 text-white' : 'text-rose-700 hover:bg-rose-50'}`}
+                  className={`flex-1 rounded px-2 py-1 text-[11px] font-medium ${quickPresetGroup === 'extras' ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)]'}`}
                 >
                   Extras
                 </button>
@@ -509,7 +509,7 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                     <button
                       key={`${preset.type}-${preset.variant ?? 'default'}`}
                       onClick={() => addSection(manifest.type, preset.variant ?? manifest.defaultVariant)}
-                      className="rounded border border-rose-200 bg-white px-2 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-100 transition-colors"
+                      className="rounded border border-[var(--color-border-subtle)] bg-white px-2 py-1.5 text-xs font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)] transition-colors"
                     >
                       {preset.label}
                     </button>
@@ -525,7 +525,7 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                     if (contactManifest) addSection(contactManifest.type, 'interactiveHub');
                     if (faqManifest) addSection(faqManifest.type, faqManifest.defaultVariant);
                   }}
-                  className="mt-2 w-full rounded border border-rose-300 bg-white px-2 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition-colors"
+                  className="mt-2 w-full rounded border border-[var(--color-border-subtle)] bg-white px-2 py-1.5 text-xs font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)] transition-colors"
                 >
                   Add Interactive + FAQ
                 </button>
@@ -540,22 +540,22 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
               >
                 <ArrowLeft size={13} />
               </button>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+              <p className="text-xs font-semibold text-gray-400">
                 Add section
               </p>
               <span className="ml-auto text-[10px] text-gray-300">{manifests.length} types</span>
             </div>
             <div className="mb-2.5 flex items-center gap-1.5 px-1">
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">Preview mood</span>
+              <span className="text-[10px] font-semibold text-gray-400">Preview mood</span>
               <div className="ml-auto flex items-center gap-1">
                 {PREVIEW_PHOTO_SET_OPTIONS.map((opt) => (
                   <button
                     key={opt.id}
                     type="button"
                     onClick={() => setPreviewPhotoSet(opt.id)}
-                    className={`rounded border px-1.5 py-0.5 text-[10px] font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/70 focus-visible:ring-offset-1 ${
+                    className={`rounded border px-1.5 py-0.5 text-[10px] font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]/40 focus-visible:ring-offset-1 ${
                       previewPhotoSet === opt.id
-                        ? 'border-rose-300 bg-rose-50 text-rose-700 shadow-[0_6px_16px_-12px_rgba(190,24,93,0.55)]'
+                        ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)] text-[var(--color-accent)] shadow-sm'
                         : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:border-gray-300'
                     }`}
                   >
@@ -571,10 +571,10 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                   <button
                     key={manifest.type}
                     onClick={() => handleSectionClick(manifest)}
-                    className={`w-full text-left rounded-xl border transition-all duration-300 ease-out overflow-hidden group focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/80 focus-visible:ring-offset-2 active:scale-[0.992] ${
+                    className={`w-full text-left rounded-xl border transition-all duration-300 ease-out overflow-hidden group focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]/45 focus-visible:ring-offset-2 active:scale-[0.992] ${
                       isCustom
-                        ? 'border-amber-200 bg-amber-50/50 hover:border-amber-300 hover:bg-amber-50 hover:shadow-[0_10px_20px_-16px_rgba(217,119,6,0.5)]'
-                        : 'border-gray-200 bg-white hover:border-rose-300 hover:shadow-[0_14px_30px_-18px_rgba(190,24,93,0.45)]'
+                        ? 'border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] hover:border-[var(--color-border-strong)] hover:bg-[var(--color-accent-soft)] hover:shadow-sm'
+                        : 'border-gray-200 bg-white hover:border-[var(--color-border-strong)] hover:shadow-sm'
                     }`}
                   >
                     <div className="pointer-events-none relative">
@@ -585,22 +585,22 @@ export const BuilderSidebarLibrary: React.FC<BuilderSidebarLibraryProps> = ({ ac
                         isHovered={false}
                         weddingData={buildPreviewWeddingData(previewPhotoSet, manifest.type)}
                       />
-                      <div className="absolute top-1.5 right-1.5 rounded bg-black/45 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-white/90">
+                      <div className="absolute top-1.5 right-1.5 rounded bg-black/45 px-1.5 py-0.5 text-[8px] font-semibold text-white/90">
                         {manifest.defaultVariant}
                       </div>
-                      <div className="absolute top-1.5 left-1.5 rounded bg-white/85 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-gray-600 shadow-sm">
+                      <div className="absolute top-1.5 left-1.5 rounded bg-white/85 px-1.5 py-0.5 text-[8px] font-semibold text-gray-600 shadow-sm">
                         {SECTION_PICKER_STORY_LABEL[manifest.type] ?? 'Section'}
                       </div>
                     </div>
-                    <div className={`px-2.5 py-2 border-t ${isCustom ? 'border-amber-100' : 'border-gray-100'}`}>
+                    <div className={`px-2.5 py-2 border-t ${isCustom ? 'border-[var(--color-border-subtle)]' : 'border-gray-100'}`}>
                       <div className="flex items-center justify-between gap-1.5">
                         <div className="min-w-0">
-                          <p className={`text-[11px] font-semibold truncate ${isCustom ? 'text-amber-800' : 'text-gray-700'}`}>{manifest.label}</p>
+                          <p className={`text-[11px] font-semibold truncate ${isCustom ? 'text-[var(--color-text-primary)]' : 'text-gray-700'}`}>{manifest.label}</p>
                           <p className="text-[9px] text-gray-400 truncate">
                             {isCustom ? '8 starter layouts' : `${manifest.variantMeta.length} ${manifest.variantMeta.length === 1 ? 'layout' : 'layouts'}`}
                           </p>
                         </div>
-                        <ChevronRight size={12} className={`flex-shrink-0 transition-colors ${isCustom ? 'text-amber-300 group-hover:text-amber-500' : 'text-gray-300 group-hover:text-rose-400'}`} />
+                        <ChevronRight size={12} className={`flex-shrink-0 transition-colors ${isCustom ? 'text-[var(--color-text-tertiary)] group-hover:text-[var(--color-accent)]' : 'text-gray-300 group-hover:text-[var(--color-accent)]'}`} />
                       </div>
                       <p className="mt-1 text-[9px] leading-relaxed text-gray-500 line-clamp-2">
                         {SECTION_PICKER_EDITORIAL_NOTES[manifest.type] ?? 'A strong starting section with clear structure and balanced spacing.'}
@@ -698,7 +698,7 @@ const VariantPicker: React.FC<VariantPickerProps> = ({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center gap-2 px-3 py-3 border-b border-gray-100">
+      <div className="flex items-center gap-2 px-3 py-3 border-b border-[var(--color-border-subtle)]">
         <button
           onClick={onBack}
           className="p-1.5 rounded-md hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors flex-shrink-0"
@@ -707,8 +707,8 @@ const VariantPicker: React.FC<VariantPickerProps> = ({
           <ArrowLeft size={14} />
         </button>
         <div className="flex items-center gap-2 min-w-0">
-          <div className="w-6 h-6 bg-rose-50 rounded flex items-center justify-center flex-shrink-0">
-            <IconComp size={13} className="text-rose-500" />
+          <div className="w-6 h-6 bg-[var(--color-accent-soft)] rounded flex items-center justify-center flex-shrink-0">
+            <IconComp size={13} className="text-[var(--color-accent)]" />
           </div>
           <p className="text-sm font-semibold text-gray-700 truncate">{manifest.label}</p>
         </div>
@@ -717,7 +717,7 @@ const VariantPicker: React.FC<VariantPickerProps> = ({
       <div className="px-3.5 pt-3 pb-3 border-b border-neutral-200 bg-white">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-[0.14em]">Choose a layout</p>
+            <p className="text-[11px] text-gray-400 font-semibold">Choose a layout</p>
             <p className="mt-1 text-[11px] leading-relaxed text-gray-500">Each layout gives this section a different feel. Pick the one that fits best.</p>
           </div>
           <div className="rounded-md border border-neutral-200 bg-neutral-50 px-2 py-1 text-[10px] font-semibold text-neutral-700">
@@ -725,16 +725,16 @@ const VariantPicker: React.FC<VariantPickerProps> = ({
           </div>
         </div>
         <div className="mt-2.5 flex items-center gap-1.5">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-400">Preview mood</span>
+            <span className="text-[10px] font-semibold text-gray-400">Preview mood</span>
           <div className="ml-auto flex items-center gap-1">
             {PREVIEW_PHOTO_SET_OPTIONS.map((opt) => (
               <button
                 key={opt.id}
                 type="button"
                 onClick={() => onPreviewPhotoSetChange(opt.id)}
-                className={`rounded border px-1.5 py-0.5 text-[10px] font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/70 focus-visible:ring-offset-1 ${
+                className={`rounded border px-1.5 py-0.5 text-[10px] font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]/40 focus-visible:ring-offset-1 ${
                   previewPhotoSet === opt.id
-                    ? 'border-rose-300 bg-rose-50 text-rose-700 shadow-[0_6px_16px_-12px_rgba(190,24,93,0.55)]'
+                    ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)] text-[var(--color-accent)] shadow-sm'
                     : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:border-gray-300'
                 }`}
               >
@@ -747,7 +747,7 @@ const VariantPicker: React.FC<VariantPickerProps> = ({
 
       <div className="flex-1 overflow-y-auto px-3.5 pb-3.5">
         <div className="mb-2 flex items-center justify-between rounded-lg border border-gray-200 bg-white px-2.5 py-1.5">
-          <span className="text-[10px] uppercase tracking-wide text-gray-500">Variant browser</span>
+          <span className="text-[10px] text-gray-500">Variant browser</span>
           <span className="text-[10px] font-medium text-gray-700">{activeVariantIndex + 1} / {manifest.variantMeta.length}</span>
         </div>
         <div className="mb-2 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-[10px] text-gray-600">
@@ -792,10 +792,10 @@ const VARIANT_STYLE_TONE: Record<string, { label: string; accent: string; chip: 
   minimal: { label: 'Minimal', accent: 'from-stone-300/45 via-white/0 to-white/0', chip: 'border-stone-300 text-stone-600 bg-stone-50' },
   formal: { label: 'Formal', accent: 'from-slate-600/30 via-slate-300/10 to-white/0', chip: 'border-slate-300 text-slate-700 bg-slate-50' },
   editorial: { label: 'Editorial', accent: 'from-zinc-700/30 via-zinc-300/10 to-white/0', chip: 'border-zinc-300 text-zinc-700 bg-zinc-50' },
-  cinematic: { label: 'Cinematic', accent: 'from-indigo-600/35 via-violet-400/15 to-white/0', chip: 'border-indigo-300 text-indigo-700 bg-indigo-50' },
-  interactive: { label: 'Interactive', accent: 'from-emerald-500/35 via-teal-300/10 to-white/0', chip: 'border-emerald-300 text-emerald-700 bg-emerald-50' },
-  romantic: { label: 'Romantic', accent: 'from-rose-500/35 via-pink-300/15 to-white/0', chip: 'border-rose-300 text-rose-700 bg-rose-50' },
-  playful: { label: 'Playful', accent: 'from-amber-400/40 via-orange-200/15 to-white/0', chip: 'border-amber-300 text-amber-700 bg-amber-50' },
+  cinematic: { label: 'Cinematic', accent: 'from-stone-700/25 via-stone-300/10 to-white/0', chip: 'border-stone-300 text-stone-700 bg-stone-50' },
+  interactive: { label: 'Interactive', accent: 'from-[var(--color-primary)]/25 via-[var(--color-primary)]/10 to-white/0', chip: 'border-[var(--color-border-subtle)] text-[var(--color-accent)] bg-[var(--color-accent-soft)]' },
+  romantic: { label: 'Romantic', accent: 'from-[var(--color-accent)]/25 via-[var(--color-accent)]/10 to-white/0', chip: 'border-[var(--color-border-subtle)] text-[var(--color-accent)] bg-[var(--color-accent-soft)]' },
+  playful: { label: 'Playful', accent: 'from-stone-400/35 via-stone-200/15 to-white/0', chip: 'border-stone-300 text-stone-700 bg-stone-50' },
 };
 
 const VARIANT_TONE_BY_ID: Record<string, keyof typeof VARIANT_STYLE_TONE> = {
@@ -1079,11 +1079,11 @@ const VariantCard: React.FC<VariantCardProps> = ({
       onMouseLeave={() => onHover(null)}
       onFocus={onFocusIndex}
       onClick={() => onSelect(variant.id)}
-      className={`group relative w-full overflow-hidden rounded-2xl border bg-white text-left will-change-transform transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/70 focus-visible:ring-offset-2 active:scale-[0.995] ${
+      className={`group relative w-full overflow-hidden rounded-xl border bg-white text-left will-change-transform transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]/45 focus-visible:ring-offset-2 active:scale-[0.995] ${
         isHovered || isKeyboardActive
-          ? 'border-blue-300 shadow-sm -translate-y-[1px]'
+          ? 'border-[var(--color-accent)] shadow-sm -translate-y-[1px]'
           : 'border-neutral-200 hover:border-neutral-300 hover:shadow-sm'
-      } ${isDefault ? 'ring-1 ring-blue-100/80' : ''}`}
+      } ${isDefault ? 'ring-1 ring-[var(--color-accent)]/20' : ''}`}
       title={variant.description}
       aria-label={`Add ${variant.label} variant`}
     >
@@ -1100,8 +1100,8 @@ const VariantCard: React.FC<VariantCardProps> = ({
         <div className="flex items-start justify-between gap-2.5">
           <div className="min-w-0 flex-1">
             <div className="mb-1.5 flex items-center gap-1.5">
-              <span className="block truncate text-[13px] font-semibold tracking-tight text-gray-800">{variant.label}</span>
-              <span className={`inline-flex items-center rounded-full border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${tone.chip}`}>
+              <span className="block truncate text-[13px] font-semibold text-gray-800">{variant.label}</span>
+              <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[9px] font-semibold ${tone.chip}`}>
                 {tone.label}
               </span>
             </div>
@@ -1117,16 +1117,16 @@ const VariantCard: React.FC<VariantCardProps> = ({
               </p>
             )}
             {isDefault && (
-              <span className="mt-1.5 inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-rose-700">Default</span>
+              <span className="mt-1.5 inline-flex items-center rounded-md border border-[var(--color-border-subtle)] bg-[var(--color-accent-soft)] px-1.5 py-0.5 text-[9px] font-semibold text-[var(--color-accent)]">Default</span>
             )}
           </div>
           <span className={`mt-0.5 flex-shrink-0 transform transition-all duration-200 ${isHovered ? 'translate-x-0 opacity-100' : '-translate-x-1 opacity-0 group-focus-visible:translate-x-0 group-focus-visible:opacity-100'}`}>
-            <Plus size={13} className="text-rose-500" />
+            <Plus size={13} className="text-[var(--color-accent)]" />
           </span>
         </div>
-        <div className="mt-2 flex items-center justify-between text-[9px] uppercase tracking-[0.12em] text-gray-400">
+        <div className="mt-2 flex items-center justify-between text-[9px] text-gray-400">
           <span>{isHovered ? 'Click to add' : 'Live preview'}</span>
-          <span className={`${isHovered ? 'text-rose-500' : 'text-gray-300'} transition-colors`}>{isHovered ? 'Ready to insert' : 'Curated'}</span>
+          <span className={`${isHovered ? 'text-[var(--color-accent)]' : 'text-gray-300'} transition-colors`}>{isHovered ? 'Ready to insert' : 'Curated'}</span>
         </div>
       </div>
     </button>
@@ -1177,7 +1177,7 @@ const BuilderVariantCardPreview: React.FC<{
           <SectionTypePreview sectionType={sectionType} compact />
         </div>
         <LiveVariantPreview sectionType={typedSectionType} variantId={variantId} weddingData={weddingData} />
-        <div className="absolute right-1.5 top-1.5 rounded-md bg-black/48 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-white/95 shadow-sm">
+        <div className="absolute right-1.5 top-1.5 rounded-md bg-black/48 px-1.5 py-0.5 text-[8px] font-semibold text-white/95 shadow-sm">
           {variantId}
         </div>
         <div
@@ -1220,7 +1220,7 @@ const SectionTypePreview: React.FC<{ sectionType: string; compact?: boolean }> =
       <div className="w-full h-16 relative flex flex-col items-center justify-center bg-slate-700">
         <div className="absolute inset-0 bg-black/40" />
         <div className="relative flex flex-col items-center gap-1">
-          <div className="text-[7px] text-white/50 uppercase tracking-widest font-medium">We are getting married</div>
+          <div className="text-[7px] text-white/50st font-medium">We are getting married</div>
           <div className="text-[13px] font-bold text-white">Sarah & James</div>
           <div className="text-[7px] text-white/60">June 14, 2025 · New York</div>
           <div className="mt-0.5 px-2.5 py-0.5 border border-white/40 rounded text-[7px] text-white/80 font-semibold">Send RSVP</div>
@@ -1230,7 +1230,7 @@ const SectionTypePreview: React.FC<{ sectionType: string; compact?: boolean }> =
     story: (
       <div className="w-full h-16 flex bg-gray-50">
         <div className="flex-1 flex flex-col justify-center gap-1 px-3">
-          <div className="text-[7px] text-gray-400 uppercase tracking-widest">Our Story</div>
+          <div className="text-[7px] text-gray-400st">Our Story</div>
           <div className="h-1 rounded-sm bg-gray-700 w-20" />
           <div className="h-0.5 rounded-sm bg-gray-300 w-full" />
           <div className="h-0.5 rounded-sm bg-gray-300 w-4/5" />
@@ -1253,7 +1253,7 @@ const SectionTypePreview: React.FC<{ sectionType: string; compact?: boolean }> =
     ),
     schedule: (
       <div className="w-full h-16 flex flex-col justify-center px-3 gap-0 bg-gray-50">
-        <div className="text-[7px] text-gray-400 uppercase tracking-widest mb-1">Schedule</div>
+        <div className="text-[7px] text-gray-400st mb-1">Schedule</div>
         {[0,1,2].map(i => (
           <div key={i} className="flex items-start gap-1.5 py-0.5">
             <div className="flex flex-col items-center flex-shrink-0">
@@ -1270,7 +1270,7 @@ const SectionTypePreview: React.FC<{ sectionType: string; compact?: boolean }> =
     ),
     travel: (
       <div className="w-full h-16 flex flex-col justify-center gap-1 px-3 bg-white">
-        <div className="text-[7px] text-gray-400 uppercase tracking-widest">Travel details</div>
+        <div className="text-[7px] text-gray-400st">Travel details</div>
         {[0,1].map(i => (
           <div key={i} className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-gray-300 flex-shrink-0" />
@@ -1282,7 +1282,7 @@ const SectionTypePreview: React.FC<{ sectionType: string; compact?: boolean }> =
     ),
     registry: (
       <div className="w-full h-16 flex flex-col justify-center gap-1 px-3 bg-gray-50">
-        <div className="text-[7px] text-gray-400 uppercase tracking-widest">Registry</div>
+        <div className="text-[7px] text-gray-400st">Registry</div>
         {[0,1].map(i => (
           <div key={i} className="h-5 rounded-lg flex items-center px-2 gap-2 bg-white border border-gray-200">
             <div className="w-2.5 h-2.5 rounded-sm bg-gray-200 flex-shrink-0" />
@@ -1294,7 +1294,7 @@ const SectionTypePreview: React.FC<{ sectionType: string; compact?: boolean }> =
     ),
     faq: (
       <div className="w-full h-16 flex flex-col justify-center gap-1 px-3 bg-white">
-        <div className="text-[7px] text-gray-400 uppercase tracking-widest">FAQ</div>
+        <div className="text-[7px] text-gray-400st">FAQ</div>
         {[0,1,2].map(i => (
           <div key={i} className="flex items-center justify-between px-1.5 py-0.5 rounded border border-gray-100 bg-gray-50">
             <div className={`h-1.5 rounded-sm ${i === 0 ? 'w-20 bg-gray-600' : 'w-16 bg-gray-300'}`} />
@@ -1341,7 +1341,7 @@ const SectionTypePreview: React.FC<{ sectionType: string; compact?: boolean }> =
     ),
     countdown: (
       <div className="w-full h-16 flex flex-col items-center justify-center gap-1 bg-gray-50">
-        <div className="text-[7px] text-gray-400 uppercase tracking-widest">Counting down</div>
+        <div className="text-[7px] text-gray-400st">Counting down</div>
         <div className="flex items-end gap-1.5">
           {[{n:'47',l:'Days'},{n:'12',l:'Hrs'},{n:'38',l:'Min'}].map(({n,l}) => (
             <div key={l} className="flex flex-col items-center">
@@ -1354,7 +1354,7 @@ const SectionTypePreview: React.FC<{ sectionType: string; compact?: boolean }> =
     ),
     'wedding-party': (
       <div className="w-full h-16 flex flex-col justify-center gap-1 px-2 bg-gray-50">
-        <div className="text-[7px] text-gray-400 uppercase tracking-widest text-center">Wedding Party</div>
+        <div className="text-[7px] text-gray-400st text-center">Wedding Party</div>
         <div className="flex justify-center gap-1.5">
           {[0,1,2,3].map(i => (
             <div key={i} className="flex flex-col items-center gap-0.5">
@@ -1369,7 +1369,7 @@ const SectionTypePreview: React.FC<{ sectionType: string; compact?: boolean }> =
       <div className="w-full h-16 flex bg-gray-50">
         <div className="w-1 h-full bg-gray-500" />
         <div className="flex-1 flex flex-col justify-center gap-0.5 px-2">
-          <div className="text-[6px] text-gray-400 uppercase tracking-widest">What to wear</div>
+          <div className="text-[6px] text-gray-400st">What to wear</div>
           <div className="text-[10px] font-bold text-gray-800">Black Tie</div>
           <div className="h-0.5 rounded-sm bg-gray-300 w-full" />
           <div className="h-0.5 rounded-sm bg-gray-200 w-4/5" />
@@ -1383,7 +1383,7 @@ const SectionTypePreview: React.FC<{ sectionType: string; compact?: boolean }> =
     ),
     accommodations: (
       <div className="w-full h-16 flex flex-col justify-center gap-1 px-3 bg-white">
-        <div className="text-[7px] text-gray-400 uppercase tracking-widest">Accommodations</div>
+        <div className="text-[7px] text-gray-400st">Accommodations</div>
         {[0,1].map(i => (
           <div key={i} className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-sm bg-gray-300 flex-shrink-0" />
@@ -1395,7 +1395,7 @@ const SectionTypePreview: React.FC<{ sectionType: string; compact?: boolean }> =
     ),
     contact: (
       <div className="w-full h-16 flex flex-col justify-center gap-1 px-3 bg-white">
-        <div className="text-[7px] text-gray-400 uppercase tracking-widest">Need help?</div>
+        <div className="text-[7px] text-gray-400st">Need help?</div>
         <div className="flex gap-2">
           {[0,1].map(i => (
             <div key={i} className="flex-1 h-8 rounded-lg p-1.5 flex flex-col gap-0.5 bg-gray-50 border border-gray-100">
@@ -1440,7 +1440,7 @@ const SectionTypePreview: React.FC<{ sectionType: string; compact?: boolean }> =
     ),
     quotes: (
       <div className="w-full h-16 flex flex-col justify-center gap-1 px-3 bg-gray-50">
-        <div className="text-[7px] text-gray-400 uppercase tracking-widest">Notes from loved ones</div>
+        <div className="text-[7px] text-gray-400st">Notes from loved ones</div>
         <div className="flex flex-col gap-0.5">
           <div className="h-0.5 rounded-sm bg-gray-300 w-full" />
           <div className="h-0.5 rounded-sm bg-gray-200 w-4/5" />
@@ -1454,7 +1454,7 @@ const SectionTypePreview: React.FC<{ sectionType: string; compact?: boolean }> =
     ),
     menu: (
       <div className="w-full h-16 flex flex-col justify-center gap-1 px-3 bg-white">
-        <div className="text-[7px] text-gray-400 uppercase tracking-widest">Dinner and drinks</div>
+        <div className="text-[7px] text-gray-400st">Dinner and drinks</div>
         <div className="flex gap-1">
           {['Starter','Main','Dessert'].map(c => (
             <div key={c} className="flex-1 h-3 rounded text-[5px] flex items-center justify-center bg-gray-100 text-gray-500 border border-gray-200 font-medium">{c}</div>
@@ -1468,7 +1468,7 @@ const SectionTypePreview: React.FC<{ sectionType: string; compact?: boolean }> =
     ),
     music: (
       <div className="w-full h-16 flex flex-col justify-center gap-1 px-3 bg-gray-900">
-        <div className="text-[7px] text-gray-400 uppercase tracking-widest">Music</div>
+        <div className="text-[7px] text-gray-400st">Music</div>
         {[0,1,2].map(i => (
           <div key={i} className="flex items-center gap-1">
             <div className="text-[6px] text-gray-500 w-3 text-right">{i+1}</div>
@@ -1481,7 +1481,7 @@ const SectionTypePreview: React.FC<{ sectionType: string; compact?: boolean }> =
     directions: (
       <div className="w-full h-16 flex bg-white">
         <div className="flex-1 flex flex-col justify-center gap-1 px-2">
-          <div className="text-[7px] text-gray-400 uppercase tracking-widest">Directions</div>
+          <div className="text-[7px] text-gray-400st">Directions</div>
           <div className="h-0.5 rounded-sm bg-gray-300 w-full" />
           <div className="h-0.5 rounded-sm bg-gray-200 w-4/5" />
           <div className="w-8 h-2.5 rounded text-[5px] flex items-center justify-center bg-gray-700 text-white font-semibold mt-0.5">View map</div>
@@ -1494,7 +1494,7 @@ const SectionTypePreview: React.FC<{ sectionType: string; compact?: boolean }> =
     ),
     video: (
       <div className="w-full h-16 flex flex-col items-center justify-center gap-1 bg-gray-900">
-        <div className="text-[7px] text-gray-400 uppercase tracking-widest">Video</div>
+        <div className="text-[7px] text-gray-400st">Video</div>
         <div className="w-8 h-8 rounded-md bg-gray-700 flex items-center justify-center border border-gray-600">
           <div className="w-0 h-0 border-t-[5px] border-t-transparent border-b-[5px] border-b-transparent border-l-[8px] border-l-white/70 ml-0.5" />
         </div>
@@ -1789,7 +1789,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
           </div>
         </div>
         <div className={`h-5 rounded-md flex items-center justify-center ${h ? 'bg-rose-500' : 'bg-gray-700'}`}>
-          <div className="text-[8px] text-white font-semibold tracking-wide">SEND RSVP</div>
+          <div className="text-[8px] text-white font-semibold">SEND RSVP</div>
         </div>
       </div>
     ),
@@ -1860,7 +1860,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
     /* ── COUNTDOWN ── */
     countdown_default: (
       <div className={`w-full h-20 flex flex-col items-center justify-center gap-1.5 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
-        <div className={`text-[8px] font-medium ${h ? 'text-rose-400' : 'text-gray-400'} tracking-widest uppercase`}>Counting down</div>
+        <div className={`text-[8px] font-medium ${h ? 'text-rose-400' : 'text-gray-400'}st`}>Counting down</div>
         <div className="flex items-end gap-1.5">
           {[{n:'047',l:'Days'},{n:'12',l:'Hrs'},{n:'38',l:'Min'}].map(({n,l}) => (
             <div key={l} className="flex flex-col items-center">
@@ -1919,7 +1919,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
       <div className={`w-full h-20 flex transition-colors ${h ? 'bg-stone-50' : 'bg-gray-50'}`}>
         <div className={`w-1.5 h-full ${h ? 'bg-rose-400' : 'bg-gray-400'}`} />
         <div className="flex-1 flex flex-col justify-center gap-1.5 px-3">
-          <div className={`text-[7px] font-semibold uppercase tracking-widest ${h ? 'text-rose-400' : 'text-gray-400'}`}>What to wear</div>
+          <div className={`text-[7px] font-semibold ${h ? 'text-rose-400' : 'text-gray-400'}`}>What to wear</div>
           <div className={`text-[10px] font-bold ${h ? 'text-rose-700' : 'text-gray-700'}`}>Black Tie</div>
           <div className={`h-1 rounded-sm w-full ${c}`} />
           <div className={`h-1 rounded-sm w-4/5 ${c}`} />
@@ -1934,7 +1934,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
     'dress-code_banner': (
       <div className={`w-full h-20 flex items-center justify-between px-4 transition-colors ${h ? 'bg-rose-900' : 'bg-gray-900'}`}>
         <div className="flex flex-col gap-1">
-          <div className={`text-[7px] uppercase tracking-widest ${h ? 'text-rose-300' : 'text-gray-400'}`}>Dress code</div>
+          <div className={`text-[7px] ${h ? 'text-rose-300' : 'text-gray-400'}`}>Dress code</div>
           <div className="text-[11px] font-bold text-white">Black Tie</div>
         </div>
         <div className={`w-px h-8 ${h ? 'bg-rose-700' : 'bg-gray-700'}`} />
@@ -2039,7 +2039,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
       <div className={`w-full h-20 flex transition-colors`}>
         <div className={`w-1/2 h-full ${h ? 'bg-rose-200' : 'bg-gray-300'}`} />
         <div className={`w-1/2 flex flex-col justify-center gap-1.5 px-3 ${h ? 'bg-rose-50' : 'bg-white'}`}>
-          <div className={`text-[7px] uppercase tracking-widest ${h ? 'text-rose-400' : 'text-gray-400'}`}>We're Getting Married</div>
+          <div className={`text-[7px] ${h ? 'text-rose-400' : 'text-gray-400'}`}>We're Getting Married</div>
           <div className={`w-20 h-2.5 rounded-sm ${cd}`} />
           <div className={`w-14 h-1.5 rounded-sm ${c}`} />
           <div className={`mt-1 w-12 h-4 rounded border ${h ? 'border-rose-400 text-rose-500' : 'border-gray-400 text-gray-500'} text-[7px] flex items-center justify-center font-semibold`}>Reply</div>
@@ -2072,10 +2072,10 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
     hero_invitation: (
       <div className={`w-full h-20 flex items-center justify-center transition-colors ${h ? 'bg-rose-50' : 'bg-amber-50'}`}>
         <div className={`w-28 h-16 flex flex-col items-center justify-center gap-0.5 border-2 ${h ? 'border-rose-200' : 'border-amber-200'} rounded-sm`}>
-          <div className={`text-[5px] uppercase tracking-widest ${h ? 'text-rose-400' : 'text-amber-600'}`}>Together with their families</div>
+          <div className={`text-[5px] ${h ? 'text-rose-400' : 'text-amber-600'}`}>Together with their families</div>
           <div className={`w-16 h-2 rounded-sm ${cd}`} />
           <div className={`w-px h-2 ${h ? 'bg-rose-200' : 'bg-amber-200'}`} />
-          <div className={`text-[5px] uppercase tracking-widest ${h ? 'text-rose-400' : 'text-amber-600'}`}>request the honour of your</div>
+          <div className={`text-[5px] ${h ? 'text-rose-400' : 'text-amber-600'}`}>request the honour of your</div>
           <div className={`w-10 h-1.5 rounded-sm ${c}`} />
         </div>
       </div>
@@ -2100,7 +2100,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
     /* ── STORY new variants ── */
     story_timeline: (
       <div className={`w-full h-20 flex flex-col justify-center px-3 gap-0 transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
-        <div className={`text-[7px] uppercase tracking-widest mb-1 ${h ? 'text-rose-400' : 'text-gray-400'}`}>Our Journey</div>
+        <div className={`text-[7px] mb-1 ${h ? 'text-rose-400' : 'text-gray-400'}`}>Our Journey</div>
         {['2019','2021','2023'].map((yr, i) => (
           <div key={yr} className="flex items-center gap-1.5 py-0.5">
             <div className={`text-[6px] font-bold w-6 flex-shrink-0 ${h ? 'text-rose-400' : 'text-gray-500'}`}>{yr}</div>
@@ -2116,7 +2116,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
           <div className={`text-[9px] font-bold ${h ? 'text-rose-600' : 'text-gray-600'}`}>I.</div>
         </div>
         <div className="flex-1 flex flex-col justify-center gap-1 px-2.5 bg-white">
-          <div className={`text-[6px] uppercase tracking-widest ${h ? 'text-rose-400' : 'text-gray-400'}`}>Chapter One</div>
+          <div className={`text-[6px] ${h ? 'text-rose-400' : 'text-gray-400'}`}>Chapter One</div>
           <div className={`h-1.5 rounded-sm w-4/5 ${cd}`} />
           <div className={`h-1 rounded-sm ${c}`} />
           <div className={`h-1 rounded-sm w-3/4 ${c}`} />
@@ -2156,7 +2156,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
         <div className="absolute inset-0 bg-black/50" />
         <div className="relative w-full px-3 pb-3 flex items-end justify-between">
           <div>
-            <div className={`text-[6px] uppercase tracking-widest ${h ? 'text-rose-300' : 'text-white/50'}`}>Ceremony</div>
+            <div className={`text-[6px] ${h ? 'text-rose-300' : 'text-white/50'}`}>Ceremony</div>
             <div className="text-[10px] font-bold text-white">The Grand Estate</div>
             <div className="text-[7px] text-white/60">123 Venue Lane</div>
           </div>
@@ -2170,7 +2170,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
           <div key={i} className="flex-1 flex overflow-hidden rounded-sm">
             <div className={`w-2/5 h-full ${color}`} />
             <div className={`flex-1 flex flex-col justify-center gap-0.5 px-1.5 bg-white`}>
-              <div className={`text-[5px] uppercase tracking-widest font-bold ${h ? 'text-rose-400' : 'text-gray-400'}`}>{label}</div>
+              <div className={`text-[5px] font-bold ${h ? 'text-rose-400' : 'text-gray-400'}`}>{label}</div>
               <div className={`h-1.5 rounded-sm w-4/5 ${cd}`} />
               <div className={`h-1 rounded-sm w-full ${cl}`} />
             </div>
@@ -2226,7 +2226,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
       <div className={`w-full h-20 flex transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
         {[{label:'Ceremony'},{label:'Reception'}].map(({label},i) => (
           <div key={i} className={`flex-1 flex flex-col px-2 pt-1.5 gap-1 ${i === 0 ? 'border-r border-gray-200' : ''}`}>
-            <div className={`text-[5px] uppercase tracking-widest font-bold ${h ? 'text-rose-400' : 'text-gray-400'}`}>{label}</div>
+            <div className={`text-[5px] font-bold ${h ? 'text-rose-400' : 'text-gray-400'}`}>{label}</div>
             {[0,1,2].map(j => (
               <div key={j} className="flex items-center gap-0.5">
                 <div className={`w-3 h-0.5 rounded-sm ${h ? 'bg-rose-200' : 'bg-gray-300'} flex-shrink-0`} />
@@ -2273,12 +2273,12 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
     travel_splitAirHotel: (
       <div className={`w-full h-20 flex transition-colors ${h ? 'bg-rose-50' : 'bg-gray-50'}`}>
         <div className={`flex-1 flex flex-col justify-center gap-1 px-2 border-r ${h ? 'border-rose-200' : 'border-gray-200'}`}>
-          <div className={`text-[6px] uppercase tracking-widest font-bold ${h ? 'text-rose-400' : 'text-gray-400'}`}>By Air</div>
+          <div className={`text-[6px] font-bold ${h ? 'text-rose-400' : 'text-gray-400'}`}>By Air</div>
           <div className={`h-1 rounded-sm ${cd}`} />
           <div className={`text-[6px] ${h ? 'text-rose-300' : 'text-gray-300'}`}>✈ JFK · 45 min</div>
         </div>
         <div className="flex-1 flex flex-col justify-center gap-1 px-2">
-          <div className={`text-[6px] uppercase tracking-widest font-bold ${h ? 'text-rose-400' : 'text-gray-400'}`}>Hotels</div>
+          <div className={`text-[6px] font-bold ${h ? 'text-rose-400' : 'text-gray-400'}`}>Hotels</div>
           {[0,1].map(i => (
             <div key={i} className="flex items-center gap-1">
               <div className={`w-1 h-1 rounded-full ${c}`} />
@@ -2538,12 +2538,12 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
     countdown_minimal: (
       <div className={`w-full h-20 flex flex-col items-center justify-center transition-colors bg-white`}>
         <div className={`text-[28px] font-black leading-none ${h ? 'text-rose-500' : 'text-gray-800'}`}>47</div>
-        <div className={`text-[8px] font-medium tracking-widest uppercase mt-0.5 ${h ? 'text-rose-400' : 'text-gray-400'}`}>days to go</div>
+        <div className={`text-[8px] font-mediumst mt-0.5 ${h ? 'text-rose-400' : 'text-gray-400'}`}>days to go</div>
       </div>
     ),
     countdown_dark: (
       <div className={`w-full h-20 flex flex-col items-center justify-center gap-1.5 ${h ? 'bg-rose-950' : 'bg-gray-900'}`}>
-        <div className={`text-[7px] tracking-widest uppercase ${h ? 'text-rose-400' : 'text-gray-400'}`}>Until we say I do</div>
+        <div className={`text-[7px] ${h ? 'text-rose-400' : 'text-gray-400'}`}>Until we say I do</div>
         <div className="flex items-end gap-2">
           {['47','12','38'].map((n,i) => (
             <div key={i} className="flex flex-col items-center">
@@ -2586,7 +2586,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
       <div className={`w-full h-20 flex gap-0 transition-colors`}>
         <div className={`w-2/5 h-full ${h ? 'bg-rose-200' : 'bg-gray-200'}`} />
         <div className="flex-1 flex flex-col justify-center gap-1 px-2 bg-white">
-          <div className={`text-[6px] uppercase tracking-widest ${h ? 'text-rose-400' : 'text-gray-400'}`}>Maid of Honor</div>
+          <div className={`text-[6px] ${h ? 'text-rose-400' : 'text-gray-400'}`}>Maid of Honor</div>
           <div className={`h-1.5 rounded-sm w-4/5 ${cd}`} />
           <div className={`h-1 rounded-sm ${c}`} />
           <div className={`h-1 rounded-sm w-3/4 ${c}`} />
@@ -2596,10 +2596,10 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
     ),
     'wedding-party_minimal': (
       <div className={`w-full h-20 flex flex-col items-center justify-center gap-1 transition-colors bg-white`}>
-        <div className={`text-[7px] uppercase tracking-widest ${h ? 'text-rose-400' : 'text-gray-400'}`}>Maid of Honor</div>
+        <div className={`text-[7px] ${h ? 'text-rose-400' : 'text-gray-400'}`}>Maid of Honor</div>
         <div className={`h-1.5 rounded-sm w-24 ${cd}`} />
         <div className={`h-px w-20 ${h ? 'bg-rose-100' : 'bg-gray-100'}`} />
-        <div className={`text-[7px] uppercase tracking-widest ${h ? 'text-rose-400' : 'text-gray-400'}`}>Bridesmaids</div>
+        <div className={`text-[7px] ${h ? 'text-rose-400' : 'text-gray-400'}`}>Bridesmaids</div>
         <div className="flex gap-1.5">
           {[0,1,2].map(i => (
             <div key={i} className={`h-1.5 w-10 rounded-sm ${c}`} />
@@ -2610,7 +2610,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
     'wedding-party_splitSides': (
       <div className={`w-full h-20 flex transition-colors`}>
         <div className={`flex-1 flex flex-col justify-center gap-1 px-2 ${h ? 'bg-rose-100/40' : 'bg-pink-50'}`}>
-          <div className={`text-[6px] uppercase tracking-widest font-bold text-center ${h ? 'text-rose-400' : 'text-pink-400'}`}>Her Side</div>
+          <div className={`text-[6px] font-bold text-center ${h ? 'text-rose-400' : 'text-pink-400'}`}>Her Side</div>
           <div className="flex justify-center gap-0.5">
             {[0,1,2].map(i => (
               <div key={i} className={`w-4 h-4 rounded-full ${h ? 'bg-rose-300' : 'bg-pink-200'}`} />
@@ -2618,7 +2618,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
           </div>
         </div>
         <div className={`flex-1 flex flex-col justify-center gap-1 px-2 ${h ? 'bg-sky-100/40' : 'bg-sky-50'}`}>
-          <div className={`text-[6px] uppercase tracking-widest font-bold text-center ${h ? 'text-sky-500' : 'text-sky-400'}`}>His Side</div>
+          <div className={`text-[6px] font-bold text-center ${h ? 'text-sky-500' : 'text-sky-400'}`}>His Side</div>
           <div className="flex justify-center gap-0.5">
             {[0,1,2].map(i => (
               <div key={i} className={`w-4 h-4 rounded-full ${h ? 'bg-sky-300' : 'bg-sky-200'}`} />
@@ -2631,7 +2631,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
     /* ── DRESS CODE new variants ── */
     'dress-code_palette': (
       <div className={`w-full h-20 flex flex-col justify-center gap-1 px-3 bg-white transition-colors`}>
-        <div className={`text-[6px] uppercase tracking-widest ${h ? 'text-rose-400' : 'text-gray-400'}`}>Encouraged Colors</div>
+        <div className={`text-[6px] ${h ? 'text-rose-400' : 'text-gray-400'}`}>Encouraged Colors</div>
         <div className="flex gap-1">
           {[h?'bg-rose-300':'bg-slate-300', h?'bg-rose-200':'bg-gray-200', h?'bg-amber-200':'bg-stone-300', h?'bg-green-200':'bg-gray-100'].map((color,i) => (
             <div key={i} className={`w-5 h-5 rounded-sm ${color} ring-1 ring-white shadow-sm`} />
@@ -2672,7 +2672,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
     ),
     'dress-code_scale': (
       <div className={`w-full h-20 flex flex-col items-center justify-center gap-2 transition-colors bg-white`}>
-        <div className={`text-[7px] uppercase tracking-widest ${h ? 'text-rose-400' : 'text-gray-400'}`}>Dress code</div>
+        <div className={`text-[7px] ${h ? 'text-rose-400' : 'text-gray-400'}`}>Dress code</div>
         <div className="w-full px-4">
           <div className="flex justify-between text-[5px] text-gray-400 mb-0.5">
             <span>Casual</span><span>Black Tie</span>
@@ -2738,7 +2738,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
       <div className={`w-full h-20 flex transition-colors`}>
         <div className={`w-2/5 h-full ${h ? 'bg-rose-200' : 'bg-stone-200'}`} />
         <div className="flex-1 flex flex-col justify-center gap-1 px-2 bg-white">
-          <div className={`text-[6px] uppercase tracking-widest ${h ? 'text-rose-400' : 'text-amber-600'}`}>On-Site Lodging</div>
+          <div className={`text-[6px] ${h ? 'text-rose-400' : 'text-amber-600'}`}>On-Site Lodging</div>
           <div className={`h-1.5 rounded-sm w-4/5 ${cd}`} />
           <div className={`h-1 rounded-sm ${c}`} />
           <div className={`h-1 rounded-sm w-3/4 ${cl}`} />
@@ -2887,7 +2887,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
     menu_printed: (
       <div className={`w-full h-20 flex items-center justify-center transition-colors ${h ? 'bg-rose-50' : 'bg-amber-50'}`}>
         <div className={`w-24 h-15 flex flex-col items-center py-1.5 px-2 border ${h ? 'border-rose-200' : 'border-amber-200'} rounded-sm`} style={{height:'3.75rem'}}>
-          <div className={`text-[7px] font-bold uppercase tracking-widest ${h ? 'text-rose-600' : 'text-amber-700'}`}>Dinner</div>
+          <div className={`text-[7px] font-bold ${h ? 'text-rose-600' : 'text-amber-700'}`}>Dinner</div>
           <div className={`h-px w-12 ${h ? 'bg-rose-200' : 'bg-amber-200'} my-0.5`} />
           {['Starter','— Main —','Dessert'].map((c2,i) => (
             <div key={c2} className={`text-[5px] text-center ${i === 1 ? (h ? 'text-rose-500 font-bold' : 'text-amber-600 font-bold') : (h ? 'text-rose-400' : 'text-amber-500')}`}>{c2}</div>
@@ -2900,7 +2900,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
         {[{label:'Cocktail Hour',icon:'🥂'},{label:'Dinner',icon:'🍽'}].map(({label,icon},i) => (
           <div key={label} className={`flex-1 flex flex-col px-1.5 py-1 ${i === 0 ? (h ? 'bg-rose-100/60' : 'bg-amber-50 border-r border-amber-100') : 'bg-white'}`}>
             <div className="text-[9px] mb-0.5">{icon}</div>
-            <div className={`text-[5px] font-bold uppercase tracking-widest mb-0.5 ${h ? 'text-rose-500' : 'text-gray-500'}`}>{label}</div>
+            <div className={`text-[5px] font-bold mb-0.5 ${h ? 'text-rose-500' : 'text-gray-500'}`}>{label}</div>
             {[0,1,2].map(j => (
               <div key={j} className={`h-0.5 rounded-sm mb-0.5 ${j === 0 ? cd : cl}`} />
             ))}
@@ -3020,7 +3020,7 @@ const VariantPreviewSwatch: React.FC<{ variantId: string; sectionType?: string; 
     ),
     directions_fromHotel: (
       <div className={`w-full h-20 flex flex-col justify-center gap-1 px-3 transition-colors bg-white`}>
-        <div className={`text-[6px] uppercase tracking-widest font-bold ${h ? 'text-rose-400' : 'text-gray-400'}`}>From The Grand Hotel</div>
+        <div className={`text-[6px] font-bold ${h ? 'text-rose-400' : 'text-gray-400'}`}>From The Grand Hotel</div>
         {[0,1,2].map(i => (
           <div key={i} className="flex items-center gap-1.5">
             <div className={`text-[6px] font-bold ${h ? 'text-rose-400' : 'text-gray-400'} w-3`}>{i+1}.</div>
@@ -3169,8 +3169,8 @@ const SortableLayerItem: React.FC<SortableLayerItemProps> = ({ section, index, p
   const health = getSectionHealth(section);
   const healthPill = {
     empty: 'bg-gray-100 text-gray-500',
-    draft: 'bg-amber-100 text-amber-700',
-    ready: 'bg-emerald-100 text-emerald-700',
+    draft: 'bg-[var(--color-surface-subtle)] text-[var(--color-text-secondary)]',
+    ready: 'bg-[var(--color-accent-soft)] text-[var(--color-accent)]',
   }[health];
   const canInsertStarter = health === 'empty' && Boolean(pageId);
 
@@ -3184,7 +3184,7 @@ const SortableLayerItem: React.FC<SortableLayerItemProps> = ({ section, index, p
       }}
       className={`flex items-center gap-2 px-2 py-2 rounded-lg cursor-pointer group transition-colors ${
         isSelected
-          ? 'bg-rose-50 border border-rose-200'
+          ? 'bg-[var(--color-accent-soft)] border border-[var(--color-border-subtle)]'
           : 'hover:bg-gray-50 border border-transparent'
       }`}
     >
@@ -3199,22 +3199,22 @@ const SortableLayerItem: React.FC<SortableLayerItemProps> = ({ section, index, p
       </button>
 
       <div className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 transition-colors ${
-        isSelected ? 'bg-rose-100' : 'bg-gray-100 group-hover:bg-gray-200'
+        isSelected ? 'bg-[var(--color-accent-soft)]' : 'bg-gray-100 group-hover:bg-gray-200'
       }`}>
-        <IconComp size={12} className={isSelected ? 'text-rose-500' : 'text-gray-500'} />
+        <IconComp size={12} className={isSelected ? 'text-[var(--color-accent)]' : 'text-gray-500'} />
       </div>
 
       <div className="flex-1 min-w-0">
-        <p className={`text-xs font-medium truncate ${isSelected ? 'text-rose-700' : 'text-gray-700'}`}>
+        <p className={`text-xs font-medium truncate ${isSelected ? 'text-[var(--color-accent)]' : 'text-gray-700'}`}>
           {manifest.label}
         </p>
         <div className="mt-0.5 flex items-center gap-1.5">
           <p className="text-[10px] text-gray-400">#{index + 1}</p>
-          <span className={`rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${healthPill}`}>
+          <span className={`rounded px-1.5 py-0.5 text-[9px] font-semibold ${healthPill}`}>
             {health}
           </span>
           {section.locked && (
-            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-slate-600">locked</span>
+            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-semibold text-slate-600">locked</span>
           )}
         </div>
       </div>
@@ -3228,7 +3228,7 @@ const SortableLayerItem: React.FC<SortableLayerItemProps> = ({ section, index, p
               dispatch(builderActions.updateSection(pageId, section.id, getStarterContentPatch(section)));
             }}
             title="Insert starter content"
-            className="inline-flex items-center gap-1 rounded bg-rose-50 px-1.5 py-1 text-[9px] font-semibold uppercase tracking-wide text-rose-600 hover:bg-rose-100"
+            className="inline-flex items-center gap-1 rounded bg-[var(--color-accent-soft)] px-1.5 py-1 text-[9px] font-semibold text-[var(--color-accent)] hover:bg-[var(--color-surface-subtle)]"
           >
             <Sparkles size={10} />
             Start
@@ -3242,7 +3242,7 @@ const SortableLayerItem: React.FC<SortableLayerItemProps> = ({ section, index, p
           title={section.enabled ? 'Hide' : 'Show'}
           className="p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition-colors"
         >
-          {section.enabled ? <Eye size={12} /> : <EyeOff size={12} className="text-rose-400" />}
+          {section.enabled ? <Eye size={12} /> : <EyeOff size={12} className="text-[var(--color-accent)]" />}
         </button>
         <button
           onClick={e => {
@@ -3283,10 +3283,10 @@ const LayerItemOverlay: React.FC<{ section: BuilderSectionInstance }> = ({ secti
   const manifest = getSectionManifest(section.type);
   const IconComp = SECTION_ICONS[manifest.icon] ?? Layout;
   return (
-    <div className="flex items-center gap-2 px-2 py-2 rounded-lg bg-white border border-rose-300 shadow-lg w-56 opacity-95">
+    <div className="flex items-center gap-2 px-2 py-2 rounded-lg bg-white border border-[var(--color-accent)] shadow-sm w-56 opacity-95">
       <GripVertical size={14} className="text-gray-400 flex-shrink-0" />
-      <div className="w-6 h-6 rounded bg-rose-100 flex items-center justify-center flex-shrink-0">
-        <IconComp size={12} className="text-rose-500" />
+      <div className="w-6 h-6 rounded bg-[var(--color-accent-soft)] flex items-center justify-center flex-shrink-0">
+        <IconComp size={12} className="text-[var(--color-accent)]" />
       </div>
       <p className="text-xs font-medium text-gray-700 truncate">{manifest.label}</p>
     </div>

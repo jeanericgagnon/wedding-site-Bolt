@@ -171,6 +171,6 @@ export const generateClarifyingQuestionDecision = async (input: ClarifyingQuesti
     if (error instanceof OpenAiNotConfiguredError) {
       throw error;
     }
-    throw new Error(`[aiClarifyingQuestions] OpenAI clarifying-question generation failed: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error('Clarifying-question generation failed. Please use the deterministic setup flow.');
   }
 };

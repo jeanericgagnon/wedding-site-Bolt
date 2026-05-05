@@ -16,16 +16,41 @@ const json = (data: unknown, status = 200) =>
 const BATCH_SIZE = 20;
 const MAX_ATTEMPTS = 3;
 
+function escapeHtml(value: unknown): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function safeEmailUrl(value: unknown): string {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "https://dayof.love";
+  try {
+    const parsed = new URL(raw);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return "https://dayof.love";
+    return parsed.toString();
+  } catch {
+    return "https://dayof.love";
+  }
+}
+
+function safeEmailHref(value: unknown): string {
+  return escapeHtml(safeEmailUrl(value));
+}
+
 function buildEmailHtml(type: string, payload: Record<string, unknown>): { subject: string; html: string } | null {
   const p = payload as Record<string, string | boolean | null>;
-  const c1 = (p.coupleName1 as string) ?? "Partner";
-  const c2 = (p.coupleName2 as string) ?? "Partner";
+  const c1 = escapeHtml((p.coupleName1 as string) ?? "Partner");
+  const c2 = escapeHtml((p.coupleName2 as string) ?? "Partner");
 
   if (type === "rsvp_notification") {
     const attending = p.attending as boolean;
-    const guestName = p.guestName as string;
+    const guestName = escapeHtml(p.guestName || "A guest");
     return {
-      subject: `New RSVP from ${guestName}`,
+      subject: `New RSVP from ${String(p.guestName || "A guest")}`,
       html: `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#f9f7f4;font-family:Georgia,serif;">
 <div style="max-width:560px;margin:40px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,0.08);">
   <div style="background:#1a1a1a;padding:32px 40px;text-align:center;">
@@ -36,9 +61,9 @@ function buildEmailHtml(type: string, payload: Record<string, unknown>): { subje
     <div style="background:${attending ? "#f0fdf4" : "#fef2f2"};border:1px solid ${attending ? "#bbf7d0" : "#fecaca"};border-radius:8px;padding:20px 24px;text-align:center;">
       <p style="margin:0;font-size:18px;font-weight:600;color:${attending ? "#15803d" : "#dc2626"};">${guestName} will ${attending ? "be attending" : "not be attending"}</p>
     </div>
-    ${attending && p.mealChoice ? `<p style="margin:20px 0 0;font-size:14px;color:#555;">Meal: <strong>${p.mealChoice}</strong></p>` : ""}
-    ${attending && p.plusOneName ? `<p style="margin:8px 0 0;font-size:14px;color:#555;">Plus one: <strong>${p.plusOneName}</strong></p>` : ""}
-    ${p.notes ? `<p style="margin:8px 0 0;font-size:14px;color:#555;">Notes: ${p.notes}</p>` : ""}
+    ${attending && p.mealChoice ? `<p style="margin:20px 0 0;font-size:14px;color:#555;">Meal: <strong>${escapeHtml(p.mealChoice)}</strong></p>` : ""}
+    ${attending && p.plusOneName ? `<p style="margin:8px 0 0;font-size:14px;color:#555;">Plus one: <strong>${escapeHtml(p.plusOneName)}</strong></p>` : ""}
+    ${p.notes ? `<p style="margin:8px 0 0;font-size:14px;color:#555;">Notes: ${escapeHtml(p.notes)}</p>` : ""}
   </div>
   <div style="padding:20px 40px;background:#f9f7f4;text-align:center;border-top:1px solid #ede9e0;"><p style="margin:0;font-size:12px;color:#aaa;">Powered by DayOf</p></div>
 </div></body></html>`,
@@ -47,7 +72,7 @@ function buildEmailHtml(type: string, payload: Record<string, unknown>): { subje
 
   if (type === "rsvp_confirmation") {
     const attending = p.attending as boolean;
-    const guestName = p.guestName as string;
+    const guestName = escapeHtml(p.guestName || "there");
     return {
       subject: `RSVP Confirmed – ${c1} & ${c2}`,
       html: `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#f9f7f4;font-family:Georgia,serif;">
@@ -63,11 +88,55 @@ function buildEmailHtml(type: string, payload: Record<string, unknown>): { subje
       : `<p style="font-size:15px;color:#555;line-height:1.7;">Thank you for letting us know. We'll miss you!</p>`}
     ${attending && (p.weddingDate || p.venueName) ? `<div style="background:#f9f7f4;border-radius:8px;padding:20px 24px;margin-top:24px;text-align:left;">
       <p style="margin:0 0 12px;font-size:13px;color:#888;letter-spacing:2px;text-transform:uppercase;">Event Details</p>
-      ${p.weddingDate ? `<p style="margin:0 0 6px;font-size:15px;color:#333;">${p.weddingDate}</p>` : ""}
-      ${p.venueName ? `<p style="margin:0;font-size:15px;color:#333;">${p.venueName}</p>` : ""}
+      ${p.weddingDate ? `<p style="margin:0 0 6px;font-size:15px;color:#333;">${escapeHtml(p.weddingDate)}</p>` : ""}
+      ${p.venueName ? `<p style="margin:0;font-size:15px;color:#333;">${escapeHtml(p.venueName)}</p>` : ""}
     </div>` : ""}
   </div>
   <div style="padding:20px 40px;background:#f9f7f4;text-align:center;border-top:1px solid #ede9e0;"><p style="margin:0;font-size:12px;color:#aaa;">Powered by DayOf</p></div>
+</div></body></html>`,
+    };
+  }
+
+  if (type === "guest_recap_available") {
+    return {
+      subject: `The ${String(p.coupleLabel || `${payload.coupleName1 || "Partner"} & ${payload.coupleName2 || "Partner"}`)} wedding recap is ready`,
+      html: `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#f9f7f4;font-family:Georgia,serif;">
+<div style="max-width:560px;margin:40px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,0.08);">
+  <div style="background:#1a1a1a;padding:34px 40px;text-align:center;">
+    <p style="margin:0;color:#c8a97e;font-size:12px;letter-spacing:3px;text-transform:uppercase;">Wedding Recap</p>
+    <h1 style="margin:10px 0 0;color:#fff;font-size:30px;font-weight:400;">${p.coupleLabel ? escapeHtml(p.coupleLabel) : `${c1} &amp; ${c2}`}</h1>
+  </div>
+  <div style="padding:38px 36px;text-align:center;">
+    <p style="font-size:18px;color:#333;margin:0 0 10px;">Hi ${escapeHtml(p.guestName || "there")},</p>
+    <p style="font-size:15px;color:#555;line-height:1.75;margin:0 0 26px;">The guest photo recap is ready: highlights, memory chapters, and shared moments from the wedding weekend.</p>
+    <a href="${safeEmailHref(p.recapUrl)}" style="display:inline-block;background:#1a1a1a;color:#fff;text-decoration:none;padding:14px 34px;border-radius:999px;font-size:14px;font-weight:600;">View the recap</a>
+    <p style="margin:22px 0 0;font-size:13px;color:#777;line-height:1.6;">Have photos from the day? You can still add them from the recap page.</p>
+  </div>
+  <div style="padding:20px 36px;background:#f9f7f4;text-align:center;border-top:1px solid #ede9e0;">
+    <p style="margin:0;font-size:12px;color:#999;">Made with DayOf</p>
+  </div>
+</div></body></html>`,
+    };
+  }
+
+  if (type === "prospect_future_event") {
+    return {
+      subject: `Want a DayOf site for your own event?`,
+      html: `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#f9f7f4;font-family:Georgia,serif;">
+<div style="max-width:560px;margin:40px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,0.08);">
+  <div style="background:#1a1a1a;padding:34px 40px;text-align:center;">
+    <p style="margin:0;color:#c8a97e;font-size:12px;letter-spacing:3px;text-transform:uppercase;">DayOf</p>
+    <h1 style="margin:10px 0 0;color:#fff;font-size:28px;font-weight:400;">Make your event feel this easy</h1>
+  </div>
+  <div style="padding:38px 36px;text-align:center;">
+    <p style="font-size:18px;color:#333;margin:0 0 10px;">Hi ${escapeHtml(p.guestName || "there")},</p>
+    <p style="font-size:15px;color:#555;line-height:1.75;margin:0 0 18px;">You used DayOf for ${p.coupleLabel ? escapeHtml(p.coupleLabel) : `${c1} &amp; ${c2}`}. If you ever plan your own wedding or private event, you can get the same RSVP, photo recap, guest messaging, and planning tools in one place.</p>
+    <a href="${safeEmailHref(p.signupUrl || "https://dayof.love/signup")}" style="display:inline-block;background:#1a1a1a;color:#fff;text-decoration:none;padding:14px 34px;border-radius:999px;font-size:14px;font-weight:600;">Create your DayOf</a>
+    <p style="margin:22px 0 0;font-size:13px;color:#777;line-height:1.6;">Want to remember what it looked like? <a href="${safeEmailHref(p.recapUrl)}" style="color:#1a1a1a;">Open the wedding recap</a>.</p>
+  </div>
+  <div style="padding:20px 36px;background:#f9f7f4;text-align:center;border-top:1px solid #ede9e0;">
+    <p style="margin:0;font-size:12px;color:#999;">Made with DayOf</p>
+  </div>
 </div></body></html>`,
     };
   }
@@ -176,7 +245,7 @@ Deno.serve(async (req: Request) => {
 
     return json({ processed: items.length, delivered, failed });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Internal server error";
-    return json({ error: message }, 500);
+    console.error("PROCESS_EMAIL_QUEUE_UNEXPECTED_FAILED", err);
+    return json({ error: "Could not process email queue. Please try again." }, 500);
   }
 });

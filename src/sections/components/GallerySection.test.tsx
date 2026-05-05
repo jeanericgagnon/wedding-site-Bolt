@@ -82,6 +82,32 @@ describe('GallerySection', () => {
     expect(screen.queryByAltText('Fallback photo')).not.toBeInTheDocument();
   });
 
+  it('drops unsafe gallery URLs and internal-looking captions before public render', () => {
+    const data = createEmptyWeddingData();
+    data.media.gallery = [
+      { id: 'unsafe', url: 'javascript:alert(1)', caption: 'Provider metadata token failed' },
+      { id: 'safe', url: 'https://example.com/safe.jpg', caption: 'Ceremony garden' },
+    ];
+
+    render(
+      <GallerySection
+        data={data}
+        instance={makeInstance({
+          showTitle: true,
+          title: 'Photos',
+          images: [
+            { id: 'bad-setting', url: 'https://image.thum.io/get/width/900/https%3A%2F%2Fexample.com', caption: 'Page Not Found' },
+            { id: 'safe-setting', url: 'https://example.com/builder-safe.jpg', caption: 'database bucket failed', alt: 'Garden moment' },
+          ],
+        })}
+      />
+    );
+
+    const image = screen.getByAltText('Garden moment') as HTMLImageElement;
+    expect(image.src).toContain('https://example.com/builder-safe.jpg');
+    expect(screen.queryByText(/provider|metadata|database|bucket|page not found/i)).not.toBeInTheDocument();
+  });
+
   it('falls back to weddingData gallery when section settings are empty', () => {
     const data = createEmptyWeddingData();
     data.media.gallery = [{ id: 'fallback-1', url: 'https://example.com/fallback.jpg', caption: 'Fallback photo' }];

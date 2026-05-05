@@ -2,6 +2,7 @@ import React from 'react';
 import { z } from 'zod';
 import { Plane, Car, Hotel, ExternalLink } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
+import { getSafePublicWebUrl } from '../../publicLinks';
 
 const HotelSchema = z.object({
   id: z.string(),
@@ -72,11 +73,11 @@ const TravelList: React.FC<SectionComponentProps<TravelListData>> = ({ data }) =
       <div className="max-w-5xl mx-auto px-6 md:px-12">
         <div className="text-center mb-16">
           {data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">
+            <p className="text-sm text-stone-400 font-light mb-4">
               {data.eyebrow}
             </p>
           )}
-          <h2 className="text-4xl md:text-6xl font-light text-stone-900 tracking-tight">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-stone-900">{data.headline}</h2>
         </div>
 
         {travelItems.length > 0 && (
@@ -87,7 +88,7 @@ const TravelList: React.FC<SectionComponentProps<TravelListData>> = ({ data }) =
                   <div className="w-8 h-8 rounded-lg bg-stone-50 border border-stone-100 flex items-center justify-center">
                     <Icon size={15} className="text-stone-500" />
                   </div>
-                  <h3 className="text-sm font-medium text-stone-700 uppercase tracking-wide">{label}</h3>
+                  <h3 className="text-sm font-medium text-stone-700">{label}</h3>
                 </div>
                 <p className="text-sm text-stone-500 leading-relaxed text-pretty">{content}</p>
               </div>
@@ -100,7 +101,7 @@ const TravelList: React.FC<SectionComponentProps<TravelListData>> = ({ data }) =
             <div className="flex items-center gap-4 mb-8">
               <div className="flex items-center gap-2">
                 <Hotel size={16} className="text-stone-400" />
-                <h3 className="text-sm font-semibold text-stone-700 uppercase tracking-wider">Where to Stay</h3>
+                <h3 className="text-sm font-semibold text-stone-700">Where to stay</h3>
               </div>
               <div className="flex-1 h-px bg-stone-200" />
             </div>
@@ -112,12 +113,14 @@ const TravelList: React.FC<SectionComponentProps<TravelListData>> = ({ data }) =
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {data.hotels.map(hotel => (
+              {data.hotels.map(hotel => {
+                const safeHotelUrl = getSafePublicWebUrl(hotel.url);
+                return (
                 <div key={hotel.id} className="bg-white rounded-2xl p-6 border border-stone-100 shadow-sm hover:shadow-md transition-shadow">
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <h4 className="text-base font-medium text-stone-900">{hotel.name}</h4>
-                    {hotel.url && (
-                      <a href={hotel.url} target="_blank" rel="noopener noreferrer" className="flex-shrink-0">
+                    {safeHotelUrl && (
+                      <a href={safeHotelUrl} target="_blank" rel="noopener noreferrer" className="flex-shrink-0">
                         <ExternalLink size={14} className="text-stone-400 hover:text-stone-600 transition-colors" />
                       </a>
                     )}
@@ -132,7 +135,8 @@ const TravelList: React.FC<SectionComponentProps<TravelListData>> = ({ data }) =
                     {hotel.notes && <p className="text-stone-400 text-xs leading-relaxed pt-1">{hotel.notes}</p>}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}

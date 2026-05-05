@@ -13,9 +13,9 @@ describe('coordinatorRoleBoard', () => {
         { key: 'alerts-later', label: 'Schedule', enabled: false, detail: '' },
       ],
     })).toEqual({
-      statusLabel: 'This role can run day-of ops with guardrails',
+      statusLabel: 'This role can help on the wedding day with guardrails',
       tone: 'warning',
-      modeLabel: 'Live coordinator operator',
+      modeLabel: 'Coordinator helper',
       enabledLabel: 'Check-in · Timeline · Guest Q&A · Send now',
       blockedLabel: 'Schedule',
       guidanceLabel: 'Run guest movement, live timing, answers, and urgent sends without drifting into planner-only work.',

@@ -11,7 +11,7 @@ describe('coordinatorCommandBoard', () => {
       secondary: 'Timeline',
       primaryActionTitle: 'Resolve the next door exception',
     })).toEqual({
-      statusLabel: 'Check-in is the live priority',
+      statusLabel: 'Check-in is the next focus',
       tone: 'warning',
       firstActionLabel: 'Open door review · Check-in',
       firstTargetLabel: 'Resolve the next door exception on Alex Rivera',
@@ -29,11 +29,11 @@ describe('coordinatorCommandBoard', () => {
       secondary: null,
       primaryActionTitle: 'Board is under control',
     })).toEqual({
-      statusLabel: 'Command board is pacing the room',
+      statusLabel: 'Updates are ready when you need them',
       tone: 'ready',
       firstActionLabel: 'Open alert draft · Alerting',
       firstTargetLabel: 'Board is under control',
-      secondActionLabel: 'No second priority queued',
+      secondActionLabel: 'No second step waiting',
       reasonLabel: 'live event update is ready to send',
     });
   });

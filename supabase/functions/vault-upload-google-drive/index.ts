@@ -171,7 +171,8 @@ Deno.serve(async (req: Request) => {
 
     const uploadJson = await uploadRes.json();
     if (!uploadRes.ok || !uploadJson.id) {
-      return json({ error: "Google Drive upload failed", details: uploadJson }, 400);
+      console.error("VAULT_UPLOAD_GOOGLE_DRIVE_UPLOAD_FAILED", uploadJson);
+      return json({ error: "Could not upload this file to Google Drive. Please try again." }, 400);
     }
 
     return json({
@@ -181,6 +182,7 @@ Deno.serve(async (req: Request) => {
       folderId: yearFolderId,
     });
   } catch (err) {
-    return json({ error: err instanceof Error ? err.message : "Internal server error" }, 500);
+    console.error("VAULT_UPLOAD_GOOGLE_DRIVE_UNEXPECTED_FAILED", err);
+    return json({ error: "Could not upload this file to Google Drive. Please try again." }, 500);
   }
 });

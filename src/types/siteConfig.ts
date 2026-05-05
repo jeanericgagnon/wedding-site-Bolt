@@ -24,7 +24,7 @@ export interface SiteConfig {
     enabled: boolean;
   };
   sections: SectionConfig[];
-  content: Record<string, unknown>;
+  content: Record<string, any>;
   theme: {
     preset?: string;
     tokens?: Record<string, string>;

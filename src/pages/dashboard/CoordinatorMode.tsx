@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Input, Textarea } from '../../components/ui';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
+import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
-import { PLANNER_ROLE_OPTIONS, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
+import { PLANNER_ROLE_OPTIONS, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole, type PlannerPermissionKey } from '../../lib/plannerAccess';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { isAttendingRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 import { useToast } from '../../components/ui/Toast';
@@ -160,6 +161,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const [qnaItems, setQnaItems] = useState<QnaItem[]>([]);
   const [coordinatorRole, setCoordinatorRole] = useState<PlannerAccessRole>('owner');
   const [activeSiteRole, setActiveSiteRole] = useState<PlannerAccessRole>('owner');
+  const [coordinatorPermissions, setCoordinatorPermissions] = useState<PlannerPermissionKey[] | null>(null);
   const [alertChannelFilter, setAlertChannelFilter] = useState<'all' | 'email' | 'sms'>('all');
   const [alertTimingFilter, setAlertTimingFilter] = useState<'all' | 'now' | 'scheduled'>('all');
   const [qnaInput, setQnaInput] = useState('');
@@ -225,6 +227,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
         setSiteId(resolvedSiteId);
         setActiveSiteRole(activeSite?.role ?? 'owner');
         setCoordinatorRole(activeSite?.role ?? 'owner');
+        setCoordinatorPermissions(activeSite?.permissions ?? null);
 
         const [{ data: guestsData }, { data: eventsData }] = await Promise.all([
           supabase.from('guests').select('id, first_name, last_name, name, rsvp_status, checked_in_at').eq('wedding_site_id', resolvedSiteId),
@@ -480,7 +483,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
         .eq('id', guest.id)
         .eq('wedding_site_id', siteId);
       if (error) {
-        toast(error.message || 'Could not update check-in right now.', 'error');
+        toast('Couldn’t update check-in right now.', 'error');
         return;
       }
 
@@ -518,11 +521,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
     return guests.length;
   })();
 
-  const canCheckIn = canManageCoordinatorCheckIn(coordinatorRole);
-  const canEditTimeline = canManageCoordinatorTimeline(coordinatorRole);
-  const canEditQna = canManageCoordinatorQna(coordinatorRole);
-  const canSendAlerts = canSendImmediateCoordinatorAlerts(coordinatorRole);
-  const canScheduleAlerts = canScheduleCoordinatorAlerts(coordinatorRole);
+  const canCheckIn = canManageCoordinatorCheckIn(coordinatorRole, coordinatorPermissions);
+  const canEditTimeline = canManageCoordinatorTimeline(coordinatorRole, coordinatorPermissions);
+  const canEditQna = canManageCoordinatorQna(coordinatorRole, coordinatorPermissions);
+  const canSendAlerts = canSendImmediateCoordinatorAlerts(coordinatorRole, coordinatorPermissions);
+  const canScheduleAlerts = canScheduleCoordinatorAlerts(coordinatorRole, coordinatorPermissions);
 
   const qnaCounts = useMemo(() => getCoordinatorQnaCounts(qnaItems), [qnaItems]);
   const filteredQnaItems = useMemo(() => filterCoordinatorQnaItems(qnaItems, qnaFilter), [qnaItems, qnaFilter]);
@@ -573,7 +576,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   const handoffCopy = {
     title: coordinatorRole === 'viewer' ? 'Viewer handoff' : coordinatorRole === 'coordinator' ? 'Coordinator handoff' : 'Planner handoff',
     detail: coordinatorRole === 'viewer'
-      ? 'Use this board for visibility only and escalate changes to the active operator.'
+      ? 'Use this view for visibility only and pass changes to the couple or planner.'
       : coordinatorRole === 'coordinator'
         ? 'Keep live updates moving and flag anything sensitive back to the couple.'
         : 'Run the room, keep communications aligned, and escalate only the decisions that need the couple.'
@@ -1148,8 +1151,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
           : reset;
       });
       toast(scheduledFor ? 'Coordinator alert scheduled.' : 'Coordinator alert queued.', 'success');
-    } catch (err) {
-      toast(err instanceof Error ? err.message : 'Could not queue that alert right now.', 'error');
+    } catch {
+      toast('Couldn’t prepare that update right now.', 'error');
     } finally {
       setAlertBusy(false);
     }
@@ -1173,7 +1176,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
         .select('id, question, answer, status')
         .single();
       if (error) {
-        toast(error.message || 'Could not save that question.', 'error');
+        toast('Couldn’t save that guest question right now.', 'error');
         return;
       }
       if (data) {
@@ -1587,7 +1590,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
         status: nextItem.status,
       }).eq('id', id);
       if (error) {
-        toast(error.message || 'Could not save that answer.', 'error');
+        toast('Couldn’t save that answer right now.', 'error');
         return;
       }
     }
@@ -1599,13 +1602,18 @@ export const DashboardCoordinatorMode: React.FC = () => {
   };
 
   return (
-    <DashboardLayout currentPage="planning">
+    <DashboardLayout currentPage="coordinator">
       <div className="max-w-6xl mx-auto space-y-5">
-        <div className="rounded-2xl border border-border/35 bg-white shadow-[0_6px_20px_rgba(15,23,42,0.06)] p-5 flex flex-col md:flex-row md:items-end md:justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-semibold text-text-primary">Coordinator mode</h1>
-            <p className="text-sm text-text-secondary mt-1">A live command view for the couple and the planner they invite to help run check-in, timeline updates, guest questions, and day-of messages.</p>
-          </div>
+        <DashboardPageHero
+          eyebrow="Day-of view"
+          title="Give helpers the next useful thing, not every planning detail."
+          description="Check-in, schedule updates, guest questions, and day-of messages stay focused so a planner or coordinator can act quickly."
+          stats={[
+            { label: 'Guests', value: stats.total, detail: `${stats.confirmed} attending` },
+            { label: 'Checked in', value: stats.checkedIn, detail: 'arrivals marked' },
+            { label: 'Questions', value: qnaCounts.open, detail: 'open guest questions' },
+          ]}
+          actions={
           <div>
             <label className="block text-xs text-text-tertiary mb-1">Planner access view</label>
             <select
@@ -1622,7 +1630,8 @@ export const DashboardCoordinatorMode: React.FC = () => {
               <p className="mt-1 text-[11px] text-text-tertiary">Access view follows your actual collaborator role on this site.</p>
             )}
           </div>
-        </div>
+          }
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -1632,21 +1641,21 @@ export const DashboardCoordinatorMode: React.FC = () => {
               ['Pending', stats.pending],
               ['Checked In', stats.checkedIn],
             ].map(([label, value]) => (
-              <div key={String(label)} className="rounded-xl border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] p-4">
-                <p className="text-xs uppercase tracking-wide text-text-tertiary">{label}</p>
+              <div key={String(label)} className="rounded-xl border border-border-subtle bg-white p-4 shadow-sm">
+                <p className="text-xs text-text-tertiary">{label}</p>
                 <p className="text-2xl font-semibold text-text-primary mt-1">{loading ? '—' : value}</p>
               </div>
             ))}
           </div>
 
-          <div className="rounded-2xl border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] p-4">
+          <div className="rounded-xl border border-border-subtle bg-white p-4 shadow-sm">
             <p className="text-sm font-medium text-text-primary mb-2">Attention now</p>
             <p className="text-[11px] text-text-tertiary mb-2">This pulls together the live exceptions the coordinator should resolve first.</p>
             <div className="space-y-2">
               {liveIssues.length === 0 && correctionCues.length === 0 && (
-                <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2">
-                  <p className="text-sm font-medium text-emerald-800">Board is clear right now</p>
-                  <p className="mt-1 text-xs text-emerald-700">No active escalations or recovery cues are waiting. Use the command center to review the next-best action.</p>
+                <div className="rounded-lg border border-border-subtle bg-accent-light px-3 py-2">
+                  <p className="text-sm font-medium text-primary">Board is clear right now</p>
+                  <p className="mt-1 text-xs text-text-secondary">No active escalations or recovery cues are waiting. Use the next helpful action when you want a fast cue.</p>
                 </div>
               )}
               {liveIssues.map((item) => (
@@ -1667,7 +1676,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                       setTimelineState((prev) => setCoordinatorEventTimelineState(prev, timelineTarget, 'live'));
                     }
                   }}
-                  className={`w-full text-left rounded-lg border px-3 py-2 ${item.tone === 'warning' ? 'border-amber-200 bg-amber-50' : item.tone === 'success' ? 'border-emerald-200 bg-emerald-50' : 'border-border/50 bg-surface-subtle/40'}`}
+                  className={`w-full rounded-lg border px-3 py-2 text-left ${item.tone === 'warning' ? 'border-primary/20 bg-accent-light' : item.tone === 'success' ? 'border-border-subtle bg-surface-subtle' : 'border-border/50 bg-surface-subtle/40'}`}
                 >
                   <p className="text-sm font-medium text-text-primary">{item.title}</p>
                   <p className="mt-1 text-xs text-text-secondary">{item.detail}</p>
@@ -1679,7 +1688,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   key={cue.key}
                   type="button"
                   onClick={() => runCorrectionCue(cue)}
-                  className="w-full text-left rounded-lg border border-amber-200 bg-amber-50 px-3 py-2"
+                  className="w-full rounded-lg border border-primary/20 bg-accent-light px-3 py-2 text-left"
                 >
                   <p className="text-sm font-medium text-text-primary">{cue.title}</p>
                   <p className="mt-1 text-xs text-text-secondary">{cue.detail}</p>
@@ -1718,7 +1727,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
             <div className="mt-3 flex flex-wrap gap-2">
               <a href="/dashboard/rsvp-board" className="rounded border border-border px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary">Open RSVP board</a>
               <a href="/dashboard/seating-lookup" className="rounded border border-border px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary">Open seating lookup</a>
-              <a href="/dashboard/planning" className="rounded border border-border px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary">Open planning workspace</a>
+              <a href="/dashboard/planning" className="rounded border border-border px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/40 hover:text-primary">Open planning</a>
             </div>
           </div>
         </div>
@@ -1726,43 +1735,43 @@ export const DashboardCoordinatorMode: React.FC = () => {
         <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
           <p className="font-medium">{handoffCopy.title}</p>
           <p className="mt-1 text-primary/80">{handoffCopy.detail}</p>
-          <p className="mt-2 text-primary/70">Final couple decisions still sit above this workspace when something needs approval.</p>
+          <p className="mt-2 text-primary/70">Final couple decisions stay with the couple when something needs approval.</p>
         </div>
 
-        <div className="rounded-lg border border-border/35 bg-white px-3 py-3 shadow-[0_4px_14px_rgba(15,23,42,0.05)]">
+        <div className="rounded-xl border border-border-subtle bg-white px-3 py-3 shadow-sm">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-medium text-text-primary">Role-aware live ops access</p>
+              <p className="text-xs font-medium text-text-primary">Day-of helper access</p>
               <p className="mt-1 text-[11px] text-text-tertiary">
                 {coordinatorRole === 'viewer'
                   ? 'Read-only visibility for day-of coordination.'
                   : coordinatorRole === 'coordinator'
-                    ? 'Live operator access for event-day execution.'
-                    : 'Broader planner access with live ops control.'}
+                    ? 'Can help with event-day updates and guest flow.'
+                    : 'Broader planner access with day-of controls.'}
               </p>
             </div>
-            <span className={`rounded-full border px-2 py-1 text-[10px] font-medium ${coordinatorRole === 'viewer' ? 'border-border bg-surface-subtle text-text-tertiary' : coordinatorRole === 'coordinator' ? 'border-primary/20 bg-primary/5 text-primary' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}>
-              {coordinatorRole === 'viewer' ? 'Read only' : coordinatorRole === 'coordinator' ? 'Coordinator operator' : 'Planner operator'}
+            <span className={`rounded-lg border px-2 py-1 text-[10px] font-medium ${coordinatorRole === 'viewer' ? 'border-border bg-surface-subtle text-text-tertiary' : coordinatorRole === 'coordinator' ? 'border-primary/20 bg-primary/5 text-primary' : 'border-border-subtle bg-accent-light text-primary'}`}>
+              {coordinatorRole === 'viewer' ? 'Read only' : coordinatorRole === 'coordinator' ? 'Coordinator helper' : 'Planner helper'}
             </span>
           </div>
           <div className="mt-3 rounded-lg border border-border/50 bg-surface-subtle/25 px-3 py-3">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[11px] font-medium text-text-primary">Operator posture</p>
+                <p className="text-[11px] font-medium text-text-primary">Helper role</p>
                 <p className="mt-1 text-[11px] text-text-secondary">Mode · {roleBoard.modeLabel}</p>
                 <p className="text-[11px] text-text-secondary">Enabled · {roleBoard.enabledLabel}</p>
               </div>
-              <span className={`rounded-full border px-2 py-1 text-[10px] font-medium ${roleBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : roleBoard.tone === 'warning' ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-border bg-white text-text-tertiary'}`}>
+              <span className={`rounded-lg border px-2 py-1 text-[10px] font-medium ${roleBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : roleBoard.tone === 'warning' ? 'border-primary/20 bg-accent-light text-primary' : 'border-border bg-white text-text-tertiary'}`}>
                 {roleBoard.statusLabel}
               </span>
             </div>
             <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
               <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
-                <p className="text-[10px] uppercase tracking-wide text-text-tertiary">Blocked here</p>
+                <p className="text-[10px] text-text-tertiary">Blocked here</p>
                 <p className="mt-1 text-[11px] text-text-primary">{roleBoard.blockedLabel}</p>
               </div>
               <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
-                <p className="text-[10px] uppercase tracking-wide text-text-tertiary">Operating note</p>
+                <p className="text-[10px] text-text-tertiary">Operating note</p>
                 <p className="mt-1 text-[11px] text-text-primary">{roleBoard.guidanceLabel}</p>
               </div>
             </div>
@@ -1775,7 +1784,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
               >
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-[11px] font-medium text-text-primary">{item.label}</p>
-                  <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${item.enabled ? 'border-primary/20 bg-white text-primary' : 'border-border bg-white text-text-tertiary'}`}>
+                  <span className={`rounded-lg border px-1.5 py-0.5 text-[9px] font-medium ${item.enabled ? 'border-primary/20 bg-white text-primary' : 'border-border bg-white text-text-tertiary'}`}>
                     {item.enabled ? 'Enabled' : 'Blocked'}
                   </span>
                 </div>
@@ -1785,41 +1794,41 @@ export const DashboardCoordinatorMode: React.FC = () => {
           </div>
         </div>
 
-        <div className="rounded-lg border border-border/35 bg-white px-3 py-2 shadow-[0_4px_14px_rgba(15,23,42,0.05)]">
+        <div className="rounded-xl border border-border-subtle bg-white px-3 py-2 shadow-sm">
           <div className="flex items-center justify-between gap-3 mb-2">
-            <p className="text-xs font-medium text-text-primary">Live command summary</p>
-            <p className="text-[11px] text-text-tertiary">What the board thinks matters right now</p>
+            <p className="text-xs font-medium text-text-primary">Day-of summary</p>
+            <p className="text-[11px] text-text-tertiary">What needs attention right now</p>
           </div>
 
           {summaryDisplayCue ? (
             <div className="mb-3 space-y-2">
               <div>
-                <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-text-tertiary">Live signal</p>
+                <p className="text-[10px] font-medium text-text-tertiary">Current signal</p>
                 {summaryDisplayCue.kind === 'feedback' && summaryFeedbackTone && (
-                  <div className={`mt-1 inline-flex flex-wrap items-center gap-2 rounded-full border px-2.5 text-[11px] ${summaryFeedbackTone.containerClassName} ${summaryFeedbackLayout === 'prominent' ? 'py-1.5 shadow-[0_2px_8px_rgba(15,23,42,0.08)]' : summaryFeedbackLayout === 'standard' ? 'py-1' : 'py-0.5 opacity-90'}`}>
-                    <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${summaryFeedbackBadgeToneClassName}`}>{summaryFeedbackBadge ?? summaryFeedbackTone.badge}</span>
+                  <div className={`mt-1 inline-flex flex-wrap items-center gap-2 rounded-lg border px-2.5 text-[11px] ${summaryFeedbackTone.containerClassName} ${summaryFeedbackLayout === 'prominent' ? 'py-1.5 shadow-sm' : summaryFeedbackLayout === 'standard' ? 'py-1' : 'py-0.5 opacity-90'}`}>
+                    <span className={`rounded-lg border px-1.5 py-0.5 text-[9px] font-medium ${summaryFeedbackBadgeToneClassName}`}>{summaryFeedbackBadge ?? summaryFeedbackTone.badge}</span>
                     <span>{summaryFeedbackCopy ?? summaryDisplayCue.feedback.label}</span>
                   </div>
                 )}
                 {summaryDisplayCue.kind === 'alert-override' && (
-                  <div className="mt-1 inline-flex flex-wrap items-center gap-2 rounded-full border border-amber-200 bg-amber-50/80 px-2.5 py-1 text-[11px] text-amber-800">
-                    <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${overrideBadgeToneClassName}`}>{alertOverrideBadge}</span>
+                  <div className="mt-1 inline-flex flex-wrap items-center gap-2 rounded-lg border border-primary/20 bg-accent-light px-2.5 py-1 text-[11px] text-primary">
+                    <span className={`rounded-lg border px-1.5 py-0.5 text-[9px] font-medium ${overrideBadgeToneClassName}`}>{alertOverrideBadge}</span>
                     <span>{summaryDisplayCue.label}</span>
-                    {alertOverrideTargetLabel && <span className="text-amber-800/80">{alertOverrideTargetLabel}</span>}
+                    {alertOverrideTargetLabel && <span className="text-primary/80">{alertOverrideTargetLabel}</span>}
                     {alertOverrideCurrentLabel && <span className="text-text-secondary">{alertOverrideCurrentLabel}</span>}
                   </div>
                 )}
                 {summaryDisplayCue.kind === 'manual-override' && (
-                  <div className="mt-1 inline-flex flex-wrap items-center gap-2 rounded-full border border-amber-200 bg-amber-50/80 px-2.5 py-1 text-[11px] text-amber-800">
-                    <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${overrideBadgeToneClassName}`}>{manualOverrideBadge}</span>
+                  <div className="mt-1 inline-flex flex-wrap items-center gap-2 rounded-lg border border-primary/20 bg-accent-light px-2.5 py-1 text-[11px] text-primary">
+                    <span className={`rounded-lg border px-1.5 py-0.5 text-[9px] font-medium ${overrideBadgeToneClassName}`}>{manualOverrideBadge}</span>
                     <span>{summaryDisplayCue.label}</span>
-                    {manualOverrideTargetLabel && <span className="text-amber-800/80">{manualOverrideTargetLabel}</span>}
+                    {manualOverrideTargetLabel && <span className="text-primary/80">{manualOverrideTargetLabel}</span>}
                     {manualOverrideCurrentTargetLabel && <span className="text-text-secondary">{manualOverrideCurrentTargetLabel}</span>}
                     {manualOverrideActionLabel && (
                       <button
                         type="button"
                         onClick={returnToBoardTarget}
-                        className="rounded-full border border-amber-200 bg-white px-2 py-0.5 text-amber-700"
+                        className="rounded-lg border border-border-subtle bg-white px-2 py-0.5 text-primary"
                       >
                         {manualOverrideActionLabel}
                       </button>
@@ -1829,31 +1838,31 @@ export const DashboardCoordinatorMode: React.FC = () => {
               </div>
 
               <div>
-                <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-text-tertiary">{standingPromptMode === 'secondary' ? 'Next up' : 'Standing prompt'}</p>
+                <p className="text-[10px] font-medium text-text-tertiary">{standingPromptMode === 'secondary' ? 'Next up' : 'Standing prompt'}</p>
                 <button
                   type="button"
                   onClick={jumpToStablePrompt}
-                  className={`mt-1 inline-flex flex-wrap items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] hover:border-primary/35 hover:bg-primary/[0.04] ${standingPromptMode === 'secondary' ? 'border-border/35 bg-surface-subtle/20 text-text-tertiary' : 'border-border/50 bg-surface-subtle/40 text-text-secondary'}`}
+                  className={`mt-1 inline-flex flex-wrap items-center gap-2 rounded-lg border px-2.5 py-1 text-[11px] hover:border-primary/35 hover:bg-primary/[0.04] ${standingPromptMode === 'secondary' ? 'border-border/35 bg-surface-subtle/20 text-text-tertiary' : 'border-border/50 bg-surface-subtle/40 text-text-secondary'}`}
                 >
-                  <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${stablePromptBadgeToneClassName}`}>{standingPromptBadge}</span>
+                  <span className={`rounded-lg border px-1.5 py-0.5 text-[9px] font-medium ${stablePromptBadgeToneClassName}`}>{standingPromptBadge}</span>
                   <span>{standingPromptMode === 'secondary' ? stablePrompt.badge : stablePrompt.label}</span>
                   {standingPromptMode === 'full' && stablePromptTargetLabel && <span className="text-text-tertiary">{stablePromptTargetLabel}</span>}
-                  <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${stablePromptStateToneClassName}`}>{standingPromptStateLabel}</span>
+                  <span className={`rounded-lg border px-1.5 py-0.5 text-[9px] font-medium ${stablePromptStateToneClassName}`}>{standingPromptStateLabel}</span>
                 </button>
               </div>
             </div>
           ) : (
             <div className="mb-3">
-              <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-text-tertiary">{standingPromptMode === 'secondary' ? 'Next up' : 'Standing prompt'}</p>
+              <p className="text-[10px] font-medium text-text-tertiary">{standingPromptMode === 'secondary' ? 'Next up' : 'Standing prompt'}</p>
               <button
                 type="button"
                 onClick={jumpToStablePrompt}
-                className={`mt-1 inline-flex flex-wrap items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] hover:border-primary/35 hover:bg-primary/[0.04] ${standingPromptMode === 'secondary' ? 'border-border/35 bg-surface-subtle/20 text-text-tertiary' : 'border-border/50 bg-surface-subtle/40 text-text-secondary'}`}
+                className={`mt-1 inline-flex flex-wrap items-center gap-2 rounded-lg border px-2.5 py-1 text-[11px] hover:border-primary/35 hover:bg-primary/[0.04] ${standingPromptMode === 'secondary' ? 'border-border/35 bg-surface-subtle/20 text-text-tertiary' : 'border-border/50 bg-surface-subtle/40 text-text-secondary'}`}
               >
-                <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${stablePromptBadgeToneClassName}`}>{standingPromptBadge}</span>
+                <span className={`rounded-lg border px-1.5 py-0.5 text-[9px] font-medium ${stablePromptBadgeToneClassName}`}>{standingPromptBadge}</span>
                 <span>{standingPromptCopy}</span>
                 {stablePromptTargetLabel && <span className="text-text-tertiary">{stablePromptTargetLabel}</span>}
-                <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${stablePromptStateToneClassName}`}>{standingPromptStateLabel}</span>
+                <span className={`rounded-lg border px-1.5 py-0.5 text-[9px] font-medium ${stablePromptStateToneClassName}`}>{standingPromptStateLabel}</span>
               </button>
             </div>
           )}
@@ -1872,26 +1881,26 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 <button
                   type="button"
                   onClick={runPrimaryAction}
-                  className="rounded-full border border-primary/25 bg-primary/5 px-3 py-1 text-[11px] font-medium text-primary hover:bg-primary/10"
+                  className="rounded-lg border border-primary/25 bg-primary/5 px-3 py-1 text-[11px] font-medium text-primary hover:bg-primary/10"
                 >
-                  {primaryAction.key === 'all-clear' ? 'Review next best action' : 'Run primary action'}
+                  {primaryAction.key === 'all-clear' ? 'Review next best action' : 'Open suggested action'}
                 </button>
                 {commandSource && (
                   <button
                     type="button"
                     onClick={returnToBoard}
-                    className="rounded-full border border-border bg-white px-3 py-1 text-[11px] text-text-secondary hover:border-primary/35 hover:text-primary"
+                    className="rounded-lg border border-border bg-white px-3 py-1 text-[11px] text-text-secondary hover:border-primary/35 hover:text-primary"
                   >
-                    Return to board
+                    Return to summary
                   </button>
                 )}
                 {!commandSource && panelFocus && (
                   <button
                     type="button"
                     onClick={revisitNeutralFocus}
-                    className="rounded-full border border-border bg-white px-3 py-1 text-[11px] text-text-secondary hover:border-primary/35 hover:text-primary"
+                    className="rounded-lg border border-border bg-white px-3 py-1 text-[11px] text-text-secondary hover:border-primary/35 hover:text-primary"
                   >
-                    Revisit board focus
+                    Revisit focus
                   </button>
                 )}
               </div>
@@ -1900,32 +1909,32 @@ export const DashboardCoordinatorMode: React.FC = () => {
           <div className="mb-3 rounded-lg border border-border/50 bg-surface-subtle/25 px-3 py-3">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[11px] font-medium text-text-primary">Primary action path</p>
+                <p className="text-[11px] font-medium text-text-primary">Suggested action</p>
                 <p className="mt-1 text-[11px] text-text-secondary">Destination · {primaryActionBoard.destinationLabel}</p>
-                <p className="text-[11px] text-text-secondary">Execution · {primaryActionBoard.executionLabel}</p>
+                <p className="text-[11px] text-text-secondary">Follow-through · {primaryActionBoard.followThroughLabel}</p>
               </div>
-              <span className={`rounded-full border px-2 py-1 text-[10px] font-medium ${primaryActionBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : primaryActionBoard.tone === 'warning' ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-border bg-white text-text-tertiary'}`}>
+              <span className={`rounded-lg border px-2 py-1 text-[10px] font-medium ${primaryActionBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : primaryActionBoard.tone === 'warning' ? 'border-primary/20 bg-accent-light text-primary' : 'border-border bg-white text-text-tertiary'}`}>
                 {primaryActionBoard.statusLabel}
               </span>
             </div>
             <div className="mt-3 rounded-md border border-border/50 bg-white px-2.5 py-2">
-              <p className="text-[10px] uppercase tracking-wide text-text-tertiary">Action detail</p>
+              <p className="text-[10px] text-text-tertiary">Action detail</p>
               <p className="mt-1 text-[11px] text-text-primary">{primaryActionBoard.detailLabel}</p>
             </div>
           </div>
           <div className="mb-3 rounded-lg border border-border/50 bg-surface-subtle/25 px-3 py-3">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[11px] font-medium text-text-primary">Execution status</p>
-                <p className="mt-1 text-[11px] text-text-secondary">Lane · {executionBoard.laneLabel}</p>
-                <p className="text-[11px] text-text-secondary">Last move · {executionBoard.lastMoveLabel}</p>
+                <p className="text-[11px] font-medium text-text-primary">Progress status</p>
+                <p className="mt-1 text-[11px] text-text-secondary">Focus · {executionBoard.laneLabel}</p>
+                <p className="text-[11px] text-text-secondary">Latest update · {executionBoard.lastMoveLabel}</p>
               </div>
-              <span className={`rounded-full border px-2 py-1 text-[10px] font-medium ${executionBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : executionBoard.tone === 'warning' ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-border bg-white text-text-tertiary'}`}>
+              <span className={`rounded-lg border px-2 py-1 text-[10px] font-medium ${executionBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : executionBoard.tone === 'warning' ? 'border-primary/20 bg-accent-light text-primary' : 'border-border bg-white text-text-tertiary'}`}>
                 {executionBoard.statusLabel}
               </span>
             </div>
             <div className="mt-3 rounded-md border border-border/50 bg-white px-2.5 py-2">
-              <p className="text-[10px] uppercase tracking-wide text-text-tertiary">Effect</p>
+              <p className="text-[10px] text-text-tertiary">What it changes</p>
               <p className="mt-1 text-[11px] text-text-primary">{executionBoard.effectLabel}</p>
             </div>
           </div>
@@ -1934,35 +1943,35 @@ export const DashboardCoordinatorMode: React.FC = () => {
               <div>
                 <p className="text-[11px] font-medium text-text-primary">Navigation path</p>
                 <p className="mt-1 text-[11px] text-text-secondary">Destination · {navigationBoard.destinationLabel}</p>
-                <p className="text-[11px] text-text-secondary">Board target · {navigationBoard.boardTargetLabel}</p>
+                <p className="text-[11px] text-text-secondary">Next stop · {navigationBoard.boardTargetLabel}</p>
               </div>
-              <span className={`rounded-full border px-2 py-1 text-[10px] font-medium ${navigationBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : navigationBoard.tone === 'warning' ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-border bg-white text-text-tertiary'}`}>
+              <span className={`rounded-lg border px-2 py-1 text-[10px] font-medium ${navigationBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : navigationBoard.tone === 'warning' ? 'border-primary/20 bg-accent-light text-primary' : 'border-border bg-white text-text-tertiary'}`}>
                 {navigationBoard.statusLabel}
               </span>
             </div>
             <div className="mt-3 rounded-md border border-border/50 bg-white px-2.5 py-2">
-              <p className="text-[10px] uppercase tracking-wide text-text-tertiary">Route mode</p>
+              <p className="text-[10px] text-text-tertiary">Route mode</p>
               <p className="mt-1 text-[11px] text-text-primary">{navigationBoard.modeLabel}</p>
             </div>
           </div>
           <div className="mb-3 rounded-lg border border-border/50 bg-surface-subtle/25 px-3 py-3">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[11px] font-medium text-text-primary">Command board</p>
+                <p className="text-[11px] font-medium text-text-primary">Next steps</p>
                 <p className="mt-1 text-[11px] text-text-secondary">First · {commandBoard.firstActionLabel}</p>
                 <p className="text-[11px] text-text-secondary">Then · {commandBoard.secondActionLabel}</p>
               </div>
-              <span className={`rounded-full border px-2 py-1 text-[10px] font-medium ${commandBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : commandBoard.tone === 'warning' ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-border bg-white text-text-tertiary'}`}>
+              <span className={`rounded-lg border px-2 py-1 text-[10px] font-medium ${commandBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : commandBoard.tone === 'warning' ? 'border-primary/20 bg-accent-light text-primary' : 'border-border bg-white text-text-tertiary'}`}>
                 {commandBoard.statusLabel}
               </span>
             </div>
             <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
               <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
-                <p className="text-[10px] uppercase tracking-wide text-text-tertiary">Primary target</p>
+                <p className="text-[10px] text-text-tertiary">Primary target</p>
                 <p className="mt-1 text-[11px] text-text-primary">{commandBoard.firstTargetLabel}</p>
               </div>
               <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
-                <p className="text-[10px] uppercase tracking-wide text-text-tertiary">Why now</p>
+                <p className="text-[10px] text-text-tertiary">Why now</p>
                 <p className="mt-1 text-[11px] text-text-primary">{commandBoard.reasonLabel}</p>
               </div>
             </div>
@@ -1973,25 +1982,25 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 key={item.label}
                 type="button"
                 onClick={() => jumpToCommandSummaryItem(item.label)}
-                className={`rounded-xl border px-3 py-2.5 text-left transition hover:border-primary/35 hover:bg-primary/[0.04] ${item.tone === 'priority' ? 'border-primary/30 bg-primary/[0.06]' : item.tone === 'ready' ? 'border-emerald-200 bg-emerald-50/60' : 'border-border/50 bg-surface-subtle/35'}`}
+                className={`rounded-xl border px-3 py-2.5 text-left transition hover:border-primary/35 hover:bg-primary/[0.04] ${item.tone === 'priority' ? 'border-primary/30 bg-primary/[0.06]' : item.tone === 'ready' ? 'border-border-subtle bg-surface-subtle' : 'border-border/50 bg-surface-subtle/35'}`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-[11px] font-medium text-text-primary">{item.label}</p>
-                  <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${item.tone === 'priority' ? 'border-primary/20 bg-white text-primary' : item.tone === 'ready' ? 'border-emerald-200 bg-white text-emerald-700' : 'border-border bg-white text-text-tertiary'}`}>
+                  <span className={`rounded-lg border px-1.5 py-0.5 text-[9px] font-medium ${item.tone === 'priority' ? 'border-primary/20 bg-white text-primary' : item.tone === 'ready' ? 'border-border-subtle bg-white text-primary' : 'border-border bg-white text-text-tertiary'}`}>
                     {item.statusLabel}
                   </span>
                 </div>
-                <p className="mt-2 text-[10px] uppercase tracking-[0.12em] text-text-tertiary">Target</p>
+                <p className="mt-2 text-[10px] text-text-tertiary">Target</p>
                 <p className="mt-1 text-[11px] text-text-primary">{item.targetLabel}</p>
                 <p className="mt-2 text-[10px] text-text-secondary">{item.detail}</p>
-                <div className="mt-2 inline-flex items-center gap-1 rounded-full border border-border/60 bg-white/80 px-2 py-1 text-[9px] font-medium text-text-secondary">
+                <div className="mt-2 inline-flex items-center gap-1 rounded-lg border border-border/60 bg-white/80 px-2 py-1 text-[9px] font-medium text-text-secondary">
                   <span className="text-text-tertiary">Next</span>
                   <span>{item.actionLabel}</span>
                 </div>
                 {priorityCommandLabel === item.label && (
-                  <div className="mt-2 inline-flex flex-wrap items-center gap-1 rounded-full border border-primary/20 bg-white/80 px-2 py-1 text-[9px] font-medium text-primary">
-                    <span>Priority — {priorityCommandReason}{priorityCommandTargetReason ? ` ${priorityCommandTargetReason}` : ''}</span>
-                    <span className="rounded-full border border-primary/15 bg-primary/[0.05] px-1.5 py-0.5">{priorityCommandCta}</span>
+                  <div className="mt-2 inline-flex flex-wrap items-center gap-1 rounded-lg border border-primary/20 bg-white/80 px-2 py-1 text-[9px] font-medium text-primary">
+                    <span>Now — {priorityCommandReason}{priorityCommandTargetReason ? ` ${priorityCommandTargetReason}` : ''}</span>
+                    <span className="rounded-lg border border-primary/15 bg-primary/[0.05] px-1.5 py-0.5">{priorityCommandCta}</span>
                   </div>
                 )}
               </button>
@@ -2008,13 +2017,13 @@ export const DashboardCoordinatorMode: React.FC = () => {
               >
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-[11px] font-medium text-text-primary">{item.label}</p>
-                  <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${item.priority ? 'border-primary/20 bg-white text-primary' : 'border-border bg-white text-text-tertiary'}`}>
+                  <span className={`rounded-lg border px-1.5 py-0.5 text-[9px] font-medium ${item.priority ? 'border-primary/20 bg-white text-primary' : 'border-border bg-white text-text-tertiary'}`}>
                     {item.status}
                   </span>
                 </div>
                 <p className="mt-2 text-[11px] text-text-secondary">{item.detail}</p>
                 {item.target && <p className="mt-2 text-[10px] text-text-tertiary">Target · {item.target}</p>}
-                <p className="mt-3 text-[10px] font-medium uppercase tracking-[0.12em] text-text-tertiary">{item.cta}</p>
+                <p className="mt-3 text-[10px] font-medium text-text-tertiary">{item.cta}</p>
               </button>
             ))}
           </div>
@@ -2025,18 +2034,18 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 key={item.key}
                 type="button"
                 onClick={() => jumpToOpsSnapshotLane(item.key)}
-                className={`rounded-xl border px-3 py-3 text-left transition hover:border-primary/35 hover:bg-primary/[0.04] ${item.tone === 'warning' ? 'border-amber-200 bg-amber-50/70' : item.tone === 'success' ? 'border-emerald-200 bg-emerald-50/70' : 'border-border/50 bg-surface-subtle/30'}`}
+                className={`rounded-xl border px-3 py-3 text-left transition hover:border-primary/35 hover:bg-primary/[0.04] ${item.tone === 'warning' ? 'border-primary/20 bg-accent-light' : item.tone === 'success' ? 'border-border-subtle bg-surface-subtle' : 'border-border/50 bg-surface-subtle/30'}`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="text-[11px] font-medium text-text-primary">{item.title}</p>
                     <p className="mt-1 text-[11px] text-text-secondary">{item.detail}</p>
                   </div>
-                  <span className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${item.locked ? 'border-border bg-white text-text-tertiary' : item.tone === 'warning' ? 'border-amber-200 bg-white text-amber-700' : item.tone === 'success' ? 'border-emerald-200 bg-white text-emerald-700' : 'border-primary/20 bg-white text-primary'}`}>
+                  <span className={`rounded-lg border px-1.5 py-0.5 text-[9px] font-medium ${item.locked ? 'border-border bg-white text-text-tertiary' : item.tone === 'warning' ? 'border-border-subtle bg-white text-primary' : item.tone === 'success' ? 'border-border-subtle bg-white text-primary' : 'border-primary/20 bg-white text-primary'}`}>
                     {item.locked ? 'Read only' : item.tone === 'warning' ? 'Needs action' : item.tone === 'success' ? 'On track' : 'Ready'}
                   </span>
                 </div>
-                <p className="mt-3 text-[10px] font-medium uppercase tracking-[0.12em] text-text-tertiary">{item.cta}</p>
+                <p className="mt-3 text-[10px] font-medium text-text-tertiary">{item.cta}</p>
               </button>
             ))}
           </div>
@@ -2044,7 +2053,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
         {coordinatorRole === 'planner' && (
           <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
-            Planner view is on — this workspace stays focused on live guest movement, timeline decisions, and day-of updates.
+            Planner view is on. This view stays focused on guest movement, timeline decisions, and day-of updates.
           </div>
         )}
         {coordinatorRole === 'viewer' && (
@@ -2054,7 +2063,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className={`lg:col-span-2 rounded-2xl border bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] overflow-hidden ${panelFocus === 'check-in' ? 'border-primary/40 ring-2 ring-primary/10' : 'border-border/35'}`}>
+          <div className={`lg:col-span-2 overflow-hidden rounded-xl border bg-white shadow-sm ${panelFocus === 'check-in' ? 'border-primary/40 ring-2 ring-primary/10' : 'border-border-subtle'}`}>
             <div className="px-4 py-3 border-b border-border/60 space-y-3">
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -2070,17 +2079,17 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     <p className="mt-1 text-[11px] text-text-secondary">Active · {checkInBoard.activeLabel}</p>
                     <p className="text-[11px] text-text-secondary">Next ready · {checkInBoard.nextReadyLabel}</p>
                   </div>
-                  <span className={`rounded-full border px-2 py-1 text-[10px] font-medium ${checkInBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : checkInBoard.tone === 'warning' ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-border bg-white text-text-tertiary'}`}>
+                  <span className={`rounded-lg border px-2 py-1 text-[10px] font-medium ${checkInBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : checkInBoard.tone === 'warning' ? 'border-primary/20 bg-accent-light text-primary' : 'border-border bg-white text-text-tertiary'}`}>
                     {checkInBoard.statusLabel}
                   </span>
                 </div>
                 <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
                   <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
-                    <p className="text-[10px] uppercase tracking-wide text-text-tertiary">Queue mix</p>
+                    <p className="text-[10px] text-text-tertiary">Queue mix</p>
                     <p className="mt-1 text-[11px] text-text-primary">{checkInBoard.queueLabel}</p>
                   </div>
                   <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
-                    <p className="text-[10px] uppercase tracking-wide text-text-tertiary">Review pressure</p>
+                    <p className="text-[10px] text-text-tertiary">Review pressure</p>
                     <p className="mt-1 text-[11px] text-text-primary">{checkInBoard.reviewLabel}</p>
                   </div>
                 </div>
@@ -2122,7 +2131,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     setCheckInReviewOnly(false);
                     setActiveGuestId(nextArrivals[0]?.id ?? null);
                   }}
-                  className={`rounded-full border px-2.5 py-1 text-[11px] ${!checkInReviewOnly && checkInFilter === 'arrivals' ? 'border-primary/35 bg-primary/5 text-primary' : 'border-border bg-white text-text-secondary hover:border-primary/35 hover:text-primary'}`}
+                  className={`rounded-lg border px-2.5 py-1 text-[11px] ${!checkInReviewOnly && checkInFilter === 'arrivals' ? 'border-primary/35 bg-primary/5 text-primary' : 'border-border bg-white text-text-secondary hover:border-primary/35 hover:text-primary'}`}
                 >
                   Ready now{nextArrivals.length ? ` · ${nextArrivals.length}` : ''}
                 </button>
@@ -2134,7 +2143,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     setCheckInReviewOnly((prev) => !prev);
                     setActiveGuestId(checkInBoardTargetId);
                   }}
-                  className={`rounded-full border px-2.5 py-1 text-[11px] ${checkInReviewOnly ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-border bg-white text-text-secondary hover:border-amber-300 hover:text-amber-800'}`}
+                  className={`rounded-lg border px-2.5 py-1 text-[11px] ${checkInReviewOnly ? 'border-primary/20 bg-accent-light text-primary' : 'border-border bg-white text-text-secondary hover:border-primary/35 hover:text-primary'}`}
                 >
                   Review only{checkInWatchCount ? ` · ${checkInWatchCount}` : ''}
                 </button>
@@ -2148,7 +2157,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                       void toggleCheckIn(activeGuest);
                     }}
                     disabled={!canCheckIn || checkInBusyGuestId === activeGuestId || !(checkInQueue.find((guest) => guest.id === activeGuestId))}
-                    className="rounded-full border border-primary/25 bg-primary/5 px-2.5 py-1 text-[11px] text-primary disabled:opacity-40"
+                    className="rounded-lg border border-primary/25 bg-primary/5 px-2.5 py-1 text-[11px] text-primary disabled:opacity-40"
                   >
                     {checkInBusyGuestId === activeGuestId ? 'Updating…' : 'Check in active guest'}
                   </button>
@@ -2175,17 +2184,17 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-sm font-medium text-text-primary">{g.name}</p>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] border ${doorStatus === 'ready' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : doorStatus === 'watch' ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-border bg-surface-subtle text-text-tertiary'}`}>
+                        <span className={`px-2 py-0.5 rounded-lg text-[10px] border ${doorStatus === 'ready' ? 'border-border-subtle bg-accent-light text-primary' : doorStatus === 'watch' ? 'border-primary/20 bg-accent-light text-primary' : 'border-border bg-surface-subtle text-text-tertiary'}`}>
                           {getCoordinatorDoorStatusLabel(doorStatus)}
                         </span>
                         {checkInBoardTargetId === g.id && (
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] border ${checkInTargetState.isBoardTargetActive ? 'border-primary/25 bg-primary/10 text-primary' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>
-                            {checkInTargetState.isBoardTargetActive ? 'Board target in progress' : 'Board target'}
+                          <span className={`px-2 py-0.5 rounded-lg text-[10px] border ${checkInTargetState.isBoardTargetActive ? 'border-primary/25 bg-primary/10 text-primary' : 'border-primary/20 bg-accent-light text-primary'}`}>
+                            {checkInTargetState.isBoardTargetActive ? 'Suggested guest in progress' : 'Suggested guest'}
                           </span>
                         )}
                         {activeGuestId === g.id && checkInBoardTargetId !== g.id && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] border border-primary/20 bg-primary/5 text-primary">
-                            Working guest
+                          <span className="px-2 py-0.5 rounded-lg text-[10px] border border-primary/20 bg-primary/5 text-primary">
+                            Selected guest
                           </span>
                         )}
                       </div>
@@ -2196,16 +2205,23 @@ export const DashboardCoordinatorMode: React.FC = () => {
                         <button
                           type="button"
                           onClick={(e) => { e.stopPropagation(); escalateDoorReview(g); }}
-                          className="px-3 py-1.5 text-xs rounded-md border border-amber-200 text-amber-700 bg-amber-50"
+                          className="rounded-md border border-primary/20 bg-accent-light px-3 py-1.5 text-xs text-primary"
                         >
                           Escalate
                         </button>
                       )}
                       <button
                         type="button"
-                          onClick={(e) => { e.stopPropagation(); focusCoordinatorCheckInLane(); setActiveGuestId(g.id); canCheckIn && void toggleCheckIn(g); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            focusCoordinatorCheckInLane();
+                            setActiveGuestId(g.id);
+                            if (canCheckIn) {
+                              void toggleCheckIn(g);
+                            }
+                          }}
                         disabled={!canCheckIn || doorStatus === 'watch' || checkInBusyGuestId === g.id}
-                        className={`px-3 py-1.5 text-xs rounded-md border disabled:opacity-40 ${g.checked_in_at ? 'border-success/40 text-success bg-success/5' : doorStatus === 'watch' ? 'border-amber-200 text-amber-700 bg-amber-50' : 'border-border text-text-secondary bg-white'}`}
+                        className={`rounded-md border px-3 py-1.5 text-xs disabled:opacity-40 ${g.checked_in_at ? 'border-primary/20 bg-accent-light text-primary' : doorStatus === 'watch' ? 'border-primary/20 bg-accent-light text-primary' : 'border-border bg-white text-text-secondary'}`}
                       >
                         {checkInBusyGuestId === g.id ? 'Updating…' : g.checked_in_at ? getCoordinatorCheckInActionLabel(g) : doorStatus === 'watch' ? 'Review first' : getCoordinatorCheckInActionLabel(g)}
                       </button>
@@ -2216,7 +2232,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] p-4 space-y-4">
+          <div className="space-y-4 rounded-xl border border-border-subtle bg-white p-4 shadow-sm">
             <div>
               <p className="text-sm font-medium text-text-primary mb-2">Run-of-show timeline{panelFocus === 'timeline' ? ' · focus' : ''}{activeTimelineEventId ? ` · ${getCoordinatorActiveTargetLabel('timeline')}` : ''}{timelineTargetState.label ? ` · ${timelineTargetState.label}` : ''}</p>
               <div className="mb-2 rounded-lg border border-border/50 bg-surface-subtle/25 px-3 py-3">
@@ -2226,7 +2242,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     <p className="mt-1 text-[11px] text-text-secondary">Live · {timelineBoard.liveLabel}</p>
                     <p className="text-[11px] text-text-secondary">Up next · {timelineBoard.upNextLabel}</p>
                   </div>
-                  <span className={`rounded-full border px-2 py-1 text-[10px] font-medium ${timelineBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : timelineBoard.tone === 'warning' ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-border bg-white text-text-tertiary'}`}>
+                  <span className={`rounded-lg border px-2 py-1 text-[10px] font-medium ${timelineBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : timelineBoard.tone === 'warning' ? 'border-primary/20 bg-accent-light text-primary' : 'border-border bg-white text-text-tertiary'}`}>
                     {timelineBoard.stateLabel}
                   </span>
                 </div>
@@ -2249,7 +2265,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                           type="button"
                           disabled={!canEditTimeline}
                           onClick={() => runTimelineAction(activeTimelineEvent.id, activeTimelineCorrectionAction.nextState)}
-                          className="text-[11px] px-2.5 py-1 rounded border border-amber-200 bg-amber-50 text-amber-700 disabled:opacity-40"
+                          className="rounded border border-primary/20 bg-accent-light px-2.5 py-1 text-[11px] text-primary disabled:opacity-40"
                         >
                           {activeTimelineCorrectionAction.label}
                         </button>
@@ -2274,7 +2290,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => jumpToTimelineEvent(liveEventId)}
-                      className={`text-[11px] px-2 py-1 rounded-full border ${activeTimelineEventId === liveEventId ? 'border-primary/30 bg-primary/10 text-primary' : 'border-primary/20 bg-primary/5 text-primary hover:bg-primary/10'}`}
+                      className={`text-[11px] px-2 py-1 rounded-lg border ${activeTimelineEventId === liveEventId ? 'border-primary/30 bg-primary/10 text-primary' : 'border-primary/20 bg-primary/5 text-primary hover:bg-primary/10'}`}
                     >
                       Jump to live event
                     </button>
@@ -2283,7 +2299,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => jumpToTimelineEvent(upNextEventId)}
-                      className={`text-[11px] px-2 py-1 rounded-full border ${activeTimelineEventId === upNextEventId ? 'border-amber-300 bg-amber-100 text-amber-800' : 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'}`}
+                      className={`rounded-lg border px-2 py-1 text-[11px] ${activeTimelineEventId === upNextEventId ? 'border-primary/20 bg-accent-light text-primary' : 'border-border-subtle bg-surface-subtle text-text-secondary hover:border-primary/35 hover:text-primary'}`}
                     >
                       Jump to up next
                     </button>
@@ -2292,9 +2308,9 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => jumpToTimelineEvent(timelineBoardTargetId)}
-                      className={`text-[11px] px-2 py-1 rounded-full border ${activeTimelineEventId === timelineBoardTargetId ? 'border-primary/30 bg-primary/10 text-primary' : 'border-border bg-white text-text-secondary hover:border-primary/35 hover:text-primary'}`}
+                      className={`text-[11px] px-2 py-1 rounded-lg border ${activeTimelineEventId === timelineBoardTargetId ? 'border-primary/30 bg-primary/10 text-primary' : 'border-border bg-white text-text-secondary hover:border-primary/35 hover:text-primary'}`}
                     >
-                      Jump to board target
+                      Jump to suggested event
                     </button>
                   )}
                 </div>
@@ -2317,7 +2333,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     return (
                       <div
                         key={e.id}
-                        className={`rounded-lg border px-3 py-2 cursor-pointer ${activeTimelineEventId === e.id ? 'ring-2 ring-primary/10 ' : ''}${isLive ? 'border-primary/35 bg-primary/5' : isUpNext ? 'border-amber-200 bg-amber-50' : 'border-border/50 bg-surface-subtle/40'}`}
+                        className={`cursor-pointer rounded-lg border px-3 py-2 ${activeTimelineEventId === e.id ? 'ring-2 ring-primary/10 ' : ''}${isLive ? 'border-primary/35 bg-primary/5' : isUpNext ? 'border-primary/20 bg-accent-light' : 'border-border/50 bg-surface-subtle/40'}`}
                         onClick={() => {
                           focusCoordinatorTimelineLane();
                           setActiveTimelineEventId(e.id);
@@ -2328,13 +2344,13 @@ export const DashboardCoordinatorMode: React.FC = () => {
                             <div className="flex flex-wrap items-center gap-2">
                               <p className="text-sm text-text-primary">{e.event_name}</p>
                               {timelineBoardTargetId === e.id && (
-                                <span className={`px-2 py-0.5 rounded-full text-[10px] border ${timelineTargetState.isBoardTargetActive ? 'border-primary/25 bg-primary/10 text-primary' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>
-                                  {timelineTargetState.isBoardTargetActive ? 'Board event in progress' : isLive ? 'Board live event' : 'Board up-next event'}
+                                <span className={`px-2 py-0.5 rounded-lg text-[10px] border ${timelineTargetState.isBoardTargetActive ? 'border-primary/25 bg-primary/10 text-primary' : 'border-primary/20 bg-accent-light text-primary'}`}>
+                                  {timelineTargetState.isBoardTargetActive ? 'Suggested event in progress' : isLive ? 'Suggested live event' : 'Suggested up-next event'}
                                 </span>
                               )}
                               {activeTimelineEventId === e.id && timelineBoardTargetId !== e.id && (
-                                <span className="px-2 py-0.5 rounded-full text-[10px] border border-primary/20 bg-primary/5 text-primary">
-                                  Working event
+                                <span className="px-2 py-0.5 rounded-lg text-[10px] border border-primary/20 bg-primary/5 text-primary">
+                                  Selected event
                                 </span>
                               )}
                             </div>
@@ -2360,7 +2376,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                                 type="button"
                                 disabled={!canEditTimeline}
                                 onClick={(ev) => { ev.stopPropagation(); runTimelineAction(e.id, correctionAction.nextState); }}
-                                className="text-[11px] px-2.5 py-1 rounded border border-amber-200 bg-amber-50 text-amber-700 disabled:opacity-40"
+                                className="rounded border border-primary/20 bg-accent-light px-2.5 py-1 text-[11px] text-primary disabled:opacity-40"
                               >
                                 {correctionAction.label}
                               </button>
@@ -2391,11 +2407,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   ['Queued', alertStats.total],
                   ['Send now', alertStats.immediate],
                   ['Scheduled', alertStats.scheduled],
-                  ['SMS', alertStats.sms],
+                  ['Text', alertStats.sms],
                   ['Email', alertStats.email],
                 ].map(([label, value]) => (
-                  <div key={String(label)} className="rounded-lg border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.04)] px-2.5 py-2">
-                    <p className="text-[10px] uppercase tracking-wide text-text-tertiary">{label}</p>
+                  <div key={String(label)} className="rounded-lg border border-border-subtle bg-white px-2.5 py-2 shadow-sm">
+                    <p className="text-[10px] text-text-tertiary">{label}</p>
                     <p className="text-xs font-semibold text-text-primary">{value}</p>
                   </div>
                 ))}
@@ -2406,17 +2422,17 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     <p className="text-[11px] font-medium text-text-primary">Alert board</p>
                     <p className="mt-1 text-[11px] text-text-secondary">{alertBoard.targetLabel}</p>
                   </div>
-                  <span className={`rounded-full border px-2 py-1 text-[10px] font-medium ${alertBoard.statusTone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : alertBoard.statusTone === 'warning' ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-border bg-white text-text-tertiary'}`}>
+                  <span className={`rounded-lg border px-2 py-1 text-[10px] font-medium ${alertBoard.statusTone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : alertBoard.statusTone === 'warning' ? 'border-primary/20 bg-accent-light text-primary' : 'border-border bg-white text-text-tertiary'}`}>
                     {alertBoard.statusLabel}
                   </span>
                 </div>
                 <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
                   <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
-                    <p className="text-[10px] uppercase tracking-wide text-text-tertiary">Delivery</p>
+                    <p className="text-[10px] text-text-tertiary">Delivery</p>
                     <p className="mt-1 text-[11px] text-text-primary">{alertBoard.deliveryLabel}</p>
                   </div>
                   <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
-                    <p className="text-[10px] uppercase tracking-wide text-text-tertiary">Latest activity</p>
+                    <p className="text-[10px] text-text-tertiary">Latest activity</p>
                     <p className="mt-1 text-[11px] text-text-primary">{alertBoard.latestActivityLabel}</p>
                   </div>
                 </div>
@@ -2428,17 +2444,17 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     <p className="mt-1 text-[11px] text-text-secondary">Latest live · {alertActivityBoard.latestLiveLabel}</p>
                     <p className="text-[11px] text-text-secondary">Next scheduled · {alertActivityBoard.nextScheduledLabel}</p>
                   </div>
-                  <span className={`rounded-full border px-2 py-1 text-[10px] font-medium ${alertActivityBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : alertActivityBoard.tone === 'warning' ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-border bg-white text-text-tertiary'}`}>
+                  <span className={`rounded-lg border px-2 py-1 text-[10px] font-medium ${alertActivityBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : alertActivityBoard.tone === 'warning' ? 'border-primary/20 bg-accent-light text-primary' : 'border-border bg-white text-text-tertiary'}`}>
                     {alertActivityBoard.statusLabel}
                   </span>
                 </div>
                 <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
                   <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
-                    <p className="text-[10px] uppercase tracking-wide text-text-tertiary">Channel mix</p>
+                    <p className="text-[10px] text-text-tertiary">Channel mix</p>
                     <p className="mt-1 text-[11px] text-text-primary">{alertActivityBoard.channelLabel}</p>
                   </div>
                   <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
-                    <p className="text-[10px] uppercase tracking-wide text-text-tertiary">Pacing</p>
+                    <p className="text-[10px] text-text-tertiary">Pacing</p>
                     <p className="mt-1 text-[11px] text-text-primary">{alertActivityBoard.pacingLabel}</p>
                   </div>
                 </div>
@@ -2468,11 +2484,11 @@ export const DashboardCoordinatorMode: React.FC = () => {
                         }));
                         setLastAlertSuggestionKey(suggestion.key);
                       }}
-                      className={`text-[11px] px-2 py-1 rounded-full border inline-flex items-center gap-1.5 disabled:opacity-40 ${suggestionState.isDraftMatch ? 'border-primary/35 bg-primary/10 text-primary' : suggestionState.isBoardTarget ? 'border-primary/25 bg-primary/5 text-primary hover:bg-primary/10' : 'border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary'}`}
+                      className={`text-[11px] px-2 py-1 rounded-lg border inline-flex items-center gap-1.5 disabled:opacity-40 ${suggestionState.isDraftMatch ? 'border-primary/35 bg-primary/10 text-primary' : suggestionState.isBoardTarget ? 'border-primary/25 bg-primary/5 text-primary hover:bg-primary/10' : 'border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary'}`}
                     >
                       <span>{suggestion.label}</span>
                       {suggestionState.badge && (
-                        <span className={`px-1.5 py-0.5 rounded-full border text-[9px] font-medium ${suggestionState.isDraftMatch ? 'border-primary/25 bg-white/80 text-primary' : 'border-primary/15 bg-primary/[0.04] text-primary/80'}`}>
+                        <span className={`px-1.5 py-0.5 rounded-lg border text-[9px] font-medium ${suggestionState.isDraftMatch ? 'border-primary/25 bg-white/80 text-primary' : 'border-primary/15 bg-primary/[0.04] text-primary/80'}`}>
                           {suggestionState.badge}
                         </span>
                       )}
@@ -2483,7 +2499,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   type="button"
                   disabled={!canSendAlerts}
                   onClick={() => { focusCoordinatorAlertLane(); setAlertForm((prev) => ({ ...prev, channel: 'sms', scheduleType: 'now' })); }}
-                  className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary disabled:opacity-40"
+                  className="text-[11px] px-2 py-1 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary disabled:opacity-40"
                 >
                   Text now
                 </button>
@@ -2491,7 +2507,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                   type="button"
                   disabled={!canSendAlerts || !canScheduleAlerts}
                   onClick={() => { focusCoordinatorAlertLane(); setAlertForm((prev) => ({ ...prev, channel: 'email', scheduleType: 'later' })); }}
-                  className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary disabled:opacity-40"
+                  className="text-[11px] px-2 py-1 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary disabled:opacity-40"
                 >
                   Schedule email
                 </button>
@@ -2501,7 +2517,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     type="button"
                     disabled={!canSendAlerts}
                     onClick={() => { focusCoordinatorAlertLane(); setAlertForm((prev) => ({ ...prev, audience })); }}
-                    className="text-[11px] px-2 py-1 rounded-full border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary disabled:opacity-40"
+                    className="text-[11px] px-2 py-1 rounded-lg border border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary disabled:opacity-40"
                   >
                     {audience} ({count})
                   </button>
@@ -2539,7 +2555,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     className="text-xs rounded-md border border-border bg-white px-2 py-2 text-text-secondary"
                   >
                     <option value="email">Email</option>
-                    <option value="sms">SMS</option>
+                    <option value="sms">Text</option>
                   </select>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -2568,30 +2584,30 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     </div>
                   ) : <div />}
                 </div>
-                <div className={`rounded-md border px-3 py-2 space-y-2 ${alertTargetCue.aligned ? 'border-primary/20 bg-primary/[0.03]' : 'border-amber-200 bg-amber-50/80'}`}>
+                <div className={`space-y-2 rounded-md border px-3 py-2 ${alertTargetCue.aligned ? 'border-primary/20 bg-primary/[0.03]' : 'border-primary/20 bg-accent-light'}`}>
                   <div className="flex items-center justify-between gap-2">
                     <div>
                       <p className="text-[11px] font-medium text-text-primary">Ready to send</p>
                       <p className="text-[10px] text-text-tertiary/80">{getCoordinatorActiveTargetLabel('alert')}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className={`px-2 py-0.5 rounded-full border text-[10px] font-medium ${alertTargetCue.aligned ? 'border-primary/20 bg-primary/5 text-primary' : 'border-amber-300 bg-amber-100 text-amber-800'}`}>{alertTargetCue.aligned ? 'Board-aligned' : 'Customized'}</span>
-                      <span className="px-2 py-0.5 rounded-full border border-primary/20 bg-primary/5 text-[10px] font-medium text-primary">{alertLaneLabel}</span>
+                      <span className={`px-2 py-0.5 rounded-lg border text-[10px] font-medium ${alertTargetCue.aligned ? 'border-primary/20 bg-primary/5 text-primary' : 'border-border-subtle bg-white text-primary'}`}>{alertTargetCue.aligned ? 'Board-aligned' : 'Customized'}</span>
+                      <span className="px-2 py-0.5 rounded-lg border border-primary/20 bg-primary/5 text-[10px] font-medium text-primary">{alertLaneLabel}</span>
                     </div>
                   </div>
                   <p className="text-[11px] font-medium text-text-primary">{alertTargetCue.title}</p>
                   <p className="text-[11px] text-text-secondary">{alertTargetCue.detail}</p>
                   {!alertTargetCue.aligned && (
                     <div className="space-y-2">
-                      {alertOverrideLabel && <p className="text-[11px] text-amber-800">{alertOverrideLabel}</p>}
+                      {alertOverrideLabel && <p className="text-[11px] text-primary">{alertOverrideLabel}</p>}
                       <div className="flex flex-wrap items-center gap-2 text-[11px]">
-                        {alertOverrideTargetLabel && <p className="text-amber-800/80">{alertOverrideTargetLabel}</p>}
+                        {alertOverrideTargetLabel && <p className="text-primary/80">{alertOverrideTargetLabel}</p>}
                         {alertOverrideCurrentLabel && <p className="text-text-secondary">{alertOverrideCurrentLabel}</p>}
                         {preferredAlertSuggestion && (
                           <button
                             type="button"
                             onClick={() => { focusCoordinatorAlertLane(); setAlertForm((prev) => applyCoordinatorAlertSuggestion({ form: prev, suggestion: preferredAlertSuggestion })); }}
-                            className="inline-flex w-fit px-2.5 py-1 rounded-md border border-amber-300 bg-white text-[11px] font-medium text-amber-800"
+                            className="inline-flex w-fit rounded-md border border-border-subtle bg-white px-2.5 py-1 text-[11px] font-medium text-primary"
                           >
                             Re-align to {preferredAlertSuggestion.label.toLowerCase()}
                           </button>
@@ -2615,15 +2631,15 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 {alertLog.length > 0 && (
                   <div className="pt-1 space-y-1.5">
                     <div className="flex flex-wrap gap-1.5">
-                      <button type="button" onClick={() => { focusCoordinatorAlertLane(); setAlertChannelFilter('all'); }} className={`text-[11px] px-2 py-0.5 rounded-full border ${alertChannelFilter === 'all' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>All</button>
-                      <button type="button" onClick={() => { focusCoordinatorAlertLane(); setAlertChannelFilter('email'); }} className={`text-[11px] px-2 py-0.5 rounded-full border ${alertChannelFilter === 'email' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>Email</button>
-                      <button type="button" onClick={() => { focusCoordinatorAlertLane(); setAlertChannelFilter('sms'); }} className={`text-[11px] px-2 py-0.5 rounded-full border ${alertChannelFilter === 'sms' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>SMS</button>
-                      <button type="button" onClick={() => { focusCoordinatorAlertLane(); setAlertTimingFilter('all'); }} className={`text-[11px] px-2 py-0.5 rounded-full border ${alertTimingFilter === 'all' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>Any time</button>
-                      <button type="button" onClick={() => { focusCoordinatorAlertLane(); setAlertTimingFilter('now'); }} className={`text-[11px] px-2 py-0.5 rounded-full border ${alertTimingFilter === 'now' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>Send now</button>
-                      <button type="button" onClick={() => { focusCoordinatorAlertLane(); setAlertTimingFilter('scheduled'); }} className={`text-[11px] px-2 py-0.5 rounded-full border ${alertTimingFilter === 'scheduled' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>Scheduled</button>
+                      <button type="button" onClick={() => { focusCoordinatorAlertLane(); setAlertChannelFilter('all'); }} className={`text-[11px] px-2 py-0.5 rounded-lg border ${alertChannelFilter === 'all' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>All</button>
+                      <button type="button" onClick={() => { focusCoordinatorAlertLane(); setAlertChannelFilter('email'); }} className={`text-[11px] px-2 py-0.5 rounded-lg border ${alertChannelFilter === 'email' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>Email</button>
+                      <button type="button" onClick={() => { focusCoordinatorAlertLane(); setAlertChannelFilter('sms'); }} className={`text-[11px] px-2 py-0.5 rounded-lg border ${alertChannelFilter === 'sms' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>Text</button>
+                      <button type="button" onClick={() => { focusCoordinatorAlertLane(); setAlertTimingFilter('all'); }} className={`text-[11px] px-2 py-0.5 rounded-lg border ${alertTimingFilter === 'all' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>Any time</button>
+                      <button type="button" onClick={() => { focusCoordinatorAlertLane(); setAlertTimingFilter('now'); }} className={`text-[11px] px-2 py-0.5 rounded-lg border ${alertTimingFilter === 'now' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>Send now</button>
+                      <button type="button" onClick={() => { focusCoordinatorAlertLane(); setAlertTimingFilter('scheduled'); }} className={`text-[11px] px-2 py-0.5 rounded-lg border ${alertTimingFilter === 'scheduled' ? 'border-primary/35 text-primary bg-primary/5' : 'border-border text-text-secondary bg-white'}`}>Scheduled</button>
                     </div>
                     {filteredAlertLogView.slice(0, 4).map((item) => (
-                      <div key={item.id} className={`border rounded-md px-2.5 py-2 ${item.tone === 'ready' ? 'border-primary/20 bg-primary/[0.03]' : 'border-amber-200 bg-amber-50/50'}`}>
+                      <div key={item.id} className={`rounded-md border px-2.5 py-2 ${item.tone === 'ready' ? 'border-primary/20 bg-primary/[0.03]' : 'border-primary/20 bg-accent-light'}`}>
                         <div className="flex items-center justify-between gap-2">
                           <p className="text-[11px] font-medium text-text-primary">{item.title}</p>
                           <p className="text-[10px] text-text-tertiary">{item.meta}</p>
@@ -2652,17 +2668,17 @@ export const DashboardCoordinatorMode: React.FC = () => {
                     <p className="mt-1 text-[11px] text-text-secondary">Focused · {qnaBoard.activeLabel}</p>
                     <p className="text-[11px] text-text-secondary">Next up · {qnaBoard.nextLabel}</p>
                   </div>
-                  <span className={`rounded-full border px-2 py-1 text-[10px] font-medium ${qnaBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : qnaBoard.tone === 'warning' ? 'border-amber-300 bg-amber-50 text-amber-800' : 'border-border bg-white text-text-tertiary'}`}>
+                  <span className={`rounded-lg border px-2 py-1 text-[10px] font-medium ${qnaBoard.tone === 'ready' ? 'border-primary/20 bg-primary/5 text-primary' : qnaBoard.tone === 'warning' ? 'border-primary/20 bg-accent-light text-primary' : 'border-border bg-white text-text-tertiary'}`}>
                     {qnaBoard.statusLabel}
                   </span>
                 </div>
                 <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
                   <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
-                    <p className="text-[10px] uppercase tracking-wide text-text-tertiary">Backlog</p>
+                    <p className="text-[10px] text-text-tertiary">Backlog</p>
                     <p className="mt-1 text-[11px] text-text-primary">{qnaBoard.backlogLabel}</p>
                   </div>
                   <div className="rounded-md border border-border/50 bg-white px-2.5 py-2">
-                    <p className="text-[10px] uppercase tracking-wide text-text-tertiary">Focused draft</p>
+                    <p className="text-[10px] text-text-tertiary">Focused draft</p>
                     <p className="mt-1 text-[11px] text-text-primary">{qnaBoard.draftLabel}</p>
                   </div>
                 </div>
@@ -2686,9 +2702,9 @@ export const DashboardCoordinatorMode: React.FC = () => {
                             setQnaFilter('open');
                             setActiveQnaId(qnaBoardTargetId);
                           }}
-                          className="rounded-full border border-border bg-white px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/35 hover:text-primary"
+                          className="rounded-lg border border-border bg-white px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/35 hover:text-primary"
                         >
-                          Jump to board question
+                          Jump to suggested question
                         </button>
                       )}
                       <button
@@ -2698,7 +2714,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                           setActiveQnaId(activeQnaItem.id);
                           void saveQnaAnswer(activeQnaItem.id);
                         }}
-                        className="rounded-full border border-primary/25 bg-primary/5 px-2.5 py-1 text-[11px] text-primary"
+                        className="rounded-lg border border-primary/25 bg-primary/5 px-2.5 py-1 text-[11px] text-primary"
                       >
                         {(qnaDraftAnswers[activeQnaItem.id] ?? activeQnaItem.answer ?? '').trim() ? 'Save focused reply' : 'Reopen focused question'}
                       </button>
@@ -2706,7 +2722,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
                         <button
                           type="button"
                           onClick={focusNextCoordinatorQna}
-                          className="rounded-full border border-border bg-white px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/35 hover:text-primary"
+                          className="rounded-lg border border-border bg-white px-2.5 py-1 text-[11px] text-text-secondary hover:border-primary/35 hover:text-primary"
                         >
                           Open next question
                         </button>
@@ -2736,21 +2752,21 @@ export const DashboardCoordinatorMode: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => { focusCoordinatorQnaLane(); setQnaFilter('open'); if (!activeQnaId) setActiveQnaId(getFirstOpenCoordinatorQnaId(qnaItems)); }}
-                  className={`rounded-full border px-2.5 py-1 text-[11px] ${qnaFilter === 'open' ? 'border-primary/35 bg-primary/5 text-primary' : 'border-border bg-white text-text-secondary hover:border-primary/35 hover:text-primary'}`}
+                  className={`rounded-lg border px-2.5 py-1 text-[11px] ${qnaFilter === 'open' ? 'border-primary/35 bg-primary/5 text-primary' : 'border-border bg-white text-text-secondary hover:border-primary/35 hover:text-primary'}`}
                 >
                   Open only · {qnaCounts.open}
                 </button>
                 <button
                   type="button"
                   onClick={() => { focusCoordinatorQnaLane(); setQnaFilter('answered'); }}
-                  className={`rounded-full border px-2.5 py-1 text-[11px] ${qnaFilter === 'answered' ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : 'border-border bg-white text-text-secondary hover:border-emerald-300 hover:text-emerald-800'}`}
+                  className={`rounded-lg border px-2.5 py-1 text-[11px] ${qnaFilter === 'answered' ? 'border-primary/20 bg-accent-light text-primary' : 'border-border bg-white text-text-secondary hover:border-primary/35 hover:text-primary'}`}
                 >
                   Answered · {qnaCounts.answered}
                 </button>
                 <button
                   type="button"
                   onClick={() => { focusCoordinatorQnaLane(); setQnaFilter('all'); }}
-                  className={`rounded-full border px-2.5 py-1 text-[11px] ${qnaFilter === 'all' ? 'border-border/70 bg-surface-subtle/40 text-text-primary' : 'border-border bg-white text-text-secondary hover:border-primary/35 hover:text-primary'}`}
+                  className={`rounded-lg border px-2.5 py-1 text-[11px] ${qnaFilter === 'all' ? 'border-border/70 bg-surface-subtle/40 text-text-primary' : 'border-border bg-white text-text-secondary hover:border-primary/35 hover:text-primary'}`}
                 >
                   All · {qnaItems.length}
                 </button>
@@ -2773,18 +2789,18 @@ export const DashboardCoordinatorMode: React.FC = () => {
                           <span className="text-text-secondary">{item.question}</span>
                           <div className="flex flex-wrap gap-1.5">
                             {qnaBoardTargetId === item.id && (
-                              <span className={`px-2 py-0.5 rounded border whitespace-nowrap ${qnaTargetState.isBoardTargetActive ? 'border-primary/25 bg-primary/10 text-primary' : 'border-amber-200 bg-amber-50 text-amber-700'}`}>
-                                {qnaTargetState.isBoardTargetActive ? 'Board question in progress' : 'Board question'}
+                              <span className={`px-2 py-0.5 rounded border whitespace-nowrap ${qnaTargetState.isBoardTargetActive ? 'border-primary/25 bg-primary/10 text-primary' : 'border-primary/20 bg-accent-light text-primary'}`}>
+                                {qnaTargetState.isBoardTargetActive ? 'Suggested question in progress' : 'Suggested question'}
                               </span>
                             )}
                             {activeQnaId === item.id && qnaBoardTargetId !== item.id && (
                               <span className="px-2 py-0.5 rounded border whitespace-nowrap border-primary/20 bg-primary/5 text-primary">
-                                Working question
+                                Selected question
                               </span>
                             )}
                           </div>
                         </div>
-                        <span className={`px-2 py-0.5 rounded border whitespace-nowrap ${item.status === 'answered' ? 'text-success border-success/35 bg-success/5' : 'text-warning border-warning/35 bg-warning/5'}`}>
+                        <span className={`px-2 py-0.5 rounded border whitespace-nowrap ${item.status === 'answered' ? 'border-primary/20 bg-accent-light text-primary' : 'border-border-subtle bg-surface-subtle text-text-secondary'}`}>
                           {item.status === 'answered' ? 'Answered' : 'New'}
                         </span>
                       </div>

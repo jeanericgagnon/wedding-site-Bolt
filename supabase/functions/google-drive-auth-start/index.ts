@@ -31,7 +31,7 @@ Deno.serve(async (req: Request) => {
     const redirectUri = Deno.env.get("GOOGLE_DRIVE_REDIRECT_URI");
 
     if (!googleClientId || !redirectUri) {
-      return json({ error: "Google Drive OAuth is not configured on server env." }, 500);
+      return json({ error: "Google Drive connection is not ready yet." }, 500);
     }
 
     const userClient = createClient(supabaseUrl, anonKey, {
@@ -59,6 +59,7 @@ Deno.serve(async (req: Request) => {
 
     return json({ authUrl });
   } catch (err) {
-    return json({ error: err instanceof Error ? err.message : "Internal server error" }, 500);
+    console.error("GOOGLE_DRIVE_AUTH_START_UNEXPECTED_FAILED", err);
+    return json({ error: "Could not start Google Drive connection. Please try again." }, 500);
   }
 });

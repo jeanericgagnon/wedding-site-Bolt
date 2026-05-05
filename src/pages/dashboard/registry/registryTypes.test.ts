@@ -85,7 +85,7 @@ describe('registry metadata confidence + attention state', () => {
     };
 
     expect(computeConfidence(preview)).toBe('manual');
-    expect(getBlockedMessage(preview)).toMatch(/Amazon blocks automated product lookups/i);
+    expect(getBlockedMessage(preview)).toMatch(/Amazon blocks automatic product lookups/i);
   });
 
   it('marks broken imports and missing fields as attention-worthy', () => {

@@ -354,7 +354,6 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
 -- Ensure trigger exists
 DROP TRIGGER IF EXISTS on_demo_user_created ON auth.users;
 CREATE TRIGGER on_demo_user_created

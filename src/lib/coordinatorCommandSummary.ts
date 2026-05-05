@@ -28,11 +28,11 @@ const getCoordinatorCommandSummarySignal = ({
       : { statusLabel: 'Needs review', tone: 'neutral' };
   }
 
-  if (detail === 'Working board target' || detail === 'Working board event' || detail === 'Working board question') {
+  if (detail === 'Suggested guest in progress' || detail === 'Suggested event in progress' || detail === 'Suggested question in progress') {
     return { statusLabel: 'In focus', tone: 'ready' };
   }
 
-  if (detail === 'Board target available' || detail === 'Board event available' || detail === 'Board question available') {
+  if (detail === 'Suggested guest waiting' || detail === 'Suggested event waiting' || detail === 'Suggested question waiting') {
     return { statusLabel: 'Queued', tone: 'ready' };
   }
 

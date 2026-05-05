@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { demoGuests, demoWeddingSite } from '../lib/demoData';
+import { customerSafeErrorMessage } from '../lib/customerSafeError';
 
 type Match = {
   id: string;
@@ -9,17 +10,26 @@ type Match = {
   household_size?: number;
 };
 
+export const friendlyGuestContactError = (err: unknown, fallback: string) => {
+  return customerSafeErrorMessage(err, fallback, {
+    allow: [/^Add an email or phone first\.$/i],
+  });
+};
 
 async function callPublicFn(name: string, body: unknown) {
   const base = ((import.meta as any).env?.VITE_SUPABASE_URL as string | undefined)?.trim();
-  if (!base) throw new Error('Missing Supabase URL');
+  const anonKey = ((import.meta as any).env?.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim();
+  if (!base || !anonKey) throw new Error('Guest contact updates are not ready yet.');
   const res = await fetch(`${base}/functions/v1/${name}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: anonKey,
+    },
     body: JSON.stringify(body),
   });
   const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error((json as any).error || `Request failed (${res.status})`);
+  if (!res.ok) throw new Error((json as any).error || 'Couldn’t reach the couple’s guest list right now.');
   if ((json as any)?.error) throw new Error((json as any).error);
   return json as any;
 }
@@ -91,7 +101,7 @@ export const GuestContactUpdate: React.FC = () => {
           setResult({ ok: false, message: 'No demo guest matched that search. Try a full name from the sample guest list.' });
         }
       } else {
-        setResult({ ok: false, message: err instanceof Error ? err.message : 'Couldn’t complete that search. Please try again.' });
+        setResult({ ok: false, message: friendlyGuestContactError(err, 'Couldn’t complete that search. Please try again.') });
       }
     } finally {
       setSearching(false);
@@ -124,7 +134,7 @@ export const GuestContactUpdate: React.FC = () => {
       }
       setResult({ ok: true, message: 'Thanks! Your information has been updated.' });
     } catch (err) {
-      setResult({ ok: false, message: err instanceof Error ? err.message : 'Could not send your update right now.' });
+      setResult({ ok: false, message: friendlyGuestContactError(err, 'Couldn’t send your update right now.') });
     } finally {
       setLoading(false);
     }
@@ -132,26 +142,33 @@ export const GuestContactUpdate: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-xl bg-surface border border-border rounded-2xl p-6 space-y-4">
+      <div className="w-full max-w-xl bg-surface border border-border rounded-lg p-6 space-y-4">
         <h1 className="text-xl font-semibold text-text-primary">Update contact & RSVP</h1>
         <p className="text-sm text-text-secondary">Search your name, choose your record, then update details for yourself or your party.</p>
 
-        <div className="flex gap-2">
+        <div>
+          <label htmlFor="guest-contact-search" className="mb-1 block text-sm font-medium text-text-primary">Find your guest record</label>
+          <div className="flex gap-2">
           <input
+            id="guest-contact-search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search your first or last name"
+            aria-describedby="guest-contact-search-helper"
             className="flex-1 px-3 py-2 border border-border rounded-lg bg-surface-subtle"
           />
           <button onClick={handleSearch} disabled={searching || query.trim().length < 2} className="px-4 py-2 rounded-lg bg-primary text-white disabled:opacity-50">
             {searching ? 'Searching…' : 'Find'}
           </button>
+          </div>
+          <p id="guest-contact-search-helper" className="mt-1 text-xs text-text-secondary">Use the name from your invitation.</p>
         </div>
 
         {matches.length > 0 && (
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-text-primary">Select your name</label>
+            <label htmlFor="guest-contact-match" className="block text-sm font-medium text-text-primary">Select your name</label>
             <select
+              id="guest-contact-match"
               value={selectedGuestId}
               onChange={(e) => {
                 const id = e.target.value;
@@ -174,34 +191,48 @@ export const GuestContactUpdate: React.FC = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" aria-busy={loading}>
           <div>
-            <label className="block text-sm font-medium text-text-primary mb-1">Email (optional)</label>
-            <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className="w-full px-3 py-2 border border-border rounded-lg bg-surface-subtle" placeholder="you@example.com" />
+            <label htmlFor="guest-contact-email" className="block text-sm font-medium text-text-primary mb-1">Email (optional)</label>
+            <input id="guest-contact-email" value={email} onChange={(e) => setEmail(e.target.value)} type="email" className="w-full px-3 py-2 border border-border rounded-lg bg-surface-subtle" placeholder="you@example.com" />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-text-primary mb-1">Phone (optional)</label>
-            <input value={phone} onChange={(e) => setPhone(e.target.value)} type="tel" className="w-full px-3 py-2 border border-border rounded-lg bg-surface-subtle" placeholder="(555) 123-4567" />
+            <label htmlFor="guest-contact-phone" className="block text-sm font-medium text-text-primary mb-1">Phone (optional)</label>
+            <input id="guest-contact-phone" value={phone} onChange={(e) => setPhone(e.target.value)} type="tel" className="w-full px-3 py-2 border border-border rounded-lg bg-surface-subtle" placeholder="(555) 123-4567" />
           </div>
 
-          <div className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-3 space-y-2">
-            <p className="text-sm font-medium text-text-primary">Mailing address (optional)</p>
-            <input value={mailingAddressLine1} onChange={(e) => setMailingAddressLine1(e.target.value)} type="text" className="w-full px-3 py-2 border border-border rounded-lg bg-surface" placeholder="Address line 1" />
-            <input value={mailingAddressLine2} onChange={(e) => setMailingAddressLine2(e.target.value)} type="text" className="w-full px-3 py-2 border border-border rounded-lg bg-surface" placeholder="Address line 2" />
+          <fieldset className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-3 space-y-2">
+            <legend className="text-sm font-medium text-text-primary">Mailing address (optional)</legend>
+            <label className="sr-only" htmlFor="guest-contact-address-line-1">Address line 1</label>
+            <input id="guest-contact-address-line-1" value={mailingAddressLine1} onChange={(e) => setMailingAddressLine1(e.target.value)} type="text" className="w-full px-3 py-2 border border-border rounded-lg bg-surface" placeholder="Address line 1" />
+            <label className="sr-only" htmlFor="guest-contact-address-line-2">Address line 2</label>
+            <input id="guest-contact-address-line-2" value={mailingAddressLine2} onChange={(e) => setMailingAddressLine2(e.target.value)} type="text" className="w-full px-3 py-2 border border-border rounded-lg bg-surface" placeholder="Address line 2" />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <input value={mailingCity} onChange={(e) => setMailingCity(e.target.value)} type="text" className="w-full px-3 py-2 border border-border rounded-lg bg-surface" placeholder="City" />
-              <input value={mailingState} onChange={(e) => setMailingState(e.target.value)} type="text" className="w-full px-3 py-2 border border-border rounded-lg bg-surface" placeholder="State / Province" />
+              <div>
+                <label className="sr-only" htmlFor="guest-contact-city">City</label>
+                <input id="guest-contact-city" value={mailingCity} onChange={(e) => setMailingCity(e.target.value)} type="text" className="w-full px-3 py-2 border border-border rounded-lg bg-surface" placeholder="City" />
+              </div>
+              <div>
+                <label className="sr-only" htmlFor="guest-contact-state">State / Province</label>
+                <input id="guest-contact-state" value={mailingState} onChange={(e) => setMailingState(e.target.value)} type="text" className="w-full px-3 py-2 border border-border rounded-lg bg-surface" placeholder="State / Province" />
+              </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <input value={mailingPostalCode} onChange={(e) => setMailingPostalCode(e.target.value)} type="text" className="w-full px-3 py-2 border border-border rounded-lg bg-surface" placeholder="ZIP / Postal code" />
-              <input value={mailingCountry} onChange={(e) => setMailingCountry(e.target.value)} type="text" className="w-full px-3 py-2 border border-border rounded-lg bg-surface" placeholder="Country" />
+              <div>
+                <label className="sr-only" htmlFor="guest-contact-postal-code">ZIP / Postal code</label>
+                <input id="guest-contact-postal-code" value={mailingPostalCode} onChange={(e) => setMailingPostalCode(e.target.value)} type="text" className="w-full px-3 py-2 border border-border rounded-lg bg-surface" placeholder="ZIP / Postal code" />
+              </div>
+              <div>
+                <label className="sr-only" htmlFor="guest-contact-country">Country</label>
+                <input id="guest-contact-country" value={mailingCountry} onChange={(e) => setMailingCountry(e.target.value)} type="text" className="w-full px-3 py-2 border border-border rounded-lg bg-surface" placeholder="Country" />
+              </div>
             </div>
-          </div>
+          </fieldset>
 
           <div>
-            <label className="block text-sm font-medium text-text-primary mb-1">RSVP (optional)</label>
-            <select value={rsvpStatus} onChange={(e) => setRsvpStatus(e.target.value as any)} className="w-full px-3 py-2 border border-border rounded-lg bg-surface-subtle">
+            <label htmlFor="guest-contact-rsvp" className="block text-sm font-medium text-text-primary mb-1">RSVP (optional)</label>
+            <select id="guest-contact-rsvp" value={rsvpStatus} onChange={(e) => setRsvpStatus(e.target.value as any)} className="w-full px-3 py-2 border border-border rounded-lg bg-surface-subtle">
               <option value="">No change</option>
               <option value="confirmed">Attending</option>
               <option value="declined">Can’t attend</option>
@@ -220,7 +251,7 @@ export const GuestContactUpdate: React.FC = () => {
         </form>
 
         {result && (
-          <p className={`text-sm ${result.ok ? 'text-success' : 'text-error'}`}>{result.message}</p>
+          <p role={result.ok ? 'status' : 'alert'} className="rounded-lg border border-border-subtle bg-surface-secondary px-3 py-2 text-sm text-text-secondary">{result.message}</p>
         )}
       </div>
     </div>

@@ -49,9 +49,7 @@ vi.mock('../../lib/guidedSetupErrorCopy', () => ({
   buildGuidedSetupHydrationErrorMessage: vi.fn(() => 'hydrate failed'),
   buildGuidedSetupSaveErrorMessage: vi.fn(() => 'save failed'),
 }));
-vi.mock('xlsx', () => ({}));
-
-import { GuidedSetup } from './GuidedSetup';
+import { GuidedSetup, safeGuidedSetupCsvError } from './GuidedSetup';
 
 describe('GuidedSetup starter draft wording truth', () => {
   beforeEach(() => {
@@ -90,7 +88,7 @@ describe('GuidedSetup starter draft wording truth', () => {
       expect(screen.getByText('Your starter draft is ready to review')).toBeInTheDocument();
     });
 
-    expect(screen.getByText("We drafted the core pages from what you shared. Review the starter draft in your dashboard, tighten the details, and only publish once you're ready to share it with guests.")).toBeInTheDocument();
+    expect(screen.getByText("We drafted the core pages from what you shared. Review the starter draft in your wedding home, tighten the details, and only publish once you're ready to share it with guests.")).toBeInTheDocument();
     expect(screen.queryByText(/you'?re all set/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/starter wedding site is ready/i)).not.toBeInTheDocument();
   });
@@ -125,5 +123,22 @@ describe('GuidedSetup starter draft wording truth', () => {
       const saved = JSON.parse(window.localStorage.getItem(GUIDED_SETUP_STORAGE_KEY) || '{}');
       expect(saved.formData?.weddingDate).toBe('');
     });
+  });
+});
+
+describe('safeGuidedSetupCsvError', () => {
+  it('keeps spreadsheet format guidance visible', () => {
+    expect(safeGuidedSetupCsvError(new Error('Please export your spreadsheet as CSV before importing.'))).toBe(
+      'Please export your spreadsheet as CSV before importing.'
+    );
+  });
+
+  it('hides technical import failures from setup copy', () => {
+    expect(safeGuidedSetupCsvError(new Error('Supabase policy rejected insert into guests table'))).toBe(
+      'Couldn’t import that guest file. Please check the CSV and try again.'
+    );
+    expect(safeGuidedSetupCsvError(new Error('duplicate key value violates unique constraint "guests_email_key"'))).toBe(
+      'Couldn’t import that guest file. Please check the CSV and try again.'
+    );
   });
 });

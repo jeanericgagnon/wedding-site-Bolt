@@ -9,6 +9,7 @@ import { clearAuthEntryReturnPath } from '../lib/authEntryCleanup';
 import { resolveSignupReturnPath } from '../lib/signupReturnResolver';
 import { buildQuickStartEntryPath } from '../lib/quickStartContinuation';
 import { normalizeMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnapshot } from '../lib/quickStartStateTransfer';
+import { safeAuthError } from '../lib/authErrorCopy';
 
 const makeBaseSlug = (email: string) => {
   const local = (email.split('@')[0] || 'ourwedding').toLowerCase();
@@ -48,7 +49,7 @@ async function ensureMinimalWeddingSite(userId: string, email: string): Promise<
     if (!collision) throw error;
   }
 
-  throw new Error('Could not reserve a website URL right now. Please try again.');
+  throw new Error('Couldn’t reserve a website URL right now. Please try again.');
 }
 
 export const Signup: React.FC = () => {
@@ -124,7 +125,7 @@ export const Signup: React.FC = () => {
       });
       if (oauthError) throw oauthError;
     } catch (err: unknown) {
-      setError((err as Error).message || 'Couldn’t start Google sign-in right now. Please try again.');
+      setError(safeAuthError(err, 'Couldn’t start Google sign-in right now. Please try again.'));
       setLoading(false);
     }
   };
@@ -185,7 +186,7 @@ export const Signup: React.FC = () => {
       await ensureMinimalWeddingSite(userId, formData.email);
       navigate(consumeSignupReturnPath() || resolveSignupReturnPath(explicitReturnPath, paymentGateEnabled ? '/payment-required?signup=1' : '/onboarding?signup=1'));
     } catch (err: unknown) {
-      setError((err as Error).message || 'Couldn’t create your account right now. Please try again.');
+      setError(safeAuthError(err, 'Couldn’t create your account right now. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -197,19 +198,19 @@ export const Signup: React.FC = () => {
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6 hover:opacity-80 transition-opacity">
             <Heart className="w-8 h-8 text-accent" aria-hidden="true" />
-            <span className="text-2xl font-semibold text-text-primary">WeddingSite</span>
+            <span className="text-2xl font-semibold text-text-primary">dayof</span>
           </Link>
-          <h1 className="text-3xl font-bold text-text-primary mb-2">Create your account</h1>
+          <h1 className="text-3xl font-semibold text-text-primary mb-2">Start your wedding space</h1>
           <p className="text-text-secondary">
-            {hasInviteContext ? 'Create a collaborator account, then jump straight back into this invite.' : (paymentGateEnabled ? 'Step 1: account setup. Step 2: site details after payment.' : 'Create your account, then go straight into setup.')}
+            {hasInviteContext ? 'Create a collaborator account, then return to this invite.' : (paymentGateEnabled ? 'Create your account first. We’ll help with the wedding details next.' : 'Create your account, then we’ll help shape the first version.')}
           </p>
         </div>
 
-        <Card variant="default" padding="lg" className="shadow-lg">
+        <Card variant="default" padding="lg">
           {hasInviteContext && (
-            <div className="mb-5 rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4 text-left">
-              <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Collaborator invite</p>
-              <p className="mt-2 text-base font-semibold text-text-primary">{inviteSite || 'Wedding dashboard access'}</p>
+            <div className="mb-5 rounded-lg border border-border-subtle bg-surface-subtle/30 p-4 text-left">
+              <p className="text-xs font-medium text-text-tertiary">Collaborator invite</p>
+              <p className="mt-2 text-base font-semibold text-text-primary">{inviteSite || 'Wedding access'}</p>
               <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-secondary">
                 {inviteRole && <span className="rounded-full bg-white px-3 py-1">{inviteRole.replace(/_/g, ' ')}</span>}
                 {inviteEmail && <span className="rounded-full bg-white px-3 py-1">{inviteEmail}</span>}
@@ -235,7 +236,7 @@ export const Signup: React.FC = () => {
               <div className="w-full border-t border-border-subtle" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-surface text-text-secondary">or continue with email</span>
+              <span className="px-2 bg-surface text-text-secondary">or use email</span>
             </div>
           </div>
 
@@ -272,11 +273,7 @@ export const Signup: React.FC = () => {
             />
 
             {error && (
-              <div className={`p-3 rounded-lg text-sm ${
-                error.startsWith('Account created!')
-                  ? 'bg-success/10 text-success border border-success/20'
-                  : 'bg-error-light text-error'
-              }`}>
+              <div className="p-3 rounded-lg text-sm bg-surface-secondary border border-border-subtle text-text-secondary">
                 {error}
               </div>
             )}
@@ -288,7 +285,7 @@ export const Signup: React.FC = () => {
               fullWidth
               disabled={loading}
             >
-              {loading ? 'Creating Account...' : hasInviteContext ? 'Create account and continue invite' : 'Create Account'}
+              {loading ? 'Creating account...' : hasInviteContext ? 'Create account and continue invite' : 'Create account'}
             </Button>
           </form>
 

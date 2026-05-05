@@ -39,9 +39,7 @@ CREATE TABLE IF NOT EXISTS vault_entries (
   attachment_name text,
   created_at timestamptz DEFAULT now()
 );
-
 ALTER TABLE vault_entries ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Owner can read vault entries"
   ON vault_entries FOR SELECT
   TO authenticated
@@ -52,7 +50,6 @@ CREATE POLICY "Owner can read vault entries"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Owner can insert vault entries"
   ON vault_entries FOR INSERT
   TO authenticated
@@ -63,7 +60,6 @@ CREATE POLICY "Owner can insert vault entries"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Owner can update vault entries"
   ON vault_entries FOR UPDATE
   TO authenticated
@@ -81,7 +77,6 @@ CREATE POLICY "Owner can update vault entries"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Owner can delete vault entries"
   ON vault_entries FOR DELETE
   TO authenticated
@@ -92,6 +87,5 @@ CREATE POLICY "Owner can delete vault entries"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE INDEX IF NOT EXISTS vault_entries_wedding_site_id_idx ON vault_entries(wedding_site_id);
 CREATE INDEX IF NOT EXISTS vault_entries_vault_year_idx ON vault_entries(wedding_site_id, vault_year);

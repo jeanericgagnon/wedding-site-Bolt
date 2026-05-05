@@ -7,6 +7,14 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const json = (data: unknown, status = 200) =>
+  new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
 
@@ -16,19 +24,20 @@ Deno.serve(async (req: Request) => {
     const query = String(body.query ?? "").trim();
 
     if (!siteRef || query.length < 2) {
-      return new Response(JSON.stringify({ matches: [] }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return json({ matches: [] });
     }
 
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-    const { data: site } = await admin
+    const siteQuery = admin
       .from("wedding_sites")
       .select("id")
-      .or(`id.eq.${siteRef},site_slug.eq.${siteRef}`)
+      .eq(UUID_RE.test(siteRef) ? "id" : "site_slug", siteRef)
       .maybeSingle();
+    const { data: site } = await siteQuery;
 
     if (!site?.id) {
-      return new Response(JSON.stringify({ matches: [] }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return json({ matches: [] });
     }
 
     const { data: guests } = await admin
@@ -39,7 +48,7 @@ Deno.serve(async (req: Request) => {
       .limit(10);
 
     const householdIds = Array.from(new Set((guests ?? []).map((g: any) => g.household_id).filter(Boolean)));
-    let householdCounts: Record<string, number> = {};
+    const householdCounts: Record<string, number> = {};
 
     if (householdIds.length > 0) {
       const { data: hh } = await admin
@@ -60,14 +69,9 @@ Deno.serve(async (req: Request) => {
       household_size: g.household_id ? (householdCounts[g.household_id] ?? 1) : 1,
     }));
 
-    return new Response(JSON.stringify({ matches }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ matches });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : "Internal error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    console.error("GUEST_CONTACT_LOOKUP_UNEXPECTED_FAILED", err);
+    return json({ error: "Could not look up guests. Please try again." }, 500);
   }
 });

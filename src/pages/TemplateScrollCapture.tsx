@@ -31,6 +31,7 @@ function pickPhotos(pool: PreviewPhoto[], seed: string, limit = 16): string[] {
 export default function TemplateScrollCapture() {
   const [search] = useSearchParams();
   const templateId = search.get('templateId') || 'modern-luxe';
+  const showPreviewMeta = search.get('showPreviewMeta') === '1';
 
   const [photos, setPhotos] = React.useState<PreviewPhoto[]>([]);
   const [ready, setReady] = React.useState(false);
@@ -128,7 +129,7 @@ export default function TemplateScrollCapture() {
 
     data.registry = {
       enabled: true,
-      intro: 'Registry items are placeholder examples right now.',
+      intro: 'A few sample gifts and funds to show how this section can feel.',
       items: [
         { id: 'r1', title: 'Honeymoon Dinner', description: 'A special dinner in Sayulita', type: 'cash', amount: 120 },
         { id: 'r2', title: 'Snorkel Excursion', description: 'Adventure day for two', type: 'cash', amount: 180 },
@@ -148,8 +149,8 @@ export default function TemplateScrollCapture() {
   if (!template) {
     return (
       <div id="template-scroll-root" data-template-scroll-ready="true" className="min-h-screen bg-white px-6 py-10">
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
-          Template not found for id: <code>{templateId}</code>
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-900">
+          That design preview is not available right now.
         </div>
       </div>
     );
@@ -157,12 +158,14 @@ export default function TemplateScrollCapture() {
 
   return (
     <div id="template-scroll-root" data-template-scroll-ready={ready ? 'true' : 'false'} className="bg-white min-h-screen">
-      <section className="px-6 py-10 md:px-10 md:py-14 border-b border-neutral-200 bg-white">
-        <p className="text-xs tracking-[0.18em] uppercase text-neutral-500">Preview Dataset · Template: {template.id}</p>
-        <h1 className="mt-2 text-3xl md:text-4xl font-semibold text-neutral-900">Kara & Eric</h1>
-        <p className="mt-2 text-neutral-700">Sunday, January 17, 2027 · Sayulita, Mexico</p>
-        <p className="mt-1 text-neutral-600">Amor Boutique Hotel · Pescadores S/N, 63734 Sayulita, Nay., Mexico</p>
-      </section>
+      {showPreviewMeta && (
+        <section className="px-6 py-10 md:px-10 md:py-14 border-b border-neutral-200 bg-white">
+          <p className="text-sm text-neutral-500">Preview dataset · Template: {template.id}</p>
+          <h1 className="mt-2 text-3xl md:text-4xl font-semibold text-neutral-900">Kara & Eric</h1>
+          <p className="mt-2 text-neutral-700">Sunday, January 17, 2027 · Sayulita, Mexico</p>
+          <p className="mt-1 text-neutral-600">Amor Boutique Hotel · Pescadores S/N, 63734 Sayulita, Nay., Mexico</p>
+        </section>
+      )}
 
       {sections.map((section) => (
         <SectionRenderer

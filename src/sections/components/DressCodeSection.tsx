@@ -62,7 +62,7 @@ export const DressCodeSection: React.FC<Props> = ({ data: _data, instance }) => 
       <div className="max-w-3xl mx-auto text-center">
         {settings.showTitle !== false && (
           <div className="mb-10">
-            <p className="text-xs uppercase tracking-[0.3em] text-primary mb-3 font-medium">
+            <p className="text-sm text-primary mb-3 font-light">
               {eyebrow}
             </p>
             <h2 className="text-3xl md:text-4xl font-light text-text-primary leading-tight">{title}</h2>
@@ -130,7 +130,7 @@ export const DressCodeBanner: React.FC<Props> = ({ data: _data, instance }) => {
             <Shirt className="w-8 h-8 text-primary" />
           </div>
           <div className="flex-1 text-center md:text-left">
-            <p className="text-xs uppercase tracking-[0.25em] text-primary font-medium mb-1">Dress Code</p>
+            <p className="text-sm text-primary font-light mb-1">Dress code</p>
             <h2 className="text-2xl font-semibold text-text-primary mb-2">{title}</h2>
             <p className="text-text-secondary">{description}</p>
           </div>

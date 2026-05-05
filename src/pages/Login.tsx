@@ -8,6 +8,7 @@ import { consumeSignupReturnPath, writeSignupReturnPath } from '../lib/signupCon
 import { clearAuthEntryReturnPath } from '../lib/authEntryCleanup';
 import { resolveLoginReturnPath } from '../lib/loginReturnResolver';
 import { normalizeMeaningfulQuickStartDraftSnapshot, persistQuickStartDraftSnapshot } from '../lib/quickStartStateTransfer';
+import { safeAuthError } from '../lib/authErrorCopy';
 
 type AuthView = 'login' | 'forgot-password' | 'forgot-sent';
 
@@ -124,7 +125,7 @@ export const Login: React.FC = () => {
       }
       navigate(consumeSignupReturnPath() || resolveLoginReturnPath(getPostLoginRoute(signInData.user?.email)));
     } catch (err: unknown) {
-      setError((err as Error).message || 'Couldn’t sign you in right now. Please try again.');
+      setError(safeAuthError(err, 'Couldn’t sign you in right now. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -137,7 +138,7 @@ export const Login: React.FC = () => {
       await signIn();
       navigate(getPostLoginRoute('demo@dayof.love'));
     } catch (err: unknown) {
-      setError((err as Error).message || 'Couldn’t open demo mode right now. Please try again.');
+      setError(safeAuthError(err, 'Couldn’t open demo mode right now. Please try again.'));
     } finally {
       setDemoLoading(false);
     }
@@ -167,7 +168,7 @@ export const Login: React.FC = () => {
       });
       if (oauthError) throw oauthError;
     } catch (err: unknown) {
-      setError((err as Error).message || 'Couldn’t start Google sign-in right now. Please try again.');
+      setError(safeAuthError(err, 'Couldn’t start Google sign-in right now. Please try again.'));
       setLoading(false);
     }
   };
@@ -183,7 +184,7 @@ export const Login: React.FC = () => {
       if (resetError) throw resetError;
       setView('forgot-sent');
     } catch (err: unknown) {
-      setError((err as Error).message || 'Couldn’t send reset email right now. Please try again.');
+      setError(safeAuthError(err, 'Couldn’t send reset email right now. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -196,14 +197,14 @@ export const Login: React.FC = () => {
           <div className="text-center mb-8">
             <Link to="/" className="inline-flex items-center gap-2 mb-6 hover:opacity-80 transition-opacity">
               <Heart className="w-8 h-8 text-accent" aria-hidden="true" />
-              <span className="text-2xl font-semibold text-text-primary">WeddingSite</span>
+              <span className="text-2xl font-semibold text-text-primary">dayof</span>
             </Link>
           </div>
-          <Card variant="default" padding="lg" className="shadow-lg text-center">
-            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-5">
-              <Mail className="w-8 h-8 text-primary" aria-hidden="true" />
+          <Card variant="default" padding="lg" className="text-center">
+            <div className="w-16 h-16 bg-surface-secondary border border-border-subtle rounded-lg flex items-center justify-center mx-auto mb-5">
+              <Mail className="w-8 h-8 text-accent" aria-hidden="true" />
             </div>
-            <h1 className="text-2xl font-bold text-text-primary mb-2">Check your email</h1>
+            <h1 className="text-2xl font-semibold text-text-primary mb-2">Check your email</h1>
             <p className="text-text-secondary mb-2">
               We sent a password reset link to
             </p>
@@ -238,12 +239,12 @@ export const Login: React.FC = () => {
           <div className="text-center mb-8">
             <Link to="/" className="inline-flex items-center gap-2 mb-6 hover:opacity-80 transition-opacity">
               <Heart className="w-8 h-8 text-accent" aria-hidden="true" />
-              <span className="text-2xl font-semibold text-text-primary">WeddingSite</span>
+              <span className="text-2xl font-semibold text-text-primary">dayof</span>
             </Link>
-            <h1 className="text-3xl font-bold text-text-primary mb-2">Reset your password</h1>
-            <p className="text-text-secondary">Enter your email and we'll send you a reset link</p>
+            <h1 className="text-3xl font-semibold text-text-primary mb-2">Reset your password</h1>
+            <p className="text-text-secondary">Enter your email and we’ll send you a reset link.</p>
           </div>
-          <Card variant="default" padding="lg" className="shadow-lg">
+          <Card variant="default" padding="lg">
             <form onSubmit={handleForgotPassword} className="space-y-5">
               <Input
                 label="Email address"
@@ -255,7 +256,7 @@ export const Login: React.FC = () => {
                 required
               />
               {error && (
-                <div className="p-3 bg-error-light text-error rounded-lg text-sm" role="alert">
+                <div className="p-3 bg-surface-secondary border border-border-subtle text-text-secondary rounded-lg text-sm" role="alert">
                   {error}
                 </div>
               )}
@@ -282,19 +283,19 @@ export const Login: React.FC = () => {
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6 hover:opacity-80 transition-opacity">
             <Heart className="w-8 h-8 text-accent" aria-hidden="true" />
-            <span className="text-2xl font-semibold text-text-primary">WeddingSite</span>
+            <span className="text-2xl font-semibold text-text-primary">dayof</span>
           </Link>
-          <h1 className="text-3xl font-bold text-text-primary mb-2">Welcome back</h1>
+          <h1 className="text-3xl font-semibold text-text-primary mb-2">Welcome back</h1>
           <p className="text-text-secondary">
-            {hasInviteContext ? 'Sign in with the invited email to finish joining this wedding team.' : 'Sign in to manage your wedding website'}
+            {hasInviteContext ? 'Sign in with the invited email to join this wedding.' : 'Pick up where you left off.'}
           </p>
         </div>
 
-        <Card variant="default" padding="lg" className="shadow-lg">
+        <Card variant="default" padding="lg">
           {hasInviteContext && (
-            <div className="mb-5 rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4 text-left">
-              <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Collaborator invite</p>
-              <p className="mt-2 text-base font-semibold text-text-primary">{inviteSite || 'Wedding dashboard access'}</p>
+            <div className="mb-5 rounded-lg border border-border-subtle bg-surface-subtle/30 p-4 text-left">
+              <p className="text-xs font-medium text-text-tertiary">Collaborator invite</p>
+              <p className="mt-2 text-base font-semibold text-text-primary">{inviteSite || 'Wedding access'}</p>
               <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-secondary">
                 {inviteRole && <span className="rounded-full bg-white px-3 py-1">{inviteRole.replace(/_/g, ' ')}</span>}
                 {inviteEmail && <span className="rounded-full bg-white px-3 py-1">{inviteEmail}</span>}
@@ -304,8 +305,8 @@ export const Login: React.FC = () => {
           )}
 
           {notice && (
-            <div className="flex items-start gap-2 p-3 bg-warning-light rounded-lg text-sm text-warning border border-warning/20 mb-5">
-              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" aria-hidden="true" />
+            <div className="flex items-start gap-2 p-3 bg-surface-secondary rounded-lg text-sm text-text-secondary border border-border-subtle mb-5">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-text-tertiary" aria-hidden="true" />
               <span>{notice}</span>
             </div>
           )}
@@ -326,7 +327,7 @@ export const Login: React.FC = () => {
               <div className="w-full border-t border-border-subtle" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-surface text-text-secondary">or continue with email</span>
+              <span className="px-2 bg-surface text-text-secondary">or use email</span>
             </div>
           </div>
 
@@ -365,7 +366,7 @@ export const Login: React.FC = () => {
             </div>
 
             {error && (
-              <div className="p-3 bg-error-light text-error rounded-lg text-sm" role="alert">
+              <div className="p-3 bg-surface-secondary border border-border-subtle text-text-secondary rounded-lg text-sm" role="alert">
                 {error}
               </div>
             )}
@@ -377,7 +378,7 @@ export const Login: React.FC = () => {
               fullWidth
               disabled={loading || demoLoading }
             >
-              {loading ? 'Signing in...' : hasInviteContext ? 'Sign In and continue invite' : 'Sign In'}
+              {loading ? 'Signing in...' : hasInviteContext ? 'Sign in and continue invite' : 'Sign in'}
             </Button>
           </form>
 
@@ -397,7 +398,7 @@ export const Login: React.FC = () => {
             onClick={handleDemoLogin}
             disabled={loading || demoLoading || hasInviteContext }
           >
-            {demoLoading ? 'Loading demo...' : 'Try Demo — no account needed'}
+            {demoLoading ? 'Loading demo...' : 'Try demo'}
           </Button>
 
           <div className="mt-6 text-center">
@@ -416,7 +417,7 @@ export const Login: React.FC = () => {
                 } : undefined}
                 className="text-primary hover:text-primary-hover font-medium transition-colors"
               >
-                {hasInviteContext ? 'Create collaborator account' : 'Get started — $49'}
+                {hasInviteContext ? 'Create collaborator account' : 'Get started for $49'}
               </Link>
             </p>
           </div>

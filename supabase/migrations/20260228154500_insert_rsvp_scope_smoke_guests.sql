@@ -46,7 +46,6 @@ SELECT
 FROM base b, counts c
 WHERE c.tokenized_count < 2
   AND NOT EXISTS (SELECT 1 FROM guests WHERE invite_token = 'smoke-reception-only-token');
-
 WITH base AS (
   SELECT wedding_site_id
   FROM guests

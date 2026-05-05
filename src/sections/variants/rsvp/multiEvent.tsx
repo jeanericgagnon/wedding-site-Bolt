@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { CheckCircle, Loader2 } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
 import { supabase } from '../../../lib/supabase';
+import { getSafePublicImageUrl, getSafePublicWebUrl } from '../../publicLinks';
 
 const RsvpEventSchema = z.object({
   id: z.string(),
@@ -14,7 +15,9 @@ const RsvpEventSchema = z.object({
 
 export const rsvpMultiEventSchema = z.object({
   eyebrow: z.string().default('Kindly reply by'),
+  title: z.string().default(''),
   headline: z.string().default('RSVP'),
+  deadlineText: z.string().default(''),
   deadline: z.string().default(''),
   events: z.array(RsvpEventSchema).default([]),
   confirmationMessage: z.string().default('Thank you! We look forward to celebrating with you.'),
@@ -23,13 +26,17 @@ export const rsvpMultiEventSchema = z.object({
   mode: z.enum(['form', 'embed']).default('form'),
   embedUrl: z.string().default(''),
   embedHeight: z.number().min(360).max(1400).default(760),
+  layoutStyle: z.enum(['multiEvent', 'inline', 'card', 'illustrated', 'formal']).default('multiEvent'),
+  imageUrl: z.string().default(''),
 });
 
 export type RsvpMultiEventData = z.infer<typeof rsvpMultiEventSchema>;
 
 export const defaultRsvpMultiEventData: RsvpMultiEventData = {
   eyebrow: 'Kindly reply by',
+  title: '',
   headline: 'RSVP',
+  deadlineText: '',
   deadline: 'May 15, 2025',
   confirmationMessage: 'Thank you! We can\'t wait to celebrate with you.',
   declineMessage: 'We\'re sorry you can\'t make it. You\'ll be missed!',
@@ -37,6 +44,8 @@ export const defaultRsvpMultiEventData: RsvpMultiEventData = {
   mode: 'form',
   embedUrl: '',
   embedHeight: 760,
+  layoutStyle: 'multiEvent',
+  imageUrl: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1800&q=85',
   events: [
     {
       id: '1',
@@ -58,6 +67,10 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
   const [dietary, setDietary] = useState('');
   const [status, setStatus] = useState<RsvpStatus>('idle');
   const [errorMsg, setErrorMsg] = useState('');
+  const headline = data.headline || data.title || 'RSVP';
+  const deadline = data.deadline || data.deadlineText;
+  const illustratedImageUrl = getSafePublicImageUrl(data.imageUrl);
+  const safeEmbedUrl = getSafePublicWebUrl(data.embedUrl);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,7 +111,7 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
     }
   };
 
-  const useEmbed = data.mode === 'embed' && !!data.embedUrl?.trim();
+  const useEmbed = data.mode === 'embed' && !!safeEmbedUrl;
 
   if (status === 'success') {
     const message = attending === 'yes' ? data.confirmationMessage : data.declineMessage;
@@ -116,17 +129,55 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
   }
 
   return (
-    <section className="py-32 md:py-40 bg-gradient-to-b from-white to-stone-50/35" id="rsvp">
-      <div className="max-w-2xl mx-auto px-6 md:px-12">
-        <div className="text-center mb-11 md:mb-12">
-          {data.deadline && data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.22em] text-stone-400 font-medium mb-4">
-              {data.eyebrow} <span className="text-stone-600">{data.deadline}</span>
+    <section className={`relative overflow-hidden ${
+      data.layoutStyle === 'illustrated'
+        ? 'py-28 md:py-36 bg-stone-950'
+        : data.layoutStyle === 'inline'
+          ? 'py-16 md:py-20 bg-white'
+          : data.layoutStyle === 'formal'
+            ? 'py-28 md:py-36 bg-stone-50'
+            : 'py-32 md:py-40 bg-gradient-to-b from-white to-stone-50/35'
+    }`} id="rsvp">
+      {data.layoutStyle === 'illustrated' && illustratedImageUrl && (
+        <>
+          <img src={illustratedImageUrl} alt="" className="absolute inset-0 h-full w-full object-cover opacity-45" />
+          <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/65 to-stone-950/35" />
+        </>
+      )}
+      <div className={`relative mx-auto px-6 md:px-12 ${
+        data.layoutStyle === 'inline'
+          ? 'max-w-6xl grid grid-cols-1 lg:grid-cols-[0.85fr_1.15fr] gap-10 items-start'
+          : data.layoutStyle === 'card'
+            ? 'max-w-5xl grid grid-cols-1 lg:grid-cols-[0.8fr_1.2fr] gap-8 items-start'
+            : 'max-w-2xl'
+      }`}>
+        <div className={`${
+          data.layoutStyle === 'inline' || data.layoutStyle === 'card'
+            ? 'text-left lg:sticky lg:top-8'
+            : 'text-center mb-11 md:mb-12'
+        } ${data.layoutStyle === 'formal' ? 'rounded-[2rem] border border-stone-200 bg-white p-7 md:p-9 shadow-sm mb-8' : ''}`}>
+          {deadline && data.eyebrow && (
+            <p className={`text-sm font-light mb-4 ${data.layoutStyle === 'illustrated' ? 'text-white/70' : 'text-stone-500'}`}>
+              {data.eyebrow} <span className={data.layoutStyle === 'illustrated' ? 'text-white/80' : 'text-stone-600'}>{deadline}</span>
             </p>
           )}
-          <h2 className="text-4xl md:text-6xl font-light text-stone-900 tracking-tight leading-[1.04]">{data.headline}</h2>
+          <h2 className={`text-4xl md:text-6xl font-light leading-[1.04] ${data.layoutStyle === 'illustrated' ? 'text-white' : 'text-stone-900'}`}>{data.layoutStyle === 'formal' ? 'The favour of your reply is requested' : headline}</h2>
+          {data.layoutStyle === 'card' && (
+            <div className="mt-8 space-y-3">
+              {['Find your invitation', 'Choose each event', 'Share meal notes'].map((step, index) => (
+                <div key={step} className="flex items-center gap-3 rounded-2xl border border-stone-100 bg-white px-4 py-3 shadow-sm">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-stone-950 text-xs text-white">{index + 1}</span>
+                  <span className="text-sm text-stone-600">{step}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {data.layoutStyle === 'inline' && data.guestNote && (
+            <p className="mt-5 text-stone-500 leading-relaxed">{data.guestNote}</p>
+          )}
         </div>
 
+        <div>
         {data.events.length > 1 && (
           <div className="mb-8 space-y-2">
             {data.events.map(event => (
@@ -145,19 +196,25 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
         {useEmbed ? (
           <div className="space-y-4">
             <iframe
-              src={data.embedUrl}
+              src={safeEmbedUrl}
               title="RSVP form"
               className="w-full rounded-xl border border-stone-200 bg-white"
               style={{ height: `${data.embedHeight}px` }}
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
             />
-            <p className="text-xs text-stone-400">Embedded RSVP is enabled for this section.</p>
+            <p className="text-xs text-stone-400">If the RSVP form does not appear, please refresh this page or reach out to the couple directly.</p>
           </div>
         ) : (
-        <form onSubmit={handleSubmit} className="space-y-7 md:space-y-8 bg-white border border-stone-100 rounded-[1.85rem] p-6 md:p-9 shadow-sm md:shadow-xl md:shadow-stone-900/5">
+        <form onSubmit={handleSubmit} className={`space-y-7 md:space-y-8 bg-white border ${
+          data.layoutStyle === 'formal'
+            ? 'border-stone-200 rounded-none p-7 md:p-10 shadow-sm outline outline-1 outline-offset-[-10px] outline-stone-200'
+            : data.layoutStyle === 'illustrated'
+              ? 'border-white/20 rounded-[1.85rem] p-6 md:p-9 shadow-2xl shadow-black/30'
+              : 'border-stone-100 rounded-[1.85rem] p-6 md:p-9 shadow-sm md:shadow-xl md:shadow-stone-900/5'
+        }`}>
           <div>
-            <label className="block text-xs font-semibold text-stone-500 uppercase tracking-wider mb-2">
+            <label className="block text-sm font-medium text-stone-600 mb-2">
               Full Name <span className="text-rose-400">*</span>
             </label>
             <input
@@ -171,7 +228,7 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-stone-500 uppercase tracking-wider mb-2">Email</label>
+            <label className="block text-sm font-medium text-stone-600 mb-2">Email</label>
             <input
               type="email"
               value={email}
@@ -182,7 +239,7 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-stone-500 uppercase tracking-wider mb-3">
+            <label className="block text-sm font-medium text-stone-600 mb-3">
               Will you be attending? <span className="text-rose-400">*</span>
             </label>
             <div className="grid grid-cols-2 gap-3">
@@ -191,7 +248,7 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
                   key={option}
                   type="button"
                   onClick={() => setAttending(option)}
-                  className={`min-h-[46px] py-3 px-4 rounded-xl border-2 text-sm font-medium tracking-[0.01em] transition-all ${
+                  className={`min-h-[46px] py-3 px-4 rounded-xl border-2 text-sm font-medium transition-all ${
                     attending === option
                       ? option === 'yes'
                         ? 'border-rose-400 bg-rose-50 text-rose-700'
@@ -208,7 +265,7 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
           {attending === 'yes' && (
             <>
               <div>
-                <label className="block text-xs font-semibold text-stone-500 uppercase tracking-wider mb-2">
+                <label className="block text-sm font-medium text-stone-600 mb-2">
                   Number of Guests
                 </label>
                 <select
@@ -223,7 +280,7 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-stone-500 uppercase tracking-wider mb-2">
+                <label className="block text-sm font-medium text-stone-600 mb-2">
                   Dietary Restrictions
                 </label>
                 <textarea
@@ -248,13 +305,14 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
           <button
             type="submit"
             disabled={status === 'submitting' || !name || attending === null}
-            className="w-full min-h-[50px] py-4 bg-stone-900 text-white text-sm font-semibold uppercase tracking-[0.16em] rounded-xl hover:bg-stone-800 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-900/20 focus-visible:ring-offset-2"
+            className="w-full min-h-[50px] py-4 bg-stone-900 text-white text-sm font-semibold rounded-xl hover:bg-stone-800 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-900/20 focus-visible:ring-offset-2"
           >
             {status === 'submitting' && <Loader2 size={16} className="animate-spin" />}
             {status === 'submitting' ? 'Submitting…' : 'Send RSVP'}
           </button>
         </form>
         )}
+        </div>
       </div>
     </section>
   );
@@ -267,3 +325,19 @@ export const rsvpMultiEventDefinition: SectionDefinition<RsvpMultiEventData> = {
   defaultData: defaultRsvpMultiEventData,
   Component: RsvpMultiEvent,
 };
+
+function rsvpVariant(variant: string, layoutStyle: RsvpMultiEventData['layoutStyle'], overrides: Partial<RsvpMultiEventData> = {}): SectionDefinition<RsvpMultiEventData> {
+  return {
+    type: 'rsvp',
+    variant,
+    schema: rsvpMultiEventSchema,
+    defaultData: { ...defaultRsvpMultiEventData, layoutStyle, ...overrides },
+    Component: RsvpMultiEvent,
+  };
+}
+
+export const rsvpInlineDefinition = rsvpVariant('inline', 'inline');
+export const rsvpCardDefinition = rsvpVariant('card', 'card');
+export const rsvpIllustratedDefinition = rsvpVariant('illustrated', 'illustrated');
+export const rsvpFormalDefinition = rsvpVariant('formal', 'formal', { guestNote: 'Kindly respond for each invited guest.' });
+export const rsvpDefaultDefinition = rsvpVariant('default', 'multiEvent');

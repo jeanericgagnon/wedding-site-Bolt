@@ -13,6 +13,14 @@ const json = (data: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
+function safePhotoAlbumManageError(code: "LOOKUP_FAILED" | "COLLABORATOR_FAILED" | "UPDATE_FAILED" | "PARENT_FAILED" | "INTERNAL_ERROR"): string {
+  if (code === "LOOKUP_FAILED") return "Could not load this photo album. Please try again.";
+  if (code === "COLLABORATOR_FAILED") return "Could not confirm photo permissions. Please try again.";
+  if (code === "PARENT_FAILED") return "Could not load the parent album. Please try again.";
+  if (code === "UPDATE_FAILED") return "Could not update this photo album. Please try again.";
+  return "Could not update photo albums. Please try again.";
+}
+
 async function sha256Hex(value: string): Promise<string> {
   const bytes = new TextEncoder().encode(value);
   const digest = await crypto.subtle.digest("SHA-256", bytes);
@@ -25,8 +33,13 @@ function randomToken(length = 48) {
   return Array.from(bytes).map((b) => chars[b % chars.length]).join("");
 }
 
+function hasPermissionKey(permissions: unknown, key: string): boolean {
+  return Array.isArray(permissions) && permissions.includes(key);
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
+  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   try {
     const authHeader = req.headers.get("Authorization");
@@ -38,6 +51,7 @@ Deno.serve(async (req: Request) => {
     const isActive = typeof body.isActive === "boolean" ? body.isActive : null;
     const opensAt = typeof body.opensAt === "string" ? body.opensAt : null;
     const closesAt = typeof body.closesAt === "string" ? body.closesAt : null;
+    const parentAlbumId = typeof body.parentAlbumId === "string" && body.parentAlbumId.trim() ? body.parentAlbumId.trim() : null;
 
     if (!albumId) return json({ error: "albumId is required" }, 400);
 
@@ -64,7 +78,11 @@ Deno.serve(async (req: Request) => {
       .eq("id", albumId)
       .maybeSingle();
 
-    if (albumErr || !album) return json({ error: albumErr?.message ?? "Album not found" }, 404);
+    if (albumErr) {
+      console.error("PHOTO_ALBUM_MANAGE_LOOKUP_FAILED", albumErr);
+      return json({ error: safePhotoAlbumManageError("LOOKUP_FAILED") }, 404);
+    }
+    if (!album) return json({ error: "Album not found" }, 404);
 
     const { data: site } = await admin
       .from("wedding_sites")
@@ -72,7 +90,21 @@ Deno.serve(async (req: Request) => {
       .eq("id", album.wedding_site_id as string)
       .maybeSingle();
 
-    if (!site || site.user_id !== user.id) return json({ error: "Forbidden" }, 403);
+    let allowed = !!site && site.user_id === user.id;
+    if (!allowed) {
+      const { data: collaborator, error: collaboratorError } = await admin
+        .from("wedding_site_collaborators")
+        .select("permissions")
+        .eq("wedding_site_id", album.wedding_site_id as string)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (collaboratorError) {
+        console.error("PHOTO_ALBUM_MANAGE_COLLABORATOR_FAILED", collaboratorError);
+        return json({ error: safePhotoAlbumManageError("COLLABORATOR_FAILED") }, 400);
+      }
+      allowed = hasPermissionKey(collaborator?.permissions, "photos");
+    }
+    if (!allowed) return json({ error: "Forbidden" }, 403);
 
     if (action === "set_active") {
       if (isActive === null) return json({ error: "isActive is required for set_active" }, 400);
@@ -80,7 +112,10 @@ Deno.serve(async (req: Request) => {
         .from("photo_albums")
         .update({ is_active: isActive })
         .eq("id", albumId);
-      if (error) return json({ error: error.message }, 400);
+      if (error) {
+        console.error("PHOTO_ALBUM_MANAGE_SET_ACTIVE_FAILED", error);
+        return json({ error: safePhotoAlbumManageError("UPDATE_FAILED") }, 400);
+      }
       return json({ success: true, albumId, isActive });
     }
 
@@ -89,8 +124,45 @@ Deno.serve(async (req: Request) => {
         .from("photo_albums")
         .update({ opens_at: opensAt, closes_at: closesAt })
         .eq("id", albumId);
-      if (error) return json({ error: error.message }, 400);
+      if (error) {
+        console.error("PHOTO_ALBUM_MANAGE_SET_WINDOW_FAILED", error);
+        return json({ error: safePhotoAlbumManageError("UPDATE_FAILED") }, 400);
+      }
       return json({ success: true, albumId, opensAt, closesAt });
+    }
+
+    if (action === "set_parent") {
+      if (parentAlbumId === albumId) return json({ error: "A bucket cannot be its own parent" }, 400);
+      let hierarchyLabel: string | null = null;
+      if (parentAlbumId) {
+        const { data: parent, error: parentError } = await admin
+          .from("photo_albums")
+          .select("id,wedding_site_id,name")
+          .eq("id", parentAlbumId)
+          .maybeSingle();
+        if (parentError) {
+          console.error("PHOTO_ALBUM_MANAGE_PARENT_FAILED", parentError);
+          return json({ error: safePhotoAlbumManageError("PARENT_FAILED") }, 400);
+        }
+        if (!parent || parent.wedding_site_id !== album.wedding_site_id) {
+          return json({ error: "Parent bucket must belong to this wedding site" }, 400);
+        }
+        const { data: current } = await admin
+          .from("photo_albums")
+          .select("name")
+          .eq("id", albumId)
+          .maybeSingle();
+        hierarchyLabel = `${parent.name as string} / ${String(current?.name ?? "Bucket")}`;
+      }
+      const { error } = await admin
+        .from("photo_albums")
+        .update({ parent_album_id: parentAlbumId, hierarchy_label: hierarchyLabel })
+        .eq("id", albumId);
+      if (error) {
+        console.error("PHOTO_ALBUM_MANAGE_SET_PARENT_FAILED", error);
+        return json({ error: safePhotoAlbumManageError("UPDATE_FAILED") }, 400);
+      }
+      return json({ success: true, albumId, parentAlbumId });
     }
 
     if (action === "regenerate_link") {
@@ -101,7 +173,10 @@ Deno.serve(async (req: Request) => {
         .update({ upload_token_hash: tokenHash, is_active: true })
         .eq("id", albumId);
 
-      if (error) return json({ error: error.message }, 400);
+      if (error) {
+        console.error("PHOTO_ALBUM_MANAGE_REGENERATE_LINK_FAILED", error);
+        return json({ error: safePhotoAlbumManageError("UPDATE_FAILED") }, 400);
+      }
 
       const uploadUrl = `${appUrl.replace(/\/$/, "")}/photos/upload?t=${encodeURIComponent(token)}`;
       return json({ success: true, albumId, uploadUrl, uploadToken: token });
@@ -109,6 +184,7 @@ Deno.serve(async (req: Request) => {
 
     return json({ error: "Unsupported action" }, 400);
   } catch (err) {
-    return json({ error: err instanceof Error ? err.message : "Internal server error" }, 500);
+    console.error("PHOTO_ALBUM_MANAGE_UNEXPECTED_FAILED", err);
+    return json({ error: safePhotoAlbumManageError("INTERNAL_ERROR") }, 500);
   }
 });

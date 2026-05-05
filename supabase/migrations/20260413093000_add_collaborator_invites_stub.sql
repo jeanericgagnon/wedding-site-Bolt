@@ -19,15 +19,11 @@ CREATE TABLE IF NOT EXISTS wedding_site_collaborator_invites (
   revoked_at timestamptz,
   updated_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS idx_collaborator_invites_site_id
   ON wedding_site_collaborator_invites (wedding_site_id);
-
 CREATE INDEX IF NOT EXISTS idx_collaborator_invites_email
   ON wedding_site_collaborator_invites (invite_email);
-
 ALTER TABLE wedding_site_collaborator_invites ENABLE ROW LEVEL SECURITY;
-
 DROP POLICY IF EXISTS "Owners/admins can read collaborator invites" ON wedding_site_collaborator_invites;
 CREATE POLICY "Owners/admins can read collaborator invites"
   ON wedding_site_collaborator_invites FOR SELECT
@@ -40,7 +36,6 @@ CREATE POLICY "Owners/admins can read collaborator invites"
         AND ws.user_id = auth.uid()
     )
   );
-
 DROP POLICY IF EXISTS "Owners/admins can manage collaborator invites" ON wedding_site_collaborator_invites;
 CREATE POLICY "Owners/admins can manage collaborator invites"
   ON wedding_site_collaborator_invites FOR ALL

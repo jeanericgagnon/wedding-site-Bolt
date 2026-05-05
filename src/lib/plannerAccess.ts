@@ -16,12 +16,12 @@ export const PLANNER_ROLE_OPTIONS: PlannerRoleOption[] = [
   {
     value: 'planner',
     label: 'Planner',
-    description: 'Broad wedding operations access across guests, planning, seating, and day-of coordination.',
+    description: 'Broad planning access across guests, tasks, seating, and day-of coordination.',
   },
   {
     value: 'coordinator',
     label: 'Coordinator',
-    description: 'Focused on live event operations, check-in, updates, and day-of support.',
+    description: 'Focused on check-in, updates, and day-of support.',
   },
   {
     value: 'viewer',
@@ -60,28 +60,58 @@ export function canEditPlannerSurface(role: PlannerAccessRole): boolean {
   return role !== 'viewer';
 }
 
-export function canManagePlanning(role: PlannerAccessRole): boolean {
-  return role === 'owner' || role === 'planner' || role === 'coordinator';
+export function hasPlannerPermission(
+  role: PlannerAccessRole,
+  permissions: PlannerPermissionKey[] | null | undefined,
+  permission: PlannerPermissionKey,
+): boolean {
+  if (role === 'owner') return true;
+  if (Array.isArray(permissions)) return permissions.includes(permission);
+  return getPlannerPermissionPreset(role as Exclude<PlannerAccessRole, 'owner'>).includes(permission);
 }
 
-export function canEditPlanningTasks(role: PlannerAccessRole): boolean {
-  return role === 'owner' || role === 'planner' || role === 'coordinator';
+export function canManagePlanning(role: PlannerAccessRole, permissions?: PlannerPermissionKey[] | null): boolean {
+  return hasPlannerPermission(role, permissions, 'planning');
 }
 
-export function canEditPlanningBudget(role: PlannerAccessRole): boolean {
-  return role === 'owner' || role === 'planner';
+export function canEditPlanningTasks(role: PlannerAccessRole, permissions?: PlannerPermissionKey[] | null): boolean {
+  return hasPlannerPermission(role, permissions, 'planning');
 }
 
-export function canEditPlanningVendors(role: PlannerAccessRole): boolean {
-  return role === 'owner' || role === 'planner';
+export function canEditPlanningBudget(role: PlannerAccessRole, permissions?: PlannerPermissionKey[] | null): boolean {
+  return hasPlannerPermission(role, permissions, 'budget');
 }
 
-export function canComposeDashboardMessages(role: PlannerAccessRole): boolean {
-  return role === 'owner' || role === 'planner';
+export function canEditPlanningVendors(role: PlannerAccessRole, permissions?: PlannerPermissionKey[] | null): boolean {
+  return hasPlannerPermission(role, permissions, 'vendors');
 }
 
-export function canSendCoordinatorUpdates(role: PlannerAccessRole): boolean {
-  return role === 'owner' || role === 'planner' || role === 'coordinator';
+export function canComposeDashboardMessages(role: PlannerAccessRole, permissions?: PlannerPermissionKey[] | null): boolean {
+  return hasPlannerPermission(role, permissions, 'messages');
+}
+
+export function canSendCoordinatorUpdates(role: PlannerAccessRole, permissions?: PlannerPermissionKey[] | null): boolean {
+  return hasPlannerPermission(role, permissions, 'coordinator');
+}
+
+export function canManageGuests(role: PlannerAccessRole, permissions?: PlannerPermissionKey[] | null): boolean {
+  return hasPlannerPermission(role, permissions, 'guests');
+}
+
+export function canManageSeating(role: PlannerAccessRole, permissions?: PlannerPermissionKey[] | null): boolean {
+  return hasPlannerPermission(role, permissions, 'seating');
+}
+
+export function canManageRegistry(role: PlannerAccessRole, permissions?: PlannerPermissionKey[] | null): boolean {
+  return hasPlannerPermission(role, permissions, 'registry');
+}
+
+export function canManagePhotos(role: PlannerAccessRole, permissions?: PlannerPermissionKey[] | null): boolean {
+  return hasPlannerPermission(role, permissions, 'photos');
+}
+
+export function canManageSettings(role: PlannerAccessRole, permissions?: PlannerPermissionKey[] | null): boolean {
+  return hasPlannerPermission(role, permissions, 'settings');
 }
 
 export interface PlannerInviteRecord {
@@ -90,6 +120,7 @@ export interface PlannerInviteRecord {
   role: Exclude<PlannerAccessRole, 'owner'>;
   status: 'draft' | 'pending' | 'active';
   invitedAtISO: string;
+  permissions?: PlannerPermissionKey[];
 }
 
 export function getPlannerInviteStorageKey(siteId: string | null | undefined): string | null {
@@ -152,7 +183,7 @@ export const PLANNER_PERMISSION_GROUPS: Array<{
   { key: 'vendors', label: 'Vendors', description: 'Manage vendor details and contacts.' },
   { key: 'seating', label: 'Seating', description: 'Edit seating charts and assignments.' },
   { key: 'timeline', label: 'Timeline', description: 'Update itinerary and event schedule.' },
-  { key: 'coordinator', label: 'Day-of coordination', description: 'Use coordinator mode and live ops tools.' },
+  { key: 'coordinator', label: 'Day-of coordination', description: 'Use day-of view and live support tools.' },
   { key: 'photos', label: 'Photos & media', description: 'Manage uploads, vault, and media flows.' },
   { key: 'registry', label: 'Registry', description: 'View or manage registry tools.' },
   { key: 'settings', label: 'Settings', description: 'Access site settings (not billing).' },
@@ -169,7 +200,7 @@ export const PLANNER_PERMISSION_PRESETS: PlannerPermissionPreset[] = [
   },
   {
     role: 'viewer',
-    permissions: ['guests', 'messages', 'planning', 'timeline', 'photos', 'registry'],
+    permissions: [],
   },
 ];
 
@@ -178,8 +209,9 @@ export function getPlannerPermissionPreset(role: Exclude<PlannerAccessRole, 'own
 }
 
 export function derivePlannerRoleFromPermissions(permissions: PlannerPermissionKey[] | null | undefined): PlannerAccessRole {
+  if (permissions == null) return 'owner';
   const set = new Set(permissions ?? []);
-  if (set.size === 0) return 'owner';
+  if (set.size === 0) return 'viewer';
   const plannerPreset = new Set(getPlannerPermissionPreset('planner'));
   const coordinatorPreset = new Set(getPlannerPermissionPreset('coordinator'));
   const viewerPreset = new Set(getPlannerPermissionPreset('viewer'));

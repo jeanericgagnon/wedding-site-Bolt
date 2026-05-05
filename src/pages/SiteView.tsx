@@ -5,7 +5,7 @@ import { AlertCircle, Lock, Eye, EyeOff } from 'lucide-react';
 import { LanguageSwitcher } from '../components/ui/LanguageSwitcher';
 import { supabase } from '../lib/supabase';
 import { WeddingDataV1, createEmptyWeddingData, normalizeWeddingData } from '../types/weddingData';
-import { LayoutConfigV1 } from '../types/layoutConfig';
+import { LayoutConfigV1, SectionInstance } from '../types/layoutConfig';
 import { getSectionComponent } from '../sections/sectionRegistry';
 import { applyThemePreset, applyThemeTokens } from '../lib/themePresets';
 import { BuilderProject } from '../types/builder/project';
@@ -14,6 +14,8 @@ import { SectionRenderer } from '../builder/components/SectionRenderer';
 import { PageRenderer } from '../render/PageRenderer';
 import { safeJsonParse } from '../lib/jsonUtils';
 import { SiteViewContext } from '../contexts/SiteViewContext';
+import { RegistryGrid } from '../sections/components/RegistrySection';
+import { OwnerPreviewBanner } from '../components/site/OwnerPreviewBanner';
 import { siteRepository } from '../data/siteRepository';
 import { normalizePublicSiteSlug } from '../lib/publicSiteSlug';
 import { getTemplatePack } from '../builder/constants/builderTemplatePacks';
@@ -21,9 +23,9 @@ import { getSectionVariants } from '../sections/sectionRegistry';
 import { demoWeddingSite } from '../lib/demoData';
 import { rewriteSignedMediaUrlsToPublicDeep } from '../lib/mediaUrl';
 import { getArchiveModeDescriptor } from '../lib/archiveMode';
-import { getSiteVisibilityState } from '../lib/siteVisibilityState';
 import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
 import { getIsPublishedFromSiteRow, getPublicBuilderProject, getPublicWeddingData } from '../lib/publicSiteProject';
+import { fetchPublicSiteAccess, requestPublicSitePasswordUnlock } from '../lib/publicSiteAccess';
 
 interface PublicItineraryRow {
   id?: string;
@@ -183,15 +185,230 @@ function normalizeSectionVariants(sections: BuilderSectionInstance[]): BuilderSe
   });
 }
 
+function hasRegistryBuilderSection(sections: BuilderSectionInstance[]): boolean {
+  return sections.some((section) => section.type.trim().toLowerCase().replace(/[^a-z0-9-]/g, '') === 'registry');
+}
+
+async function hasLiveRegistryItems(siteId: string): Promise<boolean> {
+  try {
+    const { data: fnData } = await supabase.functions.invoke('public-registry-items', {
+      body: { wedding_site_id: siteId, limit: 1 },
+    });
+    if (Array.isArray(fnData?.items)) return fnData.items.length > 0;
+
+    const { data, error } = await supabase
+      .from('registry_items')
+      .select('id')
+      .eq('wedding_site_id', siteId)
+      .limit(1);
+
+    return !error && Array.isArray(data) && data.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+function appendRegistrySectionWhenNeeded(sections: BuilderSectionInstance[], shouldAppend: boolean): BuilderSectionInstance[] {
+  if (!shouldAppend || hasRegistryBuilderSection(sections)) return sections;
+  return [
+    ...sections,
+    {
+      ...createDefaultSectionInstance('registry', 'featured', sections.length),
+      enabled: true,
+      settings: {
+        title: 'Registry',
+        showTitle: true,
+      },
+    },
+  ];
+}
+
+function hasMeaningfulText(value: unknown, minLength = 2): boolean {
+  if (typeof value !== 'string') return false;
+  const normalized = value.trim().toLowerCase();
+  if (normalized.length < minLength) return false;
+  return !['tbd', 'date tbd', 'venue tbd', 'the couple', 'our wedding'].includes(normalized);
+}
+
+function hasGuestReadyVenue(data: WeddingDataV1): boolean {
+  return data.venues.some((venue) => hasMeaningfulText(venue.name) || hasMeaningfulText(venue.address, 6));
+}
+
+function hasGuestReadyTravel(data: WeddingDataV1): boolean {
+  const travel = data.travel ?? {};
+  return [
+    travel.notes,
+    travel.parkingInfo,
+    travel.hotelInfo,
+    travel.flightInfo,
+    typeof travel.accommodations === 'string' ? travel.accommodations : '',
+  ].some((value) => hasMeaningfulText(value, 12)) || (Array.isArray(travel.accommodations) && travel.accommodations.length > 0);
+}
+
+function hasGuestReadyRegistry(data: WeddingDataV1): boolean {
+  return Array.isArray(data.registry?.links) && data.registry.links.length > 0;
+}
+
+function settingArray(settings: Record<string, unknown> | undefined, key: string): unknown[] {
+  const value = settings?.[key];
+  return Array.isArray(value) ? value : [];
+}
+
+function hasSettingText(settings: Record<string, unknown> | undefined, keys: string[], minLength = 2): boolean {
+  return keys.some((key) => {
+    const value = settings?.[key];
+    if (typeof value === 'string') return hasMeaningfulText(value, minLength);
+    if (value && typeof value === 'object' && 'value' in value) {
+      return hasMeaningfulText((value as { value?: unknown }).value, minLength);
+    }
+    return false;
+  });
+}
+
+function hasGuestReadyContentForSection(
+  sectionType: string,
+  data: WeddingDataV1,
+  settings?: Record<string, unknown>,
+  variant?: string
+): boolean {
+  const type = sectionType.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+  const normalizedVariant = variant?.trim().toLowerCase().replace(/[^a-z0-9-]/g, '') ?? '';
+  switch (type) {
+    case 'venue':
+      return hasGuestReadyVenue(data);
+    case 'schedule':
+    case 'timeline':
+      return data.schedule.length > 0;
+    case 'registry':
+      return hasGuestReadyRegistry(data);
+    case 'story':
+      return hasMeaningfulText(data.couple.story, 24);
+    case 'gallery':
+      return data.media.gallery.length > 0 || hasMeaningfulText(data.media.heroImageUrl, 10);
+    case 'travel':
+      return hasGuestReadyTravel(data);
+    case 'accommodations':
+      return hasGuestReadyTravel(data) || settingArray(settings, 'hotels').length > 0 || hasSettingText(settings, ['generalNote'], 12);
+    case 'faq':
+      return data.faq.length > 0;
+    case 'contact':
+      return normalizedVariant === 'interactivehub'
+        || settingArray(settings, 'contacts').length > 0
+        || hasSettingText(settings, ['introText', 'closingNote', 'subtitle'], 12);
+    case 'dress-code':
+    case 'dresscode':
+      return hasSettingText(settings, ['presetCode', 'description', 'colorNote', 'additionalNote', 'dressCodeLabel'], 2)
+        || settingArray(settings, 'suggestions').length > 0;
+    case 'wedding-party':
+    case 'weddingparty':
+      return settingArray(settings, 'bridalParty').length > 0 || settingArray(settings, 'groomParty').length > 0;
+    case 'countdown':
+      return !!toIsoDateOrUndefined(data.event.weddingDateISO ?? data.event.date)
+        || hasSettingText(settings, ['targetDate'], 8);
+    default:
+      return true;
+  }
+}
+
+function filterGuestReadyBuilderSections(sections: BuilderSectionInstance[], data: WeddingDataV1): BuilderSectionInstance[] {
+  return sections.filter((section) => hasGuestReadyContentForSection(
+    section.type,
+    data,
+    section.settings as Record<string, unknown> | undefined,
+    section.variant
+  ));
+}
+
+function isPublicWeddingDataSparse(data: WeddingDataV1): boolean {
+  const hasCoupleNames = hasMeaningfulText(data.couple.partner1Name) || hasMeaningfulText(data.couple.partner2Name) || hasMeaningfulText(data.couple.displayName);
+  const hasDate = !!toIsoDateOrUndefined(data.event.weddingDateISO ?? data.event.date);
+  const hasImage = hasMeaningfulText(data.media.heroImageUrl, 10) || data.media.gallery.length > 0;
+  const hasStory = hasMeaningfulText(data.couple.story, 24);
+  const hasSchedule = data.schedule.length > 0;
+  const score = [hasCoupleNames, hasDate, hasGuestReadyVenue(data), hasImage, hasStory, hasSchedule].filter(Boolean).length;
+  return score <= 2;
+}
+
+function titleCaseSlugPart(value: string): string {
+  return value
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(' ');
+}
+
+function deriveCoupleNamesFromSlug(siteSlug: string): { partner1Name: string; partner2Name: string; displayName: string } | null {
+  const normalized = siteSlug.trim().toLowerCase();
+  const match = normalized.match(/^(.+?)(?:-and-|and)(.+)$/);
+  if (!match) return null;
+
+  const partner1Name = titleCaseSlugPart(match[1] ?? '');
+  const partner2Name = titleCaseSlugPart(match[2] ?? '');
+  if (!hasMeaningfulText(partner1Name) || !hasMeaningfulText(partner2Name)) return null;
+
+  return {
+    partner1Name,
+    partner2Name,
+    displayName: `${partner1Name} and ${partner2Name}`,
+  };
+}
+
+function withSlugDerivedCoupleNames(data: WeddingDataV1, siteSlug: string): WeddingDataV1 {
+  const hasNames = hasMeaningfulText(data.couple.partner1Name)
+    || hasMeaningfulText(data.couple.partner2Name)
+    || hasMeaningfulText(data.couple.displayName);
+  if (hasNames) return data;
+
+  const derived = deriveCoupleNamesFromSlug(siteSlug);
+  if (!derived) return data;
+
+  return {
+    ...data,
+    couple: {
+      ...data.couple,
+      partner1Name: derived.partner1Name,
+      partner2Name: derived.partner2Name,
+      displayName: derived.displayName,
+    },
+  };
+}
+
 export function createAlexJordanDemoWeddingData(overrides: Partial<typeof demoWeddingSite> = {}): WeddingDataV1 {
   const site = { ...demoWeddingSite, ...overrides };
   const data = createEmptyWeddingData();
   data.couple.partner1Name = site.couple_name_1;
   data.couple.partner2Name = site.couple_name_2;
   data.couple.displayName = buildCoupleDisplayName(site.couple_name_1, site.couple_name_2, 'The couple');
+  data.couple.story = 'We met through friends, got lost in a long first conversation, and somehow the rest of the evening became the beginning of this next chapter. We cannot wait to gather everyone we love in one place.';
   data.event.weddingDateISO = toIsoDateOrUndefined(site.wedding_date);
   data.venues = [{ id: 'demo-venue-1', name: site.venue_name, address: site.venue_location }];
+  data.schedule = [
+    { id: 'demo-welcome', label: 'Welcome Drinks', startTimeISO: '2026-06-14T18:00:00', venueId: 'demo-venue-1', notes: 'A relaxed hello before the wedding day.' },
+    { id: 'demo-ceremony', label: 'Ceremony', startTimeISO: '2026-06-15T16:00:00', venueId: 'demo-venue-1', notes: 'Garden ceremony followed by cocktails nearby.' },
+    { id: 'demo-reception', label: 'Dinner and Dancing', startTimeISO: '2026-06-15T18:00:00', venueId: 'demo-venue-1', notes: 'Dinner, speeches, and a full dance floor.' },
+  ];
+  data.travel = {
+    notes: 'Napa evenings cool down quickly. Bring a light layer for the garden and plan rideshare pickup near the main estate entrance.',
+    parkingInfo: 'Complimentary valet will be available at the venue entrance.',
+    hotelInfo: 'A small room block is available nearby under the Thompson Rivera wedding.',
+  };
+  data.registry = {
+    links: [
+      { id: 'demo-registry-1', label: 'Honeymoon Fund', url: 'https://dayof.love' },
+      { id: 'demo-registry-2', label: 'Home Registry', url: 'https://dayof.love' },
+    ],
+    notes: 'Your presence is enough. For anyone who has asked, we added a few ways to celebrate this next chapter.',
+  };
+  data.faq = [
+    { id: 'demo-faq-1', q: 'What should I wear?', a: 'Cocktail attire works perfectly. The ceremony is outside, so block heels or comfortable shoes are recommended.' },
+    { id: 'demo-faq-2', q: 'Can I bring a plus one?', a: 'Please check your RSVP. If a guest is included, their name will appear with your invitation.' },
+  ];
   data.media.heroImageUrl = site.hero_image_url;
+  data.media.gallery = [
+    { id: 'demo-gallery-1', url: 'https://images.pexels.com/photos/1444442/pexels-photo-1444442.jpeg', caption: 'Garden celebration' },
+    { id: 'demo-gallery-2', url: 'https://images.pexels.com/photos/2959192/pexels-photo-2959192.jpeg', caption: 'Dinner under soft light' },
+    { id: 'demo-gallery-3', url: 'https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg', caption: 'A quiet moment together' },
+  ];
   data.theme.preset = 'elegant';
   return data;
 }
@@ -205,24 +422,55 @@ const FALLBACK_IMAGE_DATA_URI = `data:image/svg+xml;utf8,${encodeURIComponent(
       </linearGradient>
     </defs>
     <rect width='1200' height='675' fill='url(#g)'/>
-    <g fill='none' stroke='#a8a29e' stroke-width='16' opacity='0.8'>
-      <rect x='420' y='212' width='360' height='250' rx='22'/>
-      <path d='M452 430l90-95 84 74 58-54 68 75'/>
-      <circle cx='688' cy='286' r='22' fill='#a8a29e' stroke='none'/>
-    </g>
-    <text x='600' y='528' text-anchor='middle' fill='#78716c' font-size='34' font-family='Inter,Arial,sans-serif'>Image unavailable</text>
+    <circle cx='315' cy='182' r='180' fill='#ffffff' opacity='0.32'/>
+    <circle cx='906' cy='498' r='240' fill='#d6d3d1' opacity='0.28'/>
   </svg>`
 )}`;
 
+function hasRegistryPersistedSection(sections: Array<{ type?: unknown }>): boolean {
+  return sections.some((section) => String(section.type ?? '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '') === 'registry');
+}
+
+const fallbackRegistryInstance: SectionInstance = {
+  id: 'auto-live-registry',
+  type: 'registry',
+  variant: 'cards',
+  enabled: true,
+  settings: {
+    title: 'Registry',
+    showTitle: true,
+  },
+};
+
 const PageRendererFromDB: React.FC<{ siteId: string; siteSlug: string; weddingData?: WeddingDataV1 | null }> = ({ siteId, siteSlug, weddingData }) => {
   const [sections, setSections] = useState<import('../sections/schemas').PersistedSection[]>([]);
+  const [appendRegistry, setAppendRegistry] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    siteRepository.fetchPublishedSections(siteId)
-      .then(setSections)
-      .catch(() => setSections([]))
-      .finally(() => setLoading(false));
+    let cancelled = false;
+    async function loadSections() {
+      setLoading(true);
+      try {
+        const loadedSections = await siteRepository.fetchPublishedSections(siteId);
+        const shouldAppendRegistry = !hasRegistryPersistedSection(loadedSections) && await hasLiveRegistryItems(siteId);
+        if (!cancelled) {
+          setSections(loadedSections);
+          setAppendRegistry(shouldAppendRegistry);
+        }
+      } catch {
+        const shouldAppendRegistry = await hasLiveRegistryItems(siteId);
+        if (!cancelled) {
+          setSections([]);
+          setAppendRegistry(shouldAppendRegistry);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    loadSections();
+    return () => { cancelled = true; };
   }, [siteId]);
 
   if (loading) {
@@ -233,7 +481,23 @@ const PageRendererFromDB: React.FC<{ siteId: string; siteSlug: string; weddingDa
     );
   }
 
-  return <PageRenderer sections={sections} weddingData={weddingData} siteSlug={siteSlug} />;
+  const guestReadySections = weddingData
+    ? sections.filter((section) => hasGuestReadyContentForSection(
+      section.type,
+      weddingData,
+      section.data as Record<string, unknown> | undefined,
+      section.variant
+    ))
+    : sections;
+
+  return (
+    <>
+      <PageRenderer sections={guestReadySections} weddingData={weddingData} siteSlug={siteSlug} />
+      {appendRegistry && (
+        <RegistryGrid data={weddingData ?? createEmptyWeddingData()} instance={fallbackRegistryInstance} />
+      )}
+    </>
+  );
 };
 
 type PrivacyGateState = 'loading' | 'open' | 'password_required' | 'invite_only' | 'unlocked';
@@ -251,25 +515,25 @@ const PasswordGate: React.FC<{
   useEffect(() => { inputRef.current?.focus(); }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-stone-50 to-stone-100 px-4">
+    <div className="min-h-screen flex flex-col bg-[#fbf7f1] px-4">
       <div className="flex justify-end p-4">
         <LanguageSwitcher />
       </div>
       <div className="flex-1 flex items-center justify-center">
       <div className="max-w-sm w-full">
         <div className="text-center mb-6">
-          <div className="w-14 h-14 bg-stone-800 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Lock className="w-7 h-7 text-stone-200" />
+          <div className="w-14 h-14 bg-white rounded-lg border border-stone-200 flex items-center justify-center mx-auto mb-4">
+            <Lock className="w-7 h-7 text-stone-600" />
           </div>
           <h1 className="text-2xl font-light text-stone-800 mb-2">{t('site.password_gate_title')}</h1>
           <p className="text-stone-500 text-sm">{t('site.password_gate_subtitle')}</p>
         </div>
         <form
           onSubmit={e => { e.preventDefault(); onSubmit(pw); }}
-          className="bg-white border border-stone-200 rounded-2xl shadow-[0_1px_2px_rgba(15,23,42,0.06)] p-5 space-y-4"
+          className="bg-white border border-stone-200 rounded-lg p-5 space-y-4"
         >
           {error && (
-            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            <div className="flex items-center gap-2 p-3 bg-stone-50 border border-stone-200 rounded-lg text-stone-700 text-sm">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               {error}
             </div>
@@ -302,7 +566,7 @@ const PasswordGate: React.FC<{
             {checking ? t('site.password_checking') : t('site.password_submit')}
           </button>
         </form>
-        <p className="text-center text-xs text-stone-400 mt-2.5">Powered by DayOf</p>
+        <p className="text-center text-xs text-stone-400 mt-2.5">Powered by dayof</p>
       </div>
       </div>
     </div>
@@ -312,14 +576,14 @@ const PasswordGate: React.FC<{
 const InviteOnlyGate: React.FC = () => {
   const { t } = useTranslation();
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-stone-50 to-stone-100 px-4">
+    <div className="min-h-screen flex flex-col bg-[#fbf7f1] px-4">
       <div className="flex justify-end p-3.5">
         <LanguageSwitcher />
       </div>
       <div className="flex-1 flex items-center justify-center">
         <div className="max-w-md w-full text-center space-y-3">
-          <div className="w-16 h-16 bg-stone-800 rounded-full flex items-center justify-center mx-auto">
-            <Lock className="w-8 h-8 text-stone-200" />
+          <div className="w-16 h-16 bg-white rounded-lg border border-stone-200 flex items-center justify-center mx-auto">
+            <Lock className="w-8 h-8 text-stone-600" />
           </div>
           <div>
             <h1 className="text-2xl font-light text-stone-800 mb-2">{t('site.invite_only_title')}</h1>
@@ -342,12 +606,12 @@ const InviteOnlyGate: React.FC = () => {
 const ComingSoonScreen: React.FC = () => {
   const { t } = useTranslation();
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-background to-surface px-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#fbf7f1] px-4">
       <div className="flex justify-end w-full max-w-md absolute top-3.5 right-4">
         <LanguageSwitcher />
       </div>
       <div className="max-w-md w-full text-center space-y-3">
-        <div className="w-24 h-24 bg-primary/8 rounded-full flex items-center justify-center mx-auto">
+        <div className="w-16 h-16 bg-white rounded-lg border border-border-subtle flex items-center justify-center mx-auto">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-12 h-12 text-primary/60">
             <path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/>
           </svg>
@@ -364,7 +628,7 @@ const ComingSoonScreen: React.FC = () => {
         <p className="text-xs text-text-tertiary">
           Are you the couple?{' '}
           <a href="/login" className="text-primary hover:underline">Sign in</a>
-          {' '}and click Publish in your builder.
+          {' '}and publish from the site editor.
         </p>
       </div>
     </div>
@@ -400,8 +664,10 @@ export const SiteView: React.FC = () => {
   const [hideFromSearch, setHideFromSearch] = useState(false);
   const [passwordGateError, setPasswordGateError] = useState<string | null>(null);
   const [passwordGateChecking, setPasswordGateChecking] = useState(false);
+  const [privacyUnlockNonce, setPrivacyUnlockNonce] = useState(0);
 
-  const STORAGE_KEY = `dayof_pw_unlocked_${resolvedSlug ?? 'unknown'}`;
+  const PASSWORD_SESSION_KEY = `dayof_pw_session_${resolvedSlug ?? 'unknown'}`;
+  const INVITE_TOKEN_KEY = `dayof_invite_token_${resolvedSlug ?? 'unknown'}`;
 
   const handleImageErrorCapture = useCallback((event: React.SyntheticEvent<HTMLElement>) => {
     const target = event.target;
@@ -414,27 +680,32 @@ export const SiteView: React.FC = () => {
 
     target.dataset.fallbackApplied = '1';
     target.src = FALLBACK_IMAGE_DATA_URI;
-    if (!target.alt || target.alt.trim().length === 0) {
-      target.alt = 'Image unavailable';
-    }
+    target.alt = target.alt || '';
   }, []);
 
   const handlePasswordSubmit = async (pw: string) => {
     setPasswordGateChecking(true);
     setPasswordGateError(null);
     try {
-      const { data } = await supabase.rpc('check_site_password', {
-        p_slug: resolvedSlug,
-        p_password: pw,
+      if (!resolvedSlug) {
+        setPasswordGateError('This site link is not complete right now.');
+        return;
+      }
+
+      const result = await requestPublicSitePasswordUnlock({
+        slug: resolvedSlug,
+        password: pw,
       });
-      if (data === true) {
-        sessionStorage.setItem(STORAGE_KEY, '1');
-        setPrivacyGate('unlocked');
+
+      if (result.ok && result.passwordSession) {
+        sessionStorage.setItem(PASSWORD_SESSION_KEY, result.passwordSession);
+        setPrivacyGate('loading');
+        setPrivacyUnlockNonce((current) => current + 1);
       } else {
         setPasswordGateError('Incorrect password. Please try again.');
       }
     } catch {
-      setPasswordGateError('Could not verify that password right now. Please try again.');
+      setPasswordGateError('Couldn’t check that password right now. Please try again.');
     } finally {
       setPasswordGateChecking(false);
     }
@@ -458,20 +729,52 @@ export const SiteView: React.FC = () => {
       clearSiteState();
 
       if (!resolvedSlug) {
-        setError('Invalid site URL');
+        setError('This wedding site link does not look complete.');
         setLoading(false);
         return;
       }
 
       try {
-        const data = await siteRepository.fetchPublicSiteBySlug(resolvedSlug);
+        const urlToken = searchParams.get('token');
+        const inviteToken = urlToken ?? sessionStorage.getItem(INVITE_TOKEN_KEY);
+        const passwordSession = sessionStorage.getItem(PASSWORD_SESSION_KEY);
+        const access = await fetchPublicSiteAccess({
+          slug: resolvedSlug,
+          inviteToken,
+          passwordSession,
+        });
 
-        if (!data) {
-          setError('Wedding site not found');
+        if (access.status === 'coming_soon') {
+          setIsComingSoon(true);
           setLoading(false);
           return;
         }
 
+        if (access.status === 'password_required') {
+          sessionStorage.removeItem(PASSWORD_SESSION_KEY);
+          setPrivacyGate('password_required');
+          setLoading(false);
+          return;
+        }
+
+        if (access.status === 'invite_required') {
+          if (!urlToken) sessionStorage.removeItem(INVITE_TOKEN_KEY);
+          setPrivacyGate('invite_only');
+          setLoading(false);
+          return;
+        }
+
+        if (access.status === 'unavailable' || !access.site) {
+          setError('This wedding site is not available right now.');
+          setLoading(false);
+          return;
+        }
+
+        if (urlToken) {
+          sessionStorage.setItem(INVITE_TOKEN_KEY, urlToken);
+        }
+
+        const data = access.site as unknown as Record<string, unknown>;
         setWeddingSiteId(data.id as string);
 
         const siteLang = (data.default_language as string) ?? 'en';
@@ -482,47 +785,28 @@ export const SiteView: React.FC = () => {
 
         const row = data as Record<string, unknown>;
         const isPublished = getIsPublishedFromSiteRow(row);
-
-        const privacyMode = (data.privacy_mode as string) ?? 'public';
-        const visibility = getSiteVisibilityState({ isPublished, privacyMode, hideFromSearch: data.hide_from_search === true });
-        const allowPrivatePreview = visibility.isPrivatePreview;
-
-        if (!isPublished && !allowPrivatePreview) {
-          setIsComingSoon(true);
-          setLoading(false);
-          return;
-        }
-
-        const pwHash = (data.site_password_hash as string | null) ?? null;
-        const hideSearch = !!(data.hide_from_search);
-        const guestToken = (data.guest_access_token as string | null) ?? null;
+        const hideSearch = data.allow_search_indexing === false;
 
         setHideFromSearch(hideSearch);
 
-        if (privacyMode === 'password_protected') {
-          const alreadyUnlocked = sessionStorage.getItem(`dayof_pw_unlocked_${resolvedSlug}`) === '1';
-          if (!pwHash || !alreadyUnlocked) {
-            setPrivacyGate('password_required');
-            setLoading(false);
-            return;
-          }
-        } else if (privacyMode === 'invite_only') {
-          const urlToken = searchParams.get('token');
-          const storedToken = sessionStorage.getItem(`dayof_invite_token_${resolvedSlug}`);
-          const tokenToCheck = urlToken ?? storedToken;
-          if (!guestToken || !tokenToCheck || tokenToCheck !== guestToken) {
-            setPrivacyGate('invite_only');
-            setLoading(false);
-            return;
-          }
-          if (urlToken) {
-            sessionStorage.setItem(`dayof_invite_token_${resolvedSlug}`, urlToken);
+        setPrivacyGate('open');
+
+        const activeLanguage = i18n.language?.split('-')[0] || 'en';
+        let renderRow = row;
+        if (activeLanguage !== 'en') {
+          const translation = await siteRepository.fetchPublicSiteTranslation(data.id as string, activeLanguage).catch(() => null);
+          if (translation) {
+            renderRow = {
+              ...row,
+              site_json: translation.translated_site_json ?? row.site_json,
+              published_json: translation.translated_published_json ?? row.published_json,
+              wedding_data: translation.translated_wedding_data ?? row.wedding_data,
+              layout_config: translation.translated_layout_config ?? row.layout_config,
+            };
           }
         }
 
-        setPrivacyGate('open');
-
-        const rawSiteJson = getPublicBuilderProject(row);
+        const rawSiteJson = getPublicBuilderProject(renderRow);
         const siteJson = rawSiteJson
           ? rewriteSignedMediaUrlsToPublicDeep({
               ...rawSiteJson,
@@ -538,14 +822,30 @@ export const SiteView: React.FC = () => {
           : null;
 
         const persistedSections = await siteRepository.fetchPublishedSections(data.id as string).catch(() => []);
+        const isDemoSite = resolvedSlug === 'alex-jordan-demo';
 
         if (isPublished && persistedSections.length > 0 && !(siteJson && siteJson.pages?.length > 0)) {
           const rawWData = normalizeWeddingData(
             rewriteSignedMediaUrlsToPublicDeep(
-              getPublicWeddingData(row) ?? createEmptyWeddingData()
+              getPublicWeddingData(renderRow) ?? createEmptyWeddingData()
             )
           );
-          const wData = await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData);
+          const wData = withSlugDerivedCoupleNames(await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData), resolvedSlug);
+          if (isDemoSite && isPublicWeddingDataSparse(wData)) {
+            const demoSections = createDemoFallbackSections('modern-luxe');
+            if (demoSections.length > 0) {
+              setUseNewRenderer(false);
+              setBuilderSections(filterGuestReadyBuilderSections(demoSections, createAlexJordanDemoWeddingData()));
+              setLayoutConfig(null);
+              setWeddingData(createAlexJordanDemoWeddingData());
+              applyThemePreset('elegant');
+              return;
+            }
+          }
+          if (!isDemoSite && isPublicWeddingDataSparse(wData)) {
+            setIsComingSoon(true);
+            return;
+          }
           setUseNewRenderer(true);
           setBuilderSections(null);
           setLayoutConfig(null);
@@ -557,13 +857,23 @@ export const SiteView: React.FC = () => {
         if (siteJson && siteJson.pages?.length > 0) {
           const homePage = siteJson.pages.find(p => p.id === 'home') ?? siteJson.pages[0];
           const sections = normalizeSectionVariants(homePage.sections.filter(s => s.enabled));
+          const shouldAppendRegistry = await hasLiveRegistryItems(data.id as string);
+          const publicSections = appendRegistrySectionWhenNeeded(sections, shouldAppendRegistry);
+          const rawWData = normalizeWeddingData(
+            rewriteSignedMediaUrlsToPublicDeep(
+              getPublicWeddingData(renderRow) ?? createEmptyWeddingData()
+            )
+          );
+          const wData = withSlugDerivedCoupleNames(await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData), resolvedSlug);
+          const sparsePublicData = isPublicWeddingDataSparse(wData);
 
-          if (sections.length === 0) {
-            if (resolvedSlug === 'alex-jordan-demo') {
+          if (publicSections.length === 0 || (isDemoSite && sparsePublicData)) {
+            if (isDemoSite) {
+              const demoData = createAlexJordanDemoWeddingData();
               const demoSections = createDemoFallbackSections(siteJson.templateId || 'modern-luxe');
               if (demoSections.length > 0) {
-                setBuilderSections(demoSections);
-                setWeddingData(createAlexJordanDemoWeddingData());
+                setBuilderSections(filterGuestReadyBuilderSections(demoSections, demoData));
+                setWeddingData(demoData);
                 if (siteJson.themeId) {
                   applyThemePreset(siteJson.themeId);
                 } else {
@@ -577,12 +887,10 @@ export const SiteView: React.FC = () => {
             return;
           }
 
-          const rawWData = normalizeWeddingData(
-            rewriteSignedMediaUrlsToPublicDeep(
-              getPublicWeddingData(row) ?? createEmptyWeddingData()
-            )
-          );
-          const wData = await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData);
+          if (!isDemoSite && sparsePublicData) {
+            setIsComingSoon(true);
+            return;
+          }
 
           if (siteJson.themeTokens) {
             applyThemeTokens(siteJson.themeTokens);
@@ -592,14 +900,14 @@ export const SiteView: React.FC = () => {
             applyThemePreset(wData.theme.preset);
           }
 
-          setBuilderSections(sections);
+          setBuilderSections(filterGuestReadyBuilderSections(publicSections, wData));
           setWeddingData(wData);
         } else {
-          const parsedWData = getPublicWeddingData(row);
+          const parsedWData = getPublicWeddingData(renderRow);
           const rawWData = parsedWData
             ? normalizeWeddingData(rewriteSignedMediaUrlsToPublicDeep(parsedWData))
             : null;
-          const lConfig = safeJsonParse<LayoutConfigV1 | null>(data.layout_config, null);
+          const lConfig = safeJsonParse<LayoutConfigV1 | null>(renderRow.layout_config, null);
 
           if (!rawWData || !lConfig) {
             setError('This wedding site is still being set up. Check back soon!');
@@ -607,7 +915,22 @@ export const SiteView: React.FC = () => {
             return;
           }
 
-          const wData = await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData);
+          const wData = withSlugDerivedCoupleNames(await hydrateWeddingDataFromItinerary(data.id as string, resolvedSlug, rawWData), resolvedSlug);
+          if (isDemoSite && isPublicWeddingDataSparse(wData)) {
+            const demoData = createAlexJordanDemoWeddingData();
+            const demoSections = createDemoFallbackSections('modern-luxe');
+            if (demoSections.length > 0) {
+              setBuilderSections(filterGuestReadyBuilderSections(demoSections, demoData));
+              setWeddingData(demoData);
+              setLayoutConfig(null);
+              applyThemePreset('elegant');
+              return;
+            }
+          }
+          if (!isDemoSite && isPublicWeddingDataSparse(wData)) {
+            setIsComingSoon(true);
+            return;
+          }
 
           if (wData.theme?.preset) {
             applyThemePreset(wData.theme.preset);
@@ -618,7 +941,7 @@ export const SiteView: React.FC = () => {
         }
       } catch {
         clearSiteState();
-        setError('Failed to load wedding site');
+        setError('Couldn’t load this wedding site. Please refresh and try again.');
       } finally {
         setLoading(false);
       }
@@ -637,7 +960,7 @@ export const SiteView: React.FC = () => {
       ];
       resetProps.forEach(p => el.style.removeProperty(p));
     };
-  }, [i18n, resolvedSlug, searchParams]);
+  }, [i18n, i18n.language, resolvedSlug, searchParams, privacyUnlockNonce]);
 
   useEffect(() => {
     if (!hideFromSearch) return;
@@ -683,7 +1006,7 @@ export const SiteView: React.FC = () => {
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="max-w-md w-full bg-surface border border-border-subtle rounded-xl p-6 text-center">
+        <div className="max-w-md w-full bg-surface border border-border-subtle rounded-lg p-6 text-center">
           <AlertCircle className="w-14 h-14 text-error mx-auto mb-3" />
           <h1 className="text-xl font-semibold text-text-primary mb-2">Something went wrong</h1>
           <p className="text-text-secondary">{error}</p>
@@ -696,6 +1019,7 @@ export const SiteView: React.FC = () => {
     return (
       <SiteViewContext.Provider value={{ weddingSiteId }}>
         <div onErrorCapture={handleImageErrorCapture}>
+          <OwnerPreviewBanner />
           <PageRendererFromDB siteId={weddingSiteId} siteSlug={resolvedSlug ?? ''} weddingData={weddingData} />
         </div>
       </SiteViewContext.Provider>
@@ -706,8 +1030,9 @@ export const SiteView: React.FC = () => {
     return (
       <SiteViewContext.Provider value={{ weddingSiteId }}>
         <div className="builder-themed-canvas min-h-screen bg-background" onErrorCapture={handleImageErrorCapture}>
+          <OwnerPreviewBanner />
           {builderSections.map(section => (
-            <SectionRenderer key={section.id} section={section} weddingData={weddingData} />
+            <SectionRenderer key={section.id} section={section} weddingData={weddingData} surface="public" />
           ))}
         </div>
       </SiteViewContext.Provider>
@@ -717,8 +1042,8 @@ export const SiteView: React.FC = () => {
   if (!weddingData || !layoutConfig) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="max-w-md w-full bg-surface border border-border-subtle rounded-xl p-6 text-center">
-          <p className="text-text-secondary">No wedding site data found</p>
+        <div className="max-w-md w-full bg-surface border border-border-subtle rounded-lg p-6 text-center">
+          <p className="text-text-secondary">This wedding site is not ready to view yet.</p>
         </div>
       </div>
     );
@@ -728,8 +1053,8 @@ export const SiteView: React.FC = () => {
   if (!homePage) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="max-w-md w-full bg-surface border border-border-subtle rounded-xl p-6 text-center">
-          <p className="text-text-secondary">No page configuration found</p>
+        <div className="max-w-md w-full bg-surface border border-border-subtle rounded-lg p-6 text-center">
+          <p className="text-text-secondary">This wedding site is not ready to view yet.</p>
         </div>
       </div>
     );
@@ -740,6 +1065,7 @@ export const SiteView: React.FC = () => {
   return (
     <SiteViewContext.Provider value={{ weddingSiteId }}>
       <div className="min-h-screen bg-background" onErrorCapture={handleImageErrorCapture}>
+        <OwnerPreviewBanner />
         {enabledSections.map((sectionInstance) => {
           try {
             const SectionComponent = getSectionComponent(
@@ -755,8 +1081,8 @@ export const SiteView: React.FC = () => {
             );
           } catch {
             return (
-              <div key={sectionInstance.id} className="py-8 px-4 bg-error-light text-error text-center">
-                <p>Error rendering {sectionInstance.type} section</p>
+              <div key={sectionInstance.id} className="py-8 px-4 bg-surface-subtle text-text-secondary text-center">
+                <p>This part of the wedding site is taking a moment to load.</p>
               </div>
             );
           }

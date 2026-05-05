@@ -5,7 +5,7 @@ export type CoordinatorPrimaryActionBoard = {
   statusLabel: string;
   tone: 'ready' | 'warning' | 'neutral';
   destinationLabel: string;
-  executionLabel: string;
+  followThroughLabel: string;
   detailLabel: string;
 };
 
@@ -23,7 +23,7 @@ export const buildCoordinatorPrimaryActionBoard = ({
       statusLabel: 'No forced move is queued',
       tone: 'neutral',
       destinationLabel: 'Stay on the board',
-      executionLabel: 'Manual review',
+      followThroughLabel: 'Review when ready',
       detailLabel: action.detail,
     };
   }
@@ -34,17 +34,17 @@ export const buildCoordinatorPrimaryActionBoard = ({
       ? 'Guest Q&A'
       : 'Run-of-show timeline';
 
-  const executionLabel = action.key === 'start-up-next'
+  const followThroughLabel = action.key === 'start-up-next'
     ? canAutoRunTimeline
-      ? 'Auto-runs the next event live'
-      : 'Focuses timeline for manual launch'
-    : 'Focuses the lane immediately';
+      ? 'Can move the next event live'
+      : 'Opens timeline for review'
+    : 'Opens the right area now';
 
   return {
     statusLabel: `${action.title}`,
     tone: action.key === 'start-up-next' && canAutoRunTimeline ? 'ready' : 'warning',
     destinationLabel,
-    executionLabel,
+    followThroughLabel,
     detailLabel: action.detail,
   };
 };

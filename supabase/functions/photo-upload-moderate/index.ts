@@ -2,6 +2,17 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders, fail, json } from "../_shared/photoUtils.ts";
 
+function hasPermissionKey(permissions: unknown, key: string): boolean {
+  return Array.isArray(permissions) && permissions.includes(key);
+}
+
+function safePhotoModerationError(code: "LOAD" | "PERMISSION" | "SAVE" | "INTERNAL"): string {
+  if (code === "LOAD") return "Could not load selected photos. Please try again.";
+  if (code === "PERMISSION") return "Could not confirm photo permissions. Please try again.";
+  if (code === "SAVE") return "Could not update selected photos. Please try again.";
+  return "Could not update selected photos. Please try again.";
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
 
@@ -37,7 +48,8 @@ Deno.serve(async (req: Request) => {
       .in("id", uploadIds);
 
     if (uploadsErr || !uploads || uploads.length === 0) {
-      return fail("DB_ERROR", uploadsErr?.message ?? "No uploads found", 400);
+      if (uploadsErr) console.error("PHOTO_UPLOAD_MODERATE_LOAD_FAILED", uploadsErr);
+      return fail("DB_ERROR", uploadsErr ? safePhotoModerationError("LOAD") : "No uploads found", 400);
     }
 
     const siteIds = [...new Set(uploads.map((u) => u.wedding_site_id))];
@@ -46,27 +58,54 @@ Deno.serve(async (req: Request) => {
       .select("id,user_id")
       .in("id", siteIds);
 
-    const unauthorized = (sites ?? []).some((s) => s.user_id !== user.id);
-    if (unauthorized) return fail("FORBIDDEN", "Forbidden", 403);
+    const ownedSiteIds = new Set((sites ?? []).filter((s) => s.user_id === user.id).map((s) => s.id));
+    const remainingSiteIds = siteIds.filter((siteId) => !ownedSiteIds.has(siteId));
+    if (remainingSiteIds.length > 0) {
+      const { data: collaborators, error: collaboratorError } = await admin
+        .from("wedding_site_collaborators")
+        .select("wedding_site_id,permissions")
+        .eq("user_id", user.id)
+        .in("wedding_site_id", remainingSiteIds);
+      if (collaboratorError) {
+        console.error("PHOTO_UPLOAD_MODERATE_COLLABORATOR_FAILED", collaboratorError);
+        return fail("DB_ERROR", safePhotoModerationError("PERMISSION"), 400);
+      }
+      const allowedSiteIds = new Set(
+        (collaborators ?? [])
+          .filter((row) => hasPermissionKey(row.permissions, "photos"))
+          .map((row) => row.wedding_site_id),
+      );
+      const unauthorized = remainingSiteIds.some((siteId) => !allowedSiteIds.has(siteId));
+      if (unauthorized) return fail("FORBIDDEN", "Forbidden", 403);
+    }
 
     const allowedPatch: Record<string, unknown> = {};
     if (typeof patch.is_hidden === "boolean") allowedPatch.is_hidden = patch.is_hidden;
     if (typeof patch.is_flagged === "boolean") allowedPatch.is_flagged = patch.is_flagged;
+    if (typeof patch.recap_hidden === "boolean") allowedPatch.recap_hidden = patch.recap_hidden;
+    if (typeof patch.recap_featured === "boolean") allowedPatch.recap_featured = patch.recap_featured;
+    if (typeof patch.recap_story === "boolean") allowedPatch.recap_story = patch.recap_story;
     if (Object.keys(allowedPatch).length === 0) return fail("VALIDATION_ERROR", "No valid patch fields", 400);
 
+    const hasRecapPatch = ["recap_hidden", "recap_featured", "recap_story"].some((key) => key in allowedPatch);
     const { error: updateErr } = await admin
       .from("photo_uploads")
       .update({
         ...allowedPatch,
         moderated_at: new Date().toISOString(),
         moderated_by: user.id,
+        ...(hasRecapPatch ? { recap_curated_at: new Date().toISOString(), recap_curated_by: user.id } : {}),
       })
       .in("id", uploadIds);
 
-    if (updateErr) return fail("DB_ERROR", updateErr.message, 400);
+    if (updateErr) {
+      console.error("PHOTO_UPLOAD_MODERATE_SAVE_FAILED", updateErr);
+      return fail("DB_ERROR", safePhotoModerationError("SAVE"), 400);
+    }
 
     return json({ success: true, updated: uploadIds.length });
   } catch (err) {
-    return fail("INTERNAL_ERROR", err instanceof Error ? err.message : "Internal server error", 500);
+    console.error("PHOTO_UPLOAD_MODERATE_UNEXPECTED_FAILED", err);
+    return fail("INTERNAL_ERROR", safePhotoModerationError("INTERNAL"), 500);
   }
 });

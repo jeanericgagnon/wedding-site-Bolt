@@ -9,12 +9,9 @@ create table if not exists guest_contact_requests (
   created_by uuid references auth.users(id),
   created_at timestamptz not null default now()
 );
-
 create index if not exists guest_contact_requests_guest_idx on guest_contact_requests(guest_id, created_at desc);
 create index if not exists guest_contact_requests_token_idx on guest_contact_requests(token);
-
 alter table guest_contact_requests enable row level security;
-
 -- Authenticated users can manage requests for their own site.
 do $$ begin
   if not exists (

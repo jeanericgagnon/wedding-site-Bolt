@@ -27,7 +27,7 @@ export const BuilderDropZone: React.FC<BuilderDropZoneProps> = ({
   return (
     <div
       ref={setNodeRef}
-      className={`min-h-full transition-colors ${isOver ? 'bg-rose-50/30' : ''}`}
+      className={`min-h-full transition-colors ${isOver ? 'bg-[var(--color-accent-light)]/40' : ''}`}
     >
       <SortableContext items={sections.map(s => s.id)} strategy={verticalListSortingStrategy}>
         {sections.map(section => (
@@ -47,7 +47,7 @@ export const BuilderDropZone: React.FC<BuilderDropZoneProps> = ({
       {sections.length === 0 && !isPreview && <BuilderEmptyDropState />}
 
       {isOver && (
-        <div className="h-0.5 bg-rose-400 rounded-full mx-4 my-1 transition-all" />
+        <div className="h-0.5 bg-[var(--color-primary)] rounded-full mx-4 my-1 transition-all" />
       )}
     </div>
   );
@@ -56,11 +56,11 @@ export const BuilderDropZone: React.FC<BuilderDropZoneProps> = ({
 const BuilderEmptyDropState: React.FC = () => {
   return (
     <div className="flex flex-col items-center justify-center py-24 px-8 text-center">
-      <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
-        <Plus size={28} className="text-gray-400" />
+      <div className="w-16 h-16 rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] flex items-center justify-center mb-4">
+        <Plus size={28} className="text-[var(--color-text-tertiary)]" />
       </div>
-      <h3 className="text-base font-semibold text-gray-700 mb-1">Start building your site</h3>
-      <p className="text-sm text-gray-400 max-w-xs">
+      <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-1">Start building your site</h3>
+      <p className="text-sm text-[var(--color-text-tertiary)] max-w-xs">
         Add sections from the left panel, or apply a template to get started instantly.
       </p>
     </div>

@@ -48,7 +48,7 @@ export function getArchiveModeDescriptor(input: ArchiveModeInput): ArchiveModeDe
     return {
       state: 'planning',
       label: 'Planning mode',
-      detail: 'The wedding is still being prepared, so planning and guest operations stay front and center.',
+      detail: 'The wedding is still being prepared, so planning and guest needs stay front and center.',
       isArchiveLike: false,
     };
   }
@@ -70,7 +70,7 @@ export function getArchiveModeDescriptor(input: ArchiveModeInput): ArchiveModeDe
     return {
       state: 'post-wedding',
       label: 'Post-wedding transition',
-      detail: 'The event is behind you. This is where DayOf should start shifting from operations into archive and memory mode.',
+      detail: 'The event is behind you. This is where dayof can start shifting from planning into archive and memory mode.',
       isArchiveLike: true,
     };
   }
@@ -78,7 +78,7 @@ export function getArchiveModeDescriptor(input: ArchiveModeInput): ArchiveModeDe
   return {
     state: 'planning',
     label: 'Planning mode',
-    detail: 'The wedding is still ahead, so planning and guest operations should remain primary.',
+    detail: 'The wedding is still ahead, so planning and guest needs should remain primary.',
     isArchiveLike: false,
   };
 }

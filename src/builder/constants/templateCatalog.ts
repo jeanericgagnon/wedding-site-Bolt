@@ -1,5 +1,5 @@
-import { getAllTemplates } from '../../templates/registry';
-import { getTemplatePreviewSource } from './templatePreviewSource';
+import { BuilderTemplateDefinition } from '../../types/builder/template';
+import { getLaunchTemplatePacks } from './builderTemplatePacks';
 
 export type TemplateCatalogItem = {
   id: string;
@@ -14,6 +14,7 @@ export type TemplateCatalogItem = {
   bestFor: string[];
   includedModules: string[];
   defaultSectionOrder: string[];
+  launchTier?: 'flagship' | 'secondary';
 };
 
 const THEME_TO_COLORWAY: Record<string, string> = {
@@ -76,28 +77,39 @@ const titleCase = (s: string) =>
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ');
 
+const styleTagFromMood = (tag: string) => {
+  if (tag === 'luxe') return 'Formal';
+  return tag.charAt(0).toUpperCase() + tag.slice(1);
+};
+
 const buildCatalog = (): TemplateCatalogItem[] => {
-  return getAllTemplates().map((tpl) => {
-    const styleTags = inferStyleTags(tpl.id, tpl.name, tpl.description);
-    const seasonTags = inferSeasonTags(tpl.id, tpl.name, tpl.description);
-    const defaultSectionOrder = tpl.defaultLayout.sections.map((s) => titleCase(String(s.type)));
+  return getLaunchTemplatePacks().map((tpl: BuilderTemplateDefinition) => {
+    const inferredStyleTags = inferStyleTags(tpl.id, tpl.displayName, tpl.description);
+    const styleTags = Array.from(new Set([
+      ...tpl.moodTags.map(styleTagFromMood),
+      ...inferredStyleTags,
+    ])).slice(0, 3);
+    const seasonTags = inferSeasonTags(tpl.id, tpl.displayName, tpl.description);
+    const defaultSectionOrder = tpl.sectionComposition
+      .filter((section) => section.enabled)
+      .map((s) => titleCase(String(s.type)));
     const includedModules = Array.from(new Set(defaultSectionOrder));
-    const colorwayId = THEME_TO_COLORWAY[tpl.defaultThemePreset] ?? 'ivory-ink';
-    const preview = getTemplatePreviewSource(tpl.id);
+    const colorwayId = THEME_TO_COLORWAY[tpl.defaultThemeId] ?? 'ivory-ink';
 
     return {
       id: tpl.id,
-      name: tpl.name,
-      previewImage: preview.src,
-      previewFallbackImage: preview.fallbackSrc,
+      name: tpl.displayName,
+      previewImage: tpl.previewThumbnailPath,
+      previewFallbackImage: '/template-previews/_fallback.svg',
       styleTags,
       seasonTags,
       colorwayId,
       designFamily: tpl.id,
       description: tpl.description,
-      bestFor: [styleTags[0] ? `${styleTags[0]} weddings` : 'All celebrations'],
+      bestFor: tpl.bestFor ?? [styleTags[0] ? `${styleTags[0]} weddings` : 'All celebrations'],
       includedModules,
       defaultSectionOrder,
+      launchTier: tpl.launchTier === 'secondary' ? 'secondary' : 'flagship',
     };
   });
 };

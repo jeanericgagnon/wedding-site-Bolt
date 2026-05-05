@@ -18,7 +18,6 @@ ALTER TABLE public.vault_entries
   ADD COLUMN IF NOT EXISTS mime_type text,
   ADD COLUMN IF NOT EXISTS size_bytes bigint,
   ADD COLUMN IF NOT EXISTS duration_seconds int;
-
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -31,7 +30,6 @@ BEGIN
       CHECK (media_type IN ('text', 'photo', 'video', 'voice'));
   END IF;
 END $$;
-
 -- 2) Create/ensure vault-attachments bucket
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
@@ -49,7 +47,6 @@ ON CONFLICT (id) DO UPDATE SET
   public = EXCLUDED.public,
   file_size_limit = EXCLUDED.file_size_limit,
   allowed_mime_types = EXCLUDED.allowed_mime_types;
-
 -- 3) Storage policies
 DO $$
 BEGIN

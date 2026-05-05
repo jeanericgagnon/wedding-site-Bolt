@@ -78,10 +78,8 @@ BEGIN
     ALTER TABLE registry_items ADD COLUMN updated_at timestamptz NOT NULL DEFAULT now();
   END IF;
 END $$;
-
 -- 2. Sync price_amount from existing price column where null
 UPDATE registry_items SET price_amount = price WHERE price_amount IS NULL AND price IS NOT NULL;
-
 -- 3. Sync purchase_status for any existing rows
 UPDATE registry_items SET
   purchase_status = CASE
@@ -90,7 +88,6 @@ UPDATE registry_items SET
     ELSE 'available'
   END
 WHERE purchase_status = 'available';
-
 -- 4. Public read policy for published wedding sites
 DO $$
 BEGIN
@@ -112,7 +109,6 @@ BEGIN
       );
   END IF;
 END $$;
-
 -- 5. Authenticated users can also read items for published sites (guests)
 DO $$
 BEGIN
@@ -134,17 +130,13 @@ BEGIN
       );
   END IF;
 END $$;
-
 -- 6. Performance indexes
 CREATE INDEX IF NOT EXISTS idx_registry_items_wedding_sort
   ON registry_items(wedding_site_id, sort_order);
-
 CREATE INDEX IF NOT EXISTS idx_registry_items_purchase_status
   ON registry_items(purchase_status);
-
 CREATE INDEX IF NOT EXISTS idx_registry_items_wedding_site_id
   ON registry_items(wedding_site_id);
-
 -- 7. Atomic purchase increment function
 -- Callable by anon so guests can mark items as purchased.
 -- Only touches purchase fields — never metadata.
@@ -168,31 +160,12 @@ BEGIN
     RAISE EXCEPTION 'Registry item not found: %', p_item_id;
   END IF;
 
-  -- Public guests can only claim items on published sites.
-  -- Authenticated owners/planners/coordinators should still be able to keep
-  -- purchase truth accurate from the dashboard before publish.
+  -- Verify item is on a published site (public safety check)
   IF NOT EXISTS (
-    SELECT 1
-    FROM wedding_sites ws
-    WHERE ws.id = v_row.wedding_site_id
-      AND (
-        ws.is_published = true
-        OR (
-          auth.uid() IS NOT NULL
-          AND (
-            ws.user_id = auth.uid()
-            OR EXISTS (
-              SELECT 1
-              FROM wedding_site_collaborators c
-              WHERE c.wedding_site_id = ws.id
-                AND c.user_id = auth.uid()
-                AND c.role IN ('owner', 'planner', 'coordinator')
-            )
-          )
-        )
-      )
+    SELECT 1 FROM wedding_sites
+    WHERE id = v_row.wedding_site_id AND is_published = true
   ) THEN
-    RAISE EXCEPTION 'Registry purchase updates require a published site or dashboard access';
+    RAISE EXCEPTION 'Item is not on a published site';
   END IF;
 
   -- Cap at desired_quantity
@@ -216,7 +189,6 @@ BEGIN
   RETURN v_row;
 END;
 $$;
-
 -- Grant execute to anon and authenticated
 GRANT EXECUTE ON FUNCTION increment_registry_purchase(uuid, text, integer) TO anon;
 GRANT EXECUTE ON FUNCTION increment_registry_purchase(uuid, text, integer) TO authenticated;

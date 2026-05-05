@@ -38,7 +38,7 @@ function extractJsonBlob(text) {
 
 function classifyParsedResult(parsed) {
   if (!parsed || typeof parsed !== 'object') return { blocked: false, blockerType: null };
-  if (parsed.step === 'external_fixture_required' || parsed.skipped === true) {
+  if (parsed.step === 'external_fixture_required' || parsed.step === 'env_missing' || parsed.skipped === true) {
     return { blocked: true, blockerType: parsed.step ?? 'external_fixture_required' };
   }
   return { blocked: false, blockerType: null };

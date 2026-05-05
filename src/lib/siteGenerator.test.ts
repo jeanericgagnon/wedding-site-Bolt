@@ -25,13 +25,25 @@ describe('generateSiteConfig', () => {
 
   it('guards invalid persisted onboarding dates instead of baking Invalid Date into generated copy', () => {
     const config = generateSiteConfig(buildInput({
-      wedding_date: 'not-a-date',
-      rsvp_deadline: 'still-not-a-date',
+      wedding_date: '2027-02-30',
+      rsvp_deadline: '2027-02-31',
     }));
 
-    expect(config.content.hero.subheadline).toBe("We're getting married on the wedding day.");
-    expect(config.content.rsvp.deadline_text).toBe('Please reply by the wedding day');
+    expect(config.content.hero.subheadline).toBe("We're getting married.");
+    expect(config.content.rsvp.deadline_text).toBe('RSVP timing will be added once it is set.');
     expect(config.content.hero.subheadline).not.toContain('Invalid Date');
     expect(config.content.rsvp.deadline_text).not.toContain('Invalid Date');
+    expect(config.content.hero.subheadline).not.toContain('March');
+    expect(config.content.rsvp.deadline_text).not.toContain('March');
+  });
+
+  it('uses finished-feeling fallback copy for sparse public site sections', () => {
+    const config = generateSiteConfig(buildInput());
+    const serialized = JSON.stringify(config.content);
+
+    expect(config.content.details.venue_name).toBe('Venue details are being finalized.');
+    expect(config.content.details.ceremony_time).toBe('Time to follow');
+    expect(config.content.travel.transportation).toBe('Travel details will be added if guests need them.');
+    expect(serialized).not.toMatch(/shared here|coming soon|placeholder/i);
   });
 });

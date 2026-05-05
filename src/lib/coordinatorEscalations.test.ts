@@ -36,7 +36,7 @@ describe('coordinatorEscalations', () => {
     expect(items).toEqual([
       {
         key: 'all-clear',
-        title: 'Ops board looks calm',
+        title: 'Day-of board looks calm',
         detail: 'No urgent escalations need attention right now.',
         tone: 'success',
       },

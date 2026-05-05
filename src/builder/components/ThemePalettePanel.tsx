@@ -25,7 +25,7 @@ const TOKEN_LABELS: { key: keyof ThemeTokens; label: string; group: string }[] =
 function ColorSwatch({ color }: { color: string }) {
   return (
     <div
-      className="w-5 h-5 rounded-full border border-black/10 shadow-sm flex-shrink-0"
+      className="w-5 h-5 rounded-md border border-black/10 shadow-sm flex-shrink-0"
       style={{ backgroundColor: color }}
     />
   );
@@ -60,7 +60,7 @@ function PresetRow({
         {swatchColors.map((c, i) => (
           <div
             key={i}
-            className="w-4 h-4 rounded-full border border-black/10"
+            className="w-4 h-4 rounded-md border border-black/10"
             style={{ backgroundColor: c }}
           />
         ))}
@@ -176,7 +176,7 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
     <div className="fixed inset-0 z-50 flex items-start justify-end pointer-events-none">
       <div
         ref={panelRef}
-        className="mt-14 mr-0 w-80 bg-white border-l border-gray-200 shadow-2xl h-[calc(100vh-3.5rem)] flex flex-col pointer-events-auto"
+        className="mt-14 mr-0 w-80 bg-white border-l border-gray-200 shadow-sm h-[calc(100vh-3.5rem)] flex flex-col pointer-events-auto"
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
           <div className="flex items-center gap-2">
@@ -216,10 +216,10 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
         </div>
 
         <div className="px-3 py-2.5 border-b border-gray-100 bg-gray-50/80">
-          <label className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Section animation (optional)</label>
+          <label className="text-[11px] font-semibold text-gray-500">Section animation (optional)</label>
           <select
             value={globalAnimationPreset ?? 'none'}
-            onChange={(e) => dispatch(builderActions.setGlobalAnimationPreset(e.target.value === 'none' ? null : (e.target.value as 'fade-in' | 'fade-up' | 'slide-up' | 'zoom-in' | 'stagger')))}
+            onChange={(e) => dispatch(builderActions.setGlobalAnimationPreset(e.target.value === 'none' ? null : (e.target.value as NonNullable<typeof globalAnimationPreset>)))}
             className="mt-1.5 w-full border border-gray-200 rounded-lg px-2.5 py-2 text-xs text-gray-700 bg-white"
           >
             <option value="none">No shared animation</option>
@@ -228,6 +228,11 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
             <option value="slide-up">Slide up</option>
             <option value="zoom-in">Zoom in</option>
             <option value="stagger">Stagger by section order</option>
+            <option value="reveal-left">Reveal from left</option>
+            <option value="reveal-right">Reveal from right</option>
+            <option value="blur-in">Soft blur in</option>
+            <option value="float-in">Float in</option>
+            <option value="scale-up">Scale up</option>
           </select>
         </div>
 
@@ -237,7 +242,7 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
               <div className="flex flex-wrap gap-1.5 pb-2 border-b border-gray-100">
                 <button
                   onClick={() => setSelectedPack('all')}
-                  className={`px-2 py-1 rounded-full text-[11px] font-medium border ${selectedPack === 'all' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+                  className={`rounded-lg border px-2 py-1 text-[11px] font-medium ${selectedPack === 'all' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
                 >
                   All packs
                 </button>
@@ -245,7 +250,7 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
                   <button
                     key={pack.id}
                     onClick={() => setSelectedPack(pack.id)}
-                    className={`px-2 py-1 rounded-full text-[11px] font-medium border ${selectedPack === pack.id ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+                    className={`rounded-lg border px-2 py-1 text-[11px] font-medium ${selectedPack === pack.id ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
                   >
                     {pack.label}
                   </button>
@@ -284,7 +289,7 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
 
               {Object.entries(grouped).map(([group, tokens]) => (
                 <div key={group}>
-                  <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                  <div className="text-xs font-semibold text-gray-400 mb-2">
                     {group}
                   </div>
                   <div className="space-y-2">
@@ -346,7 +351,7 @@ export const ThemePalettePanel: React.FC<ThemePalettePanelProps> = ({ isOpen, on
               ].map((c, i) => (
                 <div
                   key={i}
-                  className="w-4 h-4 rounded-full border border-black/10 shadow-sm"
+                  className="w-4 h-4 rounded-md border border-black/10 shadow-sm"
                   style={{ backgroundColor: c }}
                 />
               ))}

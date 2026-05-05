@@ -1,6 +1,7 @@
 import React from 'react';
 import { z } from 'zod';
 import { SectionDefinition, SectionComponentProps } from '../../types';
+import { getSafePublicImageUrl } from '../../publicLinks';
 
 const PartyMemberSchema = z.object({
   id: z.string(),
@@ -37,7 +38,7 @@ const WeddingPartyScroll: React.FC<SectionComponentProps<WeddingPartyScrollData>
     <section className="py-20 md:py-28 bg-surface" id="wedding-party">
       <div className="max-w-6xl mx-auto px-5 md:px-10">
         <div className="text-center mb-8 md:mb-10">
-          <p className="text-xs uppercase tracking-[0.24em] text-text-tertiary mb-3">{data.eyebrow}</p>
+          <p className="text-sm text-text-tertiary mb-3">{data.eyebrow}</p>
           <h2 className="text-3xl md:text-5xl font-light text-text-primary">{data.headline}</h2>
           {data.subheadline ? <p className="mt-3 text-sm text-text-secondary">{data.subheadline}</p> : null}
         </div>
@@ -48,11 +49,13 @@ const WeddingPartyScroll: React.FC<SectionComponentProps<WeddingPartyScrollData>
           </div>
         ) : (
           <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2" aria-label="Wedding party members">
-            {data.members.map((m) => (
+            {data.members.map((m) => {
+              const photo = getSafePublicImageUrl(m.photo);
+              return (
               <article key={m.id} className="snap-start shrink-0 w-[220px] rounded-2xl border border-border/30 bg-white p-3.5 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
                 <div className="aspect-[3/4] rounded-xl overflow-hidden bg-surface-subtle mb-3">
-                  {m.photo ? (
-                    <img src={m.photo} alt={m.name} className="w-full h-full object-cover" />
+                  {photo ? (
+                    <img src={photo} alt={m.name} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-text-tertiary text-3xl font-light">{m.name.charAt(0).toUpperCase()}</div>
                   )}
@@ -60,7 +63,7 @@ const WeddingPartyScroll: React.FC<SectionComponentProps<WeddingPartyScrollData>
                 <p className="text-sm font-medium text-text-primary">{m.name}</p>
                 {m.role ? <p className="text-xs text-text-secondary mt-0.5">{m.role}</p> : null}
               </article>
-            ))}
+            );})}
           </div>
         )}
       </div>

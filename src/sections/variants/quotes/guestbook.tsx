@@ -69,7 +69,7 @@ const QuotesGuestbook: React.FC<SectionComponentProps<QuotesGuestbookData>> = ({
     <section className="py-24 bg-white" id="guestbook">
       <div className="max-w-4xl mx-auto px-6 md:px-10">
         <div className="text-center mb-10">
-          <p className="text-xs uppercase tracking-[0.22em] text-primary/70 mb-3">{data.eyebrow}</p>
+          <p className="text-sm text-primary/70 mb-3">{data.eyebrow}</p>
           <h2 className="text-3xl md:text-5xl font-light text-text-primary">{data.headline}</h2>
           <p className="text-sm text-text-secondary mt-3">{data.prompt}</p>
         </div>

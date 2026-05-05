@@ -7,8 +7,13 @@ import { BUILDER_SUPPORTED_IMAGE_TYPES, BUILDER_MAX_FILE_SIZE_MB } from '../cons
 import { mediaService } from '../services/mediaService';
 import { generateBuilderId } from '../../types/builder/project';
 import { getSectionManifest } from '../registry/sectionManifests';
-import { markFieldAsUserEdited } from '../../lib/weddingProfile';
+import { markFieldAsUserEdited, readBuilderValue } from '../../lib/weddingProfile';
 import { mergeMediaAssetsAfterUploadRefresh } from '../utils/mediaRefresh';
+import { customerSafeErrorMessage } from '../../lib/customerSafeError';
+
+function safeMediaLibraryError(err: unknown, fallback = 'Please try again in a moment.'): string {
+  return customerSafeErrorMessage(err, fallback);
+}
 
 function resolveImageSettingKey(sectionType: string): string {
   try {
@@ -53,7 +58,9 @@ export const MediaLibraryPanel: React.FC = () => {
       }));
       dispatch(builderActions.updateCustomBlock(pageId, sectionId, blockId, { imageUrl: asset.url }, columnIndex, columnBlockId));
     } else if (state.mediaPickerTargetField === 'imageArray' && state.mediaPickerTargetImageIndex !== null) {
-      const images = ((section.settings.images ?? []) as Array<Record<string, unknown>>).slice();
+      const unwrappedImages = readBuilderValue<unknown>(section.settings.images, []);
+      const imageList = Array.isArray(unwrappedImages) ? unwrappedImages as Array<Record<string, unknown>> : [];
+      const images = imageList.slice();
       const idx = state.mediaPickerTargetImageIndex;
       if (idx < images.length) {
         images[idx] = { ...images[idx], url: asset.url };
@@ -63,7 +70,7 @@ export const MediaLibraryPanel: React.FC = () => {
       const { images: _removed, ...restSettings } = section.settings as Record<string, unknown>;
       dispatch(builderActions.updateSection(pageId, sectionId, {
         bindings: nextBindings,
-        settings: { ...restSettings, images },
+        settings: { ...restSettings, images: markFieldAsUserEdited(images) },
       }));
     } else {
       const imageKey = state.mediaPickerTargetSettingKey || resolveImageSettingKey(section.type);
@@ -75,7 +82,7 @@ export const MediaLibraryPanel: React.FC = () => {
 
     if (asset.id) {
       void mediaService.attachAssetToSection(asset.id, sectionId).catch(() => {
-        dispatch(builderActions.setError('Image selected, but we could not link it back to this section in the media library.'));
+        dispatch(builderActions.setError('Image selected. It may take a moment to appear with this section in the media library.'));
       });
     }
 
@@ -88,7 +95,7 @@ export const MediaLibraryPanel: React.FC = () => {
         className="absolute inset-0 bg-black/50"
         onClick={() => dispatch(builderActions.closeMediaLibrary())}
       />
-      <div className="relative ml-auto w-full max-w-3xl bg-white h-full flex flex-col shadow-2xl">
+      <div className="relative ml-auto w-full max-w-3xl bg-white h-full flex flex-col shadow-sm">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">
@@ -144,11 +151,11 @@ export const UploadDropArea: React.FC<UploadDropAreaProps> = ({ weddingId }) => 
 
     const valid = Array.from(files).filter(f => {
       if (!BUILDER_SUPPORTED_IMAGE_TYPES.includes(f.type)) {
-        errors.push(`${f.name}: unsupported type (${f.type || 'unknown'}). Use JPEG, PNG, or WebP.`);
+        errors.push(`${f.name}: use JPEG, PNG, or WebP.`);
         return false;
       }
       if (f.size > maxBytes) {
-        errors.push(`${f.name}: file too large (${(f.size / 1024 / 1024).toFixed(1)}MB). Limit is ${BUILDER_MAX_FILE_SIZE_MB}MB.`);
+        errors.push(`${f.name}: this photo is ${(f.size / 1024 / 1024).toFixed(1)}MB. Keep it under ${BUILDER_MAX_FILE_SIZE_MB}MB.`);
         return false;
       }
       return true;
@@ -183,9 +190,9 @@ export const UploadDropArea: React.FC<UploadDropAreaProps> = ({ weddingId }) => 
         uploadedCount += 1;
       } catch (err) {
         const message =
-          err instanceof Error ? err.message
-          : typeof (err as { message?: string })?.message === 'string' ? (err as { message: string }).message
-          : 'Upload failed. Please try again.';
+          err instanceof Error ? safeMediaLibraryError(err)
+          : typeof (err as { message?: string })?.message === 'string' ? safeMediaLibraryError(err)
+          : 'Couldn’t upload that file. Please try again.';
         dispatch({
           type: 'UPDATE_UPLOAD_QUEUE',
           payload: { assetId: tempId, filename: file.name, progress: 0, status: 'error', error: message },
@@ -202,8 +209,8 @@ export const UploadDropArea: React.FC<UploadDropAreaProps> = ({ weddingId }) => 
       }
     } catch (err) {
       if (uploadedCount > 0) {
-        const message = err instanceof Error ? err.message : 'Unknown refresh error';
-        dispatch(builderActions.setError(`Your photo upload likely succeeded, but the media library failed to refresh: ${message}`));
+        const message = safeMediaLibraryError(err);
+        dispatch(builderActions.setError(`Your photo was added. The library just needs a refresh. ${message}`));
       }
       // Keep optimistic local assets if refresh fails.
     }
@@ -214,7 +221,7 @@ export const UploadDropArea: React.FC<UploadDropAreaProps> = ({ weddingId }) => 
       {uploadErrors.length > 0 && (
         <div className="mb-3 space-y-1">
           {uploadErrors.map((err, i) => (
-            <p key={i} className="text-xs text-red-500">{err}</p>
+            <p key={i} className="text-xs text-[var(--color-accent)]">{err}</p>
           ))}
         </div>
       )}
@@ -228,10 +235,10 @@ export const UploadDropArea: React.FC<UploadDropAreaProps> = ({ weddingId }) => 
         }}
         onClick={() => fileInputRef.current?.click()}
         className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
-          isDragOver ? 'border-rose-400 bg-rose-50' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+          isDragOver ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)]' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
         }`}
       >
-        <Upload size={24} className={`mx-auto mb-3 ${isDragOver ? 'text-rose-500' : 'text-gray-400'}`} />
+        <Upload size={24} className={`mx-auto mb-3 ${isDragOver ? 'text-[var(--color-accent)]' : 'text-gray-400'}`} />
         <p className="text-sm font-medium text-gray-700">Drop photos here or click to add them</p>
         <p className="text-xs text-gray-400 mt-1">
           JPEG, PNG, WebP up to {BUILDER_MAX_FILE_SIZE_MB}MB
@@ -251,7 +258,7 @@ export const UploadDropArea: React.FC<UploadDropAreaProps> = ({ weddingId }) => 
 
 interface AssetGridProps {
   assets: BuilderMediaAsset[];
-  uploadQueue: Array<{ assetId: string; filename: string; progress: number; status: string; error?: string }>;
+  uploadQueue: Array<{ assetId: string; filename?: string; progress: number; status: string; error?: string }>;
   isPickerMode?: boolean;
   onSelectAsset?: (asset: BuilderMediaAsset) => void;
 }
@@ -264,7 +271,7 @@ export const AssetGrid: React.FC<AssetGridProps> = ({ assets, uploadQueue, isPic
       await mediaService.deleteAsset(asset.id);
       dispatch(builderActions.removeMediaAsset(asset.id));
     } catch {
-      dispatch(builderActions.setError('Failed to delete image. Please try again.'));
+      dispatch(builderActions.setError('Couldn’t remove image. Please try again.'));
     }
   };
 
@@ -272,22 +279,22 @@ export const AssetGrid: React.FC<AssetGridProps> = ({ assets, uploadQueue, isPic
     <div className="flex-1 px-6 pb-6 pt-4">
       {uploadQueue.length > 0 && (
         <div className="mb-4 space-y-2">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Uploads in progress</p>
+          <p className="text-xs font-semibold text-gray-500">Uploads in progress</p>
           {uploadQueue.map(item => (
             <div key={item.assetId} className="flex items-center gap-3 bg-gray-50 rounded-lg px-3 py-2">
               {item.status === 'error' ? (
-                <span className="text-red-500 text-xs flex-shrink-0">Failed</span>
+                <span className="text-[var(--color-accent)] text-xs flex-shrink-0">Needs retry</span>
               ) : (
-                <Loader2 size={14} className="animate-spin text-rose-500 flex-shrink-0" />
+                <Loader2 size={14} className="animate-spin text-[var(--color-accent)] flex-shrink-0" />
               )}
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-gray-700 truncate">{item.filename}</p>
                 {item.status === 'error' ? (
-                  <p className="text-xs text-red-500 mt-0.5">{item.error ?? 'Upload failed'}</p>
+                  <p className="text-xs text-[var(--color-accent)] mt-0.5">{item.error ?? 'Upload needs retry'}</p>
                 ) : (
-                  <div className="mt-1 h-1 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="mt-1 h-1 overflow-hidden rounded-sm bg-gray-200">
                     <div
-                      className="h-full bg-rose-500 rounded-full transition-all"
+                      className="h-full rounded-sm bg-[var(--color-accent)] transition-all"
                       style={{ width: `${item.progress}%` }}
                     />
                   </div>
@@ -346,7 +353,7 @@ const AssetTile: React.FC<AssetTileProps> = ({ asset, onDelete, isPickerMode, on
   return (
   <div
     className={`group relative aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200 ${
-      isPickerMode ? 'cursor-pointer hover:ring-2 hover:ring-rose-400' : ''
+      isPickerMode ? 'cursor-pointer hover:ring-2 hover:ring-[var(--color-primary)]' : ''
     }`}
     onClick={isPickerMode ? onSelect : undefined}
   >
@@ -379,7 +386,7 @@ const AssetTile: React.FC<AssetTileProps> = ({ asset, onDelete, isPickerMode, on
 
     {isPickerMode ? (
       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-        <div className="bg-rose-500 text-white rounded-full p-1.5">
+        <div className="rounded-md bg-[var(--color-accent)] p-1.5 text-white">
           <Check size={14} />
         </div>
       </div>
@@ -387,7 +394,7 @@ const AssetTile: React.FC<AssetTileProps> = ({ asset, onDelete, isPickerMode, on
       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-end justify-end p-2 opacity-0 group-hover:opacity-100">
         <button
           onClick={e => { e.stopPropagation(); onDelete(); }}
-          className="p-1.5 bg-white rounded-lg text-red-500 hover:text-red-700 shadow-sm transition-colors"
+          className="p-1.5 bg-white rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] shadow-sm transition-colors"
           aria-label="Remove image"
         >
           <Trash2 size={12} />
@@ -396,7 +403,7 @@ const AssetTile: React.FC<AssetTileProps> = ({ asset, onDelete, isPickerMode, on
     )}
 
     {asset.attachedSectionIds.length > 0 && !isPickerMode && (
-      <div className="absolute top-1 left-1 bg-rose-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[9px] font-bold">
+      <div className="absolute left-1 top-1 flex h-4 w-4 items-center justify-center rounded-md bg-[var(--color-accent)] text-[9px] font-bold text-white">
         {asset.attachedSectionIds.length}
       </div>
     )}

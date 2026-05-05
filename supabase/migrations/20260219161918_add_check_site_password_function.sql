@@ -36,5 +36,4 @@ BEGIN
   RETURN v_hash = crypt(p_password, v_hash);
 END;
 $$;
-
 GRANT EXECUTE ON FUNCTION public.check_site_password(text, text) TO anon, authenticated;

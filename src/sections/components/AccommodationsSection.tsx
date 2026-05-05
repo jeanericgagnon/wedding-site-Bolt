@@ -3,6 +3,7 @@ import { WeddingDataV1 } from '../../types/weddingData';
 import { SectionInstance } from '../../types/layoutConfig';
 import { Hotel, ExternalLink, Phone, Tag } from 'lucide-react';
 import { readBuilderValue } from '../../lib/weddingProfile';
+import { getSafePublicTelHref, getSafePublicWebUrl } from '../publicLinks';
 
 interface Props {
   data: WeddingDataV1;
@@ -43,7 +44,7 @@ export const AccommodationsSection: React.FC<Props> = ({ data, instance }) => {
       <div className="max-w-4xl mx-auto">
         {settings.showTitle !== false && (
           <div className="text-center mb-10 md:mb-12">
-            <p className="text-xs uppercase tracking-[0.3em] text-primary mb-3 font-medium">
+            <p className="text-sm text-primary mb-3 font-light">
               {eyebrow}
             </p>
             <h2 className="text-3xl md:text-4xl font-light text-text-primary leading-tight">
@@ -66,7 +67,10 @@ export const AccommodationsSection: React.FC<Props> = ({ data, instance }) => {
           </div>
         ) : (
           <div className="space-y-5">
-            {hotels.map((hotel, i) => (
+            {hotels.map((hotel, i) => {
+              const safeHotelUrl = getSafePublicWebUrl(hotel.url);
+              const safeHotelPhoneHref = getSafePublicTelHref(hotel.phone);
+              return (
               <div key={i} className="bg-surface border border-border rounded-2xl p-6">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                   <div className="flex-1">
@@ -101,17 +105,17 @@ export const AccommodationsSection: React.FC<Props> = ({ data, instance }) => {
                     )}
                   </div>
                 </div>
-                {(hotel.url || hotel.phone) && (
+                {(safeHotelUrl || safeHotelPhoneHref) && (
                   <div className="flex items-center gap-4 mt-4 pt-4 border-t border-border">
-                    {hotel.phone && (
-                      <a href={`tel:${hotel.phone}`} className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-primary transition-colors">
+                    {safeHotelPhoneHref && (
+                      <a href={safeHotelPhoneHref} className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-primary transition-colors">
                         <Phone className="w-3.5 h-3.5" />
                         {hotel.phone}
                       </a>
                     )}
-                    {hotel.url && (
+                    {safeHotelUrl && (
                       <a
-                        href={hotel.url}
+                        href={safeHotelUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-1.5 text-sm text-primary hover:underline"
@@ -123,7 +127,8 @@ export const AccommodationsSection: React.FC<Props> = ({ data, instance }) => {
                   </div>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -146,7 +151,7 @@ export const AccommodationsCards: React.FC<Props> = ({ data, instance }) => {
       <div className="max-w-5xl mx-auto">
         {settings.showTitle !== false && (
           <div className="text-center mb-10 md:mb-14">
-            <p className="text-xs uppercase tracking-[0.3em] text-primary mb-3 font-medium">
+            <p className="text-sm text-primary mb-3 font-light">
               {eyebrow}
             </p>
             <h2 className="text-3xl md:text-4xl font-light text-text-primary leading-tight">
@@ -166,7 +171,9 @@ export const AccommodationsCards: React.FC<Props> = ({ data, instance }) => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
-            {hotels.map((hotel, i) => (
+            {hotels.map((hotel, i) => {
+              const safeHotelUrl = getSafePublicWebUrl(hotel.url);
+              return (
               <div key={i} className="rounded-2xl border border-border bg-surface-subtle p-7 flex flex-col gap-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -201,9 +208,9 @@ export const AccommodationsCards: React.FC<Props> = ({ data, instance }) => {
                   </div>
                 )}
                 {hotel.notes && <p className="text-sm text-text-secondary italic">{hotel.notes}</p>}
-                {hotel.url && (
+                {safeHotelUrl && (
                   <a
-                    href={hotel.url}
+                    href={safeHotelUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-auto inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
@@ -213,7 +220,8 @@ export const AccommodationsCards: React.FC<Props> = ({ data, instance }) => {
                   </a>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

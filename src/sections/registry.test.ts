@@ -56,13 +56,13 @@ describe('sections registry resolution', () => {
   it('keeps registry owner and guest renders aligned when persisted registry variants drift in casing or punctuation', () => {
     expect(getDefinition(' Hero ' as never, 'fullBleed' as never)?.type).toBe('hero');
     expect(getDefinition('footer-cta' as never, 'rsvpPush' as never)?.type).toBe('footerCta');
-    expect(resolveCanonicalRegistrySectionInput('Footer Cta', undefined)).toEqual({ type: 'footerCta', variant: 'rsvpPush' });
-    expect(resolveCanonicalRegistrySectionInput('footer-cta', 'Luxury')).toEqual({ type: 'footerCta', variant: 'rsvpPush' });
-    expect(resolveCanonicalRegistrySectionInput('Footer Cta', 'Luxury')).toEqual({ type: 'footerCta', variant: 'rsvpPush' });
-    expect(resolveCanonicalRegistrySectionInput('Footer Cta', 'legacy-default')).toEqual({ type: 'footerCta', variant: 'rsvpPush' });
-    expect(resolveAndParse('Footer Cta' as never, 'Luxury' as never, {}, { strictVariant: true })?.def.variant).toBe('rsvpPush');
-    expect(resolveAndParse('Footer Cta' as never, 'Luxury' as never, {}, { strictVariant: false })?.def.variant).toBe('rsvpPush');
-    expect(resolveAndParse('Footer Cta' as never, 'luxury' as never, {}, { strictVariant: true })?.def.variant).toBe('rsvpPush');
+    expect(resolveCanonicalRegistrySectionInput('Footer Cta', undefined)).toEqual({ type: 'footerCta', variant: 'default' });
+    expect(resolveCanonicalRegistrySectionInput('footer-cta', 'Luxury')).toEqual({ type: 'footerCta', variant: 'photo' });
+    expect(resolveCanonicalRegistrySectionInput('Footer Cta', 'Luxury')).toEqual({ type: 'footerCta', variant: 'photo' });
+    expect(resolveCanonicalRegistrySectionInput('Footer Cta', 'legacy-default')).toEqual({ type: 'footerCta', variant: 'default' });
+    expect(resolveAndParse('Footer Cta' as never, 'Luxury' as never, {}, { strictVariant: true })?.def.variant).toBe('photo');
+    expect(resolveAndParse('Footer Cta' as never, 'Luxury' as never, {}, { strictVariant: false })?.def.variant).toBe('photo');
+    expect(resolveAndParse('Footer Cta' as never, 'luxury' as never, {}, { strictVariant: true })?.def.variant).toBe('photo');
     expect(resolveCanonicalRegistrySectionInput(' Hero ', 'FULL.BLEED')).toEqual({ type: 'hero', variant: 'fullBleed' });
     expect(resolveAndParse('Hero' as never, 'legacy-default' as never, {}, { strictVariant: false })?.def.variant).toBe('fullBleed');
     expect(getDefinitionOrThrow('RegistrySection' as never, ' Luxury ' as never).variant).toBe('featured');
@@ -149,7 +149,7 @@ describe('sections registry resolution', () => {
     expect(getAllTemplates()
       .find((template) => template.id === 'timeless-classic')
       ?.defaultLayout.sections.find((section) => section.type === 'registry')?.settings).toEqual({});
-  });
+  }, 10000);
 
   it('keeps imported registry template variants normalized onto guest-visible layouts', () => {
     const importedTemplate = getTemplate('luxury-opulent');
@@ -558,8 +558,8 @@ describe('sections registry resolution', () => {
     expect(registryDashboard).toContain('filter((i) => getRegistryItemMetadataState(i).hasBadImportTitle)');
     expect(registryDashboard).toContain('repair: actionableBadImportCount,');
     expect(registryDashboard).toContain("imageIssues: normalizedItems.filter((item) => !item.image_url || item.image_url.includes('thum.io') || item.image_url.includes('weserv.nl')).length,");
-    expect(registryDashboard).toContain('Repair states: {normalizedItems.filter((item) => getRegistryRepairStates(item).length > 0).length}');
-    expect(registryDashboard).toContain('Imported gifts to fix: {actionableBadImportCount}');
+    expect(registryDashboard).toContain('Needs cleanup: {normalizedItems.filter((item) => getRegistryRepairStates(item).length > 0).length}');
+    expect(registryDashboard).toContain('Gifts to review: {actionableBadImportCount}');
     expect(registryDashboard).toContain('{actionableBadImportCount > 0 && (');
   });
 

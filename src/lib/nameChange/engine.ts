@@ -151,7 +151,7 @@ export function evaluateCaliforniaNameChangeEligibility(input: NameChangeEngineI
     return {
       legalBasis: 'court_order',
       decision: 'court_order_required',
-      reasons: ['Launch scope only supports California workflows right now.'],
+      reasons: ['This guided path currently supports California name-change steps.'],
     };
   }
 
@@ -219,12 +219,12 @@ function collectMissingInputs(
   if (legalBasis === 'marriage') {
     if (!hasMeaningfulValue(profile.marriage_date)) missing.push('Marriage date');
     if (!hasMeaningfulValue(String(profile.structured_intake.spouseLastName ?? ''))) missing.push('Spouse last name');
-    if (!legalProofReady) missing.push(hasLegalProofInIntake ? 'Certified marriage certificate review' : 'Certified marriage certificate metadata');
+    if (!legalProofReady) missing.push(hasLegalProofInIntake ? 'Certified marriage certificate review' : 'Certified marriage certificate details');
     if (outOfStateMarriageCertificateGroundingMissing) missing.push('Out-of-state marriage certificate county, certificate number, and issuing authority');
   }
 
   if (legalBasis === 'court_order' && !legalProofReady) {
-    missing.push(hasLegalProofInIntake ? 'Court order packet or signed order review' : 'Court order packet or signed order metadata');
+    missing.push(hasLegalProofInIntake ? 'Court order packet or signed order review' : 'Court order packet or signed order details');
   }
 
   if (profile.passport_needs_update && !profile.is_us_citizen) {
@@ -342,7 +342,7 @@ function buildDualPartnerProofSteps(legalProofReady: boolean): NameChangePlanSte
       status: legalProofReady ? 'later' : 'blocked',
       blockers: legalProofReady ? ['Partner A photo ID should be updated before broad account rollout.'] : blockedUntilLegalProof,
       forms: [],
-      institutions: ['Banks', 'Payroll / HR', 'Insurance providers', 'Travel and loyalty accounts'],
+      institutions: ['Banks', 'Payroll / HR', 'Insurance companies', 'Travel and loyalty accounts'],
       evidenceNeeded: ['Partner A account confirmations', 'Partner A updated photo ID', 'Partner A legal proof'],
     }),
     buildStep({
@@ -354,7 +354,7 @@ function buildDualPartnerProofSteps(legalProofReady: boolean): NameChangePlanSte
       status: legalProofReady ? 'later' : 'blocked',
       blockers: legalProofReady ? ['Partner B photo ID should be updated before broad account rollout.'] : blockedUntilLegalProof,
       forms: [],
-      institutions: ['Banks', 'Payroll / HR', 'Insurance providers', 'Travel and loyalty accounts'],
+      institutions: ['Banks', 'Payroll / HR', 'Insurance companies', 'Travel and loyalty accounts'],
       evidenceNeeded: ['Partner B account confirmations', 'Partner B updated photo ID', 'Partner B legal proof'],
     }),
   ];
@@ -1393,7 +1393,7 @@ export function buildNameChangePlan(input: NameChangeEngineInput): NameChangePla
   const cautionNotes = [
     'This planner generates guidance and sequencing. It is not filing paperwork on your behalf.',
     'Use structured extracted fields as your source of truth; raw uploads are only an intake accelerator.',
-    ...(wantsDocumentIntakeHelp ? ['Document intake help is turned on, so capturing certificate / ID metadata early will make the rest of the workflow less manual.'] : []),
+    ...(wantsDocumentIntakeHelp ? ['Document intake help is turned on, so capturing certificate / ID details early will make the rest of the workflow less manual.'] : []),
     ...(travelBookedSoon ? ['Upcoming travel means passport, TSA, and booking-name consistency should be watched closely once SSA is moving.'] : []),
     ...(input.profile.urgency_level === 'expedited' ? ['Expedited travel or hiring timelines may justify moving passport and employer updates higher once SSA is in motion.'] : []),
   ];

@@ -166,4 +166,62 @@ describe('deriveEventCountersFromGuests', () => {
       unassigned: 0,
     });
   });
+
+  it('uses explicit event RSVP state for declined and pending counts when event invitations exist', () => {
+    const guests: EligibleGuest[] = [
+      {
+        id: 'g1',
+        full_name: 'Alex Rivera',
+        email: null,
+        rsvp_status: 'attending',
+        household_id: null,
+        group_name: null,
+        is_attending: true,
+        is_invited_to_event: true,
+        event_rsvp_attending: true,
+      },
+      {
+        id: 'g2',
+        full_name: 'Sam Lee',
+        email: null,
+        rsvp_status: 'attending',
+        household_id: null,
+        group_name: null,
+        is_attending: false,
+        is_invited_to_event: true,
+        event_rsvp_attending: false,
+      },
+      {
+        id: 'g3',
+        full_name: 'Taylor Kim',
+        email: null,
+        rsvp_status: 'attending',
+        household_id: null,
+        group_name: null,
+        is_attending: false,
+        is_invited_to_event: true,
+        event_rsvp_attending: null,
+      },
+      {
+        id: 'g4',
+        full_name: 'Jordan Smith',
+        email: null,
+        rsvp_status: 'declined',
+        household_id: null,
+        group_name: null,
+        is_attending: false,
+        is_invited_to_event: false,
+        event_rsvp_attending: null,
+      },
+    ];
+
+    expect(deriveEventCountersFromGuests(guests, [])).toEqual({
+      invited: 3,
+      attending: 1,
+      declined: 1,
+      pending: 1,
+      seated: 0,
+      unassigned: 1,
+    });
+  });
 });

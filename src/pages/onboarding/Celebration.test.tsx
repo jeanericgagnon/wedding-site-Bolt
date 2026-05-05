@@ -37,7 +37,7 @@ describe('Celebration', () => {
 
     render(<Celebration />);
 
-    expect(screen.getByText('Your account is ready. Choose the fastest way to get your wedding website where you want it.')).toBeInTheDocument();
+    expect(screen.getByText('Your account is ready. Choose the path that feels easiest right now.')).toBeInTheDocument();
     expect(screen.queryByText(/days until the big day!/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Your big day is here!/i)).not.toBeInTheDocument();
   });
@@ -47,7 +47,7 @@ describe('Celebration', () => {
 
     render(<Celebration />);
 
-    expect(screen.getByText('Your account is ready. Choose the fastest way to get your wedding website where you want it.')).toBeInTheDocument();
+    expect(screen.getByText('Your account is ready. Choose the path that feels easiest right now.')).toBeInTheDocument();
     expect(screen.queryByText(/days until the big day!/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Your big day is here!/i)).not.toBeInTheDocument();
   });

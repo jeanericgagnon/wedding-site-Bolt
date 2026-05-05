@@ -50,6 +50,25 @@ if (typeof window !== 'undefined') {
       stack,
     });
   });
+
+  window.addEventListener('dayof:function-error', (event) => {
+    const detail = event instanceof CustomEvent ? event.detail as {
+      functionName?: string;
+      status?: number;
+      code?: string;
+      message?: string;
+    } : {};
+    logClientError({
+      source: 'edge-function',
+      severity: detail.status && detail.status >= 500 ? 'error' : 'warning',
+      message: detail.message || 'Edge Function request failed',
+      metadata: {
+        functionName: detail.functionName,
+        status: detail.status,
+        code: detail.code,
+      },
+    });
+  });
 }
 
 createRoot(document.getElementById('root')!).render(

@@ -50,6 +50,13 @@ export type ClarifyingPersistenceEnvelope = {
     history: StoredClarifyingQuestion[];
   };
   draftOutputs: ClarifyingDraftOutputs;
+  meta?: {
+    qualityScore?: number;
+    confidence?: 'low' | 'medium' | 'high';
+    loopCount?: number;
+    maxLoopCount?: number;
+    fallbackUsed?: boolean;
+  };
 };
 
 export const createEmptyClarifyingPersistence = (): ClarifyingPersistenceEnvelope => ({

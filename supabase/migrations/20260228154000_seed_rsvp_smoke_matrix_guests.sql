@@ -20,7 +20,6 @@ SET invited_to_ceremony = true,
     max_additional_guests = 0
 FROM ordered o
 WHERE g.id = o.id AND o.rn = 1;
-
 WITH ordered AS (
   SELECT id, row_number() OVER (ORDER BY created_at ASC, id ASC) AS rn
   FROM guests
@@ -35,7 +34,6 @@ SET invited_to_ceremony = false,
     max_additional_guests = 0
 FROM ordered o
 WHERE g.id = o.id AND o.rn = 2;
-
 WITH ordered AS (
   SELECT id, row_number() OVER (ORDER BY created_at ASC, id ASC) AS rn
   FROM guests

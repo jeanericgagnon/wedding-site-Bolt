@@ -8,9 +8,9 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 export const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ className = '', variant = 'default', padding = 'md', children, ...props }, ref) => {
     const variantStyles = {
-      default: 'bg-surface-raised border border-border/35 shadow-[0_6px_20px_rgba(15,23,42,0.06)]',
-      subtle: 'bg-surface-subtle border border-border-subtle',
-      bordered: 'bg-surface-raised border border-border/35 shadow-[0_6px_20px_rgba(15,23,42,0.06)]',
+      default: 'bg-surface-raised border border-border-subtle',
+      subtle: 'bg-surface-subtle/70 border border-border-subtle shadow-none',
+      bordered: 'bg-surface-raised border border-border-subtle',
     };
 
     const paddingStyles = {
@@ -23,7 +23,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
     return (
       <div
         ref={ref}
-        className={`rounded-xl ${variantStyles[variant]} ${paddingStyles[padding]} ${className}`}
+        className={`rounded-lg ${variantStyles[variant]} ${paddingStyles[padding]} ${className}`}
         {...props}
       >
         {children}
@@ -46,7 +46,7 @@ CardHeader.displayName = 'CardHeader';
 
 export const CardTitle = React.forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadingElement>>(
   ({ className = '', children, ...props }, ref) => (
-    <h3 ref={ref} className={`text-lg font-semibold text-text-primary tracking-tight ${className}`} {...props}>
+    <h3 ref={ref} className={`text-lg font-semibold text-text-primary ${className}`} {...props}>
       {children}
     </h3>
   )

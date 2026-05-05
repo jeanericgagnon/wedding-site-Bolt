@@ -2,6 +2,7 @@ import React from 'react';
 import { WeddingDataV1 } from '../../types/weddingData';
 import { SectionInstance } from '../../types/layoutConfig';
 import { readBuilderValue } from '../../lib/weddingProfile';
+import { getSafePublicGalleryImageUrl, sanitizePublicGalleryText } from '../variants/gallery/publicGallery';
 
 interface Props {
   data: WeddingDataV1;
@@ -26,35 +27,37 @@ function normalizeGalleryPhotos(data: WeddingDataV1, settings: SectionInstance['
   const settingPhotos = rawSettingImages
     .map((item, index) => {
       if (typeof item === 'string') {
-        const url = item.trim();
+        const url = getSafePublicGalleryImageUrl(item);
         return url ? { id: `settings-${index}`, url, caption: '', alt: '' } : null;
       }
 
       if (!item || typeof item !== 'object') return null;
 
       const record = item as Record<string, unknown>;
-      const url = typeof record.url === 'string'
-        ? record.url.trim()
-        : typeof record.image === 'string'
-          ? record.image.trim()
-          : '';
+      const url = getSafePublicGalleryImageUrl(
+        typeof record.url === 'string'
+          ? record.url
+          : typeof record.image === 'string'
+            ? record.image
+            : ''
+      );
       if (!url) return null;
 
       return {
         id: typeof record.id === 'string' && record.id ? record.id : `settings-${index}`,
         url,
-        caption: typeof record.caption === 'string'
+        caption: sanitizePublicGalleryText(typeof record.caption === 'string'
           ? record.caption
           : typeof record.title === 'string'
             ? record.title
-            : '',
-        alt: typeof record.alt === 'string'
+            : ''),
+        alt: sanitizePublicGalleryText(typeof record.alt === 'string'
           ? record.alt
           : typeof record.caption === 'string'
             ? record.caption
             : typeof record.title === 'string'
               ? record.title
-              : '',
+              : ''),
       };
     })
     .filter((photo): photo is GalleryPhoto => Boolean(photo));
@@ -62,12 +65,12 @@ function normalizeGalleryPhotos(data: WeddingDataV1, settings: SectionInstance['
   if (settingPhotos.length > 0) return settingPhotos;
 
   return data.media.gallery
-    .filter((photo) => Boolean(photo.url?.trim()))
+    .filter((photo) => Boolean(getSafePublicGalleryImageUrl(photo.url)))
     .map((photo, index) => ({
       id: photo.id || `media-${index}`,
-      url: photo.url,
-      caption: photo.caption || '',
-      alt: photo.caption || '',
+      url: getSafePublicGalleryImageUrl(photo.url),
+      caption: sanitizePublicGalleryText(photo.caption),
+      alt: sanitizePublicGalleryText(photo.caption),
     }));
 }
 
@@ -80,7 +83,7 @@ export const GallerySection: React.FC<Props> = ({ data, instance }) => {
       <section className="py-16 md:py-20 px-4 bg-surface-subtle">
         <div className="max-w-4xl mx-auto text-center">
           {settings.showTitle !== false && (
-            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary mb-6">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Photos')}</h2>
+            <h2 className="text-3xl md:text-4xl font-semibold text-text-primary mb-6">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Photos')}</h2>
           )}
           <p className="text-text-secondary">Photos will appear here once they’re added.</p>
         </div>
@@ -92,7 +95,7 @@ export const GallerySection: React.FC<Props> = ({ data, instance }) => {
     <section className="py-16 md:py-20 px-4 bg-surface-subtle">
       <div className="max-w-6xl mx-auto">
         {settings.showTitle !== false && (
-          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary text-center mb-10 md:mb-12">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Photos')}</h2>
+          <h2 className="text-3xl md:text-4xl font-semibold text-text-primary text-center mb-10 md:mb-12">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Photos')}</h2>
         )}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
           {photos.map(photo => (
@@ -135,8 +138,8 @@ export const GalleryMasonry: React.FC<Props> = ({ data, instance }) => {
       <div className="max-w-6xl mx-auto">
         {settings.showTitle !== false && (
           <div className="text-center mb-10 md:mb-14">
-            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Memories</p>
-            <h2 className="text-3xl md:text-4xl font-light tracking-tight text-text-primary leading-tight">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Photos')}</h2>
+            <p className="text-sm text-primary mb-3 font-light">Memories</p>
+            <h2 className="text-3xl md:text-4xl font-light text-text-primary leading-tight">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Photos')}</h2>
             <div className="w-10 h-px bg-primary mx-auto mt-6" />
           </div>
         )}

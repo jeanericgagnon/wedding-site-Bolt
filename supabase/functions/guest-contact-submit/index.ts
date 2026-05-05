@@ -1,11 +1,20 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { enforcePublicSubmissionRateLimit } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const json = (data: unknown, status = 200) =>
+  new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
@@ -27,19 +36,20 @@ Deno.serve(async (req: Request) => {
     const mailingCountry = String(body.mailing_country ?? '').trim() || null;
 
     if (!siteRef || !guestId) {
-      return new Response(JSON.stringify({ error: "Missing site/guest" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return json({ error: "Missing site/guest" }, 400);
     }
 
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-    const { data: site } = await admin
+    const siteQuery = admin
       .from("wedding_sites")
       .select("id")
-      .or(`id.eq.${siteRef},site_slug.eq.${siteRef}`)
+      .eq(UUID_RE.test(siteRef) ? "id" : "site_slug", siteRef)
       .maybeSingle();
+    const { data: site } = await siteQuery;
 
     if (!site?.id) {
-      return new Response(JSON.stringify({ error: "Invalid site" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return json({ error: "Invalid site" }, 404);
     }
 
     const { data: guest } = await admin
@@ -50,7 +60,22 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
 
     if (!guest?.id) {
-      return new Response(JSON.stringify({ error: "Guest not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return json({ error: "Guest not found" }, 404);
+    }
+
+    const rateLimit = await enforcePublicSubmissionRateLimit({
+      admin,
+      request: req,
+      scope: "guest_contact_submit",
+      subject: `${site.id}:${guest.id}`,
+      siteId: site.id,
+      siteSlug: UUID_RE.test(siteRef) ? null : siteRef,
+      maxIp: 20,
+      maxSubject: 8,
+      windowMinutes: 10,
+    });
+    if (!rateLimit.ok) {
+      return json({ error: rateLimit.message }, rateLimit.status);
     }
 
     const patch: Record<string, unknown> = {};
@@ -63,10 +88,10 @@ Deno.serve(async (req: Request) => {
     if (mailingState) patch.mailing_state = mailingState;
     if (mailingPostalCode) patch.mailing_postal_code = mailingPostalCode;
     if (mailingCountry) patch.mailing_country = mailingCountry;
-    // SMS consent will be handled in a dedicated field in a follow-up migration.
+    if (phone) patch.sms_consent = smsConsent;
 
     if (Object.keys(patch).length === 0) {
-      return new Response(JSON.stringify({ error: "No updates provided" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return json({ error: "No updates provided" }, 400);
     }
 
     let query = admin.from("guests").update(patch).eq("wedding_site_id", site.id);
@@ -78,17 +103,13 @@ Deno.serve(async (req: Request) => {
 
     const { error: updateError } = await query;
     if (updateError) {
-      return new Response(JSON.stringify({ error: updateError.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      console.error("GUEST_CONTACT_SUBMIT_UPDATE_FAILED", updateError);
+      return json({ error: "Could not save this contact update. Please try again." }, 500);
     }
 
-    return new Response(JSON.stringify({ ok: true }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ ok: true });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : "Internal error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    console.error("GUEST_CONTACT_SUBMIT_UNEXPECTED_FAILED", err);
+    return json({ error: "Could not save this contact update. Please try again." }, 500);
   }
 });

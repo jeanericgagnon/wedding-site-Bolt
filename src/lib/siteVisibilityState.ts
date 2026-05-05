@@ -70,7 +70,7 @@ export function getSiteVisibilityState(input: SiteVisibilityInput): SiteVisibili
     state: 'live',
     label: 'Live and visible to guests',
     shortLabel: 'Live',
-    explainer: 'The site is live for guests at your DayOf URL.',
+    explainer: 'The site is live for guests at your dayof URL.',
     searchLabel: hideFromSearch ? 'Hidden from search' : 'Search visibility on',
     isLive: true,
     isPrivatePreview: false,

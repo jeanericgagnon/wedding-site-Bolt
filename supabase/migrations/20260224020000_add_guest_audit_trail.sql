@@ -9,12 +9,9 @@ create table if not exists guest_audit_logs (
   old_data jsonb,
   new_data jsonb
 );
-
 create index if not exists guest_audit_logs_guest_changed_idx on guest_audit_logs(guest_id, changed_at desc);
 create index if not exists guest_audit_logs_site_changed_idx on guest_audit_logs(wedding_site_id, changed_at desc);
-
 alter table guest_audit_logs enable row level security;
-
 do $$ begin
   if not exists (
     select 1 from pg_policies where schemaname='public' and tablename='guest_audit_logs' and policyname='Users can view audit logs for own site'
@@ -32,7 +29,6 @@ do $$ begin
       );
   end if;
 end $$;
-
 create or replace function public.log_guest_audit_change()
 returns trigger
 language plpgsql
@@ -58,7 +54,6 @@ begin
   return null;
 end;
 $$;
-
 drop trigger if exists trg_guest_audit_log on guests;
 create trigger trg_guest_audit_log
 after insert or update or delete on guests

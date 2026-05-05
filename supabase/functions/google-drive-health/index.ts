@@ -115,6 +115,12 @@ Deno.serve(async (req: Request) => {
       message: refreshed ? "Drive token refreshed and healthy." : "Drive connection healthy.",
     });
   } catch (err) {
-    return json({ connected: true, healthy: false, needsReconnect: true, message: err instanceof Error ? err.message : "Health check failed." }, 500);
+    console.error("GOOGLE_DRIVE_HEALTH_CHECK_FAILED", err);
+    return json({
+      connected: true,
+      healthy: false,
+      needsReconnect: true,
+      message: "Drive backup needs to be reconnected. dayof hosted storage is active.",
+    });
   }
 });

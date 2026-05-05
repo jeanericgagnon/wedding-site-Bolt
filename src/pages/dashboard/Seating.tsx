@@ -11,19 +11,21 @@ import {
   useDroppable,
   useDraggable,
 } from '@dnd-kit/core';
-import { Users, Download, Wand2, Plus, Edit2, Trash2, X, AlertTriangle, RotateCcw, RotateCw, TableProperties, CheckCircle2, RefreshCw } from 'lucide-react';
-import * as XLSX from 'xlsx';
+import { Users, Download, Wand2, Plus, Edit2, Trash2, X, AlertTriangle, RotateCcw, RotateCw, TableProperties, CheckCircle2, RefreshCw, History, Image as ImageIcon } from 'lucide-react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
+import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { useToast } from '../../components/ui/Toast';
 import { useAuth } from '../../hooks/useAuth';
 import { demoWeddingSite, demoGuests, demoEvents } from '../../lib/demoData';
 import { supabase } from '../../lib/supabase';
-import { isAttendingRsvpStatus, isDeclinedRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
+import { isAttendingRsvpStatus } from '../../lib/rsvpStatus';
+import { buildSeatingCateringHandoffReview, buildSeatingCateringPacket, cateringRowsToCsv } from '../../lib/seatingCateringExportReadiness';
 import { formatSeatingEventLabel } from './seatingEventDate';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Badge } from '../../components/ui/Badge';
+import { ConfirmDialog, type ConfirmDialogProps } from '../../components/ui/ConfirmDialog';
 import {
   ItineraryEvent, SeatingEvent, SeatingTable, SeatingAssignment, EligibleGuest,
   EventCounters, getWeddingSiteId, loadItineraryEvents, getOrCreateSeatingEvent,
@@ -31,10 +33,25 @@ import {
   assignGuestToTable, unassignGuest, resetSeating, getEligibleGuests,
   getEventCounters, autoCreateTables, autoSeatGuests, exportSeatingCSV,
   exportPlaceCardsCSV, downloadCSV, invalidateDriftedAssignments, setGuestCheckedIn,
+  SeatingLayoutVersion, loadSeatingVersions, createSeatingVersion, markSeatingVersionRestored,
+  deriveEventCountersFromGuests,
 } from './seating/seatingService';
 
 const UNASSIGNED_DROPPABLE = 'unassigned-pool';
 type TableShape = 'round' | 'rectangle' | 'bar' | 'dj_booth' | 'dance_floor';
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function safeExportSlug(value: string): string {
+  return (value || 'event').replace(/[^a-z0-9-_]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'event';
+}
 
 function getShapeLabel(shape: TableShape): string {
   switch (shape) {
@@ -52,13 +69,13 @@ function getShapePalette(shape: TableShape) {
     case 'round':
       return { chip: 'bg-primary/10 border-primary/30 text-primary', fill: 'bg-primary/5 border-primary/20' };
     case 'rectangle':
-      return { chip: 'bg-indigo-500/10 border-indigo-500/30 text-indigo-600', fill: 'bg-indigo-500/5 border-indigo-500/20' };
+      return { chip: 'bg-surface-subtle border-border-subtle text-text-secondary', fill: 'bg-surface-subtle/50 border-border-subtle' };
     case 'bar':
-      return { chip: 'bg-amber-500/10 border-amber-500/30 text-amber-700', fill: 'bg-amber-500/8 border-amber-500/25' };
+      return { chip: 'bg-surface-subtle border-border-subtle text-text-secondary', fill: 'bg-surface-subtle/50 border-border-subtle' };
     case 'dj_booth':
-      return { chip: 'bg-fuchsia-500/10 border-fuchsia-500/30 text-fuchsia-700', fill: 'bg-fuchsia-500/8 border-fuchsia-500/25' };
+      return { chip: 'bg-surface-subtle border-border-subtle text-text-secondary', fill: 'bg-surface-subtle/50 border-border-subtle' };
     case 'dance_floor':
-      return { chip: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700', fill: 'bg-emerald-500/8 border-emerald-500/25' };
+      return { chip: 'bg-primary/10 border-primary/25 text-primary', fill: 'bg-primary/5 border-primary/20' };
     default:
       return { chip: 'bg-surface-subtle border-border-subtle text-text-tertiary', fill: 'bg-surface-subtle border-border-subtle' };
   }
@@ -80,7 +97,7 @@ function GuestChip({
       flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium
       select-none cursor-grab active:cursor-grabbing
       transition-colors border
-      ${isDragging ? 'shadow-lg opacity-90 rotate-1' : ''}
+      ${isDragging ? 'opacity-90 ring-2 ring-primary/20' : ''}
       ${isInvalid ? 'bg-error/10 border-error/30 text-error' : 'bg-surface border-border-subtle text-text-primary hover:border-border hover:bg-surface-subtle'}
     `}>
       {isInvalid && <AlertTriangle className="w-3 h-3 flex-shrink-0" />}
@@ -118,7 +135,7 @@ function UnassignedPool({ guests }: { guests: EligibleGuest[] }) {
   return (
     <div
       ref={setNodeRef}
-      className={`min-h-[120px] p-3 rounded-xl border-2 border-dashed transition-colors ${isOver ? 'border-primary bg-primary-light/50' : 'border-border-subtle bg-surface-subtle'}`}
+      className={`min-h-[120px] rounded-lg border-2 border-dashed p-3 transition-colors ${isOver ? 'border-primary bg-primary-light/50' : 'border-border-subtle bg-surface-subtle'}`}
     >
       {guests.length > 0 && (
         <div className="mb-3 space-y-2">
@@ -302,11 +319,11 @@ function TableCard({
         onStartMove(e);
       }}
       className={`
-        rounded-xl transition-all cursor-pointer
+        rounded-lg transition-all cursor-pointer
         ${isCanvas
           ? (isOver && !isFull ? 'bg-transparent ring-2 ring-primary/40' : isSelected ? 'bg-transparent ring-1 ring-border' : 'bg-transparent')
           : (isOver && !isFull
-              ? 'border-2 border-primary bg-primary-light/30 shadow-md'
+              ? 'border-2 border-primary bg-primary-light/30'
               : isFull
                 ? 'border-2 border-border-subtle bg-surface'
                 : 'border-2 border-border-subtle bg-surface hover:border-border')}
@@ -317,10 +334,10 @@ function TableCard({
           <div className="flex items-center gap-2 min-w-0">
             <TableProperties className="w-3.5 h-3.5 text-text-tertiary flex-shrink-0" />
             <span className="text-sm font-semibold text-text-primary truncate">{table.table_name}</span>
-            <span className={`text-[10px] uppercase px-1.5 py-0.5 rounded border ${palette.chip}`}>{getShapeLabel((table.table_shape ?? 'round') as TableShape)}</span>
+            <span className={`text-[10px] px-1.5 py-0.5 rounded border ${palette.chip}`}>{getShapeLabel((table.table_shape ?? 'round') as TableShape)}</span>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${isFull ? 'bg-success/10 text-success' : 'bg-surface-subtle text-text-tertiary'}`}>
+            <span className={`rounded-md px-1.5 py-0.5 text-xs font-medium ${isFull ? 'bg-primary/10 text-primary' : 'bg-surface-subtle text-text-tertiary'}`}>
               {occupied}/{effectiveCapacity}
             </span>
             {isSelected && (
@@ -348,7 +365,7 @@ function TableCard({
           <div style={{ transform: `rotate(${table.rotation_deg ?? 0}deg)`, transformOrigin: '50% 50%' }}>
             {(['bar', 'dj_booth', 'dance_floor'] as TableShape[]).includes((table.table_shape ?? 'round') as TableShape) ? (
               <div className="relative mb-2">
-                <div className={`mx-auto rounded-xl flex items-center justify-center text-xs text-text-tertiary ${palette.fill} ${isNonSeatingObject ? 'border-2 border-dashed shadow-sm pointer-events-none select-none' : 'border'}`} style={{ width: `${rectSize.width}px`, height: `${rectSize.height}px` }}>
+                <div className={`mx-auto flex items-center justify-center rounded-lg text-xs text-text-tertiary ${palette.fill} ${isNonSeatingObject ? 'pointer-events-none select-none border-2 border-dashed' : 'border'}`} style={{ width: `${rectSize.width}px`, height: `${rectSize.height}px` }}>
                   {table.table_name || ''}
                 </div>
               </div>
@@ -370,7 +387,7 @@ function TableCard({
                       tableId={table.id}
                       seatIndex={seatNumber}
                       guest={seatAssignment?.guest}
-                      className="absolute w-16 sm:w-20 h-9 sm:h-10 -ml-8 sm:-ml-10 -mt-4 sm:-mt-5 shadow-sm"
+                      className="absolute h-9 w-16 -ml-8 -mt-4 sm:h-10 sm:w-20 sm:-ml-10 sm:-mt-5"
                       style={{ left: '50%', top: '50%', transform: `translate(${x}px, ${y}px)` }}
                       onSelectSeat={onSelectSeat}
                     />
@@ -381,7 +398,7 @@ function TableCard({
               <div className="relative mb-2">
                 <div className="mx-auto relative" style={{ width: `${rectSize.width + 110}px`, height: `${rectSize.height + 110}px` }}>
                   <div
-                    className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 border rounded-xl ${palette.fill}`}
+                    className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-lg border ${palette.fill}`}
                     style={{ width: `${rectSize.width}px`, height: `${rectSize.height}px` }}
                   >
                     <div className="absolute left-2 top-1 text-[10px] text-text-tertiary">{rectSize.width}×{rectSize.height}</div>
@@ -437,8 +454,9 @@ function TableCard({
                           tableId={table.id}
                           seatIndex={pos.seatNumber}
                           guest={seatAssignment?.guest}
-                          className="absolute w-[74px] h-[34px] -ml-[37px] -mt-[17px] shadow-sm"
+                          className="absolute h-[34px] w-[74px] -ml-[37px] -mt-[17px]"
                           style={{ left: `${pos.x}px`, top: `${pos.y}px` }}
+                          onSelectSeat={onSelectSeat}
                         />
                       );
                     });
@@ -545,7 +563,7 @@ function TableForm({ initial, onSave, onCancel }: {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-2 p-3 bg-surface-subtle rounded-xl border border-border-subtle">
+    <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-2 rounded-lg border border-border-subtle bg-surface-subtle p-3">
       <div>
         <label className="block text-xs font-medium text-text-secondary mb-1">Name</label>
         <input
@@ -611,7 +629,13 @@ function TableForm({ initial, onSave, onCancel }: {
         {initial?.id ? (
           <Button type="button" size="sm" onClick={onCancel}>Done</Button>
         ) : (
-          <Button type="submit" size="sm">Save</Button>
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => onSave(buildPayload())}
+          >
+            Save
+          </Button>
         )}
         <Button type="button" variant="ghost" size="sm" onClick={onCancel}>Cancel</Button>
       </div>
@@ -623,6 +647,7 @@ const DEMO_EVENT_ID = 'demo-event-reception';
 const DEMO_SEATING_EVENT_ID = 'demo-seating-event';
 const DEMO_ITINERARY_STORAGE_KEY = 'dayof.demo.itinerary.events';
 const DEMO_SEATING_STORAGE_KEY = 'dayof.demo.seating.state';
+const SEATING_VERSION_STORAGE_KEY = 'dayof.seating.versions';
 
 export const DashboardSeating: React.FC = () => {
   const { isDemoMode } = useAuth();
@@ -661,8 +686,24 @@ export const DashboardSeating: React.FC = () => {
     : [];
   const [canvasZoom, setCanvasZoom] = useState(1);
   const [canvasFullscreen, setCanvasFullscreen] = useState(false);
+  const [versions, setVersions] = useState<SeatingLayoutVersion[]>([]);
   const tableDragRef = useRef<{ id: string; startX: number; startY: number; originX: number; originY: number } | null>(null);
   const { toast } = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<null | Omit<ConfirmDialogProps, 'open'>>(null);
+  const requestConfirmation = (options: Pick<ConfirmDialogProps, 'title' | 'description' | 'confirmLabel' | 'tone'>) =>
+    new Promise<boolean>((resolve) => {
+      setConfirmDialog({
+        ...options,
+        onCancel: () => {
+          setConfirmDialog(null);
+          resolve(false);
+        },
+        onConfirm: () => {
+          setConfirmDialog(null);
+          resolve(true);
+        },
+      });
+    });
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -717,6 +758,22 @@ export const DashboardSeating: React.FC = () => {
       const parsed = raw ? JSON.parse(raw) as Record<string, any> : {};
       parsed[eventId] = { tables: tablesData, assignments: assignmentsData };
       localStorage.setItem(DEMO_SEATING_STORAGE_KEY, JSON.stringify(parsed));
+    } catch {}
+  }
+
+  function readSeatingVersions(): SeatingLayoutVersion[] {
+    try {
+      const raw = localStorage.getItem(SEATING_VERSION_STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) as SeatingLayoutVersion[] : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function writeSeatingVersions(nextVersions: SeatingLayoutVersion[]) {
+    try {
+      localStorage.setItem(SEATING_VERSION_STORAGE_KEY, JSON.stringify(nextVersions.slice(0, 40)));
     } catch {}
   }
 
@@ -826,12 +883,7 @@ export const DashboardSeating: React.FC = () => {
         setTables(saved.tables);
         setAssignments(saved.assignments);
         setAllGuests(guestsData);
-        const invitedGuests = guestsData.filter(g => g.is_invited_to_event);
-        const attending = invitedGuests.filter(g => g.is_attending).length;
-        const declined = invitedGuests.filter(g => isDeclinedRsvpStatus(g.rsvp_status)).length;
-        const pending = invitedGuests.filter(g => isPendingRsvpStatus(g.rsvp_status)).length;
-        const seated = invitedGuests.filter(g => g.is_attending && saved.assignments.some(a => a.is_valid && a.guest_id === g.id)).length;
-        setCounters({ invited: invitedGuests.length, attending, declined, pending, seated, unassigned: Math.max(attending - seated, 0) });
+        setCounters(deriveEventCountersFromGuests(guestsData, saved.assignments));
         setInvalidCount(0);
         return;
       }
@@ -850,6 +902,11 @@ export const DashboardSeating: React.FC = () => {
       setCounters(ctrs);
       const invalid = assignmentsData.filter(a => !a.is_valid).length;
       setInvalidCount(invalid);
+      try {
+        setVersions(await loadSeatingVersions(se.id));
+      } catch {
+        setVersions([]);
+      }
     } catch {
       toast('Couldn’t load seating data right now. Please try again.', 'error');
     } finally {
@@ -861,6 +918,16 @@ export const DashboardSeating: React.FC = () => {
     if (!isDemoMode || !selectedEventId) return;
     writeDemoSeatingState(selectedEventId, tables, assignments);
   }, [isDemoMode, selectedEventId, tables, assignments]);
+
+  useEffect(() => {
+    if (!selectedEventId) {
+      setVersions([]);
+      return;
+    }
+    if (isDemoMode) {
+      setVersions(readSeatingVersions().filter((version) => version.itinerary_event_id === selectedEventId));
+    }
+  }, [selectedEventId]);
 
   const assignedGuestIds = new Set(assignments.map(a => a.guest_id));
   const unassignedGuests = allGuests.filter(g => g.is_attending && !assignedGuestIds.has(g.id));
@@ -1000,7 +1067,10 @@ export const DashboardSeating: React.FC = () => {
   }, [seatingEvent, toast, isDemoMode]);
 
   async function handleAddTable(tableData: Partial<SeatingTable>) {
-    if (!seatingEvent) return;
+    if (!seatingEvent) {
+      toast('Seating is still loading. Please try again in a moment.', 'warning');
+      return;
+    }
     try {
       const sortOrder = tables.length;
       const created = isDemoMode
@@ -1379,47 +1449,33 @@ export const DashboardSeating: React.FC = () => {
     downloadCSV(csv, 'place-cards.csv');
   }
 
-  function handleExportExcel() {
+  function handleExportTableSummaryCSV() {
     const selectedEvent = itineraryEvents.find(e => e.id === selectedEventId);
     const eventName = selectedEvent?.event_name ?? 'Event';
-    const assignmentMap = new Map(assignments.map(a => [a.guest_id, a]));
-    const tableMap = new Map(tables.map(t => [t.id, t]));
+    const packet = buildSeatingCateringPacket({ guests: allGuests, tables, assignments });
 
-    const seatingRows = allGuests
-      .filter(g => g.is_attending)
-      .map((guest) => {
-        const assignment = assignmentMap.get(guest.id);
-        const table = assignment ? tableMap.get(assignment.table_id) : null;
-        return {
-          Guest: guest.full_name,
-          Email: guest.email ?? '',
-          Table: table?.table_name ?? 'Unassigned',
-          Seat: assignment?.seat_index ?? '',
-          Arrived: assignment?.checked_in_at ? 'Yes' : 'No',
-          Event: eventName,
-        };
-      });
+    const safeName = safeExportSlug(eventName);
+    const rows = [
+      ['Table', 'Capacity', 'Assigned', 'Arrived', 'Dietary Notes', 'Meal Counts'],
+      ...packet.tableSummaries.map((row) => [
+        row.tableName,
+        String(row.capacity),
+        String(row.assigned),
+        String(row.arrived),
+        String(row.dietaryNotes),
+        row.mealCounts.map((meal) => `${meal.meal}: ${meal.count}`).join('; '),
+      ]),
+    ];
+    const csv = rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
 
-    const tableRows = tables
-      .map((table) => {
-        const assigned = assignments.filter(a => a.table_id === table.id).length;
-        const arrived = assignments.filter(a => a.table_id === table.id && !!a.checked_in_at).length;
-        return {
-          Table: table.table_name,
-          Capacity: table.capacity,
-          Assigned: assigned,
-          Arrived: arrived,
-          'Meal Headcount': assigned,
-        };
-      })
-      .sort((a, b) => a.Table.localeCompare(b.Table));
+    downloadCSV(csv, `table-summary-${safeName}.csv`);
+  }
 
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(seatingRows), 'Seating');
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(tableRows), 'Table Summary');
-
-    const safeName = (eventName || 'event').replace(/[^a-z0-9-_]+/gi, '-').toLowerCase();
-    XLSX.writeFile(wb, `seating-${safeName}.xlsx`);
+  function handleExportCateringCSV() {
+    const selectedEvent = itineraryEvents.find(e => e.id === selectedEventId);
+    const eventName = selectedEvent?.event_name ?? 'Event';
+    const packet = buildSeatingCateringPacket({ guests: allGuests, tables, assignments });
+    downloadCSV(cateringRowsToCsv(packet.rows), `catering-packet-${safeExportSlug(eventName)}.csv`);
   }
 
   function handlePrint() {
@@ -1437,12 +1493,12 @@ export const DashboardSeating: React.FC = () => {
       );
       const rows = tableGuests.map((g) => {
         const assignment = assignments.find(a => a.table_id === table.id && a.guest_id === g.id);
-        return `<tr><td>${g.full_name}</td><td>${g.email ?? ''}</td><td>${assignment?.checked_in_at ? 'Yes' : 'No'}</td></tr>`;
+        return `<tr><td>${escapeHtml(g.full_name)}</td><td>${escapeHtml(g.email ?? '')}</td><td>${assignment?.checked_in_at ? 'Yes' : 'No'}</td></tr>`;
       }).join('');
 
       return `
         <section style="margin-bottom:18px; page-break-inside:avoid;">
-          <h3 style="margin:0 0 8px 0;">${table.table_name} (${tableGuests.length}/${table.capacity})</h3>
+          <h3 style="margin:0 0 8px 0;">${escapeHtml(table.table_name)} (${tableGuests.length}/${table.capacity})</h3>
           <table style="width:100%; border-collapse:collapse; font-size:12px;">
             <thead>
               <tr>
@@ -1459,10 +1515,10 @@ export const DashboardSeating: React.FC = () => {
 
     const html = `
       <html>
-        <head><title>Seating Export - ${eventName}</title></head>
+        <head><title>Seating Export - ${escapeHtml(eventName)}</title></head>
         <body style="font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif; padding:24px; color:#111;">
-          <h1 style="margin:0 0 6px 0;">Seating Report — ${eventName}</h1>
-          <p style="margin:0 0 14px 0; color:#555;">Created ${now}</p>
+          <h1 style="margin:0 0 6px 0;">Seating Report - ${escapeHtml(eventName)}</h1>
+          <p style="margin:0 0 14px 0; color:#555;">Created ${escapeHtml(now)}</p>
           <p style="margin:0 0 20px 0; color:#333;">Attending: ${counters?.attending ?? 0} · Seated: ${counters?.seated ?? 0} · Arrived: ${arrivedCount}</p>
           ${tableBlocks || '<p>No tables yet.</p>'}
         </body>
@@ -1481,6 +1537,89 @@ export const DashboardSeating: React.FC = () => {
     w.print();
   }
 
+  function handleExportImage() {
+    const selectedEvent = itineraryEvents.find(e => e.id === selectedEventId);
+    const eventName = selectedEvent?.event_name ?? 'Event';
+    const escapeText = (value: string) => value.replace(/[<>&]/g, '');
+    const tableBlocks = tables.map((table) => {
+      const x = Number(table.layout_x ?? 24);
+      const y = Number(table.layout_y ?? 82);
+      const width = Number(table.layout_width ?? 220);
+      const height = Number(table.layout_height ?? 120);
+      const assigned = assignments.filter((assignment) => assignment.table_id === table.id).length;
+      const name = escapeText(`${table.table_name} (${assigned}/${table.capacity})`);
+      return `<g><rect x="${x}" y="${y}" width="${width}" height="${height}" rx="16" fill="#fff7ed" stroke="#d6d3d1" stroke-width="2"/><text x="${x + 16}" y="${y + 32}" font-size="16" font-family="Arial" font-weight="700" fill="#1c1917">${name}</text></g>`;
+    });
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1000" viewBox="0 0 1400 1000"><rect width="1400" height="1000" fill="#fafaf9"/><text x="28" y="42" font-size="24" font-family="Arial" font-weight="700">${escapeText(eventName)} seating layout</text>${tableBlocks.join('')}</svg>`;
+    const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `seating-layout-${(eventName || 'event').replace(/[^a-z0-9-_]+/gi, '-').toLowerCase()}.svg`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  async function handleSaveVersion() {
+    if (!selectedEventId || !siteId || !seatingEvent) return;
+    const selectedEvent = itineraryEvents.find(e => e.id === selectedEventId);
+    if (!isDemoMode) {
+      try {
+        const saved = await createSeatingVersion({
+          weddingSiteId: siteId,
+          seatingEventId: seatingEvent.id,
+          itineraryEventId: selectedEventId,
+          label: `${selectedEvent?.event_name ?? 'Layout'} v${versions.length + 1}`,
+          tables,
+          assignments,
+        });
+        setVersions((prev) => [saved, ...prev].slice(0, 12));
+        toast('Seating version saved for the team', 'success');
+      } catch {
+        toast('Couldn’t save that seating version. Please try again.', 'error');
+      }
+      return;
+    }
+
+    const nextVersion: SeatingLayoutVersion = {
+      id: `version-${Date.now()}`,
+      wedding_site_id: siteId,
+      seating_event_id: seatingEvent.id,
+      itinerary_event_id: selectedEventId,
+      label: `${selectedEvent?.event_name ?? 'Layout'} v${versions.length + 1}`,
+      created_at: new Date().toISOString(),
+      created_by: null,
+      restored_at: null,
+      tables,
+      assignments,
+    };
+    const allVersions = [nextVersion, ...readSeatingVersions().filter((version) => version.id !== nextVersion.id)].slice(0, 40);
+    writeSeatingVersions(allVersions);
+    setVersions(allVersions.filter((version) => version.itinerary_event_id === selectedEventId));
+    toast('Seating version saved on this device', 'success');
+  }
+
+  async function handleRestoreVersion(version: SeatingLayoutVersion) {
+    const confirmed = await requestConfirmation({
+      title: `Restore ${version.label}?`,
+      description: 'This replaces the current local layout view with the saved version. You can still apply changes after reviewing it.',
+      confirmLabel: 'Restore version',
+    });
+    if (!confirmed) return;
+    setTables(version.tables);
+    setAssignments(version.assignments);
+    if (isDemoMode && selectedEventId) {
+      writeDemoSeatingState(selectedEventId, version.tables, version.assignments);
+    } else {
+      try {
+        await markSeatingVersionRestored(version.id);
+      } catch {}
+    }
+    toast(isDemoMode ? 'Version restored locally.' : 'Version restored as a working copy. Apply changes to persist the live seating board.', 'success');
+  }
+
   const selectedItineraryEvent = itineraryEvents.find(e => e.id === selectedEventId);
   const arrivedGuestIds = new Set(assignments.filter(a => !!a.checked_in_at).map(a => a.guest_id));
   const assignedGuestIdSet = new Set(assignments.map(a => a.guest_id));
@@ -1491,13 +1630,14 @@ export const DashboardSeating: React.FC = () => {
     .filter(g => g.full_name.toLowerCase().includes(checkInQuery.toLowerCase().trim()))
     .slice(0, 12);
 
-  const mealHeadcountByTable = tables
-    .map((table) => {
-      const assigned = assignments.filter(a => a.table_id === table.id).length;
-      return { tableName: table.table_name, assigned, capacity: table.capacity };
-    })
-    .filter((row) => row.assigned > 0)
-    .sort((a, b) => b.assigned - a.assigned);
+  const cateringPacket = buildSeatingCateringPacket({ guests: allGuests, tables, assignments });
+  const cateringHandoffReview = buildSeatingCateringHandoffReview(cateringPacket);
+  const mealHeadcountByTable = cateringPacket.tableSummaries;
+  const packetReadyTone = cateringPacket.readiness.status === 'ready'
+    ? 'border-success/25 bg-success/5'
+    : cateringPacket.readiness.status === 'needs-review'
+      ? 'border-primary/25 bg-primary/5'
+      : 'border-border-subtle bg-surface';
 
   if (loading) {
     return (
@@ -1528,28 +1668,38 @@ export const DashboardSeating: React.FC = () => {
 
   return (
     <DashboardLayout currentPage="seating">
-      <div className="max-w-7xl mx-auto space-y-6" onClick={() => setSelectedTableId(null)}>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary-light rounded-xl">
-              <Users className="w-6 h-6 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-text-primary">Seating</h1>
-              <p className="text-sm text-text-secondary">{layoutMode === 'visual' ? 'Drag guests onto specific seats' : 'Drag guests between tables quickly'}</p>
-              <div className="flex flex-wrap gap-2 mt-1">
-                <a href="/dashboard/seating-lookup" className="text-xs text-primary hover:text-primary-hover">Open Seating Lookup</a>
-                <a href="/dashboard/coordinator" className="text-xs text-primary hover:text-primary-hover">Open Coordinator Mode</a>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2 items-center p-2 rounded-xl border border-border-subtle bg-surface-subtle/40">
+      <div className="max-w-[1100px] mx-auto space-y-5" onClick={() => setSelectedTableId(null)}>
+        <DashboardPageHero
+          eyebrow="Seating"
+          title="Place guests at tables without losing the room."
+          description={layoutMode === 'visual' ? 'Use the canvas when the venue layout matters, or switch to the list when you just need to move people quickly.' : 'Move guests between tables quickly, then switch back to the canvas when you want the room view.'}
+          stats={[
+            { label: 'Tables', value: tables.length, detail: selectedItineraryEvent?.event_name ?? 'current event' },
+            { label: 'Seated', value: counters?.seated ?? assignments.length, detail: `${unassignedGuests.length} still unassigned` },
+            { label: 'Arrived', value: arrivedCount, detail: checkInMode ? 'check-in is on' : 'check-in off' },
+          ]}
+          actions={
+            <>
+              <a href="/dashboard/seating-lookup" className="rounded-lg border border-border-subtle bg-white px-3 py-2 text-sm font-medium text-text-primary no-underline hover:bg-surface-subtle">Lookup</a>
+              <a href="/dashboard/coordinator" className="rounded-lg border border-border-subtle bg-white px-3 py-2 text-sm font-medium text-text-primary no-underline hover:bg-surface-subtle">Day-of view</a>
+            </>
+          }
+        >
+          <div className="flex flex-wrap gap-2 items-center">
             <Button variant="outline" size="sm" onClick={handleExportCSV}>
               <Download className="w-4 h-4 mr-1" /> CSV
             </Button>
-            <Button variant="outline" size="sm" onClick={handleExportExcel}>
-              <Download className="w-4 h-4 mr-1" /> Excel
+            <Button variant="outline" size="sm" onClick={handleExportTableSummaryCSV}>
+              <Download className="w-4 h-4 mr-1" /> Table summary
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleExportCateringCSV}>
+              <Download className="w-4 h-4 mr-1" /> Catering CSV
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleExportPDF}>
+              <Download className="w-4 h-4 mr-1" /> PDF
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleExportImage}>
+              <ImageIcon className="w-4 h-4 mr-1" /> Image
             </Button>
             <Button variant={checkInMode ? 'primary' : 'outline'} size="sm" onClick={() => setCheckInMode(v => !v)}>
               <CheckCircle2 className="w-4 h-4 mr-1" /> {checkInMode ? 'Check-in: On' : 'Check-in Mode'}
@@ -1557,15 +1707,15 @@ export const DashboardSeating: React.FC = () => {
             <Button variant="outline" size="sm" onClick={() => void handleCheckDrift()}>
               <RefreshCw className="w-4 h-4 mr-1" /> Check assignments
             </Button>
-            <div className="inline-flex rounded-xl border border-border bg-surface-subtle p-0.5">
+              <div className="inline-flex rounded-lg border border-border bg-surface-subtle p-0.5">
               <button
-                className={`px-4 py-2 text-sm rounded-lg transition-colors ${layoutMode === 'visual' ? 'bg-primary/10 text-primary shadow-sm border border-primary/30' : 'text-text-tertiary hover:text-text-primary'}`}
+                className={`rounded-md px-4 py-2 text-sm transition-colors ${layoutMode === 'visual' ? 'border border-primary/25 bg-primary/10 text-primary' : 'text-text-tertiary hover:text-text-primary'}`}
                 onClick={() => setLayoutMode('visual')}
               >
                 Canvas Layout
               </button>
               <button
-                className={`px-4 py-2 text-sm rounded-lg transition-colors ${layoutMode === 'list' ? 'bg-primary/10 text-primary shadow-sm border border-primary/30' : 'text-text-tertiary hover:text-text-primary'}`}
+                className={`rounded-md px-4 py-2 text-sm transition-colors ${layoutMode === 'list' ? 'border border-primary/25 bg-primary/10 text-primary' : 'text-text-tertiary hover:text-text-primary'}`}
                 onClick={() => setLayoutMode('list')}
               >
                 List Layout
@@ -1575,13 +1725,13 @@ export const DashboardSeating: React.FC = () => {
               Current Event: <span className="font-medium text-text-primary">{selectedItineraryEvent?.event_name ?? '—'}</span>
             </div>
           </div>
-        </div>
+        </DashboardPageHero>
 
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
           <div className="flex items-center gap-2 flex-1">
             <label className="text-sm font-medium text-text-secondary whitespace-nowrap">Event:</label>
             <select
-              className="flex-1 px-3 py-2 text-sm bg-surface border border-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+              className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
               value={selectedEventId ?? ''}
               onChange={e => setSelectedEventId(e.target.value)}
             >
@@ -1594,14 +1744,117 @@ export const DashboardSeating: React.FC = () => {
           </div>
         </div>
 
-        <details className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-3">
+        <div className={`rounded-lg border p-4 ${packetReadyTone}`}>
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                {cateringPacket.readiness.status === 'ready' ? (
+                  <CheckCircle2 className="h-4 w-4 text-success" />
+                ) : (
+                  <AlertTriangle className="h-4 w-4 text-primary" />
+                )}
+                <p className="text-sm font-semibold text-text-primary">Venue and catering packet</p>
+              </div>
+              <p className="mt-1 text-sm text-text-secondary">{cateringPacket.readiness.summary}</p>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-center sm:min-w-[360px]">
+              <div className="rounded-lg border border-border-subtle bg-surface px-3 py-2">
+                <p className="text-lg font-semibold text-text-primary">{cateringPacket.readiness.assignedCount}/{cateringPacket.readiness.attendingCount}</p>
+                <p className="text-[11px] text-text-tertiary">Seated</p>
+              </div>
+              <div className="rounded-lg border border-border-subtle bg-surface px-3 py-2">
+                <p className="text-lg font-semibold text-text-primary">{cateringPacket.readiness.mealChoiceCount}</p>
+                <p className="text-[11px] text-text-tertiary">Meals</p>
+              </div>
+              <div className="rounded-lg border border-border-subtle bg-surface px-3 py-2">
+                <p className="text-lg font-semibold text-text-primary">{cateringPacket.readiness.dietaryNoteCount}</p>
+                <p className="text-[11px] text-text-tertiary">Notes</p>
+              </div>
+            </div>
+          </div>
+          <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+            {cateringPacket.readiness.checklist.map((item) => {
+              const iconClass = item.state === 'ready'
+                ? 'text-success'
+                : item.state === 'needs-action'
+                  ? 'text-primary'
+                  : 'text-text-tertiary';
+              return (
+                <div key={item.id} className="flex gap-2 rounded-lg border border-border-subtle bg-surface px-3 py-2">
+                  {item.state === 'ready' ? (
+                    <CheckCircle2 className={`mt-0.5 h-4 w-4 flex-shrink-0 ${iconClass}`} />
+                  ) : (
+                    <AlertTriangle className={`mt-0.5 h-4 w-4 flex-shrink-0 ${iconClass}`} />
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-text-primary">{item.label}</p>
+                    <p className="text-xs text-text-secondary">{item.detail}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="mt-3 rounded-lg border border-border-subtle bg-surface p-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-text-primary">Venue handoff review</p>
+                <p className="mt-1 text-xs text-text-secondary">{cateringHandoffReview.summary}</p>
+              </div>
+              <Badge variant={cateringHandoffReview.status === 'ready' ? 'success' : 'warning'}>
+                {cateringHandoffReview.status === 'ready' ? 'Ready' : 'Review'}
+              </Badge>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+              {[
+                { label: 'Guests', value: cateringHandoffReview.sourceCounts.attendingGuests },
+                { label: 'Tables', value: cateringHandoffReview.sourceCounts.tablesWithGuests },
+                { label: 'Meals', value: cateringHandoffReview.sourceCounts.mealRows },
+                { label: 'Notes', value: cateringHandoffReview.sourceCounts.dietaryRows },
+                { label: 'Unseated', value: cateringHandoffReview.sourceCounts.unassignedGuests },
+                { label: 'Review', value: cateringHandoffReview.sourceCounts.invalidAssignments },
+              ].map((stat) => (
+                <div key={stat.label} className="rounded-lg border border-border-subtle bg-surface-subtle px-2 py-2 text-center">
+                  <p className="text-base font-semibold text-text-primary">{stat.value}</p>
+                  <p className="text-[11px] text-text-tertiary">{stat.label}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 grid gap-2 md:grid-cols-2">
+              {cateringHandoffReview.files.map((file) => (
+                <div key={file.id} className="flex items-start gap-2 rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2">
+                  {file.status === 'ready' ? (
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-success" />
+                  ) : (
+                    <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-text-primary">{file.label} <span className="font-normal text-text-tertiary">({file.format})</span></p>
+                    <p className="text-xs text-text-secondary">{file.detail}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {cateringHandoffReview.warnings.length > 0 && (
+              <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
+                <p className="text-xs font-semibold text-text-primary">Before final handoff</p>
+                <ul className="mt-1 space-y-1">
+                  {cateringHandoffReview.warnings.map((warning) => (
+                    <li key={warning} className="text-xs text-text-secondary">{warning}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <details className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-3">
           <summary className="cursor-pointer list-none flex items-center justify-between gap-2">
             <span className="text-sm font-semibold text-text-primary">Seating insights</span>
             <span className="text-xs text-text-tertiary">View details</span>
           </summary>
           <div className="mt-3 space-y-3">
             {layoutMode === 'visual' && (
-              <div className="hidden sm:flex flex-wrap items-center gap-3 text-xs text-text-tertiary bg-surface-subtle border border-border-subtle rounded-xl px-3 py-2">
+              <div className="hidden flex-wrap items-center gap-3 rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2 text-xs text-text-tertiary sm:flex">
                 <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-surface border border-border-subtle" /> Empty seat</span>
                 <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-primary-light border border-primary/40" /> Active drop zone</span>
                 <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-success/10 border border-success/40" /> Arrived (check-in)</span>
@@ -1612,12 +1865,12 @@ export const DashboardSeating: React.FC = () => {
               <div className="grid grid-cols-3 sm:grid-cols-7 gap-2">
                 {[
                   { label: 'Invited', value: counters.invited, color: 'text-text-primary' },
-                  { label: 'Attending', value: counters.attending, color: 'text-success' },
-                  { label: 'Arrived', value: arrivedCount, color: 'text-success' },
-                  { label: 'Declined', value: counters.declined, color: 'text-error' },
-                  { label: 'Pending', value: counters.pending, color: 'text-warning' },
+                  { label: 'Attending', value: counters.attending, color: 'text-primary' },
+                  { label: 'Arrived', value: arrivedCount, color: 'text-primary' },
+                  { label: 'Declined', value: counters.declined, color: 'text-text-secondary' },
+                  { label: 'Pending', value: counters.pending, color: 'text-text-secondary' },
                   { label: 'Seated', value: counters.seated, color: 'text-primary' },
-                  { label: 'Unassigned', value: counters.unassigned, color: counters.unassigned > 0 ? 'text-warning' : 'text-text-tertiary' },
+                  { label: 'Unassigned', value: counters.unassigned, color: counters.unassigned > 0 ? 'text-primary' : 'text-text-tertiary' },
                 ].map(stat => (
                   <Card key={stat.label} padding="sm" className="text-center">
                     <p className={`text-xl font-bold ${stat.color}`}>{stat.value}</p>
@@ -1637,7 +1890,12 @@ export const DashboardSeating: React.FC = () => {
                   {mealHeadcountByTable.map((row) => (
                     <div key={row.tableName} className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2">
                       <p className="text-sm font-medium text-text-primary truncate">{row.tableName}</p>
-                      <p className="text-xs text-text-secondary mt-0.5">{row.assigned}/{row.capacity} meals</p>
+                      <p className="text-xs text-text-secondary mt-0.5">
+                        {row.assigned}/{row.capacity} guests · {row.mealCounts.map((meal) => `${meal.meal}: ${meal.count}`).join(', ')}
+                      </p>
+                      {row.dietaryNotes > 0 && (
+                        <p className="mt-0.5 text-[11px] text-primary">{row.dietaryNotes} dietary note{row.dietaryNotes === 1 ? '' : 's'}</p>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -1645,7 +1903,7 @@ export const DashboardSeating: React.FC = () => {
             )}
 
             {invalidCount > 0 && (
-              <div className="flex items-center gap-2 p-3 bg-error/5 border border-error/20 rounded-xl text-sm">
+              <div className="flex items-center gap-2 rounded-lg border border-error/20 bg-error/5 p-3 text-sm">
                 <AlertTriangle className="w-4 h-4 text-error flex-shrink-0" />
                 <span className="text-text-primary">
                   <span className="font-medium text-error">{invalidCount}</span> assignment(s) are invalid due to RSVP changes.
@@ -1655,13 +1913,41 @@ export const DashboardSeating: React.FC = () => {
           </div>
         </details>
 
-        <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-3">
+        <Card className="p-4 border border-border-subtle bg-surface">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <History className="h-4 w-4 text-primary" />
+                <p className="text-sm font-semibold text-text-primary">Layout versions</p>
+              </div>
+              <p className="mt-1 text-xs text-text-secondary">Save comparison points before trying a new seating plan. Versions are local snapshots for fast iteration.</p>
+            </div>
+            <Button size="sm" variant="outline" onClick={() => void handleSaveVersion()}>Save version</Button>
+          </div>
+          {versions.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {versions.slice(0, 6).map((version) => (
+                <button
+                  key={version.id}
+                  type="button"
+                  onClick={() => handleRestoreVersion(version)}
+                  className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2 text-left text-xs hover:border-primary/40"
+                >
+                  <span className="block font-medium text-text-primary">{version.label}</span>
+                  <span className="text-text-tertiary">{new Date(version.created_at).toLocaleString()}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </Card>
+
+        <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-3">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">Table actions</p>
+              <p className="text-xs font-semibold text-text-tertiary">Table actions</p>
               <p className="mt-1 text-sm text-text-secondary">Create tables fast, auto-seat where it helps, or reset the room when plans changed.</p>
             </div>
-            <Button size="sm" onClick={() => setAddingTable(true)}>
+            <Button size="sm" onClick={() => setAddingTable(true)} disabled={!seatingEvent || loadingSeating}>
               <Plus className="w-4 h-4 mr-1" /> Add Table
             </Button>
           </div>
@@ -1670,7 +1956,7 @@ export const DashboardSeating: React.FC = () => {
               type="button"
               onClick={() => setShowAutoTablesModal(true)}
               disabled={seatingBusyAction !== null}
-              className="rounded-2xl border border-border-subtle bg-white px-4 py-4 text-left hover:border-primary/30 hover:bg-primary-light/10 disabled:opacity-50"
+              className="rounded-lg border border-border-subtle bg-white px-4 py-4 text-left hover:border-primary/25 hover:bg-primary-light/10 disabled:opacity-50"
             >
               <p className="text-sm font-semibold text-text-primary">Auto-create tables</p>
               <p className="mt-1 text-xs leading-5 text-text-secondary">Build enough tables for the current attending count.</p>
@@ -1679,7 +1965,7 @@ export const DashboardSeating: React.FC = () => {
               type="button"
               onClick={() => { void handleAutoSeat(); }}
               disabled={tables.length === 0 || unassignedGuests.length === 0 || seatingBusyAction !== null}
-              className="rounded-2xl border border-border-subtle bg-white px-4 py-4 text-left hover:border-primary/30 hover:bg-primary-light/10 disabled:opacity-50"
+              className="rounded-lg border border-border-subtle bg-white px-4 py-4 text-left hover:border-primary/25 hover:bg-primary-light/10 disabled:opacity-50"
             >
               <p className="text-sm font-semibold text-text-primary">{seatingBusyAction === 'auto-seat' ? 'Auto-seating guests…' : 'Auto-seat guests'}</p>
               <p className="mt-1 text-xs leading-5 text-text-secondary">Fill open seats for the {unassignedGuests.length} guests still waiting.</p>
@@ -1688,7 +1974,7 @@ export const DashboardSeating: React.FC = () => {
               type="button"
               onClick={() => setShowResetConfirm(true)}
               disabled={assignments.length === 0 || seatingBusyAction !== null}
-              className="rounded-2xl border border-border-subtle bg-white px-4 py-4 text-left hover:border-error/30 hover:bg-error/5 disabled:opacity-50"
+              className="rounded-lg border border-border-subtle bg-white px-4 py-4 text-left hover:border-primary/25 hover:bg-surface-subtle/60 disabled:opacity-50"
             >
               <p className="text-sm font-semibold text-text-primary">Reset seating</p>
               <p className="mt-1 text-xs leading-5 text-text-secondary">Clear every seat assignment for this event and start fresh.</p>
@@ -1697,14 +1983,14 @@ export const DashboardSeating: React.FC = () => {
         </div>
 
         {checkInMode && (
-          <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4 space-y-3">
+          <div className="space-y-3 rounded-lg border border-border-subtle bg-surface-subtle/40 p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">Check-in mode</p>
+                <p className="text-xs font-semibold text-text-tertiary">Check-in mode</p>
                 <p className="mt-1 text-sm text-text-secondary">Search an attendee, then mark them arrived without leaving the seating board.</p>
               </div>
-              <div className="rounded-xl border border-border-subtle bg-white px-3 py-2 text-right">
-                <p className="text-[11px] uppercase tracking-[0.2em] text-text-tertiary">Arrivals</p>
+              <div className="rounded-lg border border-border-subtle bg-white px-3 py-2 text-right">
+                <p className="text-[11px] text-text-tertiary">Arrivals</p>
                 <p className="mt-1 text-sm font-semibold text-text-primary">{arrivedCount}/{counters?.attending ?? 0}</p>
               </div>
             </div>
@@ -1734,7 +2020,7 @@ export const DashboardSeating: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => void handleBulkCheckIn(checkInCandidates.filter((guest) => !arrivedGuestIds.has(guest.id)).map((guest) => guest.id), true)}
-                  className="rounded-full border border-success/30 bg-success/10 px-3 py-1 text-success hover:bg-success/15"
+                  className="rounded-md border border-primary/25 bg-primary/10 px-3 py-1 text-primary hover:bg-primary/15"
                 >
                   Mark visible arrived
                 </button>
@@ -1743,7 +2029,7 @@ export const DashboardSeating: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => void handleBulkCheckIn(checkInCandidates.filter((guest) => arrivedGuestIds.has(guest.id)).map((guest) => guest.id), false)}
-                  className="rounded-full border border-border-subtle bg-white px-3 py-1 text-text-secondary hover:border-primary/30 hover:text-primary"
+                  className="rounded-md border border-border-subtle bg-white px-3 py-1 text-text-secondary hover:border-primary/30 hover:text-primary"
                 >
                   Clear visible arrivals
                 </button>
@@ -1760,7 +2046,7 @@ export const DashboardSeating: React.FC = () => {
                     <button
                       key={guest.id}
                       onClick={() => handleToggleCheckIn(guest.id, !checked)}
-                      className={`px-2.5 py-1.5 rounded-lg border text-xs transition-colors ${checked ? 'bg-success/10 border-success/40 text-success' : 'bg-surface border-border-subtle text-text-secondary hover:border-success/40 hover:text-success'}`}
+                      className={`rounded-md border px-2.5 py-1.5 text-xs transition-colors ${checked ? 'border-primary/30 bg-primary/10 text-primary' : 'border-border-subtle bg-surface text-text-secondary hover:border-primary/40 hover:text-primary'}`}
                     >
                       {guest.full_name} {isAssigned ? '• Seated' : '• Unseated'} {checked ? '• Arrived' : '• Mark arrived'}
                     </button>
@@ -1787,10 +2073,10 @@ export const DashboardSeating: React.FC = () => {
         )}
 
         {showAutoTablesModal && (
-          <div className="p-4 bg-surface-subtle rounded-xl border border-border-subtle space-y-3">
+          <div className="space-y-3 rounded-lg border border-border-subtle bg-surface-subtle p-4">
             <h3 className="text-sm font-semibold text-text-primary">Auto-Create Tables</h3>
             <p className="text-xs text-text-tertiary">
-              Creates enough tables to seat {counters?.attending ?? 0} attending guests.
+              Creates enough tables for {counters?.attending ?? 0} attending guests.
             </p>
             <div className="flex items-center gap-3">
               <label className="text-sm text-text-secondary">Guests per table:</label>
@@ -1807,14 +2093,14 @@ export const DashboardSeating: React.FC = () => {
               </span>
             </div>
             <div className="flex gap-2">
-              <Button size="sm" onClick={handleAutoCreateTables} disabled={seatingBusyAction !== null}>{seatingBusyAction === 'auto-create' ? 'Creating…' : 'Create Tables'}</Button>
+              <Button size="sm" onClick={handleAutoCreateTables} disabled={seatingBusyAction !== null}>{seatingBusyAction === 'auto-create' ? 'Creating…' : 'Create tables'}</Button>
               <Button size="sm" variant="ghost" onClick={() => setShowAutoTablesModal(false)}>Cancel</Button>
             </div>
           </div>
         )}
 
         {showResetConfirm && (
-          <div className="p-4 bg-error/5 border border-error/20 rounded-xl flex items-start justify-between gap-4">
+          <div className="flex items-start justify-between gap-4 rounded-lg border border-error/20 bg-error/5 p-4">
             <p className="text-sm text-text-primary">Reset all seating assignments for this event? This cannot be undone.</p>
             <div className="flex gap-2 flex-shrink-0">
               <Button size="sm" variant="outline" onClick={handleReset} disabled={seatingBusyAction !== null} className="border-error text-error hover:bg-error/5">{seatingBusyAction === 'reset' ? 'Resetting…' : 'Reset'}</Button>
@@ -1824,7 +2110,7 @@ export const DashboardSeating: React.FC = () => {
         )}
 
         {seatPicker && (
-          <div className="p-4 rounded-xl border border-border-subtle bg-surface-subtle/40 space-y-4">
+          <div className="space-y-4 rounded-lg border border-border-subtle bg-surface-subtle/40 p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h3 className="text-sm font-semibold text-text-primary">Map a guest to seat {seatPicker.seatIndex}</h3>
@@ -1835,7 +2121,7 @@ export const DashboardSeating: React.FC = () => {
             {activeSeatGuest && (
               <div className="rounded-lg border border-primary/20 bg-primary-light/20 px-3 py-3 flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-text-tertiary">Current seat assignment</p>
+                  <p className="text-xs text-text-tertiary">Current seat assignment</p>
                   <p className="mt-1 text-sm font-medium text-text-primary">{activeSeatGuest.full_name}</p>
                 </div>
                 <Button size="sm" variant="outline" onClick={() => void clearSeatAssignment(seatPicker.tableId, seatPicker.seatIndex)}>
@@ -1878,7 +2164,7 @@ export const DashboardSeating: React.FC = () => {
           <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
             <div className="flex flex-col lg:flex-row gap-5">
               <div className="lg:w-64 xl:w-72 flex-shrink-0">
-                <div className="sticky top-24 p-3 rounded-xl border border-border-subtle bg-surface-subtle/40 space-y-3">
+                <div className="sticky top-24 space-y-3 rounded-lg border border-border-subtle bg-surface-subtle/40 p-3">
                   <div className="flex items-center justify-between">
                     <div>
                       <h2 className="text-sm font-semibold text-text-primary">Unassigned</h2>
@@ -1887,7 +2173,7 @@ export const DashboardSeating: React.FC = () => {
                     <span className="text-xs text-text-tertiary">{unassignedGuests.length} guests</span>
                   </div>
                   <div className="rounded-lg border border-border-subtle bg-white px-3 py-2">
-                    <p className="text-[11px] uppercase tracking-[0.2em] text-text-tertiary">Open work</p>
+                    <p className="text-[11px] text-text-tertiary">Still needs seats</p>
                     <p className="mt-1 text-sm font-medium text-text-primary">{unassignedGuests.length} guest{unassignedGuests.length !== 1 ? 's' : ''} still need seats</p>
                   </div>
                   <UnassignedPool guests={unassignedGuests} />
@@ -1896,7 +2182,7 @@ export const DashboardSeating: React.FC = () => {
 
               <div className="flex-1 min-w-0">
                 {layoutMode === 'visual' && (
-                  <div className="mb-3 rounded-xl border border-border-subtle bg-gradient-to-b from-surface-subtle to-surface p-2 text-xs text-text-tertiary flex items-center justify-between gap-2">
+                  <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-border-subtle bg-surface-subtle p-2 text-xs text-text-tertiary">
                     <span>Canvas mode: arrange tables and seats visually.</span>
                     <div className="inline-flex items-center gap-1">
                       <button
@@ -1932,11 +2218,11 @@ export const DashboardSeating: React.FC = () => {
                   </div>
                 )}
                 {tables.length === 0 ? (
-                  <div className="text-center py-16 border-2 border-dashed border-border-subtle rounded-xl">
+                  <div className="rounded-lg border-2 border-dashed border-border-subtle py-16 text-center">
                     <TableProperties className="w-10 h-10 text-text-tertiary mx-auto mb-3" />
                     <p className="text-text-secondary mb-2">No tables yet</p>
-                    <p className="text-sm text-text-tertiary mb-4">Add tables manually or let Dayof create a starting layout from your guest count.</p>
-                    <Button size="sm" onClick={() => setAddingTable(true)}>
+                    <p className="text-sm text-text-tertiary mb-4">Add your own tables or let dayof create a starting layout from your guest count.</p>
+                    <Button size="sm" onClick={() => setAddingTable(true)} disabled={!seatingEvent || loadingSeating}>
                       <Plus className="w-4 h-4 mr-1" /> Add table
                     </Button>
                   </div>
@@ -1947,7 +2233,7 @@ export const DashboardSeating: React.FC = () => {
                       <div className="fixed inset-0 bg-black/35 z-[9998]" onClick={() => setCanvasFullscreen(false)} />
                     )}
                     <div
-                      className={`relative min-h-[720px] rounded-2xl border border-border-subtle bg-white overflow-auto transition-all duration-300 ${canvasFullscreen ? 'rounded-2xl shadow-2xl bg-white p-3' : ''}`}
+                      className={`relative min-h-[720px] overflow-auto rounded-lg border border-border-subtle bg-white transition-all duration-300 ${canvasFullscreen ? 'bg-white p-3' : ''}`}
                       style={canvasFullscreen ? { position: 'fixed', inset: '16px', zIndex: 9999, background: '#fff' } : undefined}
                       onWheel={handleCanvasWheelZoom}
                     >
@@ -1960,7 +2246,7 @@ export const DashboardSeating: React.FC = () => {
                             >
                               ← Back
                             </button>
-                            <Button size="sm" onClick={() => { setCanvasFullscreen(false); setAddingTable(true); }}>
+                            <Button size="sm" onClick={() => { setCanvasFullscreen(false); setAddingTable(true); }} disabled={!seatingEvent || loadingSeating}>
                               <Plus className="w-4 h-4 mr-1" /> Add Table
                             </Button>
                           </div>
@@ -2068,6 +2354,17 @@ export const DashboardSeating: React.FC = () => {
           })}
         </div>
       </div>
+      {confirmDialog && (
+        <ConfirmDialog
+          open
+          title={confirmDialog.title}
+          description={confirmDialog.description}
+          confirmLabel={confirmDialog.confirmLabel}
+          tone={confirmDialog.tone}
+          onConfirm={confirmDialog.onConfirm}
+          onCancel={confirmDialog.onCancel}
+        />
+      )}
     </DashboardLayout>
   );
 };

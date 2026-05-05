@@ -10,7 +10,6 @@ values
   ('photo-uploads', 'photo-uploads', false),
   ('wedding-media', 'wedding-media', false)
 on conflict (id) do nothing;
-
 -- Authenticated users can read their app media buckets
 DROP POLICY IF EXISTS "authenticated can read site media" ON storage.objects;
 create policy "authenticated can read site media"
@@ -20,7 +19,6 @@ using (
   bucket_id in ('site-media', 'builder-media', 'photos', 'photo-uploads', 'wedding-media')
   and auth.role() = 'authenticated'
 );
-
 -- Authenticated users can upload to app media buckets
 DROP POLICY IF EXISTS "authenticated can upload site media" ON storage.objects;
 create policy "authenticated can upload site media"
@@ -30,7 +28,6 @@ with check (
   bucket_id in ('site-media', 'builder-media', 'photos', 'photo-uploads', 'wedding-media')
   and auth.role() = 'authenticated'
 );
-
 -- Authenticated users can update their uploaded media in app buckets
 DROP POLICY IF EXISTS "authenticated can update site media" ON storage.objects;
 create policy "authenticated can update site media"
@@ -44,7 +41,6 @@ with check (
   bucket_id in ('site-media', 'builder-media', 'photos', 'photo-uploads', 'wedding-media')
   and auth.role() = 'authenticated'
 );
-
 -- Authenticated users can delete from app media buckets (optional but useful for builder replacement flows)
 DROP POLICY IF EXISTS "authenticated can delete site media" ON storage.objects;
 create policy "authenticated can delete site media"

@@ -40,9 +40,9 @@ describe('coordinatorOpsSnapshot', () => {
       },
       {
         key: 'alerting',
-        title: 'Alerting',
+        title: 'Updates',
         detail: 'Ceremony update is recommended, but the draft is currently customized.',
-        cta: 'Re-align alert draft',
+        cta: 'Refresh update draft',
         tone: 'warning',
         locked: false,
       },
@@ -87,7 +87,7 @@ describe('coordinatorOpsSnapshot', () => {
       },
       {
         key: 'alerting',
-        title: 'Alerting',
+        title: 'Updates',
         detail: 'Viewer access can review the day-of message lane but cannot send updates.',
         cta: 'Review message lane',
         tone: 'neutral',

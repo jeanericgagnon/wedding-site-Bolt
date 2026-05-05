@@ -3,6 +3,7 @@ import { WeddingDataV1 } from '../../types/weddingData';
 import { SectionInstance } from '../../types/layoutConfig';
 import { readBuilderValue } from '../../lib/weddingProfile';
 import { getSectionPrimaryImage } from '../../lib/sectionMedia';
+import { getSafePublicImageUrl } from '../publicLinks';
 
 interface Props {
   data: WeddingDataV1;
@@ -13,8 +14,8 @@ export const StorySection: React.FC<Props> = ({ data, instance }) => {
   const couple = data?.couple;
   const media = data?.media;
   const { settings } = instance;
-  const story = readBuilderValue(settings.storyText as string | { value: string } | undefined, '') || couple?.story || 'More of our story will be shared here soon.';
-  const photoUrl = getSectionPrimaryImage(settings as Record<string, unknown>, media?.heroImageUrl || '');
+  const story = readBuilderValue(settings.storyText as string | { value: string } | undefined, '') || couple?.story || 'We will add more of our story soon.';
+  const photoUrl = getSafePublicImageUrl(getSectionPrimaryImage(settings as Record<string, unknown>, media?.heroImageUrl || ''));
 
   return (
     <section className="py-16 px-4 bg-surface">
@@ -41,15 +42,15 @@ export const StoryCentered: React.FC<Props> = ({ data, instance }) => {
   const couple = data?.couple;
   const media = data?.media;
   const { settings } = instance;
-  const story = readBuilderValue(settings.storyText as string | { value: string } | undefined, '') || couple?.story || 'More of our story will be shared here soon.';
-  const photoUrl = getSectionPrimaryImage(settings as Record<string, unknown>, media?.heroImageUrl || '');
+  const story = readBuilderValue(settings.storyText as string | { value: string } | undefined, '') || couple?.story || 'We will add more of our story soon.';
+  const photoUrl = getSafePublicImageUrl(getSectionPrimaryImage(settings as Record<string, unknown>, media?.heroImageUrl || ''));
 
   return (
     <section className="py-20 px-4 bg-surface">
       <div className="max-w-2xl mx-auto text-center">
         {settings.showTitle !== false && (
           <>
-            <p className="text-xs uppercase tracking-[0.3em] text-primary mb-4 font-medium">
+            <p className="text-sm text-primary mb-4 font-light">
               How it began
             </p>
             <h2 className="text-4xl md:text-5xl font-light text-text-primary mb-10">
@@ -75,8 +76,8 @@ export const StorySplit: React.FC<Props> = ({ data, instance }) => {
   const couple = data?.couple;
   const media = data?.media;
   const { settings } = instance;
-  const story = readBuilderValue(settings.storyText as string | { value: string } | undefined, '') || couple?.story || 'More of our story will be shared here soon.';
-  const photoUrl = getSectionPrimaryImage(settings as Record<string, unknown>, media?.heroImageUrl || '');
+  const story = readBuilderValue(settings.storyText as string | { value: string } | undefined, '') || couple?.story || 'We will add more of our story soon.';
+  const photoUrl = getSafePublicImageUrl(getSectionPrimaryImage(settings as Record<string, unknown>, media?.heroImageUrl || ''));
 
   return (
     <section className="py-20 bg-surface">
@@ -86,14 +87,14 @@ export const StorySplit: React.FC<Props> = ({ data, instance }) => {
             <img src={photoUrl} alt="Couple" className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-text-secondary">
-              <span className="text-sm">Photo coming soon</span>
+              <span className="text-sm">Add a favorite photo</span>
             </div>
           )}
         </div>
         <div>
           {settings.showTitle !== false && (
             <>
-              <p className="text-xs uppercase tracking-[0.3em] text-primary mb-3 font-medium">About us</p>
+              <p className="text-sm text-primary mb-3 font-light">About us</p>
               <h2 className="text-3xl md:text-4xl font-light text-text-primary mb-8">
                 {readBuilderValue(settings.title as string | { value: string } | undefined, 'Our Story')}
               </h2>
@@ -110,7 +111,7 @@ export const StorySplit: React.FC<Props> = ({ data, instance }) => {
 export const StoryTimeline: React.FC<Props> = ({ data, instance }) => {
   const couple = data?.couple;
   const { settings } = instance;
-  const story = readBuilderValue(settings.storyText as string | { value: string } | undefined, '') || couple?.story || 'More of our story will be shared here soon.';
+  const story = readBuilderValue(settings.storyText as string | { value: string } | undefined, '') || couple?.story || 'We will add more of our story soon.';
   const baseLines = story
     .split(/\n+/)
     .map((line) => line.trim())
@@ -134,7 +135,7 @@ export const StoryTimeline: React.FC<Props> = ({ data, instance }) => {
       <div className="max-w-4xl mx-auto px-4">
         {settings.showTitle !== false && (
           <div className="text-center mb-10">
-            <p className="text-xs uppercase tracking-[0.25em] text-primary mb-3 font-medium">The journey</p>
+            <p className="text-sm text-primary mb-3 font-light">The journey</p>
             <h2 className="text-3xl md:text-4xl font-light text-text-primary">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Our Story')}</h2>
           </div>
         )}
@@ -142,7 +143,7 @@ export const StoryTimeline: React.FC<Props> = ({ data, instance }) => {
         <div className="space-y-6">
           {timeline.map((item, idx) => (
             <div key={`${item.year}-${idx}`} className="grid grid-cols-[120px_1fr] gap-4 md:gap-8 items-start">
-              <p className="text-xs md:text-sm uppercase tracking-[0.18em] text-primary font-semibold pt-1">{item.year}</p>
+              <p className="text-xs md:text-sm text-primary font-semibold pt-1">{item.year}</p>
               <div className="relative pl-6 pb-6 border-l border-border-subtle last:pb-0">
                 <span className="absolute -left-[6px] top-1 h-3 w-3 rounded-full bg-primary" />
                 <p className="text-text-secondary leading-relaxed">{item.detail}</p>

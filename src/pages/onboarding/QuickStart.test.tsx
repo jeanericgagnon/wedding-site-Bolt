@@ -34,6 +34,7 @@ vi.mock('../../lib/supabase', () => ({
     from: () => ({
       select: () => ({
         eq: () => ({
+          maybeSingle: () => Promise.resolve({ data: weddingSiteRow }),
           order: () => ({
             limit: () => ({
               maybeSingle: () => Promise.resolve({ data: weddingSiteRow }),
@@ -43,6 +44,10 @@ vi.mock('../../lib/supabase', () => ({
       }),
     }),
   },
+}));
+
+vi.mock('../../lib/activeSite', () => ({
+  resolveActiveSiteForUser: () => Promise.resolve({ id: 'site-1', role: 'owner', permissions: null }),
 }));
 
 import { QuickStart } from './QuickStart';
@@ -66,7 +71,7 @@ describe('QuickStart flow guards', () => {
       viewState: 'followups',
       initialSetupAnswers: {
         partnerNames: 'Alex & Jordan',
-        venueLocation: 'January 17, 2027 — Sayulita, Mexico',
+        venueLocation: 'January 17, 2027 in Sayulita, Mexico',
       },
       followUpAnswers: {
         lodging: 'We will share hotel blocks soon.',
@@ -96,11 +101,11 @@ describe('QuickStart flow guards', () => {
 
     render(<QuickStart />);
 
-    await screen.findByText('A few smart follow-ups before we build');
+    await screen.findByText('A few useful follow-ups before we build');
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
 
     expect(await screen.findByText('When and where are you getting married?')).toBeInTheDocument();
-    expect(screen.queryByText('A few smart follow-ups before we build')).not.toBeInTheDocument();
+    expect(screen.queryByText('A few useful follow-ups before we build')).not.toBeInTheDocument();
   });
 
   it('does not clobber a blank input when hydration lands after mount', async () => {
@@ -146,7 +151,7 @@ describe('QuickStart flow guards', () => {
         labelPreference: 'names-only',
         customLabelPartnerOne: '',
         customLabelPartnerTwo: '',
-        whenWhere: 'January 17, 2027 — Sayulita, Mexico',
+        whenWhere: 'January 17, 2027 in Sayulita, Mexico',
         venueNameOrTbd: 'Amor Boutique Hotel',
         style: 'Tropical, relaxed',
         guestFeel: 'Warm, excited, relaxed',
@@ -181,7 +186,7 @@ describe('QuickStart flow guards', () => {
         labelPreference: 'names-only',
         customLabelPartnerOne: '',
         customLabelPartnerTwo: '',
-        whenWhere: 'January 17, 2027 — Sayulita, Mexico',
+        whenWhere: 'January 17, 2027 in Sayulita, Mexico',
         venueNameOrTbd: 'Amor Boutique Hotel',
         style: 'Tropical, relaxed',
         guestFeel: 'Warm, excited, relaxed',
@@ -222,8 +227,8 @@ describe('QuickStart flow guards', () => {
     expect(await screen.findByDisplayValue('Alex & Jordan')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Just our names' }));
-    fireEvent.change(screen.getByPlaceholderText('January 17, 2027 — Sayulita, Mexico'), {
-      target: { value: 'January 17, 2027 — Sayulita, Mexico' },
+    fireEvent.change(screen.getByPlaceholderText('January 17, 2027 in Sayulita, Mexico'), {
+      target: { value: 'January 17, 2027 in Sayulita, Mexico' },
     });
     fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
 

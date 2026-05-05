@@ -1,6 +1,7 @@
 import React from 'react';
 import { Hotel, Car } from 'lucide-react';
 import type { TravelContent } from '../../../types/siteConfig';
+import { getSafePublicWebUrl } from '../../../sections/publicLinks';
 
 interface TravelSectionProps {
   content: TravelContent;
@@ -21,7 +22,9 @@ export const TravelSection: React.FC<TravelSectionProps> = ({ content }) => {
               <h3 className="text-2xl font-semibold text-text-primary">Hotels</h3>
             </div>
             <div className="space-y-4">
-              {content.hotels.map((hotel, index) => (
+              {content.hotels.map((hotel, index) => {
+                const safeHotelUrl = getSafePublicWebUrl(hotel.url);
+                return (
                 <div key={index} className="bg-background rounded-lg p-6">
                   <h4 className="font-semibold text-text-primary mb-2">{hotel.name}</h4>
                   {hotel.address && (
@@ -30,9 +33,9 @@ export const TravelSection: React.FC<TravelSectionProps> = ({ content }) => {
                   {hotel.phone && (
                     <p className="text-text-secondary text-sm mb-1">{hotel.phone}</p>
                   )}
-                  {hotel.url && (
+                  {safeHotelUrl && (
                     <a
-                      href={hotel.url}
+                      href={safeHotelUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary text-sm hover:underline"
@@ -44,7 +47,8 @@ export const TravelSection: React.FC<TravelSectionProps> = ({ content }) => {
                     <p className="text-text-secondary text-sm mt-2 italic">{hotel.notes}</p>
                   )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}

@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { z } from 'zod';
-import { ExternalLink, Gift, ShoppingBag } from 'lucide-react';
+import { ExternalLink, Gift } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
 import { useSiteView } from '../../../contexts/SiteViewContext';
 import { publicFetchRegistryItems } from '../../../pages/dashboard/registry/registryService';
 import { RegistryItem, sanitizeRegistryQuantityState } from '../../../pages/dashboard/registry/registryTypes';
+import { RegistryItemsDisplay, sanitizePublicRegistryItems } from '../../components/RegistrySection';
 
 const RegistryLinkSchema = z.object({
   id: z.string(),
@@ -43,7 +44,7 @@ export const defaultRegistryCardsData: RegistryCardsData = {
 };
 
 export function getRegistryItemPublicUrl(item: Pick<RegistryItem, 'item_url' | 'canonical_url'>): string | null {
-  return item.item_url ?? item.canonical_url ?? null;
+  return getSafePublicRegistryUrl(item.item_url) ?? getSafePublicRegistryUrl(item.canonical_url);
 }
 
 export function shouldUseLiveRegistryStoreGroups(liveItems: RegistryItem[] | null): boolean {
@@ -51,7 +52,7 @@ export function shouldUseLiveRegistryStoreGroups(liveItems: RegistryItem[] | nul
 }
 
 export function normalizeRegistryStoreGroupItems(items: RegistryItem[]): RegistryItem[] {
-  return items.map((item) => {
+  return sanitizePublicRegistryItems(items).map((item) => {
     const quantityState = sanitizeRegistryQuantityState(item.quantity_purchased, item.quantity_needed);
     return {
       ...item,
@@ -63,10 +64,26 @@ export function normalizeRegistryStoreGroupItems(items: RegistryItem[]): Registr
   });
 }
 
+export function getSafePublicRegistryUrl(value?: string | null): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed || trimmed === '#') return null;
+  try {
+    const parsed = new URL(trimmed);
+    return ['http:', 'https:'].includes(parsed.protocol) ? parsed.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+function getSafeRegistryStoreName(value?: string | null): string {
+  const normalized = String(value ?? '').replace(/\s+/g, ' ').trim();
+  return normalized || 'Registry';
+}
+
 export function groupByStore(items: RegistryItem[]): Array<{ store: string; count: number; available: number; partial: number; purchased: number; url: string | null }> {
   const map = new Map<string, { count: number; available: number; partial: number; purchased: number; url: string | null }>();
   for (const item of normalizeRegistryStoreGroupItems(items)) {
-    const store = item.store_name ?? item.merchant ?? 'Other';
+    const store = getSafeRegistryStoreName(item.store_name ?? item.merchant);
     const publicUrl = getRegistryItemPublicUrl(item);
     const existing = map.get(store) ?? { count: 0, available: 0, partial: 0, purchased: 0, url: publicUrl };
     map.set(store, {
@@ -94,86 +111,89 @@ const RegistryCards: React.FC<SectionComponentProps<RegistryCardsData>> = ({ dat
       .catch(() => setLiveItems(null));
   }, [weddingSiteId]);
 
-  const safeLinks = Array.isArray(data.links) ? data.links : [];
-  const storeGroups = liveItems ? groupByStore(liveItems) : null;
+  const safeLinks = Array.isArray(data.links)
+    ? data.links.map(link => ({
+        ...link,
+        store: getSafeRegistryStoreName(link.store),
+        url: getSafePublicRegistryUrl(link.url),
+      }))
+    : [];
   const shouldUseLiveStoreGroups = shouldUseLiveRegistryStoreGroups(liveItems);
+
+  if (shouldUseLiveStoreGroups) {
+    return (
+      <section className="py-32 md:py-40 bg-white" id="registry">
+        <div className="max-w-6xl mx-auto px-6 md:px-12">
+          <RegistryItemsDisplay
+            items={liveItems ?? []}
+            settings={{ title: data.headline, showTitle: true }}
+            notes={data.message}
+            updateItem={(updated) => setLiveItems(prev => prev?.map(item => item.id === updated.id ? updated : item) ?? prev)}
+          />
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-32 md:py-40 bg-white" id="registry">
       <div className="max-w-4xl mx-auto px-6 md:px-12">
         <div className="text-center mb-12">
           {data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">{data.eyebrow}</p>
+            <p className="text-sm text-stone-400 font-light mb-4">{data.eyebrow}</p>
           )}
-          <h2 className="text-4xl md:text-6xl font-light text-stone-900 mb-4 tracking-tight">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-stone-900 mb-4">{data.headline}</h2>
           {data.message && (
             <p className="text-stone-500 text-base font-light leading-relaxed max-w-2xl mx-auto">{data.message}</p>
           )}
         </div>
 
-        {shouldUseLiveStoreGroups ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-            {storeGroups?.map(group => (
-              <a
-                key={group.store}
-                href={group.url || '#'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex flex-col p-7 bg-stone-50/70 border border-stone-100 rounded-[1.5rem] hover:border-stone-300 hover:bg-white hover:shadow-lg hover:-translate-y-0.5 transition-all"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-white border border-stone-200 flex items-center justify-center shadow-sm group-hover:shadow transition-shadow">
-                    <ShoppingBag size={18} className="text-stone-400" />
-                  </div>
-                  <ExternalLink size={14} className="text-stone-300 group-hover:text-stone-500 transition-colors mt-1" />
-                </div>
-                <h3 className="font-medium text-stone-900 text-base mb-1.5">{group.store}</h3>
-                <p className="text-sm text-stone-400 leading-relaxed">
-                  {group.count} {group.count === 1 ? 'item' : 'items'}
-                  {group.partial > 0 ? ` · ${group.partial} partial` : ''}
-                  {group.purchased > 0 ? ` · ${group.purchased} claimed` : ''}
-                </p>
-                <div className="mt-auto pt-4">
-                  <span className="text-xs text-stone-400 group-hover:text-stone-600 transition-colors uppercase tracking-wide font-medium">
-                    View registry →
-                  </span>
-                </div>
-              </a>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-            {safeLinks.map(link => (
-              <a
-                key={link.id}
-                href={link.url || '#'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex flex-col p-7 bg-stone-50/70 border border-stone-100 rounded-[1.5rem] hover:border-stone-300 hover:bg-white hover:shadow-lg hover:-translate-y-0.5 transition-all"
-              >
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+          {safeLinks.map(link => {
+            const card = (
+              <>
                 <div className="flex items-start justify-between mb-4">
                   <div className="w-10 h-10 rounded-xl bg-white border border-stone-200 flex items-center justify-center shadow-sm group-hover:shadow transition-shadow">
                     <Gift size={18} className="text-stone-400" />
                   </div>
-                  <ExternalLink size={14} className="text-stone-300 group-hover:text-stone-500 transition-colors mt-1" />
+                  {link.url && <ExternalLink size={14} className="text-stone-300 group-hover:text-stone-500 transition-colors mt-1" />}
                 </div>
                 <h3 className="font-medium text-stone-900 text-base mb-1.5">{link.store}</h3>
                 {link.description && (
                   <p className="text-sm text-stone-400 leading-relaxed">{link.description}</p>
                 )}
                 <div className="mt-auto pt-4">
-                  <span className="text-xs text-stone-400 group-hover:text-stone-600 transition-colors uppercase tracking-wide font-medium">
-                    View registry →
+                  <span className="text-xs text-stone-400 group-hover:text-stone-600 transition-colors font-medium">
+                    {link.url ? 'View registry' : 'Registry details coming soon'}
                   </span>
                 </div>
-              </a>
-            ))}
-          </div>
-        )}
+              </>
+            );
 
-        {data.cashFundEnabled && data.cashFundUrl && (
+            return link.url ? (
+              <a
+              key={link.id}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex flex-col p-7 bg-stone-50/70 border border-stone-100 rounded-[1.5rem] hover:border-stone-300 hover:bg-white hover:shadow-lg hover:-translate-y-0.5 transition-all"
+            >
+              {card}
+            </a>
+            ) : (
+              <div
+                key={link.id}
+                className="group flex flex-col p-7 bg-stone-50/70 border border-stone-100 rounded-[1.5rem] transition-all"
+              >
+                {card}
+              </div>
+            );
+          })}
+        </div>
+
+        {data.cashFundEnabled && getSafePublicRegistryUrl(data.cashFundUrl) && (
           <a
-            href={data.cashFundUrl}
+            href={getSafePublicRegistryUrl(data.cashFundUrl) ?? undefined}
             target="_blank"
             rel="noopener noreferrer"
             className="group flex items-center justify-between p-7 bg-rose-50 border border-rose-100 rounded-[1.5rem] hover:bg-rose-100 hover:border-rose-200 hover:shadow-sm transition-all"

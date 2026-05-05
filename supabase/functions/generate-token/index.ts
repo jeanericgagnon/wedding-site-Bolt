@@ -70,7 +70,7 @@ Deno.serve(async (req: Request) => {
 
     return json({ tokens });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Internal server error";
-    return json({ error: message }, 500);
+    console.error("GENERATE_TOKEN_UNEXPECTED_FAILED", err);
+    return json({ error: "Could not generate token. Please try again." }, 500);
   }
 });

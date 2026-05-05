@@ -72,10 +72,10 @@ describe('name change medical execution snapshot', () => {
     expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'primary-photo-id-progress')).toMatchObject({ status: 'satisfied' });
   });
 
-  it('blocks medical/provider updates when primary photo ID has not started moving', () => {
+  it('blocks medical-office updates when primary photo ID has not started moving', () => {
     const snapshot = buildNameChangeMedicalExecutionSnapshot(makeCase(), [], []);
     expect(snapshot.ready).toBe(false);
-    expect(snapshot.blockers).toContain('Medical/provider record updates usually go smoother once your primary photo ID is moving or already updated.');
+    expect(snapshot.blockers).toContain('Medical office record updates usually go smoother once your primary photo ID is moving or already updated.');
     expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'primary-photo-id-progress')).toMatchObject({ status: 'missing' });
   });
 });

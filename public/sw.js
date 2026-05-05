@@ -1,5 +1,18 @@
 const CACHE_NAME = 'dayof-static-v3';
 const ASSETS = ['/', '/manifest.webmanifest', '/image.png'];
+const STATIC_ASSET_PATTERN = /\.(?:js|css|png|jpg|jpeg|gif|webp|svg|ico|woff2?|ttf)$/i;
+
+function isSafeStaticRequest(requestUrl, request) {
+  if (request.method !== 'GET') return false;
+  if (requestUrl.origin !== self.location.origin) return false;
+  if (requestUrl.pathname.startsWith('/functions/v1/')) return false;
+  if (requestUrl.pathname.startsWith('/auth/v1/')) return false;
+  if (requestUrl.pathname.startsWith('/rest/v1/')) return false;
+  if (requestUrl.pathname.startsWith('/storage/v1/')) return false;
+  if (requestUrl.search) return false;
+  if (ASSETS.includes(requestUrl.pathname)) return true;
+  return STATIC_ASSET_PATTERN.test(requestUrl.pathname);
+}
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -14,14 +27,19 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
+  const requestUrl = new URL(event.request.url);
+  if (!isSafeStaticRequest(requestUrl, event.request)) {
+    return;
+  }
+
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
+    caches.match(event.request).then((cached) => (
+      cached || fetch(event.request).then((response) => {
+        if (!response || !response.ok) return response;
         const copy = response.clone();
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy)).catch(() => {});
         return response;
       })
-      .catch(() => caches.match(event.request).then((cached) => cached || caches.match('/')))
+    )).catch(() => caches.match(event.request).then((cached) => cached || caches.match('/')))
   );
 });

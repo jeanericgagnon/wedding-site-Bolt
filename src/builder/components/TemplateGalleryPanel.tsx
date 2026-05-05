@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { X, Check, Sparkles, Loader2, CheckCircle2, RefreshCw, Crown, Zap } from 'lucide-react';
 import { useBuilderContext } from '../state/builderStore';
 import { builderActions } from '../state/builderActions';
-import { getAllTemplatePacks } from '../constants/builderTemplatePacks';
+import { getLaunchTemplatePacks } from '../constants/builderTemplatePacks';
 import { BuilderTemplateDefinition, TemplateMoodTag } from '../../types/builder/template';
 import { createBuilderSectionFromLibrary } from '../adapters/layoutAdapter';
 import { getSectionManifest } from '../registry/sectionManifests';
@@ -149,21 +149,21 @@ const ModernLuxePreview = () => (
           <div className="h-px w-6 bg-[#C8A96E]" />
           <div className="h-px w-4 bg-[#C8A96E]/40" />
         </div>
-        <div className="text-[7px] text-[#C8A96E]/60 tracking-[0.4em] uppercase font-light">S&J</div>
+        <div className="text-[7px] text-[#C8A96E]/60 font-light">S&J</div>
       </div>
       <div className="absolute inset-0 flex flex-col items-center justify-center px-5 text-center">
-        <div className="text-[8px] text-[#C8A96E] tracking-[0.5em] uppercase font-light mb-3">A Private Celebration</div>
-        <div className="text-white font-serif text-[22px] leading-none tracking-tight mb-1">
+        <div className="text-[8px] text-[#C8A96E] font-light mb-3">A Private Celebration</div>
+        <div className="text-white font-serif text-[22px] leading-none mb-1">
           Sarah
           <span className="text-[#C8A96E] text-[14px] mx-1.5">&</span>
           James
         </div>
         <div className="flex items-center gap-3 mt-3">
           <div className="h-px w-8 bg-white/20" />
-          <div className="text-white/40 text-[7px] tracking-[0.3em] uppercase">14 June 2026</div>
+          <div className="text-white/40 text-[7px]">14 June 2026</div>
           <div className="h-px w-8 bg-white/20" />
         </div>
-        <div className="text-white/25 text-[7px] tracking-wider mt-1.5">The Ritz · London</div>
+        <div className="text-white/25 text-[7px] mt-1.5">The Ritz · London</div>
       </div>
       <div className="absolute bottom-0 left-0 right-0 h-16 flex">
         {[
@@ -176,7 +176,7 @@ const ModernLuxePreview = () => (
             <div className="w-4 h-4 rounded-full border border-[#C8A96E]/30 flex items-center justify-center">
               <div className="w-1.5 h-1.5 rounded-full bg-[#C8A96E]/40" />
             </div>
-            <span className="text-[5.5px] text-white/25 uppercase tracking-wider">{s.label}</span>
+            <span className="text-[5.5px] text-white/25r">{s.label}</span>
           </div>
         ))}
       </div>
@@ -194,23 +194,23 @@ const EditorialRomancePreview = () => (
       <div className="absolute inset-0" style={{
         background: 'radial-gradient(ellipse at 75% 22%, rgba(145,102,68,0.16) 0%, transparent 55%)',
       }} />
-      <div className="absolute top-4 left-4 text-[6.5px] uppercase tracking-[0.35em]" style={{ color: '#7E6250' }}>Editorial Romance</div>
-      <div className="absolute top-4 right-4 text-[6px] uppercase tracking-[0.3em]" style={{ color: '#A9876E' }}>No. 03</div>
+      <div className="absolute top-4 left-4 text-[6.5px]" style={{ color: '#7E6250' }}>Editorial Romance</div>
+      <div className="absolute top-4 right-4 text-[6px]" style={{ color: '#A9876E' }}>No. 03</div>
 
       <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-        <div className="text-[7px] uppercase tracking-[0.45em] mb-4" style={{ color: '#A47757' }}>For the hopeless romantics</div>
+        <div className="text-[7px] mb-4" style={{ color: '#A47757' }}>For the hopeless romantics</div>
         <div className="font-serif text-[30px] leading-none" style={{ color: '#221A16' }}>Emma</div>
-        <div className="text-[10px] my-1 tracking-[0.28em]" style={{ color: '#B08860' }}>&amp;</div>
+        <div className="text-[10px] my-1" style={{ color: '#B08860' }}>&amp;</div>
         <div className="font-serif text-[30px] leading-none" style={{ color: '#221A16' }}>Oliver</div>
-        <div className="mt-4 text-[7px] tracking-[0.32em] uppercase" style={{ color: '#6C5648' }}>September 18 · 2026</div>
-        <div className="mt-1 text-[6.5px] tracking-[0.18em] uppercase" style={{ color: '#8E7566' }}>Villa Borghese · Rome</div>
+        <div className="mt-4 text-[7px]" style={{ color: '#6C5648' }}>September 18 · 2026</div>
+        <div className="mt-1 text-[6.5px]" style={{ color: '#8E7566' }}>Villa Borghese · Rome</div>
       </div>
     </div>
 
     <div className="h-11 border-t grid grid-cols-4" style={{ background: '#FCF9F5', borderColor: '#E2D8CB' }}>
       {['Story', 'Gallery', 'Schedule', 'RSVP'].map(s => (
         <div key={s} className="flex items-center justify-center border-r last:border-0" style={{ borderColor: '#E8DFD4' }}>
-          <span className="text-[6px] uppercase tracking-[0.24em]" style={{ color: '#6E5A4B' }}>{s}</span>
+          <span className="text-[6px]" style={{ color: '#6E5A4B' }}>{s}</span>
         </div>
       ))}
     </div>
@@ -237,7 +237,7 @@ const TimelessClassicPreview = () => (
         <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#C4983C' }} />
         <div className="h-px flex-1" style={{ background: 'linear-gradient(to left, transparent, #C4983C)' }} />
       </div>
-      <div className="text-[7px] tracking-[0.5em] uppercase font-medium mb-3" style={{ color: '#C4983C' }}>
+      <div className="text-[7px] font-medium mb-3" style={{ color: '#C4983C' }}>
         You are cordially invited to
       </div>
       <div className="font-serif text-[11px] mb-0.5" style={{ color: '#0A1624' }}>The Wedding of</div>
@@ -249,17 +249,17 @@ const TimelessClassicPreview = () => (
         <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#C4983C' }} />
         <div className="h-px flex-1" style={{ background: 'linear-gradient(to left, transparent, #C4983C)' }} />
       </div>
-      <div className="text-[7px] tracking-[0.25em] uppercase mb-0.5" style={{ color: '#53647E' }}>
+      <div className="text-[7px] mb-0.5" style={{ color: '#53647E' }}>
         Saturday, 21st June 2026
       </div>
-      <div className="text-[7px] tracking-wider" style={{ color: '#53647E' }}>
+      <div className="text-[7px]" style={{ color: '#53647E' }}>
         Grand Manor House · Cotswolds
       </div>
     </div>
     <div className="h-9 border-t flex" style={{ background: '#F8F5EE', borderColor: '#D9D2C3' }}>
       {['Our Story', 'Venue', 'Schedule', 'RSVP'].map((s, i) => (
         <div key={s} className="flex-1 flex items-center justify-center border-r last:border-0" style={{ borderColor: '#D9D2C3' }}>
-          <span className="text-[5.5px] uppercase tracking-wider" style={{ color: '#53647E' }}>{s}</span>
+          <span className="text-[5.5px]" style={{ color: '#53647E' }}>{s}</span>
         </div>
       ))}
     </div>
@@ -276,12 +276,12 @@ const DestinationMinimalPreview = () => (
         background: 'radial-gradient(circle at 75% 18%, rgba(255,255,255,0.2) 0%, transparent 45%)',
       }} />
       <div className="absolute top-4 left-4">
-        <div className="text-[6px] text-white/75 tracking-[0.45em] uppercase mb-1">Destination Collection</div>
-        <div className="text-white font-light text-[20px] leading-tight tracking-tight">Mia &amp; Luca</div>
-        <div className="text-white/60 text-[6.5px] tracking-[0.25em] uppercase mt-1">Santorini · July 2026</div>
+        <div className="text-[6px] text-white/75 mb-1">Destination Collection</div>
+        <div className="text-white font-light text-[20px] leading-tight">Mia &amp; Luca</div>
+        <div className="text-white/60 text-[6.5px] mt-1">Santorini · July 2026</div>
       </div>
       <div className="absolute bottom-3 right-3 rounded-full px-2.5 py-1" style={{ background: 'rgba(255,255,255,0.16)' }}>
-        <span className="text-[5.5px] uppercase tracking-[0.2em] text-white">Ocean View</span>
+        <span className="text-[5.5px] text-white">Ocean View</span>
       </div>
     </div>
     <div className="flex-1 px-4 py-3 flex flex-col justify-center gap-2">
@@ -289,12 +289,12 @@ const DestinationMinimalPreview = () => (
         {['Venue', 'Travel', 'Stay'].map((x, i) => (
           <div key={x} className="rounded-lg py-1.5 flex flex-col items-center gap-0.5" style={{ background: i===1 ? '#DDEEF2' : '#E6F2F5' }}>
             <div className="w-4 h-3 rounded-sm" style={{ background: i===1 ? '#1F6F82' : '#49A5B8' }} />
-            <span className="text-[5.5px] uppercase tracking-[0.16em]" style={{ color: '#2C5D68' }}>{x}</span>
+            <span className="text-[5.5px]" style={{ color: '#2C5D68' }}>{x}</span>
           </div>
         ))}
       </div>
       <div className="rounded-lg h-6 flex items-center justify-center" style={{ background: '#124B59' }}>
-        <span className="text-[6px] text-white uppercase tracking-[0.22em]">Explore itinerary</span>
+        <span className="text-[6px] text-white">Explore itinerary</span>
       </div>
     </div>
   </div>
@@ -305,19 +305,19 @@ const BoldContemporaryPreview = () => (
     <div className="flex-1 relative overflow-hidden">
       <div className="absolute inset-0" style={{ background: 'linear-gradient(125deg, #111111 0%, #171717 55%, #0D0D0D 100%)' }} />
       <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 78% 22%, rgba(255,87,34,0.22) 0%, transparent 40%)' }} />
-      <div className="absolute top-3 left-3 text-[6px] uppercase tracking-[0.42em]" style={{ color: '#FF825C' }}>Bold Series</div>
+      <div className="absolute top-3 left-3 text-[6px]" style={{ color: '#FF825C' }}>Bold Series</div>
       <div className="absolute bottom-5 left-4 right-4">
-        <div className="font-black uppercase leading-[0.92]" style={{ color: '#FFFFFF', fontSize: '30px', letterSpacing: '-0.03em' }}>NOVA<br/>&amp; KAI</div>
-        <div className="mt-2 text-[6px] uppercase tracking-[0.34em]" style={{ color: '#FF9A76' }}>Los Angeles · 2026</div>
+        <div className="font-black leading-[0.92]" style={{ color: '#FFFFFF', fontSize: '30px', letterSpacing: '-0.03em' }}>NOVA<br/>&amp; KAI</div>
+        <div className="mt-2 text-[6px]" style={{ color: '#FF9A76' }}>Los Angeles · 2026</div>
       </div>
       <div className="absolute top-10 right-3 rounded px-2 py-1" style={{ background: '#FF5F2B' }}>
-        <span className="text-[5.5px] uppercase tracking-[0.2em] text-white">New</span>
+        <span className="text-[5.5px] text-white">New</span>
       </div>
     </div>
     <div className="h-11 grid grid-cols-4 border-t" style={{ borderColor: '#242424', background: '#111111' }}>
       {['Plan', 'Photos', 'Venue', 'RSVP'].map(s => (
         <div key={s} className="flex items-center justify-center border-r last:border-0" style={{ borderColor: '#242424' }}>
-          <span className="text-[6px] font-semibold uppercase tracking-[0.2em]" style={{ color: '#B8B8B8' }}>{s}</span>
+          <span className="text-[6px] font-semibold" style={{ color: '#B8B8B8' }}>{s}</span>
         </div>
       ))}
     </div>
@@ -337,7 +337,7 @@ const PhotoStorytellingPreview = () => (
           }} />
           <div className="absolute left-3 right-3 bottom-3 rounded-lg px-2.5 py-2" style={{ background: 'rgba(249,244,240,0.95)' }}>
             <div className="font-serif text-[11px]" style={{ color: '#2E1D1A' }}>Ava &amp; Noah</div>
-            <div className="text-[6px] uppercase tracking-[0.25em] mt-0.5" style={{ color: '#8D6661' }}>October 2026 · Carmel</div>
+            <div className="text-[6px] mt-0.5" style={{ color: '#8D6661' }}>October 2026 · Carmel</div>
           </div>
         </div>
         <div className="rounded-xl" style={{ background: 'linear-gradient(140deg, #E8C8B1 0%, #DCA68A 100%)' }} />
@@ -345,10 +345,10 @@ const PhotoStorytellingPreview = () => (
       </div>
     </div>
     <div className="h-12 border-t px-3 flex items-center gap-2" style={{ background: '#FFFFFF', borderColor: '#E9DAD3' }}>
-      <div className="text-[6px] uppercase tracking-[0.2em]" style={{ color: '#7A5A54' }}>Photo-first</div>
+      <div className="text-[6px]" style={{ color: '#7A5A54' }}>Photo-first</div>
       <div className="flex-1 h-1.5 rounded-full" style={{ background: '#F3E6E0' }} />
       <div className="rounded-full px-3 h-6 flex items-center justify-center" style={{ background: '#9A5D5C' }}>
-        <span className="text-[6px] text-white uppercase tracking-wider font-medium">See details</span>
+        <span className="text-[6px] text-whiter font-medium">See details</span>
       </div>
     </div>
   </div>
@@ -364,14 +364,14 @@ const FloralGardenPreview = () => (
         background: 'radial-gradient(circle at 20% 25%, rgba(92,138,103,0.22) 0%, transparent 40%), radial-gradient(circle at 80% 20%, rgba(201,131,88,0.16) 0%, transparent 38%)',
       }} />
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-5">
-        <div className="text-[7px] tracking-[0.35em] uppercase mb-2" style={{ color: '#51785C' }}>Garden Collection</div>
+        <div className="text-[7px] mb-2" style={{ color: '#51785C' }}>Garden Collection</div>
         <div className="font-serif text-[24px] leading-tight" style={{ color: '#1C3222' }}>
           Rose
           <span className="text-[14px] mx-1.5" style={{ color: '#C47A4A' }}>&amp;</span>
           Henry
         </div>
-        <div className="mt-2 text-[6.5px] uppercase tracking-[0.3em]" style={{ color: '#5A7A61' }}>May 2026 · Surrey</div>
-        <div className="mt-3 rounded-full px-3 py-1 text-[6px] uppercase tracking-[0.25em]" style={{ background: '#E0ECDC', color: '#4E7C5F' }}>
+        <div className="mt-2 text-[6.5px]" style={{ color: '#5A7A61' }}>May 2026 · Surrey</div>
+        <div className="mt-3 rounded-full px-3 py-1 text-[6px]" style={{ background: '#E0ECDC', color: '#4E7C5F' }}>
           Floral · Outdoor · Romantic
         </div>
       </div>
@@ -379,7 +379,7 @@ const FloralGardenPreview = () => (
     <div className="h-11 border-t grid grid-cols-4" style={{ background: '#EDF4EA', borderColor: '#CFDDCC' }}>
       {['Story', 'Photos', 'Venue', 'RSVP'].map(s => (
         <div key={s} className="flex items-center justify-center border-r last:border-0" style={{ borderColor: '#CFDDCC' }}>
-          <span className="text-[6px] uppercase tracking-[0.24em]" style={{ color: '#4E7C5F' }}>{s}</span>
+          <span className="text-[6px]" style={{ color: '#4E7C5F' }}>{s}</span>
         </div>
       ))}
     </div>
@@ -391,19 +391,19 @@ const EditorialRomanceMidnightPreview = () => (
     <div className="flex-1 relative">
       <div className="absolute inset-0" style={{ background: 'linear-gradient(140deg, #11131D 0%, #1B1F2F 55%, #2B2234 100%)' }} />
       <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 80% 18%, rgba(173,133,165,0.2) 0%, transparent 48%)' }} />
-      <div className="absolute top-4 left-4 text-[6.5px] uppercase tracking-[0.35em]" style={{ color: '#C8B1D4' }}>Midnight Edition</div>
+      <div className="absolute top-4 left-4 text-[6.5px]" style={{ color: '#C8B1D4' }}>Midnight Edition</div>
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
-        <div className="text-[7px] uppercase tracking-[0.45em] mb-3" style={{ color: '#A58CB2' }}>Editorial Romance</div>
+        <div className="text-[7px] mb-3" style={{ color: '#A58CB2' }}>Editorial Romance</div>
         <div className="font-serif text-[30px] leading-none" style={{ color: '#F1EAF6' }}>Clara</div>
-        <div className="text-[9px] my-1.5 tracking-[0.3em]" style={{ color: '#A58CB2' }}>&amp;</div>
+        <div className="text-[9px] my-1.5" style={{ color: '#A58CB2' }}>&amp;</div>
         <div className="font-serif text-[30px] leading-none" style={{ color: '#F1EAF6' }}>Elias</div>
-        <div className="mt-4 text-[6.5px] uppercase tracking-[0.3em]" style={{ color: '#C9BAD4' }}>November 2026 · New York</div>
+        <div className="mt-4 text-[6.5px]" style={{ color: '#C9BAD4' }}>November 2026 · New York</div>
       </div>
     </div>
     <div className="h-11 border-t grid grid-cols-4" style={{ background: '#171A28', borderColor: '#2D3145' }}>
       {['Story','Gallery','Schedule','RSVP'].map(s => (
         <div key={s} className="flex items-center justify-center border-r last:border-0" style={{ borderColor: '#2D3145' }}>
-          <span className="text-[6px] uppercase tracking-[0.24em]" style={{ color: '#B5A6C6' }}>{s}</span>
+          <span className="text-[6px]" style={{ color: '#B5A6C6' }}>{s}</span>
         </div>
       ))}
     </div>
@@ -416,16 +416,16 @@ const FloralGardenRosePreview = () => (
       <div className="absolute inset-0" style={{ background: 'linear-gradient(145deg, #FBF3F4 0%, #F5E9EC 60%, #FDEEEF 100%)' }} />
       <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 20% 22%, rgba(183,122,138,0.18) 0%, transparent 44%), radial-gradient(circle at 82% 24%, rgba(219,162,176,0.18) 0%, transparent 40%)' }} />
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-5">
-        <div className="text-[7px] tracking-[0.35em] uppercase mb-2" style={{ color: '#9A6271' }}>Rose Garden</div>
+        <div className="text-[7px] mb-2" style={{ color: '#9A6271' }}>Rose Garden</div>
         <div className="font-serif text-[24px] leading-tight" style={{ color: '#4B2A34' }}>Lily <span className="text-[14px] mx-1" style={{ color: '#B77A8A' }}>&amp;</span> James</div>
-        <div className="mt-2 text-[6.5px] uppercase tracking-[0.3em]" style={{ color: '#9A6271' }}>June 2026 · Sonoma</div>
-        <div className="mt-3 rounded-full px-3 py-1 text-[6px] uppercase tracking-[0.25em]" style={{ background: '#F2DCE2', color: '#8A5665' }}>Floral · Romantic · Outdoor</div>
+        <div className="mt-2 text-[6.5px]" style={{ color: '#9A6271' }}>June 2026 · Sonoma</div>
+        <div className="mt-3 rounded-full px-3 py-1 text-[6px]" style={{ background: '#F2DCE2', color: '#8A5665' }}>Floral · Romantic · Outdoor</div>
       </div>
     </div>
     <div className="h-11 border-t grid grid-cols-4" style={{ background: '#F8EAEE', borderColor: '#E6CCD5' }}>
       {['Story','Photos','Venue','RSVP'].map(s => (
         <div key={s} className="flex items-center justify-center border-r last:border-0" style={{ borderColor: '#E6CCD5' }}>
-          <span className="text-[6px] uppercase tracking-[0.24em]" style={{ color: '#8A5665' }}>{s}</span>
+          <span className="text-[6px]" style={{ color: '#8A5665' }}>{s}</span>
         </div>
       ))}
     </div>
@@ -510,7 +510,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [applyResult, setApplyResult] = useState<ApplyResult | null>(null);
 
-  const templates = getAllTemplatePacks();
+  const templates = getLaunchTemplatePacks();
 
   const recommendedTemplates = useMemo(() => {
     const usage = readTemplateUsage();
@@ -656,19 +656,19 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div className="absolute inset-0 bg-black/40" onClick={() => setApplyResult(null)} />
-        <div className="relative bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 text-center">
-          <div className="w-14 h-14 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle2 className="w-7 h-7 text-green-500" />
+        <div className="relative bg-white rounded-xl shadow-sm border border-[var(--color-border-subtle)] p-8 max-w-sm w-full mx-4 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-[var(--color-accent-soft)]">
+            <CheckCircle2 className="h-7 w-7 text-[var(--color-accent)]" />
           </div>
           <h3 className="text-base font-semibold text-gray-900 mb-1">"{applyResult.templateName}" applied</h3>
           <p className="text-sm text-gray-500 mb-5">Your site layout and theme have been updated.</p>
 
           {applyResult.preservedSections.length > 0 && (
-            <div className="mb-3 text-left bg-green-50 rounded-xl p-4">
-              <p className="text-xs font-semibold text-green-700 mb-2">Content preserved from before:</p>
+            <div className="mb-3 rounded-xl bg-[var(--color-surface-subtle)] p-4 text-left">
+              <p className="mb-2 text-xs font-semibold text-[var(--color-text-primary)]">Content preserved from before:</p>
               <ul className="space-y-1">
                 {applyResult.preservedSections.map(s => (
-                  <li key={s} className="text-xs text-green-600 flex items-center gap-1.5">
+                  <li key={s} className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
                     <CheckCircle2 className="w-3 h-3" />
                     {s}
                   </li>
@@ -678,11 +678,11 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
           )}
 
           {applyResult.newSections.length > 0 && (
-            <div className="mb-5 text-left bg-blue-50 rounded-xl p-4">
-              <p className="text-xs font-semibold text-blue-700 mb-2">New sections added:</p>
+            <div className="mb-5 text-left bg-[var(--color-accent-soft)] rounded-xl p-4">
+              <p className="text-xs font-semibold text-[var(--color-accent)] mb-2">New sections added:</p>
               <ul className="space-y-1">
                 {applyResult.newSections.map(s => (
-                  <li key={s} className="text-xs text-blue-600 flex items-center gap-1.5">
+                  <li key={s} className="text-xs text-[var(--color-accent)] flex items-center gap-1.5">
                     <RefreshCw className="w-3 h-3" />
                     {s}
                   </li>
@@ -712,11 +712,11 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
   return (
     <div className="fixed inset-0 z-50 flex">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleCloseGallery} />
-      <div className="relative ml-auto w-full max-w-5xl bg-white h-full flex flex-col shadow-2xl">
+      <div className="relative ml-auto w-full max-w-5xl bg-white h-full flex flex-col shadow-sm">
         <div className="px-7 py-5 border-b border-neutral-200 bg-white">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-2xl font-bold text-neutral-900 tracking-tight">Template Gallery</h2>
+              <h2 className="text-2xl font-bold text-neutral-900">Template Gallery</h2>
               <p className="text-sm text-neutral-600 mt-0.5">Choose the design direction that feels closest to your wedding.</p>
               <p className="text-[11px] text-neutral-500 mt-2">Start with the best fit first. You can still swap layouts, photos, and colors after.</p>
             </div>
@@ -757,7 +757,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
                 onClick={() => setActiveFilter(f.id)}
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
                   activeFilter === f.id
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-[var(--color-accent)] text-white'
                     : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                 }`}
               >
@@ -772,9 +772,9 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
               <button
                 key={`color-${f}`}
                 onClick={() => setActiveColorFilter(f)}
-                className={`px-2.5 py-1 rounded-full border transition-colors ${
+                className={`rounded-lg border px-2.5 py-1 transition-colors ${
                   activeColorFilter === f
-                    ? 'bg-rose-50 border-rose-200 text-rose-700'
+                    ? 'bg-[var(--color-accent-soft)] border-[var(--color-border-subtle)] text-[var(--color-accent)]'
                     : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                 }`}
               >
@@ -789,9 +789,9 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
               <button
                 key={`season-${f}`}
                 onClick={() => setActiveSeasonFilter(f)}
-                className={`px-2.5 py-1 rounded-full border transition-colors ${
+                className={`rounded-lg border px-2.5 py-1 transition-colors ${
                   activeSeasonFilter === f
-                    ? 'bg-blue-50 border-blue-200 text-blue-700'
+                    ? 'bg-[var(--color-accent-soft)] border-[var(--color-border-subtle)] text-[var(--color-accent)]'
                     : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                 }`}
               >
@@ -803,15 +803,15 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
 
         <div className="flex-1 overflow-y-auto p-7">
           <div className="mb-5">
-            <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Recommended starting designs</div>
+            <div className="text-xs font-semibold text-gray-500 mb-2">Recommended starting designs</div>
             <div className="flex flex-wrap gap-2">
               {recommendedTemplates.map((template) => (
                 <button
                   key={`recommended-${template.id}`}
                   onClick={() => setConfirmTemplate(template)}
-                  className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${
+                  className={`rounded-lg border px-3 py-1.5 text-xs transition-colors ${
                     template.id === currentTemplateId
-                      ? 'bg-rose-50 border-rose-200 text-rose-700'
+                      ? 'bg-[var(--color-accent-soft)] border-[var(--color-border-subtle)] text-[var(--color-accent)]'
                       : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
                   }`}
                 >
@@ -822,7 +822,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
           </div>
 
           <div className="mb-4 rounded-xl border border-neutral-200 bg-white px-3 py-2 flex items-center justify-between gap-3">
-            <div className="text-xs text-sky-900">
+            <div className="text-xs text-[var(--color-text-secondary)]">
               {compareTemplates.length === 0 && 'Select up to 2 designs to compare side by side.'}
               {compareTemplates.length === 1 && `Selected for compare: ${compareTemplates[0].displayName}. Choose one more.`}
               {compareTemplates.length === 2 && `Ready to compare: ${compareTemplates[0].displayName} vs ${compareTemplates[1].displayName}.`}
@@ -832,7 +832,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
                 type="button"
                 onClick={() => setCompareTemplateIds([])}
                 disabled={compareTemplates.length === 0}
-                className="rounded border border-sky-200 bg-white px-2 py-1 text-xs font-medium text-sky-800 hover:bg-sky-100 disabled:opacity-40"
+                className="rounded border border-[var(--color-border-subtle)] bg-white px-2 py-1 text-xs font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)] disabled:opacity-40"
               >
                 Clear
               </button>
@@ -840,7 +840,7 @@ export const TemplateGalleryPanel: React.FC<TemplateGalleryPanelProps> = ({ onSa
                 type="button"
                 onClick={() => setShowCompareModal(true)}
                 disabled={compareTemplates.length !== 2}
-                className="rounded border border-sky-300 bg-sky-600 px-2 py-1 text-xs font-semibold text-white hover:bg-sky-700 disabled:opacity-40"
+                className="rounded border border-[var(--color-primary)] bg-[var(--color-primary)] px-2 py-1 text-xs font-semibold text-white hover:bg-[var(--color-primary-hover)] disabled:opacity-40"
               >
                 Compare
               </button>
@@ -937,11 +937,11 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
 
   return (
     <div
-      className={`group rounded-2xl overflow-hidden border transition-all cursor-pointer bg-white ${
+      className={`group rounded-xl overflow-hidden border transition-all cursor-pointer bg-white ${
         isCurrent
-          ? 'border-blue-500 shadow-sm'
+          ? 'border-primary shadow-sm'
           : isCompared
-          ? 'border-blue-300 shadow-sm'
+          ? 'border-primary/40 shadow-sm'
           : hovered
           ? 'border-neutral-300 shadow-sm'
           : 'border-neutral-200'
@@ -958,19 +958,19 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
         />
 
         {isCurrent && (
-          <div className="absolute top-2.5 right-2.5 bg-rose-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md">
+          <div className="absolute right-2.5 top-2.5 flex h-6 w-6 items-center justify-center rounded-lg bg-primary text-white shadow-sm">
             <Check size={11} />
           </div>
         )}
         {template.isPremium && !template.isNew && (
-          <div className="absolute top-2.5 left-2.5 rounded-full px-2 py-0.5 text-[10px] font-semibold flex items-center gap-1 shadow-sm"
+          <div className="absolute left-2.5 top-2.5 flex items-center gap-1 rounded-lg px-2 py-0.5 text-[10px] font-semibold shadow-sm"
             style={{ background: 'rgba(200,169,110,0.95)', color: '#2D1F00' }}>
             <Crown size={8} />
             Premium
           </div>
         )}
         {template.isNew && (
-          <div className="absolute top-2.5 left-2.5 bg-blue-500 text-white rounded-full px-2 py-0.5 text-[10px] font-semibold shadow-sm flex items-center gap-1">
+          <div className="absolute left-2.5 top-2.5 flex items-center gap-1 rounded-lg bg-primary px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm">
             <Zap size={8} />
             New
           </div>
@@ -978,7 +978,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
 
         {hovered && !isCurrent && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="bg-white/95 text-gray-900 text-xs font-semibold px-4 py-2 rounded-xl shadow-lg">
+            <div className="bg-white/95 text-gray-900 text-xs font-semibold px-4 py-2 rounded-lg shadow-sm">
               See design
             </div>
           </div>
@@ -990,7 +990,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
           <h3 className="font-semibold text-gray-900 text-sm leading-tight">{template.displayName}</h3>
           <div className="flex items-center gap-1 mt-0.5 flex-shrink-0">
             {dots.map((color, i) => (
-              <div key={i} className="w-2.5 h-2.5 rounded-full border border-white shadow-sm" style={{ background: color }} />
+              <div key={i} className="h-2.5 w-2.5 rounded-sm border border-white shadow-sm" style={{ background: color }} />
             ))}
           </div>
         </div>
@@ -1000,7 +1000,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
         <div className="flex items-center justify-between">
           <div className="flex gap-1 flex-wrap">
             {template.moodTags.slice(0, 2).map(tag => (
-              <span key={tag} className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full capitalize">
+              <span key={tag} className="rounded-md bg-gray-100 px-2 py-0.5 text-[10px] capitalize text-gray-500">
                 {tag}
               </span>
             ))}
@@ -1019,7 +1019,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
             onClick={e => { e.stopPropagation(); onCompare(); }}
             className={`w-full py-2 rounded-xl text-xs font-semibold border transition-colors ${
               isCompared
-                ? 'border-sky-300 bg-sky-50 text-sky-700'
+                ? 'border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] text-[var(--color-text-primary)]'
                 : 'border-gray-200 text-gray-600 hover:bg-gray-50'
             }`}
           >
@@ -1029,8 +1029,8 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, isCurrent, isAppl
             onClick={e => { e.stopPropagation(); onDetails(); }}
             className={`w-full py-2 rounded-xl text-xs font-semibold transition-all ${
               isCurrent
-                ? 'bg-rose-50 text-rose-500 border border-rose-200/80'
-                : 'bg-gray-900 text-white hover:bg-gray-800 active:scale-[0.98]'
+                ? 'bg-[var(--color-accent-soft)] text-[var(--color-accent)] border border-[var(--color-border-subtle)]'
+                : 'bg-gray-900 text-white hover:bg-gray-800'
             }`}
           >
           {isCurrent ? (
@@ -1060,7 +1060,7 @@ const TemplateCompareModal: React.FC<TemplateCompareModalProps> = ({ leftTemplat
 
   return (
     <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)' }}>
-      <div className="bg-white rounded-2xl shadow-2xl p-5 max-w-5xl w-full mx-4">
+      <div className="bg-white rounded-xl shadow-sm border border-[var(--color-border-subtle)] p-5 max-w-5xl w-full mx-4">
         <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Compare designs</h3>
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"><X size={16} /></button>
@@ -1081,12 +1081,12 @@ const TemplateCompareModal: React.FC<TemplateCompareModalProps> = ({ leftTemplat
                   <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{template.description}</p>
                 </div>
                 <div className="flex items-center gap-1 mt-0.5">
-                  {dots.map((c, i) => <div key={i} className="w-2.5 h-2.5 rounded-full border border-gray-200" style={{ background: c }} />)}
+                  {dots.map((c, i) => <div key={i} className="h-2.5 w-2.5 rounded-sm border border-gray-200" style={{ background: c }} />)}
                 </div>
               </div>
               <div className="mt-2 flex flex-wrap gap-1">
                 {template.moodTags.slice(0, 3).map((tag) => (
-                  <span key={tag} className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full capitalize">{tag}</span>
+                  <span key={tag} className="rounded-md bg-gray-100 px-2 py-0.5 text-[10px] capitalize text-gray-600">{tag}</span>
                 ))}
               </div>
               <button onClick={onApply} className="mt-3 w-full py-2 rounded-lg bg-gray-900 text-white text-xs font-semibold hover:bg-gray-800">
@@ -1151,14 +1151,14 @@ const TemplateDetailsModal: React.FC<TemplateDetailsModalProps> = ({ template, o
 
   return (
     <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)' }}>
-      <div className="bg-white rounded-2xl shadow-2xl w-[94vw] h-[90vh] max-w-7xl overflow-hidden flex flex-col">
+      <div className="bg-white rounded-xl shadow-sm border border-[var(--color-border-subtle)] w-[94vw] h-[90vh] max-w-7xl overflow-hidden flex flex-col">
         <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-gray-200">
           <div>
             <h3 className="text-lg font-semibold text-gray-900">{template.displayName}</h3>
             <p className="text-sm text-gray-500 mt-1">{template.description}</p>
             <div className="mt-2 flex flex-wrap gap-1">
               {template.moodTags.map((tag) => (
-                <span key={tag} className="text-[11px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full capitalize">{tag}</span>
+                <span key={tag} className="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] capitalize text-gray-600">{tag}</span>
               ))}
             </div>
           </div>
@@ -1194,11 +1194,11 @@ const TemplateDetailsModal: React.FC<TemplateDetailsModalProps> = ({ template, o
 
           <div className="col-span-4 overflow-y-auto p-4 space-y-3">
             <div>
-              <div className="text-xs uppercase tracking-wide text-gray-500 mb-1">Palette</div>
-              <div className="flex gap-1.5">{dots.map((c, i) => <div key={i} className="w-5 h-5 rounded-full border border-gray-200" style={{ background: c }} />)}</div>
+              <div className="text-xs text-gray-500 mb-1">Palette</div>
+              <div className="flex gap-1.5">{dots.map((c, i) => <div key={i} className="h-5 w-5 rounded-md border border-gray-200" style={{ background: c }} />)}</div>
             </div>
             <div>
-              <div className="text-xs uppercase tracking-wide text-gray-500 mb-1">Sections</div>
+              <div className="text-xs text-gray-500 mb-1">Sections</div>
               <div className="space-y-1">
                 {template.sectionComposition.map((s, i) => (
                   <button
@@ -1231,7 +1231,7 @@ interface TemplateConfirmModalProps {
 
 const TemplateConfirmModal: React.FC<TemplateConfirmModalProps> = ({ template, isApplying, onConfirm, onCancel }) => (
   <div className="absolute inset-0 z-10 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}>
-    <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4">
+    <div className="bg-white rounded-xl shadow-sm border border-[var(--color-border-subtle)] p-6 max-w-sm w-full mx-4">
       <div className="flex items-center gap-3 mb-4">
         <div className="w-10 h-10 rounded-xl bg-gray-900 flex items-center justify-center flex-shrink-0">
           <div className="w-5 h-5 rounded relative overflow-hidden">
@@ -1250,9 +1250,9 @@ const TemplateConfirmModal: React.FC<TemplateConfirmModalProps> = ({ template, i
             <span className="font-semibold">Preserved:</span> All text, images, and media stay exactly as they are.
           </div>
         </div>
-        <div className="flex items-start gap-2.5 p-3 bg-amber-50 rounded-xl">
-          <RefreshCw className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
-          <div className="text-xs text-amber-700">
+        <div className="flex items-start gap-2.5 p-3 bg-[var(--color-surface-subtle)] rounded-xl border border-[var(--color-border-subtle)]">
+          <RefreshCw className="w-4 h-4 text-[var(--color-primary)] mt-0.5 flex-shrink-0" />
+          <div className="text-xs text-[var(--color-text-secondary)]">
             <span className="font-semibold">Updated:</span> Section layouts and color styling will switch to "{template.displayName}".
           </div>
         </div>

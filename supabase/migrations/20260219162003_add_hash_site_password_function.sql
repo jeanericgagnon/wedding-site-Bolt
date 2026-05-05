@@ -22,5 +22,4 @@ BEGIN
   RETURN crypt(p_password, gen_salt('bf', 12));
 END;
 $$;
-
 GRANT EXECUTE ON FUNCTION public.hash_site_password(text) TO authenticated;

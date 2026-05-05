@@ -81,13 +81,28 @@ describe('fetchUrlPreview', () => {
       text: () => Promise.resolve('Rate limit exceeded'),
     });
     vi.stubGlobal('fetch', mockFetch);
-    await expect(fetchUrlPreview('https://amazon.com/dp/B001')).rejects.toThrow();
+    await expect(fetchUrlPreview('https://amazon.com/dp/B001')).rejects.toThrow('Couldn’t fill in gift details from that link. You can still add the item by hand.');
   });
 
   it('throws on network failure', async () => {
     const mockFetch = vi.fn().mockRejectedValue(new Error('Network error'));
     vi.stubGlobal('fetch', mockFetch);
-    await expect(fetchUrlPreview('https://amazon.com/dp/B001')).rejects.toThrow('Network error');
+    await expect(fetchUrlPreview('https://amazon.com/dp/B001')).rejects.toThrow('Couldn’t fill in gift details from that link. You can still add the item by hand.');
+  });
+
+  it('does not expose raw preview error details to owner-facing callers', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      text: () => Promise.resolve(JSON.stringify({
+        error: 'database failed',
+        details: 'select * from registry_items with service role',
+      })),
+    });
+    vi.stubGlobal('fetch', mockFetch);
+
+    await expect(fetchUrlPreview('https://amazon.com/dp/B001')).rejects.toThrow('Couldn’t fill in gift details from that link. You can still add the item by hand.');
+    await expect(fetchUrlPreview('https://amazon.com/dp/B001')).rejects.not.toThrow(/database|service role|select \*/i);
   });
 
   it('returns error field when fetch fails gracefully', async () => {

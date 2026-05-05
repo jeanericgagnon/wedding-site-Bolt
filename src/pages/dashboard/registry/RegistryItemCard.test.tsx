@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { getOwnerRegistryPurchaserLabel, normalizeOwnerRegistryItemState, RegistryItemCard } from './RegistryItemCard';
+import { getOwnerRegistryPurchaserLabel, getOwnerRegistrySourceLabel, normalizeOwnerRegistryItemState, RegistryItemCard } from './RegistryItemCard';
 import type { RegistryItem } from './registryTypes';
 
 function makeItem(overrides: Partial<RegistryItem> = {}): RegistryItem {
@@ -44,7 +44,7 @@ describe('RegistryItemCard', () => {
     expect(screen.getByRole('link', { name: /view/i })).toHaveAttribute('href', 'https://example.com/canonical-product');
   });
 
-  it('falls back to a canonical page preview image when image_url and item_url are missing', () => {
+  it('uses the built-in placeholder instead of a third-party page preview when image_url is missing', () => {
     render(
       <RegistryItemCard
         item={makeItem({ canonical_url: 'https://example.com/canonical-product' })}
@@ -53,11 +53,11 @@ describe('RegistryItemCard', () => {
       />,
     );
 
-    const image = screen.getByRole('img', { name: /kitchenaid mixer/i });
-    expect(image).toHaveAttribute('src', expect.stringContaining(encodeURIComponent('https://example.com/canonical-product')));
+    expect(screen.queryByRole('img', { name: /kitchenaid mixer/i })).not.toBeInTheDocument();
+    expect(screen.getByText('Needs image')).toBeInTheDocument();
   });
 
-  it('tries canonical page preview after direct image failure when no item_url exists', () => {
+  it('falls back to the built-in placeholder after direct image failure', () => {
     render(
       <RegistryItemCard
         item={makeItem({
@@ -71,9 +71,9 @@ describe('RegistryItemCard', () => {
 
     const image = screen.getByRole('img', { name: /kitchenaid mixer/i }) as HTMLImageElement;
     fireEvent.error(image);
-    fireEvent.error(image);
 
-    expect(image.getAttribute('src')).toContain(encodeURIComponent('https://example.com/canonical-product'));
+    expect(screen.queryByRole('img', { name: /kitchenaid mixer/i })).not.toBeInTheDocument();
+    expect(screen.getByText('Product image')).toBeInTheDocument();
   });
 
   it('keeps owner purchaser labels aligned with actual purchase state', () => {
@@ -94,6 +94,58 @@ describe('RegistryItemCard', () => {
       quantity_purchased: 0,
       quantity_needed: 1,
     }));
+  });
+
+  it('drops unsafe owner registry links and image URLs before rendering', () => {
+    const normalized = normalizeOwnerRegistryItemState(makeItem({
+      item_url: 'javascript:alert(1)',
+      canonical_url: 'ftp://example.com/gift',
+      image_url: 'javascript:alert(1)',
+      fund_venmo_url: 'javascript:alert(1)',
+      fund_paypal_url: 'data:text/html,<script>alert(1)</script>',
+      fund_custom_url: 'https://example.com/contribute',
+      item_type: 'cash_fund',
+    }));
+
+    expect(normalized).toEqual(expect.objectContaining({
+      item_url: null,
+      canonical_url: null,
+      image_url: null,
+      fund_venmo_url: null,
+      fund_paypal_url: null,
+      fund_custom_url: 'https://example.com/contribute',
+    }));
+  });
+
+  it('does not render javascript links for owner cash-fund actions', () => {
+    const { container } = render(
+      <RegistryItemCard
+        item={makeItem({
+          item_type: 'cash_fund',
+          fund_venmo_url: 'javascript:alert(1)',
+          fund_paypal_url: 'https://paypal.me/dayof',
+          fund_custom_url: 'data:text/html,<script>alert(1)</script>',
+        })}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    expect(container.querySelector('a[href^="javascript:"]')).not.toBeInTheDocument();
+    expect(container.querySelector('a[href^="data:"]')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /paypal/i })).toHaveAttribute('href', 'https://paypal.me/dayof');
+  });
+
+  it('hides unsafe owner product links from the View action', () => {
+    render(
+      <RegistryItemCard
+        item={makeItem({ item_url: 'javascript:alert(1)', canonical_url: 'https://example.com/safe' })}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('link', { name: /view/i })).toHaveAttribute('href', 'https://example.com/safe');
   });
 
   it('passes normalized purchase truth into owner actions', async () => {
@@ -123,5 +175,14 @@ describe('RegistryItemCard', () => {
     );
 
     expect(screen.getByText('Check details')).toBeInTheDocument();
+  });
+
+  it('maps raw metadata source methods into owner-friendly labels', () => {
+    expect(getOwnerRegistrySourceLabel('adapter')).toBe('Imported from store page');
+    expect(getOwnerRegistrySourceLabel('jsonld')).toBe('Imported from product data');
+    expect(getOwnerRegistrySourceLabel('opengraph')).toBe('Imported from page preview');
+    expect(getOwnerRegistrySourceLabel('heuristic')).toBe('Imported with partial details');
+    expect(getOwnerRegistrySourceLabel('manual')).toBe('Details entered by you');
+    expect(getOwnerRegistrySourceLabel(null)).toBeNull();
   });
 });

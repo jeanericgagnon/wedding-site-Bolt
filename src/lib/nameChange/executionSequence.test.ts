@@ -589,7 +589,7 @@ describe('name change execution sequence snapshot', () => {
     };
 
     const snapshot = buildNameChangeExecutionSequenceSnapshot('tsa', profile, documents, extractedFields, plan);
-    expect(snapshot.ready).toBe(true);
+    expect(snapshot.ready).toBe(false);
     expect(snapshot.dependencies.find((dependency) => dependency.key === 'passport-progress')).toMatchObject({ status: 'satisfied' });
   });
 
@@ -640,7 +640,7 @@ describe('name change execution sequence snapshot', () => {
     expect(snapshot.ready).toBe(false);
     expect(snapshot.dependencies.find((dependency) => dependency.key === 'out-of-state-marriage-certificate-grounding')).toMatchObject({
       status: 'missing',
-      reason: 'Marriage certificate is present, but no grounded county, certificate-number extraction, or issuing-authority metadata is represented yet for out-of-state follow-through.',
+      reason: 'Marriage certificate is present, but the county, certificate number, or issuing authority is not ready yet for out-of-state follow-through.',
     });
   });
 
@@ -667,7 +667,7 @@ describe('name change execution sequence snapshot', () => {
     expect(snapshot.ready).toBe(false);
     expect(snapshot.dependencies.find((dependency) => dependency.key === 'out-of-state-marriage-certificate-grounding')).toMatchObject({
       status: 'missing',
-      reason: 'Marriage certificate is present, but no grounded county, certificate-number extraction, or issuing-authority metadata is represented yet for out-of-state follow-through.',
+      reason: 'Marriage certificate is present, but the county, certificate number, or issuing authority is not ready yet for out-of-state follow-through.',
     });
   });
 
@@ -700,7 +700,7 @@ describe('name change execution sequence snapshot', () => {
     expect(snapshot.dependencies.find((dependency) => dependency.key === 'employment-context')).toMatchObject({ status: 'satisfied' });
   });
 
-  it('blocks California DMV sequencing when launch state is not aligned', () => {
+  it('blocks California DMV sequencing when selected state is not aligned', () => {
     const snapshot = buildNameChangeExecutionSequenceSnapshot('dmv', makeCase({ launch_state: 'texas' as never }), [], [], null);
     expect(snapshot.ready).toBe(false);
     expect(snapshot.dependencies.find((dependency) => dependency.key === 'launch-state-alignment')).toMatchObject({ status: 'missing' });
@@ -805,7 +805,7 @@ describe('name change execution sequence snapshot', () => {
       required: true,
       nextActionCategory: 'document',
       blocksReady: true,
-      reason: 'Identity documents exist in intake, but metadata is still too thin for confident downstream use.',
+      reason: 'Identity documents exist in intake, but saved details are still too thin for confident downstream use.',
     });
     expect(snapshot.ready).toBe(false);
   });

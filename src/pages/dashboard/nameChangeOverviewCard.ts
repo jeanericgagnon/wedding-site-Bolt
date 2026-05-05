@@ -62,7 +62,7 @@ export function buildNameChangeOverviewCardModel(input: {
       badgeLabel: 'Post-wedding',
       headline: 'Soft next steps, not a checklist you have to clear',
       statusLabel: 'Resume where you left off',
-      helperCopy: 'You already started the name-change flow, so the dashboard should bring you back to the status vault instead of making you hunt for your place again.',
+      helperCopy: 'You already started the name-change flow, so dayof brings you back to the saved status view instead of making you hunt for your place again.',
       primaryHref: `${base}#target-status-tracking`,
       primaryLabel: 'Resume status vault',
       secondaryHref: `${base}#name-change-roadmap`,

@@ -1,10 +1,14 @@
 import React, { useMemo, useState } from 'react';
-import { Plus, Edit2, Trash2, Phone, Mail, Globe, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Edit2, Trash2, Phone, Mail, Globe, FileText, ChevronDown, ChevronUp, Copy, Download } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
+import { useToast } from '../../../components/ui/Toast';
 import { PlanningVendor } from './planningService';
 import { formatVendorDate, isVendorDateOnOrBefore } from './vendorDate';
+import { copyTextOrDownload } from '../../../lib/copyText';
+import { getSafePublicEmailHref, getSafePublicTelHref, getSafePublicWebUrl } from '../../../sections/publicLinks';
+import { isVendorProfileCreationEnabled } from '../../../lib/vendorProfileLaunch';
 
 interface Props {
   vendors: PlanningVendor[];
@@ -24,6 +28,14 @@ function fmt(n: number) {
   return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 }
 
+function vendorProfileCreateUrl(vendor: Partial<PlanningVendor>) {
+  const params = new URLSearchParams();
+  if (vendor.name) params.set('vendorName', vendor.name);
+  if (vendor.website) params.set('websiteUrl', vendor.website);
+  if (vendor.email) params.set('contactEmail', vendor.email);
+  return `/vendor-profile-v1${params.toString() ? `?${params.toString()}` : ''}`;
+}
+
 function VendorForm({ initial, onSave, onCancel }: {
   initial?: Partial<PlanningVendor>;
   onSave: (v: Partial<PlanningVendor>) => Promise<void>;
@@ -39,6 +51,8 @@ function VendorForm({ initial, onSave, onCancel }: {
     contract_total: initial?.contract_total ?? 0,
     amount_paid: initial?.amount_paid ?? 0,
     next_payment_due: initial?.next_payment_due ?? '',
+    document_label: initial?.document_label ?? '',
+    document_url: initial?.document_url ?? '',
     notes: initial?.notes ?? '',
   });
   const [saving, setSaving] = useState(false);
@@ -51,12 +65,14 @@ function VendorForm({ initial, onSave, onCancel }: {
       contract_total: Number(form.contract_total),
       amount_paid: Number(form.amount_paid),
       next_payment_due: form.next_payment_due || null,
+      document_label: form.document_label || null,
+      document_url: form.document_url || null,
     });
     setSaving(false);
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-4 bg-surface-subtle rounded-xl border border-border-subtle">
+    <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-border-subtle bg-surface-subtle p-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="block text-xs font-medium text-text-secondary mb-1">Type *</label>
@@ -148,6 +164,24 @@ function VendorForm({ initial, onSave, onCancel }: {
             onChange={e => setForm(f => ({ ...f, next_payment_due: e.target.value }))}
           />
         </div>
+        <div>
+          <label className="block text-xs font-medium text-text-secondary mb-1">Document Label</label>
+          <input
+            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            value={form.document_label}
+            onChange={e => setForm(f => ({ ...f, document_label: e.target.value }))}
+            placeholder="Contract, invoice, proposal"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-text-secondary mb-1">Document Link</label>
+          <input
+            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            value={form.document_url}
+            onChange={e => setForm(f => ({ ...f, document_url: e.target.value }))}
+            placeholder="https://drive.google.com/..."
+          />
+        </div>
         <div className="sm:col-span-2">
           <label className="block text-xs font-medium text-text-secondary mb-1">Notes</label>
           <textarea
@@ -168,12 +202,14 @@ function VendorForm({ initial, onSave, onCancel }: {
 }
 
 export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete, canEdit = true }) => {
+  const { toast } = useToast();
   const [showAdd, setShowAdd] = useState(false);
   const [editingVendor, setEditingVendor] = useState<PlanningVendor | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'pipeline'>('list');
   const [vendorMeta, setVendorMeta] = useState<Record<string, { lastContacted?: string; nextFollowUp?: string }>>({});
+  const vendorProfileCreationEnabled = isVendorProfileCreationEnabled();
 
   React.useEffect(() => {
     try {
@@ -192,6 +228,8 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
   in7Days.setDate(in7Days.getDate() + 7);
 
   const totalBalance = vendors.reduce((s, v) => s + (v.balance_due || 0), 0);
+  const documentedCount = vendors.filter((vendor) => Boolean(vendor.document_url)).length;
+  const contactableCount = vendors.filter((vendor) => Boolean(vendor.email || vendor.phone)).length;
   const followUpDueCount = vendors.filter((v) => {
     const dt = vendorMeta[v.id]?.nextFollowUp;
     return isVendorDateOnOrBefore(dt, in7Days);
@@ -220,17 +258,67 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
     paid: filteredVendors.filter((v) => vendorStage(v) === 'paid'),
   };
 
+  async function copyVendorBrief() {
+    const text = vendors.map((vendor) => [
+      vendor.name,
+      vendor.vendor_type ? `Type: ${vendor.vendor_type}` : null,
+      vendor.contact_name ? `Contact: ${vendor.contact_name}` : null,
+      vendor.email ? `Email: ${vendor.email}` : null,
+      vendor.phone ? `Phone: ${vendor.phone}` : null,
+      `Balance: ${fmt(vendor.balance_due || 0)}`,
+      vendor.next_payment_due ? `Next due: ${formatVendorDate(vendor.next_payment_due)}` : null,
+      vendor.document_url ? `Document: ${vendor.document_url}` : 'Document: missing',
+    ].filter(Boolean).join('\n')).join('\n\n');
+    const result = await copyTextOrDownload(text || 'No vendors yet.', 'dayof-vendor-brief.txt');
+    toast(result === 'copied' ? 'Vendor brief copied.' : 'Clipboard was blocked, so the vendor brief downloaded.', 'success');
+  }
+
+  function exportVendors() {
+    const csvRows = [
+      ['Name', 'Type', 'Contact', 'Email', 'Phone', 'Website', 'Contract total', 'Paid', 'Balance', 'Next due', 'Document label', 'Document URL'],
+      ...vendors.map((vendor) => [
+        vendor.name,
+        vendor.vendor_type,
+        vendor.contact_name,
+        vendor.email,
+        vendor.phone,
+        vendor.website,
+        String(vendor.contract_total || 0),
+        String(vendor.amount_paid || 0),
+        String(vendor.balance_due || 0),
+        vendor.next_payment_due ?? '',
+        vendor.document_label ?? '',
+        vendor.document_url ?? '',
+      ]),
+    ];
+    const csv = csvRows.map((row) => row.map((cell) => `"${String(cell ?? '').replaceAll('"', '""')}"`).join(',')).join('\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `dayof-vendors-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="space-y-4">
-      {(totalBalance > 0 || followUpDueCount > 0) && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-border/35 shadow-[0_4px_14px_rgba(15,23,42,0.05)] hover:shadow-[0_8px_20px_rgba(15,23,42,0.08)] transition-shadow">
+      {(vendors.length > 0 || totalBalance > 0 || followUpDueCount > 0) && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+          <div className="flex items-center justify-between rounded-lg border border-border-subtle bg-white p-3 transition-colors hover:border-primary/25">
             <span className="text-sm text-text-secondary">Still to pay vendors</span>
             <span className="font-bold text-text-primary">{fmt(totalBalance)}</span>
           </div>
-          <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-border/35 shadow-[0_4px_14px_rgba(15,23,42,0.05)]">
+          <div className="flex items-center justify-between rounded-lg border border-border-subtle bg-white p-3">
             <span className="text-sm text-text-secondary">Follow-ups due (7d)</span>
             <span className="font-bold text-text-primary">{followUpDueCount}</span>
+          </div>
+          <div className="flex items-center justify-between rounded-lg border border-border-subtle bg-white p-3">
+            <span className="text-sm text-text-secondary">Docs linked</span>
+            <span className="font-bold text-text-primary">{documentedCount}/{vendors.length}</span>
+          </div>
+          <div className="flex items-center justify-between rounded-lg border border-border-subtle bg-white p-3">
+            <span className="text-sm text-text-secondary">Reachable</span>
+            <span className="font-bold text-text-primary">{contactableCount}/{vendors.length}</span>
           </div>
         </div>
       )}
@@ -249,6 +337,15 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={copyVendorBrief}>
+            <Copy className="w-4 h-4 mr-1" /> Copy brief
+          </Button>
+          <Button size="sm" variant="outline" onClick={exportVendors}>
+            <Download className="w-4 h-4 mr-1" /> Export
+          </Button>
+          <a href="/vendor-templates" className="inline-flex items-center rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-medium text-text-primary hover:bg-surface-subtle">
+            Template lab
+          </a>
           {!canEdit && <p className="text-xs text-text-tertiary">Viewer mode: editing is turned off here.</p>}
           <Button size="sm" onClick={() => setShowAdd(true)} disabled={!canEdit}>
             <Plus className="w-4 h-4 mr-1" /> Add vendor
@@ -275,9 +372,9 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
             ['open-balance', 'Open balance'],
             ['paid', 'Paid'],
           ] as const).map(([key, label]) => (
-            <div key={key} className="rounded-xl border border-border/35 bg-white p-3">
+            <div key={key} className="rounded-lg border border-border-subtle bg-white p-3">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-xs uppercase tracking-wide text-text-tertiary">{label}</p>
+                <p className="text-xs text-text-tertiary">{label}</p>
                 <span className="text-xs text-text-secondary">{pipelineGroups[key].length}</span>
               </div>
               <div className="space-y-2">
@@ -298,6 +395,10 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
             const isExpanded = expandedId === vendor.id;
             const isDueSoon = Boolean(vendor.balance_due > 0 && isVendorDateOnOrBefore(vendor.next_payment_due, in7Days));
             const balancePct = vendor.contract_total > 0 ? (vendor.amount_paid / vendor.contract_total) * 100 : 0;
+            const safeEmailHref = getSafePublicEmailHref(vendor.email);
+            const safePhoneHref = getSafePublicTelHref(vendor.phone);
+            const safeWebsiteUrl = getSafePublicWebUrl(vendor.website);
+            const safeDocumentUrl = getSafePublicWebUrl(vendor.document_url);
 
             return (
               <div key={vendor.id}>
@@ -315,6 +416,7 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
                           <p className="text-sm font-semibold text-text-primary">{vendor.name}</p>
                           <Badge variant="neutral">{vendor.vendor_type}</Badge>
                           {isDueSoon && <Badge variant="warning">Payment due soon</Badge>}
+                          {!vendor.document_url && <Badge variant="warning">Doc missing</Badge>}
                         </div>
                         {vendor.contact_name && (
                           <p className="text-xs text-text-tertiary mt-0.5">{vendor.contact_name}</p>
@@ -327,8 +429,8 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
                                 {vendor.balance_due > 0 ? `${fmt(vendor.balance_due)} left` : 'Paid in full'}
                               </span>
                             </div>
-                            <div className="h-1.5 bg-surface-subtle rounded-full overflow-hidden">
-                              <div className="h-full bg-primary rounded-full" style={{ width: `${Math.min(100, balancePct)}%` }} />
+                            <div className="h-1.5 overflow-hidden rounded-lg bg-surface-subtle">
+                              <div className="h-full rounded-lg bg-primary" style={{ width: `${Math.min(100, balancePct)}%` }} />
                             </div>
                           </div>
                         </div>
@@ -352,19 +454,29 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
                     {isExpanded && (
                       <div className="mt-3 pt-3 border-t border-border-subtle space-y-2">
                         <div className="flex flex-wrap gap-3">
-                          {vendor.email && (
-                            <a href={`mailto:${vendor.email}`} className="flex items-center gap-1.5 text-xs text-primary hover:underline">
+                          {safeEmailHref && (
+                            <a href={safeEmailHref} className="flex items-center gap-1.5 text-xs text-primary hover:underline">
                               <Mail className="w-3.5 h-3.5" />{vendor.email}
                             </a>
                           )}
-                          {vendor.phone && (
-                            <a href={`tel:${vendor.phone}`} className="flex items-center gap-1.5 text-xs text-primary hover:underline">
+                          {safePhoneHref && (
+                            <a href={safePhoneHref} className="flex items-center gap-1.5 text-xs text-primary hover:underline">
                               <Phone className="w-3.5 h-3.5" />{vendor.phone}
                             </a>
                           )}
-                          {vendor.website && (
-                            <a href={vendor.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-primary hover:underline">
+                          {safeWebsiteUrl && (
+                            <a href={safeWebsiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-primary hover:underline">
                               <Globe className="w-3.5 h-3.5" />Website
+                            </a>
+                          )}
+                          {safeDocumentUrl && (
+                            <a href={safeDocumentUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-primary hover:underline">
+                              <FileText className="w-3.5 h-3.5" />{vendor.document_label || 'Document'}
+                            </a>
+                          )}
+                          {vendorProfileCreationEnabled && (
+                            <a href={vendorProfileCreateUrl(vendor)} className="flex items-center gap-1.5 text-xs text-primary hover:underline">
+                              <Globe className="w-3.5 h-3.5" />Generate vendor page
                             </a>
                           )}
                         </div>
@@ -376,7 +488,7 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
                           </p>
                         )}
                         <div className="rounded-lg border border-border/35 bg-surface-subtle/40 px-2.5 py-2 space-y-1.5">
-                          <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Follow-up</p>
+                          <p className="text-[11px] text-text-tertiary">Follow-up</p>
                           <p className="text-xs text-text-secondary">
                             Last contacted: {vendorMeta[vendor.id]?.lastContacted ? formatVendorDate(vendorMeta[vendor.id]!.lastContacted as string) : 'Not added yet'}
                           </p>

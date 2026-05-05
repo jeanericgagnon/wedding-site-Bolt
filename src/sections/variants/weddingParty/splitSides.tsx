@@ -38,7 +38,7 @@ export const defaultWeddingPartySplitSidesData: WeddingPartySplitSidesData = {
 
 const SplitCard: React.FC<{ title: string; members: z.infer<typeof PartyMemberSchema>[]; accent?: boolean }> = ({ title, members, accent }) => (
   <div className={`rounded-3xl border p-5 md:p-7 shadow-[0_8px_24px_rgba(15,23,42,0.05)] ${accent ? 'bg-primary/5 border-primary/20' : 'bg-white border-border/30'}`}>
-    <p className="text-xs uppercase tracking-[0.2em] text-text-tertiary mb-4">{title}</p>
+    <p className="text-sm text-text-tertiary mb-4">{title}</p>
     {members.length === 0 ? (
       <p className="text-sm text-text-secondary">No wedding party members yet.</p>
     ) : (
@@ -63,7 +63,7 @@ const WeddingPartySplitSides: React.FC<SectionComponentProps<WeddingPartySplitSi
     <section className="py-20 md:py-28 bg-surface" id="wedding-party">
       <div className="max-w-6xl mx-auto px-5 md:px-8">
         <div className="text-center mb-10 md:mb-14">
-          <p className="text-xs uppercase tracking-[0.24em] text-text-tertiary mb-3">{data.eyebrow}</p>
+          <p className="text-sm text-text-tertiary mb-3">{data.eyebrow}</p>
           <h2 className="text-3xl md:text-5xl font-light text-text-primary">{data.headline}</h2>
           {data.subheadline && <p className="mt-3 text-sm text-text-secondary">{data.subheadline}</p>}
         </div>

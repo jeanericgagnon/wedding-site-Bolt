@@ -387,7 +387,9 @@ export function getExecutionNextActionDetail(snapshot: Pick<NameChangeTargetExec
 }
 
 export function getExecutionStatusVaultNotes(
-  snapshot: Pick<NameChangeTargetExecutionSnapshot, 'targetKey' | 'nextAction' | 'statusVault'>,
+  snapshot: Pick<NameChangeTargetExecutionSnapshot, 'targetKey' | 'nextAction'> & {
+    statusVault: Pick<NameChangeTargetExecutionSnapshot['statusVault'], 'notes'>;
+  },
 ) {
   if (!snapshot.nextAction) {
     return snapshot.statusVault.notes;

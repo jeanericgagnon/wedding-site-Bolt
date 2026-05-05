@@ -3,12 +3,12 @@ import type { CoordinatorCommandState } from './coordinatorCommandState';
 export const getCoordinatorCommandModeLabel = (source: CoordinatorCommandState['source']) => {
   switch (source) {
     case 'primary-action':
-      return 'Primary action mode';
+      return 'Suggested action view';
     case 'escalation':
-      return 'Escalation mode';
+      return 'Needs attention view';
     case 'correction':
-      return 'Correction mode';
+      return 'Fix detail view';
     default:
-      return 'Live board mode';
+      return 'Day-of summary view';
   }
 };

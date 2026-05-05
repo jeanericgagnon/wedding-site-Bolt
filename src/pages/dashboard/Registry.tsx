@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
+import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, Button, ActionsMenu } from '../../components/ui';
-import { Gift, Plus, CheckCircle2, DollarSign, Search, Package, AlertCircle } from 'lucide-react';
+import { Gift, Plus, CheckCircle2, DollarSign, Search, Package, AlertCircle, Sparkles } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { useAuth } from '../../hooks/useAuth';
@@ -24,11 +25,20 @@ import { findDuplicateRegistryGroups } from './registry/duplicateRegistryItems';
 import { getCurrentMonthKey, resolveRegistryRefreshBudgetState } from './registry/refreshBudget';
 import { ageExceedsMs, formatRegistryItemDate, getRegistryItemTimestamp, isRegistryItemDue } from './registryItemTime';
 import { getWeddingRefreshWindowDate, parseRefreshWindowEndIso, toDateInputValueOrEmpty, toValidDateOrNull } from './registryRefreshWindow';
+import { copyTextOrDownload } from '../../lib/copyText';
+import { buildRegistryInsights } from '../../lib/invisibleIntelligence';
+import { logAppAction } from '../../lib/actionAudit';
+import { customerSafeErrorMessage } from '../../lib/customerSafeError';
+import { buildRegistryLaunchReadiness, buildRegistryThankYouPlan } from '../../lib/registryLaunchReadiness';
 
 interface Toast {
   id: number;
   message: string;
   type: 'success' | 'error';
+}
+
+function safeRegistryDashboardError(err: unknown, fallback: string): string {
+  return customerSafeErrorMessage(err, fallback);
 }
 
 function normalizeOwnerDashboardRegistryItem(item: RegistryItem): RegistryItem {
@@ -47,10 +57,10 @@ const ToastList: React.FC<{ toasts: Toast[] }> = ({ toasts }) => (
     {toasts.map(t => (
       <div
         key={t.id}
-        className={`px-4 py-3 rounded-xl shadow-lg text-sm font-medium border ${
+        className={`rounded-lg border bg-white px-4 py-3 text-sm font-medium text-text-primary ${
           t.type === 'error'
-            ? 'bg-error-light text-error border-error/20'
-            : 'bg-success-light text-success border-success/20'
+            ? 'border-border-subtle'
+            : 'border-success/20'
         }`}
       >
         {t.message}
@@ -149,6 +159,19 @@ export const DashboardRegistry: React.FC = () => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, message, type }]);
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
+  }
+
+  function logRegistryAction(type: string, summary: string, metadata?: Record<string, unknown>, targetId?: string | null, targetLabel?: string | null) {
+    if (!weddingSiteId) return;
+    void logAppAction({
+      weddingSiteId,
+      area: 'registry',
+      type,
+      summary,
+      targetId,
+      targetLabel,
+      metadata,
+    });
   }
 
   function toDemoRegistryItem(item: typeof demoRegistryItems[number], index: number): RegistryItem {
@@ -365,10 +388,22 @@ export const DashboardRegistry: React.FC = () => {
     if (editItem) {
       const updated = await updateRegistryItem(editItem.id, fields);
       setItems(prev => prev.map(i => (i.id === updated.id ? normalizeOwnerDashboardRegistryItem(updated) : i)));
+      logRegistryAction('registry_item_updated', 'Registry item was updated.', {
+        itemType: updated.item_type ?? 'product',
+        hideWhenPurchased: updated.hide_when_purchased,
+        purchaseStatus: updated.purchase_status,
+        quantityNeeded: updated.quantity_needed,
+      }, updated.id, updated.item_name);
       toast('Item updated');
     } else {
       const created = await createRegistryItem(weddingSiteId, fields);
       setItems(prev => [...prev, normalizeOwnerDashboardRegistryItem(created)]);
+      logRegistryAction('registry_item_created', 'Registry item was created.', {
+        itemType: created.item_type ?? 'product',
+        hideWhenPurchased: created.hide_when_purchased,
+        purchaseStatus: created.purchase_status,
+        quantityNeeded: created.quantity_needed,
+      }, created.id, created.item_name);
       toast('Item added to registry');
     }
 
@@ -378,10 +413,16 @@ export const DashboardRegistry: React.FC = () => {
 
   async function handleDelete(id: string) {
     try {
+      const item = items.find((candidate) => candidate.id === id);
       if (!isDemoMode) {
         await deleteRegistryItem(id);
       }
       setItems(prev => prev.filter(i => i.id !== id));
+      logRegistryAction('registry_item_deleted', 'Registry item was deleted.', {
+        purchaseStatus: item?.purchase_status ?? null,
+        quantityPurchased: item?.quantity_purchased ?? null,
+        quantityNeeded: item?.quantity_needed ?? null,
+      }, id, item?.item_name || 'Registry item');
       toast('Item removed');
     } catch {
       toast('Couldn’t remove that item. Please try again.', 'error');
@@ -404,6 +445,12 @@ export const DashboardRegistry: React.FC = () => {
         : await ownerMarkPurchased(item.id, qty);
 
       setItems(prev => prev.map(i => (i.id === updated.id ? normalizeOwnerDashboardRegistryItem(updated) : i)));
+      logRegistryAction('registry_purchase_marked', 'Registry purchase status was updated by the owner.', {
+        incrementBy: qty,
+        quantityPurchased: updated.quantity_purchased,
+        quantityNeeded: updated.quantity_needed,
+        purchaseStatus: updated.purchase_status,
+      }, updated.id, updated.item_name);
       toast(
         updated.purchase_status === 'purchased'
           ? `"${item.item_name}" marked as fully purchased`
@@ -418,7 +465,7 @@ export const DashboardRegistry: React.FC = () => {
     const url = item.item_url ?? item.canonical_url;
     if (!url) return false;
     if (isDemoMode) {
-      if (!silent) toast(replaceExisting ? 'Demo: sample product details are already fully re-imported' : 'Demo: sample product details are already populated', 'success');
+        if (!silent) toast(replaceExisting ? 'Demo: sample gift details are already refreshed' : 'Demo: sample gift details are already filled in', 'success');
       return true;
     }
     try {
@@ -450,13 +497,19 @@ export const DashboardRegistry: React.FC = () => {
       if (Object.keys(fields).length > 0) {
         const updated = await updateRegistryItem(item.id, fields);
         setItems(prev => prev.map(i => (i.id === updated.id ? normalizeOwnerDashboardRegistryItem(updated) : i)));
-        if (!silent) toast(replaceExisting ? 'Item re-imported from source link' : 'Product details refreshed');
+        logRegistryAction(replaceExisting ? 'registry_metadata_reimported' : 'registry_metadata_refreshed', replaceExisting ? 'Registry item details were refreshed from the source.' : 'Registry item details were refreshed.', {
+          fetchStatus: fields.metadata_fetch_status,
+          hasImage: Boolean(updated.image_url),
+          hasPrice: updated.price_amount != null || Boolean(updated.price_label),
+          replaceExisting,
+        }, updated.id, updated.item_name);
+        if (!silent) toast(replaceExisting ? 'Gift details refreshed from the link' : 'Gift details refreshed');
       } else if (!silent) {
         toast('No new details found — details are up to date');
       }
       return true;
     } catch {
-      if (!silent) toast(replaceExisting ? 'Couldn’t re-import this item right now. Try Edit if the source page is weak.' : 'Couldn’t refresh product details right now. Please try again.', 'error');
+      if (!silent) toast(replaceExisting ? 'Couldn’t refresh this gift right now. Try Edit if the store page is light on details.' : 'Couldn’t refresh gift details right now. Please try again.', 'error');
       return false;
     }
   }
@@ -476,12 +529,15 @@ export const DashboardRegistry: React.FC = () => {
     setImageRefreshBusy(true);
     let ok = 0;
     for (const item of candidates) {
-      // eslint-disable-next-line no-await-in-loop
       const refreshed = await handleRefetchMetadata(item, true);
       if (refreshed) ok += 1;
     }
     setImageRefreshBusy(false);
-    toast(`Refreshed ${ok}/${candidates.length} image-issue item${candidates.length === 1 ? '' : 's'}.`, ok > 0 ? 'success' : 'error');
+    logRegistryAction('registry_image_issues_refreshed', 'Registry image-issue items were refreshed.', {
+      candidateCount: candidates.length,
+      refreshedCount: ok,
+    });
+    toast(`Refreshed photos for ${ok}/${candidates.length} gift${candidates.length === 1 ? '' : 's'}.`, ok > 0 ? 'success' : 'error');
   }
 
 
@@ -492,11 +548,11 @@ export const DashboardRegistry: React.FC = () => {
       return;
     }
     const payload = lines.join('\n');
-    try {
-      await navigator.clipboard.writeText(payload);
+    const result = await copyTextOrDownload(payload, 'dayof-registry-duplicate-review.txt');
+    if (result === 'copied') {
       toast('Copied duplicate review list');
-    } catch {
-      window.prompt('Copy duplicate review list:', payload);
+    } else {
+      toast('Clipboard was blocked, so the duplicate review list downloaded.');
     }
   }
 
@@ -508,19 +564,22 @@ export const DashboardRegistry: React.FC = () => {
       .slice(0, 20);
 
     if (candidates.length === 0) {
-      toast('No repairable bad imports found.');
+      toast('No gift links need cleanup.');
       return;
     }
 
     setRepairingBadImports(true);
     let repaired = 0;
     for (const item of candidates) {
-      // eslint-disable-next-line no-await-in-loop
       const refreshed = await handleRefetchMetadata(item, true);
       if (refreshed) repaired += 1;
     }
     setRepairingBadImports(false);
-    toast(`Repaired ${repaired}/${candidates.length} bad import${candidates.length === 1 ? '' : 's'}.`, repaired > 0 ? 'success' : 'error');
+    logRegistryAction('registry_bad_imports_repaired', 'Registry gift cleanup was run.', {
+      candidateCount: candidates.length,
+      repairedCount: repaired,
+    });
+    toast(`Refreshed ${repaired}/${candidates.length} gift detail${candidates.length === 1 ? '' : 's'}.`, repaired > 0 ? 'success' : 'error');
   }
 
   async function handleAutoRefreshStale(silent = false, alertsOnly = false) {
@@ -533,7 +592,7 @@ export const DashboardRegistry: React.FC = () => {
     const budgetState = await ensureMonthlyBudgetState();
     const remaining = Math.max(0, monthlyRefreshCap - budgetState.count);
     if (remaining <= 0) {
-      if (!silent) toast('Monthly refresh budget reached for this registry.');
+      if (!silent) toast('Monthly gift refresh limit reached for this registry.');
       return;
     }
 
@@ -552,7 +611,7 @@ export const DashboardRegistry: React.FC = () => {
       .slice(0, Math.min(12, remaining));
 
     if (staleCandidates.length === 0) {
-      if (!silent) toast('Registry metadata is already fresh.');
+      if (!silent) toast('Gift details are already fresh.');
       return;
     }
 
@@ -617,6 +676,14 @@ export const DashboardRegistry: React.FC = () => {
           .eq('id', weddingSiteId);
       }
     }
+    if (updatedCount > 0) {
+      logRegistryAction(alertsOnly ? 'registry_alert_items_refreshed' : 'registry_stale_items_refreshed', 'Registry items were refreshed in bulk.', {
+        updatedCount,
+        candidateCount: staleCandidates.length,
+        alertsOnly,
+        remainingMonthlyBudget: Math.max(0, monthlyRefreshCap - (budgetState.count + updatedCount)),
+      });
+    }
     if (!silent) toast(`Refreshed ${updatedCount} ${alertsOnly ? 'alert ' : ''}item${updatedCount === 1 ? '' : 's'}.`);
   }
 
@@ -624,7 +691,7 @@ export const DashboardRegistry: React.FC = () => {
     if (!weddingSiteId) return;
     const urls = Array.from(new Set(bulkUrls.split('\n').map((u) => u.trim()).filter(Boolean)));
     if (urls.length === 0) {
-      toast('Paste at least one URL to import.', 'error');
+      toast('Paste at least one gift link.', 'error');
       return;
     }
 
@@ -632,7 +699,7 @@ export const DashboardRegistry: React.FC = () => {
     let createdCount = 0;
     let failedCount = 0;
     let invalidUrlCount = 0;
-    const skippedExamples: string[] = [];
+    const reviewExamples: string[] = [];
     for (const url of urls.slice(0, 30)) {
       try {
         let hostname = '';
@@ -641,7 +708,7 @@ export const DashboardRegistry: React.FC = () => {
         } catch {
           invalidUrlCount += 1;
           failedCount += 1;
-          if (skippedExamples.length < 3) skippedExamples.push(`${url} (invalid URL)`);
+          if (reviewExamples.length < 3) reviewExamples.push(`${url} (check the link)`);
           continue;
         }
 
@@ -672,7 +739,7 @@ export const DashboardRegistry: React.FC = () => {
         createdCount += 1;
       } catch {
         failedCount += 1;
-        if (skippedExamples.length < 3) skippedExamples.push(`${url} (fetch failed)`);
+        if (reviewExamples.length < 3) reviewExamples.push(`${url} (add details by hand)`);
       }
     }
 
@@ -680,14 +747,22 @@ export const DashboardRegistry: React.FC = () => {
     setBulkImportOpen(false);
     setBulkUrls('');
     if (failedCount > 0) {
-      toast(`Imported ${createdCount} item${createdCount === 1 ? '' : 's'} (${failedCount} skipped).`, createdCount > 0 ? 'success' : 'error');
+      toast(`Added ${createdCount} gift${createdCount === 1 ? '' : 's'} (${failedCount} need review).`, createdCount > 0 ? 'success' : 'error');
       const details = [
-        invalidUrlCount > 0 ? `${invalidUrlCount} invalid URL${invalidUrlCount === 1 ? '' : 's'}` : null,
-        skippedExamples.length > 0 ? `Examples: ${skippedExamples.join(' • ')}` : null,
+        invalidUrlCount > 0 ? `${invalidUrlCount} link${invalidUrlCount === 1 ? '' : 's'} need a quick fix` : null,
+        reviewExamples.length > 0 ? `Examples: ${reviewExamples.join(' • ')}` : null,
       ].filter(Boolean).join(' — ');
       if (details) toast(details, 'error');
     } else {
-      toast(`Imported ${createdCount} item${createdCount === 1 ? '' : 's'} from URLs.`);
+      toast(`Added ${createdCount} gift${createdCount === 1 ? '' : 's'} from links.`);
+    }
+    if (createdCount > 0 || failedCount > 0) {
+      logRegistryAction('registry_bulk_import_completed', 'Registry bulk URL import completed.', {
+        urlCount: urls.slice(0, 30).length,
+        createdCount,
+        failedCount,
+        invalidUrlCount,
+      });
     }
   }
 
@@ -720,9 +795,15 @@ export const DashboardRegistry: React.FC = () => {
       setRefreshEnabledUntil(untilIso);
       setPolicyUpdatedAt(new Date().toISOString());
       setPolicyUpdatedBy(user?.id ?? null);
+      logRegistryAction('registry_refresh_policy_saved', 'Registry refresh policy was updated.', {
+        monthlyRefreshCap: cap,
+        refreshEnabledUntil: untilIso,
+        autoRefreshEnabled,
+        refreshIncludePurchased,
+      }, weddingSiteId, 'Registry refresh policy');
       toast('Refresh policy saved.');
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'Couldn’t save refresh settings right now. Please try again.', 'error');
+      toast(safeRegistryDashboardError(err, 'Couldn’t save refresh settings right now. Please try again.'), 'error');
     } finally {
       setSavingRefreshPolicy(false);
     }
@@ -753,6 +834,7 @@ export const DashboardRegistry: React.FC = () => {
     setMonthlyRefreshMonth(monthKey);
     setPolicyUpdatedAt(new Date().toISOString());
     setPolicyUpdatedBy(user?.id ?? null);
+    logRegistryAction('registry_refresh_counter_reset', 'Registry monthly refresh counter was reset.', { monthKey }, weddingSiteId, 'Registry refresh policy');
     toast('Monthly refresh counter reset.');
   }
 
@@ -788,7 +870,7 @@ export const DashboardRegistry: React.FC = () => {
 
   useEffect(() => {
     if (loading || isDemoMode || items.length === 0) return;
-    const hasStale = normalizedItems.some((item) => ageExceedsMs(item.metadata_last_checked_at, WEEKLY_REFRESH_MS));
+    const hasStale = normalizedItems.some((item) => !item.metadata_last_checked_at || (Date.now() - new Date(item.metadata_last_checked_at).getTime()) > WEEKLY_REFRESH_MS);
     if (!hasStale) return;
     handleAutoRefreshStale(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -857,6 +939,15 @@ export const DashboardRegistry: React.FC = () => {
       return bProgress - aProgress;
     })
     .slice(0, 5);
+  const registryInsights = buildRegistryInsights(normalizedItems.map((item) => ({
+    category: item.item_type === 'cash_fund' ? 'cash funds' : null,
+    store_name: item.store_name ?? item.merchant,
+    item_name: item.item_name,
+    image_url: item.image_url,
+    price: item.price_amount,
+  }))).slice(0, 3);
+  const registryLaunchReadiness = buildRegistryLaunchReadiness(normalizedItems);
+  const registryThankYouPlan = buildRegistryThankYouPlan(normalizedItems);
 
   const alertCounts = {
     stale: normalizedItems.filter((i) => ageExceedsMs(i.metadata_last_checked_at, 1000 * 60 * 60 * 24)).length,
@@ -876,22 +967,19 @@ export const DashboardRegistry: React.FC = () => {
 
   return (
     <DashboardLayout currentPage="registry">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="max-w-[1100px] mx-auto space-y-5">
 
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-text-primary mb-1">Gift Registry</h1>
-            <p className="text-sm text-text-secondary">
-              Paste any product URL to import items from any store · prices auto-refresh weekly
-            </p>
-            <div className="mt-2 inline-flex items-center gap-2 text-[11px] text-text-tertiary">
-              <span className="px-2 py-0.5 rounded-full border border-border-subtle bg-surface-subtle">
-                {autoRefreshEnabled ? (refreshWindowOpen ? 'Auto-refresh on' : 'Refresh window closed') : 'Auto-refresh paused'}
-              </span>
-              <span>Budget {monthlyRefreshCount}/{monthlyRefreshCap}</span>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
+        <DashboardPageHero
+          eyebrow="Registry"
+          title="Keep gifts helpful, optional, and easy for guests."
+          description="Add links from any store, keep images and availability fresh, and show gentle registry ideas without making the page feel pushy."
+          stats={[
+            { label: 'Gifts', value: counts.total, detail: `${counts.available + counts.partial} still available` },
+            { label: 'Purchased', value: counts.purchased, detail: `${fulfillmentRate}% complete` },
+            { label: 'Worth checking', value: alertCounts.stale + alertCounts.priceChanged + alertCounts.outOfStock, detail: 'quick review items' },
+          ]}
+          actions={
+            <>
             <ActionsMenu
               label="More"
               open={registryActionsOpen}
@@ -906,31 +994,44 @@ export const DashboardRegistry: React.FC = () => {
                 {imageRefreshBusy ? 'Refreshing image issues…' : 'Refresh image issues'}
               </Button>
               <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { setBulkImportOpen(true); setRegistryActionsOpen(false); }} disabled={!weddingSiteId}>
-Import a list of links
+Add a list of links
               </Button>
               <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { void handleRepairBadImports(); setRegistryActionsOpen(false); }} disabled={repairingBadImports}>
                 {repairingBadImports ? 'Cleaning up imported gifts…' : 'Clean up imported gifts'}
               </Button>
               <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { void handleAutoRefreshStale(false); setRegistryActionsOpen(false); }} disabled={!weddingSiteId || autoRefreshing || !refreshWindowOpen || refreshBudgetRemaining <= 0}>
-                {autoRefreshing ? 'Refreshing…' : 'Refresh weekly stale metadata'}
+                {autoRefreshing ? 'Refreshing…' : 'Refresh stale gift details'}
               </Button>
               <Button variant="outline" size="sm" className="w-full justify-start" onClick={() => { void handleAutoRefreshStale(false, true); setRegistryActionsOpen(false); }} disabled={!weddingSiteId || autoRefreshing || !refreshWindowOpen || refreshBudgetRemaining <= 0}>
-                {autoRefreshing ? 'Refreshing…' : 'Refresh alert items'}
+                {autoRefreshing ? 'Refreshing…' : 'Refresh gifts worth checking'}
               </Button>
             </ActionsMenu>
             <Button variant="primary" size="md" onClick={handleAddNew} disabled={!weddingSiteId}>
               <Plus className="w-4 h-4" />
-              Add Item
+              Add gift
             </Button>
+            </>
+          }
+        >
+          <div className="inline-flex flex-wrap items-center gap-2 text-[11px] text-text-tertiary">
+            <span className="rounded-lg border border-border-subtle bg-white px-2 py-0.5">
+              {autoRefreshEnabled ? (refreshWindowOpen ? 'Weekly refresh on' : 'Refresh window closed') : 'Refresh paused'}
+            </span>
+            <span>Monthly refreshes {monthlyRefreshCount}/{monthlyRefreshCap}</span>
           </div>
-        </div>
+        </DashboardPageHero>
 
+        <details className="rounded-lg border border-border-subtle bg-white/80 p-4">
+          <summary className="cursor-pointer list-none text-sm font-semibold text-text-primary">
+            Gift snapshot and review details
+          </summary>
+          <div className="mt-4 space-y-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { icon: Gift, bg: 'bg-primary-light', color: 'text-primary', val: counts.total, label: 'Total Items' },
+            { icon: Gift, bg: 'bg-primary-light', color: 'text-primary', val: counts.total, label: 'Gifts' },
             { icon: CheckCircle2, bg: 'bg-success-light', color: 'text-success', val: counts.purchased, label: 'Purchased' },
             { icon: Package, bg: 'bg-surface-subtle', color: 'text-text-secondary', val: counts.available + counts.partial, label: 'Remaining' },
-            { icon: DollarSign, bg: 'bg-primary-light', color: 'text-primary', val: `$${counts.totalValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}`, label: 'Est. Value' },
+            { icon: DollarSign, bg: 'bg-primary-light', color: 'text-primary', val: `$${counts.totalValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}`, label: 'Estimated value' },
           ].map(({ icon: Icon, bg, color, val, label }) => (
             <Card key={label} variant="bordered" padding="md">
               <div className="flex items-center gap-3">
@@ -948,26 +1049,55 @@ Import a list of links
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <Card variant="bordered" padding="md">
-            <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Fulfillment rate</p>
+            <p className="text-xs font-medium text-text-tertiary">Gift progress</p>
             <p className="mt-1 text-2xl font-bold text-text-primary">{fulfillmentRate}%</p>
-            <p className="mt-1 text-xs text-text-secondary">Purchased items out of total registry items</p>
+            <p className="mt-1 text-xs text-text-secondary">Items already marked purchased</p>
           </Card>
           <Card variant="bordered" padding="md">
-            <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Cash funds</p>
+            <p className="text-xs font-medium text-text-tertiary">Cash funds</p>
             <p className="mt-1 text-2xl font-bold text-text-primary">{fundStats.count}</p>
-            <p className="mt-1 text-xs text-text-secondary">Fund-based registry entries live</p>
+            <p className="mt-1 text-xs text-text-secondary">Funds visible to guests</p>
           </Card>
           <Card variant="bordered" padding="md">
-            <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Fund progress</p>
+            <p className="text-xs font-medium text-text-tertiary">Fund gifts</p>
             <p className="mt-1 text-2xl font-bold text-text-primary">${fundStats.received.toLocaleString('en-US', { maximumFractionDigits: 0 })}</p>
             <p className="mt-1 text-xs text-text-secondary">Received toward ${fundStats.goal.toLocaleString('en-US', { maximumFractionDigits: 0 })} goal</p>
           </Card>
           <Card variant="bordered" padding="md">
-            <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Alert load</p>
+            <p className="text-xs font-medium text-text-tertiary">Worth checking</p>
             <p className="mt-1 text-2xl font-bold text-text-primary">{alertCounts.stale + alertCounts.priceChanged + alertCounts.outOfStock}</p>
-            <p className="mt-1 text-xs text-text-secondary">Items needing freshness or availability review</p>
+            <p className="mt-1 text-xs text-text-secondary">Items that may need a quick review</p>
           </Card>
         </div>
+
+        {registryInsights.length > 0 && (
+          <Card variant="bordered" padding="lg">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" aria-hidden="true" />
+              <h2 className="text-base font-semibold text-text-primary">Registry quick check</h2>
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              {registryInsights.map((insight) => (
+                <div key={insight.id} className="rounded-lg border border-border-subtle bg-surface-subtle/20 p-4">
+                  <p className="text-sm font-semibold text-text-primary">{insight.title}</p>
+                  <p className="mt-1 text-sm leading-6 text-text-secondary">{insight.detail}</p>
+                  <button
+                    type="button"
+                    className="mt-3 text-xs font-semibold text-primary hover:underline"
+                    onClick={() => {
+                      if (insight.id === 'registry-metadata-images') {
+                        setShowImageIssuesOnly(true);
+                        setShowAlertsOnly(false);
+                      }
+                    }}
+                  >
+                    {insight.actionLabel}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
 
         <div className="grid gap-4 lg:grid-cols-3">
           <Card variant="bordered" padding="lg">
@@ -983,8 +1113,8 @@ Import a list of links
                       <p className="text-sm font-medium text-text-primary">{item.item_name}</p>
                       <span className="text-xs text-text-tertiary">{item.quantity_purchased ?? 0}/{item.quantity_needed ?? 1}</span>
                     </div>
-                    <div className="mt-2 h-2 rounded-full bg-surface-subtle overflow-hidden">
-                      <div className="h-full bg-primary" style={{ width: `${progress}%` }} />
+                    <div className="mt-2 h-2 overflow-hidden rounded-lg bg-surface-subtle">
+                      <div className="h-full rounded-lg bg-primary" style={{ width: `${progress}%` }} />
                     </div>
                   </div>
                 );
@@ -1010,7 +1140,7 @@ Import a list of links
           </Card>
 
           <Card variant="bordered" padding="lg">
-            <p className="text-sm font-semibold text-text-primary">Registry analytics notes</p>
+            <p className="text-sm font-semibold text-text-primary">Registry notes</p>
             <div className="mt-3 space-y-2.5 text-sm text-text-secondary">
               <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
                 Purchased: <span className="font-semibold text-text-primary">{counts.purchased}</span> · Remaining: <span className="font-semibold text-text-primary">{counts.available + counts.partial}</span>
@@ -1024,6 +1154,87 @@ Import a list of links
             </div>
           </Card>
         </div>
+          </div>
+        </details>
+
+        <Card variant="bordered" padding="lg" className="border-border-subtle bg-white">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div>
+              <p className="text-xs font-medium text-text-tertiary">Guest-ready registry check</p>
+              <h2 className="mt-2 text-xl font-semibold text-text-primary">{registryLaunchReadiness.headline}</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">{registryLaunchReadiness.summary}</p>
+            </div>
+            <div className={`rounded-lg border px-3 py-2 text-xs font-semibold ${
+              registryLaunchReadiness.status === 'ready'
+                ? 'border-success/20 bg-success-light text-success'
+                : registryLaunchReadiness.status === 'needs-review'
+                  ? 'border-border-subtle bg-primary-light text-primary'
+                  : 'border-border-subtle bg-surface-subtle text-text-secondary'
+            }`}>
+              {registryLaunchReadiness.status === 'ready' ? 'Guest-ready' : registryLaunchReadiness.status === 'needs-review' ? `${registryLaunchReadiness.reviewCount} to review` : 'Empty'}
+            </div>
+          </div>
+          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+            {registryLaunchReadiness.items.map((item) => (
+              <div key={item.id} className="rounded-lg border border-border-subtle bg-surface-subtle/25 px-4 py-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-text-primary">{item.label}</p>
+                  <span className={`rounded-lg border px-2 py-0.5 text-[11px] font-medium ${
+                    item.tone === 'review'
+                      ? 'border-border-subtle bg-white text-primary'
+                      : item.tone === 'planned'
+                        ? 'border-border-subtle bg-white text-text-secondary'
+                        : 'border-success/20 bg-success-light text-success'
+                  }`}>
+                    {item.tone === 'review' ? 'Review' : item.tone === 'planned' ? 'Planned' : 'Ready'}
+                  </span>
+                </div>
+                <p className="mt-2 text-xs leading-5 text-text-secondary">{item.detail}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card variant="bordered" padding="lg" className="border-border-subtle bg-white">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div>
+              <p className="text-xs font-medium text-text-tertiary">Thank-you tracking preview</p>
+              <h2 className="mt-2 text-xl font-semibold text-text-primary">{registryThankYouPlan.headline}</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">{registryThankYouPlan.summary}</p>
+            </div>
+            <div className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2 text-xs font-semibold text-text-secondary">
+              {registryThankYouPlan.namedPurchaserCount}/{registryThankYouPlan.purchasedCount} named
+            </div>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <div className="rounded-lg border border-border-subtle bg-surface-subtle/25 px-4 py-3">
+              <p className="text-xs font-medium text-text-tertiary">Purchased gifts</p>
+              <p className="mt-1 text-2xl font-semibold text-text-primary">{registryThankYouPlan.purchasedCount}</p>
+            </div>
+            <div className="rounded-lg border border-border-subtle bg-surface-subtle/25 px-4 py-3">
+              <p className="text-xs font-medium text-text-tertiary">Purchaser names</p>
+              <p className="mt-1 text-2xl font-semibold text-text-primary">{registryThankYouPlan.namedPurchaserCount}</p>
+            </div>
+            <div className="rounded-lg border border-border-subtle bg-surface-subtle/25 px-4 py-3">
+              <p className="text-xs font-medium text-text-tertiary">Needs name</p>
+              <p className="mt-1 text-2xl font-semibold text-text-primary">{registryThankYouPlan.missingPurchaserCount}</p>
+            </div>
+          </div>
+          {registryThankYouPlan.items.length > 0 && (
+            <div className="mt-4 grid gap-2 md:grid-cols-2">
+              {registryThankYouPlan.items.map((item) => (
+                <div key={item.id} className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3">
+                  <p className="text-sm font-semibold text-text-primary">{item.giftName}</p>
+                  <p className="mt-1 text-xs text-text-secondary">{item.purchaserLabel}</p>
+                  <p className="mt-2 text-xs leading-5 text-text-tertiary">{item.detail}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          <p className="mt-4 text-xs leading-5 text-text-tertiary">
+            This is a review surface only. Thank-you tasks stay planned until task creation and readback are connected.
+          </p>
+        </Card>
 
         <Card variant="bordered" padding="lg">
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -1044,7 +1255,7 @@ Import a list of links
                   onClick={() => setFilter(tab.key)}
                   className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap ${
                     filter === tab.key
-                      ? 'bg-surface text-text-primary shadow-sm'
+                      ? 'bg-surface text-text-primary ring-1 ring-border-subtle'
                       : 'text-text-secondary hover:text-text-primary'
                   }`}
                 >
@@ -1060,13 +1271,13 @@ Import a list of links
           <div className="mb-4 flex flex-wrap items-center gap-2 text-xs">
             <button
               onClick={() => setShowAlertsOnly((v) => !v)}
-              className={`px-2.5 py-1 rounded-full border text-xs font-medium ${showAlertsOnly ? 'border-warning/40 bg-warning/10 text-warning' : 'border-border text-text-tertiary'}`}
+              className={`rounded-lg border px-2.5 py-1 text-xs font-medium ${showAlertsOnly ? 'border-border-subtle bg-primary-light text-primary' : 'border-border text-text-tertiary'}`}
             >
-              {showAlertsOnly ? 'Showing alerts only' : 'Show alerts only'}
+              {showAlertsOnly ? 'Showing review items' : 'Show review items'}
             </button>
             <button
               onClick={() => setShowImageIssuesOnly((v) => !v)}
-              className={`px-2.5 py-1 rounded-full border text-xs font-medium ${showImageIssuesOnly ? 'border-sky-300 bg-sky-50 text-sky-700' : 'border-border text-text-tertiary'}`}
+              className={`rounded-lg border px-2.5 py-1 text-xs font-medium ${showImageIssuesOnly ? 'border-border-subtle bg-primary-light text-primary' : 'border-border text-text-tertiary'}`}
             >
               {showImageIssuesOnly ? 'Showing image issues' : 'Show image issues'}
             </button>
@@ -1075,74 +1286,74 @@ Import a list of links
                 <button
                   onClick={() => void handleRefreshImageIssues()}
                   disabled={imageRefreshBusy}
-                  className="px-2 py-1 rounded-full border border-sky-200 bg-sky-50 text-sky-700 text-xs font-medium disabled:opacity-60"
+                  className="rounded-lg border border-border-subtle bg-primary-light px-2 py-1 text-xs font-medium text-primary disabled:opacity-60"
                 >
                   {imageRefreshBusy ? 'Refreshing…' : 'Fix image issues now'}
                 </button>
                 <button
                   onClick={() => setShowImageIssuesOnly(false)}
-                  className="px-2 py-1 rounded-full border border-border text-text-tertiary"
+                  className="rounded-lg border border-border px-2 py-1 text-text-tertiary"
                 >
                   Clear
                 </button>
               </>
             )}
-            <span className="px-2 py-1 rounded-full border border-border text-text-tertiary text-xs font-medium">
-              Alerts: {alertCounts.stale + alertCounts.priceChanged + alertCounts.outOfStock}
+            <span className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-text-tertiary">
+              Review: {alertCounts.stale + alertCounts.priceChanged + alertCounts.outOfStock}
             </span>
-            <span className="px-2 py-1 rounded-full border border-border text-text-tertiary text-xs font-medium">
+            <span className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-text-tertiary">
               Image issues: {alertCounts.imageIssues}
             </span>
-            <span className="px-2 py-1 rounded-full border border-border text-text-tertiary text-xs font-medium">
-              Imported gifts to fix: {actionableBadImportCount}
+            <span className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-text-tertiary">
+              Gifts to review: {actionableBadImportCount}
             </span>
-            <span className="px-2 py-1 rounded-full border border-border text-text-tertiary text-xs font-medium">
-              Repair states: {normalizedItems.filter((item) => getRegistryRepairStates(item).length > 0).length}
+            <span className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-text-tertiary">
+              Needs cleanup: {normalizedItems.filter((item) => getRegistryRepairStates(item).length > 0).length}
             </span>
-            <span className="px-2 py-1 rounded-full border border-border text-text-tertiary text-xs font-medium">
+            <span className="rounded-lg border border-border px-2 py-1 text-xs font-medium text-text-tertiary">
               Duplicate groups: {duplicateGroups.length}
             </span>
             {actionableBadImportCount > 0 && (
               <button
                 onClick={() => void handleRepairBadImports()}
                 disabled={repairingBadImports}
-                className="px-2 py-1 rounded-full border border-warning/30 bg-warning/10 text-warning text-xs font-medium disabled:opacity-60"
+                className="rounded-lg border border-border-subtle bg-primary-light px-2 py-1 text-xs font-medium text-primary disabled:opacity-60"
               >
                 {repairingBadImports ? 'Cleaning up…' : 'Clean up imported gifts'}
               </button>
             )}
-            <span className={`px-2 py-1 rounded-full border ${nearBudgetCap ? 'border-warning/40 text-warning bg-warning/10' : 'border-border text-text-tertiary'}`}>
-              Budget used: {Math.round(budgetUtilization * 100)}%
+            <span className={`rounded-lg border px-2 py-1 ${nearBudgetCap ? 'border-border-subtle bg-primary-light text-primary' : 'border-border text-text-tertiary'}`}>
+              Refresh room used: {Math.round(budgetUtilization * 100)}%
             </span>
           </div>
 
           <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
-              <p className="text-xs uppercase tracking-wide text-text-tertiary">Bulk review · repair</p>
+            <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 p-4">
+              <p className="text-xs text-text-tertiary">Could use details</p>
               <p className="mt-1 text-lg font-semibold text-text-primary">{bulkReviewCounts.repair}</p>
             </div>
-            <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
-              <p className="text-xs uppercase tracking-wide text-text-tertiary">Bulk review · duplicates</p>
+            <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 p-4">
+              <p className="text-xs text-text-tertiary">Possible repeats</p>
               <p className="mt-1 text-lg font-semibold text-text-primary">{bulkReviewCounts.duplicates}</p>
             </div>
-            <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-4">
-              <p className="text-xs uppercase tracking-wide text-text-tertiary">Bulk review · image issues</p>
+            <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 p-4">
+              <p className="text-xs text-text-tertiary">Needs better image</p>
               <p className="mt-1 text-lg font-semibold text-text-primary">{bulkReviewCounts.imageIssues}</p>
             </div>
           </div>
 
-          <div className="mb-3 rounded-xl border border-border-subtle bg-surface-subtle/20 p-4 text-xs text-text-secondary">
-            Cleanup tools help repair weak imports and spot duplicates, but they do not silently merge or delete items for you. Review anything important before making public changes.
+          <div className="mb-3 rounded-lg border border-border-subtle bg-surface-subtle/20 p-4 text-xs text-text-secondary">
+            These tools help tidy imported links and spot repeated gifts. Nothing is merged or deleted unless you choose it.
           </div>
 
           <div className="mb-4 flex flex-wrap gap-2">
-            {bulkReviewCounts.repair > 0 && <button onClick={() => void handleRepairBadImports()} disabled={repairingBadImports} className="px-3 py-1.5 rounded-lg border border-warning/30 bg-warning/10 text-warning text-xs font-medium disabled:opacity-60" title="Re-fetch weak imports without deleting items">{repairingBadImports ? 'Cleaning up…' : 'Run repair cleanup'}</button>}
-            {bulkReviewCounts.imageIssues > 0 && <button onClick={() => void handleRefreshImageIssues()} disabled={imageRefreshBusy} className="px-3 py-1.5 rounded-lg border border-sky-200 bg-sky-50 text-sky-700 text-xs font-medium disabled:opacity-60">{imageRefreshBusy ? 'Refreshing…' : 'Refresh image issues'}</button>}
-            {duplicateGroups.length > 0 && <button onClick={() => void handleCopyDuplicateReviewList()} className="px-3 py-1.5 rounded-lg border border-border text-text-secondary text-xs font-medium" title="Review duplicates manually before removing anything">Copy duplicate review list</button>}
+            {bulkReviewCounts.repair > 0 && <button onClick={() => void handleRepairBadImports()} disabled={repairingBadImports} className="rounded-lg border border-border-subtle bg-primary-light px-3 py-1.5 text-xs font-medium text-primary disabled:opacity-60" title="Refresh weaker gift details without deleting items">{repairingBadImports ? 'Cleaning up…' : 'Review details'}</button>}
+            {bulkReviewCounts.imageIssues > 0 && <button onClick={() => void handleRefreshImageIssues()} disabled={imageRefreshBusy} className="rounded-lg border border-border-subtle bg-primary-light px-3 py-1.5 text-xs font-medium text-primary disabled:opacity-60">{imageRefreshBusy ? 'Refreshing…' : 'Refresh image issues'}</button>}
+            {duplicateGroups.length > 0 && <button onClick={() => void handleCopyDuplicateReviewList()} className="px-3 py-1.5 rounded-lg border border-border text-text-secondary text-xs font-medium" title="Review duplicates before removing anything">Copy duplicate review list</button>}
           </div>
 
           {duplicateGroups.length > 0 && (
-            <div className="mb-4 rounded-xl border border-warning/30 bg-warning/10 p-4 text-sm text-warning space-y-2">
+            <div className="mb-4 rounded-lg border border-border-subtle bg-surface-subtle/20 p-4 text-sm text-text-secondary space-y-2">
               <p className="font-medium">Possible duplicate gifts found</p>
               <div className="space-y-1 text-xs">
                 {duplicateGroups.slice(0, 4).map((group, index) => (
@@ -1159,7 +1370,7 @@ Import a list of links
             <DashboardStateBlock title="No wedding site found" description="Complete onboarding first to set up your registry." />
           ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
-              <div className="w-16 h-16 rounded-full bg-surface-subtle flex items-center justify-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-surface-subtle">
                 <Gift className="w-8 h-8 text-text-tertiary" />
               </div>
               <div>
@@ -1207,13 +1418,13 @@ Import a list of links
 
       {bulkImportOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl bg-surface rounded-2xl border border-border shadow-xl p-5 space-y-4">
+          <div className="w-full max-w-2xl space-y-4 rounded-lg border border-border bg-surface p-5">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-text-primary">Bulk import registry URLs</h3>
+              <h3 className="text-lg font-semibold text-text-primary">Add gift links</h3>
               <button className="text-text-tertiary hover:text-text-primary" onClick={() => setBulkImportOpen(false)}>Close</button>
             </div>
-            <p className="text-sm text-text-secondary">Paste one URL per line (up to 30). We'll auto-fetch metadata and add items.</p>
-            <p className="text-xs text-text-tertiary">If some URLs are skipped, you'll see invalid/fetch-failed examples so you can quickly fix and retry.</p>
+            <p className="text-sm text-text-secondary">Paste one link per line (up to 30). We’ll fill what we can and add the gifts to your registry.</p>
+            <p className="text-xs text-text-tertiary">If some links need review, you’ll see a short note so you can fix and retry.</p>
             <textarea
               value={bulkUrls}
               onChange={(e) => setBulkUrls(e.target.value)}
@@ -1224,7 +1435,7 @@ Import a list of links
             <div className="flex items-center justify-end gap-2">
               <Button variant="ghost" size="sm" onClick={() => setBulkImportOpen(false)}>Cancel</Button>
               <Button variant="primary" size="sm" onClick={handleBulkImport} disabled={bulkImportBusy}>
-                {bulkImportBusy ? 'Importing…' : 'Import URLs'}
+                {bulkImportBusy ? 'Adding…' : 'Add links'}
               </Button>
             </div>
           </div>

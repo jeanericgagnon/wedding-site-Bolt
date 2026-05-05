@@ -46,7 +46,7 @@ export function buildAnalyticsBaseline(input: AnalyticsBaselineInput): Analytics
       source: 'measured',
     },
     {
-      label: 'Contact coverage',
+      label: 'Reachable guests',
       value: `${contactCoverage}%`,
       detail: `${input.contactableGuests} of ${input.totalGuests} guests have email or phone contact available.`,
       source: 'derived',

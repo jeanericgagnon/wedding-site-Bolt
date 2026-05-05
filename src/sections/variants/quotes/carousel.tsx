@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { z } from 'zod';
 import { ChevronLeft, ChevronRight, Quote } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
+import { getSafePublicImageUrl } from '../../publicLinks';
 
 const QuoteItemSchema = z.object({
   id: z.string(),
@@ -59,13 +60,14 @@ const QuotesCarousel: React.FC<SectionComponentProps<QuotesCarouselData>> = ({ d
   if (total === 0) return null;
 
   const q = data.quotes[current];
+  const photo = getSafePublicImageUrl(q.photo);
 
   return (
     <section className={`relative overflow-hidden py-28 md:py-36 ${colors.section}`} id="quotes">
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top,rgba(244,63,94,0.10),transparent_55%)]" />
       <div className="relative max-w-3xl mx-auto px-6 md:px-12 text-center">
         {data.eyebrow && (
-          <p className="text-xs uppercase tracking-[0.25em] text-rose-400 font-medium mb-4">{data.eyebrow}</p>
+          <p className="text-sm text-rose-400 font-light mb-4">{data.eyebrow}</p>
         )}
         <h2 className={`text-3xl md:text-4xl font-light mb-16 ${colors.text}`}>{data.headline}</h2>
 
@@ -77,8 +79,8 @@ const QuotesCarousel: React.FC<SectionComponentProps<QuotesCarouselData>> = ({ d
                 "{q.text}"
               </p>
               <div className="mt-8 flex items-center justify-center gap-4">
-                {q.photo && (
-                  <img src={q.photo} alt={q.author} className="w-10 h-10 rounded-full object-cover ring-2 ring-stone-200" />
+                {photo && (
+                  <img src={photo} alt={q.author} className="w-10 h-10 rounded-full object-cover ring-2 ring-stone-200" />
                 )}
                 <div className="text-left">
                   <p className={`font-medium text-sm ${colors.text}`}>{q.author}</p>

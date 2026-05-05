@@ -96,9 +96,9 @@ export function computeConfidence(preview: RegistryPreview): MetadataConfidence 
 export function getBlockedMessage(preview: RegistryPreview): string | null {
   if (preview.fetch_status !== 'blocked') return null;
   const r = preview.retailer;
-  if (r === 'amazon') return 'Amazon blocks automated product lookups. Paste the title and price manually — the product link will still work for guests.';
+  if (r === 'amazon') return 'Amazon blocks automatic product lookups. Paste the title and price below. The product link will still work for guests.';
   if (r === 'target') return 'Target blocks automated lookups. Fill in the details below — the link will still open correctly for guests.';
-  if (r === 'walmart') return 'Walmart blocks automated lookups. Fill in the details below manually.';
+  if (r === 'walmart') return 'Walmart blocks automatic lookups. Fill in the details below.';
   return 'This store blocks automated product lookups. Fill in the name, price, and store below — your product link has been saved.';
 }
 

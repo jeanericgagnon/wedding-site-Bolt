@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { z } from 'zod';
 import { Music, Play, ExternalLink, Plus } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
+import { getSafePublicWebUrl } from '../../publicLinks';
 
 const TrackSchema = z.object({
   id: z.string(),
@@ -78,6 +79,8 @@ export const defaultMusicPlaylistData: MusicPlaylistData = {
 const MusicPlaylist: React.FC<SectionComponentProps<MusicPlaylistData>> = ({ data }) => {
   const [activeTab, setActiveTab] = useState(0);
   const active = data.playlists[activeTab];
+  const safeSpotifyUrl = getSafePublicWebUrl(active?.spotifyUrl);
+  const safeAppleMusicUrl = getSafePublicWebUrl(active?.appleMusicUrl);
 
   return (
     <section className="relative overflow-hidden py-28 md:py-36 bg-stone-950" id="music">
@@ -85,7 +88,7 @@ const MusicPlaylist: React.FC<SectionComponentProps<MusicPlaylistData>> = ({ dat
       <div className="relative max-w-4xl mx-auto px-6 md:px-12">
         <div className="text-center mb-14">
           {data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">{data.eyebrow}</p>
+            <p className="text-sm text-stone-400 font-light mb-4">{data.eyebrow}</p>
           )}
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="w-8 h-px bg-stone-700" />
@@ -118,11 +121,11 @@ const MusicPlaylist: React.FC<SectionComponentProps<MusicPlaylistData>> = ({ dat
 
             {active && (
               <div className="bg-stone-800 rounded-2xl overflow-hidden">
-                {(active.spotifyUrl || active.appleMusicUrl) && (
+                {(safeSpotifyUrl || safeAppleMusicUrl) && (
                   <div className="flex flex-wrap gap-3 px-6 py-4 border-b border-stone-700">
-                    {active.spotifyUrl && (
+                    {safeSpotifyUrl && (
                       <a
-                        href={active.spotifyUrl}
+                        href={safeSpotifyUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 text-xs font-medium text-stone-300 hover:text-white transition-colors"
@@ -134,9 +137,9 @@ const MusicPlaylist: React.FC<SectionComponentProps<MusicPlaylistData>> = ({ dat
                         <ExternalLink size={10} />
                       </a>
                     )}
-                    {active.appleMusicUrl && (
+                    {safeAppleMusicUrl && (
                       <a
-                        href={active.appleMusicUrl}
+                        href={safeAppleMusicUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 text-xs font-medium text-stone-300 hover:text-white transition-colors"

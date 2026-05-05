@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getRegistryItemPublicUrl, groupByStore, normalizeRegistryStoreGroupItems, shouldUseLiveRegistryStoreGroups } from './cards';
+import { getRegistryItemPublicUrl, getSafePublicRegistryUrl, groupByStore, normalizeRegistryStoreGroupItems, shouldUseLiveRegistryStoreGroups } from './cards';
 import type { RegistryItem } from '../../../pages/dashboard/registry/registryTypes';
 
 const makeItem = (overrides: Partial<RegistryItem>): RegistryItem => ({
@@ -34,6 +34,12 @@ const makeItem = (overrides: Partial<RegistryItem>): RegistryItem => ({
 describe('registry cards public parity helpers', () => {
   it('falls back to canonical url when imported items lost item_url', () => {
     expect(getRegistryItemPublicUrl(makeItem({ item_url: null, canonical_url: 'https://example.com/canonical' }))).toBe('https://example.com/canonical');
+  });
+
+  it('rejects placeholder or non-web registry urls before public rendering', () => {
+    expect(getSafePublicRegistryUrl('#')).toBeNull();
+    expect(getSafePublicRegistryUrl('javascript:alert(1)')).toBeNull();
+    expect(getRegistryItemPublicUrl(makeItem({ item_url: '#', canonical_url: 'mailto:test@example.com' }))).toBeNull();
   });
 
   it('keeps store group links usable for canonical-only public registry items', () => {
@@ -92,6 +98,22 @@ describe('registry cards public parity helpers', () => {
         quantity_needed: 1,
         purchaser_name: null,
       }),
+    ]);
+  });
+
+  it('filters imported placeholder titles before live store summaries render', () => {
+    expect(groupByStore([
+      makeItem({ id: 'bad-title', item_name: 'Page Not Found', store_name: 'Debug Store', item_url: 'https://example.com/bad' }),
+      makeItem({ id: 'good-title', item_name: 'Serving Bowl', store_name: 'Home Store', item_url: 'https://example.com/good' }),
+    ])).toEqual([
+      {
+        store: 'Home Store',
+        count: 1,
+        available: 1,
+        partial: 0,
+        purchased: 0,
+        url: 'https://example.com/good',
+      },
     ]);
   });
 });

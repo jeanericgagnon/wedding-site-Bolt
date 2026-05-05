@@ -65,14 +65,25 @@ const toStoredClarifyingQuestions = (decision: ClarifyingQuestionDecision, round
 export const createClarifyingPersistenceFromDecision = (
   decision: ClarifyingQuestionDecision,
   round = 1,
-): ClarifyingPersistenceEnvelope => ({
-  clarifying: {
-    mode: decision.mode,
-    questions: toStoredClarifyingQuestions(decision, round),
-    history: [],
-  },
-  draftOutputs: decision.draftOutputs || {},
-});
+  meta?: ClarifyingPersistenceEnvelope['meta'],
+): ClarifyingPersistenceEnvelope => {
+  const { provider: _provider, model: _model, ...safeMeta } = (meta || {}) as ClarifyingPersistenceEnvelope['meta'] & {
+    provider?: unknown;
+    model?: unknown;
+  };
+  return {
+    clarifying: {
+      mode: decision.mode,
+      questions: toStoredClarifyingQuestions(decision, round),
+      history: [],
+    },
+    draftOutputs: decision.draftOutputs || {},
+    meta: {
+      confidence: decision.confidence,
+      ...safeMeta,
+    },
+  };
+};
 
 export const createClarifyingDecisionFromInitialSetup = async (answers: InitialSetupAnswers) => {
   const decision = await generateClarifyingQuestionDecision(toClarifyingInputFromInitialSetup(answers));

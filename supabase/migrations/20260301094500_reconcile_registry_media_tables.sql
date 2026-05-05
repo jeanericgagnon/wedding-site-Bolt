@@ -26,17 +26,13 @@ ALTER TABLE public.registry_items
   ADD COLUMN IF NOT EXISTS fund_zelle_handle text,
   ADD COLUMN IF NOT EXISTS fund_custom_url text,
   ADD COLUMN IF NOT EXISTS fund_custom_label text;
-
 UPDATE public.registry_items
 SET price_amount = COALESCE(price_amount, price)
 WHERE price_amount IS NULL;
-
 UPDATE public.registry_items
 SET price_label = COALESCE(price_label, CASE WHEN price IS NOT NULL THEN ('$' || trim(to_char(price, 'FM999999990.00'))) ELSE NULL END)
 WHERE price_label IS NULL;
-
 CREATE INDEX IF NOT EXISTS idx_registry_items_sort_order ON public.registry_items(wedding_site_id, sort_order, created_at);
-
 -- Builder media assets compatibility
 CREATE TABLE IF NOT EXISTS public.builder_media_assets (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -58,9 +54,7 @@ CREATE TABLE IF NOT EXISTS public.builder_media_assets (
   uploaded_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
-
 ALTER TABLE public.builder_media_assets ENABLE ROW LEVEL SECURITY;
-
 DO $$ BEGIN
   CREATE POLICY builder_media_assets_owner_select
     ON public.builder_media_assets FOR SELECT
@@ -72,7 +66,6 @@ DO $$ BEGIN
       )
     );
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
 DO $$ BEGIN
   CREATE POLICY builder_media_assets_owner_insert
     ON public.builder_media_assets FOR INSERT
@@ -84,7 +77,6 @@ DO $$ BEGIN
       )
     );
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
 DO $$ BEGIN
   CREATE POLICY builder_media_assets_owner_update
     ON public.builder_media_assets FOR UPDATE
@@ -103,7 +95,6 @@ DO $$ BEGIN
       )
     );
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
 DO $$ BEGIN
   CREATE POLICY builder_media_assets_owner_delete
     ON public.builder_media_assets FOR DELETE
@@ -115,6 +106,5 @@ DO $$ BEGIN
       )
     );
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
 CREATE INDEX IF NOT EXISTS idx_builder_media_assets_site_uploaded
   ON public.builder_media_assets(wedding_site_id, uploaded_at DESC);

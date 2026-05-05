@@ -27,6 +27,13 @@ const allowedTemplateIds = new Set([
 ]);
 const allowedStyleTags = new Set(['Modern', 'Classic', 'Floral', 'Minimal', 'Romantic', 'Rustic', 'Bold', 'Destination']);
 
+function safeSetupBootstrapError(code: "SERVER_CONFIG_ERROR" | "SAVE_FAILED" | "LOAD_FAILED" | "INTERNAL_ERROR"): string {
+  if (code === "SERVER_CONFIG_ERROR") return "Setup is not ready yet. Please try again in a few minutes.";
+  if (code === "LOAD_FAILED") return "Could not load your setup space. Please try again.";
+  if (code === "SAVE_FAILED") return "Could not save your setup details. Please try again.";
+  return "Could not finish setup. Please try again.";
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
 
@@ -59,7 +66,7 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
     const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    if (!anonKey) return fail("SERVER_CONFIG_ERROR", "Missing SUPABASE_ANON_KEY", 500);
+    if (!anonKey) return fail("SERVER_CONFIG_ERROR", safeSetupBootstrapError("SERVER_CONFIG_ERROR"), 500);
 
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
@@ -70,7 +77,7 @@ Deno.serve(async (req: Request) => {
       error: userErr,
     } = await userClient.auth.getUser();
 
-    if (userErr || !user) return fail("UNAUTHORIZED", userErr?.message ?? "Unauthorized", 401);
+    if (userErr || !user) return fail("UNAUTHORIZED", "Unauthorized", 401);
 
     const admin = createClient(supabaseUrl, serviceRole);
 
@@ -80,7 +87,10 @@ Deno.serve(async (req: Request) => {
       .eq("user_id", user.id)
       .maybeSingle();
 
-    if (siteErr) return fail("DB_ERROR", siteErr.message, 400);
+    if (siteErr) {
+      console.error("SETUP_BOOTSTRAP_LOAD_FAILED", siteErr);
+      return fail("DB_ERROR", safeSetupBootstrapError("LOAD_FAILED"), 400);
+    }
     if (!site) return fail("NO_SITE", "No wedding site found for this account", 404);
 
     let weddingDateISO: string | undefined;
@@ -132,10 +142,14 @@ Deno.serve(async (req: Request) => {
     };
 
     const { error: updateErr } = await admin.from("wedding_sites").update(updatePayload).eq("id", site.id);
-    if (updateErr) return fail("DB_ERROR", updateErr.message, 400);
+    if (updateErr) {
+      console.error("SETUP_BOOTSTRAP_SAVE_FAILED", updateErr);
+      return fail("DB_ERROR", safeSetupBootstrapError("SAVE_FAILED"), 400);
+    }
 
     return json({ success: true, weddingSiteId: site.id });
   } catch (err) {
-    return fail("INTERNAL_ERROR", err instanceof Error ? err.message : "Internal server error", 500);
+    console.error("SETUP_BOOTSTRAP_UNEXPECTED_FAILED", err);
+    return fail("INTERNAL_ERROR", safeSetupBootstrapError("INTERNAL_ERROR"), 500);
   }
 });

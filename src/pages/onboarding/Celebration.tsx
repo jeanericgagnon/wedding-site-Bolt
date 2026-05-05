@@ -49,7 +49,7 @@ export const Celebration: React.FC = () => {
     clearAllOnboardingContinuationState();
     const timer = setTimeout(() => {
       setShowConfetti(false);
-    }, 5000);
+    }, 2500);
 
     return () => clearTimeout(timer);
   }, []);
@@ -67,13 +67,13 @@ export const Celebration: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary-light via-accent-light to-background p-4 relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 relative overflow-hidden">
       {showConfetti && <ConfettiEffect />}
 
       <div className="w-full max-w-5xl relative z-10">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-24 h-24 bg-accent/20 rounded-full mb-6 animate-bounce">
-            <Heart className="w-12 h-12 text-accent" fill="currentColor" aria-hidden="true" />
+          <div className="inline-flex h-20 w-20 items-center justify-center rounded-lg border border-border-subtle bg-surface-raised mb-6">
+            <Heart className="w-10 h-10 text-primary" fill="currentColor" aria-hidden="true" />
           </div>
 
           <h1 className="text-3xl md:text-5xl font-bold text-text-primary mb-4 animate-fade-in leading-tight">
@@ -81,19 +81,19 @@ export const Celebration: React.FC = () => {
           </h1>
 
           {daysUntilWedding !== null && daysUntilWedding > 0 && (
-            <div className="inline-flex items-center gap-3 px-5 md:px-8 py-3 md:py-4 bg-accent/10 rounded-full mb-6 animate-slide-up max-w-full">
-              <Calendar className="w-8 h-8 text-accent" aria-hidden="true" />
+            <div className="inline-flex items-center gap-3 rounded-lg border border-border-subtle bg-surface px-5 py-3 mb-6 max-w-full">
+              <Calendar className="w-7 h-7 text-primary" aria-hidden="true" />
               <div className="text-left">
-                <div className="text-4xl font-bold text-accent">{daysUntilWedding}</div>
+                <div className="text-3xl font-semibold text-text-primary">{daysUntilWedding}</div>
                 <div className="text-sm text-text-secondary">days until the big day!</div>
               </div>
             </div>
           )}
 
           {daysUntilWedding !== null && daysUntilWedding <= 0 && (
-            <div className="inline-flex items-center gap-3 px-5 md:px-8 py-3 md:py-4 bg-accent/10 rounded-full mb-6 animate-slide-up max-w-full">
-              <Sparkles className="w-8 h-8 text-accent" aria-hidden="true" />
-              <div className="text-2xl font-semibold text-accent">
+            <div className="inline-flex items-center gap-3 rounded-lg border border-border-subtle bg-surface px-5 py-3 mb-6 max-w-full">
+              <Sparkles className="w-7 h-7 text-primary" aria-hidden="true" />
+              <div className="text-2xl font-semibold text-text-primary">
                 Your big day is here!
               </div>
             </div>
@@ -101,12 +101,12 @@ export const Celebration: React.FC = () => {
 
           {!state?.weddingDate && (
             <p className="text-xl text-text-secondary mb-6">
-              You’re set up — now choose how you want to shape and launch your website.
+              You’re set up. Now choose how you want to shape the first version.
             </p>
           )}
 
           <p className="text-lg text-text-secondary max-w-2xl mx-auto mb-2">
-            Your account is ready. Choose the fastest way to get your wedding website where you want it.
+            Your account is ready. Choose the path that feels easiest right now.
           </p>
         </div>
 
@@ -114,38 +114,38 @@ export const Celebration: React.FC = () => {
           <Card
             variant="default"
             padding="lg"
-            className="hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer border-2 border-transparent hover:border-accent"
+            className="transition-colors duration-200 cursor-pointer border border-border-subtle hover:border-primary/40 hover:bg-primary/5"
             onClick={handleQuickStart}
           >
             <div className="flex flex-col h-full">
               <div className="flex-grow">
-                <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center mb-4">
-                  <Sparkles className="w-6 h-6 text-accent" aria-hidden="true" />
+                <div className="w-12 h-12 bg-surface-subtle border border-border-subtle rounded-lg flex items-center justify-center mb-4">
+                  <Sparkles className="w-6 h-6 text-primary" aria-hidden="true" />
                 </div>
                 <h2 className="text-xl font-bold text-text-primary mb-2">
-                  AI setup
+                  Smart setup
                 </h2>
-                <p className="text-xs text-accent font-medium mb-3">Fastest path with AI help</p>
+                <p className="text-xs text-text-secondary font-medium mb-3">Fast path to a reviewable draft</p>
                 <p className="text-text-secondary text-sm mb-4">
-                  Launch the AI-assisted setup flow and let it help shape your first draft fast.
+                  Answer a few focused questions and let dayof shape a first draft you can review before sharing.
                 </p>
                 <ul className="space-y-2 mb-6">
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
-                    <div className="w-1.5 h-1.5 rounded-full bg-accent"></div>
-                    <span>AI-led fastest path</span>
+                    <div className="w-1.5 h-1.5 rounded-sm bg-primary"></div>
+                    <span>Guided fastest path</span>
                   </li>
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
-                    <div className="w-1.5 h-1.5 rounded-full bg-accent"></div>
+                    <div className="w-1.5 h-1.5 rounded-sm bg-primary"></div>
                     <span>Get a strong first draft quickly</span>
                   </li>
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
-                    <div className="w-1.5 h-1.5 rounded-full bg-accent"></div>
+                    <div className="w-1.5 h-1.5 rounded-sm bg-primary"></div>
                     <span>Refine details later</span>
                   </li>
                 </ul>
               </div>
               <Button variant="accent" size="lg" fullWidth>
-                Start AI setup
+                Start smart setup
                 <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
               </Button>
             </div>
@@ -154,7 +154,7 @@ export const Celebration: React.FC = () => {
           <Card
             variant="default"
             padding="lg"
-            className="hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer border-2 border-transparent hover:border-primary"
+            className="transition-colors duration-200 cursor-pointer border border-border-subtle hover:border-primary/50 hover:bg-primary/5"
             onClick={handleGuidedSetup}
           >
             <div className="flex flex-col h-full">
@@ -165,21 +165,21 @@ export const Celebration: React.FC = () => {
                 <h2 className="text-xl font-bold text-text-primary mb-2">
                   Guided setup
                 </h2>
-                <p className="text-xs text-primary font-medium mb-3">Current structured setup flow</p>
+                <p className="text-xs text-primary font-medium mb-3">Step-by-step setup flow</p>
                 <p className="text-text-secondary text-sm mb-4">
-                  Use the current structured onboarding flow with more control and visible progress.
+                  Move through the setup flow with more control and visible progress.
                 </p>
                 <ul className="space-y-2 mb-6">
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-                    <span>Current onboarding flow</span>
+                    <div className="w-1.5 h-1.5 rounded-sm bg-primary"></div>
+                    <span>Guided setup flow</span>
                   </li>
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                    <div className="w-1.5 h-1.5 rounded-sm bg-primary"></div>
                     <span>Step by step answers</span>
                   </li>
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                    <div className="w-1.5 h-1.5 rounded-sm bg-primary"></div>
                     <span>Skip optional parts</span>
                   </li>
                 </ul>
@@ -194,7 +194,7 @@ export const Celebration: React.FC = () => {
           <Card
             variant="default"
             padding="lg"
-            className="hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer border-2 border-transparent hover:border-border-hover"
+            className="transition-colors duration-200 cursor-pointer border border-border-subtle hover:border-border-hover hover:bg-surface"
             onClick={handleManualSetup}
           >
             <div className="flex flex-col h-full">
@@ -203,29 +203,29 @@ export const Celebration: React.FC = () => {
                   <Calendar className="w-6 h-6 text-text-secondary" aria-hidden="true" />
                 </div>
                 <h2 className="text-xl font-bold text-text-primary mb-2">
-                  Edit manually
+                  Open the editor
                 </h2>
-                <p className="text-xs text-text-secondary font-medium mb-3">Start directly in the dashboard</p>
+                <p className="text-xs text-text-secondary font-medium mb-3">Start with your own details</p>
                 <p className="text-text-secondary text-sm mb-4">
-                  Jump straight into the editor and handle every detail yourself.
+                  Go straight to the site editor and shape the details at your own pace.
                 </p>
                 <ul className="space-y-2 mb-6">
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
-                    <div className="w-1.5 h-1.5 rounded-full bg-text-secondary"></div>
-                    <span>Full control from the start</span>
+                    <div className="w-1.5 h-1.5 rounded-sm bg-text-secondary"></div>
+                    <span>Choose each section yourself</span>
                   </li>
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
-                    <div className="w-1.5 h-1.5 rounded-full bg-text-secondary"></div>
-                    <span>No guided steps</span>
+                    <div className="w-1.5 h-1.5 rounded-sm bg-text-secondary"></div>
+                    <span>Skip the questions for now</span>
                   </li>
                   <li className="flex items-center gap-2 text-sm text-text-secondary">
-                    <div className="w-1.5 h-1.5 rounded-full bg-text-secondary"></div>
-                    <span>Go straight to the dashboard</span>
+                    <div className="w-1.5 h-1.5 rounded-sm bg-text-secondary"></div>
+                    <span>Go straight to the editor</span>
                   </li>
                 </ul>
               </div>
               <Button variant="outline" size="lg" fullWidth>
-                Open dashboard
+                Open editor
                 <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
               </Button>
             </div>
@@ -237,12 +237,12 @@ export const Celebration: React.FC = () => {
 };
 
 const ConfettiEffect: React.FC = () => {
-  const confettiPieces = Array.from({ length: 50 }, (_, i) => ({
+  const confettiPieces = Array.from({ length: 18 }, (_, i) => ({
     id: i,
     left: Math.random() * 100,
     delay: Math.random() * 3,
     duration: 3 + Math.random() * 2,
-    color: ['#FF6B9D', '#C44569', '#FFA07A', '#98D8C8', '#6C5CE7', '#A29BFE'][Math.floor(Math.random() * 6)],
+    color: ['#8B7355', '#B8A68A', '#D8D0C3', '#7A8B73', '#C8C2B8'][Math.floor(Math.random() * 5)],
   }));
 
   return (

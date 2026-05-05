@@ -4,10 +4,10 @@ import { getCoordinatorAlertSummaryTransitionLabel } from './coordinatorAlertSum
 describe('coordinatorAlertSummaryTransitionLabel', () => {
   it('describes alert-lane transitions for the top command summary', () => {
     expect(getCoordinatorAlertSummaryTransitionLabel({ previousAligned: false, currentAligned: true })).toBe(
-      'Alert lane re-aligned to board target',
+      'Update draft returned to the suggestion',
     );
     expect(getCoordinatorAlertSummaryTransitionLabel({ previousAligned: true, currentAligned: false })).toBe(
-      'Alert lane moved into manual override',
+      'Update draft was customized',
     );
   });
 

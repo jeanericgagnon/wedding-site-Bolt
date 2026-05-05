@@ -10,14 +10,14 @@ describe('coordinatorStandingPromptReasonTighten', () => {
 
     expect(getCoordinatorStandingPromptReasonTightened({
       priority: 'Timeline',
-      reason: 'the board event is waiting',
-    })).toBe('board event waiting');
+      reason: 'the next event is waiting',
+    })).toBe('next event waiting');
   });
 
   it('tightens q-and-a standing prompt copy', () => {
     expect(getCoordinatorStandingPromptReasonTightened({
       priority: 'Q&A',
-      reason: 'the board question is already in progress',
+      reason: 'the suggested question is already in progress',
     })).toBe('question in progress');
 
     expect(getCoordinatorStandingPromptReasonTightened({

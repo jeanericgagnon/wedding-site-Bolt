@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
+import { CheckCircle2, Loader2, AlertCircle, Heart } from 'lucide-react';
 import { Button } from '../components/ui';
 import { useAuth } from '../hooks/useAuth';
 import { fetchPaymentStatus, verifyCheckoutSession } from '../lib/stripeService';
@@ -22,7 +22,7 @@ export const PaymentSuccess: React.FC = () => {
       const params = new URLSearchParams(window.location.search);
       const sessionId = params.get('session_id');
 
-      // Fast-path: confirm directly with Stripe session id on return URL.
+      // Fast-path: confirm directly with the return session id.
       if (sessionId) {
         try {
           const verified = await verifyCheckoutSession(sessionId);
@@ -47,7 +47,7 @@ export const PaymentSuccess: React.FC = () => {
             return;
           }
         } catch {
-          // silent — keep polling
+          // Keep polling while the payment status catches up.
         }
 
         attemptsRef.current += 1;
@@ -66,36 +66,40 @@ export const PaymentSuccess: React.FC = () => {
   }, [user, navigate]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-surface-subtle to-surface flex items-center justify-center p-4">
-      <div className="w-full max-w-md text-center">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(139,157,126,0.18),transparent_32%),linear-gradient(135deg,#faf7f1,#f6f1e8_42%,#fbfaf7)] flex items-center justify-center p-4">
+      <div className="w-full max-w-lg rounded-lg border border-border-subtle bg-white/88 p-8 text-center shadow-sm">
+        <div className="mx-auto mb-6 inline-flex h-16 w-16 items-center justify-center rounded-lg bg-surface-subtle">
+          <Heart className="h-8 w-8 text-accent" />
+        </div>
+
         {status === 'polling' && (
           <>
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-primary/10 rounded-full mb-6">
-              <Loader2 className="w-10 h-10 text-primary animate-spin" />
+            <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-lg border border-border-subtle bg-surface-secondary">
+              <Loader2 className="w-10 h-10 text-accent animate-spin" />
             </div>
-            <h1 className="text-2xl font-bold text-text-primary mb-2">Confirming your payment...</h1>
-            <p className="text-text-secondary">This usually takes just a moment. Please don't close this page.</p>
+            <h1 className="mb-2 text-3xl font-semibold text-text-primary">Confirming payment</h1>
+            <p className="text-text-secondary">This usually takes just a moment. Please keep this page open.</p>
           </>
         )}
 
         {status === 'confirmed' && (
           <>
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-success/10 rounded-full mb-6">
-              <CheckCircle2 className="w-10 h-10 text-success" />
+            <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-lg border border-border-subtle bg-surface-secondary">
+              <CheckCircle2 className="w-10 h-10 text-accent" />
             </div>
-            <h1 className="text-2xl font-bold text-text-primary mb-2">Payment confirmed!</h1>
-            <p className="text-text-secondary">Taking you into setup...</p>
+            <h1 className="mb-2 text-3xl font-semibold text-text-primary">Payment confirmed</h1>
+            <p className="text-text-secondary">Taking you into setup now.</p>
           </>
         )}
 
         {status === 'timeout' && (
           <>
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-warning/10 rounded-full mb-6">
-              <AlertCircle className="w-10 h-10 text-warning" />
+            <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-lg border border-border-subtle bg-surface-secondary">
+              <AlertCircle className="w-10 h-10 text-text-tertiary" />
             </div>
-            <h1 className="text-2xl font-bold text-text-primary mb-2">Taking longer than expected</h1>
-            <p className="text-text-secondary mb-6">
-              Your payment may still be processing. Check back in a moment — if this persists, contact support.
+            <h1 className="mb-2 text-3xl font-semibold text-text-primary">Taking longer than expected</h1>
+            <p className="mb-6 text-text-secondary">
+              Your payment may still be processing. Check again in a moment, or contact support if it keeps happening.
             </p>
             <div className="flex flex-col gap-3">
               <Button variant="primary" size="md" onClick={() => window.location.reload()}>

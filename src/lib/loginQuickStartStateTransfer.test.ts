@@ -48,7 +48,7 @@ describe('login quick start state transfer', () => {
       clarifyingState: { clarifying: [] },
     });
 
-    expect(carriedDraft.currentIndex).toBe(2);
+    expect(carriedDraft.currentIndex).toBe(0);
     expect(carriedDraft.showFollowUps).toBe(false);
     expect(carriedDraft.viewState).toBe('question');
     expect(carriedDraft.followUpAnswers).toEqual({});

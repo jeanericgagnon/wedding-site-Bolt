@@ -26,7 +26,7 @@ export interface BuilderMediaAsset {
 
 export interface MediaUploadProgress {
   assetId: string;
-  filename: string;
+  filename?: string;
   progress: number;
   status: MediaAssetStatus;
   error?: string;

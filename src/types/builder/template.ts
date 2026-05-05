@@ -18,7 +18,7 @@ export interface TemplateSectionSlot {
   variant: string;
   enabled: boolean;
   locked: boolean;
-  settings: Record<string, string | boolean | number | undefined>;
+  settings: Record<string, unknown>;
 }
 
 export interface BuilderTemplateDefinition {
@@ -39,4 +39,5 @@ export interface BuilderTemplateDefinition {
   bestFor?: string[];
   isNew?: boolean;
   isPremium?: boolean;
+  launchTier?: 'flagship' | 'secondary' | 'hidden';
 }

@@ -8,6 +8,61 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
+const INCLUDED_SMS_CREDITS = 1000;
+
+function json(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+async function grantIncludedSmsCredits(supabase: ReturnType<typeof createClient>, weddingSiteId: string) {
+  const { data: existing, error: existingError } = await supabase
+    .from("sms_credit_transactions")
+    .select("id")
+    .eq("wedding_site_id", weddingSiteId)
+    .eq("reason", "included")
+    .contains("metadata", { source: "included_with_site_purchase" })
+    .maybeSingle();
+
+  if (existingError) throw existingError;
+  if (existing?.id) return;
+
+  const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+  const { error: txError } = await supabase
+    .from("sms_credit_transactions")
+    .insert({
+      wedding_site_id: weddingSiteId,
+      credits_delta: INCLUDED_SMS_CREDITS,
+      remaining_credits: INCLUDED_SMS_CREDITS,
+      expires_at: expiresAt,
+      reason: "included",
+      metadata: {
+        source: "included_with_site_purchase",
+        unit: "160_character_sms_segment",
+      },
+    });
+
+  if (txError) throw txError;
+
+  const { data: site, error: siteError } = await supabase
+    .from("wedding_sites")
+    .select("sms_credits_balance")
+    .eq("id", weddingSiteId)
+    .maybeSingle();
+
+  if (siteError) throw siteError;
+
+  const current = Number(site?.sms_credits_balance ?? 0);
+  const { error: balanceError } = await supabase
+    .from("wedding_sites")
+    .update({ sms_credits_balance: current + INCLUDED_SMS_CREDITS })
+    .eq("id", weddingSiteId);
+
+  if (balanceError) throw balanceError;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -96,21 +151,15 @@ Deno.serve(async (req: Request) => {
       .eq("user_id", user.id);
 
     if (updateError) {
-      return new Response(JSON.stringify({ error: updateError.message }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      console.error("STRIPE_VERIFY_CHECKOUT_UPDATE_FAILED", updateError);
+      return json({ error: "Could not confirm payment yet. Please try again." }, 500);
     }
 
-    return new Response(JSON.stringify({ paid: true, session_id: session.id }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    await grantIncludedSmsCredits(supabaseAdmin, weddingSiteId);
+
+    return json({ paid: true, session_id: session.id });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Internal server error";
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    console.error("STRIPE_VERIFY_CHECKOUT_UNEXPECTED_FAILED", err);
+    return json({ error: "Could not confirm payment yet. Please try again." }, 500);
   }
 });

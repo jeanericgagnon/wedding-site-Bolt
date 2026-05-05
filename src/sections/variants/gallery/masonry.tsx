@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { z } from 'zod';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
+import { sanitizePublicGalleryImages, type PublicGalleryImage } from './publicGallery';
 
 const GalleryImageSchema = z.object({
   id: z.string(),
@@ -62,7 +63,7 @@ function useIntersection(ref: React.RefObject<Element | null>, threshold = 0.1) 
 }
 
 const MasonryCell: React.FC<{
-  image: GalleryMasonryData['images'][number];
+  image: PublicGalleryImage & { span?: '1' | '2' };
   idx: number;
   animation: string;
   showCaptions: boolean;
@@ -111,16 +112,20 @@ const MasonryCell: React.FC<{
 
 const SECTION_SHELL = "py-32 md:py-40 bg-gradient-to-b from-stone-50 to-white";
 const CONTAINER_SHELL = "max-w-6xl mx-auto px-6 md:px-12";
-const SECTION_TITLE = "text-4xl md:text-6xl font-light text-stone-900 tracking-tight text-balance";
+const SECTION_TITLE = "text-4xl md:text-6xl font-light text-stone-900 text-balance";
 const PHOTO_FRAME = "relative group overflow-hidden rounded-[1.4rem] bg-stone-200 ring-1 ring-stone-100/80 shadow-[0_12px_40px_-28px_rgba(28,25,23,0.45)] transition-[opacity,transform]";
 const PHOTO_IMG = "w-full h-full object-cover saturate-[1.03] contrast-[1.02] transition-transform duration-700 group-hover:scale-105";
 
 const GalleryMasonry: React.FC<SectionComponentProps<GalleryMasonryData>> = ({ data }) => {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const images = sanitizePublicGalleryImages(data.images).map((image) => ({
+    ...image,
+    span: data.images.find((candidate) => candidate.id === image.id)?.span,
+  }));
 
   const closeLightbox = () => setLightboxIndex(null);
-  const prevImage = () => setLightboxIndex(i => i === null ? null : (i - 1 + data.images.length) % data.images.length);
-  const nextImage = () => setLightboxIndex(i => i === null ? null : (i + 1) % data.images.length);
+  const prevImage = () => setLightboxIndex(i => i === null ? null : (i - 1 + images.length) % images.length);
+  const nextImage = () => setLightboxIndex(i => i === null ? null : (i + 1) % images.length);
 
   useEffect(() => {
     if (lightboxIndex === null) return;
@@ -138,16 +143,16 @@ const GalleryMasonry: React.FC<SectionComponentProps<GalleryMasonryData>> = ({ d
       <div className={CONTAINER_SHELL}>
         <div className="text-center mb-14">
           {data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">
+            <p className="text-sm text-stone-400 font-light mb-4">
               {data.eyebrow}
             </p>
           )}
           <h2 className={SECTION_TITLE}>{data.headline}</h2>
         </div>
 
-        {data.images.length > 0 ? (
+        {images.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 auto-rows-[220px] md:auto-rows-[250px] gap-3 md:gap-4">
-            {data.images.map((image, idx) => (
+            {images.map((image, idx) => (
               <MasonryCell
                 key={image.id}
                 image={image}
@@ -161,7 +166,7 @@ const GalleryMasonry: React.FC<SectionComponentProps<GalleryMasonryData>> = ({ d
           </div>
         ) : (
           <div className="text-center py-20 text-stone-400">
-            <p className="text-sm">No photos yet</p>
+            <p className="text-sm">Photos will appear once they’re added.</p>
           </div>
         )}
       </div>
@@ -185,12 +190,12 @@ const GalleryMasonry: React.FC<SectionComponentProps<GalleryMasonryData>> = ({ d
           </button>
           <div className="max-w-5xl max-h-[85vh] px-16" onClick={e => e.stopPropagation()}>
             <img
-              src={data.images[lightboxIndex].url}
-              alt={data.images[lightboxIndex].alt}
+              src={images[lightboxIndex]?.url}
+              alt={images[lightboxIndex]?.alt ?? 'Gallery photo'}
               className="max-w-full max-h-[85vh] object-contain rounded-lg"
             />
-            {data.showCaptions && data.images[lightboxIndex].caption && (
-              <p className="text-white/70 text-sm text-center mt-3">{data.images[lightboxIndex].caption}</p>
+            {data.showCaptions && images[lightboxIndex]?.caption && (
+              <p className="text-white/70 text-sm text-center mt-3">{images[lightboxIndex]?.caption}</p>
             )}
           </div>
           <button
@@ -200,7 +205,7 @@ const GalleryMasonry: React.FC<SectionComponentProps<GalleryMasonryData>> = ({ d
             <ChevronRight size={20} />
           </button>
           <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/40 text-xs">
-            {lightboxIndex + 1} / {data.images.length}
+            {lightboxIndex + 1} / {images.length}
           </p>
         </div>
       )}

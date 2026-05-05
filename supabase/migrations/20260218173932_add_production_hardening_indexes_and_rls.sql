@@ -45,20 +45,15 @@ BEGIN
     ALTER TABLE wedding_sites ADD COLUMN published_json jsonb;
   END IF;
 END $$;
-
 CREATE INDEX IF NOT EXISTS idx_wedding_sites_user_id
   ON wedding_sites(user_id);
-
 CREATE UNIQUE INDEX IF NOT EXISTS idx_wedding_sites_site_slug
   ON wedding_sites(site_slug)
   WHERE site_slug IS NOT NULL;
-
 CREATE INDEX IF NOT EXISTS idx_builder_media_assets_wedding_site_id
   ON builder_media_assets(wedding_site_id);
-
 CREATE INDEX IF NOT EXISTS idx_builder_media_assets_status
   ON builder_media_assets(status);
-
 CREATE INDEX IF NOT EXISTS idx_wedding_sites_is_published
   ON wedding_sites(is_published)
   WHERE is_published = true;

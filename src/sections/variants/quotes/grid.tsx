@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { z } from 'zod';
 import { Quote } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
+import { getSafePublicImageUrl } from '../../publicLinks';
 
 const QuoteItemSchema = z.object({
   id: z.string(),
@@ -41,6 +42,10 @@ function useIntersection(ref: React.RefObject<Element | null>, threshold = 0.1) 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    if (typeof IntersectionObserver === 'undefined') {
+      setVisible(true);
+      return;
+    }
     const obs = new IntersectionObserver(
       ([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } },
       { threshold }
@@ -54,6 +59,7 @@ function useIntersection(ref: React.RefObject<Element | null>, threshold = 0.1) 
 const QuoteCard: React.FC<{ q: QuotesGridData['quotes'][number]; idx: number }> = ({ q, idx }) => {
   const ref = useRef<HTMLDivElement>(null);
   const visible = useIntersection(ref);
+  const photo = getSafePublicImageUrl(q.photo);
 
   return (
     <div
@@ -64,8 +70,8 @@ const QuoteCard: React.FC<{ q: QuotesGridData['quotes'][number]; idx: number }> 
       <Quote size={20} className="text-rose-300 mb-5 shrink-0" />
       <p className="text-stone-600 italic leading-relaxed text-base flex-1">"{q.text}"</p>
       <div className="mt-6 flex items-center gap-3">
-        {q.photo ? (
-          <img src={q.photo} alt={q.author} className="w-9 h-9 rounded-full object-cover saturate-[1.03] contrast-[1.02] ring-2 ring-stone-200 shrink-0" />
+        {photo ? (
+          <img src={photo} alt={q.author} className="w-9 h-9 rounded-full object-cover saturate-[1.03] contrast-[1.02] ring-2 ring-stone-200 shrink-0" />
         ) : (
           <div className="w-9 h-9 rounded-full bg-rose-100 flex items-center justify-center shrink-0">
             <span className="text-rose-500 text-sm font-medium">{q.author.charAt(0)}</span>
@@ -102,9 +108,9 @@ const QuotesGrid: React.FC<SectionComponentProps<QuotesGridData>> = ({ data }) =
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-16">
           {data.eyebrow && (
-            <p className={`text-xs uppercase tracking-[0.25em] ${tm.eyebrow} font-medium mb-4`}>{data.eyebrow}</p>
+            <p className={`text-sm ${tm.eyebrow} font-light mb-4`}>{data.eyebrow}</p>
           )}
-          <h2 className={`text-4xl md:text-6xl font-light tracking-tight ${tm.heading}`}>{data.headline}</h2>
+          <h2 className={`text-4xl md:text-6xl font-light ${tm.heading}`}>{data.headline}</h2>
         </div>
 
         {data.quotes.length > 0 ? (

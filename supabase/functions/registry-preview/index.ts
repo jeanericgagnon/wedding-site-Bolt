@@ -13,6 +13,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
+function json(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
 // Initialize adapters
 const adapters: RetailerAdapter[] = [
   new TargetAdapter(),
@@ -21,6 +28,14 @@ const adapters: RetailerAdapter[] = [
 ];
 
 const genericAdapter = new GenericAdapter();
+const MAX_PREVIEW_REDIRECTS = 3;
+const MAX_PREVIEW_BYTES = 2_000_000;
+const PREVIEW_FETCH_TIMEOUT_MS = 10_000;
+const METADATA_HOSTS = new Set([
+  "169.254.169.254",
+  "metadata.google.internal",
+  "metadata",
+]);
 
 // Rate limiting
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -35,6 +50,114 @@ function checkRateLimit(ip: string): boolean {
   if (entry.count >= 30) return false;
   entry.count++;
   return true;
+}
+
+function isPrivateIpv4(hostname: string): boolean {
+  const parts = hostname.split('.').map((part) => Number(part));
+  if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) return false;
+  const [a, b] = parts;
+  return a === 10
+    || a === 127
+    || a === 0
+    || (a === 169 && b === 254)
+    || (a === 172 && b >= 16 && b <= 31)
+    || (a === 192 && b === 168);
+}
+
+function isBlockedPreviewHostname(hostname: string): boolean {
+  const normalized = hostname.toLowerCase().replace(/\.$/, '');
+  if (!normalized) return true;
+  if (METADATA_HOSTS.has(normalized)) return true;
+  if (
+    normalized === "localhost"
+    || normalized.endsWith(".localhost")
+    || normalized.endsWith(".local")
+    || normalized.endsWith(".internal")
+    || normalized.endsWith(".test")
+  ) return true;
+  if (normalized.includes(":")) return true;
+  return isPrivateIpv4(normalized);
+}
+
+async function assertPublicPreviewTarget(url: string): Promise<URL> {
+  const parsed = new URL(url);
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw new Error("Enter a public product URL.");
+  }
+  if (parsed.username || parsed.password || isBlockedPreviewHostname(parsed.hostname)) {
+    throw new Error("Enter a public product URL.");
+  }
+
+  try {
+    const addresses = await Deno.resolveDns(parsed.hostname, "A");
+    if (addresses.some(isPrivateIpv4)) {
+      throw new Error("Enter a public product URL.");
+    }
+  } catch (err) {
+    if (err instanceof Error && err.message === "Enter a public product URL.") throw err;
+    // DNS resolution may be unavailable for some edge runtimes; hostname rules above still apply.
+  }
+
+  return parsed;
+}
+
+async function fetchPreviewHtml(url: string): Promise<{ finalUrl: string; html: string; headers: Headers }> {
+  let currentUrl = url;
+
+  for (let redirects = 0; redirects <= MAX_PREVIEW_REDIRECTS; redirects++) {
+    const parsed = await assertPublicPreviewTarget(currentUrl);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), PREVIEW_FETCH_TIMEOUT_MS);
+
+    try {
+      const response = await fetch(parsed.toString(), {
+        signal: controller.signal,
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.9",
+          "Accept-Encoding": "gzip, deflate, br",
+          Referer: parsed.origin,
+          "Cache-Control": "no-cache",
+        },
+        redirect: "manual",
+      });
+
+      const location = response.headers.get("location");
+      if ([301, 302, 303, 307, 308].includes(response.status) && location) {
+        if (redirects >= MAX_PREVIEW_REDIRECTS) throw new Error("Too many redirects");
+        currentUrl = new URL(location, parsed).toString();
+        continue;
+      }
+
+      if (response.status === 403 || response.status === 429) {
+        throw new Error(`This store blocks automated access (HTTP ${response.status}). Please enter details manually.`);
+      }
+      if (!response.ok) throw new Error(`Page returned HTTP ${response.status}`);
+
+      const contentType = response.headers.get("content-type") ?? "";
+      if (!/\b(html|xhtml)\b/i.test(contentType)) {
+        throw new Error("URL does not point to an HTML page");
+      }
+
+      const contentLength = Number(response.headers.get("content-length") ?? 0);
+      if (Number.isFinite(contentLength) && contentLength > MAX_PREVIEW_BYTES) {
+        throw new Error("Page is too large to preview");
+      }
+
+      const html = await response.text();
+      if (new TextEncoder().encode(html).byteLength > MAX_PREVIEW_BYTES) {
+        throw new Error("Page is too large to preview");
+      }
+
+      return { finalUrl: parsed.toString(), html, headers: response.headers };
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  throw new Error("Too many redirects");
 }
 
 // URL hash for caching
@@ -183,16 +306,23 @@ const MIN_PRICE_CONFIDENCE_SCORE = 2;
 
 async function extractProxyTextData(url: string): Promise<{ title?: string; priceAmount?: number; priceLabel?: string; imageUrl?: string; priceConfidence?: number } | null> {
   try {
+    await assertPublicPreviewTarget(url);
     const proxyUrl = `https://r.jina.ai/http://${url.replace(/^https?:\/\//i, '')}`;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), PREVIEW_FETCH_TIMEOUT_MS);
     const resp = await fetch(proxyUrl, {
+      signal: controller.signal,
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; DayOfRegistryPreview/1.0)",
         Accept: "text/plain, text/markdown, */*",
       },
-    });
+    }).finally(() => clearTimeout(timeout));
     if (!resp.ok) return null;
+    const contentLength = Number(resp.headers.get("content-length") ?? 0);
+    if (Number.isFinite(contentLength) && contentLength > MAX_PREVIEW_BYTES) return null;
 
     const body = await resp.text();
+    if (new TextEncoder().encode(body).byteLength > MAX_PREVIEW_BYTES) return null;
     if (!body || body.length < 80) return null;
 
     const lines = body.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
@@ -305,43 +435,8 @@ async function extractProductData(url: string): Promise<ProductData> {
 
   console.log(`Using ${adapter.name} adapter for ${url}`);
 
-  // Fetch HTML with browser-like headers
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
-
   try {
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Accept-Encoding": "gzip, deflate, br",
-        Referer: new URL(url).origin,
-        "Cache-Control": "no-cache",
-      },
-      redirect: "follow",
-    });
-
-    clearTimeout(timeout);
-
-    if (response.status === 403 || response.status === 429) {
-      throw new Error(
-        `This store blocks automated access (HTTP ${response.status}). Please enter details manually.`
-      );
-    }
-
-    if (!response.ok) {
-      throw new Error(`Page returned HTTP ${response.status}`);
-    }
-
-    const contentType = response.headers.get("content-type") ?? "";
-    if (!contentType.includes("html")) {
-      throw new Error("URL does not point to an HTML page");
-    }
-
-    const html = await response.text();
+    const { finalUrl, html, headers } = await fetchPreviewHtml(url);
 
     if (html.length < 200) {
       throw new Error("Page content too short — site may require login or block access");
@@ -349,9 +444,9 @@ async function extractProductData(url: string): Promise<ProductData> {
 
     // Parse with adapter
     const result = await adapter.parse({
-      url,
+      url: finalUrl,
       html,
-      headers: Object.fromEntries(response.headers.entries()),
+      headers: Object.fromEntries(headers.entries()),
     });
 
     if (result) {
@@ -361,8 +456,6 @@ async function extractProductData(url: string): Promise<ProductData> {
     // If adapter failed but we have HTML, create a minimal fallback
     throw new Error("Could not extract product information from page");
   } catch (error) {
-    clearTimeout(timeout);
-
     const proxyData = await extractProxyTextData(url);
     if (proxyData?.title) {
       const fallbackImage = proxyData.imageUrl || deriveFallbackImage(url, normalized.hostname);
@@ -498,7 +591,12 @@ Deno.serve(async (req: Request) => {
     }
 
     // Normalize URL
-    const normalized = normalizeUrl(rawUrl);
+    let normalized;
+    try {
+      normalized = normalizeUrl(rawUrl);
+    } catch {
+      return json({ error: "Enter a public product URL." }, 400);
+    }
     const hash = await hashUrl(normalized.canonical);
 
     // Check cache unless force refresh
@@ -513,8 +611,8 @@ Deno.serve(async (req: Request) => {
     }
 
     // Extract product data
-    const extracted = await extractProductData(rawUrl);
-    const result = ensureBaselineMetadata(rawUrl, extracted);
+    const extracted = await extractProductData(normalized.canonical);
+    const result = ensureBaselineMetadata(normalized.canonical, extracted);
 
     // Save to cache in background
     EdgeRuntime.waitUntil(saveCache(supabaseAdmin, hash, normalized.canonical, result, normalized.retailer));
@@ -528,7 +626,6 @@ Deno.serve(async (req: Request) => {
     return new Response(
       JSON.stringify({
         error: "Preview service unavailable. Please fill in details manually.",
-        details: msg,
       }),
       {
         status: 500,

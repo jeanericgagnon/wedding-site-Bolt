@@ -35,9 +35,8 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
     try {
       await signIn();
       navigate('/dashboard');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Demo login failed. Please try again.';
-      toast(message, 'error');
+    } catch {
+      toast('Couldn’t open the demo right now. Please try again.', 'error');
       setDemoLoading(false);
     }
   };
@@ -118,7 +117,7 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
   return (
     <header className={`sticky top-0 z-50 transition-all duration-200 ${
       isScrolled
-        ? 'bg-paper shadow-md border-b border-brand/20'
+        ? 'bg-paper shadow-sm border-b border-brand/20'
         : 'bg-paper/95 backdrop-blur-md border-b border-brand/10'
     }`}>
       <nav className="container-custom" aria-label="Main navigation">
@@ -126,10 +125,10 @@ export const Header: React.FC<HeaderProps> = ({ variant = 'marketing' }) => {
           <Link
             to="/"
             className="flex items-center gap-2.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded-lg p-1 -ml-1"
-            aria-label="WeddingSite home"
+            aria-label="dayof home"
           >
             <Heart className="w-5 h-5 text-accent" aria-hidden="true" />
-            <span className="text-[1.125rem] font-semibold text-ink tracking-tight leading-snug">WeddingSite</span>
+            <span className="text-[1.125rem] font-semibold text-ink leading-snug">dayof</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-1">

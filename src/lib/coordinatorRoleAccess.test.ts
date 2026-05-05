@@ -22,4 +22,13 @@ describe('coordinatorRoleAccess', () => {
     expect(canScheduleCoordinatorAlerts('planner')).toBe(true);
     expect(canScheduleCoordinatorAlerts('owner')).toBe(true);
   });
+
+  it('honors explicit permission arrays over role presets', () => {
+    expect(canManageCoordinatorCheckIn('coordinator', ['guests'])).toBe(true);
+    expect(canManageCoordinatorTimeline('coordinator', ['guests'])).toBe(false);
+    expect(canManageCoordinatorQna('coordinator', ['timeline'])).toBe(false);
+    expect(canSendImmediateCoordinatorAlerts('planner', ['messages'])).toBe(false);
+    expect(canScheduleCoordinatorAlerts('coordinator', ['messages'])).toBe(false);
+    expect(canScheduleCoordinatorAlerts('planner', ['messages'])).toBe(true);
+  });
 });

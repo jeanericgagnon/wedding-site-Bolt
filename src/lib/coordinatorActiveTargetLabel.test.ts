@@ -6,6 +6,6 @@ describe('coordinatorActiveTargetLabel', () => {
     expect(getCoordinatorActiveTargetLabel('guest')).toBe('Active guest');
     expect(getCoordinatorActiveTargetLabel('timeline')).toBe('Active event');
     expect(getCoordinatorActiveTargetLabel('qna')).toBe('Active question');
-    expect(getCoordinatorActiveTargetLabel('alert')).toBe('Active alert lane');
+    expect(getCoordinatorActiveTargetLabel('alert')).toBe('Active update');
   });
 });

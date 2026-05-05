@@ -4,6 +4,7 @@ import { LayoutConfigV1, SectionType } from '../../types/layoutConfig';
 import { Button, Input, Textarea, Card } from '../ui';
 import { Check, ChevronRight, Save, SkipForward, Plus, Trash2, Eye, EyeOff } from 'lucide-react';
 import { AddressInput } from '../ui/AddressInput';
+import { buildTravelGuestPortalReadiness } from '../../lib/travelGuestPortal';
 
 type ModuleId = 'hero' | 'story' | 'venue' | 'schedule' | 'travel' | 'registry' | 'faq' | 'rsvp' | 'gallery';
 
@@ -89,6 +90,16 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
   saving,
 }) => {
   const [activeModule, setActiveModule] = useState<ModuleId>('hero');
+  const travelPortalReadiness = buildTravelGuestPortalReadiness({
+    flightInfo: weddingData.travel?.flightInfo,
+    hotelInfo: weddingData.travel?.hotelInfo,
+    parkingInfo: weddingData.travel?.parkingInfo,
+    notes: weddingData.travel?.notes,
+    venueCount: weddingData.venues.length,
+    venueAddressCount: weddingData.venues.filter((venue) => Boolean(venue.address?.trim())).length,
+    scheduleCount: weddingData.schedule.length,
+    eventInviteScoped: Boolean(weddingData.rsvp?.enabled),
+  });
   const normalizeModuleSectionType = (type: string) => type.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
 
   const isSectionEnabled = (sectionType: SectionType): boolean => {
@@ -300,7 +311,7 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
   return (
     <div className="grid md:grid-cols-[320px_1fr] gap-6">
       <div className="space-y-2">
-        <h3 className="text-sm font-semibold text-text-secondary mb-3 px-2">Website sections</h3>
+        <h3 className="text-sm font-semibold text-text-secondary mb-3 px-2">Site sections</h3>
         {modules.map((module) => {
           const status = getModuleStatus(module.id);
           const isActive = activeModule === module.id;
@@ -617,6 +628,39 @@ export const GuidedBuilderModules: React.FC<GuidedBuilderModulesProps> = ({
 
               {activeModule === 'travel' && (
                 <div className="space-y-4">
+                  <div className="rounded-lg border border-border bg-background p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <h4 className="font-medium text-text-primary">Guest travel portal readiness</h4>
+                        <p className="mt-1 text-sm text-text-secondary">Keep arrival, lodging, transport, venue, and schedule guidance together before guests rely on it from the hub.</p>
+                      </div>
+                      <span className="inline-flex w-fit rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1 text-xs font-medium text-text-primary">
+                        {travelPortalReadiness.readyCount} of {travelPortalReadiness.steps.length} ready
+                      </span>
+                    </div>
+                    <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                      {travelPortalReadiness.steps.map((step) => (
+                        <div key={step.id} className="rounded-lg border border-border-subtle bg-white p-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <p className="text-sm font-medium text-text-primary">{step.label}</p>
+                            <span className={`shrink-0 rounded-lg px-2 py-0.5 text-[11px] font-medium ${
+                              step.status === 'ready'
+                                ? 'bg-success/10 text-success'
+                                : step.status === 'needs-info'
+                                  ? 'bg-warning/10 text-warning'
+                                  : step.status === 'planned'
+                                    ? 'bg-surface-subtle text-text-tertiary'
+                                    : 'bg-white text-text-tertiary'
+                            }`}>
+                              {step.status === 'ready' ? 'Ready' : step.status === 'needs-info' ? 'Needs info' : step.status === 'planned' ? 'Planned' : 'Empty'}
+                            </span>
+                          </div>
+                          <p className="mt-2 text-xs leading-5 text-text-secondary">{step.detail}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   <p className="text-sm text-text-secondary">
                     Venue addresses already appear automatically. Add extra travel details here if guests need more help.
                   </p>

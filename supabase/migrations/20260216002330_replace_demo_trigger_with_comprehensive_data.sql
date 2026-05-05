@@ -21,7 +21,6 @@
 -- Drop existing trigger and function
 DROP TRIGGER IF EXISTS on_demo_user_created ON auth.users;
 DROP FUNCTION IF EXISTS create_demo_wedding_data();
-
 -- Create new comprehensive demo data function
 CREATE OR REPLACE FUNCTION create_demo_wedding_data()
 RETURNS TRIGGER AS $$
@@ -210,7 +209,6 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
 -- Recreate trigger
 CREATE TRIGGER on_demo_user_created
   AFTER INSERT ON auth.users

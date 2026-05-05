@@ -4,6 +4,7 @@ import { SectionInstance } from '../../types/layoutConfig';
 import { Heart } from 'lucide-react';
 import { readBuilderValue } from '../../lib/weddingProfile';
 import { buildCoupleDisplayName } from '../../lib/coupleDisplayName';
+import { getSafePublicActionHref } from '../publicLinks';
 
 interface Props {
   data: WeddingDataV1;
@@ -32,7 +33,8 @@ export const FooterCtaSection: React.FC<Props> = ({ data, instance }) => {
   const { settings } = instance;
   const displayName = getFooterDisplayName(data.couple);
   const date = formatDate(data.event.weddingDateISO);
-  const rsvpUrl = readBuilderValue(settings.rsvpUrl as string | { value: string } | undefined, '#rsvp') || '#rsvp';
+  const rawRsvpUrl = readBuilderValue(settings.rsvpUrl as string | { value: string } | undefined, '#rsvp') || '#rsvp';
+  const rsvpUrl = getSafePublicActionHref(rawRsvpUrl, '#rsvp');
   const buttonLabel = readBuilderValue(settings.buttonLabel as string | { value: string } | undefined, 'Send RSVP');
   const headline = readBuilderValue(settings.headline as string | { value: string } | undefined, 'We hope to see you there');
   const subtext = readBuilderValue(settings.subtext as string | { value: string } | undefined, data.rsvp.deadlineISO ? `Please reply by ${formatDate(data.rsvp.deadlineISO)}` : 'We’re so glad to celebrate with you');
@@ -56,7 +58,7 @@ export const FooterCtaSection: React.FC<Props> = ({ data, instance }) => {
           {displayName}
         </h2>
         {date && (
-          <p className="text-white/70 text-sm uppercase tracking-[0.2em] mb-8">{date}</p>
+          <p className="text-white/75 text-sm mb-8">{date}</p>
         )}
         <p className="text-xl text-white/90 mb-3 font-light">{headline}</p>
         <p className="text-white/60 text-sm mb-10">{subtext}</p>
@@ -64,7 +66,7 @@ export const FooterCtaSection: React.FC<Props> = ({ data, instance }) => {
         {data.rsvp.enabled !== false && (
           <a
             href={rsvpUrl}
-            className="inline-flex items-center gap-2 px-8 py-4 bg-white text-primary font-semibold rounded-full hover:bg-white/90 transition-all hover:shadow-lg hover:-translate-y-0.5 text-sm tracking-wide"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-white text-primary font-semibold rounded-full hover:bg-white/90 transition-all hover:shadow-lg hover:-translate-y-0.5 text-sm"
           >
             {buttonLabel}
           </a>
@@ -82,7 +84,8 @@ export const FooterCtaMinimal: React.FC<Props> = ({ data, instance }) => {
   const { settings } = instance;
   const displayName = getFooterDisplayName(data.couple);
   const date = formatDate(data.event.weddingDateISO);
-  const rsvpUrl = readBuilderValue(settings.rsvpUrl as string | { value: string } | undefined, '#rsvp') || '#rsvp';
+  const rawRsvpUrl = readBuilderValue(settings.rsvpUrl as string | { value: string } | undefined, '#rsvp') || '#rsvp';
+  const rsvpUrl = getSafePublicActionHref(rawRsvpUrl, '#rsvp');
   const buttonLabel = readBuilderValue(settings.buttonLabel as string | { value: string } | undefined, 'Send RSVP');
   const headline = readBuilderValue(settings.headline as string | { value: string } | undefined, "We can't wait to celebrate with you");
   const subtext = readBuilderValue(settings.subtext as string | { value: string } | undefined, data.rsvp.deadlineISO ? `Please reply by ${formatDate(data.rsvp.deadlineISO)}` : '');
@@ -91,7 +94,7 @@ export const FooterCtaMinimal: React.FC<Props> = ({ data, instance }) => {
     <section className="py-20 px-4 bg-surface border-t border-border">
       <div className="max-w-3xl mx-auto text-center">
         <div className="w-10 h-px bg-primary mx-auto mb-8" />
-        <p className="text-xs uppercase tracking-[0.3em] text-text-tertiary mb-4">{displayName}</p>
+        <p className="text-sm text-text-tertiary mb-4">{displayName}</p>
         {date && <p className="text-sm text-text-secondary mb-6">{date}</p>}
         <h2 className="text-3xl font-light text-text-primary mb-3">{headline}</h2>
         {subtext && <p className="text-text-secondary text-sm mb-8">{subtext}</p>}
@@ -99,7 +102,7 @@ export const FooterCtaMinimal: React.FC<Props> = ({ data, instance }) => {
         {data.rsvp.enabled !== false && (
           <a
             href={rsvpUrl}
-            className="inline-flex items-center gap-2 px-7 py-3.5 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all text-sm tracking-wide"
+            className="inline-flex items-center gap-2 px-7 py-3.5 bg-primary text-white font-medium rounded-full hover:bg-primary/90 transition-all text-sm"
           >
             {buttonLabel}
           </a>

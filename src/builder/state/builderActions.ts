@@ -60,7 +60,7 @@ export const builderActions = {
   }),
 
   applyTheme: (themeId: string): BuilderAction => ({ type: 'APPLY_THEME', payload: themeId }),
-  setGlobalAnimationPreset: (preset: 'none' | 'fade-in' | 'fade-up' | 'slide-up' | 'zoom-in' | 'stagger' | null): BuilderAction => ({ type: 'SET_GLOBAL_ANIMATION_PRESET', payload: preset }),
+  setGlobalAnimationPreset: (preset: 'none' | 'fade-in' | 'fade-up' | 'slide-up' | 'zoom-in' | 'stagger' | 'reveal-left' | 'reveal-right' | 'blur-in' | 'float-in' | 'scale-up' | null): BuilderAction => ({ type: 'SET_GLOBAL_ANIMATION_PRESET', payload: preset }),
   applyThemeTokens: (themeId: string, tokens: ThemeTokens): BuilderAction => ({ type: 'APPLY_THEME_TOKENS', payload: { themeId, tokens } }),
 
   undo: (): BuilderAction => ({ type: 'UNDO' }),

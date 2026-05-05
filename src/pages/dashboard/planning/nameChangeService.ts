@@ -3,7 +3,7 @@ import { buildNameChangePlan } from '../../../lib/nameChange/engine';
 import { canonicalizeNameChangeDocumentKind } from '../../../lib/nameChange/documentKinds';
 import { normalizeDraftFieldKey, normalizeDraftFieldValue } from '../../../lib/nameChange/intakeDraft';
 import { NAME_CHANGE_ENGINE_VERSION } from '../../../lib/nameChange/registry';
-import { buildNameChangeReminderSuggestions, mapReminderSuggestionsToInputs } from '../../../lib/nameChange/reminders';
+import { buildNameChangeReminderSuggestions, getReminderPlannerRoute, mapReminderSuggestionsToInputs } from '../../../lib/nameChange/reminders';
 import type {
   HydratedNameChangeWorkspace,
   NameChangeCaseInput,
@@ -208,9 +208,9 @@ export function normalizeNameChangeReminders(reminders: NameChangeReminderInput[
       reminder_key: reminderKey,
       label: normalizeText(reminder.label) || reminderKey,
       reason: normalizeText(reminder.reason),
-      depends_on_step_id: normalizeText(reminder.depends_on_step_id),
-      suggested_offset_days: Math.max(0, Math.round(reminder.suggested_offset_days)),
-      urgency: reminder.urgency,
+      depends_on_step_id: normalizeText(reminder.depends_on_step_id) || '',
+      suggested_offset_days: Math.max(0, Math.round(reminder.suggested_offset_days ?? 0)),
+      urgency: reminder.urgency === 'normal' ? 'medium' : reminder.urgency,
       status: reminder.status,
       section_key: reminder.section_key,
       planner_intent: reminder.planner_intent,
@@ -218,7 +218,7 @@ export function normalizeNameChangeReminders(reminders: NameChangeReminderInput[
     });
   });
 
-  return [...deduped.values()].sort((a, b) => a.suggested_offset_days - b.suggested_offset_days || a.label.localeCompare(b.label));
+  return [...deduped.values()].sort((a, b) => (a.suggested_offset_days ?? 0) - (b.suggested_offset_days ?? 0) || a.label.localeCompare(b.label));
 }
 
 export function mergeNameChangeReminders(
@@ -522,7 +522,7 @@ export function annotateNameChangePlanStepsFromReminderChanges(
   plan: NameChangePlan,
   changedReminders: Array<{
     label: string;
-    depends_on_step_id: string;
+    depends_on_step_id?: string;
     status: NameChangeReminderInput['status'];
   }>,
   timestamp?: string,
@@ -531,6 +531,7 @@ export function annotateNameChangePlanStepsFromReminderChanges(
   const reminderChangesByStep = new Map<string, Array<{ label: string; status: NameChangeReminderInput['status'] }>>();
 
   changedReminders.forEach((reminder) => {
+    if (!reminder.depends_on_step_id) return;
     const list = reminderChangesByStep.get(reminder.depends_on_step_id) ?? [];
     list.push({ label: reminder.label, status: reminder.status });
     reminderChangesByStep.set(reminder.depends_on_step_id, list);
@@ -816,13 +817,29 @@ export function buildNameChangeWorkspaceBundle(
   );
 
   const generatedReminders = mapReminderSuggestionsToInputs(buildNameChangeReminderSuggestions(plan));
+  const mergedReminders = mergeNameChangeReminders(generatedReminders, reminders);
+  const mergedReminderKeys = new Set(mergedReminders.map((reminder) => reminder.reminder_key));
+  const carriedExplicitReminders = normalizeNameChangeReminders(reminders ?? [])
+    .filter((reminder) => reminder.status !== 'pending' && !mergedReminderKeys.has(reminder.reminder_key));
+  const enrichedExplicitReminders = carriedExplicitReminders.map((reminder) => {
+    const route = getReminderPlannerRoute({
+      id: reminder.reminder_key,
+      dependsOnStepId: reminder.depends_on_step_id ?? '',
+    });
+    return {
+      ...reminder,
+      section_key: reminder.section_key ?? route.sectionKey,
+      planner_intent: reminder.planner_intent ?? route.plannerIntent,
+      focus_target_id: reminder.focus_target_id ?? route.focusTargetId,
+    };
+  });
 
   return {
     draft,
     documents: normalizedDocuments,
     extractedFields: normalizedExtractedFields,
     plan,
-    reminders: mergeNameChangeReminders(generatedReminders, reminders),
+    reminders: [...mergedReminders, ...enrichedExplicitReminders],
   };
 }
 

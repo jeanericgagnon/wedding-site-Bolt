@@ -20,6 +20,9 @@ export const SectionSettingsDrawer: React.FC<SectionSettingsDrawerProps> = ({
   onUpdate,
 }) => {
   if (!isOpen) return null;
+  const bindings = section.bindings ?? {};
+  const venues = weddingData.venues ?? [];
+  const registryLinks = Array.isArray(weddingData.registry?.links) ? weddingData.registry.links : [];
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSettingChange = (key: string, value: any) => {
@@ -32,14 +35,14 @@ export const SectionSettingsDrawer: React.FC<SectionSettingsDrawerProps> = ({
   };
 
   const handleBindingChange = (key: string, id: string, checked: boolean) => {
-    const currentIds = section.bindings[key as keyof typeof section.bindings] || [];
+    const currentIds = bindings[key as keyof typeof bindings] || [];
     const newIds = checked
       ? [...currentIds, id]
       : currentIds.filter((existingId) => existingId !== id);
 
     onUpdate({
       bindings: {
-        ...section.bindings,
+        ...bindings,
         [key]: newIds,
       },
     });
@@ -56,7 +59,7 @@ export const SectionSettingsDrawer: React.FC<SectionSettingsDrawerProps> = ({
         className="fixed inset-0 bg-black/50 z-40"
         onClick={onClose}
       />
-      <div className="fixed right-0 top-0 bottom-0 w-96 bg-surface border-l border-border shadow-2xl z-50 overflow-y-auto">
+      <div className="fixed right-0 top-0 bottom-0 w-96 bg-surface border-l border-border shadow-sm z-50 overflow-y-auto">
         <div className="sticky top-0 bg-surface border-b border-border p-4 flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold text-text-primary capitalize">
@@ -77,12 +80,12 @@ export const SectionSettingsDrawer: React.FC<SectionSettingsDrawerProps> = ({
         <div className="p-4 space-y-6">
           <div>
             <h3 className="text-sm font-semibold text-text-primary mb-3">
-              Display Settings
+              Section look
             </h3>
 
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <label className="text-sm text-text-secondary">Show Title</label>
+                <label className="text-sm text-text-secondary">Show section title</label>
                 <input
                   type="checkbox"
                   checked={section.settings.showTitle !== false}
@@ -94,7 +97,7 @@ export const SectionSettingsDrawer: React.FC<SectionSettingsDrawerProps> = ({
               {section.settings.showTitle !== false && (
                 <>
                   <Input
-                    label="Title Override"
+                    label="Section title"
                     value={section.settings.title || ''}
                     onChange={(e) => handleSettingChange('title', e.target.value)}
                     placeholder={`Default: ${section.type}`}
@@ -110,7 +113,7 @@ export const SectionSettingsDrawer: React.FC<SectionSettingsDrawerProps> = ({
             </div>
           </div>
 
-          {hasVenueBindings && weddingData.venues.length > 0 && (
+          {hasVenueBindings && venues.length > 0 && (
             <div>
               <h3 className="text-sm font-semibold text-text-primary mb-3">
                 Venue Bindings
@@ -119,8 +122,8 @@ export const SectionSettingsDrawer: React.FC<SectionSettingsDrawerProps> = ({
                 Select which venues to display in this section
               </p>
               <div className="space-y-2">
-                {weddingData.venues.map((venue) => {
-                  const isChecked = section.bindings.venueIds?.includes(venue.id);
+                {venues.map((venue) => {
+                  const isChecked = bindings.venueIds?.includes(venue.id);
                   return (
                     <label
                       key={venue.id}
@@ -154,7 +157,7 @@ export const SectionSettingsDrawer: React.FC<SectionSettingsDrawerProps> = ({
               </p>
               <div className="space-y-2">
                 {weddingData.schedule.map((item) => {
-                  const isChecked = section.bindings.scheduleItemIds?.includes(item.id);
+                  const isChecked = bindings.scheduleItemIds?.includes(item.id);
                   return (
                     <label
                       key={item.id}
@@ -178,7 +181,7 @@ export const SectionSettingsDrawer: React.FC<SectionSettingsDrawerProps> = ({
             </div>
           )}
 
-          {hasLinkBindings && weddingData.registry.links.length > 0 && (
+          {hasLinkBindings && registryLinks.length > 0 && (
             <div>
               <h3 className="text-sm font-semibold text-text-primary mb-3">
                 Registry Link Bindings
@@ -187,8 +190,8 @@ export const SectionSettingsDrawer: React.FC<SectionSettingsDrawerProps> = ({
                 Select which registry links to display
               </p>
               <div className="space-y-2">
-                {weddingData.registry.links.map((link) => {
-                  const isChecked = section.bindings.linkIds?.includes(link.id);
+                {registryLinks.map((link) => {
+                  const isChecked = bindings.linkIds?.includes(link.id);
                   return (
                     <label
                       key={link.id}
@@ -222,7 +225,7 @@ export const SectionSettingsDrawer: React.FC<SectionSettingsDrawerProps> = ({
               </p>
               <div className="space-y-2">
                 {weddingData.faq.map((item) => {
-                  const isChecked = section.bindings.faqIds?.includes(item.id);
+                  const isChecked = bindings.faqIds?.includes(item.id);
                   return (
                     <label
                       key={item.id}

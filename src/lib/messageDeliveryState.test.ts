@@ -2,31 +2,31 @@ import { describe, expect, it } from 'vitest';
 import { getMessageDeliveryState } from './messageDeliveryState';
 
 describe('getMessageDeliveryState', () => {
-  it('treats failed status or explicit error as delivery failure', () => {
+  it('treats missed delivery as a review state without leaking provider details', () => {
     expect(getMessageDeliveryState({ status: 'failed' })).toEqual({
-      label: 'Delivery failed',
-      tone: 'danger',
-      explainer: 'This message did not finish sending successfully.',
+      label: 'Needs review',
+      tone: 'warning',
+      explainer: 'This message needs another look before it reaches every guest.',
     });
 
     expect(getMessageDeliveryState({ status: 'sent', error: 'SMTP timeout' })).toEqual({
-      label: 'Delivery failed',
-      tone: 'danger',
-      explainer: 'SMTP timeout',
+      label: 'Needs review',
+      tone: 'warning',
+      explainer: 'This message needs another look before it reaches every guest.',
     });
   });
 
   it('treats queued and processing states as in-flight delivery', () => {
     expect(getMessageDeliveryState({ status: 'queued' })).toEqual({
-      label: 'Queued',
+      label: 'Getting ready',
       tone: 'warning',
-      explainer: 'This message is queued or processing and may still be on its way.',
+      explainer: 'This message is prepared and may still be on its way.',
     });
 
     expect(getMessageDeliveryState({ status: 'processing' })).toEqual({
-      label: 'Queued',
+      label: 'Getting ready',
       tone: 'warning',
-      explainer: 'This message is queued or processing and may still be on its way.',
+      explainer: 'This message is prepared and may still be on its way.',
     });
   });
 
@@ -34,13 +34,13 @@ describe('getMessageDeliveryState', () => {
     expect(getMessageDeliveryState({ status: 'sent' })).toEqual({
       label: 'Sent',
       tone: 'success',
-      explainer: 'This message finished sending through the current delivery path.',
+      explainer: 'This message was sent to the selected guests.',
     });
 
     expect(getMessageDeliveryState({ sentAt: '2026-04-20T21:00:00.000Z' })).toEqual({
       label: 'Sent',
       tone: 'success',
-      explainer: 'This message finished sending through the current delivery path.',
+      explainer: 'This message was sent to the selected guests.',
     });
   });
 
@@ -48,7 +48,7 @@ describe('getMessageDeliveryState', () => {
     expect(getMessageDeliveryState({})).toEqual({
       label: 'Draft',
       tone: 'neutral',
-      explainer: 'This message has not been delivered yet.',
+      explainer: 'This message is ready to review when you are.',
     });
   });
 });

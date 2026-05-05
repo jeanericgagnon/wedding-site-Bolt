@@ -13,9 +13,11 @@ export type NameChangeDocumentKind =
   | 'professional_license_record'
   | 'birth_certificate'
   | 'proof_of_address'
+  | 'bank_statement'
   | 'other';
 
-export type NameChangeExtractionFieldKey =
+export type NameChangeExtractionFieldKey = string & {};
+export type CanonicalNameChangeExtractionFieldKey =
   | 'first_name'
   | 'middle_name'
   | 'last_name'
@@ -27,10 +29,11 @@ export type NameChangeExtractionFieldKey =
   | 'court_order_date';
 
 export interface NameChangeStructuredIntake {
-  spouseLastName: string | null;
-  travelBookedSoon: boolean;
-  wantsDocumentIntakeHelp: boolean;
+  spouseLastName?: string | null;
+  travelBookedSoon?: boolean;
+  wantsDocumentIntakeHelp?: boolean;
   bothPartnersChangeName?: boolean;
+  employerName?: string;
 }
 
 export interface NameChangeCaseRecord {
@@ -87,6 +90,7 @@ export interface NameChangeCaseInput {
   change_reasons: string[];
   structured_intake: NameChangeStructuredIntake;
   latest_plan_summary?: Record<string, unknown> | null;
+  has_certified_marriage_certificate?: boolean;
 }
 
 export interface NameChangeDocumentRecord {
@@ -107,7 +111,7 @@ export interface NameChangeDocumentRecord {
 }
 
 export interface NameChangeDocumentInput {
-  id?: string;
+  id?: string | null;
   document_kind: NameChangeDocumentKind;
   display_name: string;
   storage_mode: 'none' | 'metadata_only';
@@ -137,7 +141,7 @@ export interface NameChangeExtractedFieldInput {
   document_id?: string | null;
   field_key: NameChangeExtractionFieldKey;
   field_label: string;
-  field_value_masked: string;
+  field_value_masked: string | null;
   source_type: 'manual' | 'document_extract';
   is_verified: boolean;
 }
@@ -180,20 +184,20 @@ export interface NameChangePlanSummary {
   legalPathLabel: string;
   recommendedOrder: string[];
   targetStatusOverview?: {
-    todo: number;
-    inProgress: number;
-    complete: number;
-    ready: number;
-    blocked: number;
-    missingProofTargets: number;
-    attentionProofTargets: number;
-    touchedByExecution: number;
-    touchedByReminder: number;
-    latestUpdatedAt: string | null;
-    latestMilestoneAt: string | null;
-    latestReminderAt: string | null;
-    latestTouchedAt: string | null;
-    latestTouchedSource: 'execution' | 'milestone' | 'reminder' | null;
+    todo?: number;
+    inProgress?: number;
+    complete?: number;
+    ready?: number;
+    blocked?: number;
+    missingProofTargets?: number;
+    attentionProofTargets?: number;
+    touchedByExecution?: number;
+    touchedByReminder?: number;
+    latestUpdatedAt?: string | null;
+    latestMilestoneAt?: string | null;
+    latestReminderAt?: string | null;
+    latestTouchedAt?: string | null;
+    latestTouchedSource?: 'execution' | 'milestone' | 'reminder' | null;
   };
   executionTracks?: Array<{
     id: string;
@@ -456,6 +460,7 @@ export interface NameChangeFormFieldPayload {
 
 export interface NameChangeFormPayloadSnapshot {
   formCode: string;
+  formLabel?: string;
   fields: NameChangeFormFieldPayload[];
   summary: {
     ready: number;
@@ -511,7 +516,7 @@ export interface NameChangeExecutionTargetDefinition {
   checklistSpecs: Array<{
     key: string;
     label: string;
-    kind: 'requirement' | 'field_presence' | 'document_support';
+    kind?: 'requirement' | 'field_presence' | 'document_support';
     nextActionCategory?: 'packet' | 'checklist' | 'document' | 'review';
     blocksReady?: boolean;
     requirementKey?: string;
@@ -598,7 +603,7 @@ export interface NameChangeTargetExecutionSnapshot {
   checklist: Array<{
     key: string;
     label: string;
-    kind: 'requirement' | 'field_presence' | 'document_support';
+    kind?: 'requirement' | 'field_presence' | 'document_support';
     nextActionCategory?: 'packet' | 'checklist' | 'document' | 'review';
     blocksReady?: boolean;
     status: 'ready' | 'missing' | 'attention';
@@ -688,10 +693,11 @@ export interface NameChangeReminderInput {
   reminder_key: string;
   label: string;
   reason: string;
-  depends_on_step_id: string;
-  suggested_offset_days: number;
-  urgency: 'high' | 'medium' | 'low';
+  depends_on_step_id?: string;
+  suggested_offset_days?: number;
+  urgency: 'high' | 'medium' | 'low' | 'normal';
   status: 'pending' | 'scheduled' | 'sent' | 'dismissed';
+  trigger_type?: string;
   section_key?: 'core-government' | 'work-identity' | 'institutional' | 'cleanup';
   planner_intent?: 'open_execution_card';
   focus_target_id?: string;

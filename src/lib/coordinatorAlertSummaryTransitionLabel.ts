@@ -7,6 +7,6 @@ export const getCoordinatorAlertSummaryTransitionLabel = ({
 }) => {
   if (previousAligned === null || previousAligned === currentAligned) return null;
   return currentAligned
-    ? 'Alert lane re-aligned to board target'
-    : 'Alert lane moved into manual override';
+    ? 'Update draft returned to the suggestion'
+    : 'Update draft was customized';
 };

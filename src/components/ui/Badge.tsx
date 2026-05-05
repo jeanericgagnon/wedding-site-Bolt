@@ -8,17 +8,17 @@ export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
   ({ className = '', variant = 'neutral', children, ...props }, ref) => {
     const variantStyles = {
       primary: 'bg-primary-light text-primary border-primary/20',
-      secondary: 'bg-[#FAF0ED] text-accent border-accent/20',
+      secondary: 'bg-surface-subtle text-text-secondary border-border/60',
       success: 'bg-success-light text-success border-success/20',
-      warning: 'bg-warning-light text-warning border-warning/20',
-      error: 'bg-error-light text-error border-error/20',
+      warning: 'bg-surface-subtle text-text-secondary border-border-subtle',
+      error: 'bg-surface-subtle text-text-secondary border-border-subtle',
       neutral: 'bg-surface text-text-secondary border-border/50',
     };
 
     return (
       <span
         ref={ref}
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${variantStyles[variant]} ${className}`}
+        className={`inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-medium ${variantStyles[variant]} ${className}`}
         {...props}
       >
         {children}

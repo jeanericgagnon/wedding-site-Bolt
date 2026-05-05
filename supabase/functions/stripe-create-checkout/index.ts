@@ -8,6 +8,27 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
+function json(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+function isAllowedCheckoutRedirect(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return false;
+    const appOrigin = new URL(Deno.env.get("APP_PUBLIC_URL") || "https://dayof.love").origin;
+    if (parsed.origin === appOrigin) return true;
+    if (parsed.hostname === "dayof.love" || parsed.hostname.endsWith(".dayof.love")) return true;
+    if (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1") return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -16,10 +37,7 @@ Deno.serve(async (req: Request) => {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Missing authorization" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Missing authorization" }, 401);
     }
 
     const token = authHeader.replace(/^Bearer\s+/i, "").trim();
@@ -31,10 +49,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
     if (userError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Unauthorized" }, 401);
     }
 
     const body = await req.json().catch(() => ({}));
@@ -45,10 +60,11 @@ Deno.serve(async (req: Request) => {
     };
 
     if (!wedding_site_id || !success_url || !cancel_url) {
-      return new Response(JSON.stringify({ error: "Missing required fields: wedding_site_id, success_url, cancel_url" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Missing required fields: wedding_site_id, success_url, cancel_url" }, 400);
+    }
+
+    if (!isAllowedCheckoutRedirect(success_url) || !isAllowedCheckoutRedirect(cancel_url)) {
+      return json({ error: "Checkout return URL is not allowed." }, 400);
     }
 
     const { data: site, error: siteError } = await supabaseAdmin
@@ -59,17 +75,11 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
 
     if (siteError || !site) {
-      return new Response(JSON.stringify({ error: "Wedding site not found" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Wedding site not found" }, 404);
     }
 
     if (site.payment_status === "active") {
-      return new Response(JSON.stringify({ error: "Already paid" }), {
-        status: 409,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Already paid" }, 409);
     }
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
@@ -107,15 +117,9 @@ Deno.serve(async (req: Request) => {
       .update({ stripe_checkout_session_id: session.id })
       .eq("id", wedding_site_id);
 
-    return new Response(JSON.stringify({ url: session.url, session_id: session.id }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ url: session.url, session_id: session.id });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Internal server error";
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    console.error("STRIPE_CREATE_CHECKOUT_UNEXPECTED_FAILED", err);
+    return json({ error: "Could not start checkout. Please try again." }, 500);
   }
 });

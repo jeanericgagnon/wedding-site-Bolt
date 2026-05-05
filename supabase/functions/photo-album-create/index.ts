@@ -10,6 +10,14 @@ const slugify = (value: string) =>
     .replace(/^-+|-+$/g, "")
     .slice(0, 80) || "album";
 
+function safePhotoAlbumCreateError(code: "CONFIG" | "AUTH" | "PARENT" | "SAVE" | "INTERNAL"): string {
+  if (code === "CONFIG") return "Photo albums are not ready yet. Please try again in a few minutes.";
+  if (code === "AUTH") return "Unauthorized";
+  if (code === "PARENT") return "Could not load the parent album. Please try again.";
+  if (code === "SAVE") return "Could not create this photo album. Please try again.";
+  return "Could not create this photo album. Please try again.";
+}
+
 function randomToken(length = 48) {
   const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   const bytes = crypto.getRandomValues(new Uint8Array(length));
@@ -43,6 +51,11 @@ async function refreshAccessToken(refreshToken: string) {
       ? new Date(Date.now() + Number(tokenJson.expires_in) * 1000).toISOString()
       : null,
   };
+}
+
+function isGoogleDriveRefreshFailure(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return message.toLowerCase().includes("refresh google access token");
 }
 
 async function ensureFolder(accessToken: string, name: string, parentId?: string | null) {
@@ -80,6 +93,57 @@ async function ensureFolder(accessToken: string, name: string, parentId?: string
   return createJson.id as string;
 }
 
+async function tryEnsureDriveFolder(options: {
+  admin: ReturnType<typeof createClient>;
+  site: Record<string, unknown>;
+  siteId: string;
+  siteSlug: string;
+  albumName: string;
+}) {
+  const { admin, site, siteId, siteSlug, albumName } = options;
+  if (!site.vault_google_drive_connected) return { folderId: null, folderUrl: null, backupStatus: "not_connected" };
+
+  let accessToken = site.vault_google_drive_access_token as string | null;
+  const refreshToken = site.vault_google_drive_refresh_token as string | null;
+  const tokenExpiresAt = site.vault_google_drive_token_expires_at ? new Date(site.vault_google_drive_token_expires_at as string).getTime() : 0;
+
+  if (!accessToken || !tokenExpiresAt || tokenExpiresAt < Date.now() + 30_000) {
+    if (!refreshToken) return { folderId: null, folderUrl: null, backupStatus: "reconnect_required" };
+    try {
+      const refreshed = await refreshAccessToken(refreshToken);
+      accessToken = refreshed.accessToken;
+      await admin
+        .from("wedding_sites")
+        .update({
+          vault_google_drive_access_token: refreshed.accessToken,
+          vault_google_drive_token_expires_at: refreshed.expiresAt,
+        })
+        .eq("id", siteId);
+    } catch (error) {
+      if (isGoogleDriveRefreshFailure(error)) {
+        return { folderId: null, folderUrl: null, backupStatus: "reconnect_required" };
+      }
+      return { folderId: null, folderUrl: null, backupStatus: "failed" };
+    }
+  }
+
+  try {
+    let rootFolderId = site.vault_google_drive_root_folder_id as string | null;
+    if (!rootFolderId) {
+      rootFolderId = await ensureFolder(accessToken!, `DayOf Photos - ${siteSlug}`);
+      await admin.from("wedding_sites").update({ vault_google_drive_root_folder_id: rootFolderId }).eq("id", siteId);
+    }
+    const folderId = await ensureFolder(accessToken!, albumName, rootFolderId);
+    return {
+      folderId,
+      folderUrl: `https://drive.google.com/drive/folders/${folderId}`,
+      backupStatus: "connected",
+    };
+  } catch {
+    return { folderId: null, folderUrl: null, backupStatus: "failed" };
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
 
@@ -91,6 +155,7 @@ Deno.serve(async (req: Request) => {
     const siteId = typeof body.siteId === "string" ? body.siteId : null;
     const name = typeof body.name === "string" ? body.name.trim() : "";
     const itineraryEventId = typeof body.itineraryEventId === "string" ? body.itineraryEventId : null;
+    const parentAlbumId = typeof body.parentAlbumId === "string" && body.parentAlbumId.trim() ? body.parentAlbumId.trim() : null;
     const opensAt = typeof body.opensAt === "string" ? body.opensAt : null;
     const closesAt = typeof body.closesAt === "string" ? body.closesAt : null;
 
@@ -101,7 +166,7 @@ Deno.serve(async (req: Request) => {
     const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const appUrl = Deno.env.get("APP_PUBLIC_URL") ?? "https://dayof.love";
 
-    if (!anonKey) return fail("SERVER_CONFIG_ERROR", "Missing SUPABASE_ANON_KEY in function env", 500);
+    if (!anonKey) return fail("SERVER_CONFIG_ERROR", safePhotoAlbumCreateError("CONFIG"), 500);
 
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
@@ -112,7 +177,7 @@ Deno.serve(async (req: Request) => {
       error: userErr,
     } = await userClient.auth.getUser();
 
-    if (userErr || !user) return fail("UNAUTHORIZED", userErr?.message ?? "Unauthorized", 401);
+    if (userErr || !user) return fail("UNAUTHORIZED", safePhotoAlbumCreateError("AUTH"), 401);
 
     const admin = createClient(supabaseUrl, serviceRole);
 
@@ -123,37 +188,30 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
 
     if (!site || site.user_id !== user.id) return fail("FORBIDDEN", "Forbidden", 403);
-    if (!site.vault_google_drive_connected) return fail("DRIVE_NOT_CONNECTED", "Google Drive is not connected.", 400);
 
-    let accessToken = site.vault_google_drive_access_token as string | null;
-    const refreshToken = site.vault_google_drive_refresh_token as string | null;
-    const tokenExpiresAt = site.vault_google_drive_token_expires_at ? new Date(site.vault_google_drive_token_expires_at as string).getTime() : 0;
-
-    if (!accessToken || !tokenExpiresAt || tokenExpiresAt < Date.now() + 30_000) {
-      if (!refreshToken) return fail("DRIVE_RECONNECT_REQUIRED", "Google Drive connection needs reconnect.", 400);
-      const refreshed = await refreshAccessToken(refreshToken);
-      accessToken = refreshed.accessToken;
-      await admin
-        .from("wedding_sites")
-        .update({
-          vault_google_drive_access_token: refreshed.accessToken,
-          vault_google_drive_token_expires_at: refreshed.expiresAt,
-        })
-        .eq("id", siteId);
+    let parentAlbum: Record<string, unknown> | null = null;
+    if (parentAlbumId) {
+      const { data: parent, error: parentError } = await admin
+        .from("photo_albums")
+        .select("id,wedding_site_id,name")
+        .eq("id", parentAlbumId)
+        .maybeSingle();
+      if (parentError) {
+        console.error("PHOTO_ALBUM_CREATE_PARENT_FAILED", parentError);
+        return fail("PARENT_BUCKET_ERROR", safePhotoAlbumCreateError("PARENT"), 400);
+      }
+      if (!parent || parent.wedding_site_id !== siteId) {
+        return fail("PARENT_BUCKET_INVALID", "Parent bucket must belong to this wedding site.", 400);
+      }
+      parentAlbum = parent;
     }
 
     const siteSlug = (site.site_slug as string | null) ?? `site-${siteId.slice(0, 8)}`;
-    let rootFolderId = site.vault_google_drive_root_folder_id as string | null;
-
-    if (!rootFolderId) {
-      rootFolderId = await ensureFolder(accessToken!, `DayOf Photos - ${siteSlug}`);
-      await admin.from("wedding_sites").update({ vault_google_drive_root_folder_id: rootFolderId }).eq("id", siteId);
-    }
-
     const albumSlugBase = slugify(name);
     const albumSlug = `${albumSlugBase}-${Date.now().toString(36).slice(-4)}`;
-    const folderId = await ensureFolder(accessToken!, name, rootFolderId);
-    const folderUrl = `https://drive.google.com/drive/folders/${folderId}`;
+    const hierarchyLabel = parentAlbum ? `${String(parentAlbum.name)} / ${name}` : name;
+    const driveBackup = await tryEnsureDriveFolder({ admin, site, siteId, siteSlug, albumName: hierarchyLabel });
+    const hostedFolderKey = `hosted/${siteId}/${albumSlug}`;
 
     const token = randomToken();
     const tokenHash = await sha256Hex(token);
@@ -162,21 +220,26 @@ Deno.serve(async (req: Request) => {
       .from("photo_albums")
       .insert({
         wedding_site_id: siteId,
+        parent_album_id: parentAlbumId,
+        hierarchy_label: hierarchyLabel,
         itinerary_event_id: itineraryEventId,
         name,
         slug: albumSlug,
-        drive_folder_id: folderId,
-        drive_folder_url: folderUrl,
+        drive_folder_id: driveBackup.folderId ?? hostedFolderKey,
+        drive_folder_url: driveBackup.folderUrl,
         upload_token_hash: tokenHash,
         is_active: true,
         opens_at: opensAt,
         closes_at: closesAt,
         created_by: user.id,
       })
-      .select("id,name,slug,drive_folder_id,drive_folder_url")
+      .select("id,name,slug,parent_album_id,hierarchy_label,drive_folder_id,drive_folder_url")
       .single();
 
-    if (error) return fail("DB_ERROR", error.message, 400);
+    if (error) {
+      console.error("PHOTO_ALBUM_CREATE_SAVE_FAILED", error);
+      return fail("DB_ERROR", safePhotoAlbumCreateError("SAVE"), 400);
+    }
 
     const uploadUrl = `${appUrl.replace(/\/$/, "")}/photos/upload?t=${encodeURIComponent(token)}`;
 
@@ -184,8 +247,11 @@ Deno.serve(async (req: Request) => {
       album: created,
       uploadUrl,
       uploadToken: token,
+      storageProvider: "dayof_hosted",
+      driveBackupStatus: driveBackup.backupStatus,
     });
   } catch (err) {
-    return fail("INTERNAL_ERROR", err instanceof Error ? err.message : "Internal server error", 500);
+    console.error("PHOTO_ALBUM_CREATE_UNEXPECTED_FAILED", err);
+    return fail("INTERNAL_ERROR", safePhotoAlbumCreateError("INTERNAL"), 500);
   }
 });

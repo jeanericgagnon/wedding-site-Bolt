@@ -93,6 +93,39 @@ describe('applyWeddingDataBindings', () => {
     expect(links[0].url).toBe('https://amazon.com/registry');
   });
 
+  it('sanitizes bound registry and cash-fund URLs before variant render', () => {
+    const data = createEmptyWeddingData();
+    data.registry.links = [
+      { id: 'unsafe', label: 'Unsafe', url: 'javascript:alert(1)' },
+      { id: 'safe', label: 'Safe Store', url: 'https://example.com/registry' },
+    ];
+
+    const unsafeResult = applyWeddingDataBindings({
+      type: 'registry',
+      variant: 'cards',
+      data: { links: [], cashFundEnabled: true, cashFundUrl: 'ftp://example.com/fund' },
+      bindings: { linkIds: ['unsafe'] },
+    }, data);
+
+    const unsafeLinks = unsafeResult.links as Array<Record<string, unknown>>;
+    expect(unsafeLinks).toHaveLength(1);
+    expect(unsafeLinks[0].store).toBe('Safe Store');
+    expect(unsafeLinks[0].url).toBe('https://example.com/registry');
+    expect(unsafeResult.viewAllUrl).toBe('https://example.com/registry');
+    expect(unsafeResult.cashFundUrl).toBe('');
+    expect(unsafeResult.cashFundEnabled).toBe(false);
+
+    const safeResult = applyWeddingDataBindings({
+      type: 'registry',
+      variant: 'cards',
+      data: { links: [], cashFundEnabled: true, cashFundUrl: 'https://example.com/fund' },
+      bindings: { linkIds: ['safe'] },
+    }, data);
+
+    expect(safeResult.cashFundUrl).toBe('https://example.com/fund');
+    expect(safeResult.cashFundEnabled).toBe(true);
+  });
+
   it('binds faq items from wedding data', () => {
     const data = createEmptyWeddingData();
     data.faq = [
@@ -268,6 +301,116 @@ describe('applyWeddingDataBindings', () => {
     expect(result.title).toBe('Alex');
   });
 
+  it('treats stock hero labels as placeholders on public renders', () => {
+    const data = createEmptyWeddingData();
+    data.couple.partner1Name = 'Maya';
+    data.couple.partner2Name = 'Leo';
+    data.event.weddingDateISO = '2026-09-12T00:00:00.000Z';
+
+    const result = applyWeddingDataBindings({
+      type: 'hero',
+      variant: 'fullBleed',
+      data: {
+        headline: 'Our Wedding',
+        title: 'The couple',
+        coupleName: 'Partner One & Partner Two',
+        names: 'Your names',
+        subheadline: 'Date TBD',
+        subtitle: 'Wedding date',
+      },
+    }, data);
+
+    expect(result.headline).toBe('Maya & Leo');
+    expect(result.title).toBe('Maya & Leo');
+    expect(result.coupleName).toBe('Maya & Leo');
+    expect(result.names).toBe('Maya & Leo');
+    expect(result.subheadline).toBe('Friday, September 11, 2026');
+    expect(result.subtitle).toBe('Friday, September 11, 2026');
+  });
+
+  it('prefers real partner names over a saved placeholder display name', () => {
+    const data = createEmptyWeddingData();
+    data.couple.partner1Name = 'Maya';
+    data.couple.partner2Name = 'Leo';
+    data.couple.displayName = 'The couple';
+
+    const result = applyWeddingDataBindings({
+      type: 'hero',
+      variant: 'fullBleed',
+      data: {
+        headline: '',
+        title: '',
+      },
+    }, data);
+
+    expect(result.headline).toBe('Maya & Leo');
+    expect(result.title).toBe('Maya & Leo');
+  });
+
+  it('replaces stale standalone hero dates while preserving custom sentence subtitles', () => {
+    const data = createEmptyWeddingData();
+    data.couple.partner1Name = 'Maya';
+    data.couple.partner2Name = 'Leo';
+    data.event.weddingDateISO = '2027-06-06T12:00:00.000Z';
+
+    const staleDateResult = applyWeddingDataBindings({
+      type: 'hero',
+      variant: 'fullBleed',
+      data: {
+        subtitle: 'Sunday, January 17, 2027',
+      },
+    }, data);
+
+    const customSubtitleResult = applyWeddingDataBindings({
+      type: 'hero',
+      variant: 'fullBleed',
+      data: {
+        subtitle: 'Join us in Sayulita for a weekend by the water',
+      },
+    }, data);
+
+    expect(staleDateResult.subtitle).toBe('Sunday, June 6, 2027');
+    expect(customSubtitleResult.subtitle).toBe('Join us in Sayulita for a weekend by the water');
+  });
+
+  it('maps builder subtitle settings into hero subheadline data for section variants', () => {
+    const data = createEmptyWeddingData();
+    data.couple.partner1Name = 'Maya';
+    data.couple.partner2Name = 'Leo';
+    data.event.weddingDateISO = '2027-06-06T12:00:00.000Z';
+
+    const result = applyWeddingDataBindings({
+      type: 'hero',
+      variant: 'fullBleed',
+      data: {
+        headline: 'Our Wedding',
+        subtitle: 'Sunday, January 17, 2027',
+      },
+    }, data);
+
+    expect(result.headline).toBe('Maya & Leo');
+    expect(result.subheadline).toBe('Sunday, June 6, 2027');
+  });
+
+  it('keeps normal section labels like Our Story while dropping non-hero date placeholders', () => {
+    const data = createEmptyWeddingData();
+    data.couple.partner1Name = 'Maya';
+    data.couple.partner2Name = 'Leo';
+    data.event.weddingDateISO = '2026-09-12T00:00:00.000Z';
+
+    const result = applyWeddingDataBindings({
+      type: 'story',
+      variant: 'twoColumn',
+      data: {
+        title: 'Our Story',
+        subheadline: 'Date TBD',
+      },
+    }, data);
+
+    expect(result.title).toBe('Our Story');
+    expect(result.subheadline).toBe('');
+  });
+
   it('falls back to wedding media when common image fields are blank or empty', () => {
     const data = createEmptyWeddingData();
     data.media.heroImageUrl = 'https://example.com/hero.jpg';
@@ -308,5 +451,75 @@ describe('applyWeddingDataBindings', () => {
       { id: 'g1', url: 'https://example.com/gallery-1.jpg', caption: 'First', alt: 'First' },
       { id: 'g2', url: 'https://example.com/gallery-2.jpg', caption: 'Second', alt: 'Second' },
     ]);
+  });
+
+  it('sanitizes bound common media URLs before section render', () => {
+    const data = createEmptyWeddingData();
+    data.media.heroImageUrl = 'javascript:alert(1)';
+    data.media.gallery = [
+      { id: 'bad-script', url: 'javascript:alert(1)', caption: 'Unsafe script' },
+      { id: 'bad-preview', url: 'https://image.thum.io/get/width/900/https%3A%2F%2Fexample.com', caption: 'Preview proxy' },
+      { id: 'safe', url: '/preview-photos/header-anchor.jpg', caption: 'Safe photo' },
+    ];
+
+    const result = applyWeddingDataBindings({
+      type: 'gallery',
+      variant: 'grid',
+      data: {
+        heroImage: '',
+        backgroundImage: '',
+        photos: [],
+        images: [],
+        galleryImages: [],
+      },
+    }, data);
+
+    expect(result.heroImage).toBe('');
+    expect(result.backgroundImage).toBe('');
+    expect(result.photos).toEqual(['/preview-photos/header-anchor.jpg']);
+    expect(result.images).toEqual([
+      { id: 'safe', url: '/preview-photos/header-anchor.jpg', caption: 'Safe photo', alt: 'Safe photo' },
+    ]);
+    expect(JSON.stringify(result)).not.toContain('javascript:alert');
+    expect(JSON.stringify(result)).not.toContain('image.thum.io');
+  });
+
+  it('ignores unsafe persisted section media in favor of safe wedding media', () => {
+    const data = createEmptyWeddingData();
+    data.media.heroImageUrl = '/preview-photos/header-anchor.jpg';
+    data.media.gallery = [
+      { id: 'safe-fallback', url: '/preview-photos/header-anchor.jpg', caption: 'Fallback photo' },
+    ];
+
+    const result = applyWeddingDataBindings({
+      type: 'gallery',
+      variant: 'grid',
+      data: {
+        heroImage: 'javascript:alert(1)',
+        heroImageUrl: 'ftp://example.com/hero.jpg',
+        backgroundImage: 'https://image.thum.io/get/width/900/https%3A%2F%2Fexample.com',
+        image: '//example.com/nope.jpg',
+        coverImage: '/\\evil.jpg',
+        photos: ['javascript:alert(1)', 'https://image.thum.io/get/https%3A%2F%2Fexample.com'],
+        images: [{ id: 'bad-image', url: 'javascript:alert(1)', caption: 'Bad image' }],
+        galleryImages: [{ id: 'bad-gallery', url: 'ftp://example.com/gallery.jpg', caption: 'Bad gallery' }],
+      },
+    }, data);
+
+    expect(result.heroImage).toBe('/preview-photos/header-anchor.jpg');
+    expect(result.heroImageUrl).toBe('/preview-photos/header-anchor.jpg');
+    expect(result.backgroundImage).toBe('/preview-photos/header-anchor.jpg');
+    expect(result.image).toBe('/preview-photos/header-anchor.jpg');
+    expect(result.coverImage).toBe('/preview-photos/header-anchor.jpg');
+    expect(result.photos).toEqual(['/preview-photos/header-anchor.jpg']);
+    expect(result.images).toEqual([
+      { id: 'safe-fallback', url: '/preview-photos/header-anchor.jpg', caption: 'Fallback photo', alt: 'Fallback photo' },
+    ]);
+    expect(result.galleryImages).toEqual([
+      { id: 'safe-fallback', url: '/preview-photos/header-anchor.jpg', caption: 'Fallback photo', alt: 'Fallback photo' },
+    ]);
+    expect(JSON.stringify(result)).not.toContain('javascript:alert');
+    expect(JSON.stringify(result)).not.toContain('ftp://example.com');
+    expect(JSON.stringify(result)).not.toContain('image.thum.io');
   });
 });

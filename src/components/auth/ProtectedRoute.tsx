@@ -3,7 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { fetchBillingInfo, isSiteExpired, type BillingInfo } from '../../lib/stripeService';
 import { resolveActiveSiteRoleForUser } from '../../lib/activeSite';
-import { isPaymentGateEnabled } from '../../lib/paymentGate';
+import { isPaymentBypassAllowed, isPaymentGateEnabled } from '../../lib/paymentGate';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -13,6 +13,7 @@ interface ProtectedRouteProps {
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, skipPaymentGate = false }) => {
   const { user, loading, isDemoMode } = useAuth();
   const paymentGateEnabled = isPaymentGateEnabled();
+  const paymentBypassAllowed = isPaymentBypassAllowed();
   const location = useLocation();
   const [billingInfo, setBillingInfo] = useState<BillingInfo | null | 'loading'>('loading');
   const [activeSiteRole, setActiveSiteRole] = useState<string | null>(null);
@@ -46,7 +47,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, skipPa
   }
 
   if (!user) {
-    const bypassPayment = new URLSearchParams(location.search).get('bypassPayment') === '1';
+    const bypassPayment = paymentBypassAllowed && new URLSearchParams(location.search).get('bypassPayment') === '1';
     const allowQuickStartPreview = bypassPayment && location.pathname === '/onboarding/quick-start';
 
     if (allowQuickStartPreview) {
@@ -58,7 +59,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, skipPa
 
   if (paymentGateEnabled && !skipPaymentGate && !isDemoMode && activeSiteRole !== 'planner' && activeSiteRole !== 'coordinator' && activeSiteRole !== 'viewer') {
     const isPaymentRoute = location.pathname.startsWith('/payment');
-    const bypassPayment = new URLSearchParams(location.search).get('bypassPayment') === '1';
+    const bypassPayment = paymentBypassAllowed && new URLSearchParams(location.search).get('bypassPayment') === '1';
 
     if (billingInfo?.payment_status === 'payment_required' && !isPaymentRoute && !bypassPayment) {
       return <Navigate to="/payment-required" replace />;

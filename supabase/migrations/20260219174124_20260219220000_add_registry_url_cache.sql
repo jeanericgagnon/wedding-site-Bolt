@@ -63,14 +63,11 @@ CREATE TABLE IF NOT EXISTS registry_url_cache (
   last_fetched_at timestamptz NOT NULL DEFAULT now(),
   created_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS registry_url_cache_hash_idx ON registry_url_cache(normalized_url_hash);
 CREATE INDEX IF NOT EXISTS registry_url_cache_fetched_idx ON registry_url_cache(last_fetched_at);
 CREATE INDEX IF NOT EXISTS registry_url_cache_status_idx ON registry_url_cache(fetch_status);
 CREATE INDEX IF NOT EXISTS registry_url_cache_retailer_idx ON registry_url_cache(retailer);
-
 ALTER TABLE registry_url_cache ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Authenticated users can read url cache"
   ON registry_url_cache FOR SELECT
   TO authenticated

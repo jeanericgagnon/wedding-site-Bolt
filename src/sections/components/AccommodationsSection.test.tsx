@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { AccommodationsCards, AccommodationsSection } from './AccommodationsSection';
+import { accommodationsCardsDefinition } from '../variants/accommodations/cards';
 import type { SectionInstance } from '../../types/layoutConfig';
 import type { WeddingDataV1 } from '../../types/weddingData';
 
@@ -101,5 +102,74 @@ describe('AccommodationsSection', () => {
 
     expect(screen.queryByText('Accommodations')).not.toBeInTheDocument();
     expect(screen.getByText('We reserved a small room block.')).toBeInTheDocument();
+  });
+
+  it('drops unsafe hotel booking URLs before rendering public links', () => {
+    render(
+      <AccommodationsSection
+        data={createEmptyWeddingData()}
+        instance={makeInstance({
+          hotels: [
+            { name: 'Unsafe Inn', url: 'javascript:alert(1)' },
+            { name: 'Safe Hotel', url: 'https://example.com/book' },
+          ],
+        })}
+      />
+    );
+
+    expect(screen.getByText('Unsafe Inn')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /book now/i })).toHaveAttribute('href', 'https://example.com/book');
+    expect(document.querySelector('a[href^="javascript:"]')).not.toBeInTheDocument();
+  });
+
+  it('drops unsafe accommodation variant image URLs before render', () => {
+    const VariantCards = accommodationsCardsDefinition.Component;
+
+    render(
+      <VariantCards
+        data={{
+          eyebrow: 'Stay',
+          title: '',
+          headline: 'Hotels',
+          generalNote: '',
+          blockNote: '',
+          layoutStyle: 'cards',
+          mapImage: '',
+          shuttleNote: '',
+          hotels: [
+            {
+              id: 'bad',
+              name: 'Unsafe Hotel',
+              stars: 4,
+              distance: '',
+              priceRange: '',
+              bookingCode: '',
+              phone: '',
+              url: '',
+              image: 'https://image.thum.io/get/width/900/https%3A%2F%2Fexample.com',
+              notes: '',
+              recommended: false,
+            },
+            {
+              id: 'safe',
+              name: 'Safe Hotel',
+              stars: 4,
+              distance: '',
+              priceRange: '',
+              bookingCode: '',
+              phone: '',
+              url: '',
+              image: 'https://example.com/hotel.jpg',
+              notes: '',
+              recommended: false,
+            },
+          ],
+        }}
+      />,
+    );
+
+    expect(screen.getByText('Unsafe Hotel')).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: 'Unsafe Hotel' })).not.toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Safe Hotel' })).toHaveAttribute('src', 'https://example.com/hotel.jpg');
   });
 });

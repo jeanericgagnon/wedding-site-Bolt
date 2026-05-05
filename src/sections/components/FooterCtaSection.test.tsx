@@ -107,4 +107,50 @@ describe('FooterCtaSection', () => {
     expect(screen.queryByText('Invalid Date')).not.toBeInTheDocument();
     expect(screen.getByText('Please reply by')).toBeInTheDocument();
   });
+
+  it('sanitizes legacy footer RSVP links before render', () => {
+    const data = createEmptyWeddingData();
+
+    const { container, rerender } = render(
+      <FooterCtaSection
+        data={data}
+        instance={makeInstance({ rsvpUrl: 'javascript:alert(1)' })}
+      />,
+    );
+
+    expect(screen.getByRole('link', { name: /send rsvp/i })).toHaveAttribute('href', '#rsvp');
+    expect(container.innerHTML).not.toContain('javascript:alert');
+
+    rerender(
+      <FooterCtaMinimal
+        data={data}
+        instance={makeInstance({ rsvpUrl: 'ftp://example.com/rsvp' })}
+      />,
+    );
+
+    expect(screen.getByRole('link', { name: /send rsvp/i })).toHaveAttribute('href', '#rsvp');
+    expect(container.innerHTML).not.toContain('ftp://example.com/rsvp');
+  });
+
+  it('keeps safe legacy footer RSVP links', () => {
+    const data = createEmptyWeddingData();
+
+    const { rerender } = render(
+      <FooterCtaSection
+        data={data}
+        instance={makeInstance({ rsvpUrl: '/site/alex-jordan#rsvp' })}
+      />,
+    );
+
+    expect(screen.getByRole('link', { name: /send rsvp/i })).toHaveAttribute('href', '/site/alex-jordan#rsvp');
+
+    rerender(
+      <FooterCtaMinimal
+        data={data}
+        instance={makeInstance({ rsvpUrl: 'https://example.com/rsvp' })}
+      />,
+    );
+
+    expect(screen.getByRole('link', { name: /send rsvp/i })).toHaveAttribute('href', 'https://example.com/rsvp');
+  });
 });

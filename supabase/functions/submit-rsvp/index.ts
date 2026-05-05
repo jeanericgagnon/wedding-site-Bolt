@@ -274,7 +274,7 @@ Deno.serve(async (req: Request) => {
         : null,
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Internal server error";
-    return json({ error: message }, 500);
+    console.error("SUBMIT_RSVP_UNEXPECTED_FAILED", err);
+    return json({ error: "Could not submit this RSVP. Please try again." }, 500);
   }
 });

@@ -13,23 +13,24 @@ export interface NameChangeDocumentRepairQueueItem {
   label: string;
   severity: 'blocking' | 'attention';
   score: number;
-  impactSummary: string;
-  payoffSummary: string;
+  impactSummary?: string;
+  payoffSummary: string | string[];
   nextActions: NameChangeGuidedAction[];
   impactedTargets: string[];
-  canonicalConflictCount: number;
-  impactedFields: Array<{
+  canonicalConflictCount?: number;
+  impactedFields?: Array<{
     fieldKey: string;
     label: string;
     targetLabel: string;
     severity: 'blocking' | 'attention';
   }>;
-  blockingRiskCount: number;
-  attentionRiskCount: number;
-  metadataMissing: string[];
+  blockingRiskCount?: number;
+  attentionRiskCount?: number;
+  metadataMissing?: string[];
+  missingMetadata?: string[];
   missingExtractionFields: string[];
-  intakeStatus: NameChangeDocumentContractStatus['intakeStatus'];
-  required: boolean;
+  intakeStatus?: NameChangeDocumentContractStatus['intakeStatus'];
+  required?: boolean;
 }
 
 function getDocumentRepairActionPriority(action: NameChangeGuidedAction) {
@@ -62,7 +63,7 @@ function buildExtractionRepairAction(
       return {
         category: 'document',
         label: 'Capture county + certificate number + issuing authority for certified marriage certificate',
-        detail: 'Out-of-state marriage follow-through needs grounded county, certificate-number extraction, and issuing-authority metadata from the marriage certificate.',
+        detail: 'Out-of-state marriage follow-through needs the county, certificate number, and issuing authority from the marriage certificate.',
         documentKind: 'marriage_certificate',
       };
     }
@@ -71,7 +72,7 @@ function buildExtractionRepairAction(
       return {
         category: 'document',
         label: 'Capture county + certificate number for certified marriage certificate',
-        detail: 'Out-of-state marriage follow-through needs grounded county and certificate-number extraction from the marriage certificate.',
+        detail: 'Out-of-state marriage follow-through needs the county and certificate number from the marriage certificate.',
         documentKind: 'marriage_certificate',
       };
     }
@@ -80,7 +81,7 @@ function buildExtractionRepairAction(
       return {
         category: 'document',
         label: 'Capture county + issuing authority for certified marriage certificate',
-        detail: 'Out-of-state marriage follow-through still needs grounded county extraction and issuing-authority metadata from the marriage certificate.',
+        detail: 'Out-of-state marriage follow-through still needs the county and issuing authority from the marriage certificate.',
         documentKind: 'marriage_certificate',
       };
     }
@@ -89,7 +90,7 @@ function buildExtractionRepairAction(
       return {
         category: 'document',
         label: 'Capture certificate number + issuing authority for certified marriage certificate',
-        detail: 'Out-of-state marriage follow-through still needs grounded certificate-number extraction and issuing-authority metadata from the marriage certificate.',
+        detail: 'Out-of-state marriage follow-through still needs the certificate number and issuing authority from the marriage certificate.',
         documentKind: 'marriage_certificate',
       };
     }
@@ -98,7 +99,7 @@ function buildExtractionRepairAction(
       return {
         category: 'document',
         label: 'Capture county for certified marriage certificate',
-        detail: 'Out-of-state marriage follow-through still needs grounded county extraction from the marriage certificate.',
+        detail: 'Out-of-state marriage follow-through still needs the county from the marriage certificate.',
         documentKind: 'marriage_certificate',
       };
     }
@@ -107,7 +108,7 @@ function buildExtractionRepairAction(
       return {
         category: 'document',
         label: 'Capture certificate number for certified marriage certificate',
-        detail: 'Out-of-state marriage follow-through still needs grounded certificate-number extraction from the marriage certificate.',
+        detail: 'Out-of-state marriage follow-through still needs the certificate number from the marriage certificate.',
         documentKind: 'marriage_certificate',
       };
     }
@@ -116,7 +117,7 @@ function buildExtractionRepairAction(
       return {
         category: 'document',
         label: 'Capture issuing authority for certified marriage certificate',
-        detail: 'Out-of-state marriage follow-through still needs issuing-authority metadata from the marriage certificate.',
+        detail: 'Out-of-state marriage follow-through still needs the issuing authority from the marriage certificate.',
         documentKind: 'marriage_certificate',
       };
     }
@@ -190,7 +191,7 @@ export function buildNameChangeDocumentRepairQueue(
       const issueBits: string[] = [];
       const nextActions: NameChangeGuidedAction[] = [];
       if (document.intakeStatus === 'not_started') issueBits.push('not started');
-      if (document.metadataMissing.length > 0) issueBits.push(`${document.metadataMissing.length} metadata gaps`);
+      if (document.metadataMissing.length > 0) issueBits.push(`${document.metadataMissing.length} detail gaps`);
       if (actionableMissingExtractionFields.length > 0) issueBits.push(`${actionableMissingExtractionFields.length} extraction gaps`);
       if (canonicalConflictCount > 0) issueBits.push(`${canonicalConflictCount} canonical conflict${canonicalConflictCount === 1 ? '' : 's'}`);
       if (blockingRiskCount > 0) issueBits.push(`${blockingRiskCount} blocking field risks`);
@@ -200,15 +201,15 @@ export function buildNameChangeDocumentRepairQueue(
         nextActions.push({
           category: 'document',
           label: `Add ${document.label.toLowerCase()} to intake`,
-          detail: 'Capture baseline metadata so this document can support downstream packets.',
+          detail: 'Capture baseline details so this document can support downstream packets.',
           documentKind: document.kind,
         });
       }
       if (document.metadataMissing.length > 0) {
         nextActions.push({
           category: 'document',
-          label: `Fill metadata for ${document.label.toLowerCase()}`,
-          detail: `Missing metadata: ${document.metadataMissing.join(', ')}.`,
+          label: `Fill details for ${document.label.toLowerCase()}`,
+          detail: `Missing details: ${document.metadataMissing.join(', ')}.`,
           documentKind: document.kind,
         });
       }

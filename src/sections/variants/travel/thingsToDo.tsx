@@ -2,6 +2,7 @@ import React from 'react';
 import { z } from 'zod';
 import { MapPin, ExternalLink, Sparkles } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
+import { getSafePublicWebUrl } from '../../publicLinks';
 
 const ActivitySchema = z.object({
   id: z.string(),
@@ -59,20 +60,22 @@ const TravelThingsToDo: React.FC<SectionComponentProps<TravelThingsToDoData>> = 
     <section className="py-24 bg-white" id="things-to-do">
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-12">
-          <p className="text-xs uppercase tracking-[0.2em] text-primary/70 mb-3">{data.eyebrow}</p>
+          <p className="text-sm text-primary/70 mb-3">{data.eyebrow}</p>
           <h2 className="text-3xl md:text-5xl font-light text-text-primary">{data.headline}</h2>
           {data.intro && <p className="text-sm text-text-secondary mt-3 max-w-2xl mx-auto">{data.intro}</p>}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {activities.map((a) => (
+          {activities.map((a) => {
+            const safeActivityUrl = getSafePublicWebUrl(a.url);
+            return (
             <article key={a.id} className="rounded-2xl border border-border/30 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.05)] p-5">
               <div className="flex items-center justify-between gap-2 mb-2">
                 <h3 className="text-base font-semibold text-text-primary">{a.name}</h3>
                 {a.category && <span className="text-[11px] px-2 py-1 rounded-full border border-border/50 text-text-tertiary">{a.category}</span>}
               </div>
               {a.description && <p className="text-sm text-text-secondary leading-relaxed">{a.description}</p>}
-              {(a.address || a.url) && (
+              {(a.address || safeActivityUrl) && (
                 <div className="mt-3 space-y-2">
                   {a.address && (
                     <p className="text-xs text-text-tertiary flex items-center gap-1.5">
@@ -80,8 +83,8 @@ const TravelThingsToDo: React.FC<SectionComponentProps<TravelThingsToDoData>> = 
                       {a.address}
                     </p>
                   )}
-                  {a.url && (
-                    <a href={a.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs text-primary hover:text-primary-hover">
+                  {safeActivityUrl && (
+                    <a href={safeActivityUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs text-primary hover:text-primary-hover">
                       <Sparkles className="w-3.5 h-3.5" />
                       Visit
                       <ExternalLink className="w-3.5 h-3.5" />
@@ -90,7 +93,8 @@ const TravelThingsToDo: React.FC<SectionComponentProps<TravelThingsToDoData>> = 
                 </div>
               )}
             </article>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

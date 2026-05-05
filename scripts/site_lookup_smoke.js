@@ -9,9 +9,15 @@ const normalizeEnvValue = (value) => {
   return trimmed;
 };
 
-const fileEnv = fs.existsSync('.env.local')
+const envFilePath = fs.existsSync('.env.local')
+  ? '.env.local'
+  : fs.existsSync('.env')
+    ? '.env'
+    : null;
+
+const fileEnv = envFilePath
   ? Object.fromEntries(
-      fs.readFileSync('.env.local', 'utf8')
+      fs.readFileSync(envFilePath, 'utf8')
         .split('\n')
         .map((l) => l.trim())
         .filter((line) => line && !line.startsWith('#') && line.includes('='))

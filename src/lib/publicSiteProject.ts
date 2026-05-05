@@ -1,6 +1,7 @@
 import type { BuilderProject } from '../types/builder/project';
 import type { BuilderSectionInstance } from '../types/builder/section';
 import type { WeddingDataV1 } from '../types/weddingData';
+import { normalizeWeddingData } from '../types/weddingData';
 import { buildCoupleDisplayName } from './coupleDisplayName';
 import { safeJsonParse } from './jsonUtils';
 import { rewriteSignedMediaUrlsToPublicDeep } from './mediaUrl';
@@ -25,6 +26,66 @@ const withTruthfulCoupleDisplayName = (data: WeddingDataV1): WeddingDataV1 => {
     couple: {
       ...data.couple,
       displayName,
+    },
+  };
+};
+
+const asTrimmedString = (value: unknown): string => typeof value === 'string' ? value.trim() : '';
+
+const toCanonicalRowWeddingDateISO = (value: unknown): string => {
+  const raw = asTrimmedString(value);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return '';
+  const date = new Date(`${raw}T12:00:00.000Z`);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toISOString().slice(0, 10) === raw ? date.toISOString() : '';
+};
+
+const withCanonicalRowCoupleNames = (data: WeddingDataV1, row: Record<string, unknown>): WeddingDataV1 => {
+  const partner1Name = asTrimmedString(row.couple_name_1);
+  const partner2Name = asTrimmedString(row.couple_name_2);
+  if (!partner1Name && !partner2Name) return data;
+
+  const displayName = buildCoupleDisplayName(partner1Name, partner2Name);
+  const currentPartner1 = asTrimmedString(data.couple.partner1Name);
+  const currentPartner2 = asTrimmedString(data.couple.partner2Name);
+  const currentDisplay = asTrimmedString(data.couple.displayName);
+
+  if (
+    currentPartner1 === partner1Name
+    && currentPartner2 === partner2Name
+    && currentDisplay === displayName
+  ) {
+    return data;
+  }
+
+  return {
+    ...data,
+    couple: {
+      ...data.couple,
+      partner1Name,
+      partner2Name,
+      displayName,
+    },
+  };
+};
+
+const withCanonicalRowEventData = (data: WeddingDataV1, row: Record<string, unknown>): WeddingDataV1 => {
+  const rowWeddingData = safeJsonParse<WeddingDataV1 | null>(row.wedding_data, null);
+  const canonical = rowWeddingData ? normalizeWeddingData(rowWeddingData) : null;
+  const canonicalDate = toCanonicalRowWeddingDateISO(row.wedding_date)
+    || asTrimmedString(canonical?.event.weddingDateISO);
+  const canonicalHeadline = asTrimmedString(canonical?.event.headline);
+  const canonicalRsvpCallToAction = asTrimmedString(canonical?.event.rsvpCallToAction);
+  const hasCanonicalEvent = Boolean(canonicalDate || canonicalHeadline || canonicalRsvpCallToAction);
+  if (!hasCanonicalEvent) return data;
+
+  return {
+    ...data,
+    event: {
+      ...data.event,
+      ...(canonicalHeadline ? { headline: canonicalHeadline } : {}),
+      ...(canonicalDate ? { weddingDateISO: canonicalDate } : {}),
+      ...(canonicalRsvpCallToAction ? { rsvpCallToAction: canonicalRsvpCallToAction } : {}),
     },
   };
 };
@@ -170,16 +231,19 @@ export const getPublicWeddingData = (row: Record<string, unknown>): WeddingDataV
 
   const candidates = [
     preferredSource?.weddingDataSnapshot,
-    preferredSource?.weddingData,
     fallbackSource?.weddingDataSnapshot,
-    fallbackSource?.weddingData,
     row.wedding_data,
+    preferredSource?.weddingData,
+    fallbackSource?.weddingData,
   ];
 
   for (const candidate of candidates) {
     const parsed = safeJsonParse<WeddingDataV1 | null>(candidate, null);
     if (parsed) {
-      return rewriteSignedMediaUrlsToPublicDeep(withTruthfulCoupleDisplayName(parsed));
+      return rewriteSignedMediaUrlsToPublicDeep(withCanonicalRowCoupleNames(
+        withCanonicalRowEventData(withTruthfulCoupleDisplayName(normalizeWeddingData(parsed)), row),
+        row,
+      ));
     }
   }
 

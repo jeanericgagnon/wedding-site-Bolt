@@ -379,11 +379,11 @@ const SkeletonThumbnail: React.FC<{ skeleton: CustomSectionSkeleton; selected: b
     /* ── NEW ANNOUNCEMENTS ── */
     'change-update': (
       <div className="w-full h-full flex flex-col items-center justify-center gap-1.5 p-3" style={{ backgroundColor: bg }}>
-        <div className="w-12 h-1.5 rounded-full border border-amber-400" />
-        <div className="w-22 h-2 rounded bg-amber-600/50" />
-        <div className="w-24 h-1 rounded bg-amber-400/30" />
-        <div className="w-20 h-1 rounded bg-amber-400/30" />
-        <div className="w-16 h-4 rounded-full bg-amber-500/40 mt-1" />
+        <div className="w-12 h-1.5 rounded-full border border-stone-300" />
+        <div className="w-22 h-2 rounded bg-stone-500/45" />
+        <div className="w-24 h-1 rounded bg-stone-300/50" />
+        <div className="w-20 h-1 rounded bg-stone-300/50" />
+        <div className="w-16 h-4 rounded-full bg-[var(--color-primary)]/35 mt-1" />
       </div>
     ),
     'welcome-note': (
@@ -555,7 +555,7 @@ const SkeletonThumbnail: React.FC<{ skeleton: CustomSectionSkeleton; selected: b
 
   return (
     <div className={`w-full aspect-[4/3] rounded-lg overflow-hidden transition-all ${
-      selected ? 'ring-2 ring-rose-500 ring-offset-1' : ''
+      selected ? 'ring-2 ring-[var(--color-primary)] ring-offset-1' : ''
     }`}>
       {thumbnails[skeleton.thumbnail] ?? (
         <div className="w-full h-full" style={{ backgroundColor: bg }} />
@@ -578,7 +578,7 @@ export const SkeletonPickerModal: React.FC<SkeletonPickerModalProps> = ({ onSele
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col overflow-hidden" style={{ maxHeight: '85vh' }}>
+      <div className="bg-white rounded-xl shadow-sm border border-[var(--color-border-subtle)] w-full max-w-2xl flex flex-col overflow-hidden" style={{ maxHeight: '85vh' }}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <div>
             <h2 className="text-base font-semibold text-gray-800">Choose a Section Layout</h2>
@@ -622,7 +622,7 @@ export const SkeletonPickerModal: React.FC<SkeletonPickerModalProps> = ({ onSele
                 onClick={() => setSelected(skeleton.id)}
                 className={`group text-left rounded-xl overflow-hidden border-2 transition-all ${
                   selected === skeleton.id
-                    ? 'border-rose-500 shadow-sm'
+                    ? 'border-[var(--color-accent)] shadow-sm'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
@@ -631,7 +631,7 @@ export const SkeletonPickerModal: React.FC<SkeletonPickerModalProps> = ({ onSele
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-gray-700">{skeleton.label}</span>
                     {selected === skeleton.id && (
-                      <div className="w-4 h-4 rounded-full bg-rose-500 flex items-center justify-center flex-shrink-0">
+                      <div className="w-4 h-4 rounded-full bg-[var(--color-accent)] flex items-center justify-center flex-shrink-0">
                         <Check size={9} className="text-white" />
                       </div>
                     )}
@@ -656,7 +656,7 @@ export const SkeletonPickerModal: React.FC<SkeletonPickerModalProps> = ({ onSele
             </button>
             <button
               onClick={() => onSelect(selectedSkeleton)}
-              className="px-5 py-2 bg-rose-500 hover:bg-rose-600 text-white text-sm font-medium rounded-xl transition-colors"
+              className="px-5 py-2 bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white text-sm font-medium rounded-lg transition-colors"
             >
               Add Section
             </button>

@@ -100,11 +100,9 @@ BEGIN
     ALTER TABLE guests ADD COLUMN invited_to_reception boolean DEFAULT true;
   END IF;
 END $$;
-
 -- Create indexes on guests table
 CREATE INDEX IF NOT EXISTS idx_guests_invite_token ON guests(invite_token);
 CREATE INDEX IF NOT EXISTS idx_guests_household_id ON guests(household_id);
-
 -- Create RSVPs table
 CREATE TABLE IF NOT EXISTS rsvps (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -116,14 +114,11 @@ CREATE TABLE IF NOT EXISTS rsvps (
   responded_at timestamptz DEFAULT now(),
   created_at timestamptz DEFAULT now()
 );
-
 ALTER TABLE rsvps ENABLE ROW LEVEL SECURITY;
-
 -- Drop existing policies if they exist to avoid conflicts
 DROP POLICY IF EXISTS "Couples can view RSVPs for their guests" ON rsvps;
 DROP POLICY IF EXISTS "Anyone can submit RSVP" ON rsvps;
 DROP POLICY IF EXISTS "Guests can update their own RSVP" ON rsvps;
-
 -- RSVPs policies for authenticated couples
 CREATE POLICY "Couples can view RSVPs for their guests"
   ON rsvps FOR SELECT
@@ -136,20 +131,17 @@ CREATE POLICY "Couples can view RSVPs for their guests"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 -- Public can insert RSVP (we'll validate guest_id in the application)
 CREATE POLICY "Anyone can submit RSVP"
   ON rsvps FOR INSERT
   TO anon, authenticated
   WITH CHECK (true);
-
 -- Guests can update their own RSVP
 CREATE POLICY "Guests can update their own RSVP"
   ON rsvps FOR UPDATE
   TO anon, authenticated
   USING (true)
   WITH CHECK (true);
-
 -- Create messages table
 CREATE TABLE IF NOT EXISTS messages (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -161,14 +153,11 @@ CREATE TABLE IF NOT EXISTS messages (
   recipient_filter jsonb DEFAULT '{}'::jsonb,
   created_at timestamptz DEFAULT now()
 );
-
 ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
-
 -- Drop existing policies if they exist
 DROP POLICY IF EXISTS "Couples can view their own messages" ON messages;
 DROP POLICY IF EXISTS "Couples can create messages" ON messages;
 DROP POLICY IF EXISTS "Couples can delete their own messages" ON messages;
-
 -- Messages policies
 CREATE POLICY "Couples can view their own messages"
   ON messages FOR SELECT
@@ -180,7 +169,6 @@ CREATE POLICY "Couples can view their own messages"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Couples can create messages"
   ON messages FOR INSERT
   TO authenticated
@@ -191,7 +179,6 @@ CREATE POLICY "Couples can create messages"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Couples can delete their own messages"
   ON messages FOR DELETE
   TO authenticated
@@ -202,14 +189,11 @@ CREATE POLICY "Couples can delete their own messages"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_rsvps_guest_id ON rsvps(guest_id);
 CREATE INDEX IF NOT EXISTS idx_messages_wedding_site_id ON messages(wedding_site_id);
-
 -- Drop and recreate public guest policy
 DROP POLICY IF EXISTS "Guests can view their own data via token" ON guests;
-
 -- Add public policy for guests to view their own info via token
 CREATE POLICY "Guests can view their own data via token"
   ON guests FOR SELECT

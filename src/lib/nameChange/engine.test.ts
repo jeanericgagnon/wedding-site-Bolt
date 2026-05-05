@@ -244,8 +244,8 @@ describe('name change engine', () => {
         'Credit bureau identity file monitoring',
         'Retirement plan, pension, and beneficiary records',
         'Health, dental, vision, auto, renters, and life insurance',
-        'Disability insurance and leave administrators',
-        'Workers comp, leave, and claims administrators',
+        'Disability insurance and leave teams',
+        'Workers comp, leave, and claims teams',
         'California voter registration',
         'County recorder, deed, and local property filings',
         'TSA PreCheck, Global Entry, and airline profiles',
@@ -432,7 +432,7 @@ describe('name change engine', () => {
     const plan = buildNameChangePlan({ ...makeInput(), documents: [] });
     expect(plan.summary.blockers[0]).toContain('Certified marriage certificate');
     expect(plan.summary.executionTracks?.every((track) => track.status === 'blocked')).toBe(true);
-    expect(plan.summary.missingInputs).toContain('Certified marriage certificate metadata');
+    expect(plan.summary.missingInputs).toContain('Certified marriage certificate details');
     expect(plan.summary.nextBestAction).toContain('Fill:');
     expect(plan.steps.find((step) => step.id === 'federal-ssa')?.status).toBe('blocked');
     expect(plan.summary.milestoneChecklist).toEqual(
@@ -585,11 +585,11 @@ describe('name change engine', () => {
       extractedFields: [],
     });
 
-    expect(plan.summary.blockers).toContain('Marriage certificate is present, but no grounded county, certificate-number extraction, or issuing-authority metadata is represented yet for out-of-state follow-through.');
+    expect(plan.summary.blockers).toContain('Marriage certificate is present, but the county, certificate number, or issuing authority is not ready yet for out-of-state follow-through.');
     expect(plan.summary.missingInputs).toContain('Out-of-state marriage certificate county, certificate number, and issuing authority');
     expect(plan.steps.find((step) => step.id === 'eligibility-proof')).toMatchObject({
       status: 'blocked',
-      blockers: ['Marriage certificate is present, but no grounded county, certificate-number extraction, or issuing-authority metadata is represented yet for out-of-state follow-through.'],
+      blockers: ['Marriage certificate is present, but the county, certificate number, or issuing authority is not ready yet for out-of-state follow-through.'],
     });
     expect(plan.steps.find((step) => step.id === 'federal-ssa')).toMatchObject({
       status: 'blocked',

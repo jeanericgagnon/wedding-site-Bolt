@@ -48,7 +48,6 @@ BEGIN
     ALTER TABLE wedding_sites ADD COLUMN couple_email text;
   END IF;
 END $$;
-
 -- Add scheduling columns to messages table
 DO $$
 BEGIN
@@ -73,12 +72,10 @@ BEGIN
     ALTER TABLE messages ADD COLUMN status text DEFAULT 'draft';
   END IF;
 END $$;
-
 -- Update existing messages to have 'sent' status
 UPDATE messages 
 SET status = 'sent', sent_at = created_at
 WHERE status IS NULL OR status = 'draft';
-
 -- Create function to generate couple email
 CREATE OR REPLACE FUNCTION generate_couple_email()
 RETURNS TRIGGER AS $$
@@ -93,7 +90,6 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-
 -- Create trigger to auto-generate email
 DROP TRIGGER IF EXISTS wedding_sites_generate_email ON wedding_sites;
 CREATE TRIGGER wedding_sites_generate_email
@@ -101,7 +97,6 @@ CREATE TRIGGER wedding_sites_generate_email
   ON wedding_sites
   FOR EACH ROW
   EXECUTE FUNCTION generate_couple_email();
-
 -- Add index for scheduled messages query
 CREATE INDEX IF NOT EXISTS idx_messages_scheduled_for ON messages(scheduled_for) WHERE status = 'scheduled';
 CREATE INDEX IF NOT EXISTS idx_messages_status ON messages(status);

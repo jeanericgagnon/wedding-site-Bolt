@@ -1,13 +1,18 @@
 import React from 'react';
 import { Image as ImageIcon } from 'lucide-react';
 import type { GalleryContent } from '../../../types/siteConfig';
+import { getSafePublicImageUrl } from '../../../sections/publicLinks';
 
 interface GallerySectionProps {
   content: GalleryContent;
 }
 
 export const GallerySection: React.FC<GallerySectionProps> = ({ content }) => {
-  if (!content.photos || content.photos.length === 0) {
+  const safePhotos = (content.photos ?? [])
+    .map((photo) => ({ ...photo, url: getSafePublicImageUrl(photo.url) }))
+    .filter((photo) => photo.url);
+
+  if (safePhotos.length === 0) {
     return (
       <section className="py-16 px-8 bg-surface">
         <div className="max-w-4xl mx-auto text-center">
@@ -16,7 +21,7 @@ export const GallerySection: React.FC<GallerySectionProps> = ({ content }) => {
             Photo Gallery
           </h2>
           <p className="text-text-secondary italic">
-            Photos will be shared here soon
+            Photos will appear after the celebration
           </p>
         </div>
       </section>
@@ -31,7 +36,7 @@ export const GallerySection: React.FC<GallerySectionProps> = ({ content }) => {
         </h2>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {content.photos.map((photo) => (
+          {safePhotos.map((photo) => (
             <div key={photo.id} className="aspect-square rounded-lg overflow-hidden bg-surface-subtle">
               <img
                 src={photo.url}

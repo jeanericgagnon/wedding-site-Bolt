@@ -1,0 +1,364 @@
+export type BudgetVendorLedgerStatus = 'ready' | 'needs-review' | 'empty';
+export type BudgetVendorLedgerChecklistState = 'ready' | 'needs-action' | 'planned';
+
+export interface BudgetLedgerItem {
+  id: string;
+  category: string;
+  item_name: string;
+  estimated_amount?: number | null;
+  actual_amount?: number | null;
+  paid_amount?: number | null;
+  due_date?: string | null;
+  vendor_id?: string | null;
+  notes?: string | null;
+}
+
+export interface VendorLedgerItem {
+  id: string;
+  vendor_type?: string | null;
+  name: string;
+  contact_name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  website?: string | null;
+  contract_total?: number | null;
+  amount_paid?: number | null;
+  balance_due?: number | null;
+  next_payment_due?: string | null;
+  document_url?: string | null;
+  document_label?: string | null;
+  notes?: string | null;
+}
+
+export interface BudgetVendorLedgerChecklistItem {
+  id: string;
+  label: string;
+  detail: string;
+  state: BudgetVendorLedgerChecklistState;
+}
+
+export interface BudgetVendorLedgerReadiness {
+  status: BudgetVendorLedgerStatus;
+  summary: string;
+  totalBudget: number;
+  estimatedTotal: number;
+  actualTotal: number;
+  paidTotal: number;
+  openBalance: number;
+  budgetItemCount: number;
+  vendorCount: number;
+  contactableVendorCount: number;
+  documentedVendorCount: number;
+  dueSoonCount: number;
+  unlinkedBudgetItemCount: number;
+  checklist: BudgetVendorLedgerChecklistItem[];
+}
+
+export type BudgetPaymentReviewStatus = 'overdue' | 'due-soon' | 'open' | 'paid';
+export type BudgetPaymentReviewSource = 'budget' | 'vendor';
+
+export interface BudgetPaymentReviewRow {
+  id: string;
+  source: BudgetPaymentReviewSource;
+  name: string;
+  vendorName: string;
+  dueDate: string;
+  total: number;
+  paid: number;
+  open: number;
+  status: BudgetPaymentReviewStatus;
+  hasContact: boolean;
+  hasDocument: boolean;
+}
+
+export interface BudgetPaymentReview {
+  status: 'ready' | 'needs-review' | 'empty';
+  summary: string;
+  openTotal: number;
+  overdueCount: number;
+  dueSoonCount: number;
+  missingContactCount: number;
+  missingDocumentCount: number;
+  rows: BudgetPaymentReviewRow[];
+  privacyNote: string;
+}
+
+function money(value: number | null | undefined): number {
+  return Number.isFinite(Number(value)) ? Math.max(0, Number(value)) : 0;
+}
+
+function isOnOrBefore(dateValue: string | null | undefined, target: Date): boolean {
+  if (!dateValue) return false;
+  const date = new Date(`${dateValue.slice(0, 10)}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return false;
+  return date <= target;
+}
+
+export function buildBudgetVendorLedgerReadiness(input: {
+  budgetItems: BudgetLedgerItem[];
+  vendors: VendorLedgerItem[];
+  totalBudget: number;
+  today?: Date;
+}): BudgetVendorLedgerReadiness {
+  const today = input.today ? new Date(input.today) : new Date();
+  today.setHours(0, 0, 0, 0);
+  const nextTwoWeeks = new Date(today);
+  nextTwoWeeks.setDate(nextTwoWeeks.getDate() + 14);
+
+  const estimatedTotal = input.budgetItems.reduce((sum, item) => sum + money(item.estimated_amount), 0);
+  const actualTotal = input.budgetItems.reduce((sum, item) => sum + money(item.actual_amount), 0);
+  const budgetPaidTotal = input.budgetItems.reduce((sum, item) => sum + money(item.paid_amount), 0);
+  const vendorPaidTotal = input.vendors.reduce((sum, vendor) => sum + money(vendor.amount_paid), 0);
+  const vendorOpenBalance = input.vendors.reduce((sum, vendor) => {
+    if (vendor.balance_due != null) return sum + money(vendor.balance_due);
+    return sum + Math.max(0, money(vendor.contract_total) - money(vendor.amount_paid));
+  }, 0);
+  const openBudgetBalance = input.budgetItems.reduce((sum, item) => {
+    const total = money(item.actual_amount) || money(item.estimated_amount);
+    return sum + Math.max(0, total - money(item.paid_amount));
+  }, 0);
+
+  const vendorIds = new Set(input.vendors.map((vendor) => vendor.id));
+  const unlinkedBudgetItemCount = input.budgetItems.filter((item) => !item.vendor_id || !vendorIds.has(item.vendor_id)).length;
+  const contactableVendorCount = input.vendors.filter((vendor) => Boolean(vendor.email || vendor.phone)).length;
+  const documentedVendorCount = input.vendors.filter((vendor) => Boolean(vendor.document_url)).length;
+  const dueSoonCount = [
+    ...input.budgetItems.filter((item) => {
+      const total = money(item.actual_amount) || money(item.estimated_amount);
+      return total > money(item.paid_amount) && isOnOrBefore(item.due_date, nextTwoWeeks);
+    }),
+    ...input.vendors.filter((vendor) => {
+      const remaining = vendor.balance_due != null ? money(vendor.balance_due) : Math.max(0, money(vendor.contract_total) - money(vendor.amount_paid));
+      return remaining > 0 && isOnOrBefore(vendor.next_payment_due, nextTwoWeeks);
+    }),
+  ].length;
+
+  const totalBudget = money(input.totalBudget);
+  const paidTotal = Math.max(budgetPaidTotal, vendorPaidTotal);
+  const openBalance = Math.max(openBudgetBalance, vendorOpenBalance);
+  const hasLedger = input.budgetItems.length > 0 || input.vendors.length > 0;
+  const checklist: BudgetVendorLedgerChecklistItem[] = [
+    {
+      id: 'budget-goal',
+      label: 'Budget goal',
+      detail: totalBudget > 0 ? 'Overall budget is set.' : 'Add an overall budget before relying on totals.',
+      state: totalBudget > 0 ? 'ready' : 'needs-action',
+    },
+    {
+      id: 'budget-lines',
+      label: 'Budget lines',
+      detail: input.budgetItems.length > 0
+        ? `${input.budgetItems.length} budget item${input.budgetItems.length === 1 ? '' : 's'} are tracked.`
+        : 'Add budget lines for deposits, balances, and estimates.',
+      state: input.budgetItems.length > 0 ? 'ready' : 'needs-action',
+    },
+    {
+      id: 'vendor-contacts',
+      label: 'Vendor contacts',
+      detail: input.vendors.length === 0
+        ? 'Add vendors before planner handoff.'
+        : `${contactableVendorCount}/${input.vendors.length} vendors have an email or phone.`,
+      state: input.vendors.length > 0 && contactableVendorCount === input.vendors.length ? 'ready' : 'needs-action',
+    },
+    {
+      id: 'contracts-docs',
+      label: 'Contracts and invoices',
+      detail: input.vendors.length === 0
+        ? 'No vendor documents are tracked yet.'
+        : `${documentedVendorCount}/${input.vendors.length} vendors have a document link.`,
+      state: input.vendors.length > 0 && documentedVendorCount === input.vendors.length ? 'ready' : 'needs-action',
+    },
+    {
+      id: 'payment-reminders',
+      label: 'Payment dates',
+      detail: dueSoonCount > 0
+        ? `${dueSoonCount} open payment${dueSoonCount === 1 ? '' : 's'} are due within 14 days or overdue.`
+        : 'No open payments are due in the next 14 days.',
+      state: dueSoonCount > 0 ? 'needs-action' : 'ready',
+    },
+    {
+      id: 'vendor-linking',
+      label: 'Budget/vendor links',
+      detail: unlinkedBudgetItemCount === 0
+        ? 'Budget lines are connected to vendor records where available.'
+        : `${unlinkedBudgetItemCount} budget line${unlinkedBudgetItemCount === 1 ? '' : 's'} are not linked to a vendor.`,
+      state: unlinkedBudgetItemCount === 0 ? 'ready' : 'planned',
+    },
+  ];
+
+  const needsAction = checklist.filter((item) => item.state === 'needs-action').length;
+  const status: BudgetVendorLedgerStatus = !hasLedger
+    ? 'empty'
+    : needsAction > 0
+      ? 'needs-review'
+      : 'ready';
+
+  const summary = status === 'ready'
+    ? 'Ready for a planner or payment check-in.'
+    : status === 'empty'
+      ? 'Add budget items and vendors before this ledger can guide payment decisions.'
+      : `${needsAction} item${needsAction === 1 ? '' : 's'} need review before this ledger is planner-ready.`;
+
+  return {
+    status,
+    summary,
+    totalBudget,
+    estimatedTotal,
+    actualTotal,
+    paidTotal,
+    openBalance,
+    budgetItemCount: input.budgetItems.length,
+    vendorCount: input.vendors.length,
+    contactableVendorCount,
+    documentedVendorCount,
+    dueSoonCount,
+    unlinkedBudgetItemCount,
+    checklist,
+  };
+}
+
+export function budgetVendorLedgerToCsv(input: {
+  budgetItems: BudgetLedgerItem[];
+  vendors: VendorLedgerItem[];
+}): string {
+  const vendorMap = new Map(input.vendors.map((vendor) => [vendor.id, vendor]));
+  const rows = [
+    ['Record Type', 'Name', 'Category or Type', 'Vendor', 'Estimated', 'Actual or Contract', 'Paid', 'Open', 'Due Date', 'Contact', 'Document URL', 'Notes'],
+    ...input.budgetItems.map((item) => {
+      const total = money(item.actual_amount) || money(item.estimated_amount);
+      const paid = money(item.paid_amount);
+      const vendor = item.vendor_id ? vendorMap.get(item.vendor_id) : undefined;
+      return [
+        'Budget item',
+        item.item_name,
+        item.category,
+        vendor?.name ?? '',
+        String(money(item.estimated_amount)),
+        String(money(item.actual_amount)),
+        String(paid),
+        String(Math.max(0, total - paid)),
+        item.due_date ?? '',
+        vendor ? [vendor.email, vendor.phone].filter(Boolean).join(' / ') : '',
+        vendor?.document_url ?? '',
+        item.notes ?? '',
+      ];
+    }),
+    ...input.vendors.map((vendor) => {
+      const total = money(vendor.contract_total);
+      const paid = money(vendor.amount_paid);
+      const open = vendor.balance_due != null ? money(vendor.balance_due) : Math.max(0, total - paid);
+      return [
+        'Vendor',
+        vendor.name,
+        vendor.vendor_type ?? '',
+        vendor.name,
+        '',
+        String(total),
+        String(paid),
+        String(open),
+        vendor.next_payment_due ?? '',
+        [vendor.email, vendor.phone].filter(Boolean).join(' / '),
+        vendor.document_url ?? '',
+        vendor.notes ?? '',
+      ];
+    }),
+  ];
+
+  return rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+}
+
+function paymentStatus(dueDate: string | null | undefined, open: number, today: Date, nextTwoWeeks: Date): BudgetPaymentReviewStatus {
+  if (open <= 0) return 'paid';
+  if (!dueDate) return 'open';
+  const due = new Date(`${dueDate.slice(0, 10)}T00:00:00`);
+  if (Number.isNaN(due.getTime())) return 'open';
+  if (due < today) return 'overdue';
+  if (due <= nextTwoWeeks) return 'due-soon';
+  return 'open';
+}
+
+export function buildBudgetPaymentReview(input: {
+  budgetItems: BudgetLedgerItem[];
+  vendors: VendorLedgerItem[];
+  today?: Date;
+}): BudgetPaymentReview {
+  const today = input.today ? new Date(input.today) : new Date();
+  today.setHours(0, 0, 0, 0);
+  const nextTwoWeeks = new Date(today);
+  nextTwoWeeks.setDate(nextTwoWeeks.getDate() + 14);
+  const vendorMap = new Map(input.vendors.map((vendor) => [vendor.id, vendor]));
+
+  const budgetRows: BudgetPaymentReviewRow[] = input.budgetItems.map((item) => {
+    const total = money(item.actual_amount) || money(item.estimated_amount);
+    const paid = money(item.paid_amount);
+    const open = Math.max(0, total - paid);
+    const vendor = item.vendor_id ? vendorMap.get(item.vendor_id) : undefined;
+    return {
+      id: `budget:${item.id}`,
+      source: 'budget',
+      name: item.item_name || 'Budget item',
+      vendorName: vendor?.name ?? '',
+      dueDate: item.due_date ?? '',
+      total,
+      paid,
+      open,
+      status: paymentStatus(item.due_date, open, today, nextTwoWeeks),
+      hasContact: vendor ? Boolean(vendor.email || vendor.phone) : false,
+      hasDocument: vendor ? Boolean(vendor.document_url) : false,
+    };
+  });
+
+  const vendorRows: BudgetPaymentReviewRow[] = input.vendors.map((vendor) => {
+    const total = money(vendor.contract_total);
+    const paid = money(vendor.amount_paid);
+    const open = vendor.balance_due != null ? money(vendor.balance_due) : Math.max(0, total - paid);
+    return {
+      id: `vendor:${vendor.id}`,
+      source: 'vendor',
+      name: vendor.name || 'Vendor',
+      vendorName: vendor.name || '',
+      dueDate: vendor.next_payment_due ?? '',
+      total,
+      paid,
+      open,
+      status: paymentStatus(vendor.next_payment_due, open, today, nextTwoWeeks),
+      hasContact: Boolean(vendor.email || vendor.phone),
+      hasDocument: Boolean(vendor.document_url),
+    };
+  });
+
+  const rows = [...budgetRows, ...vendorRows]
+    .filter((row) => row.open > 0 || row.status !== 'paid')
+    .sort((a, b) => {
+      const priority: Record<BudgetPaymentReviewStatus, number> = { overdue: 0, 'due-soon': 1, open: 2, paid: 3 };
+      if (priority[a.status] !== priority[b.status]) return priority[a.status] - priority[b.status];
+      if (!a.dueDate && b.dueDate) return 1;
+      if (a.dueDate && !b.dueDate) return -1;
+      return a.dueDate.localeCompare(b.dueDate) || b.open - a.open || a.name.localeCompare(b.name);
+    })
+    .slice(0, 8);
+
+  const openTotal = rows.reduce((sum, row) => sum + row.open, 0);
+  const overdueCount = rows.filter((row) => row.status === 'overdue').length;
+  const dueSoonCount = rows.filter((row) => row.status === 'due-soon').length;
+  const missingContactCount = rows.filter((row) => !row.hasContact).length;
+  const missingDocumentCount = rows.filter((row) => !row.hasDocument).length;
+  const needsReview = overdueCount + dueSoonCount + missingContactCount + missingDocumentCount;
+  const status = rows.length === 0 ? 'empty' : needsReview > 0 ? 'needs-review' : 'ready';
+
+  return {
+    status,
+    summary: status === 'empty'
+      ? 'Add vendor contracts or budget payments before reviewing reminders.'
+      : status === 'ready'
+        ? 'Open payments have contact details and no near-term due dates.'
+        : `${needsReview} payment detail${needsReview === 1 ? '' : 's'} need review before planner handoff.`,
+    openTotal,
+    overdueCount,
+    dueSoonCount,
+    missingContactCount,
+    missingDocumentCount,
+    rows,
+    privacyNote: 'Planner review stays owner/planner-only; public and guest surfaces must not expose financial details.',
+  };
+}

@@ -24,14 +24,14 @@ export const RSVPFeature: React.FC = () => {
       <section className="py-16 md:py-24 bg-gradient-to-b from-paper to-white">
         <div className="container-custom">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center justify-center p-4 bg-brand/10 rounded-2xl mb-6">
+            <div className="inline-flex items-center justify-center p-4 bg-brand/10 rounded-lg mb-6">
               <CheckCircle2 className="w-12 h-12 text-brand" />
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-ink mb-6 leading-tight">
 RSVP
             </h1>
             <p className="text-xl md:text-2xl text-ink/70 mb-10 leading-relaxed">
-              A calm RSVP flow for households, events, meals, and guest details — built to make replying feel simple for guests and clear for you.
+              A calm RSVP flow for households, events, meals, and guest details, built to make replying feel simple for guests and clear for you.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/signup">
@@ -41,7 +41,7 @@ RSVP
               </Link>
               <Link to="/product">
                 <Button variant="outline" size="lg">
-                  See how Dayof works
+                  See how dayof works
                 </Button>
               </Link>
             </div>
@@ -56,28 +56,28 @@ RSVP
 Built to keep things clear
             </h2>
             <p className="text-xl text-ink/70 max-w-3xl mx-auto">
-              Most RSVP friction comes from confusing flows. Dayof keeps responses clean, clear, and easy to trust.
+              Most RSVP friction comes from confusing flows. dayof keeps responses clean, clear, and easy to trust.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="bg-paper rounded-2xl p-8">
-              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
+            <div className="bg-paper rounded-lg p-8">
+              <div className="p-3 bg-brand/10 rounded-lg w-fit mb-4">
                 <Users className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Household-Aware Flow</h3>
               <p className="text-ink/70 mb-4">
-                Keep household replies together so guest responses stay easier to read and manage. DayOf helps structure the household flow without pretending every family edge case is magic.
+                Keep household replies together so guest responses stay easier to read and manage. dayof helps structure the household flow without pretending every family edge case is magic.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• Clear household member selection</li>
-                <li>• Fewer duplicate-response messes</li>
+                <li>• Fewer duplicate responses to reconcile</li>
                 <li>• Plus-one acceptance built in</li>
               </ul>
             </div>
 
-            <div className="bg-paper rounded-2xl p-8">
-              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
+            <div className="bg-paper rounded-lg p-8">
+              <div className="p-3 bg-brand/10 rounded-lg w-fit mb-4">
                 <Calendar className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Multi-Event RSVP</h3>
@@ -91,8 +91,8 @@ Built to keep things clear
               </ul>
             </div>
 
-            <div className="bg-paper rounded-2xl p-8">
-              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
+            <div className="bg-paper rounded-lg p-8">
+              <div className="p-3 bg-brand/10 rounded-lg w-fit mb-4">
                 <Utensils className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Meal Selection</h3>
@@ -106,8 +106,8 @@ Built to keep things clear
               </ul>
             </div>
 
-            <div className="bg-paper rounded-2xl p-8">
-              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
+            <div className="bg-paper rounded-lg p-8">
+              <div className="p-3 bg-brand/10 rounded-lg w-fit mb-4">
                 <MessageSquare className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Custom Questions</h3>
@@ -121,8 +121,8 @@ Built to keep things clear
               </ul>
             </div>
 
-            <div className="bg-paper rounded-2xl p-8">
-              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
+            <div className="bg-paper rounded-lg p-8">
+              <div className="p-3 bg-brand/10 rounded-lg w-fit mb-4">
                 <Clock className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Deadline Handling</h3>
@@ -136,8 +136,8 @@ Built to keep things clear
               </ul>
             </div>
 
-            <div className="bg-paper rounded-2xl p-8">
-              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
+            <div className="bg-paper rounded-lg p-8">
+              <div className="p-3 bg-brand/10 rounded-lg w-fit mb-4">
                 <BarChart className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Current RSVP visibility</h3>
@@ -164,9 +164,9 @@ Built to keep things clear
             </div>
 
             <div className="space-y-8">
-              <div className="bg-white rounded-2xl p-8 border border-brand/20">
+              <div className="bg-white rounded-lg p-8 border border-brand/20">
                 <div className="flex items-start gap-6">
-                  <div className="p-3 bg-brand/10 rounded-xl flex-shrink-0">
+                  <div className="p-3 bg-brand/10 rounded-lg flex-shrink-0">
                     <Mail className="w-6 h-6 text-brand" />
                   </div>
                   <div>
@@ -178,9 +178,9 @@ Built to keep things clear
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl p-8 border border-brand/20">
+              <div className="bg-white rounded-lg p-8 border border-brand/20">
                 <div className="flex items-start gap-6">
-                  <div className="p-3 bg-brand/10 rounded-xl flex-shrink-0">
+                  <div className="p-3 bg-brand/10 rounded-lg flex-shrink-0">
                     <Shield className="w-6 h-6 text-brand" />
                   </div>
                   <div>
@@ -192,23 +192,23 @@ Built to keep things clear
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl p-8 border border-brand/20">
+              <div className="bg-white rounded-lg p-8 border border-brand/20">
                 <div className="flex items-start gap-6">
-                  <div className="p-3 bg-brand/10 rounded-xl flex-shrink-0">
+                  <div className="p-3 bg-brand/10 rounded-lg flex-shrink-0">
                     <Users className="w-6 h-6 text-brand" />
                   </div>
                   <div>
                     <h3 className="text-xl font-semibold text-ink mb-3">Fallback-friendly when guests need help</h3>
                     <p className="text-ink/70 leading-relaxed">
-                      Some guests will answer by phone, text, or through a parent. DayOf should still let you keep one clean RSVP record without making those guests fight the software.
+                      Some guests will answer by phone, text, or through a parent. dayof should still let you keep one clean RSVP record without making those guests fight the software.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl p-8 border border-brand/20">
+              <div className="bg-white rounded-lg p-8 border border-brand/20">
                 <div className="flex items-start gap-6">
-                  <div className="p-3 bg-brand/10 rounded-xl flex-shrink-0">
+                  <div className="p-3 bg-brand/10 rounded-lg flex-shrink-0">
                     <AlertCircle className="w-6 h-6 text-brand" />
                   </div>
                   <div>
@@ -231,7 +231,7 @@ Built to keep things clear
               A strong RSVP core, already together
               </h2>
               <p className="text-xl text-ink/70 mb-8">
-              A practical RSVP flow that keeps replies cleaner and easier to trust, without pretending every reminder or admin edge path is fully automatic.
+              A practical RSVP flow that keeps replies cleaner and easier to trust, with reminders and follow-up paths couples can review before sending.
               </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12 text-left">
@@ -250,7 +250,7 @@ Built to keep things clear
                 'Mobile-friendly',
               ].map((feature, idx) => (
                 <div key={idx} className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                  <CheckCircle2 className="w-5 h-5 text-brand mt-0.5 flex-shrink-0" />
                   <span className="text-ink/70">{feature}</span>
                 </div>
               ))}

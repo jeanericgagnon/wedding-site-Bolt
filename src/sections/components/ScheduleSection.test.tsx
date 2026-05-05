@@ -19,6 +19,7 @@ function createWeddingData(schedule: WeddingDataV1['schedule'] = []): WeddingDat
     registry: [],
     theme: {},
     media: { gallery: [] },
+    meta: { createdAtISO: '', updatedAtISO: '' },
   };
 }
 
@@ -115,5 +116,40 @@ describe('ScheduleSection', () => {
 
     expect(screen.getAllByRole('button', { name: 'Wedding Day' }).length).toBeGreaterThan(0);
     expect(screen.queryByText('Invalid Date')).not.toBeInTheDocument();
+  });
+
+  it('omits missing public event times instead of leaking Time TBD placeholders', () => {
+    const populatedData = createWeddingData([
+      { id: 'event-1', label: 'Welcome Party', startTimeISO: undefined, notes: 'Friday welcome drinks' },
+      { id: 'event-2', label: 'Ceremony', startTimeISO: '', notes: 'Sunday ceremony' },
+    ]);
+
+    const { rerender } = render(
+      <ScheduleSection
+        data={populatedData}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(screen.getByText('Welcome Party')).toBeInTheDocument();
+    expect(screen.queryByText('Time TBD')).not.toBeInTheDocument();
+
+    rerender(
+      <ScheduleTimeline
+        data={populatedData}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(screen.queryByText('Time TBD')).not.toBeInTheDocument();
+
+    rerender(
+      <ScheduleDayTabs
+        data={populatedData}
+        instance={makeInstance({})}
+      />,
+    );
+
+    expect(screen.queryByText('Time TBD')).not.toBeInTheDocument();
   });
 });

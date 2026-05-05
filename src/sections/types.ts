@@ -4,10 +4,18 @@ export interface SectionInstance {
   id: string;
   type: string;
   variant: string;
-  data: Record<string, unknown>;
-  order: number;
-  visible: boolean;
-  schemaVersion: number;
+  data?: Record<string, unknown>;
+  order?: number;
+  visible?: boolean;
+  schemaVersion?: number;
+  enabled?: boolean;
+  settings?: Record<string, unknown>;
+  bindings?: {
+    venueIds?: string[];
+    scheduleItemIds?: string[];
+    linkIds?: string[];
+    faqIds?: string[];
+  };
 }
 
 export interface SectionDefinition<T = Record<string, unknown>> {

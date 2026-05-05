@@ -7,11 +7,11 @@ describe('getPublishGuidance', () => {
     expect(
       getPublishGuidance({
         kind: 'unsaved-changes',
-        message: 'Save your latest draft changes before going live.',
+        message: 'Save your latest draft changes before sharing with guests.',
       }),
     ).toEqual({
       notice: 'Save your latest draft changes, then try publish again.',
-      error: 'Save your latest draft changes before going live.',
+      error: 'Save your latest draft changes before sharing with guests.',
     });
   });
 
@@ -19,11 +19,11 @@ describe('getPublishGuidance', () => {
     expect(
       getPublishGuidance({
         kind: 'missing-venue',
-        message: 'Add at least one venue before going live.',
+        message: 'Add at least one venue before sharing with guests.',
       }),
     ).toEqual({
-      notice: 'Add at least one venue before going live.',
-      error: 'Add at least one venue before going live.',
+      notice: 'Add at least one venue before sharing with guests.',
+      error: 'Add at least one venue before sharing with guests.',
     });
   });
 });

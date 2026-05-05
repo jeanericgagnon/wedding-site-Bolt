@@ -13,16 +13,16 @@ describe('coordinatorExecutionBoard', () => {
       tone: 'ready',
       lastMoveLabel: 'Ceremony moved live and synced alert draft',
       laneLabel: 'Timeline',
-      effectLabel: 'Execution changed live state',
+      effectLabel: 'Live state changed',
     });
   });
 
   it('shows neutral state when no execution feedback exists', () => {
     expect(buildCoordinatorExecutionBoard(null)).toEqual({
-      statusLabel: 'No recent execution feedback',
+      statusLabel: 'No recent board update',
       tone: 'neutral',
-      lastMoveLabel: 'Board is waiting for the next operator move',
-      laneLabel: 'No active execution lane',
+      lastMoveLabel: 'Board is waiting for the next move',
+      laneLabel: 'No active focus yet',
       effectLabel: 'Run a board action to stamp the latest move here',
     });
   });

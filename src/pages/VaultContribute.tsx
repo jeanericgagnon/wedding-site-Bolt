@@ -4,6 +4,7 @@ import { Lock, Heart, Send, CheckCircle, AlertCircle, Loader2, Mic, Square } fro
 import { supabase } from '../lib/supabase';
 import { DEMO_MODE } from '../config/env';
 import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
+import { customerSafeErrorMessage } from '../lib/customerSafeError';
 
 interface SiteInfo {
   id: string;
@@ -26,6 +27,12 @@ const DEMO_VAULT_STORAGE_KEY = 'dayof_demo_vault_state_v1';
 const MAX_UPLOAD_MB_BY_TYPE: Record<'photo' | 'video' | 'voice', number> = { photo: 8, video: 35, voice: 12 };
 const VAULT_SUBMITTED_KEY_PREFIX = 'vault_submitted_years_';
 const DEMO_WEDDING_DATE = '2026-02-23';
+
+export function safeVaultUploadError(err: unknown): string {
+  return customerSafeErrorMessage(err, 'Couldn’t add that file right now. Please try again.', {
+    allow: [/^Please choose an (image|audio) file for .+ type\.$/i, /^Please choose only (image|video) files for .+ type\.$/i],
+  });
+}
 
 function normalizeVaultWeddingDate(value: string | null | undefined): string | null {
   const trimmed = value?.trim() || '';
@@ -66,7 +73,9 @@ function formatVaultWindowDate(date: Date): string {
   return date.toLocaleDateString();
 }
 
-export function getContributionWindow(weddingDateRaw: string | null): { canSubmit: boolean; message: string | null } {
+export function getContributionWindow(weddingDateRaw: string | null, forceOpen = false): { canSubmit: boolean; message: string | null } {
+  if (forceOpen) return { canSubmit: true, message: 'QA mode: vault uploads are open for testing.' };
+
   const normalizedWeddingDate = normalizeVaultWeddingDate(weddingDateRaw);
   if (!normalizedWeddingDate) return { canSubmit: true, message: null };
 
@@ -131,6 +140,7 @@ export const VaultContribute: React.FC = () => {
 
   const hasYearParam = typeof year === 'string' && year.length > 0;
   const vaultYear = hasYearParam ? parseInt(year ?? '0', 10) : null;
+  const qaOpen = new URLSearchParams(window.location.search).get('vaultQaOpen') === '1';
 
 
   const submittedKey = `${VAULT_SUBMITTED_KEY_PREFIX}${siteSlug ?? 'unknown'}`;
@@ -234,7 +244,7 @@ export const VaultContribute: React.FC = () => {
       setRecordSeconds(0);
       setIsRecordingVoice(true);
     } catch {
-      setSubmitError('Could not start microphone recording. Please allow microphone access or upload an audio file instead.');
+      setSubmitError('Couldn’t start microphone recording. Please allow microphone access or upload an audio file instead.');
     }
   }
 
@@ -379,7 +389,7 @@ export const VaultContribute: React.FC = () => {
 
     await new Promise<void>((resolve, reject) => {
       video.onloadedmetadata = () => resolve();
-      video.onerror = () => reject(new Error('Could not read that video file'));
+      video.onerror = () => reject(new Error('Couldn’t read that video file.'));
     });
 
     const maxW = 1280;
@@ -411,7 +421,7 @@ export const VaultContribute: React.FC = () => {
     };
 
     const finished = new Promise<File>((resolve, reject) => {
-      recorder.onerror = () => reject(new Error('Video compression failed'));
+      recorder.onerror = () => reject(new Error('Couldn’t prepare that video.'));
       recorder.onstop = () => {
         cancelAnimationFrame(raf);
         URL.revokeObjectURL(url);
@@ -445,7 +455,7 @@ export const VaultContribute: React.FC = () => {
     e.preventDefault();
     if (!validate() || !site || !vaultConfig) return;
 
-    const liveWindow = getContributionWindow(site.wedding_date);
+    const liveWindow = getContributionWindow(site.wedding_date, qaOpen);
     if (!liveWindow.canSubmit) {
       setSubmitError(liveWindow.message || 'Uploads are currently closed for this vault.');
       return;
@@ -455,8 +465,8 @@ export const VaultContribute: React.FC = () => {
 
     const uploadedItems: Array<{ url: string | null; name: string | null; mime: string | null; size: number | null; externalFileId?: string | null; storageProvider?: 'supabase' | 'google_drive' }> = [];
 
-    const storageProvider = site.vault_storage_provider ?? 'supabase';
-    const useGoogleDrive = storageProvider === 'google_drive';
+    const storageProvider = 'supabase' as const;
+    const useGoogleDrive = false;
 
     if (selectedFiles.length > 0 && form.media_type !== 'text') {
       setUploadProgress(3);
@@ -469,20 +479,14 @@ export const VaultContribute: React.FC = () => {
           try {
             file = await compressVideoTo720p(file);
             setCompressionStatus(null);
-          } catch (err) {
+          } catch {
             setCompressionStatus(null);
             // Fallback: keep original file upload instead of blocking submit.
-            setSubmitError(
-              err instanceof Error
-                ? `${err.message} Uploading original video instead.`
-                : 'Compression failed. Uploading original video instead.'
-            );
+            setSubmitError('Couldn’t prepare a smaller version. Uploading the original video instead.');
           }
         }
 
-        const ext = file.name.split('.').pop() || 'bin';
         const safeType = form.media_type === 'voice' ? 'audio' : form.media_type;
-        const path = `public/${site.id}/${vaultConfig.id}/${Date.now()}-${i}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
 
         if (DEMO_MODE && site.id === 'demo-site-id') {
           uploadedItems.push({ url: `demo-upload://${safeType}/${file.name}`, name: file.name, mime: file.type || null, size: file.size || null, storageProvider: useGoogleDrive ? 'google_drive' : 'supabase' });
@@ -505,7 +509,7 @@ export const VaultContribute: React.FC = () => {
               const idx = result.indexOf(',');
               resolve(idx >= 0 ? result.slice(idx + 1) : result);
             };
-            reader.onerror = () => reject(new Error('Failed to read file for Google Drive upload.'));
+            reader.onerror = () => reject(new Error('Couldn’t read that file for upload.'));
             reader.readAsDataURL(file);
           });
 
@@ -522,7 +526,7 @@ export const VaultContribute: React.FC = () => {
           if (driveError) {
             setUploadProgress(null);
             setSubmitting(false);
-            setSubmitError(`Google Drive upload failed: ${driveError.message}`);
+            setSubmitError(safeVaultUploadError(driveError));
             return;
           }
 
@@ -537,21 +541,53 @@ export const VaultContribute: React.FC = () => {
           });
           setUploadProgress(Math.round(((i + 1) / selectedFiles.length) * 100));
         } else {
-          const { error: uploadError } = await supabase.storage
-            .from('vault-attachments')
-            .upload(path, file, { upsert: false, contentType: file.type || undefined });
+          const base64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+              const result = String(reader.result || '');
+              const idx = result.indexOf(',');
+              resolve(idx >= 0 ? result.slice(idx + 1) : result);
+            };
+            reader.onerror = () => reject(new Error('Couldn’t read that file for upload.'));
+            reader.readAsDataURL(file);
+          });
+
+          const { data: uploadData, error: uploadError } = await supabase.functions.invoke('vault-entry-submit', {
+            body: {
+              action: 'upload_attachment',
+              siteId: site.id,
+              vaultConfigId: vaultConfig.id,
+              vaultYear: vaultConfig.duration_years,
+              mediaType: form.media_type,
+              fileName: file.name,
+              mimeType: file.type || 'application/octet-stream',
+              base64,
+              qaOpen,
+            },
+          });
 
           if (uploadError) {
             setUploadProgress(null);
             setSubmitting(false);
-            setSubmitError(uploadError.message?.includes('bucket')
-              ? 'Media upload is not configured yet (missing vault-attachments bucket or policy).'
-              : `Upload failed: ${uploadError.message}`);
+            setSubmitError(safeVaultUploadError(uploadError));
             return;
           }
 
-          const { data: publicData } = supabase.storage.from('vault-attachments').getPublicUrl(path);
-          uploadedItems.push({ url: publicData.publicUrl, name: file.name, mime: file.type || null, size: file.size || null, storageProvider: 'supabase' });
+          const uploaded = uploadData as { publicUrl?: string | null; fileName?: string | null; mimeType?: string | null; sizeBytes?: number | null } | null;
+          if (!uploaded?.publicUrl) {
+            setUploadProgress(null);
+            setSubmitting(false);
+            setSubmitError('Couldn’t finish that upload. Please try again.');
+            return;
+          }
+
+          uploadedItems.push({
+            url: uploaded.publicUrl,
+            name: uploaded.fileName || file.name,
+            mime: uploaded.mimeType || file.type || null,
+            size: uploaded.sizeBytes ?? file.size ?? null,
+            storageProvider: 'supabase',
+          });
           setUploadProgress(Math.round(((i + 1) / selectedFiles.length) * 100));
         }
       }
@@ -597,13 +633,15 @@ export const VaultContribute: React.FC = () => {
       unlock_at: getVaultUnlockAtIso(site.wedding_date, vaultConfig.duration_years),
     }));
 
-    const { error } = await supabase.from('vault_entries').insert(rows);
+    const { error } = await supabase.functions.invoke('vault-entry-submit', {
+      body: { rows, qaOpen },
+    });
 
     setSubmitting(false);
     setUploadProgress(null);
     setCompressionStatus(null);
     if (error) {
-      setSubmitError(`Could not save your message right now: ${error.message}`);
+      setSubmitError(safeVaultUploadError(error));
     } else {
       markSubmitted(vaultConfig.duration_years);
       setStep('success');
@@ -622,15 +660,15 @@ export const VaultContribute: React.FC = () => {
   const coupleName = getVaultCoupleName(site);
 
   const unlockYear = getVaultUnlockYear(site?.wedding_date, vaultConfig?.duration_years);
-  const storageProvider = site?.vault_storage_provider ?? 'supabase';
-  const usingGoogleDrive = storageProvider === 'google_drive';
+  const storageProvider = 'supabase' as const;
+  const isDemoVault = DEMO_MODE && site?.id === 'demo-site-id';
 
   const ordinal = vaultConfig ? ordinalLabel(vaultConfig.duration_years) : '';
   const vaultLabel = vaultConfig?.label || (vaultConfig ? `${vaultConfig.duration_years}-Year Anniversary Vault` : 'Anniversary Vault');
   const description = vaultConfig
     ? `Leave a message to be opened on the couple's ${ordinal} anniversary.`
     : 'Choose a vault and leave a message for a future anniversary.';
-  const contributionWindow = getContributionWindow(site?.wedding_date ?? null);
+  const contributionWindow = getContributionWindow(site?.wedding_date ?? null, qaOpen);
 
   if (step === 'loading') {
     return (
@@ -642,13 +680,13 @@ export const VaultContribute: React.FC = () => {
 
   if (step === 'invalid') {
     return (
-      <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.10),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.08),transparent_38%),linear-gradient(135deg,#f8fafc,#ffffff)] flex items-center justify-center px-4">
+      <div className="min-h-screen bg-app flex items-center justify-center px-4">
         <div className="text-center max-w-sm">
-          <div className="w-14 h-14 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4 border border-stone-200">
+          <div className="w-14 h-14 bg-stone-100 rounded-lg flex items-center justify-center mx-auto mb-4 border border-stone-200">
             <Lock className="w-6 h-6 text-stone-400" />
           </div>
-          <h1 className="text-xl font-semibold text-stone-800 mb-2">Vault not found</h1>
-          <p className="text-stone-500 text-sm">This link may be invalid or the vault is no longer accepting contributions.</p>
+          <h1 className="text-xl font-semibold text-stone-800 mb-2">This vault is not available right now</h1>
+          <p className="text-stone-500 text-sm">Please check the link from the couple or come back a little later.</p>
         </div>
       </div>
     );
@@ -657,14 +695,14 @@ export const VaultContribute: React.FC = () => {
 
   if (step === 'hub') {
     return (
-      <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.10),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.08),transparent_38%),linear-gradient(135deg,#f8fafc,#ffffff)] flex flex-col">
+      <div className="min-h-screen bg-app flex flex-col">
         <div className="flex-1 flex items-center justify-center px-4 py-12">
           <div className="w-full max-w-3xl">
             <div className="text-center mb-8">
-              <div className="w-14 h-14 bg-white border border-amber-200 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+              <div className="w-14 h-14 bg-white border border-border-subtle rounded-lg flex items-center justify-center mx-auto mb-4">
                 <Lock className="w-6 h-6 text-primary" />
               </div>
-              {coupleName && <p className="text-sm text-stone-500 mb-1 updates-wide uppercase font-medium">{coupleName}</p>}
+              {coupleName && <p className="text-sm text-stone-500 mb-1 font-medium">{coupleName}</p>}
               <h1 className="text-[30px] leading-tight font-bold text-text-primary">Choose an anniversary vault</h1>
               <p className="text-text-secondary text-sm mt-2">Pick a future anniversary and leave something meaningful for them to open later.</p>
             </div>
@@ -676,14 +714,14 @@ export const VaultContribute: React.FC = () => {
                   <Link
                     key={v.id}
                     to={`/vault/${siteSlug}/${v.duration_years}`}
-                    className="group bg-white/95 backdrop-blur rounded-2xl border border-border-subtle p-5 hover:border-primary/40 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 shadow-sm relative overflow-hidden"
+                    className="group bg-white/95 rounded-lg border border-border-subtle p-5 hover:border-primary/40 transition-colors duration-200 relative overflow-hidden"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm font-semibold text-stone-800">{v.label || `${v.duration_years}-Year Anniversary Vault`}</p>
-                      {done && <CheckCircle className="w-5 h-5 text-green-600" />}
+                      {done && <CheckCircle className="w-5 h-5 text-primary" />}
                     </div>
                     <p className="text-xs text-stone-500 mt-2">Opens on their {ordinalLabel(v.duration_years)} anniversary.</p>
-                    <p className={`text-xs mt-3 font-semibold updates-wide ${done ? 'text-emerald-700' : 'text-primary'}`}>{done ? 'Added ✓' : 'Add a note →'}</p>
+                    <p className={`text-xs mt-3 font-semibold ${done ? 'text-text-secondary' : 'text-primary'}`}>{done ? 'Added' : 'Add a note'}</p>
                   </Link>
                 );
               })}
@@ -696,12 +734,12 @@ export const VaultContribute: React.FC = () => {
 
   if (step === 'success') {
     return (
-      <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.10),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.08),transparent_38%),linear-gradient(135deg,#f8fafc,#ffffff)] flex items-center justify-center px-4">
+      <div className="min-h-screen bg-app flex items-center justify-center px-4">
         <div className="text-center max-w-sm">
-          <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-5 border border-green-200 shadow-sm">
-            <CheckCircle className="w-8 h-8 text-green-600" />
+          <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center mx-auto mb-5 border border-border-subtle">
+            <CheckCircle className="w-8 h-8 text-primary" />
           </div>
-          <h1 className="text-[26px] leading-tight font-bold text-stone-800 mb-2">Saved for later ✨</h1>
+          <h1 className="text-[26px] leading-tight font-bold text-stone-800 mb-2">Saved for later</h1>
           <p className="text-text-secondary mb-1">
             Your note has been saved in {coupleName ? <strong>{coupleName}'s</strong> : 'the'} {ordinal} anniversary vault.
           </p>
@@ -710,7 +748,7 @@ export const VaultContribute: React.FC = () => {
               It will be opened in {unlockYear}.
             </p>
           )}
-          <div className="mt-8 p-4 bg-primary/5 border border-primary/20 rounded-xl text-sm text-primary">
+          <div className="mt-8 p-4 bg-primary/5 border border-primary/20 rounded-lg text-sm text-primary">
             <Heart className="w-4 h-4 inline-block mr-1.5 mb-0.5" />
             Thank you for adding to this part of their story.
             {hasYearParam && <p className="mt-2 text-xs text-primary">Returning to vault list…</p>}
@@ -722,16 +760,16 @@ export const VaultContribute: React.FC = () => {
 
   if (step === 'error') {
     return (
-      <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.10),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.08),transparent_38%),linear-gradient(135deg,#f8fafc,#ffffff)] flex items-center justify-center px-4">
+      <div className="min-h-screen bg-app flex items-center justify-center px-4">
         <div className="text-center max-w-sm">
-          <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-200">
-            <AlertCircle className="w-6 h-6 text-red-500" />
+          <div className="w-14 h-14 bg-white rounded-lg flex items-center justify-center mx-auto mb-4 border border-border-subtle">
+            <AlertCircle className="w-6 h-6 text-text-tertiary" />
           </div>
           <h1 className="text-xl font-semibold text-stone-800 mb-2">Something went wrong</h1>
           <p className="text-stone-500 text-sm mb-6">Your message couldn't be saved. Please try again.</p>
           <button
             onClick={() => setStep('form')}
-            className="px-5 py-2.5 bg-gradient-to-r from-primary to-primary-hover text-white rounded-xl text-sm font-semibold hover:from-primary-hover hover:to-primary transition-all shadow"
+            className="px-5 py-2.5 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary-hover transition-colors"
           >
             Try again
           </button>
@@ -741,15 +779,15 @@ export const VaultContribute: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.10),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(99,102,241,0.08),transparent_38%),linear-gradient(135deg,#f8fafc,#ffffff)] flex flex-col">
+    <div className="min-h-screen bg-app flex flex-col">
       <div className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-lg">
           <div className="text-center mb-8">
-            <div className="w-14 h-14 bg-white border border-amber-200 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+            <div className="w-14 h-14 bg-white border border-border-subtle rounded-lg flex items-center justify-center mx-auto mb-4">
               <Lock className="w-6 h-6 text-primary" />
             </div>
             {coupleName && (
-              <p className="text-sm text-stone-500 mb-1 updates-wide uppercase font-medium">
+              <p className="text-sm text-stone-500 mb-1 font-medium">
                 {coupleName}
               </p>
             )}
@@ -760,86 +798,91 @@ export const VaultContribute: React.FC = () => {
                 <> The vault opens in <strong className="text-stone-700">{unlockYear}</strong>.</>
               )}
             </p>
-            {DEMO_MODE && (
-              <p className="text-[11px] mt-2 inline-flex items-center px-2 py-1 rounded-full border border-warning/30 bg-warning/10 text-warning font-medium">
-                Demo mode: uploads and provider actions may be simulated
+            {isDemoVault && (
+              <p className="text-[11px] mt-2 inline-flex items-center px-2 py-1 rounded border border-border-subtle bg-surface-subtle text-text-secondary font-medium">
+                Demo mode: uploads may be simulated
               </p>
             )}
           </div>
 
-          <div className="bg-white/95 backdrop-blur rounded-3xl shadow-xl border border-border-subtle p-5 sm:p-6 md:p-8 relative overflow-hidden transition-shadow duration-300 hover:shadow-2xl">
+          <div className="bg-white/95 rounded-lg border border-border-subtle p-5 sm:p-6 md:p-8 relative overflow-hidden">
             <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/20 via-primary/60 to-primary/20" />
-            <form onSubmit={handleSubmit} className="space-y-5 md:space-y-5.5">
-              <div className="text-xs rounded-xl px-3 py-2 border bg-stone-50 border-stone-200 text-stone-600">
-                Storage destination: <strong className="text-stone-800">{usingGoogleDrive ? 'Google Drive' : 'Secure vault storage'}</strong>
-                {usingGoogleDrive && !site?.vault_google_drive_connected && (
-                  <span className="text-red-600"> · Not connected yet (ask the couple to connect Google Drive in Vault settings).</span>
-                )}
+            <form onSubmit={handleSubmit} className="space-y-5 md:space-y-5.5" aria-busy={submitting}>
+              <div className="text-xs rounded-lg px-3 py-2 border bg-stone-50 border-stone-200 text-stone-600">
+                Saved to: <strong className="text-stone-800">your private dayof vault</strong>
               </div>
               {contributionWindow.message && (
-                <div className={`text-xs rounded-xl px-3 py-2 border ${contributionWindow.canSubmit ? 'bg-primary/5 border-primary/20 text-primary' : 'bg-warning/10 border-warning/30 text-warning'}`}>
+                <div className={`text-xs rounded-lg px-3 py-2 border ${contributionWindow.canSubmit ? 'bg-primary/5 border-primary/20 text-primary' : 'bg-surface-subtle border-border-subtle text-text-secondary'}`}>
                   {contributionWindow.message}
                 </div>
               )}
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-1.5">
-                  Your name <span className="text-red-500">*</span>
+                <label htmlFor="vault-author-name" className="block text-sm font-medium text-stone-700 mb-1.5">
+                  Your name <span className="text-text-tertiary">*</span>
                 </label>
                 <input
+                  id="vault-author-name"
                   type="text"
+                  aria-invalid={errors.author_name ? 'true' : 'false'}
+                  aria-describedby={errors.author_name ? 'vault-author-name-error' : undefined}
                   value={form.author_name}
                   onChange={e => setForm({ ...form, author_name: e.target.value })}
                   placeholder="For example: Aunt Sarah, The Johnsons, Your college roommate"
-                  className={`w-full px-4 py-2.5 border rounded-xl text-text-primary placeholder:text-text-tertiary text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 transition shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] ${
-                    errors.author_name ? 'border-red-300 bg-red-50' : 'border-stone-300 bg-white'
+                  className={`w-full px-4 py-2.5 border rounded-lg text-text-primary placeholder:text-text-tertiary text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 transition ${
+                    errors.author_name ? 'border-border-subtle bg-surface-secondary' : 'border-stone-300 bg-white'
                   }`}
                 />
                 {errors.author_name && (
-                  <p className="text-red-500 text-xs mt-1">{errors.author_name}</p>
+                  <p id="vault-author-name-error" className="text-text-secondary text-xs mt-1">{errors.author_name}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-1.5">
+                <label htmlFor="vault-title" className="block text-sm font-medium text-stone-700 mb-1.5">
                   Title <span className="text-stone-400 font-normal">(optional)</span>
                 </label>
                 <input
+                  id="vault-title"
                   type="text"
                   value={form.title}
                   onChange={e => setForm({ ...form, title: e.target.value })}
                   placeholder="For example: Advice for year one, A wish for you both…"
-                  className="w-full px-4 py-3 border border-stone-300 rounded-xl text-text-primary placeholder:text-text-tertiary text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 bg-white transition shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]"
+                  className="w-full px-4 py-3 border border-stone-300 rounded-lg text-text-primary placeholder:text-text-tertiary text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 bg-white transition"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-1.5">
-                  Your message <span className="text-red-500">*</span>
+                <label htmlFor="vault-message" className="block text-sm font-medium text-stone-700 mb-1.5">
+                  Your message <span className="text-text-tertiary">*</span>
                 </label>
                 <textarea
+                  id="vault-message"
+                  aria-invalid={errors.content ? 'true' : 'false'}
+                  aria-describedby={errors.content ? 'vault-message-error' : 'vault-message-count'}
                   value={form.content}
                   onChange={e => setForm({ ...form, content: e.target.value })}
                   rows={6}
-                  placeholder={`Write something meaningful for ${coupleName || 'the couple'} to read on their ${ordinal} anniversary…`}
-                  className={`w-full px-4 py-3 border rounded-xl text-stone-800 placeholder:text-stone-400 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 resize-none transition ${
-                    errors.content ? 'border-red-300 bg-red-50' : 'border-stone-300 bg-white'
+                  placeholder={`Write something meaningful for ${coupleName || 'the couple'} to read on their ${ordinal} anniversary...`}
+                  className={`w-full px-4 py-3 border rounded-lg text-stone-800 placeholder:text-stone-400 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 resize-none transition ${
+                    errors.content ? 'border-border-subtle bg-surface-secondary' : 'border-stone-300 bg-white'
                   }`}
                 />
                 {errors.content ? (
-                  <p className="text-red-500 text-xs mt-1">{errors.content}</p>
+                  <p id="vault-message-error" className="text-text-secondary text-xs mt-1">{errors.content}</p>
                 ) : (
-                  <p className="text-stone-400 text-xs mt-1">{form.content.length} characters</p>
+                  <p id="vault-message-count" aria-live="polite" className="text-stone-400 text-xs mt-1">{form.content.length} characters</p>
                 )}
               </div>
 
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-1.5 updates-[0.01em]">Message type</label>
+                  <label htmlFor="vault-message-type" className="block text-sm font-medium text-stone-700 mb-1.5">Message type</label>
                   <select
+                    id="vault-message-type"
                     value={form.media_type}
                     onChange={e => { setForm({ ...form, media_type: e.target.value as 'text' | 'photo' | 'video' | 'voice' }); setSelectedFiles([]); setSubmitError(null); if (isRecordingVoice) stopVoiceRecording(); }}
-                    className="w-full px-4 py-3 border border-stone-300 rounded-xl text-stone-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 bg-white transition"
+                    className="w-full px-4 py-3 border border-stone-300 rounded-lg text-stone-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 bg-white transition"
                   >
                     <option value="text">Note only</option>
                     <option value="photo">Photo</option>
@@ -851,11 +894,14 @@ export const VaultContribute: React.FC = () => {
 
               {form.media_type !== 'text' && (
                 <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-1.5">
-                    Add files <span className="text-red-500">*</span>
+                  <label htmlFor="vault-file-upload" className="block text-sm font-medium text-stone-700 mb-1.5">
+                    Add files <span className="text-text-tertiary">*</span>
                   </label>
                   <input
+                    id="vault-file-upload"
                     type="file"
+                    aria-invalid={errors.attachment_url ? 'true' : 'false'}
+                    aria-describedby="vault-file-limits vault-file-status"
                     multiple={form.media_type === 'photo' || form.media_type === 'video'}
                     accept={form.media_type === 'photo' ? 'image/*' : form.media_type === 'video' ? 'video/*' : 'audio/*'}
                     onChange={e => {
@@ -905,9 +951,16 @@ export const VaultContribute: React.FC = () => {
                       setSubmitError(null);
                       setSelectedFiles(files);
                     }}
-                    className="w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-amber-100 file:text-primary file:px-3 file:py-1.5 hover:file:bg-primary/15"
+                    className="w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-surface-secondary file:text-primary file:px-3 file:py-1.5 hover:file:bg-primary/15"
                   />
-                  {selectedFiles.length > 0 && <p className="text-xs text-stone-500 mt-1">Selected: {selectedFiles.length} file{selectedFiles.length === 1 ? '' : 's'}</p>}
+                  <p
+                    id="vault-file-status"
+                    role="status"
+                    aria-live="polite"
+                    className={selectedFiles.length > 0 ? 'text-xs text-stone-500 mt-1' : 'sr-only'}
+                  >
+                    {selectedFiles.length > 0 ? `Selected: ${selectedFiles.length} file${selectedFiles.length === 1 ? '' : 's'}` : ''}
+                  </p>
                   {form.media_type === 'video' && (
                     <label className="mt-1 inline-flex items-center gap-2 text-xs text-stone-600">
                       <input type="checkbox" checked={compressVideo} onChange={e => setCompressVideo(e.target.checked)} />
@@ -919,68 +972,74 @@ export const VaultContribute: React.FC = () => {
                     <div className="mt-2 border border-stone-200 rounded-lg p-3 bg-stone-50">
                       <p className="text-xs text-stone-600 mb-2">Or record one here:</p>
                       {!isRecordingVoice ? (
-                        <button type="button" onClick={startVoiceRecording} className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-md border border-stone-300 hover:border-amber-400">
+                        <button type="button" onClick={startVoiceRecording} className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-md border border-stone-300 hover:border-primary/40">
                           <Mic className="w-3.5 h-3.5" /> Record voice note
                         </button>
                       ) : (
                         <div className="flex items-center gap-3">
-                          <span className="text-xs text-red-600">Recording… {recordSeconds}s</span>
-                          <button type="button" onClick={stopVoiceRecording} className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-md border border-red-300 text-red-700 hover:bg-red-50">
+                          <span className="text-xs text-text-secondary">Recording… {recordSeconds}s</span>
+                          <button type="button" onClick={stopVoiceRecording} className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-md border border-border-subtle text-text-secondary hover:bg-surface-secondary">
                             <Square className="w-3.5 h-3.5" /> Stop
                           </button>
                         </div>
                       )}
                     </div>
                   )}
-                  <p className="text-[11px] text-stone-400 mt-1">{form.media_type === 'photo' ? 'Up to 3 photos, 8MB each. If larger, compress first.' : form.media_type === 'video' ? (compressVideo ? 'Up to 3 videos, 200MB source each (auto-compressed to 720p).' : 'Up to 3 videos, 35MB each. If larger, compress/trim first.') : 'Single voice file, 12MB max. If larger, trim/compress first.'}</p>
-                  {errors.attachment_url && <p className="text-red-500 text-xs mt-1">{errors.attachment_url}</p>}
+                  <p id="vault-file-limits" className="text-[11px] text-stone-400 mt-1">{form.media_type === 'photo' ? 'Up to 3 photos, 8MB each. If larger, compress first.' : form.media_type === 'video' ? (compressVideo ? 'Up to 3 videos, 200MB source each (auto-compressed to 720p).' : 'Up to 3 videos, 35MB each. If larger, compress/trim first.') : 'Single voice file, 12MB max. If larger, trim/compress first.'}</p>
+                  {errors.attachment_url && <p className="text-text-secondary text-xs mt-1">{errors.attachment_url}</p>}
                 </div>
               )}
 
 
               <div>
-                <label className="block text-sm font-medium text-stone-700 mb-1.5">
+                <label htmlFor="vault-media-label" className="block text-sm font-medium text-stone-700 mb-1.5">
                   Media label <span className="text-stone-400 font-normal">(optional)</span>
                 </label>
                 <input
+                  id="vault-media-label"
                   type="text"
                   value={form.attachment_name}
                   onChange={e => setForm({ ...form, attachment_name: e.target.value })}
                   placeholder="e.g. Engagement video, Voice memo"
-                  className="w-full px-4 py-3 border border-stone-300 rounded-xl text-text-primary placeholder:text-text-tertiary text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 bg-white transition shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]"
+                  className="w-full px-4 py-3 border border-stone-300 rounded-lg text-text-primary placeholder:text-text-tertiary text-sm focus:outline-none focus:ring-2 focus:ring-primary/25 bg-white transition"
                 />
               </div>
 
 
               {submitError && (
-                <div className="p-3 rounded-xl border border-red-200 bg-red-50 text-red-700 text-sm">
+                <div role="alert" className="p-3 rounded-lg border border-border-subtle bg-surface-secondary text-text-secondary text-sm">
                   {submitError}
                 </div>
               )}
 
               {compressionStatus && (
-                <div className="text-xs text-stone-500">{compressionStatus}</div>
+                <div role="status" aria-live="polite" className="text-xs text-stone-500">{compressionStatus}</div>
               )}
 
               {uploadProgress !== null && (
-                <div className="space-y-1">
+                <div className="space-y-1" role="status" aria-live="polite">
                   <div className="text-xs text-stone-500">Uploading media… {uploadProgress}%</div>
-                  <div className="h-2 rounded-full bg-stone-200 overflow-hidden">
-                    <div className="h-full bg-amber-500 transition-all" style={{ width: `${uploadProgress}%` }} />
+                  <div className="h-2 rounded-lg bg-stone-200 overflow-hidden">
+                    <div className="h-full bg-primary transition-all" style={{ width: `${uploadProgress}%` }} />
                   </div>
                 </div>
               )}
 
-              {!submitting && form.media_type !== 'text' && selectedFiles.length > 0 && (
-                <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2 font-medium">
-                  Ready to save: {selectedFiles.length} {selectedFiles.length === 1 ? 'file' : 'files'} will be uploaded to {usingGoogleDrive ? 'Google Drive' : 'vault storage'}.
+              {!submitting && contributionWindow.canSubmit && form.media_type !== 'text' && selectedFiles.length > 0 && (
+                <p className="text-xs text-text-secondary bg-surface-secondary border border-border-subtle rounded-lg px-3 py-2 font-medium">
+                  Ready to save: {selectedFiles.length} {selectedFiles.length === 1 ? 'file' : 'files'} will be added with your vault note.
+                </p>
+              )}
+              {!submitting && !contributionWindow.canSubmit && (
+                <p className="text-xs text-text-secondary bg-surface-secondary border border-border-subtle rounded-lg px-3 py-2 font-medium">
+                  Save is disabled because this vault is outside its upload window.
                 </p>
               )}
 
               <button
                 type="submit"
-                disabled={submitting || !contributionWindow.canSubmit || (usingGoogleDrive && !site?.vault_google_drive_connected)}
-                className="w-full flex items-center justify-center gap-2 py-3.5 px-6 bg-gradient-to-r from-primary to-primary-hover hover:from-primary-hover hover:to-primary text-white font-semibold rounded-xl text-sm transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-[1px] disabled:opacity-60 disabled:cursor-not-allowed"
+                disabled={submitting || !contributionWindow.canSubmit}
+                className="w-full flex items-center justify-center gap-2 py-3.5 px-6 bg-primary hover:bg-primary-hover text-white font-semibold rounded-lg text-sm transition-colors duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {submitting ? (
                   <><Loader2 className="w-4 h-4 animate-spin" />Saving your contribution…</>
@@ -988,16 +1047,13 @@ export const VaultContribute: React.FC = () => {
                   <><Send className="w-4 h-4" />Save in vault</>
                 )}
               </button>
-              {usingGoogleDrive && !site?.vault_google_drive_connected && (
-                <p className="text-xs text-red-600 mt-2">Submissions are temporarily paused until the couple reconnects Google Drive.</p>
-              )}
             </form>
           </div>
 
           <p className="text-center text-xs text-stone-400 mt-6">
             Powered by{' '}
             <Link to="/" className="hover:text-stone-600 transition-colors">
-              Day Of
+              dayof
             </Link>
           </p>
         </div>

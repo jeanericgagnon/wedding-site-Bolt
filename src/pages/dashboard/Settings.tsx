@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
+import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input, Select, Badge } from '../../components/ui';
-import { Save, ExternalLink, CreditCard, User, Globe, Bell, Lock, Layout, Check, Sparkles, AlertCircle, Loader2, Calendar, Repeat, Eye, EyeOff, Copy, CheckCheck, Plus, Trash2, ChevronDown, LogOut, Users } from 'lucide-react';
+import { Save, ExternalLink, CreditCard, User, Globe, Bell, Lock, Layout, Check, Sparkles, AlertCircle, Loader2, Calendar, Repeat, Eye, EyeOff, Copy, CheckCheck, Plus, Trash2, ChevronDown, LogOut, Users, ClipboardList } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { getSiteVisibilityState, getVisibilityModeOptions } from '../../lib/siteVisibilityState';
 import { getAllTemplates } from '../../templates/registry';
@@ -13,10 +14,30 @@ import { fromExistingLayoutToBuilderProject } from '../../builder/adapters/layou
 import { mergeGeneratedDraftIntoBuilderProject } from '../../lib/aiBuilderProjectPatch';
 import { fetchBillingInfo, createSubscriptionSession, daysUntilExpiry, type BillingInfo } from '../../lib/stripeService';
 import { useAuth } from '../../hooks/useAuth';
-import { PLANNER_ROLE_OPTIONS, PLANNER_PERMISSION_GROUPS, getPlannerPermissionPreset, readPlannerInvite, writePlannerInvite, type PlannerInviteRecord, type PlannerPermissionKey } from '../../lib/plannerAccess';
+import { PLANNER_ROLE_OPTIONS, PLANNER_PERMISSION_GROUPS, getPlannerPermissionPreset, readPlannerInvite, writePlannerInvite, type PlannerAccessRole, type PlannerInviteRecord, type PlannerPermissionKey } from '../../lib/plannerAccess';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { useToast } from '../../components/ui/Toast';
 import { formatSettingsDate } from './settingsDate';
+import { ShareQrPanel } from '../../components/ui/ShareQrPanel';
+import { copyTextOrDownload } from '../../lib/copyText';
+import { logAppAction } from '../../lib/actionAudit';
+import { demoWeddingSite } from '../../lib/demoData';
+import { getSafePublicWebUrl } from '../../sections/publicLinks';
+import { customerSafeErrorMessage } from '../../lib/customerSafeError';
+import {
+  buildWeddingIdentityExportKit,
+  buildWeddingIdentityManifestText,
+  buildWeddingIdentityPrintAssets,
+  renderWeddingIdentityPrintHtml,
+} from '../../lib/weddingIdentityExports';
+import {
+  generateSettingsSecureToken,
+  hashSettingsSitePassword,
+  loadSettingsSite,
+  translateSettingsSiteContent,
+  updateSettingsSite,
+  type SettingsSiteUpdates,
+} from './settings/settingsSiteData';
 
 
 interface RSVPQuestionSetting {
@@ -39,6 +60,62 @@ const makeQuestion = (): RSVPQuestionSetting => ({
 
 const LOCAL_RSVP_QUESTIONS_KEY = 'dayof_demo_rsvp_custom_questions_v1';
 const LOCAL_RSVP_MEAL_KEY = 'dayof_demo_rsvp_meal_config_v1';
+const SITE_LANGUAGE_OPTIONS = [
+  { value: 'en', label: 'English' },
+  { value: 'es', label: 'Español' },
+  { value: 'fr', label: 'Français' },
+  { value: 'it', label: 'Italiano' },
+  { value: 'de', label: 'Deutsch' },
+  { value: 'pt', label: 'Português' },
+] as const;
+
+type SiteLanguageCode = typeof SITE_LANGUAGE_OPTIONS[number]['value'];
+type TranslationLanguageCode = Exclude<SiteLanguageCode, 'en'>;
+type TranslationStatusRow = {
+  language: TranslationLanguageCode;
+  status: 'ready' | 'failed';
+  translated_at: string | null;
+};
+const TRANSLATION_LANGUAGE_OPTIONS = SITE_LANGUAGE_OPTIONS.filter((option) => option.value !== 'en') as ReadonlyArray<{
+  value: TranslationLanguageCode;
+  label: string;
+}>;
+
+const getSiteLanguageLabel = (language: string) =>
+  SITE_LANGUAGE_OPTIONS.find((option) => option.value === language)?.label ?? language.toUpperCase();
+
+const formatTranslationStatusDate = (value: string | null) => {
+  if (!value) return 'Not generated yet';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return 'Generated recently';
+  return `Updated ${parsed.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;
+};
+
+const SETTINGS_SITE_MISSING_COPY = 'Couldn’t find your wedding site right now. Refresh and try again.';
+
+const safeSettingsError = (err: unknown, fallback: string) => {
+  return customerSafeErrorMessage(err, fallback);
+};
+
+const plannerPermissionLabel = (key: PlannerPermissionKey) =>
+  PLANNER_PERMISSION_GROUPS.find((permission) => permission.key === key)?.label ?? 'Planner access';
+
+const useDraftHydrationGuard = (clearStatus: () => void) => {
+  const dirtyRef = useRef(false);
+
+  const markDirty = useCallback(() => {
+    dirtyRef.current = true;
+    clearStatus();
+  }, [clearStatus]);
+
+  const markSaved = useCallback(() => {
+    dirtyRef.current = false;
+  }, []);
+
+  const shouldHydrate = useCallback(() => !dirtyRef.current, []);
+
+  return { markDirty, markSaved, shouldHydrate };
+};
 
 export const DashboardSettings: React.FC = () => {
   const { toast } = useToast();
@@ -47,6 +124,8 @@ export const DashboardSettings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'account' | 'team' | 'site' | 'rsvp' | 'notifications' | 'billing'>('account');
 
   const [coupleNames, setCoupleNames] = useState('');
+  const [weddingDate, setWeddingDate] = useState<string | null>(null);
+  const [venueName, setVenueName] = useState<string | null>(null);
   const [accountEmail, setAccountEmail] = useState('');
   const [accountSaving, setAccountSaving] = useState(false);
   const [accountSuccess, setAccountSuccess] = useState<string | null>(null);
@@ -64,11 +143,14 @@ export const DashboardSettings: React.FC = () => {
 
   const [siteSlug, setSiteSlug] = useState('');
   const [musicPlaylistUrl, setMusicPlaylistUrl] = useState('');
+  const safeMusicPlaylistUrl = getSafePublicWebUrl(musicPlaylistUrl);
   const [slugSaving, setSlugSaving] = useState(false);
   const [slugSuccess, setSlugSuccess] = useState<string | null>(null);
   const [slugError, setSlugError] = useState<string | null>(null);
 
-  const [defaultLanguage, setDefaultLanguage] = useState<'en' | 'es'>('en');
+  const [defaultLanguage, setDefaultLanguage] = useState<SiteLanguageCode>('en');
+  const [translatingLanguage, setTranslatingLanguage] = useState<TranslationLanguageCode | null>(null);
+  const [translationStatuses, setTranslationStatuses] = useState<TranslationStatusRow[]>([]);
   const [privacyMode, setPrivacyMode] = useState<'public' | 'password_protected' | 'invite_only'>('public');
   const [hideFromSearch, setHideFromSearch] = useState(false);
   const [sitePassword, setSitePassword] = useState('');
@@ -96,11 +178,22 @@ export const DashboardSettings: React.FC = () => {
   const [plannerInvitePermissions, setPlannerInvitePermissions] = useState<PlannerPermissionKey[]>(getPlannerPermissionPreset('planner'));
   const [revokingCollaboratorInviteId, setRevokingCollaboratorInviteId] = useState<string | null>(null);
   const [rsvpMealOptions, setRsvpMealOptions] = useState<string[]>(['Chicken','Beef','Fish','Vegetarian','Vegan']);
+  const clearRsvpSettingsStatus = useCallback(() => {
+    setRsvpQuestionsSuccess(null);
+    setRsvpQuestionsError(null);
+  }, []);
+  const rsvpDraftGuard = useDraftHydrationGuard(clearRsvpSettingsStatus);
   const [privacyCopied, setPrivacyCopied] = useState(false);
   const [visibilitySaving, setVisibilitySaving] = useState(false);
   const [visibilitySuccess, setVisibilitySuccess] = useState<string | null>(null);
   const [visibilityError, setVisibilityError] = useState<string | null>(null);
+  const clearVisibilityStatus = useCallback(() => {
+    setVisibilitySuccess(null);
+    setVisibilityError(null);
+  }, []);
+  const visibilityDraftGuard = useDraftHydrationGuard(clearVisibilityStatus);
   const [weddingSiteId, setWeddingSiteId] = useState<string | null>(null);
+  const [settingsRole, setSettingsRole] = useState<PlannerAccessRole>('owner');
 
   const [notifRsvp, setNotifRsvp] = useState(true);
   const [notifPhotos, setNotifPhotos] = useState(true);
@@ -109,6 +202,11 @@ export const DashboardSettings: React.FC = () => {
   const [notifSaving, setNotifSaving] = useState(false);
   const [notifSuccess, setNotifSuccess] = useState<string | null>(null);
   const [notifError, setNotifError] = useState<string | null>(null);
+  const clearNotifSettingsStatus = useCallback(() => {
+    setNotifSuccess(null);
+    setNotifError(null);
+  }, []);
+  const notifDraftGuard = useDraftHydrationGuard(clearNotifSettingsStatus);
 
   const [currentTemplate, setCurrentTemplate] = useState<string>('base');
   const [changingTemplate, setChangingTemplate] = useState(false);
@@ -126,14 +224,20 @@ export const DashboardSettings: React.FC = () => {
   }, [user, isDemoMode]);
 
   useEffect(() => {
-    if (activeTab === 'billing' && user && !billingInfo) {
+    if (activeTab === 'billing' && settingsRole === 'owner' && user && !billingInfo) {
       setBillingLoading(true);
       fetchBillingInfo(user.id)
         .then(info => setBillingInfo(info))
-        .catch(err => setBillingError(err.message))
+        .catch(err => setBillingError(safeSettingsError(err, 'Couldn’t load billing right now.')))
         .finally(() => setBillingLoading(false));
     }
-  }, [activeTab, user]);
+  }, [activeTab, settingsRole, user, billingInfo]);
+
+  useEffect(() => {
+    if (settingsRole !== 'owner' && (activeTab === 'team' || activeTab === 'billing')) {
+      setActiveTab('site');
+    }
+  }, [activeTab, settingsRole]);
 
   const handleLogout = async () => {
     await signOut();
@@ -150,6 +254,62 @@ export const DashboardSettings: React.FC = () => {
     setCollaboratorInvites((inviteRows as Array<{ id: string; invite_email: string; invite_name: string | null; role: string; status: string; invited_at: string; expires_at?: string | null; invite_token?: string; permissions?: PlannerPermissionKey[] }> | null) ?? []);
   };
 
+  const resolveSettingsSiteId = async () => {
+    if (weddingSiteId) return weddingSiteId;
+    if (!user?.id) return null;
+    const activeSite = await resolveActiveSiteForUser(user.id);
+    const activeSiteId = activeSite?.id ?? null;
+    if (activeSiteId) setWeddingSiteId(activeSiteId);
+    return activeSiteId;
+  };
+
+  const logSettingsAction = (
+    type: string,
+    summary: string,
+    metadata?: Record<string, unknown>,
+    targetId?: string | null,
+    targetLabel?: string | null,
+    siteIdOverride?: string | null,
+  ) => {
+    const targetSiteId = siteIdOverride ?? weddingSiteId;
+    if (!targetSiteId) return;
+    void logAppAction({
+      weddingSiteId: targetSiteId,
+      area: 'settings',
+      type,
+      summary,
+      targetId,
+      targetLabel,
+      metadata,
+    });
+  };
+
+  const loadTranslationStatuses = async (siteId: string) => {
+    const { data, error } = await supabase
+      .from('site_translations')
+      .select('language,status,translated_at')
+      .eq('wedding_site_id', siteId)
+      .in('language', TRANSLATION_LANGUAGE_OPTIONS.map((option) => option.value));
+
+    if (error) {
+      setTranslationStatuses([]);
+      return;
+    }
+
+    setTranslationStatuses(
+      ((data ?? []) as Array<{ language?: string | null; status?: string | null; translated_at?: string | null }>)
+        .filter((row): row is TranslationStatusRow =>
+          TRANSLATION_LANGUAGE_OPTIONS.some((option) => option.value === row.language) &&
+          (row.status === 'ready' || row.status === 'failed')
+        )
+        .map((row) => ({
+          language: row.language,
+          status: row.status,
+          translated_at: row.translated_at ?? null,
+        }))
+    );
+  };
+
   const loadSiteData = async () => {
     if (!user) {
       setWeddingSiteId(null);
@@ -158,6 +318,7 @@ export const DashboardSettings: React.FC = () => {
       setSiteSlug('');
       setGuestAccessToken(null);
       setCollaboratorInvites([]);
+      setSettingsRole('owner');
       return;
     }
 
@@ -177,45 +338,104 @@ export const DashboardSettings: React.FC = () => {
               appliesTo: (q.appliesTo as RSVPQuestionSetting['appliesTo']) || 'all',
               options: Array.isArray(q.options) ? q.options.filter((x) => typeof x === 'string') as string[] : [],
             }));
-          setRsvpQuestions(normalized);
+          if (rsvpDraftGuard.shouldHydrate()) {
+            setRsvpQuestions(normalized);
+          }
         }
 
         const rawMeal = localStorage.getItem(LOCAL_RSVP_MEAL_KEY);
         const parsedMeal = rawMeal ? JSON.parse(rawMeal) : null;
         if (parsedMeal && typeof parsedMeal === 'object') {
-          setRsvpMealEnabled(typeof parsedMeal.enabled === 'boolean' ? parsedMeal.enabled : true);
-          setRsvpMealOptions(Array.isArray(parsedMeal.options) ? parsedMeal.options.filter((x: unknown): x is string => typeof x === 'string' && x.trim().length > 0) : ['Chicken','Beef','Fish','Vegetarian','Vegan']);
+          if (rsvpDraftGuard.shouldHydrate()) {
+            setRsvpMealEnabled(typeof parsedMeal.enabled === 'boolean' ? parsedMeal.enabled : true);
+            setRsvpMealOptions(Array.isArray(parsedMeal.options) ? parsedMeal.options.filter((x: unknown): x is string => typeof x === 'string' && x.trim().length > 0) : ['Chicken','Beef','Fish','Vegetarian','Vegan']);
+          }
         }
       } catch {
         // ignore local parse issues
       }
+
+      setSettingsRole('owner');
+      setWeddingSiteId(demoWeddingSite.id);
+      setAccountEmail(user.email ?? '');
+      setCoupleNames(`${demoWeddingSite.couple_name_1} & ${demoWeddingSite.couple_name_2}`);
+      setWeddingDate(demoWeddingSite.wedding_date);
+      setVenueName(demoWeddingSite.venue_name);
+      setCurrentTemplate('base');
+      setSiteSlug(demoWeddingSite.site_url);
+      setMusicPlaylistUrl('');
+      if (visibilityDraftGuard.shouldHydrate()) {
+        setPrivacyMode('public');
+        setHideFromSearch(false);
+        setGuestAccessToken(null);
+        setDefaultLanguage('en');
+      }
+      if (notifDraftGuard.shouldHydrate()) {
+        setNotifRsvp(true);
+        setNotifPhotos(true);
+        setNotifDigest(false);
+        setNotifUpdates(false);
+      }
+      setCollaboratorInvites([]);
+      return;
     }
 
     try {
-      const { data: queryData, error: siteLoadError } = await supabase
-        .from('wedding_sites')
-        .select('id, couple_name_1, couple_name_2, active_template_id, site_slug, rsvp_custom_questions, rsvp_meal_config, music_playlist_url')
-        .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
-        .maybeSingle();
-      if (siteLoadError) throw siteLoadError;
-
-      const data = (queryData as Record<string, unknown> | null) ?? null;
+      const activeSite = await resolveActiveSiteForUser(user.id);
+      setSettingsRole(activeSite?.role ?? 'owner');
+      if (isDemoMode && activeSite?.id === 'demo-site-id') {
+        setWeddingSiteId(demoWeddingSite.id);
+        setAccountEmail(user.email ?? '');
+        setCoupleNames(`${demoWeddingSite.couple_name_1} & ${demoWeddingSite.couple_name_2}`);
+        setWeddingDate(demoWeddingSite.wedding_date);
+        setVenueName(demoWeddingSite.venue_name);
+        setCurrentTemplate('base');
+        setSiteSlug(demoWeddingSite.site_url);
+        setMusicPlaylistUrl('');
+        if (visibilityDraftGuard.shouldHydrate()) {
+          setPrivacyMode('public');
+          setHideFromSearch(false);
+          setGuestAccessToken(null);
+          setDefaultLanguage('en');
+        }
+        if (notifDraftGuard.shouldHydrate()) {
+          setNotifRsvp(true);
+          setNotifPhotos(true);
+          setNotifDigest(false);
+          setNotifUpdates(false);
+        }
+        setCollaboratorInvites([]);
+        return;
+      }
+      const data = activeSite?.id ? await loadSettingsSite(activeSite.id) : null;
 
       if (data) {
         setWeddingSiteId((data.id as string) ?? null);
+        if (typeof data.id === 'string') {
+          void loadTranslationStatuses(data.id);
+        }
         const name1 = (data.couple_name_1 as string) ?? '';
         const name2 = (data.couple_name_2 as string) ?? '';
         setCoupleNames(name1 && name2 ? `${name1} & ${name2}` : name1 || name2 || '');
+        setWeddingDate((data.wedding_date as string | null) ?? null);
+        setVenueName((data.venue_name as string | null) ?? null);
         setAccountEmail(user.email ?? '');
         setCurrentTemplate((data.active_template_id as string) || 'base');
         setSiteSlug((data.site_slug as string) ?? '');
         setMusicPlaylistUrl((data.music_playlist_url as string) ?? '');
-        setPrivacyMode((data.privacy_mode as 'public' | 'password_protected' | 'invite_only') ?? 'public');
-        setHideFromSearch(!!(data.hide_from_search as boolean | null | undefined));
-        setGuestAccessToken((data.guest_access_token as string | null) ?? null);
-        setDefaultLanguage(((data.default_language as string) === 'es' ? 'es' : 'en'));
+        if (visibilityDraftGuard.shouldHydrate()) {
+          setPrivacyMode((data.privacy_mode as 'public' | 'password_protected' | 'invite_only') ?? 'public');
+          setHideFromSearch(!!(data.hide_from_search as boolean | null | undefined));
+          setGuestAccessToken((data.guest_access_token as string | null) ?? null);
+        }
+        const loadedLanguage = SITE_LANGUAGE_OPTIONS.some((option) => option.value === data.default_language)
+          ? data.default_language as SiteLanguageCode
+          : 'en';
+        if (visibilityDraftGuard.shouldHydrate()) {
+          setDefaultLanguage(loadedLanguage);
+        }
         const prefs = data.notification_prefs as Record<string, boolean> | null;
-        if (prefs) {
+        if (prefs && notifDraftGuard.shouldHydrate()) {
           setNotifRsvp(prefs.rsvp ?? true);
           setNotifPhotos(prefs.photos ?? true);
           setNotifDigest(prefs.digest ?? false);
@@ -237,11 +457,13 @@ export const DashboardSettings: React.FC = () => {
             appliesTo: (q.appliesTo as RSVPQuestionSetting['appliesTo']) || 'all',
             options: Array.isArray(q.options) ? q.options.filter((x) => typeof x === 'string') as string[] : [],
           }));
-        setRsvpQuestions(normalized);
+        if (rsvpDraftGuard.shouldHydrate()) {
+          setRsvpQuestions(normalized);
 
-        const mealCfg = (data as { rsvp_meal_config?: unknown }).rsvp_meal_config as { enabled?: boolean; options?: unknown[] } | undefined;
-        setRsvpMealEnabled(mealCfg?.enabled ?? true);
-        setRsvpMealOptions(Array.isArray(mealCfg?.options) ? mealCfg!.options.filter((x): x is string => typeof x === 'string' && x.trim().length > 0) : ['Chicken','Beef','Fish','Vegetarian','Vegan']);
+          const mealCfg = (data as { rsvp_meal_config?: unknown }).rsvp_meal_config as { enabled?: boolean; options?: unknown[] } | undefined;
+          setRsvpMealEnabled(mealCfg?.enabled ?? true);
+          setRsvpMealOptions(Array.isArray(mealCfg?.options) ? mealCfg!.options.filter((x): x is string => typeof x === 'string' && x.trim().length > 0) : ['Chicken','Beef','Fish','Vegetarian','Vegan']);
+        }
 
         if ((data.id as string | undefined)) {
           await loadCollaboratorInvites(data.id as string);
@@ -255,7 +477,7 @@ export const DashboardSettings: React.FC = () => {
         setCollaboratorInvites([]);
       }
     } catch (err) {
-      setAccountError(err instanceof Error ? err.message : 'Could not load settings right now.');
+      setAccountError(safeSettingsError(err, 'Couldn’t load settings right now.'));
     }
   };
 
@@ -276,7 +498,7 @@ export const DashboardSettings: React.FC = () => {
       if (error) throw error;
       setAccountSuccess('Account information saved.');
     } catch (err) {
-      setAccountError(err instanceof Error ? err.message : 'Failed to save changes.');
+      setAccountError(safeSettingsError(err, 'Couldn’t save changes.'));
     } finally {
       setAccountSaving(false);
     }
@@ -294,7 +516,7 @@ export const DashboardSettings: React.FC = () => {
     try {
       const { data: authData } = await supabase.auth.getUser();
       const email = authData.user?.email;
-      if (!email) throw new Error('Unable to verify current user email.');
+      if (!email) throw new Error('Couldn’t verify your account email right now.');
 
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
@@ -304,12 +526,13 @@ export const DashboardSettings: React.FC = () => {
 
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
+      logSettingsAction('account_password_changed', 'Account password was changed.');
       setPasswordSuccess('Password updated successfully.');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (err) {
-      setPasswordError(err instanceof Error ? err.message : 'Failed to update password.');
+      setPasswordError(safeSettingsError(err, 'Couldn’t update password.'));
     } finally {
       setPasswordSaving(false);
     }
@@ -346,6 +569,7 @@ export const DashboardSettings: React.FC = () => {
       role: plannerInviteRole,
       status: plannerInvite?.status === 'active' ? 'active' : 'pending',
       invitedAtISO: plannerInvite?.invitedAtISO ?? new Date().toISOString(),
+      permissions: plannerInvitePermissions,
     };
 
     try {
@@ -353,7 +577,7 @@ export const DashboardSettings: React.FC = () => {
       setPlannerInvite(invite);
       setPlannerInviteSuccess(plannerInvite ? 'Planner access updated.' : 'Planner invite saved.');
     } catch (err) {
-      setPlannerInviteError(err instanceof Error ? err.message : 'Failed to save planner invite.');
+      setPlannerInviteError(safeSettingsError(err, 'Couldn’t save planner invite.'));
     }
   };
 
@@ -363,12 +587,13 @@ export const DashboardSettings: React.FC = () => {
     const name = plannerInviteName.trim();
     const email = plannerInviteEmail.trim().toLowerCase();
 
-    if (!weddingSiteId) {
-      setPlannerInviteError('Missing wedding site context.');
+    const targetSiteId = await resolveSettingsSiteId();
+    if (!targetSiteId) {
+      setPlannerInviteError(SETTINGS_SITE_MISSING_COPY);
       return;
     }
     if (!user?.id) {
-      setPlannerInviteError('Missing owner context.');
+      setPlannerInviteError('Sign in again before creating an invite.');
       return;
     }
     if (!name) {
@@ -386,23 +611,29 @@ export const DashboardSettings: React.FC = () => {
       const { data, error } = await supabase
         .from('wedding_site_collaborator_invites')
         .insert({
-          wedding_site_id: weddingSiteId,
+          wedding_site_id: targetSiteId,
           invite_email: email,
           invite_name: name,
           role: plannerInviteRole,
           status: 'pending',
           invite_token: inviteToken,
           invited_by: user.id,
+          permissions: plannerInvitePermissions,
         })
         .select('id, invite_email, invite_name, role, status, invited_at, expires_at, invite_token, permissions')
         .single();
 
       if (error) throw error;
 
-      await loadCollaboratorInvites(weddingSiteId);
-      setPlannerInviteSuccess('Collaborator invite created in the database.');
+      await loadCollaboratorInvites(targetSiteId);
+      logSettingsAction('collaborator_invite_created', 'Collaborator invite was created.', {
+        role: plannerInviteRole,
+        permissionCount: plannerInvitePermissions.length,
+        status: 'pending',
+      }, data.id as string, name, targetSiteId);
+      setPlannerInviteSuccess('Collaborator invite link created. Copy it and send it to the invited teammate.');
     } catch (err) {
-      setPlannerInviteError(err instanceof Error ? err.message : 'Failed to create collaborator invite.');
+      setPlannerInviteError(safeSettingsError(err, 'Couldn’t create helper invite.'));
     } finally {
       setCreatingCollaboratorInvite(false);
     }
@@ -413,6 +644,7 @@ export const DashboardSettings: React.FC = () => {
     setPlannerInviteSuccess(null);
     setRevokingCollaboratorInviteId(inviteId);
     try {
+      const invite = collaboratorInvites.find((row) => row.id === inviteId);
       const { error } = await supabase
         .from('wedding_site_collaborator_invites')
         .update({ status: 'revoked', revoked_at: new Date().toISOString() })
@@ -423,9 +655,13 @@ export const DashboardSettings: React.FC = () => {
       if (weddingSiteId) {
         await loadCollaboratorInvites(weddingSiteId);
       }
+      logSettingsAction('collaborator_invite_revoked', 'Collaborator invite was revoked.', {
+        role: invite?.role ?? null,
+        previousStatus: invite?.status ?? null,
+      }, inviteId, invite?.invite_name || invite?.invite_email || 'Collaborator invite');
       setPlannerInviteSuccess('Collaborator invite revoked.');
     } catch (err) {
-      setPlannerInviteError(err instanceof Error ? err.message : 'Failed to revoke collaborator invite.');
+      setPlannerInviteError(safeSettingsError(err, 'Couldn’t revoke helper invite.'));
     } finally {
       setRevokingCollaboratorInviteId(null);
     }
@@ -433,25 +669,23 @@ export const DashboardSettings: React.FC = () => {
 
   const handleCopyCollaboratorInviteLink = async (inviteToken: string | undefined) => {
     if (!inviteToken) {
-      setPlannerInviteError('Missing invite token.');
+      setPlannerInviteError('This invite link is not ready yet.');
       return;
     }
 
     const inviteUrl = `${window.location.origin}/accept-collaborator-invite?token=${inviteToken}`;
-    try {
-      await navigator.clipboard.writeText(inviteUrl);
+    const result = await copyTextOrDownload(inviteUrl, 'dayof-collaborator-invite-link.txt');
+    if (result === 'copied') {
       setPlannerInviteSuccess('Invite link copied.');
-      setPlannerInviteError(null);
-    } catch {
-      window.prompt('Copy collaborator invite link:', inviteUrl);
-      setPlannerInviteSuccess('Invite link ready to copy.');
-      setPlannerInviteError(null);
+    } else {
+      setPlannerInviteSuccess('Clipboard was blocked, so the invite link downloaded.');
     }
+    setPlannerInviteError(null);
   };
 
   const handleResendCollaboratorInvite = async (inviteToken: string | undefined) => {
     await handleCopyCollaboratorInviteLink(inviteToken);
-    setPlannerInviteSuccess('Invite link copied again for resend.');
+    setPlannerInviteSuccess('Invite link copied for sending.');
   };
 
   const handleRemovePlannerInvite = () => {
@@ -464,7 +698,7 @@ export const DashboardSettings: React.FC = () => {
       setPlannerInviteError(null);
       setPlannerInviteSuccess('Planner invite removed.');
     } catch (err) {
-      setPlannerInviteError(err instanceof Error ? err.message : 'Failed to remove planner invite.');
+      setPlannerInviteError(safeSettingsError(err, 'Couldn’t remove planner invite.'));
     }
   };
 
@@ -491,7 +725,7 @@ export const DashboardSettings: React.FC = () => {
         if (targetSiteId) setWeddingSiteId(targetSiteId);
       }
       if (!targetSiteId) {
-        setSlugError('Could not find your website right now. Refresh and try again.');
+        setSlugError(SETTINGS_SITE_MISSING_COPY);
         setSlugSaving(false);
         return;
       }
@@ -513,9 +747,10 @@ export const DashboardSettings: React.FC = () => {
         .eq('id', targetSiteId);
       if (error) throw error;
       setSiteSlug(cleaned);
+      logSettingsAction('site_slug_updated', 'Public site URL slug was updated.', { slug: cleaned }, targetSiteId, cleaned, targetSiteId);
       setSlugSuccess(`Site URL updated to /${cleaned}`);
     } catch (err) {
-      setSlugError(err instanceof Error ? err.message : 'Failed to update URL.');
+      setSlugError(safeSettingsError(err, 'Couldn’t update URL.'));
     } finally {
       setSlugSaving(false);
     }
@@ -523,127 +758,204 @@ export const DashboardSettings: React.FC = () => {
 
   const handleSavePrivacy = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!weddingSiteId) return;
     setVisibilitySaving(true);
     setVisibilityError(null);
     setVisibilitySuccess(null);
     let nextGuestAccessToken: string | null = null;
     try {
-      const updates: Record<string, unknown> = {
+      const targetSiteId = await resolveSettingsSiteId();
+      if (!targetSiteId) {
+        setVisibilityError(SETTINGS_SITE_MISSING_COPY);
+        return;
+      }
+
+      const updates: SettingsSiteUpdates = {
         privacy_mode: privacyMode,
         hide_from_search: hideFromSearch,
         default_language: defaultLanguage,
       };
 
       if (privacyMode === 'password_protected' && sitePassword) {
-        const { data: hashData, error: hashErr } = await supabase.rpc('hash_site_password', {
-          p_password: sitePassword,
-        });
-        if (hashErr) throw hashErr;
-        updates.site_password_hash = hashData as string;
+        updates.site_password_hash = await hashSettingsSitePassword(sitePassword);
       }
 
       if (privacyMode === 'invite_only' && !guestAccessToken) {
-        const { data: tokenData, error: tokenErr } = await supabase.rpc('generate_secure_token', { byte_length: 32 });
-        if (tokenErr) throw tokenErr;
-        updates.guest_access_token = tokenData as string;
-        nextGuestAccessToken = tokenData as string;
+        nextGuestAccessToken = await generateSettingsSecureToken();
+        updates.guest_access_token = nextGuestAccessToken;
       }
 
-      const { error } = await supabase
-        .from('wedding_sites')
-        .update(updates)
-        .eq('id', weddingSiteId);
-      if (error) throw error;
+      await updateSettingsSite(targetSiteId, updates);
       if (nextGuestAccessToken) setGuestAccessToken(nextGuestAccessToken);
+      visibilityDraftGuard.markSaved();
       setSitePassword('');
+      logSettingsAction('site_privacy_saved', 'Site privacy and access settings were updated.', {
+        privacyMode,
+        hideFromSearch,
+        defaultLanguage,
+        passwordChanged: privacyMode === 'password_protected' && Boolean(sitePassword),
+        guestAccessTokenCreated: Boolean(nextGuestAccessToken),
+      }, targetSiteId, 'Site privacy', targetSiteId);
       setVisibilitySuccess('Privacy settings saved.');
     } catch (err) {
-      setVisibilityError(err instanceof Error ? err.message : 'Failed to save privacy settings.');
+      setVisibilityError(safeSettingsError(err, 'Couldn’t save sharing settings.'));
     } finally {
       setVisibilitySaving(false);
     }
   };
 
   const handleRegenerateToken = async () => {
-    if (!weddingSiteId) return;
     try {
-      const { data, error } = await supabase.rpc('generate_secure_token', { byte_length: 32 });
-      if (error) throw error;
-      const { error: updateError } = await supabase
-        .from('wedding_sites')
-        .update({ guest_access_token: data as string })
-        .eq('id', weddingSiteId);
-      if (updateError) throw updateError;
-      setGuestAccessToken(data as string);
-      toast('Guest access token regenerated.', 'success');
+      const targetSiteId = await resolveSettingsSiteId();
+      if (!targetSiteId) {
+        toast(SETTINGS_SITE_MISSING_COPY, 'error');
+        return;
+      }
+
+      const data = await generateSettingsSecureToken();
+      await updateSettingsSite(targetSiteId, { guest_access_token: data });
+      setGuestAccessToken(data);
+      logSettingsAction('guest_access_token_regenerated', 'Invite-only guest access link was regenerated.', { privacyMode }, targetSiteId, 'Guest access link', targetSiteId);
+      toast('Guest access link refreshed.', 'success');
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'Could not regenerate guest access token.', 'error');
+      toast(safeSettingsError(err, 'Couldn’t refresh guest access link.'), 'error');
     }
   };
 
   const copyInviteLink = async () => {
     if (!guestAccessToken || !siteSlug) return;
     const url = `${window.location.origin}/site/${siteSlug}?token=${guestAccessToken}`;
-    try {
-      await navigator.clipboard.writeText(url);
+    const result = await copyTextOrDownload(url, 'dayof-guest-access-link.txt');
+    if (result === 'copied') {
       setPrivacyCopied(true);
       setTimeout(() => setPrivacyCopied(false), 2000);
-    } catch {
-      window.prompt('Copy guest access link:', url);
-      toast('Guest access link ready to copy.', 'success');
+    } else {
+      toast('Clipboard was blocked, so the guest access link downloaded.', 'success');
     }
   };
 
   const publicSiteUrl = siteSlug ? `https://${siteSlug}.dayof.love` : '';
   const plannerRoleOptions = PLANNER_ROLE_OPTIONS.filter((option) => option.value !== 'owner');
+  const currentTemplateName = getAllTemplates().find((template) => template.id === currentTemplate)?.name ?? 'Current site theme';
+  const weddingIdentityExportKit = useMemo(() => buildWeddingIdentityExportKit({
+    coupleNames,
+    publicSiteUrl,
+    weddingDate,
+    venueName,
+    templateName: currentTemplateName,
+    defaultLanguage,
+  }), [coupleNames, currentTemplateName, defaultLanguage, publicSiteUrl, venueName, weddingDate]);
+  const weddingIdentityPrintAssets = useMemo(() => buildWeddingIdentityPrintAssets({
+    coupleNames,
+    publicSiteUrl,
+    weddingDate,
+    venueName,
+    templateName: currentTemplateName,
+    defaultLanguage,
+  }), [coupleNames, currentTemplateName, defaultLanguage, publicSiteUrl, venueName, weddingDate]);
+
+  const downloadTextFile = (filename: string, content: string, type = 'text/plain;charset=utf-8') => {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const copyIdentityManifest = async () => {
+    const manifest = buildWeddingIdentityManifestText(weddingIdentityExportKit);
+    const result = await copyTextOrDownload(manifest, 'dayof-wedding-identity-export-manifest.txt');
+    toast(result === 'copied' ? 'Wedding identity manifest copied.' : 'Wedding identity manifest downloaded.', 'success');
+  };
+
+  const downloadIdentityPrintPack = () => {
+    if (weddingIdentityPrintAssets.length === 0) {
+      toast('Set a public site URL before saving the identity print pack.', 'error');
+      return;
+    }
+
+    downloadTextFile(
+      'dayof-wedding-identity-print-pack.html',
+      renderWeddingIdentityPrintHtml(weddingIdentityPrintAssets),
+      'text/html;charset=utf-8'
+    );
+    toast('Wedding identity print pack saved.', 'success');
+  };
 
   const togglePlannerPermission = (key: PlannerPermissionKey) => {
     setPlannerInvitePermissions((prev) => prev.includes(key) ? prev.filter((item) => item !== key) : [...prev, key]);
   };
-  const publicSiteQrUrl = publicSiteUrl
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent(publicSiteUrl)}`
-    : '';
-
-  const handleDefaultLanguageChange = async (next: 'en' | 'es') => {
+  const handleDefaultLanguageChange = async (next: SiteLanguageCode) => {
     const previous = defaultLanguage;
+    visibilityDraftGuard.markDirty();
     setDefaultLanguage(next);
     setVisibilityError(null);
     setVisibilitySuccess(null);
-    if (!weddingSiteId) return;
     try {
-      const { error } = await supabase
-        .from('wedding_sites')
-        .update({ default_language: next })
-        .eq('id', weddingSiteId);
-      if (error) throw error;
-      setVisibilitySuccess(`Default language set to ${next === 'es' ? 'Español' : 'English'}.`);
+      const targetSiteId = await resolveSettingsSiteId();
+      if (!targetSiteId) {
+        setDefaultLanguage(previous);
+        visibilityDraftGuard.markSaved();
+        setVisibilityError(SETTINGS_SITE_MISSING_COPY);
+        return;
+      }
+
+      await updateSettingsSite(targetSiteId, { default_language: next });
+      visibilityDraftGuard.markSaved();
+      logSettingsAction('default_language_updated', 'Default public-site language was updated.', { language: next }, targetSiteId, getSiteLanguageLabel(next), targetSiteId);
+      setVisibilitySuccess(`Default language set to ${getSiteLanguageLabel(next)}.`);
     } catch (err) {
       setDefaultLanguage(previous);
-      setVisibilityError(err instanceof Error ? err.message : 'Failed to save default language.');
+      visibilityDraftGuard.markSaved();
+      setVisibilityError(safeSettingsError(err, 'Couldn’t save default language.'));
+    }
+  };
+
+  const handleAutoTranslateLanguage = async (language: TranslationLanguageCode) => {
+    setTranslatingLanguage(language);
+    setVisibilityError(null);
+    setVisibilitySuccess(null);
+    try {
+      const targetSiteId = await resolveSettingsSiteId();
+      if (!targetSiteId) {
+        setVisibilityError(SETTINGS_SITE_MISSING_COPY);
+        return;
+      }
+
+      await translateSettingsSiteContent(targetSiteId, language);
+      await loadTranslationStatuses(targetSiteId);
+      logSettingsAction('site_translation_generated', 'Site translation was generated.', { language }, targetSiteId, getSiteLanguageLabel(language), targetSiteId);
+      setVisibilitySuccess(`${getSiteLanguageLabel(language)} translation generated. Guests can switch languages on the public site.`);
+    } catch (err) {
+      setVisibilityError(safeSettingsError(err, 'Couldn’t prepare translation.'));
+    } finally {
+      setTranslatingLanguage(null);
     }
   };
 
   const handleSaveMusicPlaylist = async () => {
-    if (!weddingSiteId) return;
     setVisibilityError(null);
     setVisibilitySuccess(null);
     try {
+      const targetSiteId = await resolveSettingsSiteId();
+      if (!targetSiteId) {
+        setVisibilityError(SETTINGS_SITE_MISSING_COPY);
+        return;
+      }
+
       const value = musicPlaylistUrl.trim();
-      const { error } = await supabase
-        .from('wedding_sites')
-        .update({ music_playlist_url: value || null })
-        .eq('id', weddingSiteId);
-      if (error) throw error;
+      await updateSettingsSite(targetSiteId, { music_playlist_url: value || null });
+      logSettingsAction('music_playlist_saved', 'Song request playlist link was saved.', { hasPlaylist: Boolean(value) }, targetSiteId, 'Song request playlist', targetSiteId);
       setVisibilitySuccess('Song request playlist link saved.');
     } catch (err) {
-      setVisibilityError(err instanceof Error ? err.message : 'Failed to save playlist link.');
+      setVisibilityError(safeSettingsError(err, 'Couldn’t save playlist link.'));
     }
   };
 
-  const handleSaveRsvpQuestions = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const saveRsvpSettings = async () => {
     setRsvpQuestionsSaving(true);
     setRsvpQuestionsSuccess(null);
     setRsvpQuestionsError(null);
@@ -671,7 +983,14 @@ export const DashboardSettings: React.FC = () => {
         return;
       }
 
-      if (!weddingSiteId) {
+      let targetSiteId = weddingSiteId;
+      if (!targetSiteId && user?.id) {
+        const activeSite = await resolveActiveSiteForUser(user.id);
+        targetSiteId = activeSite?.id ?? null;
+        if (targetSiteId) setWeddingSiteId(targetSiteId);
+      }
+
+      if (!targetSiteId) {
         if (isDemoMode) {
           localStorage.setItem(LOCAL_RSVP_QUESTIONS_KEY, JSON.stringify(cleaned));
           localStorage.setItem(LOCAL_RSVP_MEAL_KEY, JSON.stringify({ enabled: rsvpMealEnabled, options: mealOptions }));
@@ -680,40 +999,60 @@ export const DashboardSettings: React.FC = () => {
           return;
         }
 
-        setRsvpQuestionsError('Could not find your website record right now. Refresh and try again.');
+        setRsvpQuestionsError(SETTINGS_SITE_MISSING_COPY);
         return;
       }
 
-      const { error } = await supabase
-        .from('wedding_sites')
-        .update({ rsvp_custom_questions: cleaned, rsvp_meal_config: { enabled: rsvpMealEnabled, options: mealOptions } })
-        .eq('id', weddingSiteId);
-
-      if (error) throw error;
+      await updateSettingsSite(targetSiteId, {
+        rsvp_custom_questions: cleaned,
+        rsvp_meal_config: { enabled: rsvpMealEnabled, options: mealOptions },
+      });
       setRsvpQuestions(cleaned);
+      setRsvpMealOptions(mealOptions);
+      rsvpDraftGuard.markSaved();
+      logSettingsAction('rsvp_settings_saved', 'RSVP custom questions and meal settings were updated.', {
+        customQuestionCount: cleaned.length,
+        mealEnabled: rsvpMealEnabled,
+        mealOptionCount: mealOptions.length,
+      }, targetSiteId, 'RSVP settings', targetSiteId);
       setRsvpQuestionsSuccess('RSVP settings saved.');
     } catch (err) {
-      setRsvpQuestionsError(err instanceof Error ? err.message : 'Failed to save RSVP custom questions.');
+      setRsvpQuestionsError(safeSettingsError(err, 'Couldn’t save RSVP questions.'));
     } finally {
       setRsvpQuestionsSaving(false);
     }
   };
 
+  const handleSaveRsvpQuestions = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await saveRsvpSettings();
+  };
+
   const handleSaveNotifications = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!weddingSiteId) return;
     setNotifSaving(true);
     setNotifError(null);
     setNotifSuccess(null);
     try {
-      const { error } = await supabase
-        .from('wedding_sites')
-        .update({ notification_prefs: { rsvp: notifRsvp, photos: notifPhotos, digest: notifDigest, updates: notifUpdates } })
-        .eq('id', weddingSiteId);
-      if (error) throw error;
+      const targetSiteId = await resolveSettingsSiteId();
+      if (!targetSiteId) {
+        setNotifError(SETTINGS_SITE_MISSING_COPY);
+        return;
+      }
+
+      await updateSettingsSite(targetSiteId, {
+        notification_prefs: { rsvp: notifRsvp, photos: notifPhotos, digest: notifDigest, updates: notifUpdates },
+      });
+      notifDraftGuard.markSaved();
+      logSettingsAction('notification_preferences_saved', 'Notification preferences were updated.', {
+        rsvp: notifRsvp,
+        photos: notifPhotos,
+        digest: notifDigest,
+        updates: notifUpdates,
+      }, targetSiteId, 'Notification preferences', targetSiteId);
       setNotifSuccess('Preferences saved.');
     } catch (err) {
-      setNotifError(err instanceof Error ? err.message : 'Failed to save preferences.');
+      setNotifError(safeSettingsError(err, 'Couldn’t save preferences.'));
     } finally {
       setNotifSaving(false);
     }
@@ -730,9 +1069,21 @@ export const DashboardSettings: React.FC = () => {
         `${origin}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
         `${origin}/dashboard/settings?tab=billing&canceled=1`
       );
+      void logAppAction({
+        weddingSiteId: billingInfo.wedding_site_id,
+        area: 'billing',
+        type: 'subscription_checkout_started',
+        summary: 'Subscription checkout was started.',
+        targetId: billingInfo.wedding_site_id,
+        targetLabel: 'Subscription checkout',
+        metadata: {
+          currentPaymentStatus: billingInfo.payment_status,
+          currentBillingType: billingInfo.billing_type,
+        },
+      });
       window.location.href = url;
     } catch (err) {
-      setSubscribeError(err instanceof Error ? err.message : 'Could not start checkout right now.');
+      setSubscribeError(safeSettingsError(err, 'Couldn’t start checkout right now.'));
       setSubscribeLoading(false);
     }
   };
@@ -750,7 +1101,7 @@ export const DashboardSettings: React.FC = () => {
         .maybeSingle();
 
       if (fetchError) throw fetchError;
-      if (!data) throw new Error('Wedding site not found');
+      if (!data) throw new Error(SETTINGS_SITE_MISSING_COPY);
 
       const weddingData = data.wedding_data as WeddingDataV1;
       const currentLayout = data.layout_config as LayoutConfigV1;
@@ -770,9 +1121,13 @@ export const DashboardSettings: React.FC = () => {
 
       if (updateError) throw updateError;
       setCurrentTemplate(newTemplateId);
+      logSettingsAction('template_changed', 'Site template was changed.', {
+        templateId: newTemplateId,
+        preservedContent: true,
+      }, weddingSiteId, newTemplateId, weddingSiteId);
       setTemplateSuccess('Template changed successfully. Your content has been preserved.');
     } catch (err: unknown) {
-      setTemplateError((err as Error).message || 'Failed to change template');
+      setTemplateError(safeSettingsError(err, 'Couldn’t change design.'));
     } finally {
       setChangingTemplate(false);
     }
@@ -782,21 +1137,29 @@ export const DashboardSettings: React.FC = () => {
     { id: 'account' as const, label: 'Account', icon: User },
     { id: 'team' as const, label: 'Team Access', icon: Users },
     { id: 'site' as const, label: 'Site Settings', icon: Globe },
+    { id: 'rsvp' as const, label: 'RSVP', icon: ClipboardList },
     { id: 'notifications' as const, label: 'Notifications', icon: Bell },
     { id: 'billing' as const, label: 'Billing', icon: CreditCard },
-  ];
+  ].filter((tab) => settingsRole === 'owner' || (tab.id !== 'team' && tab.id !== 'billing'));
+  const translationStatusByLanguage = new Map(translationStatuses.map((row) => [row.language, row]));
 
   return (
     <DashboardLayout currentPage="settings">
       <div className="max-w-5xl mx-auto space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold text-text-primary mb-2">Settings</h1>
-          <p className="text-text-secondary">Manage your account and wedding site preferences</p>
-        </div>
+        <DashboardPageHero
+          eyebrow="Settings"
+          title="The quiet controls behind your wedding site."
+          description="Update access, language, RSVP behavior, notifications, and billing when you need to. The everyday planning tools stay out front."
+          stats={[
+            { label: 'Language', value: getSiteLanguageLabel(defaultLanguage), detail: 'public site default' },
+            { label: 'Access', value: tabs.some((tab) => tab.id === 'team') ? 'Team ready' : 'Owner only', detail: settingsRole === 'owner' ? 'invite links available' : 'limited by role' },
+            { label: 'RSVP', value: rsvpQuestions.length, detail: 'custom questions' },
+          ]}
+        />
 
         <div className="flex flex-col md:flex-row gap-8">
-          <nav className="md:w-48 flex-shrink-0" aria-label="Settings navigation">
-            <div className="space-y-1">
+          <nav className="md:w-56 flex-shrink-0" aria-label="Settings navigation">
+            <div className="rounded-lg border border-border-subtle bg-white/80 p-2">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 return (
@@ -806,7 +1169,7 @@ export const DashboardSettings: React.FC = () => {
                     className={`
                       w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors
                       ${activeTab === tab.id
-                        ? 'bg-primary-light text-primary font-medium'
+                        ? 'bg-primary/10 text-text-primary font-medium'
                         : 'text-text-secondary hover:bg-surface-subtle hover:text-text-primary'
                       }
                     `}
@@ -833,7 +1196,7 @@ export const DashboardSettings: React.FC = () => {
                         <div className="p-3 bg-success-light border border-success/20 rounded-lg text-success text-sm">{accountSuccess}</div>
                       )}
                       {accountError && (
-                        <div className="p-3 bg-error-light border border-error/20 rounded-lg text-error text-sm">{accountError}</div>
+                        <div className="p-3 bg-surface-subtle border border-border-subtle rounded-lg text-text-secondary text-sm">{accountError}</div>
                       )}
                       <Input
                         label="Partner names"
@@ -868,7 +1231,7 @@ export const DashboardSettings: React.FC = () => {
                         <div className="p-3 bg-success-light border border-success/20 rounded-lg text-success text-sm">{passwordSuccess}</div>
                       )}
                       {passwordError && (
-                        <div className="p-3 bg-error-light border border-error/20 rounded-lg text-error text-sm">{passwordError}</div>
+                        <div className="p-3 bg-surface-subtle border border-border-subtle rounded-lg text-text-secondary text-sm">{passwordError}</div>
                       )}
                       <div className="relative">
                         <Input
@@ -955,21 +1318,21 @@ export const DashboardSettings: React.FC = () => {
                           <Users className="w-5 h-5" />
                           Planner access
                         </CardTitle>
-                        <CardDescription>Set up planner or coordinator access from the couple side, with calm boundaries around what they can help manage. Full collaborator persistence is still being tightened.</CardDescription>
+                        <CardDescription>Invite planners, coordinators, or trusted helpers with role-based access that stays separate from couple ownership and billing.</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-4 space-y-2">
+                    <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4 space-y-2">
                       <p className="text-sm font-medium text-text-primary">Invite your planner, not a generic staff account</p>
-                      <p className="text-sm text-text-secondary">Keep ownership with the couple while sharing the parts of DayOf that help someone run the event well. Treat this as access setup, not a fully finished multi-admin system yet.</p>
+                      <p className="text-sm text-text-secondary">Keep ownership with the couple while sharing the parts of dayof that help someone run the event well. Helpers claim access from a secure invite link and do not touch billing.</p>
                     </div>
 
                     {plannerInviteSuccess && (
-                      <div className="rounded-xl border border-success/20 bg-success-light p-3 text-sm text-success">{plannerInviteSuccess}</div>
+                      <div className="rounded-lg border border-success/20 bg-success-light p-3 text-sm text-success">{plannerInviteSuccess}</div>
                     )}
                     {plannerInviteError && (
-                      <div className="rounded-xl border border-error/20 bg-error-light p-3 text-sm text-error">{plannerInviteError}</div>
+                      <div className="rounded-lg border border-border-subtle bg-surface-subtle p-3 text-sm text-text-secondary">{plannerInviteError}</div>
                     )}
 
                     <div className="grid gap-3 md:grid-cols-3">
@@ -982,7 +1345,7 @@ export const DashboardSettings: React.FC = () => {
                             setPlannerInviteRole(nextRole);
                             setPlannerInvitePermissions(getPlannerPermissionPreset(nextRole));
                           }}
-                          className={`rounded-xl border p-4 text-left transition-colors ${plannerInviteRole === option.value ? 'border-primary bg-primary/5' : 'border-border-subtle bg-white hover:border-primary/35'}`}
+                          className={`rounded-lg border p-4 text-left transition-colors ${plannerInviteRole === option.value ? 'border-primary bg-primary/5' : 'border-border-subtle bg-white hover:border-primary/35'}`}
                         >
                           <p className="text-sm font-medium text-text-primary">{option.label}</p>
                           <p className="mt-1 text-xs text-text-secondary">{option.description}</p>
@@ -1001,7 +1364,7 @@ export const DashboardSettings: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="rounded-xl border border-dashed border-border bg-surface-subtle/20 p-4 space-y-3">
+                    <div className="rounded-lg border border-dashed border-border bg-surface-subtle/20 p-4 space-y-3">
                       <div>
                         <p className="text-sm font-medium text-text-primary">Permissions</p>
                         <p className="mt-1 text-sm text-text-secondary">Start with a role preset, then tighten or expand access simply before you send the invite.</p>
@@ -1010,7 +1373,7 @@ export const DashboardSettings: React.FC = () => {
                         {PLANNER_PERMISSION_GROUPS.map((permission) => {
                           const checked = plannerInvitePermissions.includes(permission.key);
                           return (
-                            <label key={permission.key} className={`rounded-xl border p-3 cursor-pointer transition-colors ${checked ? 'border-primary bg-primary/5' : 'border-border-subtle bg-white hover:border-primary/30'}`}>
+                            <label key={permission.key} className={`rounded-lg border p-3 cursor-pointer transition-colors ${checked ? 'border-primary bg-primary/5' : 'border-border-subtle bg-white hover:border-primary/30'}`}>
                               <div className="flex items-start gap-3">
                                 <input
                                   type="checkbox"
@@ -1031,7 +1394,7 @@ export const DashboardSettings: React.FC = () => {
                     </div>
 
                     {plannerInvite && (
-                      <div className="rounded-xl border border-border-subtle bg-white p-4">
+                      <div className="rounded-lg border border-border-subtle bg-white p-4">
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <p className="text-sm font-medium text-text-primary">Access setup saved for {plannerInvite.name}</p>
@@ -1042,14 +1405,14 @@ export const DashboardSettings: React.FC = () => {
                       </div>
                     )}
 
-                    <div className="rounded-xl border border-border-subtle bg-surface-subtle/20 p-4 space-y-3">
+                    <div className="rounded-lg border border-border-subtle bg-surface-subtle/20 p-4 space-y-3">
                       <div>
                         <p className="text-sm font-medium text-text-primary">Collaborator list</p>
-                        <p className="mt-1 text-xs text-text-secondary">This is the current lightweight view of who has access configured. Real multi-user collaborator persistence is still the next layer.</p>
+                        <p className="mt-1 text-xs text-text-secondary">Track pending and accepted access links, copy invite URLs, and revoke pending access before it is claimed.</p>
                       </div>
 
                       {plannerInvite ? (
-                        <div className="rounded-xl border border-border-subtle bg-white px-4 py-3">
+                        <div className="rounded-lg border border-border-subtle bg-white px-4 py-3">
                           <div className="flex items-center justify-between gap-3">
                             <div>
                               <p className="text-sm font-medium text-text-primary">{plannerInvite.name}</p>
@@ -1062,21 +1425,21 @@ export const DashboardSettings: React.FC = () => {
                           </div>
                         </div>
                       ) : (
-                        <div className="rounded-xl border border-dashed border-border-subtle bg-white px-4 py-3 text-sm text-text-secondary">
+                        <div className="rounded-lg border border-dashed border-border-subtle bg-white px-4 py-3 text-sm text-text-secondary">
                           No collaborator access setups saved yet.
                         </div>
                       )}
 
                       {collaboratorInvites.length > 0 && (
                         <div className="space-y-2">
-                          <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">DB-backed invites</p>
+                          <p className="text-xs font-medium text-text-tertiary">Sent invite links</p>
                           {collaboratorInvites.map((invite) => (
-                            <div key={invite.id} className="rounded-xl border border-border-subtle bg-white px-4 py-3">
+                            <div key={invite.id} className="rounded-lg border border-border-subtle bg-white px-4 py-3">
                               <div className="flex items-center justify-between gap-3">
                                 <div>
                                   <p className="text-sm font-medium text-text-primary">{invite.invite_name || invite.invite_email}</p>
                                   <p className="mt-1 text-xs text-text-secondary">{invite.invite_email} · {invite.role} · {formatSettingsDate(invite.invited_at)}{invite.expires_at ? ` · expires ${formatSettingsDate(invite.expires_at)}` : ''}</p>
-                                  {invite.permissions && invite.permissions.length > 0 && <p className="mt-1 text-[11px] text-text-tertiary">{invite.permissions.join(' · ')}</p>}
+                                  {invite.permissions && invite.permissions.length > 0 && <p className="mt-1 text-[11px] text-text-tertiary">{invite.permissions.map(plannerPermissionLabel).join(' · ')}</p>}
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <Badge variant={invite.status === 'accepted' ? 'success' : invite.status === 'pending' ? 'secondary' : 'warning'}>{invite.status}</Badge>
@@ -1087,7 +1450,7 @@ export const DashboardSettings: React.FC = () => {
                                   )}
                                   {invite.status === 'pending' && (
                                     <Button type="button" variant="outline" size="sm" onClick={() => { void handleResendCollaboratorInvite(invite.invite_token); }}>
-                                      Resend
+                                      Copy again
                                     </Button>
                                   )}
                                   {invite.status === 'pending' && (
@@ -1108,7 +1471,7 @@ export const DashboardSettings: React.FC = () => {
                         <Button type="button" variant="outline" size="sm" onClick={handleRemovePlannerInvite}>Remove invite</Button>
                       )}
                       <Button type="button" variant="outline" size="sm" onClick={handleCreateCollaboratorInvite} disabled={creatingCollaboratorInvite}>
-                        {creatingCollaboratorInvite ? 'Creating DB invite…' : 'Create DB invite'}
+                        {creatingCollaboratorInvite ? 'Creating invite…' : 'Create invite link'}
                       </Button>
                       <Button type="button" variant="primary" size="md" onClick={handleSavePlannerInvite}>
                         {plannerInvite ? 'Update planner access' : 'Save planner invite'}
@@ -1133,7 +1496,7 @@ export const DashboardSettings: React.FC = () => {
                         <div className="p-3 bg-success-light border border-success/20 rounded-lg text-success text-sm">{slugSuccess}</div>
                       )}
                       {slugError && (
-                        <div className="p-3 bg-error-light border border-error/20 rounded-lg text-error text-sm">{slugError}</div>
+                        <div className="p-3 bg-surface-subtle border border-border-subtle rounded-lg text-text-secondary text-sm">{slugError}</div>
                       )}
                       <div>
                         <label className="block text-sm font-medium text-text-primary mb-2">
@@ -1162,35 +1525,13 @@ export const DashboardSettings: React.FC = () => {
                                 <ExternalLink className="inline w-3 h-3 ml-1" aria-hidden="true" />
                               </a>
                             </p>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                onClick={() => window.open(publicSiteQrUrl, '_blank')}
-                              >
-                                Open QR
-                              </Button>
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                onClick={async () => {
-                                  if (!publicSiteQrUrl) return;
-                                  try {
-                                    await navigator.clipboard.writeText(publicSiteQrUrl);
-                                    setSlugSuccess('QR image link copied.');
-                                    setSlugError(null);
-                                  } catch {
-                                    window.prompt('Copy QR image link:', publicSiteQrUrl);
-                                    setSlugSuccess('QR image link ready to copy.');
-                                    setSlugError(null);
-                                  }
-                                }}
-                              >
-                                Copy QR link
-                              </Button>
-                            </div>
+                            <ShareQrPanel
+                              title="Public site QR"
+                              description="Print this or add it to signage so guests can open the wedding site quickly."
+                              url={publicSiteUrl}
+                              copyLabel="Copy site link"
+                              className="mt-3"
+                            />
                           </div>
                         )}
                       </div>
@@ -1201,6 +1542,83 @@ export const DashboardSettings: React.FC = () => {
                         </Button>
                       </div>
                     </form>
+                  </CardContent>
+                </Card>
+
+                <Card variant="bordered" padding="lg">
+                  <CardHeader>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <CardTitle>Wedding identity exports</CardTitle>
+                        <CardDescription>Prepare one consistent kit for QR cards, inserts, signage, and planner handoff.</CardDescription>
+                      </div>
+                      <Badge variant={weddingIdentityExportKit.warnings.length > 0 ? 'warning' : 'success'}>
+                        {weddingIdentityExportKit.readyCount} of {weddingIdentityExportKit.items.length} ready
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {weddingIdentityExportKit.items.map((item) => (
+                          <div key={item.id} className="rounded-lg border border-border-subtle bg-white p-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="text-sm font-semibold text-text-primary">{item.label}</p>
+                                <p className="mt-1 text-xs text-text-secondary">{item.description}</p>
+                              </div>
+                              <span className={`shrink-0 rounded-lg px-2 py-0.5 text-[11px] font-medium ${
+                                item.status === 'ready'
+                                  ? 'bg-success/10 text-success'
+                                  : item.status === 'needs-info'
+                                    ? 'bg-warning/10 text-warning'
+                                    : 'bg-surface-subtle text-text-tertiary'
+                              }`}>
+                                {item.status === 'ready' ? 'Ready' : item.status === 'needs-info' ? 'Needs info' : 'Planned'}
+                              </span>
+                            </div>
+                            <p className="mt-2 text-[11px] text-text-tertiary">{item.format}</p>
+                            {item.blockers.length > 0 && (
+                              <p className="mt-2 text-[11px] leading-4 text-text-secondary">{item.blockers.join(' ')}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4">
+                        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                          {weddingIdentityExportKit.manifest.map((entry) => (
+                            <div key={entry.label}>
+                              <p className="text-[11px] font-medium uppercase tracking-wide text-text-tertiary">{entry.label}</p>
+                              <p className="mt-0.5 truncate text-sm text-text-primary">{entry.value}</p>
+                            </div>
+                          ))}
+                        </div>
+                        {weddingIdentityExportKit.warnings.length > 0 && (
+                          <div className="mt-3 space-y-1 text-xs text-text-secondary">
+                            {weddingIdentityExportKit.warnings.map((warning) => (
+                              <p key={warning}>{warning}</p>
+                            ))}
+                          </div>
+                        )}
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <Button type="button" variant="outline" size="sm" onClick={copyIdentityManifest}>
+                            <Copy className="mr-1 h-3.5 w-3.5" />
+                            Copy manifest
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={weddingIdentityPrintAssets.length === 0}
+                            onClick={downloadIdentityPrintPack}
+                          >
+                            <Layout className="mr-1 h-3.5 w-3.5" />
+                            Save print pack
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -1218,7 +1636,7 @@ export const DashboardSettings: React.FC = () => {
                   </CardHeader>
                   <CardContent>
                     {!showPrivacySettings ? (
-                      <div className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
+                      <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
                         Hidden by default to keep things simple. Open it when you want to choose who can see your site.
                       </div>
                     ) : (
@@ -1227,20 +1645,17 @@ export const DashboardSettings: React.FC = () => {
                         <div className="p-3 bg-success-light border border-success/20 rounded-lg text-success text-sm">{visibilitySuccess}</div>
                       )}
                       {visibilityError && (
-                        <div className="p-3 bg-error-light border border-error/20 rounded-lg text-error text-sm">{visibilityError}</div>
+                        <div className="p-3 bg-surface-subtle border border-border-subtle rounded-lg text-text-secondary text-sm">{visibilityError}</div>
                       )}
 
                       <div className="space-y-2">
                         <label className="block text-sm font-medium text-text-primary">Default site language</label>
                         <p className="text-xs text-text-secondary">Sets the default language for your public wedding site and RSVP page.</p>
                         <div className="flex gap-3">
-                          {([
-                            { value: 'en', label: 'English' },
-                            { value: 'es', label: 'Español' },
-                          ] as const).map(opt => (
+                          {SITE_LANGUAGE_OPTIONS.map(opt => (
                             <label
                               key={opt.value}
-                              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 cursor-pointer transition-colors ${
+                              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 cursor-pointer transition-colors ${
                                 defaultLanguage === opt.value
                                   ? 'border-primary bg-primary/5'
                                   : 'border-border hover:border-primary/40'
@@ -1258,14 +1673,63 @@ export const DashboardSettings: React.FC = () => {
                             </label>
                           ))}
                         </div>
+                        <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4">
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                              <p className="text-sm font-semibold text-text-primary">Auto-translate public site</p>
+                              <p className="text-xs text-text-secondary">Generate stored translated versions of guest-facing site copy. Review the public site after generation.</p>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {TRANSLATION_LANGUAGE_OPTIONS.map((language) => (
+                                <Button
+                                  key={language.value}
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => void handleAutoTranslateLanguage(language.value)}
+                                  disabled={translatingLanguage === language.value}
+                                >
+                                  {translatingLanguage === language.value ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                                  {translatingLanguage === language.value ? 'Translating…' : language.label}
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+                            {TRANSLATION_LANGUAGE_OPTIONS.map((language) => {
+                              const status = translationStatusByLanguage.get(language.value);
+                              const ready = status?.status === 'ready';
+                              const failed = status?.status === 'failed';
+                              return (
+                                <div key={language.value} className="rounded-lg border border-border bg-white px-3 py-3">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <p className="text-xs font-semibold text-text-primary">{language.label}</p>
+                                    <span className={`rounded-lg px-2 py-0.5 text-[11px] font-medium ${
+                                      ready
+                                        ? 'bg-success/10 text-success'
+                                        : failed
+                                          ? 'bg-surface-subtle text-text-secondary'
+                                          : 'bg-surface-subtle text-text-tertiary'
+                                    }`}>
+                                      {ready ? 'Ready' : failed ? 'Try again' : 'Not yet'}
+                                    </span>
+                                  </div>
+                                  <p className="mt-1 text-[11px] leading-4 text-text-tertiary">
+                                    {formatTranslationStatusDate(status?.translated_at ?? null)}
+                                  </p>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-4 space-y-2">
+                      <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4 space-y-2">
                         <p className="text-sm font-medium text-text-primary">Visibility states</p>
                         <ul className="space-y-1 text-xs text-text-secondary">
                           <li>• <span className="font-medium text-text-primary">Draft</span> means only you can see the site while editing.</li>
                           <li>• <span className="font-medium text-text-primary">Protected live access</span> lets you limit who can open the guest-facing site once it is live.</li>
-                          <li>• <span className="font-medium text-text-primary">Guest-facing launch</span> makes the site live at your DayOf URL.</li>
+                          <li>• <span className="font-medium text-text-primary">Share with guests</span> makes the site live at your dayof URL.</li>
                         </ul>
                       </div>
 
@@ -1273,7 +1737,7 @@ export const DashboardSettings: React.FC = () => {
                         {getVisibilityModeOptions().map(opt => (
                           <label
                             key={opt.value}
-                            className={`flex items-start gap-3 p-3.5 rounded-xl border-2 cursor-pointer transition-colors ${
+                            className={`flex items-start gap-3 p-3.5 rounded-lg border-2 cursor-pointer transition-colors ${
                               privacyMode === opt.value
                                 ? 'border-primary bg-primary/5'
                                 : 'border-border hover:border-primary/40'
@@ -1284,7 +1748,10 @@ export const DashboardSettings: React.FC = () => {
                               name="privacy_mode"
                               value={opt.value}
                               checked={privacyMode === opt.value}
-                              onChange={() => setPrivacyMode(opt.value)}
+                              onChange={() => {
+                                visibilityDraftGuard.markDirty();
+                                setPrivacyMode(opt.value);
+                              }}
                               className="mt-0.5 text-primary focus:ring-primary"
                             />
                             <div>
@@ -1296,14 +1763,17 @@ export const DashboardSettings: React.FC = () => {
                       </div>
 
                       {privacyMode === 'password_protected' && (
-                        <div className="p-4 bg-surface-subtle border border-border rounded-xl space-y-3">
+                        <div className="p-4 bg-surface-subtle border border-border rounded-lg space-y-3">
                           <p className="text-sm font-medium text-text-primary">Site password</p>
                           <p className="text-xs text-text-secondary">Guests will be prompted to enter this before viewing the site.</p>
                           <div className="relative">
                             <input
                               type={showSitePassword ? 'text' : 'password'}
                               value={sitePassword}
-                              onChange={e => setSitePassword(e.target.value)}
+                              onChange={e => {
+                                visibilityDraftGuard.markDirty();
+                                setSitePassword(e.target.value);
+                              }}
                               placeholder="Set new password…"
                               className="w-full px-3 py-2 pr-10 border border-border rounded-lg text-sm text-text-primary bg-background focus:outline-none focus:ring-2 focus:ring-primary/40"
                               autoComplete="new-password"
@@ -1322,7 +1792,7 @@ export const DashboardSettings: React.FC = () => {
                       )}
 
                       {privacyMode === 'invite_only' && (
-                        <div className="p-4 bg-surface-subtle border border-border rounded-xl space-y-3">
+                        <div className="p-4 bg-surface-subtle border border-border rounded-lg space-y-3">
                           <p className="text-sm font-medium text-text-primary">Invite-only guest access link</p>
                           <p className="text-xs text-text-secondary">Share this link with guests you want to allow through your invite-only access setting. This is a guest access control, not a separate unpublished preview product, and it is separate from search visibility.</p>
                           {guestAccessToken && siteSlug ? (
@@ -1353,7 +1823,10 @@ export const DashboardSettings: React.FC = () => {
                         <input
                           type="checkbox"
                           checked={hideFromSearch}
-                          onChange={e => setHideFromSearch(e.target.checked)}
+                          onChange={e => {
+                            visibilityDraftGuard.markDirty();
+                            setHideFromSearch(e.target.checked);
+                          }}
                           className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
                         />
                         <div>
@@ -1390,7 +1863,7 @@ export const DashboardSettings: React.FC = () => {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {!showTemplateSettings ? (
-                      <div className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
+                      <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
                         Hidden by default to keep things calm. Open it when you want to change how your site looks.
                       </div>
                     ) : (
@@ -1401,7 +1874,7 @@ export const DashboardSettings: React.FC = () => {
                           </div>
                         )}
                         {templateError && (
-                          <div className="p-3 bg-error-light border border-error rounded-lg text-error text-sm">
+                          <div className="p-3 bg-surface-subtle border border-border-subtle rounded-lg text-text-secondary text-sm">
                             {templateError}
                           </div>
                         )}
@@ -1460,13 +1933,13 @@ export const DashboardSettings: React.FC = () => {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {!showMealChoiceSettings ? (
-                      <div className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
+                      <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
                         Hidden by default to keep RSVP setup lighter. Open this section only if you want guests to choose a meal.
                       </div>
                     ) : (
                       <>
                         <label className="flex items-center gap-2 text-sm text-text-primary">
-                          <input type="checkbox" checked={rsvpMealEnabled} onChange={(e) => setRsvpMealEnabled(e.target.checked)} className="w-4 h-4 rounded border-border text-primary" />
+                          <input type="checkbox" checked={rsvpMealEnabled} onChange={(e) => { rsvpDraftGuard.markDirty(); setRsvpMealEnabled(e.target.checked); }} className="w-4 h-4 rounded border-border text-primary" />
                           Collect meal choice on RSVP form
                         </label>
                         {rsvpMealEnabled && (
@@ -1474,14 +1947,26 @@ export const DashboardSettings: React.FC = () => {
                             <label className="block text-sm font-medium text-text-primary">Meal options</label>
                             {rsvpMealOptions.map((opt, idx) => (
                               <div key={`meal-opt-${idx}`} className="flex items-center gap-2">
-                                <Input value={opt} onChange={(e) => setRsvpMealOptions((prev) => { const n=[...prev]; n[idx]=e.target.value; return n; })} placeholder={`Meal option ${idx+1}`} />
-                                <Button type="button" variant="ghost" size="sm" onClick={() => setRsvpMealOptions((prev) => prev.filter((_, i) => i !== idx))}><Trash2 className="w-4 h-4" /></Button>
+                                <Input value={opt} onChange={(e) => { rsvpDraftGuard.markDirty(); setRsvpMealOptions((prev) => { const n=[...prev]; n[idx]=e.target.value; return n; }); }} placeholder={`Meal option ${idx+1}`} />
+                                <Button type="button" variant="ghost" size="sm" onClick={() => { rsvpDraftGuard.markDirty(); setRsvpMealOptions((prev) => prev.filter((_, i) => i !== idx)); }}><Trash2 className="w-4 h-4" /></Button>
                               </div>
                             ))}
-                            <Button type="button" variant="outline" size="sm" onClick={() => setRsvpMealOptions((prev) => [...prev, ''])}><Plus className="w-4 h-4 mr-1" />Add meal option</Button>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Button type="button" variant="outline" size="sm" onClick={() => { rsvpDraftGuard.markDirty(); setRsvpMealOptions((prev) => [...prev, '']); }}><Plus className="w-4 h-4 mr-1" />Add meal option</Button>
+                              <Button type="button" variant="primary" size="sm" onClick={() => void saveRsvpSettings()} disabled={rsvpQuestionsSaving}>
+                                {rsvpQuestionsSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                                Save meal choices
+                              </Button>
+                            </div>
                           </div>
                         )}
                       </>
+                    )}
+                    {!showAdvancedRsvp && rsvpQuestionsSuccess && (
+                      <div className="p-3 bg-success-light border border-success/20 rounded-lg text-success text-sm">{rsvpQuestionsSuccess}</div>
+                    )}
+                    {!showAdvancedRsvp && rsvpQuestionsError && (
+                      <div className="p-3 bg-surface-subtle border border-border-subtle rounded-lg text-text-secondary text-sm">{rsvpQuestionsError}</div>
                     )}
                   </CardContent>
                 </Card>
@@ -1500,7 +1985,7 @@ export const DashboardSettings: React.FC = () => {
                   </CardHeader>
                   <CardContent>
                     {!showAdvancedRsvp ? (
-                      <div className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
+                      <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
                         Hidden by default to keep RSVP setup simple. Open this section if you want to ask extra questions or let guests share song requests.
                       </div>
                     ) : (
@@ -1509,7 +1994,7 @@ export const DashboardSettings: React.FC = () => {
                         <div className="p-3 bg-success-light border border-success/20 rounded-lg text-success text-sm">{rsvpQuestionsSuccess}</div>
                       )}
                       {rsvpQuestionsError && (
-                        <div className="p-3 bg-error-light border border-error/20 rounded-lg text-error text-sm">{rsvpQuestionsError}</div>
+                        <div className="p-3 bg-surface-subtle border border-border-subtle rounded-lg text-text-secondary text-sm">{rsvpQuestionsError}</div>
                       )}
 
                       <div className="space-y-3">
@@ -1520,7 +2005,7 @@ export const DashboardSettings: React.FC = () => {
                         {rsvpQuestions.map((q, idx) => {
                           const isCollapsed = collapsedQuestionIds.has(q.id);
                           return (
-                          <div key={q.id} className="p-4 border border-border rounded-xl space-y-3 bg-surface-subtle">
+                          <div key={q.id} className="p-4 border border-border rounded-lg space-y-3 bg-surface-subtle">
                             <div className="flex items-center justify-between">
                               <button
                                 type="button"
@@ -1537,6 +2022,7 @@ export const DashboardSettings: React.FC = () => {
                               <button
                                 type="button"
                                 onClick={() => {
+                                  rsvpDraftGuard.markDirty();
                                   setRsvpQuestions((prev) => prev.filter((item) => item.id !== q.id));
                                   setCollapsedQuestionIds((prev) => {
                                     const next = new Set(prev);
@@ -1544,7 +2030,7 @@ export const DashboardSettings: React.FC = () => {
                                     return next;
                                   });
                                 }}
-                                className="text-error hover:text-error/80"
+                                className="text-text-tertiary hover:text-text-primary"
                                 aria-label="Remove question"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -1556,7 +2042,7 @@ export const DashboardSettings: React.FC = () => {
                             <Input
                               label="Prompt"
                               value={q.label}
-                              onChange={(e) => setRsvpQuestions((prev) => prev.map((item) => item.id === q.id ? { ...item, label: e.target.value } : item))}
+                              onChange={(e) => { rsvpDraftGuard.markDirty(); setRsvpQuestions((prev) => prev.map((item) => item.id === q.id ? { ...item, label: e.target.value } : item)); }}
                               placeholder="e.g., Song request"
                             />
 
@@ -1564,7 +2050,7 @@ export const DashboardSettings: React.FC = () => {
                               <Select
                                 label="Type"
                                 value={q.type}
-                                onChange={(e) => setRsvpQuestions((prev) => prev.map((item) => {
+                                onChange={(e) => { rsvpDraftGuard.markDirty(); setRsvpQuestions((prev) => prev.map((item) => {
                                   if (item.id !== q.id) return item;
                                   const nextType = e.target.value as RSVPQuestionSetting['type'];
                                   if (nextType === 'single_choice' || nextType === 'multi_choice') {
@@ -1572,7 +2058,7 @@ export const DashboardSettings: React.FC = () => {
                                     return { ...item, type: nextType, options: current.length > 0 ? current : ['', ''] };
                                   }
                                   return { ...item, type: nextType, options: [] };
-                                }))}
+                                })); }}
                                 options={[
                                   { value: 'short_text', label: 'Short text' },
                                   { value: 'long_text', label: 'Long text' },
@@ -1584,7 +2070,7 @@ export const DashboardSettings: React.FC = () => {
                               <Select
                                 label="Applies to"
                                 value={q.appliesTo}
-                                onChange={(e) => setRsvpQuestions((prev) => prev.map((item) => item.id === q.id ? { ...item, appliesTo: e.target.value as RSVPQuestionSetting['appliesTo'] } : item))}
+                                onChange={(e) => { rsvpDraftGuard.markDirty(); setRsvpQuestions((prev) => prev.map((item) => item.id === q.id ? { ...item, appliesTo: e.target.value as RSVPQuestionSetting['appliesTo'] } : item)); }}
                                 options={[
                                   { value: 'all', label: 'All attendees' },
                                   { value: 'ceremony', label: 'Ceremony attendees' },
@@ -1596,7 +2082,7 @@ export const DashboardSettings: React.FC = () => {
                                 <input
                                   type="checkbox"
                                   checked={q.required}
-                                  onChange={(e) => setRsvpQuestions((prev) => prev.map((item) => item.id === q.id ? { ...item, required: e.target.checked } : item))}
+                                  onChange={(e) => { rsvpDraftGuard.markDirty(); setRsvpQuestions((prev) => prev.map((item) => item.id === q.id ? { ...item, required: e.target.checked } : item)); }}
                                   className="w-4 h-4 rounded border-border text-primary"
                                 />
                                 Required
@@ -1610,24 +2096,24 @@ export const DashboardSettings: React.FC = () => {
                                   <div key={`${q.id}-opt-${optIdx}`} className="flex items-center gap-2">
                                     <Input
                                       value={opt}
-                                      onChange={(e) => setRsvpQuestions((prev) => prev.map((item) => {
+                                      onChange={(e) => { rsvpDraftGuard.markDirty(); setRsvpQuestions((prev) => prev.map((item) => {
                                         if (item.id !== q.id) return item;
                                         const next = [...(item.options ?? [])];
                                         next[optIdx] = e.target.value;
                                         return { ...item, options: next };
-                                      }))}
+                                      })); }}
                                       placeholder={`Option ${optIdx + 1}`}
                                     />
                                     <Button
                                       type="button"
                                       variant="ghost"
                                       size="sm"
-                                      onClick={() => setRsvpQuestions((prev) => prev.map((item) => {
+                                      onClick={() => { rsvpDraftGuard.markDirty(); setRsvpQuestions((prev) => prev.map((item) => {
                                         if (item.id !== q.id) return item;
                                         const next = [...(item.options ?? [])];
                                         next.splice(optIdx, 1);
                                         return { ...item, options: next };
-                                      }))}
+                                      })); }}
                                       aria-label="Remove choice"
                                     >
                                       <Trash2 className="w-4 h-4" />
@@ -1638,7 +2124,7 @@ export const DashboardSettings: React.FC = () => {
                                   type="button"
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => setRsvpQuestions((prev) => prev.map((item) => item.id === q.id ? { ...item, options: [...(item.options ?? []), ''] } : item))}
+                                  onClick={() => { rsvpDraftGuard.markDirty(); setRsvpQuestions((prev) => prev.map((item) => item.id === q.id ? { ...item, options: [...(item.options ?? []), ''] } : item)); }}
                                 >
                                   <Plus className="w-4 h-4 mr-1" />
                                   Add choice
@@ -1653,7 +2139,7 @@ export const DashboardSettings: React.FC = () => {
                         })}
                       </div>
 
-                      <div className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-4 space-y-3">
+                      <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4 space-y-3">
                         <p className="text-sm font-medium text-text-primary">Song request playlist (Spotify collaborative)</p>
                         <Input
                           label="Playlist URL"
@@ -1665,8 +2151,8 @@ export const DashboardSettings: React.FC = () => {
                           <Button type="button" variant="outline" size="sm" onClick={handleSaveMusicPlaylist}>
                             Save playlist link
                           </Button>
-                          {musicPlaylistUrl && (
-                            <Button type="button" variant="outline" size="sm" onClick={() => window.open(musicPlaylistUrl, '_blank')}>
+                          {safeMusicPlaylistUrl && (
+                            <Button type="button" variant="outline" size="sm" onClick={() => window.open(safeMusicPlaylistUrl, '_blank', 'noopener,noreferrer')}>
                               Open
                             </Button>
                           )}
@@ -1677,7 +2163,7 @@ export const DashboardSettings: React.FC = () => {
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={() => { const q = makeQuestion(); setRsvpQuestions((prev) => [...prev, q]); setCollapsedQuestionIds((prev) => { const next = new Set(prev); next.delete(q.id); return next; }); }}
+                          onClick={() => { rsvpDraftGuard.markDirty(); const q = makeQuestion(); setRsvpQuestions((prev) => [...prev, q]); setCollapsedQuestionIds((prev) => { const next = new Set(prev); next.delete(q.id); return next; }); }}
                         >
                           <Plus className="w-4 h-4 mr-2" />
                           Add Question
@@ -1710,7 +2196,7 @@ export const DashboardSettings: React.FC = () => {
                 </CardHeader>
                 <CardContent>
                   {!showNotificationSettings ? (
-                    <div className="rounded-xl border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
+                    <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4 text-sm text-text-secondary">
                       Hidden by default to keep this page easy to scan. Open it when you want to choose which updates you get.
                     </div>
                   ) : (
@@ -1719,13 +2205,13 @@ export const DashboardSettings: React.FC = () => {
                       <div className="p-3 bg-success-light border border-success/20 rounded-lg text-success text-sm">{notifSuccess}</div>
                     )}
                     {notifError && (
-                      <div className="p-3 bg-error-light border border-error/20 rounded-lg text-error text-sm">{notifError}</div>
+                      <div className="p-3 bg-surface-subtle border border-border-subtle rounded-lg text-text-secondary text-sm">{notifError}</div>
                     )}
                     <label className="flex items-start gap-3 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={notifRsvp}
-                        onChange={e => setNotifRsvp(e.target.checked)}
+                        onChange={e => { notifDraftGuard.markDirty(); setNotifRsvp(e.target.checked); }}
                         className="mt-1 w-5 h-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
                       />
                       <div className="flex-1">
@@ -1738,7 +2224,7 @@ export const DashboardSettings: React.FC = () => {
                       <input
                         type="checkbox"
                         checked={notifPhotos}
-                        onChange={e => setNotifPhotos(e.target.checked)}
+                        onChange={e => { notifDraftGuard.markDirty(); setNotifPhotos(e.target.checked); }}
                         className="mt-1 w-5 h-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
                       />
                       <div className="flex-1">
@@ -1751,7 +2237,7 @@ export const DashboardSettings: React.FC = () => {
                       <input
                         type="checkbox"
                         checked={notifDigest}
-                        onChange={e => setNotifDigest(e.target.checked)}
+                        onChange={e => { notifDraftGuard.markDirty(); setNotifDigest(e.target.checked); }}
                         className="mt-1 w-5 h-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
                       />
                       <div className="flex-1">
@@ -1764,7 +2250,7 @@ export const DashboardSettings: React.FC = () => {
                       <input
                         type="checkbox"
                         checked={notifUpdates}
-                        onChange={e => setNotifUpdates(e.target.checked)}
+                        onChange={e => { notifDraftGuard.markDirty(); setNotifUpdates(e.target.checked); }}
                         className="mt-1 w-5 h-5 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2"
                       />
                       <div className="flex-1">
@@ -1794,7 +2280,7 @@ export const DashboardSettings: React.FC = () => {
                 )}
 
                 {billingError && (
-                  <div className="flex items-start gap-2 p-4 bg-error-light border border-error/20 rounded-lg text-error text-sm">
+                  <div className="flex items-start gap-2 p-4 bg-surface-subtle border border-border-subtle rounded-lg text-text-secondary text-sm">
                     <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                     <span>{billingError}</span>
                   </div>
@@ -1817,7 +2303,7 @@ export const DashboardSettings: React.FC = () => {
                       <CardContent className="space-y-5">
                         {billingInfo.billing_type === 'one_time' ? (
                           <>
-                            <div className="flex items-start gap-4 p-4 bg-surface-subtle rounded-xl border border-border">
+                            <div className="flex items-start gap-4 p-4 bg-surface-subtle rounded-lg border border-border">
                               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                                 <Calendar className="w-5 h-5 text-primary" />
                               </div>
@@ -1828,7 +2314,7 @@ export const DashboardSettings: React.FC = () => {
                                   const expDate = formatSettingsDate(billingInfo.site_expires_at, { year: 'numeric', month: 'long', day: 'numeric' });
                                   const isExpiringSoon = days !== null && days <= 90;
                                   return (
-                                    <p className={`text-sm mt-0.5 ${isExpiringSoon ? 'text-warning font-medium' : 'text-text-secondary'}`}>
+                                    <p className={`text-sm mt-0.5 ${isExpiringSoon ? 'text-text-secondary font-medium' : 'text-text-secondary'}`}>
                                       {isExpiringSoon && days !== null && days > 0
                                         ? `Expires in ${days} days — ${expDate}`
                                         : days !== null && days <= 0
@@ -1840,8 +2326,8 @@ export const DashboardSettings: React.FC = () => {
                               </div>
                             </div>
 
-                            <div className="border border-border rounded-xl overflow-hidden">
-                              <div className="px-5 py-4 bg-gradient-to-r from-primary/5 to-accent/5 border-b border-border">
+                            <div className="border border-border rounded-lg overflow-hidden">
+                              <div className="px-5 py-4 bg-surface-subtle/45 border-b border-border">
                                 <div className="flex items-center gap-2 mb-1">
                                   <Repeat className="w-4 h-4 text-accent" />
                                   <p className="font-semibold text-text-primary">Switch to Annual Billing</p>
@@ -1859,7 +2345,7 @@ export const DashboardSettings: React.FC = () => {
                                 </div>
 
                                 {subscribeError && (
-                                  <div className="flex items-start gap-2 p-3 bg-error-light border border-error/20 rounded-lg text-error text-sm">
+                                  <div className="flex items-start gap-2 p-3 bg-surface-subtle border border-border-subtle rounded-lg text-text-secondary text-sm">
                                     <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                                     <span>{subscribeError}</span>
                                   </div>
@@ -1887,7 +2373,7 @@ export const DashboardSettings: React.FC = () => {
                             </div>
                           </>
                         ) : (
-                          <div className="flex items-start gap-4 p-4 bg-surface-subtle rounded-xl border border-border">
+                          <div className="flex items-start gap-4 p-4 bg-surface-subtle rounded-lg border border-border">
                             <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center flex-shrink-0">
                               <Repeat className="w-5 h-5 text-success" />
                             </div>
@@ -1910,7 +2396,7 @@ export const DashboardSettings: React.FC = () => {
                           <div className="flex items-center justify-between py-3 border-b border-border-subtle">
                             <div>
                               <p className="font-medium text-text-primary">
-                                {billingInfo.billing_type === 'recurring' ? 'Annual Plan' : 'DayOf.Love — 2-Year Access'}
+                                {billingInfo.billing_type === 'recurring' ? 'Annual Plan' : 'dayof.love, 2-Year Access'}
                               </p>
                               <p className="text-sm text-text-secondary">
                                 {formatSettingsDate(billingInfo.paid_at, { year: 'numeric', month: 'long', day: 'numeric' })}

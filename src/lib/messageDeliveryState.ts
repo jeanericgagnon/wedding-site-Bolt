@@ -10,32 +10,40 @@ export interface MessageDeliveryState {
   explainer: string;
 }
 
+function safeDeliveryExplainer(error?: string | null): string {
+  if (!error) return 'This message needs another look before it reaches every guest.';
+  if (/smtp|provider|twilio|telnyx|sendgrid|resend|api|database|function|network|timeout|jwt|token|unauthorized/i.test(error)) {
+    return 'This message needs another look before it reaches every guest.';
+  }
+  return error;
+}
+
 export function getMessageDeliveryState(input: MessageDeliveryInput): MessageDeliveryState {
   const status = (input.status || '').toLowerCase();
   if (status === 'failed' || input.error) {
     return {
-      label: 'Delivery failed',
-      tone: 'danger',
-      explainer: input.error || 'This message did not finish sending successfully.',
+      label: 'Needs review',
+      tone: 'warning',
+      explainer: safeDeliveryExplainer(input.error),
     };
   }
   if (status === 'queued' || status === 'processing') {
     return {
-      label: 'Queued',
+      label: 'Getting ready',
       tone: 'warning',
-      explainer: 'This message is queued or processing and may still be on its way.',
+      explainer: 'This message is prepared and may still be on its way.',
     };
   }
   if (status === 'sent' || input.sentAt) {
     return {
       label: 'Sent',
       tone: 'success',
-      explainer: 'This message finished sending through the current delivery path.',
+      explainer: 'This message was sent to the selected guests.',
     };
   }
   return {
     label: 'Draft',
     tone: 'neutral',
-    explainer: 'This message has not been delivered yet.',
+    explainer: 'This message is ready to review when you are.',
   };
 }

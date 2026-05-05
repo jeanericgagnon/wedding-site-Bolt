@@ -55,7 +55,41 @@ describe('aiOnboardingClarifyingAdapter', () => {
     expect(decision.questions[4]?.id).toBe('event-time-brunch-3');
     expect(decision.questions[4]?.question).toContain('brunch');
 
-    const persistence = createClarifyingPersistenceFromDecision(decision);
+    const persistence = createClarifyingPersistenceFromDecision(decision, 2, {
+      qualityScore: 87,
+      loopCount: 2,
+      maxLoopCount: 3,
+      fallbackUsed: false,
+      provider: 'openai',
+      model: 'gpt-4.1-mini',
+    } as Parameters<typeof createClarifyingPersistenceFromDecision>[2] & { provider: string; model: string });
     expect(persistence.clarifying.questions).toHaveLength(6);
+    expect(persistence.clarifying.questions[0]?.round).toBe(2);
+    expect(persistence.meta).toEqual({
+      confidence: 'medium',
+      qualityScore: 87,
+      loopCount: 2,
+      maxLoopCount: 3,
+      fallbackUsed: false,
+    });
+  });
+
+  it('does not persist provider or model metadata into customer draft state', async () => {
+    const persistence = createClarifyingPersistenceFromDecision({
+      mode: 'draft',
+      questions: [],
+      why: [],
+      confidence: 'high',
+      draftOutputs: undefined,
+    }, 1, {
+      qualityScore: 95,
+      provider: 'openai',
+      model: 'gpt-4.1-mini',
+      fallbackUsed: false,
+    } as Parameters<typeof createClarifyingPersistenceFromDecision>[2] & { provider: string; model: string });
+
+    expect(persistence.meta).toMatchObject({ confidence: 'high', qualityScore: 95, fallbackUsed: false });
+    expect(persistence.meta).not.toHaveProperty('provider');
+    expect(persistence.meta).not.toHaveProperty('model');
   });
 });

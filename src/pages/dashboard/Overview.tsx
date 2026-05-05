@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { readSetupDraft, setupDraftProgress } from '../../lib/setupDraft';
-import { SITE_VISIBILITY_COPY } from '../../lib/siteVisibilityCopy';
 import {
   buildPublishReadinessItems,
   buildSetupChecklist,
@@ -13,8 +12,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge } from '../../components/ui';
-import { Eye, Users, CheckCircle2, Calendar, ExternalLink, Edit, Clock, EyeOff, Radio } from 'lucide-react';
+import { Eye, Users, ExternalLink, Edit, EyeOff, Radio } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { buildDraftSitePatchFromProfile, getWeddingProfileRefineTargets, getWeddingProfileSummary, isWeddingProfile } from '../../lib/weddingProfile';
 import { generateDraftFromWeddingProfile, mergeGeneratedDraftIntoWeddingData } from '../../lib/aiDraftGenerator';
 import { mergeGeneratedDraftIntoBuilderProject } from '../../lib/aiBuilderProjectPatch';
@@ -33,9 +33,18 @@ import { calcOverviewDaysUntil, formatOverviewRelativeTime, formatOverviewWeddin
 import { getOverviewFallbackCoupleValue } from './overviewDraftBrief';
 import { buildNameChangeOverviewCardModel } from './nameChangeOverviewCard';
 import { buildNameChangeOverviewInsights, type NameChangeOverviewInsights } from './nameChangeOverviewInsights';
+import { customerSafeErrorMessage } from '../../lib/customerSafeError';
 import { NAME_CHANGE_LIFECYCLE_LABELS } from './nameChangeLifecycleLabels';
 import { deriveNameChangeLifecycleStatus } from './nameChangeLifecycleStatus';
 import { hydrateNameChangeWorkspace, loadNameChangeWorkspace } from './planning/nameChangeService';
+import { buildLaunchReadiness } from '../../lib/launchReadiness';
+import { buildPlanningAssistantModel } from '../../lib/aiPlanningAssistant';
+import { buildInvisibleIntelligenceSuggestions, type IntelligenceSuggestion } from '../../lib/invisibleIntelligence';
+import { buildCalmDigestDeliveryPreview, buildCalmOwnerDigest, type CalmDigestPriority } from '../../lib/calmOwnerDigest';
+import { buildWebsiteInviteAnalyticsFunnelReview, buildWebsiteInviteAnalyticsReadiness } from '../../lib/websiteInviteAnalyticsReadiness';
+import type { PlannerAccessRole, PlannerPermissionKey } from '../../lib/plannerAccess';
+
+const INTELLIGENCE_DISMISSALS_STORAGE_KEY = 'dayof_intelligence_dismissed_v1';
 
 const DEFAULT_NAME_CHANGE_INSIGHTS: NameChangeOverviewInsights = {
   coreChainLabel: 'Certificate, SSA, and DMV stay together so the legal identity chain does not drift.',
@@ -47,6 +56,13 @@ const DEFAULT_NAME_CHANGE_INSIGHTS: NameChangeOverviewInsights = {
   milestoneSummaryLabel: 'Milestones ready to confirm',
   reminderSummaryHref: '/dashboard/planning?tab=nameChange#name-change-roadmap',
   reminderSummaryLabel: 'No open reminders',
+};
+
+const CALM_DIGEST_PRIORITY_LABELS: Record<CalmDigestPriority, string> = {
+  now: 'Now',
+  soon: 'Soon',
+  watch: 'Watch',
+  quiet: 'Quiet',
 };
 
 interface OverviewStats {
@@ -72,8 +88,12 @@ interface OverviewStats {
   registryItemCount: number;
   photoAlbumCount: number;
   activePhotoAlbumCount: number;
+  vaultCount: number;
+  enabledVaultCount: number;
   contactableGuestCount: number;
   recentRsvps: RecentRsvp[];
+  activeSiteRole: PlannerAccessRole;
+  activeSitePermissions: PlannerPermissionKey[] | null;
 }
 
 interface RecentRsvp {
@@ -87,6 +107,66 @@ interface InteractiveSuggestion {
   id: string;
   suggestion_text: string;
   created_at: string;
+}
+
+interface InteractiveVoteRow {
+  id: string;
+  widget_kind: 'poll' | 'quiz';
+  widget_id: string;
+  option_id: string;
+  created_at: string;
+}
+
+interface InteractiveVoteSummary {
+  key: string;
+  widgetKind: 'poll' | 'quiz';
+  widgetId: string;
+  total: number;
+  latestAt: string;
+  options: Array<{ optionId: string; count: number; percentage: number }>;
+}
+
+function summarizeInteractiveVotes(rows: InteractiveVoteRow[]): InteractiveVoteSummary[] {
+  const grouped = rows.reduce<Record<string, { widgetKind: 'poll' | 'quiz'; widgetId: string; latestAt: string; counts: Record<string, number> }>>((acc, row) => {
+    const key = `${row.widget_kind}:${row.widget_id}`;
+    const current = acc[key] ?? {
+      widgetKind: row.widget_kind,
+      widgetId: row.widget_id,
+      latestAt: row.created_at,
+      counts: {},
+    };
+    current.latestAt = new Date(row.created_at).getTime() > new Date(current.latestAt).getTime() ? row.created_at : current.latestAt;
+    current.counts[row.option_id] = (current.counts[row.option_id] ?? 0) + 1;
+    acc[key] = current;
+    return acc;
+  }, {});
+
+  return Object.entries(grouped)
+    .map(([key, group]) => {
+      const total = Object.values(group.counts).reduce((sum, count) => sum + count, 0);
+      return {
+        key,
+        widgetKind: group.widgetKind,
+        widgetId: group.widgetId,
+        total,
+        latestAt: group.latestAt,
+        options: Object.entries(group.counts)
+          .map(([optionId, count]) => ({
+            optionId,
+            count,
+            percentage: total > 0 ? Math.round((count / total) * 100) : 0,
+          }))
+          .sort((a, b) => b.count - a.count),
+      };
+    })
+    .sort((a, b) => new Date(b.latestAt).getTime() - new Date(a.latestAt).getTime());
+}
+
+function formatInteractiveVoteLabel(value: string): string {
+  return value
+    .replace(/^(poll|quiz)[-_:]/i, '')
+    .replace(/[-_:]+/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 function resolveWeddingDateFromData(
@@ -195,8 +275,8 @@ export const DashboardOverview: React.FC = () => {
       if (updateError) throw updateError;
       await loadStats();
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to refresh draft from brief';
-      alert(message);
+      const message = customerSafeErrorMessage(err, 'Failed to refresh draft from brief');
+      toast(message, 'error');
     } finally {
       setRefreshingBrief(false);
     }
@@ -209,6 +289,7 @@ export const DashboardOverview: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [setupDraftProgressPercent, setSetupDraftProgressPercent] = useState<number>(0);
   const [interactiveSuggestions, setInteractiveSuggestions] = useState<InteractiveSuggestion[]>([]);
+  const [interactiveVoteSummaries, setInteractiveVoteSummaries] = useState<InteractiveVoteSummary[]>([]);
   const [interactiveLoading, setInteractiveLoading] = useState(false);
   const [recentSiteActivity, setRecentSiteActivity] = useState<BuilderRevision[]>([]);
   const [draftBrief, setDraftBrief] = useState<Array<{ id: string; label: string; value: string; questionKey: string }>>([]);
@@ -218,6 +299,17 @@ export const DashboardOverview: React.FC = () => {
   const [draftBriefDebug, setDraftBriefDebug] = useState<string>('init');
   const [nameChangeOverviewState, setNameChangeOverviewState] = useState<{ hasWorkspace: boolean; workflowStatus: 'draft' | 'ready' | 'in_progress' | 'complete' | null; hasExecutionActivity: boolean; }>({ hasWorkspace: false, workflowStatus: null, hasExecutionActivity: false });
   const [nameChangeInsights, setNameChangeInsights] = useState<NameChangeOverviewInsights>(DEFAULT_NAME_CHANGE_INSIGHTS);
+  const [showMoreDetail, setShowMoreDetail] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return new URLSearchParams(window.location.search).get('details') === '1';
+  });
+  const [dismissedIntelligenceIds, setDismissedIntelligenceIds] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem(INTELLIGENCE_DISMISSALS_STORAGE_KEY) ?? '[]') as string[];
+    } catch {
+      return [];
+    }
+  });
 
   useEffect(() => {
     if (!user) return;
@@ -235,22 +327,32 @@ export const DashboardOverview: React.FC = () => {
     const slug = stats?.siteSlug;
     if (!slug || isDemoMode) {
       setInteractiveSuggestions([]);
+      setInteractiveVoteSummaries([]);
       return;
     }
 
     let mounted = true;
     const loadSuggestions = async () => {
       setInteractiveLoading(true);
-      const { data, error: suggestionsErr } = await supabase
-        .from('interactive_suggestions')
-        .select('id, suggestion_text, created_at')
-        .eq('site_slug', slug)
-        .eq('is_hidden', false)
-        .order('created_at', { ascending: false })
-        .limit(8);
+      const [suggestionsResult, votesResult] = await Promise.all([
+        supabase
+          .from('interactive_suggestions')
+          .select('id, suggestion_text, created_at')
+          .eq('site_slug', slug)
+          .eq('is_hidden', false)
+          .order('created_at', { ascending: false })
+          .limit(8),
+        supabase
+          .from('interactive_votes')
+          .select('id, widget_kind, widget_id, option_id, created_at')
+          .eq('site_slug', slug)
+          .order('created_at', { ascending: false })
+          .limit(500),
+      ]);
 
       if (!mounted) return;
-      if (!suggestionsErr) setInteractiveSuggestions((data ?? []) as InteractiveSuggestion[]);
+      if (!suggestionsResult.error) setInteractiveSuggestions((suggestionsResult.data ?? []) as InteractiveSuggestion[]);
+      if (!votesResult.error) setInteractiveVoteSummaries(summarizeInteractiveVotes((votesResult.data ?? []) as InteractiveVoteRow[]));
       setInteractiveLoading(false);
     };
 
@@ -305,8 +407,12 @@ export const DashboardOverview: React.FC = () => {
           registryItemCount: 2,
           photoAlbumCount: 3,
           activePhotoAlbumCount: 2,
+          vaultCount: 3,
+          enabledVaultCount: 3,
           contactableGuestCount: demoGuests.filter((g) => Boolean(g.email)).length,
           recentRsvps,
+          activeSiteRole: 'owner',
+          activeSitePermissions: null,
         });
         setNameChangeOverviewState({ hasWorkspace: true, workflowStatus: 'in_progress', hasExecutionActivity: true });
         setNameChangeInsights({
@@ -323,10 +429,11 @@ export const DashboardOverview: React.FC = () => {
         return;
       }
 
+      const activeSite = await resolveActiveSiteForUser(user.id);
       const { data: ownedSite, error: siteErr } = await supabase
         .from('wedding_sites')
 .select('id, site_slug, site_url, is_published, site_json, updated_at, template_id, wedding_data, onboarding_answers, couple_name_1, couple_name_2, venue_name, wedding_date, venue_date, wedding_location')
-        .eq('user_id', user.id)
+        .eq('id', activeSite?.id ?? '')
         .maybeSingle();
 
       if (siteErr) throw siteErr;
@@ -360,6 +467,19 @@ export const DashboardOverview: React.FC = () => {
 
       if (site) {
         const weddingData = site.wedding_data as Record<string, unknown> | null;
+        const meta = (weddingData?.meta as Record<string, unknown> | undefined) ?? {};
+        const persistedDismissals = Array.isArray(meta.intelligenceDismissals)
+          ? meta.intelligenceDismissals.filter((id): id is string => typeof id === 'string')
+          : [];
+        if (persistedDismissals.length > 0) {
+          setDismissedIntelligenceIds((current) => {
+            const next = Array.from(new Set([...current, ...persistedDismissals]));
+            try {
+              localStorage.setItem(INTELLIGENCE_DISMISSALS_STORAGE_KEY, JSON.stringify(next));
+            } catch {}
+            return next;
+          });
+        }
         weddingDate = resolveWeddingDateFromData(weddingData, {
           wedding_date: site.wedding_date,
           venue_date: site.venue_date,
@@ -409,6 +529,17 @@ export const DashboardOverview: React.FC = () => {
         .select('id', { count: 'exact', head: true })
         .eq('wedding_site_id', site?.id ?? '')
         .eq('is_active', true);
+
+      const { count: vaultCount } = await supabase
+        .from('vault_configs')
+        .select('id', { count: 'exact', head: true })
+        .eq('wedding_site_id', site?.id ?? '');
+
+      const { count: enabledVaultCount } = await supabase
+        .from('vault_configs')
+        .select('id', { count: 'exact', head: true })
+        .eq('wedding_site_id', site?.id ?? '')
+        .eq('is_enabled', true);
 
       const allGuests = guests ?? [];
       const confirmed = allGuests.filter((g) => isAttendingRsvpStatus(g.rsvp_status));
@@ -482,11 +613,15 @@ export const DashboardOverview: React.FC = () => {
         registryItemCount: registryItemCount ?? 0,
         photoAlbumCount: photoAlbumCount ?? 0,
         activePhotoAlbumCount: activePhotoAlbumCount ?? 0,
+        vaultCount: vaultCount ?? 0,
+        enabledVaultCount: enabledVaultCount ?? 0,
         contactableGuestCount,
         recentRsvps,
+        activeSiteRole: activeSite?.role ?? 'owner',
+        activeSitePermissions: activeSite?.permissions ?? null,
       });
     } catch {
-      setError('Could not load your overview right now.');
+      setError('Couldn’t load your overview right now.');
     } finally {
       setLoading(false);
     }
@@ -518,11 +653,66 @@ export const DashboardOverview: React.FC = () => {
     activePhotoAlbumCount: stats?.activePhotoAlbumCount ?? 0,
     interactiveSuggestionCount: interactiveSuggestions.length,
   });
+  const websiteInviteAnalytics = buildWebsiteInviteAnalyticsReadiness({
+    siteSlug: stats?.siteSlug ?? null,
+    isPublished: stats?.isPublished ?? false,
+    totalGuests: stats?.totalGuests ?? 0,
+    confirmedGuests: stats?.confirmedGuests ?? 0,
+    declinedGuests: stats?.declinedGuests ?? 0,
+    pendingGuests: stats?.pendingGuests ?? 0,
+    contactableGuests: stats?.contactableGuestCount ?? 0,
+    registryItemCount: stats?.registryItemCount ?? 0,
+    photoAlbumCount: stats?.photoAlbumCount ?? 0,
+    activePhotoAlbumCount: stats?.activePhotoAlbumCount ?? 0,
+    interactiveSuggestionCount: interactiveSuggestions.length,
+    interactiveVoteWidgetCount: interactiveVoteSummaries.length,
+    recentRsvpCount: stats?.recentRsvps.length ?? 0,
+  });
+  const websiteInviteAnalyticsFunnel = buildWebsiteInviteAnalyticsFunnelReview(websiteInviteAnalytics);
+  const launchReadiness = stats ? buildLaunchReadiness(stats) : null;
+  const planningAssistant = stats && launchReadiness ? buildPlanningAssistantModel(stats, launchReadiness) : null;
+  const invisibleSuggestions: IntelligenceSuggestion[] = stats
+    ? buildInvisibleIntelligenceSuggestions(stats).filter((suggestion) => !dismissedIntelligenceIds.includes(suggestion.id))
+    : [];
+  const showInternalProof = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('proof') === '1';
+
+  const dismissInvisibleSuggestion = (id: string) => {
+    const next = Array.from(new Set([...dismissedIntelligenceIds, id]));
+    setDismissedIntelligenceIds(next);
+    try {
+      localStorage.setItem(INTELLIGENCE_DISMISSALS_STORAGE_KEY, JSON.stringify(next));
+    } catch {}
+    if (!stats?.siteId || isDemoMode) return;
+
+    void (async () => {
+      const { data, error } = await supabase
+        .from('wedding_sites')
+        .select('wedding_data')
+        .eq('id', stats.siteId)
+        .maybeSingle();
+      if (error) return;
+
+      const weddingData = (data?.wedding_data as Record<string, unknown> | null) ?? {};
+      const meta = (weddingData.meta as Record<string, unknown> | undefined) ?? {};
+      await supabase
+        .from('wedding_sites')
+        .update({
+          wedding_data: {
+            ...weddingData,
+            meta: {
+              ...meta,
+              intelligenceDismissals: next,
+            },
+          },
+        })
+        .eq('id', stats.siteId);
+    })();
+  };
 
   const hideSuggestion = async (id: string) => {
     const { error } = await supabase.from('interactive_suggestions').update({ is_hidden: true }).eq('id', id);
     if (error) {
-      toast(error.message || 'Could not hide that suggestion.', 'error');
+      toast('Couldn’t hide that suggestion right now.', 'error');
       return;
     }
     setInteractiveSuggestions((prev) => prev.filter((s) => s.id !== id));
@@ -544,6 +734,7 @@ export const DashboardOverview: React.FC = () => {
     : [];
 
   const setupCompletedCount = setupChecklist.filter((item) => item.done).length;
+  const setupProgressRatio = setupChecklist.length > 0 ? setupCompletedCount / setupChecklist.length : 0;
   const publishReadinessItems = buildPublishReadinessItems({
     coupleName1: stats?.coupleName1 ?? '',
     coupleName2: stats?.coupleName2 ?? '',
@@ -574,38 +765,154 @@ export const DashboardOverview: React.FC = () => {
   const publishProgress = getChecklistProgress(publishReadinessItems);
   const publishBlockers = getIncompleteChecklistItems(publishReadinessItems);
   const firstPublishBlocker = getFirstIncompleteChecklistItem(publishReadinessItems);
+  const calmDigest = stats ? buildCalmOwnerDigest({
+    role: stats.activeSiteRole,
+    permissions: stats.activeSitePermissions,
+    newRsvpCount: stats.recentRsvps.length,
+    pendingRsvpCount: stats.pendingGuests,
+    missingContactCount: Math.max(0, stats.totalGuests - stats.contactableGuestCount),
+    messageFailureCount: 0,
+    upcomingTaskCount: 0,
+    upcomingPaymentCount: 0,
+    newPhotoUploadCount: 0,
+    activePhotoAlbumCount: stats.activePhotoAlbumCount,
+    seatingGapCount: 0,
+    registryItemCount: stats.registryItemCount,
+    isPublished: stats.isPublished,
+    publishBlockerCount: publishBlockers.length,
+  }) : null;
+  const calmDigestPreview = calmDigest ? buildCalmDigestDeliveryPreview({
+    digest: calmDigest,
+    cadence: 'weekly',
+    includePlanner: stats?.activeSiteRole === 'owner',
+    emailDeliveryEnabled: false,
+  }) : null;
+  const coupleLabel = [stats?.coupleName1, stats?.coupleName2].filter(Boolean).join(' & ') || 'your wedding';
+  const heroVenueLine = [stats?.venueName, stats?.venueLocation].filter(Boolean).join(' · ');
+  const nextStepLabel = firstPublishBlocker?.label
+    ?? ((stats?.pendingGuests ?? 0) > 0
+      ? 'Follow up with guests still awaiting RSVP'
+      : stats?.isPublished
+        ? 'Review recent activity before the next guest update'
+        : 'Review your draft website before sharing');
+  const nextStepActionLabel = firstPublishBlocker
+    ? 'Fix next setup item'
+    : stats?.isPublished
+      ? 'Open guests'
+      : 'Open site builder';
+  const nextStepAction = firstPublishBlocker?.action
+    ?? (() => navigate(stats?.isPublished ? '/dashboard/guests' : '/dashboard/builder?publishNow=1'));
 
   return (
     <DashboardLayout currentPage="overview">
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="mx-auto max-w-[1100px] space-y-5">
+        <section className="overflow-hidden rounded-lg border border-border-subtle bg-white">
+          <div className="grid gap-0 lg:grid-cols-[minmax(0,1.6fr)_minmax(320px,0.9fr)]">
+            <div className="p-5 md:p-6">
+              <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-text-tertiary">
+                <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{siteVisibility.label}</span>
+                <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{archiveMode.state}</span>
+                {stats?.weddingDate && <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">{formatOverviewWeddingDate(stats.weddingDate)}</span>}
+              </div>
+              <div className="mt-6 max-w-3xl">
+                <p className="text-xs font-medium text-text-tertiary">Today</p>
+                <h1 className="mt-3 text-3xl font-semibold leading-tight text-text-primary md:text-4xl">
+                  A calmer place to plan {coupleLabel}.
+                </h1>
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-text-secondary">
+                  The essentials are here when you need them: guests, your site, photos, gifts, and the next helpful step.
+                </p>
+                {heroVenueLine && <p className="mt-3 text-sm font-medium text-text-primary">{heroVenueLine}</p>}
+              </div>
+              <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/45 px-4 py-4">
+                  <p className="text-xs font-medium text-text-tertiary">RSVPs</p>
+                  <p className="mt-2 text-2xl font-semibold text-text-primary">{responseRate ?? 0}%</p>
+                  <p className="mt-1 text-xs text-text-secondary">{stats?.confirmedGuests ?? 0} attending · {stats?.pendingGuests ?? 0} pending</p>
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/45 px-4 py-4">
+                  <p className="text-xs font-medium text-text-tertiary">Guest contact info</p>
+                  <p className="mt-2 text-2xl font-semibold text-text-primary">{contactCoverage ?? 0}%</p>
+                  <p className="mt-1 text-xs text-text-secondary">{stats?.contactableGuestCount ?? 0} of {stats?.totalGuests ?? 0} contactable</p>
+                </div>
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/45 px-4 py-4">
+                  <p className="text-xs font-medium text-text-tertiary">Site details</p>
+                  <p className="mt-2 text-2xl font-semibold text-text-primary">{publishProgress.done}/{publishProgress.total}</p>
+                  <p className="mt-1 text-xs text-text-secondary">{publishBlockers.length > 0 ? `${publishBlockers.length} item${publishBlockers.length !== 1 ? 's' : ''} left` : 'Ready items cleared'}</p>
+                </div>
+              </div>
+            </div>
+            <aside className="border-t border-border-subtle bg-surface-subtle/35 p-4 md:p-5 lg:border-l lg:border-t-0">
+              <div className="flex h-full flex-col justify-between gap-5">
+                <div className="overflow-hidden rounded-lg border border-border-subtle bg-white">
+                  <img
+                    src="/preview-photos/header-anchor.jpg"
+                    alt=""
+                    className="h-44 w-full object-cover md:h-56"
+                    loading="lazy"
+                  />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-text-tertiary">Worth doing next</p>
+                  <h2 className="mt-3 text-xl font-semibold text-text-primary">{nextStepLabel}</h2>
+                  <p className="mt-3 text-sm leading-6 text-text-secondary">
+                    A gentle nudge based on what is already set up. You can skip it and come back whenever it feels right.
+                  </p>
+                </div>
+                <div className="space-y-3">
+                  <Button variant="primary" size="md" fullWidth onClick={nextStepAction}>
+                    {nextStepActionLabel}
+                  </Button>
+                  {stats?.siteSlug && (
+                    <Button variant="outline" size="md" fullWidth onClick={() => window.open(`/site/${stats.siteSlug}`, '_blank', 'noopener,noreferrer')}>
+                      <ExternalLink className="w-4 h-4 mr-2" aria-hidden="true" />
+                      {stats.isPublished ? 'View live site' : 'Preview draft'}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </aside>
+          </div>
+        </section>
         <div className="card-clean px-5 py-4 md:px-6 md:py-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-xs uppercase updates-wide text-text-tertiary">Setup progress</p>
-              <p className="text-sm text-text-secondary mt-1">Keep momentum — complete your core setup items.</p>
+              <p className="text-xs font-medium text-text-tertiary">Setup progress</p>
+              <p className="text-sm text-text-secondary mt-1">A few pieces help the guest experience feel complete.</p>
             </div>
             <div className="text-right">
               <p className="text-2xl font-bold text-text-primary">{setupCompletedCount}/{setupChecklist.length}</p>
               <p className="text-xs text-text-tertiary">complete</p>
             </div>
           </div>
-          <div className="mt-4 h-2 rounded-full bg-surface-subtle overflow-hidden">
-            <div
-              className="h-full bg-primary transition-all duration-300"
-              style={{ width: `${(setupCompletedCount / Math.max(setupChecklist.length, 1)) * 100}%` }}
-            />
+          <div className={`mt-4 h-2 rounded-md overflow-hidden ${setupProgressRatio >= 1 ? 'bg-primary' : 'bg-surface-subtle'}`}>
+            {setupProgressRatio < 1 && (
+              <div
+                className="h-full bg-primary transition-[width] duration-300"
+                style={{ width: `${Math.max(0, Math.min(1, setupProgressRatio)) * 100}%` }}
+              />
+            )}
           </div>
         </div>
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => setShowMoreDetail((value) => !value)}
+            className="rounded-lg border border-border-subtle bg-white/80 px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:border-border hover:text-text-primary"
+          >
+            {showMoreDetail ? 'Hide extra detail' : 'Show more detail'}
+          </button>
+        </div>
         {setupDraftProgressPercent > 0 && setupDraftProgressPercent < 100 && (
-          <Card variant="bordered" padding="lg" className="shadow-sm border-rose-200 bg-rose-50/40">
+          <Card variant="bordered" padding="lg" className="border-border-subtle bg-surface-subtle/45">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold text-rose-900">Builder V2 setup in progress</p>
-                <p className="text-xs text-rose-700 mt-1">You're {setupDraftProgressPercent}% done. Finish setup for stronger defaults.</p>
+                <p className="text-sm font-semibold text-text-primary">Website setup in progress</p>
+                <p className="text-xs text-text-secondary mt-1">You're {setupDraftProgressPercent}% done. Finish setup for stronger defaults.</p>
               </div>
               <button
                 onClick={() => navigate('/setup/names')}
-                className="rounded bg-rose-600 px-3 py-2 text-xs font-medium text-white hover:bg-rose-700"
+                className="rounded-lg bg-primary px-3 py-2 text-xs font-medium text-white hover:bg-primary-hover"
               >
                 Resume setup
               </button>
@@ -613,214 +920,300 @@ export const DashboardOverview: React.FC = () => {
           </Card>
         )}
 
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-text-primary mb-2">Overview</h1>
-            <p className="text-text-secondary">Your wedding at a glance</p>
-            {!loading && stats && !stats.isPublished && (
-              <div className="mt-2 space-y-1.5">
-                <div className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
-                  {SITE_VISIBILITY_COPY.draftBadge}
-                </div>
-                {firstPublishBlocker && (
-                  <p className="text-xs text-amber-700">Next thing before guest-facing launch: {firstPublishBlocker.label}</p>
-                )}
-              </div>
-            )}
-          </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto sm:flex-wrap sm:justify-end">
-            {!loading && stats?.isPublished && stats?.siteSlug && (
-              <Button variant="outline" size="sm" onClick={() => window.open(`/site/${stats.siteSlug}`, '_blank')}>
-                Open live website
-              </Button>
-            )}
-            {!loading && stats && !stats.isPublished && (
-              <>
-                <Button
-                  variant="accent"
-                  size="sm"
-                  className="w-full sm:w-auto"
-                  onClick={() => navigate('/dashboard/builder?publishNow=1')}
-                  title="Open your site editor and go straight to the go-live checklist"
-                >
-                  Open launch checklist
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full sm:w-auto"
-                  onClick={() => navigate('/dashboard/builder?photoTips=1')}
-                  title="Open your site editor with photo tips"
-                >
-                  Add photos better
-                </Button>
-                {publishBlockers.length > 0 && firstPublishBlocker?.action && (
-                  <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => firstPublishBlocker.action?.()}>
-                    Fix what’s left ({publishBlockers.length})
-                  </Button>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-
         {error && <DashboardStateBlock title="Couldn’t load overview right now" description={error} tone="error" />}
 
         {loading ? (
           <div className="space-y-6 animate-pulse" aria-hidden="true">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="h-32 rounded-2xl bg-surface-subtle border border-border-subtle" />
-              <div className="h-32 rounded-2xl bg-surface-subtle border border-border-subtle" />
-              <div className="h-32 rounded-2xl bg-surface-subtle border border-border-subtle" />
-              <div className="h-32 rounded-2xl bg-surface-subtle border border-border-subtle" />
+              <div className="h-32 rounded-lg bg-surface-subtle border border-border-subtle" />
+              <div className="h-32 rounded-lg bg-surface-subtle border border-border-subtle" />
+              <div className="h-32 rounded-lg bg-surface-subtle border border-border-subtle" />
+              <div className="h-32 rounded-lg bg-surface-subtle border border-border-subtle" />
             </div>
-            <div className="h-44 rounded-2xl bg-surface-subtle border border-border-subtle" />
+            <div className="h-44 rounded-lg bg-surface-subtle border border-border-subtle" />
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card variant="bordered" padding="md" className="h-full shadow-sm">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="p-3 bg-accent-light rounded-lg">
-                    <Users className="w-6 h-6 text-accent" aria-hidden="true" />
+            {calmDigest && calmDigest.items.length > 0 && (
+              <Card variant="bordered" padding="lg" className="border-border-subtle bg-white">
+                <CardHeader>
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                    <div>
+                      <CardTitle>{calmDigest.title}</CardTitle>
+                      <CardDescription>{calmDigest.summary}</CardDescription>
+                    </div>
+                    <Badge variant={calmDigest.attentionCount > 0 ? 'primary' : 'secondary'}>
+                      {calmDigest.attentionCount > 0 ? `${calmDigest.attentionCount} to review` : 'Quiet'}
+                    </Badge>
                   </div>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-text-primary mb-1">{stats ? `${stats.confirmedGuests} / ${stats.totalGuests}` : '—'}</p>
-                  <p className="text-sm text-text-secondary">RSVPs received</p>
-                  {responseRate !== null && <p className="text-xs text-text-tertiary mt-2">{responseRate}% replied so far</p>}
-                  {stats?.totalGuests === 0 && <p className="text-xs text-text-tertiary mt-2">Add guests to get started</p>}
-                </div>
-              </Card>
-
-              <Card variant="bordered" padding="md" className="h-full shadow-sm">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="p-3 bg-primary-light rounded-lg">
-                    <CheckCircle2 className="w-6 h-6 text-primary" aria-hidden="true" />
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    {calmDigest.items.slice(0, 6).map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => navigate(item.href)}
+                        className="rounded-lg border border-border-subtle bg-surface-subtle/35 px-4 py-4 text-left transition hover:border-primary/30 hover:bg-white"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold text-text-primary">{item.label}</p>
+                            <p className="mt-1 text-xs leading-5 text-text-secondary">{item.detail}</p>
+                          </div>
+                          <span className={`shrink-0 rounded-lg border px-2 py-0.5 text-[11px] font-medium ${
+                            item.priority === 'now'
+                              ? 'border-primary/25 bg-primary/10 text-primary'
+                              : item.priority === 'soon'
+                                ? 'border-border-subtle bg-white text-text-primary'
+                                : 'border-border-subtle bg-white text-text-tertiary'
+                          }`}>
+                            {CALM_DIGEST_PRIORITY_LABELS[item.priority]}
+                          </span>
+                        </div>
+                        <p className="mt-3 text-xs font-semibold text-primary">{item.cta}</p>
+                      </button>
+                    ))}
                   </div>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-text-primary mb-1">{stats ? stats.confirmedGuests : '—'}</p>
-                  <p className="text-sm text-text-secondary">Confirmed guests</p>
-                  {stats && stats.declinedGuests > 0 && <p className="text-xs text-text-tertiary mt-2">{stats.declinedGuests} declined</p>}
-                  {stats && stats.pendingGuests > 0 && stats.declinedGuests === 0 && <p className="text-xs text-text-tertiary mt-2">{stats.pendingGuests} pending</p>}
-                </div>
-              </Card>
-
-              <Card variant="bordered" padding="md" className="h-full shadow-sm">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="p-3 bg-primary-light rounded-lg">
-                    <Clock className="w-6 h-6 text-primary" aria-hidden="true" />
-                  </div>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-text-primary mb-1">{stats?.pendingGuests ?? '—'}</p>
-                  <p className="text-sm text-text-secondary">Awaiting response</p>
-                  {stats && stats.totalGuests > 0 && <p className="text-xs text-text-tertiary mt-2">of {stats.totalGuests} invited</p>}
-                </div>
-              </Card>
-
-              <Card variant="bordered" padding="md" className="h-full shadow-sm">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="p-3 bg-primary-light rounded-lg">
-                    <Calendar className="w-6 h-6 text-primary" aria-hidden="true" />
-                  </div>
-                </div>
-                <div>
-                  {stats?.daysUntilWedding !== null && stats?.daysUntilWedding !== undefined ? (
-                    <>
-                      <p className="text-2xl font-bold text-text-primary mb-1">
-                        {stats.daysUntilWedding > 0 ? stats.daysUntilWedding : stats.daysUntilWedding === 0 ? 'Today' : `+${Math.abs(stats.daysUntilWedding)}`}
-                      </p>
-                      <p className="text-sm text-text-secondary">
-                        {stats.daysUntilWedding > 0 ? 'Days until wedding' : stats.daysUntilWedding === 0 ? 'Wedding day!' : 'Days since wedding'}
-                      </p>
-                      {stats.weddingDate && <p className="text-xs text-text-tertiary mt-2">{formatOverviewWeddingDate(stats.weddingDate)}</p>}
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-2xl font-bold text-text-primary mb-1">—</p>
-                      <p className="text-sm text-text-secondary">Days until wedding</p>
-                      <Link to="/dashboard/settings" className="text-xs text-primary hover:text-primary-hover mt-2 block">
-                        Set your date
-                      </Link>
-                    </>
+                  {calmDigestPreview && (
+                    <div className="mt-5 rounded-lg border border-border-subtle bg-surface-subtle/35 px-4 py-4">
+                      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                        <div>
+                          <p className="text-xs font-medium text-text-tertiary">Digest preview</p>
+                          <h3 className="mt-2 text-base font-semibold text-text-primary">{calmDigestPreview.subject}</h3>
+                          <p className="mt-1 text-sm leading-6 text-text-secondary">
+                            {calmDigestPreview.cadenceLabel} · {calmDigestPreview.audienceLabel} · {calmDigestPreview.statusLabel}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => navigate(calmDigestPreview.reviewHref)}
+                          className="rounded-lg border border-border-subtle bg-white px-3 py-2 text-xs font-semibold text-text-secondary transition-colors hover:border-primary/30 hover:text-text-primary"
+                        >
+                          Review preferences
+                        </button>
+                      </div>
+                      <div className="mt-3 grid gap-2 md:grid-cols-2">
+                        {calmDigestPreview.previewLines.slice(0, 4).map((line) => (
+                          <p key={line} className="rounded-lg border border-border-subtle bg-white px-3 py-2 text-xs leading-5 text-text-secondary">
+                            {line}
+                          </p>
+                        ))}
+                      </div>
+                      <p className="mt-3 text-xs leading-5 text-text-tertiary">{calmDigestPreview.safetyNotes.join(' ')}</p>
+                    </div>
                   )}
-                </div>
+                </CardContent>
               </Card>
-            </div>
+            )}
 
-            <Card variant="bordered" padding="lg" className="shadow-sm">
+            {showMoreDetail && (
+            <Card variant="bordered" padding="lg">
               <CardHeader>
-                <CardTitle>Engagement dashboard</CardTitle>
-                <CardDescription>One place for RSVP momentum, guest reachability, registry readiness, and photo prompt signals.</CardDescription>
+                <CardTitle>Guest pulse</CardTitle>
+                <CardDescription>A quick read on replies, contact details, gifts, and photo sharing.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                  <div className="rounded-xl border border-border-subtle bg-surface-secondary/20 px-4 py-4">
-                    <p className="text-xs uppercase tracking-wide text-text-tertiary">Response rate</p>
+                  <div className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-4 py-4">
+                    <p className="text-xs font-medium text-text-tertiary">Replies</p>
                     <p className="mt-1 text-2xl font-bold text-text-primary">{responseRate ?? 0}%</p>
-                    <p className="mt-1 text-xs text-text-secondary">Guests who already replied</p>
+                    <p className="mt-1 text-xs text-text-secondary">Guests who have already answered</p>
                   </div>
-                  <div className="rounded-xl border border-border-subtle bg-surface-secondary/20 px-4 py-4">
-                    <p className="text-xs uppercase tracking-wide text-text-tertiary">Attendance rate</p>
+                  <div className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-4 py-4">
+                    <p className="text-xs font-medium text-text-tertiary">Coming</p>
                     <p className="mt-1 text-2xl font-bold text-text-primary">{attendanceRate ?? 0}%</p>
-                    <p className="mt-1 text-xs text-text-secondary">Invited guests currently marked attending</p>
+                    <p className="mt-1 text-xs text-text-secondary">Invited guests marked attending</p>
                   </div>
-                  <div className="rounded-xl border border-border-subtle bg-surface-secondary/20 px-4 py-4">
-                    <p className="text-xs uppercase tracking-wide text-text-tertiary">Contact coverage</p>
+                  <div className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-4 py-4">
+                    <p className="text-xs font-medium text-text-tertiary">Reachable guests</p>
                     <p className="mt-1 text-2xl font-bold text-text-primary">{contactCoverage ?? 0}%</p>
                     <p className="mt-1 text-xs text-text-secondary">Guests with email or phone on file</p>
                   </div>
-                  <div className="rounded-xl border border-border-subtle bg-surface-secondary/20 px-4 py-4">
-                    <p className="text-xs uppercase tracking-wide text-text-tertiary">Registry readiness</p>
+                  <div className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-4 py-4">
+                    <p className="text-xs font-medium text-text-tertiary">Registry</p>
                     <p className="mt-1 text-2xl font-bold text-text-primary">{stats?.registryItemCount ?? 0}</p>
                     <p className="mt-1 text-xs text-text-secondary">Live registry items ready for guests</p>
                   </div>
                 </div>
 
                 <div className="grid gap-3 lg:grid-cols-3">
-                  <div className="rounded-xl border border-border-subtle bg-white px-4 py-4">
-                    <p className="text-sm font-semibold text-text-primary">RSVP funnel</p>
+                  <div className="rounded-lg border border-border-subtle bg-white px-4 py-4">
+                    <p className="text-sm font-semibold text-text-primary">RSVPs</p>
                     <div className="mt-3 space-y-2 text-sm text-text-secondary">
                       <div className="flex items-center justify-between gap-3"><span>Confirmed</span><span className="font-semibold text-text-primary">{stats?.confirmedGuests ?? 0}</span></div>
                       <div className="flex items-center justify-between gap-3"><span>Declined</span><span className="font-semibold text-text-primary">{stats?.declinedGuests ?? 0}</span></div>
                       <div className="flex items-center justify-between gap-3"><span>Pending</span><span className="font-semibold text-text-primary">{stats?.pendingGuests ?? 0}</span></div>
                     </div>
                   </div>
-                  <div className="rounded-xl border border-border-subtle bg-white px-4 py-4">
-                    <p className="text-sm font-semibold text-text-primary">Registry + photos</p>
+                  <div className="rounded-lg border border-border-subtle bg-white px-4 py-4">
+                    <p className="text-sm font-semibold text-text-primary">Registry and photos</p>
                     <div className="mt-3 space-y-2 text-sm text-text-secondary">
                       <div className="flex items-center justify-between gap-3"><span>Registry items</span><span className="font-semibold text-text-primary">{stats?.registryItemCount ?? 0}</span></div>
                       <div className="flex items-center justify-between gap-3"><span>Photo albums</span><span className="font-semibold text-text-primary">{stats?.activePhotoAlbumCount ?? 0}/{stats?.photoAlbumCount ?? 0}</span></div>
                       <div className="flex items-center justify-between gap-3"><span>Guest prompts</span><span className="font-semibold text-text-primary">{interactiveSuggestions.length}</span></div>
                     </div>
                   </div>
-                  <div className="rounded-xl border border-border-subtle bg-white px-4 py-4">
-                    <p className="text-sm font-semibold text-text-primary">Where to push next</p>
+                  <div className="rounded-lg border border-border-subtle bg-white px-4 py-4">
+                    <p className="text-sm font-semibold text-text-primary">Worth checking</p>
                     <div className="mt-3 space-y-2 text-sm text-text-secondary">
                       <p>{(stats?.pendingGuests ?? 0) > 0 ? `${stats?.pendingGuests ?? 0} guests still need an RSVP reply.` : 'RSVP backlog is clear right now.'}</p>
-                      <p>{(stats?.contactableGuestCount ?? 0) < (stats?.totalGuests ?? 0) ? `${(stats?.totalGuests ?? 0) - (stats?.contactableGuestCount ?? 0)} guests still need contact coverage.` : 'Guest contact coverage looks complete.'}</p>
-                      <p>{(stats?.registryItemCount ?? 0) === 0 ? 'Registry still needs live items.' : 'Registry has enough live items to be guest-facing.'}</p>
+                      <p>{(stats?.contactableGuestCount ?? 0) < (stats?.totalGuests ?? 0) ? `${(stats?.totalGuests ?? 0) - (stats?.contactableGuestCount ?? 0)} guests still need email or phone details.` : 'Guest contact details look complete.'}</p>
+                      <p>{(stats?.registryItemCount ?? 0) === 0 ? 'Add a few registry items before guests visit.' : 'Registry is ready for guests.'}</p>
                     </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
+            )}
 
-            {draftBrief.length > 0 && (
-              <Card variant="bordered" padding="lg" className="shadow-sm">
+            {showMoreDetail && launchReadiness && (
+              <Card variant="bordered" padding="lg" className="border-border-subtle bg-surface">
                 <CardHeader>
-                  <CardTitle>Saved onboarding brief</CardTitle>
-                  <CardDescription>This is the structured concierge brief currently saved on the site.</CardDescription>
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                    <div>
+                      <CardTitle>Ready check</CardTitle>
+                      <CardDescription>{launchReadiness.headline}</CardDescription>
+                    </div>
+                    <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 px-4 py-3 text-right">
+                      <p className="text-xs font-medium text-text-tertiary">Ready</p>
+                      <p className="mt-1 text-3xl font-semibold text-text-primary">{launchReadiness.score}%</p>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {launchReadiness.nextItem && (
+                    <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-4">
+                      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <div>
+                      <p className="text-xs font-medium text-text-tertiary">Worth doing next</p>
+                          <p className="mt-1 text-base font-semibold text-text-primary">{launchReadiness.nextItem.label}</p>
+                          <p className="mt-1 text-sm text-text-secondary">{launchReadiness.nextItem.detail}</p>
+                        </div>
+                        <Button variant="accent" size="sm" onClick={() => navigate(launchReadiness.nextItem!.href)}>
+                          {launchReadiness.nextItem.nextAction}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {planningAssistant && planningAssistant.actions.length > 0 && (
+                    <div className="rounded-lg border border-border-subtle bg-white px-4 py-4">
+                      <p className="text-xs font-medium text-text-tertiary">Helpful next steps</p>
+                      <p className="mt-1 text-sm text-text-secondary">{planningAssistant.headline}</p>
+                      <div className="mt-3 grid gap-2 md:grid-cols-2">
+                        {planningAssistant.actions.map((action) => (
+                          <button
+                            key={action.id}
+                            type="button"
+                            onClick={() => navigate(action.href)}
+                            className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-3 text-left transition hover:border-primary/25 hover:bg-white"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <p className="text-sm font-semibold text-text-primary">{action.title}</p>
+                              <span className={`rounded-lg px-2 py-0.5 text-[11px] font-medium ${
+                                action.tone === 'urgent'
+                                  ? 'border border-border-subtle bg-white text-text-primary'
+                                  : action.tone === 'important'
+                                    ? 'border border-border-subtle bg-white text-text-secondary'
+                                    : 'border border-border-subtle bg-white text-text-tertiary'
+                              }`}>
+                                {action.tone === 'urgent' ? 'Now' : action.tone === 'important' ? 'Soon' : 'Ready'}
+                              </span>
+                            </div>
+                            <p className="mt-1 text-xs leading-5 text-text-secondary">{action.detail}</p>
+                            <p className="mt-2 text-xs font-semibold text-primary">{action.cta}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                    {launchReadiness.items.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => navigate(item.href)}
+                        className="rounded-lg border border-border-subtle bg-white px-4 py-4 text-left transition hover:border-primary/25"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-sm font-semibold text-text-primary">{item.label}</p>
+                          <span className={`rounded-lg px-2 py-0.5 text-xs font-medium ${
+                            item.status === 'ready'
+                              ? 'border border-border-subtle bg-surface-subtle text-text-secondary'
+                              : item.status === 'needs_attention'
+                                ? 'border border-border-subtle bg-white text-text-primary'
+                                : 'border border-border-subtle bg-surface-subtle text-text-tertiary'
+                          }`}>
+                            {item.score}%
+                          </span>
+                        </div>
+                        <p className="mt-2 text-xs leading-5 text-text-secondary">{item.nextAction}</p>
+                      </button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {showMoreDetail && invisibleSuggestions.length > 0 && (
+              <Card variant="bordered" padding="lg">
+                <CardHeader>
+                  <CardTitle>Quiet suggestions</CardTitle>
+                  <CardDescription>Small next moves based on the site, guests, photos, registry, messages, and vault.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                    {invisibleSuggestions.slice(0, 4).map((suggestion) => (
+                      <div key={suggestion.id} className="rounded-lg border border-border-subtle bg-white px-4 py-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <span className="rounded-lg border border-border-subtle bg-surface-subtle px-2 py-0.5 text-[11px] font-medium text-text-tertiary">
+                              {suggestion.priority === 'now' ? 'Do now' : suggestion.priority === 'next' ? 'Next' : 'Polish'}
+                            </span>
+                            <p className="mt-3 text-sm font-semibold text-text-primary">{suggestion.title}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => dismissInvisibleSuggestion(suggestion.id)}
+                            className="text-xs font-medium text-text-tertiary hover:text-text-primary"
+                            aria-label={`Hide ${suggestion.title}`}
+                          >
+                            Hide
+                          </button>
+                        </div>
+                        <p className="mt-2 min-h-[52px] text-xs leading-5 text-text-secondary">{suggestion.detail}</p>
+                        <Button
+                          variant={suggestion.priority === 'now' ? 'accent' : 'outline'}
+                          size="sm"
+                          className="mt-3 w-full"
+                          onClick={() => {
+                            if (suggestion.href) navigate(suggestion.href);
+                          }}
+                        >
+                          {suggestion.actionLabel}
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {showMoreDetail && draftBrief.length > 0 && (
+              <Card variant="bordered" padding="lg">
+                <CardHeader>
+                  <CardTitle>Wedding brief</CardTitle>
+                  <CardDescription>The answers currently shaping your wedding site.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     {draftBrief.map((item) => (
-                      <div key={item.id} className="rounded-xl border border-border-subtle bg-white px-4 py-3">
+                      <div key={item.id} className="rounded-lg border border-border-subtle bg-white px-4 py-3">
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <p className="text-xs uppercase tracking-wide text-text-tertiary">{item.label}</p>
+                            <p className="text-xs text-text-tertiary">{item.label}</p>
                             <p className="mt-1 text-sm text-text-primary">{item.value}</p>
                           </div>
                           <button
@@ -861,7 +1254,8 @@ export const DashboardOverview: React.FC = () => {
             )}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <Card variant="bordered" padding="lg" className="shadow-sm lg:col-span-2">
+            {showMoreDetail && (
+            <Card variant="bordered" padding="lg" className="lg:col-span-2">
               <CardHeader>
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -874,113 +1268,113 @@ export const DashboardOverview: React.FC = () => {
               <CardContent className="space-y-3">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-3">
-                    <p className="text-sm font-medium text-text-primary">Planning stays primary</p>
+                    <p className="text-sm font-medium text-text-primary">Planning first</p>
                     <p className="mt-1 text-xs text-text-secondary">Before the wedding, planning, guests, RSVP, seating, and live coordination stay in the foreground.</p>
                   </div>
                   <div className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-3">
-                    <p className="text-sm font-medium text-text-primary">Archive transition should be intentional</p>
-                    <p className="mt-1 text-xs text-text-secondary">After the event, the product should gradually quiet the urgent ops layer instead of pretending nothing changed.</p>
+                    <p className="text-sm font-medium text-text-primary">A calmer shift after the wedding</p>
+                    <p className="mt-1 text-xs text-text-secondary">After the event, planning prompts quiet down and memories become easier to revisit.</p>
                   </div>
                   <div className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-3">
-                    <p className="text-sm font-medium text-text-primary">Vault becomes more important later</p>
+                    <p className="text-sm font-medium text-text-primary">Vault grows over time</p>
                     <p className="mt-1 text-xs text-text-secondary">The anniversary vault and memory surfaces should start carrying more weight once the event is over.</p>
                   </div>
                 </div>
                 {archiveMode.isArchiveLike && (
-                  <div className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-4 space-y-3">
+                  <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 px-4 py-4 space-y-3">
                     <div>
-                      <p className="text-sm font-medium text-stone-900">Archive experience should take the lead now</p>
-                      <p className="mt-1 text-sm text-stone-700">This is where DayOf should start feeling less like a control panel and more like a keepsake: fewer urgent prompts, more story, photos, and anniversary memory surfaces.</p>
+                        <p className="text-sm font-medium text-text-primary">Your keepsake view is ready</p>
+                        <p className="mt-1 text-sm text-text-secondary">This is where dayof starts feeling less like planning and more like a keepsake: fewer urgent prompts, more story, photos, and anniversary memories.</p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                      <div className="rounded-lg border border-stone-200 bg-white px-3 py-3">
-                        <p className="text-xs font-medium uppercase tracking-wide text-stone-500">Come back next</p>
-                        <p className="mt-1 text-xs text-stone-700">Add one anniversary note while the wedding is still fresh.</p>
+                      <div className="rounded-lg border border-border-subtle bg-white px-3 py-3">
+                        <p className="text-xs font-medium text-text-tertiary">Come back next</p>
+                        <p className="mt-1 text-xs text-text-secondary">Add one anniversary note while the wedding is still fresh.</p>
                       </div>
-                      <div className="rounded-lg border border-stone-200 bg-white px-3 py-3">
-                        <p className="text-xs font-medium uppercase tracking-wide text-stone-500">Keep alive</p>
-                        <p className="mt-1 text-xs text-stone-700">Collect the best guest photos and keep the public story worth revisiting.</p>
+                      <div className="rounded-lg border border-border-subtle bg-white px-3 py-3">
+                        <p className="text-xs font-medium text-text-tertiary">Keep alive</p>
+                        <p className="mt-1 text-xs text-text-secondary">Collect the best guest photos and keep the public story worth revisiting.</p>
                       </div>
-                      <div className="rounded-lg border border-stone-200 bg-white px-3 py-3">
-                        <p className="text-xs font-medium uppercase tracking-wide text-stone-500">Return later</p>
-                        <p className="mt-1 text-xs text-stone-700">Let anniversaries unlock memories without rebuilding the whole context each year.</p>
+                      <div className="rounded-lg border border-border-subtle bg-white px-3 py-3">
+                        <p className="text-xs font-medium text-text-tertiary">Return later</p>
+                        <p className="mt-1 text-xs text-text-secondary">Let anniversaries unlock memories without rebuilding the whole context each year.</p>
                       </div>
                     </div>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/vault')}>Open anniversary vaults</Button>
+                      <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/vault')}>Open anniversary notes</Button>
                       <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/photos')}>Open photo sharing</Button>
-                      <Button variant="outline" size="sm" onClick={() => stats?.siteSlug && window.open(`/site/${stats.siteSlug}`, '_blank')}>Revisit public site</Button>
+                      <Button variant="outline" size="sm" onClick={() => stats?.siteSlug && window.open(`/site/${stats.siteSlug}`, '_blank', 'noopener,noreferrer')}>Revisit public site</Button>
                     </div>
                   </div>
                 )}
 
                 {archiveMode.isArchiveLike && (
-                  <div className="rounded-2xl border border-stone-300 bg-white px-4 py-4 space-y-4">
+                  <div className="rounded-lg border border-border-subtle bg-white px-4 py-4 space-y-4">
                     <div>
-                      <p className="text-sm font-semibold text-stone-900">Private archive home</p>
-                      <p className="mt-1 text-sm text-stone-700">Post-wedding, this should become the center of gravity: memories first, operations second.</p>
+                      <p className="text-sm font-semibold text-text-primary">Private archive home</p>
+                      <p className="mt-1 text-sm text-text-secondary">After the wedding, this becomes memories first and planning details second.</p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <div className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
-                        <p className="text-xs uppercase tracking-wide text-stone-500">Memory layer</p>
-                        <p className="mt-1 text-sm text-stone-800">Open anniversary vaults, add one note, and keep future milestones alive.</p>
+                      <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 px-4 py-3">
+                        <p className="text-xs text-text-tertiary">Memory layer</p>
+                        <p className="mt-1 text-sm text-text-secondary">Open anniversary notes, add one message, and keep future milestones alive.</p>
                       </div>
-                      <div className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
-                        <p className="text-xs uppercase tracking-wide text-stone-500">Photo memory</p>
-                        <p className="mt-1 text-sm text-stone-800">Review guest uploads and turn the best moments into a slideshow keepsake.</p>
+                      <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 px-4 py-3">
+                        <p className="text-xs text-text-tertiary">Photo memory</p>
+                        <p className="mt-1 text-sm text-text-secondary">Review guest uploads and turn the best moments into a slideshow keepsake.</p>
                       </div>
-                      <div className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-3">
-                        <p className="text-xs uppercase tracking-wide text-stone-500">Keepsake site</p>
-                        <p className="mt-1 text-sm text-stone-800">Revisit the public story without throwing planning urgency back in your face.</p>
+                      <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 px-4 py-3">
+                        <p className="text-xs text-text-tertiary">Keepsake site</p>
+                        <p className="mt-1 text-sm text-text-secondary">Revisit the public story without throwing planning urgency back in your face.</p>
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <Button variant="accent" size="sm" onClick={() => navigate('/dashboard/vault')}>Go to archive vaults</Button>
+                      <Button variant="accent" size="sm" onClick={() => navigate('/dashboard/vault')}>Open anniversary notes</Button>
                       <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/photos')}>Open photo memories</Button>
-                      <Button variant="outline" size="sm" onClick={() => stats?.siteSlug && window.open(`/site/${stats.siteSlug}`, '_blank')}>Open keepsake site</Button>
+                      <Button variant="outline" size="sm" onClick={() => stats?.siteSlug && window.open(`/site/${stats.siteSlug}`, '_blank', 'noopener,noreferrer')}>Open keepsake site</Button>
                     </div>
                   </div>
                 )}
 
                 {archiveMode.isArchiveLike && (
-                  <div className="rounded-2xl border border-sky-200 bg-sky-50/70 px-4 py-4 space-y-4">
+                  <div className="rounded-lg border border-border-subtle bg-surface-subtle/35 px-4 py-4 space-y-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="text-sm font-semibold text-sky-950">Post-wedding name change assistant</p>
-                        <p className="mt-1 text-xs uppercase tracking-wide text-sky-700">Free assistant · status vault · proof tracking</p>
-                        <p className="mt-1 text-base font-semibold text-sky-950">{nameChangeCard.headline}</p>
-                        <p className="mt-1 text-sm text-sky-900">{nameChangeCard.helperCopy}</p>
+                        <p className="text-sm font-semibold text-text-primary">Post-wedding name change assistant</p>
+                        <p className="mt-1 text-xs text-text-tertiary">Free assistant · saved status · document checklist</p>
+                        <p className="mt-1 text-base font-semibold text-text-primary">{nameChangeCard.headline}</p>
+                        <p className="mt-1 text-sm text-text-secondary">{nameChangeCard.helperCopy}</p>
                       </div>
                       <Badge variant="secondary">{nameChangeCard.badgeLabel}</Badge>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <div className="rounded-xl border border-sky-300 bg-sky-100/80 px-4 py-3">
-                        <p className="text-xs uppercase tracking-wide text-sky-700">Optional next step</p>
-                        <p className="mt-1 text-sm font-semibold text-sky-950">{nameChangeCard.optionalNextStep}</p>
-                        <p className="mt-1 text-xs text-sky-900">{nameChangeCard.statusLabel}</p>
+                      <div className="rounded-lg border border-border-subtle bg-white px-4 py-3">
+                        <p className="text-xs text-text-tertiary">Optional next step</p>
+                        <p className="mt-1 text-sm font-semibold text-text-primary">{nameChangeCard.optionalNextStep}</p>
+                        <p className="mt-1 text-xs text-text-secondary">{nameChangeCard.statusLabel}</p>
                         {nameChangeInsights.concreteResumeLabel ? (
-                          <p className="mt-1 text-xs text-sky-900">
+                          <p className="mt-1 text-xs text-text-secondary">
                             If you want a concrete place to pick back up,{' '}
                             <button
                               type="button"
-                              className="font-medium text-sky-950 underline underline-offset-2"
+                              className="font-medium text-primary underline underline-offset-2"
                               onClick={() => navigate(nameChangeCard.plannerHref)}
                             >
                               {nameChangeInsights.concreteResumeLabel}
                             </button>
                           </p>
                         ) : null}
-                        <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-sky-900">
+                        <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-text-secondary">
                           <button
                             type="button"
-                            className="rounded-full border border-sky-300 bg-white px-2 py-1 font-medium"
+                            className="rounded-lg border border-border-subtle bg-surface-subtle px-2 py-1 font-medium"
                             onClick={() => navigate(nameChangeInsights.milestoneSummaryHref)}
                           >
                             {nameChangeInsights.milestoneSummaryLabel}
                           </button>
                           <button
                             type="button"
-                            className="rounded-full border border-sky-300 bg-white px-2 py-1 font-medium"
+                            className="rounded-lg border border-border-subtle bg-surface-subtle px-2 py-1 font-medium"
                             onClick={() => navigate(nameChangeInsights.reminderSummaryHref)}
                           >
                             {nameChangeInsights.reminderSummaryLabel}
@@ -989,27 +1383,27 @@ export const DashboardOverview: React.FC = () => {
                       </div>
                       <button
                         type="button"
-                        className="rounded-xl border border-sky-200 bg-white px-4 py-3 text-left"
+                        className="rounded-lg border border-border-subtle bg-white px-4 py-3 text-left"
                         onClick={() => navigate(nameChangeCard.plannerHref)}
                       >
-                        <p className="text-xs uppercase tracking-wide text-sky-700">{NAME_CHANGE_LIFECYCLE_LABELS.coreChain}</p>
-                        <p className="mt-1 text-sm text-sky-950">{nameChangeInsights.coreChainLabel}</p>
+                        <p className="text-xs text-text-tertiary">{NAME_CHANGE_LIFECYCLE_LABELS.coreChain}</p>
+                        <p className="mt-1 text-sm text-text-primary">{nameChangeInsights.coreChainLabel}</p>
                       </button>
                       <button
                         type="button"
-                        className="rounded-xl border border-sky-200 bg-white px-4 py-3 text-left"
+                        className="rounded-lg border border-border-subtle bg-white px-4 py-3 text-left"
                         onClick={() => navigate(nameChangeCard.plannerHref)}
                       >
-                        <p className="text-xs uppercase tracking-wide text-sky-700">{NAME_CHANGE_LIFECYCLE_LABELS.followOn}</p>
-                        <p className="mt-1 text-sm text-sky-950">{nameChangeInsights.followOnLabel}</p>
+                        <p className="text-xs text-text-tertiary">{NAME_CHANGE_LIFECYCLE_LABELS.followOn}</p>
+                        <p className="mt-1 text-sm text-text-primary">{nameChangeInsights.followOnLabel}</p>
                       </button>
                       <button
                         type="button"
-                        className="rounded-xl border border-sky-200 bg-white px-4 py-3 text-left"
+                        className="rounded-lg border border-border-subtle bg-white px-4 py-3 text-left"
                         onClick={() => navigate(nameChangeInsights.downstreamHref)}
                       >
-                        <p className="text-xs uppercase tracking-wide text-sky-700">{NAME_CHANGE_LIFECYCLE_LABELS.downstream}</p>
-                        <p className="mt-1 text-sm text-sky-950">{nameChangeInsights.downstreamLabel}</p>
+                        <p className="text-xs text-text-tertiary">{NAME_CHANGE_LIFECYCLE_LABELS.downstream}</p>
+                        <p className="mt-1 text-sm text-text-primary">{nameChangeInsights.downstreamLabel}</p>
                       </button>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -1030,9 +1424,11 @@ export const DashboardOverview: React.FC = () => {
                 )}
               </CardContent>
             </Card>
+            )}
 
 
-            <Card variant="bordered" padding="lg" className="shadow-sm lg:col-span-2">
+            {showInternalProof && (
+            <Card variant="bordered" padding="lg" className="lg:col-span-2">
               <CardHeader>
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -1050,7 +1446,7 @@ export const DashboardOverview: React.FC = () => {
                   </div>
                   <div className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-3">
                     <p className="text-sm font-medium text-text-primary">Content recovery is shaping up</p>
-                    <p className="mt-1 text-xs text-text-secondary">Story, event details, FAQs, and registry links now have migration-focused recovery helpers instead of raw carryover only.</p>
+                    <p className="mt-1 text-xs text-text-secondary">Story, event details, FAQs, and registry links have extra helpers so older site details stay easy to reuse.</p>
                   </div>
                   <div className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-3">
                     <p className="text-sm font-medium text-text-primary">Publish is still review-based</p>
@@ -1059,13 +1455,15 @@ export const DashboardOverview: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
+            )}
 
-            <Card variant="bordered" padding="lg" className="shadow-sm lg:col-span-2">
+            {showInternalProof && (
+            <Card variant="bordered" padding="lg" className="lg:col-span-2">
               <CardHeader>
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <CardTitle>Planner command center</CardTitle>
-                    <CardDescription>DayOf is not just your website. It is the shared operating layer for the couple, the planner they invite, guests, RSVPs, seating, messages, and event-day coordination.</CardDescription>
+                    <CardTitle>Planner handoff</CardTitle>
+                    <CardDescription>Share the right pieces with the people helping you, without turning the whole wedding into a control panel.</CardDescription>
                   </div>
                   <Badge variant="warning">Planner-ready</Badge>
                 </div>
@@ -1077,8 +1475,8 @@ export const DashboardOverview: React.FC = () => {
                     <p className="mt-1 text-xs text-text-secondary">Run timeline updates, guest questions, check-in, and day-of alerts from one place the couple can share gracefully.</p>
                   </div>
                   <div className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-3">
-                    <p className="text-sm font-medium text-text-primary">RSVP + guest ops</p>
-                    <p className="mt-1 text-xs text-text-secondary">Move from invite status into live follow-up and arrival decisions without switching tools.</p>
+                    <p className="text-sm font-medium text-text-primary">RSVP + guests</p>
+                    <p className="mt-1 text-xs text-text-secondary">Move from invite status into follow-up and arrival decisions without switching tools.</p>
                   </div>
                   <div className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-3">
                     <p className="text-sm font-medium text-text-primary">Seating + live access</p>
@@ -1086,16 +1484,16 @@ export const DashboardOverview: React.FC = () => {
                   </div>
                 </div>
                 <div className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-2.5 text-xs text-text-secondary">
-                  Proof so far: planner access starts in Settings, planner workspace modes now exist across operations screens, and role boundaries are tighter than a generic shared login.
+                  Helper access starts in Settings, shared planning views exist across the main planning screens, and role boundaries are tighter than a generic shared login.
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Button variant="accent" size="md" onClick={() => navigate('/dashboard/coordinator')}>
                     <Radio className="w-4 h-4 mr-2" aria-hidden="true" />
-                    Open planner command view
+                    Open day-of view
                   </Button>
                   <Button variant="outline" size="md" onClick={() => navigate('/dashboard/planning')}>
                     <Radio className="w-4 h-4 mr-2" aria-hidden="true" />
-                    Open planning workspace
+                    Open planning
                   </Button>
                   <Button variant="outline" size="md" onClick={() => navigate('/dashboard/rsvp-board')}>
                     <Users className="w-4 h-4 mr-2" aria-hidden="true" />
@@ -1108,8 +1506,8 @@ export const DashboardOverview: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
-
-              <Card variant="bordered" padding="lg" className="shadow-sm">
+            )}
+              <Card variant="bordered" padding="lg">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
@@ -1175,8 +1573,8 @@ export const DashboardOverview: React.FC = () => {
                       </div>
 
                       {!stats?.isPublished && (
-                        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800">
-                          Going live makes this site visible to guests at your guest-facing DayOf URL. Until then, it should stay in draft or intentional private-preview mode only.
+                        <div className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2.5 text-xs text-text-secondary">
+                          Going live makes this site visible to guests at your guest-facing dayof URL. Until then, it should stay in draft or intentional private-preview mode only.
                         </div>
                       )}
 
@@ -1184,7 +1582,7 @@ export const DashboardOverview: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => firstPublishBlocker.action?.()}
-                          className="w-full rounded border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800 hover:bg-amber-100"
+                          className="w-full rounded border border-border-subtle bg-white px-3 py-1.5 text-xs font-medium text-text-primary hover:border-primary/25 hover:bg-surface-subtle"
                         >
                           Fix next: {firstPublishBlocker.label}
                         </button>
@@ -1193,20 +1591,21 @@ export const DashboardOverview: React.FC = () => {
                   </details>
                   <div className="flex flex-col sm:flex-row gap-3 pt-4">
                     {stats?.siteSlug && (
-                      <Button variant="accent" size="md" fullWidth onClick={() => window.open(`/site/${stats.siteSlug}`, '_blank')}>
+                      <Button variant="accent" size="md" fullWidth onClick={() => window.open(`/site/${stats.siteSlug}`, '_blank', 'noopener,noreferrer')}>
                         <ExternalLink className="w-5 h-5 mr-2" aria-hidden="true" />
                         {stats.isPublished ? 'Open live website' : 'Preview draft website'}
                       </Button>
                     )}
                     <Button variant="outline" size="md" fullWidth onClick={() => navigate('/dashboard/builder?photoTips=1')}>
                       <Edit className="w-5 h-5 mr-2" aria-hidden="true" />
-                      {stats?.isPublished ? 'Edit live website' : 'Edit draft before you go live'}
+                      {stats?.isPublished ? 'Edit published website' : 'Edit draft before you share'}
                     </Button>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card variant="bordered" padding="lg" className="shadow-sm">
+              {showMoreDetail && (
+              <Card variant="bordered" padding="lg">
                 <CardHeader>
                   <CardTitle>Recent RSVPs</CardTitle>
                   <CardDescription>Latest responses from your guests</CardDescription>
@@ -1216,7 +1615,7 @@ export const DashboardOverview: React.FC = () => {
                     <div className="space-y-4">
                       {stats.recentRsvps.map((rsvp) => (
                         <div key={rsvp.id} className="flex gap-4">
-                          <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${isAttendingRsvpStatus(rsvp.status) ? 'bg-success' : 'bg-error'}`} />
+                          <div className={`w-2 h-2 rounded-sm mt-2 flex-shrink-0 ${isAttendingRsvpStatus(rsvp.status) ? 'bg-success' : 'bg-error'}`} />
                           <div className="flex-1">
                             <p className="text-sm text-text-primary font-medium">{rsvp.guestName}</p>
                             <p className="text-xs text-text-secondary">{isAttendingRsvpStatus(rsvp.status) ? 'Confirmed attendance' : 'Declined'}</p>
@@ -1237,73 +1636,181 @@ export const DashboardOverview: React.FC = () => {
                   )}
                 </CardContent>
               </Card>
+              )}
 
-
-
-            <Card variant="bordered" padding="lg" className="shadow-sm">
-              <CardHeader>
-                <CardTitle>Proof baseline</CardTitle>
-                <CardDescription>Only measured product signals shown here. No guessed conversion metrics.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="rounded-lg border border-border-subtle bg-surface-secondary/30 px-3 py-2.5 text-xs text-text-secondary">
-                  This is the clean baseline before fuller analytics lands: response counts, registry readiness, photo setup, and guest prompts.
-                </div>
-                <div className="space-y-2.5">
-                  {analyticsBaseline.map((metric) => (
-                    <div key={metric.label} className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-2.5">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm font-medium text-text-primary">{metric.label}</p>
-                        <div className="flex items-center gap-2">
-                          <Badge variant={metric.source === 'measured' ? 'success' : 'warning'}>{metric.source === 'measured' ? 'Measured' : 'Derived'}</Badge>
-                          <span className="text-sm font-semibold text-text-primary">{metric.value}</span>
-                        </div>
-                      </div>
-                      <p className="mt-1 text-xs text-text-secondary">{metric.detail}</p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-
-              <Card variant="bordered" padding="lg" className="shadow-sm">
+              {showMoreDetail && (
+              <Card variant="bordered" padding="lg">
                 <CardHeader>
-                  <CardTitle>Recent site activity</CardTitle>
-                  <CardDescription>Latest local save, publish, and rollback events from this browser session history.</CardDescription>
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                    <div>
+                      <CardTitle>Website and invite analytics</CardTitle>
+                      <CardDescription>{websiteInviteAnalytics.summary}</CardDescription>
+                    </div>
+                    <Badge variant={websiteInviteAnalytics.status === 'ready' ? 'success' : websiteInviteAnalytics.status === 'empty' ? 'secondary' : 'warning'}>
+                      {websiteInviteAnalytics.measuredCount} usable · {websiteInviteAnalytics.plannedCount} planned
+                    </Badge>
+                  </div>
                 </CardHeader>
-                <CardContent>
-                  {recentSiteActivity.length === 0 ? (
-                    <div className="text-sm text-text-secondary">No local site activity recorded here yet.</div>
-                  ) : (
-                    <div className="space-y-3">
-                      {recentSiteActivity.map((activity) => (
-                        <div key={activity.id} className="rounded-lg border border-border-subtle bg-surface-secondary/30 px-3 py-2.5">
-                          <div className="flex items-center justify-between gap-3">
-                            <div>
-                              <p className="text-sm font-medium text-text-primary capitalize">{activity.action === 'publish' ? 'Published live site' : activity.action === 'rollback' ? 'Restored older version' : 'Saved draft'}</p>
-                              <p className="mt-0.5 text-[11px] text-text-tertiary">{formatOverviewRelativeTime(activity.createdAtISO)} • {activity.actor}</p>
-                            </div>
-                            <Badge variant={activity.action === 'publish' ? 'success' : activity.action === 'rollback' ? 'warning' : 'secondary'}>
-                              {activity.action}
-                            </Badge>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                    {websiteInviteAnalytics.signals.map((signal) => (
+                      <div key={signal.id} className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-xs font-semibold text-text-tertiary">{signal.label}</p>
+                            <p className="mt-1 text-xl font-semibold text-text-primary">{signal.value}</p>
                           </div>
+                          <Badge variant={signal.state === 'measured' ? 'success' : signal.state === 'derived' ? 'warning' : 'secondary'}>
+                            {signal.state === 'measured' ? 'Measured' : signal.state === 'derived' ? 'Derived' : 'Planned'}
+                          </Badge>
+                        </div>
+                        <p className="mt-2 text-xs leading-5 text-text-secondary">{signal.detail}</p>
+                        <p className="mt-2 text-[11px] leading-4 text-text-tertiary">{signal.privacy}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="rounded-lg border border-border-subtle bg-surface-secondary/25 px-3 py-2 text-xs leading-5 text-text-secondary">
+                    Analytics shown here are limited to owner-visible action counts. Visit tracking, invite opens, and QR scans stay marked planned until privacy-safe event instrumentation exists.
+                  </div>
+                  <div className="rounded-lg border border-border-subtle bg-surface px-3 py-3">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-text-primary">Guest journey funnel</p>
+                        <p className="mt-1 text-xs text-text-secondary">{websiteInviteAnalyticsFunnel.summary}</p>
+                      </div>
+                      <Badge variant={websiteInviteAnalyticsFunnel.status === 'ready' ? 'success' : websiteInviteAnalyticsFunnel.status === 'empty' ? 'secondary' : 'warning'}>
+                        {websiteInviteAnalyticsFunnel.measuredSteps} real · {websiteInviteAnalyticsFunnel.plannedSteps} planned
+                      </Badge>
+                    </div>
+                    <div className="mt-3 grid gap-2 md:grid-cols-5">
+                      {websiteInviteAnalyticsFunnel.steps.map((step) => (
+                        <div key={step.id} className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-2">
+                          <p className="text-[11px] font-semibold text-text-tertiary">{step.label}</p>
+                          <p className="mt-1 text-sm font-semibold text-text-primary">{step.value}</p>
+                          <p className="mt-1 text-[11px] leading-4 text-text-secondary">{step.detail}</p>
                         </div>
                       ))}
                     </div>
-                  )}
-                  <div className="mt-3 rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-2 text-xs text-text-secondary">
-                    This is a lightweight audit trail for support and confidence. Durable cross-device logging is still next.
+                    <div className="mt-3 space-y-1">
+                      {websiteInviteAnalyticsFunnel.guardrails.map((guardrail) => (
+                        <p key={guardrail} className="text-[11px] leading-4 text-text-tertiary">{guardrail}</p>
+                      ))}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
+              )}
 
-              <Card variant="bordered" padding="lg" className="shadow-sm">
+              {showInternalProof && (
+                <>
+                  <Card variant="bordered" padding="lg">
+                    <CardHeader>
+                      <CardTitle>Proof baseline</CardTitle>
+                      <CardDescription>Only measured product signals shown here. No guessed conversion metrics.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="rounded-lg border border-border-subtle bg-surface-secondary/30 px-3 py-2.5 text-xs text-text-secondary">
+                        This is the clean baseline before fuller analytics lands: response counts, registry readiness, photo setup, and guest prompts.
+                      </div>
+                      <div className="space-y-2.5">
+                        {analyticsBaseline.map((metric) => (
+                          <div key={metric.label} className="rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-2.5">
+                            <div className="flex items-center justify-between gap-3">
+                              <p className="text-sm font-medium text-text-primary">{metric.label}</p>
+                              <div className="flex items-center gap-2">
+                                <Badge variant={metric.source === 'measured' ? 'success' : 'warning'}>{metric.source === 'measured' ? 'Measured' : 'Derived'}</Badge>
+                                <span className="text-sm font-semibold text-text-primary">{metric.value}</span>
+                              </div>
+                            </div>
+                            <p className="mt-1 text-xs text-text-secondary">{metric.detail}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card variant="bordered" padding="lg">
+                    <CardHeader>
+                      <CardTitle>Recent site activity</CardTitle>
+                      <CardDescription>Latest local save, publish, and rollback events from this browser session history.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {recentSiteActivity.length === 0 ? (
+                        <div className="text-sm text-text-secondary">No local site activity recorded here yet.</div>
+                      ) : (
+                        <div className="space-y-3">
+                          {recentSiteActivity.map((activity) => (
+                            <div key={activity.id} className="rounded-lg border border-border-subtle bg-surface-secondary/30 px-3 py-2.5">
+                              <div className="flex items-center justify-between gap-3">
+                                <div>
+                                  <p className="text-sm font-medium text-text-primary capitalize">{activity.action === 'publish' ? 'Published live site' : activity.action === 'rollback' ? 'Restored older version' : 'Saved draft'}</p>
+                                  <p className="mt-0.5 text-[11px] text-text-tertiary">{formatOverviewRelativeTime(activity.createdAtISO)} • {activity.actor}</p>
+                                </div>
+                                <Badge variant={activity.action === 'publish' ? 'success' : activity.action === 'rollback' ? 'warning' : 'secondary'}>
+                                  {activity.action}
+                                </Badge>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <div className="mt-3 rounded-lg border border-border-subtle bg-surface-secondary/20 px-3 py-2 text-xs text-text-secondary">
+                        This gives you a simple recent history here. Deeper shared activity history lives in Settings.
+                      </div>
+                    </CardContent>
+                  </Card>
+                </>
+              )}
+
+              {showMoreDetail && (
+              <Card variant="bordered" padding="lg">
                 <CardHeader>
                   <CardTitle>Interactive suggestions</CardTitle>
                   <CardDescription>Latest guest prompt responses (moderation)</CardDescription>
                 </CardHeader>
                 <CardContent>
+                  <div className="mb-5 rounded-lg border border-border-subtle bg-surface-secondary/25 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-text-primary">Poll and quiz results</p>
+                        <p className="mt-0.5 text-xs text-text-secondary">Guest votes grouped by interactive widget.</p>
+                      </div>
+                      <Radio className="h-4 w-4 text-primary" />
+                    </div>
+                    {interactiveLoading ? (
+                      <div className="mt-4 text-sm text-text-secondary">Loading guest votes…</div>
+                    ) : interactiveVoteSummaries.length === 0 ? (
+                      <div className="mt-4 text-sm text-text-secondary">No poll or quiz votes yet.</div>
+                    ) : (
+                      <div className="mt-4 space-y-4">
+                        {interactiveVoteSummaries.slice(0, 4).map((summary) => (
+                          <div key={summary.key} className="rounded-lg border border-border-subtle bg-surface px-3 py-3">
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <p className="text-xs font-semibold text-text-tertiary">{summary.widgetKind}</p>
+                                <p className="mt-0.5 text-sm font-medium text-text-primary">{formatInteractiveVoteLabel(summary.widgetId)}</p>
+                              </div>
+                              <Badge variant="secondary">{summary.total} vote{summary.total === 1 ? '' : 's'}</Badge>
+                            </div>
+                            <div className="mt-3 space-y-2">
+                              {summary.options.slice(0, 5).map((option) => (
+                                <div key={option.optionId}>
+                                  <div className="flex items-center justify-between gap-3 text-xs text-text-secondary">
+                                    <span>{formatInteractiveVoteLabel(option.optionId)}</span>
+                                    <span>{option.percentage}%</span>
+                                  </div>
+                                  <div className="mt-1 h-1.5 overflow-hidden rounded-sm bg-surface-secondary">
+                                    <div className="h-full rounded-sm bg-primary" style={{ width: `${option.percentage}%` }} />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                            <p className="mt-2 text-[11px] text-text-tertiary">Last vote {formatOverviewRelativeTime(summary.latestAt)}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   {interactiveLoading ? (
                     <div className="text-sm text-text-secondary">Loading suggestions…</div>
                   ) : interactiveSuggestions.length === 0 ? (
@@ -1330,6 +1837,7 @@ export const DashboardOverview: React.FC = () => {
                   )}
                 </CardContent>
               </Card>
+              )}
             </div>
           </>
         )}

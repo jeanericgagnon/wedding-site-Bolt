@@ -15,13 +15,10 @@ CREATE TABLE IF NOT EXISTS app_error_logs (
   user_id uuid,
   metadata jsonb NOT NULL DEFAULT '{}'::jsonb
 );
-
 CREATE INDEX IF NOT EXISTS idx_app_error_logs_created_at ON app_error_logs(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_app_error_logs_fingerprint_created_at ON app_error_logs(fingerprint, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_app_error_logs_site_created_at ON app_error_logs(wedding_site_id, created_at DESC);
-
 ALTER TABLE app_error_logs ENABLE ROW LEVEL SECURITY;
-
 DROP POLICY IF EXISTS "Owners can view app error logs for their sites" ON app_error_logs;
 CREATE POLICY "Owners can view app error logs for their sites"
   ON app_error_logs FOR SELECT
@@ -34,7 +31,6 @@ CREATE POLICY "Owners can view app error logs for their sites"
       AND ws.user_id = auth.uid()
     )
   );
-
 DROP POLICY IF EXISTS "Service role can manage app error logs" ON app_error_logs;
 CREATE POLICY "Service role can manage app error logs"
   ON app_error_logs FOR ALL

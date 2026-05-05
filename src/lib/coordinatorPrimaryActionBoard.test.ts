@@ -15,7 +15,7 @@ describe('coordinatorPrimaryActionBoard', () => {
       statusLabel: 'Resolve the next door exception',
       tone: 'warning',
       destinationLabel: 'Check-in · review only',
-      executionLabel: 'Focuses the lane immediately',
+      followThroughLabel: 'Opens the right area now',
       detailLabel: 'Alex Rivera needs a coordinator decision before check-in.',
     });
   });
@@ -33,7 +33,7 @@ describe('coordinatorPrimaryActionBoard', () => {
       statusLabel: 'Prepare the next event transition',
       tone: 'ready',
       destinationLabel: 'Run-of-show timeline',
-      executionLabel: 'Auto-runs the next event live',
+      followThroughLabel: 'Can move the next event live',
       detailLabel: 'Ceremony is the next unfinished event in the run-of-show.',
     });
   });

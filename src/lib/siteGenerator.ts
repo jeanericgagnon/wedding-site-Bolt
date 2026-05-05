@@ -54,9 +54,9 @@ function normalizeQuestion(input: string): string {
 
 function buildDefaultTravelNotes(data: OnboardingData): string {
   if (data.wedding_location?.trim()) {
-    return `Travel notes for ${data.wedding_location.trim()} will be shared here as plans come together.`;
+    return `We will add travel notes for ${data.wedding_location.trim()} as the weekend details come together.`;
   }
-  return 'Travel notes will be shared here as plans come together.';
+  return 'We will add travel notes as the weekend details come together.';
 }
 
 function buildRegistryIntro(hasLinks: boolean): string {
@@ -87,17 +87,17 @@ function generateSiteConfig(data: OnboardingData): SiteConfig {
 
   const hero: HeroContent = {
     headline: displayName,
-    subheadline: data.wedding_date
+    subheadline: isValidIsoDate(data.wedding_date)
       ? `We're getting married on ${formatDate(data.wedding_date)}.`
       : "We're getting married.",
   };
 
   const details: DetailsContent = {
-    venue_name: data.venue || data.wedding_location || 'Venue details coming soon',
-    venue_address: data.wedding_location || 'Location details will be shared here.',
-    ceremony_time: data.ceremony_time || 'Time to be shared',
+    venue_name: data.venue || data.wedding_location || 'Venue details are being finalized.',
+    venue_address: data.wedding_location || 'Location details are being finalized.',
+    ceremony_time: data.ceremony_time || 'Time to follow',
     reception_time: data.reception_time || 'To follow',
-    attire: data.attire || 'Dress code details will be shared here closer to the wedding.',
+    attire: data.attire || 'Dress code details are coming together.',
     notes: data.our_story || undefined,
   };
 
@@ -105,10 +105,10 @@ function generateSiteConfig(data: OnboardingData): SiteConfig {
   if (data.ceremony_time || data.venue || data.wedding_location) {
     scheduleItems.push({
       id: 'ceremony',
-      time: data.ceremony_time || 'Time to be shared',
+      time: data.ceremony_time || 'Time to follow',
       title: 'Ceremony',
       description: 'We’ll gather and celebrate together.',
-      location: data.venue || data.wedding_location || 'Location details coming soon',
+      location: data.venue || data.wedding_location || 'Location details are being finalized.',
     });
   }
   if (data.reception_time || data.venue || data.wedding_location) {
@@ -117,7 +117,7 @@ function generateSiteConfig(data: OnboardingData): SiteConfig {
       time: data.reception_time || 'To follow',
       title: 'Reception',
       description: 'Dinner, dancing, and time together after the ceremony.',
-      location: data.venue || data.wedding_location || 'Location details coming soon',
+      location: data.venue || data.wedding_location || 'Location details are being finalized.',
     });
   }
 
@@ -130,10 +130,10 @@ function generateSiteConfig(data: OnboardingData): SiteConfig {
     : [];
   const travel: TravelContent = {
     hotels: parsedHotels,
-    parking: data.parking || 'Parking details and arrival notes will be shared here closer to the wedding.',
+    parking: data.parking || 'Parking details and arrival notes are coming together.',
     transportation: hasSubstance(data.hotel_recommendations) || hasSubstance(data.parking)
       ? buildDefaultTravelNotes(data)
-      : 'Travel details will be shared here if guests need them.',
+      : 'Travel details will be added if guests need them.',
   };
 
   const registryLinks = (data.registry_links
@@ -145,9 +145,9 @@ function generateSiteConfig(data: OnboardingData): SiteConfig {
   };
 
   const defaultFaqs = [
-    buildFaqEntry('attire', 'What should I wear?', data.attire || 'Dress code details will be shared here closer to the wedding.'),
-    buildFaqEntry('parking', 'Will there be parking?', data.parking || 'Parking details and arrival notes will be shared here closer to the wedding.'),
-    buildFaqEntry('stay', 'Where should I stay?', data.hotel_recommendations || (data.wedding_location?.trim() ? `Recommended places to stay near ${data.wedding_location.trim()} will be shared here.` : 'Recommended places to stay will be shared here.')),
+    buildFaqEntry('attire', 'What should I wear?', data.attire || 'Dress code details are coming together.'),
+    buildFaqEntry('parking', 'Will there be parking?', data.parking || 'Parking details and arrival notes are coming together.'),
+    buildFaqEntry('stay', 'Where should I stay?', data.hotel_recommendations || (data.wedding_location?.trim() ? `We will add recommended places to stay near ${data.wedding_location.trim()}.` : 'We will add recommended places to stay.')),
   ].filter((item): item is NonNullable<typeof item> => Boolean(item));
 
   const customFaqs = parseCustomFaqs(data.custom_faqs);
@@ -156,9 +156,9 @@ function generateSiteConfig(data: OnboardingData): SiteConfig {
   };
 
   const rsvp: RsvpContent = {
-    deadline_text: data.rsvp_deadline
+    deadline_text: isValidIsoDate(data.rsvp_deadline)
       ? `Please reply by ${formatDate(data.rsvp_deadline)}`
-      : 'RSVP timing will be shared here once it is set.',
+      : 'RSVP timing will be added once it is set.',
     meal_options: data.meal_options ? parseMealOptions(data.meal_options) : undefined,
     message: 'We look forward to celebrating with you.',
   };
@@ -223,8 +223,8 @@ function generateSiteConfig(data: OnboardingData): SiteConfig {
 export { generateSiteConfig };
 
 function formatDate(isoDate: string): string {
-  const date = new Date(isoDate);
-  if (Number.isNaN(date.getTime())) return 'the wedding day';
+  const date = parseValidIsoDate(isoDate);
+  if (!date) return 'the date we choose';
 
   return date.toLocaleDateString('en-US', {
     weekday: 'long',
@@ -232,6 +232,29 @@ function formatDate(isoDate: string): string {
     month: 'long',
     day: 'numeric',
   });
+}
+
+function isValidIsoDate(isoDate?: string | null): isoDate is string {
+  return Boolean(parseValidIsoDate(isoDate));
+}
+
+function parseValidIsoDate(isoDate?: string | null): Date | null {
+  if (!isoDate) return null;
+  const match = isoDate.match(/^(\d{4})-(\d{2})-(\d{2})(?:T.*)?$/);
+  if (!match) return null;
+  const [, yearPart, monthPart, dayPart] = match;
+  const year = Number(yearPart);
+  const month = Number(monthPart);
+  const day = Number(dayPart);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  ) {
+    return null;
+  }
+  return date;
 }
 
 function parseHotelRecommendations(text: string): TravelContent['hotels'] {

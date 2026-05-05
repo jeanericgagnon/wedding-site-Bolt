@@ -23,6 +23,7 @@ function createWeddingData(): WeddingDataV1 {
     rsvp: { enabled: true },
     theme: {},
     media: { gallery: [] },
+    meta: { createdAtISO: '', updatedAtISO: '' },
   };
 }
 
@@ -60,6 +61,28 @@ describe('RsvpSection', () => {
     expect(screen.getByText('You’re invited')).toBeInTheDocument();
     expect(screen.getByText('RSVP')).toBeInTheDocument();
     expect(screen.getByText('Join Alex & Jordan in celebrating their wedding')).toBeInTheDocument();
+  });
+
+  it('falls back to an accessible RSVP heading when persisted title settings are blank', () => {
+    const data = createWeddingData();
+
+    const { rerender } = render(
+      <RsvpSection
+        data={data}
+        instance={makeInstance({ title: { value: '   ', source: 'builder' } })}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'RSVP' })).toBeInTheDocument();
+
+    rerender(
+      <RsvpInline
+        data={data}
+        instance={makeInstance({ title: '' })}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'RSVP' })).toBeInTheDocument();
   });
 
   it('keeps inline RSVP couple copy truthful when one persisted partner name is whitespace only', () => {

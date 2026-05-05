@@ -25,6 +25,10 @@ vi.mock('../lib/supabase', () => ({
   },
 }));
 
+vi.mock('../lib/activeSite', () => ({
+  resolveActiveSiteForUser: vi.fn(),
+}));
+
 vi.mock('./services/builderProjectService', () => ({
   builderProjectService: {
     loadProject: vi.fn(),

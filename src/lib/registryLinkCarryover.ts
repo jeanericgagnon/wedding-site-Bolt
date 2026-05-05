@@ -246,7 +246,7 @@ export function mergeRegistrySourceLabels(
   for (const link of merged) {
     const existingLink = existingByUrl.get(link.url);
     const sourceLabel = link.sourceLabel ?? existingLink?.sourceLabel;
-    const nextLink = sourceLabel ? { ...link, sourceLabel } : { url: link.url };
+    const nextLink: CarryoverRegistryLink = sourceLabel ? { ...link, sourceLabel } : { url: link.url };
     const existingMerged = mergedByUrl.get(link.url);
     if (!existingMerged) {
       if (
@@ -349,7 +349,7 @@ function extractRegistryUrlTokens(line: string): CarryoverRegistryToken[] {
 export function carryOverRegistryLinks(raw: string | null | undefined): CarryoverRegistryLink[] {
   if (!raw?.trim()) return [];
   const carried = new Map<string, CarryoverRegistryLink>();
-  return raw
+  const tokens: Array<CarryoverRegistryLink & { sourceLabelMode?: 'explicit' | 'inferred' }> = raw
     .split('\n')
     .flatMap((line) => {
       let pendingSourceLabel: string | undefined;
@@ -382,35 +382,34 @@ export function carryOverRegistryLinks(raw: string | null | undefined): Carryove
           return [];
         });
     })
-    .map((token) => {
+    .map((token): (CarryoverRegistryLink & { sourceLabelMode?: 'explicit' | 'inferred' }) | null => {
       const url = normalizeUrl(token.raw);
+      if (!url) return null;
       const inferredSourceLabel = inferSourceLabel(url);
-      return url ? {
+      return {
         url,
         sourceLabel: token.sourceLabel ?? inferredSourceLabel,
         sourceLabelMode: token.sourceLabelMode ?? (inferredSourceLabel ? 'inferred' : undefined),
-      } : null;
+      };
     })
-    .filter((token): token is CarryoverRegistryLink & { sourceLabelMode?: 'explicit' | 'inferred' } => Boolean(token))
-    .map((token) => {
-      const existing = carried.get(token.url);
-      if (!existing) {
-        carried.set(token.url, token);
-        return null;
-      }
+    .filter((token): token is CarryoverRegistryLink & { sourceLabelMode?: 'explicit' | 'inferred' } => Boolean(token));
 
-      const existingMode = (existing as CarryoverRegistryLink & { sourceLabelMode?: 'explicit' | 'inferred' }).sourceLabelMode;
-      const existingInferredLabel = inferSourceLabel(existing.url);
-      if (
-        (!existing.sourceLabel && token.sourceLabel)
-        || (token.sourceLabel && isWeakInferredSourceLabel(existing.url, existing.sourceLabel) && token.sourceLabel !== existing.sourceLabel)
-        || (existingMode !== 'explicit' && token.sourceLabelMode === 'explicit' && token.sourceLabel)
-      ) {
-        carried.set(token.url, { ...existing, sourceLabel: token.sourceLabel });
-      }
+  for (const token of tokens) {
+    const existing = carried.get(token.url);
+    if (!existing) {
+      carried.set(token.url, token);
+      continue;
+    }
 
-      return null;
-    })
-    .filter(() => false)
-    .concat(Array.from(carried.values()).map((token) => finalizeCarryoverRegistryLink(token)));
+    const existingMode = (existing as CarryoverRegistryLink & { sourceLabelMode?: 'explicit' | 'inferred' }).sourceLabelMode;
+    if (
+      (!existing.sourceLabel && token.sourceLabel)
+      || (token.sourceLabel && isWeakInferredSourceLabel(existing.url, existing.sourceLabel) && token.sourceLabel !== existing.sourceLabel)
+      || (existingMode !== 'explicit' && token.sourceLabelMode === 'explicit' && token.sourceLabel)
+    ) {
+      carried.set(token.url, { ...existing, sourceLabel: token.sourceLabel });
+    }
+  }
+
+  return Array.from(carried.values()).map((token) => finalizeCarryoverRegistryLink(token));
 }

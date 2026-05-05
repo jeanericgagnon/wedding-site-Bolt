@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Loader2, AlertCircle, ArrowLeft, RefreshCw } from 'lucide-react';
+import { Loader2, AlertCircle, ArrowLeft, RefreshCw, LayoutTemplate } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { BuilderShell } from './components/BuilderShell';
@@ -13,6 +13,7 @@ import { demoWeddingSite } from '../lib/demoData';
 import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
 import { getTemplatePack } from './constants/builderTemplatePacks';
 import { readSetupDraft } from '../lib/setupDraft';
+import { resolveActiveSiteForUser } from '../lib/activeSite';
 import { applySetupDraftToWeddingData, hasMeaningfulSetupDraft } from './utils/setupDraftHydration';
 
 function createDemoBuilderProject(): BuilderProject {
@@ -172,10 +173,11 @@ export const BuilderPage: React.FC = () => {
         return;
       }
 
+      const activeSite = await resolveActiveSiteForUser(userId);
       const { data: siteData, error: siteError } = await supabase
         .from('wedding_sites')
         .select('*')
-        .eq('user_id', userId)
+        .eq('id', activeSite?.id ?? '')
         .maybeSingle();
 
       if (siteError) throw siteError;
@@ -219,8 +221,8 @@ export const BuilderPage: React.FC = () => {
 
       setProject(nextProject);
       setWeddingData(nextWeddingData);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load builder');
+    } catch {
+      setError('Couldn’t load the site editor right now. Please refresh and try again.');
     } finally {
       setLoading(false);
     }
@@ -250,10 +252,10 @@ export const BuilderPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-50">
+      <div className="h-screen flex items-center justify-center bg-surface-subtle">
         <div className="text-center">
-          <Loader2 size={32} className="animate-spin text-rose-500 mx-auto mb-3" />
-          <p className="text-sm text-gray-500">Loading your site editor…</p>
+          <Loader2 size={32} className="animate-spin text-primary mx-auto mb-3" />
+          <p className="text-sm text-text-secondary">Loading your site editor…</p>
         </div>
       </div>
     );
@@ -261,28 +263,28 @@ export const BuilderPage: React.FC = () => {
 
   if (error === 'no-site') {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-50">
+      <div className="h-screen flex items-center justify-center bg-surface-subtle">
         <div className="text-center max-w-sm px-4">
-          <div className="w-14 h-14 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-2xl">💍</span>
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg border border-border-subtle bg-white">
+            <LayoutTemplate size={24} className="text-primary" />
           </div>
-          <h2 className="text-lg font-semibold text-gray-800 mb-2">No website yet</h2>
-          <p className="text-sm text-gray-500 mb-6">
-            Finish setup first and Dayof will create a strong first version of your website for you.
+          <h2 className="text-lg font-semibold text-text-primary mb-2">No website yet</h2>
+          <p className="text-sm text-text-secondary mb-6">
+            Finish setup first and dayof will create a strong first version of your website for you.
           </p>
-          <p className="text-xs text-gray-400 mb-6">That first draft will give you something real to refine instead of a blank editor.</p>
+          <p className="text-xs text-text-tertiary mb-6">That first draft will give you something real to refine instead of a blank editor.</p>
           <button
             onClick={() => navigate('/setup/names')}
-            className="inline-flex items-center px-5 py-2.5 bg-rose-600 text-white text-sm font-medium rounded-xl hover:bg-rose-700 transition-colors"
+            className="inline-flex items-center rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
           >
             Start setup
           </button>
           <button
             onClick={() => navigate('/dashboard')}
-            className="mt-3 flex items-center gap-1.5 mx-auto text-sm text-gray-400 hover:text-gray-600 transition-colors"
+            className="mt-3 flex items-center gap-1.5 mx-auto text-sm text-text-tertiary hover:text-text-primary transition-colors"
           >
             <ArrowLeft size={14} />
-            Back to dashboard
+            Back to wedding home
           </button>
         </div>
       </div>
@@ -291,28 +293,28 @@ export const BuilderPage: React.FC = () => {
 
   if (error || !project) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-50">
+      <div className="h-screen flex items-center justify-center bg-surface-subtle">
         <div className="text-center max-w-sm px-4">
-          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertCircle size={24} className="text-red-500" />
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg border border-border-subtle bg-white">
+            <AlertCircle size={24} className="text-primary" />
           </div>
-          <h2 className="text-base font-semibold text-gray-800 mb-2">Site editor unavailable</h2>
-          <p className="text-sm text-gray-500 mb-5">{error ?? 'Unable to load your project right now.'}</p>
-          <p className="text-xs text-gray-400 mb-5">If this keeps happening, go back to the dashboard and reopen your site editor.</p>
+          <h2 className="text-base font-semibold text-text-primary mb-2">Site editor unavailable</h2>
+          <p className="text-sm text-text-secondary mb-5">We couldn’t load your site editor right now.</p>
+          <p className="text-xs text-text-tertiary mb-5">If this keeps happening, go back to your wedding home and reopen the site editor.</p>
           <div className="flex flex-col items-center gap-3">
             <button
               onClick={() => user && loadBuilderProject(user.id)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-600 text-white text-sm font-medium rounded-lg hover:bg-rose-700 transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-hover transition-colors"
             >
               <RefreshCw size={14} />
               Try again
             </button>
             <button
               onClick={() => navigate('/dashboard')}
-              className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 transition-colors"
+              className="inline-flex items-center gap-1.5 text-sm text-text-tertiary hover:text-text-primary transition-colors"
             >
               <ArrowLeft size={14} />
-              Back to dashboard
+              Back to wedding home
             </button>
           </div>
         </div>

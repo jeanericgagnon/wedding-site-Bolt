@@ -1,6 +1,12 @@
 import { supabase } from '../../../lib/supabase';
 import { RegistryItem, RegistryPreview, normalizeRegistryComparisonUrl, normalizeRegistryTitleForComparison, sanitizeRegistryQuantityState } from './registryTypes';
 
+const REGISTRY_PREVIEW_ERROR_COPY = 'Couldn’t fill in gift details from that link. You can still add the item by hand.';
+const REGISTRY_LOAD_ERROR_COPY = 'Couldn’t load registry items. Please refresh and try again.';
+const REGISTRY_SAVE_ERROR_COPY = 'Couldn’t save this gift. Please try again.';
+const REGISTRY_DELETE_ERROR_COPY = 'Couldn’t remove that gift. Please try again.';
+const REGISTRY_PURCHASE_ERROR_COPY = 'Couldn’t update that gift right now. Please try again.';
+
 function normalizeRegistryItem(item: RegistryItem): RegistryItem {
   const quantityState = sanitizeRegistryQuantityState(item.quantity_purchased, item.quantity_needed);
   return {
@@ -19,7 +25,7 @@ export async function fetchRegistryItems(weddingSiteId: string): Promise<Registr
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true });
 
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(REGISTRY_LOAD_ERROR_COPY);
   return ((data ?? []) as RegistryItem[]).map(normalizeRegistryItem);
 }
 
@@ -52,7 +58,7 @@ export async function createRegistryItem(
     .select()
     .single();
 
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(REGISTRY_SAVE_ERROR_COPY);
   return normalizeRegistryItem(data as RegistryItem);
 }
 
@@ -67,13 +73,13 @@ export async function updateRegistryItem(
     .select()
     .single();
 
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(REGISTRY_SAVE_ERROR_COPY);
   return normalizeRegistryItem(data as RegistryItem);
 }
 
 export async function deleteRegistryItem(id: string): Promise<void> {
   const { error } = await supabase.from('registry_items').delete().eq('id', id);
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(REGISTRY_DELETE_ERROR_COPY);
 }
 
 export async function reorderRegistryItems(
@@ -117,29 +123,19 @@ export async function fetchUrlPreview(url: string, forceRefresh = false): Promis
     accessToken = undefined;
   }
 
-  let resp = await invoke(accessToken);
-  if (resp.status === 401 || resp.status === 403) {
-    // Retry with anon-only headers in case local session token expired.
-    resp = await invoke();
+  let resp: Response;
+  try {
+    resp = await invoke(accessToken);
+    if (resp.status === 401 || resp.status === 403) {
+      // Retry with anon-only headers in case local session token expired.
+      resp = await invoke();
+    }
+  } catch {
+    throw new Error(REGISTRY_PREVIEW_ERROR_COPY);
   }
 
   if (!resp.ok) {
-    let errorMessage = `HTTP ${resp.status}`;
-    let errorDetails = '';
-    try {
-      const text = await resp.text();
-      const errorJson = JSON.parse(text);
-      errorMessage = errorJson.error || errorJson.message || text || errorMessage;
-      errorDetails = errorJson.details || '';
-    } catch {
-      // keep fallback errorMessage
-    }
-
-    if (errorDetails) {
-      throw new Error(`${errorMessage}\n\nDetails: ${errorDetails}`);
-    }
-
-    throw new Error(errorMessage);
+    throw new Error(REGISTRY_PREVIEW_ERROR_COPY);
   }
 
   const result = await resp.json() as RegistryPreview;
@@ -147,6 +143,30 @@ export async function fetchUrlPreview(url: string, forceRefresh = false): Promis
 }
 
 export async function publicFetchRegistryItems(weddingSiteId: string): Promise<RegistryItem[]> {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+
+  if (supabaseUrl && anonKey) {
+    try {
+      const response = await fetch(`${supabaseUrl}/functions/v1/public-registry-items`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Apikey: anonKey,
+          Authorization: `Bearer ${anonKey}`,
+        },
+        body: JSON.stringify({ wedding_site_id: weddingSiteId }),
+      });
+
+      if (response.ok) {
+        const payload = await response.json() as { items?: RegistryItem[] };
+        if (Array.isArray(payload.items)) return payload.items.map(normalizeRegistryItem);
+      }
+    } catch {
+      // Fall back to direct anon select for local/dev projects that allow it.
+    }
+  }
+
   const { data, error } = await supabase
     .from('registry_items')
     .select('*')
@@ -154,7 +174,7 @@ export async function publicFetchRegistryItems(weddingSiteId: string): Promise<R
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true });
 
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(REGISTRY_LOAD_ERROR_COPY);
   return ((data ?? []) as RegistryItem[]).map(normalizeRegistryItem);
 }
 
@@ -168,7 +188,7 @@ export async function ownerMarkPurchased(
     p_increment_by: incrementBy,
   });
 
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(REGISTRY_PURCHASE_ERROR_COPY);
   return normalizeRegistryItem(data as RegistryItem);
 }
 
@@ -182,7 +202,7 @@ export async function publicIncrementPurchase(
     p_increment_by: 1,
   });
 
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(REGISTRY_PURCHASE_ERROR_COPY);
   return normalizeRegistryItem(data as RegistryItem);
 }
 

@@ -26,7 +26,7 @@ export const NAME_CHANGE_DOCUMENT_CONTRACTS: NameChangeDocumentContractDefinitio
     requiredFor: ['marriage'],
     preferredForAutofill: true,
     extractionFields: ['first_name', 'last_name', 'spouse_last_name', 'issuance_date', 'county', 'certificate_number'],
-    acceptedSignals: ['filed certificate record', 'certified copy', 'county clerk issuance', 'county recorder issuance', 'marriage certificate metadata'],
+    acceptedSignals: ['filed certificate record', 'certified copy', 'county clerk issuance', 'county recorder issuance', 'marriage certificate details'],
   },
   {
     kind: 'court_order',
@@ -34,7 +34,7 @@ export const NAME_CHANGE_DOCUMENT_CONTRACTS: NameChangeDocumentContractDefinitio
     requiredFor: ['court_order'],
     preferredForAutofill: true,
     extractionFields: ['first_name', 'middle_name', 'last_name', 'case_number', 'court_order_date'],
-    acceptedSignals: ['signed court order', 'filed order metadata'],
+    acceptedSignals: ['signed court order', 'filed order details'],
   },
   {
     kind: 'current_drivers_license',
@@ -42,7 +42,7 @@ export const NAME_CHANGE_DOCUMENT_CONTRACTS: NameChangeDocumentContractDefinitio
     requiredFor: ['all'],
     preferredForAutofill: true,
     extractionFields: ['first_name', 'middle_name', 'last_name', 'issuance_date'],
-    acceptedSignals: ['state id metadata', 'license issue date'],
+    acceptedSignals: ['state id details', 'license issue date'],
   },
   {
     kind: 'current_passport',
@@ -50,7 +50,7 @@ export const NAME_CHANGE_DOCUMENT_CONTRACTS: NameChangeDocumentContractDefinitio
     requiredFor: ['all'],
     preferredForAutofill: true,
     extractionFields: ['first_name', 'middle_name', 'last_name', 'issuance_date'],
-    acceptedSignals: ['passport book metadata', 'passport issue date'],
+    acceptedSignals: ['passport book details', 'passport issue date'],
   },
   {
     kind: 'social_security_card',
@@ -58,7 +58,7 @@ export const NAME_CHANGE_DOCUMENT_CONTRACTS: NameChangeDocumentContractDefinitio
     requiredFor: ['all'],
     preferredForAutofill: false,
     extractionFields: ['first_name', 'middle_name', 'last_name'],
-    acceptedSignals: ['ssa card metadata'],
+    acceptedSignals: ['ssa card details'],
   },
   {
     kind: 'benefits_account_record',
@@ -66,7 +66,7 @@ export const NAME_CHANGE_DOCUMENT_CONTRACTS: NameChangeDocumentContractDefinitio
     requiredFor: [],
     preferredForAutofill: false,
     extractionFields: [],
-    acceptedSignals: ['401k statement metadata', 'beneficiary designation metadata', 'retirement account metadata'],
+    acceptedSignals: ['401k statement details', 'beneficiary designation details', 'retirement account details'],
   },
   {
     kind: 'insurance_card',
@@ -74,7 +74,7 @@ export const NAME_CHANGE_DOCUMENT_CONTRACTS: NameChangeDocumentContractDefinitio
     requiredFor: [],
     preferredForAutofill: false,
     extractionFields: [],
-    acceptedSignals: ['member ID card metadata', 'insurance card metadata', 'payer card metadata'],
+    acceptedSignals: ['member ID card details', 'insurance card details', 'payer card details'],
   },
   {
     kind: 'professional_license_record',
@@ -82,7 +82,7 @@ export const NAME_CHANGE_DOCUMENT_CONTRACTS: NameChangeDocumentContractDefinitio
     requiredFor: [],
     preferredForAutofill: false,
     extractionFields: [],
-    acceptedSignals: ['license card metadata', 'license certificate metadata', 'credential record metadata'],
+    acceptedSignals: ['license card details', 'license certificate details', 'credential record details'],
   },
   {
     kind: 'birth_certificate',
@@ -90,7 +90,7 @@ export const NAME_CHANGE_DOCUMENT_CONTRACTS: NameChangeDocumentContractDefinitio
     requiredFor: ['all'],
     preferredForAutofill: false,
     extractionFields: ['first_name', 'middle_name', 'last_name'],
-    acceptedSignals: ['vital record metadata'],
+    acceptedSignals: ['vital record details'],
   },
   {
     kind: 'proof_of_address',
@@ -98,7 +98,7 @@ export const NAME_CHANGE_DOCUMENT_CONTRACTS: NameChangeDocumentContractDefinitio
     requiredFor: ['all'],
     preferredForAutofill: false,
     extractionFields: ['county'],
-    acceptedSignals: ['utility bill metadata', 'residence document metadata'],
+    acceptedSignals: ['utility bill details', 'residence document details'],
   },
   {
     kind: 'other',
@@ -106,7 +106,7 @@ export const NAME_CHANGE_DOCUMENT_CONTRACTS: NameChangeDocumentContractDefinitio
     requiredFor: [],
     preferredForAutofill: false,
     extractionFields: [],
-    acceptedSignals: ['freeform supporting metadata'],
+    acceptedSignals: ['freeform supporting details'],
   },
 ];
 

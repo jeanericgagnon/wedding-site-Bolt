@@ -31,6 +31,7 @@ export const DashboardRsvpBoard: React.FC = () => {
   const [rows, setRows] = useState<GuestRow[]>([]);
   const [filter, setFilter] = useState<RsvpBoardFilter>('all');
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const fetchBoard = async (resolvedSiteId?: string | null) => {
     const useSiteId = resolvedSiteId ?? siteId;
@@ -38,12 +39,46 @@ export const DashboardRsvpBoard: React.FC = () => {
 
     const { data, error } = await supabase
       .from('guests')
-      .select('id, rsvp_status, invited_to_ceremony, invited_to_reception, invited_event_ids, checked_in_at, email, phone, notes, invitation_sent_at, reminder_last_sent_at')
+      .select('id, rsvp_status, invited_to_ceremony, invited_to_reception, checked_in_at, email, phone, notes, invitation_sent_at, reminder_last_sent_at')
       .eq('wedding_site_id', useSiteId);
 
     if (error) throw error;
-    setRows((data as GuestRow[]) || []);
+
+    let invitedEventIdsByGuest = new Map<string, string[]>();
+
+    const { data: events, error: eventsError } = await supabase
+      .from('itinerary_events')
+      .select('id')
+      .eq('wedding_site_id', useSiteId);
+
+    if (!eventsError) {
+      const eventIds = ((events ?? []) as Array<{ id: string }>).map((event) => event.id);
+      if (eventIds.length > 0) {
+        const { data: invites, error: invitesError } = await supabase
+          .from('event_invitations')
+          .select('event_id, guest_id')
+          .in('event_id', eventIds);
+
+        if (!invitesError) {
+          invitedEventIdsByGuest = ((invites ?? []) as Array<{ event_id: string; guest_id: string }>).reduce(
+            (acc, invite) => {
+              const current = acc.get(invite.guest_id) ?? [];
+              current.push(invite.event_id);
+              acc.set(invite.guest_id, current);
+              return acc;
+            },
+            new Map<string, string[]>(),
+          );
+        }
+      }
+    }
+
+    setRows(((data as GuestRow[]) || []).map((row) => ({
+      ...row,
+      invited_event_ids: invitedEventIdsByGuest.get(row.id) ?? [],
+    })));
     setLastUpdated(new Date());
+    setLoadError(null);
   };
 
   useEffect(() => {
@@ -69,6 +104,11 @@ export const DashboardRsvpBoard: React.FC = () => {
         if (!mounted) return;
         setSiteId(id);
         if (id) await fetchBoard(id);
+      } catch {
+        if (mounted) {
+          setRows([]);
+          setLoadError('We could not load RSVP activity right now. Refresh or try again in a minute.');
+        }
       } finally {
         if (mounted) setLoading(false);
       }
@@ -81,7 +121,9 @@ export const DashboardRsvpBoard: React.FC = () => {
   useEffect(() => {
     if (loading) return;
     const timer = window.setInterval(() => {
-      void fetchBoard();
+      void fetchBoard().catch(() => {
+        setLoadError('We could not refresh RSVP activity right now. The board will try again automatically.');
+      });
     }, 15000);
     return () => window.clearInterval(timer);
   }, [loading, siteId]);
@@ -109,34 +151,39 @@ export const DashboardRsvpBoard: React.FC = () => {
   return (
     <DashboardLayout currentPage="guests">
       <div className="max-w-5xl mx-auto space-y-6">
-        <div className="rounded-2xl border border-border/40 bg-white shadow-[0_6px_20px_rgba(15,23,42,0.06)] p-5">
-          <h1 className="text-2xl font-semibold text-text-primary">Live RSVP view</h1>
-          <p className="text-sm text-text-secondary mt-1">Auto-refreshes every 15 seconds so you can keep an eye on guest replies in real time.</p>
+        <div className="rounded-lg border border-border-subtle bg-white p-5">
+          <h1 className="text-2xl font-semibold text-text-primary">Guest replies</h1>
+          <p className="text-sm text-text-secondary mt-1">Refreshes every few moments so new replies are easy to spot while plans are changing.</p>
           {lastUpdated && (
             <p className="text-xs text-text-tertiary mt-2">Last refreshed: {lastUpdated.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' })}</p>
           )}
           <div className="mt-3 flex flex-wrap gap-2">
-            <Link to="/dashboard/coordinator" className="rounded border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">Open coordinator mode</Link>
-            <Link to="/dashboard/guests" className="rounded border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">Open guest ops</Link>
-            <button onClick={() => setFilter((prev) => prev === 'pending' ? 'all' : 'pending')} className="rounded border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">{filter === 'pending' ? 'Show all guests' : 'Focus pending'}</button>
+            <Link to="/dashboard/coordinator" className="rounded border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">Open day-of view</Link>
+            <Link to="/dashboard/guests" className="rounded border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">Open guests</Link>
+            <button onClick={() => setFilter((prev) => prev === 'pending' ? 'all' : 'pending')} className="rounded border border-border px-3 py-1.5 text-xs text-text-secondary hover:border-primary/40 hover:text-primary">{filter === 'pending' ? 'Show everyone' : 'Show guests waiting to reply'}</button>
           </div>
-          <div className="mt-3 rounded-lg border border-border/35 bg-surface-subtle/30 px-3 py-2 text-xs text-text-secondary">
-            Use this to spot guests who are not following the default ceremony + reception path, especially when welcome events, brunch, or reception-only invitations need their own follow-up.
+          {loadError && (
+            <div className="mt-3 rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2 text-xs text-text-primary">
+              {loadError}
+            </div>
+          )}
+          <div className="mt-3 rounded-lg border border-border-subtle bg-surface-subtle/30 px-3 py-2 text-xs text-text-secondary">
+            Helpful when some guests are invited to welcome events, brunch, or reception-only plans and need different follow-up.
           </div>
         </div>
 
-        <div className="rounded-xl border border-border/35 bg-surface-subtle/30 px-3 py-2 text-xs text-text-secondary">
-          Fallback states are now tracked separately so pending guests who need offline help do not get mixed together with clean digital replies. Invite lifecycle is also tracked separately so sent, reminded, and manual-handled guests are easier to triage.
+        <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-3 py-2 text-xs text-text-secondary">
+          Guests who need personal follow-up are kept separate from clean online replies, so your pending list stays easier to trust.
         </div>
 
-        <div className="rounded-2xl border border-border/35 bg-white shadow-[0_6px_20px_rgba(15,23,42,0.06)] p-4">
-          <p className="text-sm font-semibold text-text-primary">Per-event response structure</p>
+        <div className="rounded-lg border border-border-subtle bg-white p-4">
+          <p className="text-sm font-semibold text-text-primary">Replies by event</p>
           <div className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2">
             {['Ceremony + reception', 'Ceremony only', 'Reception only'].map((label) => {
               const count = visibleRows.filter((row) => getPerEventRsvpState({ invitedToCeremony: row.invited_to_ceremony, invitedToReception: row.invited_to_reception, invitedEventIds: row.invited_event_ids }).summary === label).length;
-              return <div key={label} className="rounded-lg border border-border/35 bg-surface-subtle/30 px-3 py-2"><p className="text-[11px] text-text-tertiary">{label}</p><p className="text-sm font-semibold text-text-primary">{loading ? '—' : count}</p></div>;
+              return <div key={label} className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-3 py-2"><p className="text-[11px] text-text-tertiary">{label}</p><p className="text-sm font-semibold text-text-primary">{loading ? '—' : count}</p></div>;
             })}
-            <div className="rounded-lg border border-border/35 bg-surface-subtle/30 px-3 py-2"><p className="text-[11px] text-text-tertiary">Event-specific invites</p><p className="text-sm font-semibold text-text-primary">{loading ? '—' : visibleRows.filter((row) => (row.invited_event_ids?.length ?? 0) > 0).length}</p></div>
+            <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-3 py-2"><p className="text-[11px] text-text-tertiary">Special event invites</p><p className="text-sm font-semibold text-text-primary">{loading ? '—' : visibleRows.filter((row) => (row.invited_event_ids?.length ?? 0) > 0).length}</p></div>
           </div>
         </div>
 
@@ -145,20 +192,20 @@ export const DashboardRsvpBoard: React.FC = () => {
             { label: 'Total', value: stats.total },
             { label: 'Confirmed', value: stats.confirmed },
             { label: 'Pending', value: stats.pending },
-            { label: 'Manual follow-up', value: stats.manualFollowUp },
-            { label: 'Handled manually', value: stats.manualHandled },
-            { label: 'No contact path', value: stats.unreachable },
+            { label: 'Personal follow-up', value: stats.manualFollowUp },
+            { label: 'Handled personally', value: stats.manualHandled },
+            { label: 'Needs contact info', value: stats.unreachable },
             { label: 'Checked in', value: stats.checkedIn },
           ].map((item) => (
-            <div key={item.label} className="rounded-xl border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.05)] p-4">
-              <p className="text-xs text-text-tertiary uppercase tracking-wide">{item.label}</p>
+            <div key={item.label} className="rounded-lg border border-border-subtle bg-white p-4">
+              <p className="text-xs text-text-tertiary">{item.label}</p>
               <p className="text-2xl font-semibold text-text-primary mt-1">{loading ? '—' : item.value}</p>
             </div>
           ))}
         </div>
 
-        <div className="rounded-2xl border border-border/35 bg-white shadow-[0_6px_20px_rgba(15,23,42,0.06)] p-4">
-          <p className="text-sm font-semibold text-text-primary">Invite lifecycle snapshot</p>
+        <div className="rounded-lg border border-border-subtle bg-white p-4">
+          <p className="text-sm font-semibold text-text-primary">Invitation progress</p>
           <div className="mt-3 grid grid-cols-1 md:grid-cols-4 gap-2">
             {['not-invited', 'invited', 'reminded', 'manual-handled'].map((state) => {
               const count = visibleRows.filter((row) => getInviteLifecycleState({
@@ -167,7 +214,12 @@ export const DashboardRsvpBoard: React.FC = () => {
                 rsvpStatus: row.rsvp_status,
                 manualHandled: Boolean(row.notes?.toLowerCase().includes('[manual rsvp]')),
               }).state === state).length;
-              return <div key={state} className="rounded-lg border border-border/35 bg-surface-subtle/30 px-3 py-2"><p className="text-[11px] text-text-tertiary">{state.replace(/-/g, ' ')}</p><p className="text-sm font-semibold text-text-primary">{loading ? '—' : count}</p></div>;
+              const label = state === 'not-invited'
+                ? 'not sent yet'
+                : state === 'manual-handled'
+                  ? 'handled personally'
+                  : state.replace(/-/g, ' ');
+              return <div key={state} className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-3 py-2"><p className="text-[11px] text-text-tertiary">{label}</p><p className="text-sm font-semibold text-text-primary">{loading ? '—' : count}</p></div>;
             })}
           </div>
         </div>

@@ -32,7 +32,6 @@ BEGIN
         CHECK (payment_status IN ('payment_required', 'active', 'canceled'));
   END IF;
 END $$;
-
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -42,7 +41,6 @@ BEGIN
     ALTER TABLE public.wedding_sites ADD COLUMN stripe_customer_id text;
   END IF;
 END $$;
-
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -52,7 +50,6 @@ BEGIN
     ALTER TABLE public.wedding_sites ADD COLUMN stripe_checkout_session_id text;
   END IF;
 END $$;
-
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -62,17 +59,14 @@ BEGIN
     ALTER TABLE public.wedding_sites ADD COLUMN paid_at timestamptz;
   END IF;
 END $$;
-
 -- Existing rows that already exist are considered active (grandfathered)
 UPDATE public.wedding_sites
 SET payment_status = 'active'
 WHERE payment_status = 'payment_required';
-
 -- Index for webhook lookups by checkout session
 CREATE INDEX IF NOT EXISTS idx_wedding_sites_stripe_checkout_session_id
   ON public.wedding_sites(stripe_checkout_session_id)
   WHERE stripe_checkout_session_id IS NOT NULL;
-
 -- Index for webhook lookups by customer
 CREATE INDEX IF NOT EXISTS idx_wedding_sites_stripe_customer_id
   ON public.wedding_sites(stripe_customer_id)

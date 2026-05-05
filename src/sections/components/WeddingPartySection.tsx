@@ -3,6 +3,7 @@ import { WeddingDataV1 } from '../../types/weddingData';
 import { SectionInstance } from '../../types/layoutConfig';
 import { Users } from 'lucide-react';
 import { readBuilderValue } from '../../lib/weddingProfile';
+import { getSafePublicImageUrl } from '../publicLinks';
 
 interface Props {
   data: WeddingDataV1;
@@ -34,22 +35,26 @@ function getPartyMembers(settings: SectionInstance['settings']): { bridal: Party
   return { bridal, groomsmen };
 }
 
-const MemberCard: React.FC<{ member: PartyMember; accent?: boolean }> = ({ member, accent }) => (
-  <div className="flex flex-col items-center text-center gap-3">
-    <div className={`w-20 h-20 rounded-full flex items-center justify-center text-xl font-light border-2 ${accent ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-surface-subtle text-text-tertiary'}`}>
-      {member.photo ? (
-        <img src={member.photo} alt={member.name} className="w-full h-full rounded-full object-cover" />
-      ) : (
-        member.name.charAt(0).toUpperCase()
-      )}
+const MemberCard: React.FC<{ member: PartyMember; accent?: boolean }> = ({ member, accent }) => {
+  const photo = getSafePublicImageUrl(member.photo);
+
+  return (
+    <div className="flex flex-col items-center text-center gap-3">
+      <div className={`w-20 h-20 rounded-full flex items-center justify-center text-xl font-light border-2 ${accent ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-surface-subtle text-text-tertiary'}`}>
+        {photo ? (
+          <img src={photo} alt={member.name} className="w-full h-full rounded-full object-cover" />
+        ) : (
+          member.name.charAt(0).toUpperCase()
+        )}
+      </div>
+      <div>
+        <p className="font-medium text-text-primary text-sm">{member.name}</p>
+        <p className="text-xs text-primary mt-0.5">{member.role}</p>
+        {member.note && <p className="text-xs text-text-secondary mt-1">{member.note}</p>}
+      </div>
     </div>
-    <div>
-      <p className="font-medium text-text-primary text-sm">{member.name}</p>
-      <p className="text-xs text-primary mt-0.5">{member.role}</p>
-      {member.note && <p className="text-xs text-text-secondary mt-1">{member.note}</p>}
-    </div>
-  </div>
-);
+  );
+};
 
 export const WeddingPartySection: React.FC<Props> = ({ data, instance }) => {
   const { settings } = instance;
@@ -67,7 +72,7 @@ export const WeddingPartySection: React.FC<Props> = ({ data, instance }) => {
       <div className="max-w-5xl mx-auto">
         {settings.showTitle !== false && (
           <div className="text-center mb-14">
-            <p className="text-xs uppercase tracking-[0.3em] text-primary mb-3 font-medium">
+            <p className="text-sm text-primary mb-3 font-light">
               {eyebrow}
             </p>
             <h2 className="text-4xl font-light text-text-primary">
@@ -82,7 +87,7 @@ export const WeddingPartySection: React.FC<Props> = ({ data, instance }) => {
 
         <div className="space-y-14">
           <div>
-            <h3 className="text-center text-xs uppercase tracking-[0.25em] font-medium text-text-tertiary mb-8">
+            <h3 className="text-center text-sm font-medium text-text-tertiary mb-8">
               {bridalTitle}
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-8 justify-items-center">
@@ -95,7 +100,7 @@ export const WeddingPartySection: React.FC<Props> = ({ data, instance }) => {
           <div className="border-t border-border" />
 
           <div>
-            <h3 className="text-center text-xs uppercase tracking-[0.25em] font-medium text-text-tertiary mb-8">
+            <h3 className="text-center text-sm font-medium text-text-tertiary mb-8">
               {groomTitle}
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-8 justify-items-center">

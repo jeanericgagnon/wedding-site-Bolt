@@ -7,10 +7,119 @@ import { publicFetchRegistryItems, publicIncrementPurchase } from '../../pages/d
 import type { RegistryItem } from '../../pages/dashboard/registry/registryTypes';
 import { sanitizeRegistryQuantityState } from '../../pages/dashboard/registry/registryTypes';
 import { readBuilderValue } from '../../lib/weddingProfile';
+import { getSafePublicImageUrl, getSafePublicWebUrl } from '../publicLinks';
 
 interface Props {
   data: WeddingDataV1;
   instance: SectionInstance;
+}
+
+const REGISTRY_PURCHASE_MEMORY_KEY = 'dayof_registry_purchase_memory_v1';
+const REGISTRY_PURCHASE_COOKIE = 'dayof_registry_purchases_v1';
+const REGISTRY_PURCHASE_COOKIE_MAX_AGE = 60 * 60 * 24 * 180;
+
+const BROKEN_REGISTRY_TITLE_PATTERNS = [
+  /^page not found$/i,
+  /^404\b/i,
+  /^not found$/i,
+  /^sorry\b.*(?:couldn.t|could not|not find)/i,
+  /^access denied$/i,
+  /^gift from [a-z0-9.-]+\.[a-z]{2,}$/i,
+];
+
+export function isGuestReadyRegistryItem(item: Pick<RegistryItem, 'item_name' | 'item_type'>): boolean {
+  if (item.item_type === 'cash_fund') return true;
+
+  const title = String(item.item_name ?? '').replace(/\s+/g, ' ').trim();
+  if (!title) return false;
+  return !BROKEN_REGISTRY_TITLE_PATTERNS.some((pattern) => pattern.test(title));
+}
+
+function cleanPublicRegistryTitle(value: string): string {
+  return value
+    .replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ')
+    .replace(/^(?:Amazon(?:\.com)?|Target|Walmart|Etsy|Crate\s*&\s*Barrel|Williams\s*Sonoma)\s*:\s*/i, '')
+    .trim();
+}
+
+function cleanPublicRegistryMerchant(value?: string | null): string | null {
+  const normalized = String(value ?? '').replace(/\s+/g, ' ').trim();
+  if (!normalized) return null;
+  if (/^[A-Z]\s+Co$/i.test(normalized)) return null;
+  if (/^unknown$/i.test(normalized)) return null;
+  return normalized;
+}
+
+export function isUsableRegistryImageUrl(url?: string | null): boolean {
+  return Boolean(getSafePublicImageUrl(url));
+}
+
+function getSafePublicRegistryUrl(url?: string | null): string | null {
+  return getSafePublicWebUrl(url) || null;
+}
+
+function normalizePublicRegistryLink(link: { id: string; label?: string; url: string }) {
+  const url = getSafePublicRegistryUrl(link.url);
+  return url ? { ...link, url } : null;
+}
+
+function normalizePublicRegistryLinks(links: Array<{ id: string; label?: string; url: string }>) {
+  return links
+    .map(normalizePublicRegistryLink)
+    .filter((link): link is { id: string; label?: string; url: string } => Boolean(link));
+}
+
+function readRegistryPurchaseMemory(): string[] {
+  if (typeof window === 'undefined') return [];
+  const ids = new Set<string>();
+
+  try {
+    const raw = window.localStorage.getItem(REGISTRY_PURCHASE_MEMORY_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    if (Array.isArray(parsed)) {
+      parsed.forEach((value) => {
+        if (typeof value === 'string' && value.trim()) ids.add(value);
+      });
+    }
+  } catch {
+    // Ignore corrupt client memory.
+  }
+
+  try {
+    const cookie = document.cookie
+      .split(';')
+      .map((part) => part.trim())
+      .find((part) => part.startsWith(`${REGISTRY_PURCHASE_COOKIE}=`));
+    const raw = cookie ? decodeURIComponent(cookie.slice(REGISTRY_PURCHASE_COOKIE.length + 1)) : '';
+    const parsed = raw ? JSON.parse(raw) : [];
+    if (Array.isArray(parsed)) {
+      parsed.forEach((value) => {
+        if (typeof value === 'string' && value.trim()) ids.add(value);
+      });
+    }
+  } catch {
+    // Ignore corrupt cookie memory.
+  }
+
+  return Array.from(ids);
+}
+
+function rememberRegistryPurchase(itemId: string): string[] {
+  if (typeof window === 'undefined' || !itemId) return [];
+  const next = Array.from(new Set([...readRegistryPurchaseMemory(), itemId])).slice(-80);
+  const payload = JSON.stringify(next);
+  try {
+    window.localStorage.setItem(REGISTRY_PURCHASE_MEMORY_KEY, payload);
+  } catch {
+    // Non-critical continuity only.
+  }
+  try {
+    document.cookie = `${REGISTRY_PURCHASE_COOKIE}=${encodeURIComponent(payload)}; Max-Age=${REGISTRY_PURCHASE_COOKIE_MAX_AGE}; Path=/; SameSite=Lax`;
+  } catch {
+    // Non-critical continuity only.
+  }
+  return next;
 }
 
 function usePublicRegistryItems(weddingSiteId: string | null) {
@@ -41,11 +150,26 @@ export function normalizePublicRegistryItemState(item: RegistryItem): RegistryIt
   const quantityState = sanitizeRegistryQuantityState(item.quantity_purchased, item.quantity_needed);
   return {
     ...item,
+    item_name: cleanPublicRegistryTitle(item.item_name),
+    merchant: cleanPublicRegistryMerchant(item.merchant),
+    store_name: cleanPublicRegistryMerchant(item.store_name),
+    image_url: getSafePublicImageUrl(item.image_url) || null,
+    item_url: getSafePublicRegistryUrl(item.item_url),
+    canonical_url: getSafePublicRegistryUrl(item.canonical_url),
+    fund_venmo_url: getSafePublicRegistryUrl(item.fund_venmo_url),
+    fund_paypal_url: getSafePublicRegistryUrl(item.fund_paypal_url),
+    fund_custom_url: getSafePublicRegistryUrl(item.fund_custom_url),
     quantity_needed: quantityState.quantityNeeded,
     quantity_purchased: quantityState.quantityPurchased,
     purchase_status: quantityState.purchaseStatus,
     purchaser_name: quantityState.purchaseStatus === 'available' ? null : item.purchaser_name,
   };
+}
+
+export function sanitizePublicRegistryItems(items: RegistryItem[]): RegistryItem[] {
+  return items
+    .filter(isGuestReadyRegistryItem)
+    .map(normalizePublicRegistryItemState);
 }
 
 interface PurchaseModalProps {
@@ -150,6 +274,7 @@ const PurchaseModal: React.FC<PurchaseModalProps> = ({ item, onClose, onConfirm 
 interface RegistryCardProps {
   item: RegistryItem;
   onPurchase: (item: RegistryItem) => void;
+  rememberedByGuest: boolean;
 }
 
 export function getRegistryPurchaseCtaLabel(item: Pick<RegistryItem, 'purchase_status'>): string {
@@ -209,14 +334,28 @@ export function getRegistryEmptyStateMessage(
   return 'All items have been purchased. Thank you!';
 }
 
-const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase }) => {
+export function safePublicRegistryPurchaseError(): string {
+  return 'Could not save that purchase right now. Please try again.';
+}
+
+const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase, rememberedByGuest }) => {
   const isCashFund = item.item_type === 'cash_fund';
   const isPurchased = item.purchase_status === 'purchased';
   const [copiedZelle, setCopiedZelle] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
   const isPartial = item.purchase_status === 'partial';
   const displayPrice = item.price_label ?? (item.price_amount != null ? `$${item.price_amount.toFixed(2)}` : null);
-  const displayUrl = item.item_url ?? item.canonical_url;
+  const displayUrl = getSafePublicRegistryUrl(item.item_url) ?? getSafePublicRegistryUrl(item.canonical_url);
+  const imageUrl = isUsableRegistryImageUrl(item.image_url) ? item.image_url : null;
+  const visibleImageUrl = imageFailed ? null : imageUrl;
   const merchant = item.merchant ?? item.store_name;
+  const venmoUrl = getSafePublicRegistryUrl(item.fund_venmo_url);
+  const paypalUrl = getSafePublicRegistryUrl(item.fund_paypal_url);
+  const customFundUrl = getSafePublicRegistryUrl(item.fund_custom_url);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [imageUrl]);
 
   if (isCashFund) {
     const goal = item.fund_goal_amount ?? 0;
@@ -226,7 +365,7 @@ const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase }) => {
       <div className="bg-surface rounded-2xl border border-border p-4 md:p-5 flex flex-col gap-3 shadow-sm">
         <div className="flex items-center justify-between gap-2">
           <h3 className="font-medium text-text-primary text-sm line-clamp-2">{item.item_name}</h3>
-          <span className="text-[10px] uppercase px-2 py-1 rounded border border-primary/30 text-primary bg-primary/10">Cash Fund</span>
+          <span className="text-xs px-2 py-1 rounded border border-primary/30 text-primary bg-primary/10">Cash fund</span>
         </div>
         {item.notes && <p className="text-xs text-text-secondary leading-relaxed">{item.notes}</p>}
         <div className="grid grid-cols-2 gap-2 text-xs">
@@ -242,9 +381,9 @@ const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase }) => {
           </div>
         )}
         <div className="flex flex-wrap gap-2">
-          {item.fund_venmo_url && <a href={item.fund_venmo_url} target="_blank" rel="noreferrer" className="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-border rounded-xl hover:border-primary hover:text-primary transition-colors">Venmo</a>}
-          {item.fund_paypal_url && <a href={item.fund_paypal_url} target="_blank" rel="noreferrer" className="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-border rounded-xl hover:border-primary hover:text-primary transition-colors">PayPal</a>}
-          {item.fund_custom_url && <a href={item.fund_custom_url} target="_blank" rel="noreferrer" className="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-border rounded-xl hover:border-primary hover:text-primary transition-colors">{item.fund_custom_label || 'Contribute'}</a>}
+          {venmoUrl && <a href={venmoUrl} target="_blank" rel="noreferrer" className="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-border rounded-xl hover:border-primary hover:text-primary transition-colors">Venmo</a>}
+          {paypalUrl && <a href={paypalUrl} target="_blank" rel="noreferrer" className="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-border rounded-xl hover:border-primary hover:text-primary transition-colors">PayPal</a>}
+          {customFundUrl && <a href={customFundUrl} target="_blank" rel="noreferrer" className="inline-flex items-center px-3 py-1.5 text-xs font-medium border border-border rounded-xl hover:border-primary hover:text-primary transition-colors">{item.fund_custom_label || 'Contribute'}</a>}
           {item.fund_zelle_handle && (
             <button
               onClick={async () => {
@@ -269,17 +408,25 @@ const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase }) => {
     <div className={`bg-surface rounded-2xl border overflow-hidden flex flex-col ui-motion-emphasis ${
       isPurchased ? 'border-success/30 bg-success-light/10 opacity-75' : 'border-border hover:border-primary/30 hover:shadow-md'
     }`}>
-      <div className="relative aspect-[4/3] bg-surface-subtle flex-shrink-0">
-        {item.image_url ? (
+      <div className="relative aspect-video flex-shrink-0 overflow-hidden bg-gradient-to-br from-[#f6efe6] via-[#fbf8f2] to-[#e9efe5]">
+        {visibleImageUrl ? (
           <img
-            src={item.image_url}
+            src={visibleImageUrl}
             alt={item.item_name}
-            className={`w-full h-full object-cover transition-opacity ${isPurchased ? 'opacity-60' : ''}`}
-            onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+            className={`h-full w-full object-contain p-4 mix-blend-multiply transition-opacity ${isPurchased ? 'opacity-60' : ''}`}
+            onError={() => setImageFailed(true)}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Package className="w-8 h-8 text-text-tertiary" />
+          <div className="relative flex h-full w-full items-end justify-between p-4">
+            <div className="absolute -right-8 -top-10 h-28 w-28 rounded-full bg-white/55" />
+            <div className="absolute -bottom-12 left-8 h-32 w-32 rounded-full bg-primary/10" />
+            <div className="relative">
+              <span className="block text-xs text-text-tertiary">Registry pick</span>
+              <span className="mt-2 block max-w-[12rem] text-sm font-medium leading-snug text-text-primary line-clamp-2">{item.item_name}</span>
+            </div>
+            <div className="relative rounded-2xl border border-white/70 bg-white/75 p-3 shadow-sm">
+              <Package className="h-5 w-5 text-primary" />
+            </div>
           </div>
         )}
         {isPurchased && (
@@ -298,7 +445,7 @@ const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase }) => {
         </div>
 
         {displayPrice && (
-          <p className="text-base font-semibold tracking-tight text-primary">{displayPrice}</p>
+          <p className="text-base font-semibold text-primary">{displayPrice}</p>
         )}
 
         {item.notes && (
@@ -313,6 +460,9 @@ const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase }) => {
 
         {getRegistryPurchaserStatusLabel(item) && (
           <p className="text-xs text-text-tertiary">{getRegistryPurchaserStatusLabel(item)}</p>
+        )}
+        {rememberedByGuest && (
+          <p className="text-xs font-medium text-primary">You marked this from this browser.</p>
         )}
 
         <div className="flex gap-2 pt-1">
@@ -348,17 +498,19 @@ const RegistryCard: React.FC<RegistryCardProps> = ({ item, onPurchase }) => {
   );
 };
 
-function RegistryItemsDisplay({ items, settings, notes, updateItem }: {
+export function RegistryItemsDisplay({ items, settings, notes, updateItem }: {
   items: RegistryItem[];
   settings: SectionInstance['settings'];
   notes?: string;
   updateItem: (item: RegistryItem) => void;
 }) {
-  const normalizedItems = items.map(normalizePublicRegistryItemState);
+  const normalizedItems = sanitizePublicRegistryItems(items);
   const [purchasingItem, setPurchasingItem] = useState<RegistryItem | null>(null);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
   const [sortMode, setSortMode] = useState<'recommended' | 'price-low' | 'price-high'>('recommended');
   const [groupMode, setGroupMode] = useState<'all' | 'funds' | 'stores'>('all');
+  const [rememberedPurchaseIds, setRememberedPurchaseIds] = useState<string[]>(() => readRegistryPurchaseMemory());
+  const rememberedPurchaseSet = new Set(rememberedPurchaseIds);
 
   const visibleItems = normalizedItems.filter(item => {
     if (item.hide_when_purchased && item.purchase_status === 'purchased') return false;
@@ -383,9 +535,10 @@ function RegistryItemsDisplay({ items, settings, notes, updateItem }: {
     try {
       const updated = await publicIncrementPurchase(purchasingItem.id, purchaserName || undefined);
       updateItem(normalizePublicRegistryItemState(updated));
-    } catch (err: unknown) {
-      setPurchaseError(err instanceof Error ? err.message : 'Could not save that purchase right now. Try again.');
-      throw err;
+      setRememberedPurchaseIds(rememberRegistryPurchase(purchasingItem.id));
+    } catch {
+      setPurchaseError(safePublicRegistryPurchaseError());
+      throw new Error(safePublicRegistryPurchaseError());
     }
   }
 
@@ -394,8 +547,8 @@ function RegistryItemsDisplay({ items, settings, notes, updateItem }: {
       <div className="text-center mb-10">
         {settings.showTitle !== false && (
           <>
-            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Registry</p>
-            <h2 className="text-4xl font-light tracking-tight text-text-primary">{readBuilderValue(settings.title, 'Registry')}</h2>
+            <p className="text-sm text-primary mb-3 font-light">Registry</p>
+            <h2 className="text-4xl font-light text-text-primary">{readBuilderValue(settings.title, 'Registry')}</h2>
           </>
         )}
         {notes && <p className="text-text-secondary mt-4 max-w-xl mx-auto leading-relaxed">{notes}</p>}
@@ -449,7 +602,7 @@ function RegistryItemsDisplay({ items, settings, notes, updateItem }: {
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 md:gap-6">
           {sortedItems.map(item => (
-            <RegistryCard key={item.id} item={item} onPurchase={setPurchasingItem} />
+            <RegistryCard key={item.id} item={item} onPurchase={setPurchasingItem} rememberedByGuest={rememberedPurchaseSet.has(item.id)} />
           ))}
         </div>
       )}
@@ -471,9 +624,10 @@ export const RegistrySection: React.FC<Props> = ({ data, instance }) => {
   const { weddingSiteId } = useSiteView();
   const { items, loading, updateItem } = usePublicRegistryItems(weddingSiteId);
 
-  const linksToShow = bindings?.linkIds && bindings.linkIds.length > 0
+  const rawLinksToShow = bindings?.linkIds && bindings.linkIds.length > 0
     ? registry.links.filter(l => bindings.linkIds!.includes(l.id))
     : registry.links;
+  const linksToShow = normalizePublicRegistryLinks(rawLinksToShow);
 
   if (loading) {
     return (
@@ -501,7 +655,7 @@ export const RegistrySection: React.FC<Props> = ({ data, instance }) => {
       <section className="py-16 px-4 bg-surface">
         <div className="max-w-4xl mx-auto text-center">
           {settings.showTitle !== false && (
-            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary mb-6">{readBuilderValue(settings.title, 'Registry')}</h2>
+            <h2 className="text-3xl md:text-4xl font-semibold text-text-primary mb-6">{readBuilderValue(settings.title, 'Registry')}</h2>
           )}
           <p className="text-text-secondary">Registry links and gift details will appear here once they’re added.</p>
         </div>
@@ -513,7 +667,7 @@ export const RegistrySection: React.FC<Props> = ({ data, instance }) => {
     <section className="py-16 px-4 bg-surface">
       <div className="max-w-4xl mx-auto">
         {settings.showTitle !== false && (
-          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary text-center mb-8">{readBuilderValue(settings.title, 'Registry')}</h2>
+          <h2 className="text-3xl md:text-4xl font-semibold text-text-primary text-center mb-8">{readBuilderValue(settings.title, 'Registry')}</h2>
         )}
         {registry.notes && <p className="text-text-secondary text-center mb-8 leading-relaxed">{registry.notes}</p>}
         <div className="grid md:grid-cols-2 gap-4">
@@ -525,7 +679,7 @@ export const RegistrySection: React.FC<Props> = ({ data, instance }) => {
               rel="noopener noreferrer"
               className="flex items-center justify-between p-4 bg-surface-subtle rounded-xl border border-border/60 hover:border-primary/30 hover:bg-primary/5 transition-colors"
             >
-              <span className="font-medium tracking-tight text-text-primary">{link.label || link.url}</span>
+              <span className="font-medium text-text-primary">{link.label || link.url}</span>
               <ExternalLink className="w-5 h-5 text-primary" />
             </a>
           ))}
@@ -541,9 +695,10 @@ export const RegistryGrid: React.FC<Props> = ({ data, instance }) => {
   const { weddingSiteId } = useSiteView();
   const { items, loading, updateItem } = usePublicRegistryItems(weddingSiteId);
 
-  const linksToShow = bindings?.linkIds && bindings.linkIds.length > 0
+  const rawLinksToShow = bindings?.linkIds && bindings.linkIds.length > 0
     ? registry.links.filter(l => bindings.linkIds!.includes(l.id))
     : registry.links;
+  const linksToShow = normalizePublicRegistryLinks(rawLinksToShow);
 
   if (loading) {
     return (
@@ -584,8 +739,8 @@ export const RegistryGrid: React.FC<Props> = ({ data, instance }) => {
       <div className="max-w-4xl mx-auto">
         {settings.showTitle !== false && (
           <div className="text-center mb-12">
-            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Registry</p>
-            <h2 className="text-4xl font-light tracking-tight text-text-primary">{readBuilderValue(settings.title, 'Registry')}</h2>
+            <p className="text-sm text-primary mb-3 font-light">Registry</p>
+            <h2 className="text-4xl font-light text-text-primary">{readBuilderValue(settings.title, 'Registry')}</h2>
             {registry.notes && <p className="text-text-secondary mt-4 max-w-xl mx-auto leading-relaxed">{registry.notes}</p>}
             <div className="w-10 h-px bg-primary mx-auto mt-6" />
           </div>
@@ -621,9 +776,10 @@ export const RegistryFundHighlight: React.FC<Props> = ({ data, instance }) => {
   const { weddingSiteId } = useSiteView();
   const { items, loading, updateItem } = usePublicRegistryItems(weddingSiteId);
 
-  const linksToShow = bindings?.linkIds && bindings.linkIds.length > 0
+  const rawLinksToShow = bindings?.linkIds && bindings.linkIds.length > 0
     ? registry.links.filter(l => bindings.linkIds!.includes(l.id))
     : registry.links;
+  const linksToShow = normalizePublicRegistryLinks(rawLinksToShow);
 
   if (loading) {
     return (
@@ -643,15 +799,15 @@ export const RegistryFundHighlight: React.FC<Props> = ({ data, instance }) => {
           <div className="text-center mb-8 md:mb-10">
             {settings.showTitle !== false && (
               <>
-                <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Registry</p>
-                <h2 className="text-3xl md:text-4xl font-light tracking-tight text-text-primary leading-tight">{readBuilderValue(settings.title, 'Registry')}</h2>
+                <p className="text-sm text-primary mb-3 font-light">Registry</p>
+                <h2 className="text-3xl md:text-4xl font-light text-text-primary leading-tight">{readBuilderValue(settings.title, 'Registry')}</h2>
               </>
             )}
             {registry.notes && <p className="text-text-secondary mt-4 max-w-xl mx-auto leading-relaxed">{registry.notes}</p>}
           </div>
 
           <div className="mb-8 rounded-2xl border border-primary/20 bg-primary/5 p-6 md:p-8 text-center">
-            <h3 className="text-xl font-semibold tracking-tight text-text-primary">Honeymoon & Experiences Fund</h3>
+            <h3 className="text-xl font-semibold text-text-primary">Honeymoon & Experiences Fund</h3>
             <p className="text-sm text-text-secondary leading-relaxed mt-2 max-w-2xl mx-auto">
               Your love and support means so much. If you’d like, you can also contribute toward future plans and shared experiences.
             </p>
@@ -682,8 +838,8 @@ export const RegistryFundHighlight: React.FC<Props> = ({ data, instance }) => {
       <div className="max-w-5xl mx-auto">
         {settings.showTitle !== false && (
           <div className="text-center mb-8 md:mb-10">
-            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Registry</p>
-            <h2 className="text-3xl md:text-4xl font-light tracking-tight text-text-primary leading-tight">{readBuilderValue(settings.title, 'Registry')}</h2>
+            <p className="text-sm text-primary mb-3 font-light">Registry</p>
+            <h2 className="text-3xl md:text-4xl font-light text-text-primary leading-tight">{readBuilderValue(settings.title, 'Registry')}</h2>
             {registry.notes && <p className="text-text-secondary mt-4 max-w-xl mx-auto leading-relaxed">{registry.notes}</p>}
           </div>
         )}
@@ -694,8 +850,8 @@ export const RegistryFundHighlight: React.FC<Props> = ({ data, instance }) => {
           rel="noopener noreferrer"
           className="block rounded-2xl border border-primary/25 bg-primary/5 p-7 md:p-9 mb-6 hover:border-primary/40 transition-colors shadow-sm"
         >
-          <p className="text-xs uppercase tracking-[0.24em] text-primary font-medium mb-2">Featured fund</p>
-          <h3 className="text-2xl md:text-3xl font-semibold tracking-tight text-text-primary">{featured.label || featured.url}</h3>
+          <p className="text-sm text-primary font-light mb-2">Featured fund</p>
+          <h3 className="text-2xl md:text-3xl font-semibold text-text-primary">{featured.label || featured.url}</h3>
           <p className="text-text-secondary mt-3 max-w-2xl leading-relaxed">Contribute toward our honeymoon and the first chapter of married life.</p>
           <span className="inline-flex items-center gap-2 mt-5 text-primary font-medium">
             Contribute to this fund
@@ -713,7 +869,7 @@ export const RegistryFundHighlight: React.FC<Props> = ({ data, instance }) => {
                 rel="noopener noreferrer"
                 className="flex items-center justify-between p-4 bg-surface-subtle rounded-xl border border-border hover:border-primary/30 transition-colors shadow-sm"
               >
-                <span className="font-medium tracking-tight text-text-primary">{link.label || link.url}</span>
+                <span className="font-medium text-text-primary">{link.label || link.url}</span>
                 <ExternalLink className="w-4 h-4 text-primary" />
               </a>
             ))}

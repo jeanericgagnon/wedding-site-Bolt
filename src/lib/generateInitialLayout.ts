@@ -71,21 +71,22 @@ export function generateInitialLayout(
       overrides: sectionDef.overrides ? { ...sectionDef.overrides } : undefined,
       locked: sectionDef.locked,
     };
+    const bindings = section.bindings ?? (section.bindings = {});
 
     if (sectionDef.type === 'venue' && data.venues.length > 0) {
-      section.bindings.venueIds = data.venues.map(v => v.id);
+      bindings.venueIds = data.venues.map(v => v.id);
     }
 
     if (sectionDef.type === 'schedule' && data.schedule.length > 0) {
-      section.bindings.scheduleItemIds = data.schedule.map(s => s.id);
+      bindings.scheduleItemIds = data.schedule.map(s => s.id);
     }
 
     if (isRegistrySectionType(sectionDef.type) && hasRealRegistryContent) {
-      section.bindings.linkIds = data.registry.links.filter((link) => link.url?.trim()).map(l => l.id);
+      bindings.linkIds = data.registry.links.filter((link) => link.url?.trim()).map(l => l.id);
     }
 
     if (sectionDef.type === 'faq' && hasRealFaqContent) {
-      section.bindings.faqIds = data.faq.map(f => f.id);
+      bindings.faqIds = data.faq.map(f => f.id);
       if (!hasSubstantiveFaqContent) {
         section.enabled = false;
       }

@@ -17,11 +17,14 @@ const QuickStart = lazy(() => import('./pages/onboarding/QuickStart').then(m => 
 const GuidedSetup = lazy(() => import('./pages/onboarding/GuidedSetup').then(m => ({ default: m.GuidedSetup })));
 const Privacy = lazy(() => import('./pages/Privacy').then(m => ({ default: m.Privacy })));
 const Terms = lazy(() => import('./pages/Terms').then(m => ({ default: m.Terms })));
+const Support = lazy(() => import('./pages/Support').then(m => ({ default: m.Support })));
+const Refund = lazy(() => import('./pages/Refund').then(m => ({ default: m.Refund })));
 const Trust = lazy(() => import('./pages/Trust').then(m => ({ default: m.Trust })));
 const SetupShell = lazy(() => import('./pages/setup/SetupShell').then(m => ({ default: m.SetupShell })));
 const RSVP = lazy(() => import('./pages/RSVP'));
 const EventRSVP = lazy(() => import('./pages/EventRSVP'));
 const GuestContactUpdate = lazy(() => import('./pages/GuestContactUpdate'));
+const GuestbookSubmit = lazy(() => import('./pages/GuestbookSubmit').then(m => ({ default: m.GuestbookSubmit })));
 const SiteView = lazy(() => import('./pages/SiteView').then(m => ({ default: m.SiteView })));
 const DashboardOverview = lazy(() => import('./pages/dashboard/Overview').then(m => ({ default: m.DashboardOverview })));
 const DashboardGuests = lazy(() => import('./pages/dashboard/Guests').then(m => ({ default: m.DashboardGuests })));
@@ -39,6 +42,7 @@ const DashboardCoordinatorMode = lazy(() => import('./pages/dashboard/Coordinato
 const DashboardErrorLogs = lazy(() => import('./pages/dashboard/ErrorLogs').then(m => ({ default: m.DashboardErrorLogs })));
 const DashboardAuditLogs = lazy(() => import('./pages/dashboard/AuditLogs').then(m => ({ default: m.DashboardAuditLogs })));
 const SiteBuilder = lazy(() => import('./builder/BuilderPage').then(m => ({ default: m.BuilderPage })));
+const BuilderVariantGallery = lazy(() => import('./pages/dashboard/BuilderVariantGallery').then(m => ({ default: m.BuilderVariantGallery })));
 const GuestsFeature = lazy(() => import('./pages/features/Guests').then(m => ({ default: m.GuestsFeature })));
 const RSVPFeature = lazy(() => import('./pages/features/RSVP').then(m => ({ default: m.RSVPFeature })));
 const MessagingFeature = lazy(() => import('./pages/features/Messaging').then(m => ({ default: m.MessagingFeature })));
@@ -53,8 +57,11 @@ const BuilderV2Lab = lazy(() => import('./pages/BuilderV2Lab').then(m => ({ defa
 const VariantPreviewCapture = lazy(() => import('./pages/VariantPreviewCapture'));
 const TemplateScrollCapture = lazy(() => import('./pages/TemplateScrollCapture'));
 const PhotoUpload = lazy(() => import('./pages/PhotoUpload').then(m => ({ default: m.PhotoUpload })));
+const EventHub = lazy(() => import('./pages/EventHub').then(m => ({ default: m.EventHub })));
+const EventRecap = lazy(() => import('./pages/EventRecap').then(m => ({ default: m.EventRecap })));
 const VendorProfilePage = lazy(() => import('./pages/VendorProfile'));
 const VendorProfileCreatePage = lazy(() => import('./pages/VendorProfileCreate'));
+const VendorTemplates = lazy(() => import('./pages/VendorTemplates').then(m => ({ default: m.VendorTemplates })));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
@@ -86,13 +93,25 @@ const AppContent = () => {
         <Route path="/template-scroll-capture" element={<TemplateScrollCapture />} />
         <Route path="/site/:slug" element={<SiteView />} />
         <Route path="/vendor/:slug" element={<VendorProfilePage />} />
+        <Route
+          path="/vendor-templates"
+          element={
+            <ProtectedRoute>
+              <VendorTemplates />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/vault/:siteSlug" element={<VaultContribute />} />
         <Route path="/vault/:siteSlug/:year" element={<VaultContribute />} />
         <Route path="/accept-collaborator-invite" element={<AcceptCollaboratorInvite />} />
+        <Route path="/event/:siteRef" element={<EventHub />} />
+        <Route path="/event/:siteRef/recap" element={<EventRecap />} />
         <Route path="/photos/upload" element={<PhotoUpload />} />
         <Route path="/rsvp" element={<RSVP />} />
+        <Route path="/rsvp/:token" element={<RSVP />} />
         <Route path="/events" element={<EventRSVP />} />
         <Route path="/guest-contact/:token" element={<GuestContactUpdate />} />
+        <Route path="/guestbook/:siteRef" element={<GuestbookSubmit />} />
         <Route path="/features/guests" element={<GuestsFeature />} />
         <Route path="/features/rsvp" element={<RSVPFeature />} />
         <Route path="/features/messaging" element={<MessagingFeature />} />
@@ -103,6 +122,8 @@ const AppContent = () => {
         <Route path="/signup" element={<Signup />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
+        <Route path="/support" element={<Support />} />
+        <Route path="/refund" element={<Refund />} />
         <Route path="/trust" element={<Trust />} />
         <Route
           path="/vendor-profile-v1"
@@ -205,6 +226,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <SiteBuilder />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/builder/variants"
+          element={
+            <ProtectedRoute>
+              <BuilderVariantGallery />
             </ProtectedRoute>
           }
         />

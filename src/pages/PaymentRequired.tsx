@@ -5,17 +5,17 @@ import { Button } from '../components/ui';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
 import { createCheckoutSession, fetchPaymentStatus, fetchWeddingSiteId, SessionExpiredError } from '../lib/stripeService';
-import { isPaymentGateEnabled } from '../lib/paymentGate';
+import { isPaymentBypassAllowed, isPaymentGateEnabled } from '../lib/paymentGate';
 import { clearAllOnboardingContinuationState } from '../lib/onboardingContinuationCleanup';
 import { buildQuickStartEntryPath } from '../lib/quickStartContinuation';
 
 const FEATURES = [
-  'Your own wedding website with custom URL',
-  'RSVP management for all your guests',
-  'Registry with purchase updates',
-  'Guest messaging & communication tools',
-  'Itinerary builder & schedule',
-  'Drag-and-drop site builder',
+  'A polished wedding site you can keep editing',
+  'RSVPs, guest details, and private guest links',
+  'Registry, photos, guestbook, and vault',
+  'Message drafts and reminders you review first',
+  'Schedule, seating, and planning tools',
+  'A visual site editor for the pieces guests will see',
 ];
 
 const makeBaseSlug = (email?: string | null) => {
@@ -23,6 +23,14 @@ const makeBaseSlug = (email?: string | null) => {
   const cleaned = local.replace(/[^a-z0-9]/g, '').slice(0, 20);
   return cleaned || 'ourwedding';
 };
+
+function safePaymentError(err: unknown, fallback: string): string {
+  const raw = err instanceof Error ? err.message : '';
+  if (raw === 'Couldn’t create your website record right now. Please refresh and try again.') {
+    return 'Couldn’t create your website record right now. Please refresh and try again.';
+  }
+  return fallback;
+}
 
 const ensureMinimalWeddingSite = async (userId: string, email?: string | null): Promise<string> => {
   const existing = await fetchWeddingSiteId(userId);
@@ -53,13 +61,13 @@ const ensureMinimalWeddingSite = async (userId: string, email?: string | null): 
     if (!collision) throw error;
   }
 
-  throw new Error('Could not create your website record right now. Please refresh and try again.');
+  throw new Error('Couldn’t create your website record right now. Please refresh and try again.');
 };
 
 export const PaymentRequired: React.FC = () => {
-  const { user } = useAuth();
+  const { user, isDemoMode } = useAuth();
   const paymentGateEnabled = isPaymentGateEnabled();
-  const paymentBypassAllowed = true;
+  const paymentBypassAllowed = isPaymentBypassAllowed();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(false);
@@ -68,13 +76,17 @@ export const PaymentRequired: React.FC = () => {
 
   useEffect(() => {
     if (!user) return;
+    if (isDemoMode) {
+      setWeddingSiteId('demo-site-id');
+      return;
+    }
 
     ensureMinimalWeddingSite(user.id, user.email)
       .then(id => setWeddingSiteId(id))
       .catch((err: unknown) => {
-        setError((err as Error).message || 'Could not finish setting up your account right now.');
+        setError(safePaymentError(err, 'Couldn’t finish setting up your account right now.'));
       });
-  }, [user]);
+  }, [isDemoMode, user]);
 
   const handleCheckout = async () => {
     if (!user || !weddingSiteId) return;
@@ -93,7 +105,7 @@ export const PaymentRequired: React.FC = () => {
         navigate('/login?reason=session_expired', { replace: true });
         return;
       }
-      setError(err instanceof Error ? err.message : 'Could not start checkout right now. Please try again.');
+      setError(safePaymentError(err, 'Couldn’t start checkout right now. Please try again.'));
       setLoading(false);
     }
   };
@@ -121,7 +133,7 @@ export const PaymentRequired: React.FC = () => {
         setError('Payment not confirmed yet. If you just paid, please wait a moment and try again.');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not check payment status right now.');
+      setError(safePaymentError(err, 'Couldn’t check payment status right now.'));
     } finally {
       setCheckingStatus(false);
     }
@@ -133,70 +145,71 @@ export const PaymentRequired: React.FC = () => {
   const isNewSignup = searchParams.get('signup') === '1' || searchParams.get('oauth') === 'google';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-surface-subtle to-surface flex items-center justify-center p-4">
-      <div className="w-full max-w-lg">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-accent/10 rounded-2xl mb-4">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(139,157,126,0.18),transparent_32%),linear-gradient(135deg,#faf7f1,#f6f1e8_42%,#fbfaf7)] flex items-center justify-center p-4">
+      <div className="w-full max-w-5xl">
+        <div className="mx-auto mb-8 max-w-2xl text-center">
+          <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-lg border border-border-subtle bg-white/82">
             <Heart className="w-8 h-8 text-accent" />
           </div>
-          <h1 className="text-3xl font-bold text-text-primary mb-2">
-            {isExpired ? 'Your Site Has Expired' : 'Step 2: Complete Your Purchase'}
+          <h1 className="text-4xl font-semibold leading-tight text-text-primary">
+            {isExpired ? 'Keep your wedding space open' : 'Start with the full wedding suite'}
           </h1>
-          <p className="text-text-secondary">
+          <p className="mt-4 text-base leading-7 text-text-secondary">
             {isExpired
-              ? 'Your 2-year access has ended. Renew below or switch to annual billing.'
-              : 'Account created. After payment, you will go straight into setup and shape your site from there.'}
+              ? 'Your two-year access period has ended. Renew here, then your site, guest details, and planning tools reopen where you left them.'
+              : 'Your account is ready. After payment, we’ll take you into setup and help shape the first version together.'}
           </p>
         </div>
 
-        <div className="bg-surface rounded-2xl shadow-lg border border-border overflow-hidden">
-          <div className="bg-gradient-to-r from-primary/5 to-accent/5 px-6 py-5 border-b border-border">
-            <div className="flex items-baseline justify-between">
+        <div className="grid overflow-hidden rounded-lg border border-border-subtle bg-white/88 lg:grid-cols-[1fr_0.82fr]">
+          <div className="p-6 sm:p-8">
+            <div className="flex flex-wrap items-end justify-between gap-4 border-b border-border-subtle pb-6">
               <div>
-                <p className="text-sm font-medium text-text-secondary mb-1">DayOf.Love — Complete Package</p>
-                <p className="text-3xl font-bold text-text-primary">$49</p>
+                <p className="text-sm font-medium text-text-secondary">dayof full access</p>
+                <p className="mt-2 text-4xl font-semibold text-text-primary">$49</p>
+                <p className="mt-1 text-sm text-text-secondary">One payment for two years of access.</p>
               </div>
-              <span className="text-sm text-text-tertiary bg-surface px-3 py-1 rounded-full border border-border">
-                One-time
+              <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1.5 text-sm text-text-secondary">
+                No surprise renewals
               </span>
             </div>
-          </div>
 
-          <div className="px-6 py-5">
-            <p className="text-sm font-medium text-text-secondary mb-3">Everything included:</p>
-            <ul className="space-y-2.5 mb-6">
+            <p className="mt-6 text-sm font-medium text-text-secondary">Included from the start</p>
+            <ul className="mt-3 grid gap-3 sm:grid-cols-2">
               {FEATURES.map(f => (
-                <li key={f} className="flex items-center gap-3 text-sm text-text-primary">
-                  <Check className="w-4 h-4 text-success flex-shrink-0" />
+                <li key={f} className="flex items-start gap-3 rounded-lg border border-border-subtle bg-surface-subtle/60 px-4 py-3 text-sm leading-6 text-text-primary">
+                  <Check className="mt-1 w-4 h-4 text-accent flex-shrink-0" />
                   {f}
                 </li>
               ))}
             </ul>
+          </div>
 
+          <div className="border-t border-border-subtle bg-surface-subtle/40 p-6 sm:p-8 lg:border-l lg:border-t-0">
             {isNewSignup && !error && !isCanceled && !isExpired && (
-              <div className="flex items-start gap-2 p-3 bg-success/10 rounded-lg text-sm text-success border border-success/20 mb-4">
-                <Check className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                <span>Account created successfully. Complete payment to unlock setup and publishing.</span>
+              <div className="mb-4 flex items-start gap-2 rounded-lg border border-border-subtle bg-surface-secondary p-3 text-sm text-text-secondary">
+                <Check className="w-4 h-4 flex-shrink-0 mt-0.5 text-accent" />
+                <span>Your account is saved. Complete payment to open setup and publishing.</span>
               </div>
             )}
 
             {isExpired && !error && !isCanceled && (
-              <div className="flex items-start gap-2 p-3 bg-warning-light rounded-lg text-sm text-warning border border-warning/20 mb-4">
-                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                <span>Your 2-year access period ended. Renew for another 2 years, or switch to annual billing in settings after renewing.</span>
+              <div className="mb-4 flex items-start gap-2 rounded-lg border border-border-subtle bg-surface-secondary p-3 text-sm text-text-secondary">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-text-tertiary" />
+                <span>Your access period ended. Renew for another two years, then adjust billing preferences in settings.</span>
               </div>
             )}
 
             {isCanceled && !error && (
-              <div className="flex items-start gap-2 p-3 bg-warning-light rounded-lg text-sm text-warning border border-warning/20 mb-4">
-                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <div className="mb-4 flex items-start gap-2 rounded-lg border border-border-subtle bg-surface-secondary p-3 text-sm text-text-secondary">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-text-tertiary" />
                 <span>Payment was canceled. You can try again whenever you're ready.</span>
               </div>
             )}
 
             {error && (
-              <div className="flex items-start gap-2 p-3 bg-error-light rounded-lg text-sm text-error border border-error/20 mb-4">
-                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <div className="mb-4 flex items-start gap-2 rounded-lg border border-border-subtle bg-surface-secondary p-3 text-sm text-text-secondary">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-text-tertiary" />
                 <span>{error}</span>
               </div>
             )}
@@ -216,7 +229,7 @@ export const PaymentRequired: React.FC = () => {
               ) : (
                 <>
                   <CreditCard className="w-5 h-5 mr-2" />
-                  Pay $49 — Get Started
+                  Pay $49 and continue
                 </>
               )}
             </Button>
@@ -247,11 +260,9 @@ export const PaymentRequired: React.FC = () => {
               )}
               Already paid? Check status
             </button>
-          </div>
 
-          <div className="px-6 py-4 bg-surface-subtle border-t border-border">
-            <p className="text-xs text-text-tertiary text-center">
-              Secure payment powered by Stripe. We never store your card details.
+            <p className="mt-6 text-center text-xs leading-5 text-text-tertiary">
+              Secure payment. We never store your card details.
             </p>
           </div>
         </div>

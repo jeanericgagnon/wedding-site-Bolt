@@ -2,6 +2,7 @@ import React from 'react';
 import { z } from 'zod';
 import { MapPin, Clock } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
+import { getSafePublicImageUrl } from '../../publicLinks';
 
 const AgendaEventSchema = z.object({
   id: z.string(),
@@ -65,11 +66,11 @@ const ScheduleAgendaCards: React.FC<SectionComponentProps<ScheduleAgendaCardsDat
       <div className="max-w-4xl mx-auto px-6 md:px-12">
         <div className="text-center mb-14">
           {data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">
+            <p className="text-sm text-stone-400 font-light mb-4">
               {data.eyebrow}
             </p>
           )}
-          <h2 className="text-4xl md:text-6xl font-light text-stone-900 mb-2 tracking-tight">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-stone-900 mb-2">{data.headline}</h2>
           {data.showDate && data.date && (
             <p className="text-stone-400 text-base font-light">{data.date}</p>
           )}
@@ -78,6 +79,7 @@ const ScheduleAgendaCards: React.FC<SectionComponentProps<ScheduleAgendaCardsDat
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
           {data.events.map(event => {
             const categoryLabel = CATEGORY_LABELS[event.category];
+            const safeEventImage = getSafePublicImageUrl(event.image);
             return (
               <div
                 key={event.id}
@@ -85,9 +87,9 @@ const ScheduleAgendaCards: React.FC<SectionComponentProps<ScheduleAgendaCardsDat
                   event.category !== 'other' ? accent.border : 'border-stone-100'
                 }`}
               >
-                {event.image && (
+                {safeEventImage && (
                   <div className="h-36 overflow-hidden">
-                    <img src={event.image} alt={event.label} className="w-full h-full object-cover saturate-[1.03] contrast-[1.02]" />
+                    <img src={safeEventImage} alt={event.label} className="w-full h-full object-cover saturate-[1.03] contrast-[1.02]" />
                   </div>
                 )}
                 <div className="p-5">
@@ -102,7 +104,7 @@ const ScheduleAgendaCards: React.FC<SectionComponentProps<ScheduleAgendaCardsDat
                       </div>
                     </div>
                     {categoryLabel && (
-                      <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full uppercase tracking-wide ${accent.bg} ${accent.text}`}>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${accent.bg} ${accent.text}`}>
                         {categoryLabel}
                       </span>
                     )}
@@ -117,7 +119,7 @@ const ScheduleAgendaCards: React.FC<SectionComponentProps<ScheduleAgendaCardsDat
                   {event.location && (
                     <div className="flex items-center gap-1.5 mt-3 text-stone-400">
                       <MapPin size={11} />
-                      <span className="text-xs uppercase tracking-wide font-medium">{event.location}</span>
+                      <span className="text-xs font-medium">{event.location}</span>
                     </div>
                   )}
                 </div>

@@ -4,10 +4,23 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BrowserRouter, MemoryRouter } from 'react-router-dom';
 
 vi.mock('../config/env', () => ({ DEMO_MODE: false }));
-vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      if (key === 'rsvp.search_button') return 'Find My Invitation';
+      if (key === 'rsvp.searching') return 'Searching…';
+      if (key === 'rsvp.loading_invitation') return 'Loading your invitation...';
+      return key;
+    },
+    i18n: {
+      language: 'en',
+      changeLanguage: vi.fn(),
+    },
+  }),
+}));
 vi.mock('../components/ui/LanguageSwitcher', () => ({ LanguageSwitcher: () => <div>LanguageSwitcher</div> }));
 
-import RSVP from './RSVP';
+import RSVP, { normalizeRsvpGuestError, normalizeRsvpSubmitError } from './RSVP';
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -30,6 +43,14 @@ describe('RSVP stale submit protection', () => {
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
+  });
+
+  it('sanitizes internal RSVP lookup and submit errors before showing guest copy', () => {
+    expect(normalizeRsvpGuestError('missing-config')).toBe('Invitation not recognized. Please search by name below.');
+    expect(normalizeRsvpGuestError('permission denied for table guests')).toBe('Invitation not recognized. Please search by name below.');
+    expect(normalizeRsvpSubmitError('Failed to submit RSVP. Please try again.')).toBe('Couldn’t send your RSVP. Please try again.');
+    expect(normalizeRsvpSubmitError('request failed at functions/v1/validate-rsvp-token')).toBe('Couldn’t send your RSVP. Please try again.');
+    expect(normalizeRsvpGuestError('The RSVP deadline has passed.')).toBe('The RSVP deadline has passed.');
   });
 
   it('does not switch into success after the guest backs out of an in-flight submit', async () => {
@@ -123,6 +144,21 @@ describe('RSVP stale submit protection', () => {
 
     expect(await screen.findByText('Invitation not recognized. Please search by name below.')).toBeInTheDocument();
     expect(screen.queryByText('An error occurred. Please try again.')).not.toBeInTheDocument();
+  });
+
+  it('links the RSVP search field to its label and helper guidance', () => {
+    render(
+      <MemoryRouter initialEntries={['/rsvp']}>
+        <RSVP />
+      </MemoryRouter>
+    );
+
+    const searchInput = screen.getByLabelText('rsvp.search_label');
+    expect(searchInput).toHaveAttribute('id', 'rsvp-guest-search');
+    expect(searchInput).toHaveAttribute('aria-describedby', 'rsvp-search-hint');
+    expect(searchInput).toHaveAttribute('aria-autocomplete', 'list');
+    expect(searchInput).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByText('rsvp.search_hint')).toHaveAttribute('id', 'rsvp-search-hint');
   });
 
   it('shows invitation-not-recognized truth when search lookup returns no payload', async () => {
@@ -394,7 +430,7 @@ describe('RSVP stale submit protection', () => {
     });
 
     expect(screen.getByText('Welcome, Taylor Rivera!')).toBeInTheDocument();
-    expect(screen.queryByText('Failed to load invitation. Please search by name below.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Couldn’t load that invitation. Please search by name below.')).not.toBeInTheDocument();
 
     await act(async () => {
       window.dispatchEvent(new CustomEvent('dayof:rsvp-updated', { detail: { updatedAt: String(Date.now()) } }));
@@ -2523,7 +2559,7 @@ describe('RSVP stale submit protection', () => {
       })
       .mockResolvedValueOnce({
         ok: false,
-        json: async () => ({ error: 'Failed to submit RSVP. Please try again.' }),
+        json: async () => ({ error: 'Couldn’t send your RSVP. Please try again.' }),
       });
 
     window.history.pushState({}, '', '/rsvp?token=token-1');
@@ -2539,7 +2575,7 @@ describe('RSVP stale submit protection', () => {
     fireEvent.click(screen.getByText('Continue to review'));
     fireEvent.click(screen.getByText('Submit RSVP'));
 
-    expect(await screen.findByText('Failed to submit RSVP. Please try again.')).toBeInTheDocument();
+    expect(await screen.findByText('Couldn’t send your RSVP. Please try again.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByText('Back'));
     fireEvent.click(screen.getByText('Back'));
@@ -2548,7 +2584,7 @@ describe('RSVP stale submit protection', () => {
     expect(await screen.findByPlaceholderText('rsvp.search_placeholder')).toBeInTheDocument();
     expect(screen.getByDisplayValue('')).toBeInTheDocument();
     expect(window.location.search).toBe('');
-    expect(screen.queryByText('Failed to submit RSVP. Please try again.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Couldn’t send your RSVP. Please try again.')).not.toBeInTheDocument();
   });
 
   it('clears stale token-loaded RSVP details when the guest cancels back to search', async () => {
@@ -3083,7 +3119,7 @@ describe('RSVP stale submit protection', () => {
     fireEvent.click(screen.getByText('Continue to review'));
     fireEvent.click(screen.getByText('Submit RSVP'));
 
-    expect(await screen.findByText('Failed to submit RSVP. Please try again.')).toBeInTheDocument();
+    expect(await screen.findByText('Couldn’t send your RSVP. Please try again.')).toBeInTheDocument();
     expect(screen.queryByText("You're confirmed!")).not.toBeInTheDocument();
   });
 
@@ -3217,7 +3253,7 @@ describe('RSVP stale submit protection', () => {
       })
       .mockResolvedValueOnce({
         ok: false,
-        json: async () => ({ error: 'Failed to submit RSVP. Please try again.' }),
+        json: async () => ({ error: 'Couldn’t send your RSVP. Please try again.' }),
       });
 
     render(
@@ -3235,14 +3271,14 @@ describe('RSVP stale submit protection', () => {
     fireEvent.click(screen.getByText('Continue to review'));
     fireEvent.click(screen.getByText('Submit RSVP'));
 
-    expect(await screen.findByText('Failed to submit RSVP. Please try again.')).toBeInTheDocument();
+    expect(await screen.findByText('Couldn’t send your RSVP. Please try again.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByText('Back'));
     fireEvent.change(screen.getByRole('combobox'), {
       target: { value: 'Beef' },
     });
 
-    expect(screen.queryByText('Failed to submit RSVP. Please try again.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Couldn’t send your RSVP. Please try again.')).not.toBeInTheDocument();
   });
 
   it('clears stale submit errors when the guest backs out of review before retrying', async () => {
@@ -3275,7 +3311,7 @@ describe('RSVP stale submit protection', () => {
       })
       .mockResolvedValueOnce({
         ok: false,
-        json: async () => ({ error: 'Failed to submit RSVP. Please try again.' }),
+        json: async () => ({ error: 'Couldn’t send your RSVP. Please try again.' }),
       });
 
     render(
@@ -3293,12 +3329,12 @@ describe('RSVP stale submit protection', () => {
     fireEvent.click(screen.getByText('Continue to review'));
     fireEvent.click(screen.getByText('Submit RSVP'));
 
-    expect(await screen.findByText('Failed to submit RSVP. Please try again.')).toBeInTheDocument();
+    expect(await screen.findByText('Couldn’t send your RSVP. Please try again.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByText('Back'));
 
     await screen.findByText('Continue to review');
-    expect(screen.queryByText('Failed to submit RSVP. Please try again.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Couldn’t send your RSVP. Please try again.')).not.toBeInTheDocument();
   });
 
   it('clears stale meal-selection errors when the guest changes their RSVP details before retrying', async () => {

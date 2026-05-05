@@ -74,11 +74,11 @@ const ScheduleDayTabs: React.FC<SectionComponentProps<ScheduleDayTabsData>> = ({
       <div className="max-w-3xl mx-auto px-6 md:px-12">
         <div className="text-center mb-12">
           {data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">
+            <p className="text-sm text-stone-400 font-light mb-4">
               {data.eyebrow}
             </p>
           )}
-          <h2 className="text-4xl md:text-6xl font-light text-stone-900 tracking-tight">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-stone-900">{data.headline}</h2>
         </div>
 
         {data.days.length > 1 && (
@@ -93,7 +93,7 @@ const ScheduleDayTabs: React.FC<SectionComponentProps<ScheduleDayTabsData>> = ({
                     : 'border-stone-200/90 bg-white/80 text-stone-500 hover:border-stone-300 hover:text-stone-700'
                 }`}
               >
-                <span className="text-xs font-medium uppercase tracking-wide">{day.label}</span>
+                <span className="text-sm font-medium">{day.label}</span>
                 {day.date && (
                   <span className={`text-xs mt-0.5 ${activeDay === day.id ? 'text-white/60' : 'text-stone-400'}`}>
                     {day.date}
@@ -140,7 +140,7 @@ const ScheduleDayTabs: React.FC<SectionComponentProps<ScheduleDayTabsData>> = ({
                       {event.location && (
                         <div className={`flex items-center gap-1 mt-1.5 ${event.highlight ? 'text-rose-400' : 'text-stone-400'}`}>
                           <MapPin size={10} />
-                          <span className="text-[10px] uppercase tracking-wide font-medium">{event.location}</span>
+                          <span className="text-xs font-medium">{event.location}</span>
                         </div>
                       )}
                     </div>

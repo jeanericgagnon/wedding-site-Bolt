@@ -14,6 +14,254 @@ const DISALLOWED_MIME_TYPES = new Set([
 const HONEYPOT_FIELD = 'website';
 const MAX_ATTEMPTS_PER_10_MIN = 30;
 const MAX_ATTEMPTS_PER_10_MIN_PER_IP = 60;
+const HOSTED_BUCKET = "photo-uploads";
+
+const safePathSegment = (value: string) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9._-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 96) || "upload";
+
+type ExtractedPhotoMetadata = {
+  fileSha256: string;
+  perceptualHash: string | null;
+  width: number | null;
+  height: number | null;
+  orientation: number | null;
+  takenAt: string | null;
+  cameraMake: string | null;
+  cameraModel: string | null;
+  gpsLat: number | null;
+  gpsLng: number | null;
+  gpsAltitude: number | null;
+  hasExif: boolean;
+  hasGps: boolean;
+  rawExif: Record<string, unknown>;
+};
+
+type ItineraryEventForMatch = {
+  id: string;
+  event_name: string;
+  event_date: string | null;
+  start_time?: string | null;
+  end_time?: string | null;
+};
+
+const readAscii = (bytes: Uint8Array, start: number, length: number) =>
+  new TextDecoder("ascii").decode(bytes.slice(start, start + length)).replace(/\0+$/g, "").trim();
+
+const bytesToHex = (bytes: Uint8Array) =>
+  Array.from(bytes).map((byte) => byte.toString(16).padStart(2, "0")).join("");
+
+async function sha256Bytes(bytes: Uint8Array) {
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return bytesToHex(new Uint8Array(digest));
+}
+
+function parseExifDate(value: string | null): string | null {
+  if (!value) return null;
+  const match = value.match(/^(\d{4}):(\d{2}):(\d{2})\s+(\d{2}):(\d{2}):(\d{2})/);
+  if (!match) return null;
+  const [, y, mo, d, h, mi, s] = match;
+  return `${y}-${mo}-${d}T${h}:${mi}:${s}Z`;
+}
+
+function readRational(view: DataView, offset: number, little: boolean) {
+  const numerator = view.getUint32(offset, little);
+  const denominator = view.getUint32(offset + 4, little);
+  return denominator === 0 ? 0 : numerator / denominator;
+}
+
+function readExifValue(bytes: Uint8Array, view: DataView, tiffStart: number, entryOffset: number, little: boolean) {
+  const type = view.getUint16(entryOffset + 2, little);
+  const count = view.getUint32(entryOffset + 4, little);
+  const valueOffset = entryOffset + 8;
+  const inlineOrOffset = view.getUint32(valueOffset, little);
+  const unitSize = type === 3 ? 2 : type === 4 || type === 9 ? 4 : type === 5 || type === 10 ? 8 : 1;
+  const totalSize = count * unitSize;
+  const dataOffset = totalSize <= 4 ? valueOffset : tiffStart + inlineOrOffset;
+
+  if (dataOffset < 0 || dataOffset >= bytes.length) return null;
+
+  if (type === 2) return readAscii(bytes, dataOffset, count);
+  if (type === 3) return count === 1 ? view.getUint16(dataOffset, little) : null;
+  if (type === 4) return count === 1 ? view.getUint32(dataOffset, little) : null;
+  if (type === 5) return count === 1 ? readRational(view, dataOffset, little) : Array.from({ length: count }, (_, i) => readRational(view, dataOffset + i * 8, little));
+  return null;
+}
+
+function readIfd(bytes: Uint8Array, view: DataView, tiffStart: number, ifdOffset: number, little: boolean) {
+  const entries = new Map<number, unknown>();
+  const start = tiffStart + ifdOffset;
+  if (start < 0 || start + 2 > bytes.length) return entries;
+  const count = view.getUint16(start, little);
+  for (let i = 0; i < count; i += 1) {
+    const entryOffset = start + 2 + i * 12;
+    if (entryOffset + 12 > bytes.length) break;
+    const tag = view.getUint16(entryOffset, little);
+    entries.set(tag, readExifValue(bytes, view, tiffStart, entryOffset, little));
+  }
+  return entries;
+}
+
+function parseJpegDimensions(bytes: Uint8Array) {
+  if (bytes[0] !== 0xff || bytes[1] !== 0xd8) return { width: null, height: null };
+  let offset = 2;
+  while (offset + 9 < bytes.length) {
+    if (bytes[offset] !== 0xff) break;
+    const marker = bytes[offset + 1];
+    const length = (bytes[offset + 2] << 8) + bytes[offset + 3];
+    if (length < 2) break;
+    if ((marker >= 0xc0 && marker <= 0xc3) || (marker >= 0xc5 && marker <= 0xc7) || (marker >= 0xc9 && marker <= 0xcb) || (marker >= 0xcd && marker <= 0xcf)) {
+      return {
+        height: (bytes[offset + 5] << 8) + bytes[offset + 6],
+        width: (bytes[offset + 7] << 8) + bytes[offset + 8],
+      };
+    }
+    offset += 2 + length;
+  }
+  return { width: null, height: null };
+}
+
+function parsePngDimensions(bytes: Uint8Array) {
+  const isPng = bytes.length > 24 && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47;
+  if (!isPng) return { width: null, height: null };
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  return { width: view.getUint32(16, false), height: view.getUint32(20, false) };
+}
+
+function parseJpegExif(bytes: Uint8Array) {
+  if (bytes[0] !== 0xff || bytes[1] !== 0xd8) return null;
+  let offset = 2;
+  while (offset + 10 < bytes.length) {
+    if (bytes[offset] !== 0xff) break;
+    const marker = bytes[offset + 1];
+    const length = (bytes[offset + 2] << 8) + bytes[offset + 3];
+    if (marker === 0xe1 && readAscii(bytes, offset + 4, 6) === "Exif") {
+      const tiffStart = offset + 10;
+      const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+      const endian = readAscii(bytes, tiffStart, 2);
+      const little = endian === "II";
+      if (!little && endian !== "MM") return null;
+      const firstIfdOffset = view.getUint32(tiffStart + 4, little);
+      const ifd0 = readIfd(bytes, view, tiffStart, firstIfdOffset, little);
+      const exifOffset = typeof ifd0.get(0x8769) === "number" ? ifd0.get(0x8769) as number : null;
+      const gpsOffset = typeof ifd0.get(0x8825) === "number" ? ifd0.get(0x8825) as number : null;
+      const exif = exifOffset ? readIfd(bytes, view, tiffStart, exifOffset, little) : new Map<number, unknown>();
+      const gps = gpsOffset ? readIfd(bytes, view, tiffStart, gpsOffset, little) : new Map<number, unknown>();
+      return { ifd0, exif, gps };
+    }
+    if (length < 2) break;
+    offset += 2 + length;
+  }
+  return null;
+}
+
+function gpsToDecimal(value: unknown, ref: unknown) {
+  if (!Array.isArray(value) || value.length < 3) return null;
+  const decimal = Number(value[0]) + Number(value[1]) / 60 + Number(value[2]) / 3600;
+  if (!Number.isFinite(decimal)) return null;
+  const direction = String(ref ?? "").toUpperCase();
+  return direction === "S" || direction === "W" ? -decimal : decimal;
+}
+
+async function extractPhotoMetadata(file: File): Promise<ExtractedPhotoMetadata> {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const fileSha256 = await sha256Bytes(bytes);
+  const jpegDims = parseJpegDimensions(bytes);
+  const pngDims = parsePngDimensions(bytes);
+  const parsed = parseJpegExif(bytes);
+  const ifd0 = parsed?.ifd0 ?? new Map<number, unknown>();
+  const exif = parsed?.exif ?? new Map<number, unknown>();
+  const gps = parsed?.gps ?? new Map<number, unknown>();
+  const takenAt = parseExifDate(String(exif.get(0x9003) ?? exif.get(0x9004) ?? ifd0.get(0x0132) ?? ""));
+  const gpsLat = gpsToDecimal(gps.get(0x0002), gps.get(0x0001));
+  const gpsLng = gpsToDecimal(gps.get(0x0004), gps.get(0x0003));
+  const width = jpegDims.width ?? pngDims.width;
+  const height = jpegDims.height ?? pngDims.height;
+
+  return {
+    fileSha256,
+    perceptualHash: width && height ? `${width}x${height}:${Math.round(file.size / 1024)}` : null,
+    width,
+    height,
+    orientation: typeof ifd0.get(0x0112) === "number" ? ifd0.get(0x0112) as number : null,
+    takenAt,
+    cameraMake: typeof ifd0.get(0x010f) === "string" ? ifd0.get(0x010f) as string : null,
+    cameraModel: typeof ifd0.get(0x0110) === "string" ? ifd0.get(0x0110) as string : null,
+    gpsLat,
+    gpsLng,
+    gpsAltitude: typeof gps.get(0x0006) === "number" ? gps.get(0x0006) as number : null,
+    hasExif: Boolean(parsed),
+    hasGps: gpsLat !== null && gpsLng !== null,
+    rawExif: {
+      takenAt,
+      cameraMake: typeof ifd0.get(0x010f) === "string" ? ifd0.get(0x010f) : null,
+      cameraModel: typeof ifd0.get(0x0110) === "string" ? ifd0.get(0x0110) : null,
+      orientation: typeof ifd0.get(0x0112) === "number" ? ifd0.get(0x0112) : null,
+      width,
+      height,
+      hasGps: gpsLat !== null && gpsLng !== null,
+    },
+  };
+}
+
+function matchEventByTakenAt(takenAt: string | null, events: ItineraryEventForMatch[]) {
+  if (!takenAt) return { eventMatchId: null, confidence: null, reason: null };
+  const taken = new Date(takenAt);
+  if (Number.isNaN(taken.getTime())) return { eventMatchId: null, confidence: null, reason: null };
+  const dateKey = taken.toISOString().slice(0, 10);
+  const sameDay = events.filter((event) => typeof event.event_date === "string" && event.event_date.slice(0, 10) === dateKey);
+  if (sameDay.length === 0) return { eventMatchId: null, confidence: null, reason: null };
+  const withWindows = sameDay.map((event) => {
+    const start = event.start_time ? new Date(`${dateKey}T${event.start_time}`).getTime() : Number.NaN;
+    const end = event.end_time ? new Date(`${dateKey}T${event.end_time}`).getTime() : Number.NaN;
+    const inWindow = Number.isFinite(start) && Number.isFinite(end) && taken.getTime() >= start - 30 * 60_000 && taken.getTime() <= end + 30 * 60_000;
+    return { event, inWindow };
+  });
+  const exact = withWindows.find((entry) => entry.inWindow);
+  if (exact) return { eventMatchId: exact.event.id, confidence: 0.9, reason: `Capture time matches ${exact.event.event_name}.` };
+  if (sameDay.length === 1) return { eventMatchId: sameDay[0].id, confidence: 0.55, reason: `Capture date matches ${sameDay[0].event_name}.` };
+  return { eventMatchId: sameDay[0].id, confidence: 0.35, reason: "Capture date matches multiple events; picked earliest same-day event." };
+}
+
+async function persistUploadMetadata(
+  admin: ReturnType<typeof createClient>,
+  upload: { id: string; wedding_site_id: string; photo_album_id: string },
+  metadata: ExtractedPhotoMetadata,
+  events: ItineraryEventForMatch[],
+) {
+  const eventMatch = matchEventByTakenAt(metadata.takenAt, events);
+  await admin
+    .from("photo_upload_metadata")
+    .upsert({
+      upload_id: upload.id,
+      wedding_site_id: upload.wedding_site_id,
+      photo_album_id: upload.photo_album_id,
+      file_sha256: metadata.fileSha256,
+      perceptual_hash: metadata.perceptualHash,
+      width: metadata.width,
+      height: metadata.height,
+      orientation: metadata.orientation,
+      taken_at: metadata.takenAt,
+      camera_make: metadata.cameraMake,
+      camera_model: metadata.cameraModel,
+      gps_lat: metadata.gpsLat,
+      gps_lng: metadata.gpsLng,
+      gps_altitude: metadata.gpsAltitude,
+      location_precision: metadata.hasGps ? "exact_private" : null,
+      location_label: metadata.hasGps ? "GPS captured privately" : null,
+      event_match_id: eventMatch.eventMatchId,
+      event_match_confidence: eventMatch.confidence,
+      event_match_reason: eventMatch.reason,
+      metadata_source: "upload",
+      has_exif: metadata.hasExif,
+      has_gps: metadata.hasGps,
+      raw_exif: metadata.rawExif,
+    }, { onConflict: "upload_id" });
+}
 
 
 async function refreshAccessToken(refreshToken: string) {
@@ -43,6 +291,11 @@ async function refreshAccessToken(refreshToken: string) {
       ? new Date(Date.now() + Number(tokenJson.expires_in) * 1000).toISOString()
       : null,
   };
+}
+
+function isGoogleDriveRefreshFailure(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return message.toLowerCase().includes("refresh google access token");
 }
 
 async function uploadFileToDrive(accessToken: string, folderId: string, file: File) {
@@ -116,8 +369,74 @@ async function uploadFileToDrive(accessToken: string, folderId: string, file: Fi
   throw new Error(`Google Drive upload failed for ${file.name}`);
 }
 
+async function uploadFileToHostedStorage(
+  admin: ReturnType<typeof createClient>,
+  album: { id: string; wedding_site_id: string },
+  file: File,
+) {
+  const extension = file.name.includes(".") ? file.name.split(".").pop() : "";
+  const baseName = safePathSegment(file.name.replace(/\.[^.]+$/, ""));
+  const path = `${album.wedding_site_id}/${album.id}/${crypto.randomUUID()}-${baseName}${extension ? `.${safePathSegment(extension)}` : ""}`;
+  const uploadOptions = {
+    contentType: file.type || "application/octet-stream",
+    upsert: false,
+  };
+  let { error } = await admin.storage.from(HOSTED_BUCKET).upload(path, file, uploadOptions);
+  if (error && /bucket/i.test(error.message)) {
+    await admin.storage.createBucket(HOSTED_BUCKET, { public: false });
+    const retry = await admin.storage.from(HOSTED_BUCKET).upload(path, file, uploadOptions);
+    error = retry.error;
+  }
+  if (error) throw new Error("Hosted upload failed.");
+
+  const { data: signed } = await admin.storage.from(HOSTED_BUCKET).createSignedUrl(path, 60 * 60 * 24 * 30);
+  return {
+    path,
+    signedUrl: signed?.signedUrl ?? null,
+  };
+}
+
+async function resolveDriveBackup(
+  admin: ReturnType<typeof createClient>,
+  site: Record<string, unknown>,
+  siteId: string,
+) {
+  if (!site.vault_google_drive_connected) return { accessToken: null, status: "not_connected" };
+
+  let accessToken = site.vault_google_drive_access_token as string | null;
+  const refreshToken = site.vault_google_drive_refresh_token as string | null;
+  const tokenExpiresAt = site.vault_google_drive_token_expires_at ? new Date(site.vault_google_drive_token_expires_at as string).getTime() : 0;
+
+  if (!accessToken || !tokenExpiresAt || tokenExpiresAt < Date.now() + 30_000) {
+    if (!refreshToken) return { accessToken: null, status: "reconnect_required" };
+    try {
+      const refreshed = await refreshAccessToken(refreshToken);
+      accessToken = refreshed.accessToken;
+      await admin
+        .from("wedding_sites")
+        .update({
+          vault_google_drive_access_token: refreshed.accessToken,
+          vault_google_drive_token_expires_at: refreshed.expiresAt,
+        })
+        .eq("id", siteId);
+    } catch (error) {
+      if (isGoogleDriveRefreshFailure(error)) {
+        return { accessToken: null, status: "reconnect_required" };
+      }
+      return { accessToken: null, status: "failed" };
+    }
+  }
+
+  return { accessToken, status: "connected" };
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
+  const url = new URL(req.url);
+  if (url.searchParams.get("readiness") === "1") {
+    return json({ success: true, function: "photo-upload", readiness: "ok" });
+  }
+  if (req.method !== "POST") return fail("METHOD_NOT_ALLOWED", "Method not allowed.", 405);
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -129,6 +448,7 @@ Deno.serve(async (req: Request) => {
 
     const form = await req.formData();
     const token = String(form.get("token") ?? "").trim();
+    const siteSlug = String(form.get("siteSlug") ?? "").trim().toLowerCase();
     const guestName = String(form.get("guestName") ?? "").trim() || null;
     const guestEmailRaw = String(form.get("guestEmail") ?? "").trim();
     const guestEmail = guestEmailRaw ? guestEmailRaw.toLowerCase() : null;
@@ -136,7 +456,10 @@ Deno.serve(async (req: Request) => {
     const honeypot = String(form.get(HONEYPOT_FIELD) ?? '').trim();
     const files = form.getAll("files").filter((v): v is File => v instanceof File);
 
-    if (!token) return fail("TOKEN_REQUIRED", "token is required", 400);
+    if (!token && !siteSlug) return fail("TOKEN_REQUIRED", "token or siteSlug is required", 400);
+    if (siteSlug && !/^[a-z0-9-]{2,80}$/.test(siteSlug)) {
+      return fail("INVALID_SITE", "Invalid site link.", 400);
+    }
     if (honeypot) return fail("BOT_DETECTED", "Request rejected", 400);
     if (guestEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)) {
       return fail("INVALID_EMAIL", "Invalid email address.", 400);
@@ -160,16 +483,49 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    const tokenHash = await sha256Hex(token);
+    const tokenHash = token ? await sha256Hex(token) : null;
 
-    const { data: album } = await admin
-      .from("photo_albums")
-      .select("id,wedding_site_id,name,drive_folder_id,is_active,opens_at,closes_at")
-      .eq("upload_token_hash", tokenHash)
-      .maybeSingle();
+    let album: Record<string, unknown> | null = null;
+    if (tokenHash) {
+      const { data } = await admin
+        .from("photo_albums")
+        .select("id,wedding_site_id,name,drive_folder_id,is_active,opens_at,closes_at")
+        .eq("upload_token_hash", tokenHash)
+        .maybeSingle();
+      album = data;
+    } else {
+      const { data: siteBySlug } = await admin
+        .from("wedding_sites")
+        .select("id,is_published")
+        .eq("site_slug", siteSlug)
+        .maybeSingle();
+
+      if (!siteBySlug || !siteBySlug.is_published) {
+        return fail("SITE_UNAVAILABLE", "Site not available for uploads.", 403);
+      }
+
+      const { data } = await admin
+        .from("photo_albums")
+        .select("id,wedding_site_id,name,drive_folder_id,is_active,opens_at,closes_at")
+        .eq("wedding_site_id", siteBySlug.id)
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      album = data;
+    }
 
     if (!album) return fail("INVALID_TOKEN", "Invalid upload link.", 404);
     if (!album.is_active) return fail("ALBUM_INACTIVE", "Uploads are disabled for this album.", 403);
+
+    const { data: hubSettings } = await admin
+      .from("guest_hub_settings")
+      .select("photos_enabled")
+      .eq("wedding_site_id", album.wedding_site_id)
+      .maybeSingle();
+    if (hubSettings && hubSettings.photos_enabled === false) {
+      return fail("PHOTO_SHARING_DISABLED", "Photo sharing is currently turned off for this event.", 403);
+    }
 
     const tenMinutesAgoIso = new Date(Date.now() - 10 * 60 * 1000).toISOString();
     const { count: albumAttemptCount } = await admin
@@ -196,7 +552,7 @@ Deno.serve(async (req: Request) => {
 
     await admin.from("photo_upload_attempts").insert({
       photo_album_id: album.id,
-      token_hash: tokenHash,
+      token_hash: tokenHash ?? `site:${siteSlug}`,
       requester_ip: requesterIp,
       file_count: files.length,
       total_bytes: totalBytes,
@@ -217,31 +573,35 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
 
     if (!site || !site.is_published) return fail("SITE_UNAVAILABLE", "Site not available for uploads.", 403);
-    if (!site.vault_google_drive_connected) return fail("DRIVE_NOT_CONNECTED", "Google Drive is not connected.", 400);
+    const driveBackup = await resolveDriveBackup(admin, site, album.wedding_site_id as string);
+    const { data: itineraryData } = await admin
+      .from("itinerary_events")
+      .select("id,event_name,event_date,start_time,end_time")
+      .eq("wedding_site_id", album.wedding_site_id)
+      .order("event_date", { ascending: true });
+    const itineraryEvents = (itineraryData ?? []) as ItineraryEventForMatch[];
 
-    let accessToken = site.vault_google_drive_access_token as string | null;
-    const refreshToken = site.vault_google_drive_refresh_token as string | null;
-    const tokenExpiresAt = site.vault_google_drive_token_expires_at ? new Date(site.vault_google_drive_token_expires_at as string).getTime() : 0;
-
-    if (!accessToken || !tokenExpiresAt || tokenExpiresAt < Date.now() + 30_000) {
-      if (!refreshToken) return fail("DRIVE_RECONNECT_REQUIRED", "Google Drive connection needs reconnect.", 400);
-      const refreshed = await refreshAccessToken(refreshToken);
-      accessToken = refreshed.accessToken;
-      await admin
-        .from("wedding_sites")
-        .update({
-          vault_google_drive_access_token: refreshed.accessToken,
-          vault_google_drive_token_expires_at: refreshed.expiresAt,
-        })
-        .eq("id", album.wedding_site_id as string);
-    }
-
-    const uploaded: Array<{ id: string; name: string; webViewLink: string | null }> = [];
+    const uploaded: Array<{ id: string; name: string; storagePath: string; webViewLink: string | null; driveBackupStatus: string }> = [];
     const failed: Array<{ name: string; code: string; error: string }> = [];
 
     for (const file of files) {
       try {
-        const drive = await uploadFileToDrive(accessToken!, album.drive_folder_id as string, file);
+        const metadata = await extractPhotoMetadata(file);
+        const hosted = await uploadFileToHostedStorage(admin, album as { id: string; wedding_site_id: string }, file);
+        let driveFileId: string | null = null;
+        let driveWebViewLink: string | null = null;
+        let driveBackupStatus = driveBackup.status;
+
+        if (driveBackup.accessToken && album.drive_folder_id && !String(album.drive_folder_id).startsWith("hosted/")) {
+          try {
+            const drive = await uploadFileToDrive(driveBackup.accessToken, album.drive_folder_id as string, file);
+            driveFileId = drive.id;
+            driveWebViewLink = drive.webViewLink;
+            driveBackupStatus = "backed_up";
+          } catch {
+            driveBackupStatus = "failed";
+          }
+        }
 
         const { data: row, error } = await admin
           .from("photo_uploads")
@@ -254,20 +614,25 @@ Deno.serve(async (req: Request) => {
             original_filename: file.name,
             mime_type: file.type || "application/octet-stream",
             size_bytes: file.size,
-            drive_file_id: drive.id,
-            drive_web_view_link: drive.webViewLink,
+            drive_file_id: driveFileId ?? hosted.path,
+            drive_web_view_link: driveWebViewLink ?? hosted.signedUrl,
           })
           .select("id")
           .single();
 
         if (error) throw new Error(error.message);
+        await persistUploadMetadata(admin, {
+          id: row.id as string,
+          wedding_site_id: album.wedding_site_id as string,
+          photo_album_id: album.id as string,
+        }, metadata, itineraryEvents);
 
-        uploaded.push({ id: row.id as string, name: file.name, webViewLink: drive.webViewLink });
+        uploaded.push({ id: row.id as string, name: file.name, storagePath: hosted.path, webViewLink: driveWebViewLink ?? hosted.signedUrl, driveBackupStatus });
       } catch (error) {
         failed.push({
           name: file.name,
           code: "UPLOAD_FAILED",
-          error: error instanceof Error ? error.message : "Upload failed",
+          error: "We couldn't upload this file. Please try again.",
         });
       }
     }
@@ -285,6 +650,6 @@ Deno.serve(async (req: Request) => {
       partial: failed.length > 0,
     });
   } catch (err) {
-    return fail("INTERNAL_ERROR", err instanceof Error ? err.message : "Internal server error", 500);
+    return fail("INTERNAL_ERROR", "We couldn't finish this upload. Please try again.", 500);
   }
 });

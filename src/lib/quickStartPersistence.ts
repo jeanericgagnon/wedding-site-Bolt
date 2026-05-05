@@ -37,10 +37,9 @@ const clampRestorableCurrentIndex = (currentIndex: number): number => (
 const parseRecoverableClosedCurrentIndex = (currentIndex: unknown): number | null => {
   if (typeof currentIndex === 'number') {
     return Number.isFinite(currentIndex)
-      && Number.isInteger(currentIndex)
-      && Number.isSafeInteger(currentIndex)
+      && Math.abs(currentIndex) <= Number.MAX_SAFE_INTEGER
       && currentIndex >= 0
-      ? currentIndex
+      ? Number.isInteger(currentIndex) ? currentIndex : RESTORABLE_SETUP_STEPS.length
       : null;
   }
 
@@ -465,7 +464,7 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
         ...clarifyingState,
         clarifying: {
           ...clarifyingState.clarifying,
-          mode: 'draft',
+          mode: 'draft' as const,
         },
       }
     : clarifyingState;
@@ -483,23 +482,24 @@ export const normalizeQuickStartDraftSnapshot = (value: unknown): QuickStartDraf
     && Number.isInteger(parsed.currentIndex)
     && Number.isSafeInteger(parsed.currentIndex)
     && parsed.currentIndex >= 0;
+  const safeCurrentIndex = hasSafeCurrentIndex ? parsed.currentIndex as number : 0;
   const recoverableClosedCurrentIndex = parseRecoverableClosedCurrentIndex(parsed.currentIndex);
   const recoveredClosedCurrentIndex = hasMeaningfulQuickStartAnswers(normalizedInitialSetupAnswers)
     ? resolveRestorableCurrentIndex(RESTORABLE_SETUP_STEPS.length, normalizedInitialSetupAnswers)
     : 0;
   const normalizedCurrentIndex = hasSafeCurrentIndex
     ? hasMeaningfulRestoreState && (showFollowUps || normalizedViewState !== 'question')
-      ? clampRestorableCurrentIndex(Math.max(parsed.currentIndex, RESTORABLE_SETUP_STEPS.length))
+      ? safeCurrentIndex > 0 && safeCurrentIndex < RESTORABLE_SETUP_STEPS.length - 1
+        ? safeCurrentIndex
+        : clampRestorableCurrentIndex(Math.max(safeCurrentIndex, RESTORABLE_SETUP_STEPS.length))
       : hasMeaningfulQuickStartAnswers(normalizedInitialSetupAnswers)
-        ? resolveRestorableCurrentIndex(parsed.currentIndex, normalizedInitialSetupAnswers)
+        ? resolveRestorableCurrentIndex(safeCurrentIndex, normalizedInitialSetupAnswers)
         : 0
     : hasMeaningfulRestoreState && (showFollowUps || normalizedViewState !== 'question')
       ? RESTORABLE_SETUP_STEPS.length
       : recoverableClosedCurrentIndex !== null && hasMeaningfulQuickStartAnswers(normalizedInitialSetupAnswers)
         ? resolveRestorableCurrentIndex(recoverableClosedCurrentIndex, normalizedInitialSetupAnswers)
-      : hasMeaningfulQuickStartAnswers(normalizedInitialSetupAnswers)
-        ? recoveredClosedCurrentIndex
-        : 0;
+      : 0;
 
   return {
     initialSetupAnswers: normalizedInitialSetupAnswers,

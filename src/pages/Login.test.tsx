@@ -35,7 +35,7 @@ vi.mock('../lib/supabase', () => ({
   supabase: {
     auth: {
       getSession: () => Promise.resolve({ data: { session: null } }),
-      signInWithOAuth: (...args: unknown[]) => signInWithOAuthMock(...args),
+      signInWithOAuth: () => signInWithOAuthMock(),
       onAuthStateChange: () => ({
         data: { subscription: { unsubscribe: vi.fn() } },
       }),
@@ -114,7 +114,7 @@ describe('Login quick start handoff', () => {
   it('passes normalized onboarding drafts when switching from login to signup', async () => {
     render(<Login />);
 
-    const link = screen.getByRole('link', { name: 'Get started — $49' });
+    const link = screen.getByRole('link', { name: 'Get started for $49' });
     const state = JSON.parse(link.getAttribute('data-nav-state') || '{}');
 
     expect(state.quickStartDraft).toEqual(expect.objectContaining({
@@ -131,7 +131,7 @@ describe('Login quick start handoff', () => {
 
     render(<Login />);
 
-    const link = screen.getByRole('link', { name: 'Get started — $49' });
+    const link = screen.getByRole('link', { name: 'Get started for $49' });
     const state = JSON.parse(link.getAttribute('data-nav-state') || '{}');
 
     expect(state).toEqual({ returnTo: '/onboarding' });

@@ -105,31 +105,25 @@ CREATE TABLE IF NOT EXISTS wedding_sites (
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );
-
 ALTER TABLE wedding_sites ENABLE ROW LEVEL SECURITY;
-
 -- Wedding sites policies
 CREATE POLICY "Users can view their own wedding sites"
   ON wedding_sites FOR SELECT
   TO authenticated
   USING (auth.uid() = user_id);
-
 CREATE POLICY "Users can create their own wedding sites"
   ON wedding_sites FOR INSERT
   TO authenticated
   WITH CHECK (auth.uid() = user_id);
-
 CREATE POLICY "Users can update their own wedding sites"
   ON wedding_sites FOR UPDATE
   TO authenticated
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
-
 CREATE POLICY "Users can delete their own wedding sites"
   ON wedding_sites FOR DELETE
   TO authenticated
   USING (auth.uid() = user_id);
-
 -- Create guests table
 CREATE TABLE IF NOT EXISTS guests (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -146,9 +140,7 @@ CREATE TABLE IF NOT EXISTS guests (
   rsvp_received_at timestamptz,
   created_at timestamptz DEFAULT now()
 );
-
 ALTER TABLE guests ENABLE ROW LEVEL SECURITY;
-
 -- Guests policies
 CREATE POLICY "Users can view guests for their wedding sites"
   ON guests FOR SELECT
@@ -160,7 +152,6 @@ CREATE POLICY "Users can view guests for their wedding sites"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Users can create guests for their wedding sites"
   ON guests FOR INSERT
   TO authenticated
@@ -171,7 +162,6 @@ CREATE POLICY "Users can create guests for their wedding sites"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Users can update guests for their wedding sites"
   ON guests FOR UPDATE
   TO authenticated
@@ -189,7 +179,6 @@ CREATE POLICY "Users can update guests for their wedding sites"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Users can delete guests for their wedding sites"
   ON guests FOR DELETE
   TO authenticated
@@ -200,7 +189,6 @@ CREATE POLICY "Users can delete guests for their wedding sites"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 -- Create photos table
 CREATE TABLE IF NOT EXISTS photos (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -213,9 +201,7 @@ CREATE TABLE IF NOT EXISTS photos (
   uploaded_at timestamptz DEFAULT now(),
   created_at timestamptz DEFAULT now()
 );
-
 ALTER TABLE photos ENABLE ROW LEVEL SECURITY;
-
 -- Photos policies
 CREATE POLICY "Users can view photos for their wedding sites"
   ON photos FOR SELECT
@@ -227,7 +213,6 @@ CREATE POLICY "Users can view photos for their wedding sites"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Users can create photos for their wedding sites"
   ON photos FOR INSERT
   TO authenticated
@@ -238,7 +223,6 @@ CREATE POLICY "Users can create photos for their wedding sites"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Users can update photos for their wedding sites"
   ON photos FOR UPDATE
   TO authenticated
@@ -256,7 +240,6 @@ CREATE POLICY "Users can update photos for their wedding sites"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Users can delete photos for their wedding sites"
   ON photos FOR DELETE
   TO authenticated
@@ -267,7 +250,6 @@ CREATE POLICY "Users can delete photos for their wedding sites"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 -- Create registry_items table
 CREATE TABLE IF NOT EXISTS registry_items (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -283,9 +265,7 @@ CREATE TABLE IF NOT EXISTS registry_items (
   priority text DEFAULT 'medium',
   created_at timestamptz DEFAULT now()
 );
-
 ALTER TABLE registry_items ENABLE ROW LEVEL SECURITY;
-
 -- Registry items policies
 CREATE POLICY "Users can view registry items for their wedding sites"
   ON registry_items FOR SELECT
@@ -297,7 +277,6 @@ CREATE POLICY "Users can view registry items for their wedding sites"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Users can create registry items for their wedding sites"
   ON registry_items FOR INSERT
   TO authenticated
@@ -308,7 +287,6 @@ CREATE POLICY "Users can create registry items for their wedding sites"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Users can update registry items for their wedding sites"
   ON registry_items FOR UPDATE
   TO authenticated
@@ -326,7 +304,6 @@ CREATE POLICY "Users can update registry items for their wedding sites"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Users can delete registry items for their wedding sites"
   ON registry_items FOR DELETE
   TO authenticated
@@ -337,7 +314,6 @@ CREATE POLICY "Users can delete registry items for their wedding sites"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 -- Create site_content table
 CREATE TABLE IF NOT EXISTS site_content (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -350,9 +326,7 @@ CREATE TABLE IF NOT EXISTS site_content (
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );
-
 ALTER TABLE site_content ENABLE ROW LEVEL SECURITY;
-
 -- Site content policies
 CREATE POLICY "Users can view content for their wedding sites"
   ON site_content FOR SELECT
@@ -364,7 +338,6 @@ CREATE POLICY "Users can view content for their wedding sites"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Users can create content for their wedding sites"
   ON site_content FOR INSERT
   TO authenticated
@@ -375,7 +348,6 @@ CREATE POLICY "Users can create content for their wedding sites"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Users can update content for their wedding sites"
   ON site_content FOR UPDATE
   TO authenticated
@@ -393,7 +365,6 @@ CREATE POLICY "Users can update content for their wedding sites"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Users can delete content for their wedding sites"
   ON site_content FOR DELETE
   TO authenticated
@@ -404,7 +375,6 @@ CREATE POLICY "Users can delete content for their wedding sites"
       AND wedding_sites.user_id = auth.uid()
     )
   );
-
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_wedding_sites_user_id ON wedding_sites(user_id);
 CREATE INDEX IF NOT EXISTS idx_wedding_sites_site_url ON wedding_sites(site_url);
@@ -414,7 +384,6 @@ CREATE INDEX IF NOT EXISTS idx_guests_rsvp_status ON guests(rsvp_status);
 CREATE INDEX IF NOT EXISTS idx_photos_wedding_site_id ON photos(wedding_site_id);
 CREATE INDEX IF NOT EXISTS idx_registry_items_wedding_site_id ON registry_items(wedding_site_id);
 CREATE INDEX IF NOT EXISTS idx_site_content_wedding_site_id ON site_content(wedding_site_id);
-
 -- Create function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
@@ -423,13 +392,11 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-
 -- Create triggers for updated_at
 CREATE TRIGGER update_wedding_sites_updated_at
   BEFORE UPDATE ON wedding_sites
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
-
 CREATE TRIGGER update_site_content_updated_at
   BEFORE UPDATE ON site_content
   FOR EACH ROW

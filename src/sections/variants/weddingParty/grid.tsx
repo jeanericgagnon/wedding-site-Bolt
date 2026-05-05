@@ -1,6 +1,7 @@
 import React from 'react';
 import { z } from 'zod';
 import { SectionDefinition, SectionComponentProps } from '../../types';
+import { getSafePublicImageUrl } from '../../publicLinks';
 
 const PartyMemberSchema = z.object({
   id: z.string(),
@@ -40,26 +41,30 @@ export const defaultWeddingPartyGridData: WeddingPartyGridData = {
   ],
 };
 
-const MemberCard: React.FC<{ member: z.infer<typeof PartyMemberSchema> }> = ({ member }) => (
-  <div className="flex flex-col items-center text-center group max-w-[13rem]">
-    <div className="relative mb-4">
-      {member.photo ? (
-        <div className="w-28 h-28 md:w-32 md:h-32 rounded-full overflow-hidden border-2 border-stone-100 shadow-sm group-hover:shadow-xl group-hover:-translate-y-0.5 transition-all duration-300">
-          <img src={member.photo} alt={member.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-        </div>
-      ) : (
-        <div className="w-28 h-28 md:w-32 md:h-32 rounded-full bg-stone-100 border-2 border-stone-200 flex items-center justify-center">
-          <span className="text-2xl font-light text-stone-400">{member.name.charAt(0)}</span>
-        </div>
+const MemberCard: React.FC<{ member: z.infer<typeof PartyMemberSchema> }> = ({ member }) => {
+  const photo = getSafePublicImageUrl(member.photo);
+
+  return (
+    <div className="flex flex-col items-center text-center group max-w-[13rem]">
+      <div className="relative mb-4">
+        {photo ? (
+          <div className="w-28 h-28 md:w-32 md:h-32 rounded-full overflow-hidden border-2 border-stone-100 shadow-sm group-hover:shadow-xl group-hover:-translate-y-0.5 transition-all duration-300">
+            <img src={photo} alt={member.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+          </div>
+        ) : (
+          <div className="w-28 h-28 md:w-32 md:h-32 rounded-full bg-stone-100 border-2 border-stone-200 flex items-center justify-center">
+            <span className="text-2xl font-light text-stone-400">{member.name.charAt(0)}</span>
+          </div>
+        )}
+      </div>
+      <h3 className="font-medium text-stone-900 text-sm md:text-base">{member.name}</h3>
+      <p className="text-xs text-stone-400 mt-0.5">{member.role}</p>
+      {member.note && (
+        <p className="text-xs text-stone-400 mt-1.5 max-w-[140px] leading-relaxed">{member.note}</p>
       )}
     </div>
-    <h3 className="font-medium text-stone-900 text-sm md:text-base">{member.name}</h3>
-    <p className="text-xs text-stone-400 uppercase tracking-wide mt-0.5">{member.role}</p>
-    {member.note && (
-      <p className="text-xs text-stone-400 mt-1.5 max-w-[140px] leading-relaxed">{member.note}</p>
-    )}
-  </div>
-);
+  );
+};
 
 const WeddingPartyGrid: React.FC<SectionComponentProps<WeddingPartyGridData>> = ({ data }) => {
   const partner1Members = data.members.filter(m => m.side === 'partner1' || m.side === 'both');
@@ -71,11 +76,11 @@ const WeddingPartyGrid: React.FC<SectionComponentProps<WeddingPartyGridData>> = 
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-16">
           {data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">
+            <p className="text-sm text-stone-400 font-light mb-4">
               {data.eyebrow}
             </p>
           )}
-          <h2 className="text-4xl md:text-6xl font-light text-stone-900 mb-3 tracking-tight">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-stone-900 mb-3">{data.headline}</h2>
           {data.subheadline && (
             <p className="text-stone-500 font-light max-w-xl mx-auto">{data.subheadline}</p>
           )}
@@ -85,7 +90,7 @@ const WeddingPartyGrid: React.FC<SectionComponentProps<WeddingPartyGridData>> = 
           <div className="space-y-16">
             {partner1Members.length > 0 && (
               <div>
-                <p className="text-center text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-10">
+                <p className="text-center text-sm text-stone-400 font-light mb-10">
                   {data.partner1Label}
                 </p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-10 justify-items-center">
@@ -96,7 +101,7 @@ const WeddingPartyGrid: React.FC<SectionComponentProps<WeddingPartyGridData>> = 
             {partner2Members.length > 0 && (
               <div>
                 <div className="w-24 h-px bg-stone-100 mx-auto mb-16" />
-                <p className="text-center text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-10">
+                <p className="text-center text-sm text-stone-400 font-light mb-10">
                   {data.partner2Label}
                 </p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-10 justify-items-center">

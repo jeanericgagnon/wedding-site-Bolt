@@ -45,12 +45,10 @@ STABLE
 AS $$
   SELECT current_setting('app.current_invite_token', true);
 $$;
-
 -- ── rsvps: replace permissive policies ──────────────────────────────────────
 
 DROP POLICY IF EXISTS "Anyone can submit RSVP" ON rsvps;
 DROP POLICY IF EXISTS "Guests can update their own RSVP" ON rsvps;
-
 CREATE POLICY "Guests can insert RSVP with valid token"
   ON rsvps FOR INSERT
   TO anon, authenticated
@@ -62,7 +60,6 @@ CREATE POLICY "Guests can insert RSVP with valid token"
       AND guests.invite_token = get_invite_token()
     )
   );
-
 CREATE POLICY "Guests can update their own RSVP with valid token"
   ON rsvps FOR UPDATE
   TO anon, authenticated
@@ -82,11 +79,9 @@ CREATE POLICY "Guests can update their own RSVP with valid token"
       AND guests.invite_token = get_invite_token()
     )
   );
-
 -- ── guests: tighten the public read policy ───────────────────────────────────
 
 DROP POLICY IF EXISTS "Guests can view their own data via token" ON guests;
-
 CREATE POLICY "Guests can view their own row via token"
   ON guests FOR SELECT
   TO anon, authenticated
@@ -104,7 +99,6 @@ CREATE POLICY "Guests can view their own row via token"
       OR get_invite_token() = ''
     )
   );
-
 -- ── Add token_expires_at column for future expiry support ───────────────────
 
 DO $$

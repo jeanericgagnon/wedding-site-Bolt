@@ -9,6 +9,7 @@ import {
   canSendCoordinatorUpdates,
   derivePlannerRoleFromPermissions,
   getPlannerPermissionPreset,
+  hasPlannerPermission,
   type PlannerAccessRole,
 } from './plannerAccess';
 
@@ -25,13 +26,13 @@ describe('plannerAccess role matrix', () => {
     expect(canSendCoordinatorUpdates('viewer')).toBe(false);
   });
 
-  it('lets coordinators handle live ops but not budget, vendors, or dashboard message composition', () => {
+  it('lets coordinators handle live ops and selected messaging but not budget or vendors', () => {
     expect(canEditPlannerSurface('coordinator')).toBe(true);
     expect(canManagePlanning('coordinator')).toBe(true);
     expect(canEditPlanningTasks('coordinator')).toBe(true);
     expect(canEditPlanningBudget('coordinator')).toBe(false);
     expect(canEditPlanningVendors('coordinator')).toBe(false);
-    expect(canComposeDashboardMessages('coordinator')).toBe(false);
+    expect(canComposeDashboardMessages('coordinator')).toBe(true);
     expect(canSendCoordinatorUpdates('coordinator')).toBe(true);
   });
 
@@ -65,8 +66,8 @@ describe('plannerAccess permission presets', () => {
     expect(derivePlannerRoleFromPermissions(getPlannerPermissionPreset('viewer'))).toBe('viewer');
   });
 
-  it('falls back to owner only when no collaborator permissions exist', () => {
-    expect(derivePlannerRoleFromPermissions([])).toBe('owner');
+  it('treats null permissions as owner context and empty collaborator permissions as viewer', () => {
+    expect(derivePlannerRoleFromPermissions([])).toBe('viewer');
     expect(derivePlannerRoleFromPermissions(null)).toBe('owner');
     expect(derivePlannerRoleFromPermissions(undefined)).toBe('owner');
   });
@@ -86,5 +87,19 @@ describe('plannerAccess permission presets', () => {
   it('falls back to viewer for lighter read-oriented mixes', () => {
     expect(derivePlannerRoleFromPermissions(['guests'])).toBe('viewer');
     expect(derivePlannerRoleFromPermissions(['planning', 'timeline', 'photos'])).toBe('viewer');
+  });
+
+  it('uses explicit permission arrays over broad role defaults', () => {
+    expect(hasPlannerPermission('planner', ['messages'], 'messages')).toBe(true);
+    expect(hasPlannerPermission('planner', ['messages'], 'budget')).toBe(false);
+    expect(canEditPlanningBudget('planner', ['messages'])).toBe(false);
+    expect(canComposeDashboardMessages('coordinator', ['messages'])).toBe(true);
+    expect(canSendCoordinatorUpdates('coordinator', ['guests'])).toBe(false);
+  });
+
+  it('uses role presets only when no explicit permission array was loaded', () => {
+    expect(canEditPlanningBudget('planner')).toBe(true);
+    expect(canEditPlanningBudget('coordinator')).toBe(false);
+    expect(canComposeDashboardMessages('viewer')).toBe(false);
   });
 });

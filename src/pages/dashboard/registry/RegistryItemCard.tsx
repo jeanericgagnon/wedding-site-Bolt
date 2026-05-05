@@ -3,6 +3,8 @@ import { ExternalLink, Pencil, Trash2, GripVertical, Package, CheckCircle2, Shop
 import { Badge } from '../../../components/ui';
 import { ageExceedsMs, formatRegistryItemDate } from '../registryItemTime';
 import { getRegistryItemMetadataState, sanitizeRegistryQuantityState, type RegistryItem, type PurchaseStatus } from './registryTypes';
+import { copyTextOrDownload } from '../../../lib/copyText';
+import { getSafePublicImageUrl, getSafePublicWebUrl } from '../../../sections/publicLinks';
 
 interface Props {
   item: RegistryItem;
@@ -41,11 +43,28 @@ export function normalizeOwnerRegistryItemState(item: RegistryItem): RegistryIte
   const quantityState = sanitizeRegistryQuantityState(item.quantity_purchased, item.quantity_needed);
   return {
     ...item,
+    item_url: getSafePublicWebUrl(item.item_url) || null,
+    canonical_url: getSafePublicWebUrl(item.canonical_url) || null,
+    image_url: getSafePublicImageUrl(item.image_url) || null,
+    fund_venmo_url: getSafePublicWebUrl(item.fund_venmo_url) || null,
+    fund_paypal_url: getSafePublicWebUrl(item.fund_paypal_url) || null,
+    fund_custom_url: getSafePublicWebUrl(item.fund_custom_url) || null,
     quantity_needed: quantityState.quantityNeeded,
     quantity_purchased: quantityState.quantityPurchased,
     purchase_status: quantityState.purchaseStatus,
     purchaser_name: quantityState.purchaseStatus === 'available' ? null : item.purchaser_name,
   };
+}
+
+export function getOwnerRegistrySourceLabel(sourceMethod: string | null | undefined): string | null {
+  if (!sourceMethod) return null;
+  const normalized = sourceMethod.toLowerCase();
+  if (normalized === 'manual') return 'Details entered by you';
+  if (normalized === 'adapter') return 'Imported from store page';
+  if (normalized === 'jsonld') return 'Imported from product data';
+  if (normalized === 'opengraph') return 'Imported from page preview';
+  if (normalized === 'heuristic') return 'Imported with partial details';
+  return 'Imported from source link';
 }
 
 interface PurchaseConfirmProps {
@@ -60,7 +79,7 @@ const PurchaseConfirmPanel: React.FC<PurchaseConfirmProps> = ({ item, onConfirm,
   const [qty, setQty] = useState(Math.min(1, remaining));
 
   return (
-    <div className="absolute inset-0 z-10 bg-surface/95 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center p-4 gap-3">
+    <div className="absolute inset-0 z-10 bg-surface/95 backdrop-blur-sm rounded-lg flex flex-col items-center justify-center p-4 gap-3">
       <div className="text-center">
         <p className="font-semibold text-text-primary text-sm leading-snug mb-1">Mark as purchased?</p>
         <p className="text-xs text-text-secondary">This lets guests know it's been bought.</p>
@@ -112,16 +131,7 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
   const [refetching, setRefetching] = useState(false);
   const [copiedHint, setCopiedHint] = useState<string | null>(null);
   const [imgFailed, setImgFailed] = useState(false);
-  const [imgSrc, setImgSrc] = useState<string | null>(item.image_url ?? null);
-  const [imgTriedProxy, setImgTriedProxy] = useState(false);
-  const [imgTriedPagePreview, setImgTriedPagePreview] = useState(false);
-  const pagePreviewSourceUrl = normalizedItem.item_url ?? normalizedItem.canonical_url ?? null;
-
-  const buildPagePreviewUrl = (url?: string | null) => {
-    const v = (url || '').trim();
-    if (!v) return null;
-    return `https://image.thum.io/get/width/1200/noanimate/${encodeURIComponent(v)}`;
-  };
+  const [imgSrc, setImgSrc] = useState<string | null>(null);
   const cooldownRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isCashFund = normalizedItem.item_type === 'cash_fund';
@@ -148,10 +158,9 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
 
   const imageSource = (() => {
     const src = (normalizedItem.image_url || '').toLowerCase();
-    if (src.includes('thum.io') || src.includes('weserv.nl')) return { label: 'Image: Fallback', tone: 'neutral' as const, hint: 'Using a screenshot/proxy fallback image.' };
-    if (normalizedItem.image_url) return { label: 'Image: Direct', tone: 'success' as const, hint: 'Using a direct product image URL.' };
-    if (normalizedItem.item_url || normalizedItem.canonical_url) return { label: 'Image: Auto', tone: 'warning' as const, hint: 'Using auto-fetched image metadata from product URL.' };
-    return { label: 'Image: Missing', tone: 'error' as const, hint: 'No image source available yet.' };
+    if (src.includes('thum.io') || src.includes('weserv.nl')) return { label: 'Backup image', tone: 'neutral' as const, hint: 'Using a page preview image.' };
+    if (normalizedItem.image_url) return { label: 'Product image', tone: 'primary' as const, hint: 'Using the product image.' };
+    return { label: 'Needs image', tone: 'neutral' as const, hint: 'No image source available yet.' };
   })();
   const asOfLabel = normalizedItem.metadata_last_checked_at
     ? formatRegistryItemDate(normalizedItem.metadata_last_checked_at, { month: 'short', day: 'numeric', year: 'numeric' })
@@ -160,20 +169,23 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
     ? formatRegistryItemDate(normalizedItem.next_refresh_at, { month: 'short', day: 'numeric' })
     : null;
   const failCount = normalizedItem.refresh_fail_count ?? 0;
-  const sourceLabel = normalizedItem.metadata_source_method ? `Source: ${normalizedItem.metadata_source_method}` : null;
+  const sourceLabel = getOwnerRegistrySourceLabel(normalizedItem.metadata_source_method);
   const retailerLabel = normalizedItem.metadata_retailer ? `Retailer: ${normalizedItem.metadata_retailer}` : null;
   const repairGuidance = (() => {
     const retailer = (normalizedItem.metadata_retailer || normalizedItem.merchant || normalizedItem.store_name || '').toLowerCase();
-    if (retailer.includes('amazon')) return 'Amazon often needs manual title or price cleanup after import.';
+    if (retailer.includes('amazon')) return 'Amazon often needs a quick title or price check after import.';
     if (retailer.includes('target')) return 'Target imports can drift; re-import first, then confirm title and price.';
     if (retailer.includes('walmart')) return 'Walmart usually benefits from a quick image and price check.';
     if (retailer.includes('etsy')) return 'Etsy listings can hide variant-specific details; review before save.';
-    if (retailer.includes('crate') || retailer.includes('cb2')) return 'Crate & Barrel / CB2 may still need manual cleanup today.';
+    if (retailer.includes('crate') || retailer.includes('cb2')) return 'Crate & Barrel / CB2 may still need a quick detail cleanup today.';
     return null;
   })();
   const goal = normalizedItem.fund_goal_amount ?? 0;
   const received = normalizedItem.fund_received_amount ?? 0;
   const fundPct = goal > 0 ? Math.min(100, Math.round((received / goal) * 100)) : null;
+  const venmoUrl = normalizedItem.fund_venmo_url;
+  const paypalUrl = normalizedItem.fund_paypal_url;
+  const customFundUrl = normalizedItem.fund_custom_url;
 
   function handleDeleteClick() {
     if (confirmDelete) {
@@ -209,25 +221,23 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
   async function copyText(label: string, text: string) {
     if (!text) return;
     try {
-      await navigator.clipboard.writeText(text);
-      setCopiedHint(`${label} copied`);
+      const result = await copyTextOrDownload(text, `${label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'registry'}-link.txt`);
+      setCopiedHint(result === 'copied' ? `${label} copied` : `${label} downloaded`);
       setTimeout(() => setCopiedHint(null), 1800);
     } catch {
-      setCopiedHint('Copy failed');
+      setCopiedHint('Copy needs retry');
       setTimeout(() => setCopiedHint(null), 1800);
     }
   }
 
   useEffect(() => {
     setImgFailed(false);
-    setImgTriedProxy(false);
-    setImgTriedPagePreview(false);
-    setImgSrc(normalizedItem.image_url ?? buildPagePreviewUrl(pagePreviewSourceUrl) ?? null);
-  }, [normalizedItem.id, normalizedItem.image_url, pagePreviewSourceUrl]);
+    setImgSrc(normalizedItem.image_url ?? null);
+  }, [normalizedItem.id, normalizedItem.image_url]);
 
   if (isCashFund) {
     return (
-      <div className="group relative bg-surface border border-border rounded-xl overflow-hidden flex flex-col transition-shadow hover:shadow-md p-4 gap-3">
+      <div className="group relative flex flex-col gap-3 overflow-hidden rounded-lg border border-border bg-surface p-4">
         <div className="flex items-start justify-between">
           <h3 className="font-semibold text-text-primary leading-snug">{item.item_name}</h3>
           <Badge variant="neutral">Cash Fund</Badge>
@@ -245,8 +255,8 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
         </div>
         {fundPct != null && (
           <div>
-            <div className="w-full h-2 rounded-full bg-surface-subtle border border-border overflow-hidden">
-              <div className="h-full bg-primary" style={{ width: `${fundPct}%` }} />
+            <div className="h-2 w-full overflow-hidden rounded-lg border border-border bg-surface-subtle">
+              <div className="h-full rounded-lg bg-primary" style={{ width: `${fundPct}%` }} />
             </div>
             <p className="text-xs text-text-tertiary mt-1">{fundPct}% funded</p>
           </div>
@@ -254,24 +264,24 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
         <div className="grid grid-cols-2 gap-2">
           <input type="number" min="0" step="0.01" value={received} onChange={() => {}} readOnly className="hidden" />
           <button onClick={() => onEdit(normalizedItem)} className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-text-secondary border border-border rounded-lg hover:border-primary hover:text-primary transition-colors"><Pencil className="w-3.5 h-3.5" />Edit</button>
-          <button onClick={handleDeleteClick} className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium border rounded-lg transition-colors ${confirmDelete ? 'text-error border-error bg-error/5' : 'text-text-secondary border-border hover:border-error hover:text-error'}`}>
+          <button onClick={handleDeleteClick} className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium border rounded-lg transition-colors ${confirmDelete ? 'text-text-primary border-border bg-surface-subtle' : 'text-text-secondary border-border hover:border-text-tertiary hover:text-text-primary'}`}>
             <Trash2 className="w-3.5 h-3.5" />{confirmDelete ? 'Confirm' : 'Delete'}
           </button>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          {item.fund_venmo_url && <a href={item.fund_venmo_url} target="_blank" rel="noreferrer" className="text-xs px-2 py-1 border rounded-lg">Venmo</a>}
-          {item.fund_paypal_url && <a href={item.fund_paypal_url} target="_blank" rel="noreferrer" className="text-xs px-2 py-1 border rounded-lg">PayPal</a>}
+          {venmoUrl && <a href={venmoUrl} target="_blank" rel="noreferrer" className="text-xs px-2 py-1 border rounded-lg">Venmo</a>}
+          {paypalUrl && <a href={paypalUrl} target="_blank" rel="noreferrer" className="text-xs px-2 py-1 border rounded-lg">PayPal</a>}
           {item.fund_zelle_handle && <span className="text-xs px-2 py-1 border rounded-lg">Zelle: {item.fund_zelle_handle}</span>}
-          {item.fund_custom_url && <a href={item.fund_custom_url} target="_blank" rel="noreferrer" className="text-xs px-2 py-1 border rounded-lg">{item.fund_custom_label || 'Link'}</a>}
+          {customFundUrl && <a href={customFundUrl} target="_blank" rel="noreferrer" className="text-xs px-2 py-1 border rounded-lg">{item.fund_custom_label || 'Link'}</a>}
           {item.fund_zelle_handle && (
             <button onClick={() => copyText('Zelle', item.fund_zelle_handle || '')} className="text-xs px-2 py-1 border rounded-lg hover:border-primary hover:text-primary">Copy Zelle</button>
           )}
           <button
             onClick={() => copyText('Payout details', [
-              item.fund_venmo_url ? `Venmo: ${item.fund_venmo_url}` : null,
-              item.fund_paypal_url ? `PayPal: ${item.fund_paypal_url}` : null,
+              venmoUrl ? `Venmo: ${venmoUrl}` : null,
+              paypalUrl ? `PayPal: ${paypalUrl}` : null,
               item.fund_zelle_handle ? `Zelle: ${item.fund_zelle_handle}` : null,
-              item.fund_custom_url ? `${item.fund_custom_label || 'Link'}: ${item.fund_custom_url}` : null,
+              customFundUrl ? `${item.fund_custom_label || 'Link'}: ${customFundUrl}` : null,
             ].filter(Boolean).join('\n'))}
             className="text-xs px-2 py-1 border rounded-lg hover:border-primary hover:text-primary"
           >
@@ -284,7 +294,7 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
   }
 
   return (
-    <div className="group relative bg-surface border border-border rounded-xl overflow-hidden flex flex-col transition-shadow hover:shadow-md">
+    <div className="group relative flex flex-col overflow-hidden rounded-lg border border-border bg-surface">
       {showPurchaseConfirm && (
         <PurchaseConfirmPanel
           item={item}
@@ -298,22 +308,9 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
         {imgSrc && !imgFailed ? (
           <img
             src={imgSrc}
-            alt={item.item_name}
+            alt={normalizedItem.item_name}
             className={`w-full h-full object-cover transition-opacity ${isPurchased ? 'opacity-40' : ''}`}
-            onError={() => {
-              if (!imgTriedProxy && normalizedItem.image_url) {
-                setImgTriedProxy(true);
-                setImgSrc(`https://images.weserv.nl/?url=${encodeURIComponent(normalizedItem.image_url.replace(/^https?:\/\//, ''))}&w=1200&fit=inside`);
-                return;
-              }
-              const pagePreview = buildPagePreviewUrl(pagePreviewSourceUrl);
-              if (!imgTriedPagePreview && pagePreview && imgSrc !== pagePreview) {
-                setImgTriedPagePreview(true);
-                setImgSrc(pagePreview);
-                return;
-              }
-              setImgFailed(true);
-            }}
+            onError={() => setImgFailed(true)}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
@@ -322,7 +319,7 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
         )}
         {isPurchased && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="bg-success/90 text-white text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 rounded-lg bg-success/90 px-3 py-1.5 text-xs font-semibold text-white">
               <CheckCircle2 className="w-3.5 h-3.5" />
               Purchased
             </div>
@@ -363,38 +360,38 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
         </div>
 
         <div className="flex items-center gap-1.5 flex-wrap">
-          {outOfStock && <Badge variant="warning">Out of stock</Badge>}
+          {outOfStock && <Badge variant="neutral">Out of stock</Badge>}
           {priceChanged && <Badge variant="success">Price changed</Badge>}
           {stale && <Badge variant="neutral">Check details</Badge>}
-          {failCount > 0 && <Badge variant="error">Retry {failCount}</Badge>}
-          {repairStates.includes('broken-import') && <Badge variant="error">Broken import</Badge>}
-          {repairStates.includes('partial-import') && <Badge variant="warning">Partial import</Badge>}
+          {failCount > 0 && <Badge variant="neutral">Retry {failCount}</Badge>}
+          {repairStates.includes('broken-import') && <Badge variant="neutral">Needs repair</Badge>}
+          {repairStates.includes('partial-import') && <Badge variant="neutral">Needs a quick check</Badge>}
           {repairStates.includes('stale-details') && <Badge variant="neutral">Stale details</Badge>}
-          {repairStates.includes('manual-review') && <Badge variant="warning">Manual review</Badge>}
-          {normalizedItem.metadata_fetch_status === 'blocked' && <Badge variant="error">Couldn’t pull everything</Badge>}
-          {normalizedItem.metadata_fetch_status === 'error' && <Badge variant="error">Import problem</Badge>}
-          {normalizedItem.metadata_fetch_status === 'timeout' && <Badge variant="warning">Import timeout</Badge>}
-          {normalizedItem.metadata_fetch_status === 'parse_failure' && <Badge variant="warning">Couldn’t read details</Badge>}
-          {hasBadImportTitle && <Badge variant="error">Bad import title</Badge>}
+          {repairStates.includes('manual-review') && <Badge variant="neutral">Worth checking</Badge>}
+          {normalizedItem.metadata_fetch_status === 'blocked' && <Badge variant="neutral">Needs details</Badge>}
+          {normalizedItem.metadata_fetch_status === 'error' && <Badge variant="neutral">Could use update</Badge>}
+          {normalizedItem.metadata_fetch_status === 'timeout' && <Badge variant="neutral">Update paused</Badge>}
+          {normalizedItem.metadata_fetch_status === 'parse_failure' && <Badge variant="neutral">Could use details</Badge>}
+          {hasBadImportTitle && <Badge variant="neutral">Needs title fix</Badge>}
           {extractionConfidence === 'full' && <Badge variant="success">Imported well</Badge>}
-          {extractionConfidence === 'partial' && <Badge variant="warning">Needs a quick check</Badge>}
-          {extractionConfidence === 'manual' && <Badge variant="neutral">Added manually</Badge>}
+          {extractionConfidence === 'partial' && <Badge variant="neutral">Needs a quick check</Badge>}
+          {extractionConfidence === 'manual' && <Badge variant="neutral">Added by you</Badge>}
           <span title={imageSource.hint}>
             <Badge variant={imageSource.tone}>{imageSource.label}</Badge>
           </span>
           {sourceLabel && <Badge variant="neutral">{sourceLabel}</Badge>}
           {retailerLabel && <Badge variant="neutral">{retailerLabel}</Badge>}
         </div>
-        {(imageSource.label === 'Image: Missing' || imageSource.label === 'Image: Fallback') && (
+        {(imageSource.label === 'Needs image' || imageSource.label === 'Backup image') && (
           <p className="text-[11px] text-text-tertiary">
-            Tip: paste a direct image link in Edit, or refresh metadata from the product URL.
+            Tip: paste a direct image link in Edit, or refresh details from the product URL.
           </p>
         )}
         {(missingSummary || blockedMessage || hasBadImportTitle || repairGuidance) && (
           <div className="space-y-1">
             {missingSummary && <p className="text-[11px] text-text-tertiary">{missingSummary}</p>}
-            {blockedMessage && <p className="text-[11px] text-warning">{blockedMessage}</p>}
-            {hasBadImportTitle && <p className="text-[11px] text-warning">This item looks like an old bad import. Use Refresh, Re-import, or Edit to repair the title/details.</p>}
+            {blockedMessage && <p className="text-[11px] text-text-secondary">{blockedMessage}</p>}
+            {hasBadImportTitle && <p className="text-[11px] text-text-secondary">This gift needs a better title. Use Refresh, Re-import, or Edit to update the details.</p>}
             {repairGuidance && <p className="text-[11px] text-text-tertiary">{repairGuidance}</p>}
           </div>
         )}
@@ -432,12 +429,12 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
             <Pencil className="w-3.5 h-3.5" />
             Edit
           </button>
-          {onRefetchMetadata && pagePreviewSourceUrl && (
+          {onRefetchMetadata && displayUrl && (
             <>
             <button
               onClick={handleRefetch}
               disabled={refetching}
-              title="Re-fetch product details from the store"
+              title="Refresh gift details from the store"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-text-secondary border border-border rounded-lg hover:border-primary hover:text-primary transition-colors disabled:opacity-50"
             >
               {refetching ? (
@@ -462,8 +459,8 @@ export const RegistryItemCard: React.FC<Props> = ({ item, onEdit, onDelete, onMa
             onClick={handleDeleteClick}
             className={`ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
               confirmDelete
-                ? 'border-error text-error bg-error-light'
-                : 'text-text-tertiary border-transparent hover:border-error/40 hover:text-error'
+                ? 'border-border bg-surface-subtle text-text-primary'
+                : 'text-text-tertiary border-transparent hover:border-text-tertiary hover:text-text-primary'
             }`}
           >
             <Trash2 className="w-3.5 h-3.5" />

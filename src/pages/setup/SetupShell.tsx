@@ -6,6 +6,11 @@ import { templateCatalog } from '../../builder/constants/templateCatalog';
 import { TEMPLATE_USE_CASE_PACKS } from '../../builder/constants/templateUseCasePacks';
 import { clearSetupDraft, clearSetupDraftOnly, readSetupDraft, setupDraftProgress, type SetupDraft, writeSetupDraft } from '../../lib/setupDraft';
 import { deriveSetupMode, getRecommendedTemplates, SETUP_STYLE_OPTIONS } from '../../lib/setupDraftRecommendations';
+import { customerSafeErrorMessage } from '../../lib/customerSafeError';
+
+function safeSetupError(err: unknown): string {
+  return customerSafeErrorMessage(err, 'Couldn’t save your setup right now. Please try again.');
+}
 
 const steps = [
   { key: 'migration', label: 'Migration' },
@@ -150,7 +155,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
       clearSetupDraftOnly();
       navigate('/builder');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save your setup right now.');
+      setError(safeSetupError(err));
     } finally {
       setSaving(false);
     }
@@ -162,14 +167,14 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
         <h1 className="text-3xl font-bold text-neutral-900">Set up your wedding website</h1>
         <p className="mt-2 text-sm text-neutral-600">A quick guided setup to get your site ready faster.</p>
         <p className="mt-1 text-xs text-neutral-500">Useful whether you're starting fresh or moving over from Zola, Joy, or The Knot.</p>
-        {draft.migrationSource && <p className="mt-1 text-xs text-rose-700">Current path: {draft.migrationSource === 'other' ? 'migration from another source' : `migration from ${draft.migrationSource}`}</p>}
+        {draft.migrationSource && <p className="mt-1 text-xs text-text-secondary">Current path: {draft.migrationSource === 'other' ? 'migration from another source' : `migration from ${draft.migrationSource}`}</p>}
         <div className="mt-4">
           <div className="mb-1 flex items-center justify-between text-xs text-neutral-500">
             <span>Setup progress</span>
             <span>{completion}%</span>
           </div>
           <div className="h-2 w-full rounded bg-neutral-200">
-            <div className="h-2 rounded bg-rose-600 transition-all" style={{ width: `${completion}%` }} />
+            <div className="h-2 rounded bg-primary transition-all" style={{ width: `${completion}%` }} />
           </div>
         </div>
 
@@ -204,7 +209,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                     setError('Add names, date or timing, location, and guest estimate before review.');
                   }
                 }}
-                className={`rounded border px-3 py-2 text-sm ${activeStep === s.key ? 'border-rose-500 bg-rose-50 text-rose-700' : 'border-neutral-300 bg-white text-neutral-700'} ${isReviewLocked ? 'opacity-60' : ''}`}
+                className={`rounded border px-3 py-2 text-sm ${activeStep === s.key ? 'border-primary bg-surface-secondary text-text-primary' : 'border-neutral-300 bg-white text-neutral-700'} ${isReviewLocked ? 'opacity-60' : ''}`}
               >
                 {s.label}
               </Link>
@@ -222,13 +227,13 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
               Starting fresh is fine. Moving over from Zola, Joy, The Knot, or somewhere else is fine too. We just want to shape the next steps the right way.
             </div>
             {draft.migrationSource && draft.migrationSource !== 'other' && (
-              <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800">
+              <div className="rounded-lg border border-border-subtle bg-surface-secondary p-3 text-xs text-text-secondary">
                 Migration-first guidance: start by securing your names, date, city, and guest structure here. You can clean up story, FAQs, registry links, and design once the core move is done.
               </div>
             )}
             {draft.migrationSource === 'other' && (
-              <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800">
-                Migration-first guidance: move the essentials first — names, date, location, guest list, and RSVP setup — then fill in the rest after the switch is stable.
+              <div className="rounded-lg border border-border-subtle bg-surface-secondary p-3 text-xs text-text-secondary">
+                Migration-first guidance: move the essentials first: names, date, location, guest list, and RSVP setup. Then fill in the rest after the switch is stable.
               </div>
             )}
             <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
@@ -243,7 +248,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                   key={`${value}-${idx}`}
                   type="button"
                   onClick={() => updateDraft({ migrationSource: value as SetupDraft['migrationSource'] })}
-                  className={`rounded-xl border px-4 py-3 text-sm text-left ${draft.migrationSource === value && !(label === 'Starting fresh' && draft.migrationSource === 'other') ? 'border-rose-300 bg-rose-50 text-rose-800' : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300'}`}
+                  className={`rounded-lg border px-4 py-3 text-sm text-left ${draft.migrationSource === value && !(label === 'Starting fresh' && draft.migrationSource === 'other') ? 'border-primary bg-surface-secondary text-text-primary' : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300'}`}
                 >
                   {label}
                 </button>
@@ -254,7 +259,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
             </div>
             <div className="flex items-center justify-between gap-3">
               <div className="text-xs text-neutral-500">We will use this to shape migration-specific guidance next.</div>
-              <button onClick={continueFromMigration} className="rounded-xl bg-neutral-900 text-white px-4 py-2 text-sm hover:bg-neutral-800">Continue</button>
+              <button onClick={continueFromMigration} className="rounded-lg bg-neutral-900 text-white px-4 py-2 text-sm hover:bg-neutral-800">Continue</button>
             </div>
           </div>
         )}
@@ -267,9 +272,9 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                 <input className="w-full rounded border border-neutral-300 px-3 py-2 text-sm" placeholder="Partner 2 first name" value={draft.partnerTwoFirstName} onChange={(e) => updateDraft({ partnerTwoFirstName: e.target.value })} />
                 <input className="w-full rounded border border-neutral-300 px-3 py-2 text-sm" placeholder="Partner 2 last name" value={draft.partnerTwoLastName} onChange={(e) => updateDraft({ partnerTwoLastName: e.target.value })} />
               </div>
-              {error && <p className="text-sm text-red-600">{error}</p>}
+              {error && <p className="text-sm text-text-secondary">{error}</p>}
               <div className="flex items-center gap-2">
-                <button type="button" onClick={continueFromNames} className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">Continue</button>
+                <button type="button" onClick={continueFromNames} className="rounded bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover">Continue</button>
                 <p className="text-xs text-neutral-500">Your progress saves automatically in this browser.</p>
               </div>
             </div>
@@ -284,10 +289,10 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
 
               <input type="date" disabled={!draft.dateKnown} className="w-full max-w-sm rounded border border-neutral-300 px-3 py-2 text-sm disabled:bg-neutral-100 disabled:text-neutral-500" value={draft.weddingDate} onChange={(e) => updateDraft({ weddingDate: e.target.value })} />
 
-              {error && <p className="text-sm text-red-600">{error}</p>}
+              {error && <p className="text-sm text-text-secondary">{error}</p>}
               <div className="flex items-center gap-2">
                 <button type="button" onClick={goPrev} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Back</button>
-                <button type="button" onClick={continueFromDate} className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">Continue</button>
+                <button type="button" onClick={continueFromDate} className="rounded bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover">Continue</button>
               </div>
             </div>
           )}
@@ -303,10 +308,10 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                 <input className="w-full rounded border border-neutral-300 px-3 py-2 text-sm" placeholder="State / Region (optional)" value={draft.weddingRegion} onChange={(e) => updateDraft({ weddingRegion: e.target.value })} />
               </div>
 
-              {error && <p className="text-sm text-red-600">{error}</p>}
+              {error && <p className="text-sm text-text-secondary">{error}</p>}
               <div className="flex items-center gap-2">
                 <button type="button" onClick={goPrev} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Back</button>
-                <button type="button" onClick={continueFromLocation} className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">Continue</button>
+                <button type="button" onClick={continueFromLocation} className="rounded bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover">Continue</button>
               </div>
             </div>
           )}
@@ -324,17 +329,17 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                     key={opt.value}
                     type="button"
                     onClick={() => updateDraft({ guestEstimateBand: opt.value as SetupDraft['guestEstimateBand'] })}
-                    className={`rounded border px-3 py-2 text-left text-sm ${draft.guestEstimateBand === opt.value ? 'border-rose-500 bg-rose-50 text-rose-700' : 'border-neutral-300 bg-white text-neutral-700'}`}
+                    className={`rounded border px-3 py-2 text-left text-sm ${draft.guestEstimateBand === opt.value ? 'border-primary bg-surface-secondary text-text-primary' : 'border-neutral-300 bg-white text-neutral-700'}`}
                   >
                     {opt.label}
                   </button>
                 ))}
               </div>
 
-              {error && <p className="text-sm text-red-600">{error}</p>}
+              {error && <p className="text-sm text-text-secondary">{error}</p>}
               <div className="flex items-center gap-2">
                 <button type="button" onClick={goPrev} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Back</button>
-                <button type="button" onClick={continueFromGuestEstimate} className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">Continue</button>
+                <button type="button" onClick={continueFromGuestEstimate} className="rounded bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover">Continue</button>
               </div>
             </div>
           )}
@@ -349,7 +354,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                       key={style}
                       type="button"
                       onClick={() => toggleStyle(style)}
-                      className={`rounded border px-3 py-2 text-sm ${selected ? 'border-rose-500 bg-rose-50 text-rose-700' : 'border-neutral-300 bg-white text-neutral-700'}`}
+                      className={`rounded border px-3 py-2 text-sm ${selected ? 'border-primary bg-surface-secondary text-text-primary' : 'border-neutral-300 bg-white text-neutral-700'}`}
                     >
                       {style}
                     </button>
@@ -367,7 +372,7 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                         key={tpl.id}
                         type="button"
                         onClick={() => updateDraft({ selectedTemplateId: tpl.id })}
-                        className={`rounded border p-2 text-left ${active ? 'border-rose-500 bg-rose-50' : 'border-neutral-300 bg-white'}`}
+                        className={`rounded border p-2 text-left ${active ? 'border-primary bg-surface-secondary' : 'border-neutral-300 bg-white'}`}
                       >
                         <p className="text-sm font-medium text-neutral-900">{tpl.name}</p>
                         <p className="text-xs text-neutral-500">{tpl.colorwayId}</p>
@@ -379,23 +384,23 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
 
               <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-600">
                 <p className="font-medium text-neutral-800">Setup direction</p>
-                <p className="mt-1">{setupMode.destination ? 'Destination wedding mode is on — DayOf should lean harder into travel, hotel, and arrival guidance.' : setupMode.weekend ? 'Weekend-style setup is on — DayOf should expect more than one event and more guest coordination.' : 'Classic single-day setup is fine here. You can still add extra events later.'}</p>
+                <p className="mt-1">{setupMode.destination ? 'Destination wedding mode is on. dayof will lean harder into travel, hotel, and arrival guidance.' : setupMode.weekend ? 'Weekend-style setup is on. dayof will expect more than one event and more guest coordination.' : 'Classic single-day setup is fine here. You can still add extra events later.'}</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                 {TEMPLATE_USE_CASE_PACKS.map((pack) => {
                   const active = (pack.id === 'destination' && setupMode.destination) || (pack.id === 'bilingual' && setupMode.bilingual) || (pack.id === 'interfaith' && setupMode.interfaith);
                   return (
-                    <div key={pack.id} className={`rounded-lg border p-3 text-xs ${active ? 'border-rose-300 bg-rose-50 text-rose-800' : 'border-neutral-200 bg-white text-neutral-600'}`}>
+                    <div key={pack.id} className={`rounded-lg border p-3 text-xs ${active ? 'border-primary bg-surface-secondary text-text-primary' : 'border-neutral-200 bg-white text-neutral-600'}`}>
                       <p className="font-medium text-neutral-900">{pack.label}</p>
                       <p className="mt-1">{pack.description}</p>
                     </div>
                   );
                 })}
               </div>
-              <p className="text-xs text-neutral-500">Optional — helps Dayof pick a better starting direction for your site. Destination is currently the deepest of these packs; bilingual and interfaith are still earlier.</p>
+              <p className="text-xs text-neutral-500">Optional. This helps dayof pick a better starting direction for your site. Destination is currently the deepest of these packs; bilingual and interfaith are still earlier.</p>
               <div className="flex items-center gap-2">
                 <button type="button" onClick={goPrev} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Back</button>
-                <button type="button" onClick={continueFromStyle} className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700">Continue</button>
+                <button type="button" onClick={continueFromStyle} className="rounded bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover">Continue</button>
               </div>
             </div>
           )}
@@ -411,19 +416,18 @@ export const SetupShell: React.FC<{ step?: string }> = ({ step }) => {
                 <p><strong>Styles:</strong> {draft.stylePreferences.join(', ') || 'None selected'}</p>
                 <p><strong>Setup direction:</strong> {setupMode.destination ? 'Destination wedding' : setupMode.weekend ? 'Multi-day / weekend wedding' : 'Single-day wedding'}</p>
                 <p><strong>Use-case packs:</strong> {[setupMode.destination && 'Destination', setupMode.bilingual && 'Bilingual', setupMode.interfaith && 'Interfaith'].filter(Boolean).join(', ') || 'None selected yet'}</p>
-                <p><strong>Template:</strong> {selectedTemplateName}</p>
-                <p><strong>Template ID:</strong> {draft.selectedTemplateId}</p>
+                <p><strong>Design:</strong> {selectedTemplateName}</p>
               </div>
 
               <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-xs text-neutral-600">
-                {setupMode.destination ? 'Next after setup: confirm travel details, hotel guidance, and weekend events before deciding the site is ready to publish.' : setupMode.weekend ? 'Next after setup: add your full weekend schedule so guests can follow the flow clearly.' : 'Next after setup: finish the main event details, RSVP settings, and guest list before you treat the site as launch-ready.'} {setupMode.bilingual ? 'Keep bilingual guest copy in mind while you fill out FAQs and key guest guidance.' : ''} {setupMode.interfaith ? 'Add a short ceremony note early so guests understand the traditions being honored.' : ''}
+                {setupMode.destination ? 'Next after setup: confirm travel details, hotel guidance, and weekend events before publishing.' : setupMode.weekend ? 'Next after setup: add your full weekend schedule so guests can follow the flow clearly.' : 'Next after setup: finish the main event details, RSVP settings, and guest list before sharing it with guests.'} {setupMode.bilingual ? 'Keep bilingual guest copy in mind while you fill out FAQs and key guest guidance.' : ''} {setupMode.interfaith ? 'Add a short ceremony note early so guests understand the traditions being honored.' : ''}
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
                 <button type="button" onClick={goPrev} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Back</button>
-                <button type="button" onClick={() => navigate('/templates')} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Choose a different template</button>
+                <button type="button" onClick={() => navigate('/templates')} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Choose a different design</button>
                 <button type="button" onClick={resetSetupDraft} className="rounded border border-neutral-300 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100">Start over</button>
-                <button type="button" onClick={() => void saveAndGoBuilder()} disabled={saving} className="rounded bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-60">
+                <button type="button" onClick={() => void saveAndGoBuilder()} disabled={saving} className="rounded bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-60">
                   {saving ? 'Saving...' : 'Save and open your site editor'}
                 </button>
               </div>

@@ -82,4 +82,88 @@ describe('builderProjectService.loadWeddingData', () => {
       },
     });
   });
+
+  it('uses canonical row identity over stale saved wedding data placeholders', async () => {
+    maybeSingle.mockResolvedValue({
+      data: {
+        couple_name_1: 'Maya',
+        couple_name_2: 'Leo',
+        wedding_date: '2026-10-03',
+        venue_name: 'The Conservatory',
+        wedding_location: 'Austin, TX',
+        wedding_data: {
+          version: '1',
+          couple: {
+            partner1Name: '',
+            partner2Name: '',
+            displayName: 'The couple',
+          },
+          event: {},
+          venues: [],
+          schedule: [],
+          rsvp: { enabled: true },
+          travel: {},
+          registry: { links: [] },
+          faq: [],
+          theme: {},
+          media: { gallery: [] },
+          meta: {
+            createdAtISO: '2026-01-01T00:00:00.000Z',
+            updatedAtISO: '2026-01-01T00:00:00.000Z',
+          },
+        },
+      },
+      error: null,
+    });
+
+    const result = await builderProjectService.loadWeddingData('site-4');
+
+    expect(result.couple).toMatchObject({
+      partner1Name: 'Maya',
+      partner2Name: 'Leo',
+      displayName: 'Maya & Leo',
+    });
+    expect(result.event.weddingDateISO).toBe('2026-10-03T00:00:00.000Z');
+    expect(result.venues[0]).toMatchObject({
+      name: 'The Conservatory',
+      address: 'Austin, TX',
+    });
+  });
+
+  it('keeps saved wedding data when canonical row fields are still empty', async () => {
+    maybeSingle.mockResolvedValue({
+      data: {
+        wedding_data: {
+          version: '1',
+          couple: {
+            partner1Name: 'Priya',
+            partner2Name: 'Sam',
+            displayName: 'Priya & Sam',
+          },
+          event: {
+            weddingDateISO: '2026-09-12T00:00:00.000Z',
+          },
+          venues: [{ id: 'primary', name: 'Garden House' }],
+          schedule: [],
+          rsvp: { enabled: true },
+          travel: {},
+          registry: { links: [] },
+          faq: [],
+          theme: {},
+          media: { gallery: [] },
+          meta: {
+            createdAtISO: '2026-01-01T00:00:00.000Z',
+            updatedAtISO: '2026-01-01T00:00:00.000Z',
+          },
+        },
+      },
+      error: null,
+    });
+
+    const result = await builderProjectService.loadWeddingData('site-5');
+
+    expect(result.couple.displayName).toBe('Priya & Sam');
+    expect(result.event.weddingDateISO).toBe('2026-09-12T00:00:00.000Z');
+    expect(result.venues[0].name).toBe('Garden House');
+  });
 });

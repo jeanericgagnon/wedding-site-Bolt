@@ -7,6 +7,7 @@ import { WeddingDataV1 } from '../types/weddingData';
 import { applyWeddingDataBindings } from './weddingDataBindings';
 import { sanitizeSignedMediaUrlsDeep } from '../lib/mediaUrl';
 import { logClientError } from '../lib/errorLogger';
+import { sanitizePublicSectionDataDeep } from './publicSectionDataSanitizer';
 
 interface PageRendererProps {
   sections: SectionInstance[] | PersistedSection[];
@@ -34,21 +35,22 @@ function normalise(s: SectionInstance | PersistedSection): {
       id: s.id,
       type: s.type,
       variant: s.variant,
-      data: s.data,
-      order: s.order,
-      visible: s.visible,
+      data: s.data ?? {},
+      order: s.order ?? 0,
+      visible: s.visible ?? true,
       styleOverrides: s.style_overrides as Record<string, string | undefined> | undefined,
       bindings: s.bindings,
     };
   }
   const maybeBindings = (s as unknown as { bindings?: { venueIds?: string[]; scheduleItemIds?: string[]; linkIds?: string[]; faqIds?: string[] } }).bindings;
+  const maybeSettings = (s as unknown as { settings?: Record<string, unknown> }).settings;
   return {
     id: s.id,
     type: s.type,
     variant: s.variant,
-    data: s.data,
-    order: s.order,
-    visible: s.visible,
+    data: s.data ?? maybeSettings ?? {},
+    order: s.order ?? 0,
+    visible: s.visible ?? true,
     bindings: maybeBindings,
   };
 }
@@ -101,9 +103,9 @@ class SectionErrorBoundary extends React.Component<SectionErrorBoundaryProps, Se
   render() {
     if (this.state.hasError) {
       return (
-        <div className="py-8 px-4 flex items-center justify-center gap-2 text-sm text-amber-600 bg-amber-50 border-y border-amber-100">
-          <AlertTriangle size={16} />
-          <span>This section could not be displayed.</span>
+        <div className="py-8 px-6 bg-surface-subtle border-y border-border-subtle flex items-center justify-center gap-2 text-center">
+          <AlertTriangle size={16} className="text-primary" />
+          <span className="text-sm text-text-secondary">This part of the wedding site is taking a moment to load.</span>
         </div>
       );
     }
@@ -121,7 +123,7 @@ export const PageRenderer: React.FC<PageRendererProps> = ({ sections, weddingDat
     <div className={`min-h-screen ${className}`}>
       {sorted.map(section => {
         const dataWithBindings = applyWeddingDataBindings(section, weddingData);
-        const sanitizedData = sanitizeSignedMediaUrlsDeep(dataWithBindings);
+        const sanitizedData = sanitizePublicSectionDataDeep(sanitizeSignedMediaUrlsDeep(dataWithBindings));
         const resolved = resolveAndParse(section.type, section.variant, sanitizedData);
 
         if (!resolved) {

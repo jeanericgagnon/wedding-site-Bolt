@@ -6,6 +6,9 @@ import { SectionInstance } from '../../types/layoutConfig';
 import { resolveAndParse } from '../../sections/registry';
 import { getSectionComponent } from '../../sections/sectionRegistry';
 import { applyWeddingDataBindings } from '../../render/weddingDataBindings';
+import { sanitizePublicSectionDataDeep } from '../../render/publicSectionDataSanitizer';
+import { buildScopedSectionCss, sanitizeCustomClassName } from '../utils/customCss';
+import { getSafePublicImageUrl } from '../../sections/publicLinks';
 
 interface SectionRendererProps {
   section: BuilderSectionInstance;
@@ -14,16 +17,17 @@ interface SectionRendererProps {
   siteSlug?: string;
   globalAnimationPreset?: BuilderSectionStyleOverrides['animationPreset'];
   strictVariantMatching?: boolean;
+  surface?: 'builder' | 'public';
 }
 
-function toSectionInstance(section: BuilderSectionInstance): SectionInstance {
+function toSectionInstance(section: BuilderSectionInstance, settingsOverride?: Record<string, unknown>): SectionInstance {
   return {
     id: section.id,
     type: section.type,
     variant: section.variant,
     enabled: section.enabled,
     locked: section.locked,
-    settings: { ...section.settings },
+    settings: { ...(settingsOverride ?? section.settings) },
     bindings: { ...section.bindings },
     overrides: { ...section.styleOverrides } as Record<string, string | boolean | number | undefined>,
   };
@@ -51,6 +55,16 @@ function getAnimationClass(overrides: BuilderSectionStyleOverrides, globalAnimat
       return 'section-anim section-anim-zoom-in';
     case 'stagger':
       return 'section-anim section-anim-stagger';
+    case 'reveal-left':
+      return 'section-anim section-anim-reveal-left';
+    case 'reveal-right':
+      return 'section-anim section-anim-reveal-right';
+    case 'blur-in':
+      return 'section-anim section-anim-blur-in';
+    case 'float-in':
+      return 'section-anim section-anim-float-in';
+    case 'scale-up':
+      return 'section-anim section-anim-scale-up';
     default:
       return '';
   }
@@ -69,7 +83,8 @@ interface SideImageWrapperProps {
 
 const SideImageWrapper: React.FC<SideImageWrapperProps> = ({ overrides, children }) => {
   const { sideImage, sideImagePosition = 'right', sideImageSize = 'md', sideImageFit = 'cover' } = overrides;
-  if (!sideImage) return <>{children}</>;
+  const safeSideImage = getSafePublicImageUrl(sideImage);
+  if (!safeSideImage) return <>{children}</>;
 
   const imgWidth = SIZE_TO_CLASS[sideImageSize] ?? '40%';
   const isLeft = sideImagePosition === 'left';
@@ -80,7 +95,7 @@ const SideImageWrapper: React.FC<SideImageWrapperProps> = ({ overrides, children
       className="relative overflow-hidden"
     >
       <img
-        src={sideImage}
+        src={safeSideImage}
         alt=""
         className="absolute inset-0 w-full h-full"
         style={{ objectFit: sideImageFit }}
@@ -99,20 +114,19 @@ const SideImageWrapper: React.FC<SideImageWrapperProps> = ({ overrides, children
 
 interface ErrorBoundaryState {
   hasError: boolean;
-  errorMessage: string | null;
 }
 
 class SectionErrorBoundary extends React.Component<
-  { children: React.ReactNode; sectionType: string; isPreview?: boolean; onError?: () => void },
+  { children: React.ReactNode; sectionType: string; isPreview?: boolean; surface?: 'builder' | 'public'; onError?: () => void },
   ErrorBoundaryState
 > {
-  constructor(props: { children: React.ReactNode; sectionType: string; isPreview?: boolean; onError?: () => void }) {
+  constructor(props: { children: React.ReactNode; sectionType: string; isPreview?: boolean; surface?: 'builder' | 'public'; onError?: () => void }) {
     super(props);
-    this.state = { hasError: false, errorMessage: null };
+    this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { hasError: true, errorMessage: error.message };
+  static getDerivedStateFromError(): ErrorBoundaryState {
+    return { hasError: true };
   }
 
   componentDidCatch(): void {
@@ -120,35 +134,45 @@ class SectionErrorBoundary extends React.Component<
   }
 
   handleRetry = () => {
-    this.setState({ hasError: false, errorMessage: null });
+    this.setState({ hasError: false });
   };
 
   render() {
     if (this.state.hasError) {
       if (this.props.isPreview) {
         return (
-          <div className="py-12 px-6 flex flex-col items-center gap-3 text-center bg-gray-50 border-y border-gray-200">
-            <AlertTriangle className="w-6 h-6 text-amber-400" />
-            <p className="text-sm text-gray-500">
+          <div className="py-12 px-6 flex flex-col items-center gap-3 text-center bg-surface-subtle border-y border-border-subtle">
+            <AlertTriangle className="w-6 h-6 text-primary" />
+            <p className="text-sm text-text-secondary">
               This section couldn't be displayed. It may still appear correctly on the published site.
             </p>
           </div>
         );
       }
-      return (
-        <div className="py-8 px-6 bg-amber-50 border border-amber-200 rounded-lg m-3 flex flex-col items-center gap-3 text-center">
-          <AlertTriangle className="w-6 h-6 text-amber-500" />
-          <div>
-            <p className="text-sm font-medium text-amber-800">
-              The <span className="font-semibold capitalize">{this.props.sectionType}</span> section failed to render
+      if (this.props.surface === 'public') {
+        return (
+          <div className="py-8 px-6 bg-surface-subtle border-y border-border-subtle flex flex-col items-center gap-2 text-center">
+            <AlertTriangle className="w-5 h-5 text-primary" />
+            <p className="text-sm text-text-secondary">
+              This part of the wedding site is taking a moment to load.
             </p>
-            <p className="text-xs text-amber-600 mt-1">
+          </div>
+        );
+      }
+      return (
+        <div className="py-8 px-6 bg-surface-subtle border border-border-subtle rounded-lg m-3 flex flex-col items-center gap-3 text-center">
+          <AlertTriangle className="w-6 h-6 text-primary" />
+          <div>
+            <p className="text-sm font-medium text-text-primary">
+              This <span className="font-semibold capitalize">{this.props.sectionType}</span> section needs a refresh
+            </p>
+            <p className="text-xs text-text-secondary mt-1">
               Your content is safe. Try editing the section settings or switch to a different variant.
             </p>
           </div>
           <button
             onClick={this.handleRetry}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-medium rounded-lg transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-border-subtle hover:bg-surface text-text-primary text-xs font-medium rounded-lg transition-colors"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             Retry
@@ -160,26 +184,29 @@ class SectionErrorBoundary extends React.Component<
   }
 }
 
-export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddingData, isPreview, siteSlug, globalAnimationPreset, strictVariantMatching }) => {
+export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddingData, isPreview, siteSlug, globalAnimationPreset, strictVariantMatching, surface = 'builder' }) => {
   const [preferLegacyRenderer, setPreferLegacyRenderer] = React.useState(false);
 
   const styleOverrides = section.styleOverrides ?? {};
   const overrideStyle = buildOverrideStyle(styleOverrides);
   const effectivePreset = styleOverrides.animationPreset ?? globalAnimationPreset;
   const animationClass = getAnimationClass(styleOverrides, globalAnimationPreset);
+  const customClassName = sanitizeCustomClassName(styleOverrides.customClassName);
+  const customCss = buildScopedSectionCss(section.id, [styleOverrides.styleRecipeCss, styleOverrides.customCss].filter(Boolean).join('\n\n'));
+  const sectionClassName = [animationClass, customClassName].filter(Boolean).join(' ');
   const mergedStyle = {
     ...overrideStyle,
     animationDelay: effectivePreset === 'stagger' ? `${Math.min(section.orderIndex * 70, 420)}ms` : undefined,
   } as React.CSSProperties;
 
-  const boundSettings = applyWeddingDataBindings({
+  const boundSettings = sanitizePublicSectionDataDeep(applyWeddingDataBindings({
     type: section.type,
     variant: section.variant,
     data: section.settings as Record<string, unknown>,
     bindings: section.bindings,
-  }, weddingData);
+  }, weddingData));
 
-  const shouldUseResolvedRenderer = isPreview || strictVariantMatching;
+  const shouldUseResolvedRenderer = surface === 'public' || isPreview || strictVariantMatching;
 
   const resolved = !preferLegacyRenderer && shouldUseResolvedRenderer
     ? resolveAndParse(
@@ -198,10 +225,18 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddi
       <SectionErrorBoundary
         sectionType={section.type}
         isPreview={isPreview}
+        surface={surface}
         onError={isPreview ? () => setPreferLegacyRenderer(true) : undefined}
       >
         <SideImageWrapper overrides={styleOverrides}>
-          <div className={animationClass} style={mergedStyle}>
+          {customCss ? <style data-builder-section-style={section.id}>{customCss}</style> : null}
+          <div
+            className={sectionClassName}
+            style={mergedStyle}
+            data-builder-section-id={section.id}
+            data-section-type={section.type}
+            data-section-variant={section.variant}
+          >
             <Component data={parsedData as never} siteSlug={siteSlug} />
           </div>
         </SideImageWrapper>
@@ -212,8 +247,8 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddi
   if (strictVariantMatching) {
     if (isPreview) {
       return (
-        <div className="py-6 px-4 bg-red-50 border border-red-200 text-center rounded-lg m-3">
-          <p className="text-sm text-red-700">Missing exact section variant: <code className="font-mono">{section.type}::{section.variant}</code></p>
+        <div className="m-3 rounded-lg border border-border-subtle bg-surface-subtle px-4 py-6 text-center">
+          <p className="text-sm text-text-secondary">This design needs a quick refresh before it can preview.</p>
         </div>
       );
     }
@@ -225,20 +260,34 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({ section, weddi
     LegacyComponent = getSectionComponent(section.type, section.variant);
   } catch {
     if (isPreview) return null;
+    if (surface === 'public') {
+      return (
+        <div className="py-8 px-6 bg-surface-subtle border-y border-border-subtle text-center">
+          <p className="text-sm text-text-secondary">This part of the wedding site is taking a moment to load.</p>
+        </div>
+      );
+    }
     return (
-      <div className="py-6 px-4 bg-gray-50 border-2 border-dashed border-gray-200 text-center rounded-lg m-3">
-        <p className="text-sm text-gray-400">Unknown section type: <code className="font-mono">{section.type}</code></p>
-        <p className="text-xs text-gray-400 mt-1">Remove this section or choose a different type from the sidebar.</p>
+      <div className="m-3 rounded-lg border border-dashed border-border-subtle bg-surface-subtle px-4 py-6 text-center">
+        <p className="text-sm text-text-secondary">This section needs a quick refresh before it can preview.</p>
+        <p className="mt-1 text-xs text-text-tertiary">Remove it or choose a different section from the sidebar.</p>
       </div>
     );
   }
 
-  const instance = toSectionInstance(section);
+  const instance = toSectionInstance(section, boundSettings);
 
   return (
-    <SectionErrorBoundary sectionType={section.type} isPreview={isPreview}>
+    <SectionErrorBoundary sectionType={section.type} isPreview={isPreview} surface={surface}>
       <SideImageWrapper overrides={styleOverrides}>
-        <div className={animationClass} style={mergedStyle}>
+        {customCss ? <style data-builder-section-style={section.id}>{customCss}</style> : null}
+        <div
+          className={sectionClassName}
+          style={mergedStyle}
+          data-builder-section-id={section.id}
+          data-section-type={section.type}
+          data-section-variant={section.variant}
+        >
           <LegacyComponent data={weddingData} instance={instance} />
         </div>
       </SideImageWrapper>

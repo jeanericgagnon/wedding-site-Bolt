@@ -2,6 +2,7 @@ import React from 'react';
 import { z } from 'zod';
 import { MapPin, Navigation, Car, Train, ExternalLink } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
+import { getSafePublicMapsEmbedUrl, getSafePublicMapsUrl } from '../../publicLinks';
 
 const TransportOptionSchema = z.object({
   id: z.string(),
@@ -45,14 +46,15 @@ const iconMap = { car: Car, train: Train, other: Navigation };
 
 const DirectionsPin: React.FC<SectionComponentProps<DirectionsPinData>> = ({ data }) => {
   const mapsQuery = [data.venueName, data.address, data.city].filter(Boolean).join(', ');
-  const mapsHref = data.mapUrl || (mapsQuery ? `https://maps.google.com/?q=${encodeURIComponent(mapsQuery)}` : '');
+  const mapsHref = getSafePublicMapsUrl(data.mapUrl, mapsQuery);
+  const mapsEmbedUrl = getSafePublicMapsEmbedUrl(data.mapUrl, mapsQuery);
 
   return (
     <section className="py-28 md:py-36 bg-gradient-to-b from-white via-stone-50/40 to-white" id="directions">
       <div className="max-w-5xl mx-auto px-6 md:px-12">
         <div className="text-center mb-16">
           {data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">{data.eyebrow}</p>
+            <p className="text-sm text-stone-400 font-light mb-4">{data.eyebrow}</p>
           )}
           <h2 className="text-4xl md:text-5xl font-light text-stone-900">{data.headline}</h2>
         </div>
@@ -85,7 +87,7 @@ const DirectionsPin: React.FC<SectionComponentProps<DirectionsPinData>> = ({ dat
               <div className="flex items-start gap-4 p-5 rounded-xl bg-stone-50 border border-stone-100">
                 <Car size={16} className="text-stone-400 shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-widest text-stone-400 mb-1">Parking</p>
+                  <p className="text-sm font-medium text-stone-400 mb-1">Parking</p>
                   <p className="text-stone-600 text-sm leading-relaxed">{data.parkingNote}</p>
                 </div>
               </div>
@@ -95,7 +97,7 @@ const DirectionsPin: React.FC<SectionComponentProps<DirectionsPinData>> = ({ dat
               <div className="flex items-start gap-4 p-5 rounded-xl bg-rose-50 border border-rose-100">
                 <Navigation size={16} className="text-rose-400 shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-widest text-rose-400 mb-1">Shuttle Service</p>
+                  <p className="text-sm font-medium text-rose-400 mb-1">Shuttle service</p>
                   <p className="text-stone-600 text-sm leading-relaxed">{data.shuttleNote}</p>
                 </div>
               </div>
@@ -121,7 +123,7 @@ const DirectionsPin: React.FC<SectionComponentProps<DirectionsPinData>> = ({ dat
 
           <div className="lg:col-span-3">
             <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-stone-100 relative group">
-              {mapsHref ? (
+              {mapsEmbedUrl ? (
                 <>
                   <iframe
                     title="Venue location"
@@ -130,7 +132,7 @@ const DirectionsPin: React.FC<SectionComponentProps<DirectionsPinData>> = ({ dat
                     className="border-0 w-full h-full"
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"
-                    src={`https://www.google.com/maps?q=${encodeURIComponent(mapsQuery)}&output=embed`}
+                    src={mapsEmbedUrl}
                   />
                   <a
                     href={mapsHref}

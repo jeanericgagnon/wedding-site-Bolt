@@ -88,6 +88,119 @@ describe('publicSiteProject', () => {
     expect(getPublicWeddingData(row)?.media.heroImageUrl).toBe('https://example.com/published-hero.jpg');
   });
 
+  it('reconciles stale embedded couple names back to canonical site row names', () => {
+    const row = {
+      is_published: true,
+      couple_name_1: 'Maya',
+      couple_name_2: 'Leo',
+      site_json: {
+        ...draftProject,
+        weddingData: {
+          ...liveWeddingData,
+          couple: {
+            partner1Name: 'Eric',
+            partner2Name: 'Kara',
+            displayName: 'Eric & Kara',
+          },
+        },
+      },
+      wedding_data: liveWeddingData,
+    };
+
+    expect(getPublicWeddingData(row)?.couple).toMatchObject({
+      partner1Name: 'Maya',
+      partner2Name: 'Leo',
+      displayName: 'Maya & Leo',
+    });
+  });
+
+  it('prefers canonical row wedding_data over stale embedded non-snapshot weddingData', () => {
+    const row = {
+      is_published: true,
+      couple_name_1: 'Maya',
+      couple_name_2: 'Leo',
+      site_json: {
+        ...draftProject,
+        weddingData: {
+          ...liveWeddingData,
+          couple: {
+            partner1Name: 'Eric',
+            partner2Name: 'Kara',
+            displayName: 'Eric & Kara',
+          },
+          event: {
+            weddingDateISO: '2027-01-17T23:00:00.000Z',
+          },
+        },
+      },
+      wedding_data: {
+        ...liveWeddingData,
+        couple: {
+          partner1Name: '',
+          partner2Name: '',
+          displayName: '',
+        },
+        event: {
+          weddingDateISO: '2027-06-06T12:00:00.000Z',
+        },
+      },
+    };
+
+    const data = getPublicWeddingData(row);
+    expect(data?.couple.displayName).toBe('Maya & Leo');
+    expect(data?.event.weddingDateISO).toBe('2027-06-06T12:00:00.000Z');
+  });
+
+  it('reconciles stale snapshot event dates back to canonical row wedding data', () => {
+    const row = {
+      is_published: true,
+      couple_name_1: 'Maya',
+      couple_name_2: 'Leo',
+      site_json: {
+        ...draftProject,
+        weddingDataSnapshot: {
+          ...liveWeddingData,
+          couple: {
+            partner1Name: 'Eric',
+            partner2Name: 'Kara',
+            displayName: 'Eric & Kara',
+          },
+          event: {
+            weddingDateISO: '2027-01-17T23:00:00.000Z',
+          },
+        },
+      },
+      wedding_data: {
+        ...liveWeddingData,
+        event: {
+          weddingDateISO: '2027-06-06T12:00:00.000Z',
+          rsvpCallToAction: 'Please reply by April 30.',
+        },
+      },
+    };
+
+    const data = getPublicWeddingData(row);
+    expect(data?.couple.displayName).toBe('Maya & Leo');
+    expect(data?.event.weddingDateISO).toBe('2027-06-06T12:00:00.000Z');
+    expect(data?.event.rsvpCallToAction).toBe('Please reply by April 30.');
+  });
+
+  it('prefers the canonical row wedding date over midnight snapshot timestamps', () => {
+    const row = {
+      is_published: true,
+      wedding_date: '2027-06-06',
+      site_json: draftProject,
+      wedding_data: {
+        ...liveWeddingData,
+        event: {
+          weddingDateISO: '2027-06-06T00:00:00.000Z',
+        },
+      },
+    };
+
+    expect(getPublicWeddingData(row)?.event.weddingDateISO).toBe('2027-06-06T12:00:00.000Z');
+  });
+
   it('falls back to live wedding_data when no published snapshot exists', () => {
     const row = {
       is_published: false,

@@ -3,12 +3,32 @@ import { supabase } from './supabase';
 export interface EventRsvpSnapshot {
   event_invitation_id: string;
   attending: boolean;
+  dietary_restrictions?: string | null;
+  notes?: string | null;
   responded_at?: string | null;
 }
 
 function isMissingEventRsvpsRelation(message: string | undefined): boolean {
   const msg = (message || '').toLowerCase();
   return msg.includes('event_rsvps') || msg.includes('does not exist') || msg.includes('404') || msg.includes('relation');
+}
+
+export function normalizeEventRsvpSnapshots(rows: unknown[]): EventRsvpSnapshot[] {
+  return rows.flatMap((row) => {
+    if (!row || typeof row !== 'object') return [];
+    const value = row as Record<string, unknown>;
+    if (typeof value.event_invitation_id !== 'string' || typeof value.attending !== 'boolean') {
+      return [];
+    }
+
+    return [{
+      event_invitation_id: value.event_invitation_id,
+      attending: value.attending,
+      dietary_restrictions: typeof value.dietary_restrictions === 'string' ? value.dietary_restrictions : null,
+      notes: typeof value.notes === 'string' ? value.notes : null,
+      responded_at: typeof value.responded_at === 'string' ? value.responded_at : null,
+    }];
+  });
 }
 
 export async function deleteEventRsvpsByInvitationIds(invitationIds: string[]): Promise<void> {
@@ -34,7 +54,7 @@ export async function getEventRsvpSnapshotsByInvitationIds(invitationIds: string
 
   const { data, error } = await supabase
     .from('event_rsvps')
-    .select('event_invitation_id, attending, responded_at')
+    .select('event_invitation_id, attending, dietary_restrictions, notes, responded_at')
     .in('event_invitation_id', invitationIds);
 
   if (error) {
@@ -42,7 +62,7 @@ export async function getEventRsvpSnapshotsByInvitationIds(invitationIds: string
     throw error;
   }
 
-  return (data ?? []) as EventRsvpSnapshot[];
+  return normalizeEventRsvpSnapshots(data ?? []);
 }
 
 export async function restoreEventRsvpSnapshots(rows: EventRsvpSnapshot[]): Promise<void> {

@@ -14,10 +14,8 @@
 -- Drop trigger approach
 DROP TRIGGER IF EXISTS on_demo_user_created ON auth.users;
 DROP FUNCTION IF EXISTS create_demo_wedding_data();
-
 -- Clear any existing demo data
 DELETE FROM auth.users WHERE email = 'demo@dayof.love';
-
 -- We cannot directly insert into auth.users from migrations
 -- Instead, we'll create an initialization function that can be called
 -- This function will check if demo exists and create it if not
@@ -214,6 +212,5 @@ BEGIN
 
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
 -- Call the function to initialize demo
 SELECT initialize_demo_account();

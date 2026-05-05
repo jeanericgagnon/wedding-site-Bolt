@@ -167,6 +167,22 @@ const buildDraftCriticPrompt = (profile: WeddingProfile, draft: Omit<DraftGenera
 
 const hasPlaceholderLikeText = (value: string) => /\[[^\]]+\]|\bTBD\b|to be confirmed/i.test(value);
 const normalizeForScoring = (value: string) => value.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+const normalizeHumanCopyPunctuation = (value: string) => value
+  .replace(/[—–]/g, ', ')
+  .replace(/\s+-\s+/g, ', ')
+  .replace(/([A-Za-z])[-‐‑‒]([A-Za-z])/g, '$1 $2')
+  .replace(/\bnew chapter\b/gi, 'what comes next')
+  .replace(/\bplan accordingly\b/gi, 'plan well')
+  .replace(/\bWe invite you to join us\b/g, 'We would love to have you with us')
+  .replace(/\bcurated list\b/gi, 'short list')
+  .replace(/\bsavor\b/gi, 'enjoy')
+  .replace(/\bbeautiful moments\b/gi, 'the parts we are most excited to share')
+  .replace(/\bfilled with love, great company, and\b/gi, 'with')
+  .replace(/\bwarmly welcome\b/gi, 'welcome')
+  .replace(/\s+/g, ' ')
+  .replace(/\s+,/g, ',')
+  .replace(/,\s*,+/g, ',')
+  .trim();
 
 const preferDeterministicField = (generated: string, fallback: string, invalidPatterns: RegExp[]) => {
   const value = (generated || '').trim();
@@ -304,19 +320,38 @@ const guardGeneratedDraft = (
   return {
     ...deterministic,
     ...generated,
-    heroSubtitle: safeHeroSubtitle,
-    storyBody: safeStoryBody,
-    countdownMessage: safeCountdownMessage,
-    eventHeadline: safeEventHeadline,
-    registryIntro: safeRegistryIntro,
-    faqIntro: safeFaqIntro,
-    travelIntro: safeTravelIntro,
-    accommodationsIntro: safeAccommodationsIntro,
-    dressCodeIntro: safeDressCodeIntro,
-    contactIntro: safeContactIntro,
-    directionsIntro: safeDirectionsIntro,
-    weddingPartyIntro: safeWeddingPartyIntro,
-    rsvpCallToAction: safeRsvpCallToAction,
+    heroTitle: normalizeHumanCopyPunctuation(generated.heroTitle || deterministic.heroTitle),
+    heroSubtitle: normalizeHumanCopyPunctuation(safeHeroSubtitle),
+    storyTitle: normalizeHumanCopyPunctuation(generated.storyTitle || deterministic.storyTitle),
+    storyBody: normalizeHumanCopyPunctuation(safeStoryBody),
+    countdownTitle: normalizeHumanCopyPunctuation(generated.countdownTitle || deterministic.countdownTitle),
+    countdownMessage: normalizeHumanCopyPunctuation(safeCountdownMessage),
+    venueTitle: normalizeHumanCopyPunctuation(generated.venueTitle || deterministic.venueTitle),
+    venueIntro: normalizeHumanCopyPunctuation(generated.venueIntro || deterministic.venueIntro),
+    scheduleTitle: normalizeHumanCopyPunctuation(generated.scheduleTitle || deterministic.scheduleTitle),
+    scheduleIntro: normalizeHumanCopyPunctuation(generated.scheduleIntro || deterministic.scheduleIntro),
+    galleryTitle: normalizeHumanCopyPunctuation(generated.galleryTitle || deterministic.galleryTitle),
+    galleryIntro: normalizeHumanCopyPunctuation(generated.galleryIntro || deterministic.galleryIntro),
+    rsvpTitle: normalizeHumanCopyPunctuation(generated.rsvpTitle || deterministic.rsvpTitle),
+    rsvpIntro: normalizeHumanCopyPunctuation(generated.rsvpIntro || deterministic.rsvpIntro),
+    registryTitle: normalizeHumanCopyPunctuation(generated.registryTitle || deterministic.registryTitle),
+    registryIntro: normalizeHumanCopyPunctuation(safeRegistryIntro),
+    faqHeadline: normalizeHumanCopyPunctuation(generated.faqHeadline || deterministic.faqHeadline),
+    faqIntro: normalizeHumanCopyPunctuation(safeFaqIntro),
+    travelTitle: normalizeHumanCopyPunctuation(generated.travelTitle || deterministic.travelTitle),
+    travelIntro: normalizeHumanCopyPunctuation(safeTravelIntro),
+    accommodationsTitle: normalizeHumanCopyPunctuation(generated.accommodationsTitle || deterministic.accommodationsTitle),
+    accommodationsIntro: normalizeHumanCopyPunctuation(safeAccommodationsIntro),
+    dressCodeTitle: normalizeHumanCopyPunctuation(generated.dressCodeTitle || deterministic.dressCodeTitle),
+    dressCodeIntro: normalizeHumanCopyPunctuation(safeDressCodeIntro),
+    contactTitle: normalizeHumanCopyPunctuation(generated.contactTitle || deterministic.contactTitle),
+    contactIntro: normalizeHumanCopyPunctuation(safeContactIntro),
+    directionsTitle: normalizeHumanCopyPunctuation(generated.directionsTitle || deterministic.directionsTitle),
+    directionsIntro: normalizeHumanCopyPunctuation(safeDirectionsIntro),
+    weddingPartyTitle: normalizeHumanCopyPunctuation(generated.weddingPartyTitle || deterministic.weddingPartyTitle),
+    weddingPartyIntro: normalizeHumanCopyPunctuation(safeWeddingPartyIntro),
+    eventHeadline: normalizeHumanCopyPunctuation(safeEventHeadline),
+    rsvpCallToAction: normalizeHumanCopyPunctuation(safeRsvpCallToAction),
     weddingDataPatch: deterministic.weddingDataPatch,
   };
 };
@@ -325,7 +360,9 @@ export const generateDraftFromWeddingProfile = async (profile: WeddingProfile): 
   const deterministic = deterministicDraftFromWeddingProfile(profile);
 
   if (!isOpenAiConfigured()) {
-    console.info('[aiDraftGenerator] using deterministic fallback: OpenAI not configured');
+    if (import.meta.env.DEV) {
+      console.info('[aiDraftGenerator] using deterministic fallback: OpenAI not configured');
+    }
     return deterministic;
   }
 
@@ -346,19 +383,24 @@ export const generateDraftFromWeddingProfile = async (profile: WeddingProfile): 
       model: getOpenAiRuntimeConfig().model,
     });
 
-    console.info('[aiDraftGenerator] using OpenAI draft generation', getOpenAiRuntimeConfig());
+    if (import.meta.env.DEV) {
+      console.info('[aiDraftGenerator] using OpenAI draft generation', getOpenAiRuntimeConfig());
+    }
     return guardGeneratedDraft(refined, deterministic, profile);
-  } catch (error) {
-    console.warn('[aiDraftGenerator] OpenAI draft generation failed, falling back to deterministic generator', error);
+  } catch {
+    if (import.meta.env.DEV) {
+      console.warn('[aiDraftGenerator] OpenAI draft generation failed; using deterministic fallback.');
+    }
     return deterministic;
   }
 };
 
 export const mergeGeneratedDraftIntoWeddingData = async (
   existingWeddingData: Record<string, unknown> | null,
-  profile: WeddingProfile
+  profile: WeddingProfile,
+  generatedOverride?: DraftGenerationResult
 ) => {
-  const generated = await generateDraftFromWeddingProfile(profile);
+  const generated = generatedOverride ?? await generateDraftFromWeddingProfile(profile);
   const merged = mergeWeddingDataFromProfile(existingWeddingData, profile) as Record<string, unknown>;
 
   return {

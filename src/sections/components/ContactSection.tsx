@@ -3,6 +3,7 @@ import { WeddingDataV1 } from '../../types/weddingData';
 import { SectionInstance } from '../../types/layoutConfig';
 import { Mail, Phone, MessageCircle } from 'lucide-react';
 import { readBuilderValue } from '../../lib/weddingProfile';
+import { getSafePublicEmailHref, getSafePublicTelHref } from '../publicLinks';
 
 interface Props {
   data: WeddingDataV1;
@@ -31,16 +32,14 @@ export const ContactSection: React.FC<Props> = ({ data: _data, instance }) => {
   const subtitle = readBuilderValue(settings.subtitle as string | { value: string } | undefined, '');
   const introText = readBuilderValue(settings.introText as string | { value: string } | undefined, '');
   const closingNote = readBuilderValue(settings.closingNote as string | { value: string } | undefined, '');
-  const emailSubject = encodeURIComponent(
-    readBuilderValue(settings.emailSubject as string | { value: string } | undefined, 'Wedding Question')
-  );
+  const emailSubject = readBuilderValue(settings.emailSubject as string | { value: string } | undefined, 'Wedding Question');
 
   return (
     <section className="py-16 md:py-20 px-4 bg-surface-subtle">
       <div className="max-w-3xl mx-auto text-center">
         {settings.showTitle !== false && (
           <div className="mb-8 md:mb-10">
-            <p className="text-xs uppercase tracking-[0.3em] text-primary mb-3 font-medium">
+            <p className="text-sm text-primary mb-3 font-light">
               {eyebrow}
             </p>
             <h2 className="text-3xl md:text-4xl font-light text-text-primary leading-tight">
@@ -64,18 +63,21 @@ export const ContactSection: React.FC<Props> = ({ data: _data, instance }) => {
           </div>
         ) : (
           <div className={`grid gap-6 ${contacts.length === 1 ? 'max-w-sm mx-auto' : 'sm:grid-cols-2'}`}>
-            {contacts.map((contact, i) => (
+            {contacts.map((contact, i) => {
+              const safeEmailHref = getSafePublicEmailHref(contact.email, emailSubject);
+              const safeTelHref = getSafePublicTelHref(contact.phone);
+              return (
               <div key={i} className="bg-surface border border-border rounded-2xl p-6 md:p-7 text-left">
                 <div className="mb-4">
                   <p className="font-semibold text-text-primary">{contact.name}</p>
                   {contact.role && (
-                    <p className="text-xs text-primary mt-0.5 uppercase tracking-wide">{contact.role}</p>
+                    <p className="text-xs text-primary mt-0.5">{contact.role}</p>
                   )}
                 </div>
                 <div className="space-y-3">
-                  {contact.email && (
+                  {safeEmailHref && (
                     <a
-                      href={`mailto:${contact.email}?subject=${emailSubject}`}
+                      href={safeEmailHref}
                       className="flex items-center gap-2.5 text-sm text-text-secondary hover:text-primary transition-colors group"
                     >
                       <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
@@ -84,9 +86,9 @@ export const ContactSection: React.FC<Props> = ({ data: _data, instance }) => {
                       {contact.email}
                     </a>
                   )}
-                  {contact.phone && (
+                  {safeTelHref && (
                     <a
-                      href={`tel:${contact.phone}`}
+                      href={safeTelHref}
                       className="flex items-center gap-2.5 text-sm text-text-secondary hover:text-primary transition-colors group"
                     >
                       <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
@@ -97,7 +99,8 @@ export const ContactSection: React.FC<Props> = ({ data: _data, instance }) => {
                   )}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -114,9 +117,7 @@ export const ContactMinimal: React.FC<Props> = ({ data: _data, instance }) => {
   const contacts = getContacts(settings);
   const title = readBuilderValue(settings.title as string | { value: string } | undefined, 'Have questions?');
   const subtitle = readBuilderValue(settings.subtitle as string | { value: string } | undefined, '');
-  const emailSubject = encodeURIComponent(
-    readBuilderValue(settings.emailSubject as string | { value: string } | undefined, 'Wedding Question')
-  );
+  const emailSubject = readBuilderValue(settings.emailSubject as string | { value: string } | undefined, 'Wedding Question');
 
   return (
     <section className="py-14 md:py-16 px-4 bg-surface border-y border-border">
@@ -131,25 +132,29 @@ export const ContactMinimal: React.FC<Props> = ({ data: _data, instance }) => {
             )}
           </div>
           <div className="flex flex-wrap items-center gap-4 justify-center">
-            {contacts.slice(0, 2).map((contact, i) => (
+            {contacts.slice(0, 2).map((contact, i) => {
+              const safeEmailHref = getSafePublicEmailHref(contact.email, emailSubject);
+              const safeTelHref = getSafePublicTelHref(contact.phone);
+              return (
               <div key={i} className="flex items-center gap-3">
-                {contact.email && (
+                {safeEmailHref && (
                   <a
-                    href={`mailto:${contact.email}?subject=${emailSubject}`}
+                    href={safeEmailHref}
                     className="flex items-center gap-2 text-sm font-medium text-primary hover:underline"
                   >
                     <Mail className="w-4 h-4" />
                     {contact.name ? contact.name : contact.email}
                   </a>
                 )}
-                {contact.phone && !contact.email && (
-                  <a href={`tel:${contact.phone}`} className="flex items-center gap-2 text-sm font-medium text-primary hover:underline">
+                {safeTelHref && !safeEmailHref && (
+                  <a href={safeTelHref} className="flex items-center gap-2 text-sm font-medium text-primary hover:underline">
                     <Phone className="w-4 h-4" />
                     {contact.name ? contact.name : contact.phone}
                   </a>
                 )}
               </div>
-            ))}
+              );
+            })}
             {contacts.length === 0 && (
               <p className="text-sm text-text-tertiary">Contact details will appear here once they’re added.</p>
             )}

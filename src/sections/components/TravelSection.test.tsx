@@ -2,6 +2,9 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { TravelCards, TravelLocalGuide, TravelSection } from './TravelSection';
+import { travelCompactDefinition } from '../variants/travel/compact';
+import { travelHotelBlockDefinition } from '../variants/travel/hotelBlock';
+import { travelMapPinsDefinition } from '../variants/travel/mapPins';
 import type { SectionInstance } from '../../types/layoutConfig';
 import type { WeddingDataV1 } from '../../types/weddingData';
 
@@ -24,6 +27,7 @@ function createWeddingData(): WeddingDataV1 {
     customSections: [],
     media: { gallery: [] },
     venues: [],
+    meta: { createdAtISO: '', updatedAtISO: '' },
   };
 }
 
@@ -102,5 +106,104 @@ describe('TravelSection', () => {
     );
 
     expect(screen.getByText('Local weekend guide')).toBeInTheDocument();
+  });
+
+  it('drops unsafe external links from public travel variants', () => {
+    const Compact = travelCompactDefinition.Component;
+    const MapPins = travelMapPinsDefinition.Component;
+
+    const { rerender } = render(
+      <Compact
+        data={{
+          eyebrow: 'Travel',
+          headline: 'Stay nearby',
+          intro: '',
+          airport: '',
+          venueAddress: '',
+          hotels: [
+            { id: 'bad', name: 'Bad Hotel', distance: '', url: 'javascript:alert(1)' },
+            { id: 'good', name: 'Good Hotel', distance: '', url: 'https://example.com/stay' },
+          ],
+        }}
+      />,
+    );
+
+    expect(screen.getByText('Bad Hotel')).toBeInTheDocument();
+    expect(document.querySelector('a[href^="javascript:"]')).not.toBeInTheDocument();
+    expect(screen.getByRole('link')).toHaveAttribute('href', 'https://example.com/stay');
+
+    rerender(
+      <MapPins
+        data={{
+          eyebrow: 'Map',
+          headline: 'Locations',
+          intro: '',
+          pins: [
+            { id: 'bad', name: 'Bad Pin', type: 'Hotel', address: '', note: '', url: 'ftp://example.com/place' },
+            { id: 'good', name: 'Good Pin', type: 'Venue', address: '', note: '', url: 'https://example.com/place' },
+          ],
+        }}
+      />,
+    );
+
+    expect(screen.getByText('Bad Pin')).toBeInTheDocument();
+    expect(document.querySelector('a[href^="ftp:"]')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /open good pin location link/i })).toHaveAttribute('href', 'https://example.com/place');
+  });
+
+  it('drops unsafe public travel image URLs before render', () => {
+    const HotelBlock = travelHotelBlockDefinition.Component;
+
+    render(
+      <HotelBlock
+        data={{
+          eyebrow: 'Stay',
+          headline: 'Hotels',
+          subheadline: '',
+          deadlineNote: '',
+          generalNote: '',
+          showAmenities: true,
+          showShuttle: true,
+          hotels: [
+            {
+              id: 'bad',
+              name: 'Unsafe Hotel',
+              stars: 4,
+              distance: '',
+              priceRange: '',
+              bookingCode: '',
+              bookingDeadline: '',
+              phone: '',
+              url: '',
+              image: 'javascript:alert(1)',
+              amenities: [],
+              shuttleInfo: '',
+              notes: '',
+              recommended: false,
+            },
+            {
+              id: 'safe',
+              name: 'Safe Hotel',
+              stars: 4,
+              distance: '',
+              priceRange: '',
+              bookingCode: '',
+              bookingDeadline: '',
+              phone: '',
+              url: '',
+              image: 'https://example.com/stay.jpg',
+              amenities: [],
+              shuttleInfo: '',
+              notes: '',
+              recommended: false,
+            },
+          ],
+        }}
+      />,
+    );
+
+    expect(screen.getByText('Unsafe Hotel')).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: 'Unsafe Hotel' })).not.toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Safe Hotel' })).toHaveAttribute('src', 'https://example.com/stay.jpg');
   });
 });

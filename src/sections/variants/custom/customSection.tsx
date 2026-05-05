@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { z } from 'zod';
 import { SectionDefinition, SectionComponentProps } from '../../types';
 import { CustomBlock, CUSTOM_SKELETONS } from './skeletons';
+import { getSafePublicActionHref, getSafePublicImageUrl } from '../../publicLinks';
 
 const CustomBlockSchema: z.ZodType<CustomBlock> = z.lazy(() =>
   z.object({
@@ -87,7 +88,7 @@ const BlockRenderer: React.FC<{ block: CustomBlock; dark?: boolean }> = ({ block
     case 'badge':
       return (
         <div ref={ref} className={`flex ${justifyClass} mb-4 ${baseTransition} ${revealClass}`}>
-          <span className={`text-[11px] uppercase tracking-[0.2em] font-semibold px-3 py-1 rounded-full border ${
+          <span className={`text-xs font-medium px-3 py-1 rounded-full border ${
             isLight ? 'border-white/30 text-white/80' : 'border-stone-300 text-stone-500'
           }`}>
             {block.content}
@@ -131,17 +132,20 @@ const BlockRenderer: React.FC<{ block: CustomBlock; dark?: boolean }> = ({ block
       );
     }
 
-    case 'image':
+    case 'image': {
+      const safeImageUrl = getSafePublicImageUrl(block.imageUrl);
+      if (!safeImageUrl) return null;
       return (
         <div ref={ref} className={`${baseTransition} ${revealClass} w-full`}>
           <img
-            src={block.imageUrl}
+            src={safeImageUrl}
             alt={block.imageAlt ?? ''}
             className="w-full rounded-2xl object-cover shadow-sm"
             style={{ maxHeight: '420px' }}
           />
         </div>
       );
+    }
 
     case 'button': {
       const isOutlineLight = block.variant === 'outline-light';
@@ -153,8 +157,8 @@ const BlockRenderer: React.FC<{ block: CustomBlock; dark?: boolean }> = ({ block
       return (
         <div ref={ref} className={`flex ${justifyClass} mt-2 ${baseTransition} ${revealClass}`}>
           <a
-            href={block.buttonUrl || '#'}
-            className={`inline-flex items-center px-7 py-3 rounded-full text-sm font-semibold tracking-wide transition-all ${btnClass}`}
+            href={getSafePublicActionHref(block.buttonUrl, '#')}
+            className={`inline-flex items-center px-7 py-3 rounded-full text-sm font-semibold transition-all ${btnClass}`}
           >
             {block.buttonLabel}
           </a>

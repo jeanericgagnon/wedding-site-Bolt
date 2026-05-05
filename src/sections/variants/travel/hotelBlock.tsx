@@ -2,6 +2,7 @@ import React from 'react';
 import { z } from 'zod';
 import { MapPin, Phone, ExternalLink, Star, Tag, Bus, Clock } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
+import { getSafePublicImageUrl, getSafePublicTelHref, getSafePublicWebUrl } from '../../publicLinks';
 
 const HotelSchema = z.object({
   id: z.string(),
@@ -107,11 +108,11 @@ const TravelHotelBlock: React.FC<SectionComponentProps<TravelHotelBlockData>> = 
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-12">
           {data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">
+            <p className="text-sm text-stone-400 font-light mb-4">
               {data.eyebrow}
             </p>
           )}
-          <h2 className="text-4xl md:text-6xl font-light text-stone-900 mb-3 tracking-tight">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-stone-900 mb-3">{data.headline}</h2>
           {data.subheadline && (
             <p className="text-stone-500 font-light max-w-xl mx-auto">{data.subheadline}</p>
           )}
@@ -135,7 +136,11 @@ const TravelHotelBlock: React.FC<SectionComponentProps<TravelHotelBlockData>> = 
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {data.hotels.map(hotel => (
+          {data.hotels.map(hotel => {
+            const safeHotelUrl = getSafePublicWebUrl(hotel.url);
+            const safeHotelImage = getSafePublicImageUrl(hotel.image);
+            const safeHotelPhoneHref = getSafePublicTelHref(hotel.phone);
+            return (
             <div
               key={hotel.id}
               className={`relative bg-white rounded-[1.5rem] overflow-hidden border shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex flex-col ${
@@ -144,23 +149,23 @@ const TravelHotelBlock: React.FC<SectionComponentProps<TravelHotelBlockData>> = 
             >
               {hotel.recommended && (
                 <div className="absolute top-3 left-3 z-10">
-                  <span className="px-2.5 py-1 bg-rose-500 text-white text-[10px] font-semibold rounded-full uppercase tracking-wide">
+                  <span className="px-2.5 py-1 bg-rose-500 text-white text-[11px] font-medium rounded-full">
                     Recommended
                   </span>
                 </div>
               )}
 
-              {hotel.image && (
+              {safeHotelImage && (
                 <div className="aspect-[16/9] overflow-hidden flex-shrink-0">
-                  <img src={hotel.image} alt={hotel.name} className="w-full h-full object-cover saturate-[1.03] contrast-[1.02]" />
+                  <img src={safeHotelImage} alt={hotel.name} className="w-full h-full object-cover saturate-[1.03] contrast-[1.02]" />
                 </div>
               )}
 
               <div className="p-5 flex flex-col flex-1">
                 <div className="flex items-start justify-between gap-2 mb-1">
                   <h3 className="font-semibold text-stone-900 text-base leading-tight">{hotel.name}</h3>
-                  {hotel.url && (
-                    <a href={hotel.url} target="_blank" rel="noopener noreferrer" className="flex-shrink-0 mt-0.5">
+                  {safeHotelUrl && (
+                    <a href={safeHotelUrl} target="_blank" rel="noopener noreferrer" className="flex-shrink-0 mt-0.5">
                       <ExternalLink size={13} className="text-stone-300 hover:text-stone-600 transition-colors" />
                     </a>
                   )}
@@ -178,10 +183,10 @@ const TravelHotelBlock: React.FC<SectionComponentProps<TravelHotelBlockData>> = 
                   {hotel.priceRange && (
                     <p className="font-semibold text-stone-800 text-sm">{hotel.priceRange}</p>
                   )}
-                  {hotel.phone && (
+                  {safeHotelPhoneHref && (
                     <div className="flex items-center gap-2 text-stone-500">
                       <Phone size={12} className="text-stone-400 flex-shrink-0" />
-                      <a href={`tel:${hotel.phone}`} className="hover:text-stone-800 transition-colors">{hotel.phone}</a>
+                      <a href={safeHotelPhoneHref} className="hover:text-stone-800 transition-colors">{hotel.phone}</a>
                     </div>
                   )}
                 </div>
@@ -190,12 +195,12 @@ const TravelHotelBlock: React.FC<SectionComponentProps<TravelHotelBlockData>> = 
                   <div className="mt-3 p-3 bg-stone-50 rounded-xl border border-stone-100">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-[10px] text-stone-400 uppercase tracking-wide font-medium">Booking code</p>
+                        <p className="text-xs text-stone-400 font-medium">Booking code</p>
                         <p className="font-mono font-bold text-stone-800 text-sm mt-0.5">{hotel.bookingCode}</p>
                       </div>
                       {hotel.bookingDeadline && (
                         <div className="text-right">
-                          <p className="text-[10px] text-stone-400 uppercase tracking-wide font-medium">Expires</p>
+                          <p className="text-xs text-stone-400 font-medium">Expires</p>
                           <p className="text-xs text-stone-600 font-medium mt-0.5">{hotel.bookingDeadline}</p>
                         </div>
                       )}
@@ -224,10 +229,10 @@ const TravelHotelBlock: React.FC<SectionComponentProps<TravelHotelBlockData>> = 
                   <p className="mt-3 text-xs text-stone-400 leading-relaxed">{hotel.notes}</p>
                 )}
 
-                {hotel.url && (
+                {safeHotelUrl && (
                   <div className="mt-auto pt-4">
                     <a
-                      href={hotel.url}
+                      href={safeHotelUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center justify-center gap-1.5 w-full py-2 border border-stone-200 rounded-xl text-xs font-medium text-stone-600 hover:bg-stone-50 hover:border-stone-300 transition-all"
@@ -239,7 +244,8 @@ const TravelHotelBlock: React.FC<SectionComponentProps<TravelHotelBlockData>> = 
                 )}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

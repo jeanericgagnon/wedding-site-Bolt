@@ -21,7 +21,7 @@ export const VenueSection: React.FC<Props> = ({ data, instance }) => {
       <section className="py-16 md:py-20 px-4 bg-surface-subtle">
         <div className="max-w-4xl mx-auto text-center">
           {settings.showTitle !== false && (
-            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary mb-6">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Venue')}</h2>
+            <h2 className="text-3xl md:text-4xl font-semibold text-text-primary mb-6">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Venue')}</h2>
           )}
           <p className="text-text-secondary">Venue details will appear here once they’re added.</p>
         </div>
@@ -33,12 +33,12 @@ export const VenueSection: React.FC<Props> = ({ data, instance }) => {
     <section className="py-16 md:py-20 px-4 bg-surface-subtle">
       <div className="max-w-4xl mx-auto">
         {settings.showTitle !== false && (
-          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary text-center mb-10 md:mb-12">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Venue')}</h2>
+          <h2 className="text-3xl md:text-4xl font-semibold text-text-primary text-center mb-10 md:mb-12">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Venue')}</h2>
         )}
         <div className="space-y-6 md:space-y-7">
           {venuesToShow.map(venue => (
             <div key={venue.id} className="bg-surface p-6 md:p-7 rounded-2xl border border-border/70 shadow-sm">
-              <h3 className="text-xl md:text-2xl font-semibold tracking-tight text-text-primary mb-2">{venue.name || 'Venue Name TBD'}</h3>
+              <h3 className="text-xl md:text-2xl font-semibold text-text-primary mb-2">{venue.name || 'Venue Name TBD'}</h3>
               {venue.address && (
                 <p className="text-text-secondary flex items-start gap-2.5 leading-relaxed">
                   <MapPin className="w-5 h-5 flex-shrink-0 mt-0.5 text-primary/80" />
@@ -79,8 +79,8 @@ export const VenueCard: React.FC<Props> = ({ data, instance }) => {
       <div className="max-w-5xl mx-auto">
         {settings.showTitle !== false && (
           <div className="text-center mb-10 md:mb-14">
-            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Venue details</p>
-            <h2 className="text-3xl md:text-4xl font-light tracking-tight text-text-primary leading-tight">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Venue')}</h2>
+            <p className="text-sm text-primary mb-3 font-light">Venue details</p>
+            <h2 className="text-3xl md:text-4xl font-light text-text-primary leading-tight">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Venue')}</h2>
             <div className="w-10 h-px bg-primary mx-auto mt-6" />
           </div>
         )}
@@ -94,7 +94,7 @@ export const VenueCard: React.FC<Props> = ({ data, instance }) => {
                 <MapPin className="w-12 h-12 text-primary/30" />
               </div>
               <div className="p-6">
-                <h3 className="text-xl font-semibold text-text-primary mb-3 tracking-tight">{venue.name || 'Venue TBD'}</h3>
+                <h3 className="text-xl font-semibold text-text-primary mb-3">{venue.name || 'Venue TBD'}</h3>
                 {venue.address && (
                   <p className="text-text-secondary flex items-start gap-2 mb-4">
                     <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5 text-primary" />

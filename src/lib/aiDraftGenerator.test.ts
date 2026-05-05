@@ -116,4 +116,22 @@ describe('aiDraftGenerator', () => {
     expect((merged.couple as Record<string, unknown>).headline).toBe('Alex & Jordan');
     expect((merged.event as Record<string, unknown>).rsvpCallToAction).toContain('2027-05-01');
   });
+
+  it('reuses a supplied generated draft instead of generating a second onboarding draft', async () => {
+    const generated = await generateDraftFromWeddingProfile(baseProfile);
+    const merged = await mergeGeneratedDraftIntoWeddingData({}, baseProfile, {
+      ...generated,
+      heroTitle: 'One generated draft only',
+      heroSubtitle: 'Reused without another generation pass',
+      storyBody: 'This copy came from the already generated draft.',
+      eventHeadline: 'Already generated event line',
+      rsvpCallToAction: 'Already generated RSVP line',
+    });
+
+    expect((merged.couple as Record<string, unknown>).headline).toBe('One generated draft only');
+    expect((merged.couple as Record<string, unknown>).subheadline).toBe('Reused without another generation pass');
+    expect((merged.couple as Record<string, unknown>).story).toBe('This copy came from the already generated draft.');
+    expect((merged.event as Record<string, unknown>).headline).toBe('Already generated event line');
+    expect((merged.event as Record<string, unknown>).rsvpCallToAction).toBe('Already generated RSVP line');
+  });
 });

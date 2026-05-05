@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
+import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, Button, Input, Textarea } from '../../components/ui';
 import { Send, Mail, Users, Clock, CheckCircle, Calendar, Save, AtSign, AlertCircle, Eye, ChevronDown, ChevronUp, RefreshCw, X, ArrowLeft, Loader2, Link2, Copy } from 'lucide-react';
@@ -8,7 +9,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { demoEvents, demoGuests, demoWeddingSite } from '../../lib/demoData';
 import { createSmsCreditsSession } from '../../lib/stripeService';
-import { canComposeDashboardMessages, canEditPlannerSurface, derivePlannerRoleFromPermissions, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole } from '../../lib/plannerAccess';
+import { canComposeDashboardMessages, canEditPlannerSurface, derivePlannerRoleFromPermissions, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole, type PlannerPermissionKey } from '../../lib/plannerAccess';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { GUEST_COMMUNICATION_FLOW } from '../../lib/guestCommunicationFlow';
 import { buildRsvpReminderDraft } from '../../lib/reminderDraftHelper';
@@ -18,6 +19,12 @@ import { formatMessageEventOptionLabel } from './messageEventDate';
 import { formatMessageHistoryDate, formatMessageHistoryDateTime, getMessageHistoryTimestamp } from './messageHistoryTime';
 import { formatScheduledMessageDateTime, parseScheduleInputToIso, toScheduleInputValue } from './messageScheduleTime';
 import { getMessageTemplateCoupleLabel } from './messageTemplateVariables';
+import { SMS_SEGMENT_SIZE, countSmsSegments, estimateSmsCredits } from '../../lib/smsSegments';
+import { SMS_PROVIDER_PENDING_COPY, isSmsProviderEnabled } from '../../lib/smsProvider';
+import { logAppAction } from '../../lib/actionAudit';
+import { customerSafeErrorMessage } from '../../lib/customerSafeError';
+import { buildMessageAudienceOptions, filterMessageAudienceGuests, getMessageAudienceDetail } from '../../lib/messageAudienceSegments';
+import { buildGuestMessageLanguagePreviews } from '../../lib/guestMessageLanguagePreview';
 
 const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bulk-message`;
 const DEMO_MESSAGES_STORAGE_KEY = 'dayof.demo.messages.history';
@@ -28,6 +35,9 @@ const RSVP_CONTINUITY_STORAGE_KEY = 'dayof.rsvp.updatedAt';
 // Start unknown, then permanently disable after one confirmed missing-table miss.
 let hasMessageDeliveriesTable: boolean | null = null;
 
+function safeMessagesError(err: unknown, fallback: string): string {
+  return customerSafeErrorMessage(err, fallback);
+}
 
 function buildDemoMessageSeed(): Message[] {
   const now = Date.now();
@@ -164,7 +174,15 @@ interface Guest {
   id: string;
   email: string | null;
   phone?: string | null;
+  sms_consent?: boolean | null;
   rsvp_status: string;
+  invitation_sent_at?: string | null;
+  reminder_last_sent_at?: string | null;
+  mailing_address_line1?: string | null;
+  mailing_city?: string | null;
+  mailing_state?: string | null;
+  mailing_postal_code?: string | null;
+  meal_choice?: string | null;
   first_name: string | null;
   last_name: string | null;
   name: string;
@@ -172,6 +190,7 @@ interface Guest {
 
 interface WeddingSite {
   id: string;
+  site_slug?: string | null;
   couple_first_name: string | null;
   couple_second_name: string | null;
   couple_email: string | null;
@@ -193,6 +212,7 @@ interface AudienceOption {
   value: string;
   label: string;
   count: number;
+  detail?: string;
 }
 
 interface Toast {
@@ -397,7 +417,7 @@ const COMPOSER_TEMPLATES: ComposerTemplate[] = [
   {
     key: 'day-of-update',
     label: 'Day-of update',
-    detail: 'Fast operational update for guests.',
+    detail: 'Quick note for guests when plans shift.',
     campaignType: 'day-of-update',
     defaultChannel: 'sms',
     build: ({ audienceLabel, venue, weddingDate, applyTemplateVariables }) => {
@@ -442,8 +462,8 @@ function hasReachableEmail(email: string | null | undefined): boolean {
   return !!email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-function hasReachablePhone(phone: string | null | undefined): boolean {
-  return !!phone?.trim();
+function hasReachableSms(guest: Pick<Guest, 'phone' | 'sms_consent'>): boolean {
+  return !!guest.phone?.trim() && guest.sms_consent === true;
 }
 
 function formatScheduledDate(scheduledFor: string): string {
@@ -460,12 +480,12 @@ const ToastList: React.FC<{ toasts: Toast[] }> = ({ toasts }) => (
     {toasts.map(t => (
       <div
         key={t.id}
-        className={`px-4 py-3 rounded-xl shadow-lg text-sm font-medium border ${
+        className={`rounded-lg border bg-white px-4 py-3 text-sm font-medium text-text-primary ${
           t.type === 'error'
-            ? 'bg-error-light text-error border-error/20'
+            ? 'border-error/20'
             : t.type === 'info'
-            ? 'bg-primary-light text-primary border-primary/20'
-            : 'bg-success-light text-success border-success/20'
+            ? 'border-primary/20'
+            : 'border-success/20'
         }`}
       >
         {t.message}
@@ -487,9 +507,9 @@ function getStatusBadge(message: Message) {
     case 'sent':
       return <span className="px-2 py-1 bg-success-light text-success rounded text-xs border border-success/20">Sent</span>;
     case 'partial':
-      return <span className="px-2 py-1 bg-warning-light text-warning rounded text-xs border border-warning/20">Partial</span>;
+      return <span className="px-2 py-1 bg-warning-light text-warning rounded text-xs border border-warning/20">Needs follow-up</span>;
     case 'failed':
-      return <span className="px-2 py-1 bg-error-light text-error rounded text-xs border border-error/20">Failed</span>;
+      return <span className="px-2 py-1 bg-error-light text-error rounded text-xs border border-error/20">Needs review</span>;
     default:
       return null;
   }
@@ -504,6 +524,8 @@ function getAudienceLabel(message: Message): string {
     case 'attending': return 'Attending guests';
     case 'not_responded': return 'Not yet responded';
     case 'declined': return 'Declined guests';
+    case 'missing_address': return 'Missing address';
+    case 'missing_meal': return 'Missing meal';
     default: return 'All guests';
   }
 }
@@ -537,18 +559,6 @@ function getCampaignThreadKey(message: Message): string {
   return getCampaignName(message) ?? message.subject ?? message.id;
 }
 
-function isAttendingStatus(status: string | null | undefined): boolean {
-  return status === 'confirmed' || status === 'attending' || status === 'accepted';
-}
-
-function isDeclinedStatus(status: string | null | undefined): boolean {
-  return status === 'declined' || status === 'not_attending';
-}
-
-function isPendingStatus(status: string | null | undefined): boolean {
-  return !status || status === 'pending';
-}
-
 function getCampaignTypeLabel(message: Message): string | null {
   const raw = message.recipient_filter?.campaignType as string | undefined;
   if (!raw) return null;
@@ -565,6 +575,23 @@ function getTemplateKey(message: Message): MessageTemplateKey {
   const raw = message.recipient_filter?.templateKey;
   if (typeof raw !== 'string') return 'blank';
   return (COMPOSER_TEMPLATES.some((tpl) => tpl.key === raw) ? raw : 'blank') as MessageTemplateKey;
+}
+
+function getCustomerDeliveryReason(message: string | null | undefined, fallback: string) {
+  const cleaned = (message || fallback)
+    .replace(/\b(provider|twilio|telnyx|sendgrid|resend)\b/gi, 'delivery service')
+    .replace(/\bapi\b/gi, 'delivery service')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return customerSafeErrorMessage(cleaned, fallback, {
+    allow: [
+      /\b(delivery|message|email|phone|contact|recipient|address|number|missing|invalid|blocked|bounced|unsubscribed|review|retry|attention|details)\b/i,
+    ],
+  });
+}
+
+function describeRecipientReview(count: number): string {
+  return `${count} ${count === 1 ? 'recipient needs' : 'recipients need'} contact details`;
 }
 
 interface MessageDetailModalProps {
@@ -611,14 +638,14 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
   const skippedDeliveries = messageDeliveries.filter((delivery) => delivery.status === 'skipped');
   const topFailureReasons = Array.from(
     failedDeliveries.reduce((map, delivery) => {
-      const key = (delivery.error_message || 'Unknown provider error').trim();
+      const key = getCustomerDeliveryReason(delivery.error_message, 'Unknown delivery issue');
       map.set(key, (map.get(key) ?? 0) + 1);
       return map;
     }, new Map<string, number>()).entries(),
   ).sort((a, b) => b[1] - a[1]).slice(0, 3);
   const topSkipReasons = Array.from(
     skippedDeliveries.reduce((map, delivery) => {
-      const key = (delivery.error_message || 'Skipped before send').trim();
+      const key = getCustomerDeliveryReason(delivery.error_message, 'Needs contact details');
       map.set(key, (map.get(key) ?? 0) + 1);
       return map;
     }, new Map<string, number>()).entries(),
@@ -626,7 +653,7 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col border border-border">
+      <div className="bg-surface rounded-lg w-full max-w-2xl max-h-[90vh] flex flex-col border border-border">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border flex-shrink-0">
           <div className="flex items-center gap-3">
             <button
@@ -637,7 +664,7 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
               <ArrowLeft className="w-4 h-4" />
             </button>
             <div>
-              {campaignName && <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-text-tertiary mb-1">{campaignName}</p>}
+              {campaignName && <p className="text-[11px] font-semibold text-text-tertiary mb-1">{campaignName}</p>}
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-semibold text-text-primary">{message.subject}</h2>
                 {getStatusBadge(message)}
@@ -670,8 +697,8 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
             <div>
               <p className="text-text-tertiary text-xs mb-1">Recipients</p>
               <p className="font-medium text-text-primary">{recipientCount} {recipientCount === 1 ? 'person' : 'people'}</p>
-              {skippedCount > 0 && <p className="text-[11px] text-warning mt-1">{skippedCount} skipped before send</p>}
-              {unreachedCount > 0 && <p className="text-[11px] text-warning mt-1">{unreachedCount} unreached after send</p>}
+              {skippedCount > 0 && <p className="text-[11px] text-warning mt-1">{skippedCount} need contact details</p>}
+              {unreachedCount > 0 && <p className="text-[11px] text-warning mt-1">{unreachedCount} not reached yet</p>}
             </div>
             <div>
               <p className="text-text-tertiary text-xs mb-1">Channel</p>
@@ -682,8 +709,8 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
 
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
           <div className="prose prose-sm max-w-none">
-            <div className="bg-surface-subtle rounded-xl border border-border p-5">
-              <p className="text-xs font-medium text-text-tertiary uppercase updates-wide mb-3">Message body</p>
+            <div className="bg-surface-subtle rounded-lg border border-border p-5">
+              <p className="text-xs font-medium text-text-tertiary mb-3">Message body</p>
               <div className="text-text-primary text-sm leading-relaxed whitespace-pre-wrap font-sans">
                 {message.body}
               </div>
@@ -691,14 +718,14 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
           </div>
 
           {message.status === 'scheduled' && (
-            <div className="rounded-xl border border-border bg-surface-subtle p-4">
+            <div className="rounded-lg border border-border bg-surface-subtle p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-text-primary">Scheduled send control</p>
                   <p className="mt-1 text-xs text-text-tertiary">Adjust the send time here or drop it back to draft without leaving the comms center.</p>
                 </div>
                 {message.scheduled_for && isPastScheduledTime(message.scheduled_for) && (
-                  <span className="rounded-full border border-warning/20 bg-warning-light px-2 py-0.5 text-[11px] font-medium text-warning">Due now</span>
+                  <span className="rounded-lg border border-warning/20 bg-warning-light px-2 py-0.5 text-[11px] font-medium text-warning">Due now</span>
                 )}
               </div>
               <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
@@ -754,41 +781,41 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
           )}
 
           {failedDeliveries.length > 0 && (
-            <div className="rounded-xl border border-rose-200 bg-rose-50 p-4">
+            <div className="rounded-lg border border-border-subtle bg-surface-subtle p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-sm font-semibold text-rose-900">Delivery needs attention</p>
-                  <p className="mt-1 text-xs text-rose-700">These are real failed recipients from the current delivery log, not a generic warning.</p>
+                  <p className="text-sm font-semibold text-text-primary">Delivery needs attention</p>
+                  <p className="mt-1 text-xs text-text-secondary">These recipients need a closer look before another send.</p>
                 </div>
-                <span className="rounded-full border border-rose-200 bg-white px-2 py-0.5 text-[11px] font-medium text-rose-700">{failedDeliveries.length} failed</span>
+                <span className="rounded-lg border border-border-subtle bg-white px-2 py-0.5 text-[11px] font-medium text-primary">{failedDeliveries.length} need review</span>
               </div>
 
               {topFailureReasons.length > 0 && (
                 <div className="mt-3 space-y-1">
                   {topFailureReasons.map(([reason, count]) => (
-                    <div key={reason} className="flex items-start justify-between gap-3 rounded-lg border border-rose-100 bg-white/80 px-3 py-2 text-xs">
-                      <span className="text-rose-800">{reason}</span>
-                      <span className="shrink-0 text-rose-600">{count}</span>
+                    <div key={reason} className="flex items-start justify-between gap-3 rounded-lg border border-border-subtle bg-white px-3 py-2 text-xs">
+                      <span className="text-text-primary">{reason}</span>
+                      <span className="shrink-0 text-primary">{count}</span>
                     </div>
                   ))}
                 </div>
               )}
 
-              <div className="mt-3 rounded-lg border border-rose-100 bg-white/80">
-                <div className="flex items-center justify-between px-3 py-2 border-b border-rose-100">
-                  <p className="text-xs font-medium text-rose-900">Failed recipients</p>
-                  <p className="text-[11px] text-rose-600">Most recent first</p>
+              <div className="mt-3 rounded-lg border border-border-subtle bg-white">
+                <div className="flex items-center justify-between px-3 py-2 border-b border-border-subtle">
+                  <p className="text-xs font-medium text-text-primary">Recipients to review</p>
+                  <p className="text-[11px] text-text-tertiary">Most recent first</p>
                 </div>
-                <div className="max-h-48 overflow-y-auto divide-y divide-rose-100">
+                <div className="max-h-48 overflow-y-auto divide-y divide-border-subtle">
                   {failedDeliveries.slice(0, 8).map((delivery) => (
                     <div key={delivery.id} className="px-3 py-2.5 text-xs">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="font-medium text-rose-900">{delivery.recipient_name || delivery.recipient_email || 'Unknown recipient'}</p>
-                          {delivery.recipient_name && <p className="text-rose-700">{delivery.recipient_email || 'No contact recorded'}</p>}
-                          <p className="mt-0.5 text-rose-700">{delivery.error_message || 'Delivery failed before the provider returned a clear reason.'}</p>
+                          <p className="font-medium text-text-primary">{delivery.recipient_name || delivery.recipient_email || 'Unknown recipient'}</p>
+                          {delivery.recipient_name && <p className="text-text-secondary">{delivery.recipient_email || 'Contact info not added'}</p>}
+                          <p className="mt-0.5 text-text-secondary">{getCustomerDeliveryReason(delivery.error_message, 'Delivery needs review before retrying.')}</p>
                         </div>
-                        <span className="shrink-0 text-[11px] text-rose-600">{delivery.attempted_at ? formatMessageHistoryDateTime(delivery.attempted_at, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }, 'Attempted') : 'Attempted'}</span>
+                        <span className="shrink-0 text-[11px] text-text-tertiary">{delivery.attempted_at ? formatMessageHistoryDateTime(delivery.attempted_at, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }, 'Attempted') : 'Attempted'}</span>
                       </div>
                     </div>
                   ))}
@@ -798,41 +825,41 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
           )}
 
           {skippedDeliveries.length > 0 && (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <div className="rounded-lg border border-border-subtle bg-surface-subtle/70 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-sm font-semibold text-amber-900">Skipped before send</p>
-                  <p className="mt-1 text-xs text-amber-700">These recipients were part of the audience but were skipped because contact info was missing or invalid.</p>
+                  <p className="text-sm font-semibold text-primary">Needs contact details</p>
+                  <p className="mt-1 text-xs text-text-secondary">These recipients were part of the audience but still need usable contact details.</p>
                 </div>
-                <span className="rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[11px] font-medium text-amber-700">{skippedDeliveries.length} skipped</span>
+                <span className="rounded-lg border border-border-subtle bg-white px-2 py-0.5 text-[11px] font-medium text-text-secondary">{skippedDeliveries.length} need contact</span>
               </div>
 
               {topSkipReasons.length > 0 && (
                 <div className="mt-3 space-y-1">
                   {topSkipReasons.map(([reason, count]) => (
-                    <div key={reason} className="flex items-start justify-between gap-3 rounded-lg border border-amber-100 bg-white/80 px-3 py-2 text-xs">
-                      <span className="text-amber-800">{reason}</span>
-                      <span className="shrink-0 text-amber-600">{count}</span>
+                    <div key={reason} className="flex items-start justify-between gap-3 rounded-lg border border-border-subtle bg-white/85 px-3 py-2 text-xs">
+                      <span className="text-text-secondary">{reason}</span>
+                      <span className="shrink-0 text-text-tertiary">{count}</span>
                     </div>
                   ))}
                 </div>
               )}
 
-              <div className="mt-3 rounded-lg border border-amber-100 bg-white/80">
-                <div className="flex items-center justify-between px-3 py-2 border-b border-amber-100">
-                  <p className="text-xs font-medium text-amber-900">Skipped recipients</p>
-                  <p className="text-[11px] text-amber-600">Most recent first</p>
+              <div className="mt-3 rounded-lg border border-border-subtle bg-white/85">
+                <div className="flex items-center justify-between px-3 py-2 border-b border-border-subtle">
+                  <p className="text-xs font-medium text-text-primary">Recipients needing contact details</p>
+                  <p className="text-[11px] text-text-tertiary">Most recent first</p>
                 </div>
-                <div className="max-h-48 overflow-y-auto divide-y divide-amber-100">
+                <div className="max-h-48 overflow-y-auto divide-y divide-border-subtle">
                   {skippedDeliveries.slice(0, 8).map((delivery) => (
                     <div key={delivery.id} className="px-3 py-2.5 text-xs">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="font-medium text-amber-900">{delivery.recipient_name || delivery.recipient_email || 'Unknown recipient'}</p>
-                          {delivery.recipient_name && <p className="text-amber-700">{delivery.recipient_email || 'No contact recorded'}</p>}
-                          <p className="mt-0.5 text-amber-700">{delivery.error_message || 'Skipped before the provider was called.'}</p>
+                          <p className="font-medium text-text-primary">{delivery.recipient_name || delivery.recipient_email || 'Unknown recipient'}</p>
+                          {delivery.recipient_name && <p className="text-text-secondary">{delivery.recipient_email || 'Contact info not added'}</p>}
+                          <p className="mt-0.5 text-text-secondary">{getCustomerDeliveryReason(delivery.error_message, 'Missing or invalid contact details.')}</p>
                         </div>
-                        <span className="shrink-0 text-[11px] text-amber-600">{delivery.attempted_at ? formatMessageHistoryDateTime(delivery.attempted_at, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }, 'Skipped') : 'Skipped'}</span>
+                        <span className="shrink-0 text-[11px] text-text-tertiary">{delivery.attempted_at ? formatMessageHistoryDateTime(delivery.attempted_at, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }, 'Checked') : 'Checked'}</span>
                       </div>
                     </div>
                   ))}
@@ -854,19 +881,19 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
               {message.failed_count != null && message.failed_count > 0 && (
                 <span className="flex items-center gap-1.5 text-error">
                   <AlertCircle size={13} />
-                  {message.failed_count} failed
+                  {message.failed_count} need review
                 </span>
               )}
               {unreachedCount > 0 && (
                 <span className="flex items-center gap-1.5 text-warning">
                   <AlertCircle size={13} />
-                  {unreachedCount} unreached
+                  {unreachedCount} not reached yet
                 </span>
               )}
               {skippedDeliveries.length > 0 && (
                 <span className="flex items-center gap-1.5 text-warning">
                   <AlertCircle size={13} />
-                  {skippedDeliveries.length} skipped
+                  {skippedDeliveries.length} need contact
                 </span>
               )}
             </div>
@@ -914,13 +941,13 @@ const MessageDetailModal: React.FC<MessageDetailModalProps> = ({ message, delive
                 }}
               >
                 {retrying
-                  ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Retrying…</>
-                  : <><RefreshCw className="w-3.5 h-3.5 mr-1.5" />Retry send</>
+                  ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Sending…</>
+                  : <><RefreshCw className="w-3.5 h-3.5 mr-1.5" />Send again</>
                 }
               </Button>
             )}
             {message.status === 'partial' && (
-              <p className="text-xs text-text-tertiary max-w-xs">Partial campaigns are review-only here so this control does not re-send guests who already got the message.</p>
+              <p className="text-xs text-text-tertiary max-w-xs">Campaigns needing follow-up are review-only here so this control does not re-send guests who already got the message.</p>
             )}
             {message.status === 'scheduled' && (
               <Button
@@ -974,12 +1001,14 @@ export const DashboardMessages: React.FC = () => {
   const [eventGuestIds, setEventGuestIds] = useState<Record<string, Set<string>>>({});
   const [messagesRole, setMessagesRole] = useState<PlannerAccessRole>('owner');
   const [activeSiteRole, setActiveSiteRole] = useState<PlannerAccessRole>('owner');
+  const [messagesPermissions, setMessagesPermissions] = useState<PlannerPermissionKey[] | null>(null);
   const [historyStatusFilter, setHistoryStatusFilter] = useState<'all' | 'active' | 'sent' | 'scheduled' | 'draft' | 'failed' | 'partial'>('all');
   const [historyChannelFilter, setHistoryChannelFilter] = useState<'all' | 'email' | 'sms'>('all');
   const [historyAudienceFilter, setHistoryAudienceFilter] = useState<string>('all');
   const [historyDeliveryFilter, setHistoryDeliveryFilter] = useState<'all' | 'delivered' | 'failed' | 'skipped' | 'unreached'>('all');
   const [historyCampaignFilter, setHistoryCampaignFilter] = useState<string>('');
   const [historySearch, setHistorySearch] = useState('');
+  const [showSendingDetails, setShowSendingDetails] = useState(() => new URLSearchParams(window.location.search).get('details') === '1');
 
   const [formData, setFormData] = useState({
     campaignName: '',
@@ -1037,15 +1066,31 @@ export const DashboardMessages: React.FC = () => {
 
   async function handleBuySmsPack(pack: 'sms_100' | 'sms_500' | 'sms_1000') {
     if (!weddingSite) return;
+    if (!isSmsProviderEnabled()) {
+      toast('Text credit purchases will open after the final texting setup is complete.', 'info');
+      return;
+    }
     setBuyingPack(pack);
     try {
       const base = window.location.origin;
       const success = `${base}/dashboard/messages?smsCredits=success`;
       const cancel = `${base}/dashboard/messages?smsCredits=cancel`;
       const url = await createSmsCreditsSession(weddingSite.id, success, cancel, pack);
+      void logAppAction({
+        weddingSiteId: weddingSite.id,
+        area: 'billing',
+        type: 'sms_credits_checkout_started',
+        summary: 'Text credits checkout was started.',
+        targetId: weddingSite.id,
+        targetLabel: 'Text credits',
+        metadata: {
+          pack,
+          currentCredits: weddingSite.sms_credits_balance ?? 0,
+        },
+      });
       window.location.href = url;
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'Couldn’t open checkout right now. Please try again.', 'error');
+      toast(safeMessagesError(err, 'Couldn’t open checkout right now. Please try again.'), 'error');
     } finally {
       setBuyingPack(null);
     }
@@ -1079,14 +1124,15 @@ export const DashboardMessages: React.FC = () => {
     const activeSite = await resolveActiveSiteForUser(user.id);
     setActiveSiteRole(activeSite?.role ?? 'owner');
     setMessagesRole(activeSite?.role ?? 'owner');
+    setMessagesPermissions(activeSite?.permissions ?? null);
 
     const { data, error } = await supabase
       .from('wedding_sites')
-      .select('id, couple_first_name, couple_second_name, couple_email, sms_credits_balance')
+      .select('id, site_slug, couple_first_name, couple_second_name, couple_email, sms_credits_balance')
       .eq('id', activeSite?.id ?? '')
       .maybeSingle();
     if (error) {
-      toast('Couldn’t load your messaging workspace right now. Please try again.', 'error');
+      toast('Couldn’t load your messages right now. Please try again.', 'error');
       setWeddingSite(null);
       setMessages([]);
       setDeliveries([]);
@@ -1142,7 +1188,15 @@ export const DashboardMessages: React.FC = () => {
         id: g.id,
         email: g.email ?? null,
         phone: (g as any).phone ?? null,
+        sms_consent: true,
         rsvp_status: g.rsvp_status ?? 'pending',
+        invitation_sent_at: (g as any).invitation_sent_at ?? null,
+        reminder_last_sent_at: (g as any).reminder_last_sent_at ?? null,
+        mailing_address_line1: (g as any).mailing_address_line1 ?? null,
+        mailing_city: (g as any).mailing_city ?? null,
+        mailing_state: (g as any).mailing_state ?? null,
+        mailing_postal_code: (g as any).mailing_postal_code ?? null,
+        meal_choice: (g as any).meal_choice ?? null,
         first_name: g.first_name ?? null,
         last_name: g.last_name ?? null,
         name: g.name,
@@ -1152,7 +1206,7 @@ export const DashboardMessages: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('guests')
-        .select('id, email, phone, rsvp_status, first_name, last_name, name')
+        .select('id, email, phone, sms_consent, rsvp_status, invitation_sent_at, reminder_last_sent_at, mailing_address_line1, mailing_city, mailing_state, mailing_postal_code, first_name, last_name, name')
         .eq('wedding_site_id', weddingSite.id);
       if (error) {
         toast('Couldn’t load guest recipients right now. Please try again.', 'error');
@@ -1303,7 +1357,7 @@ export const DashboardMessages: React.FC = () => {
           .from('sms_credit_transactions')
           .select('remaining_credits, expires_at')
           .eq('wedding_site_id', weddingSite.id)
-          .eq('reason', 'purchase')
+          .in('reason', ['purchase', 'included'])
           .lte('expires_at', cutoff),
         supabase
           .from('sms_credit_transactions')
@@ -1314,7 +1368,7 @@ export const DashboardMessages: React.FC = () => {
       ]);
 
       if (expiringResult.error || txResult.error) {
-        toast('Couldn’t load SMS credit activity right now. Please try again.', 'error');
+        toast('Couldn’t load text credit activity right now. Please try again.', 'error');
         setSmsExpiringSoon(0);
         setSmsTransactions([]);
         return;
@@ -1324,7 +1378,7 @@ export const DashboardMessages: React.FC = () => {
       setSmsExpiringSoon(soon);
       setSmsTransactions((txResult.data ?? []) as SmsCreditTransaction[]);
     } catch {
-      toast('Couldn’t load SMS credit activity right now. Please try again.', 'error');
+      toast('Couldn’t load text credit activity right now. Please try again.', 'error');
       setSmsExpiringSoon(0);
       setSmsTransactions([]);
     }
@@ -1334,31 +1388,51 @@ export const DashboardMessages: React.FC = () => {
     const params = new URLSearchParams(location.search);
     const prefillSubject = params.get('prefillSubject');
     const prefillBody = params.get('prefillBody');
+    const prefillAudience = params.get('prefillAudience');
+    const prefillCampaignName = params.get('prefillCampaignName');
+    const prefillChannel = params.get('prefillChannel');
+    const templateKey = params.get('template') as MessageTemplateKey | null;
+    const templateAudience = params.get('audience');
     const smsCreditsStatus = params.get('smsCredits');
-    if (!prefillSubject && !prefillBody && !smsCreditsStatus) return;
+    const requestedTemplate = templateKey && COMPOSER_TEMPLATES.some((template) => template.key === templateKey) ? templateKey : null;
+    if (!prefillSubject && !prefillBody && !prefillAudience && !prefillCampaignName && !prefillChannel && !smsCreditsStatus && !requestedTemplate) return;
 
-    if (prefillSubject || prefillBody) {
+    if (requestedTemplate) {
+      applyComposerTemplate(requestedTemplate, {
+        audience: templateAudience === 'pending' ? 'not_responded' : templateAudience ?? undefined,
+      });
+      setShowRecipientPreview(true);
+    }
+
+    if (prefillSubject || prefillBody || prefillAudience || prefillCampaignName || prefillChannel) {
       setEditingMessageId(null);
       setFormData((prev) => ({
         ...prev,
-        campaignName: prev.campaignName,
+        campaignName: prefillCampaignName ?? prev.campaignName,
         subject: prefillSubject ?? prev.subject,
         body: prefillBody ?? prev.body,
+        audience: prefillAudience ?? prev.audience,
+        channel: prefillChannel === 'sms' ? 'sms' : prefillChannel === 'email' ? 'email' : prev.channel,
       }));
       setShowRecipientPreview(true);
     }
 
     if (smsCreditsStatus === 'success') {
-      toast('SMS credit purchase complete. Refreshing your balance now.', 'success');
+      toast('Text credit purchase complete. Refreshing your balance now.', 'success');
       void fetchWeddingSite();
       void fetchSmsExpiryPreview();
     } else if (smsCreditsStatus === 'cancel') {
-      toast('SMS credit checkout was canceled.', 'info');
+      toast('Text credit checkout was canceled.', 'info');
     }
 
     const cleanedParams = new URLSearchParams(location.search);
     cleanedParams.delete('prefillSubject');
     cleanedParams.delete('prefillBody');
+    cleanedParams.delete('prefillAudience');
+    cleanedParams.delete('prefillCampaignName');
+    cleanedParams.delete('prefillChannel');
+    cleanedParams.delete('template');
+    cleanedParams.delete('audience');
     cleanedParams.delete('smsCredits');
     const nextSearch = cleanedParams.toString();
     navigate(
@@ -1422,24 +1496,13 @@ export const DashboardMessages: React.FC = () => {
   }, [isDemoMode, messages]);
 
   const getRecipients = (audience: string): Guest[] => {
-    if (audience.startsWith('event:')) {
-      const eventId = audience.replace('event:', '');
-      const ids = eventGuestIds[eventId];
-      if (!ids) return [];
-      return guests.filter((g) => ids.has(g.id));
-    }
-    switch (audience) {
-      case 'attending': return guests.filter(g => isAttendingStatus(g.rsvp_status));
-      case 'not_responded': return guests.filter(g => isPendingStatus(g.rsvp_status));
-      case 'declined': return guests.filter(g => isDeclinedStatus(g.rsvp_status));
-      default: return guests;
-    }
+    return filterMessageAudienceGuests(guests, audience, eventGuestIds);
   };
 
   const getAudienceSnapshot = (audience: string, channel: 'email' | 'sms') => {
     const recipients = getRecipients(audience);
     const reachableCount = channel === 'sms'
-      ? recipients.filter((guest) => hasReachablePhone(guest.phone)).length
+      ? recipients.filter((guest) => hasReachableSms(guest)).length
       : recipients.filter((guest) => hasReachableEmail(guest.email)).length;
 
     return {
@@ -1463,7 +1526,8 @@ export const DashboardMessages: React.FC = () => {
     const couple = getMessageTemplateCoupleLabel(weddingSite?.couple_first_name, weddingSite?.couple_second_name);
     const rsvpLink = `${window.location.origin}/rsvp`;
 
-    let photoLink = `${window.location.origin}/photos/upload`;
+    const siteParam = weddingSite?.site_slug ? `?site=${encodeURIComponent(weddingSite.site_slug)}` : '';
+    let photoLink = `${window.location.origin}/photos/upload${siteParam}`;
     try {
       const raw = localStorage.getItem('dayof.photoAlbumLinks');
       if (raw) {
@@ -1484,6 +1548,12 @@ export const DashboardMessages: React.FC = () => {
   };
 
   const selectedTemplate = COMPOSER_TEMPLATES.find((tpl) => tpl.key === formData.templateKey) ?? COMPOSER_TEMPLATES[0];
+  const languagePreviews = useMemo(() => buildGuestMessageLanguagePreviews({
+    templateKey: formData.templateKey,
+    subject: formData.subject,
+    body: formData.body,
+    languages: ['en', 'es', 'fr'],
+  }), [formData.body, formData.subject, formData.templateKey]);
 
   const handleSendMessage = async (e: React.FormEvent, saveAsDraft = false) => {
     e.preventDefault();
@@ -1493,21 +1563,26 @@ export const DashboardMessages: React.FC = () => {
       const recipients = getRecipients(formData.audience);
       const totalAudienceCount = recipients.length;
       const recipientCount = formData.channel === 'sms'
-        ? recipients.filter(g => hasReachablePhone(g.phone)).length
+        ? recipients.filter(g => hasReachableSms(g)).length
         : recipients.filter(g => hasReachableEmail(g.email)).length;
       const skippedRecipientCount = Math.max(totalAudienceCount - recipientCount, 0);
 
       if (recipientCount === 0 && !saveAsDraft) {
         toast(formData.channel === 'sms'
-          ? 'No recipients have reachable phone numbers. Add phone numbers to your guests first.'
+          ? 'No recipients have reachable phone numbers with text consent. Add phone numbers and consent first.'
           : 'No recipients have valid email addresses. Add valid emails to your guests first.', 'error');
         setSending(false);
         return;
       }
 
       if (formData.channel === 'sms' && !saveAsDraft) {
+        if (!isSmsProviderEnabled()) {
+          toast(SMS_PROVIDER_PENDING_COPY, 'info');
+          setSending(false);
+          return;
+        }
         if (!smsCreditsSufficient) {
-          toast(`Not enough SMS credits. Need ${smsCreditsNeeded}, have ${smsCredits}.`, 'error');
+          toast(`Not enough text credits. Need ${smsCreditsNeeded}, have ${smsCredits}.`, 'error');
           setSending(false);
           return;
         }
@@ -1523,7 +1598,7 @@ export const DashboardMessages: React.FC = () => {
       const scheduledFor = isScheduled ? requestedScheduledFor : null;
       const campaignName = formData.campaignName.trim();
       const normalizedSubject = formData.channel === 'sms'
-        ? (formData.subject.trim() || `SMS • ${selectedAudience?.label ?? 'All guests'}`)
+        ? (formData.subject.trim() || `Text • ${selectedAudience?.label ?? 'All guests'}`)
         : formData.subject;
       const recipientMeta = {
         audience: formData.audience,
@@ -1531,6 +1606,8 @@ export const DashboardMessages: React.FC = () => {
         recipient_count: totalAudienceCount,
         reachable_count: recipientCount,
         skipped_count: skippedRecipientCount,
+        sms_segment_count: formData.channel === 'sms' ? countSmsSegments(formData.body) : null,
+        sms_credit_cost: formData.channel === 'sms' ? estimateSmsCredits(formData.body, recipientCount) : null,
         campaignName: campaignName || null,
         campaignType: selectedTemplate.campaignType ?? null,
         templateKey: formData.templateKey,
@@ -1640,7 +1717,7 @@ export const DashboardMessages: React.FC = () => {
       if (isSendNow && inserted?.id) {
         if (isDemoMode) {
           if (skippedRecipientCount > 0) {
-            toast(`${isEditingExistingMessage ? 'Updated and delivered' : 'Delivered'} ${recipientCount} • skipped ${skippedRecipientCount} (demo)`, 'info');
+            toast(`${isEditingExistingMessage ? 'Updated and delivered' : 'Delivered'} ${recipientCount} • ${describeRecipientReview(skippedRecipientCount)} (demo)`, 'info');
           } else {
             toast(`${isEditingExistingMessage ? 'Updated and delivered' : 'Delivered'} to ${recipientCount} guest${recipientCount !== 1 ? 's' : ''} (demo)`, 'success');
           }
@@ -1656,27 +1733,26 @@ export const DashboardMessages: React.FC = () => {
           if (result.failed === 0 && skipped === 0) {
             toast(`Delivered to ${result.delivered} guest${result.delivered !== 1 ? 's' : ''}`, 'success');
           } else if (result.delivered === 0 && result.failed === 0 && skipped > 0) {
-            toast(`No messages sent: ${skipped} recipient${skipped !== 1 ? 's were' : ' was'} skipped.`, 'info');
+            toast(`No messages sent: ${describeRecipientReview(skipped)}.`, 'info');
           } else if (result.delivered === 0) {
-            toast(`Delivery failed for all ${result.failed} recipient${result.failed !== 1 ? 's' : ''}${skipped > 0 ? ` • ${skipped} skipped` : ''}. Check message history.`, 'error');
+            toast(`Delivery needs review for ${result.failed} recipient${result.failed !== 1 ? 's' : ''}${skipped > 0 ? ` • ${describeRecipientReview(skipped)}` : ''}. Check message history.`, 'error');
           } else {
-            toast(`Sent ${result.delivered}${result.failed > 0 ? ` • failed ${result.failed}` : ''}${skipped > 0 ? ` • skipped ${skipped}` : ''}. Check message history.`, 'info');
+            toast(`Sent ${result.delivered}${result.failed > 0 ? ` • ${result.failed} need review` : ''}${skipped > 0 ? ` • ${describeRecipientReview(skipped)}` : ''}. Check message history.`, 'info');
           }
         } catch (sendErr) {
-          toast(sendErr instanceof Error ? sendErr.message : 'Delivery failed. Check message history.', 'error');
+          toast(safeMessagesError(sendErr, 'Delivery needs review. Check message history.'), 'error');
         }
         await fetchMessages();
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to process message. Please try again.';
-      toast(msg, 'error');
+      toast(safeMessagesError(err, 'Couldn’t process message. Please try again.'), 'error');
     } finally {
       setSending(false);
     }
   };
 
   function loadMessageIntoComposer(message: Message, mode: 'edit' | 'duplicate') {
-    if (!canComposeDashboardMessages(messagesRole)) {
+    if (!canComposeDashboardMessages(messagesRole, messagesPermissions)) {
       toast('Your collaborator role cannot edit campaigns from Messaging.', 'info');
       return;
     }
@@ -1704,7 +1780,7 @@ export const DashboardMessages: React.FC = () => {
   }
 
   function startFollowUpFromCampaignThread(mode: 'reminder' | 'day-of' | 'thank-you') {
-    if (!canComposeDashboardMessages(messagesRole)) {
+    if (!canComposeDashboardMessages(messagesRole, messagesPermissions)) {
       toast('Your collaborator role cannot create follow-up campaigns from Messaging.', 'info');
       return;
     }
@@ -1758,7 +1834,7 @@ export const DashboardMessages: React.FC = () => {
   }
 
   function startScheduledFollowUpFromCampaignThread(mode: 'reminder' | 'day-of' | 'thank-you') {
-    if (!canComposeDashboardMessages(messagesRole)) {
+    if (!canComposeDashboardMessages(messagesRole, messagesPermissions)) {
       toast('Your collaborator role cannot schedule follow-up campaigns from Messaging.', 'info');
       return;
     }
@@ -1828,15 +1904,20 @@ export const DashboardMessages: React.FC = () => {
   }
 
   async function handleRetry(message: Message) {
-    if (!canComposeDashboardMessages(messagesRole)) {
+    if (!canComposeDashboardMessages(messagesRole, messagesPermissions)) {
       toast('Your collaborator role cannot retry campaign sends.', 'info');
+      return;
+    }
+
+    if (message.channel === 'sms' && !isSmsProviderEnabled()) {
+      toast(SMS_PROVIDER_PENDING_COPY, 'info');
       return;
     }
 
     if (!canRetryMessageStatus(message.status)) {
       toast(message.status === 'partial'
-        ? 'Partial campaigns are not retried in-place here because that can duplicate sends. Duplicate the campaign and target the missed guests instead.'
-        : 'Only failed campaigns can be retried from this control.', 'info');
+        ? 'Campaigns that need follow-up are not retried in place here because that can duplicate sends. Duplicate the campaign and target the missed guests instead.'
+        : 'Only campaigns needing review can be retried from this control.', 'info');
       return;
     }
 
@@ -1846,7 +1927,7 @@ export const DashboardMessages: React.FC = () => {
         const audience = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all';
         const recipients = getRecipients(audience);
         const deliveredCount = message.channel === 'sms'
-          ? recipients.filter((guest) => hasReachablePhone(guest.phone)).length
+          ? recipients.filter((guest) => hasReachableSms(guest)).length
           : recipients.filter((guest) => hasReachableEmail(guest.email)).length;
         const skippedCount = Math.max(recipients.length - deliveredCount, 0);
 
@@ -1870,8 +1951,8 @@ export const DashboardMessages: React.FC = () => {
         )));
 
         toast(skippedCount > 0
-          ? `Retry finished in demo: delivered ${deliveredCount} • skipped ${skippedCount}.`
-          : `Retry finished in demo: delivered ${deliveredCount}.`, skippedCount > 0 ? 'info' : 'success');
+          ? `Second send finished in demo: delivered ${deliveredCount} • ${describeRecipientReview(skippedCount)}.`
+          : `Second send finished in demo: delivered ${deliveredCount}.`, skippedCount > 0 ? 'info' : 'success');
         return;
       }
 
@@ -1880,7 +1961,7 @@ export const DashboardMessages: React.FC = () => {
         .update({ status: 'queued', sent_at: null, failed_count: 0, delivered_count: 0 })
         .eq('id', message.id);
       if (error) throw error;
-      toast('Retrying delivery…', 'info');
+      toast('Sending again…', 'info');
       await fetchMessages();
       try {
         const result = await triggerBulkSend(message.id);
@@ -1888,9 +1969,9 @@ export const DashboardMessages: React.FC = () => {
         if (result.failed === 0 && skipped === 0) {
           toast(`Delivered to ${result.delivered} guest${result.delivered !== 1 ? 's' : ''}`, 'success');
         } else if (result.delivered === 0 && result.failed === 0 && skipped > 0) {
-          toast(`Retry finished with ${skipped} skipped recipient${skipped !== 1 ? 's' : ''}.`, 'info');
+          toast(`Second send finished with ${describeRecipientReview(skipped)}.`, 'info');
         } else {
-          toast(`Sent ${result.delivered}${result.failed > 0 ? ` • failed ${result.failed}` : ''}${skipped > 0 ? ` • skipped ${skipped}` : ''}`, result.delivered === 0 && result.failed > 0 ? 'error' : 'info');
+          toast(`Sent ${result.delivered}${result.failed > 0 ? ` • ${result.failed} need review` : ''}${skipped > 0 ? ` • ${describeRecipientReview(skipped)}` : ''}`, result.delivered === 0 && result.failed > 0 ? 'error' : 'info');
         }
       } catch (sendErr) {
         await supabase
@@ -1902,7 +1983,7 @@ export const DashboardMessages: React.FC = () => {
             delivered_count: message.delivered_count,
           })
           .eq('id', message.id);
-        toast(sendErr instanceof Error ? sendErr.message : 'Delivery failed. Try again later.', 'error');
+        toast(sendErr instanceof Error ? sendErr.message : 'Delivery needs review. Try again later.', 'error');
       }
       await fetchMessages();
     } catch {
@@ -1913,16 +1994,21 @@ export const DashboardMessages: React.FC = () => {
   }
 
   async function handleSendScheduledNow(message: Message) {
-    if (!canComposeDashboardMessages(messagesRole)) {
+    if (!canComposeDashboardMessages(messagesRole, messagesPermissions)) {
       toast('Your collaborator role cannot send campaigns from Messaging.', 'info');
+      return;
+    }
+
+    if (message.channel === 'sms' && !isSmsProviderEnabled()) {
+      toast(SMS_PROVIDER_PENDING_COPY, 'info');
       return;
     }
 
     if (isDemoMode) {
       const audience = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all';
       const recipients = getRecipients(audience);
-      const deliveredCount = message.channel === 'sms'
-        ? recipients.filter((guest) => hasReachablePhone(guest.phone)).length
+        const deliveredCount = message.channel === 'sms'
+        ? recipients.filter((guest) => hasReachableSms(guest)).length
         : recipients.filter((guest) => hasReachableEmail(guest.email)).length;
       const skippedCount = Math.max(recipients.length - deliveredCount, 0);
 
@@ -1945,7 +2031,7 @@ export const DashboardMessages: React.FC = () => {
           : item
       )));
       toast(skippedCount > 0
-        ? `Scheduled message sent in demo: delivered ${deliveredCount} • skipped ${skippedCount}.`
+        ? `Scheduled message sent in demo: delivered ${deliveredCount} • ${describeRecipientReview(skippedCount)}.`
         : `Scheduled message sent in demo: delivered ${deliveredCount}.`, skippedCount > 0 ? 'info' : 'success');
       return;
     }
@@ -1964,11 +2050,11 @@ export const DashboardMessages: React.FC = () => {
       if (result.failed === 0 && skipped === 0) {
         toast(`Delivered to ${result.delivered} guest${result.delivered !== 1 ? 's' : ''}`, 'success');
       } else if (result.delivered === 0 && result.failed === 0 && skipped > 0) {
-        toast(`No messages sent: ${skipped} recipient${skipped !== 1 ? 's were' : ' was'} skipped.`, 'info');
+        toast(`No messages sent: ${describeRecipientReview(skipped)}.`, 'info');
       } else if (result.delivered === 0) {
-        toast(`Delivery failed for all ${result.failed} recipient${result.failed !== 1 ? 's' : ''}${skipped > 0 ? ` • ${skipped} skipped` : ''}.`, 'error');
+        toast(`Delivery needs review for ${result.failed} recipient${result.failed !== 1 ? 's' : ''}${skipped > 0 ? ` • ${describeRecipientReview(skipped)}` : ''}.`, 'error');
       } else {
-        toast(`Sent ${result.delivered}${result.failed > 0 ? ` • failed ${result.failed}` : ''}${skipped > 0 ? ` • skipped ${skipped}` : ''}.`, 'info');
+        toast(`Sent ${result.delivered}${result.failed > 0 ? ` • ${result.failed} need review` : ''}${skipped > 0 ? ` • ${describeRecipientReview(skipped)}` : ''}.`, 'info');
       }
       deliveryTriggered = true;
       await fetchMessages();
@@ -1979,12 +2065,12 @@ export const DashboardMessages: React.FC = () => {
           .update({ scheduled_for: message.scheduled_for })
           .eq('id', message.id);
       }
-      toast(err instanceof Error ? err.message : 'Couldn’t send that scheduled message right now.', 'error');
+      toast(safeMessagesError(err, 'Couldn’t send that scheduled message right now.'), 'error');
     }
   }
 
   async function handleRescheduleMessage(message: Message, scheduledFor: string) {
-    if (!canComposeDashboardMessages(messagesRole)) {
+    if (!canComposeDashboardMessages(messagesRole, messagesPermissions)) {
       toast('Your collaborator role cannot reschedule campaigns.', 'info');
       return;
     }
@@ -2046,12 +2132,12 @@ export const DashboardMessages: React.FC = () => {
       toast(`Rescheduled for ${formatScheduledMessageDateTime(scheduledFor)}.`, 'success');
       await fetchMessages();
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'Couldn’t reschedule that campaign right now.', 'error');
+      toast(safeMessagesError(err, 'Couldn’t reschedule that campaign right now.'), 'error');
     }
   }
 
   async function handleCancelSchedule(message: Message) {
-    if (!canComposeDashboardMessages(messagesRole)) {
+    if (!canComposeDashboardMessages(messagesRole, messagesPermissions)) {
       toast('Your collaborator role cannot change scheduled campaigns.', 'info');
       return;
     }
@@ -2107,7 +2193,7 @@ export const DashboardMessages: React.FC = () => {
       toast('Scheduled campaign moved back to draft.', 'info');
       await fetchMessages();
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'Couldn’t unschedule that campaign right now.', 'error');
+      toast(safeMessagesError(err, 'Couldn’t move that campaign back to draft right now.'), 'error');
     }
   }
 
@@ -2128,7 +2214,7 @@ export const DashboardMessages: React.FC = () => {
   }, [messages, viewingMessage]);
 
   async function handleRunDueScheduledMessages() {
-    if (!canComposeDashboardMessages(messagesRole)) {
+    if (!canComposeDashboardMessages(messagesRole, messagesPermissions)) {
       toast('Your collaborator role cannot run scheduled sends.', 'info');
       return;
     }
@@ -2152,7 +2238,7 @@ export const DashboardMessages: React.FC = () => {
           const audience = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all';
           const recipients = getRecipients(audience);
           const deliveredCount = message.channel === 'sms'
-            ? recipients.filter((guest) => hasReachablePhone(guest.phone)).length
+            ? recipients.filter((guest) => hasReachableSms(guest)).length
             : recipients.filter((guest) => hasReachableEmail(guest.email)).length;
           const skippedCount = Math.max(recipients.length - deliveredCount, 0);
           skippedRecipients += skippedCount;
@@ -2172,7 +2258,7 @@ export const DashboardMessages: React.FC = () => {
             },
           };
         }));
-        toast(`Processed ${dueIds.length} scheduled message${dueIds.length !== 1 ? 's' : ''} in demo${skippedRecipients > 0 ? ` • skipped ${skippedRecipients} recipient${skippedRecipients !== 1 ? 's' : ''}` : ''}.`, skippedRecipients > 0 ? 'info' : 'success');
+        toast(`Processed ${dueIds.length} scheduled message${dueIds.length !== 1 ? 's' : ''} in demo${skippedRecipients > 0 ? ` • ${describeRecipientReview(skippedRecipients)}` : ''}.`, skippedRecipients > 0 ? 'info' : 'success');
       } finally {
         setProcessingScheduled(false);
       }
@@ -2185,27 +2271,25 @@ export const DashboardMessages: React.FC = () => {
       if (result.processed === 0) {
         toast('No scheduled messages are due right now.', 'info');
       } else if (result.failed === 0 && result.partial === 0) {
-        toast(`Processed ${result.processed} scheduled message${result.processed !== 1 ? 's' : ''}${result.skippedRecipients > 0 ? ` • ${result.skippedRecipients} recipient${result.skippedRecipients !== 1 ? 's' : ''} skipped` : ''}.`, 'success');
+        toast(`Processed ${result.processed} scheduled message${result.processed !== 1 ? 's' : ''}${result.skippedRecipients > 0 ? ` • ${describeRecipientReview(result.skippedRecipients)}` : ''}.`, 'success');
       } else {
-        toast(`Processed ${result.processed}: sent ${result.sent}, partial ${result.partial}, failed ${result.failed}${result.skippedRecipients > 0 ? `, skipped recipients ${result.skippedRecipients}` : ''}${result.skippedMessages > 0 ? `, skipped messages ${result.skippedMessages}` : ''}.`, result.failed > 0 ? 'error' : 'info');
+        toast(`Processed ${result.processed}: sent ${result.sent}, partial ${result.partial}, needs review ${result.failed}${result.skippedRecipients > 0 ? `, ${describeRecipientReview(result.skippedRecipients)}` : ''}${result.skippedMessages > 0 ? `, messages needing review ${result.skippedMessages}` : ''}.`, result.failed > 0 ? 'error' : 'info');
       }
       await fetchMessages();
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'Couldn’t process scheduled messages right now.', 'error');
+      toast(safeMessagesError(err, 'Couldn’t process scheduled messages right now.'), 'error');
     } finally {
       setProcessingScheduled(false);
     }
   }
 
   const audienceOptions = [
-    { value: 'all', label: 'All Guests', count: guests.length },
-    { value: 'attending', label: 'Attending Only', count: guests.filter(g => isAttendingStatus(g.rsvp_status)).length },
-    { value: 'not_responded', label: 'Not Responded', count: guests.filter(g => isPendingStatus(g.rsvp_status)).length },
-    { value: 'declined', label: 'Declined', count: guests.filter(g => isDeclinedStatus(g.rsvp_status)).length },
+    ...buildMessageAudienceOptions(guests),
     ...itineraryAudienceOptions,
   ];
 
   const selectedAudience = audienceOptions.find(opt => opt.value === formData.audience);
+  const selectedAudienceDetail = getMessageAudienceDetail(formData.audience, audienceOptions);
 
   function applyComposerTemplate(templateKey: MessageTemplateKey, overrides?: Partial<typeof formData>) {
     setEditingMessageId(null);
@@ -2381,10 +2465,10 @@ export const DashboardMessages: React.FC = () => {
 
       toast('Save-the-date campaign scheduled for tomorrow at 10:00.', 'success');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Could not create save-the-date campaign.';
+      const message = safeMessagesError(err, 'Couldn’t create the save-the-date campaign right now.');
       toast(
         created
-          ? `Campaign was created, but the message list could not refresh: ${message}`
+          ? `Campaign was created, but the message list needs a refresh. ${message}`
           : message,
         created ? 'info' : 'error',
       );
@@ -2417,14 +2501,16 @@ export const DashboardMessages: React.FC = () => {
     applyDayOfDraft();
   };
   const recipientsWithEmail = getRecipients(formData.audience).filter(g => hasReachableEmail(g.email)).length;
-  const recipientsWithPhone = getRecipients(formData.audience).filter(g => hasReachablePhone(g.phone)).length;
-  const activeRecipients = formData.channel === 'sms' ? recipientsWithPhone : recipientsWithEmail;
-  const previewRecipients = getRecipients(formData.audience).filter((guest) => formData.channel === 'sms' ? hasReachablePhone(guest.phone) : hasReachableEmail(guest.email));
+  const recipientsWithSmsConsent = getRecipients(formData.audience).filter(g => hasReachableSms(g)).length;
+  const activeRecipients = formData.channel === 'sms' ? recipientsWithSmsConsent : recipientsWithEmail;
+  const previewRecipients = getRecipients(formData.audience).filter((guest) => formData.channel === 'sms' ? hasReachableSms(guest) : hasReachableEmail(guest.email));
   const unreachableRecipients = (selectedAudience?.count ?? 0) - activeRecipients;
   const selectedScheduleIsPast = !!(formData.scheduleDate && formData.scheduleTime)
     && isPastScheduledTime(`${formData.scheduleDate}T${formData.scheduleTime}:00`);
   const smsCredits = weddingSite?.sms_credits_balance ?? 0;
-  const smsCreditsNeeded = recipientsWithPhone;
+  const smsProviderEnabled = isSmsProviderEnabled();
+  const smsSegmentCount = countSmsSegments(formData.body);
+  const smsCreditsNeeded = estimateSmsCredits(formData.body, recipientsWithSmsConsent);
   const smsCreditsSufficient = smsCredits >= smsCreditsNeeded;
   const HARD_EMAIL_CAP = 1000;
   const usedEmailRecipients = messages
@@ -2437,7 +2523,7 @@ export const DashboardMessages: React.FC = () => {
   const audienceReachability = useMemo(() => {
     const allRecipients = getRecipients(formData.audience);
     const withEmail = allRecipients.filter((guest) => hasReachableEmail(guest.email)).length;
-    const withPhone = allRecipients.filter((guest) => hasReachablePhone(guest.phone)).length;
+    const withPhone = allRecipients.filter((guest) => hasReachableSms(guest)).length;
     return {
       total: allRecipients.length,
       missingEmail: Math.max(allRecipients.length - withEmail, 0),
@@ -2461,7 +2547,7 @@ export const DashboardMessages: React.FC = () => {
     };
   }, [messages]);
 
-  const canCompose = canComposeDashboardMessages(messagesRole);
+  const canCompose = canComposeDashboardMessages(messagesRole, messagesPermissions);
 
   const filteredHistory = useMemo(() => messages.filter((m) => {
     if (historyStatusFilter === 'active') {
@@ -2654,25 +2740,24 @@ export const DashboardMessages: React.FC = () => {
     const sent = completedDeliveryRows.filter((d) => d.status === 'sent').length;
     const failed = completedDeliveryRows.filter((d) => d.status === 'failed').length;
     const skipped = completedDeliveryRows.filter((d) => d.status === 'skipped').length;
-    const withProviderId = completedDeliveryRows.filter((d) => !!d.provider_message_id).length;
     const errorTop = Array.from(
       completedDeliveryRows
         .filter((d) => d.status === 'failed' && d.error_message)
         .reduce((map, d) => {
-          const key = (d.error_message || 'Unknown').slice(0, 60);
+          const key = getCustomerDeliveryReason(d.error_message, 'Unknown delivery issue').slice(0, 60);
           map.set(key, (map.get(key) ?? 0) + 1);
           return map;
         }, new Map<string, number>())
         .entries(),
     ).sort((a, b) => b[1] - a[1]).slice(0, 3);
     const sentRate = attempted.length > 0 ? Math.round((sent / attempted.length) * 100) : 0;
-    return { attempted: attempted.length, sent, failed, skipped, withProviderId, sentRate, errorTop };
+    return { attempted: attempted.length, sent, failed, skipped, sentRate, errorTop };
   }, [messages, deliveries]);
 
   if (loading) {
     return (
       <DashboardLayout currentPage="messages">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-[1100px] mx-auto">
           <DashboardStateBlock title="Loading messages…" description="Preparing your campaigns and activity." />
         </div>
       </DashboardLayout>
@@ -2681,36 +2766,17 @@ export const DashboardMessages: React.FC = () => {
 
   return (
     <DashboardLayout currentPage="messages">
-      <div className="max-w-7xl mx-auto space-y-8">
-        <div className="rounded-[32px] border border-border-subtle bg-white p-6 shadow-sm">
-          <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
-            <div className="max-w-3xl">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Communications</p>
-              <h1 className="mt-3 text-4xl font-semibold tracking-tight text-text-primary">Message guests with more control and a lot less dashboard sludge.</h1>
-              <p className="mt-3 text-sm leading-6 text-text-secondary">Draft reminders, day-of updates, and follow-ups from one place. Keep the audience clear, the send timing obvious, and the results easy to scan after the fact.</p>
-              {messagesRole === 'coordinator' && <p className="mt-2 text-xs text-text-tertiary">Coordinator access can review delivery health and day-of comms, but campaign drafting stays with the couple or planner.</p>}
-            </div>
-            <div className="grid gap-3 sm:grid-cols-3 xl:w-[420px]">
-              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
-                <p className="text-xs uppercase tracking-wide text-text-tertiary">Scheduled</p>
-                <p className="mt-2 text-2xl font-semibold text-text-primary">{deliveryStats.scheduled}</p>
-              </div>
-              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
-                <p className="text-xs uppercase tracking-wide text-text-tertiary">Recipients reached / attempted</p>
-                <p className="mt-2 text-2xl font-semibold text-text-primary">{deliveryStats.targeted}</p>
-              </div>
-              <div className="rounded-2xl border border-border-subtle bg-surface-subtle/40 p-4">
-                <p className="text-xs uppercase tracking-wide text-text-tertiary">Delivery rate</p>
-                <p className="mt-2 text-2xl font-semibold text-text-primary">{deliveryStats.rate}%</p>
-              </div>
-            </div>
-          </div>
-          <div className="mt-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="inline-flex flex-wrap items-center gap-2 text-xs text-text-tertiary">
-              <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Email + SMS</span>
-              <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Audience-aware drafts</span>
-              <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Live delivery history</span>
-            </div>
+      <div className="max-w-[1100px] mx-auto space-y-5">
+        <DashboardPageHero
+          eyebrow="Messages"
+          title="Send guest updates without making them feel automated."
+          description="Pick the moment, confirm the audience, edit the words, and choose when it should go out. Text sending stays locked until setup is ready."
+          stats={[
+            { label: 'Scheduled', value: deliveryStats.scheduled, detail: 'waiting to send' },
+            { label: 'Guests reached', value: deliveryStats.targeted, detail: 'across sent updates' },
+            { label: 'Delivery', value: `${deliveryStats.rate}%`, detail: 'latest delivery health' },
+          ]}
+          actions={
             <div className="flex flex-col gap-3 md:items-end">
               <Button
                 variant={deliveryHealth.overdueScheduled > 0 ? 'primary' : 'outline'}
@@ -2723,7 +2789,7 @@ export const DashboardMessages: React.FC = () => {
                   : <><Clock className="w-4 h-4 mr-2" />{deliveryHealth.overdueScheduled > 0 ? `Run ${deliveryHealth.overdueScheduled} due scheduled send${deliveryHealth.overdueScheduled !== 1 ? 's' : ''}` : 'Run due scheduled sends'}</>}
               </Button>
               <div>
-                <label className="block text-xs text-text-tertiary mb-1">Access view</label>
+                <label className="block text-xs text-text-tertiary mb-1">View as</label>
                 <select
                   value={messagesRole}
                   onChange={(e) => setMessagesRole(e.target.value as PlannerAccessRole)}
@@ -2740,27 +2806,33 @@ export const DashboardMessages: React.FC = () => {
                 )}
               </div>
             </div>
+          }
+        >
+          <div className="inline-flex flex-wrap items-center gap-2 text-xs text-text-tertiary">
+            <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Email drafts</span>
+            <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Text drafts locked until setup</span>
+            <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Editable before send</span>
           </div>
-        </div>
+        </DashboardPageHero>
 
         {messagesRole === 'planner' && (
           <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
-            Planner view is on — this workspace stays focused on guest communications, reminders, and day-of updates.
+            Planner view is on. This view stays focused on guest communications, reminders, and day-of updates.
           </div>
         )}
 
-        <div className="rounded-[28px] border border-border-subtle bg-white p-5 shadow-sm">
+        <div className="rounded-lg border border-border-subtle bg-white p-5">
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Communication flow</p>
-              <h2 className="mt-2 text-2xl font-semibold text-text-primary">Keep the lifecycle obvious from first nudge to final follow-up.</h2>
-              <p className="mt-2 text-sm text-text-secondary">Presets pull from your real wedding details and audience context first, then hand the message back to you before anything sends.</p>
+              <p className="text-xs font-medium text-text-tertiary">Guest flow</p>
+              <h2 className="mt-2 text-2xl font-semibold text-text-primary">Start from the moment, then edit the words.</h2>
+              <p className="mt-2 text-sm text-text-secondary">Presets use your wedding details and audience first, then hand the message back before anything sends.</p>
             </div>
           </div>
           <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4">
             {GUEST_COMMUNICATION_FLOW.map((stage, index) => (
-              <div key={stage.id} className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-4">
-                <p className="text-[11px] uppercase tracking-[0.22em] text-text-tertiary">0{index + 1}</p>
+              <div key={stage.id} className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-4">
+                <p className="text-[11px] font-medium text-text-tertiary">0{index + 1}</p>
                 <p className="mt-2 text-sm font-semibold text-text-primary">{stage.label}</p>
                 <p className="mt-2 text-xs leading-5 text-text-secondary">{stage.detail}</p>
               </div>
@@ -2768,72 +2840,92 @@ export const DashboardMessages: React.FC = () => {
           </div>
         </div>
 
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => setShowSendingDetails((value) => !value)}
+            className="inline-flex items-center rounded-lg border border-border-subtle bg-white px-4 py-2 text-sm font-medium text-text-secondary transition hover:border-primary/30 hover:text-primary"
+          >
+            {showSendingDetails ? 'Hide sending details' : 'Show sending details'}
+          </button>
+        </div>
+
+        {showSendingDetails && (
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card variant="bordered" padding="lg" className="border-border-subtle shadow-sm overflow-hidden">
+            <Card variant="bordered" padding="lg" className="border-border-subtle overflow-hidden">
               <div className="-mx-6 -mt-6 mb-4 border-b border-border-subtle bg-surface-subtle/40 px-6 py-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Channel setup</p>
-                <h3 className="mt-2 text-xl font-semibold text-text-primary">Email and SMS readiness</h3>
+                <p className="text-xs font-medium text-text-tertiary">Channels</p>
+                <h3 className="mt-2 text-xl font-semibold text-text-primary">Sending details</h3>
               </div>
               <div className="space-y-4">
-                <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-4">
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-4">
                   <div className="flex items-start gap-3">
-                    <div className="rounded-xl bg-primary-light p-3">
+                    <div className="rounded-lg bg-primary-light p-3">
                       <AtSign className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">Wedding email</p>
+                      <p className="text-xs font-medium text-text-tertiary">Wedding email</p>
                       <p className="mt-2 text-base font-semibold text-text-primary">{weddingSite?.couple_email ?? 'Not set yet'}</p>
                       <p className="mt-1 text-xs text-text-secondary">Guest emails appear from this address when email is used.</p>
                     </div>
                   </div>
                 </div>
-                <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-4">
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">Email usage cap</p>
+                      <p className="text-xs font-medium text-text-tertiary">Email room</p>
                       <p className="mt-2 text-2xl font-semibold text-text-primary">{remainingEmailRecipients}</p>
-                      <p className="mt-1 text-xs text-text-secondary">Recipient slots left before the current email send cap of {HARD_EMAIL_CAP}.</p>
+                      <p className="mt-1 text-xs text-text-secondary">Email recipients available before today’s sending limit of {HARD_EMAIL_CAP}.</p>
                       <p className="text-xs text-text-tertiary">Used {usedEmailRecipients} total email recipients so far.</p>
                     </div>
-                    <div className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${emailCapacityEnough ? 'border-success/20 bg-success-light text-success' : 'border-error/20 bg-error-light text-error'}`}>
-                      {emailCapacityEnough ? 'Within cap' : 'Cap risk'}
+                    <div className={`rounded-lg border px-2.5 py-1 text-[11px] font-medium ${emailCapacityEnough ? 'border-success/20 bg-success-light text-success' : 'border-error/20 bg-error-light text-error'}`}>
+                      {emailCapacityEnough ? 'Ready' : 'Needs a smaller audience'}
                     </div>
                   </div>
                 </div>
-                <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-4">
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">SMS credits</p>
+                      <p className="text-xs font-semibold text-text-tertiary">Text credits</p>
                       <p className="mt-2 text-2xl font-semibold text-text-primary">{smsCredits}</p>
-                      <p className="mt-1 text-xs text-text-secondary">About 1 credit per guest for each text.</p>
-                      <p className="text-xs text-text-tertiary">Credits expire 12 months after purchase{smsExpiringSoon > 0 ? ` • ${smsExpiringSoon} expiring in 30 days` : ''}</p>
+                      <p className="mt-1 text-xs text-text-secondary">Includes 1,000 text credits. 1 credit = one 160-character text to one recipient.</p>
+                      <p className="text-xs text-text-tertiary">
+                        {smsProviderEnabled
+                          ? `Credits expire 12 months after purchase${smsExpiringSoon > 0 ? ` • ${smsExpiringSoon} expiring in 30 days` : ''}`
+                          : 'Texting setup pending. Drafting stays on; sending and purchases are locked.'}
+                      </p>
                     </div>
                     <div className="flex flex-col gap-2">
-                      <Button size="sm" variant="outline" onClick={() => handleBuySmsPack('sms_100')} disabled={buyingPack !== null}>{buyingPack === 'sms_100' ? 'Opening…' : 'Buy 100'}</Button>
-                      <Button size="sm" variant="outline" onClick={() => handleBuySmsPack('sms_500')} disabled={buyingPack !== null}>{buyingPack === 'sms_500' ? 'Opening…' : 'Buy 500'}</Button>
+                      <Button size="sm" variant="outline" onClick={() => handleBuySmsPack('sms_100')} disabled={buyingPack !== null || !smsProviderEnabled}>{buyingPack === 'sms_100' ? 'Opening…' : 'Buy 100'}</Button>
+                      <Button size="sm" variant="outline" onClick={() => handleBuySmsPack('sms_500')} disabled={buyingPack !== null || !smsProviderEnabled}>{buyingPack === 'sms_500' ? 'Opening…' : 'Buy 500'}</Button>
+                      <Button size="sm" variant="outline" onClick={() => handleBuySmsPack('sms_1000')} disabled={buyingPack !== null || !smsProviderEnabled}>{buyingPack === 'sms_1000' ? 'Opening…' : 'Buy 1,000'}</Button>
                     </div>
                   </div>
                 </div>
               </div>
             </Card>
 
-            <Card variant="bordered" padding="lg" className="border-border-subtle shadow-sm overflow-hidden">
+            <Card variant="bordered" padding="lg" className="border-border-subtle overflow-hidden">
               <div className="-mx-6 -mt-6 mb-4 border-b border-border-subtle bg-surface-subtle/40 px-6 py-5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Credits</p>
+                <p className="text-xs font-semibold text-text-tertiary">Text credits</p>
                     <h3 className="mt-2 text-xl font-semibold text-text-primary">Recent credit activity</h3>
                   </div>
                   <span className="text-xs text-text-tertiary">Recent {smsTransactions.length}</span>
                 </div>
               </div>
               {smsTransactions.length === 0 ? (
-                <p className="text-xs text-text-tertiary">No credit activity yet. Buy credits when you’re ready to send texts.</p>
+                <p className="text-xs text-text-tertiary">
+                  {smsProviderEnabled
+                    ? 'No credit activity yet. Buy credits when you’re ready to send texts.'
+                    : 'No credit activity yet. Credit purchases will appear here after texting setup is complete.'}
+                </p>
               ) : (
                 <>
-                  <div className="mb-3 rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-3">
-                    <p className="text-[11px] uppercase tracking-[0.22em] text-text-tertiary">Balance snapshot</p>
+                  <div className="mb-3 rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-3">
+                    <p className="text-[11px] text-text-tertiary">Balance snapshot</p>
                     <p className="mt-1 text-sm font-medium text-text-primary">{smsCredits} credits available{smsExpiringSoon > 0 ? ` • ${smsExpiringSoon} expiring soon` : ''}</p>
                   </div>
                   <div className="space-y-2 max-h-56 overflow-auto pr-1">
@@ -2845,7 +2937,7 @@ export const DashboardMessages: React.FC = () => {
                       </div>
                       <div className="text-right">
                         <p className={`${tx.credits_delta >= 0 ? 'text-success' : 'text-error'} font-medium`}>{tx.credits_delta >= 0 ? '+' : ''}{tx.credits_delta} credits</p>
-                        {tx.expires_at && tx.reason === 'purchase' && <p className="text-text-tertiary">Expires {formatMessageHistoryDate(tx.expires_at)}</p>}
+                        {tx.expires_at && (tx.reason === 'purchase' || tx.reason === 'included') && <p className="text-text-tertiary">Expires {formatMessageHistoryDate(tx.expires_at)}</p>}
                       </div>
                     </div>
                   ))}
@@ -2855,20 +2947,21 @@ export const DashboardMessages: React.FC = () => {
             </Card>
           </div>
         </div>
+        )}
 
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            <Card variant="bordered" padding="lg" className="overflow-hidden border-border-subtle shadow-sm">
+            <Card variant="bordered" padding="lg" className="overflow-hidden border-border-subtle">
               <div className="-mx-6 -mt-6 mb-6 border-b border-border-subtle bg-surface-subtle/40 px-6 py-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Composer</p>
-                <h2 className="mt-2 text-2xl font-semibold text-text-primary">Write a message</h2>
-                <p className="mt-1 text-sm text-text-secondary">Choose the audience, draft the message, then decide whether it goes out now or on a schedule.</p>
+                <p className="text-xs font-semibold text-text-tertiary">Composer</p>
+                <h2 className="mt-2 text-2xl font-semibold text-text-primary">Send a guest update</h2>
+                <p className="mt-1 text-sm text-text-secondary">Pick who needs it, adjust the wording, then send now or schedule it.</p>
               </div>
               {!canCompose && <p className="text-xs text-text-tertiary mb-3">Viewer mode is on, so writing and sending are turned off.</p>}
               <form onSubmit={(e) => handleSendMessage(e, false)} className="space-y-6">
                 <fieldset disabled={!canCompose} className="space-y-6">
-                <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
                   <div className="grid gap-4 md:grid-cols-2">
                     <div>
                       <label className="block text-sm font-medium text-text-primary mb-2">Campaign name</label>
@@ -2882,6 +2975,7 @@ export const DashboardMessages: React.FC = () => {
                     <div>
                       <label className="block text-sm font-medium text-text-primary mb-2">Template</label>
                       <select
+                        aria-label="Template"
                         value={formData.templateKey}
                         onChange={(e) => applyComposerTemplate(e.target.value as MessageTemplateKey)}
                         className="w-full px-4 py-2.5 border border-border rounded-lg bg-surface-subtle text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -2901,18 +2995,21 @@ export const DashboardMessages: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
                   <label className="block text-sm font-medium text-text-primary mb-2">Channel</label>
                   <div className="inline-flex rounded-lg border border-border overflow-hidden bg-white">
                     <button type="button" className={`px-3 py-1.5 text-sm ${formData.channel === 'email' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`} onClick={() => setFormData({ ...formData, channel: 'email' })}>Email</button>
-                    <button type="button" className={`px-3 py-1.5 text-sm border-l border-border ${formData.channel === 'sms' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`} onClick={() => setFormData({ ...formData, channel: 'sms' })}>SMS</button>
+                    <button type="button" className={`px-3 py-1.5 text-sm border-l border-border ${formData.channel === 'sms' ? 'bg-primary/10 text-primary' : 'text-text-secondary'}`} onClick={() => setFormData({ ...formData, channel: 'sms' })}>Text</button>
                   </div>
                   {formData.channel === 'sms' && (
-                    <p className="text-xs text-text-tertiary mt-1">Texts use your credit balance and send when text setup is ready.</p>
+                    <p className="text-xs text-text-tertiary mt-1">
+                      Texts use credits by 160-character segment and only send to guests with phone numbers and text consent.
+                      {!smsProviderEnabled ? ' Sending is locked until texting setup is complete.' : ''}
+                    </p>
                   )}
                 </div>
 
-                <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
                   <label className="block text-sm font-medium text-text-primary mb-2">Who should get this?</label>
                   {audienceOptions.some((a) => a.value.startsWith('event:')) && (
                     <p className="text-xs text-text-tertiary mb-1">You can also send to itinerary groups from the dropdown.</p>
@@ -2929,26 +3026,32 @@ export const DashboardMessages: React.FC = () => {
                       </option>
                     ))}
                   </select>
+                  <p className="mt-2 text-xs text-text-tertiary">{selectedAudienceDetail}</p>
                   {formData.channel === 'email' && activeRecipients < (selectedAudience?.count || 0) && (
                     <p className="text-sm text-warning mt-1">
                       {activeRecipients} of {selectedAudience?.count} guests have email addresses
                     </p>
                   )}
-                  {formData.channel === 'sms' && recipientsWithPhone < (selectedAudience?.count || 0) && (
+                  {formData.channel === 'sms' && recipientsWithSmsConsent < (selectedAudience?.count || 0) && (
                     <p className="text-sm text-warning mt-1">
-                      {recipientsWithPhone} of {selectedAudience?.count} guests have phone numbers
+                      {recipientsWithSmsConsent} of {selectedAudience?.count} guests have phone numbers and text consent
                     </p>
                   )}
                   <div className="mt-2 flex flex-wrap gap-2">
-                    <span className="inline-flex items-center px-2 py-1 text-xs rounded-full border border-border bg-white text-text-secondary">
+                    <span className="inline-flex items-center px-2 py-1 text-xs rounded-lg border border-border bg-white text-text-secondary">
                       Reaches {activeRecipients} guest{activeRecipients !== 1 ? 's' : ''}
                     </span>
-                    <span className={`inline-flex items-center px-2 py-1 text-xs rounded-full border ${unreachableRecipients > 0 ? 'border-warning/30 bg-warning-light text-warning' : 'border-success/30 bg-success-light text-success'}`}>
-                      {unreachableRecipients > 0 ? `${unreachableRecipients} missing ${formData.channel === 'sms' ? 'phone numbers' : 'email addresses'}` : `Everyone in this group is reachable by ${formData.channel === 'sms' ? 'text' : 'email'}`}
+                    <span className={`inline-flex items-center px-2 py-1 text-xs rounded-lg border ${unreachableRecipients > 0 ? 'border-warning/30 bg-warning-light text-warning' : 'border-success/30 bg-success-light text-success'}`}>
+                      {unreachableRecipients > 0 ? `${unreachableRecipients} missing ${formData.channel === 'sms' ? 'phone/consent' : 'email addresses'}` : `Everyone in this group is reachable by ${formData.channel === 'sms' ? 'text' : 'email'}`}
                     </span>
                     {formData.channel === 'sms' && (
-                      <span className={`inline-flex items-center px-2 py-1 text-xs rounded-full border ${smsCreditsSufficient ? 'border-success/30 bg-success-light text-success' : 'border-error/30 bg-error-light text-error'}`}>
-                        {smsCreditsSufficient ? 'Enough credits' : `Need ${smsCreditsNeeded - smsCredits} more credits`}
+                      <span className={`inline-flex items-center px-2 py-1 text-xs rounded-lg border ${smsCreditsSufficient ? 'border-success/30 bg-success-light text-success' : 'border-error/30 bg-error-light text-error'}`}>
+                        {smsCreditsSufficient ? `${smsCreditsNeeded} credits ready` : `Need ${smsCreditsNeeded - smsCredits} more credits`}
+                      </span>
+                    )}
+                    {formData.channel === 'sms' && (
+                      <span className="inline-flex items-center px-2 py-1 text-xs rounded-lg border border-border bg-white text-text-secondary">
+                        {smsSegmentCount || 0} segment{smsSegmentCount === 1 ? '' : 's'} x {recipientsWithSmsConsent} recipient{recipientsWithSmsConsent === 1 ? '' : 's'}
                       </span>
                     )}
                   </div>
@@ -2984,7 +3087,36 @@ export const DashboardMessages: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 p-4">
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
+                  <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-text-primary">Language preview</p>
+                      <p className="mt-1 text-xs leading-5 text-text-tertiary">
+                        Review how this template reads for guests before language-specific sending is connected.
+                      </p>
+                    </div>
+                    <span className="rounded-lg border border-border-subtle bg-white px-2 py-1 text-[11px] font-medium text-text-tertiary">
+                      Owner review required
+                    </span>
+                  </div>
+                  <div className="mt-3 grid gap-2 md:grid-cols-3">
+                    {languagePreviews.map((preview) => (
+                      <div key={preview.language} className="rounded-lg border border-border-subtle bg-white px-3 py-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-xs font-semibold text-text-primary">{preview.label}</p>
+                          <span className="text-[11px] font-medium text-text-tertiary">
+                            {preview.status === 'ready' ? 'Ready' : preview.status === 'needs-review' ? 'Review' : 'Fallback'}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-xs font-medium text-text-secondary">{preview.subject}</p>
+                        <p className="mt-1 line-clamp-3 text-xs leading-5 text-text-tertiary">{preview.body}</p>
+                        <p className="mt-2 text-[11px] leading-4 text-text-tertiary">{preview.note}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4">
                   <label className="block text-sm font-medium text-text-primary mb-2">When should it send?</label>
                   <div className="flex gap-4 mb-4">
                     <button
@@ -3058,7 +3190,7 @@ export const DashboardMessages: React.FC = () => {
                   )}
                 </div>
 
-                <div className="overflow-hidden rounded-2xl border border-border-subtle bg-white">
+                <div className="overflow-hidden rounded-lg border border-border-subtle bg-white">
                   <button
                     type="button"
                     onClick={() => setShowRecipientPreview(!showRecipientPreview)}
@@ -3075,7 +3207,7 @@ export const DashboardMessages: React.FC = () => {
                   {showRecipientPreview && (
                     <div className="border-t border-border max-h-48 overflow-y-auto">
                       {previewRecipients.length === 0 ? (
-                        <div className="p-4 text-sm text-text-secondary text-center">No guests in this group have {formData.channel === 'sms' ? 'phone numbers' : 'email addresses'} yet.</div>
+                        <div className="p-4 text-sm text-text-secondary text-center">No guests in this group have {formData.channel === 'sms' ? 'phone numbers with text consent' : 'email addresses'} yet.</div>
                       ) : (
                         <ul className="divide-y divide-border">
                           {previewRecipients.map(g => (
@@ -3090,11 +3222,11 @@ export const DashboardMessages: React.FC = () => {
                   )}
                 </div>
 
-                <div className="rounded-2xl border border-primary/20 bg-primary-light/40 p-4">
+                <div className="rounded-lg border border-border-subtle bg-primary-light/35 p-4">
                   <div className="flex items-start gap-3">
                     <Mail className="w-5 h-5 text-primary mt-0.5" />
                     <div className="text-sm">
-                      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">Delivery summary</p>
+                      <p className="text-xs font-semibold text-text-tertiary">Before sending</p>
                       <p className="mt-2 font-medium text-text-primary">What happens next</p>
                       <p className="text-text-secondary mt-1">
                         {formData.scheduleType === 'later' && formData.scheduleDate && formData.scheduleTime
@@ -3108,13 +3240,14 @@ export const DashboardMessages: React.FC = () => {
                 </div>
 
                 <div className="grid gap-3 md:grid-cols-2">
-                  <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-4 py-3 text-sm">
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">Email reachability</p>
+                  <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-3 text-sm">
+                    <p className="text-xs font-semibold text-text-tertiary">Email reachability</p>
                     <p className="mt-2 text-text-primary">{audienceReachability.total - audienceReachability.missingEmail} reachable · {audienceReachability.missingEmail} missing email</p>
                   </div>
-                  <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-4 py-3 text-sm">
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">SMS reachability</p>
-                    <p className="mt-2 text-text-primary">{audienceReachability.total - audienceReachability.missingPhone} reachable · {audienceReachability.missingPhone} missing phone</p>
+                  <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-3 text-sm">
+                    <p className="text-xs font-semibold text-text-tertiary">Text reachability</p>
+                    <p className="mt-2 text-text-primary">{audienceReachability.total - audienceReachability.missingPhone} reachable · {audienceReachability.missingPhone} missing phone/consent</p>
+                    <p className="mt-1 text-xs text-text-tertiary">{formData.body.trim().length}/{SMS_SEGMENT_SIZE} chars in current segment · {smsSegmentCount || 0} segment{smsSegmentCount === 1 ? '' : 's'} per recipient</p>
                   </div>
                 </div>
 
@@ -3130,7 +3263,7 @@ export const DashboardMessages: React.FC = () => {
                   <div className="flex items-center gap-2 p-3 bg-warning-light border border-warning/20 rounded-lg text-sm text-warning">
                     <AlertCircle className="w-4 h-4 flex-shrink-0" />
                     {formData.channel === 'sms'
-                      ? 'No guests in this group have phone numbers yet. Add phone numbers before sending a text.'
+                      ? 'No guests in this group have phone numbers with text consent yet. Add phone numbers and consent before sending a text.'
                       : 'No guests in this group have email addresses yet. Add email addresses before sending.'}
                   </div>
                 )}
@@ -3138,7 +3271,14 @@ export const DashboardMessages: React.FC = () => {
                 {formData.channel === 'sms' && activeRecipients > 0 && !smsCreditsSufficient && (
                   <div className="flex items-center justify-between gap-3 p-3 bg-error-light border border-error/20 rounded-lg text-sm text-error">
                     <span>Not enough text credits yet: need {smsCreditsNeeded}, have {smsCredits}.</span>
-                    <Button size="sm" variant="outline" onClick={() => handleBuySmsPack('sms_100')} disabled={buyingPack !== null}>Buy credits</Button>
+                    <Button size="sm" variant="outline" onClick={() => handleBuySmsPack('sms_100')} disabled={buyingPack !== null || !smsProviderEnabled}>Buy credits</Button>
+                  </div>
+                )}
+
+                {formData.channel === 'sms' && activeRecipients > 0 && !smsProviderEnabled && (
+                  <div className="flex items-start gap-2 p-3 bg-warning-light border border-warning/20 rounded-lg text-sm text-warning">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    <span>{SMS_PROVIDER_PENDING_COPY} You can still save text drafts and build audiences now.</span>
                   </div>
                 )}
 
@@ -3146,8 +3286,8 @@ export const DashboardMessages: React.FC = () => {
                   <div className={`flex items-center justify-between gap-3 p-3 rounded-lg text-sm border ${emailCapacityEnough ? 'bg-success-light border-success/20 text-success' : 'bg-error-light border-error/20 text-error'}`}>
                     <span>
                       {emailCapacityEnough
-                        ? `Email cap check: ${remainingEmailRecipients} recipient slots left before send • ${emailCapacityAfterSend} left after this campaign.`
-                        : `Email cap check: this campaign needs ${recipientsWithEmail}, but only ${remainingEmailRecipients} recipient slots remain.`}
+                        ? `Email room: ${remainingEmailRecipients} recipient slots left before send, ${emailCapacityAfterSend} left afterward.`
+                        : `This audience is too large for the remaining email room. It needs ${recipientsWithEmail}, with ${remainingEmailRecipients} left.`}
                     </span>
                   </div>
                 )}
@@ -3157,7 +3297,7 @@ export const DashboardMessages: React.FC = () => {
                     type="submit"
                     variant="primary"
                     fullWidth
-                    disabled={sending || activeRecipients === 0 || (formData.channel === 'email' && !emailCapacityEnough)}
+                    disabled={sending || activeRecipients === 0 || (formData.channel === 'email' && !emailCapacityEnough) || (formData.channel === 'sms' && !smsProviderEnabled)}
                   >
                     {sending ? 'Processing...' : (
                       formData.scheduleType === 'later' && !selectedScheduleIsPast ? (
@@ -3181,26 +3321,26 @@ export const DashboardMessages: React.FC = () => {
               </form>
             </Card>
 
-            <Card variant="bordered" padding="lg" className="overflow-hidden border-border-subtle shadow-sm mt-6">
+            <Card variant="bordered" padding="lg" className="overflow-hidden border-border-subtle mt-6">
               <div className="-mx-6 -mt-6 mb-6 border-b border-border-subtle bg-surface-subtle/40 px-6 py-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Reusable templates</p>
+                <p className="text-xs font-semibold text-text-tertiary">Reusable templates</p>
                 <h2 className="mt-2 text-2xl font-semibold text-text-primary">Saved from your real campaigns</h2>
-                <p className="mt-1 text-sm text-text-secondary">Keep a lightweight library of messages you actually reuse without bloating the backend model.</p>
+                <p className="mt-1 text-sm text-text-secondary">Keep a lightweight library of messages you actually reuse.</p>
               </div>
               {savedTemplates.length === 0 ? (
-                <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-6 text-sm text-text-secondary">
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-6 text-sm text-text-secondary">
                   No saved reusable templates yet. Save one from the composer when you have a message worth reusing.
                 </div>
               ) : (
                 <div className="space-y-3">
                   {savedTemplates.map((template) => (
-                    <div key={template.id} className="rounded-2xl border border-border-subtle bg-surface-subtle/20 px-4 py-4">
+                    <div key={template.id} className="rounded-lg border border-border-subtle bg-surface-subtle/20 px-4 py-4">
                       {(() => {
                         const savedScheduleIsUsable = isSavedTemplateScheduleUsable(template);
                         return (
                       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                         <div className="min-w-0">
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-text-tertiary">{template.channel.toUpperCase()} · {audienceOptions.find((option) => option.value === template.audience)?.label ?? 'Saved audience'}</p>
+                          <p className="text-[11px] font-semibold text-text-tertiary">{template.channel.toUpperCase()} · {audienceOptions.find((option) => option.value === template.audience)?.label ?? 'Saved audience'}</p>
                           <h3 className="mt-1 text-sm font-semibold text-text-primary">{template.name}</h3>
                           <p className="mt-1 text-xs text-text-secondary line-clamp-2">{template.subject || '(No subject)'}{template.body ? ` — ${template.body}` : ''}</p>
                           {template.scheduleType === 'later' && template.scheduleDate && template.scheduleTime && (
@@ -3234,10 +3374,11 @@ export const DashboardMessages: React.FC = () => {
           </div>
 
           <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-24 self-start">
-            <Card variant="bordered" padding="lg" className="border-border-subtle shadow-sm overflow-hidden">
+            {showSendingDetails && (
+            <Card variant="bordered" padding="lg" className="border-border-subtle overflow-hidden">
               <div className="-mx-6 -mt-6 mb-5 border-b border-border-subtle bg-surface-subtle/40 px-6 py-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Snapshot</p>
-                <h2 className="mt-2 text-2xl font-semibold text-text-primary">Communication health at a glance</h2>
+                <p className="text-xs font-semibold text-text-tertiary">Snapshot</p>
+                <h2 className="mt-2 text-2xl font-semibold text-text-primary">Guest reach</h2>
               </div>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
@@ -3255,37 +3396,37 @@ export const DashboardMessages: React.FC = () => {
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-text-primary">{guests.filter(g => hasReachableEmail(g.email)).length}</p>
-                    <p className="text-sm text-text-secondary">With Email</p>
+                    <p className="text-sm text-text-secondary">With email</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-accent-light rounded-lg">
-                    <Mail className="w-5 h-5 text-accent" />
+                  <div className="p-2 bg-primary-light rounded-lg">
+                    <Mail className="w-5 h-5 text-primary" />
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-text-primary">
                       {messages.filter(m => m.status === 'sent' || m.status === 'queued' || m.status === 'sending').length}
                     </p>
-                    <p className="text-sm text-text-secondary">Sent / Active</p>
+                    <p className="text-sm text-text-secondary">Sent or ready</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-rose-100 rounded-lg">
-                    <Link2 className="w-5 h-5 text-rose-600" />
+                  <div className="p-2 bg-primary-light rounded-lg">
+                    <Link2 className="w-5 h-5 text-primary" />
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-text-primary">{knownPhotoLinksCount}</p>
-                    <p className="text-sm text-text-secondary">Known Photo Links</p>
+                    <p className="text-sm text-text-secondary">Photo links ready</p>
                   </div>
                 </div>
 
                 <div className="pt-2">
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary mb-2">Launchpad</p>
+                  <p className="text-xs font-semibold text-text-tertiary mb-2">Helpful starts</p>
                   <div className="grid gap-2 sm:grid-cols-2">
                   {[
                     {
-                      label: 'Open Photos',
-                      detail: 'Jump into the upload flow you are messaging about',
+                      label: 'Open photos',
+                      detail: 'Jump into the memory albums you are sharing',
                       action: () => navigate('/dashboard/photos'),
                       disabled: false,
                     },
@@ -3297,7 +3438,7 @@ export const DashboardMessages: React.FC = () => {
                     },
                     {
                       label: 'Schedule save-the-date',
-                      detail: 'Create the campaign without manually building it first',
+                      detail: 'Create the campaign without building it from scratch',
                       action: () => { void quickCreateSaveTheDateCampaign(); },
                       disabled: !canCompose,
                     },
@@ -3308,7 +3449,7 @@ export const DashboardMessages: React.FC = () => {
                       disabled: !canCompose,
                     },
                     {
-                      label: 'Insert photo template',
+                      label: 'Use photo request',
                       detail: 'Drop in an upload request tied to your memories flow',
                       action: () => applyComposerTemplate('photo-request', { campaignName: 'Photo request' }),
                       disabled: !canCompose,
@@ -3319,7 +3460,7 @@ export const DashboardMessages: React.FC = () => {
                       type="button"
                       onClick={item.action}
                       disabled={item.disabled}
-                      className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-4 text-left transition hover:border-primary/30 hover:bg-white disabled:opacity-50"
+                      className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-4 text-left transition hover:border-primary/30 hover:bg-white disabled:opacity-50"
                     >
                       <p className="text-sm font-semibold text-text-primary">{item.label}</p>
                       <p className="mt-1 text-xs leading-5 text-text-secondary">{item.detail}</p>
@@ -3329,27 +3470,28 @@ export const DashboardMessages: React.FC = () => {
                 </div>
               </div>
             </Card>
+            )}
 
-            <Card variant="bordered" padding="lg" className="border-border-subtle shadow-sm overflow-hidden">
+            <Card variant="bordered" padding="lg" className="border-border-subtle overflow-hidden">
               <div className="-mx-6 -mt-6 mb-5 border-b border-border-subtle bg-surface-subtle/40 px-6 py-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">Starting points</p>
+                <p className="text-xs font-semibold text-text-tertiary">Starting points</p>
                 <h2 className="mt-2 text-2xl font-semibold text-text-primary">Draft from something useful, not from a blank page.</h2>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 {[
-                  { label: 'Save the Date', detail: 'Early excitement and initial heads-up', templateKey: 'save-the-date' as MessageTemplateKey, campaignName: 'Save the date' },
-                  { label: 'RSVP Reminder', detail: 'Nudge people who still have not replied', templateKey: 'rsvp-reminder' as MessageTemplateKey, campaignName: 'RSVP reminder' },
-                  { label: 'Week-Of Details', detail: 'Useful logistics right before the event', templateKey: 'event-reminder' as MessageTemplateKey, campaignName: 'Week-of details' },
-                  { label: 'Photo Upload Request', detail: 'Drive guests into your upload flow', templateKey: 'photo-request' as MessageTemplateKey, campaignName: 'Photo request' },
-                  { label: 'Day-Of Update', detail: 'Fast text-first guest update', templateKey: 'day-of-update' as MessageTemplateKey, campaignName: 'Day-of update' },
-                  { label: 'Thank You', detail: 'Close the loop after the celebration', templateKey: 'thank-you' as MessageTemplateKey, campaignName: 'Thank you' },
+                  { label: 'Save the date', detail: 'Early excitement and initial heads-up', templateKey: 'save-the-date' as MessageTemplateKey, campaignName: 'Save the date' },
+                  { label: 'RSVP reminder', detail: 'Nudge people who still have not replied', templateKey: 'rsvp-reminder' as MessageTemplateKey, campaignName: 'RSVP reminder' },
+                  { label: 'Week-of details', detail: 'Useful logistics right before the event', templateKey: 'event-reminder' as MessageTemplateKey, campaignName: 'Week-of details' },
+                  { label: 'Photo request', detail: 'Invite guests to add memories in one tap', templateKey: 'photo-request' as MessageTemplateKey, campaignName: 'Photo request' },
+                  { label: 'Day-of update', detail: 'Fast text-first guest update', templateKey: 'day-of-update' as MessageTemplateKey, campaignName: 'Day-of update' },
+                  { label: 'Thank you', detail: 'Close the loop after the celebration', templateKey: 'thank-you' as MessageTemplateKey, campaignName: 'Thank you' },
                 ].map(tpl => (
                   <button
                     key={tpl.label}
                     type="button"
                     onClick={() => applyComposerTemplate(tpl.templateKey, { campaignName: tpl.campaignName })}
                     disabled={!canCompose}
-                    className="w-full rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-4 text-left transition hover:border-primary/30 hover:bg-white disabled:opacity-50"
+                    className="w-full rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-4 text-left transition hover:border-primary/30 hover:bg-white disabled:opacity-50"
                   >
                     <p className="text-sm font-semibold text-text-primary">{tpl.label}</p>
                     <p className="mt-1 text-xs leading-5 text-text-secondary">{tpl.detail}</p>
@@ -3360,11 +3502,11 @@ export const DashboardMessages: React.FC = () => {
           </div>
         </div>
 
-        <Card variant="bordered" padding="lg" className="border-border-subtle shadow-sm overflow-hidden">
+        <Card variant="bordered" padding="lg" className="border-border-subtle overflow-hidden">
           <div className="-mx-6 -mt-6 mb-5 border-b border-border-subtle bg-surface-subtle/40 px-6 py-5">
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-tertiary">History</p>
+              <p className="text-xs font-semibold text-text-tertiary">History</p>
               <h2 className="mt-2 text-2xl font-semibold text-text-primary">Message history</h2>
               <p className="text-xs text-text-tertiary mt-1">Filter by status, channel, or group to quickly find what you need.</p>
             </div>
@@ -3380,14 +3522,14 @@ export const DashboardMessages: React.FC = () => {
                 <option value="active">Active</option>
                 <option value="sent">Sent</option>
                 <option value="scheduled">Scheduled</option>
-                <option value="partial">Partial</option>
-                <option value="failed">Failed</option>
+                <option value="partial">Needs follow-up</option>
+                <option value="failed">Needs review</option>
                 <option value="draft">Draft</option>
               </select>
               <select value={historyChannelFilter} onChange={(e) => setHistoryChannelFilter(e.target.value as typeof historyChannelFilter)} className="px-2.5 py-1.5 text-xs bg-surface border border-border rounded-lg text-text-secondary">
                 <option value="all">All channels</option>
                 <option value="email">Email</option>
-                <option value="sms">SMS</option>
+                <option value="sms">Text</option>
               </select>
               <select value={historyAudienceFilter} onChange={(e) => setHistoryAudienceFilter(e.target.value)} className="px-2.5 py-1.5 text-xs bg-surface border border-border rounded-lg text-text-secondary">
                 <option value="all">All audiences</option>
@@ -3398,27 +3540,27 @@ export const DashboardMessages: React.FC = () => {
               <select value={historyDeliveryFilter} onChange={(e) => setHistoryDeliveryFilter(e.target.value as typeof historyDeliveryFilter)} className="px-2.5 py-1.5 text-xs bg-surface border border-border rounded-lg text-text-secondary">
                 <option value="all">All delivery states</option>
                 <option value="delivered">Has delivered</option>
-                <option value="failed">Has failed</option>
-                <option value="skipped">Has skipped</option>
-                <option value="unreached">Has unreached</option>
+                <option value="failed">Needs review</option>
+                <option value="skipped">Needs contact details</option>
+                <option value="unreached">Not reached yet</option>
               </select>
             </div>
             </div>
           </div>
 
           <div className="flex flex-wrap gap-2 mb-4">
-            <button type="button" onClick={() => { setHistoryStatusFilter('failed'); setHistoryChannelFilter('all'); setHistoryDeliveryFilter('failed'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Show failed</button>
-            <button type="button" onClick={() => { setHistoryDeliveryFilter('skipped'); setHistoryStatusFilter('all'); setHistoryChannelFilter('all'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Show skipped</button>
-            <button type="button" onClick={() => { setHistoryDeliveryFilter('unreached'); setHistoryStatusFilter('all'); setHistoryChannelFilter('all'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Show unreached</button>
-            <button type="button" onClick={() => { setHistoryStatusFilter('scheduled'); setHistoryChannelFilter('all'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Show scheduled</button>
-            <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('sms'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">SMS only</button>
-            <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('email'); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Email only</button>
-            <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('all'); setHistoryAudienceFilter('all'); setHistoryDeliveryFilter('all'); setHistoryCampaignFilter(''); setHistorySearch(''); }} className="text-[11px] px-3 py-1.5 rounded-full border border-border-subtle bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Reset filters</button>
+            <button type="button" onClick={() => { setHistoryStatusFilter('failed'); setHistoryChannelFilter('all'); setHistoryDeliveryFilter('failed'); }} className="text-[11px] px-3 py-1.5 rounded-lg border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Needs review</button>
+            <button type="button" onClick={() => { setHistoryDeliveryFilter('skipped'); setHistoryStatusFilter('all'); setHistoryChannelFilter('all'); }} className="text-[11px] px-3 py-1.5 rounded-lg border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Needs contact details</button>
+            <button type="button" onClick={() => { setHistoryDeliveryFilter('unreached'); setHistoryStatusFilter('all'); setHistoryChannelFilter('all'); }} className="text-[11px] px-3 py-1.5 rounded-lg border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Not reached yet</button>
+            <button type="button" onClick={() => { setHistoryStatusFilter('scheduled'); setHistoryChannelFilter('all'); }} className="text-[11px] px-3 py-1.5 rounded-lg border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Show scheduled</button>
+            <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('sms'); }} className="text-[11px] px-3 py-1.5 rounded-lg border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Text only</button>
+            <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('email'); }} className="text-[11px] px-3 py-1.5 rounded-lg border border-border-subtle bg-surface-subtle/30 text-text-secondary hover:border-primary/40 hover:text-primary">Email only</button>
+            <button type="button" onClick={() => { setHistoryStatusFilter('all'); setHistoryChannelFilter('all'); setHistoryAudienceFilter('all'); setHistoryDeliveryFilter('all'); setHistoryCampaignFilter(''); setHistorySearch(''); }} className="text-[11px] px-3 py-1.5 rounded-lg border border-border-subtle bg-white text-text-secondary hover:border-primary/40 hover:text-primary">Reset filters</button>
           </div>
 
           {historyCampaignFilter && (
             <div className="mb-4 flex items-center gap-2 text-xs text-text-tertiary">
-              <span className="rounded-full border border-primary/20 bg-primary-light/40 px-3 py-1 text-primary">Campaign thread: {historyCampaignFilter}</span>
+              <span className="rounded-lg border border-primary/20 bg-primary-light/40 px-3 py-1 text-primary">Campaign thread: {historyCampaignFilter}</span>
               <button type="button" onClick={() => setHistoryCampaignFilter('')} className="text-primary hover:underline">Clear</button>
             </div>
           )}
@@ -3428,45 +3570,45 @@ export const DashboardMessages: React.FC = () => {
               ['Sent', historyStatusCounts.sent],
               ['Active', historyStatusCounts.active],
               ['Scheduled', historyStatusCounts.scheduled],
-              ['Partial', historyStatusCounts.partial],
-              ['Failed', historyStatusCounts.failed],
+              ['Needs follow-up', historyStatusCounts.partial],
+              ['Needs review', historyStatusCounts.failed],
             ].map(([label, count]) => (
-              <div key={String(label)} className="rounded-lg border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.04)] px-2.5 py-2">
-                <p className="text-[11px] uppercase tracking-wide text-text-tertiary">{label}</p>
+              <div key={String(label)} className="rounded-lg border border-border-subtle bg-white px-2.5 py-2">
+                <p className="text-[11px] text-text-tertiary">{label}</p>
                 <p className="text-sm font-semibold text-text-primary">{count}</p>
               </div>
             ))}
           </div>
 
-          <div className="rounded-2xl border border-border-subtle bg-surface-subtle/30 px-4 py-3 text-[11px] text-text-secondary mb-4">
-            Delivery health is based on message and delivery logs available in this workspace. Use it to spot what needs attention quickly, not as a full provider-grade reporting screen.
+          <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-4 py-3 text-[11px] text-text-secondary mb-4">
+            Delivery health is based on the message activity available here. Use it to see what needs a quick look before the next guest update.
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
             {[
               {
-                label: 'Provider attempts',
+                label: 'Prepared messages',
                 value: providerTelemetry.attempted,
-                detail: `${providerTelemetry.sentRate}% sent rate across attempted deliveries`,
+                detail: `${providerTelemetry.sentRate}% sent successfully`,
               },
               {
-                label: 'Skipped before send',
+                label: 'Needs contact details',
                 value: providerTelemetry.skipped,
                 detail: 'Missing or invalid contact info',
               },
               {
-                label: 'Provider IDs',
-                value: providerTelemetry.withProviderId,
-                detail: 'Rows tied to provider message ids',
+                label: 'Sent successfully',
+                value: providerTelemetry.sent,
+                detail: 'Guest messages marked as sent',
               },
               {
-                label: 'Top provider errors',
+                label: 'Needs attention',
                 value: providerTelemetry.errorTop.length,
-                detail: providerTelemetry.errorTop[0]?.[0] ?? 'No provider failures logged',
+                detail: providerTelemetry.errorTop[0]?.[0] ?? 'No send issues found',
               },
             ].map((item) => (
-              <div key={item.label} className="rounded-lg border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.04)] px-3 py-2.5">
-                <p className="text-[11px] uppercase tracking-wide text-text-tertiary">{item.label}</p>
+              <div key={item.label} className="rounded-lg border border-border-subtle bg-white px-3 py-2.5">
+                <p className="text-[11px] text-text-tertiary">{item.label}</p>
                 <p className="mt-1 text-sm font-semibold text-text-primary">{item.value}</p>
                 <p className="mt-1 text-[11px] text-text-tertiary line-clamp-2">{item.detail}</p>
               </div>
@@ -3476,7 +3618,7 @@ export const DashboardMessages: React.FC = () => {
           {audienceBreakdown.length > 0 && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
               {audienceBreakdown.map(([label, count]) => (
-                <div key={label} className="rounded-lg border border-border/35 bg-surface-subtle/40 px-2.5 py-2">
+                <div key={label} className="rounded-lg border border-border-subtle bg-surface-subtle/40 px-2.5 py-2">
                   <p className="text-[11px] text-text-tertiary truncate">{label}</p>
                   <p className="text-sm font-semibold text-text-primary">{count} recipients</p>
                 </div>
@@ -3486,13 +3628,13 @@ export const DashboardMessages: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
             {(['email', 'sms'] as const).map((channel) => (
-              <div key={channel} className="rounded-lg border border-border/35 bg-white shadow-[0_4px_14px_rgba(15,23,42,0.04)] px-3 py-2.5">
+              <div key={channel} className="rounded-lg border border-border-subtle bg-white px-3 py-2.5">
                 <div className="flex items-center justify-between mb-1.5">
-                  <p className="text-xs uppercase tracking-wide text-text-tertiary">{channel.toUpperCase()}</p>
+                  <p className="text-xs text-text-tertiary">{channel.toUpperCase()}</p>
                   <p className="text-xs text-text-secondary">{channelBreakdown[channel].targeted} recipients</p>
                 </div>
                 <p className="text-xs text-text-secondary">
-                  Sent {channelBreakdown[channel].sent} · Scheduled {channelBreakdown[channel].scheduled} · Partial {channelBreakdown[channel].partial} · Failed {channelBreakdown[channel].failed}
+                  Sent {channelBreakdown[channel].sent} · Scheduled {channelBreakdown[channel].scheduled} · Needs follow-up {channelBreakdown[channel].partial} · Needs review {channelBreakdown[channel].failed}
                 </p>
               </div>
             ))}
@@ -3507,16 +3649,16 @@ export const DashboardMessages: React.FC = () => {
                 detail: 'Reached guests cleanly',
               },
               {
-                label: 'Provider failure rate',
+                label: 'Needs another look',
                 value: `${deliveryHealth.failRate}%`,
                 tone: deliveryHealth.failRate > 0 ? 'text-error' : 'text-text-primary',
-                detail: 'Provider-attempted sends that failed',
+                detail: 'Prepared messages that did not go through',
               },
               {
-                label: 'Skipped rate',
+                label: 'Needs contact rate',
                 value: `${deliveryHealth.skippedRate}%`,
                 tone: deliveryHealth.skipped > 0 ? 'text-warning' : 'text-text-primary',
-                detail: `${deliveryHealth.skipped} recipients skipped before send`,
+                detail: `${deliveryHealth.skipped} recipients need contact details`,
               },
               {
                 label: 'Past-due scheduled',
@@ -3525,8 +3667,8 @@ export const DashboardMessages: React.FC = () => {
                 detail: 'Scheduled items needing attention',
               },
             ].map((item) => (
-              <div key={item.label} className="rounded-2xl border border-border-subtle bg-white px-3 py-3 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
-                <p className="text-[11px] uppercase tracking-[0.2em] text-text-tertiary">{item.label}</p>
+              <div key={item.label} className="rounded-lg border border-border-subtle bg-white px-3 py-3">
+                <p className="text-[11px] text-text-tertiary">{item.label}</p>
                 <p className={`mt-2 text-lg font-semibold ${item.tone}`}>{item.value}</p>
                 <p className="mt-1 text-[11px] text-text-tertiary">{item.detail}</p>
               </div>
@@ -3534,18 +3676,18 @@ export const DashboardMessages: React.FC = () => {
           </div>
 
           <div className="mb-4 flex flex-wrap gap-2 text-xs text-text-tertiary">
-            <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Drafts {campaignStatusSummary.draft}</span>
-            <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Scheduled {campaignStatusSummary.scheduled}</span>
-            <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Sent {campaignStatusSummary.sent}</span>
-            <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Partial {campaignStatusSummary.partial}</span>
-            <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Failed {campaignStatusSummary.failed}</span>
+            <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Drafts {campaignStatusSummary.draft}</span>
+            <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Scheduled {campaignStatusSummary.scheduled}</span>
+            <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Sent {campaignStatusSummary.sent}</span>
+            <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Needs follow-up {campaignStatusSummary.partial}</span>
+            <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Needs review {campaignStatusSummary.failed}</span>
           </div>
 
           {campaignThreads.length > 0 && (
-            <div className="mb-4 rounded-2xl border border-border-subtle bg-white p-4 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
+            <div className="mb-4 rounded-lg border border-border-subtle bg-white p-4">
               <div className="flex items-center justify-between gap-3 mb-3">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">Campaign rollups</p>
+                  <p className="text-xs font-semibold text-text-tertiary">Campaign rollups</p>
                   <p className="mt-1 text-sm font-medium text-text-primary">Recent campaign threads</p>
                 </div>
                 <span className="text-[11px] text-text-tertiary">Grouped by campaign name or subject</span>
@@ -3559,16 +3701,16 @@ export const DashboardMessages: React.FC = () => {
                       setHistoryCampaignFilter(thread.name);
                       setHistorySearch('');
                     }}
-                    className="w-full flex items-center justify-between gap-3 rounded-xl border border-border-subtle bg-surface-subtle/20 px-3 py-3 text-sm text-left hover:border-primary/30 hover:bg-white transition-colors"
+                    className="w-full flex items-center justify-between gap-3 rounded-lg border border-border-subtle bg-surface-subtle/20 px-3 py-3 text-sm text-left hover:border-primary/30 hover:bg-white transition-colors"
                   >
                     <div className="min-w-0">
                       <p className="font-medium text-text-primary truncate">{thread.name}</p>
                       <p className="text-[11px] text-text-tertiary">{thread.count} send{thread.count !== 1 ? 's' : ''} · latest {thread.latestStatus} · click to filter history</p>
                     </div>
                     <div className="text-right text-[11px] text-text-tertiary">
-                      <p>{thread.delivered} delivered · {thread.failed} failed</p>
-                      {thread.skipped > 0 && <p className="text-warning">{thread.skipped} skipped</p>}
-                      {thread.unreached > 0 && <p className="text-warning">{thread.unreached} unreached</p>}
+                      <p>{thread.delivered} delivered · {thread.failed} need review</p>
+                      {thread.skipped > 0 && <p className="text-warning">{describeRecipientReview(thread.skipped)}</p>}
+                      {thread.unreached > 0 && <p className="text-warning">{thread.unreached} not reached yet</p>}
                     </div>
                   </button>
                 ))}
@@ -3577,10 +3719,10 @@ export const DashboardMessages: React.FC = () => {
           )}
 
           {activeCampaignThread && (
-            <div className="mb-4 rounded-2xl border border-primary/20 bg-primary-light/30 p-4">
+            <div className="mb-4 rounded-lg border border-border-subtle bg-primary-light/30 p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">Active campaign thread</p>
+                  <p className="text-xs font-semibold text-text-tertiary">Active campaign thread</p>
                   <h3 className="mt-1 text-sm font-semibold text-text-primary">{activeCampaignThread.name}</h3>
                   <p className="mt-1 text-xs text-text-secondary">{activeCampaignThread.count} sends · latest {activeCampaignThread.latestStatus}</p>
                 </div>
@@ -3599,16 +3741,16 @@ export const DashboardMessages: React.FC = () => {
                 </div>
               </div>
               <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-tertiary">
-                <span className="rounded-full border border-border-subtle bg-white px-3 py-1">Delivered {activeCampaignThread.delivered}</span>
-                <span className="rounded-full border border-border-subtle bg-white px-3 py-1">Failed {activeCampaignThread.failed}</span>
-                <span className="rounded-full border border-border-subtle bg-white px-3 py-1">Skipped {activeCampaignThread.skipped}</span>
-                <span className="rounded-full border border-border-subtle bg-white px-3 py-1">Unreached {activeCampaignThread.unreached}</span>
+                <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Delivered {activeCampaignThread.delivered}</span>
+                <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Needs review {activeCampaignThread.failed}</span>
+                <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Needs contact {activeCampaignThread.skipped}</span>
+                <span className="rounded-lg border border-border-subtle bg-white px-3 py-1">Not reached {activeCampaignThread.unreached}</span>
               </div>
               {activeCampaignLatestMessage && (
-                <div className="mt-4 rounded-xl border border-border-subtle bg-white px-4 py-4">
+                <div className="mt-4 rounded-lg border border-border-subtle bg-white px-4 py-4">
                   <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <div className="min-w-0">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-text-tertiary">Latest campaign message</p>
+                      <p className="text-[11px] font-semibold text-text-tertiary">Latest campaign message</p>
                       <h4 className="mt-1 text-sm font-semibold text-text-primary">{activeCampaignLatestMessage.subject}</h4>
                       <p className="mt-1 text-xs text-text-secondary">
                         {activeCampaignLatestMessage.channel.toUpperCase()} · {getAudienceLabel(activeCampaignLatestMessage)} · {activeCampaignLatestMessage.status}
@@ -3683,10 +3825,10 @@ export const DashboardMessages: React.FC = () => {
                     </Button>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-tertiary">
-                    <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Recipients {getRecipientCount(activeCampaignLatestMessage)}</span>
-                    <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Delivered {activeCampaignLatestMessage.delivered_count ?? 0}</span>
-                    <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Failed {activeCampaignLatestMessage.failed_count ?? 0}</span>
-                    <span className="rounded-full border border-border-subtle bg-surface-subtle px-3 py-1">Skipped {getSkippedCount(activeCampaignLatestMessage, deliveries)}</span>
+                    <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Recipients {getRecipientCount(activeCampaignLatestMessage)}</span>
+                    <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Delivered {activeCampaignLatestMessage.delivered_count ?? 0}</span>
+                    <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Needs review {activeCampaignLatestMessage.failed_count ?? 0}</span>
+                    <span className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-1">Needs contact {getSkippedCount(activeCampaignLatestMessage, deliveries)}</span>
                   </div>
                 </div>
               )}
@@ -3695,17 +3837,17 @@ export const DashboardMessages: React.FC = () => {
 
 
           {retryCandidates.length > 0 && (
-            <div className="rounded-2xl border border-warning/20 bg-warning/5 p-4 mb-4">
+            <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 p-4 mb-4">
               <div className="flex items-center justify-between mb-3 gap-3">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">Retry queue</p>
-                  <p className="mt-1 text-sm font-medium text-text-primary">Failed campaigns ready to retry</p>
+                  <p className="text-xs font-semibold text-text-tertiary">Follow-up review</p>
+                  <p className="mt-1 text-sm font-medium text-text-primary">Messages that may need another send</p>
                 </div>
-                <button onClick={() => { setHistoryStatusFilter('failed'); setHistoryChannelFilter('all'); }} className="text-xs text-primary">View failed</button>
+                <button onClick={() => { setHistoryStatusFilter('failed'); setHistoryChannelFilter('all'); }} className="text-xs text-primary">View needs review</button>
               </div>
               <div className="space-y-2">
               {retryCandidates.map((m) => (
-                <div key={m.id} className="flex items-center justify-between gap-2 rounded-xl border border-warning/20 px-3 py-3 bg-white">
+                <div key={m.id} className="flex items-center justify-between gap-2 rounded-lg border border-border-subtle px-3 py-3 bg-white">
                   <div className="min-w-0">
                       <p className="text-sm font-medium text-text-primary truncate">{m.subject}</p>
                       <p className="text-[11px] text-text-tertiary">{m.status} · {m.channel} · {getRecipientCount(m)} recipients</p>
@@ -3716,7 +3858,7 @@ export const DashboardMessages: React.FC = () => {
                         disabled={retryingMessageId !== null || !canCompose}
                         className="text-xs px-2 py-1 rounded border border-border bg-white text-text-secondary disabled:opacity-50"
                       >
-                        {retryingMessageId === m.id ? 'Retrying…' : 'Retry'}
+                        {retryingMessageId === m.id ? 'Sending…' : 'Send again'}
                       </button>
                     ) : (
                       <span className="text-[11px] text-text-tertiary max-w-[220px] text-right">Review partial delivery before sending a follow-up so you do not duplicate messages.</span>
@@ -3728,20 +3870,20 @@ export const DashboardMessages: React.FC = () => {
           )}
 
           {reviewCandidates.length > 0 && (
-            <div className="rounded-2xl border border-accent/20 bg-accent/5 p-4 mb-4">
+            <div className="rounded-lg border border-border-subtle bg-surface-subtle/45 p-4 mb-4">
               <div className="flex items-center justify-between mb-3 gap-3">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-text-tertiary">Review queue</p>
-                  <p className="mt-1 text-sm font-medium text-text-primary">Partial campaigns that need follow-up judgment</p>
+                  <p className="text-xs font-semibold text-text-tertiary">Review queue</p>
+                  <p className="mt-1 text-sm font-medium text-text-primary">Campaigns that need follow-up judgment</p>
                 </div>
-                <button onClick={() => { setHistoryStatusFilter('partial'); setHistoryChannelFilter('all'); }} className="text-xs text-primary">View partial</button>
+                <button onClick={() => { setHistoryStatusFilter('partial'); setHistoryChannelFilter('all'); }} className="text-xs text-primary">View needs follow-up</button>
               </div>
               <div className="space-y-2">
                 {reviewCandidates.map((m) => (
-                  <div key={m.id} className="flex items-center justify-between gap-2 rounded-xl border border-accent/20 px-3 py-3 bg-white">
+                  <div key={m.id} className="flex items-center justify-between gap-2 rounded-lg border border-border-subtle px-3 py-3 bg-white">
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-text-primary truncate">{m.subject}</p>
-                      <p className="text-[11px] text-text-tertiary">{m.channel} · delivered {m.delivered_count ?? 0} · failed {m.failed_count ?? 0} · skipped {getSkippedCount(m, deliveries)}</p>
+                      <p className="text-[11px] text-text-tertiary">{m.channel} · delivered {m.delivered_count ?? 0} · needs review {m.failed_count ?? 0} · needs contact {getSkippedCount(m, deliveries)}</p>
                     </div>
                     <div className="text-right">
                       <button
@@ -3750,7 +3892,7 @@ export const DashboardMessages: React.FC = () => {
                       >
                         Review
                       </button>
-                      <p className="mt-1 text-[11px] text-text-tertiary max-w-[220px]">Do not retry in place. Review misses, then duplicate if you need a follow-up.</p>
+                      <p className="mt-1 text-[11px] text-text-tertiary max-w-[220px]">Review who missed it, then duplicate if you need a follow-up.</p>
                     </div>
                   </div>
                 ))}
@@ -3760,7 +3902,7 @@ export const DashboardMessages: React.FC = () => {
 
 
           {filteredHistory.length === 0 ? (
-            <div className="rounded-[24px] border border-border-subtle bg-surface-subtle/30 py-14 text-center">
+            <div className="rounded-lg border border-border-subtle bg-surface-subtle py-14 text-center">
               <Mail className="w-12 h-12 text-text-tertiary mx-auto mb-4" />
               <p className="text-text-secondary">No messages match these filters</p>
               <p className="text-sm text-text-tertiary mt-1">Try a different status, channel, audience, or search term.</p>
@@ -3775,7 +3917,7 @@ export const DashboardMessages: React.FC = () => {
                 return (
                   <div
                     key={message.id}
-                    className="w-full rounded-[24px] border border-border-subtle bg-white p-5 shadow-[0_6px_24px_rgba(15,23,42,0.05)] hover:border-primary/30 hover:shadow-[0_10px_32px_rgba(15,23,42,0.08)] transition-all group"
+                    className="w-full rounded-lg border border-border-subtle bg-white p-5 transition-colors hover:border-primary/30 group"
                   >
                     <button
                       type="button"
@@ -3784,11 +3926,11 @@ export const DashboardMessages: React.FC = () => {
                     >
                     <div className="mb-3 flex items-start justify-between gap-4">
                       <div>
-                        {campaignName && <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-text-tertiary">{campaignName}</p>}
+                        {campaignName && <p className="mb-1 text-[11px] font-semibold text-text-tertiary">{campaignName}</p>}
                         <h3 className="font-semibold text-text-primary group-hover:text-primary transition-colors break-words leading-snug">
                           {message.subject}
                         </h3>
-                        <p className="mt-1 text-[11px] uppercase tracking-[0.2em] text-text-tertiary">{message.channel} · {getAudienceLabel(message)}</p>
+                        <p className="mt-1 text-[11px] text-text-tertiary">{message.channel} · {getAudienceLabel(message)}</p>
                       </div>
                       <span>{getStatusBadge(message)}</span>
                     </div>
@@ -3800,16 +3942,16 @@ export const DashboardMessages: React.FC = () => {
                           {recipientCount} {recipientCount === 1 ? 'recipient' : 'recipients'}
                         </span>
                         {typeof message.delivered_count === 'number' && typeof message.failed_count === 'number' && (
-                          <span>{message.delivered_count} delivered · {message.failed_count} failed</span>
+                          <span>{message.delivered_count} delivered · {message.failed_count} need review</span>
                         )}
                         {skippedCount > 0 && (
-                          <span>{skippedCount} skipped</span>
+                          <span>{describeRecipientReview(skippedCount)}</span>
                         )}
                         {unreachedCount > 0 && (
-                          <span>{unreachedCount} unreached</span>
+                          <span>{unreachedCount} not reached yet</span>
                         )}
                         {getCampaignTypeLabel(message) && (
-                          <span className="px-2 py-0.5 bg-accent-light text-accent rounded border border-accent/20">
+                          <span className="px-2 py-0.5 bg-surface-subtle text-text-secondary rounded border border-border-subtle">
                             {getCampaignTypeLabel(message)}
                           </span>
                         )}
@@ -3835,7 +3977,7 @@ export const DashboardMessages: React.FC = () => {
                         {(message.failed_count != null && message.failed_count > 0) && (
                           <span className="flex items-center gap-1 text-error font-medium">
                             <AlertCircle size={10} />
-                            {message.failed_count} failed
+                            {message.failed_count} need review
                           </span>
                         )}
                       </div>
@@ -3865,11 +4007,11 @@ export const DashboardMessages: React.FC = () => {
                         )}
                         {canRetryMessageStatus(message.status) && (
                           <Button size="sm" variant="outline" onClick={() => void handleRetry(message)} disabled={retryingMessageId === message.id || !canCompose}>
-                            <RefreshCw className="w-3.5 h-3.5 mr-1.5" />{retryingMessageId === message.id ? 'Retrying…' : 'Retry'}
+                            <RefreshCw className="w-3.5 h-3.5 mr-1.5" />{retryingMessageId === message.id ? 'Sending…' : 'Send again'}
                           </Button>
                         )}
                         {message.status === 'partial' && (
-                          <p className="text-xs text-text-tertiary max-w-xs">Partial campaigns stay review-only here so this control does not re-send guests who already got the message.</p>
+                          <p className="text-xs text-text-tertiary max-w-xs">Campaigns needing follow-up stay review-only here so this control does not re-send guests who already got the message.</p>
                         )}
                       </div>
                     )}

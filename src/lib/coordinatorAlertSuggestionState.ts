@@ -21,6 +21,6 @@ export const getCoordinatorAlertSuggestionState = ({
   return {
     isBoardTarget,
     isDraftMatch,
-    badge: isDraftMatch ? 'In draft' : isBoardTarget ? 'Board target' : null,
+    badge: isDraftMatch ? 'In draft' : isBoardTarget ? 'Suggested' : null,
   };
 };

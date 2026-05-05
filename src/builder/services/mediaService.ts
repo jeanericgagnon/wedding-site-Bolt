@@ -1,5 +1,10 @@
 import { BuilderMediaAsset, MediaUploadOptions } from '../../types/builder/media';
 import { mediaRepository } from './mediaRepository';
+import { customerSafeErrorMessage } from '../../lib/customerSafeError';
+
+function customerSafeMediaMessage(err: unknown, fallback: string): string {
+  return customerSafeErrorMessage(err, fallback);
+}
 
 export const mediaService = {
   async uploadAsset(
@@ -18,8 +23,8 @@ export const mediaService = {
     try {
       uploaded = await mediaRepository.upload(weddingId, file, onProgress);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown storage error';
-      throw new Error(`Upload to storage failed: ${message}`);
+      const message = customerSafeMediaMessage(err, 'Please try again in a moment.');
+      throw new Error(`Couldn’t add that file. ${message}`);
     }
 
     try {
@@ -45,9 +50,9 @@ export const mediaService = {
 
       return asset;
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown database error';
+      const message = customerSafeMediaMessage(err, 'Please try again in a moment.');
       const assetLabel = assetType === 'image' ? 'Photo' : assetType === 'video' ? 'Video' : 'Document';
-      throw new Error(`${assetLabel} uploaded, but saving it to your media library failed: ${message}`);
+      throw new Error(`${assetLabel} uploaded, but couldn’t be added to your library yet. ${message}`);
     }
   },
 

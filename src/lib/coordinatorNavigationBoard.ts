@@ -24,14 +24,14 @@ export const buildCoordinatorNavigationBoard = ({
       : panelFocus === 'qna'
         ? 'Guest Q&A'
         : panelFocus === 'alert'
-          ? 'Alerting'
-          : 'Board overview';
+          ? 'Updates'
+          : 'Day-of summary';
 
   return {
-    statusLabel: panelFocus ? 'Navigation target is armed' : 'Navigation is staying on the board',
+    statusLabel: panelFocus ? 'Next stop is ready' : 'Staying on the day-of summary',
     tone: panelFocus ? (reviewOnly ? 'warning' : 'ready') : 'neutral',
     destinationLabel,
-    boardTargetLabel: boardTargetName ?? 'No board target selected',
-    modeLabel: panelFocus === null ? 'Neutral board mode' : reviewOnly ? 'Review-only route' : 'Direct route',
+    boardTargetLabel: boardTargetName ?? 'No suggested item selected',
+    modeLabel: panelFocus === null ? 'Summary view' : reviewOnly ? 'Review-only path' : 'Direct path',
   };
 };

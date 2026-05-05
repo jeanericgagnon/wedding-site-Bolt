@@ -1,11 +1,11 @@
 {
-  "name": "Dayof Wedding",
-  "short_name": "Dayof",
-  "description": "Wedding website and planning dashboard",
+  "name": "dayof",
+  "short_name": "dayof",
+  "description": "A calm wedding home for your site, guests, memories, and planning.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#111827",
+  "background_color": "#FAFAF8",
+  "theme_color": "#FAFAF8",
   "icons": [
     {
       "src": "/app-icon.svg",

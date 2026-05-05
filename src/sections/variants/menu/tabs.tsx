@@ -89,7 +89,7 @@ const MenuTabs: React.FC<SectionComponentProps<MenuTabsData>> = ({ data }) => {
       <div className="max-w-5xl mx-auto px-6 md:px-12">
         <div className="text-center mb-14">
           {data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">{data.eyebrow}</p>
+            <p className="text-sm text-stone-400 font-light mb-4">{data.eyebrow}</p>
           )}
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="w-8 h-px bg-stone-200" />

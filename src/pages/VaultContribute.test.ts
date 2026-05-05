@@ -1,6 +1,28 @@
-import { describe, expect, it } from 'vitest';
+import React from 'react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { describe, expect, it, vi } from 'vitest';
 
-import { getContributionWindow, getVaultCoupleName, getVaultUnlockAtIso, getVaultUnlockYear } from './VaultContribute';
+vi.mock('../config/env', () => ({
+  DEMO_MODE: true,
+}));
+
+vi.mock('../lib/supabase', () => ({
+  supabase: {
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          maybeSingle: async () => ({ data: null, error: new Error('demo fallback') }),
+        }),
+      }),
+    }),
+    functions: {
+      invoke: vi.fn(),
+    },
+  },
+}));
+
+import { VaultContribute, getContributionWindow, getVaultCoupleName, getVaultUnlockAtIso, getVaultUnlockYear, safeVaultUploadError } from './VaultContribute';
 
 describe('getVaultCoupleName', () => {
   it('keeps a single partner name truthful instead of showing a broken ampersand', () => {
@@ -38,5 +60,90 @@ describe('getVaultUnlockAtIso', () => {
 describe('getContributionWindow', () => {
   it('ignores impossible persisted wedding dates instead of enforcing a fake upload window', () => {
     expect(getContributionWindow('2027-02-30')).toEqual({ canSubmit: true, message: null });
+  });
+});
+
+describe('safeVaultUploadError', () => {
+  it('hides technical save details from guest-facing vault errors', () => {
+    expect(safeVaultUploadError(new Error('Supabase function policy denied access to storage bucket'))).toBe(
+      'Couldn’t add that file right now. Please try again.'
+    );
+    expect(safeVaultUploadError(new Error('duplicate key value violates unique constraint "vault_entries_pkey"'))).toBe(
+      'Couldn’t add that file right now. Please try again.'
+    );
+  });
+
+  it('keeps plain validation guidance when it is already guest safe', () => {
+    expect(safeVaultUploadError(new Error('Please choose an audio file for Voice type.'))).toBe(
+      'Please choose an audio file for Voice type.'
+    );
+  });
+});
+
+describe('VaultContribute form accessibility', () => {
+  it('labels required fields, message count, media type, and optional media label', async () => {
+    render(
+      React.createElement(
+        MemoryRouter,
+        { initialEntries: ['/vault/alex-jordan-demo/1'] },
+        React.createElement(
+          Routes,
+          null,
+          React.createElement(Route, {
+            path: '/vault/:siteSlug/:year',
+            element: React.createElement(VaultContribute),
+          }),
+        ),
+      ),
+    );
+
+    expect(await screen.findByRole('heading', { name: /anniversary vault/i })).toBeInTheDocument();
+
+    const author = screen.getByLabelText(/your name/i);
+    const message = screen.getByLabelText(/your message/i);
+    expect(author).toHaveAttribute('id', 'vault-author-name');
+    expect(message).toHaveAttribute('id', 'vault-message');
+    expect(message).toHaveAttribute('aria-describedby', 'vault-message-count');
+    expect(screen.getByText('0 characters')).toHaveAttribute('id', 'vault-message-count');
+
+    fireEvent.change(message, { target: { value: 'A future toast.' } });
+
+    expect(screen.getByText('15 characters')).toBeInTheDocument();
+    expect(screen.getByLabelText('Message type')).toHaveAttribute('id', 'vault-message-type');
+    expect(screen.getByLabelText(/media label/i)).toHaveAttribute('id', 'vault-media-label');
+  });
+
+  it('connects file upload limits and selected-file status when media type changes', async () => {
+    render(
+      React.createElement(
+        MemoryRouter,
+        { initialEntries: ['/vault/alex-jordan-demo/1'] },
+        React.createElement(
+          Routes,
+          null,
+          React.createElement(Route, {
+            path: '/vault/:siteSlug/:year',
+            element: React.createElement(VaultContribute),
+          }),
+        ),
+      ),
+    );
+
+    expect(await screen.findByRole('heading', { name: /anniversary vault/i })).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Message type'), { target: { value: 'photo' } });
+
+    const fileInput = screen.getByLabelText(/add files/i);
+    expect(fileInput).toHaveAttribute('id', 'vault-file-upload');
+    expect(fileInput).toHaveAttribute('aria-describedby', 'vault-file-limits vault-file-status');
+    expect(screen.getByText('Up to 3 photos, 8MB each. If larger, compress first.')).toHaveAttribute('id', 'vault-file-limits');
+
+    fireEvent.change(fileInput, {
+      target: {
+        files: [new File(['photo'], 'toast.jpg', { type: 'image/jpeg' })],
+      },
+    });
+
+    expect(screen.getByRole('status')).toHaveTextContent('Selected: 1 file');
   });
 });

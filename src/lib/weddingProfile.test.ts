@@ -31,6 +31,29 @@ describe('applyInitialSetupAnswersToWeddingProfile', () => {
     expect(profile.meta.readinessScore).toBeGreaterThanOrEqual(0);
   });
 
+  it('parses natural language wedding date and location from quick-start intake', () => {
+    const profile = applyInitialSetupAnswersToWeddingProfile({
+      names: 'Alex & Jordan',
+      labelPreference: 'names-only',
+      whenWhere: 'June 6, 2027 in Sayulita, Mexico',
+      venueNameOrTbd: 'Casa Sol',
+      style: 'warm coastal garden party',
+      weekendEventsRaw: 'Friday welcome drinks, Saturday ceremony and reception, Sunday brunch.',
+      ceremonyArrivalTime: '4:30 PM',
+      guestCountBand: '50-100',
+      plusOnePolicy: 'some',
+      childrenAllowed: 'no',
+      rsvpDeadline: 'April 30, 2027',
+      mealChoice: 'yes',
+      registryIntent: 'none-for-now',
+      optionalStory: 'We met at a tiny concert.',
+    });
+
+    expect(profile.event.date).toBe('2027-06-06');
+    expect(profile.event.venueLocation).toBe('Sayulita, Mexico');
+    expect(profile.event.rsvpDeadline).toBe('2027-04-30');
+  });
+
   it('keeps refinement-style answers in canonical fields instead of dropping them', () => {
     const profile = applyInitialSetupAnswersToWeddingProfile({
       names: 'Alex & Jordan',

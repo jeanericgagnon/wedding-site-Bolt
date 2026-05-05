@@ -19,6 +19,7 @@ function createWeddingData(venues: WeddingDataV1['venues'] = []): WeddingDataV1 
     registry: [],
     theme: {},
     media: { gallery: [] },
+    meta: { createdAtISO: '', updatedAtISO: '' },
   };
 }
 

@@ -572,7 +572,7 @@ export const applyInitialSetupAnswersToWeddingProfile = (answers: InitialSetupAn
       structuredWeekendEvents: interpreted.structuredWeekendEvents,
       ceremonyTime: answers.ceremonyArrivalTime,
       receptionTime: '',
-      rsvpDeadline: answers.rsvpDeadline,
+      rsvpDeadline: interpreted.rsvpDeadline,
     },
     venue: {
       city: interpreted.weddingLocation,

@@ -37,9 +37,7 @@ CREATE TABLE IF NOT EXISTS vault_configs (
   updated_at timestamptz DEFAULT now(),
   UNIQUE (wedding_site_id, vault_index)
 );
-
 ALTER TABLE vault_configs ENABLE ROW LEVEL SECURITY;
-
 CREATE POLICY "Owner can read vault configs"
   ON vault_configs FOR SELECT
   TO authenticated
@@ -48,7 +46,6 @@ CREATE POLICY "Owner can read vault configs"
       SELECT id FROM wedding_sites WHERE user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Owner can insert vault configs"
   ON vault_configs FOR INSERT
   TO authenticated
@@ -57,7 +54,6 @@ CREATE POLICY "Owner can insert vault configs"
       SELECT id FROM wedding_sites WHERE user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Owner can update vault configs"
   ON vault_configs FOR UPDATE
   TO authenticated
@@ -71,7 +67,6 @@ CREATE POLICY "Owner can update vault configs"
       SELECT id FROM wedding_sites WHERE user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Owner can delete vault configs"
   ON vault_configs FOR DELETE
   TO authenticated
@@ -80,12 +75,10 @@ CREATE POLICY "Owner can delete vault configs"
       SELECT id FROM wedding_sites WHERE user_id = auth.uid()
     )
   );
-
 CREATE POLICY "Public can read enabled vault configs"
   ON vault_configs FOR SELECT
   TO anon
   USING (is_enabled = true);
-
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -95,6 +88,5 @@ BEGIN
     ALTER TABLE vault_entries ADD COLUMN vault_config_id uuid REFERENCES vault_configs(id) ON DELETE SET NULL;
   END IF;
 END $$;
-
 CREATE INDEX IF NOT EXISTS idx_vault_configs_wedding_site ON vault_configs(wedding_site_id);
 CREATE INDEX IF NOT EXISTS idx_vault_entries_vault_config ON vault_entries(vault_config_id);

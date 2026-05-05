@@ -17,7 +17,6 @@
 
 -- Drop and recreate the trigger function with RLS bypass
 DROP FUNCTION IF EXISTS create_demo_wedding_data() CASCADE;
-
 CREATE OR REPLACE FUNCTION create_demo_wedding_data()
 RETURNS TRIGGER 
 SECURITY DEFINER
@@ -221,7 +220,6 @@ Alex & Jordan', now() - interval '10 days', 'email', 'confirmed', 7);
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-
 -- Recreate the trigger
 DROP TRIGGER IF EXISTS on_demo_user_created ON auth.users;
 CREATE TRIGGER on_demo_user_created

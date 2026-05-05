@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getRegistryItemPublicUrl, groupRegistryStoreLinks, normalizeRegistryFeaturedItems, registryFeaturedSchema, shouldUseLiveRegistryFeaturedData } from './featured';
+import { getRegistryItemPublicUrl, getSafePublicRegistryUrl, groupRegistryStoreLinks, normalizeRegistryFeaturedItems, registryFeaturedSchema, registryItemToGift, shouldUseLiveRegistryFeaturedData } from './featured';
 import type { RegistryItem } from '../../../pages/dashboard/registry/registryTypes';
 
 const makeItem = (overrides: Partial<RegistryItem>): RegistryItem => ({
@@ -34,6 +34,12 @@ const makeItem = (overrides: Partial<RegistryItem>): RegistryItem => ({
 describe('registry featured public parity helpers', () => {
   it('falls back to canonical urls for public featured links', () => {
     expect(getRegistryItemPublicUrl(makeItem({ item_url: null, canonical_url: 'https://example.com/canonical' }))).toBe('https://example.com/canonical');
+  });
+
+  it('rejects placeholder and unsafe featured registry urls before public rendering', () => {
+    expect(getSafePublicRegistryUrl('#')).toBe('');
+    expect(getSafePublicRegistryUrl('javascript:alert(1)')).toBe('');
+    expect(getRegistryItemPublicUrl(makeItem({ item_url: '#', canonical_url: 'ftp://example.com/gift' }))).toBe('');
   });
 
   it('derives live store links from canonical-only imported registry items', () => {
@@ -95,5 +101,27 @@ describe('registry featured public parity helpers', () => {
         purchaser_name: null,
       }),
     ]);
+  });
+
+  it('filters imported placeholder titles before featured store links render', () => {
+    expect(groupRegistryStoreLinks([
+      makeItem({ id: 'bad-title', item_name: 'Access denied', store_name: 'Hidden Store', item_url: 'https://example.com/bad' }),
+      makeItem({ id: 'good-title', item_name: 'Picnic Blanket', store_name: 'Outdoor Store', item_url: 'https://example.com/good' }),
+    ])).toEqual([
+      { id: 'good-title', store: 'Outdoor Store', url: 'https://example.com/good', description: '' },
+    ]);
+  });
+
+  it('does not synthesize third-party screenshot preview images for canonical-only gifts', () => {
+    const gift = registryItemToGift(makeItem({
+      item_name: 'Dinner Set',
+      image_url: null,
+      item_url: null,
+      canonical_url: 'https://example.com/dinner-set',
+    }));
+
+    expect(gift.url).toBe('https://example.com/dinner-set');
+    expect(gift.image).toBe('');
+    expect(gift.image).not.toMatch(/image\.thum\.io/i);
   });
 });

@@ -10,6 +10,10 @@ Rules:
 - Avoid cheesy wedding clichés and startup/product language
 - Be concise, polished, and emotionally warm
 - Default to first-person voice (we / our / us) for couple-facing copy unless a section clearly needs third-person labeling
+- Avoid em dashes, en dashes, and dash-heavy sentence construction
+- Do not use dashes as a shortcut for emotion or structure. Use commas, periods, or a clean new sentence instead
+- Avoid hyphenated wedding shorthand in customer copy when normal words work. Use "black tie optional", "plus one", and "adults only"
+- Sound sincere, specific, and human. Never sound like generated ad copy
 - Do not sound corporate, hospitality-branded, concierge-like, or brochure-written
 - Write like a real couple with taste, not like a wedding copywriter
 - Prefer concrete, conversational phrasing over sentimental shortcut language
@@ -19,6 +23,7 @@ Rules:
 - Prefer tasteful specificity over generic filler
 - Avoid vague luxury language like "meaningful day," "serene embrace," "cherished friends," "journey," "quiet elegance," or "special day" unless the profile clearly earns it
 - Avoid Hallmark-style shorthand like "rest of our lives," "soulmate," "forever," "those we hold dear," or "special day"
+- Avoid generated-sounding phrases like "new chapter," "plan accordingly," "journey," "cherished," "savor," "curated," or "beautiful moments"
 - Avoid generic bridal-magazine phrasing and default mush
 - When details are sparse, be simple and clean instead of poetic
 - Return copy that can be placed directly on a wedding website`;
@@ -110,6 +115,9 @@ Rules:
 - Remove clichés, filler, and startup/product language
 - Keep the tone warm, elegant, and human
 - Prefer first-person couple voice where appropriate
+- Remove em dashes, en dashes, and dash-heavy constructions
+- Remove unnecessary hyphenated shorthand in customer copy
+- Make the copy sound sincere and human, not generated or overly polished
 - Remove corporate, concierge, hospitality, or brochure-like phrasing
 - Keep facts intact
 - Remove any invented detail, placeholder, bracket text, or fake-specific phrasing

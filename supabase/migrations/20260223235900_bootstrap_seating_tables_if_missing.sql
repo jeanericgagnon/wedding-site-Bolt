@@ -10,7 +10,6 @@ CREATE TABLE IF NOT EXISTS seating_events (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE TABLE IF NOT EXISTS seating_tables (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   seating_event_id uuid NOT NULL REFERENCES seating_events(id) ON DELETE CASCADE,
@@ -21,7 +20,6 @@ CREATE TABLE IF NOT EXISTS seating_tables (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE TABLE IF NOT EXISTS seating_assignments (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   seating_event_id uuid NOT NULL REFERENCES seating_events(id) ON DELETE CASCADE,
@@ -33,7 +31,6 @@ CREATE TABLE IF NOT EXISTS seating_assignments (
   updated_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE(seating_event_id, guest_id)
 );
-
 CREATE INDEX IF NOT EXISTS seating_tables_event_idx ON seating_tables(seating_event_id);
 CREATE INDEX IF NOT EXISTS seating_assignments_event_idx ON seating_assignments(seating_event_id);
 CREATE INDEX IF NOT EXISTS seating_assignments_table_idx ON seating_assignments(table_id);

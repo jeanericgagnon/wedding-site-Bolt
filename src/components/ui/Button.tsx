@@ -15,12 +15,12 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       secondary: 'bg-secondary text-text-inverse hover:bg-secondary-hover shadow-sm hover:shadow-md focus-visible:ring-secondary/50',
       outline: 'border-2 border-border-strong text-text-primary hover:bg-surface hover:border-primary focus-visible:ring-primary/50',
       ghost: 'text-text-secondary hover:text-text-primary hover:bg-surface focus-visible:ring-primary/50',
-      accent: 'bg-accent text-text-inverse hover:bg-[#C2664A] shadow-sm hover:shadow-md focus-visible:ring-accent/50',
+      accent: 'bg-primary text-text-inverse hover:bg-primary-hover shadow-sm hover:shadow-md focus-visible:ring-primary/50',
     };
 
     const sizeStyles = {
       sm: 'px-4 py-2 text-sm font-medium min-h-[36px] gap-2',
-      md: 'px-5 py-2.5 text-base font-medium min-h-[44px] gap-2',
+      md: 'px-4 py-2.5 text-sm font-medium min-h-[40px] gap-2',
       lg: 'px-6 py-3 text-base font-semibold min-h-[48px] gap-2',
     };
 

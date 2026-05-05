@@ -33,7 +33,6 @@ BEGIN
     ALTER TABLE wedding_sites ADD COLUMN wedding_data jsonb DEFAULT '{}'::jsonb;
   END IF;
 END $$;
-
 -- Add layout_config column if not exists
 DO $$
 BEGIN
@@ -44,7 +43,6 @@ BEGIN
     ALTER TABLE wedding_sites ADD COLUMN layout_config jsonb DEFAULT '{}'::jsonb;
   END IF;
 END $$;
-
 -- Add active_template_id column if not exists
 DO $$
 BEGIN
@@ -55,13 +53,10 @@ BEGIN
     ALTER TABLE wedding_sites ADD COLUMN active_template_id text DEFAULT 'base';
   END IF;
 END $$;
-
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_wedding_sites_active_template
   ON wedding_sites(active_template_id);
-
 CREATE INDEX IF NOT EXISTS idx_wedding_sites_wedding_data_gin
   ON wedding_sites USING GIN (wedding_data);
-
 CREATE INDEX IF NOT EXISTS idx_wedding_sites_layout_config_gin
   ON wedding_sites USING GIN (layout_config);

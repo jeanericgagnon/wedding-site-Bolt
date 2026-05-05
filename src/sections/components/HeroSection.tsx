@@ -4,6 +4,9 @@ import { SectionInstance } from '../../types/layoutConfig';
 import { readBuilderValue } from '../../lib/weddingProfile';
 import { getSectionPrimaryImage } from '../../lib/sectionMedia';
 import { buildCoupleDisplayName } from '../../lib/coupleDisplayName';
+import { getSafePublicImageUrl } from '../publicLinks';
+
+const DEFAULT_HERO_IMAGE = '/preview-photos/header-anchor.jpg';
 
 interface Props {
   data: WeddingDataV1;
@@ -32,13 +35,23 @@ function getHeroDisplayName(
     || 'The couple';
 }
 
+function normalizeHeroImageOpacity(value: unknown): number {
+  if (typeof value !== 'number' || Number.isNaN(value)) return 0.45;
+  const normalized = value > 1 ? value / 100 : value;
+  return Math.max(0.18, Math.min(1, normalized));
+}
+
 export const HeroSection: React.FC<Props> = ({ data, instance }) => {
   const { couple, event, media } = data;
   const { settings } = instance;
   const displayName = getHeroDisplayName(settings.headline as string | { value: string } | undefined, couple);
   const date = formatDate(event.weddingDateISO);
-  const bgImage = getSectionPrimaryImage(settings as Record<string, unknown>, media.heroImageUrl || '');
-  const opacity = typeof settings.overlayOpacity === 'number' ? settings.overlayOpacity / 100 : 0.3;
+  const bgImage = getSafePublicImageUrl(getSectionPrimaryImage(settings as Record<string, unknown>, media.heroImageUrl || DEFAULT_HERO_IMAGE));
+  const opacity = normalizeHeroImageOpacity(settings.overlayOpacity);
+  const eyebrowClass = bgImage ? 'text-white/75' : 'text-text-secondary';
+  const headlineClass = bgImage ? 'text-white' : 'text-text-primary';
+  const subheadlineClass = bgImage ? 'text-white/80' : 'text-text-secondary';
+  const dividerClass = bgImage ? 'bg-white/55' : 'bg-primary';
 
   return (
     <section className="relative h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
@@ -50,15 +63,15 @@ export const HeroSection: React.FC<Props> = ({ data, instance }) => {
       )}
       <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
         {settings.showTitle !== false && (
-          <p className="text-sm uppercase tracking-[0.25em] text-text-secondary mb-6 font-medium">
+          <p className={`text-sm mb-6 font-light ${eyebrowClass}`}>
             {readBuilderValue(settings.title as string | { value: string } | undefined, 'We are getting married')}
           </p>
         )}
-        <h1 className="text-5xl md:text-7xl font-bold text-text-primary mb-6 leading-tight">
+        <h1 className={`text-5xl md:text-7xl font-bold mb-6 leading-tight drop-shadow-[0_8px_28px_rgba(0,0,0,0.35)] ${headlineClass}`}>
           {displayName}
         </h1>
-        <div className="w-16 h-px bg-primary mx-auto mb-6" />
-        <p className="text-xl md:text-2xl text-text-secondary">
+        <div className={`w-16 h-px mx-auto mb-6 ${dividerClass}`} />
+        <p className={`text-xl md:text-2xl ${subheadlineClass}`}>
           {readBuilderValue(settings.subtitle as string | { value: string } | undefined, date)}
         </p>
       </div>
@@ -71,7 +84,7 @@ export const HeroMinimal: React.FC<Props> = ({ data, instance }) => {
   const { settings } = instance;
   const displayName = getHeroDisplayName(settings.headline as string | { value: string } | undefined, couple);
   const date = formatDate(event.weddingDateISO);
-  const bgImage = getSectionPrimaryImage(settings as Record<string, unknown>, media.heroImageUrl || '');
+  const bgImage = getSafePublicImageUrl(getSectionPrimaryImage(settings as Record<string, unknown>, media.heroImageUrl || DEFAULT_HERO_IMAGE));
   const hasImage = !!bgImage;
 
   return (
@@ -85,11 +98,11 @@ export const HeroMinimal: React.FC<Props> = ({ data, instance }) => {
       <div className="relative z-10 w-full px-8 md:px-16">
         <div className="max-w-6xl mx-auto">
           {settings.showTitle !== false && (
-            <p className={"text-sm uppercase tracking-[0.25em] font-medium mb-3 " + (hasImage ? "text-white/70" : "text-text-secondary")}>
+            <p className={"text-sm font-light mb-3 " + (hasImage ? "text-white/75" : "text-text-secondary")}>
               {readBuilderValue(settings.title as string | { value: string } | undefined, 'We are getting married')}
             </p>
           )}
-          <h1 className={"text-6xl md:text-8xl font-light tracking-tight mb-3 " + (hasImage ? "text-white" : "text-text-primary")}>
+          <h1 className={"text-6xl md:text-8xl font-light mb-3 " + (hasImage ? "text-white" : "text-text-primary")}>
             {displayName}
           </h1>
           <p className={"text-lg md:text-xl font-light " + (hasImage ? "text-white/80" : "text-text-secondary")}>
@@ -106,7 +119,7 @@ export const HeroFullbleed: React.FC<Props> = ({ data, instance }) => {
   const { settings } = instance;
   const displayName = getHeroDisplayName(settings.headline as string | { value: string } | undefined, couple);
   const date = formatDate(event.weddingDateISO);
-  const bgImage = getSectionPrimaryImage(settings as Record<string, unknown>, media.heroImageUrl || '');
+  const bgImage = getSafePublicImageUrl(getSectionPrimaryImage(settings as Record<string, unknown>, media.heroImageUrl || DEFAULT_HERO_IMAGE));
 
   return (
     <section className="relative h-screen flex items-center justify-center overflow-hidden bg-neutral-900">
@@ -119,16 +132,16 @@ export const HeroFullbleed: React.FC<Props> = ({ data, instance }) => {
       )}
       <div className="absolute inset-0 bg-black/30" />
       <div className="relative z-10 text-center px-4">
-        <p className="text-xs uppercase tracking-[0.4em] text-white/70 mb-8 font-medium">
+        <p className="text-sm text-white/75 mb-8 font-light">
           {readBuilderValue(settings.subtitle as string | { value: string } | undefined, date)}
         </p>
-        <h1 className="text-6xl md:text-9xl font-light tracking-tight text-white leading-none mb-8">
+        <h1 className="text-6xl md:text-9xl font-light text-white leading-none mb-8">
           {displayName}
         </h1>
         {settings.showTitle !== false && (
           <div className="flex items-center justify-center gap-6">
             <div className="h-px w-12 bg-white/50" />
-            <p className="text-sm tracking-widest text-white/70 uppercase font-medium">
+            <p className="text-sm text-white/75 font-light">
               {readBuilderValue(settings.title as string | { value: string } | undefined, 'Celebrate with us')}
             </p>
             <div className="h-px w-12 bg-white/50" />
@@ -157,7 +170,7 @@ export const HeroCountdown: React.FC<Props> = ({ data, instance }) => {
   const { settings } = instance;
   const displayName = getHeroDisplayName(settings.headline as string | { value: string } | undefined, couple);
   const date = formatDate(event.weddingDateISO);
-  const bgImage = getSectionPrimaryImage(settings as Record<string, unknown>, media.heroImageUrl || '');
+  const bgImage = getSafePublicImageUrl(getSectionPrimaryImage(settings as Record<string, unknown>, media.heroImageUrl || DEFAULT_HERO_IMAGE));
   const countdown = getCountdownParts(event.weddingDateISO);
 
   return (
@@ -173,23 +186,23 @@ export const HeroCountdown: React.FC<Props> = ({ data, instance }) => {
 
       <div className="relative z-10 text-center px-4 max-w-5xl mx-auto">
         {settings.showTitle !== false && (
-          <p className="text-xs uppercase tracking-[0.35em] text-white/70 mb-5 font-medium">
+          <p className="text-sm text-white/75 mb-5 font-light">
             {readBuilderValue(settings.title as string | { value: string } | undefined, 'Save the date')}
           </p>
         )}
-        <h1 className="text-5xl md:text-8xl font-light tracking-tight text-white leading-tight mb-4">{displayName}</h1>
+        <h1 className="text-5xl md:text-8xl font-light text-white leading-tight mb-4">{displayName}</h1>
         <p className="text-base md:text-xl text-white/80 mb-8">{readBuilderValue(settings.subtitle as string | { value: string } | undefined, date)}</p>
 
         {countdown && (
           <div className="inline-flex items-center gap-4 md:gap-8 px-6 py-4 rounded-2xl bg-white/15 backdrop-blur-sm border border-white/20">
             <div>
               <p className="text-3xl md:text-4xl font-semibold text-white leading-none">{countdown.days}</p>
-              <p className="text-[11px] uppercase tracking-[0.2em] text-white/70 mt-1">Days</p>
+              <p className="text-xs text-white/75 mt-1">Days</p>
             </div>
             <div className="w-px h-10 bg-white/30" />
             <div>
               <p className="text-3xl md:text-4xl font-semibold text-white leading-none">{countdown.hours}</p>
-              <p className="text-[11px] uppercase tracking-[0.2em] text-white/70 mt-1">Hours</p>
+              <p className="text-xs text-white/75 mt-1">Hours</p>
             </div>
           </div>
         )}

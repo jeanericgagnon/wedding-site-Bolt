@@ -19,8 +19,8 @@ import { GridItem, HeroReveal, Reveal, SlideReveal, StaggerGrid } from '../compo
 
 const V1_HOME_GROUPS = [
   {
-    title: 'Core v1 today',
-    badge: 'Must ship',
+    title: 'Wedding core today',
+    badge: 'Included',
     tone: 'must',
     items: [
       'Wedding site, RSVP, guests, messaging, seating, registry, itinerary, and day-of coordination in one coherent flow',
@@ -29,8 +29,8 @@ const V1_HOME_GROUPS = [
     ],
   },
   {
-    title: 'Real, but not carrying the launch claim',
-    badge: 'Should ship',
+    title: 'Helpful extras',
+    badge: 'Helpful',
     tone: 'should',
     items: [
       'Archive mode, guest photo return paths, and post-wedding memory layers',
@@ -39,13 +39,13 @@ const V1_HOME_GROUPS = [
     ],
   },
   {
-    title: 'Not part of the current promise',
-    badge: 'Cut from promise',
+    title: 'Future or limited today',
+    badge: 'Not the main promise',
     tone: 'cut',
     items: [
-      'External custom domains as a default launch expectation',
+      'External custom domains as a default expectation',
       'Advanced analytics as a major product claim',
-      'Fake one-click automation language around migration, reminders, or merchant sync',
+      'One-click promises around migration, reminders, or merchant sync',
     ],
   },
 ] as const;
@@ -89,14 +89,14 @@ export const Home: React.FC = () => {
       title: 'Planner Collaboration',
       icon: Calendar,
       href: user ? '/dashboard/planning' : '/product',
-      bullets: ['Invite your planner from the couple side', 'Named planner invite with role preset', 'Planner coordination view', 'Shared guest + seating + timeline context', 'Read-only or operational access', 'Built for real event-day help'],
+      bullets: ['Invite your planner from the couple side', 'Named planner invite with role preset', 'Planner coordination view', 'Shared guest + seating + timeline context', 'Read-only or hands-on access', 'Built for real event-day help'],
     },
     {
       id: 'dayof',
       title: 'Day-of Coordination',
       icon: Radio,
       href: user ? '/dashboard/coordinator' : '/product',
-      bullets: ['Coordinator workspace', 'Check-in and arrivals focus', 'Timeline + Q&A context', 'Fast guest lookup', 'Alert and issue visibility', 'Built for calmer event-week execution'],
+      bullets: ['Coordinator view', 'Check-in and arrivals focus', 'Timeline + Q&A context', 'Fast guest lookup', 'Alert and issue visibility', 'Built for a calmer event week'],
     },
     {
       id: 'travel',
@@ -117,7 +117,7 @@ export const Home: React.FC = () => {
       title: 'Seating',
       icon: Calendar,
       href: user ? '/dashboard/seating' : '/features/seating',
-      bullets: ['Drag-and-drop seating board', 'Table capacity management', 'Auto-assign starting point', 'Table assignment workflows', 'Export for caterer', 'Per-event seating'],
+      bullets: ['Drag-and-drop seating board', 'Table capacity management', 'Auto-assign starting point', 'Table assignment tools', 'Export for caterer', 'Per-event seating'],
     },
   ] as const;
 
@@ -144,8 +144,7 @@ export const Home: React.FC = () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
       navigate('/dashboard/overview', { replace: true });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Demo login failed. Please try again.';
-      toast(message, 'error');
+      toast('Couldn’t open the demo right now. Please try again.', 'error');
       setDemoLoading(false);
     }
   };
@@ -191,7 +190,7 @@ export const Home: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-paper text-ink">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-paper text-ink">
       <Header />
 
       {/* HERO */}
@@ -211,7 +210,7 @@ export const Home: React.FC = () => {
             <HeroReveal delay={0.2}>
               <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6 w-full max-w-xl mx-auto px-1 sm:px-0">
                 <button
-                className="w-full sm:w-auto min-h-[52px] px-7 py-3.5 bg-brand text-paper font-semibold rounded-2xl hover:bg-brand/90 transition-all shadow-sm hover:shadow-md active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2"
+                className="w-full sm:w-auto min-h-[52px] px-7 py-3.5 bg-brand text-paper font-semibold rounded-lg hover:bg-brand/90 transition-all shadow-sm active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2"
                 onClick={handleSignUp}
                 aria-label={user ? 'Review your wedding site draft' : 'Start your wedding site draft'}
               >
@@ -219,15 +218,15 @@ export const Home: React.FC = () => {
               </button>
               <Link
                 to={user ? '/dashboard/builder' : '/templates'}
-                className="group inline-flex w-full sm:w-auto min-h-[52px] items-center justify-center gap-2 px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 hover:border-brand transition-all active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2"
+                className="group inline-flex w-full sm:w-auto min-h-[52px] items-center justify-center gap-2 px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-lg hover:bg-brand/5 hover:border-brand transition-all active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2"
               >
-                {user ? 'Open your builder' : 'Browse templates'}
+                {user ? 'Open site editor' : 'Browse templates'}
                 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <button
                 onClick={user ? () => navigate('/dashboard/guests') : handleDemoLogin}
                 disabled={demoLoading}
-                className="inline-flex w-full sm:w-auto min-h-[52px] items-center justify-center gap-2 px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 hover:border-brand transition-all active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-wait"
+                className="inline-flex w-full sm:w-auto min-h-[52px] items-center justify-center gap-2 px-7 py-3.5 border-2 border-brand text-brand font-semibold rounded-lg hover:bg-brand/5 hover:border-brand transition-all active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-wait"
               >
                 {demoLoading && (
                   <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
@@ -240,14 +239,14 @@ export const Home: React.FC = () => {
               </div>
             </HeroReveal>
             <HeroReveal delay={0.3}>
-              <p className="text-[0.8125rem] text-ink/60 updates-wide leading-loose">
+              <p className="text-[0.8125rem] text-ink/60 leading-loose">
                 $49 flat fee for 2 years • Auto-renew OFF by default • Hidden from search by default
               </p>
             </HeroReveal>
             <HeroReveal delay={0.38}>
               <div className="mt-4 inline-flex flex-wrap justify-center gap-2">
                 <span className="text-[11px] px-2.5 py-1 rounded-full border border-brand/20 bg-brand/5 text-brand">Beautiful site + RSVP + guest tools</span>
-                <span className="text-[11px] px-2.5 py-1 rounded-full border border-border bg-surface text-ink/80">Planner + coordinator support stays bounded by proof-backed role checks</span>
+                <span className="text-[11px] px-2.5 py-1 rounded-full border border-border bg-surface text-ink/80">Planner + coordinator support stays couple-led</span>
                 <span className="text-[11px] px-2.5 py-1 rounded-full border border-border bg-surface text-ink/80">No forced upsells</span>
                 <span className="text-[11px] px-2.5 py-1 rounded-full border border-border bg-surface text-ink/80">Built for guests of all ages</span>
                 <span className="text-[11px] px-2.5 py-1 rounded-full border border-border bg-surface text-ink/80">Easy if you're moving off Zola, Joy, or The Knot</span>
@@ -260,22 +259,22 @@ export const Home: React.FC = () => {
 
       <section className="section-shell bg-white border-y border-border-subtle">
         <div className="container-custom max-w-6xl">
-          <div className="rounded-2xl border border-border-subtle bg-surface p-6 md:p-7">
-            <p className="text-xs uppercase tracking-wide text-brand font-semibold">Migration proof</p>
+          <div className="rounded-lg border border-border-subtle bg-surface p-6 md:p-7">
+            <p className="text-sm text-brand font-semibold">Moving over</p>
             <h2 className="text-2xl md:text-3xl font-serif font-bold text-ink mt-2">Switching is no longer just a promise.</h2>
-            <p className="mt-3 max-w-3xl text-ink/75">DayOf now has a guided migration path with source intake, setup guidance, guest import review, story/event/FAQ recovery helpers, registry-link carryover, and starter-draft review cues before anything gets shared with guests.</p>
+            <p className="mt-3 max-w-3xl text-ink/75">dayof now has a guided migration path with detail intake, setup guidance, guest import review, story/event/FAQ recovery helpers, registry-link carryover, and starter-draft review cues before anything gets shared with guests.</p>
             <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="rounded-xl border border-border-subtle bg-white p-4">
-                <p className="text-sm font-medium text-ink">Import with review truth</p>
-                <p className="mt-1 text-sm text-ink/70">Imports now show weaker mappings, duplicate names, and risky household merges instead of pretending everything is perfect.</p>
+              <div className="rounded-lg border border-border-subtle bg-white p-4">
+                <p className="text-sm font-medium text-ink">Import with a real review step</p>
+                <p className="mt-1 text-sm text-ink/70">Imports show weaker mappings, duplicate names, and household merge notes so you can review with confidence.</p>
               </div>
-              <div className="rounded-xl border border-border-subtle bg-white p-4">
+              <div className="rounded-lg border border-border-subtle bg-white p-4">
                 <p className="text-sm font-medium text-ink">Recover the essentials first</p>
                 <p className="mt-1 text-sm text-ink/70">Story, event details, FAQs, and registry links have a calmer recovery path instead of forcing a total rebuild.</p>
               </div>
-              <div className="rounded-xl border border-border-subtle bg-white p-4">
-                <p className="text-sm font-medium text-ink">Guided, not fake-automated</p>
-                <p className="mt-1 text-sm text-ink/70">The current migration path is intentionally guided and review-heavy, not a dishonest one-click import claim.</p>
+              <div className="rounded-lg border border-border-subtle bg-white p-4">
+                <p className="text-sm font-medium text-ink">Guided and reviewable</p>
+                <p className="mt-1 text-sm text-ink/70">The migration path helps organize the move while leaving the final review in your hands.</p>
               </div>
             </div>
           </div>
@@ -284,24 +283,24 @@ export const Home: React.FC = () => {
 
       <section className="section-shell bg-white border-y border-border-subtle">
         <div className="container-custom max-w-5xl">
-          <div className="rounded-2xl border border-border-subtle bg-surface p-6 md:p-7">
+          <div className="rounded-lg border border-border-subtle bg-surface p-6 md:p-7">
             <div className="max-w-3xl">
-              <p className="text-xs uppercase tracking-wide text-brand font-semibold">Switching is part of the plan</p>
+              <p className="text-sm text-brand font-semibold">Switching is part of the plan</p>
               <h2 className="text-2xl md:text-3xl font-serif font-bold text-ink mt-2">Already started on Zola, Joy, or The Knot?</h2>
-              <p className="mt-3 text-ink/75 leading-relaxed">You should not have to restart from scratch just because another wedding site got messy, expensive, or too limited. DayOf is being shaped to make switching feel calm: keep your guest list, bring over the essentials, and move into a cleaner operating flow.</p>
+              <p className="mt-3 text-ink/75 leading-relaxed">You should not have to restart from scratch just because another wedding site became expensive or too limited. dayof is shaped to make switching feel calm: keep your guest list, bring over the essentials, and move into a cleaner planning flow.</p>
             </div>
             <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="rounded-xl border border-border bg-white p-4">
+              <div className="rounded-lg border border-border bg-white p-4">
                 <p className="font-semibold text-ink">Bring the important parts</p>
-                <p className="mt-1 text-sm text-ink/70">Guest lists, core wedding details, and site direction matter more than rebuilding everything manually.</p>
+                <p className="mt-1 text-sm text-ink/70">Guest lists, core wedding details, and site direction matter more than rebuilding everything by hand.</p>
               </div>
-              <div className="rounded-xl border border-border bg-white p-4">
+              <div className="rounded-lg border border-border bg-white p-4">
                 <p className="font-semibold text-ink">Keep the site beautiful</p>
                 <p className="mt-1 text-sm text-ink/70">Switching should not mean downgrading the site quality couples are working toward.</p>
               </div>
-              <div className="rounded-xl border border-border bg-white p-4">
-                <p className="font-semibold text-ink">Land in a better ops flow</p>
-                <p className="mt-1 text-sm text-ink/70">Move straight into RSVPs, messages, seating, and day-of coordination without duct tape.</p>
+              <div className="rounded-lg border border-border bg-white p-4">
+                <p className="font-semibold text-ink">Land in a calmer planning flow</p>
+                <p className="mt-1 text-sm text-ink/70">Move straight into RSVPs, messages, seating, and day-of coordination in one place.</p>
               </div>
             </div>
           </div>
@@ -321,7 +320,7 @@ export const Home: React.FC = () => {
                 src={proposalImageUrl}
                 alt="Proposal moment in a park overlooking the city"
                 loading="lazy"
-                className="w-full rounded-2xl shadow-lg mb-8 object-cover"
+                className="w-full rounded-lg shadow-sm mb-8 object-cover"
               />
               <div className="space-y-5 max-w-2xl mx-auto">
                 <p className="text-[1.0625rem] text-ink/80 leading-relaxed">
@@ -342,7 +341,7 @@ export const Home: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-accent/5 rounded-2xl p-7 border border-accent/20 max-w-2xl mx-auto">
+            <div className="bg-accent/5 rounded-lg p-7 border border-accent/20 max-w-2xl mx-auto">
               <h3 className="text-[1.5rem] font-serif font-bold text-ink mb-3 leading-[1.2] updates-tight">Built for trust, not pressure</h3>
               <p className="text-[1.0625rem] text-ink/80 mb-6 leading-relaxed">Your wedding website should feel calm, polished, and straightforward from the start.</p>
               <ul className="space-y-3 text-[0.9375rem] text-ink/70">
@@ -363,28 +362,28 @@ export const Home: React.FC = () => {
         <div className="container-custom">
           <SlideReveal from="left" className="section-intro">
             <h2 className="section-title mb-4">
-              Core wedding flow first. Broader product ambition second.
+              Core wedding flow first. Helpful extras stay smaller.
             </h2>
             <p className="text-ink/70 max-w-3xl">
-              DayOf should be judged on the core wedding path couples actually need right now. Some surrounding slices are real direction, but they should not blur the current v1 line.
+              dayof should be judged on the core wedding path couples actually need right now. Helpful extras can exist, but they should not blur the current couple-facing promise.
             </p>
           </SlideReveal>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
             {V1_HOME_GROUPS.map((group) => {
               const toneClasses = group.tone === 'must'
-                ? 'border-emerald-200 bg-white'
+                ? 'border-border-subtle bg-white'
                 : group.tone === 'should'
-                  ? 'border-amber-200 bg-white'
-                  : 'border-rose-200 bg-white';
+                  ? 'border-border-subtle bg-white'
+                  : 'border-border-subtle bg-white';
               const badgeClasses = group.tone === 'must'
-                ? 'bg-emerald-50 text-emerald-700'
+                ? 'border border-primary/15 bg-primary/5 text-primary'
                 : group.tone === 'should'
-                  ? 'bg-amber-50 text-amber-700'
-                  : 'bg-rose-50 text-rose-700';
+                  ? 'border border-border-subtle bg-surface text-text-secondary'
+                  : 'border border-border-subtle bg-surface text-text-secondary';
 
               return (
-                <div key={group.title} className={`rounded-2xl border p-5 ${toneClasses}`}>
+                <div key={group.title} className={`rounded-lg border p-5 ${toneClasses}`}>
                   <div className="flex items-center justify-between gap-3 mb-3">
                     <h3 className="font-semibold text-ink">{group.title}</h3>
                     <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ${badgeClasses}`}>{group.badge}</span>
@@ -403,14 +402,14 @@ export const Home: React.FC = () => {
           </div>
 
           <div className="mb-8 sticky top-20 z-10">
-            <div className="bg-white/90 backdrop-blur border border-border-subtle rounded-2xl p-2 overflow-x-auto">
+            <div className="bg-white/90 backdrop-blur border border-border-subtle rounded-lg p-2 overflow-x-auto">
               <div className="flex gap-2 min-w-max">
                 {featurePanels.map((feature) => (
                   <button
                     key={feature.id}
                     type="button"
                     onClick={() => focusFeature(feature.id)}
-                    className={`px-4 py-2.5 rounded-xl border text-sm font-semibold transition-all whitespace-nowrap ${selectedFeature === feature.id
+                    className={`px-4 py-2.5 rounded-lg border text-sm font-semibold transition-all whitespace-nowrap ${selectedFeature === feature.id
                       ? 'bg-brand text-paper border-brand shadow-sm'
                       : 'bg-white text-ink/80 border-border hover:border-brand/40 hover:bg-brand/5'}`}
                   >
@@ -450,13 +449,13 @@ export const Home: React.FC = () => {
                     ref={(el) => {
                       featureRefs.current[feature.id] = el;
                     }}
-                    className={`shrink-0 w-[90vw] sm:w-[82vw] md:w-[62vw] lg:w-[48vw] rounded-2xl border p-5 md:p-7 transition-all ${selectedFeature === feature.id
-                      ? 'bg-white border-brand/35 shadow-lg'
+                    className={`shrink-0 w-[90vw] sm:w-[82vw] md:w-[62vw] lg:w-[48vw] rounded-lg border p-5 md:p-7 transition-all ${selectedFeature === feature.id
+                      ? 'bg-white border-brand/35 shadow-sm'
                       : 'bg-white/80 border-border-subtle shadow-sm'}`}
                   >
                     <div className="flex items-start justify-between gap-4 mb-5">
                       <div className="flex items-center gap-3">
-                        <div className={`p-3 rounded-xl ${selectedFeature === feature.id ? 'bg-brand/12' : 'bg-brand/8'}`}>
+                        <div className={`p-3 rounded-lg ${selectedFeature === feature.id ? 'bg-brand/12' : 'bg-brand/8'}`}>
                           <Icon className="w-6 h-6 text-brand" />
                         </div>
                         <h3 className="text-[1.3rem] font-serif font-bold text-ink leading-snug updates-tight">{feature.title}</h3>
@@ -495,18 +494,18 @@ export const Home: React.FC = () => {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-5 md:p-6 mb-8">
-            <p className="text-xs uppercase tracking-wide text-amber-700 font-semibold">Adjacent, not carrying v1</p>
-            <h3 className="text-xl md:text-2xl font-serif font-bold text-ink mt-2">Post-wedding memory layers stay in the product direction bucket for now.</h3>
-            <p className="mt-3 max-w-3xl text-sm md:text-base text-ink/75">Archive mode, guest photo return paths, and name-change support can stay real without pretending they are the reason to trust DayOf first. The hard launch line is still {SITE_TRUST_COPY.launchStoryCore}.</p>
+          <div className="rounded-lg border border-border-subtle bg-surface p-5 md:p-6 mb-8">
+            <p className="text-sm text-ink/70 font-semibold">Nice extras, clearly framed</p>
+            <h3 className="text-xl md:text-2xl font-serif font-bold text-ink mt-2">After the wedding, memories can keep unfolding at their own pace.</h3>
+            <p className="mt-3 max-w-3xl text-sm md:text-base text-ink/75">Archive mode, guest photo returns, and name-change support are helpful additions. The heart of dayof is still {SITE_TRUST_COPY.launchStoryCore}.</p>
           </div>
 
           <SlideReveal from="right" className="text-center">
             <Link
               to={user ? '/dashboard/planning' : '/product'}
-              className="group inline-flex items-center justify-center gap-2 px-6 py-3 border-2 border-brand text-brand font-semibold rounded-2xl hover:bg-brand/5 transition-all active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+              className="group inline-flex items-center justify-center gap-2 px-6 py-3 border-2 border-brand text-brand font-semibold rounded-lg hover:bg-brand/5 transition-all active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
             >
-              {user ? 'Open planner workspace' : 'See full product tour'}
+              {user ? 'Open planner space' : 'See full product tour'}
               <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
             </Link>
           </SlideReveal>
@@ -526,9 +525,9 @@ export const Home: React.FC = () => {
           </div>
 
           <div className="max-w-lg mx-auto mb-14">
-            <div className="bg-white border border-brand/25 rounded-2xl p-7 shadow-[0_1px_2px_rgba(15,23,42,0.06)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)] transition-shadow duration-200">
+            <div className="bg-white border border-brand/25 rounded-lg p-7 shadow-sm hover:shadow-sm transition-shadow duration-200">
               <div className="text-center mb-7">
-                <h3 className="text-[1.5rem] font-serif font-bold text-ink mb-6 leading-[1.2] updates-tight">Core wedding site + ops</h3>
+                <h3 className="text-[1.5rem] font-serif font-bold text-ink mb-6 leading-[1.2] updates-tight">Core wedding site + planning</h3>
                 <div className="mb-5">
                   <div className="flex items-baseline justify-center gap-2">
                     <span className="text-[4.5rem] font-bold text-brand leading-[1] updates-tight">$49</span>
@@ -554,7 +553,7 @@ export const Home: React.FC = () => {
                   'Guest export tools',
                 ].map((item, idx) => (
                   <li key={idx} className="flex items-start gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                    <CheckCircle2 className="w-5 h-5 text-brand mt-0.5 flex-shrink-0" />
                     <span className="text-[0.9375rem] text-ink/75 leading-relaxed">{item}</span>
                   </li>
                 ))}
@@ -562,7 +561,7 @@ export const Home: React.FC = () => {
 
               <div className="space-y-3">
                 <button
-                  className="w-full px-6 py-4 text-[1.0625rem] bg-brand text-paper font-semibold rounded-xl hover:bg-brand/90 transition-all shadow-sm hover:shadow-md active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2"
+                  className="w-full px-6 py-4 text-[1.0625rem] bg-brand text-paper font-semibold rounded-lg hover:bg-brand/90 transition-all shadow-sm active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2"
                   onClick={handleSignUp}
                   aria-label={user ? 'Review your wedding site draft' : 'Start your wedding site draft'}
                 >
@@ -571,7 +570,7 @@ export const Home: React.FC = () => {
                 <button
                   onClick={user ? () => navigate('/dashboard/messages') : handleDemoLogin}
                   disabled={demoLoading}
-                  className="inline-flex items-center justify-center gap-2 w-full px-6 py-3 text-center border-2 border-brand/40 text-brand font-medium rounded-xl hover:bg-brand/5 hover:border-brand transition-all active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-wait"
+                  className="inline-flex items-center justify-center gap-2 w-full px-6 py-3 text-center border-2 border-brand/40 text-brand font-medium rounded-lg hover:bg-brand/5 hover:border-brand transition-all active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-wait"
                 >
                   {demoLoading && (
                     <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
@@ -584,10 +583,10 @@ export const Home: React.FC = () => {
               </div>
 
               <div className="mt-5 pt-5 border-t border-border-subtle space-y-2">
-                <p className="text-[0.8125rem] text-ink/55 text-center updates-wide leading-loose">
+                <p className="text-[0.8125rem] text-ink/55 text-center leading-loose">
                   Taxes may apply depending on location.
                 </p>
-                <p className="text-[0.8125rem] text-ink/55 text-center updates-wide leading-loose">
+                <p className="text-[0.8125rem] text-ink/55 text-center leading-loose">
                   After 2 years: site remains readable. You'll get the option to renew.
                 </p>
               </div>
@@ -620,7 +619,7 @@ export const Home: React.FC = () => {
                 },
                 {
                   q: 'Can I export my data?',
-                  a: 'Yes. DayOf supports export paths for core wedding data like guest information, RSVP records, and other practical planning data. Exact export shape depends on the part of the product, so we keep the promise tied to what couples actually need rather than pretending every surface has the same export contract.',
+                  a: 'Yes. dayof supports export paths for core wedding data like guest information, RSVP records, and other practical planning data. Exact export shape depends on the part of the product, so we keep the promise tied to what couples actually need rather than pretending every surface has the same export contract.',
                 },
                 {
                   q: 'What happens after 2 years?',
@@ -633,7 +632,7 @@ export const Home: React.FC = () => {
               ].map((faq, idx) => (
                 <div
                   key={idx}
-                  className="bg-paper border border-brand/20 rounded-2xl p-5 cursor-pointer hover:border-brand/40 transition-all"
+                  className="bg-paper border border-brand/20 rounded-lg p-5 cursor-pointer hover:border-brand/40 transition-all"
                   onClick={() => setExpandedFaq(expandedFaq === idx ? null : idx)}
                   role="button"
                   tabIndex={0}

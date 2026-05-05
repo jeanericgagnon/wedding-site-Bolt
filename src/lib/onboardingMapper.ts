@@ -56,9 +56,9 @@ export function buildOnboardingUpdateData(input: OnboardingMapperInput): Record<
     receptionTime: input.receptionTime,
   });
   const normalizedStory = recovered.story;
-  const normalizedAttire = input.attire?.trim() || 'Dress code details will be shared here closer to the wedding.';
-  const normalizedHotelRecommendations = input.hotelRecommendations?.trim() || (input.location?.trim() ? `Recommended places to stay near ${input.location.trim()} will be shared here.` : 'Recommended places to stay will be shared here.');
-  const normalizedParking = input.parking?.trim() || 'Parking details and arrival notes will be shared here closer to the wedding.';
+  const normalizedAttire = input.attire?.trim() || 'Dress code details are coming together.';
+  const normalizedHotelRecommendations = input.hotelRecommendations?.trim() || (input.location?.trim() ? `We will add recommended places to stay near ${input.location.trim()}.` : 'We will add recommended places to stay.');
+  const normalizedParking = input.parking?.trim() || 'Parking details and arrival notes are coming together.';
   const useCasePacks = Array.from(new Set([
     ...((input.useCasePacks ?? []).filter(Boolean)),
     /destination|travel|coastal/.test((input.template ?? '').toLowerCase()) ? 'destination' : null,

@@ -14,14 +14,14 @@ const NON_BLOCKING_PUBLISH_COPY = new Set([
   'latest edits are saved',
   'everything is saved',
   'all changes saved',
-  'ready to go live',
+  'ready to share',
   'no checks yet',
   'draft only',
   'live site unchanged',
   'live site unchanged - you have new draft edits',
   'live site is up to date',
   'guest-facing site',
-  'go live',
+  'share site',
   'update guest-facing site',
 ]);
 
@@ -45,7 +45,7 @@ const isNonBlockingPublishCopy = (normalizedErrorLower: string): boolean => {
   if (/^.+ has visible sections$/.test(normalizedStatusCopy)) return true;
   if (/^\d+ sections? visible$/.test(normalizedStatusCopy)) return true;
   if (/^\d+ pages? ready$/.test(normalizedStatusCopy)) return true;
-  if (/^\d+ things? left before guest-facing launch$/.test(normalizedStatusCopy)) return true;
+  if (/^\d+ things? left before sharing with guests$/.test(normalizedStatusCopy)) return true;
   if (/^draft has unsaved changes$/.test(normalizedStatusCopy)) return true;
   if (/^live site unchanged(?: — you have new draft edits)?$/.test(normalizedStatusCopy)) return true;
   if (/^guest-facing site$/.test(normalizedStatusCopy)) return true;
@@ -57,7 +57,7 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
   const normalizedError = publishValidationError.trim();
   const normalizedErrorLower = normalizePublishErrorForMatch(normalizedError);
   if (isNonBlockingPublishCopy(normalizedErrorLower)) {
-    return ['Use Fix next to move through the last blockers before the guest-facing launch.'];
+    return ['Use Fix next to move through the last blockers before sharing with guests.'];
   }
   if (
     normalizedErrorLower.includes('add at least one page')
@@ -78,7 +78,7 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
   ) {
     return [
       'Select a section on the canvas.',
-      'Turn it on in the right panel, then save and go live again.',
+      'Turn it on in the right panel, then save and try again.',
     ];
   }
   if (
@@ -112,12 +112,12 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
     || normalizedErrorLower.includes('choose your wedding date')
     || normalizedErrorLower.includes('choose your event date')
     || normalizedErrorLower.includes('choose your date')
-    || normalizedErrorLower.includes('wedding date before going live')
-    || normalizedErrorLower.includes('event date before going live')
+    || normalizedErrorLower.includes('wedding date before sharing with guests')
+    || normalizedErrorLower.includes('event date before sharing with guests')
   ) {
     return [
       'Open event details.',
-      'Add your wedding date before going live.',
+      'Add your wedding date before sharing with guests.',
     ];
   }
   if (
@@ -136,8 +136,8 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
     ];
   }
   if (
-    normalizedErrorLower.includes('save your latest draft changes before going live')
-    || normalizedErrorLower.includes('save your latest changes before going live')
+    normalizedErrorLower.includes('save your latest draft changes before sharing with guests')
+    || normalizedErrorLower.includes('save your latest changes before sharing with guests')
   ) {
     return [
       'Save your draft before trying again.',
@@ -149,15 +149,15 @@ export const getPublishBlockedHints = (publishValidationError?: string | null): 
     || normalizedErrorLower.includes('turn rsvp on')
   ) {
     return [
-      'Turn RSVP back on before going live.',
+      'Turn RSVP back on before sharing with guests.',
       'If you are not collecting replies yet, remove RSVP calls to action first.',
     ];
   }
-  return ['Use Fix next to move through the last blockers before the guest-facing launch.'];
+  return ['Use Fix next to move through the last blockers before sharing with guests.'];
 };
 
 export const getPublishCtaLabel = (isPublished: boolean): string =>
-  isPublished ? 'Update guest-facing site' : 'Go live';
+  isPublished ? 'Update guest-facing site' : 'Share site';
 
 export const getPublishStatusLabel = (isPublished: boolean, hasUnsavedChanges: boolean): string => {
   if (!isPublished && hasUnsavedChanges) return 'Draft has unsaved changes';
@@ -174,10 +174,10 @@ export const getPublishProgressLabel = (done: number, total: number): string => 
   const normalizedDone = Number.isFinite(done)
     ? Math.min(normalizedTotal, Math.max(0, Math.floor(done)))
     : 0;
-  if (normalizedDone >= normalizedTotal) return 'Ready to go live';
+  if (normalizedDone >= normalizedTotal) return 'Ready to share';
 
   const remaining = normalizedTotal - normalizedDone;
-  return `${remaining} thing${remaining === 1 ? '' : 's'} left before guest-facing launch`;
+  return `${remaining} thing${remaining === 1 ? '' : 's'} left before sharing with guests`;
 };
 
 export const shouldAutoPublishFromSearch = (search: string): boolean => {

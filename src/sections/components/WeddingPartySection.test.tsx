@@ -9,6 +9,7 @@ function createWeddingData(): WeddingDataV1 {
   return {
     couple: { partner1: '', partner2: '', displayName: '', partner1Name: 'Alex', partner2Name: 'Jordan' },
     event: { date: '', venue: '', location: '' },
+    venues: [],
     story: { proposalStory: '', howWeMet: '' },
     schedule: [],
     travel: { accommodations: [], transportation: [], airports: [] },
@@ -23,6 +24,7 @@ function createWeddingData(): WeddingDataV1 {
     design: { template: 'classic-romance', colorScheme: 'soft-blush', fontPairing: 'elegant-serif' },
     customSections: [],
     media: { gallery: [] },
+    meta: { createdAtISO: '', updatedAtISO: '' },
   };
 }
 
@@ -75,5 +77,21 @@ describe('WeddingPartySection', () => {
     );
 
     expect(screen.getByText('Party lineup')).toBeInTheDocument();
+  });
+
+  it('drops unsafe member photo values before legacy public render', () => {
+    const { container } = render(
+      <WeddingPartySection
+        data={createWeddingData()}
+        instance={makeInstance({
+          bridalParty: [{ name: 'Sam', role: 'Maid of Honor', photo: 'javascript:alert(1)' }],
+          groomParty: [],
+        })}
+      />,
+    );
+
+    expect(container.querySelector('img')).not.toBeInTheDocument();
+    expect(container.innerHTML).not.toContain('javascript:alert');
+    expect(screen.getByText('S')).toBeInTheDocument();
   });
 });

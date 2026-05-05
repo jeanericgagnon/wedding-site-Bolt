@@ -56,6 +56,60 @@ describe('HeroSection', () => {
     expect(image.src).toContain('https://example.com/fallback-hero.jpg');
   });
 
+  it('uses the warm default wedding image when no hero media exists yet', () => {
+    const data = createEmptyWeddingData();
+    data.couple.displayName = 'Alex & Jordan';
+
+    render(
+      <HeroSection
+        data={data}
+        instance={makeInstance({
+          headline: 'Alex & Jordan',
+        })}
+      />
+    );
+
+    const image = screen.getByAltText('Hero') as HTMLImageElement;
+    expect(image.src).toContain('/preview-photos/header-anchor.jpg');
+  });
+
+  it('treats fractional overlay opacity as a usable image opacity', () => {
+    const data = createEmptyWeddingData();
+    data.couple.displayName = 'Alex & Jordan';
+
+    render(
+      <HeroSection
+        data={data}
+        instance={makeInstance({
+          headline: 'Alex & Jordan',
+          heroImageUrl: 'https://example.com/section-hero.jpg',
+          overlayOpacity: 0.35,
+        })}
+      />
+    );
+
+    const image = screen.getByAltText('Hero') as HTMLImageElement;
+    expect(image.style.opacity).toBe('0.35');
+  });
+
+  it('drops unsafe hero image values before legacy public render', () => {
+    const data = createEmptyWeddingData();
+    data.couple.displayName = 'Alex & Jordan';
+
+    const { container } = render(
+      <HeroSection
+        data={data}
+        instance={makeInstance({
+          headline: 'Alex & Jordan',
+          heroImageUrl: 'javascript:alert(1)',
+        })}
+      />
+    );
+
+    expect(container.querySelector('img')).not.toBeInTheDocument();
+    expect(container.innerHTML).not.toContain('javascript:alert');
+  });
+
   it('falls back to a truthful hero display name when couple names are missing', () => {
     const data = createEmptyWeddingData();
 

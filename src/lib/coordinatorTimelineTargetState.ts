@@ -20,11 +20,11 @@ export const getCoordinatorTimelineTargetState = ({
     activeTimelineEventId,
     isBoardTargetActive,
     label: isBoardTargetActive
-      ? 'Working board event'
+      ? 'Suggested event in progress'
       : boardTargetId
-        ? 'Board event available'
+        ? 'Suggested event waiting'
         : activeTimelineEventId
-          ? 'Working custom event'
+          ? 'Selected event in progress'
           : null,
   };
 };

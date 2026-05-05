@@ -60,7 +60,7 @@ describe('name change courtesy execution snapshot', () => {
     expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'courtesy-identity-support')).toMatchObject({ status: 'satisfied' });
   });
 
-  it('stays mostly lightweight when no downstream admin lane has started yet', () => {
+  it('stays mostly lightweight when no related account step has started yet', () => {
     const snapshot = buildNameChangeCourtesyExecutionSnapshot(makeCase(), [], []);
     expect(snapshot.ready).toBe(true);
     expect(snapshot.sequence.dependencies.find((dependency) => dependency.key === 'banks-or-utilities-progress')).toMatchObject({ status: 'missing' });

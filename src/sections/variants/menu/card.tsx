@@ -2,6 +2,7 @@ import React from 'react';
 import { z } from 'zod';
 import { Utensils, Leaf, Wine } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
+import { getSafePublicImageUrl } from '../../publicLinks';
 
 const MenuItemSchema = z.object({
   id: z.string(),
@@ -25,6 +26,7 @@ export const menuCardSchema = z.object({
   showDietaryKey: z.boolean().default(true),
   backgroundImage: z.string().default(''),
   sections: z.array(MenuSectionSchema).default([]),
+  layoutStyle: z.enum(['card', 'cocktailDinner']).default('card'),
 });
 
 export type MenuCardData = z.infer<typeof menuCardSchema>;
@@ -35,7 +37,8 @@ export const defaultMenuCardData: MenuCardData = {
   subtitle: 'Join us for an exceptional culinary experience as we celebrate our special day.',
   note: 'Dietary requirements can be noted on your RSVP.',
   showDietaryKey: true,
-  backgroundImage: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=1200',
+  backgroundImage: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1600&q=85',
+  layoutStyle: 'card',
   sections: [
     {
       id: '1',
@@ -77,18 +80,58 @@ const DIETARY_LABELS: Record<string, string> = {
 const iconMap = { utensils: Utensils, wine: Wine, leaf: Leaf };
 
 const MenuCard: React.FC<SectionComponentProps<MenuCardData>> = ({ data }) => {
+  const backgroundImage = getSafePublicImageUrl(data.backgroundImage);
+
+  if (data.layoutStyle === 'cocktailDinner') {
+    const cocktailSections = data.sections.filter((section) => /cocktail|start|hour|drink|wine/i.test(section.label));
+    const dinnerSections = data.sections.filter((section) => !cocktailSections.some((candidate) => candidate.id === section.id));
+    const columns = [
+      { label: 'Cocktail hour', sections: cocktailSections.length ? cocktailSections : data.sections.slice(0, 1) },
+      { label: 'Dinner service', sections: dinnerSections.length ? dinnerSections : data.sections.slice(1) },
+    ];
+
+    return (
+      <section className="relative overflow-hidden py-28 md:py-36 bg-stone-950" id="menu">
+        {backgroundImage && <div className="absolute inset-0 bg-cover bg-center opacity-20" style={{ backgroundImage: `url("${backgroundImage}")` }} />}
+        <div className="relative max-w-6xl mx-auto px-6 md:px-12">
+          <div className="text-center mb-14">
+            {data.eyebrow && <p className="text-sm text-white/45 font-light mb-4">{data.eyebrow}</p>}
+            <h2 className="text-4xl md:text-6xl font-light text-white">{data.headline}</h2>
+            {data.subtitle && <p className="mt-4 text-white/60">{data.subtitle}</p>}
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {columns.map((column) => (
+              <div key={column.label} className="rounded-[2rem] border border-white/10 bg-white/[0.08] p-6 md:p-8 backdrop-blur">
+                <p className="text-sm text-white/45 mb-6">{column.label}</p>
+                <div className="space-y-8">
+                  {column.sections.flatMap((section) => section.items).map((item) => (
+                    <div key={item.id} className="border-b border-white/10 pb-5 last:border-0 last:pb-0">
+                      <h3 className="font-medium text-white">{item.name}</h3>
+                      {item.description && <p className="mt-1 text-sm leading-relaxed text-white/55">{item.description}</p>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          {data.note && <p className="mt-8 text-center text-sm italic text-white/45">{data.note}</p>}
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="relative overflow-hidden py-28 md:py-36 bg-stone-900" id="menu">
-      {data.backgroundImage && (
+      {backgroundImage && (
         <div
           className="absolute inset-0 opacity-30 bg-cover bg-center"
-          style={{ backgroundImage: `url(${data.backgroundImage})` }}
+          style={{ backgroundImage: `url("${backgroundImage}")` }}
         />
       )}
       <div className="relative max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-16">
           {data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.25em] text-stone-300 font-medium mb-4">{data.eyebrow}</p>
+            <p className="text-sm text-stone-300 font-light mb-4">{data.eyebrow}</p>
           )}
           <h2 className="text-4xl md:text-5xl font-light text-white">{data.headline}</h2>
           {data.subtitle && (
@@ -105,7 +148,7 @@ const MenuCard: React.FC<SectionComponentProps<MenuCardData>> = ({ data }) => {
                   <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center">
                     <Icon size={14} className="text-stone-500" />
                   </div>
-                  <h3 className="text-stone-900 font-medium tracking-wide text-sm uppercase">{sec.label}</h3>
+                  <h3 className="text-stone-900 font-medium text-sm">{sec.label}</h3>
                 </div>
                 <div className="space-y-5">
                   {sec.items.map(item => (
@@ -154,5 +197,13 @@ export const menuCardDefinition: SectionDefinition<MenuCardData> = {
   variant: 'card',
   schema: menuCardSchema,
   defaultData: defaultMenuCardData,
+  Component: MenuCard,
+};
+
+export const menuCocktailDinnerDefinition: SectionDefinition<MenuCardData> = {
+  type: 'menu',
+  variant: 'cocktailDinner',
+  schema: menuCardSchema,
+  defaultData: { ...defaultMenuCardData, layoutStyle: 'cocktailDinner' },
   Component: MenuCard,
 };

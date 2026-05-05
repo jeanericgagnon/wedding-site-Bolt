@@ -2,6 +2,7 @@ import React from 'react';
 import { z } from 'zod';
 import { MapPin, ExternalLink } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
+import { getSafePublicWebUrl } from '../../publicLinks';
 
 const CompactHotelSchema = z.object({
   id: z.string(),
@@ -38,7 +39,7 @@ const TravelCompact: React.FC<SectionComponentProps<TravelCompactData>> = ({ dat
     <section className="py-16 md:py-20 bg-white" id="travel">
       <div className="max-w-4xl mx-auto px-5 md:px-8">
         <div className="text-center mb-8 md:mb-10">
-          <p className="text-xs uppercase tracking-[0.22em] text-text-tertiary mb-2.5">{data.eyebrow}</p>
+          <p className="text-sm text-text-tertiary mb-2.5">{data.eyebrow}</p>
           <h2 className="text-3xl md:text-4xl font-light text-text-primary">{data.headline}</h2>
           {data.intro ? <p className="mt-2.5 text-sm text-text-secondary">{data.intro}</p> : null}
         </div>
@@ -54,21 +55,24 @@ const TravelCompact: React.FC<SectionComponentProps<TravelCompactData>> = ({ dat
 
           {data.hotels.length > 0 ? (
             <div className="pt-1.5">
-              <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary mb-2">Nearby hotels</p>
+              <p className="text-sm text-text-tertiary mb-2">Nearby hotels</p>
               <ul className="space-y-2">
-                {data.hotels.map((hotel) => (
+                {data.hotels.map((hotel) => {
+                  const safeHotelUrl = getSafePublicWebUrl(hotel.url);
+                  return (
                   <li key={hotel.id} className="flex items-center justify-between gap-3 rounded-lg border border-border/35 bg-white px-3 py-2">
                     <div>
                       <p className="text-sm text-text-primary">{hotel.name}</p>
                       {hotel.distance ? <p className="text-xs text-text-secondary">{hotel.distance}</p> : null}
                     </div>
-                    {hotel.url ? (
-                      <a href={hotel.url} target="_blank" rel="noopener noreferrer" className="text-text-tertiary hover:text-primary">
+                    {safeHotelUrl ? (
+                      <a href={safeHotelUrl} target="_blank" rel="noopener noreferrer" className="text-text-tertiary hover:text-primary">
                         <ExternalLink className="w-3.5 h-3.5" />
                       </a>
                     ) : null}
                   </li>
-                ))}
+                  );
+                })}
               </ul>
             </div>
           ) : null}

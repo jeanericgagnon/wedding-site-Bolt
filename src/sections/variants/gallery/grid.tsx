@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { z } from 'zod';
 import { X, ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
+import { sanitizePublicGalleryImages, type PublicGalleryImage } from './publicGallery';
 
 const GalleryImageSchema = z.object({
   id: z.string(),
@@ -68,7 +69,7 @@ const ASPECT_CLASS: Record<string, string> = {
 };
 
 const AnimatedImage: React.FC<{
-  image: GalleryGridData['images'][number];
+  image: PublicGalleryImage;
   idx: number;
   animation: string;
   aspectClass: string;
@@ -120,6 +121,7 @@ const AnimatedImage: React.FC<{
 
 const GalleryGrid: React.FC<SectionComponentProps<GalleryGridData>> = ({ data }) => {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const images = sanitizePublicGalleryImages(data.images);
 
   const colClass = {
     '2': 'grid-cols-2',
@@ -130,8 +132,8 @@ const GalleryGrid: React.FC<SectionComponentProps<GalleryGridData>> = ({ data })
   const aspectClass = ASPECT_CLASS[data.aspectRatio] ?? 'aspect-square';
 
   const closeLightbox = () => setLightboxIndex(null);
-  const prevImage = () => setLightboxIndex(i => i === null ? null : (i - 1 + data.images.length) % data.images.length);
-  const nextImage = () => setLightboxIndex(i => i === null ? null : (i + 1) % data.images.length);
+  const prevImage = () => setLightboxIndex(i => i === null ? null : (i - 1 + images.length) % images.length);
+  const nextImage = () => setLightboxIndex(i => i === null ? null : (i + 1) % images.length);
 
   useEffect(() => {
     if (lightboxIndex === null) return;
@@ -149,14 +151,14 @@ const GalleryGrid: React.FC<SectionComponentProps<GalleryGridData>> = ({ data })
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-14">
           {data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">{data.eyebrow}</p>
+            <p className="text-sm text-stone-400 font-light mb-4">{data.eyebrow}</p>
           )}
-          <h2 className="text-4xl md:text-6xl font-light text-stone-900 tracking-tight">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-stone-900">{data.headline}</h2>
         </div>
 
-        {data.images.length > 0 ? (
+        {images.length > 0 ? (
           <div className={`grid ${colClass} gap-3 md:gap-4`}>
-            {data.images.map((image, idx) => (
+            {images.map((image, idx) => (
               <AnimatedImage
                 key={image.id}
                 image={image}
@@ -171,7 +173,7 @@ const GalleryGrid: React.FC<SectionComponentProps<GalleryGridData>> = ({ data })
           </div>
         ) : (
           <div className="text-center py-20 text-stone-400">
-            <p className="text-sm">No photos yet</p>
+            <p className="text-sm">Photos will appear once they’re added.</p>
           </div>
         )}
       </div>
@@ -195,12 +197,12 @@ const GalleryGrid: React.FC<SectionComponentProps<GalleryGridData>> = ({ data })
           </button>
           <div className="max-w-5xl max-h-[85vh] px-16" onClick={e => e.stopPropagation()}>
             <img
-              src={data.images[lightboxIndex].url}
-              alt={data.images[lightboxIndex].alt}
+              src={images[lightboxIndex]?.url}
+              alt={images[lightboxIndex]?.alt ?? 'Gallery photo'}
               className="max-w-full max-h-[85vh] object-contain rounded-lg"
             />
-            {data.showCaptions && data.images[lightboxIndex].caption && (
-              <p className="text-white/70 text-sm text-center mt-3">{data.images[lightboxIndex].caption}</p>
+            {data.showCaptions && images[lightboxIndex]?.caption && (
+              <p className="text-white/70 text-sm text-center mt-3">{images[lightboxIndex]?.caption}</p>
             )}
           </div>
           <button
@@ -210,7 +212,7 @@ const GalleryGrid: React.FC<SectionComponentProps<GalleryGridData>> = ({ data })
             <ChevronRight size={20} />
           </button>
           <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/40 text-xs">
-            {lightboxIndex + 1} / {data.images.length}
+            {lightboxIndex + 1} / {images.length}
           </p>
         </div>
       )}

@@ -19,7 +19,6 @@
 -- Fix 1: event_rsvps public UPDATE — only allow update if the invitation exists
 -- (anon cannot update arbitrary RSVPs; they can only update if they know the invitation_id)
 DROP POLICY IF EXISTS "Public can update event RSVPs" ON event_rsvps;
-
 CREATE POLICY "Public can update event RSVPs via valid invitation"
   ON event_rsvps FOR UPDATE
   TO anon
@@ -29,10 +28,8 @@ CREATE POLICY "Public can update event RSVPs via valid invitation"
   WITH CHECK (
     event_invitation_id IN (SELECT id FROM event_invitations)
   );
-
 -- Fix 2: rsvps public SELECT — restrict to token-verified guest context
 DROP POLICY IF EXISTS "Public can view RSVP by guest_id" ON rsvps;
-
 CREATE POLICY "Public can view RSVP via invite token"
   ON rsvps FOR SELECT
   TO anon

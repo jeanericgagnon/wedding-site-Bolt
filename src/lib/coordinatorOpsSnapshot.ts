@@ -110,7 +110,7 @@ export const buildCoordinatorOpsSnapshot = ({
   const alerting: CoordinatorOpsSnapshotItem = locked
     ? {
         key: 'alerting',
-        title: 'Alerting',
+        title: 'Updates',
         detail: 'Viewer access can review the day-of message lane but cannot send updates.',
         cta: 'Review message lane',
         tone: 'neutral',
@@ -119,17 +119,17 @@ export const buildCoordinatorOpsSnapshot = ({
     : preferredAlertLabel
       ? {
           key: 'alerting',
-          title: 'Alerting',
+          title: 'Updates',
           detail: alertAligned
             ? `${preferredAlertLabel} is ready in the day-of message lane.`
             : `${preferredAlertLabel} is recommended, but the draft is currently customized.`,
-          cta: alertAligned ? 'Send board update' : 'Re-align alert draft',
+          cta: alertAligned ? 'Review update' : 'Refresh update draft',
           tone: alertAligned ? 'success' : 'warning',
           locked: false,
         }
       : {
           key: 'alerting',
-          title: 'Alerting',
+          title: 'Updates',
           detail: canScheduleAlerts
             ? 'Use this lane for live updates or scheduled day-of follow-through.'
             : 'Use this lane for live updates; scheduled sends stay with planners and the couple.',

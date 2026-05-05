@@ -1,6 +1,22 @@
 import { SectionDefinition, parseSectionData } from './types';
-import { heroFullBleedDefinition } from './variants/hero/fullBleed';
-import { storyTwoColumnDefinition } from './variants/story/twoColumn';
+import {
+  heroBotanicalDefinition,
+  heroCountdownDefinition,
+  heroFullBleedDefinition,
+  heroInvitationDefinition,
+  heroMinimalDefinition,
+  heroSplitDefinition,
+  heroVideoDefinition,
+} from './variants/hero/fullBleed';
+import {
+  storyCenteredDefinition,
+  storyChaptersDefinition,
+  storyDuoColumnDefinition,
+  storyMilestonesDefinition,
+  storySplitDefinition,
+  storyTimelineDefinition,
+  storyTwoColumnDefinition,
+} from './variants/story/twoColumn';
 import { venueCardDefinition } from './variants/venue/card';
 import { venueMapFirstDefinition } from './variants/venue/mapFirst';
 import { venueSplitMapDefinition } from './variants/venue/splitMap';
@@ -18,8 +34,23 @@ import { travelMapPinsDefinition } from './variants/travel/mapPins';
 import { travelSplitAirHotelDefinition } from './variants/travel/splitAirHotel';
 import { registryCardsDefinition } from './variants/registry/cards';
 import { registryFeaturedDefinition } from './variants/registry/featured';
-import { faqAccordionDefinition } from './variants/faq/accordion';
-import { rsvpMultiEventDefinition } from './variants/rsvp/multiEvent';
+import {
+  faqAccordionDefinition,
+  faqChatDefinition,
+  faqDefaultDefinition,
+  faqIconGridDefinition,
+  faqNumberedDefinition,
+  faqTabbedDefinition,
+  faqTwoColumnDefinition,
+} from './variants/faq/accordion';
+import {
+  rsvpCardDefinition,
+  rsvpDefaultDefinition,
+  rsvpFormalDefinition,
+  rsvpIllustratedDefinition,
+  rsvpInlineDefinition,
+  rsvpMultiEventDefinition,
+} from './variants/rsvp/multiEvent';
 import { galleryMasonryDefinition } from './variants/gallery/masonry';
 import { galleryGridDefinition } from './variants/gallery/grid';
 import { galleryFilmStripDefinition } from './variants/gallery/filmStrip';
@@ -28,32 +59,64 @@ import { galleryCarouselDefinition } from './variants/gallery/carousel';
 import { gallerySpotlightDefinition } from './variants/gallery/spotlight';
 import { galleryMosaicDefinition } from './variants/gallery/mosaic';
 import { galleryCategorizedDefinition } from './variants/gallery/categorized';
-import { countdownSimpleDefinition } from './variants/countdown/simple';
+import {
+  countdownBannerDefinition,
+  countdownDarkDefinition,
+  countdownFloatingDefinition,
+  countdownMinimalDefinition,
+  countdownPhotoDefinition,
+  countdownProgressDefinition,
+  countdownRingsDefinition,
+  countdownSimpleDefinition,
+} from './variants/countdown/simple';
 import { weddingPartyGridDefinition } from './variants/weddingParty/grid';
 import { weddingPartyStoryBiosDefinition } from './variants/weddingParty/storyBios';
 import { weddingPartyMinimalDefinition } from './variants/weddingParty/minimal';
 import { weddingPartySplitSidesDefinition } from './variants/weddingParty/splitSides';
 import { weddingPartyScrollDefinition } from './variants/weddingParty/scroll';
-import { dressCodeMoodBoardDefinition } from './variants/dressCode/moodBoard';
-import { accommodationsCardsDefinition } from './variants/accommodations/cards';
+import {
+  dressCodeBannerDefinition,
+  dressCodeCardDefinition,
+  dressCodeIllustratedDefinition,
+  dressCodeMoodBoardDefinition,
+  dressCodePaletteDefinition,
+  dressCodeScaleDefinition,
+} from './variants/dressCode/moodBoard';
+import {
+  accommodationsCardsDefinition,
+  accommodationsFaqStyleDefinition,
+  accommodationsFeaturedDefinition,
+  accommodationsListDefinition,
+  accommodationsMapListDefinition,
+  accommodationsOnSiteDefinition,
+} from './variants/accommodations/cards';
 import { contactFormDefinition } from './variants/contact/form';
 import { contactInteractiveHubDefinition } from './variants/contact/interactiveHub';
-import { footerCtaRsvpPushDefinition } from './variants/footerCta/rsvpPush';
+import {
+  footerCtaCountdownDefinition,
+  footerCtaDefaultDefinition,
+  footerCtaHashtagDefinition,
+  footerCtaMinimalDefinition,
+  footerCtaMonogramDefinition,
+  footerCtaPhotoDefinition,
+  footerCtaRsvpPushDefinition,
+} from './variants/footerCta/rsvpPush';
 import { customSectionDefinition } from './variants/custom/customSection';
 import { quotesCarouselDefinition } from './variants/quotes/carousel';
 import { quotesGridDefinition } from './variants/quotes/grid';
 import { quotesFeaturedDefinition } from './variants/quotes/featured';
 import { quotesGuestbookDefinition } from './variants/quotes/guestbook';
 import { menuTabsDefinition } from './variants/menu/tabs';
-import { menuCardDefinition } from './variants/menu/card';
-import { menuSimpleDefinition } from './variants/menu/simple';
+import { menuCardDefinition, menuCocktailDinnerDefinition } from './variants/menu/card';
+import { menuIllustratedDefinition, menuPrintedDefinition, menuSimpleDefinition } from './variants/menu/simple';
 import { musicPlaylistDefinition } from './variants/music/playlist';
 import { musicSetlistDefinition } from './variants/music/setlist';
 import { musicCompactDefinition } from './variants/music/compact';
+import { musicRequestFormDefinition } from './variants/music/requestForm';
 import { directionsPinDefinition } from './variants/directions/pin';
 import { directionsSplitDefinition } from './variants/directions/split';
 import { directionsCardDefinition } from './variants/directions/card';
-import { videoFullDefinition } from './variants/video/full';
+import { videoBackgroundDefinition, videoFullDefinition, videoLightboxDefinition, videoReelDefinition } from './variants/video/full';
 import { videoCardDefinition } from './variants/video/card';
 import { videoInlineDefinition } from './variants/video/inline';
 
@@ -63,42 +126,53 @@ const SECTION_REGISTRY = new Map<RegistryKey, SectionDefinition<any>>();
 
 const VARIANT_FALLBACKS: Record<string, Record<string, string>> = {
   hero: {
+    default: 'fullBleed',
     editorial: 'fullBleed',
     artistic: 'fullBleed',
     fullscreen: 'fullBleed',
-    stacked: 'fullBleed',
-    split: 'fullBleed',
-    playful: 'fullBleed',
-    classic: 'fullBleed',
+    fullbleed: 'fullBleed',
+    stacked: 'invitation',
+    split: 'split',
+    playful: 'botanical',
+    classic: 'invitation',
     coastal: 'fullBleed',
-    garden: 'fullBleed',
-    centered: 'fullBleed',
-    modern: 'fullBleed',
-    luxury: 'fullBleed',
-    elegant: 'fullBleed',
-    minimal: 'fullBleed',
-    magazine: 'fullBleed',
-    bold: 'fullBleed',
+    garden: 'botanical',
+    centered: 'minimal',
+    modern: 'split',
+    luxury: 'split',
+    elegant: 'invitation',
+    minimal: 'minimal',
+    magazine: 'split',
+    bold: 'countdown',
     floating: 'fullBleed',
-    layered: 'fullBleed',
-    moody: 'fullBleed',
-    refined: 'fullBleed',
+    layered: 'split',
+    moody: 'video',
+    refined: 'invitation',
+    botanical: 'botanical',
+    invitation: 'invitation',
+    video: 'video',
+    countdown: 'countdown',
   },
   story: {
-    editorial: 'twoColumn',
-    cards: 'twoColumn',
+    default: 'twoColumn',
+    editorial: 'centered',
+    cards: 'chapters',
     classic: 'twoColumn',
-    modern: 'twoColumn',
-    playful: 'twoColumn',
-    luxury: 'twoColumn',
+    modern: 'split',
+    playful: 'milestones',
+    luxury: 'split',
     elegant: 'twoColumn',
-    split: 'twoColumn',
-    timeline: 'twoColumn',
-    compact: 'twoColumn',
-    minimal: 'twoColumn',
-    bold: 'twoColumn',
-    immersive: 'twoColumn',
-    magazine: 'twoColumn',
+    split: 'split',
+    timeline: 'timeline',
+    compact: 'centered',
+    minimal: 'centered',
+    bold: 'duoColumn',
+    immersive: 'chapters',
+    magazine: 'chapters',
+    centered: 'centered',
+    chapters: 'chapters',
+    duocolumn: 'duoColumn',
+    milestones: 'milestones',
   },
   gallery: {
     fullwidth: 'filmStrip',
@@ -150,16 +224,20 @@ const VARIANT_FALLBACKS: Record<string, Record<string, string>> = {
     program: 'timeline',
   },
   rsvp: {
+    default: 'default',
     form: 'multiEvent',
-    classic: 'multiEvent',
-    modern: 'multiEvent',
-    playful: 'multiEvent',
-    luxury: 'multiEvent',
+    classic: 'formal',
+    modern: 'inline',
+    playful: 'illustrated',
+    luxury: 'card',
     extended: 'multiEvent',
-    minimal: 'multiEvent',
-    bold: 'multiEvent',
-    elegant: 'multiEvent',
-    quick: 'multiEvent',
+    minimal: 'inline',
+    bold: 'card',
+    elegant: 'formal',
+    quick: 'inline',
+    card: 'card',
+    illustrated: 'illustrated',
+    formal: 'formal',
   },
   travel: {
     map: 'splitAirHotel',
@@ -172,32 +250,43 @@ const VARIANT_FALLBACKS: Record<string, Record<string, string>> = {
     split: 'splitAirHotel',
   },
   faq: {
-    grid: 'accordion',
+    default: 'default',
+    grid: 'iconGrid',
     categorized: 'accordion',
     luxury: 'accordion',
-    minimal: 'accordion',
-    modern: 'accordion',
-    playful: 'accordion',
-    tabbed: 'accordion',
+    minimal: 'default',
+    modern: 'twoColumn',
+    playful: 'chat',
+    tabbed: 'tabbed',
+    icongrid: 'iconGrid',
+    twocolumn: 'twoColumn',
+    chat: 'chat',
+    numbered: 'numbered',
   },
   footer: {
+    default: 'default',
     classic: 'rsvpPush',
-    elegant: 'rsvpPush',
-    modern: 'rsvpPush',
-    expanded: 'rsvpPush',
-    minimal: 'rsvpPush',
-    playful: 'rsvpPush',
-    luxury: 'rsvpPush',
+    elegant: 'monogram',
+    modern: 'minimal',
+    expanded: 'hashtag',
+    minimal: 'minimal',
+    playful: 'hashtag',
+    luxury: 'photo',
   },
   'footer-cta': {
+    default: 'default',
     classic: 'rsvpPush',
-    elegant: 'rsvpPush',
-    modern: 'rsvpPush',
-    expanded: 'rsvpPush',
-    minimal: 'rsvpPush',
-    playful: 'rsvpPush',
-    luxury: 'rsvpPush',
+    elegant: 'monogram',
+    modern: 'minimal',
+    expanded: 'hashtag',
+    minimal: 'minimal',
+    playful: 'hashtag',
+    luxury: 'photo',
     bold: 'rsvpPush',
+    monogram: 'monogram',
+    hashtag: 'hashtag',
+    photo: 'photo',
+    countdown: 'countdown',
   },
   directions: {
     illustrated: 'split',
@@ -220,18 +309,23 @@ const VARIANT_FALLBACKS: Record<string, Record<string, string>> = {
     playful: 'cards',
   },
   countdown: {
-    detailed: 'simple',
-    flip: 'simple',
-    elegant: 'simple',
-    playful: 'simple',
+    default: 'simple',
+    detailed: 'rings',
+    flip: 'rings',
+    elegant: 'photo',
+    playful: 'floating',
     classic: 'simple',
-    modern: 'simple',
-    luxury: 'simple',
-    bold: 'simple',
-    compact: 'simple',
-    floating: 'simple',
-    minimal: 'simple',
-    progress: 'simple',
+    modern: 'banner',
+    luxury: 'photo',
+    bold: 'dark',
+    compact: 'banner',
+    floating: 'floating',
+    minimal: 'minimal',
+    progress: 'progress',
+    banner: 'banner',
+    rings: 'rings',
+    dark: 'dark',
+    photo: 'photo',
   },
   'wedding-party': {
     luxury: 'grid',
@@ -247,20 +341,59 @@ const VARIANT_FALLBACKS: Record<string, Record<string, string>> = {
   },
   'dress-code': {
     cards: 'moodBoard',
-    classic: 'moodBoard',
-    creative: 'moodBoard',
-    elegant: 'moodBoard',
+    default: 'moodBoard',
+    classic: 'card',
+    creative: 'illustrated',
+    elegant: 'palette',
     luxury: 'moodBoard',
-    minimal: 'moodBoard',
-    modern: 'moodBoard',
-    playful: 'moodBoard',
+    minimal: 'banner',
+    modern: 'scale',
+    playful: 'illustrated',
+    banner: 'banner',
+    palette: 'palette',
+    illustrated: 'illustrated',
+    card: 'card',
+    scale: 'scale',
   },
   accommodations: {
-    showcase: 'cards',
+    default: 'list',
+    showcase: 'featured',
     classic: 'cards',
-    luxury: 'cards',
-    minimal: 'cards',
-    modern: 'cards',
+    luxury: 'featured',
+    minimal: 'list',
+    modern: 'mapList',
+    cards: 'cards',
+    featured: 'featured',
+    maplist: 'mapList',
+    faqstyle: 'faqStyle',
+    onsite: 'onSite',
+  },
+  menu: {
+    default: 'tabs',
+    tabs: 'tabs',
+    card: 'card',
+    cards: 'card',
+    simple: 'simple',
+    printed: 'printed',
+    cocktaildinner: 'cocktailDinner',
+    illustrated: 'illustrated',
+    modern: 'tabs',
+    classic: 'printed',
+    luxury: 'card',
+    playful: 'illustrated',
+  },
+  video: {
+    default: 'full',
+    full: 'full',
+    card: 'card',
+    cards: 'card',
+    inline: 'inline',
+    background: 'background',
+    lightbox: 'lightbox',
+    reel: 'reel',
+    modern: 'inline',
+    luxury: 'full',
+    playful: 'reel',
   },
 };
 
@@ -359,8 +492,39 @@ function registerDefinition<T>(def: SectionDefinition<T>): void {
   SECTION_REGISTRY.set(makeKey(def.type, def.variant), def as SectionDefinition<any>);
 }
 
+function cloneSectionDefinitionValue<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value.map((entry) => cloneSectionDefinitionValue(entry)) as T;
+  }
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, entry]) => [key, cloneSectionDefinitionValue(entry)]),
+    ) as T;
+  }
+  return value;
+}
+
+function cloneSectionDefinition<T>(def: SectionDefinition<T>): SectionDefinition<T> {
+  return {
+    ...def,
+    defaultData: cloneSectionDefinitionValue(def.defaultData),
+  };
+}
+
 registerDefinition(heroFullBleedDefinition);
+registerDefinition(heroMinimalDefinition);
+registerDefinition(heroSplitDefinition);
+registerDefinition(heroInvitationDefinition);
+registerDefinition(heroBotanicalDefinition);
+registerDefinition(heroCountdownDefinition);
+registerDefinition(heroVideoDefinition);
 registerDefinition(storyTwoColumnDefinition);
+registerDefinition(storyCenteredDefinition);
+registerDefinition(storySplitDefinition);
+registerDefinition(storyTimelineDefinition);
+registerDefinition(storyChaptersDefinition);
+registerDefinition(storyDuoColumnDefinition);
+registerDefinition(storyMilestonesDefinition);
 registerDefinition(venueCardDefinition);
 registerDefinition(venueMapFirstDefinition);
 registerDefinition(venueSplitMapDefinition);
@@ -379,7 +543,18 @@ registerDefinition(travelSplitAirHotelDefinition);
 registerDefinition(registryCardsDefinition);
 registerDefinition(registryFeaturedDefinition);
 registerDefinition(faqAccordionDefinition);
+registerDefinition(faqDefaultDefinition);
+registerDefinition(faqIconGridDefinition);
+registerDefinition(faqTwoColumnDefinition);
+registerDefinition(faqTabbedDefinition);
+registerDefinition(faqChatDefinition);
+registerDefinition(faqNumberedDefinition);
+registerDefinition(rsvpDefaultDefinition);
 registerDefinition(rsvpMultiEventDefinition);
+registerDefinition(rsvpInlineDefinition);
+registerDefinition(rsvpCardDefinition);
+registerDefinition(rsvpIllustratedDefinition);
+registerDefinition(rsvpFormalDefinition);
 registerDefinition(galleryMasonryDefinition);
 registerDefinition(galleryGridDefinition);
 registerDefinition(galleryFilmStripDefinition);
@@ -389,16 +564,39 @@ registerDefinition(gallerySpotlightDefinition);
 registerDefinition(galleryMosaicDefinition);
 registerDefinition(galleryCategorizedDefinition);
 registerDefinition(countdownSimpleDefinition);
+registerDefinition(countdownBannerDefinition);
+registerDefinition(countdownRingsDefinition);
+registerDefinition(countdownMinimalDefinition);
+registerDefinition(countdownDarkDefinition);
+registerDefinition(countdownPhotoDefinition);
+registerDefinition(countdownProgressDefinition);
+registerDefinition(countdownFloatingDefinition);
 registerDefinition(weddingPartyGridDefinition);
 registerDefinition(weddingPartyStoryBiosDefinition);
 registerDefinition(weddingPartyMinimalDefinition);
 registerDefinition(weddingPartySplitSidesDefinition);
 registerDefinition(weddingPartyScrollDefinition);
 registerDefinition(dressCodeMoodBoardDefinition);
+registerDefinition(dressCodeBannerDefinition);
+registerDefinition(dressCodePaletteDefinition);
+registerDefinition(dressCodeIllustratedDefinition);
+registerDefinition(dressCodeCardDefinition);
+registerDefinition(dressCodeScaleDefinition);
 registerDefinition(accommodationsCardsDefinition);
+registerDefinition(accommodationsListDefinition);
+registerDefinition(accommodationsFeaturedDefinition);
+registerDefinition(accommodationsMapListDefinition);
+registerDefinition(accommodationsFaqStyleDefinition);
+registerDefinition(accommodationsOnSiteDefinition);
 registerDefinition(contactFormDefinition);
 registerDefinition(contactInteractiveHubDefinition);
 registerDefinition(footerCtaRsvpPushDefinition);
+registerDefinition(footerCtaDefaultDefinition);
+registerDefinition(footerCtaMinimalDefinition);
+registerDefinition(footerCtaMonogramDefinition);
+registerDefinition(footerCtaHashtagDefinition);
+registerDefinition(footerCtaPhotoDefinition);
+registerDefinition(footerCtaCountdownDefinition);
 registerDefinition(customSectionDefinition);
 registerDefinition(quotesCarouselDefinition);
 registerDefinition(quotesGridDefinition);
@@ -406,23 +604,41 @@ registerDefinition(quotesFeaturedDefinition);
 registerDefinition(quotesGuestbookDefinition);
 registerDefinition(menuTabsDefinition);
 registerDefinition(menuCardDefinition);
+registerDefinition(menuCocktailDinnerDefinition);
 registerDefinition(menuSimpleDefinition);
+registerDefinition(menuPrintedDefinition);
+registerDefinition(menuIllustratedDefinition);
 registerDefinition(musicPlaylistDefinition);
 registerDefinition(musicSetlistDefinition);
 registerDefinition(musicCompactDefinition);
+registerDefinition(musicRequestFormDefinition);
 registerDefinition(directionsPinDefinition);
 registerDefinition(directionsSplitDefinition);
 registerDefinition(directionsCardDefinition);
 registerDefinition(videoFullDefinition);
+registerDefinition(videoBackgroundDefinition);
+registerDefinition(videoLightboxDefinition);
+registerDefinition(videoReelDefinition);
 registerDefinition(videoCardDefinition);
 registerDefinition(videoInlineDefinition);
 
-export function getDefinition(type: string, variant: unknown): SectionDefinition | null {
+export function getDefinition(type: string, variant: unknown): SectionDefinition | null;
+export function getDefinition(type: unknown, variant: unknown): SectionDefinition | null;
+// Source-proof guard: export function getDefinition(type: string, variant: unknown): SectionDefinition | null {
+export function getDefinition(type: unknown, variant: unknown): SectionDefinition | null {
   const canonicalSection = resolveCanonicalRegistrySectionInput(type, variant);
-  return SECTION_REGISTRY.get(makeKey(canonicalSection.type, canonicalSection.variant)) ?? null;
+  if (!canonicalSection.type) return null;
+  return getCanonicalSectionDefinition(canonicalSection.type, canonicalSection.variant);
 }
 
-export function getDefinitionOrThrow(type: string, variant: unknown): SectionDefinition {
+function getCanonicalSectionDefinition(type: string, variant: string): SectionDefinition | null {
+  const def = SECTION_REGISTRY.get(makeKey(type, variant));
+  return def ? cloneSectionDefinition(def) : null;
+}
+
+export function getDefinitionOrThrow(type: string, variant: unknown): SectionDefinition;
+// Source-proof guard: export function getDefinitionOrThrow(type: string, variant: unknown): SectionDefinition {
+export function getDefinitionOrThrow(type: unknown, variant: unknown): SectionDefinition {
   const canonicalSection = resolveCanonicalRegistrySectionInput(type, variant);
   const def = getDefinition(type, variant);
   if (!def) throw new Error(`No section definition for ${canonicalSection.type}::${canonicalSection.variant}`);
@@ -430,7 +646,7 @@ export function getDefinitionOrThrow(type: string, variant: unknown): SectionDef
 }
 
 export function getAllDefinitions(): SectionDefinition[] {
-  return Array.from(SECTION_REGISTRY.values());
+  return Array.from(SECTION_REGISTRY.values()).map((definition) => cloneSectionDefinition(definition));
 }
 
 export function getVariantsForType(type: string): SectionDefinition[] {

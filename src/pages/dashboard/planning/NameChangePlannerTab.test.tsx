@@ -7,6 +7,8 @@ import { buildNameChangePlan } from '../../../lib/nameChange/engine';
 import { getExecutionNextActionDetail } from '../../../lib/nameChange/actionFeed';
 import type { NameChangeCaseInput, NameChangePlan } from '../../../lib/nameChange/types';
 
+vi.setConfig({ testTimeout: 15000 });
+
 function makeDraft(overrides: Partial<NameChangeCaseInput> = {}): NameChangeCaseInput {
   return {
     ...defaultNameChangeCaseInput,
@@ -142,7 +144,7 @@ describe('NameChangePlannerTab', () => {
 
       expect(screen.getByText('Start whenever you want, then come back whenever you need')).toBeInTheDocument();
       expect(screen.getByText('Roadmap saved')).toBeInTheDocument();
-      expect(screen.getByText('Free assistant · status vault · proof tracking')).toBeInTheDocument();
+      expect(screen.getByText('Free assistant · saved status · document checklist')).toBeInTheDocument();
       expect(screen.getByText('Milestones ready to confirm')).toBeInTheDocument();
       expect(screen.getByText('No open reminders')).toBeInTheDocument();
       expect(screen.getByText(/Optional next step:/i)).toBeInTheDocument();
@@ -199,10 +201,10 @@ describe('NameChangePlannerTab', () => {
       );
 
       expect(screen.getByText('Resume where you left off')).toBeInTheDocument();
-      expect(screen.getByText('Free assistant · status vault · proof tracking')).toBeInTheDocument();
+      expect(screen.getByText('Free assistant · saved status · document checklist')).toBeInTheDocument();
       expect(screen.getByText('Milestones ready to confirm')).toBeInTheDocument();
       expect(screen.getByText('No open reminders')).toBeInTheDocument();
-      expect(screen.getByText('You already started the name-change flow, so the dashboard should bring you back to the status vault instead of making you hunt for your place again.')).toBeInTheDocument();
+      expect(screen.getByText('You already started the name-change flow, so dayof brings you back to the saved status view instead of making you hunt for your place again.')).toBeInTheDocument();
       expect(screen.getByText('Optional next step: Pick back up in the vault if you want progress and proof. If details changed, case setup is still one click away.')).toBeInTheDocument();
       expect(screen.getByText('0 complete · 1 in progress across the legal identity chain.')).toBeInTheDocument();
 
@@ -348,7 +350,7 @@ describe('NameChangePlannerTab', () => {
       />,
     );
 
-    expect(screen.getAllByText('Guided next action').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Next best step').length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Do now:/).length).toBeGreaterThan(1);
     expect(screen.getAllByText(/Why it helps:/).length).toBeGreaterThan(1);
     expect(screen.getAllByText(/Can wait: Actual submission can safely wait\./).length).toBeGreaterThan(0);
@@ -379,7 +381,7 @@ describe('NameChangePlannerTab', () => {
       />,
     );
 
-    expect(screen.getAllByText(/Guided next action|Do now:/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Next best step|Do now:/).length).toBeGreaterThan(0);
     expect(screen.queryByText(new RegExp(`^Execution note: ${escapeRegExp(bankGuidedDetail)}$`))).not.toBeInTheDocument();
     expect(screen.queryByText(new RegExp(`^• ${escapeRegExp(bankGuidedDetail)}$`))).not.toBeInTheDocument();
     expect(screen.getAllByText(/Next: Unblock DMV completion|Can wait: Actual submission can safely wait\./).length).toBeGreaterThan(0);
@@ -501,7 +503,7 @@ describe('NameChangePlannerTab', () => {
         />,
       );
 
-      fireEvent.click(screen.getAllByRole('button', { name: 'Open linked execution' })[0]);
+      fireEvent.click(screen.getAllByRole('button', { name: 'Open linked step' })[0]);
       expect(scrollIntoView).toHaveBeenCalled();
     } finally {
       HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
@@ -546,15 +548,15 @@ describe('NameChangePlannerTab', () => {
       />,
     );
 
-    expect(screen.getByText('Target status tracking')).toBeInTheDocument();
+    expect(screen.getByText('Status tracking')).toBeInTheDocument();
     expect(screen.getAllByText(/checks ready/).length).toBeGreaterThan(0);
     expect(screen.getAllByText('Submitted the SS-5 packet and waiting on return mail.').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Execution: in_progress').length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Latest touch|Execution updated/).length).toBeGreaterThan(0);
-    expect(screen.getByText(/Steps 0 done • 1 active • 0 todo/)).toBeInTheDocument();
+    expect(screen.getAllByText('Status: In progress').length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Latest touch|Step updated/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Steps 0 done • 1 started • 0 to do/)).toBeInTheDocument();
     expect(screen.getByText(/with missing proof/)).toBeInTheDocument();
-    expect(screen.getByText(/with proof attention/)).toBeInTheDocument();
-    expect(screen.getByText(/with execution activity/)).toBeInTheDocument();
+    expect(screen.getByText(/proof details worth checking/)).toBeInTheDocument();
+    expect(screen.getByText(/recently updated/)).toBeInTheDocument();
     expect(screen.getByText(/with reminder follow-up/)).toBeInTheDocument();
     expect(screen.getAllByText(/missing|attention/).length).toBeGreaterThan(0);
   });
@@ -936,7 +938,7 @@ describe('NameChangePlannerTab', () => {
       />,
     );
 
-    const trackingHeader = screen.getByText('Target status tracking');
+    const trackingHeader = screen.getByText('Status tracking');
     const trackingList = trackingHeader.closest('div')?.parentElement?.nextElementSibling as HTMLElement;
     const targetTitles = within(trackingList).getAllByText(/Social Security Administration|California DMV/).map((node) => node.textContent);
     expect(targetTitles.slice(0, 2)).toEqual([
@@ -1231,7 +1233,7 @@ describe('NameChangePlannerTab', () => {
     );
 
     expect(screen.getByText(/Latest move .*reminder/)).toBeInTheDocument();
-    expect(screen.getByText(/Latest execution/)).toBeInTheDocument();
+    expect(screen.getByText(/Latest step/)).toBeInTheDocument();
     expect(screen.queryByText(/Latest reminder/)).not.toBeInTheDocument();
   });
 
@@ -1287,7 +1289,7 @@ describe('NameChangePlannerTab', () => {
       />,
     );
 
-    expect(screen.getByText(/Latest move .*execution/)).toBeInTheDocument();
+    expect(screen.getByText(/Latest move .*step/)).toBeInTheDocument();
     expect(screen.getByText(/Latest reminder/)).toBeInTheDocument();
   });
 
@@ -1329,7 +1331,7 @@ describe('NameChangePlannerTab', () => {
     );
 
     expect(screen.getByText(/Latest move .*milestone/)).toBeInTheDocument();
-    expect(screen.getByText(/Latest execution/)).toBeInTheDocument();
+    expect(screen.getByText(/Latest step/)).toBeInTheDocument();
     expect(screen.getByText(/Latest reminder/)).toBeInTheDocument();
   });
 

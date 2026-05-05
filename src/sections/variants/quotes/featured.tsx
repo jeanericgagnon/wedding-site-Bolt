@@ -2,6 +2,7 @@ import React from 'react';
 import { z } from 'zod';
 import { Quote, Heart } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
+import { getSafePublicImageUrl } from '../../publicLinks';
 
 const QuoteItemSchema = z.object({
   id: z.string(),
@@ -38,6 +39,7 @@ export const defaultQuotesFeaturedData: QuotesFeaturedData = {
 const QuotesFeatured: React.FC<SectionComponentProps<QuotesFeaturedData>> = ({ data }) => {
   const featured = data.quotes.find(q => q.featured);
   const others = data.quotes.filter(q => !q.featured);
+  const featuredPhoto = getSafePublicImageUrl(featured?.photo);
 
   return (
     <section className="relative overflow-hidden py-28 md:py-36 bg-gradient-to-b from-white via-stone-50/70 to-white" id="quotes">
@@ -45,7 +47,7 @@ const QuotesFeatured: React.FC<SectionComponentProps<QuotesFeaturedData>> = ({ d
       <div className="relative max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-16">
           {data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.25em] text-rose-400 font-medium mb-4">{data.eyebrow}</p>
+            <p className="text-sm text-rose-400 font-light mb-4">{data.eyebrow}</p>
           )}
           <h2 className="text-4xl md:text-5xl font-light text-stone-900 mb-4">{data.headline}</h2>
           {data.subtitle && (
@@ -65,8 +67,8 @@ const QuotesFeatured: React.FC<SectionComponentProps<QuotesFeaturedData>> = ({ d
                   "{featured.text}"
                 </p>
                 <div className="flex flex-col items-center gap-4">
-                  {data.showPhotos && featured.photo && (
-                    <img src={featured.photo} alt={featured.author} className="w-16 h-16 rounded-full object-cover ring-4 ring-stone-100" />
+                  {data.showPhotos && featuredPhoto && (
+                    <img src={featuredPhoto} alt={featured.author} className="w-16 h-16 rounded-full object-cover ring-4 ring-stone-100" />
                   )}
                   <div>
                     <p className="font-semibold text-stone-900">{featured.author}</p>
@@ -85,8 +87,8 @@ const QuotesFeatured: React.FC<SectionComponentProps<QuotesFeaturedData>> = ({ d
                 <Quote size={16} className="text-rose-300 mb-4" />
                 <p className="text-stone-600 text-sm leading-relaxed italic mb-4">"{q.text}"</p>
                 <div className="flex items-center gap-3">
-                  {data.showPhotos && q.photo ? (
-                    <img src={q.photo} alt={q.author} className="w-8 h-8 rounded-full object-cover ring-2 ring-stone-100" />
+                  {data.showPhotos && getSafePublicImageUrl(q.photo) ? (
+                    <img src={getSafePublicImageUrl(q.photo)} alt={q.author} className="w-8 h-8 rounded-full object-cover ring-2 ring-stone-100" />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center">
                       <span className="text-rose-500 text-xs font-medium">{q.author.charAt(0)}</span>

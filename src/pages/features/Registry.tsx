@@ -23,7 +23,7 @@ export const RegistryFeature: React.FC = () => {
       <section className="py-16 md:py-24 bg-gradient-to-b from-paper to-white">
         <div className="container-custom">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center justify-center p-4 bg-brand/10 rounded-2xl mb-6">
+            <div className="inline-flex items-center justify-center p-4 bg-brand/10 rounded-lg mb-6">
               <Heart className="w-12 h-12 text-brand" />
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-ink mb-6 leading-tight">
@@ -40,7 +40,7 @@ export const RegistryFeature: React.FC = () => {
               </Link>
               <Link to="/product">
                 <Button variant="outline" size="lg">
-                  See how Dayof works
+                  See how dayof works
                 </Button>
               </Link>
             </div>
@@ -60,38 +60,38 @@ export const RegistryFeature: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="bg-paper rounded-2xl p-8">
-              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
+            <div className="bg-paper rounded-lg p-8">
+              <div className="p-3 bg-brand/10 rounded-lg w-fit mb-4">
                 <ExternalLink className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Link Any Registry</h3>
               <p className="text-ink/70 mb-4">
-                Link to your existing registries from the major stores couples already use, or add a direct registry or gift link manually when a merchant needs a simpler path.
+                Link to your existing registries from the major stores couples already use, or add a direct registry or gift link when a merchant needs a simpler path.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• Major-registry-friendly linking</li>
-                <li>• Auto-fetch when metadata cooperates</li>
+                <li>• Pull in details when stores allow it</li>
                 <li>• Multiple registries supported</li>
               </ul>
             </div>
 
-            <div className="bg-paper rounded-2xl p-8">
-              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
+            <div className="bg-paper rounded-lg p-8">
+              <div className="p-3 bg-brand/10 rounded-lg w-fit mb-4">
                 <LinkIcon className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Use your own affiliate links</h3>
               <p className="text-ink/70 mb-4">
-                If you already have your own affiliate or tracked links, DayOf can point guests there instead of inserting its own sponsored layer.
+                If you already have your own affiliate or tracked links, dayof can point guests there instead of inserting its own sponsored layer.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• Bring your own tracked links</li>
-                <li>• No forced DayOf affiliate layer</li>
+                <li>• No forced dayof affiliate layer</li>
                 <li>• Cleaner control over where guests land</li>
               </ul>
             </div>
 
-            <div className="bg-paper rounded-2xl p-8">
-              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
+            <div className="bg-paper rounded-lg p-8">
+              <div className="p-3 bg-brand/10 rounded-lg w-fit mb-4">
                 <Wallet className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Honeymoon Fund</h3>
@@ -105,8 +105,8 @@ export const RegistryFeature: React.FC = () => {
               </ul>
             </div>
 
-            <div className="bg-paper rounded-2xl p-8">
-              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
+            <div className="bg-paper rounded-lg p-8">
+              <div className="p-3 bg-brand/10 rounded-lg w-fit mb-4">
                 <Gift className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Charity Donations</h3>
@@ -120,23 +120,23 @@ export const RegistryFeature: React.FC = () => {
               </ul>
             </div>
 
-            <div className="bg-paper rounded-2xl p-8">
-              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
+            <div className="bg-paper rounded-lg p-8">
+              <div className="p-3 bg-brand/10 rounded-lg w-fit mb-4">
                 <Sparkles className="w-6 h-6 text-brand" />
               </div>
-              <h3 className="text-xl font-serif font-bold text-ink mb-3">Auto-Fetch Details</h3>
+              <h3 className="text-xl font-serif font-bold text-ink mb-3">Fill In Gift Details</h3>
               <p className="text-ink/70 mb-4">
-                Paste a registry URL and DayOf can often pull in the title, description, and preview image to speed up setup, with manual cleanup when merchants are messy.
+                Paste a registry URL and dayof can often fill in the title, description, and preview image to speed up setup, with a quick detail check when merchant pages are sparse.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
-                <li>• Metadata fetch when available</li>
+                <li>• Gift details when available</li>
                 <li>• Preview images when available</li>
-                <li>• Manual override available</li>
+                <li>• Editable details before guests see them</li>
               </ul>
             </div>
 
-            <div className="bg-paper rounded-2xl p-8">
-              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
+            <div className="bg-paper rounded-lg p-8">
+              <div className="p-3 bg-brand/10 rounded-lg w-fit mb-4">
                 <Shield className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">No Sponsored Clutter</h3>
@@ -163,9 +163,9 @@ export const RegistryFeature: React.FC = () => {
             </div>
 
             <div className="space-y-8">
-              <div className="bg-white rounded-2xl p-8 border border-brand/20">
+              <div className="bg-white rounded-lg p-8 border border-brand/20">
                 <div className="flex items-start gap-6">
-                  <div className="p-3 bg-brand/10 rounded-xl flex-shrink-0">
+                  <div className="p-3 bg-brand/10 rounded-lg flex-shrink-0">
                     <DollarSign className="w-6 h-6 text-brand" />
                   </div>
                   <div>
@@ -177,23 +177,23 @@ export const RegistryFeature: React.FC = () => {
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl p-8 border border-brand/20">
+              <div className="bg-white rounded-lg p-8 border border-brand/20">
                 <div className="flex items-start gap-6">
-                  <div className="p-3 bg-brand/10 rounded-xl flex-shrink-0">
+                  <div className="p-3 bg-brand/10 rounded-lg flex-shrink-0">
                     <LinkIcon className="w-6 h-6 text-brand" />
                   </div>
                   <div>
                     <h3 className="text-xl font-semibold text-ink mb-3">Healthier links over time</h3>
                     <p className="text-ink/70 leading-relaxed">
-                      DayOf now has a practical repair workflow for weak or messy registry links, including refresh, re-import, and manual cleanup when metadata comes back badly.
+                      dayof now has practical cleanup for weak or incomplete registry links, including refresh, re-import, and editable details when store details come back incomplete.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl p-8 border border-brand/20">
+              <div className="bg-white rounded-lg p-8 border border-brand/20">
                 <div className="flex items-start gap-6">
-                  <div className="p-3 bg-brand/10 rounded-xl flex-shrink-0">
+                  <div className="p-3 bg-brand/10 rounded-lg flex-shrink-0">
                     <Gift className="w-6 h-6 text-brand" />
                   </div>
                   <div>
@@ -216,7 +216,7 @@ export const RegistryFeature: React.FC = () => {
               A practical registry core, already together
             </h2>
             <p className="text-xl text-ink/70 mb-8">
-              A polished registry flow with guided cleanup where merchants cooperate — not a fake promise of perfect merchant parity.
+              A polished registry flow with guided cleanup where merchants cooperate, while still keeping every detail editable.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12 text-left">
@@ -229,13 +229,13 @@ export const RegistryFeature: React.FC = () => {
                 'Charity donations',
                 'BYOAL affiliate option',
                 'Custom messaging',
-                'Repair workflow',
+                'Link cleanup',
                 'No sponsored items',
                 'No rigged order',
                 'Clean presentation',
               ].map((feature, idx) => (
                 <div key={idx} className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                  <CheckCircle2 className="w-5 h-5 text-brand mt-0.5 flex-shrink-0" />
                   <span className="text-ink/70">{feature}</span>
                 </div>
               ))}

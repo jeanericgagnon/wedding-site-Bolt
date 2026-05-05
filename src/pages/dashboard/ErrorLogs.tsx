@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { useAuth } from '../../hooks/useAuth';
 import { Card } from '../../components/ui/Card';
 import { Link } from 'react-router-dom';
 import { formatErrorLogDateTime, getErrorLogTimestamp } from './errorLogTime';
+import { copyTextOrDownload } from '../../lib/copyText';
 
 interface ErrorLogRow {
   id: string;
@@ -25,7 +25,7 @@ interface GroupedError {
 }
 
 export const DashboardErrorLogs: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, isDemoMode } = useAuth();
   const [rows, setRows] = useState<ErrorLogRow[]>([]);
   const [logsLoading, setLogsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,16 +49,23 @@ export const DashboardErrorLogs: React.FC = () => {
         }
         return;
       }
+      if (isDemoMode) {
+        if (mounted) {
+          setIsAdmin(false);
+          setLogsLoading(false);
+        }
+        return;
+      }
 
       const { data, error } = await supabase
         .from('admin_users')
         .select('user_id')
-        .eq('id', (await resolveActiveSiteForUser(user.id))?.id ?? '')
+        .eq('user_id', user.id)
         .maybeSingle();
 
       if (!mounted) return;
       if (error) {
-        setError(error.message);
+        setError('Couldn’t verify error-log access right now.');
         setLogsLoading(false);
         return;
       }
@@ -69,7 +76,7 @@ export const DashboardErrorLogs: React.FC = () => {
     return () => {
       mounted = false;
     };
-  }, [user?.id]);
+  }, [isDemoMode, user?.id]);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -87,8 +94,8 @@ export const DashboardErrorLogs: React.FC = () => {
           .limit(100);
         if (error) throw error;
         if (mounted) setRows((data ?? []) as ErrorLogRow[]);
-      } catch (err) {
-        if (mounted) setError(err instanceof Error ? err.message : 'Couldn’t load error logs right now.');
+      } catch {
+        if (mounted) setError('Couldn’t load error logs right now.');
       } finally {
         if (mounted) setLogsLoading(false);
       }
@@ -135,7 +142,7 @@ export const DashboardErrorLogs: React.FC = () => {
 
   const copyValue = async (value: string, key: string) => {
     try {
-      await navigator.clipboard.writeText(value);
+      await copyTextOrDownload(value, `dayof-error-${key}.txt`);
       setCopied(key);
       setTimeout(() => setCopied((prev) => (prev === key ? null : prev)), 1200);
     } catch {
@@ -215,7 +222,7 @@ export const DashboardErrorLogs: React.FC = () => {
           <Card padding="lg">
             <h1 className="text-xl font-semibold text-text-primary mb-2">Restricted</h1>
             <p className="text-sm text-text-secondary mb-4">This admin page is available only to the designated admin account.</p>
-            <Link to="/dashboard/overview" className="text-sm text-primary hover:text-primary-hover">Back to dashboard</Link>
+            <Link to="/dashboard/overview" className="text-sm text-primary hover:text-primary-hover">Back to wedding home</Link>
           </Card>
         </div>
       </div>
@@ -328,7 +335,7 @@ export const DashboardErrorLogs: React.FC = () => {
                       >
                         Filter
                       </button>
-                      <span className="text-xs px-2 py-1 rounded-full border border-border-subtle bg-surface-subtle whitespace-nowrap">{g.count}x</span>
+                      <span className="whitespace-nowrap rounded-md border border-border-subtle bg-surface-subtle px-2 py-1 text-xs">{g.count}x</span>
                     </div>
                   </div>
                 ))}

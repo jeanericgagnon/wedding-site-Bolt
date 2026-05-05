@@ -104,7 +104,10 @@ Deno.serve(async (req: Request) => {
       metadata,
     });
 
-    if (error) return json({ error: error.message }, 500);
+    if (error) {
+      console.error("LOG_CLIENT_ERROR_INSERT_FAILED", error);
+      return json({ error: "Could not save error report." }, 500);
+    }
     return json({ ok: true });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Internal error";

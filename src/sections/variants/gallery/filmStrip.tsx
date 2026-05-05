@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { z } from 'zod';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
+import { sanitizePublicGalleryImages } from './publicGallery';
 
 const GalleryImageSchema = z.object({
   id: z.string(),
@@ -54,6 +55,7 @@ const GalleryFilmStrip: React.FC<SectionComponentProps<GalleryFilmStripData>> = 
   const [isGlidePaused, setIsGlidePaused] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
   const stripRef = useRef<HTMLDivElement>(null);
+  const images = sanitizePublicGalleryImages(data.images);
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -66,13 +68,13 @@ const GalleryFilmStrip: React.FC<SectionComponentProps<GalleryFilmStripData>> = 
   }, []);
 
   useEffect(() => {
-    if (!data.autoScroll || data.images.length === 0) return;
+    if (!data.autoScroll || images.length === 0) return;
     const ms = Math.max(1400, 5200 - data.glideSpeed * 40);
     const interval = setInterval(() => {
-      setActiveIndex(i => (i + 1) % data.images.length);
+      setActiveIndex(i => (i + 1) % images.length);
     }, ms);
     return () => clearInterval(interval);
-  }, [data.autoScroll, data.images.length, data.glideSpeed]);
+  }, [data.autoScroll, images.length, data.glideSpeed]);
 
   useEffect(() => {
     if (!stripRef.current) return;
@@ -81,8 +83,8 @@ const GalleryFilmStrip: React.FC<SectionComponentProps<GalleryFilmStripData>> = 
   }, [activeIndex]);
 
   const closeLightbox = () => setLightboxIndex(null);
-  const prevLightbox = () => setLightboxIndex(i => i === null ? null : (i - 1 + data.images.length) % data.images.length);
-  const nextLightbox = () => setLightboxIndex(i => i === null ? null : (i + 1) % data.images.length);
+  const prevLightbox = () => setLightboxIndex(i => i === null ? null : (i - 1 + images.length) % images.length);
+  const nextLightbox = () => setLightboxIndex(i => i === null ? null : (i + 1) % images.length);
 
   useEffect(() => {
     if (lightboxIndex === null) return;
@@ -95,7 +97,7 @@ const GalleryFilmStrip: React.FC<SectionComponentProps<GalleryFilmStripData>> = 
     return () => window.removeEventListener('keydown', h);
   }, [lightboxIndex]);
 
-  const active = data.images[activeIndex];
+  const active = images[activeIndex];
 
   const heroAnimClass = data.animation === 'none' ? '' :
     data.animation === 'fade' ? (isVisible ? 'opacity-100' : 'opacity-0') :
@@ -109,19 +111,19 @@ const GalleryFilmStrip: React.FC<SectionComponentProps<GalleryFilmStripData>> = 
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-10">
           {data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">{data.eyebrow}</p>
+            <p className="text-sm text-stone-400 font-light mb-4">{data.eyebrow}</p>
           )}
-          <h2 className="text-4xl md:text-6xl font-light text-white tracking-tight">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-white">{data.headline}</h2>
         </div>
 
-        {data.images.length > 0 && (
+        {images.length > 0 ? (
           <>
             <div
               className={`relative aspect-[16/9] md:aspect-[21/9] rounded-2xl overflow-hidden mb-4 cursor-pointer group transition-[opacity,transform] duration-700 ${heroAnimClass}`}
               style={{ transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
               onClick={() => data.enableLightbox && setLightboxIndex(activeIndex)}
             >
-              {data.images.map((img, idx) => (
+              {images.map((img, idx) => (
                 <div
                   key={img.id}
                   className={`absolute inset-0 transition-opacity duration-700 ${idx === activeIndex ? 'opacity-100' : 'opacity-0'}`}
@@ -131,16 +133,16 @@ const GalleryFilmStrip: React.FC<SectionComponentProps<GalleryFilmStripData>> = 
               ))}
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
 
-              {data.images.length > 1 && (
+              {images.length > 1 && (
                 <>
                   <button
-                    onClick={e => { e.stopPropagation(); setActiveIndex(i => (i - 1 + data.images.length) % data.images.length); }}
+                    onClick={e => { e.stopPropagation(); setActiveIndex(i => (i - 1 + images.length) % images.length); }}
                     className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/30 hover:bg-black/50 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all"
                   >
                     <ChevronLeft size={18} />
                   </button>
                   <button
-                    onClick={e => { e.stopPropagation(); setActiveIndex(i => (i + 1) % data.images.length); }}
+                    onClick={e => { e.stopPropagation(); setActiveIndex(i => (i + 1) % images.length); }}
                     className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/30 hover:bg-black/50 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all"
                   >
                     <ChevronRight size={18} />
@@ -155,7 +157,7 @@ const GalleryFilmStrip: React.FC<SectionComponentProps<GalleryFilmStripData>> = 
               )}
 
               <div className="absolute bottom-3 right-3 text-white/40 text-xs font-medium">
-                {activeIndex + 1} / {data.images.length}
+                {activeIndex + 1} / {images.length}
               </div>
             </div>
 
@@ -172,8 +174,8 @@ const GalleryFilmStrip: React.FC<SectionComponentProps<GalleryFilmStripData>> = 
                     animationPlayState: isGlidePaused ? 'paused' : 'running',
                   }}
                 >
-                  {[...data.images, ...data.images].map((img, i) => {
-                    const idx = i % data.images.length;
+                  {[...images, ...images].map((img, i) => {
+                    const idx = i % images.length;
                     return (
                       <button
                         key={`${img.id}-${i}`}
@@ -196,7 +198,7 @@ const GalleryFilmStrip: React.FC<SectionComponentProps<GalleryFilmStripData>> = 
                 className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide snap-x"
                 style={{ scrollbarWidth: 'none' }}
               >
-                {data.images.map((img, idx) => (
+                {images.map((img, idx) => (
                   <button
                     key={img.id}
                     onClick={() => setActiveIndex(idx)}
@@ -212,6 +214,10 @@ const GalleryFilmStrip: React.FC<SectionComponentProps<GalleryFilmStripData>> = 
               </div>
             )}
           </>
+        ) : (
+          <div className="rounded-2xl border border-white/10 py-16 text-center text-white/50 text-sm">
+            Photos will appear once they’re added.
+          </div>
         )}
       </div>
 
@@ -227,12 +233,12 @@ const GalleryFilmStrip: React.FC<SectionComponentProps<GalleryFilmStripData>> = 
             <ChevronLeft size={20} />
           </button>
           <div className="max-w-5xl max-h-[85vh] px-16" onClick={e => e.stopPropagation()}>
-            <img src={data.images[lightboxIndex].url} alt={data.images[lightboxIndex].alt} className="max-w-full max-h-[85vh] object-contain rounded-lg" />
+            <img src={images[lightboxIndex]?.url} alt={images[lightboxIndex]?.alt ?? 'Gallery photo'} className="max-w-full max-h-[85vh] object-contain rounded-lg" />
           </div>
           <button onClick={e => { e.stopPropagation(); nextLightbox(); }} className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors">
             <ChevronRight size={20} />
           </button>
-          <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/40 text-xs">{lightboxIndex + 1} / {data.images.length}</p>
+          <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/40 text-xs">{lightboxIndex + 1} / {images.length}</p>
         </div>
       )}
       </section>

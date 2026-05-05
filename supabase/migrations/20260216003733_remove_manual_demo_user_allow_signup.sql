@@ -13,7 +13,6 @@
 
 -- Delete manually created demo user
 DELETE FROM auth.users WHERE email = 'demo@dayof.love';
-
 -- Ensure trigger function exists
 CREATE OR REPLACE FUNCTION create_demo_wedding_data()
 RETURNS TRIGGER AS $$
@@ -157,7 +156,6 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
 -- Ensure trigger exists
 DROP TRIGGER IF EXISTS on_demo_user_created ON auth.users;
 CREATE TRIGGER on_demo_user_created

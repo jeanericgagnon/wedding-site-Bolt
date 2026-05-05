@@ -2,6 +2,7 @@ import React from 'react';
 import { z } from 'zod';
 import { MapPin, Car, Navigation, Train, ExternalLink, Clock } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
+import { getSafePublicMapsEmbedUrl, getSafePublicMapsUrl } from '../../publicLinks';
 
 export const directionsSplitSchema = z.object({
   eyebrow: z.string().default('Find Us'),
@@ -37,7 +38,8 @@ export const defaultDirectionsSplitData: DirectionsSplitData = {
 
 const DirectionsSplit: React.FC<SectionComponentProps<DirectionsSplitData>> = ({ data }) => {
   const mapsQuery = [data.venueName, data.address, data.city].filter(Boolean).join(', ');
-  const mapsHref = data.mapUrl || (mapsQuery ? `https://maps.google.com/?q=${encodeURIComponent(mapsQuery)}` : '');
+  const mapsHref = getSafePublicMapsUrl(data.mapUrl, mapsQuery);
+  const mapsEmbedUrl = getSafePublicMapsEmbedUrl(data.mapUrl, mapsQuery);
   const bg = data.background === 'soft' ? 'bg-stone-50' : 'bg-white';
 
   return (
@@ -46,7 +48,7 @@ const DirectionsSplit: React.FC<SectionComponentProps<DirectionsSplitData>> = ({
       <div className="relative max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 min-h-[640px]">
         <div className="py-20 px-8 md:px-16 flex flex-col justify-center">
           {data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">{data.eyebrow}</p>
+            <p className="text-sm text-stone-400 font-light mb-4">{data.eyebrow}</p>
           )}
           <h2 className="text-4xl md:text-5xl font-light text-stone-900 mb-8">{data.headline}</h2>
 
@@ -85,7 +87,7 @@ const DirectionsSplit: React.FC<SectionComponentProps<DirectionsSplitData>> = ({
               <div className="flex items-start gap-3">
                 <Car size={14} className="text-stone-400 shrink-0 mt-1" />
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-1">Parking</p>
+                  <p className="text-sm font-medium text-stone-400 mb-1">Parking</p>
                   <p className="text-stone-600 text-sm leading-relaxed">{data.parkingNote}</p>
                 </div>
               </div>
@@ -94,7 +96,7 @@ const DirectionsSplit: React.FC<SectionComponentProps<DirectionsSplitData>> = ({
               <div className="flex items-start gap-3">
                 <Train size={14} className="text-stone-400 shrink-0 mt-1" />
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-1">Public Transit</p>
+                  <p className="text-sm font-medium text-stone-400 mb-1">Public transit</p>
                   <p className="text-stone-600 text-sm leading-relaxed">{data.publicTransitNote}</p>
                 </div>
               </div>
@@ -103,7 +105,7 @@ const DirectionsSplit: React.FC<SectionComponentProps<DirectionsSplitData>> = ({
               <div className="flex items-start gap-3">
                 <Navigation size={14} className="text-rose-400 shrink-0 mt-1" />
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-rose-400 mb-1">Shuttle Service</p>
+                  <p className="text-sm font-medium text-rose-400 mb-1">Shuttle service</p>
                   <p className="text-stone-600 text-sm leading-relaxed">{data.shuttleNote}</p>
                 </div>
               </div>
@@ -112,7 +114,7 @@ const DirectionsSplit: React.FC<SectionComponentProps<DirectionsSplitData>> = ({
         </div>
 
         <div className="relative min-h-[400px] lg:min-h-0">
-          {mapsHref ? (
+          {mapsEmbedUrl ? (
             <iframe
               title="Venue map"
               width="100%"
@@ -120,7 +122,7 @@ const DirectionsSplit: React.FC<SectionComponentProps<DirectionsSplitData>> = ({
               className="border-0 w-full h-full absolute inset-0"
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              src={`https://www.google.com/maps?q=${encodeURIComponent(mapsQuery)}&output=embed`}
+              src={mapsEmbedUrl}
             />
           ) : (
             <div className="w-full h-full bg-stone-200 flex flex-col items-center justify-center gap-3">

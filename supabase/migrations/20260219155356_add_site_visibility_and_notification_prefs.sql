@@ -22,7 +22,6 @@ BEGIN
     ALTER TABLE wedding_sites ADD COLUMN site_visibility text NOT NULL DEFAULT 'public';
   END IF;
 END $$;
-
 DO $$
 BEGIN
   IF NOT EXISTS (

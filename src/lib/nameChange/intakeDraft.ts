@@ -624,7 +624,7 @@ export function normalizeDraftFieldValue(fieldKey: NameChangeExtractedFieldInput
   }
 
   if (fieldKey === 'first_name' || fieldKey === 'middle_name' || fieldKey === 'last_name' || fieldKey === 'spouse_last_name') {
-    return normalizeDraftPersonNameValue(normalizedValue, fieldKey);
+    return normalizeDraftPersonNameValue(normalizedValue, fieldKey as 'first_name' | 'middle_name' | 'last_name' | 'spouse_last_name');
   }
 
   if (fieldKey === 'case_number' || fieldKey === 'certificate_number') {

@@ -3,7 +3,6 @@
 -- and those signed URLs were later persisted into section/site payloads.
 
 begin;
-
 -- wedding_sites JSON payloads
 update public.wedding_sites
 set
@@ -23,7 +22,6 @@ set
 where
   coalesce(site_json::text, '') like '%/storage/v1/object/sign/wedding-media/%'
   or coalesce(wedding_data::text, '') like '%/storage/v1/object/sign/wedding-media/%';
-
 -- sections payloads
 update public.sections
 set
@@ -35,7 +33,6 @@ set
   )::jsonb,
   updated_at = now()
 where coalesce(data::text, '') like '%/storage/v1/object/sign/wedding-media/%';
-
 -- media library table canonical URL fields
 update public.builder_media_assets
 set
@@ -55,5 +52,4 @@ set
 where
   coalesce(url, '') like '%/storage/v1/object/sign/wedding-media/%'
   or coalesce(thumbnail_url, '') like '%/storage/v1/object/sign/wedding-media/%';
-
 commit;

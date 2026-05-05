@@ -173,7 +173,7 @@ export async function fetchBillingInfo(userId: string): Promise<BillingInfo | nu
     .eq('id', activeSite.id)
     .maybeSingle();
 
-  if (error) throw new Error(error.message);
+  if (error) throw new Error('Couldn’t load billing right now.');
   if (!data) return null;
 
   return {
@@ -219,29 +219,31 @@ export async function verifyCheckoutSession(sessionId: string): Promise<{ paid: 
 }
 
 export async function fetchPaymentStatus(userId: string): Promise<'payment_required' | 'active' | 'canceled' | null> {
+  const activeSite = await resolveActiveSiteForUser(userId);
+  if (!activeSite?.id) return null;
+
   const { data, error } = await supabase
     .from('wedding_sites')
     .select('id, payment_status')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: true })
-    .limit(1)
+    .eq('id', activeSite.id)
     .maybeSingle();
 
-  if (error) throw new Error(error.message);
+  if (error) throw new Error('Couldn’t check payment status right now.');
   if (!data) return null;
   return data.payment_status as 'payment_required' | 'active' | 'canceled';
 }
 
 export async function fetchWeddingSiteId(userId: string): Promise<string | null> {
+  const activeSite = await resolveActiveSiteForUser(userId);
+  if (!activeSite?.id) return null;
+
   const { data, error } = await supabase
     .from('wedding_sites')
     .select('id')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: true })
-    .limit(1)
+    .eq('id', activeSite.id)
     .maybeSingle();
 
-  if (error) throw new Error(error.message);
+  if (error) throw new Error('Couldn’t find your wedding site right now.');
   return data?.id ?? null;
 }
 

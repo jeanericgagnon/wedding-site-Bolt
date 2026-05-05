@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Calendar, Clock, MapPin, Users, Edit2, Trash2, UserPlus, ExternalLink, AlertTriangle, Check, X, HelpCircle, Camera } from 'lucide-react';
+import { Plus, Calendar, Clock, MapPin, Users, Edit2, Trash2, UserPlus, ExternalLink, AlertTriangle, Check, X, HelpCircle, Camera, Wand2, MoveRight } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { invokeFunctionOrThrow } from '../../lib/invokeFunctionOrThrow';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
+import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { Button } from '../../components/ui/Button';
+import { useToast } from '../../components/ui/Toast';
+import { ConfirmDialog, type ConfirmDialogProps } from '../../components/ui/ConfirmDialog';
 import { useAuth } from '../../hooks/useAuth';
 import { demoEvents } from '../../lib/demoData';
 import { Card } from '../../components/ui/Card';
@@ -14,6 +17,9 @@ import { deleteEventRsvpByInvitationId, deleteEventRsvpsByInvitationIds, getEven
 import type { WeddingDataV1 } from '../../types/weddingData';
 import { combineDateAndTimeISO } from './itineraryDateTime';
 import { formatItineraryEventDate, toValidItineraryEventDateOrNull } from './itineraryEventDate';
+import { deriveItineraryEventRsvpCounts, shouldLoadEventRsvps } from './itineraryEventRsvpCounts';
+import { analyzeTimeline } from '../../lib/invisibleIntelligence';
+import { customerSafeErrorMessage } from '../../lib/customerSafeError';
 
 interface ItineraryEvent {
   id: string;
@@ -31,15 +37,15 @@ interface ItineraryEvent {
 }
 
 const DEMO_ITINERARY_STORAGE_KEY = 'dayof.demo.itinerary.events';
-// Optional table: many environments do not provision event_rsvps yet.
-// Default false to avoid noisy 404 probing on every dashboard load.
-let hasEventRsvpsTable: boolean | null = false;
+// Optional table: detect once at runtime so older environments degrade quietly.
+let hasEventRsvpsTable: boolean | null = null;
 
 interface EventWithInvites extends ItineraryEvent {
   invitation_count: number;
   rsvp_count: number;
   attending_count: number;
   declined_count: number;
+  pending_count: number;
 }
 
 function toScheduleSectionEvents(events: ItineraryEvent[]) {
@@ -85,6 +91,22 @@ function toWeddingSchedule(events: ItineraryEvent[]): WeddingDataV1['schedule'] 
 
 export const DashboardItinerary: React.FC = () => {
   const { isDemoMode } = useAuth();
+  const { toast } = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<null | Omit<ConfirmDialogProps, 'open'>>(null);
+  const requestConfirmation = (options: Pick<ConfirmDialogProps, 'title' | 'description' | 'confirmLabel' | 'tone'>) =>
+    new Promise<boolean>((resolve) => {
+      setConfirmDialog({
+        ...options,
+        onCancel: () => {
+          setConfirmDialog(null);
+          resolve(false);
+        },
+        onConfirm: () => {
+          setConfirmDialog(null);
+          resolve(true);
+        },
+      });
+    });
   const [events, setEvents] = useState<EventWithInvites[]>([]);
   const [loading, setLoading] = useState(true);
   const [showEventForm, setShowEventForm] = useState(false);
@@ -94,6 +116,12 @@ export const DashboardItinerary: React.FC = () => {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
   const [isSavingEvent, setIsSavingEvent] = useState(false);
+  const [templateDate, setTemplateDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [templateStart, setTemplateStart] = useState('11:00');
+  const [shiftMinutes, setShiftMinutes] = useState(15);
+  const [shiftFromEventId, setShiftFromEventId] = useState<string>('all');
+  const [timelineBusy, setTimelineBusy] = useState<string | null>(null);
+  const [lastTimelineSnapshot, setLastTimelineSnapshot] = useState<EventWithInvites[] | null>(null);
 
   const [formData, setFormData] = useState({
     event_name: '',
@@ -196,6 +224,7 @@ export const DashboardItinerary: React.FC = () => {
           rsvp_count: [72, 107, 109, 44][idx] ?? 0,
           attending_count: [68, 98, 101, 39][idx] ?? 0,
           declined_count: [4, 9, 8, 5][idx] ?? 0,
+          pending_count: Math.max(0, ([86, 120, 120, 52][idx] ?? 0) - ([68, 98, 101, 39][idx] ?? 0) - ([4, 9, 8, 5][idx] ?? 0)),
         }));
 
         try {
@@ -203,7 +232,12 @@ export const DashboardItinerary: React.FC = () => {
           if (raw) {
             const parsed = JSON.parse(raw) as EventWithInvites[];
             if (Array.isArray(parsed) && parsed.length > 0) {
-              setEvents(parsed);
+              setEvents(parsed.map((event) => ({
+                ...event,
+                pending_count: typeof event.pending_count === 'number'
+                  ? event.pending_count
+                  : Math.max(0, event.invitation_count - event.attending_count - event.declined_count),
+              })));
               return;
             }
           }
@@ -271,7 +305,7 @@ export const DashboardItinerary: React.FC = () => {
           const inviteCount = invitationIds.length;
 
           let rsvps: Array<{ attending: boolean | null }> = [];
-          if (invitationIds.length > 0 && hasEventRsvpsTable !== false) {
+          if (shouldLoadEventRsvps(invitationIds.length, hasEventRsvpsTable)) {
             const { data, error } = await supabase
               .from('event_rsvps')
               .select('attending')
@@ -288,9 +322,7 @@ export const DashboardItinerary: React.FC = () => {
             }
           }
 
-          const rsvpCount = rsvps.length;
-          const attendingCount = rsvps.filter((r) => !!r.attending).length;
-          const declinedCount = rsvps.filter((r) => r.attending === false).length;
+          const { rsvpCount, attendingCount, declinedCount, pendingCount } = deriveItineraryEventRsvpCounts(rsvps, inviteCount);
 
           return {
             ...event,
@@ -298,6 +330,7 @@ export const DashboardItinerary: React.FC = () => {
             rsvp_count: rsvpCount,
             attending_count: attendingCount,
             declined_count: declinedCount,
+            pending_count: pendingCount,
           };
         })
       );
@@ -305,7 +338,7 @@ export const DashboardItinerary: React.FC = () => {
       setEvents(eventsWithCounts);
     } catch {
       setEvents([]);
-      alert('Failed to load itinerary events. Please try again.');
+      toast('Couldn’t load itinerary events. Please try again.', 'error');
     } finally {
       setLoading(false);
     }
@@ -395,6 +428,7 @@ export const DashboardItinerary: React.FC = () => {
             rsvp_count: 0,
             attending_count: 0,
             declined_count: 0,
+            pending_count: 60,
           }] as EventWithInvites[]));
         }
         setShowEventForm(false);
@@ -415,7 +449,7 @@ export const DashboardItinerary: React.FC = () => {
         .single();
 
       if (!site) {
-        setSaveError('Could not find your website right now. Please refresh and try again.');
+        setSaveError('Couldn’t find your website right now. Please refresh and try again.');
         return;
       }
 
@@ -497,15 +531,20 @@ export const DashboardItinerary: React.FC = () => {
       setSaveNotice(editingEvent ? 'Event updated.' : 'Event created.');
       loadEvents();
     } catch (err: unknown) {
-      const message = (err as { message?: string })?.message || 'Failed to save event. Please try again.';
-      setSaveError(message);
+      setSaveError(customerSafeErrorMessage(err, 'Couldn’t save event. Please try again.'));
     } finally {
       setIsSavingEvent(false);
     }
   }
 
   async function handleDeleteEvent(eventId: string) {
-    if (!confirm('Are you sure you want to delete this event?')) return;
+    const confirmed = await requestConfirmation({
+      title: 'Delete this itinerary event?',
+      description: 'This removes the event from your timeline and guest-facing schedule.',
+      confirmLabel: 'Delete event',
+      tone: 'danger',
+    });
+    if (!confirmed) return;
 
     try {
       if (isDemoMode) {
@@ -521,7 +560,7 @@ export const DashboardItinerary: React.FC = () => {
 
       loadEvents();
     } catch {
-      alert('Failed to delete event. Please try again.');
+      toast('Couldn’t delete event. Please try again.', 'error');
     }
   }
 
@@ -568,34 +607,203 @@ export const DashboardItinerary: React.FC = () => {
     return `https://www.google.com/maps/search/?api=1&query=${query}`;
   }
 
+  function minutesToTime(minutes: number) {
+    const normalized = ((minutes % 1440) + 1440) % 1440;
+    const h = Math.floor(normalized / 60);
+    const m = normalized % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  }
+
+  function addMinutes(time: string | null, delta: number) {
+    const base = timeToMinutes(time);
+    if (base === null) return time;
+    return minutesToTime(base + delta);
+  }
+
+  function durationFromEvent(event: Pick<ItineraryEvent, 'start_time' | 'end_time'>) {
+    const start = timeToMinutes(event.start_time);
+    const end = timeToMinutes(event.end_time);
+    if (start === null || end === null || end <= start) return null;
+    return end - start;
+  }
+
+  async function updateEventsInPlace(nextEvents: EventWithInvites[], notice: string) {
+    setTimelineBusy(notice);
+    setSaveError(null);
+    try {
+      if (isDemoMode) {
+        setEvents(nextEvents);
+        setSaveNotice(notice);
+        return;
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Please log in again and retry.');
+      const activeSite = await resolveActiveSiteForUser(user.id);
+      if (!activeSite?.id) throw new Error('Couldn’t find your website right now.');
+
+      const results = await Promise.all(nextEvents.map((event) => supabase
+        .from('itinerary_events')
+        .update({
+          event_date: event.event_date,
+          start_time: event.start_time || null,
+          end_time: event.end_time || null,
+          display_order: event.display_order,
+        })
+        .eq('id', event.id)
+      ));
+      const failed = results.find((result) => result.error);
+      if (failed?.error) throw failed.error;
+      await syncWeddingDataSchedule(activeSite.id, nextEvents);
+      setEvents(nextEvents);
+      setSaveNotice(notice);
+    } catch (err: unknown) {
+      setSaveError(customerSafeErrorMessage(err, 'Couldn’t update the timeline.'));
+    } finally {
+      setTimelineBusy(null);
+    }
+  }
+
+  async function handleShiftTimeline(delta: number) {
+    const sorted = [...events].sort((a, b) => `${a.event_date}T${a.start_time}`.localeCompare(`${b.event_date}T${b.start_time}`));
+    const fromIndex = shiftFromEventId === 'all' ? 0 : sorted.findIndex((event) => event.id === shiftFromEventId);
+    if (fromIndex < 0) return;
+    const shiftedIds = new Set(sorted.slice(fromIndex).map((event) => event.id));
+    const nextEvents = events.map((event) => shiftedIds.has(event.id)
+      ? { ...event, start_time: addMinutes(event.start_time, delta) || '', end_time: addMinutes(event.end_time, delta) }
+      : event
+    );
+    setLastTimelineSnapshot(events);
+    await updateEventsInPlace(nextEvents, `Shifted timeline by ${delta} minutes.`);
+  }
+
+  async function handleUndoTimelineShift() {
+    if (!lastTimelineSnapshot) return;
+    const snapshot = lastTimelineSnapshot;
+    setLastTimelineSnapshot(null);
+    await updateEventsInPlace(snapshot, 'Restored the previous timeline.');
+  }
+
+  async function handleCreateSmartTemplate() {
+    const base = timeToMinutes(templateStart) ?? 660;
+    const existing = new Set(events.map((event) => `${event.event_date}:${event.event_name.toLowerCase()}`));
+    const template = [
+      ['Getting Ready', 0, 120, 'Hair, makeup, detail photos, and quiet buffer.'],
+      ['First Look & Portraits', 135, 75, 'Couple portraits, wedding party, and immediate family.'],
+      ['Ceremony', 240, 30, 'Guests seated 15 minutes before start.'],
+      ['Cocktail Hour', 280, 60, 'Bar opens, passed bites, family photo overflow.'],
+      ['Reception Entrance', 350, 15, 'Wedding party entrance and welcome.'],
+      ['Dinner', 370, 75, 'Dinner service and speeches.'],
+      ['First Dance', 455, 15, 'Transition into dance floor.'],
+      ['Open Dancing', 475, 180, 'DJ timeline, late-night bites, final sendoff.'],
+    ];
+    const newEvents = template
+      .filter(([name]) => !existing.has(`${templateDate}:${String(name).toLowerCase()}`))
+      .map(([name, offset, duration, description], index) => ({
+        id: `template-${Date.now()}-${index}`,
+        event_name: String(name),
+        description: String(description),
+        event_date: templateDate,
+        start_time: minutesToTime(base + Number(offset)),
+        end_time: minutesToTime(base + Number(offset) + Number(duration)),
+        location_name: '',
+        location_address: '',
+        dress_code: null,
+        notes: null,
+        display_order: events.length + index + 1,
+        is_visible: true,
+        invitation_count: 0,
+        rsvp_count: 0,
+        attending_count: 0,
+        declined_count: 0,
+        pending_count: 0,
+      }));
+
+    if (newEvents.length === 0) {
+      setSaveNotice('Template events are already present for that date.');
+      return;
+    }
+
+    setTimelineBusy('Building template…');
+    setSaveError(null);
+    try {
+      if (isDemoMode) {
+        setEvents((prev) => [...prev, ...newEvents]);
+        setSaveNotice(`Added ${newEvents.length} template events.`);
+        return;
+      }
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Please log in again and retry.');
+      const activeSite = await resolveActiveSiteForUser(user.id);
+      if (!activeSite?.id) throw new Error('Couldn’t find your website right now.');
+      const { error } = await supabase.from('itinerary_events').insert(newEvents.map((event) => ({
+        wedding_site_id: activeSite.id,
+        event_name: event.event_name,
+        title: event.event_name,
+        description: event.description,
+        event_date: event.event_date,
+        start_time: event.start_time,
+        end_time: event.end_time,
+        display_order: event.display_order,
+        is_visible: true,
+      })));
+      if (error) throw error;
+      await loadEvents();
+      setSaveNotice(`Added ${newEvents.length} template events.`);
+    } catch (err: unknown) {
+      setSaveError(customerSafeErrorMessage(err, 'Couldn’t build the template.'));
+    } finally {
+      setTimelineBusy(null);
+    }
+  }
+
   if (loading) {
     return (
       <DashboardLayout currentPage="itinerary">
         <div className="space-y-4 animate-pulse" aria-hidden="true">
-          <div className="h-12 w-64 rounded-xl bg-surface-subtle border border-border-subtle" />
-          <div className="h-24 rounded-2xl bg-surface-subtle border border-border-subtle" />
-          <div className="h-24 rounded-2xl bg-surface-subtle border border-border-subtle" />
-          <div className="h-24 rounded-2xl bg-surface-subtle border border-border-subtle" />
+          <div className="h-12 w-64 rounded-lg bg-surface-subtle border border-border-subtle" />
+          <div className="h-24 rounded-lg bg-surface-subtle border border-border-subtle" />
+          <div className="h-24 rounded-lg bg-surface-subtle border border-border-subtle" />
+          <div className="h-24 rounded-lg bg-surface-subtle border border-border-subtle" />
         </div>
       </DashboardLayout>
     );
   }
 
+  const timelineInsights = analyzeTimeline(events.map((event) => ({
+    id: event.id,
+    name: event.event_name,
+    eventDate: event.event_date,
+    startTime: event.start_time,
+    endTime: event.end_time,
+    durationMinutes: durationFromEvent(event),
+  }))).slice(0, 4);
+  const sortedShiftEvents = [...events].sort((a, b) => `${a.event_date}T${a.start_time}`.localeCompare(`${b.event_date}T${b.start_time}`));
+  const shiftFromIndex = shiftFromEventId === 'all' ? 0 : sortedShiftEvents.findIndex((event) => event.id === shiftFromEventId);
+  const shiftPreviewCount = shiftFromIndex >= 0 ? sortedShiftEvents.length - shiftFromIndex : 0;
+  const shiftPreviewLabel = shiftFromEventId === 'all'
+    ? `${shiftPreviewCount} event${shiftPreviewCount === 1 ? '' : 's'}`
+    : `${shiftPreviewCount} event${shiftPreviewCount === 1 ? '' : 's'} from ${sortedShiftEvents[shiftFromIndex]?.event_name ?? 'selected event'}`;
+
   return (
     <DashboardLayout currentPage="itinerary">
       <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-neutral-900">Itinerary</h1>
-          <p className="mt-2 text-neutral-600">
-            Keep your weekend plans clear, organized, and easy for guests to follow.
-          </p>
-        </div>
-        <Button onClick={() => openEventForm()}>
-          <Plus className="w-5 h-5 mr-2" />
-Add to itinerary
-        </Button>
-      </div>
+      <DashboardPageHero
+        eyebrow="Schedule"
+        title="Shape the rhythm of the wedding weekend."
+        description="Add the moments guests need, keep private notes close, and adjust timing without losing the flow of the day."
+        stats={[
+          { label: 'Events', value: events.length, detail: `${events.filter((event) => event.is_visible !== false).length} visible to guests` },
+          { label: 'Timing notes', value: timelineInsights.length, detail: timelineInsights.length > 0 ? 'worth checking' : 'no timing issues found' },
+          { label: 'Shift preview', value: shiftPreviewCount, detail: 'events can move together' },
+        ]}
+        actions={
+          <Button onClick={() => openEventForm()}>
+            <Plus className="w-5 h-5 mr-2" />
+            Add to schedule
+          </Button>
+        }
+      />
 
       {showEventForm && (
         <Card className="p-6">
@@ -735,13 +943,13 @@ Add to itinerary
             )}
 
             {saveError && (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              <div className="rounded-lg border border-error/25 bg-error/5 px-3 py-2 text-sm text-text-primary">
                 {saveError}
               </div>
             )}
 
             {saveNotice && (
-              <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+              <div className="rounded-lg border border-border-subtle bg-surface-subtle px-3 py-2 text-sm text-text-primary">
                 {saveNotice}
               </div>
             )}
@@ -766,6 +974,70 @@ Add to itinerary
         </Card>
       )}
 
+      <Card className="p-5 border border-border bg-surface">
+        <div className="grid gap-4 lg:grid-cols-[1.05fr_1fr]">
+          <div>
+            <div className="flex items-center gap-2">
+              <Wand2 className="h-5 w-5 text-primary" />
+              <h2 className="text-lg font-semibold text-neutral-900">Smart wedding-day template</h2>
+            </div>
+            <p className="mt-1 text-sm text-neutral-600">Generate a working day-of timeline, then edit each item into the final producer schedule.</p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <Input type="date" value={templateDate} onChange={(e) => setTemplateDate(e.target.value)} />
+              <Input type="time" value={templateStart} onChange={(e) => setTemplateStart(e.target.value)} />
+              <Button type="button" onClick={() => void handleCreateSmartTemplate()} disabled={timelineBusy !== null}>
+                {timelineBusy === 'Building template…' ? 'Building…' : 'Build template'}
+              </Button>
+            </div>
+          </div>
+          <div className="rounded-lg border border-border-subtle bg-surface-subtle/40 p-4">
+            <div className="flex items-center gap-2">
+              <MoveRight className="h-5 w-5 text-neutral-800" />
+              <h3 className="text-sm font-semibold text-neutral-900">Bulk time shift</h3>
+            </div>
+            <p className="mt-1 text-xs leading-5 text-neutral-600">When ceremony or photos move, shift the rest of the day without rebuilding cards.</p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_110px_auto_auto]">
+              <select className="rounded-lg border border-border-subtle bg-white px-3 py-2 text-sm" value={shiftFromEventId} onChange={(e) => setShiftFromEventId(e.target.value)}>
+                <option value="all">All events</option>
+                {sortedShiftEvents.map((event) => (
+                  <option key={event.id} value={event.id}>From {event.event_name}</option>
+                ))}
+              </select>
+              <Input type="number" min="1" max="240" value={shiftMinutes} onChange={(e) => setShiftMinutes(Number(e.target.value) || 1)} />
+              <Button type="button" variant="outline" onClick={() => void handleShiftTimeline(-Math.abs(shiftMinutes))} disabled={timelineBusy !== null}>Earlier</Button>
+              <Button type="button" variant="outline" onClick={() => void handleShiftTimeline(Math.abs(shiftMinutes))} disabled={timelineBusy !== null}>Later</Button>
+            </div>
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs leading-5 text-neutral-600">
+                Preview: move {shiftPreviewLabel} by {Math.abs(shiftMinutes || 1)} minute{Math.abs(shiftMinutes || 1) === 1 ? '' : 's'}.
+              </p>
+              {lastTimelineSnapshot && (
+                <Button type="button" size="sm" variant="outline" onClick={() => void handleUndoTimelineShift()} disabled={timelineBusy !== null}>
+                  Undo last shift
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {timelineInsights.length > 0 && (
+        <Card className="p-5 border border-border bg-white">
+          <div className="flex items-center gap-2">
+            <Clock className="h-5 w-5 text-primary" />
+            <h2 className="text-lg font-semibold text-neutral-900">Timeline quick check</h2>
+          </div>
+          <div className="mt-3 grid gap-2 md:grid-cols-2">
+            {timelineInsights.map((insight, index) => (
+              <div key={`${insight.eventId}-${insight.kind}-${index}`} className="rounded-lg border border-border-subtle bg-surface-subtle/40 px-3 py-3">
+                <p className="text-sm font-semibold text-neutral-900">{insight.title}</p>
+                <p className="mt-1 text-xs leading-5 text-neutral-600">{insight.detail}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
       {events.length === 0 ? (
         <Card className="p-12 text-center">
           <Calendar className="w-12 h-12 text-neutral-400 mx-auto mb-4" />
@@ -783,9 +1055,9 @@ Add to itinerary
           {(() => {
             const conflictIds = findConflicts(events);
             return events.map((event) => {
-              const pending = Math.max(0, event.invitation_count - event.attending_count - event.declined_count);
+              const pending = event.pending_count;
               return (
-              <Card key={event.id} className={`p-6 hover:shadow-lg transition-shadow ${conflictIds.has(event.id) ? 'ring-2 ring-amber-300' : ''}`}>
+              <Card key={event.id} className={`p-6 border border-border-subtle bg-white transition-colors hover:border-primary/25 ${conflictIds.has(event.id) ? 'ring-1 ring-border-subtle' : ''}`}>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-3 flex-wrap">
@@ -798,7 +1070,7 @@ Add to itinerary
                         </span>
                       )}
                       {conflictIds.has(event.id) && (
-                        <span className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 rounded">
+                        <span className="flex items-center gap-1.5 rounded-lg border border-border-subtle bg-surface-subtle px-2 py-1 text-xs font-medium text-text-primary">
                           <AlertTriangle className="w-3 h-3" />
                           Time overlap with another event
                         </span>
@@ -848,26 +1120,26 @@ Add to itinerary
                       )}
                     </div>
 
-                    <div className="flex flex-wrap items-stretch gap-2 pt-3 border-t border-neutral-200">
-                      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-neutral-50 border border-neutral-200 text-sm">
+                    <div className="flex flex-wrap items-stretch gap-2 pt-3 border-t border-border-subtle">
+                      <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-subtle/40 px-2.5 py-1.5 text-sm">
                         <Users className="w-4 h-4 text-neutral-500" />
                         <span className="font-semibold text-neutral-900">{event.invitation_count}</span>
                         <span className="text-neutral-500">invited</span>
                       </div>
-                      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-sm">
-                        <Check className="w-4 h-4 text-emerald-600" />
-                        <span className="font-semibold text-emerald-700">{event.attending_count}</span>
-                        <span className="text-emerald-600">yes</span>
+                      <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-subtle/30 px-2.5 py-1.5 text-sm">
+                        <Check className="w-4 h-4 text-text-tertiary" />
+                        <span className="font-semibold text-text-primary">{event.attending_count}</span>
+                        <span className="text-text-secondary">yes</span>
                       </div>
-                      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-red-50 border border-red-200 text-sm">
-                        <X className="w-4 h-4 text-red-500" />
-                        <span className="font-semibold text-red-600">{event.declined_count}</span>
-                        <span className="text-red-500">no</span>
+                      <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-subtle/30 px-2.5 py-1.5 text-sm">
+                        <X className="w-4 h-4 text-text-tertiary" />
+                        <span className="font-semibold text-text-primary">{event.declined_count}</span>
+                        <span className="text-text-secondary">no</span>
                       </div>
-                      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-sm">
-                        <HelpCircle className="w-4 h-4 text-amber-500" />
-                        <span className="font-semibold text-amber-600">{pending}</span>
-                        <span className="text-amber-500">pending</span>
+                      <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-subtle/30 px-2.5 py-1.5 text-sm">
+                        <HelpCircle className="w-4 h-4 text-text-tertiary" />
+                        <span className="font-semibold text-text-primary">{pending}</span>
+                        <span className="text-text-secondary">pending</span>
                       </div>
                     </div>
                   </div>
@@ -923,6 +1195,17 @@ Add to itinerary
         />
       )}
     </div>
+      {confirmDialog && (
+        <ConfirmDialog
+          open
+          title={confirmDialog.title}
+          description={confirmDialog.description}
+          confirmLabel={confirmDialog.confirmLabel}
+          tone={confirmDialog.tone}
+          onConfirm={confirmDialog.onConfirm}
+          onCancel={confirmDialog.onCancel}
+        />
+      )}
     </DashboardLayout>
   );
 };
@@ -934,6 +1217,22 @@ interface EventGuestManagerProps {
 }
 
 function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProps) {
+  const { toast } = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<null | Omit<ConfirmDialogProps, 'open'>>(null);
+  const requestConfirmation = (options: Pick<ConfirmDialogProps, 'title' | 'description' | 'confirmLabel' | 'tone'>) =>
+    new Promise<boolean>((resolve) => {
+      setConfirmDialog({
+        ...options,
+        onCancel: () => {
+          setConfirmDialog(null);
+          resolve(false);
+        },
+        onConfirm: () => {
+          setConfirmDialog(null);
+          resolve(true);
+        },
+      });
+    });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [allGuests, setAllGuests] = useState<any[]>([]);
   const [invitedGuestIds, setInvitedGuestIds] = useState<Set<string>>(new Set());
@@ -988,7 +1287,7 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
     } catch {
       setAllGuests([]);
       setInvitedGuestIds(new Set());
-      alert('Failed to load event guest list. Please try again.');
+      toast('Couldn’t load this event’s guest list. Please try again.', 'error');
     } finally {
       setLoading(false);
     }
@@ -1042,7 +1341,7 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
 
       onUpdate();
     } catch {
-      alert('Failed to update invitation. Please try again.');
+      toast('Couldn’t update invitation. Please try again.', 'error');
     }
   }
 
@@ -1061,14 +1360,20 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
       setInvitedGuestIds(new Set(allGuests.map(g => g.id)));
       onUpdate();
     } catch {
-      alert('Failed to invite all guests. Please try again.');
+      toast('Couldn’t invite all guests. Please try again.', 'error');
     } finally {
       setBulkLoading(false);
     }
   }
 
   async function removeAll() {
-    if (!confirm('Remove all guests from this event?')) return;
+    const confirmed = await requestConfirmation({
+      title: 'Remove all guests from this event?',
+      description: 'This removes every invitation for this itinerary event. If something does not finish, the guest responses are kept safe.',
+      confirmLabel: 'Remove all',
+      tone: 'danger',
+    });
+    if (!confirmed) return;
     setBulkLoading(true);
     try {
       const { data: invitationRows, error: invitationLookupError } = await supabase
@@ -1097,7 +1402,7 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
       setInvitedGuestIds(new Set());
       onUpdate();
     } catch {
-      alert('Failed to remove all guests. Please try again.');
+      toast('Couldn’t remove all guests. Please try again.', 'error');
     } finally {
       setBulkLoading(false);
     }
@@ -1114,37 +1419,37 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
   const totalCount = allGuests.length;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
-        <div className="p-6 border-b border-neutral-200">
+    <div className="fixed inset-0 bg-black/45 flex items-center justify-center z-50 p-4">
+      <Card className="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden border border-border-subtle bg-white">
+        <div className="border-b border-border-subtle p-6">
           <div className="flex items-center justify-between mb-1">
-            <h2 className="text-xl font-semibold text-neutral-900">Manage Event Guests</h2>
+            <h2 className="text-xl font-semibold text-neutral-900">Manage event guests</h2>
             <span className="text-sm text-neutral-500">{invitedCount} of {totalCount} invited</span>
           </div>
           <p className="text-sm text-neutral-600">
-            Select which guests to invite to this event
+            Choose which guests should see and answer for this event.
           </p>
           <div className="flex items-center gap-2 mt-4">
             <input
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search guests..."
-              className="flex-1 px-3 py-2 text-sm border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              placeholder="Search guests"
+              className="flex-1 px-3 py-2 text-sm border border-border-subtle rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40"
             />
             <button
               onClick={inviteAll}
               disabled={bulkLoading || invitedCount === totalCount}
-              className="px-3 py-2 text-sm font-medium bg-primary-50 text-primary-700 border border-primary-200 rounded-lg hover:bg-primary-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-2 text-sm font-medium bg-surface-subtle text-text-primary border border-border-subtle rounded-lg hover:bg-primary-light disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
-              Invite All
+              Invite all
             </button>
             <button
               onClick={removeAll}
               disabled={bulkLoading || invitedCount === 0}
               className="px-3 py-2 text-sm font-medium bg-neutral-50 text-neutral-600 border border-neutral-200 rounded-lg hover:bg-neutral-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
-              Remove All
+              Remove all
             </button>
           </div>
         </div>
@@ -1169,8 +1474,8 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
                     key={guest.id}
                     className={`flex items-center justify-between p-3 rounded-lg border transition-colors cursor-pointer ${
                       isInvited
-                        ? 'bg-primary-50 border-primary-200'
-                        : 'border-neutral-200 hover:bg-neutral-50'
+                        ? 'bg-surface-subtle border-border-subtle'
+                        : 'border-border-subtle hover:bg-surface-subtle/50'
                     }`}
                     onClick={() => toggleGuestInvitation(guest.id)}
                   >
@@ -1181,7 +1486,7 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
                     <div
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                         isInvited
-                          ? 'bg-primary-600 text-white'
+                          ? 'bg-surface text-text-primary border border-border-subtle'
                           : 'bg-neutral-100 text-neutral-600'
                       }`}
                     >
@@ -1198,12 +1503,23 @@ function EventGuestManager({ eventId, onClose, onUpdate }: EventGuestManagerProp
           )}
         </div>
 
-        <div className="p-6 border-t border-neutral-200">
+        <div className="p-6 border-t border-border-subtle">
           <Button onClick={onClose} className="w-full">
             Done
           </Button>
         </div>
       </Card>
+      {confirmDialog && (
+        <ConfirmDialog
+          open
+          title={confirmDialog.title}
+          description={confirmDialog.description}
+          confirmLabel={confirmDialog.confirmLabel}
+          tone={confirmDialog.tone}
+          onConfirm={confirmDialog.onConfirm}
+          onCancel={confirmDialog.onCancel}
+        />
+      )}
     </div>
   );
 }

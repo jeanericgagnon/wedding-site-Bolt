@@ -11,6 +11,9 @@ const stateFile = path.join(guardDir, 'deploy-prod-state.json');
 
 const FORCE_DEPLOY = process.env.FORCE_DEPLOY === '1' || process.env.FORCE_DEPLOY === 'true';
 const COOLDOWN_MS = Number.parseInt(process.env.DEPLOY_COOLDOWN_MS ?? '300000', 10); // 5 min default
+const SKIP_POSTDEPLOY_PROOF =
+  process.env.SKIP_POSTDEPLOY_PROOF === '1' || process.env.SKIP_POSTDEPLOY_PROOF === 'true';
+const POSTDEPLOY_BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'https://dayof.love';
 
 function run(cmd, opts = {}) {
   return execSync(cmd, {
@@ -68,6 +71,22 @@ function getGitHead() {
   }
 }
 
+function runPostdeployProof() {
+  if (SKIP_POSTDEPLOY_PROOF) {
+    console.log('deploy-prod:postdeploy proof skipped by SKIP_POSTDEPLOY_PROOF=1.');
+    return;
+  }
+
+  console.log(`deploy-prod:postdeploy proof starting baseUrl=${POSTDEPLOY_BASE_URL}`);
+  run('npm run proof:v1:postdeploy', {
+    env: {
+      ...process.env,
+      PLAYWRIGHT_BASE_URL: POSTDEPLOY_BASE_URL,
+    },
+  });
+  console.log('deploy-prod:postdeploy proof passed.');
+}
+
 (async () => {
   ensureDirExists(guardDir);
   const now = Date.now();
@@ -86,14 +105,30 @@ function getGitHead() {
   }
 
   if (!lockAcquired()) {
-    const pid = process.env.DEPLOY_LOCK_CLAIMANT_PID || 'unknown';
-    const lockInfo = fs.existsSync(lockFile)
-      ? fs.readFileSync(lockFile, 'utf8')
-      : 'No lock metadata available';
-    console.log('Deployment suppressed: another deploy process is active.');
-    console.log(`Existing lock info: ${lockInfo}`);
-    console.log('Set FORCE_DEPLOY=1 to bypass (not recommended without manual confirmation).');
-    process.exit(0);
+    if (FORCE_DEPLOY) {
+      const lockInfo = fs.existsSync(lockFile)
+        ? fs.readFileSync(lockFile, 'utf8')
+        : 'No lock metadata available';
+      console.log('FORCE_DEPLOY=1: clearing existing deploy lock.');
+      console.log(`Existing lock info: ${lockInfo}`);
+      releaseLock();
+      if (lockAcquired()) {
+        // Continue with the fresh lock acquired below.
+      } else {
+        console.log('Deployment suppressed: could not acquire lock after force clearing.');
+        process.exit(0);
+      }
+    } else {
+      const pid = process.env.DEPLOY_LOCK_CLAIMANT_PID || 'unknown';
+      const lockInfo = fs.existsSync(lockFile)
+        ? fs.readFileSync(lockFile, 'utf8')
+        : 'No lock metadata available';
+      console.log('Deployment suppressed: another deploy process is active.');
+      console.log(`Existing lock info: ${lockInfo}`);
+      console.log(`Lock claimant pid hint: ${pid}`);
+      console.log('Set FORCE_DEPLOY=1 to bypass (not recommended without manual confirmation).');
+      process.exit(0);
+    }
   }
 
   let exitCode = 1;
@@ -110,6 +145,7 @@ function getGitHead() {
     fs.writeFileSync(path.join(lockDir, 'meta.json'), JSON.stringify(lockPayload, null, 2));
 
     console.log(`deploy-prod:starting commit=${commit}`);
+    run('npm run proof:v1:ai-rollout');
     run('npm run verify');
 
     let deployOutput = '';
@@ -120,6 +156,7 @@ function getGitHead() {
         encoding: 'utf8',
       });
       console.log(deployOutput);
+      runPostdeployProof();
       exitCode = 0;
     } finally {
       writeState({

@@ -10,6 +10,6 @@ export const getCoordinatorCommandSummaryTone = ({
   detail: string;
 }) => {
   if (label === priority) return 'priority';
-  if (detail.toLowerCase().includes('board')) return 'secondary';
+  if (detail.toLowerCase().includes('suggested')) return 'secondary';
   return 'background';
 };

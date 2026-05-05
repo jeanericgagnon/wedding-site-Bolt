@@ -42,13 +42,13 @@ const ScheduleTimeline: React.FC<SectionComponentProps<ScheduleTimelineData>> = 
       <div className="max-w-4xl mx-auto px-6 md:px-12">
         <div className="text-center mb-[3.75rem] md:mb-16">
           {data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.22em] text-stone-400 font-medium mb-4">
+            <p className="text-sm text-stone-400 font-light mb-4">
               {data.eyebrow}
             </p>
           )}
-          <h2 className="text-4xl md:text-6xl font-light text-stone-900 mb-3 tracking-tight leading-[1.04]">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-stone-900 mb-3 leading-[1.04]">{data.headline}</h2>
           {data.showDate && data.date && (
-            <p className="text-stone-400 text-base font-light tracking-[0.01em]">{data.date}</p>
+            <p className="text-stone-400 text-base font-light">{data.date}</p>
           )}
         </div>
 
@@ -72,12 +72,12 @@ const ScheduleTimeline: React.FC<SectionComponentProps<ScheduleTimelineData>> = 
                 </div>
 
                 <div className="pb-9 pt-0.5 flex-1 min-w-0">
-                  <h3 className="text-lg font-medium text-stone-900 leading-tight tracking-[-0.01em] text-balance">{event.label}</h3>
+                  <h3 className="text-lg font-medium text-stone-900 leading-tight text-balance">{event.label}</h3>
                   {event.description && (
                     <p className="text-sm text-stone-500 font-light mt-1.5 leading-relaxed md:leading-[1.7] max-w-[56ch]">{event.description}</p>
                   )}
                   {event.location && (
-                    <p className="text-xs text-stone-400 mt-2 uppercase tracking-[0.08em]">{event.location}</p>
+                    <p className="text-sm text-stone-400 mt-2">{event.location}</p>
                   )}
                 </div>
               </div>

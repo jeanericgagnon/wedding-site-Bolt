@@ -833,14 +833,18 @@ export const TEMPLATE_REGISTRY: Record<string, TemplateDefinition> = deepFreezeT
   rustic: cloneTemplateDefinition(getCanonicalTemplateDefinition('rustic')),
 });
 
+const templateAliasTargetEntries = Object.entries(TEMPLATE_ALIAS_TARGETS).map(([aliasId, canonicalId]) => [normalizeTemplateIdKey(aliasId), canonicalId]) as Array<readonly [string, string]>;
+
+const templateIdAliasEntries: Array<readonly [string, string]> = [
+  ...Object.entries(templateById).flatMap(([templateId, template]) => {
+    const keys = new Set([normalizeTemplateIdKey(templateId), normalizeTemplateIdKey(template.name)]);
+    return Array.from(keys).filter(Boolean).map((key) => [key, templateId] as const);
+  }),
+  ...templateAliasTargetEntries,
+];
+
 const templateIdAliases = new Map<string, string>(
-  [
-    ...Object.entries(templateById).flatMap(([templateId, template]) => {
-      const keys = new Set([normalizeTemplateIdKey(templateId), normalizeTemplateIdKey(template.name)]);
-      return Array.from(keys).filter(Boolean).map((key) => [key, templateId]);
-    }),
-    ...Object.entries(TEMPLATE_ALIAS_TARGETS).map(([aliasId, canonicalId]) => [normalizeTemplateIdKey(aliasId), canonicalId]),
-  ],
+  templateIdAliasEntries,
 );
 
 export function resolveCanonicalTemplateId(templateId: unknown): string {

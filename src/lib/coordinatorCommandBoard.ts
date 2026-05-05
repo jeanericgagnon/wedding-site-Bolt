@@ -30,15 +30,15 @@ export const buildCoordinatorCommandBoard = ({
   primaryActionTitle: string;
 }): CoordinatorCommandBoard => {
   const statusLabel = priority === 'Alerting'
-    ? 'Command board is pacing the room'
-    : `${formatLabel(priority)} is the live priority`;
+    ? 'Updates are ready when you need them'
+    : `${formatLabel(priority)} is the next focus`;
 
   return {
     statusLabel,
     tone: priority === 'Alerting' ? 'ready' : 'warning',
     firstActionLabel: `${cta} · ${formatLabel(priority)}`,
     firstTargetLabel: targetReason ? `${primaryActionTitle} ${targetReason}` : primaryActionTitle,
-    secondActionLabel: secondary ? `Then check ${formatLabel(secondary)}` : 'No second priority queued',
+    secondActionLabel: secondary ? `Then check ${formatLabel(secondary)}` : 'No second step waiting',
     reasonLabel: reason,
   };
 };

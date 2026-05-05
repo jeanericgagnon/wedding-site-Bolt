@@ -4,9 +4,9 @@ import { buildCoordinatorCommandSummary } from './coordinatorCommandSummary';
 describe('coordinatorCommandSummary', () => {
   it('surfaces live priority, targets, and next actions for command row items', () => {
     expect(buildCoordinatorCommandSummary({
-      checkInLabel: 'Working board target',
-      timelineLabel: 'Board event available',
-      qnaLabel: 'No board question',
+      checkInLabel: 'Suggested guest in progress',
+      timelineLabel: 'Suggested event waiting',
+      qnaLabel: 'No suggested question',
       alertLabel: 'Board-aligned sms lane',
       priorityLabel: 'Check-in',
       checkInTargetName: 'Alex Rivera',
@@ -16,7 +16,7 @@ describe('coordinatorCommandSummary', () => {
     })).toEqual([
       {
         label: 'Check-in',
-        detail: 'Working board target',
+        detail: 'Suggested guest in progress',
         targetLabel: 'Alex Rivera',
         statusLabel: 'Live priority',
         actionLabel: 'Review Alex Rivera now',
@@ -24,7 +24,7 @@ describe('coordinatorCommandSummary', () => {
       },
       {
         label: 'Timeline',
-        detail: 'Board event available',
+        detail: 'Suggested event waiting',
         targetLabel: 'Ceremony seating',
         statusLabel: 'Queued',
         actionLabel: 'Prep Ceremony seating',
@@ -32,7 +32,7 @@ describe('coordinatorCommandSummary', () => {
       },
       {
         label: 'Q&A',
-        detail: 'No board question',
+        detail: 'No suggested question',
         targetLabel: 'No guest question selected',
         statusLabel: 'Monitoring',
         actionLabel: 'Monitor guest questions',

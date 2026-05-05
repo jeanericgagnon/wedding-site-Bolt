@@ -17,6 +17,7 @@ import { applyThemePreset, applyThemeTokens } from '../../lib/themePresets';
 import { getPublishIssue, getPublishValidationError } from '../utils/publishReadiness';
 import { shouldAutoPublishFromSearch } from '../utils/publishUiHints';
 import { getPublishNowAction } from '../utils/publishNowFlow';
+import { customerSafeErrorMessage } from '../../lib/customerSafeError';
 
 interface BuilderShellProps {
   initialProject: BuilderProject;
@@ -27,12 +28,16 @@ interface BuilderShellProps {
   onPublish?: (projectId: string) => Promise<{ version: number; publishedAt: string }>;
 }
 
+function safeBuilderActionError(err: unknown, fallback: string): string {
+  return customerSafeErrorMessage(err, fallback);
+}
+
 export const getPublishGuidance = (issue: ReturnType<typeof getPublishIssue>): { notice: string; error: string } | null => {
   if (!issue) return null;
 
   if (issue.kind === 'no-pages') {
     return {
-      notice: 'Opened designs so you can add a starting point before going live.',
+      notice: 'Opened designs so you can add a starting point before sharing with guests.',
       error: `${issue.message} Choose a starting design or add a page first.`,
     };
   }
@@ -60,14 +65,14 @@ export const getPublishGuidance = (issue: ReturnType<typeof getPublishIssue>): {
 
   if (issue.kind === 'missing-venue') {
     return {
-      notice: 'Add at least one venue before going live.',
+      notice: 'Add at least one venue before sharing with guests.',
       error: issue.message,
     };
   }
 
   if (issue.kind === 'rsvp-disabled') {
     return {
-      notice: 'Turn RSVP on in settings or remove the RSVP button before going live.',
+      notice: 'Turn RSVP on in settings or remove the RSVP button before sharing with guests.',
       error: issue.message,
     };
   }
@@ -157,7 +162,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
           dispatch(builderActions.setMediaAssets([]));
           return;
         }
-        dispatch(builderActions.setError('Could not load the media library. Your images may not appear right away.'));
+        dispatch(builderActions.setError('Couldn’t load the media library. Your images may appear in a moment.'));
       });
   }, [initialProject.weddingId, isDemoMode]);
 
@@ -170,11 +175,16 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
 
   useEffect(() => {
     const key = 'builder_coachmarks_seen_v1';
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('builderTour') === '1') {
+      setShowCoachmarks(true);
+      return;
+    }
     try {
       const seen = window.localStorage.getItem(key);
-      if (!seen) setShowCoachmarks(true);
+      if (!seen) window.localStorage.setItem(key, '1');
     } catch {
-      setShowCoachmarks(true);
+      // Keep the editor open even if storage is blocked.
     }
   }, []);
 
@@ -188,7 +198,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
       dispatch(builderActions.markSaved(new Date().toISOString()));
       return true;
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to save';
+      const msg = safeBuilderActionError(err, 'Couldn’t save yet. Please try again.');
       setSaveError(msg);
       dispatch({ type: 'SET_SAVING', payload: false });
       return false;
@@ -205,7 +215,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
 
     if (issue.kind === 'no-pages') {
       dispatch(builderActions.openTemplateGallery());
-      setPublishNotice('Opened designs so you can add a starting point before going live.');
+      setPublishNotice('Opened designs so you can add a starting point before sharing with guests.');
       setPublishError(`${issue.message} Choose a starting design or add a page first.`);
       return;
     }
@@ -246,7 +256,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
     if (currentState.isDirty) {
       const saved = await handleSave();
       if (!saved) {
-        setPublishError('Please resolve save errors before going live.');
+        setPublishError('Please retry the save before sharing with guests.');
         return;
       }
     }
@@ -259,9 +269,9 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
           publishMeta.publishedAt
         )
       );
-      setPublishNotice(`Live site updated successfully (v${publishMeta.version})`);
+      setPublishNotice(`Live site updated. Version ${publishMeta.version}`);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to make the site live';
+      const msg = safeBuilderActionError(err, 'Couldn’t share the site yet. Please try again.');
       setPublishError(msg);
       dispatch({ type: 'SET_PUBLISHING', payload: false });
     }
@@ -382,7 +392,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
         </div>
 
         {publishNotice && (
-          <div className="fixed bottom-4 left-4 bg-green-600 text-white px-4 py-3 rounded-xl shadow-lg text-sm flex items-center gap-2 z-50 max-w-sm">
+          <div className="fixed bottom-4 left-4 bg-primary text-white px-4 py-3 rounded-xl shadow-md text-sm flex items-center gap-2 z-50 max-w-sm">
             <span className="flex-1">{publishNotice}</span>
             <button
               onClick={() => setPublishNotice(null)}
@@ -395,7 +405,7 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
         )}
 
         {state.error && (
-          <div className="fixed bottom-4 right-4 bg-error text-text-inverse px-4 py-3 rounded-xl shadow-lg text-sm flex items-center gap-2 z-50 max-w-sm">
+          <div className="fixed bottom-4 right-4 bg-error text-text-inverse px-4 py-3 rounded-xl shadow-md text-sm flex items-center gap-2 z-50 max-w-sm">
             <span className="flex-1">{state.error}</span>
             <button
               onClick={() => dispatch(builderActions.setError(null))}
@@ -416,13 +426,13 @@ export const BuilderShell: React.FC<BuilderShellProps> = ({
 
         {showCoachmarks && (
           <div className="fixed inset-0 z-[70] bg-black/45 backdrop-blur-[1px] flex items-center justify-center p-4">
-            <div className="w-full max-w-xl rounded-2xl bg-white shadow-2xl border border-gray-200 p-5">
-              <h3 className="text-lg font-semibold text-gray-900">Quick builder walkthrough</h3>
-              <p className="mt-1 text-sm text-gray-600">Three fast checks so the builder feels straightforward right away.</p>
+            <div className="w-full max-w-xl rounded-xl bg-white shadow-sm border border-border-subtle p-5">
+              <h3 className="text-lg font-semibold text-gray-900">Quick site editor walkthrough</h3>
+              <p className="mt-1 text-sm text-gray-600">Three fast checks so the editor feels straightforward right away.</p>
               <ol className="mt-4 space-y-2 text-sm text-gray-700 list-decimal list-inside">
                 <li><span className="font-medium">Canvas first:</span> click any section to start editing without hunting for controls.</li>
                 <li><span className="font-medium">Right panel:</span> use the right panel for the next useful action first, then open more controls only if needed.</li>
-                <li><span className="font-medium">Top bar:</span> check desktop, tablet, and mobile before you go live.</li>
+                <li><span className="font-medium">Top bar:</span> check desktop, tablet, and mobile before you share.</li>
               </ol>
               <div className="mt-5 flex items-center justify-end gap-2">
                 <button

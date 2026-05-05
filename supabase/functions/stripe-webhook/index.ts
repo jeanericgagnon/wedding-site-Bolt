@@ -8,6 +8,54 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey, stripe-signature",
 };
 
+const INCLUDED_SMS_CREDITS = 1000;
+
+async function grantIncludedSmsCredits(supabase: ReturnType<typeof createClient>, weddingSiteId: string) {
+  const { data: existing, error: existingError } = await supabase
+    .from("sms_credit_transactions")
+    .select("id")
+    .eq("wedding_site_id", weddingSiteId)
+    .eq("reason", "included")
+    .contains("metadata", { source: "included_with_site_purchase" })
+    .maybeSingle();
+
+  if (existingError) throw existingError;
+  if (existing?.id) return;
+
+  const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+  const { error: txError } = await supabase
+    .from("sms_credit_transactions")
+    .insert({
+      wedding_site_id: weddingSiteId,
+      credits_delta: INCLUDED_SMS_CREDITS,
+      remaining_credits: INCLUDED_SMS_CREDITS,
+      expires_at: expiresAt,
+      reason: "included",
+      metadata: {
+        source: "included_with_site_purchase",
+        unit: "160_character_sms_segment",
+      },
+    });
+
+  if (txError) throw txError;
+
+  const { data: site, error: siteError } = await supabase
+    .from("wedding_sites")
+    .select("sms_credits_balance")
+    .eq("id", weddingSiteId)
+    .maybeSingle();
+
+  if (siteError) throw siteError;
+
+  const current = Number(site?.sms_credits_balance ?? 0);
+  const { error: balanceError } = await supabase
+    .from("wedding_sites")
+    .update({ sms_credits_balance: current + INCLUDED_SMS_CREDITS })
+    .eq("id", weddingSiteId);
+
+  if (balanceError) throw balanceError;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -111,7 +159,8 @@ Deno.serve(async (req: Request) => {
             });
 
           if (txError) {
-            return new Response(JSON.stringify({ error: txError.message }), {
+            console.error("STRIPE_WEBHOOK_SMS_CREDIT_TX_FAILED", txError);
+            return new Response(JSON.stringify({ error: "Could not record SMS credit purchase." }), {
               status: 500,
               headers: { ...corsHeaders, "Content-Type": "application/json" },
             });
@@ -124,7 +173,8 @@ Deno.serve(async (req: Request) => {
             .eq("user_id", supabaseUserId);
 
           if (balError) {
-            return new Response(JSON.stringify({ error: balError.message }), {
+            console.error("STRIPE_WEBHOOK_SMS_BALANCE_FAILED", balError);
+            return new Response(JSON.stringify({ error: "Could not update SMS credit balance." }), {
               status: 500,
               headers: { ...corsHeaders, "Content-Type": "application/json" },
             });
@@ -156,11 +206,13 @@ Deno.serve(async (req: Request) => {
           .eq("user_id", supabaseUserId);
 
         if (updateError) {
-          return new Response(JSON.stringify({ error: updateError.message }), {
+          console.error("STRIPE_WEBHOOK_SUBSCRIPTION_UPDATE_FAILED", updateError);
+          return new Response(JSON.stringify({ error: "Could not update payment status." }), {
             status: 500,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
+        await grantIncludedSmsCredits(supabase, weddingSiteId);
       } else {
         const { error: updateError } = await supabase
           .from("wedding_sites")
@@ -176,11 +228,13 @@ Deno.serve(async (req: Request) => {
           .eq("user_id", supabaseUserId);
 
         if (updateError) {
-          return new Response(JSON.stringify({ error: updateError.message }), {
+          console.error("STRIPE_WEBHOOK_PAYMENT_UPDATE_FAILED", updateError);
+          return new Response(JSON.stringify({ error: "Could not update payment status." }), {
             status: 500,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
+        await grantIncludedSmsCredits(supabase, weddingSiteId);
       }
     }
 
@@ -241,8 +295,8 @@ Deno.serve(async (req: Request) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Internal server error";
-    return new Response(JSON.stringify({ error: message }), {
+    console.error("STRIPE_WEBHOOK_UNEXPECTED_FAILED", err);
+    return new Response(JSON.stringify({ error: "Could not process Stripe webhook." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

@@ -45,7 +45,7 @@ const MusicCompact: React.FC<SectionComponentProps<MusicCompactData>> = ({ data 
       <div className="max-w-3xl mx-auto px-6 md:px-12">
         <div className="text-center mb-12">
           {data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">{data.eyebrow}</p>
+            <p className="text-sm text-stone-400 font-light mb-4">{data.eyebrow}</p>
           )}
           <h2 className="text-4xl md:text-5xl font-light text-stone-900 mb-3">{data.headline}</h2>
           {data.subtitle && (

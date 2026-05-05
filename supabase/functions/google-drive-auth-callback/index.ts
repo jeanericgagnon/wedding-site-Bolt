@@ -72,7 +72,8 @@ Deno.serve(async (req: Request) => {
 
     const tokenJson = await tokenRes.json();
     if (!tokenRes.ok || !tokenJson.access_token) {
-      return json({ error: "Failed to exchange code for Google token", details: tokenJson }, 400);
+      console.error("GOOGLE_DRIVE_AUTH_TOKEN_EXCHANGE_FAILED", tokenJson);
+      return json({ error: "Could not connect Google Drive. Please try again." }, 400);
     }
 
     const adminClient = createClient(supabaseUrl, serviceRole);
@@ -108,6 +109,7 @@ Deno.serve(async (req: Request) => {
 
     return json({ success: true, connected: true });
   } catch (err) {
-    return json({ error: err instanceof Error ? err.message : "Internal server error" }, 500);
+    console.error("GOOGLE_DRIVE_AUTH_CALLBACK_UNEXPECTED_FAILED", err);
+    return json({ error: "Could not connect Google Drive. Please try again." }, 500);
   }
 });

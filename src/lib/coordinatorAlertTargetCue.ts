@@ -19,8 +19,8 @@ export const buildCoordinatorAlertTargetCue = ({
 }): CoordinatorAlertTargetCue => {
   if (!preferredSuggestion) {
     return {
-      title: 'Custom alert target',
-      detail: 'No live lane is being suggested right now, so this draft is running as a custom update.',
+      title: 'Custom update',
+      detail: 'No day-of update is being suggested right now, so this draft is ready as a custom message.',
       aligned: true,
     };
   }
@@ -33,15 +33,15 @@ export const buildCoordinatorAlertTargetCue = ({
 
   if (aligned) {
     return {
-      title: `Board target: ${preferredSuggestion.label}`,
-      detail: 'This draft is aligned with the board’s recommended day-of alert lane.',
+      title: `Suggested update: ${preferredSuggestion.label}`,
+      detail: 'This draft matches the recommended day-of update.',
       aligned: true,
     };
   }
 
   return {
     title: `Adjusted from ${preferredSuggestion.label}`,
-    detail: 'The board suggested a different alert lane, but this draft has been customized for a different send.',
+    detail: 'A different day-of update was suggested, but this draft has been customized.',
     aligned: false,
   };
 };

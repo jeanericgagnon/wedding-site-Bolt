@@ -27,6 +27,10 @@ vi.mock('../components/ui', () => ({
   Card: ({ children, ...props }: any) => <div {...props}>{children}</div>,
 }));
 
+vi.mock('../components/ui/Toast', () => ({
+  useToast: () => ({ toast: vi.fn() }),
+}));
+
 import { Onboarding, getCreateSiteRsvpDeadline, getDemoPartnerNamesFallback, getOnboardingSubdomain, parsePartnerNames } from './Onboarding';
 import { buildOnboardingUpdateWithClarifying } from '../lib/buildOnboardingUpdateWithClarifying';
 
@@ -100,7 +104,7 @@ describe('Onboarding starter draft wording truth', () => {
     render(<Onboarding />);
 
     expect(screen.getByText('Starter draft only (fastest)')).toBeInTheDocument();
-    expect(screen.getByText('Answer a few questions and we will generate a strong starting draft. You can keep refining it in the dashboard before you decide to publish.')).toBeInTheDocument();
+    expect(screen.getByText('Answer a few questions and we will generate a strong starting draft. You can keep refining it in your wedding home before you decide to publish.')).toBeInTheDocument();
     expect(screen.queryByText(/ready to publish/i)).not.toBeInTheDocument();
   });
 });

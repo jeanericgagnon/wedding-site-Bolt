@@ -13,13 +13,41 @@ interface EmailPayload {
   data: Record<string, unknown>;
 }
 
+function escapeHtml(value: unknown): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function safeEmailUrl(value: unknown): string | null {
+  const raw = String(value ?? "").trim();
+  if (!raw) return null;
+  try {
+    const parsed = new URL(raw);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
+
+function safeText(value: unknown, fallback = ""): string {
+  const raw = String(value ?? "").trim();
+  return escapeHtml(raw || fallback);
+}
+
 function anniversaryReminderHtml(data: Record<string, unknown>): string {
-  const coupleName1 = data.coupleName1 as string;
-  const coupleName2 = data.coupleName2 as string;
-  const vaultLabel = data.vaultLabel as string;
-  const anniversaryYear = data.anniversaryYear as number;
-  const unlockDate = data.unlockDate as string | null;
-  const vaultUrl = data.vaultUrl as string | null;
+  const coupleName1 = safeText(data.coupleName1, "Partner");
+  const coupleName2 = safeText(data.coupleName2, "Partner");
+  const vaultLabel = safeText(data.vaultLabel, "Anniversary vault");
+  const anniversaryYear = Number(data.anniversaryYear);
+  const safeAnniversaryYear = Number.isFinite(anniversaryYear) ? anniversaryYear : 1;
+  const unlockDate = data.unlockDate ? safeText(data.unlockDate) : null;
+  const vaultUrl = safeEmailUrl(data.vaultUrl);
+  const vaultUrlHtml = vaultUrl ? escapeHtml(vaultUrl) : null;
   const reminderKind = (data.reminderKind as string | null) ?? 'upcoming';
 
   const headline = reminderKind === 'unlock'
@@ -31,7 +59,7 @@ function anniversaryReminderHtml(data: Record<string, unknown>): string {
   const body = reminderKind === 'unlock'
     ? `The ${vaultLabel} for ${coupleName1} &amp; ${coupleName2} is now unlocked.`
     : reminderKind === 'nudge'
-      ? `There’s still time to add something meaningful before the ${anniversaryYear}${anniversaryYear === 1 ? 'st' : anniversaryYear === 2 ? 'nd' : anniversaryYear === 3 ? 'rd' : 'th'} anniversary vault opens.`
+      ? `There’s still time to add something meaningful before the ${safeAnniversaryYear}${safeAnniversaryYear === 1 ? 'st' : safeAnniversaryYear === 2 ? 'nd' : safeAnniversaryYear === 3 ? 'rd' : 'th'} anniversary vault opens.`
       : `The ${vaultLabel} for ${coupleName1} &amp; ${coupleName2} is coming up soon.`;
 
   return `
@@ -52,7 +80,7 @@ function anniversaryReminderHtml(data: Record<string, unknown>): string {
         <p style="margin:0;font-size:17px;color:#1a1a1a;font-weight:600;">${vaultLabel}</p>
         ${unlockDate ? `<p style="margin:8px 0 0;font-size:14px;color:#666;">Unlock date: ${unlockDate}</p>` : ''}
       </div>
-      ${vaultUrl ? `<a href="${vaultUrl}" style="display:inline-block;background:#1a1a1a;color:#ffffff;text-decoration:none;padding:14px 36px;border-radius:6px;font-size:14px;letter-spacing:2px;text-transform:uppercase;">Open Vault</a>` : ''}
+      ${vaultUrlHtml ? `<a href="${vaultUrlHtml}" style="display:inline-block;background:#1a1a1a;color:#ffffff;text-decoration:none;padding:14px 36px;border-radius:6px;font-size:14px;letter-spacing:2px;text-transform:uppercase;">Open Vault</a>` : ''}
     </div>
     <div style="padding:20px 40px;background:#f9f7f4;text-align:center;border-top:1px solid #ede9e0;">
       <p style="margin:0;font-size:12px;color:#aaa;">Powered by DayOf</p>
@@ -63,13 +91,13 @@ function anniversaryReminderHtml(data: Record<string, unknown>): string {
 }
 
 function rsvpNotificationHtml(data: Record<string, unknown>): string {
-  const guestName = data.guestName as string;
+  const guestName = safeText(data.guestName, "A guest");
   const attending = data.attending as boolean;
-  const mealChoice = data.mealChoice as string | null;
-  const plusOneName = data.plusOneName as string | null;
-  const notes = data.notes as string | null;
-  const coupleName1 = data.coupleName1 as string;
-  const coupleName2 = data.coupleName2 as string;
+  const mealChoice = data.mealChoice ? safeText(data.mealChoice) : null;
+  const plusOneName = data.plusOneName ? safeText(data.plusOneName) : null;
+  const notes = data.notes ? safeText(data.notes) : null;
+  const coupleName1 = safeText(data.coupleName1, "Partner");
+  const coupleName2 = safeText(data.coupleName2, "Partner");
 
   return `
 <!DOCTYPE html>
@@ -104,12 +132,12 @@ function rsvpNotificationHtml(data: Record<string, unknown>): string {
 }
 
 function rsvpConfirmationHtml(data: Record<string, unknown>): string {
-  const guestName = data.guestName as string;
+  const guestName = safeText(data.guestName, "there");
   const attending = data.attending as boolean;
-  const coupleName1 = data.coupleName1 as string;
-  const coupleName2 = data.coupleName2 as string;
-  const weddingDate = data.weddingDate as string | null;
-  const venueName = data.venueName as string | null;
+  const coupleName1 = safeText(data.coupleName1, "Partner");
+  const coupleName2 = safeText(data.coupleName2, "Partner");
+  const weddingDate = data.weddingDate ? safeText(data.weddingDate) : null;
+  const venueName = data.venueName ? safeText(data.venueName) : null;
 
   return `
 <!DOCTYPE html>
@@ -143,9 +171,9 @@ function rsvpConfirmationHtml(data: Record<string, unknown>): string {
 }
 
 function signupWelcomeHtml(data: Record<string, unknown>): string {
-  const coupleName1 = data.coupleName1 as string;
-  const coupleName2 = data.coupleName2 as string;
-  const siteUrl = data.siteUrl as string;
+  const coupleName1 = safeText(data.coupleName1, "Partner");
+  const coupleName2 = safeText(data.coupleName2, "Partner");
+  const siteUrl = safeText(data.siteUrl, "Your wedding site");
 
   return `
 <!DOCTYPE html>
@@ -181,14 +209,14 @@ function signupWelcomeHtml(data: Record<string, unknown>): string {
 }
 
 function weddingInvitationHtml(data: Record<string, unknown>): string {
-  const guestName = data.guestName as string;
-  const coupleName1 = data.coupleName1 as string;
-  const coupleName2 = data.coupleName2 as string;
-  const weddingDate = data.weddingDate as string | null;
-  const venueName = data.venueName as string | null;
-  const venueAddress = data.venueAddress as string | null;
-  const siteUrl = data.siteUrl as string | null;
-  const inviteToken = data.inviteToken as string | null;
+  const guestName = safeText(data.guestName, "Guest");
+  const coupleName1 = safeText(data.coupleName1, "Partner");
+  const coupleName2 = safeText(data.coupleName2, "Partner");
+  const weddingDate = data.weddingDate ? safeText(data.weddingDate) : null;
+  const venueName = data.venueName ? safeText(data.venueName) : null;
+  const venueAddress = data.venueAddress ? safeText(data.venueAddress) : null;
+  const siteUrl = typeof data.siteUrl === "string" ? data.siteUrl : null;
+  const inviteToken = typeof data.inviteToken === "string" ? data.inviteToken : null;
 
   const normalizeSiteUrl = (raw: string): string => {
     if (/^https?:\/\//i.test(raw)) return raw.replace(/\/$/, '');
@@ -198,10 +226,11 @@ function weddingInvitationHtml(data: Record<string, unknown>): string {
 
   const baseUrl = siteUrl ? normalizeSiteUrl(siteUrl) : null;
   const rsvpUrl = baseUrl && inviteToken
-    ? `${baseUrl}/rsvp?token=${inviteToken}`
+    ? safeEmailUrl(`${baseUrl}/rsvp?token=${encodeURIComponent(inviteToken)}`)
     : baseUrl
-    ? `${baseUrl}/rsvp`
+    ? safeEmailUrl(`${baseUrl}/rsvp`)
     : null;
+  const rsvpUrlHtml = rsvpUrl ? escapeHtml(rsvpUrl) : null;
 
   return `
 <!DOCTYPE html>
@@ -231,9 +260,9 @@ function weddingInvitationHtml(data: Record<string, unknown>): string {
         ${venueAddress ? `<p style="margin:4px 0 0;font-size:14px;color:#888;">${venueAddress}</p>` : ''}
         ` : ''}
       </div>` : ''}
-      ${rsvpUrl ? `
-      <a href="${rsvpUrl}" style="display:inline-block;background:#1a1a1a;color:#ffffff;text-decoration:none;padding:14px 36px;border-radius:6px;font-size:14px;letter-spacing:2px;text-transform:uppercase;">RSVP Now</a>
-      <p style="margin-top:16px;font-size:12px;color:#aaa;">or visit: <a href="${rsvpUrl}" style="color:#888;">${rsvpUrl}</a></p>
+      ${rsvpUrlHtml ? `
+      <a href="${rsvpUrlHtml}" style="display:inline-block;background:#1a1a1a;color:#ffffff;text-decoration:none;padding:14px 36px;border-radius:6px;font-size:14px;letter-spacing:2px;text-transform:uppercase;">RSVP Now</a>
+      <p style="margin-top:16px;font-size:12px;color:#aaa;">or visit: <a href="${rsvpUrlHtml}" style="color:#888;">${rsvpUrlHtml}</a></p>
       ` : ''}
     </div>
     <div style="padding:20px 40px;background:#f9f7f4;text-align:center;border-top:1px solid #ede9e0;">
@@ -245,6 +274,55 @@ function weddingInvitationHtml(data: Record<string, unknown>): string {
 }
 
 const OWNER_ONLY_TYPES = new Set(["wedding_invitation", "signup_welcome"]);
+
+function hasPermissionKey(permissions: unknown, key: string): boolean {
+  return Array.isArray(permissions) && permissions.includes(key);
+}
+
+async function canSendWeddingInvitation(opts: {
+  adminClient: ReturnType<typeof createClient>;
+  weddingSiteId: string;
+  userId: string;
+  inviteToken?: string | null;
+  recipientEmail: string;
+}): Promise<boolean> {
+  const { adminClient, weddingSiteId, userId, inviteToken, recipientEmail } = opts;
+  const { data: ownedSite, error: ownedError } = await adminClient
+    .from("wedding_sites")
+    .select("id")
+    .eq("id", weddingSiteId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (ownedError) throw ownedError;
+
+  let hasSiteAccess = !!ownedSite?.id;
+  if (!hasSiteAccess) {
+    const { data: collaborator, error: collaboratorError } = await adminClient
+      .from("wedding_site_collaborators")
+      .select("permissions")
+      .eq("wedding_site_id", weddingSiteId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (collaboratorError) throw collaboratorError;
+    hasSiteAccess = hasPermissionKey(collaborator?.permissions, "guests") || hasPermissionKey(collaborator?.permissions, "messages");
+  }
+
+  if (!hasSiteAccess) return false;
+  if (!inviteToken) return true;
+
+  const { data: guest, error: guestError } = await adminClient
+    .from("guests")
+    .select("id, email")
+    .eq("wedding_site_id", weddingSiteId)
+    .eq("invite_token", inviteToken)
+    .maybeSingle();
+
+  if (guestError) throw guestError;
+  if (!guest?.id) return false;
+  return String(guest.email ?? "").trim().toLowerCase() === recipientEmail.trim().toLowerCase();
+}
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -276,7 +354,9 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Owner-only types (invitations, welcome) require authenticated user or service role
+    let authedUserId: string | null = null;
+
+    // Owner-only types (invitations, welcome) require authenticated user or service role.
     if (OWNER_ONLY_TYPES.has(type) && !isServiceRole) {
       if (!token) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -296,6 +376,7 @@ Deno.serve(async (req: Request) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      authedUserId = user.id;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -304,6 +385,35 @@ Deno.serve(async (req: Request) => {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    if (type === "wedding_invitation" && !isServiceRole) {
+      const weddingSiteId = typeof data.weddingSiteId === "string" ? data.weddingSiteId.trim() : "";
+      if (!weddingSiteId) {
+        return new Response(JSON.stringify({ error: "Wedding site is required to send invitations" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const adminClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        serviceRoleKey,
+      );
+      const allowed = await canSendWeddingInvitation({
+        adminClient,
+        weddingSiteId,
+        userId: authedUserId!,
+        inviteToken: typeof data.inviteToken === "string" ? data.inviteToken : null,
+        recipientEmail: to,
+      });
+
+      if (!allowed) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
@@ -370,7 +480,7 @@ Deno.serve(async (req: Request) => {
     if (!resendResponse.ok) {
       const errorBody = await resendResponse.text();
       console.error("Resend error:", errorBody);
-      return new Response(JSON.stringify({ error: "Failed to send email", details: errorBody }), {
+      return new Response(JSON.stringify({ error: "Could not send this email. Please try again." }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -383,8 +493,8 @@ Deno.serve(async (req: Request) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Internal server error";
-    return new Response(JSON.stringify({ error: message }), {
+    console.error("SEND_WEDDING_EMAIL_UNEXPECTED_FAILED", err);
+    return new Response(JSON.stringify({ error: "Could not send this email. Please try again." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

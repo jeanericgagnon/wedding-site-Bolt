@@ -2,6 +2,7 @@ import React from 'react';
 import { z } from 'zod';
 import { MapPin, Clock, Navigation, CalendarDays, Users, Utensils } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
+import { getSafePublicImageUrl, getSafePublicWebUrl } from '../../publicLinks';
 
 const VenueDetailSchema = z.object({
   id: z.string(),
@@ -82,31 +83,34 @@ const VenueDetailsFirst: React.FC<SectionComponentProps<VenueDetailsFirstData>> 
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-16">
           {data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.22em] text-stone-400 font-medium mb-4">
+            <p className="text-sm text-stone-400 font-light mb-4">
               {data.eyebrow}
             </p>
           )}
-          <h2 className="text-4xl md:text-6xl font-light text-stone-900 mb-2 tracking-tight leading-[1.04]">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-stone-900 mb-2 leading-[1.04]">{data.headline}</h2>
           {data.subheadline && (
             <p className="text-stone-400 font-light mt-2 leading-relaxed max-w-2xl mx-auto">{data.subheadline}</p>
           )}
         </div>
 
         <div className={isWide ? 'grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-9' : 'space-y-8 max-w-4xl mx-auto'}>
-          {data.venues.map(venue => (
+          {data.venues.map(venue => {
+            const safeMapUrl = getSafePublicWebUrl(venue.mapUrl);
+            const safeVenueImage = getSafePublicImageUrl(venue.image);
+            return (
             <div key={venue.id} className="bg-white rounded-[1.5rem] overflow-hidden border border-stone-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-              {venue.image && (
+              {safeVenueImage && (
                 <div className="aspect-[21/9] overflow-hidden">
-                  <img src={venue.image} alt={venue.name} className="w-full h-full object-cover saturate-[1.03] contrast-[1.02]" />
+                  <img src={safeVenueImage} alt={venue.name} className="w-full h-full object-cover saturate-[1.03] contrast-[1.02]" />
                 </div>
               )}
 
               <div className="p-6 md:p-8">
                 <div className="mb-6">
                   {venue.role && (
-                    <p className="text-xs uppercase tracking-[0.16em] text-rose-500 font-medium mb-2">{venue.role}</p>
+                    <p className="text-sm text-rose-500 font-medium mb-2">{venue.role}</p>
                   )}
-                  <h3 className="text-xl md:text-2xl font-light text-stone-900 leading-tight tracking-[-0.01em] text-balance">{venue.name}</h3>
+                  <h3 className="text-xl md:text-2xl font-light text-stone-900 leading-tight text-balance">{venue.name}</h3>
                   {venue.description && (
                     <p className="text-sm text-stone-500 font-light mt-2.5 leading-relaxed md:leading-[1.7] text-pretty max-w-[58ch]">{venue.description}</p>
                   )}
@@ -122,7 +126,7 @@ const VenueDetailsFirst: React.FC<SectionComponentProps<VenueDetailsFirstData>> 
                             <Icon size={13} className="text-stone-400" />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-[10px] text-stone-400 uppercase tracking-wide font-medium">{detail.label}</p>
+                            <p className="text-xs text-stone-400 font-medium">{detail.label}</p>
                             <p className="text-sm text-stone-700 font-medium mt-0.5 leading-snug">{detail.value}</p>
                           </div>
                         </div>
@@ -131,12 +135,12 @@ const VenueDetailsFirst: React.FC<SectionComponentProps<VenueDetailsFirstData>> 
                   </div>
                 )}
 
-                {venue.mapUrl && (
+                {safeMapUrl && (
                   <a
-                    href={venue.mapUrl}
+                    href={safeMapUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 min-h-[46px] px-5 py-2.5 bg-stone-900 text-white text-sm font-medium tracking-[0.01em] rounded-xl hover:bg-stone-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-900/20 focus-visible:ring-offset-2"
+                    className="inline-flex items-center justify-center gap-2 min-h-[46px] px-5 py-2.5 bg-stone-900 text-white text-sm font-medium rounded-xl hover:bg-stone-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-900/20 focus-visible:ring-offset-2"
                   >
                     <Navigation size={14} />
                     Get Directions
@@ -144,7 +148,8 @@ const VenueDetailsFirst: React.FC<SectionComponentProps<VenueDetailsFirstData>> 
                 )}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

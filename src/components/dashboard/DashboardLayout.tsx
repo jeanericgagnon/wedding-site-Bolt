@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  Heart,
   LayoutDashboard,
   Palette,
   Users,
@@ -32,6 +31,7 @@ import { getSiteVisibilityState } from '../../lib/siteVisibilityState';
 import { resolveActiveSiteForUser, resolveActiveSiteRoleForUser } from '../../lib/activeSite';
 import { getStoredActiveSiteId, setStoredActiveSiteId } from '../../lib/activeSiteStorage';
 import { buildSiteMembershipLabel } from './siteMembershipLabel';
+import { hasPlannerPermission, type PlannerPermissionKey } from '../../lib/plannerAccess';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -58,6 +58,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
   const [showMoreFeatures, setShowMoreFeatures] = useState(false);
   const [siteMemberships, setSiteMemberships] = useState<SiteMembershipOption[]>([]);
   const [activeSiteRole, setActiveSiteRole] = useState<DashboardRole | null>(null);
+  const [activeSitePermissions, setActiveSitePermissions] = useState<PlannerPermissionKey[] | null>(null);
   const { user, isDemoMode } = useAuth();
   const navigate = useNavigate();
 
@@ -66,6 +67,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
 
     if (isDemoMode) {
       setSiteSlug('alex-jordan-demo');
+      setActiveSiteRole('owner');
+      setActiveSitePermissions(null);
       return;
     }
 
@@ -74,6 +77,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
       const resolvedActiveSite = await resolveActiveSiteForUser(user.id);
       const resolvedRole = await resolveActiveSiteRoleForUser(user.id);
       setActiveSiteRole(resolvedRole);
+      setActiveSitePermissions(resolvedActiveSite?.permissions ?? null);
       const preferredSiteId = persistedSiteId || resolvedActiveSite?.id || null;
 
       const { data: ownedSites } = await supabase
@@ -91,12 +95,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
 
       const { data: collaboratorMembershipsRaw } = await supabase
         .from('wedding_site_collaborators')
-        .select('wedding_site_id, role, wedding_sites!inner(id, site_slug, couple_name_1, couple_name_2)')
+        .select('wedding_site_id, role, permissions, wedding_sites!inner(id, site_slug, couple_name_1, couple_name_2)')
         .eq('user_id', user.id);
 
       const collaboratorMemberships: SiteMembershipOption[] = ((collaboratorMembershipsRaw as Array<{
         wedding_site_id: string;
         role: string;
+        permissions?: unknown;
         wedding_sites: { id: string; site_slug: string | null; couple_name_1: string | null; couple_name_2: string | null };
       }> | null) || []).map((row) => ({
         id: row.wedding_site_id,
@@ -165,25 +170,25 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
       ],
     },
     {
-      title: 'Core',
+      title: 'Pinned',
       items: [
         { id: 'builder', label: 'Website', icon: Globe, path: '/dashboard/builder' },
-        { id: 'registry', label: 'Registry', icon: Gift, path: '/dashboard/registry' },
         { id: 'guests', label: 'Guests & RSVP', icon: Users, path: '/dashboard/guests' },
-        { id: 'itinerary', label: 'Events & Seating', icon: Calendar, path: '/dashboard/itinerary' },
-        { id: 'messages', label: 'Messaging', icon: Mail, path: '/dashboard/messages' },
+        { id: 'itinerary', label: 'Schedule', icon: Calendar, path: '/dashboard/itinerary' },
         { id: 'photos', label: 'Memories', icon: Archive, path: '/dashboard/photos' },
-        { id: 'planning', label: 'Planning', icon: ClipboardList, path: '/dashboard/planning' },
-        { id: 'settings', label: 'Settings', icon: Settings, path: '/dashboard/settings' },
       ],
     },
     {
       title: 'More',
       items: [
+        { id: 'planning', label: 'Planner', icon: ClipboardList, path: '/dashboard/planning' },
+        { id: 'messages', label: 'Messaging', icon: Mail, path: '/dashboard/messages' },
+        { id: 'registry', label: 'Registry', icon: Gift, path: '/dashboard/registry' },
         { id: 'seating', label: 'Seating', icon: Armchair, path: '/dashboard/seating' },
-        { id: 'coordinator', label: 'Coordinator Mode', icon: Radio, path: '/dashboard/coordinator' },
-        { id: 'vault', label: 'Archive Vaults', icon: Image, path: '/dashboard/vault' },
-        { id: 'audit-logs', label: 'Audit Logs', icon: ScrollText, path: '/dashboard/audit-logs' },
+        { id: 'coordinator', label: 'Day-of view', icon: Radio, path: '/dashboard/coordinator' },
+        { id: 'vault', label: 'Vaults', icon: Image, path: '/dashboard/vault' },
+        { id: 'audit-logs', label: 'Activity', icon: ScrollText, path: '/dashboard/audit-logs' },
+        { id: 'settings', label: 'Settings', icon: Settings, path: '/dashboard/settings' },
       ],
     },
   ];
@@ -191,9 +196,19 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
   const role = activeSiteRole ?? 'owner';
   const canSeeNavItem = (itemId: string) => {
     if (role === 'owner') return true;
-    if (role === 'planner') return itemId !== 'builder' && itemId !== 'audit-logs';
-    if (role === 'coordinator') return ['overview', 'guests', 'itinerary', 'messages', 'photos', 'planning', 'seating', 'coordinator', 'vault'].includes(itemId);
-    return ['overview', 'registry', 'guests', 'itinerary', 'messages', 'photos', 'planning', 'vault'].includes(itemId);
+    if (itemId === 'overview') return true;
+    if (itemId === 'guests') return hasPlannerPermission(role, activeSitePermissions, 'guests');
+    if (itemId === 'messages') return hasPlannerPermission(role, activeSitePermissions, 'messages');
+    if (itemId === 'planning') return hasPlannerPermission(role, activeSitePermissions, 'planning')
+      || hasPlannerPermission(role, activeSitePermissions, 'budget')
+      || hasPlannerPermission(role, activeSitePermissions, 'vendors');
+    if (itemId === 'itinerary') return hasPlannerPermission(role, activeSitePermissions, 'timeline');
+    if (itemId === 'seating') return hasPlannerPermission(role, activeSitePermissions, 'seating');
+    if (itemId === 'coordinator') return hasPlannerPermission(role, activeSitePermissions, 'coordinator');
+    if (itemId === 'registry') return hasPlannerPermission(role, activeSitePermissions, 'registry');
+    if (itemId === 'photos' || itemId === 'vault') return hasPlannerPermission(role, activeSitePermissions, 'photos');
+    if (itemId === 'settings') return hasPlannerPermission(role, activeSitePermissions, 'settings');
+    return false;
   };
 
   const visibleNavSections = navSections
@@ -209,7 +224,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
     if (!canAccessCurrentPage) {
       navigate('/dashboard/overview', { replace: true });
     }
-  }, [activeSiteRole, currentPage, navigate, visibleNavSections]);
+  }, [activeSiteRole, activeSitePermissions, currentPage, navigate, visibleNavSections]);
+
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [currentPage]);
 
   const handleSiteSwitch = (nextSiteId: string) => {
     setStoredActiveSiteId(nextSiteId);
@@ -218,23 +237,35 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
 
   const siteVisibility = useMemo(() => getSiteVisibilityState({ isPublished: siteIsPublished, privacyMode: sitePrivacyMode, hideFromSearch: siteJsonState?.hide_from_search === true }), [siteIsPublished, sitePrivacyMode, siteJsonState]);
   const currentNavLabel = visibleNavSections.flatMap((section) => section.items).find((item) => item.id === currentPage)?.label || 'Dashboard';
+  const pageSubtitles: Record<string, string> = {
+    overview: 'The next helpful thing, without the noise.',
+    builder: 'Shape the site guests will actually use.',
+    guests: 'Names, replies, households, and gentle follow-ups.',
+    itinerary: 'The rhythm of the day in one place.',
+    messages: 'Updates guests can understand at a glance.',
+    photos: 'Guest memories, recaps, and keepsakes.',
+    planning: 'The practical pieces behind the celebration.',
+    registry: 'Gifts and funds without making it feel salesy.',
+    seating: 'Tables, people, and venue-ready assignments.',
+    coordinator: 'A quiet day-of view for the people helping.',
+    vault: 'Private notes and memories for later.',
+    settings: 'Controls for access, language, and sharing.',
+    'audit-logs': 'A private record of important changes.',
+  };
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background flex overflow-x-hidden">
       <aside
         className={`
-          fixed inset-y-0 left-0 z-50 w-64 bg-surface border-r border-border-subtle
+          fixed inset-y-0 left-0 z-50 w-56 bg-background border-r border-border-subtle
           transform transition-transform duration-200 ease-in-out
           lg:translate-x-0 lg:static
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
         <div className="flex flex-col h-full">
-          <div className="flex items-center justify-between p-6 border-b border-border-subtle">
-            <div className="flex items-center gap-2">
-              <Heart className="w-6 h-6 text-accent" aria-hidden="true" />
-              <span className="text-xl font-semibold text-text-primary">Dayof</span>
-            </div>
+          <div className="flex items-center justify-between px-6 py-5">
+            <span className="text-2xl font-serif font-normal text-text-primary">dayof</span>
             <button
               onClick={() => setSidebarOpen(false)}
               className="lg:hidden p-2 hover:bg-surface-subtle rounded-lg transition-colors"
@@ -244,18 +275,16 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
             </button>
           </div>
 
-          <nav className="flex-1 p-4 overflow-y-auto" aria-label="Dashboard navigation">
-            <div className="mb-4 rounded-xl border border-border-subtle bg-surface-subtle/40 px-4 py-3">
-              <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Site visibility</p>
+          <nav className="flex-1 px-3 pb-4 overflow-y-auto" aria-label="Dashboard navigation">
+            <div className="mb-4 rounded-lg bg-white px-4 py-3 ring-1 ring-border-subtle">
+              <p className="text-[11px] font-medium text-text-tertiary">Your site</p>
               <p className="mt-1 text-sm font-medium text-text-primary">{siteVisibility.label}</p>
-              {siteSlug && <p className="mt-1 text-xs text-text-secondary">{siteSlug}.dayof.love</p>}
-              <p className="mt-1 text-[11px] text-text-tertiary">{siteVisibility.searchLabel}</p>
-              <p className="mt-1 text-[11px] text-text-tertiary">{siteVisibility.explainer}</p>
+              {siteSlug && <p className="mt-1 truncate text-xs text-text-secondary">{siteSlug}.dayof.love</p>}
             </div>
 
             {siteMemberships.length > 1 && (
-              <div className="mb-4 rounded-xl border border-border-subtle bg-surface-subtle/40 px-4 py-3">
-                <p className="text-[11px] uppercase tracking-wide text-text-tertiary">Switch wedding</p>
+              <div className="mb-4 rounded-lg bg-white px-4 py-3 ring-1 ring-border-subtle">
+                <p className="text-[11px] font-medium text-text-tertiary">Switch wedding</p>
                 <select
                   value={siteId || ''}
                   onChange={(e) => handleSiteSwitch(e.target.value)}
@@ -270,14 +299,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
               </div>
             )}
 
-            <div className="space-y-6">
+            <div className="space-y-5">
               {visibleNavSections.map((section, sectionIndex) => (
                 <div key={section.title || `section-${sectionIndex}`}>
                   {section.title && (
                     <button
                       type="button"
                       onClick={() => section.title === 'More' && setShowMoreFeatures((prev) => !prev)}
-                      className={`mb-2 flex w-full items-center justify-between px-4 py-2 text-xs font-semibold uppercase tracking-wide ${section.title === 'More' ? 'text-text-secondary hover:text-text-primary' : 'text-text-tertiary'}`}
+                      className={`mb-1 flex w-full items-center justify-between px-4 py-2 text-xs font-medium ${section.title === 'More' ? 'text-text-secondary hover:text-text-primary' : 'text-text-tertiary'}`}
                     >
                       <span>{section.title}</span>
                       {section.title === 'More' ? (showMoreFeatures ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />) : null}
@@ -294,11 +323,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
                             <Link
                               to={item.path}
                               className={`
-                                flex items-center gap-3 px-4 py-3 rounded-lg text-base
+                                flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm
                                 transition-colors no-underline min-h-[44px]
                                 ${isActive
-                                  ? 'bg-primary text-white shadow-sm'
-                                  : 'text-text-secondary hover:text-text-primary hover:bg-surface-subtle'
+                                  ? 'bg-primary/10 text-text-primary'
+                                  : 'text-text-secondary hover:text-text-primary hover:bg-surface-subtle/75'
                                 }
                               `}
                               onClick={() => setSidebarOpen(false)}
@@ -316,9 +345,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
             </div>
           </nav>
 
-          <div className="p-4 border-t border-border-subtle">
-            <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-surface-subtle">
-              <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold">
+          <div className="p-3">
+            <div className="flex items-center gap-3 rounded-lg bg-white px-3 py-3 ring-1 ring-border-subtle">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-sm font-semibold text-text-primary">
                 {getUserInitials()}
               </div>
               <div className="min-w-0">
@@ -330,9 +359,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
         </div>
       </aside>
 
-      <div className="flex-1 min-w-0">
-        <header className="sticky top-0 z-30 border-b border-border-subtle bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-          <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+      <div className="flex-1 min-w-0 max-w-full overflow-x-hidden">
+        <header className="sticky top-0 z-30 border-b border-border-subtle bg-white">
+          <div className="flex min-h-14 items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -343,18 +372,18 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
                 <Menu className="w-5 h-5" />
               </button>
               <div>
-                <h1 className="text-lg font-semibold text-text-primary">{currentNavLabel}</h1>
-                <p className="text-sm text-text-secondary">Manage your wedding site and guest experience.</p>
+                <h1 className="text-base font-semibold text-text-primary">{currentNavLabel}</h1>
+                <p className="hidden text-sm text-text-secondary sm:block">{pageSubtitles[currentPage] ?? 'Everything for the day in one calm place.'}</p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
               {siteSlug && (
                 <a
-                  href={`/${siteSlug}`}
+                  href={`/site/${siteSlug}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="hidden items-center gap-2 rounded-lg border border-border-subtle px-3 py-2 text-sm font-medium text-text-primary hover:bg-surface-subtle sm:inline-flex"
+                  className="hidden items-center gap-2 rounded-lg border border-border-subtle bg-white px-3 py-2 text-sm font-medium text-text-primary hover:bg-surface-subtle sm:inline-flex"
                 >
                   <ExternalLink className="w-4 h-4" />
                   View site
@@ -364,17 +393,16 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
                 <button
                   type="button"
                   onClick={() => setShowUpgradeModal(true)}
-                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
+                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover"
                 >
-                  <Heart className="w-4 h-4" />
-                  Upgrade
+                  Plan options
                 </button>
               )}
             </div>
           </div>
         </header>
 
-        <main className="px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+        <main className="px-4 py-5 sm:px-6 lg:px-8">{children}</main>
       </div>
 
       {showUpgradeModal && <BillingModal onClose={() => setShowUpgradeModal(false)} />}

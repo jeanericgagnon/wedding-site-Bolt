@@ -17,10 +17,8 @@
 
 -- Delete demo wedding data first (to handle foreign key constraints)
 DELETE FROM wedding_sites WHERE user_id = '00000000-0000-0000-0000-000000000001';
-
 -- Delete the manually inserted demo user
 DELETE FROM auth.users WHERE email = 'demo@dayof.love';
-
 -- Create a function to set up demo data for new demo users
 CREATE OR REPLACE FUNCTION create_demo_wedding_data()
 RETURNS TRIGGER AS $$
@@ -219,7 +217,6 @@ Alex & Jordan', now() - interval '10 days', 'email', 'confirmed', 7);
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
 -- Create trigger to automatically set up demo data for new demo users
 DROP TRIGGER IF EXISTS on_demo_user_created ON auth.users;
 CREATE TRIGGER on_demo_user_created

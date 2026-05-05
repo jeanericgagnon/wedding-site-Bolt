@@ -9,4 +9,9 @@ describe('PhotoBucketCards', () => {
     expect(screen.getByText('Main photo of you two')).toBeInTheDocument();
     expect(screen.getByText('Weekend / destination photos')).toBeInTheDocument();
   });
+
+  it('can disable album upload buttons while the site is still loading', () => {
+    render(<PhotoBucketCards buckets={createEmptyPhotoBuckets()} uploadDisabled />);
+    expect(screen.getAllByRole('button', { name: 'Upload to this album' }).every((button) => button.hasAttribute('disabled'))).toBe(true);
+  });
 });

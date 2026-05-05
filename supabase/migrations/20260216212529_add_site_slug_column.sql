@@ -22,17 +22,14 @@ BEGIN
     ALTER TABLE wedding_sites ADD COLUMN site_slug text;
   END IF;
 END $$;
-
 -- Copy site_url to site_slug for existing rows if site_slug is null
 UPDATE wedding_sites
 SET site_slug = site_url
 WHERE site_slug IS NULL AND site_url IS NOT NULL;
-
 -- Create unique index on site_slug
 CREATE UNIQUE INDEX IF NOT EXISTS idx_wedding_sites_site_slug
   ON wedding_sites(site_slug)
   WHERE site_slug IS NOT NULL;
-
 -- Add comment
 COMMENT ON COLUMN wedding_sites.site_slug IS
   'Canonical URL slug for the wedding site. Used in public URLs like /site/:slug';

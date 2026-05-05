@@ -324,7 +324,7 @@ describe('name change passport execution snapshot', () => {
 
     const snapshot = buildNameChangePassportExecutionSnapshot(profile, documents, [], plan);
     expect(snapshot.ready).toBe(false);
-    expect(snapshot.blockers).toContain('Marriage certificate is present, but no grounded county, certificate-number extraction, or issuing-authority metadata is represented yet for out-of-state follow-through.');
+    expect(snapshot.blockers).toContain('Marriage certificate is present, but the county, certificate number, or issuing authority is not ready yet for out-of-state follow-through.');
     expect(snapshot.checklist.find((item) => item.key === 'out-of-state-marriage-certificate-grounding')).toMatchObject({ status: 'missing' });
   });
 });

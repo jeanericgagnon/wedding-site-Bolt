@@ -66,7 +66,7 @@ const MusicSetlist: React.FC<SectionComponentProps<MusicSetlistData>> = ({ data 
       <div className="max-w-2xl mx-auto px-6 md:px-12">
         <div className="text-center mb-14">
           {data.eyebrow && (
-            <p className={`text-xs uppercase tracking-[0.25em] font-medium mb-4 ${tc.sub}`}>{data.eyebrow}</p>
+            <p className={`text-sm font-light mb-4 ${tc.sub}`}>{data.eyebrow}</p>
           )}
           <h2 className={`text-4xl md:text-5xl font-light mb-4 ${tc.headline}`}>{data.headline}</h2>
           {data.subtitle && (
@@ -83,7 +83,7 @@ const MusicSetlist: React.FC<SectionComponentProps<MusicSetlistData>> = ({ data 
                   <Icon size={16} className={tc.sub} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-xs font-semibold uppercase tracking-widest mb-1 ${tc.sub}`}>{song.moment}</p>
+                  <p className={`text-xs font-medium mb-1 ${tc.sub}`}>{song.moment}</p>
                   <p className={`font-medium ${tc.headline}`}>{song.title}</p>
                   <p className={`text-sm ${tc.body}`}>{song.artist}</p>
                   {song.note && <p className={`text-xs mt-1.5 italic ${tc.sub}`}>{song.note}</p>}
@@ -95,7 +95,7 @@ const MusicSetlist: React.FC<SectionComponentProps<MusicSetlistData>> = ({ data 
 
         {data.djBandName && (
           <div className={`mt-10 text-center ${tc.sub}`}>
-            <p className="text-xs uppercase tracking-widest mb-1">{data.djBandLabel}</p>
+            <p className="text-xs mb-1">{data.djBandLabel}</p>
             <p className={`font-medium text-sm ${tc.body}`}>{data.djBandName}</p>
           </div>
         )}

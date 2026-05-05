@@ -11,15 +11,15 @@ export const getCoordinatorCommandPriority = ({
   qnaLabel: string | null;
   alertAligned: boolean;
 }): CoordinatorCommandSummaryLabel => {
-  if (checkInLabel === 'Working board target' || checkInLabel === 'Board target available') {
+  if (checkInLabel === 'Suggested guest in progress' || checkInLabel === 'Suggested guest waiting') {
     return 'Check-in';
   }
 
-  if (timelineLabel === 'Working board event' || timelineLabel === 'Board event available') {
+  if (timelineLabel === 'Suggested event in progress' || timelineLabel === 'Suggested event waiting') {
     return 'Timeline';
   }
 
-  if (qnaLabel === 'Working board question' || qnaLabel === 'Board question available') {
+  if (qnaLabel === 'Suggested question in progress' || qnaLabel === 'Suggested question waiting') {
     return 'Q&A';
   }
 

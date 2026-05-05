@@ -28,13 +28,12 @@ export const siteRepository = {
     const slug = normalizePublicSiteSlug(slugInput);
     if (!slug) return null;
 
-    const publicSiteSelect = [
+    const basePublicSiteColumns = [
       'id',
       'site_slug',
       'site_url',
       'is_published',
       'site_json',
-      'published_json',
       'couple_name_1',
       'couple_name_2',
       'wedding_date',
@@ -46,37 +45,57 @@ export const siteRepository = {
       'default_language',
       'privacy_mode',
       'hide_from_search',
-      'site_password_hash',
-      'guest_access_token',
+    ];
+    const publicSiteSelect = [...basePublicSiteColumns, 'published_json'].join(',');
+    const legacyPublicSiteSelect = [
+      ...basePublicSiteColumns,
     ].join(',');
 
-    const bySlug = await supabase
-      .from('wedding_sites')
-      .select(publicSiteSelect)
-      .eq('site_slug', slug)
-      .maybeSingle();
+    const queryPublicSite = async (column: 'site_slug' | 'site_url', value: string, select = publicSiteSelect) => {
+      const result = await supabase
+        .from('wedding_sites')
+        .select(select)
+        .eq(column, value)
+        .maybeSingle();
+
+      if (result.error?.code === '42703' && select === publicSiteSelect) {
+        return supabase
+          .from('wedding_sites')
+          .select(legacyPublicSiteSelect)
+          .eq(column, value)
+          .maybeSingle();
+      }
+
+      return result;
+    };
+
+    const bySlug = await queryPublicSite('site_slug', slug);
 
     if (bySlug.error) throw bySlug.error;
     if (bySlug.data) return bySlug.data as unknown as Record<string, unknown>;
 
     const urlCandidates = buildSiteUrlLookupCandidates(slug);
     for (const candidate of urlCandidates) {
-      const bySiteUrl = await supabase
-        .from('wedding_sites')
-        .select(publicSiteSelect)
-        .eq('site_url', candidate)
-        .maybeSingle();
+      const bySiteUrl = await queryPublicSite('site_url', candidate);
 
       if (bySiteUrl.error) throw bySiteUrl.error;
       if (bySiteUrl.data) return bySiteUrl.data as unknown as Record<string, unknown>;
     }
 
     // Last-pass fallback for legacy rows that stored full URLs with extra path/query/trailing slash.
-    const fuzzy = await supabase
+    let fuzzy = await supabase
       .from('wedding_sites')
       .select(publicSiteSelect)
       .ilike('site_url', `%${slug}%`)
       .limit(20);
+
+    if (fuzzy.error?.code === '42703') {
+      fuzzy = await supabase
+        .from('wedding_sites')
+        .select(legacyPublicSiteSelect)
+        .ilike('site_url', `%${slug}%`)
+        .limit(20);
+    }
 
     if (fuzzy.error) throw fuzzy.error;
     const match = (fuzzy.data ?? []).find((row) => {
@@ -88,6 +107,22 @@ export const siteRepository = {
     if (match) return match as unknown as Record<string, unknown>;
 
     return null;
+  },
+
+  async fetchPublicSiteTranslation(siteId: string, language: string): Promise<Record<string, unknown> | null> {
+    if (!siteId || language === 'en') return null;
+
+    const { data, error } = await supabase
+      .from('site_translations')
+      .select('translated_site_json,translated_published_json,translated_wedding_data,translated_layout_config')
+      .eq('wedding_site_id', siteId)
+      .eq('language', language)
+      .eq('status', 'ready')
+      .maybeSingle();
+
+    if (error?.code === '42P01' || error?.code === '42703') return null;
+    if (error) throw error;
+    return (data as unknown as Record<string, unknown> | null) ?? null;
   },
 
   async fetchSections(siteId: string): Promise<PersistedSection[]> {

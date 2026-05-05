@@ -51,14 +51,14 @@ describe('Trust page draft-first CTA', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Review your draft' }));
 
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
-    expect(screen.getByRole('link', { name: 'Open planner workspace' })).toHaveAttribute('href', '/dashboard/planning');
-    fireEvent.click(screen.getByRole('button', { name: 'Open your builder' }));
+    expect(screen.getByRole('link', { name: 'Open planner space' })).toHaveAttribute('href', '/dashboard/planning');
+    fireEvent.click(screen.getByRole('button', { name: 'Open site editor' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/builder');
-    fireEvent.click(screen.getByRole('button', { name: 'Open planner workspace' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open planner space' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/planning');
     fireEvent.click(screen.getByRole('button', { name: 'Open account settings' }));
     expect(navigateMock).toHaveBeenCalledWith('/settings');
-    fireEvent.click(screen.getByRole('button', { name: 'Open coordinator workspace' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open coordinator view' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/coordinator');
     fireEvent.click(screen.getByRole('button', { name: 'Open guest list' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/guests');
@@ -66,7 +66,7 @@ describe('Trust page draft-first CTA', () => {
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/messages');
     fireEvent.click(screen.getByRole('button', { name: 'Open RSVP board' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/rsvp-board');
-    fireEvent.click(screen.getByRole('button', { name: 'Open your dashboard' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open wedding home' }));
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/overview');
   });
 });

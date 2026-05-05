@@ -14,7 +14,6 @@
 
 -- Drop and recreate the function with proper security settings
 DROP FUNCTION IF EXISTS create_demo_wedding_data() CASCADE;
-
 CREATE OR REPLACE FUNCTION create_demo_wedding_data()
 RETURNS TRIGGER
 SECURITY DEFINER
@@ -359,7 +358,6 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 -- Recreate trigger
 DROP TRIGGER IF EXISTS on_demo_user_created ON auth.users;
 CREATE TRIGGER on_demo_user_created

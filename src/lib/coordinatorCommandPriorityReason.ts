@@ -17,16 +17,16 @@ export const getCoordinatorCommandPriorityReason = ({
 }) => {
   switch (priority) {
     case 'Check-in':
-      return checkInLabel === 'Working board target'
+      return checkInLabel === 'Suggested guest in progress'
         ? 'door review is already in progress'
         : 'door review is waiting';
     case 'Timeline':
-      return timelineLabel === 'Working board event'
+      return timelineLabel === 'Suggested event in progress'
         ? 'the live event is already in progress'
-        : 'the board event is waiting';
+        : 'the next event is waiting';
     case 'Q&A':
-      return qnaLabel === 'Working board question'
-        ? 'the board question is already in progress'
+      return qnaLabel === 'Suggested question in progress'
+        ? 'the suggested question is already in progress'
         : 'an unresolved guest question is waiting';
     case 'Alerting':
     default:

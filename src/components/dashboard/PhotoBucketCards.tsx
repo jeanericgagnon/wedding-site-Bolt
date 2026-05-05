@@ -12,34 +12,35 @@ const BUCKETS: Array<{ key: PhotoBucketKind; title: string; description: string;
 
 type Props = {
   buckets: CanonicalPhotoBuckets;
+  uploadDisabled?: boolean;
   onUploadClick?: (bucket: PhotoBucketKind) => void;
   onRemoveClick?: (bucket: PhotoBucketKind, itemId: string) => void;
 };
 
-export const PhotoBucketCards: React.FC<Props> = ({ buckets, onUploadClick, onRemoveClick }) => {
+export const PhotoBucketCards: React.FC<Props> = ({ buckets, uploadDisabled = false, onUploadClick, onRemoveClick }) => {
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {BUCKETS.map((bucket) => {
         const items = buckets[bucket.key] ?? [];
         return (
-          <div key={bucket.key} className="rounded-3xl border border-border bg-surface p-4 shadow-sm">
+          <div key={bucket.key} className="rounded-lg border border-border-subtle bg-white p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h3 className="text-base font-semibold text-text-primary">{bucket.title}</h3>
                 <p className="mt-1 text-sm text-text-secondary">{bucket.description}</p>
                 <p className="mt-2 text-xs text-text-tertiary">{bucket.placementHint}</p>
               </div>
-              <span className="rounded-full bg-primary-light px-2.5 py-1 text-xs font-medium text-primary">{items.length}</span>
+              <span className="rounded-md bg-primary-light px-2.5 py-1 text-xs font-medium text-primary">{items.length}</span>
             </div>
-            <div className="mt-4 flex min-h-[72px] flex-wrap gap-2 rounded-2xl bg-muted/40 p-2">
+            <div className="mt-4 flex min-h-[72px] flex-wrap gap-2 rounded-lg bg-surface-subtle p-2">
               {items.length > 0 ? items.slice(0, 4).map((item) => (
                 <div key={item.id} className="group relative">
-                  <img src={item.url} alt={item.label ?? bucket.title} className="h-16 w-16 rounded-xl object-cover" />
+                  <img src={item.url} alt={item.label ?? bucket.title} className="h-16 w-16 rounded-lg object-cover" />
                   {onRemoveClick && (
                     <button
                       type="button"
                       onClick={() => onRemoveClick(bucket.key, item.id)}
-                      className="absolute -right-1 -top-1 rounded-full bg-surface px-1.5 py-0.5 text-[10px] font-medium text-text-primary shadow opacity-0 transition group-hover:opacity-100"
+                      className="absolute -right-1 -top-1 rounded-md border border-border-subtle bg-surface px-1.5 py-0.5 text-[10px] font-medium text-text-primary opacity-0 transition group-hover:opacity-100"
                       aria-label={`Remove ${item.label ?? bucket.title}`}
                     >
                       Remove
@@ -47,7 +48,7 @@ export const PhotoBucketCards: React.FC<Props> = ({ buckets, onUploadClick, onRe
                   )}
                 </div>
               )) : (
-                <div className="flex h-16 w-full items-center justify-center rounded-xl border border-dashed border-border text-xs text-text-tertiary">
+                <div className="flex h-16 w-full items-center justify-center rounded-lg border border-dashed border-border text-xs text-text-tertiary">
                   No uploads yet
                 </div>
               )}
@@ -55,10 +56,11 @@ export const PhotoBucketCards: React.FC<Props> = ({ buckets, onUploadClick, onRe
             <button
               type="button"
               onClick={() => onUploadClick?.(bucket.key)}
-              className="mt-4 inline-flex items-center gap-2 rounded-2xl border border-border px-3 py-2 text-sm font-medium text-text-primary hover:bg-muted/50"
+              disabled={uploadDisabled}
+              className="mt-4 inline-flex items-center gap-2 rounded-lg border border-border-subtle px-3 py-2 text-sm font-medium text-text-primary hover:bg-surface-subtle disabled:cursor-not-allowed disabled:opacity-60"
             >
               <ImagePlus className="h-4 w-4" />
-              Upload to this bucket
+              Upload to this album
             </button>
           </div>
         );

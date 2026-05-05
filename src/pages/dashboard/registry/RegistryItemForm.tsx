@@ -5,6 +5,8 @@ import { fetchUrlPreview, findDuplicateItem } from './registryService';
 import { normalizeUrl, isValidUrl } from '../../../lib/urlUtils';
 import type { RegistryItem, RegistryItemDraft, RegistryPreview, MetadataConfidence } from './registryTypes';
 import { computeConfidence, getBlockedMessage } from './registryTypes';
+import { getSafePublicImageUrl, getSafePublicWebUrl } from '../../../sections/publicLinks';
+import { customerSafeErrorMessage } from '../../../lib/customerSafeError';
 
 interface Props {
   initial?: RegistryItem | null;
@@ -39,6 +41,25 @@ function itemToDraft(item: RegistryItem): RegistryItemDraft {
     metadata_confidence_score: item.metadata_confidence_score ?? null,
     metadata_source_method: (item.metadata_source_method as RegistryItemDraft['metadata_source_method']) ?? null,
     metadata_retailer: item.metadata_retailer ?? '',
+  };
+}
+
+function normalizeRegistryFormWebUrl(value: string | null | undefined): string {
+  const raw = String(value ?? '').trim();
+  if (!raw) return '';
+  if (/^[a-z][a-z0-9+.-]*:/i.test(raw) && !/^https?:\/\//i.test(raw)) return '';
+  return getSafePublicWebUrl(normalizeUrl(raw)) || '';
+}
+
+function sanitizeRegistryFormDraft(draft: RegistryItemDraft): RegistryItemDraft {
+  return {
+    ...draft,
+    item_url: normalizeRegistryFormWebUrl(draft.item_url),
+    canonical_url: normalizeRegistryFormWebUrl(draft.canonical_url),
+    image_url: getSafePublicImageUrl(draft.image_url) || '',
+    fund_venmo_url: normalizeRegistryFormWebUrl(draft.fund_venmo_url),
+    fund_paypal_url: normalizeRegistryFormWebUrl(draft.fund_paypal_url),
+    fund_custom_url: normalizeRegistryFormWebUrl(draft.fund_custom_url),
   };
 }
 
@@ -85,7 +106,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const imageUrlLooksDirect = (() => {
-    const v = (draft.image_url || '').trim();
+    const v = (getSafePublicImageUrl(draft.image_url) || '').trim();
     if (!v) return true;
     try {
       const u = new URL(v);
@@ -101,12 +122,12 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
     if (!v) return null;
     try {
       const host = new URL(normalizeUrl(v)).hostname.toLowerCase();
-      if (host.includes('amazon.')) return 'Amazon repair tip: Use the full product page. If import stays weak, re-import once, then fill title/price manually.';
-      if (host.includes('target.')) return 'Target repair tip: Full item pages work best. If details still look off, prefer manual price/title cleanup after re-import.';
-      if (host.includes('walmart.')) return 'Walmart repair tip: Re-import usually helps, but double-check price and image before save.';
-      if (host.includes('etsy.')) return 'Etsy repair tip: Listing pages usually import well, but variants and pricing can still need a manual check.';
-      if (host.includes('crateandbarrel.') || host.includes('cb2.')) return 'Crate & Barrel / CB2 tip: link save is useful, but this merchant may need more manual cleanup today.';
-      return 'Tip: Product page URLs are fine — we’ll try to auto-fetch details, but manual cleanup is normal when a store gives weak metadata.';
+      if (host.includes('amazon.')) return 'Amazon tip: Use the full product page. If details still look light, try once more, then fill in the title or price.';
+      if (host.includes('target.')) return 'Target tip: Full item pages work best. If details still look off, fill in the title or price before saving.';
+      if (host.includes('walmart.')) return 'Walmart tip: Try once more if details look light, then double-check price and image before saving.';
+      if (host.includes('etsy.')) return 'Etsy tip: Listing pages usually import well, but variants and pricing can still need a quick look.';
+      if (host.includes('crateandbarrel.') || host.includes('cb2.')) return 'Crate & Barrel / CB2 tip: saving the link helps, and these stores may need a little detail cleanup today.';
+      return 'Tip: Product page URLs are fine. We will try to fill in details, but a quick detail check is normal when a store shares limited information.';
     } catch {
       return null;
     }
@@ -118,11 +139,11 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
   const missingMerchant = missingFieldSet.has('merchant') || (!draft.merchant.trim() && !!lastPreview);
 
   const imageSourceHint = (() => {
-    const src = (draft.image_url || '').toLowerCase();
-    if (!src && (draft.item_url || '').trim()) return { label: 'Image source: Auto (from product URL)', tone: 'text-sky-700' };
-    if (!src) return { label: 'Image source: Missing', tone: 'text-amber-700' };
-    if (src.includes('thum.io') || src.includes('weserv.nl')) return { label: 'Image source: Fallback screenshot/proxy', tone: 'text-gray-600' };
-    return { label: 'Image source: Direct image URL', tone: 'text-emerald-700' };
+    const src = (getSafePublicImageUrl(draft.image_url) || '').toLowerCase();
+    if (!src && (draft.item_url || '').trim()) return { label: 'Product photo: Will try to fill from link', tone: 'text-primary' };
+    if (!src) return { label: 'Product photo: Needed', tone: 'text-text-secondary' };
+    if (src.includes('thum.io') || src.includes('weserv.nl')) return { label: 'Product photo: Store preview', tone: 'text-gray-600' };
+    return { label: 'Product photo: Ready', tone: 'text-primary' };
   })();
 
   function set<K extends keyof RegistryItemDraft>(key: K, value: RegistryItemDraft[K]) {
@@ -155,8 +176,8 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
       } else if (confidence === 'manual') {
         setFetchError(
           preview.error
-            ? `No details could be extracted from this URL. Fill in the form manually below.`
-            : `No details could be extracted. Fill in the form manually below.`
+            ? `We could not fill in details from this URL. Add the gift details below.`
+            : `We could not fill in details automatically. Add the gift details below.`
         );
       } else {
         setFetchDone(true);
@@ -207,7 +228,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
         };
       });
     } catch (err: unknown) {
-      setFetchError(err instanceof Error ? err.message : 'Fetch failed. You can still fill in the form manually.');
+      setFetchError(customerSafeErrorMessage(err, 'We could not fill this automatically. You can still add the details by hand.'));
       setDraft(prev => ({
         ...prev,
         item_url: prev.item_url || normalized,
@@ -219,7 +240,15 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
 
   async function handleFetch() {
     if (!urlInput.trim()) return;
+    const normalized = normalizeUrl(urlInput.trim());
+    if (autoFetchTimerRef.current) {
+      window.clearTimeout(autoFetchTimerRef.current);
+      autoFetchTimerRef.current = null;
+    }
     await doFetch(urlInput);
+    if (isValidUrl(normalized)) {
+      lastAutoFetchedUrlRef.current = normalized;
+    }
   }
 
   async function handleRefetch() {
@@ -242,6 +271,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
 
     autoFetchTimerRef.current = window.setTimeout(() => {
       void (async () => {
+        if (lastAutoFetchedUrlRef.current === normalized) return;
         await doFetch(normalized);
         lastAutoFetchedUrlRef.current = normalized;
       })();
@@ -261,9 +291,9 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
     setSaving(true);
     setSaveError(null);
     try {
-      await onSave(draft);
+      await onSave(sanitizeRegistryFormDraft(draft));
     } catch (err: unknown) {
-      setSaveError(err instanceof Error ? err.message : 'Save failed');
+      setSaveError(customerSafeErrorMessage(err, 'Couldn’t save this gift.'));
     } finally {
       setSaving(false);
     }
@@ -273,8 +303,8 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-text-primary/40 backdrop-blur-sm">
-      <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-surface border-b border-border px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-border-subtle bg-surface">
+        <div className="sticky top-0 bg-surface border-b border-border px-6 py-4 flex items-center justify-between rounded-t-lg z-10">
           <h2 className="text-lg font-semibold text-text-primary">
             {isEdit ? 'Edit Registry Item' : 'Add Registry Item'}
           </h2>
@@ -300,7 +330,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
           {draft.item_type !== 'cash_fund' && <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="block text-sm font-medium text-text-primary">
-                {isEdit ? 'Product URL' : 'Import from URL'}
+                {isEdit ? 'Product link' : 'Add from a link'}
                 <span className="ml-2 text-xs text-text-tertiary font-normal">(any store)</span>
               </label>
               {isEdit && draft.item_url && (
@@ -311,7 +341,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                   className="inline-flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
                 >
                   {fetching ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
-                  Re-fetch details
+                  Refresh details
                 </button>
               )}
             </div>
@@ -346,7 +376,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                   {fetching ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    'Fetch details'
+                    'Fill details'
                   )}
                 </Button>
               )}
@@ -357,8 +387,8 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
             )}
 
             {fetchError && (
-              <div className="flex items-start gap-2 p-3 bg-warning-light rounded-lg text-sm text-warning border border-warning/20">
-                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <div className="flex items-start gap-2 p-3 bg-surface-subtle rounded-lg text-sm text-text-secondary border border-border-subtle">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-text-tertiary" />
                 <div className="flex-1">
                   <span>{fetchError}</span>
                   {lastPreview?.fetch_status !== 'blocked' && (
@@ -387,8 +417,8 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
               </div>
             )}
             {dedupeWarning && (
-              <div className="flex items-start gap-2 p-3 bg-warning-light rounded-lg text-sm text-warning border border-warning/20">
-                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <div className="flex items-start gap-2 p-3 bg-surface-subtle rounded-lg text-sm text-text-secondary border border-border-subtle">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-text-tertiary" />
                 <span>{dedupeWarning}</span>
               </div>
             )}
@@ -397,10 +427,10 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
           <div className="grid grid-cols-1 gap-4">
             {/* Image preview + URL */}
             {draft.item_type !== 'cash_fund' && <div className="flex gap-4">
-              <div className="w-20 h-20 flex-shrink-0 rounded-xl bg-surface-subtle border border-border overflow-hidden flex items-center justify-center">
-                {draft.image_url ? (
+              <div className="w-20 h-20 flex-shrink-0 rounded-lg bg-surface-subtle border border-border overflow-hidden flex items-center justify-center">
+                {getSafePublicImageUrl(draft.image_url) ? (
                   <img
-                    src={draft.image_url}
+                    src={getSafePublicImageUrl(draft.image_url)}
                     alt="Product"
                     className="w-full h-full object-cover"
                     onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
@@ -420,7 +450,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                   placeholder="https://…/product-image.jpg"
                   className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
-                <p className={`mt-1 text-xs ${imageSourceHint.tone}`}>{imageSourceHint.label}</p>
+                <p className="mt-1 text-xs text-text-tertiary">{imageSourceHint.label}</p>
                 <div className="mt-1.5 flex flex-wrap gap-2">
                   {(imageSourceHint.label.includes('Missing') || imageSourceHint.label.includes('Fallback')) && (
                     <button
@@ -429,7 +459,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                       disabled={fetching || !(urlInput.trim() || draft.item_url)}
                       className="text-[11px] rounded border border-border px-2 py-0.5 text-text-secondary hover:border-primary hover:text-primary disabled:opacity-50"
                     >
-                      Re-fetch from product URL
+                      Refresh from product link
                     </button>
                   )}
                   {draft.image_url && (
@@ -443,10 +473,10 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                   )}
                 </div>
                 {!imageUrlLooksDirect && (
-                  <p className="mt-1 text-xs text-warning">Use a direct image URL (.jpg/.png/etc). Product page URLs may open blank and won’t render as images.</p>
+                  <p className="mt-1 text-xs text-text-tertiary">Use a direct image URL (.jpg/.png/etc). Product page URLs may open blank and won’t render as images.</p>
                 )}
                 {missingImage && (
-                  <p className="mt-1 text-xs text-warning">Image could not be imported cleanly. You can still save, but adding a direct image URL will make the card look better.</p>
+                  <p className="mt-1 text-xs text-text-tertiary">Image could not be imported cleanly. You can still save, but adding a direct image URL will make the card look better.</p>
                 )}
               </div>
             </div>}
@@ -454,7 +484,7 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
             {/* Name */}
             <div>
               <label className="block text-sm font-medium text-text-primary mb-1">
-                Item Name <span className="text-error">*</span>
+                Item Name <span className="text-text-tertiary">*</span>
               </label>
               <input
                 type="text"
@@ -481,28 +511,28 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                   value={draft.price_amount}
                   onChange={e => set('price_amount', e.target.value)}
                   placeholder="0.00"
-                  className={`w-full pl-7 pr-3 py-2 bg-surface-subtle border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${missingPrice ? 'border-warning' : 'border-border'}`}
+                  className={`w-full pl-7 pr-3 py-2 bg-surface-subtle border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${missingPrice ? 'border-border-subtle' : 'border-border'}`}
                 />
               </div>
               {missingPrice && (
-                <p className="mt-1 text-xs text-warning">Price could not be imported reliably from this store. Please enter it manually before saving.</p>
+                <p className="mt-1 text-xs text-text-tertiary">Price could not be filled in reliably from this store. Please enter it before saving.</p>
               )}
             </div>
 
             {/* Merchant */}
             <div>
               <label className="block text-sm font-medium text-text-primary mb-1">
-                Store / Merchant
+                Store
               </label>
               <input
                 type="text"
                 value={draft.merchant}
                 onChange={e => set('merchant', e.target.value)}
                 placeholder="e.g. Amazon, Target"
-                className={`w-full px-3 py-2 bg-surface-subtle border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${missingMerchant ? 'border-warning' : 'border-border'}`}
+                className={`w-full px-3 py-2 bg-surface-subtle border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${missingMerchant ? 'border-border-subtle' : 'border-border'}`}
               />
               {missingMerchant && (
-                <p className="mt-1 text-xs text-warning">Store name was not imported. Add the merchant manually so guests know where the gift comes from.</p>
+                <p className="mt-1 text-xs text-text-tertiary">Store name was not filled in. Add the merchant so guests know where the gift comes from.</p>
               )}
             </div>
 
@@ -537,11 +567,11 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
               <>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-text-primary mb-1">Fund Goal Amount</label>
+                    <label className="block text-sm font-medium text-text-primary mb-1">Fund goal</label>
                     <input type="number" min="0" step="0.01" value={draft.fund_goal_amount ?? ''} onChange={e => set('fund_goal_amount', e.target.value)} placeholder="e.g. 2000" className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-text-primary mb-1">Amount Received</label>
+                    <label className="block text-sm font-medium text-text-primary mb-1">Received so far</label>
                     <input type="number" min="0" step="0.01" value={draft.fund_received_amount ?? ''} onChange={e => set('fund_received_amount', e.target.value)} placeholder="e.g. 350" className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm" />
                   </div>
                 </div>
@@ -557,11 +587,11 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-text-primary mb-1">Zelle Handle</label>
+                    <label className="block text-sm font-medium text-text-primary mb-1">Zelle</label>
                     <input type="text" value={draft.fund_zelle_handle ?? ''} onChange={e => set('fund_zelle_handle', e.target.value)} placeholder="Email or phone for Zelle" className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-text-primary mb-1">Custom Link Label + URL</label>
+                    <label className="block text-sm font-medium text-text-primary mb-1">Other payment link</label>
                     <div className="grid grid-cols-2 gap-2">
                       <input type="text" value={draft.fund_custom_label ?? ''} onChange={e => set('fund_custom_label', e.target.value)} placeholder="Label" className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm" />
                       <input type="url" value={draft.fund_custom_url ?? ''} onChange={e => set('fund_custom_url', e.target.value)} placeholder="https://..." className="w-full px-3 py-2 bg-surface-subtle border border-border rounded-lg text-sm" />
@@ -588,8 +618,8 @@ export const RegistryItemForm: React.FC<Props> = ({ initial, existingItems = [],
           </div>
 
           {saveError && (
-            <div className="flex items-center gap-2 p-3 bg-error-light rounded-lg text-sm text-error border border-error/20">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <div className="flex items-center gap-2 p-3 bg-surface-subtle rounded-lg text-sm text-text-secondary border border-border-subtle">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 text-text-tertiary" />
               {saveError}
             </div>
           )}

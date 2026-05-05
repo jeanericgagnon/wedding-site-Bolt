@@ -1,11 +1,18 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { enforcePublicSubmissionRateLimit } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
+
+const json = (data: unknown, status = 200) =>
+  new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
@@ -19,14 +26,27 @@ Deno.serve(async (req: Request) => {
     const smsConsent = Boolean(body.sms_consent ?? false);
 
     if (!token) {
-      return new Response(JSON.stringify({ error: "Missing token" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return json({ error: "Missing token" }, 400);
     }
 
     if (!email && !phone && !rsvpStatus) {
-      return new Response(JSON.stringify({ error: "Provide at least one update" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return json({ error: "Provide at least one update" }, 400);
     }
 
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+
+    const rateLimit = await enforcePublicSubmissionRateLimit({
+      admin,
+      request: req,
+      scope: "submit_contact_request",
+      subject: token,
+      maxIp: 20,
+      maxSubject: 8,
+      windowMinutes: 10,
+    });
+    if (!rateLimit.ok) {
+      return json({ error: rateLimit.message }, rateLimit.status);
+    }
 
     const { data: requestRow, error: requestErr } = await admin
       .from("guest_contact_requests")
@@ -35,15 +55,15 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
 
     if (requestErr || !requestRow) {
-      return new Response(JSON.stringify({ error: "Invalid link" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return json({ error: "Invalid link" }, 404);
     }
 
     if (requestRow.used_at) {
-      return new Response(JSON.stringify({ error: "This link has already been used" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return json({ error: "This link has already been used" }, 400);
     }
 
     if (new Date(requestRow.expires_at).getTime() < Date.now()) {
-      return new Response(JSON.stringify({ error: "This link has expired" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return json({ error: "This link has expired" }, 400);
     }
 
     const patch: Record<string, unknown> = {};
@@ -59,7 +79,8 @@ Deno.serve(async (req: Request) => {
       .eq("wedding_site_id", requestRow.wedding_site_id);
 
     if (guestErr) {
-      return new Response(JSON.stringify({ error: guestErr.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      console.error("SUBMIT_CONTACT_REQUEST_UPDATE_FAILED", guestErr);
+      return json({ error: "Could not save this contact update. Please try again." }, 500);
     }
 
     await admin
@@ -67,11 +88,9 @@ Deno.serve(async (req: Request) => {
       .update({ used_at: new Date().toISOString() })
       .eq("id", requestRow.id);
 
-    return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return json({ ok: true });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : "Internal error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    console.error("SUBMIT_CONTACT_REQUEST_UNEXPECTED_FAILED", err);
+    return json({ error: "Could not save this contact update. Please try again." }, 500);
   }
 });

@@ -2,6 +2,7 @@ import React from 'react';
 import { z } from 'zod';
 import { Plane, Hotel, ExternalLink } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
+import { getSafePublicWebUrl } from '../../publicLinks';
 
 const HotelSchema = z.object({
   id: z.string(),
@@ -37,7 +38,7 @@ const TravelSplitAirHotel: React.FC<SectionComponentProps<TravelSplitAirHotelDat
     <section className="py-20 md:py-28 bg-white" id="travel">
       <div className="max-w-6xl mx-auto px-5 md:px-10">
         <div className="text-center mb-10 md:mb-12">
-          <p className="text-xs uppercase tracking-[0.24em] text-text-tertiary mb-3">{data.eyebrow}</p>
+          <p className="text-sm text-text-tertiary mb-3">{data.eyebrow}</p>
           <h2 className="text-3xl md:text-5xl font-light text-text-primary">{data.headline}</h2>
         </div>
 
@@ -45,7 +46,7 @@ const TravelSplitAirHotel: React.FC<SectionComponentProps<TravelSplitAirHotelDat
           <div className="rounded-2xl border border-border/40 bg-surface p-5">
             <div className="flex items-center gap-2 mb-3">
               <Plane className="w-4 h-4 text-primary/80" />
-              <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">By Air</p>
+              <p className="text-sm text-text-tertiary">By air</p>
             </div>
             {data.flightInfo ? <p className="text-sm text-text-primary">{data.flightInfo}</p> : null}
             {data.airportTips ? <p className="text-xs text-text-secondary mt-2">{data.airportTips}</p> : null}
@@ -54,17 +55,19 @@ const TravelSplitAirHotel: React.FC<SectionComponentProps<TravelSplitAirHotelDat
           <div className="rounded-2xl border border-border/40 bg-surface p-5">
             <div className="flex items-center gap-2 mb-3">
               <Hotel className="w-4 h-4 text-primary/80" />
-              <p className="text-xs uppercase tracking-[0.18em] text-text-tertiary">Hotels</p>
+              <p className="text-sm text-text-tertiary">Hotels</p>
             </div>
             <div className="space-y-2.5">
               {data.hotels.length === 0 ? (
                 <p className="text-xs text-text-tertiary">No hotel recommendations yet.</p>
-              ) : data.hotels.map((h) => (
+              ) : data.hotels.map((h) => {
+                const safeHotelUrl = getSafePublicWebUrl(h.url);
+                return (
                 <div key={h.id} className="rounded-xl border border-border/35 bg-white px-3 py-2.5">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm text-text-primary font-medium">{h.name}</p>
-                    {h.url ? (
-                      <a href={h.url} target="_blank" rel="noopener noreferrer" className="text-text-tertiary hover:text-primary" aria-label={`Open ${h.name} link`}>
+                    {safeHotelUrl ? (
+                      <a href={safeHotelUrl} target="_blank" rel="noopener noreferrer" className="text-text-tertiary hover:text-primary" aria-label={`Open ${h.name} link`}>
                         <ExternalLink className="w-3.5 h-3.5" />
                       </a>
                     ) : null}
@@ -72,7 +75,8 @@ const TravelSplitAirHotel: React.FC<SectionComponentProps<TravelSplitAirHotelDat
                   <p className="text-xs text-text-secondary mt-0.5">{h.distance}</p>
                   {h.note ? <p className="text-xs text-text-tertiary mt-1">{h.note}</p> : null}
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>

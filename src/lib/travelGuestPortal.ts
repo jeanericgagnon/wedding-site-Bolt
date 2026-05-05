@@ -1,0 +1,194 @@
+import { getSafePublicActionHref, getSafePublicMapsUrl } from '../sections/publicLinks';
+import type { GuestHubActionId } from './guestHubActions';
+
+export type TravelGuestPortalStepId =
+  | 'arrival'
+  | 'lodging'
+  | 'transport'
+  | 'venues'
+  | 'schedule'
+  | 'local-context'
+  | 'guest-specific';
+
+export type TravelGuestPortalStatus = 'ready' | 'needs-info' | 'empty' | 'planned';
+
+export interface TravelGuestPortalInput {
+  flightInfo?: string | null;
+  hotelInfo?: string | null;
+  parkingInfo?: string | null;
+  notes?: string | null;
+  venueCount: number;
+  venueAddressCount: number;
+  scheduleCount: number;
+  eventInviteScoped: boolean;
+}
+
+export interface TravelGuestPortalStep {
+  id: TravelGuestPortalStepId;
+  label: string;
+  detail: string;
+  status: TravelGuestPortalStatus;
+}
+
+export interface TravelGuestPortalReadiness {
+  readyCount: number;
+  steps: TravelGuestPortalStep[];
+  blockers: string[];
+}
+
+export type TravelGuestJourneyStepId = 'travel' | 'rsvp' | 'photos';
+
+export interface TravelGuestJourneyStep {
+  id: TravelGuestJourneyStepId;
+  label: string;
+  detail: string;
+  href: string;
+  status: 'ready' | 'needs-info';
+}
+
+export interface TravelGuestJourneyInput {
+  siteSlug: string;
+  enabledActionIds: GuestHubActionId[];
+}
+
+export interface TravelVenueMapInput {
+  id: string;
+  label: string;
+  address?: string | null;
+  mapUrl?: string | null;
+}
+
+export interface TravelVenueMapLink {
+  id: string;
+  label: string;
+  href: string;
+}
+
+const hasUsefulText = (value: string | null | undefined, minLength = 8) => Boolean(value && value.trim().length >= minLength);
+const hasAction = (actionIds: GuestHubActionId[], id: GuestHubActionId) => actionIds.includes(id);
+
+export function buildTravelGuestPortalReadiness(input: TravelGuestPortalInput): TravelGuestPortalReadiness {
+  const hasArrival = hasUsefulText(input.flightInfo);
+  const hasLodging = hasUsefulText(input.hotelInfo);
+  const hasTransport = hasUsefulText(input.parkingInfo);
+  const hasLocalContext = hasUsefulText(input.notes);
+  const hasVenues = input.venueCount > 0;
+  const venuesAddressed = hasVenues && input.venueAddressCount >= input.venueCount;
+  const hasSchedule = input.scheduleCount > 0;
+
+  const steps: TravelGuestPortalStep[] = [
+    {
+      id: 'arrival',
+      label: 'Arrival guidance',
+      detail: hasArrival ? 'Airport, train, or arrival guidance is written for guests.' : 'Add airport, train, shuttle, or arrival guidance.',
+      status: hasArrival ? 'ready' : 'needs-info',
+    },
+    {
+      id: 'lodging',
+      label: 'Lodging',
+      detail: hasLodging ? 'Hotel or room-block guidance is ready.' : 'Add hotel, room block, or where-to-stay guidance.',
+      status: hasLodging ? 'ready' : 'needs-info',
+    },
+    {
+      id: 'transport',
+      label: 'Local transport',
+      detail: hasTransport ? 'Parking, shuttle, or local transport details are ready.' : 'Add parking, shuttle, rideshare, or local transport guidance.',
+      status: hasTransport ? 'ready' : 'needs-info',
+    },
+    {
+      id: 'venues',
+      label: 'Venue addresses',
+      detail: venuesAddressed
+        ? `${input.venueAddressCount} of ${input.venueCount} venues have addresses.`
+        : hasVenues
+          ? `${Math.max(input.venueCount - input.venueAddressCount, 0)} venue address${input.venueCount - input.venueAddressCount === 1 ? '' : 'es'} still missing.`
+          : 'Add at least one venue before travel routing can feel complete.',
+      status: venuesAddressed ? 'ready' : hasVenues ? 'needs-info' : 'empty',
+    },
+    {
+      id: 'schedule',
+      label: 'Weekend schedule',
+      detail: hasSchedule ? `${input.scheduleCount} schedule item${input.scheduleCount === 1 ? '' : 's'} can guide travel timing.` : 'Add schedule items so guests know when travel details matter.',
+      status: hasSchedule ? 'ready' : 'empty',
+    },
+    {
+      id: 'local-context',
+      label: 'Local context',
+      detail: hasLocalContext ? 'Local notes or cultural context are ready.' : 'Add local recommendations, dress/weather context, or destination notes if guests need them.',
+      status: hasLocalContext ? 'ready' : 'empty',
+    },
+    {
+      id: 'guest-specific',
+      label: 'Guest-specific portal',
+      detail: input.eventInviteScoped
+        ? 'Travel details can build on event invite visibility.'
+        : 'Guest-specific room assignments, shuttle groups, and visa/cultural tips need a dedicated data contract before launch.',
+      status: input.eventInviteScoped ? 'planned' : 'planned',
+    },
+  ];
+
+  const blockers = steps
+    .filter((step) => step.status === 'needs-info')
+    .map((step) => step.detail);
+
+  return {
+    readyCount: steps.filter((step) => step.status === 'ready').length,
+    steps,
+    blockers,
+  };
+}
+
+export function buildTravelGuestJourney(input: TravelGuestJourneyInput): TravelGuestJourneyStep[] {
+  const siteSlug = input.siteSlug.trim().toLowerCase();
+  if (!siteSlug) return [];
+
+  const encodedSlug = encodeURIComponent(siteSlug);
+  const candidates: Array<TravelGuestJourneyStep & { actionId: GuestHubActionId }> = [
+    {
+      id: 'travel',
+      actionId: 'travel',
+      label: 'Travel details',
+      detail: 'Review travel, venue, and weekend timing before you reply.',
+      href: `/site/${encodedSlug}#travel`,
+      status: 'ready',
+    },
+    {
+      id: 'rsvp',
+      actionId: 'rsvp',
+      label: 'Reply',
+      detail: 'Confirm attendance and any event-specific details from the same hub.',
+      href: `/site/${encodedSlug}#rsvp`,
+      status: 'ready',
+    },
+    {
+      id: 'photos',
+      actionId: 'photos',
+      label: 'Upload photos',
+      detail: 'Share photos or videos without installing an app.',
+      href: `/photos/upload?site=${encodedSlug}&hub=1`,
+      status: 'ready',
+    },
+  ];
+
+  return candidates.map(({ actionId, ...step }) => {
+    const ready = hasAction(input.enabledActionIds, actionId);
+    return {
+      ...step,
+      href: ready ? getSafePublicActionHref(step.href, '') : '',
+      status: ready ? 'ready' : 'needs-info',
+    };
+  });
+}
+
+export function buildTravelVenueMapLinks(venues: TravelVenueMapInput[]): TravelVenueMapLink[] {
+  return venues
+    .map((venue) => {
+      const fallbackQuery = [venue.label, venue.address].map((part) => part?.trim()).filter(Boolean).join(' ');
+      return {
+        id: venue.id,
+        label: venue.label,
+        href: getSafePublicMapsUrl(venue.mapUrl, fallbackQuery),
+      };
+    })
+    .filter((venue): venue is TravelVenueMapLink => Boolean(venue.href));
+}

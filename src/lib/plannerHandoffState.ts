@@ -4,7 +4,7 @@ export function getPlannerHandoffCopy(role: PlannerAccessRole) {
   if (role === 'owner') {
     return {
       title: 'Couple-led right now',
-      detail: 'The couple still has the wheel. Planner help can support execution, but final direction stays here.',
+      detail: 'The couple still has the wheel. Planner help can move the work along, but final direction stays here.',
     };
   }
   if (role === 'planner') {
@@ -15,7 +15,7 @@ export function getPlannerHandoffCopy(role: PlannerAccessRole) {
   }
   if (role === 'coordinator') {
     return {
-      title: 'Coordinator handling live operations',
+      title: 'Coordinator supporting the live day',
       detail: 'This view is for real-time event support, not broad planning ownership.',
     };
   }

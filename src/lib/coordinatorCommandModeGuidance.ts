@@ -3,12 +3,12 @@ import type { CoordinatorCommandState } from './coordinatorCommandState';
 export const getCoordinatorCommandModeGuidance = (source: CoordinatorCommandState['source']) => {
   switch (source) {
     case 'primary-action':
-      return 'Work the board’s top priority, then the command center will advance you to the next thing.';
+      return 'Start with the suggested action, then dayof will surface the next helpful step.';
     case 'escalation':
-      return 'Resolve the flagged issue, then return to the live board once the exception is under control.';
+      return 'Handle the detail that needs attention, then return to the day-of summary once it is settled.';
     case 'correction':
-      return 'Confirm the mistake and use the recovery controls in the focused panel to correct it cleanly.';
+      return 'Confirm what changed and use the focused panel to update it cleanly.';
     default:
-      return 'You are in the neutral live board view. Follow the next-best action when you need a fast cue.';
+      return 'You are in the day-of summary. Follow the suggested action when you need a fast cue.';
   }
 };

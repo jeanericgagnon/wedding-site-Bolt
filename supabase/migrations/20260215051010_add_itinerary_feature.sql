@@ -71,7 +71,6 @@ CREATE TABLE IF NOT EXISTS itinerary_events (
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );
-
 -- Create event_invitations table (many-to-many)
 CREATE TABLE IF NOT EXISTS event_invitations (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -81,7 +80,6 @@ CREATE TABLE IF NOT EXISTS event_invitations (
   created_at timestamptz DEFAULT now(),
   UNIQUE(event_id, guest_id)
 );
-
 -- Create event_rsvps table
 CREATE TABLE IF NOT EXISTS event_rsvps (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -94,14 +92,12 @@ CREATE TABLE IF NOT EXISTS event_rsvps (
   updated_at timestamptz DEFAULT now(),
   UNIQUE(event_invitation_id)
 );
-
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_itinerary_events_wedding_site_id ON itinerary_events(wedding_site_id);
 CREATE INDEX IF NOT EXISTS idx_itinerary_events_event_date ON itinerary_events(event_date);
 CREATE INDEX IF NOT EXISTS idx_event_invitations_event_id ON event_invitations(event_id);
 CREATE INDEX IF NOT EXISTS idx_event_invitations_guest_id ON event_invitations(guest_id);
 CREATE INDEX IF NOT EXISTS idx_event_rsvps_event_invitation_id ON event_rsvps(event_invitation_id);
-
 -- Create updated_at trigger function if it doesn't exist
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
@@ -110,25 +106,21 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-
 -- Add updated_at triggers
 DROP TRIGGER IF EXISTS update_itinerary_events_updated_at ON itinerary_events;
 CREATE TRIGGER update_itinerary_events_updated_at
   BEFORE UPDATE ON itinerary_events
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
-
 DROP TRIGGER IF EXISTS update_event_rsvps_updated_at ON event_rsvps;
 CREATE TRIGGER update_event_rsvps_updated_at
   BEFORE UPDATE ON event_rsvps
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
-
 -- Enable Row Level Security
 ALTER TABLE itinerary_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE event_invitations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE event_rsvps ENABLE ROW LEVEL SECURITY;
-
 -- RLS Policies for itinerary_events
 
 -- Wedding site owners can view their events
@@ -140,7 +132,6 @@ CREATE POLICY "Wedding site owners can view their events"
       SELECT id FROM wedding_sites WHERE user_id = auth.uid()
     )
   );
-
 -- Wedding site owners can create events
 CREATE POLICY "Wedding site owners can create events"
   ON itinerary_events FOR INSERT
@@ -150,7 +141,6 @@ CREATE POLICY "Wedding site owners can create events"
       SELECT id FROM wedding_sites WHERE user_id = auth.uid()
     )
   );
-
 -- Wedding site owners can update their events
 CREATE POLICY "Wedding site owners can update their events"
   ON itinerary_events FOR UPDATE
@@ -165,7 +155,6 @@ CREATE POLICY "Wedding site owners can update their events"
       SELECT id FROM wedding_sites WHERE user_id = auth.uid()
     )
   );
-
 -- Wedding site owners can delete their events
 CREATE POLICY "Wedding site owners can delete their events"
   ON itinerary_events FOR DELETE
@@ -175,13 +164,11 @@ CREATE POLICY "Wedding site owners can delete their events"
       SELECT id FROM wedding_sites WHERE user_id = auth.uid()
     )
   );
-
 -- Guests can view events they're invited to (via public access with invite token)
 CREATE POLICY "Public can view visible events for RSVP"
   ON itinerary_events FOR SELECT
   TO anon
   USING (is_visible = true);
-
 -- RLS Policies for event_invitations
 
 -- Wedding site owners can view invitations for their events
@@ -195,7 +182,6 @@ CREATE POLICY "Wedding site owners can view event invitations"
       WHERE w.user_id = auth.uid()
     )
   );
-
 -- Wedding site owners can create invitations
 CREATE POLICY "Wedding site owners can create event invitations"
   ON event_invitations FOR INSERT
@@ -207,7 +193,6 @@ CREATE POLICY "Wedding site owners can create event invitations"
       WHERE w.user_id = auth.uid()
     )
   );
-
 -- Wedding site owners can delete invitations
 CREATE POLICY "Wedding site owners can delete event invitations"
   ON event_invitations FOR DELETE
@@ -219,13 +204,11 @@ CREATE POLICY "Wedding site owners can delete event invitations"
       WHERE w.user_id = auth.uid()
     )
   );
-
 -- Public can view invitations (for RSVP lookups)
 CREATE POLICY "Public can view event invitations"
   ON event_invitations FOR SELECT
   TO anon
   USING (true);
-
 -- RLS Policies for event_rsvps
 
 -- Wedding site owners can view RSVPs for their events
@@ -240,7 +223,6 @@ CREATE POLICY "Wedding site owners can view event RSVPs"
       WHERE w.user_id = auth.uid()
     )
   );
-
 -- Wedding site owners can update RSVPs
 CREATE POLICY "Wedding site owners can update event RSVPs"
   ON event_rsvps FOR UPDATE
@@ -261,7 +243,6 @@ CREATE POLICY "Wedding site owners can update event RSVPs"
       WHERE w.user_id = auth.uid()
     )
   );
-
 -- Public can submit RSVPs
 CREATE POLICY "Public can submit event RSVPs"
   ON event_rsvps FOR INSERT
@@ -271,14 +252,12 @@ CREATE POLICY "Public can submit event RSVPs"
       SELECT id FROM event_invitations
     )
   );
-
 -- Public can update their RSVPs
 CREATE POLICY "Public can update event RSVPs"
   ON event_rsvps FOR UPDATE
   TO anon
   USING (true)
   WITH CHECK (true);
-
 -- Public can view RSVPs (for checking existing responses)
 CREATE POLICY "Public can view event RSVPs"
   ON event_rsvps FOR SELECT

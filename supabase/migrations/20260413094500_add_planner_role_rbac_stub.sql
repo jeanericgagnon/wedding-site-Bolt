@@ -17,7 +17,6 @@ BEGIN
     ALTER TYPE collaborator_role ADD VALUE 'planner';
   END IF;
 END $$;
-
 -- 2) Invite table role constraint target (stub note)
 -- Recommended follow-up:
 -- add CHECK (role IN ('owner','planner','coordinator','viewer'))
@@ -36,4 +35,4 @@ END $$;
 --   seating: owner / planner / coordinator
 
 -- 4) Actual policy rewrites intentionally deferred to the next migration pass
--- after per-table verification.
+-- after per-table verification.;

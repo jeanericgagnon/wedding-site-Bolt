@@ -34,7 +34,6 @@ BEGIN
     file_size_limit = EXCLUDED.file_size_limit,
     allowed_mime_types = EXCLUDED.allowed_mime_types;
 END $$;
-
 -- Authenticated users can upload to their own wedding folder
 CREATE POLICY "Authenticated users can upload wedding media"
   ON storage.objects
@@ -48,14 +47,12 @@ CREATE POLICY "Authenticated users can upload wedding media"
         AND user_id = auth.uid()
     ) > 0
   );
-
 -- Anyone can read media (guests viewing the public wedding site)
 CREATE POLICY "Public can read wedding media"
   ON storage.objects
   FOR SELECT
   TO public
   USING (bucket_id = 'wedding-media');
-
 -- Authenticated users can delete their own wedding media
 CREATE POLICY "Authenticated users can delete own wedding media"
   ON storage.objects

@@ -10,20 +10,20 @@ describe('coordinatorAlertTargetCue', () => {
     audience: 'event:event-1',
   };
 
-  it('marks an aligned draft as matching the board target', () => {
+  it('marks an aligned draft as matching the suggested update', () => {
     expect(buildCoordinatorAlertTargetCue({
       preferredSuggestion,
       subject: 'Ceremony is live',
       body: 'Ceremony is happening now.',
       audience: 'event:event-1',
     })).toEqual({
-      title: 'Board target: Update live event',
-      detail: 'This draft is aligned with the board’s recommended day-of alert lane.',
+      title: 'Suggested update: Update live event',
+      detail: 'This draft matches the recommended day-of update.',
       aligned: true,
     });
   });
 
-  it('marks a customized draft as adjusted away from the board target', () => {
+  it('marks a customized draft as adjusted away from the suggested update', () => {
     expect(buildCoordinatorAlertTargetCue({
       preferredSuggestion,
       subject: 'Ceremony delayed',
@@ -31,7 +31,7 @@ describe('coordinatorAlertTargetCue', () => {
       audience: 'all',
     })).toEqual({
       title: 'Adjusted from Update live event',
-      detail: 'The board suggested a different alert lane, but this draft has been customized for a different send.',
+      detail: 'A different day-of update was suggested, but this draft has been customized.',
       aligned: false,
     });
   });
@@ -42,6 +42,6 @@ describe('coordinatorAlertTargetCue', () => {
       subject: 'Custom note',
       body: 'Hello there',
       audience: 'all',
-    }).title).toBe('Custom alert target');
+    }).title).toBe('Custom update');
   });
 });

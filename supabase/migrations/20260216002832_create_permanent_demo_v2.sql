@@ -9,10 +9,8 @@
 -- Drop trigger approach
 DROP TRIGGER IF EXISTS on_demo_user_created ON auth.users;
 DROP FUNCTION IF EXISTS create_demo_wedding_data();
-
 -- Delete existing demo
 DELETE FROM auth.users WHERE email = 'demo@dayof.love';
-
 -- Create demo user
 INSERT INTO auth.users (
   id,
@@ -39,7 +37,6 @@ INSERT INTO auth.users (
   'authenticated',
   'authenticated'
 );
-
 -- Create demo data
 DO $$
 DECLARE

@@ -317,7 +317,9 @@ export const extractWeddingProfileUpdates = async (
   const deterministic = deterministicExtractWeddingProfileUpdates(input, profile);
 
   if (!isOpenAiConfigured()) {
-    console.info('[aiOnboarding] using deterministic fallback: OpenAI not configured');
+    if (import.meta.env.DEV) {
+      console.info('[aiOnboarding] using deterministic fallback: OpenAI not configured');
+    }
     return deterministic;
   }
 
@@ -348,7 +350,9 @@ export const extractWeddingProfileUpdates = async (
         ? Math.max(modelResult.confidence, deterministic.confidence, 0.95)
         : Math.max(modelResult.confidence, deterministic.confidence);
 
-    console.info('[aiOnboarding] using OpenAI extraction', getOpenAiRuntimeConfig());
+    if (import.meta.env.DEV) {
+      console.info('[aiOnboarding] using OpenAI extraction', getOpenAiRuntimeConfig());
+    }
     return {
       updates: modelResult.updates as Partial<WeddingProfile>,
       inferred: modelResult.inferred,
@@ -357,8 +361,10 @@ export const extractWeddingProfileUpdates = async (
       confidence: normalizedConfidence,
       requiresConfirmation,
     };
-  } catch (error) {
-    console.warn('[aiOnboarding] OpenAI extraction failed, falling back to deterministic extractor', error);
+  } catch {
+    if (import.meta.env.DEV) {
+      console.warn('[aiOnboarding] OpenAI extraction failed; using deterministic fallback.');
+    }
     return deterministic;
   }
 };

@@ -7,7 +7,7 @@ export const getCoordinatorActiveTargetLabel = (kind: 'guest' | 'timeline' | 'qn
     case 'qna':
       return 'Active question';
     case 'alert':
-      return 'Active alert lane';
+      return 'Active update';
     default:
       return 'Active target';
   }

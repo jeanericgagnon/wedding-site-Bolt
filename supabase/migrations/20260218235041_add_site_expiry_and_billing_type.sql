@@ -27,7 +27,6 @@ BEGIN
         CHECK (billing_type IN ('one_time', 'recurring'));
   END IF;
 END $$;
-
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -37,7 +36,6 @@ BEGIN
     ALTER TABLE public.wedding_sites ADD COLUMN site_expires_at timestamptz;
   END IF;
 END $$;
-
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -47,17 +45,14 @@ BEGIN
     ALTER TABLE public.wedding_sites ADD COLUMN stripe_subscription_id text;
   END IF;
 END $$;
-
 -- Grandfather existing active sites: give them a 2-year expiry from now
 UPDATE public.wedding_sites
 SET site_expires_at = now() + interval '2 years'
 WHERE payment_status = 'active'
   AND site_expires_at IS NULL;
-
 CREATE INDEX IF NOT EXISTS idx_wedding_sites_site_expires_at
   ON public.wedding_sites(site_expires_at)
   WHERE site_expires_at IS NOT NULL;
-
 CREATE INDEX IF NOT EXISTS idx_wedding_sites_stripe_subscription_id
   ON public.wedding_sites(stripe_subscription_id)
   WHERE stripe_subscription_id IS NOT NULL;

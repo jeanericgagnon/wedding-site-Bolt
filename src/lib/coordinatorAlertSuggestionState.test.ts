@@ -24,7 +24,7 @@ describe('coordinatorAlertSuggestionState', () => {
     });
   });
 
-  it('marks only the recommended board lane when the draft drifted', () => {
+  it('marks only the suggested lane when the draft drifted', () => {
     expect(getCoordinatorAlertSuggestionState({
       suggestion: liveSuggestion,
       preferredSuggestion: liveSuggestion,
@@ -34,7 +34,7 @@ describe('coordinatorAlertSuggestionState', () => {
     })).toEqual({
       isBoardTarget: true,
       isDraftMatch: false,
-      badge: 'Board target',
+      badge: 'Suggested',
     });
   });
 

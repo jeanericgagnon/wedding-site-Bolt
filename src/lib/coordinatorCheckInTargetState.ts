@@ -19,6 +19,6 @@ export const getCoordinatorCheckInTargetState = ({
     boardTargetId,
     activeGuestId,
     isBoardTargetActive,
-    label: isBoardTargetActive ? 'Working board target' : boardTargetId ? 'Board target available' : activeGuestId ? 'Working custom guest' : null,
+    label: isBoardTargetActive ? 'Suggested guest in progress' : boardTargetId ? 'Suggested guest waiting' : activeGuestId ? 'Selected guest in progress' : null,
   };
 };

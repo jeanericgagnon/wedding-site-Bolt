@@ -9,8 +9,8 @@ interface Props {
   instance: SectionInstance;
 }
 
-function formatTime(iso: string | undefined): string {
-  if (!iso) return 'Time TBD';
+function formatTime(iso: string | undefined): string | null {
+  if (!iso) return null;
   const d = new Date(iso);
   if (isNaN(d.getTime())) {
     const parts = iso.split(':');
@@ -21,7 +21,7 @@ function formatTime(iso: string | undefined): string {
       const hour12 = h % 12 || 12;
       return hour12 + ':' + m + ' ' + ampm;
     }
-    return iso;
+    return iso.trim() || null;
   }
   return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 }
@@ -51,7 +51,7 @@ export const ScheduleSection: React.FC<Props> = ({ data, instance }) => {
       <section className="py-16 px-4 bg-surface">
         <div className="max-w-4xl mx-auto text-center">
           {settings.showTitle !== false && (
-            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary mb-6">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Schedule')}</h2>
+            <h2 className="text-3xl md:text-4xl font-semibold text-text-primary mb-6">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Schedule')}</h2>
           )}
           <p className="text-text-secondary">Schedule details will appear here once events are added.</p>
         </div>
@@ -63,18 +63,21 @@ export const ScheduleSection: React.FC<Props> = ({ data, instance }) => {
     <section className="py-16 md:py-20 px-4 bg-surface">
       <div className="max-w-4xl mx-auto">
         {settings.showTitle !== false && (
-          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary text-center mb-10 md:mb-12">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Schedule')}</h2>
+          <h2 className="text-3xl md:text-4xl font-semibold text-text-primary text-center mb-10 md:mb-12">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Schedule')}</h2>
         )}
         <div className="space-y-6">
           {itemsToShow.map(item => {
             const venue = item.venueId ? venues.find(v => v.id === item.venueId) : null;
+            const timeLabel = formatTime(item.startTimeISO);
             return (
               <div key={item.id} className="border-l-2 border-primary/70 pl-5 md:pl-6 py-0.5">
-                <h3 className="text-lg md:text-xl font-semibold tracking-tight text-text-primary mb-1.5">{item.label}</h3>
-                <p className="text-text-secondary flex items-center gap-2 mb-2 text-sm md:text-base">
-                  <Clock className="w-4 h-4" />
-                  {formatTime(item.startTimeISO)}
-                </p>
+                <h3 className="text-lg md:text-xl font-semibold text-text-primary mb-1.5">{item.label}</h3>
+                {timeLabel && (
+                  <p className="text-text-secondary flex items-center gap-2 mb-2 text-sm md:text-base">
+                    <Clock className="w-4 h-4" />
+                    {timeLabel}
+                  </p>
+                )}
                 {venue && <p className="text-sm text-text-secondary leading-relaxed">{venue.name}</p>}
                 {item.notes && <p className="text-sm text-text-secondary leading-relaxed mt-2.5">{item.notes}</p>}
               </div>
@@ -111,8 +114,8 @@ export const ScheduleTimeline: React.FC<Props> = ({ data, instance }) => {
       <div className="max-w-2xl mx-auto">
         {settings.showTitle !== false && (
           <div className="text-center mb-14">
-            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">The plan</p>
-            <h2 className="text-4xl font-light tracking-tight text-text-primary">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Schedule')}</h2>
+            <p className="text-sm text-primary mb-3 font-light">The plan</p>
+            <h2 className="text-4xl font-light text-text-primary">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Schedule')}</h2>
             <div className="w-10 h-px bg-primary mx-auto mt-6" />
           </div>
         )}
@@ -121,16 +124,17 @@ export const ScheduleTimeline: React.FC<Props> = ({ data, instance }) => {
           <div className="space-y-10">
             {itemsToShow.map((item) => {
               const venue = item.venueId ? venues.find(v => v.id === item.venueId) : null;
+              const timeLabel = formatTime(item.startTimeISO);
               return (
                 <div key={item.id} className="flex gap-6 items-start">
                   <div className="w-20 text-right flex-shrink-0">
-                    <span className="text-sm font-semibold tracking-wide text-primary">{formatTime(item.startTimeISO)}</span>
+                    {timeLabel && <span className="text-sm font-semibold text-primary">{timeLabel}</span>}
                   </div>
                   <div className="relative flex-shrink-0 mt-0.5">
                     <div className="w-3 h-3 rounded-full bg-primary ring-4 ring-surface-subtle" />
                   </div>
                   <div className="flex-1 pb-2">
-                    <h3 className="font-semibold tracking-tight text-text-primary mb-1.5">{item.label}</h3>
+                    <h3 className="font-semibold text-text-primary mb-1.5">{item.label}</h3>
                     {venue && (
                       <p className="text-sm text-text-secondary flex items-center gap-1.5">
                         <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
@@ -185,8 +189,8 @@ export const ScheduleDayTabs: React.FC<Props> = ({ data, instance }) => {
       <div className="max-w-4xl mx-auto">
         {settings.showTitle !== false && (
           <div className="text-center mb-10">
-            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Weekend schedule</p>
-            <h2 className="text-4xl font-light tracking-tight text-text-primary">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Schedule')}</h2>
+            <p className="text-sm text-primary mb-3 font-light">Weekend schedule</p>
+            <h2 className="text-4xl font-light text-text-primary">{readBuilderValue(settings.title as string | { value: string } | undefined, 'Schedule')}</h2>
           </div>
         )}
 
@@ -211,11 +215,12 @@ export const ScheduleDayTabs: React.FC<Props> = ({ data, instance }) => {
         <div className="space-y-4">
           {(activeGroup?.items ?? []).map((item) => {
             const venue = item.venueId ? venues.find(v => v.id === item.venueId) : null;
+            const timeLabel = formatTime(item.startTimeISO);
             return (
               <div key={item.id} className="rounded-xl border border-border bg-surface-subtle p-4 md:p-5">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <h3 className="font-semibold tracking-tight text-text-primary">{item.label}</h3>
-                  <span className="text-sm font-medium text-primary">{formatTime(item.startTimeISO)}</span>
+                  <h3 className="font-semibold text-text-primary">{item.label}</h3>
+                  {timeLabel && <span className="text-sm font-medium text-primary">{timeLabel}</span>}
                 </div>
                 {venue && (
                   <p className="text-sm text-text-secondary flex items-center gap-1.5 mt-2">

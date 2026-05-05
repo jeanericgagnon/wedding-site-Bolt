@@ -24,7 +24,7 @@ export const GuestsFeature: React.FC = () => {
       <section className="py-16 md:py-24 bg-gradient-to-b from-paper to-white">
         <div className="container-custom">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center justify-center p-4 bg-brand/10 rounded-2xl mb-6">
+            <div className="inline-flex items-center justify-center p-4 bg-brand/10 rounded-lg mb-6">
               <Users className="w-12 h-12 text-brand" />
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-ink mb-6 leading-tight">
@@ -41,7 +41,7 @@ export const GuestsFeature: React.FC = () => {
               </Link>
               <Link to="/product">
                 <Button variant="outline" size="lg">
-                  See how Dayof works
+                  See how dayof works
                 </Button>
               </Link>
             </div>
@@ -53,21 +53,21 @@ export const GuestsFeature: React.FC = () => {
         <div className="container-custom">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-ink mb-6">
-              Built for real guest-list messiness
+              Built for real guest-list complexity
             </h2>
             <p className="text-xl text-ink/70 max-w-3xl mx-auto">
-              Guest lists get complicated fast. Dayof keeps the structure clean without making you fight the system.
+              Guest lists get complicated fast. dayof keeps the structure clean without making you fight the system.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="bg-paper rounded-2xl p-8">
-              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
+            <div className="bg-paper rounded-lg p-8">
+              <div className="p-3 bg-brand/10 rounded-lg w-fit mb-4">
                 <Users className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Household Grouping</h3>
               <p className="text-ink/70 mb-4">
-                Keep guests organized by household so RSVPs and follow-up stay cleaner. DayOf supports household structure without pretending every family edge case resolves itself automatically.
+                Keep guests organized by household so RSVPs and follow-up stay cleaner. dayof supports household structure without pretending every family edge case resolves itself automatically.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• Clear household grouping</li>
@@ -76,8 +76,8 @@ export const GuestsFeature: React.FC = () => {
               </ul>
             </div>
 
-            <div className="bg-paper rounded-2xl p-8">
-              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
+            <div className="bg-paper rounded-lg p-8">
+              <div className="p-3 bg-brand/10 rounded-lg w-fit mb-4">
                 <UserPlus className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Plus-One Rules</h3>
@@ -91,8 +91,8 @@ export const GuestsFeature: React.FC = () => {
               </ul>
             </div>
 
-            <div className="bg-paper rounded-2xl p-8">
-              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
+            <div className="bg-paper rounded-lg p-8">
+              <div className="p-3 bg-brand/10 rounded-lg w-fit mb-4">
                 <Lock className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Event Permissions</h3>
@@ -106,23 +106,23 @@ export const GuestsFeature: React.FC = () => {
               </ul>
             </div>
 
-            <div className="bg-paper rounded-2xl p-8">
-              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
+            <div className="bg-paper rounded-lg p-8">
+              <div className="p-3 bg-brand/10 rounded-lg w-fit mb-4">
                 <AlertTriangle className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Duplicate Prevention</h3>
               <p className="text-ink/70 mb-4">
-                DayOf helps surface likely duplicates and risky overlaps before they turn into a mess. Human review still matters for the weird cases.
+                dayof helps surface likely duplicates and risky overlaps before they create confusion. Human review still matters for the unusual cases.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
                 <li>• Name similarity detection</li>
                 <li>• Email and phone matching</li>
-                <li>• Manual override available</li>
+                <li>• You choose what to merge</li>
               </ul>
             </div>
 
-            <div className="bg-paper rounded-2xl p-8">
-              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
+            <div className="bg-paper rounded-lg p-8">
+              <div className="p-3 bg-brand/10 rounded-lg w-fit mb-4">
                 <Upload className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">CSV Import</h3>
@@ -136,8 +136,8 @@ export const GuestsFeature: React.FC = () => {
               </ul>
             </div>
 
-            <div className="bg-paper rounded-2xl p-8">
-              <div className="p-3 bg-brand/10 rounded-xl w-fit mb-4">
+            <div className="bg-paper rounded-lg p-8">
+              <div className="p-3 bg-brand/10 rounded-lg w-fit mb-4">
                 <Download className="w-6 h-6 text-brand" />
               </div>
               <h3 className="text-xl font-serif font-bold text-ink mb-3">Export for Vendors</h3>
@@ -145,7 +145,7 @@ export const GuestsFeature: React.FC = () => {
                 Export guest data cleanly for caterers, venues, or your own review without rebuilding the list from scratch.
               </p>
               <ul className="space-y-2 text-sm text-ink/70">
-                <li>• CSV export workflow</li>
+                <li>• Clean CSV export</li>
                 <li>• Filtered by RSVP status or event</li>
                 <li>• Include meal preferences</li>
               </ul>
@@ -164,9 +164,9 @@ export const GuestsFeature: React.FC = () => {
             </div>
 
             <div className="space-y-8">
-              <div className="bg-white rounded-2xl p-8 border border-brand/20">
+              <div className="bg-white rounded-lg p-8 border border-brand/20">
                 <div className="flex items-start gap-6">
-                  <div className="p-3 bg-brand/10 rounded-xl flex-shrink-0">
+                  <div className="p-3 bg-brand/10 rounded-lg flex-shrink-0">
                     <Search className="w-6 h-6 text-brand" />
                   </div>
                   <div>
@@ -178,9 +178,9 @@ export const GuestsFeature: React.FC = () => {
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl p-8 border border-brand/20">
+              <div className="bg-white rounded-lg p-8 border border-brand/20">
                 <div className="flex items-start gap-6">
-                  <div className="p-3 bg-brand/10 rounded-xl flex-shrink-0">
+                  <div className="p-3 bg-brand/10 rounded-lg flex-shrink-0">
                     <Tags className="w-6 h-6 text-brand" />
                   </div>
                   <div>
@@ -192,9 +192,9 @@ export const GuestsFeature: React.FC = () => {
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl p-8 border border-brand/20">
+              <div className="bg-white rounded-lg p-8 border border-brand/20">
                 <div className="flex items-start gap-6">
-                  <div className="p-3 bg-brand/10 rounded-xl flex-shrink-0">
+                  <div className="p-3 bg-brand/10 rounded-lg flex-shrink-0">
                     <FileText className="w-6 h-6 text-brand" />
                   </div>
                   <div>
@@ -217,7 +217,7 @@ export const GuestsFeature: React.FC = () => {
               A strong guest-management core, already together
               </h2>
               <p className="text-xl text-ink/70 mb-8">
-              A practical guest workflow from first draft to final count, without pretending every edge case is fully automatic.
+              A practical guest flow from first draft to final count, without pretending every edge case is fully automatic.
               </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12 text-left">
@@ -236,7 +236,7 @@ export const GuestsFeature: React.FC = () => {
                 'Clear follow-up visibility',
               ].map((feature, idx) => (
                 <div key={idx} className="flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                  <CheckCircle2 className="w-5 h-5 text-brand mt-0.5 flex-shrink-0" />
                   <span className="text-ink/70">{feature}</span>
                 </div>
               ))}

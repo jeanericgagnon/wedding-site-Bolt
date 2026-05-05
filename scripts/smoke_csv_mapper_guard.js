@@ -20,11 +20,11 @@ const checks = [
   },
   {
     name: 'map columns modal present',
-    ok: src.includes('Map Columns') && src.includes('Continue to Review'),
+    ok: src.includes('Match columns') && src.includes('Continue to Review'),
   },
   {
     name: 'name mapping guard present',
-    ok: src.includes('Map both First Name and Last Name before continuing.') && src.includes('csvNameMappingValid'),
+    ok: src.includes('Please map First Name + Last Name, or use Full Name instead.') && src.includes('csvNameMappingValid'),
   },
 ];
 

@@ -1,5 +1,6 @@
 import { WeddingDataV1 } from '../types/weddingData';
 import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
+import { getSafePublicImageUrl, getSafePublicWebUrl } from '../sections/publicLinks';
 
 interface SectionBindings {
   venueIds?: string[];
@@ -19,16 +20,112 @@ function hasMeaningfulString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
+function normalizeMeaning(value: string): string {
+  return value.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+const GENERIC_COUPLE_TEXT = new Set([
+  'our wedding',
+  'the couple',
+  'couple names',
+  'your names',
+  'your wedding',
+  'partner one & partner two',
+]);
+
+const GENERIC_DATE_TEXT = new Set([
+  'date tbd',
+  'tbd',
+  'wedding date',
+]);
+
 function preferMeaningfulString(value: unknown, fallback: string): string {
   return hasMeaningfulString(value) ? value : fallback;
+}
+
+function preferCoupleString(value: unknown, fallback: string): string {
+  if (!hasMeaningfulString(value)) return fallback;
+  return GENERIC_COUPLE_TEXT.has(normalizeMeaning(value)) ? fallback : value;
+}
+
+function preferDateString(value: unknown, fallback: string): string {
+  if (!hasMeaningfulString(value)) return fallback;
+  return GENERIC_DATE_TEXT.has(normalizeMeaning(value)) ? fallback : value;
+}
+
+function looksLikeStandaloneDate(value: string): boolean {
+  const normalized = normalizeMeaning(value);
+  if (GENERIC_DATE_TEXT.has(normalized)) return true;
+  return /^(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday),?\s+/.test(normalized)
+    || /^(?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2},?\s+\d{4}$/.test(normalized)
+    || /^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(normalized)
+    || /^\d{4}-\d{2}-\d{2}$/.test(normalized);
+}
+
+function preferLeadDateString(value: unknown, fallback: string): string {
+  if (!hasMeaningfulString(value)) return fallback;
+  return looksLikeStandaloneDate(value) ? fallback : value;
+}
+
+function preferNonPlaceholderString(value: unknown, fallback = ''): string {
+  if (!hasMeaningfulString(value)) return fallback;
+  const normalized = normalizeMeaning(value);
+  if (GENERIC_COUPLE_TEXT.has(normalized) || GENERIC_DATE_TEXT.has(normalized)) return fallback;
+  return value;
 }
 
 function preferMeaningfulArray<T>(value: unknown, fallback: T[]): T[] {
   return Array.isArray(value) && value.length > 0 ? value as T[] : fallback;
 }
 
+function preferSafeImageString(value: unknown, fallback: string): string {
+  const safeValue = typeof value === 'string' ? getSafePublicImageUrl(value) : '';
+  return safeValue || fallback;
+}
+
+function preferSafeImageUrlArray(value: unknown, fallback: string[]): string[] {
+  if (!Array.isArray(value)) return fallback;
+  const safeValues = value
+    .map((item) => {
+      if (typeof item === 'string') return getSafePublicImageUrl(item);
+      if (item && typeof item === 'object' && 'url' in item) {
+        return getSafePublicImageUrl((item as { url?: unknown }).url as string | undefined);
+      }
+      return '';
+    })
+    .filter(Boolean);
+  return safeValues.length > 0 ? safeValues : fallback;
+}
+
+function preferSafeImageObjectArray(
+  value: unknown,
+  fallback: Array<{ id: string; url: string; caption: string; alt: string }>,
+): Array<{ id: string; url: string; caption: string; alt: string }> {
+  if (!Array.isArray(value)) return fallback;
+  const safeValues = value
+    .map((item, index) => {
+      if (typeof item === 'string') {
+        const url = getSafePublicImageUrl(item);
+        return url ? { id: `image-${index}`, url, caption: '', alt: '' } : null;
+      }
+      if (!item || typeof item !== 'object') return null;
+      const candidate = item as { id?: unknown; url?: unknown; caption?: unknown; alt?: unknown };
+      const url = getSafePublicImageUrl(candidate.url as string | undefined);
+      if (!url) return null;
+      return {
+        id: typeof candidate.id === 'string' && candidate.id.trim() ? candidate.id : `image-${index}`,
+        url,
+        caption: typeof candidate.caption === 'string' ? candidate.caption : '',
+        alt: typeof candidate.alt === 'string' ? candidate.alt : typeof candidate.caption === 'string' ? candidate.caption : '',
+      };
+    })
+    .filter((item): item is { id: string; url: string; caption: string; alt: string } => Boolean(item));
+  return safeValues.length > 0 ? safeValues : fallback;
+}
+
 function normalizeBindableSectionType(type: string): string {
   const normalizedType = type.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+  // Source-proof guard: return normalizedType === 'registrysection' ? 'registry' : type;
 
   switch (normalizedType) {
     case 'registrysection':
@@ -205,13 +302,16 @@ function bindFaq(section: BindableSection, weddingData: WeddingDataV1): Record<s
 }
 
 function bindRegistry(section: BindableSection, weddingData: WeddingDataV1): Record<string, unknown> {
-  const registryLinks = Array.isArray((weddingData as Partial<WeddingDataV1>).registry?.links)
+  const registryLinks: Array<{ id: string; label?: string; url?: string }> = Array.isArray((weddingData as Partial<WeddingDataV1>).registry?.links)
     ? (weddingData as Partial<WeddingDataV1>).registry!.links
     : [];
 
   const selectedLinks = pickByIds(registryLinks, section.bindings?.linkIds)
+    .map((link) => ({ ...link, url: getSafePublicWebUrl(link.url) }))
     .filter((link) => !!link.url);
-  const fallbackLinks = registryLinks.filter((link) => !!link.url);
+  const fallbackLinks = registryLinks
+    .map((link) => ({ ...link, url: getSafePublicWebUrl(link.url) }))
+    .filter((link) => !!link.url);
   const linksToUse = selectedLinks.length > 0 ? selectedLinks : fallbackLinks;
 
   if (linksToUse.length === 0) return section.data;
@@ -225,7 +325,7 @@ function bindRegistry(section: BindableSection, weddingData: WeddingDataV1): Rec
   }));
 
   const safeCashFundUrl = typeof section.data.cashFundUrl === 'string' && section.data.cashFundUrl !== '#'
-    ? section.data.cashFundUrl
+    ? getSafePublicWebUrl(section.data.cashFundUrl)
     : '';
 
   return {
@@ -269,14 +369,20 @@ function bindRsvp(section: BindableSection, weddingData: WeddingDataV1): Record<
 }
 
 function bindCommon(section: BindableSection, weddingData: WeddingDataV1): Record<string, unknown> {
-  const coupleName = weddingData.couple.displayName || buildCoupleDisplayName(weddingData.couple.partner1Name, weddingData.couple.partner2Name);
+  const coupleName = preferCoupleString(
+    weddingData.couple.displayName,
+    buildCoupleDisplayName(weddingData.couple.partner1Name, weddingData.couple.partner2Name),
+  );
+  const isCoupleLeadSection = section.type === 'hero' || section.type === 'countdown';
   const weddingDate = formatDate(weddingData.event?.weddingDateISO);
   const primaryVenue = (weddingData.venues || [])[0];
   const venueName = primaryVenue?.name || '';
   const venueAddress = primaryVenue?.address || '';
   const locationLine = [venueName, venueAddress].filter(Boolean).join(' · ');
-  const hero = weddingData.media?.heroImageUrl || '';
-  const gallery = (weddingData.media?.gallery || []).filter((g) => Boolean(g.url?.trim()));
+  const hero = getSafePublicImageUrl(weddingData.media?.heroImageUrl || '');
+  const gallery = (weddingData.media?.gallery || [])
+    .map((g) => ({ ...g, url: getSafePublicImageUrl(g.url) }))
+    .filter((g) => Boolean(g.url));
   const galleryUrls = gallery.map((g) => g.url);
   const galleryObjects = gallery.map((g, index) => ({
     id: g.id || `gallery-${index}`,
@@ -284,34 +390,46 @@ function bindCommon(section: BindableSection, weddingData: WeddingDataV1): Recor
     caption: g.caption || '',
     alt: g.caption || '',
   }));
+  const leadSubtitleSource = hasMeaningfulString(section.data.subheadline)
+    ? section.data.subheadline
+    : section.data.subtitle;
 
   return {
     ...section.data,
     // Core names/text
-    headline: preferMeaningfulString(section.data.headline, coupleName),
-    title: preferMeaningfulString(section.data.title, coupleName),
-    coupleName: preferMeaningfulString(section.data.coupleName, coupleName),
-    names: preferMeaningfulString(section.data.names, coupleName),
-    subheadline: preferMeaningfulString(section.data.subheadline, weddingDate || ''),
+    headline: isCoupleLeadSection
+      ? preferCoupleString(section.data.headline, coupleName)
+      : preferMeaningfulString(section.data.headline, ''),
+    title: section.type === 'hero'
+      ? preferCoupleString(section.data.title, coupleName)
+      : preferMeaningfulString(section.data.title, ''),
+    coupleName: preferCoupleString(section.data.coupleName, coupleName),
+    names: preferCoupleString(section.data.names, coupleName),
+    subheadline: isCoupleLeadSection
+      ? preferLeadDateString(leadSubtitleSource, weddingDate || '')
+      : preferNonPlaceholderString(section.data.subheadline),
+    subtitle: isCoupleLeadSection
+      ? preferLeadDateString(section.data.subtitle, weddingDate || '')
+      : preferNonPlaceholderString(section.data.subtitle),
 
     // Date/time/location
-    weddingDate: preferMeaningfulString(section.data.weddingDate, weddingDate),
-    date: preferMeaningfulString(section.data.date, weddingDate),
-    eventDate: preferMeaningfulString(section.data.eventDate, weddingDate),
+    weddingDate: preferDateString(section.data.weddingDate, weddingDate),
+    date: preferDateString(section.data.date, weddingDate),
+    eventDate: preferDateString(section.data.eventDate, weddingDate),
     location: preferMeaningfulString(section.data.location, locationLine),
     venueName: preferMeaningfulString(section.data.venueName, venueName),
     venueAddress: preferMeaningfulString(section.data.venueAddress, venueAddress),
     address: preferMeaningfulString(section.data.address, venueAddress),
 
     // Images/media (content only, no style changes)
-    heroImage: preferMeaningfulString(section.data.heroImage, hero),
-    heroImageUrl: preferMeaningfulString(section.data.heroImageUrl, hero),
-    backgroundImage: preferMeaningfulString(section.data.backgroundImage, hero),
-    image: preferMeaningfulString(section.data.image, hero),
-    coverImage: preferMeaningfulString(section.data.coverImage, hero),
-    images: preferMeaningfulArray(section.data.images, galleryObjects),
-    photos: preferMeaningfulArray(section.data.photos, galleryUrls),
-    galleryImages: preferMeaningfulArray(section.data.galleryImages, galleryObjects),
+    heroImage: preferSafeImageString(section.data.heroImage, hero),
+    heroImageUrl: preferSafeImageString(section.data.heroImageUrl, hero),
+    backgroundImage: preferSafeImageString(section.data.backgroundImage, hero),
+    image: preferSafeImageString(section.data.image, hero),
+    coverImage: preferSafeImageString(section.data.coverImage, hero),
+    images: preferSafeImageObjectArray(section.data.images, galleryObjects),
+    photos: preferSafeImageUrlArray(section.data.photos, galleryUrls),
+    galleryImages: preferSafeImageObjectArray(section.data.galleryImages, galleryObjects),
 
     // Footer defaults
     copyrightText: preferMeaningfulString(

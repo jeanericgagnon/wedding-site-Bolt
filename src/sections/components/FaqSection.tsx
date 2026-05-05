@@ -22,7 +22,7 @@ export const FaqSection: React.FC<Props> = ({ data, instance }) => {
       <section className="py-16 px-4 bg-surface">
         <div className="max-w-4xl mx-auto text-center">
           {settings.showTitle !== false && (
-            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary mb-6">{title}</h2>
+            <h2 className="text-3xl md:text-4xl font-semibold text-text-primary mb-6">{title}</h2>
           )}
           <p className="text-text-secondary">Helpful guest questions and answers will appear here once they’re added.</p>
         </div>
@@ -34,12 +34,12 @@ export const FaqSection: React.FC<Props> = ({ data, instance }) => {
     <section className="py-16 md:py-20 px-4 bg-surface">
       <div className="max-w-4xl mx-auto">
         {settings.showTitle !== false && (
-          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-text-primary text-center mb-10 md:mb-12">{title}</h2>
+          <h2 className="text-3xl md:text-4xl font-semibold text-text-primary text-center mb-10 md:mb-12">{title}</h2>
         )}
         <div className="space-y-7">
           {faqsToShow.map(item => (
             <div key={item.id} className="border-b border-border pb-6">
-              <h3 className="text-lg md:text-xl font-semibold tracking-tight text-text-primary mb-3">{item.q}</h3>
+              <h3 className="text-lg md:text-xl font-semibold text-text-primary mb-3">{item.q}</h3>
               <p className="text-text-secondary leading-relaxed whitespace-pre-wrap">{item.a}</p>
             </div>
           ))}
@@ -95,8 +95,8 @@ export const FaqAccordion: React.FC<Props> = ({ data, instance }) => {
       <div className="max-w-3xl mx-auto">
         {settings.showTitle !== false && (
           <div className="text-center mb-12">
-            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Guest questions</p>
-            <h2 className="text-3xl md:text-4xl font-light tracking-tight text-text-primary leading-tight">{title}</h2>
+            <p className="text-sm text-primary mb-3 font-light">Guest questions</p>
+            <h2 className="text-3xl md:text-4xl font-light text-text-primary leading-tight">{title}</h2>
             <div className="w-10 h-px bg-primary mx-auto mt-6" />
           </div>
         )}
@@ -185,8 +185,8 @@ export const FaqIconGrid: React.FC<Props> = ({ data, instance }) => {
       <div className="max-w-5xl mx-auto">
         {settings.showTitle !== false && (
           <div className="text-center mb-12">
-            <p className="text-xs uppercase tracking-[0.32em] text-primary mb-3 font-medium">Guest questions</p>
-            <h2 className="text-3xl md:text-4xl font-light tracking-tight text-text-primary leading-tight">{title}</h2>
+            <p className="text-sm text-primary mb-3 font-light">Guest questions</p>
+            <h2 className="text-3xl md:text-4xl font-light text-text-primary leading-tight">{title}</h2>
             <div className="w-10 h-px bg-primary mx-auto mt-6" />
           </div>
         )}
@@ -199,7 +199,7 @@ export const FaqIconGrid: React.FC<Props> = ({ data, instance }) => {
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
                   <Icon className="w-5 h-5 text-primary" />
                 </div>
-                <h3 className="font-semibold tracking-tight text-text-primary mb-2">{item.q}</h3>
+                <h3 className="font-semibold text-text-primary mb-2">{item.q}</h3>
                 <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap">{item.a}</p>
               </div>
             );

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
+import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, Button } from '../../components/ui';
 import {
@@ -14,12 +15,19 @@ import { getArchiveModeDescriptor } from '../../lib/archiveMode';
 import { sendAnniversaryReminder } from '../../lib/emailService';
 import { formatVaultUnlockDate, getVaultUnlockDate, toValidDateOrNull } from './vaultDate';
 import { formatVaultEntryDate, getVaultEntryTimestamp } from './vaultEntryTime';
+import { copyTextOrDownload } from '../../lib/copyText';
+import { getSafePublicWebUrl } from '../../sections/publicLinks';
+import { customerSafeErrorMessage } from '../../lib/customerSafeError';
 
 const MAX_VAULTS = 5;
 const DEMO_VAULT_STORAGE_KEY = 'dayof_demo_vault_state_v1';
 const VAULT_RELEASE_NOTICE_KEY = 'dayof_vault_release_notified_v1';
 const DEMO_WEDDING_DATE = '2026-02-23';
 const E2E_FORCE_UNLOCK_KEY = 'dayof_e2e_force_vault_unlock';
+
+function safeVaultDashboardError(err: unknown, fallback: string): string {
+  return customerSafeErrorMessage(err, fallback);
+}
 
 function shouldForceUnlockForE2E(): boolean {
   if (typeof window === 'undefined') return false;
@@ -88,10 +96,10 @@ const ToastList: React.FC<{ toasts: Toast[] }> = ({ toasts }) => (
     {toasts.map(t => (
       <div
         key={t.id}
-        className={`px-4 py-3.5 rounded-xl shadow-xl text-sm sm:text-[15px] font-semibold border ${
+        className={`px-4 py-3.5 rounded-lg text-sm sm:text-[15px] font-semibold border ${
           t.type === 'error'
-            ? 'bg-error-light text-error border-error/30'
-            : 'bg-success-light text-success border-success/30'
+            ? 'bg-surface text-text-primary border-border-subtle'
+            : 'bg-surface text-text-primary border-border-subtle'
         }`}
       >
         {t.message}
@@ -132,13 +140,13 @@ const EntryForm: React.FC<EntryFormProps> = ({ vaultConfigId, durationYears, onS
         attachment_name: attachmentName.trim() || null,
       });
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Couldn’t save right now. Please try again.');
+      setError(safeVaultDashboardError(err, 'Couldn’t save right now. Please try again.'));
       setSaving(false);
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-5 bg-surface-subtle rounded-xl border border-border mt-3">
+    <form onSubmit={handleSubmit} className="space-y-4 p-5 bg-surface-subtle rounded-lg border border-border mt-3">
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-xs font-medium text-text-primary mb-1">Title (optional)</label>
@@ -164,7 +172,7 @@ const EntryForm: React.FC<EntryFormProps> = ({ vaultConfigId, durationYears, onS
 
       <div>
         <label className="block text-xs font-medium text-text-primary mb-1">
-          Message <span className="text-error">*</span>
+          Message <span className="text-text-tertiary">*</span>
         </label>
         <textarea
           value={content}
@@ -201,7 +209,7 @@ const EntryForm: React.FC<EntryFormProps> = ({ vaultConfigId, durationYears, onS
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 p-3 bg-error-light rounded-lg text-sm text-error border border-error/20">
+        <div className="flex items-center gap-2 p-3 bg-surface rounded-lg text-sm text-text-primary border border-border-subtle">
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
           {error}
         </div>
@@ -229,6 +237,7 @@ interface VaultCardProps {
   onCancelForm: () => void;
   onToggleEnabled: (configId: string, enabled: boolean) => Promise<void>;
   onEdit: (config: VaultConfig) => void;
+  onError: (message: string) => void;
 }
 
 function buildAnniversaryRecap(
@@ -319,13 +328,13 @@ function buildAnniversaryRecap(
     '',
     closing,
     '',
-    '— AI recap draft (editable)'
+    '— Recap draft, ready to edit'
   ].join('\n');
 }
 
 const VaultCard: React.FC<VaultCardProps> = ({
   config, entries, weddingDate, siteSlug, showForm,
-  onAddEntry, onDeleteEntry, onSaveEntry, onCancelForm, onToggleEnabled, onEdit
+  onAddEntry, onDeleteEntry, onSaveEntry, onCancelForm, onToggleEnabled, onEdit, onError
 }) => {
   const [expanded, setExpanded] = useState(true);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -374,10 +383,11 @@ const VaultCard: React.FC<VaultCardProps> = ({
       });
       if (error) throw error;
       const url = (data as { url?: string | null } | null)?.url ?? null;
-      if (url) setResolvedEntryLinks((prev) => ({ ...prev, [entry.id]: url }));
-      return url;
+      const safeUrl = getSafePublicWebUrl(url);
+      if (safeUrl) setResolvedEntryLinks((prev) => ({ ...prev, [entry.id]: safeUrl }));
+      return safeUrl || null;
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : 'Could not open that attachment right now.');
+      onError(safeVaultDashboardError(err, 'Couldn’t open that attachment right now.'));
       return null;
     } finally {
       setResolvingEntryId(null);
@@ -394,16 +404,15 @@ const VaultCard: React.FC<VaultCardProps> = ({
       : `${window.location.origin}${basePath}${vaultPath}`;
   }
 
-  function handleCopyLink() {
+  async function handleCopyLink() {
     const url = buildVaultShareUrl();
     if (!url) return;
 
-    navigator.clipboard.writeText(url).then(() => {
+    const result = await copyTextOrDownload(url, 'dayof-vault-link.txt');
+    if (result === 'copied') {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    }).catch(() => {
-      window.prompt('Copy this vault link:', url);
-    });
+    }
   }
 
   async function handleToggle() {
@@ -422,9 +431,9 @@ const VaultCard: React.FC<VaultCardProps> = ({
       await onSaveEntry({
         vault_config_id: config.id,
         vault_year: config.duration_years,
-        title: `${config.duration_years}-Year AI Recap`,
+        title: `${config.duration_years}-Year Recap Draft`,
         content: buildAnniversaryRecap(displayEntries, config.duration_years, recapStyle, recapLength, photosOnlyRecap),
-        author_name: 'DayOf AI Recap',
+        author_name: 'dayof Recap Draft',
         attachment_url: null,
         attachment_name: null,
       });
@@ -436,7 +445,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
   async function handleRegenerateLatestRecap() {
     if (generatingRecap) return;
     const latestRecap = [...displayEntries]
-      .filter((entry) => (entry.title || '').toLowerCase().includes('ai recap'))
+      .filter((entry) => (entry.title || '').toLowerCase().includes('recap'))
       .sort((a, b) => getVaultEntryTimestamp(b.created_at) - getVaultEntryTimestamp(a.created_at))[0];
 
     if (!latestRecap) {
@@ -447,13 +456,13 @@ const VaultCard: React.FC<VaultCardProps> = ({
     setGeneratingRecap(true);
     try {
       const nextContent = buildAnniversaryRecap(displayEntries, config.duration_years, recapStyle, recapLength, photosOnlyRecap);
-      const nextTitle = `${config.duration_years}-Year AI Recap (${recapStyle[0].toUpperCase()}${recapStyle.slice(1)})`;
+      const nextTitle = `${config.duration_years}-Year Recap Draft (${recapStyle[0].toUpperCase()}${recapStyle.slice(1)})`;
       const { error } = await supabase
         .from('vault_entries')
         .update({
           title: nextTitle,
           content: nextContent,
-          author_name: 'DayOf AI Recap',
+          author_name: 'dayof Recap Draft',
         })
         .eq('id', latestRecap.id);
       if (error) throw error;
@@ -463,49 +472,48 @@ const VaultCard: React.FC<VaultCardProps> = ({
           ...prev[latestRecap.id],
           title: nextTitle,
           content: nextContent,
-          author_name: 'DayOf AI Recap',
+          author_name: 'dayof Recap Draft',
         },
       }));
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : 'Could not refresh the AI recap.');
+      onError(safeVaultDashboardError(err, 'Couldn’t refresh the recap draft.'));
     } finally {
       setGeneratingRecap(false);
     }
   }
 
   const latestRecap = [...displayEntries]
-    .filter((entry) => (entry.title || '').toLowerCase().includes('ai recap'))
+    .filter((entry) => (entry.title || '').toLowerCase().includes('recap'))
     .sort((a, b) => getVaultEntryTimestamp(b.created_at) - getVaultEntryTimestamp(a.created_at))[0];
   const hasRecap = !!latestRecap;
 
-  function handleCopyRecapLink() {
+  async function handleCopyRecapLink() {
     const base = buildVaultShareUrl();
     if (!base || !latestRecap) return;
     const url = `${base}?entry=${latestRecap.id}`;
-    navigator.clipboard.writeText(url).then(() => {
+    const result = await copyTextOrDownload(url, 'dayof-vault-recap-link.txt');
+    if (result === 'copied') {
       setRecapCopied(true);
       setTimeout(() => setRecapCopied(false), 2000);
-    }).catch(() => {
-      window.prompt('Copy this recap link:', url);
-    });
+    }
   }
 
   return (
-    <Card variant="bordered" padding="lg" className={`transition-all shadow-sm hover:shadow-md border border-border-subtle ${!config.is_enabled ? 'opacity-60' : ''}`}>
+    <Card variant="bordered" padding="lg" className={`transition-colors border border-border-subtle ${!config.is_enabled ? 'opacity-60' : ''}`}>
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-1">
         <div className="flex items-start gap-3 flex-1 min-w-0">
-          <div className={`p-2.5 rounded-xl flex-shrink-0 ${isUnlocked && config.is_enabled ? 'bg-success-light' : 'bg-surface-subtle'}`}>
+          <div className={`p-2.5 rounded-lg flex-shrink-0 ${isUnlocked && config.is_enabled ? 'bg-surface-subtle' : 'bg-surface-subtle'}`}>
             {isUnlocked && config.is_enabled
-              ? <Unlock className="w-5 h-5 text-success" />
+              ? <Unlock className="w-5 h-5 text-primary" />
               : <Lock className="w-5 h-5 text-text-tertiary" />
             }
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="font-semibold text-text-primary truncate">{config.label || `Vault ${config.vault_index}`}</h3>
-              <span className="text-[11px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 flex-shrink-0">{config.duration_years}yr</span>
+              <span className="text-[11px] px-2 py-0.5 rounded-lg bg-surface-subtle text-text-secondary border border-border-subtle flex-shrink-0">{config.duration_years}yr</span>
               {!config.is_enabled && (
-                <span className="text-xs bg-surface-subtle text-text-tertiary px-2 py-0.5 rounded-full border border-border flex-shrink-0">Disabled</span>
+                <span className="text-xs bg-surface-subtle text-text-tertiary px-2 py-0.5 rounded-lg border border-border flex-shrink-0">Disabled</span>
               )}
             </div>
             <p className="text-xs text-text-secondary mt-0.5">
@@ -525,9 +533,9 @@ const VaultCard: React.FC<VaultCardProps> = ({
           {siteSlug && config.is_enabled && (
             <button
               onClick={handleCopyLink}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all shadow-sm ${
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
                 copied
-                  ? 'border-success/40 bg-success-light text-success'
+                  ? 'border-border-subtle bg-surface-subtle text-text-primary'
                   : 'border-border bg-white text-text-secondary hover:border-primary/40 hover:text-primary hover:bg-primary/5'
               }`}
               title="Copy shareable hub link (all enabled vaults)"
@@ -572,7 +580,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
       {expanded && (
         <div className="mt-4 space-y-3">
           {displayEntries.length === 0 && !showForm && (
-            <div className="text-center py-6 border border-dashed border-border rounded-xl">
+            <div className="text-center py-6 border border-dashed border-border rounded-lg">
               <p className="text-sm text-text-secondary mb-1">No entries yet</p>
               <p className="text-xs text-text-tertiary">Add a note, photo, video, voice note, or link for this anniversary.</p>
             </div>
@@ -586,7 +594,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
               : unlockLabel;
 
             return (
-              <div key={entry.id} className="p-4 bg-surface-subtle rounded-xl border border-border">
+              <div key={entry.id} className="p-4 bg-surface-subtle rounded-lg border border-border">
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex-1 min-w-0">
                     {entry.title && <p className="font-semibold text-text-primary text-sm mb-0.5">{entry.title}</p>}
@@ -595,6 +603,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
                     </p>
                   </div>
                   <button
+                    aria-label={`${confirmDeleteId === entry.id ? 'Confirm delete' : 'Delete'} ${entry.title || entry.attachment_name || 'vault entry'}`}
                     onClick={() => {
                       if (confirmDeleteId === entry.id) {
                         onDeleteEntry(entry.id);
@@ -606,8 +615,8 @@ const VaultCard: React.FC<VaultCardProps> = ({
                     }}
                     className={`flex-shrink-0 p-1.5 rounded-lg border text-xs transition-colors ${
                       confirmDeleteId === entry.id
-                        ? 'border-error text-error bg-error-light'
-                        : 'border-transparent text-text-tertiary hover:border-error/40 hover:text-error'
+                        ? 'border-border-subtle text-text-primary bg-surface'
+                        : 'border-transparent text-text-tertiary hover:border-border-subtle hover:text-text-primary'
                     }`}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -623,7 +632,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
                   <>
                     <p className="text-sm text-text-secondary whitespace-pre-wrap">{entry.content}</p>
                     {(entry.attachment_url || entry.external_file_id || entry.external_file_url) && (() => {
-                      const attachmentUrl = resolvedEntryLinks[entry.id] || null;
+                      const attachmentUrl = getSafePublicWebUrl(resolvedEntryLinks[entry.id]) || null;
                       if (!attachmentUrl) {
                         return (
                           <div className="mt-2">
@@ -676,7 +685,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
           })}
 
           {displayEntries.length > 0 && displayEntries.every((entry) => !isEntryUnlocked(entry)) && (
-            <div className="p-4 bg-surface-subtle rounded-xl border border-dashed border-border text-center space-y-1">
+            <div className="p-4 bg-surface-subtle rounded-lg border border-dashed border-border text-center space-y-1">
               <Lock className="w-5 h-5 text-text-tertiary mx-auto mb-1" />
               <p className="text-sm font-medium text-text-secondary">
                 {displayEntries.length} {displayEntries.length === 1 ? 'entry' : 'entries'} sealed
@@ -701,7 +710,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
           {!showForm && config.is_enabled && (
             <button
               onClick={() => onAddEntry(config.id)}
-              className="w-full flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium text-text-secondary border border-dashed border-border rounded-xl hover:border-primary hover:text-primary hover:bg-primary/5 transition-colors"
+              className="w-full flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium text-text-secondary border border-dashed border-border rounded-lg hover:border-primary hover:text-primary hover:bg-primary/5 transition-colors"
             >
               <Plus className="w-4 h-4" />
               Add entry to {config.label || `Vault ${config.vault_index}`}
@@ -735,7 +744,7 @@ const EditVaultModal: React.FC<EditVaultModalProps> = ({ config, hasEntries, onS
       await onSave(config.id, label, durationYears);
       onClose();
     } catch (err) {
-      setLocalError(err instanceof Error ? err.message : 'Could not save your vault changes right now.');
+      setLocalError(safeVaultDashboardError(err, 'Couldn’t save your vault changes right now.'));
     } finally {
       setSaving(false);
     }
@@ -747,7 +756,7 @@ const EditVaultModal: React.FC<EditVaultModalProps> = ({ config, hasEntries, onS
     <>
       <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose} />
       <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-        <div className="bg-surface rounded-2xl shadow-2xl max-w-md w-full p-6 border border-border">
+        <div className="bg-surface rounded-lg max-w-md w-full p-6 border border-border">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-lg font-semibold text-text-primary">Edit Vault Settings</h2>
             <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-surface-subtle text-text-secondary transition-colors">
@@ -757,7 +766,7 @@ const EditVaultModal: React.FC<EditVaultModalProps> = ({ config, hasEntries, onS
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {localError && (
-              <div className="p-3 rounded-xl border border-error/30 bg-error-light text-error text-sm font-semibold">
+              <div className="p-3 rounded-lg border border-border-subtle bg-surface-subtle text-text-primary text-sm font-semibold">
                 {localError}
               </div>
             )}
@@ -769,7 +778,7 @@ const EditVaultModal: React.FC<EditVaultModalProps> = ({ config, hasEntries, onS
                 onChange={e => { setLabel(e.target.value); setLabelManuallyEdited(true); }}
                 placeholder="e.g. 1st Anniversary"
                 maxLength={60}
-                className="w-full px-3 py-2.5 text-sm bg-surface border border-border rounded-xl text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full px-3 py-2.5 text-sm bg-surface border border-border rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
 
@@ -789,7 +798,7 @@ const EditVaultModal: React.FC<EditVaultModalProps> = ({ config, hasEntries, onS
                     setDurationYears(durationYears);
                   }
                 }}
-                className="w-full px-3 py-2.5 text-sm bg-surface border border-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full px-3 py-2.5 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {DURATION_OPTIONS.map(o => (
                   <option key={o.value} value={String(o.value)}>{o.label}</option>
@@ -805,7 +814,7 @@ const EditVaultModal: React.FC<EditVaultModalProps> = ({ config, hasEntries, onS
                     value={durationYears}
                     disabled={hasEntries}
                     onChange={e => setDurationYears(Math.max(1, Math.min(100, Number(e.target.value))))}
-                    className="w-24 px-3 py-2 text-sm bg-surface border border-border rounded-xl text-text-primary focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="w-24 px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 disabled:cursor-not-allowed"
                   />
                   <span className="text-sm text-text-secondary">years after wedding date</span>
                 </div>
@@ -872,19 +881,19 @@ export const DashboardVault: React.FC = () => {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
   }
 
-  async function forceGoogleDriveProvider(siteId: string) {
+  async function ensureHostedVaultProvider(siteId: string) {
     if (isDemoMode && siteId === 'demo-site-id') {
-      setVaultStorageProvider('google_drive');
+      setVaultStorageProvider('supabase');
       return;
     }
 
     const { error } = await supabase
       .from('wedding_sites')
-      .update({ vault_storage_provider: 'google_drive' })
+      .update({ vault_storage_provider: 'supabase' })
       .eq('id', siteId);
 
     if (error) throw error;
-    setVaultStorageProvider('google_drive');
+    setVaultStorageProvider('supabase');
   }
 
 
@@ -895,13 +904,18 @@ export const DashboardVault: React.FC = () => {
       const { data, error } = await supabase.functions.invoke('google-drive-health', {
         body: { siteId: weddingSiteId },
       });
-      if (error) throw error;
+      if (error) {
+        setDriveHealthMessage('Drive backup is not connected right now. dayof hosted storage is active.');
+        setDriveNeedsReconnect(true);
+        setGoogleDriveConnected(false);
+        return;
+      }
       const result = data as { healthy?: boolean; needsReconnect?: boolean; message?: string } | null;
       setDriveHealthMessage(result?.message ?? null);
       setDriveNeedsReconnect(!!result?.needsReconnect);
       setGoogleDriveConnected(!!result?.healthy && !result?.needsReconnect);
-    } catch (err) {
-      setDriveHealthMessage(err instanceof Error ? err.message : 'Drive health check failed.');
+    } catch {
+      setDriveHealthMessage('Drive backup is not connected right now. dayof hosted storage is active.');
       setGoogleDriveConnected(false);
       setDriveNeedsReconnect(true);
     } finally {
@@ -914,8 +928,8 @@ export const DashboardVault: React.FC = () => {
 
     if (isDemoMode && weddingSiteId === 'demo-site-id') {
       setGoogleDriveConnected(true);
-      setVaultStorageProvider('google_drive');
-      toast('Demo: simulated Google Drive connection.');
+      setVaultStorageProvider('supabase');
+      toast('Demo: simulated Google Drive backup connection.');
       return;
     }
 
@@ -930,7 +944,7 @@ export const DashboardVault: React.FC = () => {
       if (!authUrl) throw new Error('Missing Google OAuth URL.');
       window.location.href = authUrl;
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'Failed to start Google Drive connection.', 'error');
+      toast(safeVaultDashboardError(err, 'Couldn’t start the Google Drive connection right now.'), 'error');
     } finally {
       setConnectingDrive(false);
     }
@@ -1032,10 +1046,10 @@ export const DashboardVault: React.FC = () => {
 
         if (demoSite) {
           setWeddingSiteId(demoSite.id);
-          setVaultStorageProvider('google_drive');
+          setVaultStorageProvider('supabase');
           setGoogleDriveConnected(!!(demoSite as { vault_google_drive_connected?: boolean }).vault_google_drive_connected);
-          void forceGoogleDriveProvider(demoSite.id).catch(() => {
-            toast('Couldn’t sync Google Drive as the active vault provider right now.', 'error');
+          void ensureHostedVaultProvider(demoSite.id).catch(() => {
+            toast('Couldn’t sync dayof as the active vault home right now.', 'error');
           });
 if (demoSite.wedding_date) setWeddingDate(toValidDateOrNull(demoSite.wedding_date));
           else setWeddingDate(toValidDateOrNull(DEMO_WEDDING_DATE));
@@ -1066,7 +1080,7 @@ if (demoSite.wedding_date) setWeddingDate(toValidDateOrNull(demoSite.wedding_dat
         }
 
 setWeddingSiteId('demo-site-id');
-        setVaultStorageProvider('google_drive');
+        setVaultStorageProvider('supabase');
         setGoogleDriveConnected(false);
         setWeddingDate(toValidDateOrNull(DEMO_WEDDING_DATE));
         const demoState = loadDemoState();
@@ -1099,10 +1113,10 @@ setWeddingSiteId('demo-site-id');
         return;
       }
       setWeddingSiteId(site.id);
-      setVaultStorageProvider('google_drive');
+      setVaultStorageProvider('supabase');
       setGoogleDriveConnected(!!(site as { vault_google_drive_connected?: boolean }).vault_google_drive_connected);
-      void forceGoogleDriveProvider(site.id).catch(() => {
-        toast('Couldn’t sync Google Drive as the active vault provider right now.', 'error');
+      void ensureHostedVaultProvider(site.id).catch(() => {
+        toast('Couldn’t sync dayof as the active vault home right now.', 'error');
       });
       if (site.wedding_date) setWeddingDate(toValidDateOrNull(site.wedding_date));
       if (site.site_slug) setSiteSlug(site.site_slug as string);
@@ -1156,7 +1170,7 @@ setWeddingSiteId('demo-site-id');
     const googleState = params.get('state');
 
     if (oauthError) {
-      toast(`Google Drive OAuth was cancelled or failed: ${oauthError}`, 'error');
+      toast('Google Drive connection was cancelled or failed. Please try again.', 'error');
       const url = new URL(window.location.href);
       url.searchParams.delete('error');
       url.searchParams.delete('state');
@@ -1177,7 +1191,7 @@ setWeddingSiteId('demo-site-id');
       window.history.replaceState({}, '', url.toString());
 
       if (error) {
-        toast(`Google Drive connection failed: ${error.message}`, 'error');
+        toast('Google Drive connection failed. Please try again.', 'error');
         return;
       }
 
@@ -1190,15 +1204,15 @@ setWeddingSiteId('demo-site-id');
       void (async () => {
         try {
           if (weddingSiteId) {
-            await forceGoogleDriveProvider(weddingSiteId);
+            await ensureHostedVaultProvider(weddingSiteId);
           }
-          toast('Google Drive connected successfully.');
+          toast('Google Drive backup connected successfully.');
           setGoogleDriveConnected(true);
-          setVaultStorageProvider('google_drive');
+          setVaultStorageProvider('supabase');
           checkGoogleDriveHealth();
           loadData();
-        } catch (providerErr) {
-          toast(providerErr instanceof Error ? providerErr.message : 'Google Drive connected, but we could not save the vault provider.', 'error');
+        } catch {
+          toast('Google Drive connected, but dayof could not finish the vault backup setup. Please try reconnecting.', 'error');
         }
       })();
     });
@@ -1263,7 +1277,7 @@ setWeddingSiteId('demo-site-id');
 
       toast(`Anniversary ${reminderKind} email sent.`);
     } catch (err) {
-      toast(err instanceof Error ? err.message : 'Could not send anniversary reminder.', 'error');
+      toast(safeVaultDashboardError(err, 'Couldn’t send the anniversary reminder right now.'), 'error');
     } finally {
       setSendingReminderFor(null);
     }
@@ -1413,8 +1427,9 @@ setWeddingSiteId('demo-site-id');
     if (error) {
       if (error.message?.toLowerCase().includes('duplicate') || error.message?.toLowerCase().includes('unique')) {
         toast(`You already have a ${durationYears}-year vault.`, 'error');
+        throw new Error('A vault for that anniversary already exists.');
       }
-      throw new Error(error.message);
+      throw new Error('Couldn’t update this vault. Please try again.');
     }
 
     setVaultConfigs(prev => prev
@@ -1453,7 +1468,7 @@ setWeddingSiteId('demo-site-id');
       .select()
       .single();
 
-    if (error) throw new Error(error.message);
+    if (error) throw new Error('Couldn’t save this vault entry. Please try again.');
     setEntries(prev => [...prev, data as VaultEntry]);
     setActiveFormConfigId(null);
     toast('Entry added to vault');
@@ -1531,23 +1546,16 @@ setWeddingSiteId('demo-site-id');
   return (
     <DashboardLayout currentPage="vault">
       <div className="max-w-4xl mx-auto space-y-8">
-        <div className="rounded-2xl border border-primary/15 bg-[linear-gradient(135deg,rgba(59,130,246,0.07),rgba(255,255,255,0.95))] p-5 sm:p-6">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-            <div>
-              <p className="text-[11px] uppercase updates-[0.16em] text-primary/80 font-semibold mb-2">Time Capsule</p>
-              <h1 className="text-2xl sm:text-3xl font-bold text-text-primary mb-2">Anniversary Vaults</h1>
-              <p className="text-text-secondary">
-                Time capsule messages sealed until each anniversary milestone. Up to {MAX_VAULTS} vaults supported.
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
-            {totalEntries > 0 && (
-              <div className="text-left sm:text-right">
-                <p className="text-2xl font-bold text-text-primary leading-none">{totalEntries}</p>
-                <p className="text-xs text-text-secondary mt-1">total {totalEntries === 1 ? 'entry' : 'entries'}</p>
-              </div>
-            )}
-            {vaultConfigs.length < MAX_VAULTS && (
+        <DashboardPageHero
+          eyebrow="Private keepsakes"
+          title="Anniversary vaults"
+          description={`Seal notes, photos, and messages until future anniversaries. You can keep up to ${MAX_VAULTS} vaults and invite loved ones to contribute without making the page feel public.`}
+          stats={[
+            { label: 'Vaults', value: vaultConfigs.length, detail: vaultConfigs.length === 1 ? 'One anniversary set up' : 'Anniversary moments set up' },
+            { label: 'Entries', value: totalEntries, detail: totalEntries === 1 ? 'One saved note or file' : 'Saved notes and files' },
+            { label: 'Storage', value: 'dayof', detail: driveConnectedHealthy ? 'Drive backup connected' : 'Drive backup optional' },
+          ]}
+          actions={vaultConfigs.length < MAX_VAULTS ? (
               <Button
                 variant="primary"
                 size="md"
@@ -1556,14 +1564,12 @@ setWeddingSiteId('demo-site-id');
                 className="w-full sm:w-auto shrink-0"
               >
                 {addingVault ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Plus className="w-4 h-4 mr-1.5" />}
-                Add Vault
+                Add vault
               </Button>
-            )}
-          </div>
-        </div>
-      </div>
+          ) : null}
+        />
 
-        <div className={`rounded-2xl border px-4 py-3 text-sm ${archiveMode.isArchiveLike ? 'border-stone-200 bg-stone-50' : 'border-border-subtle bg-white'}`}>
+        <div className={`rounded-lg border px-4 py-3 text-sm ${archiveMode.isArchiveLike ? 'border-stone-200 bg-stone-50' : 'border-border-subtle bg-white'}`}>
           <p className="font-medium text-text-primary">{archiveMode.label}</p>
           <p className="mt-1 text-text-secondary">{archiveMode.detail}</p>
           {archiveMode.isArchiveLike && (
@@ -1575,21 +1581,21 @@ setWeddingSiteId('demo-site-id');
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <p className="text-sm font-semibold text-text-primary">Vault Storage Provider</p>
-                {isDemoMode && <span className="text-[10px] uppercase updates-wide px-2 py-0.5 rounded-full border border-warning/30 bg-warning/10 text-warning">Demo Mode</span>}
+                <p className="text-sm font-semibold text-text-primary">Vault media</p>
+                {isDemoMode && <span className="text-[10px] px-2 py-0.5 rounded-lg border border-border-subtle bg-surface-subtle text-text-secondary">Demo mode</span>}
               </div>
-              <p className="text-xs text-text-secondary mt-1">Google Drive is the only vault storage provider.</p>
+              <p className="text-xs text-text-secondary mt-1">dayof hosts vault media. Google Drive is an optional backup connection.</p>
               <div className="mt-3 flex items-center gap-2 text-[11px]">
-                <span className={`px-2 py-1 rounded-full border ${driveConnectedHealthy ? 'border-success/30 bg-success/10 text-success' : 'border-error/30 bg-error/10 text-error'}`}>
-                  {driveConnectedHealthy ? 'Connected' : 'Disconnected'}
+                <span className={`px-2 py-1 rounded-lg border ${driveConnectedHealthy ? 'border-border-subtle bg-surface-subtle text-text-secondary' : 'border-border-subtle bg-surface-subtle text-text-secondary'}`}>
+                  Drive backup: {driveConnectedHealthy ? 'Connected' : 'Disconnected'}
                 </span>
-                <span className="px-2 py-1 rounded-full border border-border text-text-tertiary">Provider: Google Drive</span>
+                <span className="px-2 py-1 rounded-lg border border-border text-text-tertiary">Hosted by dayof</span>
               </div>
               {isDemoMode && (
-                <p className="text-xs text-warning mt-2">Drive actions are simulated in demo mode.</p>
+                <p className="text-xs text-text-secondary mt-2">Drive actions are simulated in demo mode.</p>
               )}
               {driveHealthMessage && (
-                <p className={`text-xs mt-2 ${driveNeedsReconnect ? 'text-error' : 'text-success'}`}>
+                <p className={`text-xs mt-2 ${driveNeedsReconnect ? 'text-text-secondary' : 'text-text-secondary'}`}>
                   {driveHealthMessage}
                 </p>
               )}
@@ -1601,18 +1607,18 @@ setWeddingSiteId('demo-site-id');
                   {googleDriveConnected ? 'Reconnect Drive' : 'Connect Drive'}
                 </Button>
               ) : (
-                <span className="text-xs text-success">Drive connection is healthy.</span>
+                <span className="text-xs text-text-secondary">Drive connection is healthy.</span>
               )}
             </div>
           </div>
         </Card>
 
         {!weddingDate && (
-          <div className="flex items-start gap-3 p-4 bg-warning-light border border-warning/20 rounded-xl text-sm text-warning">
+          <div className="flex items-start gap-3 p-4 bg-surface-subtle border border-border-subtle rounded-lg text-sm text-text-secondary">
             <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
             <div>
               <p className="font-medium">No wedding date set</p>
-              <p className="mt-0.5 text-warning/80">Set your wedding date in Settings. Vault entries stay locked until an unlock date can be calculated.</p>
+              <p className="mt-0.5 text-text-secondary">Set your wedding date in Settings. Vault entries stay locked until an unlock date can be calculated.</p>
             </div>
           </div>
         )}
@@ -1621,21 +1627,21 @@ setWeddingSiteId('demo-site-id');
           <Card variant="bordered" padding="md">
             <div className="space-y-3">
               <div>
-                <p className="text-sm font-semibold text-text-primary">Anniversary workflow prompts</p>
+                <p className="text-sm font-semibold text-text-primary">Anniversary note ideas</p>
                 <p className="mt-1 text-sm text-text-secondary">Once the wedding is behind you, vaults should feel like a living archive: add a note now, collect a few from guests, and let future anniversaries unlock naturally.</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-3">
-                  <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Now</p>
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-3 py-3">
+                  <p className="text-xs font-medium text-text-tertiary">Now</p>
                   <p className="mt-1 text-sm text-text-secondary">Write the first note while the day is still fresh.</p>
                 </div>
-                <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-3">
-                  <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Next</p>
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-3 py-3">
+                  <p className="text-xs font-medium text-text-tertiary">Next</p>
                   <p className="mt-1 text-sm text-text-secondary">Share a vault link with the people who matter most, not everyone by default.</p>
                 </div>
-                <div className="rounded-xl border border-border-subtle bg-surface-subtle/30 px-3 py-3">
-                  <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">Later</p>
-                  <p className="mt-1 text-sm text-text-secondary">Let anniversaries bring these memories back without needing a manual reminder system.</p>
+                <div className="rounded-lg border border-border-subtle bg-surface-subtle/30 px-3 py-3">
+                  <p className="text-xs font-medium text-text-tertiary">Later</p>
+                  <p className="mt-1 text-sm text-text-secondary">Let anniversaries bring these memories back without needing to remember every date yourself.</p>
                 </div>
               </div>
             </div>
@@ -1645,7 +1651,7 @@ setWeddingSiteId('demo-site-id');
         {vaultConfigs.length === 0 && (
           <Card variant="bordered" padding="lg">
             <div className="text-center py-10">
-              <div className="w-16 h-16 bg-surface-subtle rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-surface-subtle rounded-lg flex items-center justify-center mx-auto mb-4">
                 <Lock className="w-8 h-8 text-text-tertiary" />
               </div>
               <h3 className="font-semibold text-text-primary mb-2">No anniversary vaults yet</h3>
@@ -1654,9 +1660,9 @@ setWeddingSiteId('demo-site-id');
               </p>
               <Button variant="primary" onClick={handleSeedStarterVaults} disabled={addingVault}>
                 {addingVault ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Plus className="w-4 h-4 mr-1.5" />}
-                Load Starter Vault Set (1/5/10)
+                Create 1, 5, and 10 year vaults
               </Button>
-              <p className="text-[11px] text-text-tertiary mt-2">Creates a ready-to-demo vault set in one tap.</p>
+              <p className="text-[11px] text-text-tertiary mt-2">Adds a simple set you can edit anytime.</p>
             </div>
           </Card>
         )}
@@ -1677,6 +1683,7 @@ setWeddingSiteId('demo-site-id');
                   onCancelForm={() => setActiveFormConfigId(null)}
                   onToggleEnabled={handleToggleEnabled}
                   onEdit={c => setEditingConfig(c)}
+                  onError={(message) => toast(message, 'error')}
                 />
                 <div className="mt-2 flex flex-wrap gap-2 justify-end">
                   <Button
@@ -1698,7 +1705,7 @@ setWeddingSiteId('demo-site-id');
                 </div>
                 <button
                   onClick={() => handleDeleteVault(config.id)}
-                  className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-error text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-error/80"
+                  className="absolute -top-2 -right-2 w-6 h-6 rounded-lg bg-surface border border-border-subtle text-text-secondary flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-surface-subtle"
                   title="Remove this vault"
                 >
                   <X className="w-3 h-3" />
@@ -1712,7 +1719,7 @@ setWeddingSiteId('demo-site-id');
           <button
             onClick={handleAddVault}
             disabled={addingVault}
-            className="w-full flex items-center justify-center gap-2 py-3 text-sm font-medium text-text-secondary border-2 border-dashed border-border rounded-xl hover:border-primary hover:text-primary hover:bg-primary/5 transition-colors disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 py-3 text-sm font-medium text-text-secondary border-2 border-dashed border-border rounded-lg hover:border-primary hover:text-primary hover:bg-primary/5 transition-colors disabled:opacity-50"
           >
             {addingVault ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
             Add another vault ({vaultConfigs.length}/{MAX_VAULTS} used)
@@ -1720,13 +1727,13 @@ setWeddingSiteId('demo-site-id');
         )}
 
         {vaultConfigs.length >= MAX_VAULTS && (
-          <div className="flex items-center gap-2 p-3 bg-surface-subtle rounded-xl border border-border text-sm text-text-secondary">
+          <div className="flex items-center gap-2 p-3 bg-surface-subtle rounded-lg border border-border text-sm text-text-secondary">
             <GripVertical className="w-4 h-4 text-text-tertiary" />
             Maximum of {MAX_VAULTS} vaults reached. Disable or remove an existing vault to add a new one.
           </div>
         )}
 
-        <div className="p-5 bg-surface-subtle border border-border rounded-xl text-sm text-text-secondary">
+        <div className="p-5 bg-surface-subtle border border-border rounded-lg text-sm text-text-secondary">
           <p className="font-medium text-text-primary mb-1">How Vaults work</p>
           <p>Add messages yourself or share a vault link with guests so they can drop in a note. Each vault unlocks automatically on its anniversary date. You can enable or disable individual vaults, and customize how long each one stays sealed. Disabled vaults are hidden from guests but your entries are preserved.</p>
           {archiveMode.isArchiveLike && <p className="mt-2 text-xs text-text-tertiary">Best rhythm: start with one immediate note, one short guest-facing vault, and one later anniversary vault instead of overbuilding this all at once.</p>}

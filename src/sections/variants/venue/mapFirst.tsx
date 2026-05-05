@@ -2,6 +2,7 @@ import React from 'react';
 import { z } from 'zod';
 import { MapPin, Clock, Navigation } from 'lucide-react';
 import { SectionDefinition, SectionComponentProps } from '../../types';
+import { getSafePublicWebUrl } from '../../publicLinks';
 
 const VenueItemSchema = z.object({
   id: z.string(),
@@ -55,18 +56,19 @@ const VenueMapFirst: React.FC<SectionComponentProps<VenueMapFirstData>> = ({ dat
     ? [primaryVenue.name, primaryVenue.address, primaryVenue.city].filter(Boolean).join(', ')
     : '';
   const fallbackEmbedUrl = mapsQuery ? `https://www.google.com/maps?q=${encodeURIComponent(mapsQuery)}&output=embed` : '';
-  const primaryEmbedUrl = primaryVenue?.mapEmbedUrl || fallbackEmbedUrl;
+  const primaryMapUrl = getSafePublicWebUrl(primaryVenue?.mapUrl);
+  const primaryEmbedUrl = getSafePublicWebUrl(primaryVenue?.mapEmbedUrl) || fallbackEmbedUrl;
 
   return (
     <section className="py-32 md:py-40 bg-gradient-to-b from-stone-50 to-white" id="venue">
       <div className="max-w-6xl mx-auto px-6 md:px-12">
         <div className="text-center mb-14">
           {data.eyebrow && (
-            <p className="text-xs uppercase tracking-[0.25em] text-stone-400 font-medium mb-4">
+            <p className="text-sm text-stone-400 font-light mb-4">
               {data.eyebrow}
             </p>
           )}
-          <h2 className="text-4xl md:text-6xl font-light text-stone-900 tracking-tight">{data.headline}</h2>
+          <h2 className="text-4xl md:text-6xl font-light text-stone-900">{data.headline}</h2>
         </div>
 
         {primaryVenue && (
@@ -90,9 +92,9 @@ const VenueMapFirst: React.FC<SectionComponentProps<VenueMapFirstData>> = ({ dat
                     <p className="text-stone-600 font-medium text-sm">{primaryVenue.address}</p>
                     <p className="text-stone-400 text-sm">{primaryVenue.city}</p>
                   </div>
-                  {primaryVenue.mapUrl && (
+                  {primaryMapUrl && (
                     <a
-                      href={primaryVenue.mapUrl}
+                      href={primaryMapUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 px-4 py-2 bg-white border border-stone-200 rounded-full text-sm text-stone-600 hover:border-stone-400 hover:text-stone-900 transition-all shadow-sm"
@@ -109,7 +111,7 @@ const VenueMapFirst: React.FC<SectionComponentProps<VenueMapFirstData>> = ({ dat
               <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-5">
                 <div className="space-y-2">
                   {primaryVenue.role && (
-                    <p className="text-xs uppercase tracking-[0.2em] text-rose-500 font-medium">{primaryVenue.role}</p>
+                    <p className="text-sm text-rose-500 font-medium">{primaryVenue.role}</p>
                   )}
                   <h3 className="text-2xl font-light text-stone-900">{primaryVenue.name}</h3>
                   <div className="flex flex-col gap-2 pt-1">
@@ -130,9 +132,9 @@ const VenueMapFirst: React.FC<SectionComponentProps<VenueMapFirstData>> = ({ dat
                   </div>
                 </div>
 
-                {primaryVenue.mapUrl && (
+                {primaryMapUrl && (
                   <a
-                    href={primaryVenue.mapUrl}
+                    href={primaryMapUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex-shrink-0 flex items-center gap-2 px-5 py-2.5 bg-stone-900 text-white text-sm font-medium rounded-xl hover:bg-stone-800 transition-colors"
@@ -154,10 +156,12 @@ const VenueMapFirst: React.FC<SectionComponentProps<VenueMapFirstData>> = ({ dat
 
         {extraVenues.length > 0 && (
           <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-5">
-            {extraVenues.map(venue => (
+            {extraVenues.map(venue => {
+              const safeMapUrl = getSafePublicWebUrl(venue.mapUrl);
+              return (
               <div key={venue.id} className="bg-white rounded-2xl p-6 border border-stone-100 shadow-sm">
                 {venue.role && (
-                  <p className="text-xs uppercase tracking-[0.2em] text-rose-500 font-medium mb-2">{venue.role}</p>
+                  <p className="text-sm text-rose-500 font-medium mb-2">{venue.role}</p>
                 )}
                 <h3 className="text-lg font-light text-stone-900 mb-3">{venue.name}</h3>
                 <div className="space-y-2">
@@ -174,15 +178,16 @@ const VenueMapFirst: React.FC<SectionComponentProps<VenueMapFirstData>> = ({ dat
                     </div>
                   )}
                 </div>
-                {venue.mapUrl && (
-                  <a href={venue.mapUrl} target="_blank" rel="noopener noreferrer"
-                    className="mt-4 inline-flex items-center gap-1.5 text-xs text-stone-400 hover:text-stone-700 transition-colors uppercase tracking-wide font-medium">
+                {safeMapUrl && (
+                  <a href={safeMapUrl} target="_blank" rel="noopener noreferrer"
+                    className="mt-4 inline-flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-700 transition-colors font-medium">
                     <Navigation size={12} />
                     Directions
                   </a>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
