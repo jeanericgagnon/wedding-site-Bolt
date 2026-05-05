@@ -47,6 +47,7 @@ Every Edge Function that reads `SUPABASE_SERVICE_ROLE_KEY` is intentionally clas
 - `public-itinerary-by-slug`
 - `public-registry-items`
 - `public-site-access`
+- `public-site-rsvp-submit`
 - `submit-contact-request`
 - `submit-rsvp`
 - `validate-rsvp-token`

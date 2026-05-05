@@ -43,7 +43,7 @@ vi.mock('../lib/copyText', () => ({
   copyTextOrDownload: vi.fn(async () => 'copied'),
 }));
 
-import { EventRecap, formatEventRecapAlbumLabel, friendlyEventRecapError } from './EventRecap';
+import { EventRecap, buildEventRecapAccessHeaders, buildEventRecapGuestHubAccessPayload, formatEventRecapAlbumLabel, friendlyEventRecapError } from './EventRecap';
 
 const recapPayload = {
   site: {
@@ -81,6 +81,46 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  sessionStorage.clear();
+  window.history.replaceState({}, '', '/');
+});
+
+describe('buildEventRecapGuestHubAccessPayload', () => {
+  it('packages current invite token and password session for recap telemetry', () => {
+    window.history.replaceState({}, '', '/event/ericandkaras/recap?token=current-invite');
+    sessionStorage.setItem('dayof_invite_token_ericandkaras', 'stored-invite');
+    sessionStorage.setItem('dayof_pw_session_ericandkaras', 'password-session');
+
+    expect(buildEventRecapGuestHubAccessPayload('ericandkaras')).toEqual({
+      inviteToken: 'current-invite',
+      passwordSession: 'password-session',
+    });
+  });
+
+  it('falls back to stored invite access for shared recap links', () => {
+    sessionStorage.setItem('dayof_invite_token_ericandkaras', 'stored-invite');
+
+    expect(buildEventRecapGuestHubAccessPayload('ericandkaras')).toEqual({
+      inviteToken: 'stored-invite',
+      passwordSession: null,
+    });
+  });
+});
+
+describe('buildEventRecapAccessHeaders', () => {
+  it('adds only present access artifacts for the gated recap request', () => {
+    window.history.replaceState({}, '', '/event/ericandkaras/recap?token=current-invite');
+    sessionStorage.setItem('dayof_pw_session_ericandkaras', 'password-session');
+
+    expect(buildEventRecapAccessHeaders('ericandkaras')).toEqual({
+      'x-dayof-invite-token': 'current-invite',
+      'x-dayof-password-session': 'password-session',
+    });
+  });
+
+  it('omits empty access headers for normal public recap requests', () => {
+    expect(buildEventRecapAccessHeaders('ericandkaras')).toEqual({});
+  });
 });
 
 describe('formatEventRecapAlbumLabel', () => {

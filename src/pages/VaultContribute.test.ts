@@ -22,7 +22,35 @@ vi.mock('../lib/supabase', () => ({
   },
 }));
 
-import { VaultContribute, getContributionWindow, getVaultCoupleName, getVaultUnlockAtIso, getVaultUnlockYear, safeVaultUploadError } from './VaultContribute';
+vi.mock('../lib/publicSiteAccess', () => ({
+  fetchPublicSiteAccess: vi.fn(async () => ({ status: 'unavailable', site: null })),
+}));
+
+import { VaultContribute, buildVaultAccessPayload, getContributionWindow, getVaultCoupleName, getVaultUnlockAtIso, getVaultUnlockYear, safeVaultUploadError } from './VaultContribute';
+
+describe('buildVaultAccessPayload', () => {
+  it('packages invite and password artifacts for gated vault contribution submits', () => {
+    sessionStorage.setItem('dayof_invite_token_ericandkaras', 'stored-invite');
+    sessionStorage.setItem('dayof_pw_session_ericandkaras', 'password-session');
+    window.history.replaceState({}, '', '/vault/ericandkaras?token=current-invite');
+
+    expect(buildVaultAccessPayload('ericandkaras')).toEqual({
+      inviteToken: 'current-invite',
+      passwordSession: 'password-session',
+    });
+  });
+
+  it('falls back to stored invite access when the vault URL has no token', () => {
+    sessionStorage.setItem('dayof_invite_token_ericandkaras', 'stored-invite');
+    sessionStorage.removeItem('dayof_pw_session_ericandkaras');
+    window.history.replaceState({}, '', '/vault/ericandkaras');
+
+    expect(buildVaultAccessPayload('ericandkaras')).toEqual({
+      inviteToken: 'stored-invite',
+      passwordSession: null,
+    });
+  });
+});
 
 describe('getVaultCoupleName', () => {
   it('keeps a single partner name truthful instead of showing a broken ampersand', () => {

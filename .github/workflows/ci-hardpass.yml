@@ -37,11 +37,35 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Lint
+        run: npm run lint -- --quiet
+
       - name: File-size guard
         run: npm run guard:file-size
 
-      - name: Hardpass core (tests/build/csv/checkin)
-        run: npm test && npm run build && npm run smoke:csvmapper && npm run smoke:checkin
+      - name: Asset budget guard
+        run: npm run guard:assets
+
+      - name: Security regression tests
+        run: npm run test:security
+
+      - name: Unit and regression tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Registry smoke
+        run: npm run smoke:registry
+
+      - name: CSV mapper smoke
+        run: npm run smoke:csvmapper
+
+      - name: Check-in smoke
+        run: npm run smoke:checkin
+
+      - name: Messages smoke
+        run: npm run smoke:messages
 
       - name: Hardpass RSVP strict (Supabase-backed)
         if: ${{ env.VITE_SUPABASE_URL != '' && env.VITE_SUPABASE_ANON_KEY != '' }}

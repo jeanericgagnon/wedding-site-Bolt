@@ -16,7 +16,7 @@ import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardPageHero } from '../../components/dashboard/DashboardPageHero';
 import { useToast } from '../../components/ui/Toast';
 import { useAuth } from '../../hooks/useAuth';
-import { demoWeddingSite, demoGuests, demoEvents } from '../../lib/demoData';
+import { demoWeddingSite, demoGuests } from '../../lib/demoData';
 import { supabase } from '../../lib/supabase';
 import { isAttendingRsvpStatus } from '../../lib/rsvpStatus';
 import { buildSeatingCateringHandoffReview, buildSeatingCateringPacket, cateringRowsToCsv } from '../../lib/seatingCateringExportReadiness';
@@ -36,50 +36,35 @@ import {
   SeatingLayoutVersion, loadSeatingVersions, createSeatingVersion, markSeatingVersionRestored,
   deriveEventCountersFromGuests,
 } from './seating/seatingService';
-
-const UNASSIGNED_DROPPABLE = 'unassigned-pool';
-type TableShape = 'round' | 'rectangle' | 'bar' | 'dj_booth' | 'dance_floor';
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-function safeExportSlug(value: string): string {
-  return (value || 'event').replace(/[^a-z0-9-_]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'event';
-}
-
-function getShapeLabel(shape: TableShape): string {
-  switch (shape) {
-    case 'round': return 'Round Table';
-    case 'rectangle': return 'Rectangle Table';
-    case 'bar': return 'Service Station';
-    case 'dj_booth': return 'Booth';
-    case 'dance_floor': return 'Open Zone';
-    default: return 'Table';
-  }
-}
-
-function getShapePalette(shape: TableShape) {
-  switch (shape) {
-    case 'round':
-      return { chip: 'bg-primary/10 border-primary/30 text-primary', fill: 'bg-primary/5 border-primary/20' };
-    case 'rectangle':
-      return { chip: 'bg-surface-subtle border-border-subtle text-text-secondary', fill: 'bg-surface-subtle/50 border-border-subtle' };
-    case 'bar':
-      return { chip: 'bg-surface-subtle border-border-subtle text-text-secondary', fill: 'bg-surface-subtle/50 border-border-subtle' };
-    case 'dj_booth':
-      return { chip: 'bg-surface-subtle border-border-subtle text-text-secondary', fill: 'bg-surface-subtle/50 border-border-subtle' };
-    case 'dance_floor':
-      return { chip: 'bg-primary/10 border-primary/25 text-primary', fill: 'bg-primary/5 border-primary/20' };
-    default:
-      return { chip: 'bg-surface-subtle border-border-subtle text-text-tertiary', fill: 'bg-surface-subtle border-border-subtle' };
-  }
-}
+import {
+  UNASSIGNED_DROPPABLE,
+  buildArrivedGuestIdSet,
+  buildAssignedGuestIdSet,
+  buildDemoAutoSeatAssignments,
+  buildDemoAutoTables,
+  buildSeatingLayoutSvg,
+  buildSeatingReportHtml,
+  buildTableSummaryCsv,
+  countArrivedAttendingGuests,
+  getAssignmentsForTable,
+  getCheckInCandidates,
+  getGuestsAssignedToTable,
+  getSeatPickerOptions,
+  getShapeLabel,
+  getShapePalette,
+  getUnassignedAttendingGuests,
+  safeExportSlug,
+  type SeatingCheckInFilter,
+  type TableShape,
+} from './seating/seatingDashboardUtils';
+import {
+  DEMO_ITINERARY_STORAGE_KEY,
+  loadDemoItineraryEventsFromStorage,
+  readDemoSeatingState,
+  readSeatingVersions,
+  writeDemoSeatingState,
+  writeSeatingVersions,
+} from './seating/seatingDemoStorage';
 
 function GuestChip({
   guest,
@@ -645,9 +630,6 @@ function TableForm({ initial, onSave, onCancel }: {
 
 const DEMO_EVENT_ID = 'demo-event-reception';
 const DEMO_SEATING_EVENT_ID = 'demo-seating-event';
-const DEMO_ITINERARY_STORAGE_KEY = 'dayof.demo.itinerary.events';
-const DEMO_SEATING_STORAGE_KEY = 'dayof.demo.seating.state';
-const SEATING_VERSION_STORAGE_KEY = 'dayof.seating.versions';
 
 export const DashboardSeating: React.FC = () => {
   const { isDemoMode } = useAuth();
@@ -671,7 +653,7 @@ export const DashboardSeating: React.FC = () => {
   const [invalidCount, setInvalidCount] = useState(0);
   const [checkInMode, setCheckInMode] = useState(false);
   const [checkInQuery, setCheckInQuery] = useState('');
-  const [checkInFilter, setCheckInFilter] = useState<'all' | 'not_arrived' | 'arrived' | 'seated' | 'unseated'>('not_arrived');
+  const [checkInFilter, setCheckInFilter] = useState<SeatingCheckInFilter>('not_arrived');
   const [layoutMode, setLayoutMode] = useState<'visual' | 'list'>('visual');
   const [movingTableId, setMovingTableId] = useState<string | null>(null);
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
@@ -680,9 +662,13 @@ export const DashboardSeating: React.FC = () => {
   const activeSeatAssignment = seatPicker ? assignments.find((assignment) => assignment.table_id === seatPicker.tableId && assignment.seat_index === seatPicker.seatIndex) ?? null : null;
   const activeSeatGuest = activeSeatAssignment ? allGuests.find((guest) => guest.id === activeSeatAssignment.guest_id) ?? null : null;
   const seatPickerOptions = seatPicker
-    ? allGuests
-        .filter((guest) => !assignments.some((assignment) => assignment.guest_id === guest.id) || assignments.some((assignment) => assignment.guest_id === guest.id && assignment.table_id === seatPicker.tableId && assignment.seat_index === seatPicker.seatIndex))
-        .filter((guest) => guest.full_name.toLowerCase().includes(seatPickerQuery.toLowerCase()))
+    ? getSeatPickerOptions({
+        guests: allGuests,
+        assignments,
+        tableId: seatPicker.tableId,
+        seatIndex: seatPicker.seatIndex,
+        query: seatPickerQuery,
+      })
     : [];
   const [canvasZoom, setCanvasZoom] = useState(1);
   const [canvasFullscreen, setCanvasFullscreen] = useState(false);
@@ -708,74 +694,6 @@ export const DashboardSeating: React.FC = () => {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
-
-  function loadDemoItineraryEventsFromStorage() {
-    const fallbackEvents: ItineraryEvent[] = demoEvents.map((e: any) => ({
-      id: e.id,
-      event_name: e.event_name,
-      event_date: e.event_date,
-      start_time: e.start_time || '18:00',
-      location_name: e.location_name || '',
-    }));
-
-    let parsedEvents: ItineraryEvent[] = [];
-    try {
-      const raw = localStorage.getItem(DEMO_ITINERARY_STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as Array<any>;
-        parsedEvents = (Array.isArray(parsed) ? parsed : []).map((e) => ({
-          id: e.id,
-          event_name: e.event_name,
-          event_date: e.event_date,
-          start_time: e.start_time || '18:00',
-          location_name: e.location_name || '',
-        })).filter((e) => e.id && e.event_name && e.event_date);
-      }
-    } catch {}
-
-    return parsedEvents.length > 0 ? parsedEvents : fallbackEvents;
-  }
-
-
-  function readDemoSeatingState(eventId: string): { tables: SeatingTable[]; assignments: SeatingAssignment[] } {
-    try {
-      const raw = localStorage.getItem(DEMO_SEATING_STORAGE_KEY);
-      if (!raw) return { tables: [], assignments: [] };
-      const parsed = JSON.parse(raw) as Record<string, { tables?: SeatingTable[]; assignments?: SeatingAssignment[] }>;
-      const item = parsed?.[eventId];
-      return {
-        tables: Array.isArray(item?.tables) ? item.tables : [],
-        assignments: Array.isArray(item?.assignments) ? item.assignments : [],
-      };
-    } catch {
-      return { tables: [], assignments: [] };
-    }
-  }
-
-  function writeDemoSeatingState(eventId: string, tablesData: SeatingTable[], assignmentsData: SeatingAssignment[]) {
-    try {
-      const raw = localStorage.getItem(DEMO_SEATING_STORAGE_KEY);
-      const parsed = raw ? JSON.parse(raw) as Record<string, any> : {};
-      parsed[eventId] = { tables: tablesData, assignments: assignmentsData };
-      localStorage.setItem(DEMO_SEATING_STORAGE_KEY, JSON.stringify(parsed));
-    } catch {}
-  }
-
-  function readSeatingVersions(): SeatingLayoutVersion[] {
-    try {
-      const raw = localStorage.getItem(SEATING_VERSION_STORAGE_KEY);
-      const parsed = raw ? JSON.parse(raw) as SeatingLayoutVersion[] : [];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  }
-
-  function writeSeatingVersions(nextVersions: SeatingLayoutVersion[]) {
-    try {
-      localStorage.setItem(SEATING_VERSION_STORAGE_KEY, JSON.stringify(nextVersions.slice(0, 40)));
-    } catch {}
-  }
 
   useEffect(() => {
     loadInitial();
@@ -929,8 +847,7 @@ export const DashboardSeating: React.FC = () => {
     }
   }, [selectedEventId]);
 
-  const assignedGuestIds = new Set(assignments.map(a => a.guest_id));
-  const unassignedGuests = allGuests.filter(g => g.is_attending && !assignedGuestIds.has(g.id));
+  const unassignedGuests = getUnassignedAttendingGuests(allGuests, assignments);
 
   function handleDragStart(event: DragStartEvent) {
     const guest = allGuests.find(g => g.id === event.active.id);
@@ -1223,20 +1140,12 @@ export const DashboardSeating: React.FC = () => {
     setSeatingBusyAction('auto-create');
     try {
       const created = isDemoMode
-        ? Array.from({ length: Math.ceil(counters.attending / autoCapacity) }).map((_, idx) => ({
-            id: `demo-auto-table-${Date.now()}-${idx}`,
-            seating_event_id: seatingEvent.id,
-            table_name: `Table ${tables.length + idx + 1}`,
+        ? buildDemoAutoTables({
+            seatingEventId: seatingEvent.id,
+            attendingCount: counters.attending,
             capacity: autoCapacity,
-            sort_order: tables.length + idx,
-            notes: '',
-            table_shape: 'round' as const,
-            layout_width: 260,
-            layout_height: 150,
-            layout_x: 24 + ((tables.length + idx) % 3) * 360,
-            layout_y: 24 + Math.floor((tables.length + idx) / 3) * 330,
-            rotation_deg: 0,
-          }))
+            existingTableCount: tables.length,
+          })
         : await autoCreateTables(seatingEvent.id, counters.attending, autoCapacity);
       setTables(prev => [...prev, ...created]);
       setShowAutoTablesModal(false);
@@ -1257,49 +1166,12 @@ export const DashboardSeating: React.FC = () => {
     setSeatingBusyAction('auto-seat');
     try {
       const newAssignments = isDemoMode
-        ? (() => {
-            const existingAssignments = assignments;
-            const assignedGuestIds = new Set(existingAssignments.map((assignment) => assignment.guest_id));
-            const attendees = allGuests.filter(g => g.is_attending && !assignedGuestIds.has(g.id));
-            const occupancy = new Map<string, number>(tables.map(t => [t.id, existingAssignments.filter((assignment) => assignment.table_id === t.id).length]));
-            const seatUsage = new Map<string, Set<number>>(
-              tables.map((table) => [
-                table.id,
-                new Set(
-                  existingAssignments
-                    .filter((assignment) => assignment.table_id === table.id)
-                    .map((assignment) => assignment.seat_index)
-                    .filter((seat): seat is number => typeof seat === 'number' && seat > 0),
-                ),
-              ]),
-            );
-            const generated: SeatingAssignment[] = [];
-            const nextSeat = (tableId: string, capacity: number) => {
-              const usedSeats = seatUsage.get(tableId) ?? new Set<number>();
-              for (let i = 1; i <= capacity; i++) {
-                if (!usedSeats.has(i)) {
-                  usedSeats.add(i);
-                  seatUsage.set(tableId, usedSeats);
-                  return i;
-                }
-              }
-              return null;
-            };
-            for (const guest of attendees) {
-              const table = tables.find(t => (occupancy.get(t.id) ?? 0) < t.capacity);
-              if (!table) break;
-              occupancy.set(table.id, (occupancy.get(table.id) ?? 0) + 1);
-              generated.push({
-                id: `demo-auto-assign-${guest.id}`,
-                seating_event_id: seatingEvent.id,
-                table_id: table.id,
-                guest_id: guest.id,
-                seat_index: nextSeat(table.id, table.capacity),
-                is_valid: true,
-              });
-            }
-            return generated;
-          })()
+        ? buildDemoAutoSeatAssignments({
+            seatingEventId: seatingEvent.id,
+            guests: allGuests,
+            tables,
+            existingAssignments: assignments,
+          })
         : await autoSeatGuests(seatingEvent.id, tables, allGuests);
       setAssignments(prev => {
         const existingMap = new Map(prev.map(a => [a.guest_id, a]));
@@ -1411,23 +1283,6 @@ export const DashboardSeating: React.FC = () => {
     }
   }
 
-  function matchesCheckInFilter(guest: EligibleGuest, arrivedIds: Set<string>, assignedIds: Set<string>) {
-    const hasArrived = arrivedIds.has(guest.id);
-    const isAssigned = assignedIds.has(guest.id);
-    switch (checkInFilter) {
-      case 'arrived':
-        return hasArrived;
-      case 'not_arrived':
-        return !hasArrived;
-      case 'seated':
-        return isAssigned;
-      case 'unseated':
-        return !isAssigned;
-      default:
-        return true;
-    }
-  }
-
   function handleCanvasWheelZoom(e: React.WheelEvent<HTMLDivElement>) {
     // Trackpad pinch on desktop browsers commonly reports wheel + ctrlKey
     if (layoutMode !== 'visual') return;
@@ -1455,20 +1310,7 @@ export const DashboardSeating: React.FC = () => {
     const packet = buildSeatingCateringPacket({ guests: allGuests, tables, assignments });
 
     const safeName = safeExportSlug(eventName);
-    const rows = [
-      ['Table', 'Capacity', 'Assigned', 'Arrived', 'Dietary Notes', 'Meal Counts'],
-      ...packet.tableSummaries.map((row) => [
-        row.tableName,
-        String(row.capacity),
-        String(row.assigned),
-        String(row.arrived),
-        String(row.dietaryNotes),
-        row.mealCounts.map((meal) => `${meal.meal}: ${meal.count}`).join('; '),
-      ]),
-    ];
-    const csv = rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
-
-    downloadCSV(csv, `table-summary-${safeName}.csv`);
+    downloadCSV(buildTableSummaryCsv(packet), `table-summary-${safeName}.csv`);
   }
 
   function handleExportCateringCSV() {
@@ -1486,44 +1328,15 @@ export const DashboardSeating: React.FC = () => {
     const selectedEvent = itineraryEvents.find(e => e.id === selectedEventId);
     const eventName = selectedEvent?.event_name ?? 'Event';
     const now = new Date().toLocaleString();
-
-    const tableBlocks = tables.map((table) => {
-      const tableGuests = allGuests.filter(g =>
-        assignments.some(a => a.table_id === table.id && a.guest_id === g.id)
-      );
-      const rows = tableGuests.map((g) => {
-        const assignment = assignments.find(a => a.table_id === table.id && a.guest_id === g.id);
-        return `<tr><td>${escapeHtml(g.full_name)}</td><td>${escapeHtml(g.email ?? '')}</td><td>${assignment?.checked_in_at ? 'Yes' : 'No'}</td></tr>`;
-      }).join('');
-
-      return `
-        <section style="margin-bottom:18px; page-break-inside:avoid;">
-          <h3 style="margin:0 0 8px 0;">${escapeHtml(table.table_name)} (${tableGuests.length}/${table.capacity})</h3>
-          <table style="width:100%; border-collapse:collapse; font-size:12px;">
-            <thead>
-              <tr>
-                <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px;">Guest</th>
-                <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px;">Email</th>
-                <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px;">Arrived</th>
-              </tr>
-            </thead>
-            <tbody>${rows || '<tr><td colspan="3" style="padding:8px; color:#666;">No guests assigned</td></tr>'}</tbody>
-          </table>
-        </section>
-      `;
-    }).join('');
-
-    const html = `
-      <html>
-        <head><title>Seating Export - ${escapeHtml(eventName)}</title></head>
-        <body style="font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif; padding:24px; color:#111;">
-          <h1 style="margin:0 0 6px 0;">Seating Report - ${escapeHtml(eventName)}</h1>
-          <p style="margin:0 0 14px 0; color:#555;">Created ${escapeHtml(now)}</p>
-          <p style="margin:0 0 20px 0; color:#333;">Attending: ${counters?.attending ?? 0} · Seated: ${counters?.seated ?? 0} · Arrived: ${arrivedCount}</p>
-          ${tableBlocks || '<p>No tables yet.</p>'}
-        </body>
-      </html>
-    `;
+    const html = buildSeatingReportHtml({
+      eventName,
+      createdLabel: now,
+      guests: allGuests,
+      tables,
+      assignments,
+      counters,
+      arrivedCount,
+    });
 
     const w = window.open('', '_blank', 'noopener,noreferrer,width=1000,height=900');
     if (!w) {
@@ -1540,17 +1353,7 @@ export const DashboardSeating: React.FC = () => {
   function handleExportImage() {
     const selectedEvent = itineraryEvents.find(e => e.id === selectedEventId);
     const eventName = selectedEvent?.event_name ?? 'Event';
-    const escapeText = (value: string) => value.replace(/[<>&]/g, '');
-    const tableBlocks = tables.map((table) => {
-      const x = Number(table.layout_x ?? 24);
-      const y = Number(table.layout_y ?? 82);
-      const width = Number(table.layout_width ?? 220);
-      const height = Number(table.layout_height ?? 120);
-      const assigned = assignments.filter((assignment) => assignment.table_id === table.id).length;
-      const name = escapeText(`${table.table_name} (${assigned}/${table.capacity})`);
-      return `<g><rect x="${x}" y="${y}" width="${width}" height="${height}" rx="16" fill="#fff7ed" stroke="#d6d3d1" stroke-width="2"/><text x="${x + 16}" y="${y + 32}" font-size="16" font-family="Arial" font-weight="700" fill="#1c1917">${name}</text></g>`;
-    });
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1000" viewBox="0 0 1400 1000"><rect width="1400" height="1000" fill="#fafaf9"/><text x="28" y="42" font-size="24" font-family="Arial" font-weight="700">${escapeText(eventName)} seating layout</text>${tableBlocks.join('')}</svg>`;
+    const svg = buildSeatingLayoutSvg({ eventName, tables, assignments });
     const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1621,14 +1424,16 @@ export const DashboardSeating: React.FC = () => {
   }
 
   const selectedItineraryEvent = itineraryEvents.find(e => e.id === selectedEventId);
-  const arrivedGuestIds = new Set(assignments.filter(a => !!a.checked_in_at).map(a => a.guest_id));
-  const assignedGuestIdSet = new Set(assignments.map(a => a.guest_id));
-  const arrivedCount = allGuests.filter(g => g.is_attending && arrivedGuestIds.has(g.id)).length;
-  const checkInCandidates = allGuests
-    .filter(g => g.is_attending)
-    .filter(g => matchesCheckInFilter(g, arrivedGuestIds, assignedGuestIdSet))
-    .filter(g => g.full_name.toLowerCase().includes(checkInQuery.toLowerCase().trim()))
-    .slice(0, 12);
+  const arrivedGuestIds = buildArrivedGuestIdSet(assignments);
+  const assignedGuestIdSet = buildAssignedGuestIdSet(assignments);
+  const arrivedCount = countArrivedAttendingGuests(allGuests, arrivedGuestIds);
+  const checkInCandidates = getCheckInCandidates({
+    guests: allGuests,
+    arrivedIds: arrivedGuestIds,
+    assignedIds: assignedGuestIdSet,
+    filter: checkInFilter,
+    query: checkInQuery,
+  });
 
   const cateringPacket = buildSeatingCateringPacket({ guests: allGuests, tables, assignments });
   const cateringHandoffReview = buildSeatingCateringHandoffReview(cateringPacket);
@@ -2270,10 +2075,8 @@ export const DashboardSeating: React.FC = () => {
                             >
                               <TableCard
                                 table={table}
-                                guests={allGuests.filter(g =>
-                                  assignments.some(a => a.table_id === table.id && a.guest_id === g.id)
-                                )}
-                                assignments={assignments.filter(a => a.table_id === table.id)}
+                                guests={getGuestsAssignedToTable(allGuests, assignments, table.id)}
+                                assignments={getAssignmentsForTable(assignments, table.id)}
                                 allGuests={allGuests}
                                 onEdit={setEditingTable}
                                 onDelete={handleDeleteTable}
@@ -2302,10 +2105,8 @@ export const DashboardSeating: React.FC = () => {
                           <TableCard
                             key={table.id}
                             table={table}
-                            guests={allGuests.filter(g =>
-                              assignments.some(a => a.table_id === table.id && a.guest_id === g.id)
-                            )}
-                            assignments={assignments.filter(a => a.table_id === table.id)}
+                            guests={getGuestsAssignedToTable(allGuests, assignments, table.id)}
+                            assignments={getAssignmentsForTable(assignments, table.id)}
                             allGuests={allGuests}
                             onEdit={setEditingTable}
                             onDelete={handleDeleteTable}
@@ -2340,9 +2141,7 @@ export const DashboardSeating: React.FC = () => {
             Seating Chart — {selectedItineraryEvent?.event_name}
           </h2>
           {tables.map(table => {
-            const tableGuests = allGuests.filter(g =>
-              assignments.some(a => a.table_id === table.id && a.guest_id === g.id)
-            );
+            const tableGuests = getGuestsAssignedToTable(allGuests, assignments, table.id);
             return (
               <div key={table.id} className="mb-6 break-inside-avoid">
                 <h3 className="font-semibold text-lg mb-2">{table.table_name} ({tableGuests.length}/{table.capacity})</h3>

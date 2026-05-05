@@ -137,6 +137,7 @@ const requiredFunctionDirs = [
   'photo-export-manifest',
   'photo-upload',
   'public-registry-items',
+  'public-site-rsvp-submit',
   'queue-guest-followups',
   'translate-site-content',
   'vault-entry-submit',

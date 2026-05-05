@@ -1,6 +1,20 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { generateVendorProfileDraft, createVendorProfile, normalizeVendorTemplateId, type VendorProfile, type VendorProfileDraft, type VendorTemplateId } from '../lib/vendorProfiles';
+import {
+  VENDOR_ACCENT_OPTIONS,
+  VENDOR_GALLERY_LAYOUT_OPTIONS,
+  VENDOR_SECTION_IDS,
+  createVendorProfile,
+  generateVendorProfileDraft,
+  normalizeVendorProfileCustomization,
+  normalizeVendorTemplateId,
+  type VendorAccentId,
+  type VendorGalleryLayoutId,
+  type VendorProfile,
+  type VendorProfileDraft,
+  type VendorSectionId,
+  type VendorTemplateId,
+} from '../lib/vendorProfiles';
 import { useToast } from '../components/ui/Toast';
 import { copyTextOrDownload } from '../lib/copyText';
 import { getSafePublicEmailHref, getSafePublicImageUrl, getSafePublicInstagramUrl, getSafePublicWebUrl } from '../sections/publicLinks';
@@ -34,9 +48,15 @@ function draftLinks(draft: VendorProfileDraft) {
 }
 
 const vendorTemplateOptions: Array<{ id: VendorTemplateId; name: string; detail: string }> = [
-  { id: 'editorial', name: 'Editorial profile', detail: 'Large hero, polished gallery, and a premium inquiry section.' },
-  { id: 'portfolio', name: 'Portfolio forward', detail: 'Visual-first layout for photographers, florists, beauty, venues, and rentals.' },
-  { id: 'minimal', name: 'Minimal card', detail: 'Quiet, direct profile for planners, officiants, musicians, and service vendors.' },
+  { id: 'photography', name: 'Photography portfolio', detail: 'Image-led story, gallery rhythm, and clear package inquiry for photo and video teams.' },
+  { id: 'floral', name: 'Floral lookbook', detail: 'Texture, palette, installation moments, and inquiry copy for florists and decor studios.' },
+  { id: 'venue', name: 'Venue estate', detail: 'Large location hero, event-flow details, capacity-style proof, and tour-first CTA.' },
+  { id: 'food', name: 'Food and beverage', detail: 'Menu confidence, service style, tasting CTA, and proof points for caterers, cakes, and bar teams.' },
+  { id: 'beauty', name: 'Beauty and attire', detail: 'Artist-led portfolio, service menu, trial-ready contact path, and fit for salons, glam, and jewelry.' },
+  { id: 'music', name: 'Music and entertainment', detail: 'Energy, sample-set proof, reception timing, and booking CTA for bands, DJs, and performers.' },
+  { id: 'planner', name: 'Planner concierge', detail: 'Process, trust, logistics calm, and premium inquiry copy for planners and coordinators.' },
+  { id: 'travel', name: 'Travel and logistics', detail: 'Route, room-block, shuttle, and guest-movement clarity for transportation and travel vendors.' },
+  { id: 'service', name: 'Service card', detail: 'Fast-contact layout for officiants, rentals, specialty vendors, and practical services.' },
 ];
 
 function getDraftTemplateId(draft: VendorProfileDraft): VendorTemplateId {
@@ -44,16 +64,81 @@ function getDraftTemplateId(draft: VendorProfileDraft): VendorTemplateId {
 }
 
 function withTemplateId(draft: VendorProfileDraft, templateId: VendorTemplateId): VendorProfileDraft {
+  const customization = normalizeVendorProfileCustomization(draft.source_payload);
   return {
     ...draft,
     source_payload: {
       ...draft.source_payload,
       template_id: templateId,
+      vendor_customization: {
+        ...customization,
+        accent_id: customization.accent_id,
+      },
     },
   };
 }
 
+function updateDraftCustomization(
+  draft: VendorProfileDraft,
+  patch: Partial<{
+    accent_id: VendorAccentId;
+    gallery_layout: VendorGalleryLayoutId;
+    logo_text: string;
+    cta_label: string;
+    service_area: string;
+    pricing_note: string;
+    proof_points: string[];
+    section_order: VendorSectionId[];
+    hidden_sections: VendorSectionId[];
+    packages: Array<{ title: string; detail: string; price?: string | null }>;
+    faqs: Array<{ question: string; answer: string }>;
+    testimonials: Array<{ quote: string; attribution?: string | null }>;
+    inquiry_questions: string[];
+    external_credibility: {
+      enabled?: boolean;
+      source_label?: string | null;
+      rating?: number | string | null;
+      review_count?: number | string | null;
+      profile_url?: string | null;
+      place_id?: string | null;
+      last_synced_at?: string | null;
+    };
+    rating: {
+      enabled?: boolean;
+      overall_score?: number | string | null;
+      summary?: string | null;
+      categories?: Array<{ label: string; score: number | string }>;
+    };
+  }>,
+): VendorProfileDraft {
+  const current = normalizeVendorProfileCustomization(draft.source_payload);
+  return {
+    ...draft,
+    source_payload: {
+      ...draft.source_payload,
+      vendor_customization: {
+        ...current,
+        ...patch,
+      },
+    },
+  };
+}
+
+function updateArrayItem<T>(items: T[], index: number, patch: Partial<T>, fallback: T): T[] {
+  const next = [...items];
+  next[index] = { ...(next[index] ?? fallback), ...patch };
+  return next;
+}
+
+function readRawCustomizationArray<T>(draft: VendorProfileDraft, key: string): T[] {
+  const rawCustomization = draft.source_payload.vendor_customization;
+  if (!rawCustomization || typeof rawCustomization !== 'object' || Array.isArray(rawCustomization)) return [];
+  const value = (rawCustomization as Record<string, unknown>)[key];
+  return Array.isArray(value) ? value as T[] : [];
+}
+
 function sanitizeDraftForPublish(draft: VendorProfileDraft): VendorProfileDraft {
+  const customization = normalizeVendorProfileCustomization(draft.source_payload);
   return {
     ...draft,
     hero_image_url: getSafePublicImageUrl(draft.hero_image_url) || null,
@@ -63,6 +148,7 @@ function sanitizeDraftForPublish(draft: VendorProfileDraft): VendorProfileDraft 
     contact_email: getSafePublicEmailHref(draft.contact_email) ? draft.contact_email : null,
     source_payload: {
       ...draft.source_payload,
+      vendor_customization: customization,
       pinterest_url: typeof draft.source_payload?.pinterest_url === 'string' ? getSafePublicWebUrl(draft.source_payload.pinterest_url) || null : null,
       tiktok_url: typeof draft.source_payload?.tiktok_url === 'string' ? getSafePublicWebUrl(draft.source_payload.tiktok_url) || null : null,
       facebook_url: typeof draft.source_payload?.facebook_url === 'string' ? getSafePublicWebUrl(draft.source_payload.facebook_url) || null : null,
@@ -94,6 +180,7 @@ export const VendorProfileCreatePage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [imageEditor, setImageEditor] = useState('');
   const [createdProfile, setCreatedProfile] = useState<VendorProfile | null>(null);
+  const draftCustomization = draft ? normalizeVendorProfileCustomization(draft.source_payload) : null;
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -252,6 +339,349 @@ export const VendorProfileCreatePage: React.FC = () => {
                 })}
               </div>
             </div>
+            {draftCustomization && (
+              <div className="rounded-lg border border-[#eadfce] bg-[#fffaf3] p-4 sm:p-5 space-y-4">
+                <div>
+                  <p className="text-xs font-semibold text-[#8b6f53]">Customization</p>
+                  <h3 className="mt-2 text-lg font-semibold">Make this vendor feel specific</h3>
+                  <p className="mt-1 text-sm text-[#6f5843]">These fields shape the public call-to-action, proof chips, and vendor fit panels.</p>
+                </div>
+                <div>
+                  <label htmlFor="vendor-draft-accent" className="mb-2 block text-sm font-semibold text-[#4b3a2c]">Accent style</label>
+                  <select
+                    id="vendor-draft-accent"
+                    value={draftCustomization.accent_id}
+                    onChange={(e) => setDraft((prev) => prev ? updateDraftCustomization(prev, { accent_id: e.target.value as VendorAccentId }) : prev)}
+                    className="w-full rounded-lg border border-[#eadfce] bg-white px-4 py-3 outline-none"
+                  >
+                    {VENDOR_ACCENT_OPTIONS.map((option) => (
+                      <option key={option.id} value={option.id}>{option.name}</option>
+                    ))}
+                  </select>
+                  <p className="mt-2 text-xs text-[#8b6f53]">
+                    {VENDOR_ACCENT_OPTIONS.find((option) => option.id === draftCustomization.accent_id)?.detail}
+                  </p>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="vendor-draft-logo" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Logo or monogram text</label>
+                    <input
+                      id="vendor-draft-logo"
+                      value={draftCustomization.logo_text ?? ''}
+                      onChange={(e) => setDraft((prev) => prev ? updateDraftCustomization(prev, { logo_text: e.target.value }) : prev)}
+                      placeholder="MFH"
+                      className="w-full rounded-lg border border-[#eadfce] bg-white px-4 py-3 text-sm outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="vendor-draft-gallery-layout" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Gallery layout</label>
+                    <select
+                      id="vendor-draft-gallery-layout"
+                      value={draftCustomization.gallery_layout}
+                      onChange={(e) => setDraft((prev) => prev ? updateDraftCustomization(prev, { gallery_layout: e.target.value as VendorGalleryLayoutId }) : prev)}
+                      className="w-full rounded-lg border border-[#eadfce] bg-white px-4 py-3 text-sm outline-none"
+                    >
+                      {VENDOR_GALLERY_LAYOUT_OPTIONS.map((option) => (
+                        <option key={option.id} value={option.id}>{option.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="vendor-draft-cta-label" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Inquiry button label</label>
+                    <input
+                      id="vendor-draft-cta-label"
+                      value={draftCustomization.cta_label ?? ''}
+                      onChange={(e) => setDraft((prev) => prev ? updateDraftCustomization(prev, { cta_label: e.target.value }) : prev)}
+                      placeholder="Check date availability"
+                      className="w-full rounded-lg border border-[#eadfce] bg-white px-4 py-3 text-sm outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="vendor-draft-service-area" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Service area or best fit</label>
+                    <input
+                      id="vendor-draft-service-area"
+                      value={draftCustomization.service_area ?? ''}
+                      onChange={(e) => setDraft((prev) => prev ? updateDraftCustomization(prev, { service_area: e.target.value }) : prev)}
+                      placeholder="Hudson Valley, NYC, and destination weekends"
+                      className="w-full rounded-lg border border-[#eadfce] bg-white px-4 py-3 text-sm outline-none"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="vendor-draft-pricing-note" className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Pricing or planning note</label>
+                  <input
+                    id="vendor-draft-pricing-note"
+                    value={draftCustomization.pricing_note ?? ''}
+                    onChange={(e) => setDraft((prev) => prev ? updateDraftCustomization(prev, { pricing_note: e.target.value }) : prev)}
+                    placeholder="Best fit for full-service wedding weekends and custom scopes."
+                    className="w-full rounded-lg border border-[#eadfce] bg-white px-4 py-3 text-sm outline-none"
+                  />
+                </div>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {[0, 1, 2].map((index) => (
+                    <div key={index}>
+                      <label htmlFor={`vendor-draft-proof-${index}`} className="mb-1 block text-sm font-semibold text-[#4b3a2c]">Proof point {index + 1}</label>
+                      <input
+                        id={`vendor-draft-proof-${index}`}
+                        value={draftCustomization.proof_points[index] ?? ''}
+                        onChange={(e) => {
+                          const nextProofPoints = [...draftCustomization.proof_points];
+                          nextProofPoints[index] = e.target.value;
+                          setDraft((prev) => prev ? updateDraftCustomization(prev, { proof_points: nextProofPoints }) : prev);
+                        }}
+                        placeholder={index === 0 ? 'Fast previews' : index === 1 ? 'Rain plan ready' : 'Timeline support'}
+                        className="w-full rounded-lg border border-[#eadfce] bg-white px-4 py-3 text-sm outline-none"
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="rounded-lg border border-[#eadfce] bg-white p-4 space-y-3">
+                  <p className="text-sm font-semibold text-[#4b3a2c]">Sections</p>
+                  <p className="text-xs text-[#8b6f53]">Choose what appears publicly. Sections keep a safe default order.</p>
+                  <label htmlFor="vendor-draft-section-order" className="block text-xs font-semibold text-[#8b6f53]">Section order</label>
+                  <input
+                    id="vendor-draft-section-order"
+                    value={draftCustomization.section_order.join(', ')}
+                    onChange={(e) => {
+                      const requested = e.target.value.split(',').map((item) => item.trim()).filter((item): item is VendorSectionId => VENDOR_SECTION_IDS.includes(item as VendorSectionId));
+                      setDraft((prev) => prev ? updateDraftCustomization(prev, { section_order: requested }) : prev);
+                    }}
+                    className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
+                  />
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    {VENDOR_SECTION_IDS.map((sectionId) => {
+                      const enabled = !draftCustomization.hidden_sections.includes(sectionId);
+                      return (
+                        <label key={sectionId} className="flex items-center gap-2 rounded-lg border border-[#eadfce] px-3 py-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={enabled}
+                            onChange={(e) => {
+                              const hidden = e.target.checked
+                                ? draftCustomization.hidden_sections.filter((item) => item !== sectionId)
+                                : [...draftCustomization.hidden_sections, sectionId];
+                              setDraft((prev) => prev ? updateDraftCustomization(prev, { hidden_sections: hidden }) : prev);
+                            }}
+                          />
+                          <span className="capitalize">{sectionId}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="rounded-lg border border-[#eadfce] bg-white p-4 space-y-3">
+                  <p className="text-sm font-semibold text-[#4b3a2c]">Packages or services</p>
+                  {[0, 1, 2].map((index) => {
+                    const item = draftCustomization.packages[index] ?? { title: '', detail: '', price: '' };
+                    return (
+                      <div key={index} className="grid gap-2 rounded-lg bg-[#fffaf3] p-3">
+                        <input
+                          value={item.title}
+                          onChange={(e) => setDraft((prev) => {
+                            if (!prev) return prev;
+                            const currentPackages = readRawCustomizationArray<{ title: string; detail: string; price?: string | null }>(prev, 'packages');
+                            return updateDraftCustomization(prev, { packages: updateArrayItem(currentPackages, index, { title: e.target.value }, { title: '', detail: '', price: '' }) });
+                          })}
+                          placeholder={`Service ${index + 1} title`}
+                          className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
+                        />
+                        <input
+                          value={item.detail}
+                          onChange={(e) => setDraft((prev) => {
+                            if (!prev) return prev;
+                            const currentPackages = readRawCustomizationArray<{ title: string; detail: string; price?: string | null }>(prev, 'packages');
+                            return updateDraftCustomization(prev, { packages: updateArrayItem(currentPackages, index, { detail: e.target.value }, { title: '', detail: '', price: '' }) });
+                          })}
+                          placeholder="Short service description"
+                          className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
+                        />
+                        <input
+                          value={item.price ?? ''}
+                          onChange={(e) => setDraft((prev) => {
+                            if (!prev) return prev;
+                            const currentPackages = readRawCustomizationArray<{ title: string; detail: string; price?: string | null }>(prev, 'packages');
+                            return updateDraftCustomization(prev, { packages: updateArrayItem(currentPackages, index, { price: e.target.value }, { title: '', detail: '', price: '' }) });
+                          })}
+                          placeholder="Price hint or custom quote"
+                          className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="rounded-lg border border-[#eadfce] bg-white p-4 space-y-3">
+                  <div>
+                    <p className="text-sm font-semibold text-[#4b3a2c]">External credibility</p>
+                    <p className="mt-1 text-xs text-[#8b6f53]">Use this for Google-style public reputation. DayOf fit rating stays separate.</p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-[0.7fr_0.35fr_0.35fr]">
+                    <input
+                      value={draftCustomization.external_credibility.source_label}
+                      onChange={(e) => setDraft((prev) => prev ? updateDraftCustomization(prev, { external_credibility: { ...draftCustomization.external_credibility, enabled: true, source_label: e.target.value } }) : prev)}
+                      placeholder="Google"
+                      className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
+                    />
+                    <input
+                      value={draftCustomization.external_credibility.rating ?? ''}
+                      onChange={(e) => setDraft((prev) => prev ? updateDraftCustomization(prev, { external_credibility: { ...draftCustomization.external_credibility, enabled: true, rating: e.target.value } }) : prev)}
+                      placeholder="4.8"
+                      className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
+                    />
+                    <input
+                      value={draftCustomization.external_credibility.review_count ?? ''}
+                      onChange={(e) => setDraft((prev) => prev ? updateDraftCustomization(prev, { external_credibility: { ...draftCustomization.external_credibility, enabled: true, review_count: e.target.value } }) : prev)}
+                      placeholder="126"
+                      className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
+                    />
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <input
+                      value={draftCustomization.external_credibility.profile_url ?? ''}
+                      onChange={(e) => setDraft((prev) => prev ? updateDraftCustomization(prev, { external_credibility: { ...draftCustomization.external_credibility, enabled: true, profile_url: e.target.value } }) : prev)}
+                      placeholder="Google profile URL"
+                      className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
+                    />
+                    <input
+                      value={draftCustomization.external_credibility.place_id ?? ''}
+                      onChange={(e) => setDraft((prev) => prev ? updateDraftCustomization(prev, { external_credibility: { ...draftCustomization.external_credibility, enabled: true, place_id: e.target.value } }) : prev)}
+                      placeholder="Google place ID for future sync"
+                      className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
+                    />
+                  </div>
+                </div>
+                <div className="rounded-lg border border-[#eadfce] bg-white p-4 space-y-3">
+                  <div>
+                    <p className="text-sm font-semibold text-[#4b3a2c]">Vendor fit rating</p>
+                    <p className="mt-1 text-xs text-[#8b6f53]">A couple-facing score for fit, not a private planning note.</p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-[0.35fr_1fr]">
+                    <input
+                      value={draftCustomization.rating.overall_score ?? ''}
+                      onChange={(e) => setDraft((prev) => prev ? updateDraftCustomization(prev, { rating: { ...draftCustomization.rating, enabled: true, overall_score: e.target.value } }) : prev)}
+                      placeholder="9.2"
+                      className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
+                    />
+                    <input
+                      value={draftCustomization.rating.summary ?? ''}
+                      onChange={(e) => setDraft((prev) => prev ? updateDraftCustomization(prev, { rating: { ...draftCustomization.rating, enabled: true, summary: e.target.value } }) : prev)}
+                      placeholder="Why this vendor is a strong fit"
+                      className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
+                    />
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {[0, 1, 2, 3].map((index) => {
+                      const item = draftCustomization.rating.categories[index] ?? { label: '', score: '' };
+                      return (
+                        <div key={index} className="grid grid-cols-[1fr_80px] gap-2">
+                          <input
+                            value={item.label}
+                            onChange={(e) => {
+                              const categories = updateArrayItem<Array<{ label: string; score: number | string }>[number]>(draftCustomization.rating.categories, index, { label: e.target.value }, { label: '', score: 0 });
+                              setDraft((prev) => prev ? updateDraftCustomization(prev, { rating: { ...draftCustomization.rating, enabled: true, categories } }) : prev);
+                            }}
+                            placeholder={index === 0 ? 'Style match' : index === 1 ? 'Logistics' : index === 2 ? 'Responsiveness' : 'Value'}
+                            className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
+                          />
+                          <input
+                            value={item.score}
+                            onChange={(e) => {
+                              const categories = updateArrayItem<Array<{ label: string; score: number | string }>[number]>(draftCustomization.rating.categories, index, { score: e.target.value }, { label: '', score: 0 });
+                              setDraft((prev) => prev ? updateDraftCustomization(prev, { rating: { ...draftCustomization.rating, enabled: true, categories } }) : prev);
+                            }}
+                            placeholder="9"
+                            className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="rounded-lg border border-[#eadfce] bg-white p-4 space-y-3">
+                  <p className="text-sm font-semibold text-[#4b3a2c]">Testimonials</p>
+                  {[0, 1].map((index) => {
+                    const item = draftCustomization.testimonials[index] ?? { quote: '', attribution: '' };
+                    return (
+                      <div key={index} className="grid gap-2 rounded-lg bg-[#fffaf3] p-3">
+                        <input
+                          value={item.quote}
+                          onChange={(e) => setDraft((prev) => {
+                            if (!prev) return prev;
+                            const currentTestimonials = readRawCustomizationArray<{ quote: string; attribution?: string | null }>(prev, 'testimonials');
+                            return updateDraftCustomization(prev, { testimonials: updateArrayItem(currentTestimonials, index, { quote: e.target.value }, { quote: '', attribution: '' }) });
+                          })}
+                          placeholder="Short quote"
+                          className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
+                        />
+                        <input
+                          value={item.attribution ?? ''}
+                          onChange={(e) => setDraft((prev) => {
+                            if (!prev) return prev;
+                            const currentTestimonials = readRawCustomizationArray<{ quote: string; attribution?: string | null }>(prev, 'testimonials');
+                            return updateDraftCustomization(prev, { testimonials: updateArrayItem(currentTestimonials, index, { attribution: e.target.value }, { quote: '', attribution: '' }) });
+                          })}
+                          placeholder="Attribution"
+                          className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="rounded-lg border border-[#eadfce] bg-white p-4 space-y-3">
+                  <p className="text-sm font-semibold text-[#4b3a2c]">FAQ</p>
+                  {[0, 1, 2].map((index) => {
+                    const item = draftCustomization.faqs[index] ?? { question: '', answer: '' };
+                    return (
+                      <div key={index} className="grid gap-2 rounded-lg bg-[#fffaf3] p-3">
+                        <input
+                          value={item.question}
+                          onChange={(e) => setDraft((prev) => {
+                            if (!prev) return prev;
+                            const currentFaqs = readRawCustomizationArray<{ question: string; answer: string }>(prev, 'faqs');
+                            return updateDraftCustomization(prev, { faqs: updateArrayItem(currentFaqs, index, { question: e.target.value }, { question: '', answer: '' }) });
+                          })}
+                          placeholder={`Question ${index + 1}`}
+                          className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
+                        />
+                        <input
+                          value={item.answer}
+                          onChange={(e) => setDraft((prev) => {
+                            if (!prev) return prev;
+                            const currentFaqs = readRawCustomizationArray<{ question: string; answer: string }>(prev, 'faqs');
+                            return updateDraftCustomization(prev, { faqs: updateArrayItem(currentFaqs, index, { answer: e.target.value }, { question: '', answer: '' }) });
+                          })}
+                          placeholder="Answer"
+                          className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="rounded-lg border border-[#eadfce] bg-white p-4 space-y-3">
+                  <p className="text-sm font-semibold text-[#4b3a2c]">Custom inquiry prompts</p>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {[0, 1, 2, 3].map((index) => (
+                      <input
+                        key={index}
+                        value={draftCustomization.inquiry_questions[index] ?? ''}
+                        onChange={(e) => {
+                          setDraft((prev) => {
+                            if (!prev) return prev;
+                            const currentQuestions = readRawCustomizationArray<string>(prev, 'inquiry_questions');
+                            const nextQuestions = [...currentQuestions];
+                            nextQuestions[index] = e.target.value;
+                            return updateDraftCustomization(prev, { inquiry_questions: nextQuestions });
+                          });
+                        }}
+                        placeholder={index === 0 ? 'Estimated guest count' : index === 1 ? 'Budget range' : index === 2 ? 'Design inspiration' : 'Timing needs'}
+                        className="w-full rounded-lg border border-[#eadfce] px-3 py-2 text-sm outline-none"
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="rounded-lg border border-[#eadfce] p-4 sm:p-5 space-y-3">
               <p className="text-xs font-semibold text-[#8b6f53]">Hero</p>
               <div>
@@ -376,6 +806,18 @@ export const VendorProfileCreatePage: React.FC = () => {
                     <span className="rounded-lg bg-white px-3 py-1 text-xs text-[#6f5843] border border-[#eadfce]">Inquiry form</span>
                   </div>
                 </div>
+                {draftCustomization && (draftCustomization.cta_label || draftCustomization.service_area || draftCustomization.proof_points.length > 0) && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold text-[#8b6f53]">Customization</p>
+                    <div className="flex flex-wrap gap-2">
+                      {draftCustomization.cta_label && <span className="rounded-lg bg-[#2f261d] px-3 py-1 text-xs font-semibold text-white">{draftCustomization.cta_label}</span>}
+                      {draftCustomization.service_area && <span className="rounded-lg bg-white px-3 py-1 text-xs text-[#6f5843] border border-[#eadfce]">{draftCustomization.service_area}</span>}
+                      {draftCustomization.proof_points.map((point) => (
+                        <span key={point} className="rounded-lg bg-white px-3 py-1 text-xs text-[#6f5843] border border-[#eadfce]">{point}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

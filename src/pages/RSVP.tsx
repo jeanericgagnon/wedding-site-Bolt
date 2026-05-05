@@ -14,33 +14,33 @@ import { DEMO_MODE, SUPABASE_CONFIGURED } from '../config/env';
 import { formatRsvpDeadline, isRsvpDeadlinePassed } from './rsvpDeadline';
 import { getSafePublicWebUrl } from '../sections/publicLinks';
 import { readStoredGuestLanguage, resolveGuestLanguagePreference, writeStoredGuestLanguage } from '../lib/guestLanguagePreference';
+import {
+  DEFAULT_MEAL_CONFIG,
+  RSVP_CONTINUITY_EVENT,
+  RSVP_CONTINUITY_STORAGE_KEY,
+  RSVP_LOOKUP_ERROR_COPY,
+  RSVP_SUBMIT_ERROR_COPY,
+  normalizeRsvpGuestError,
+  normalizeRsvpSubmitError,
+  type ExistingRSVP,
+  type Guest,
+  type HouseholdGuest,
+  type LookupResponse,
+  type RSVPMealConfig,
+  type RSVPQuestion,
+} from './rsvpTypes';
+import {
+  readDemoMealConfig,
+  readDemoQuestions,
+  readDemoStoredResponses,
+  writeDemoStoredResponses,
+} from './rsvpDemoStorage';
+
+export { normalizeRsvpGuestError, normalizeRsvpSubmitError } from './rsvpTypes';
 
 const RSVP_FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/validate-rsvp-token`;
 const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const DEMO_RSVP_QUESTIONS_KEY = 'dayof_demo_rsvp_custom_questions_v1';
-const DEMO_RSVP_RESPONSES_KEY = 'dayof_demo_rsvp_responses_v1';
-const DEMO_RSVP_MEAL_KEY = 'dayof_demo_rsvp_meal_config_v1';
-const RSVP_CONTINUITY_EVENT = 'dayof:rsvp-updated';
-const RSVP_CONTINUITY_STORAGE_KEY = 'dayof.rsvp.updatedAt';
-const DEFAULT_MEAL_CONFIG: RSVPMealConfig = { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] };
 const USE_DEMO_RSVP = DEMO_MODE && !SUPABASE_CONFIGURED;
-const RSVP_SUBMIT_ERROR_COPY = 'Couldn’t send your RSVP. Please try again.';
-const RSVP_LOOKUP_ERROR_COPY = 'Invitation not recognized. Please use the private RSVP link or code from your invitation.';
-const INTERNAL_RSVP_ERROR_COPY =
-  /\b(supabase|configuration|request\s*failed|functions?\/v1|edge\s*function|function|jwt|permission(?:s)?|policy|database|provider|network|fetch|token|secret|service\s*role|storage|bucket|metadata|missing-config|status\s*code|error_message|failed\s*to\s*submit)\b/i;
-
-export function normalizeRsvpGuestError(message?: string | null, fallback = RSVP_LOOKUP_ERROR_COPY) {
-  const cleaned = String(message ?? '').replace(/\s+/g, ' ').trim();
-  if (!cleaned || INTERNAL_RSVP_ERROR_COPY.test(cleaned)) return fallback;
-  return cleaned;
-}
-
-export function normalizeRsvpSubmitError(message?: string | null) {
-  if (!message || message === 'Failed to submit RSVP. Please try again.') {
-    return RSVP_SUBMIT_ERROR_COPY;
-  }
-  return normalizeRsvpGuestError(message, RSVP_SUBMIT_ERROR_COPY);
-}
 
 function notifyRsvpContinuityUpdate() {
   if (typeof window === 'undefined') return;
@@ -71,55 +71,6 @@ async function rsvpCall(body: object): Promise<{ data?: unknown; error?: string 
   return { data: json };
 }
 
-interface Guest {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  name: string;
-  wedding_site_id: string;
-  plus_one_allowed: boolean;
-  children_allowed?: boolean | null;
-  max_children?: number | null;
-  max_additional_guests?: number | null;
-  invited_to_ceremony: boolean;
-  invited_to_reception: boolean;
-}
-
-interface ExistingRSVP {
-  id: string;
-  attending: boolean;
-  attending_ceremony?: boolean | null;
-  attending_reception?: boolean | null;
-  guest_ids?: string[] | null;
-  meal_choice: string | null;
-  plus_one_name: string | null;
-  plus_one_count?: number | null;
-  children_count?: number | null;
-  notes: string | null;
-  custom_answers?: Record<string, string | string[]> | null;
-}
-
-interface HouseholdGuest {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  name: string;
-  invited_to_ceremony?: boolean;
-  invited_to_reception?: boolean;
-}
-
-interface LookupResponse {
-  guest: Guest | null;
-  existingRsvp: ExistingRSVP | null;
-  guests: Guest[] | null;
-  rsvpDeadline: string | null;
-  rsvpQuestions?: RSVPQuestion[] | null;
-  rsvpMealConfig?: RSVPMealConfig | null;
-  musicPlaylistUrl?: string | null;
-  householdGuests?: HouseholdGuest[] | null;
-  rsvpSession?: string | null;
-}
-
 function getLegacyTestRsvpSessionToken(value: unknown): string | null {
   if (import.meta.env.MODE !== 'test' || !value || typeof value !== 'object') return null;
 
@@ -127,21 +78,6 @@ function getLegacyTestRsvpSessionToken(value: unknown): string | null {
   return typeof legacyInviteToken === 'string' && legacyInviteToken.trim().length > 0
     ? `test-legacy-session:${legacyInviteToken.trim()}`
     : null;
-}
-
-interface RSVPMealConfig {
-  enabled: boolean;
-  options: string[];
-}
-
-interface RSVPQuestion {
-  id: string;
-  label: string;
-  question_text?: string;
-  type: 'short_text' | 'long_text' | 'single_choice' | 'multi_choice';
-  required?: boolean;
-  options?: string[];
-  appliesTo?: 'all' | 'ceremony' | 'reception';
 }
 
 function guestLabel(g: Guest): string {
@@ -368,47 +304,12 @@ function parseEventSelectionsFromNotes(notes: string | null, guest: Guest): { cl
 
 
 
-function getDemoMealConfig(): RSVPMealConfig {
-  try {
-    const raw = localStorage.getItem(DEMO_RSVP_MEAL_KEY);
-    const parsed = raw ? JSON.parse(raw) : null;
-    if (!parsed || typeof parsed !== 'object') return { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] };
-    return {
-      enabled: typeof parsed.enabled === 'boolean' ? parsed.enabled : true,
-      options: Array.isArray(parsed.options) ? parsed.options.filter((x: unknown): x is string => typeof x === 'string' && x.trim().length > 0) : ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'],
-    };
-  } catch {
-    return { enabled: true, options: ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan'] };
-  }
-}
-
-function getDemoQuestions(): RSVPQuestion[] {
-  try {
-    const raw = localStorage.getItem(DEMO_RSVP_QUESTIONS_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function getDemoStoredResponses(): Record<string, ExistingRSVP> {
-  try {
-    const raw = localStorage.getItem(DEMO_RSVP_RESPONSES_KEY);
-    const parsed = raw ? JSON.parse(raw) : {};
-    return (parsed && typeof parsed === 'object') ? parsed as Record<string, ExistingRSVP> : {};
-  } catch {
-    return {};
-  }
-}
-
 function mapDemoGuest(g: (typeof demoGuests)[number]): Guest {
   return {
     id: g.id,
     first_name: g.first_name ?? null,
     last_name: g.last_name ?? null,
     name: g.name,
-    wedding_site_id: g.wedding_site_id,
     plus_one_allowed: false,
     invited_to_ceremony: !!g.invited_to_ceremony,
     invited_to_reception: !!g.invited_to_reception,
@@ -417,8 +318,8 @@ function mapDemoGuest(g: (typeof demoGuests)[number]): Guest {
 
 function demoLookup(searchValue: string): { guest: Guest | null; existingRsvp: ExistingRSVP | null; guests: Guest[] | null; rsvpDeadline: string | null; rsvpQuestions: RSVPQuestion[]; rsvpMealConfig: RSVPMealConfig; musicPlaylistUrl: string | null; householdGuests: HouseholdGuest[] } {
   const trimmed = searchValue.trim().toLowerCase();
-  const questions = getDemoQuestions();
-  const meal = getDemoMealConfig();
+  const questions = readDemoQuestions();
+  const meal = readDemoMealConfig();
   const householdFor = (g: (typeof demoGuests)[number]): HouseholdGuest[] => demoGuests
     .filter((x) => x.household_id === g.household_id && x.id !== g.id)
     .map((x) => ({
@@ -429,7 +330,7 @@ function demoLookup(searchValue: string): { guest: Guest | null; existingRsvp: E
       invited_to_ceremony: !!x.invited_to_ceremony,
       invited_to_reception: !!x.invited_to_reception,
     }));
-  const stored = getDemoStoredResponses();
+  const stored = readDemoStoredResponses();
 
   const tokenMatch = demoGuests.find((g) => (g.invite_token || '').toLowerCase() === trimmed);
   const idMatch = demoGuests.find((g) => g.id.toLowerCase() === trimmed);
@@ -771,7 +672,7 @@ export default function RSVP() {
           return;
         }
         tokenLinkedSessionRef.current = false;
-        setError('Couldn’t load that invitation. Please use the private RSVP link or code from your invitation.');
+        setError(RSVP_LOOKUP_ERROR_COPY);
       })
       .finally(() => {
         if (activeLookupRequestRef.current !== requestId) return;
@@ -1006,7 +907,7 @@ export default function RSVP() {
     try {
       const lookupResp: { data?: unknown; error?: string } = USE_DEMO_RSVP
         ? { data: demoLookup(picked.id) as unknown }
-        : await rsvpCall({ action: 'lookup_guest', guestId: picked.id });
+        : await rsvpCall({ action: 'lookup_guest', guestId: picked.id, rsvpSession: rsvpSessionToken });
       const data = lookupResp.data;
       const err = lookupResp.error;
       if (err || !data) {
@@ -1074,13 +975,13 @@ export default function RSVP() {
       }
 
       if (USE_DEMO_RSVP) {
-        const stored = getDemoStoredResponses();
+        const stored = readDemoStoredResponses();
         const targetIds = applyToHousehold ? dedupeGuestIds([guest.id, ...selectedHouseholdGuestIds]) : [guest.id];
         const payload = buildNormalizedExistingRsvp(formData, customAnswers, `demo-rsvp-${guest.id}`, targetIds);
         const normalizedSelectedHouseholdGuestIds = normalizeSelectedHouseholdGuestIds(targetIds.filter((id) => id !== guest.id), householdGuests);
         const submitSource = tokenLinkedSessionRef.current ? 'token' : 'manual';
         targetIds.forEach((id) => { stored[id] = { ...payload, id: `demo-rsvp-${id}` }; });
-        localStorage.setItem(DEMO_RSVP_RESPONSES_KEY, JSON.stringify(stored));
+        writeDemoStoredResponses(stored);
         if (activeSubmitRequestRef.current !== requestId) return;
         selectGuest(guest, payload, rsvpDeadline, rsvpQuestions, mealConfig, householdGuests, musicPlaylistUrl, submitSource, rsvpSessionToken);
         setApplyToHousehold(applyToHousehold && normalizedSelectedHouseholdGuestIds.length > 0);

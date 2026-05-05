@@ -1,8 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-dayof-invite-token, x-dayof-password-session",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
 };
 
@@ -29,11 +30,24 @@ Deno.serve(async (req: Request) => {
 
     const { data: site, error: siteError } = await admin
       .from("wedding_sites")
-      .select("id,is_published,site_slug,couple_name_1,couple_name_2,wedding_date")
+      .select("id,is_published,site_slug,privacy_mode,guest_access_token,couple_name_1,couple_name_2,wedding_date")
       .eq("site_slug", siteSlug)
       .maybeSingle();
     if (siteError) throw siteError;
-    if (!site || !site.is_published) return json({ error: "Site not available" }, 404);
+    if (
+      !site ||
+      !(await canReadPublicSubresource({
+        isPublished: site.is_published === true,
+        privacyMode: site.privacy_mode,
+        siteSlug: site.site_slug,
+        inviteToken: req.headers.get("x-dayof-invite-token"),
+        passwordSession: req.headers.get("x-dayof-password-session"),
+        storedInviteToken: site.guest_access_token,
+        secret: serviceRole,
+      }))
+    ) {
+      return json({ error: "Site not available" }, 404);
+    }
 
     const { data: settings } = await admin
       .from("guest_hub_settings")

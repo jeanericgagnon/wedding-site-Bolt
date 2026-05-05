@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts";
 import { enforcePublicSubmissionRateLimit } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
@@ -46,6 +47,11 @@ function estimateBase64Bytes(value: string) {
 
 function isLikelyBase64File(value: string) {
   return value.length > 0 && value.length <= MAX_GOOGLE_DRIVE_UPLOAD_BASE64_CHARS && /^[A-Za-z0-9+/]+={0,2}$/.test(value);
+}
+
+function bodyString(body: Record<string, unknown>, key: "inviteToken" | "passwordSession"): string | null {
+  const raw = body[key];
+  return typeof raw === "string" && raw.trim() ? raw.trim() : null;
 }
 
 async function refreshAccessToken(refreshToken: string) {
@@ -155,11 +161,23 @@ Deno.serve(async (req: Request) => {
     // public-safe gate: site must be published and have an enabled vault for this year
     const { data: site } = await adminClient
       .from("wedding_sites")
-      .select("id, is_published, site_slug, vault_storage_provider, vault_google_drive_connected, vault_google_drive_access_token, vault_google_drive_refresh_token, vault_google_drive_token_expires_at, vault_google_drive_root_folder_id")
+      .select("id,is_published,site_slug,privacy_mode,guest_access_token,vault_storage_provider,vault_google_drive_connected,vault_google_drive_access_token,vault_google_drive_refresh_token,vault_google_drive_token_expires_at,vault_google_drive_root_folder_id")
       .eq("id", siteId)
       .maybeSingle();
 
-    if (!site || !site.is_published) return json({ error: "Site not available for public contributions." }, 403);
+    const hasAccess = site
+      ? await canReadPublicSubresource({
+          isPublished: site.is_published === true,
+          privacyMode: site.privacy_mode,
+          siteSlug: site.site_slug,
+          inviteToken: bodyString(body, "inviteToken"),
+          passwordSession: bodyString(body, "passwordSession"),
+          storedInviteToken: typeof site.guest_access_token === "string" ? site.guest_access_token : null,
+          secret: Deno.env.get("PUBLIC_SITE_SESSION_SECRET") || serviceRole,
+        })
+      : false;
+
+    if (!hasAccess) return json({ error: "Site not available for public contributions." }, 403);
     if (site.vault_storage_provider !== "google_drive") return json({ error: "Vault is not configured for Google Drive uploads." }, 400);
     if (!site.vault_google_drive_connected) return json({ error: "Google Drive is not connected for this site." }, 400);
 

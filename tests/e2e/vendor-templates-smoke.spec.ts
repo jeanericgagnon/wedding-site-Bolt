@@ -14,9 +14,14 @@ test('vendor template environment filters and previews vendor page designs', asy
 
   await page.goto('/vendor-templates?vendorTemplateQa=1', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: /Choose how each vendor should feel/i })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Editorial Feature/i })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Portfolio Grid/i })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Concierge Card/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Photography Portfolio/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Floral Lookbook/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Venue Estate/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Food and Beverage/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Beauty Atelier/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Entertainment Stage/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Planner Concierge/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Travel Logistics/i })).toBeVisible();
 
   await page.getByPlaceholder('Search vendor, flowers, location...').fill('flowers');
   await expect(page.getByRole('button', { name: /Marigold Floral House/i })).toBeVisible();
@@ -27,10 +32,10 @@ test('vendor template environment filters and previews vendor page designs', asy
   await expect(page.getByRole('button', { name: /Northstar Transit Co/i })).toBeVisible();
   await expect(page.locator('span').filter({ hasText: /^Needs images$/ }).first()).toBeVisible();
 
-  await page.getByRole('button', { name: /Concierge Card/i }).click();
+  await page.getByRole('button', { name: /Travel Logistics/i }).click();
   await expect(page.getByText('Direct email and inquiry-only modes')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Send inquiry' })).toBeVisible();
-  await expect(page.getByText('No unsupported claims required')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Confirm logistics' })).toBeVisible();
+  await expect(page.getByText('Route clarity')).toBeVisible();
 
   await page.locator('select').nth(0).selectOption('All');
   await page.locator('select').nth(2).selectOption('Website ready');

@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts";
 import { enforcePublicSubmissionRateLimit } from "../_shared/rateLimit.ts";
 import { signSessionToken } from "../_shared/signedSession.ts";
 
@@ -25,6 +26,11 @@ function normalizeName(value: string) {
 
 function displayName(guest: { name?: string | null; first_name?: string | null; last_name?: string | null }) {
   return guest.name || [guest.first_name, guest.last_name].filter(Boolean).join(" ");
+}
+
+function bodyString(body: Record<string, unknown>, key: "inviteToken" | "passwordSession"): string | null {
+  const raw = body[key];
+  return typeof raw === "string" && raw.trim() ? raw.trim() : null;
 }
 
 const json = (data: unknown, status = 200) =>
@@ -54,7 +60,7 @@ Deno.serve(async (req: Request) => {
 
     const siteQuery = admin
       .from("wedding_sites")
-      .select("id")
+      .select("id,site_slug,is_published,privacy_mode,guest_access_token")
       .eq(UUID_RE.test(siteRef) ? "id" : "site_slug", siteRef)
       .maybeSingle();
     const { data: site } = await siteQuery;
@@ -62,6 +68,17 @@ Deno.serve(async (req: Request) => {
     if (!site?.id) {
       return json({ matches: [] });
     }
+
+    const hasAccess = await canReadPublicSubresource({
+      isPublished: site.is_published === true,
+      privacyMode: site.privacy_mode,
+      siteSlug: site.site_slug,
+      inviteToken: bodyString(body, "inviteToken"),
+      passwordSession: bodyString(body, "passwordSession"),
+      storedInviteToken: typeof site.guest_access_token === "string" ? site.guest_access_token : null,
+      secret: Deno.env.get("PUBLIC_SITE_SESSION_SECRET") || serviceRole,
+    });
+    if (!hasAccess) return json({ matches: [] });
 
     const rateLimit = await enforcePublicSubmissionRateLimit({
       admin,

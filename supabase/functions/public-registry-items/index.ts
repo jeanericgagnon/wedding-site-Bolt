@@ -1,6 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { verifySessionToken } from "../_shared/signedSession.ts";
+import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -33,51 +33,6 @@ function json(data: unknown, status = 200) {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
-}
-
-interface PasswordSessionPayload {
-  scope: "public_site_password";
-  slug: string;
-  exp: number;
-}
-
-async function hasValidPasswordSession(
-  slug: string | null,
-  sessionToken: string | null,
-  secret: string,
-): Promise<boolean> {
-  if (!slug || !sessionToken) return false;
-  const payload = await verifySessionToken<PasswordSessionPayload>(sessionToken, secret);
-  return Boolean(
-    payload &&
-    payload.scope === "public_site_password" &&
-    payload.slug === slug &&
-    Number.isFinite(payload.exp) &&
-    payload.exp > Date.now(),
-  );
-}
-
-async function canReadPublicSubresource(input: {
-  site: {
-    site_slug: string | null;
-    is_published: boolean | null;
-    privacy_mode?: string | null;
-    guest_access_token?: string | null;
-  };
-  inviteToken: string;
-  passwordSession: string | null;
-  secret: string;
-}): Promise<boolean> {
-  if (input.site.is_published !== true) return false;
-  const privacyMode = input.site.privacy_mode ?? "public";
-  if (privacyMode === "password_protected") {
-    return hasValidPasswordSession(input.site.site_slug, input.passwordSession, input.secret);
-  }
-  if (privacyMode === "invite_only") {
-    const stored = input.site.guest_access_token?.trim() ?? "";
-    return Boolean(input.inviteToken && stored && input.inviteToken === stored);
-  }
-  return privacyMode === "public" || privacyMode === "hidden";
 }
 
 Deno.serve(async (req) => {
@@ -119,7 +74,15 @@ Deno.serve(async (req) => {
     if (
       siteError ||
       !site ||
-      !(await canReadPublicSubresource({ site, inviteToken, passwordSession, secret: serviceRoleKey }))
+      !(await canReadPublicSubresource({
+        isPublished: site.is_published === true,
+        privacyMode: site.privacy_mode,
+        siteSlug: site.site_slug,
+        inviteToken,
+        passwordSession,
+        storedInviteToken: site.guest_access_token,
+        secret: serviceRoleKey,
+      }))
     ) {
       return json({ items: [] }, 200);
     }

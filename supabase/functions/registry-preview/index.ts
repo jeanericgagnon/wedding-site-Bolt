@@ -55,11 +55,12 @@ const METADATA_HOSTS = new Set([
 // Rate limiting
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
-function checkRateLimit(ip: string): boolean {
+async function checkRateLimit(ip: string): Promise<boolean> {
   const now = Date.now();
-  const entry = rateLimitMap.get(ip);
+  const ipMarker = `h:${await hashRateLimitKey(`registry-preview-memory:${ip}:${Deno.env.get("SUPABASE_URL") ?? ""}`)}`;
+  const entry = rateLimitMap.get(ipMarker);
   if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + 60_000 });
+    rateLimitMap.set(ipMarker, { count: 1, resetAt: now + 60_000 });
     return true;
   }
   if (entry.count >= 30) return false;
@@ -74,9 +75,16 @@ function isPrivateIpv4(hostname: string): boolean {
   return a === 10
     || a === 127
     || a === 0
+    || (a === 100 && b >= 64 && b <= 127)
     || (a === 169 && b === 254)
     || (a === 172 && b >= 16 && b <= 31)
-    || (a === 192 && b === 168);
+    || (a === 192 && b === 0)
+    || (a === 192 && b === 2)
+    || (a === 192 && b === 168)
+    || (a === 198 && (b === 18 || b === 19))
+    || (a === 198 && b === 51)
+    || (a === 203 && b === 0)
+    || a >= 224;
 }
 
 function isPrivateIpv6(address: string): boolean {
@@ -241,9 +249,10 @@ async function enforceDurableRegistryPreviewRateLimit(
     return true;
   }
 
+  const safeSubjectMarker = `h:${await hashRateLimitKey(`registry-preview-user:${userId}:${Deno.env.get("SUPABASE_URL") ?? ""}`)}`;
   await db
     .from("rsvp_rate_limit")
-    .insert({ ip_hash: ipHash, guest_token: userId.slice(0, 16), attempts: 1 });
+    .insert({ ip_hash: ipHash, guest_token: safeSubjectMarker, attempts: 1 });
   return true;
 }
 
@@ -643,7 +652,7 @@ Deno.serve(async (req: Request) => {
 
     // Rate limiting
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-    if (!checkRateLimit(ip)) {
+    if (!(await checkRateLimit(ip))) {
       return new Response(
         JSON.stringify({ error: "Rate limit exceeded. Please try again in a minute." }),
         {

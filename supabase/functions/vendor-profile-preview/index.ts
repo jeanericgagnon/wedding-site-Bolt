@@ -7,6 +7,14 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
+const MAX_VENDOR_PREVIEW_REDIRECTS = 3;
+const MAX_VENDOR_PREVIEW_BYTES = 1_500_000;
+const VENDOR_PREVIEW_FETCH_TIMEOUT_MS = 8_000;
+const METADATA_HOSTS = new Set([
+  '169.254.169.254',
+  'metadata.google.internal',
+  'metadata',
+]);
 
 function json(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -34,18 +42,100 @@ function isPrivateIpv4(hostname: string): boolean {
     (a === 100 && b >= 64 && b <= 127) ||
     (a === 169 && b === 254) ||
     (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 0) ||
+    (a === 192 && b === 2) ||
     (a === 192 && b === 168) ||
+    (a === 198 && (b === 18 || b === 19)) ||
+    (a === 198 && b === 51) ||
+    (a === 203 && b === 0) ||
     a >= 224
   );
 }
 
+function isPrivateIpv6(address: string): boolean {
+  const normalized = address.toLowerCase().replace(/^\[|\]$/g, '');
+  if (!normalized) return false;
+  return normalized === '::'
+    || normalized === '::1'
+    || normalized.startsWith('fc')
+    || normalized.startsWith('fd')
+    || normalized.startsWith('fe80:')
+    || normalized.startsWith('::ffff:10.')
+    || normalized.startsWith('::ffff:127.')
+    || normalized.startsWith('::ffff:169.254.')
+    || normalized.startsWith('::ffff:192.168.')
+    || /^::ffff:172\.(1[6-9]|2\d|3[01])\./.test(normalized);
+}
+
 function isBlockedHostname(hostname: string): boolean {
-  const normalized = hostname.toLowerCase().replace(/^\[|\]$/g, '');
+  const normalized = hostname.toLowerCase().replace(/^\[|\]$/g, '').replace(/\.$/, '');
   if (!normalized) return true;
+  if (METADATA_HOSTS.has(normalized)) return true;
   if (normalized === 'localhost' || normalized.endsWith('.localhost')) return true;
+  if (normalized.endsWith('.local') || normalized.endsWith('.internal') || normalized.endsWith('.test')) return true;
   if (normalized.includes(':')) return true;
   if (isPrivateIpv4(normalized)) return true;
   return false;
+}
+
+async function assertPublicVendorPreviewTarget(url: string): Promise<URL> {
+  const parsed = new URL(url);
+  if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') throw new Error('Enter a public website URL.');
+  if (parsed.username || parsed.password || isBlockedHostname(parsed.hostname)) throw new Error('Enter a public website URL.');
+
+  try {
+    const addresses = await Deno.resolveDns(parsed.hostname, 'A');
+    if (addresses.some(isPrivateIpv4)) throw new Error('Enter a public website URL.');
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Enter a public website URL.') throw error;
+  }
+
+  try {
+    const addresses = await Deno.resolveDns(parsed.hostname, 'AAAA');
+    if (addresses.some(isPrivateIpv6)) throw new Error('Enter a public website URL.');
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Enter a public website URL.') throw error;
+  }
+
+  return parsed;
+}
+
+async function fetchVendorPreviewHtml(url: string): Promise<string> {
+  let currentUrl = url;
+  for (let redirects = 0; redirects <= MAX_VENDOR_PREVIEW_REDIRECTS; redirects += 1) {
+    const parsed = await assertPublicVendorPreviewTarget(currentUrl);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), VENDOR_PREVIEW_FETCH_TIMEOUT_MS);
+    try {
+      const response = await fetch(parsed.toString(), {
+        signal: controller.signal,
+        redirect: 'manual',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; DayOfVendorProfile/1.0)',
+          'Accept': 'text/html,application/xhtml+xml',
+        },
+      });
+
+      const location = response.headers.get('location');
+      if ([301, 302, 303, 307, 308].includes(response.status) && location) {
+        if (redirects >= MAX_VENDOR_PREVIEW_REDIRECTS) throw new Error('Too many redirects');
+        currentUrl = new URL(location, parsed).toString();
+        continue;
+      }
+
+      if (!response.ok) throw new Error('Could not load website preview.');
+      const contentType = response.headers.get('content-type') ?? '';
+      if (!/\b(html|xhtml)\b/i.test(contentType)) throw new Error('URL does not point to an HTML page.');
+      const contentLength = Number(response.headers.get('content-length') ?? 0);
+      if (Number.isFinite(contentLength) && contentLength > MAX_VENDOR_PREVIEW_BYTES) throw new Error('Page is too large to preview.');
+      const html = await response.text();
+      if (new TextEncoder().encode(html).byteLength > MAX_VENDOR_PREVIEW_BYTES) throw new Error('Page is too large to preview.');
+      return html;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+  throw new Error('Too many redirects');
 }
 
 function normalizeUrl(url: string | null | undefined, allowedHost?: RegExp): string | null {
@@ -293,24 +383,16 @@ Deno.serve(async (req) => {
 
     if (normalizedWebsite) {
       try {
-        const resp = await fetch(normalizedWebsite, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (compatible; DayOfVendorProfile/1.0)',
-            'Accept': 'text/html,application/xhtml+xml',
-          },
-        });
-        if (resp.ok) {
-          const html = await resp.text();
-          websiteTitle = extractMeta(html, 'og:title') || extractTitle(html);
-          websiteDescription = extractMeta(html, 'og:description') || extractMeta(html, 'description');
-          websiteImage = extractMeta(html, 'og:image') || extractMeta(html, 'twitter:image');
-          websiteInstagramUrl = extractInstagramUrlFromHtml(html);
-          websitePinterestUrl = extractSocialUrlFromHtml(html, 'pinterest');
-          websiteTiktokUrl = extractSocialUrlFromHtml(html, 'tiktok');
-          websiteFacebookUrl = extractSocialUrlFromHtml(html, 'facebook');
-          websiteYoutubeUrl = extractSocialUrlFromHtml(html, 'youtube');
-          websiteContactEmail = extractMailtoEmail(html);
-        }
+        const html = await fetchVendorPreviewHtml(normalizedWebsite);
+        websiteTitle = extractMeta(html, 'og:title') || extractTitle(html);
+        websiteDescription = extractMeta(html, 'og:description') || extractMeta(html, 'description');
+        websiteImage = extractMeta(html, 'og:image') || extractMeta(html, 'twitter:image');
+        websiteInstagramUrl = extractInstagramUrlFromHtml(html);
+        websitePinterestUrl = extractSocialUrlFromHtml(html, 'pinterest');
+        websiteTiktokUrl = extractSocialUrlFromHtml(html, 'tiktok');
+        websiteFacebookUrl = extractSocialUrlFromHtml(html, 'facebook');
+        websiteYoutubeUrl = extractSocialUrlFromHtml(html, 'youtube');
+        websiteContactEmail = extractMailtoEmail(html);
       } catch {
         // ignore and fall back
       }

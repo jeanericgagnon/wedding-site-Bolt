@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { enforcePublicSubmissionRateLimit } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -30,6 +31,35 @@ function redact(text: string | null): string | null {
     .replace(/(token|invite_token|authorization|apikey|password)\s*[:=]\s*[^\s,;]+/gi, "$1=[redacted]");
 }
 
+function sanitizeRoute(value: string | null): string | null {
+  if (!value) return null;
+  const [withoutHash] = value.split("#");
+  const [withoutQuery] = withoutHash.split("?");
+  return clamp(withoutQuery || "/", 255);
+}
+
+function sanitizeSeverity(value: string | undefined): "error" | "warning" | "info" {
+  return value === "warning" || value === "info" ? value : "error";
+}
+
+function sanitizeMetadataValue(value: unknown, depth = 0): unknown {
+  if (depth > 3) return "[truncated]";
+  if (value == null || typeof value === "boolean" || typeof value === "number") return value;
+  if (typeof value === "string") return redact(clamp(value, 500));
+  if (Array.isArray(value)) return value.slice(0, 10).map((item) => sanitizeMetadataValue(item, depth + 1));
+  if (typeof value !== "object") return null;
+
+  const result: Record<string, unknown> = {};
+  for (const [key, item] of Object.entries(value as Record<string, unknown>).slice(0, 25)) {
+    if (/token|secret|password|authorization|apikey|service_role|service-role|cookie/i.test(key)) {
+      result[key] = "[redacted]";
+    } else {
+      result[key] = sanitizeMetadataValue(item, depth + 1);
+    }
+  }
+  return result;
+}
+
 async function fingerprint(input: string): Promise<string> {
   const data = new TextEncoder().encode(input);
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
@@ -55,8 +85,8 @@ Deno.serve(async (req: Request) => {
   try {
     const payload = (await req.json()) as Payload;
     const source = clamp(payload.source, 80) ?? "client";
-    const severity = clamp(payload.severity, 16) ?? "error";
-    const route = clamp(payload.route, 255);
+    const severity = sanitizeSeverity(payload.severity);
+    const route = sanitizeRoute(clamp(payload.route, 255));
     const message = redact(clamp(payload.message, 2000));
     const stack = redact(clamp(payload.stack, 4000));
 
@@ -68,20 +98,40 @@ Deno.serve(async (req: Request) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const adminClient = createClient(supabaseUrl, serviceKey);
 
+    const rateLimit = await enforcePublicSubmissionRateLimit({
+      admin: adminClient,
+      request: req,
+      scope: "log_client_error",
+      subject: `${source}:${fp}`,
+      maxIp: 60,
+      maxSubject: 30,
+      windowMinutes: 10,
+    });
+    if (!rateLimit.ok) return json({ error: rateLimit.message }, rateLimit.status);
+
     const metadata = payload.metadata && typeof payload.metadata === "object"
-      ? payload.metadata
+      ? sanitizeMetadataValue(payload.metadata)
       : {};
 
-    let inferredUserId: string | null = payload.userId ?? null;
-    let inferredSiteId: string | null = payload.weddingSiteId ?? null;
+    let inferredUserId: string | null = null;
+    let inferredSiteId: string | null = null;
 
-    if (!inferredUserId || !inferredSiteId) {
-      const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
-      const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
-      if (token) {
-        const { data: userData } = await adminClient.auth.getUser(token);
-        if (!inferredUserId) inferredUserId = userData.user?.id ?? null;
+    const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
+    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+    if (token) {
+      const { data: userData } = await adminClient.auth.getUser(token);
+      inferredUserId = userData.user?.id ?? null;
+
+      if (inferredUserId && payload.weddingSiteId) {
+        const { data: requestedSite } = await adminClient
+          .from("wedding_sites")
+          .select("id")
+          .eq("id", payload.weddingSiteId)
+          .eq("user_id", inferredUserId)
+          .maybeSingle();
+        inferredSiteId = requestedSite?.id ?? null;
       }
+
       if (!inferredSiteId && inferredUserId) {
         const { data: siteData } = await adminClient
           .from("wedding_sites")

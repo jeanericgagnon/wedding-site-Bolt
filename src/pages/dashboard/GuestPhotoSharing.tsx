@@ -27,237 +27,46 @@ import { logAppAction } from '../../lib/actionAudit';
 import { useAuth } from '../../contexts/AuthContext';
 import { demoEvents, demoWeddingSite } from '../../lib/demoData';
 import { getSafePublicWebUrl } from '../../sections/publicLinks';
-import { customerSafeErrorMessage } from '../../lib/customerSafeError';
 import { buildGuestHubActions, summarizeGuestHubActions } from '../../lib/guestHubActions';
 import { buildMemoryFlowReadiness } from '../../lib/memoryFlowReadiness';
 import { buildGuestHubQrAssets, renderGuestHubQrPrintHtml } from '../../lib/guestHubQrAssets';
-
-type ItineraryEvent = {
-  id: string;
-  event_name: string;
-  event_date: string;
-  start_time?: string | null;
-  end_time?: string | null;
-};
-
-type PhotoBucketRow = {
-  id: string;
-  name: string;
-  slug: string;
-  parent_album_id: string | null;
-  hierarchy_label: string | null;
-  drive_folder_url: string | null;
-  is_active: boolean;
-  created_at: string;
-  itinerary_event_id: string | null;
-  opens_at: string | null;
-  closes_at: string | null;
-};
-
-type PhotoUploadRow = {
-  id: string;
-  photo_album_id: string;
-  original_filename: string;
-  guest_name: string | null;
-  guest_email: string | null;
-  note: string | null;
-  mime_type: string | null;
-  size_bytes: number | null;
-  drive_web_view_link: string | null;
-  is_hidden: boolean;
-  is_flagged: boolean;
-  recap_hidden: boolean;
-  recap_featured: boolean;
-  recap_story: boolean;
-  uploaded_at: string;
-};
-
-type PhotoUploadAiAnalysisRow = {
-  id: string;
-  upload_id: string;
-  wedding_site_id: string;
-  photo_album_id: string | null;
-  status: 'ready' | 'fallback' | 'skipped' | 'failed';
-  detected_moment: string | null;
-  suggested_bucket_id: string | null;
-  suggested_bucket_name: string | null;
-  bucket_confidence: number;
-  quality_score: number;
-  blur_score: number;
-  people_count_range: string | null;
-  is_video: boolean;
-  slideshow_priority: number;
-  caption: string | null;
-  tags: string[];
-  warnings: string[];
-  error_message: string | null;
-  analyzed_at: string;
-};
-
-type PhotoUploadMetadataRow = {
-  upload_id: string;
-  taken_at: string | null;
-  width: number | null;
-  height: number | null;
-  has_exif: boolean;
-  has_gps: boolean;
-  file_sha256: string | null;
-  perceptual_hash: string | null;
-  location_label: string | null;
-  event_match_id: string | null;
-  event_match_confidence: number | null;
-  event_match_reason: string | null;
-};
-
-type PhotoAiBucketCorrectionRow = {
-  id: string;
-  upload_id: string | null;
-  action: 'accepted' | 'rejected' | 'manual';
-  previous_bucket_id: string | null;
-  suggested_bucket_id: string | null;
-  chosen_bucket_id: string | null;
-  confidence: number | null;
-  reason: string | null;
-  created_at: string;
-};
-
-type GuestbookEntryRow = {
-  id: string;
-  guest_name: string | null;
-  guest_email: string | null;
-  message: string;
-  is_hidden: boolean;
-  is_flagged: boolean;
-  created_at: string;
-};
-
-type GuestProspectOptinRow = {
-  id: string;
-  guest_name: string | null;
-  email: string | null;
-  phone: string | null;
-  source: string;
-  wants_photo_updates: boolean;
-  wants_own_event_info: boolean;
-  recap_email_queued_at: string | null;
-  future_event_email_queued_at: string | null;
-  created_at: string;
-};
-
-type GuestHubSettings = {
-  rsvp_enabled: boolean;
-  photos_enabled: boolean;
-  guestbook_enabled: boolean;
-  registry_enabled: boolean;
-  schedule_enabled: boolean;
-  travel_enabled: boolean;
-  recap_status: 'draft' | 'private_link' | 'published' | 'closed';
-  recap_published_at: string | null;
-  recap_closed_at: string | null;
-  custom_message: string;
-  language_default: string;
-};
-
-const DEFAULT_HUB_SETTINGS: GuestHubSettings = {
-  rsvp_enabled: true,
-  photos_enabled: true,
-  guestbook_enabled: true,
-  registry_enabled: true,
-  schedule_enabled: true,
-  travel_enabled: true,
-  recap_status: 'published',
-  recap_published_at: null,
-  recap_closed_at: null,
-  custom_message: '',
-  language_default: 'en',
-};
-
-type SlideshowOrderMode = 'newest' | 'oldest' | 'capture' | 'highlights';
-type SlideshowTheme = 'classic' | 'editorial' | 'party';
-
-type SlideshowFrame = {
-  uploadId: string;
-  bucketId: string;
-  bucketName: string;
-  title: string;
-  caption: string;
-  takenAt?: string | null;
-};
-
-const PHOTO_ALBUM_LINKS_STORAGE_KEY = 'dayof.photoBucketLinks';
-
-const readStoredBucketLinks = (): Record<string, string> => {
-  try {
-    const raw = localStorage.getItem(PHOTO_ALBUM_LINKS_STORAGE_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as Record<string, string>;
-    return parsed && typeof parsed === 'object' ? parsed : {};
-  } catch {
-    return {};
-  }
-};
-
-const writeStoredBucketLinks = (value: Record<string, string>) => {
-  try {
-    localStorage.setItem(PHOTO_ALBUM_LINKS_STORAGE_KEY, JSON.stringify(value));
-  } catch {
-    // ignore
-  }
-};
-
-const safePhotoOwnerError = (err: unknown, fallback: string) => {
-  return customerSafeErrorMessage(err, fallback);
-};
-
-const slugTag = (value: string) =>
-  value
-    .toLowerCase()
-    .trim()
-    .replace(/&/g, ' and ')
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '')
-    .slice(0, 48);
-
-const tagLabel = (value: string) =>
-  value
-    .replace(/[_-]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .replace(/\b\w/g, (char) => char.toUpperCase());
-
-const analysisSourceLabel = (analysis: Pick<PhotoUploadAiAnalysisRow, 'status' | 'suggested_bucket_name'>) => {
-  if (analysis.status === 'fallback') return 'Organized from upload details';
-  if (analysis.status === 'skipped') return 'Already organized';
-  if (analysis.status === 'failed') return 'Worth checking';
-  return analysis.suggested_bucket_name ? 'Ready to review' : 'Reviewed';
-};
-
-const analysisDisplayStatus = (analysis?: Pick<PhotoUploadAiAnalysisRow, 'status'> | null) => {
-  if (!analysis) return 'Not reviewed yet';
-  if (analysis.status === 'ready') return 'Ready to review';
-  if (analysis.status === 'fallback') return 'Organized from upload details';
-  if (analysis.status === 'skipped') return 'Already organized';
-  return 'Worth checking';
-};
-
-const eventMomentTags = (eventName: string) => {
-  const normalized = eventName.toLowerCase();
-  const tags = new Set<string>([slugTag(eventName)]);
-  const add = (items: string[]) => items.forEach((item) => tags.add(item));
-  if (/cocktail|drinks|hour/.test(normalized)) add(['cocktail_hour', 'mingling', 'drinks', 'guest_candids']);
-  if (/ceremony|vow|altar/.test(normalized)) add(['ceremony', 'aisle_walk', 'vows', 'ring_exchange', 'first_kiss', 'recessional']);
-  if (/processional|aisle/.test(normalized)) add(['aisle_walk', 'processional', 'family_processional']);
-  if (/reception|dinner/.test(normalized)) add(['reception', 'dinner', 'table_moments', 'guest_reactions']);
-  if (/toast|speech/.test(normalized)) add(['toasts', 'speeches', 'reaction_shots']);
-  if (/dance|party|dj/.test(normalized)) add(['dance_floor', 'first_dance', 'party', 'guest_dancing']);
-  if (/getting ready|prep|suite/.test(normalized)) add(['getting_ready', 'details', 'dress', 'wedding_party']);
-  if (/photo|portrait|family/.test(normalized)) add(['portraits', 'family_photos', 'wedding_party']);
-  if (/cake|dessert/.test(normalized)) add(['cake_cutting', 'dessert']);
-  if (/send.?off|exit|sparkler|farewell/.test(normalized)) add(['sendoff', 'sparkler_exit', 'farewell']);
-  if (/welcome|rehearsal/.test(normalized)) add(['welcome_party', 'rehearsal', 'guest_candids']);
-  if (/brunch/.test(normalized)) add(['brunch', 'farewell', 'next_day']);
-  return Array.from(tags).filter(Boolean).slice(0, 10);
-};
+import {
+  DEFAULT_HUB_SETTINGS,
+  analysisDisplayStatus,
+  analysisSourceLabel,
+  buildPhotoBucketLinksCsv,
+  buildPhotoDashboardCounts,
+  buildPhotoKnownLinks,
+  buildPhotoMemoryCollections,
+  buildPhotoShareMessageLines,
+  buildPhotoSharePackCsv,
+  buildBucketUploadsCsv,
+  buildCurationCsv,
+  buildCuratedRecapExportPayload,
+  buildGuestProspectsCsv,
+  buildGuestbookCsv,
+  buildMemoryChaptersExportPayload,
+  eventMomentTags,
+  getPhotoBucketDownloadName,
+  makePhotoShareMessage,
+  readStoredBucketLinks,
+  safePhotoOwnerError,
+  slugTag,
+  tagLabel,
+  writeStoredBucketLinks,
+  type GuestHubSettings,
+  type GuestProspectOptinRow,
+  type GuestbookEntryRow,
+  type ItineraryEvent,
+  type PhotoAiBucketCorrectionRow,
+  type PhotoBucketRow,
+  type PhotoUploadAiAnalysisRow,
+  type PhotoUploadMetadataRow,
+  type PhotoUploadRow,
+  type SlideshowFrame,
+  type SlideshowOrderMode,
+  type SlideshowTheme,
+} from './guestPhotoSharingUtils';
 
 export const GuestPhotoSharing: React.FC = () => {
   const location = useLocation();
@@ -1157,23 +966,11 @@ export const GuestPhotoSharing: React.FC = () => {
     const rows = uploads.filter((u) => u.photo_album_id === bucketId);
     if (rows.length === 0) return;
 
-    const escapeCsv = (value: string) => `"${value.replace(/"/g, '""')}"`;
-    const header = ['filename', 'guest_name', 'guest_email', 'uploaded_at'];
-    const lines = [
-      header.join(','),
-      ...rows.map((r) => [
-        escapeCsv(r.original_filename),
-        escapeCsv(r.guest_name || ''),
-        escapeCsv(r.guest_email || ''),
-        escapeCsv(toGuestPhotoCsvTimestamp(r.uploaded_at)),
-      ].join(',')),
-    ];
-
-    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+    const blob = new Blob([buildBucketUploadsCsv(rows)], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${bucketName.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'album'}-uploads.csv`;
+    a.download = getPhotoBucketDownloadName(bucketName);
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -1266,152 +1063,49 @@ export const GuestPhotoSharing: React.FC = () => {
 
   const exportGuestbookCsv = () => {
     if (guestbookEntries.length === 0) return;
-    const esc = (value: string | boolean | null | undefined) => `"${String(value ?? '').replace(/"/g, '""')}"`;
-    const lines = [
-      ['guest_name', 'guest_email', 'message', 'created_at', 'hidden', 'flagged'].join(','),
-      ...guestbookEntries.map((entry) => [
-        esc(entry.guest_name),
-        esc(entry.guest_email),
-        esc(entry.message),
-        esc(toGuestPhotoCsvTimestamp(entry.created_at)),
-        esc(entry.is_hidden ? 'yes' : 'no'),
-        esc(entry.is_flagged ? 'yes' : 'no'),
-      ].join(',')),
-    ];
-    downloadTextFile('guestbook-notes.csv', lines.join('\n'));
+    downloadTextFile('guestbook-notes.csv', buildGuestbookCsv(guestbookEntries));
     logPhotoAction('guestbook_notes_exported', 'Guestbook notes were exported.', { rowCount: guestbookEntries.length });
   };
 
   const exportProspectsCsv = () => {
     if (guestProspects.length === 0) return;
-    const esc = (value: string | boolean | null | undefined) => `"${String(value ?? '').replace(/"/g, '""')}"`;
-    const lines = [
-      ['guest_name', 'email', 'phone', 'source', 'photo_updates', 'future_event_interest', 'recap_email_queued_at', 'future_event_email_queued_at', 'created_at'].join(','),
-      ...guestProspects.map((entry) => [
-        esc(entry.guest_name),
-        esc(entry.email),
-        esc(entry.phone),
-        esc(entry.source),
-        esc(entry.wants_photo_updates ? 'yes' : 'no'),
-        esc(entry.wants_own_event_info ? 'yes' : 'no'),
-        esc(entry.recap_email_queued_at),
-        esc(entry.future_event_email_queued_at),
-        esc(toGuestPhotoCsvTimestamp(entry.created_at)),
-      ].join(',')),
-    ];
-    downloadTextFile('guest-photo-prospects.csv', lines.join('\n'));
+    downloadTextFile('guest-photo-prospects.csv', buildGuestProspectsCsv(guestProspects));
     logPhotoAction('guest_prospects_exported', 'Guest photo prospect opt-ins were exported.', { rowCount: guestProspects.length });
   };
 
   const exportCurationCsv = () => {
     if (uploads.length === 0) return;
-    const bucketById = new Map(buckets.map((bucket) => [bucket.id, bucket]));
-    const esc = (value: string | number | boolean | null | undefined) => `"${String(value ?? '').replace(/"/g, '""')}"`;
-    const lines = [
-      ['filename', 'current_album', 'suggested_album', 'tags', 'confidence', 'quality', 'slideshow_priority', 'taken_at', 'width', 'height', 'has_gps', 'status', 'review_reason'].join(','),
-      ...uploads.map((upload) => {
-        const analysis = analysisByUploadId.get(upload.id);
-        const metadata = metadataByUploadId.get(upload.id);
-        const reasons = [
-          !analysis ? 'not analyzed' : '',
-          analysis && analysis.status !== 'ready' ? analysis.status : '',
-          analysis && analysis.bucket_confidence < 0.6 ? 'low confidence' : '',
-          ...safePhotoAnalysisList(analysis?.warnings),
-        ].filter(Boolean).join('; ');
-        return [
-          esc(upload.original_filename),
-          esc(bucketDisplayName(bucketById.get(upload.photo_album_id))),
-          esc(safePhotoAnalysisText(analysis?.suggested_bucket_name, '')),
-          esc(safePhotoAnalysisList(analysis?.tags).join('; ')),
-          esc(analysis?.bucket_confidence ?? ''),
-          esc(analysis?.quality_score ?? ''),
-          esc(analysis?.slideshow_priority ?? ''),
-          esc(metadata?.taken_at ?? ''),
-          esc(metadata?.width ?? ''),
-          esc(metadata?.height ?? ''),
-          esc(metadata?.has_gps ?? false),
-          esc(analysisDisplayStatus(analysis)),
-          esc(reasons),
-        ].join(',');
-      }),
-    ];
-    downloadTextFile('photo-curation-queue.csv', lines.join('\n'));
+    downloadTextFile('photo-curation-queue.csv', buildCurationCsv({ uploads, buckets, analysisByUploadId, metadataByUploadId }));
     logPhotoAction('photo_curation_queue_exported', 'Photo curation queue was exported.', { rowCount: uploads.length });
   };
 
   const exportMemoryChaptersJson = () => {
-    const payload = {
+    const payload = buildMemoryChaptersExportPayload({
       generatedAt: new Date().toISOString(),
       siteSlug,
-      chapters: memoryChapters.map((chapter) => ({
-        date: chapter.date,
-        label: formatGuestPhotoDate(chapter.date),
-        uploadCount: chapter.entries.length,
-        highlightCount: chapter.highlights,
-        bucketNames: chapter.bucketNames,
-        frames: chapter.entries.slice(0, 24).map((entry) => ({
-          uploadId: entry.upload.id,
-          filename: entry.upload.original_filename,
-          takenAt: entry.metadata?.taken_at ?? null,
-          caption: entry.analysis ? safeOptionalPhotoAnalysisText(entry.analysis.caption) : null,
-          suggestedBucket: entry.analysis ? safeOptionalPhotoAnalysisText(entry.analysis.suggested_bucket_name) : null,
-          slideshowPriority: entry.analysis?.slideshow_priority ?? null,
-          qualityScore: entry.analysis?.quality_score ?? null,
-        })),
-      })),
-    };
+      memoryChapters,
+    });
     downloadTextFile('photo-memory-chapters.json', JSON.stringify(payload, null, 2), 'application/json;charset=utf-8');
   };
 
   const exportCuratedRecapJson = () => {
-    const visibleUploads = uploads.filter((upload) => !upload.is_hidden && !upload.is_flagged);
-    const bucketById = new Map(buckets.map((bucket) => [bucket.id, bucket]));
-    const payload = {
+    const payload = buildCuratedRecapExportPayload({
       generatedAt: new Date().toISOString(),
       siteSlug,
-      summary: {
-        totalUploads: uploads.length,
-        visibleUploads: visibleUploads.length,
-        hiddenUploads: hiddenUploadCount,
-        flaggedUploads: flaggedUploadCount,
-        analyzedUploads: uploadAnalyses.length,
-        highlights: highlightUploads.length,
-        timedUploads: chronologicalUploads.length,
-        similarSets: similarPhotoGroups.length,
-        duplicateExtras: duplicateExtraCount,
-      },
-      highlights: highlightUploads.map(({ upload, analysis, metadata }) => ({
-        uploadId: upload.id,
-        filename: upload.original_filename,
-        bucket: bucketDisplayName(bucketById.get(upload.photo_album_id)),
-        suggestedBucket: analysis ? safeOptionalPhotoAnalysisText(analysis.suggested_bucket_name) : null,
-        tags: safePhotoAnalysisList(analysis?.tags),
-        featured: upload.recap_featured,
-        story: upload.recap_story,
-        recapHidden: upload.recap_hidden,
-        caption: analysis ? safeOptionalPhotoAnalysisText(analysis.caption) : null,
-        slideshowPriority: analysis?.slideshow_priority ?? null,
-        qualityScore: analysis?.quality_score ?? null,
-        takenAt: metadata?.taken_at ?? null,
-      })),
-      chapters: memoryChapters.map((chapter) => ({
-        date: chapter.date,
-        label: formatGuestPhotoDate(chapter.date),
-        uploadCount: chapter.entries.length,
-        highlights: chapter.highlights,
-        bucketNames: chapter.bucketNames,
-      })),
-      duplicateSets: similarPhotoGroups.map((group) => ({
-        bestUploadId: group.bestUploadId,
-        duplicateIds: group.duplicateIds,
-        filenames: group.entries.map((entry) => entry.upload.original_filename),
-      })),
-      slideshow: {
-        order: slideshowOrder,
-        theme: slideshowTheme,
-        frames: slideshowFrames,
-      },
-    };
+      uploads,
+      buckets,
+      uploadAnalyses,
+      hiddenUploadCount,
+      flaggedUploadCount,
+      highlightUploads,
+      chronologicalUploads,
+      memoryChapters,
+      similarPhotoGroups,
+      duplicateExtraCount,
+      slideshowOrder,
+      slideshowTheme,
+      slideshowFrames,
+    });
     downloadTextFile('photo-curated-recap.json', JSON.stringify(payload, null, 2), 'application/json;charset=utf-8');
   };
 
@@ -1482,9 +1176,6 @@ export const GuestPhotoSharing: React.FC = () => {
     }
   };
 
-  const totalUploads = useMemo(() => uploads.length, [uploads]);
-  const activeBucketsCount = useMemo(() => buckets.filter((a) => a.is_active).length, [buckets]);
-  const pausedBucketsCount = useMemo(() => buckets.filter((a) => !a.is_active).length, [buckets]);
   const aiHighConfidenceMoves = useMemo(
     () => aiPhotoOpsPlan?.bucketSuggestions.filter((suggestion) => suggestion.confidence >= 0.74 && suggestion.targetBucketId !== suggestion.currentBucketId) ?? [],
     [aiPhotoOpsPlan]
@@ -1503,87 +1194,43 @@ export const GuestPhotoSharing: React.FC = () => {
     )),
     [uploadAnalyses]
   );
-  const visionReadyCount = useMemo(() => uploadAnalyses.filter((analysis) => analysis.status === 'ready').length, [uploadAnalyses]);
-  const visionFallbackCount = useMemo(() => uploadAnalyses.filter((analysis) => analysis.status === 'fallback' || analysis.status === 'skipped').length, [uploadAnalyses]);
-  const metadataExifCount = useMemo(() => uploadMetadata.filter((metadata) => metadata.has_exif).length, [uploadMetadata]);
-  const metadataGpsCount = useMemo(() => uploadMetadata.filter((metadata) => metadata.has_gps).length, [uploadMetadata]);
-  const metadataEventMatchCount = useMemo(() => uploadMetadata.filter((metadata) => Boolean(metadata.event_match_id)).length, [uploadMetadata]);
-  const aiAcceptedCorrectionCount = useMemo(() => aiBucketCorrections.filter((correction) => correction.action === 'accepted').length, [aiBucketCorrections]);
-  const aiRejectedCorrectionCount = useMemo(() => aiBucketCorrections.filter((correction) => correction.action === 'rejected').length, [aiBucketCorrections]);
-  const hiddenUploadCount = useMemo(() => uploads.filter((upload) => upload.is_hidden).length, [uploads]);
-  const flaggedUploadCount = useMemo(() => uploads.filter((upload) => upload.is_flagged).length, [uploads]);
-  const recapHiddenCount = useMemo(() => uploads.filter((upload) => upload.recap_hidden).length, [uploads]);
-  const recapFeaturedCount = useMemo(() => uploads.filter((upload) => upload.recap_featured && !upload.recap_hidden && !upload.is_hidden && !upload.is_flagged).length, [uploads]);
-  const recapStoryCount = useMemo(() => uploads.filter((upload) => upload.recap_story && !upload.recap_hidden && !upload.is_hidden && !upload.is_flagged).length, [uploads]);
-  const chronologicalUploads = useMemo(
-    () => uploads
-      .filter((upload) => !upload.is_hidden && !upload.is_flagged)
-      .map((upload) => ({ upload, metadata: metadataByUploadId.get(upload.id), analysis: analysisByUploadId.get(upload.id) }))
-      .filter((entry) => Boolean(entry.metadata?.taken_at))
-      .sort((a, b) => getGuestPhotoSortTime(a.metadata?.taken_at || a.upload.uploaded_at) - getGuestPhotoSortTime(b.metadata?.taken_at || b.upload.uploaded_at)),
-    [uploads, metadataByUploadId, analysisByUploadId]
-  );
-  const memoryChapters = useMemo(() => {
-    const grouped = new Map<string, typeof chronologicalUploads>();
-    chronologicalUploads.forEach((entry) => {
-      const key = (entry.metadata?.taken_at || entry.upload.uploaded_at).slice(0, 10);
-      grouped.set(key, [...(grouped.get(key) ?? []), entry]);
-    });
-    return Array.from(grouped.entries())
-      .map(([date, entries]) => ({
-        date,
-        entries,
-        highlights: entries.filter((entry) => (entry.analysis?.slideshow_priority ?? 0) >= 70).length,
-        bucketNames: Array.from(new Set(entries.map((entry) => safeOptionalPhotoAnalysisText(entry.analysis?.suggested_bucket_name)).filter(Boolean))).slice(0, 3),
-      }))
-      .slice(0, 6);
-  }, [chronologicalUploads]);
-  const highlightUploads = useMemo(
-    () => uploads
-      .filter((upload) => !upload.is_hidden && !upload.is_flagged && !upload.recap_hidden)
-      .map((upload) => ({ upload, analysis: analysisByUploadId.get(upload.id), metadata: metadataByUploadId.get(upload.id) }))
-      .filter((entry) => entry.upload.recap_featured || entry.upload.recap_story || ((entry.analysis?.status === 'ready') && ((entry.analysis?.slideshow_priority ?? 0) >= 70 || (entry.analysis?.quality_score ?? 0) >= 0.78)))
-      .sort((a, b) => Number(b.upload.recap_featured) - Number(a.upload.recap_featured) || Number(b.upload.recap_story) - Number(a.upload.recap_story) || (b.analysis?.slideshow_priority ?? 0) - (a.analysis?.slideshow_priority ?? 0) || (b.analysis?.quality_score ?? 0) - (a.analysis?.quality_score ?? 0))
-      .slice(0, 8),
-    [uploads, analysisByUploadId, metadataByUploadId]
-  );
-  const reviewUploads = useMemo(
-    () => uploads
-      .filter((upload) => !upload.is_hidden)
-      .map((upload) => ({ upload, analysis: analysisByUploadId.get(upload.id), metadata: metadataByUploadId.get(upload.id) }))
-      .filter((entry) => !entry.analysis || entry.analysis.status !== 'ready' || entry.analysis.bucket_confidence < 0.6 || (entry.analysis.warnings ?? []).length > 0)
-      .slice(0, 8),
-    [uploads, analysisByUploadId, metadataByUploadId]
-  );
-  const similarPhotoGroups = useMemo(() => {
-    const grouped = new Map<string, Array<{ upload: PhotoUploadRow; metadata: PhotoUploadMetadataRow }>>();
-    uploads.forEach((upload) => {
-      if (upload.is_hidden || upload.is_flagged) return;
-      const metadata = metadataByUploadId.get(upload.id);
-      const key = metadata?.file_sha256 || metadata?.perceptual_hash;
-      if (!metadata || !key) return;
-      grouped.set(key, [...(grouped.get(key) ?? []), { upload, metadata }]);
-    });
-    return Array.from(grouped.entries())
-      .map(([key, entries]) => {
-        const ranked = [...entries].sort((a, b) => {
-          const aAnalysis = analysisByUploadId.get(a.upload.id);
-          const bAnalysis = analysisByUploadId.get(b.upload.id);
-          return (bAnalysis?.slideshow_priority ?? 0) - (aAnalysis?.slideshow_priority ?? 0)
-            || (bAnalysis?.quality_score ?? 0) - (aAnalysis?.quality_score ?? 0)
-            || getGuestPhotoSortTime(a.metadata.taken_at || a.upload.uploaded_at) - getGuestPhotoSortTime(b.metadata.taken_at || b.upload.uploaded_at);
-        });
-        return {
-          key,
-          entries,
-          bestUploadId: ranked[0]?.upload.id ?? null,
-          duplicateIds: ranked.slice(1).map((entry) => entry.upload.id),
-        };
-      })
-      .filter((group) => group.entries.length > 1)
-      .slice(0, 6);
-  }, [uploads, metadataByUploadId, analysisByUploadId]);
-  const duplicateExtraCount = useMemo(() => similarPhotoGroups.reduce((sum, group) => sum + group.duplicateIds.length, 0), [similarPhotoGroups]);
+  const photoDashboardCounts = useMemo(() => buildPhotoDashboardCounts({
+    uploads,
+    buckets,
+    uploadAnalyses,
+    uploadMetadata,
+    aiBucketCorrections,
+  }), [aiBucketCorrections, buckets, uploadAnalyses, uploadMetadata, uploads]);
+  const {
+    totalUploads,
+    activeBucketsCount,
+    pausedBucketsCount,
+    visionReadyCount,
+    visionFallbackCount,
+    metadataExifCount,
+    metadataGpsCount,
+    metadataEventMatchCount,
+    aiAcceptedCorrectionCount,
+    aiRejectedCorrectionCount,
+    hiddenUploadCount,
+    flaggedUploadCount,
+    recapHiddenCount,
+    recapFeaturedCount,
+    recapStoryCount,
+  } = photoDashboardCounts;
+  const photoMemoryCollections = useMemo(() => buildPhotoMemoryCollections({
+    uploads,
+    analysisByUploadId,
+    metadataByUploadId,
+  }), [analysisByUploadId, metadataByUploadId, uploads]);
+  const {
+    chronologicalUploads,
+    memoryChapters,
+    highlightUploads,
+    reviewUploads,
+    similarPhotoGroups,
+    duplicateExtraCount,
+  } = photoMemoryCollections;
   const guestHubUrl = siteSlug ? `${window.location.origin}/event/${encodeURIComponent(siteSlug)}` : '';
   const guestRecapUrl = siteSlug ? `${window.location.origin}/event/${encodeURIComponent(siteSlug)}/recap` : '';
   const guestHubActions = useMemo(() => siteSlug ? buildGuestHubActions(siteSlug, hubSettings) : [], [hubSettings, siteSlug]);
@@ -1681,9 +1328,6 @@ export const GuestPhotoSharing: React.FC = () => {
       .slice(0, 18);
   }, [availableAiTags, buckets, events]);
 
-  const makeShareMessage = (bucketName: string, link: string) =>
-    `Please upload your ${bucketName} photos here: ${link}`;
-
   const bucketCardTone = (bucketName: string) => {
     const name = bucketName.toLowerCase();
     if (/ceremony|vows|aisle/.test(name)) return 'Save the quiet, meaningful moments.';
@@ -1694,14 +1338,7 @@ export const GuestPhotoSharing: React.FC = () => {
   };
 
   const sendAllActiveBucketRequests = () => {
-    const lines = buckets
-      .filter((a) => a.is_active)
-      .map((a) => {
-        const link = bucketUploadLinks[a.id];
-        if (!link) return null;
-        return `${a.name}: ${makeShareMessage(a.name, link)}`;
-      })
-      .filter((v): v is string => typeof v === 'string');
+    const lines = buildPhotoShareMessageLines({ buckets, bucketUploadLinks, activeOnly: true });
 
     if (lines.length === 0) {
       setError('No active albums with links available to send.');
@@ -1714,13 +1351,7 @@ export const GuestPhotoSharing: React.FC = () => {
   };
 
   const copyAllShareMessages = async () => {
-    const lines = buckets
-      .map((a) => {
-        const link = bucketUploadLinks[a.id];
-        if (!link) return null;
-        return `${a.name}: ${makeShareMessage(a.name, link)}`;
-      })
-      .filter((v): v is string => typeof v === 'string');
+    const lines = buildPhotoShareMessageLines({ buckets, bucketUploadLinks });
 
     if (lines.length === 0) {
       setError('No share messages are ready yet. Create links first.');
@@ -1732,9 +1363,7 @@ export const GuestPhotoSharing: React.FC = () => {
   };
 
   const copyAllKnownLinks = async () => {
-    const links = buckets
-      .map((a) => bucketUploadLinks[a.id])
-      .filter((v): v is string => typeof v === 'string' && v.length > 0);
+    const links = buildPhotoKnownLinks({ buckets, bucketUploadLinks });
 
     if (links.length === 0) {
       setError('No upload links are ready yet. Create or refresh links first.');
@@ -1775,65 +1404,15 @@ export const GuestPhotoSharing: React.FC = () => {
   };
 
   const exportSharePackCsv = () => {
-    const rows = buckets
-      .map((a) => {
-        const link = bucketUploadLinks[a.id] || '';
-        return {
-          name: a.name,
-          status: a.is_active ? 'active' : 'paused',
-          upload_link: link,
-          suggested_message: link ? makeShareMessage(a.name, link) : '',
-        };
-      })
-      .filter((r) => r.upload_link);
-
-    if (rows.length === 0) return;
-
-    const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
-    const lines = [
-      ['name', 'status', 'upload_link', 'suggested_message'].join(','),
-      ...rows.map((r) => [esc(r.name), esc(r.status), esc(r.upload_link), esc(r.suggested_message)].join(',')),
-    ];
-
-    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'photo-share-pack.csv';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    const csv = buildPhotoSharePackCsv({ buckets, bucketUploadLinks });
+    if (!csv) return;
+    downloadTextFile('photo-share-pack.csv', csv);
   };
 
   const exportBucketLinksCsv = () => {
-    const rows = buckets
-      .map((a) => ({
-        name: a.name,
-        slug: a.slug,
-        status: a.is_active ? 'active' : 'paused',
-        upload_link: bucketUploadLinks[a.id] || '',
-        drive_folder_url: a.drive_folder_url || '',
-      }))
-      .filter((r) => r.upload_link || r.drive_folder_url);
-
-    if (rows.length === 0) return;
-
-    const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
-    const lines = [
-      ['name', 'slug', 'status', 'upload_link', 'backup_folder_url'].join(','),
-      ...rows.map((r) => [esc(r.name), esc(r.slug), esc(r.status), esc(r.upload_link), esc(r.drive_folder_url)].join(',')),
-    ];
-
-    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'photo-album-links.csv';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    const csv = buildPhotoBucketLinksCsv({ buckets, bucketUploadLinks });
+    if (!csv) return;
+    downloadTextFile('photo-album-links.csv', csv);
   };
 
   const createMissingBucketsFromItinerary = async () => {
@@ -3419,7 +2998,7 @@ export const GuestPhotoSharing: React.FC = () => {
                           size="sm"
                           variant="outline"
                           disabled={!knownUploadLink}
-                          onClick={() => void copyText(makeShareMessage(bucket.name, knownUploadLink), `share-msg-${bucket.id}`)}
+                          onClick={() => void copyText(makePhotoShareMessage(bucket.name, knownUploadLink), `share-msg-${bucket.id}`)}
                         >
                           {copied === `share-msg-${bucket.id}` ? 'Copied share prompt' : 'Copy share prompt'}
                         </Button>
@@ -3429,7 +3008,7 @@ export const GuestPhotoSharing: React.FC = () => {
                           onClick={() => {
                             const shareUrl = knownUploadLink || latestUploadUrl || `${window.location.origin}/photos/upload`;
                             const subject = encodeURIComponent(`${bucket.name} photos upload`);
-                            const body = encodeURIComponent(makeShareMessage(bucket.name, shareUrl));
+                            const body = encodeURIComponent(makePhotoShareMessage(bucket.name, shareUrl));
                             window.location.href = `/dashboard/messages?prefillSubject=${subject}&prefillBody=${body}`;
                           }}
                         >

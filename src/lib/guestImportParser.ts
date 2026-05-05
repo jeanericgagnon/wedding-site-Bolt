@@ -63,6 +63,9 @@ export async function readGuestImportRows(file: File): Promise<{ headers: string
   if (lowerName.endsWith('.xls') && !lowerName.endsWith('.xlsx')) {
     throw new Error('Please save legacy .xls files as .xlsx or CSV before importing.');
   }
+  if (!lowerName.endsWith('.csv') && !lowerName.endsWith('.xlsx')) {
+    throw new Error('Guest import files must be CSV or .xlsx.');
+  }
 
   const rawRows = lowerName.endsWith('.xlsx')
     ? await readXlsxFile(file)
@@ -75,7 +78,8 @@ export async function readGuestImportRows(file: File): Promise<{ headers: string
   if (rows.length > GUEST_IMPORT_MAX_ROWS + 1) {
     throw new Error(`Guest import is limited to ${GUEST_IMPORT_MAX_ROWS.toLocaleString()} rows at a time. Split the spreadsheet and import in batches.`);
   }
-  if ((rows[0]?.length ?? 0) > GUEST_IMPORT_MAX_COLUMNS) {
+  const maxColumnCount = rows.reduce((max, row) => Math.max(max, row.length), 0);
+  if (maxColumnCount > GUEST_IMPORT_MAX_COLUMNS) {
     throw new Error(`Guest import is limited to ${GUEST_IMPORT_MAX_COLUMNS} columns. Remove unused columns and try again.`);
   }
 

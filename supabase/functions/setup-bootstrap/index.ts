@@ -89,7 +89,7 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
 
     if (siteErr) {
-      console.error("SETUP_BOOTSTRAP_LOAD_FAILED", siteErr);
+      console.error("SETUP_BOOTSTRAP_LOAD_FAILED", { reason: "SITE_LOAD_FAILED" });
       return fail("DB_ERROR", safeSetupBootstrapError("LOAD_FAILED"), 400);
     }
     if (!site) return fail("NO_SITE", "No wedding site found for this account", 404);

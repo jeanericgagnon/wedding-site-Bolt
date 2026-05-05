@@ -46,8 +46,8 @@ describe('RSVP stale submit protection', () => {
   });
 
   it('sanitizes internal RSVP lookup and submit errors before showing guest copy', () => {
-    expect(normalizeRsvpGuestError('missing-config')).toBe('Invitation not recognized. Please search by name below.');
-    expect(normalizeRsvpGuestError('permission denied for table guests')).toBe('Invitation not recognized. Please search by name below.');
+    expect(normalizeRsvpGuestError('missing-config')).toBe('Invitation not recognized. Please use the private RSVP link or code from your invitation.');
+    expect(normalizeRsvpGuestError('permission denied for table guests')).toBe('Invitation not recognized. Please use the private RSVP link or code from your invitation.');
     expect(normalizeRsvpSubmitError('Failed to submit RSVP. Please try again.')).toBe('Couldn’t send your RSVP. Please try again.');
     expect(normalizeRsvpSubmitError('request failed at functions/v1/validate-rsvp-token')).toBe('Couldn’t send your RSVP. Please try again.');
     expect(normalizeRsvpGuestError('The RSVP deadline has passed.')).toBe('The RSVP deadline has passed.');
@@ -142,7 +142,7 @@ describe('RSVP stale submit protection', () => {
     fireEvent.change(screen.getByPlaceholderText('rsvp.search_placeholder'), { target: { value: 'Nobody' } });
     fireEvent.click(screen.getByText('Find My Invitation'));
 
-    expect(await screen.findByText('Invitation not recognized. Please search by name below.')).toBeInTheDocument();
+    expect(await screen.findByText('Invitation not recognized. Please use the private RSVP link or code from your invitation.')).toBeInTheDocument();
     expect(screen.queryByText('An error occurred. Please try again.')).not.toBeInTheDocument();
   });
 
@@ -176,7 +176,7 @@ describe('RSVP stale submit protection', () => {
     fireEvent.change(screen.getByPlaceholderText('rsvp.search_placeholder'), { target: { value: 'Nobody' } });
     fireEvent.click(screen.getByText('Find My Invitation'));
 
-    expect(await screen.findByText('Invitation not recognized. Please search by name below.')).toBeInTheDocument();
+    expect(await screen.findByText('Invitation not recognized. Please use the private RSVP link or code from your invitation.')).toBeInTheDocument();
     expect(screen.queryByText('An error occurred. Please try again.')).not.toBeInTheDocument();
   });
 
@@ -622,7 +622,7 @@ describe('RSVP stale submit protection', () => {
       </BrowserRouter>
     );
 
-    expect(await screen.findByText('Invitation not recognized. Please search by name below.')).toBeInTheDocument();
+    expect(await screen.findByText('Invitation not recognized. Please use the private RSVP link or code from your invitation.')).toBeInTheDocument();
 
     fireEvent.change(screen.getByPlaceholderText('rsvp.search_placeholder'), { target: { value: 'Jordan Rivera' } });
     fireEvent.click(screen.getByText('Find My Invitation'));
@@ -637,7 +637,7 @@ describe('RSVP stale submit protection', () => {
       expect(fetchMock).toHaveBeenCalledTimes(2);
     });
     expect(screen.getByText('Welcome, Jordan Rivera!')).toBeInTheDocument();
-    expect(screen.queryByText('Invitation not recognized. Please search by name below.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Invitation not recognized. Please use the private RSVP link or code from your invitation.')).not.toBeInTheDocument();
   });
 
   it('does not let a manual-search submit swallow the next token-linked continuity refresh', async () => {
@@ -809,7 +809,7 @@ describe('RSVP stale submit protection', () => {
     );
 
     expect(await screen.findByText('Welcome, Taylor Rivera!')).toBeInTheDocument();
-    expect(screen.queryByText('Invitation not recognized. Please search by name below.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Invitation not recognized. Please use the private RSVP link or code from your invitation.')).not.toBeInTheDocument();
   });
 
   it('shows invitation-not-recognized truth when token lookup returns no payload', async () => {
@@ -826,7 +826,7 @@ describe('RSVP stale submit protection', () => {
       </BrowserRouter>
     );
 
-    expect(await screen.findByText('Invitation not recognized. Please search by name below.')).toBeInTheDocument();
+    expect(await screen.findByText('Invitation not recognized. Please use the private RSVP link or code from your invitation.')).toBeInTheDocument();
     expect(screen.queryByText('Invalid invitation link. Please search by name below.')).not.toBeInTheDocument();
   });
 
@@ -2191,7 +2191,7 @@ describe('RSVP stale submit protection', () => {
     fetchMock
       .mockResolvedValueOnce({
         ok: false,
-        json: async () => ({ error: 'Invitation not recognized. Please search by name below.' }),
+        json: async () => ({ error: 'Invitation not recognized. Please use the private RSVP link or code from your invitation.' }),
       })
       .mockResolvedValueOnce({
         ok: true,
@@ -2231,7 +2231,7 @@ describe('RSVP stale submit protection', () => {
     fireEvent.change(screen.getByPlaceholderText('rsvp.search_placeholder'), { target: { value: 'nobody' } });
     fireEvent.click(screen.getByText('Find My Invitation'));
 
-    expect(await screen.findByText('Invitation not recognized. Please search by name below.')).toBeInTheDocument();
+    expect(await screen.findByText('Invitation not recognized. Please use the private RSVP link or code from your invitation.')).toBeInTheDocument();
 
     await act(async () => {
       window.history.pushState({}, '', '/rsvp?token=token-1');
@@ -2243,14 +2243,14 @@ describe('RSVP stale submit protection', () => {
       </BrowserRouter>
     );
 
-    expect(screen.queryByText('Invitation not recognized. Please search by name below.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Invitation not recognized. Please use the private RSVP link or code from your invitation.')).not.toBeInTheDocument();
     expect(await screen.findByText('Welcome, Taylor Rivera!')).toBeInTheDocument();
   });
 
   it('clears stale search errors when the guest edits the search input before retrying', async () => {
     fetchMock.mockResolvedValueOnce({
       ok: false,
-      json: async () => ({ error: 'Invitation not recognized. Please search by name below.' }),
+      json: async () => ({ error: 'Invitation not recognized. Please use the private RSVP link or code from your invitation.' }),
     });
 
     render(
@@ -2263,11 +2263,11 @@ describe('RSVP stale submit protection', () => {
     fireEvent.change(searchInput, { target: { value: 'Nobody' } });
     fireEvent.click(screen.getByText('Find My Invitation'));
 
-    expect(await screen.findByText('Invitation not recognized. Please search by name below.')).toBeInTheDocument();
+    expect(await screen.findByText('Invitation not recognized. Please use the private RSVP link or code from your invitation.')).toBeInTheDocument();
 
     fireEvent.change(searchInput, { target: { value: 'Taylor' } });
 
-    expect(screen.queryByText('Invitation not recognized. Please search by name below.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Invitation not recognized. Please use the private RSVP link or code from your invitation.')).not.toBeInTheDocument();
   });
 
   it('drops stale search results when the guest edits the search input before the lookup resolves', async () => {
@@ -2428,7 +2428,7 @@ describe('RSVP stale submit protection', () => {
 
     expect(await screen.findByText(/Loading your invitation/)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Search by name instead' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Enter invitation code instead' }));
 
     expect(await screen.findByPlaceholderText('rsvp.search_placeholder')).toBeInTheDocument();
     expect(screen.getByDisplayValue('')).toBeInTheDocument();

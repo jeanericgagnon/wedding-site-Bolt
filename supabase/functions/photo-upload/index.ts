@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts";
 import { corsHeaders, fail, json, sha256Hex, sleep } from "../_shared/photoUtils.ts";
 
 const MAX_FILE_BYTES = 30 * 1024 * 1024;
@@ -227,6 +228,11 @@ function matchEventByTakenAt(takenAt: string | null, events: ItineraryEventForMa
   return { eventMatchId: sameDay[0].id, confidence: 0.35, reason: "Capture date matches multiple events; picked earliest same-day event." };
 }
 
+function formString(form: FormData, key: string): string | null {
+  const raw = form.get(key);
+  return typeof raw === "string" && raw.trim() ? raw.trim() : null;
+}
+
 async function persistUploadMetadata(
   admin: ReturnType<typeof createClient>,
   upload: { id: string; wedding_site_id: string; photo_album_id: string },
@@ -449,6 +455,8 @@ Deno.serve(async (req: Request) => {
     const form = await req.formData();
     const token = String(form.get("token") ?? "").trim();
     const siteSlug = String(form.get("siteSlug") ?? "").trim().toLowerCase();
+    const inviteToken = formString(form, "inviteToken");
+    const passwordSession = formString(form, "passwordSession");
     const guestName = String(form.get("guestName") ?? "").trim() || null;
     const guestEmailRaw = String(form.get("guestEmail") ?? "").trim();
     const guestEmail = guestEmailRaw ? guestEmailRaw.toLowerCase() : null;
@@ -496,11 +504,23 @@ Deno.serve(async (req: Request) => {
     } else {
       const { data: siteBySlug } = await admin
         .from("wedding_sites")
-        .select("id,is_published")
+        .select("id,site_slug,is_published,privacy_mode,guest_access_token")
         .eq("site_slug", siteSlug)
         .maybeSingle();
 
-      if (!siteBySlug || !siteBySlug.is_published) {
+      const hasAccess = siteBySlug
+        ? await canReadPublicSubresource({
+            isPublished: siteBySlug.is_published === true,
+            privacyMode: siteBySlug.privacy_mode,
+            siteSlug: siteBySlug.site_slug,
+            inviteToken,
+            passwordSession,
+            storedInviteToken: typeof siteBySlug.guest_access_token === "string" ? siteBySlug.guest_access_token : null,
+            secret: Deno.env.get("PUBLIC_SITE_SESSION_SECRET") || serviceRole,
+          })
+        : false;
+
+      if (!hasAccess) {
         return fail("SITE_UNAVAILABLE", "Site not available for uploads.", 403);
       }
 
@@ -517,6 +537,8 @@ Deno.serve(async (req: Request) => {
 
     if (!album) return fail("INVALID_TOKEN", "Invalid upload link.", 404);
     if (!album.is_active) return fail("ALBUM_INACTIVE", "Uploads are disabled for this album.", 403);
+    const requesterIpMarker = requesterIp ? `h:${await sha256Hex(`photo-upload:${album.id}:${requesterIp}`)}` : null;
+    const attemptTokenMarker = tokenHash ?? `site:${await sha256Hex(`photo-upload-site:${siteSlug}`)}`;
 
     const { data: hubSettings } = await admin
       .from("guest_hub_settings")
@@ -538,11 +560,11 @@ Deno.serve(async (req: Request) => {
       return fail("RATE_LIMITED", "Too many upload attempts. Please try again shortly.", 429);
     }
 
-    if (requesterIp) {
+    if (requesterIpMarker) {
       const { count: ipAttemptCount } = await admin
         .from("photo_upload_attempts")
         .select("id", { count: "exact", head: true })
-        .eq("requester_ip", requesterIp)
+        .eq("requester_ip", requesterIpMarker)
         .gte("attempted_at", tenMinutesAgoIso);
 
       if ((ipAttemptCount ?? 0) > MAX_ATTEMPTS_PER_10_MIN_PER_IP) {
@@ -552,8 +574,8 @@ Deno.serve(async (req: Request) => {
 
     await admin.from("photo_upload_attempts").insert({
       photo_album_id: album.id,
-      token_hash: tokenHash ?? `site:${siteSlug}`,
-      requester_ip: requesterIp,
+      token_hash: attemptTokenMarker,
+      requester_ip: requesterIpMarker,
       file_count: files.length,
       total_bytes: totalBytes,
     });
@@ -572,7 +594,7 @@ Deno.serve(async (req: Request) => {
       .eq("id", album.wedding_site_id as string)
       .maybeSingle();
 
-    if (!site || !site.is_published) return fail("SITE_UNAVAILABLE", "Site not available for uploads.", 403);
+    if (!site || (!tokenHash && !site.is_published)) return fail("SITE_UNAVAILABLE", "Site not available for uploads.", 403);
     const driveBackup = await resolveDriveBackup(admin, site, album.wedding_site_id as string);
     const { data: itineraryData } = await admin
       .from("itinerary_events")
@@ -620,7 +642,7 @@ Deno.serve(async (req: Request) => {
           .select("id")
           .single();
 
-        if (error) throw new Error(error.message);
+        if (error) throw new Error("PHOTO_UPLOAD_ROW_INSERT_FAILED");
         await persistUploadMetadata(admin, {
           id: row.id as string,
           wedding_site_id: album.wedding_site_id as string,

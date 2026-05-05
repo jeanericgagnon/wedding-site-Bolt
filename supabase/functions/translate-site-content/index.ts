@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { enforcePublicSubmissionRateLimit } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -83,6 +84,18 @@ Deno.serve(async (req: Request) => {
       return json({ error: safeTranslateSiteContentError("LOAD_FAILED") }, 500);
     }
     if (!site || site.user_id !== userData.user.id) return json({ error: "Wedding site not found" }, 404);
+
+    const rateLimit = await enforcePublicSubmissionRateLimit({
+      admin,
+      request: req,
+      scope: "translate_site_content",
+      subject: `${userData.user.id}:${siteId}:${language}`,
+      siteId,
+      maxIp: 30,
+      maxSubject: 8,
+      windowMinutes: 60,
+    });
+    if (!rateLimit.ok) return json({ error: rateLimit.message }, rateLimit.status);
 
     const source = {
       site_json: site.site_json ?? null,

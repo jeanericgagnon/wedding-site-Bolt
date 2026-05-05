@@ -2,6 +2,281 @@
 
 This backlog is organized by launch priority and is meant to drive focused production hardening work. It is intentionally implementation-oriented: each item includes the problem, risk, likely inspection areas, acceptance criteria, and a suggested approach.
 
+## 2026-05-04 9:20 PM PT - 10/10 Production Readiness Mandate Intake
+
+Mandate source: Eric requested the codebase move from approximately 6/10 to 10/10 production readiness, focused on security, privacy, reliability, maintainability, testability, performance, accessibility, and product quality. This is not a UI polish or aesthetic refactor lane. The operating standard is: real private wedding and guest data must be safe by design.
+
+Core rules for all work under this lane:
+- No assumptions. Prove everything.
+- No frontend-only security.
+- No sensitive data in browser payloads.
+- Every fix must have a test or proof.
+- If unsure, treat as a vulnerability.
+- Do not ignore failing validation.
+
+Required outputs for execution:
+- Updated code for each resolved issue.
+- `BACKLOG.md` updated after each batch with `DONE`, `PARTIAL`, or `BLOCKED`.
+- `docs/PRODUCTION_HARDENING_REPORT.md` created/updated with what changed, what remains, commands run, PASS/FAIL/TIMEOUT, key errors, and final readiness verdict.
+- Regression tests for access control, data exposure, and security boundaries.
+- Final output must include `Final Production Readiness Score: X/10`; if below 9, list exact blockers.
+
+Current readiness verdict for this intake:
+- Status: `PARTIAL`.
+- Final Production Readiness Score: 8/10 based on local hardening progress plus green approved postdeploy proof for the current non-SMS launch surface, with remaining P1/P2 and secure service-role/model proof still open.
+- Do not claim 10/10 or production-ready until every P0/P1 item below is `DONE` with tests/proof and the validation lane is recorded.
+
+### P0 - Must Fix Before Real Users
+
+1. `DONE` - Public site must never fail open.
+   Problem: `privacy_mode` must always be available server-side, undefined privacy state must not default to public/open, and hidden sites must not leak indexing state.
+   Acceptance: password site returns `password_required`; invite site returns `invite_required`; hidden site exposes no public content/indexing state. Browser payloads never receive private gate internals.
+   Current evidence: local resolver selects `privacy_mode` and `hide_from_search` privately and safe payload strips gate fields; `public-site-access` was deployed and `npm run proof:v1:postdeploy` passed 8/8 at 2:15 PM PT.
+
+2. `DONE` - Public subresources must not bypass access.
+   Problem: `public-registry-items` and `public-itinerary-by-slug` must enforce the same gate logic as `public-site-access`, not just `is_published`.
+   Acceptance: registry/itinerary cannot be fetched for gated sites without valid access.
+   Current evidence: `public-registry-items` and `public-itinerary-by-slug` were narrowed to gate-aware access, deployed with the shared public access helper, and full postdeploy proof passed at 2:15 PM PT.
+
+3. `DONE` - Remove unsafe RSVP session issuance.
+   Problem: `lookup_guest` and name-only lookup must not create RSVP sessions from guest ID alone or name match alone.
+   Acceptance: RSVP sessions require invite token or a verified server-issued flow.
+   Current evidence: `lookup_guest` requires an existing short-lived session and broad name lookup no longer mints sessions; `validate-rsvp-token` was redeployed anon-callable with internal session validation and strict live RSVP smoke passed at 2:15 PM PT.
+
+4. `PARTIAL` - Scope RSVP lookup.
+   Problem: prevent cross-site lookup and global guest enumeration.
+   Acceptance: guests cannot be discovered outside one site and guest lists cannot be enumerated through search.
+   Current evidence: local broad/ambiguous lookup responses were reduced; additional site-scoped lookup and abuse proof remains required.
+
+5. `DONE` - Rate limit lookup paths.
+   Problem: name lookup, token lookup, and password attempts must be rate-limited.
+   Acceptance: brute-force lookup and password probing are materially restricted.
+   Current evidence: RSVP lookup/event lookup/guest lookup/submit and public-site password attempts use durable scoped rate-limit checks; live prereqs and strict RSVP proof passed after function deploy at 2:15 PM PT.
+
+6. `DONE` - Eliminate sensitive data exposure for public/RSVP launch paths.
+   Problem: browser must never receive password hashes, `guest_access_token`, `invite_token`, or internal-only fields.
+   Acceptance: public browser payloads and RSVP lookup responses are minimal and regression-tested.
+   Current evidence: public-site client sanitizer, launch edge static tests, hardened RSVP response shape, strict RSVP smoke, public quality proof, and full postdeploy proof passed at 2:15 PM PT. Broader settings/dashboard exposure audits remain tracked under P1/P2.
+
+### P1 - Required For Launch
+
+7. `PARTIAL` - Centralize access control through `public-site-access`.
+   Problem: all public access must flow through the public access resolver; no bypass paths.
+   Acceptance: public site, public registry, and public itinerary share the same access-state contract.
+   Current evidence: major public route/subresource paths were moved toward the resolver contract; audit for any remaining direct public reads is still required.
+
+8. `PARTIAL` - Audit service-role usage.
+   Problem: service-role functions must not trust client-supplied IDs and must validate access server-side.
+   Acceptance: every service-role function has authorization disposition plus tests/proof.
+   Current evidence: service-role inventory/disposition doc and static guard exist; live RLS/service-role proof remains open.
+
+9. `PARTIAL` - Complete SSRF hardening.
+   Problem: registry preview must block IPv6/private ranges, validate DNS strictly, and rate-limit strongly.
+   Acceptance: hostile private/metadata/internal/redirect/oversize/timeout targets are rejected with safe errors.
+   Current evidence: local IPv6/private AAAA, reserved/special IPv4 range blocking, redirect revalidation, size/type/timeout controls, and durable rate-limit hardening exist; full hostile-target runtime matrix remains required.
+
+10. `PARTIAL` - Email safety.
+    Problem: email HTML must be escaped, URLs validated, and subjects sanitized.
+    Acceptance: all email-producing paths use shared escaping/sanitization and tests cover hostile names/body/URLs/subjects.
+    Current evidence: `send-wedding-email`, `process-email-queue`, and `send-bulk-message` now import shared Edge Function email safety helpers for HTML escaping, safe URLs, href escaping, and subject sanitization. Focused static proof and message smoke pass; complete all-template proof and live messaging authorization proof remain required.
+
+11. `PARTIAL` - Validation must pass and be recorded.
+   Required commands: `npm run typecheck`, `npm run lint`, `npm run build`, `npm test`, `npm run test:smoke`, `npm run smoke:registry`, `npm run smoke:rsvp`, `npm run smoke:site`, `npm run guard:file-size`.
+   Acceptance: every command passes or failure is fixed/documented in `docs/PRODUCTION_HARDENING_REPORT.md`.
+   Current evidence: `docs/PRODUCTION_HARDENING_REPORT.md` exists and records the latest validation lane. CI hardpass now runs typecheck, quiet lint, file-size guard, asset guard, tests, build, registry smoke, CSV mapper smoke, check-in smoke, messages smoke, and strict RSVP when secrets are present. Local typecheck/lint/build/test/guard and non-RSVP smoke lanes pass; `smoke:rsvp` fails live with deployed 503 responses.
+
+### P2 - Required Stability
+
+12. `PARTIAL` - Break oversized files.
+   Problem: `Guests.tsx`, `Messages.tsx`, and `Settings.tsx` remain oversized risk centers.
+   Acceptance: complexity drops through feature slices without behavior regression; file-size guard baselines are lowered after splits.
+   Current evidence: some message selector extraction and guardrails exist; guest-facing `RSVP.tsx` is now below the oversized threshold with a 1993-line baseline. `Guests.tsx` now has pure-helper and type/constant extractions and its baseline is down from 5430 to 5250. `Messages.tsx` now has a type/constant extraction and its baseline is down from 4043 to 3936. `Settings.tsx` now has a type/constant extraction and its baseline is down from 2422 to 2399. `Seating.tsx` now has helper extraction and its baseline is down from 2370 to 2334. Major file split work remains.
+
+13. `PARTIAL` - Remove direct Supabase calls from pages.
+    Problem: page components still own too much data access.
+    Acceptance: sensitive reads/writes move into repository/service layers with explicit projections and testable contracts.
+    Current evidence: many broad `select("*")` projections were replaced by explicit projections; full service-layer migration remains.
+
+14. `PARTIAL` - Performance and query safety.
+    Problem: overfetching, unscoped queries, and large dataset handling need full audit.
+    Acceptance: no unsafe overfetching, queries are scoped, large guest/message/media datasets are paginated or bounded.
+    Current evidence: explicit projection work reduced overfetching; pagination/query-efficiency audit remains.
+
+15. `PARTIAL` - Asset footprint.
+   Problem: production build must not include unnecessary large assets.
+   Acceptance: large proof/demo/template media are excluded from production deploy or moved to safer storage; asset budget checks exist.
+   Current evidence: `npm run guard:assets` now budgets production-copied `public/` assets at the current footprint, is wired into `test:launch`, `proof:v1:test-lanes`, and CI hardpass, and fails on growth. Existing template GIFs still need a CDN/object-storage or optimized-thumbnail strategy.
+
+### Deferred Product Data Lanes
+
+16. `DEFERRED` - Google Places vendor profile enrichment.
+    Problem: vendor profiles currently support manual external credibility fields, but they do not yet sync business identity, Google rating, review count, photos, address/location, phone, website, hours, categories, or Google profile/place IDs from Google Places.
+    Risk: expecting vendors or DayOf users to manually rate and enrich every vendor creates cold-start friction, weaker trust signals, moderation/fraud risk, and inconsistent vendor pages. Pulling this data from the browser would also expose API keys and create policy/compliance risk.
+    Likely files/areas to inspect: `src/lib/vendorProfiles.ts`, `src/pages/VendorProfile.tsx`, `src/pages/VendorProfileCreate.tsx`, `supabase/functions/**vendor**`, future `vendor-google-places-sync` Edge Function, vendor profile migrations, vendor import/search UI, `src/sections/publicLinks.ts`, and any vendor template/gallery source helpers.
+    Acceptance criteria: Google Places calls run server-side only; no Google API key ships to the browser; vendor profile records store a stable `place_id` plus a normalized public-safe snapshot; external ratings are clearly labeled as Google/public reputation, separate from DayOf fit rating; sync respects Google attribution/field-mask requirements; failures degrade to manual vendor fields; stale data is timestamped; sample/manual vendor profiles keep working without Google; tests prove no key exposure and no feature loss in vendor profile render/create/inquiry flows.
+    Suggested implementation approach: add a gated Edge Function or server job that accepts an authenticated owner/vendor action, resolves a Google Place ID through Places search/details with explicit field masks, normalizes only allowed fields into `source_payload.vendor_customization.external_credibility` plus dedicated vendor identity fields if needed, and leaves DayOf `rating` as a wedding-fit score. Start with one-way enrichment and manual override before adding recurring refresh.
+
+### 2026-05-05 2:15 PM PT - Approved Deploy / Postdeploy Proof Update
+
+- DONE: Vercel production deploy completed and is live at `https://dayof.love`; deployment id `dpl_3q71A1vTz9gc9k5tY1yvRrdVAvsm`.
+- DONE: Supabase migrations `20260505100000_vendor_rating_and_inquiry_context.sql` and `20260505102000_site_rsvps_public_gate_rls.sql` were applied to project `atuzuobpprjstfmdnwso`.
+- DONE: Public/guest Edge Functions `public-site-rsvp-submit`, `public-site-access`, `public-registry-items`, `public-itinerary-by-slug`, and `validate-rsvp-token` were deployed.
+- DONE: Live `validate-rsvp-token` boot error was fixed by removing the redeclared `rsvpSession` binding and redeploying with API bundling plus `--no-verify-jwt`.
+- DONE: Strict RSVP smoke now proves the hardened short-lived RSVP session model instead of submitting durable invite tokens.
+- DONE: Check-in guard now follows the extracted utility implementation and its unit proof.
+- Validation passed: `npm run proof:v1:postdeploy` passed 8/8 against `https://dayof.love`, including canonical smoke, prereqs, AI rollout/static exposure, runtime wording truth, public quality, guests/RSVP ops, and anon-limited data integrity.
+- Remaining: full service-role cross-table/storage integrity proof, live model-backed AI proof after server-side key configuration, remaining P1/P2 architecture/asset/test-lane cleanup, and GitHub push/commit synchronization.
+- Launch status changed: approved production deploy is live and current non-SMS postdeploy proof is green. Overall 10/10 production readiness is still `PARTIAL`, not final.
+
+17. `DEFERRED` - Texting/SMS provider launch lane.
+    Problem: owner-facing text-message UI exists, but live SMS/Telnyx sending remains outside the current launch scope until provider credentials, consent/opt-out, compliance copy, rate limits, delivery logs, and billing/credit behavior are fully proven.
+    Risk: enabling texting before compliance and abuse controls are complete can create legal/compliance exposure, unexpected provider spend, guest trust issues, and delivery confusion.
+    Likely files/areas to inspect: messaging dashboard, `supabase/functions/send-bulk-message`, scheduled message processing, SMS credit checkout/webhook functions, guest consent fields, delivery logs, unsubscribe/opt-out handling, and Telnyx environment configuration.
+    Acceptance criteria: SMS consent is required and respected; opt-out handling is clear; recipient caps/rate limits are durable; provider errors are customer-safe; credits/billing cannot be spoofed; scheduled sends cannot duplicate unexpectedly; live provider proof passes in a secure environment.
+    Suggested implementation approach: keep SMS sending locked/deferred while email and in-app planning flows continue; later run a dedicated SMS compliance/provider proof lane with real provider secrets and small allowlisted test recipients.
+
+### New Findings Added With This Intake
+
+- `BLOCKED` - Live RSVP function redeploy approval: local RSVP boot fix is committed, but redeploying `validate-rsvp-token` with `--no-verify-jwt` was blocked by approval review and still needs explicit approval before live strict RSVP proof can pass.
+- `PARTIAL` - Public proof stale identity: live postdeploy proof found stale January 17 template data on the proof site after Supabase function deploy. Local canonical public hydration now rebases stale same-day schedule/venue snapshots, with focused tests passing, but production needs redeploy and postdeploy proof rerun.
+- `PARTIAL` - GitHub branch freshness: local branch `codex/v1-finish-hard-gates` is ahead of origin by commit `eb36d500` until pushed.
+- `DONE` - `docs/PRODUCTION_HARDENING_REPORT.md` now exists for this mandate and is being updated after each batch.
+- `PARTIAL` - Full validation lane for this exact mandate has been rerun locally; aggregate smoke remains blocked by live RSVP 503 responses.
+
+Final acceptance criteria for this lane:
+- Security: private sites cannot be accessed without proper gating; RSVP cannot be abused or enumerated.
+- Data safety: no sensitive fields are exposed anywhere public.
+- Tests: regression coverage exists for security-critical paths.
+- Validation: all required commands pass or are documented with exact failures.
+- Documentation: `BACKLOG.md` and `docs/PRODUCTION_HARDENING_REPORT.md` accurately reflect current state.
+
+### 2026-05-04 9:25 PM PT P0 public access fail-closed continuation
+
+- Resolved locally in this batch: public access decisions now share `supabase/functions/_shared/publicAccessGate.ts` across `public-site-access`, `public-registry-items`, and `public-itinerary-by-slug`.
+- Resolved locally in this batch: missing/unknown `privacy_mode` no longer defaults to `public`; it fails closed as unavailable.
+- Resolved locally in this batch: `hidden` privacy mode no longer opens public site content or public registry/itinerary subresources.
+- Resolved locally in this batch: password unlock no longer opens invite-only or hidden sites as a side effect of posting to the password endpoint.
+- Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now guards the shared public access helper, hidden fail-closed behavior, unknown privacy fail-closed behavior, and subresource removal of `privacy_mode ?? "public"`.
+- Launch status: unchanged. No deploy was run, and live public-site/subresource proof remains required before marking these P0 items `DONE`.
+
+### 2026-05-04 9:30 PM PT P0 RSVP session contract continuation
+
+- Resolved locally in this batch: RSVP picked-guest follow-up lookup now sends the current short-lived `rsvpSession` to `lookup_guest`, preserving the manual/picked guest flow after the server-side no-guestId-alone hardening.
+- Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now guards that `lookup_guest` rejects missing `rsvpSession` and that `RSVP.tsx` sends `rsvpSession: rsvpSessionToken`.
+- Launch status: unchanged. No deploy was run, and live strict RSVP proof remains blocked until the approved function redeploy/proof path is completed.
+
+### 2026-05-04 9:31 PM PT P1 registry preview SSRF continuation
+
+- Resolved locally in this batch: `registry-preview` now blocks additional reserved and special IPv4 ranges in both request normalization and runtime fetch validation: carrier-grade NAT, documentation/example networks, benchmarking networks, multicast, reserved, and broadcast ranges.
+- Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now guards these blocked ranges in both `supabase/functions/registry-preview/index.ts` and `supabase/functions/registry-preview/urlNormalizer.ts`.
+- Validation: focused registry preview static guard passed after sandbox escalation, 23/23.
+- Launch status: unchanged. This reduces SSRF risk locally, but full hostile-target runtime proof and live deployment proof remain required.
+
+### 2026-05-04 9:32 PM PT validation update
+
+- `DONE` locally: `npm run typecheck` passed.
+- `DONE` locally: `npm run lint` passed with warnings only, 0 errors.
+- `DONE` locally after sandbox escalation: `npm run build` passed. The first sandboxed attempt failed with `EPERM` writing Vite temp config under `node_modules/.vite-temp`.
+- `DONE` locally after sandbox escalation: `npm test` passed, 461 files and 2753 tests.
+- `DONE` locally: `npm run guard:file-size` passed; oversized files remain within current baseline but still need P2 splitting.
+- `DONE` locally: `npm run smoke:registry`, `npm run smoke:csvmapper`, `npm run smoke:checkin`, `npm run smoke:messages`, and `npm run smoke:site` passed. `smoke:site` needed network escalation after sandbox DNS was blocked.
+- `BLOCKED`: `npm run smoke:rsvp` failed after network escalation because the deployed RSVP function returned 503 for every checked path. This also makes `npm run test:smoke` fail after `smoke:registry` passes.
+- Launch status: still not production-ready. No deploy was run.
+
+### 2026-05-04 9:39 PM PT P1 email safety centralization continuation
+
+- Resolved locally in this batch: added `supabase/functions/_shared/emailSafety.ts` for shared `escapeHtml`, `safeEmailUrl`, `safeEmailHref`, and `sanitizeEmailSubject` behavior.
+- Resolved locally in this batch: `send-wedding-email`, `process-email-queue`, and `send-bulk-message` now import the shared email safety helpers instead of carrying separate duplicate helper implementations.
+- Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now guards the shared helper implementation and requires the three email-producing functions to import it.
+- Validation: focused launch Edge Function guard passed 23/23 after updating the static expectation; `npm run typecheck`, `npm run lint -- --quiet`, `git diff --check`, `npm run build`, `npm run smoke:messages`, and `npm run guard:file-size` passed.
+- Launch status: unchanged. No deploy was run; live messaging authorization/send proof and the live RSVP 503 blocker remain.
+
+### 2026-05-04 9:40 PM PT P1 guest import/export safety continuation
+
+- Resolved locally in this batch: guest import now rejects unsupported file extensions instead of treating every non-`.xlsx` file as CSV.
+- Resolved locally in this batch: guest import now enforces the 80-column limit across all rows, not just the header row.
+- Re-proven locally in this batch: CSV export formula neutralization still protects exported cells that begin with formula/control prefixes.
+- Validation: `npm test -- --run src/lib/guestImportParser.test.ts src/lib/csvExport.test.ts` passed 12/12; `npm run smoke:csvmapper`, `npm run typecheck`, `npm run lint -- --quiet`, `git diff --check`, and `npm run build` passed.
+- Launch status: unchanged. No deploy was run; broader guest export authorization/audit proof remains open, and live RSVP 503 remains the main blocker.
+
+### 2026-05-04 9:43 PM PT P2 Guests split and guardrail continuation
+
+- Resolved locally in this batch: extracted pure guest audit/custom-answer display helpers from `src/pages/dashboard/Guests.tsx` into `src/pages/dashboard/guests/guestDisplayUtils.ts`.
+- Proof added/updated: added `src/pages/dashboard/guests/guestDisplayUtils.test.ts` to lock audit summaries, labels, RSVP event-note parsing, and custom-answer formatting.
+- Guardrail tightened: `Guests.tsx` dropped from 5430 to 5338 lines, and `scripts/check-file-size-guard.mjs` now uses the lower 5338-line baseline.
+- Validation: focused helper/import tests passed 18/18; `npm run typecheck`, `npm run lint -- --quiet`, `npm run guard:file-size`, `git diff --check`, and `npm run build` passed.
+- Launch status: unchanged. No deploy was run; this reduces maintainability risk but does not clear the live RSVP blocker.
+
+### 2026-05-04 9:47 PM PT P2 asset budget continuation
+
+- Resolved locally in this batch: added `scripts/check-asset-budget.mjs` and `npm run guard:assets`.
+- Guardrail added: production-copied `public/` assets are capped at the current baseline of 215000 KiB total and 6000 KiB per file.
+- Current evidence: `public/` is 209433 KiB across 334 files; largest assets are template preview GIFs under `public/template-previews-gif/`.
+- Validation: `npm run guard:assets`, `npm run typecheck`, `npm run lint -- --quiet`, `git diff --check`, and `npm run build` passed.
+- Launch status: unchanged. No deploy was run; existing asset shrink/CDN migration remains open.
+
+### 2026-05-04 9:50 PM PT P2 asset guard CI/test-lane continuation
+
+- Resolved locally in this batch: wired `npm run guard:assets` into `test:launch`, `scripts/v1-proof-test-lanes.mjs`, and `.github/workflows/ci-hardpass.yml`.
+- Proof tightened: `proof:v1:test-lanes` now verifies the asset guard script and the launch lane that runs both file-size and asset budgets before build/proof-board generation.
+- Guardrail kept strict: `npm run guard:file-size` initially caught `Guests.tsx` at 5339 lines against the lowered 5338-line baseline; the extra blank line was removed and the guard reran green without loosening the baseline.
+- Validation: `npm run guard:assets`, `npm run guard:file-size`, `npm run proof:v1:test-lanes`, `npm run typecheck`, `npm run lint -- --quiet`, `npm run build`, `npm run proof:v1:board:md`, and `git diff --check` passed. The first sandboxed build failed with the known Vite `node_modules/.vite-temp` `EPERM` issue and passed after sandbox escalation.
+- Launch status: unchanged. No deploy was run; existing template-preview asset shrink/CDN migration and the live RSVP 503 blocker remain open.
+
+### 2026-05-04 9:53 PM PT P1 CI hardpass reliability continuation
+
+- Resolved locally in this batch: split the CI hardpass core from one chained command into named steps for tests, build, registry smoke, CSV mapper smoke, check-in smoke, and messages smoke.
+- Resolved locally in this batch: added quiet lint to CI hardpass, keeping typecheck/lint/guards/tests/build/smoke as explicit release gates instead of a vague aggregate.
+- Proof added: `scripts/v1-proof-test-lanes.mjs` now statically checks that CI hardpass includes quiet lint, both guardrails, tests, build, registry smoke, CSV mapper smoke, check-in smoke, and messages smoke, and rejects reintroducing an opaque `npm test && ...` hardpass command.
+- Validation: `npm run proof:v1:test-lanes`, `npm run lint -- --quiet`, `npm run guard:file-size`, and `npm run guard:assets` passed.
+- Launch status: unchanged. No deploy was run; live RSVP 503 still blocks the aggregate smoke/production-readiness verdict.
+
+### 2026-05-04 9:55 PM PT P1 security regression lane continuation
+
+- Resolved locally in this batch: added `npm run test:security` as an explicit security regression lane for public access, public payload/project safety, service worker cache safety, AI/provider key exposure, AI proof-script exposure, settings error safety, service-role authorization disposition, RSVP, and event RSVP behavior.
+- Resolved locally in this batch: wired `test:security` into `test:launch` and CI hardpass so security-sensitive tests run before build/proof-board generation and during CI.
+- Proof tightened: `scripts/v1-proof-test-lanes.mjs` now verifies the `test:security` script and CI security-regression step.
+- Validation: `npm run proof:v1:test-lanes` passed; first sandboxed `npm run test:security` failed with the known Vite `node_modules/.vite-temp` `EPERM` issue, then passed after sandbox escalation with 10 files and 191 tests.
+- Launch status: unchanged. No deploy was run; this improves release-gate clarity but live RSVP 503 remains the active blocker.
+
+### 2026-05-04 9:56 PM PT P1 launch lane composition proof
+
+- Validation: `npm run test:launch` passed after sandbox escalation. It ran typecheck, quiet lint, `test:security`, file-size guard, asset guard, production build, and proof-board generation.
+- Launch status: unchanged. No deploy was run; the local launch lane is green, but production readiness remains blocked by live RSVP 503 and required postdeploy/live authorization proof.
+
+### 2026-05-04 10:00 PM PT P2 dashboard file split continuation
+
+- Resolved locally in this batch: extracted Guests dashboard shared types and storage-key constants into `src/pages/dashboard/guests/guestDashboardTypes.ts`.
+- Resolved locally in this batch: extracted Messages dashboard shared types, status constants, and saved-template storage key into `src/pages/dashboard/messages/messageDashboardTypes.ts`.
+- Guardrail tightened: `Guests.tsx` dropped from 5338 to 5250 lines and `Messages.tsx` dropped from 4043 to 3936 lines; `scripts/check-file-size-guard.mjs` now enforces both lower baselines.
+- Validation: focused Guests helper/time tests passed 6/6 after sandbox escalation; `npm run smoke:messages`, `npm run typecheck`, `npm run lint -- --quiet`, `npm run guard:file-size`, `git diff --check`, and `npm run build` passed. An intermediate typecheck run caught a missing `MessageTemplateKey` import after extraction; it was fixed before the final green run. The first focused Vitest run failed with the known sandbox Vite `node_modules/.vite-temp` `EPERM` issue and passed after sandbox escalation.
+- Launch status: unchanged. No deploy was run; this reduces maintainability risk but does not clear the live RSVP 503 blocker.
+
+### 2026-05-04 10:03 PM PT P2 Settings split and public storage regression continuation
+
+- Resolved locally in this batch: extracted Settings dashboard RSVP/language types and local demo storage constants into `src/pages/dashboard/settings/settingsDashboardTypes.ts`.
+- Guardrail tightened: `Settings.tsx` dropped from 2422 to 2399 lines, and `scripts/check-file-size-guard.mjs` now enforces the lower 2399-line baseline.
+- Proof added: `src/lib/publicSiteAccess.test.ts` now guards that public-site invite-token and password-session artifacts stay in `sessionStorage`, not `localStorage`.
+- Validation: focused settings/public-site tests passed 26/26 after sandbox escalation; `npm run typecheck`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run proof:v1:test-lanes`, `git diff --check`, and `npm run build` passed. The first focused Vitest run failed with the known sandbox Vite `node_modules/.vite-temp` `EPERM` issue and passed after sandbox escalation.
+- Launch status: unchanged. No deploy was run; this improves maintainability and browser-storage regression proof, but live RSVP 503 and postdeploy/live authorization proof remain blockers.
+
+### 2026-05-04 10:10 PM PT P2 guest-facing RSVP split continuation
+
+- Resolved locally in this batch: extracted RSVP constants, response types, meal/question types, and RSVP customer-safe error normalization into `src/pages/rsvpTypes.ts`.
+- Guardrail tightened: `RSVP.tsx` dropped from 2060 to 1993 lines, below the 2000-line oversized threshold, and `scripts/check-file-size-guard.mjs` now enforces the lower 1993-line baseline.
+- Behavior preserved: `RSVP.tsx` re-exports `normalizeRsvpGuestError` and `normalizeRsvpSubmitError` so existing tests/importers keep working.
+- Bug caught and fixed during proof: the first post-extraction RSVP test run showed three token/manual lookup cases falling back to “Couldn’t load that invitation” instead of the canonical invitation-not-recognized copy. The moved fallback constants were imported and the catch path was restored to `RSVP_LOOKUP_ERROR_COPY`; the full RSVP focused suite then passed.
+- Validation: focused RSVP/Event RSVP tests passed 115/115 after sandbox escalation; `npm run typecheck`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run test:security`, `git diff --check`, and `npm run build` passed.
+- Launch status: unchanged. No deploy was run; this reduces guest-facing RSVP maintainability risk but does not clear the live RSVP 503 blocker.
+
+### 2026-05-04 10:13 PM PT P2 Seating split continuation
+
+- Resolved locally in this batch: extracted seating dashboard pure helpers and constants into `src/pages/dashboard/seating/seatingDashboardUtils.ts`.
+- Proof added: `src/pages/dashboard/seating/seatingDashboardUtils.test.ts` now covers HTML escaping, export slug normalization, and table shape labels/palettes.
+- Guardrail tightened: `Seating.tsx` dropped from 2370 to 2334 lines, and `scripts/check-file-size-guard.mjs` now enforces the lower 2334-line baseline.
+- Validation: focused seating utility/service tests passed 9/9 after sandbox escalation; `npm run typecheck`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run smoke:checkin`, `git diff --check`, and `npm run build` passed.
+- Launch status: unchanged. No deploy was run; this reduces seating maintainability risk but does not clear live RSVP/postdeploy proof blockers.
+
 ## Current Production-Hardening Status - 2026-05-04 5:43 PM PT
 
 Canonical proof document for this pass: `docs/PRODUCTION_HARDENING_REVIEW_2026-05-05.md`.
@@ -777,6 +1052,423 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - Proof added/updated: `src/config/env.test.ts` now proves demo mode is blocked in production builds and remains opt-in outside production.
   - Validation passed: `npm test -- --run src/config/env.test.ts src/lib/paymentGate.test.ts src/lib/publicSiteAccess.test.ts` (6/6 after known Vite temp-file sandbox escalation), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run build` after the known Vite temp-file sandbox escalation, `npm run proof:v1:board:md`, `npm test -- --run src/lib/proofBoardFreshness.test.ts` (1/1 after known Vite temp-file sandbox escalation), and `git diff --check`.
   - Launch status: unchanged. This reduces local demo/bypass production risk, but production status still depends on approved deploy/function deploy and live proof.
+- 2026-05-04 10:19 PM PT - No-deploy coordinator dashboard split continuation:
+  - Resolved in this batch: extracted Coordinator Mode local dashboard types into `src/pages/dashboard/coordinator/coordinatorDashboardTypes.ts` and lowered the file-size guard baseline for `CoordinatorMode.tsx` from 2839 to 2813 lines.
+  - Proof added/updated: focused coordinator tests and the coordinator day-of proof cover role boundaries, queue filtering, timeline truth, check-in guard behavior, and build integrity after the split.
+  - Validation passed: `npm run typecheck`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm test -- --run src/pages/dashboard/coordinatorEventTime.test.ts src/lib/coordinatorModePersistence.test.ts src/lib/coordinatorCommandDeck.test.ts` (6/6 after known Vite temp-file sandbox escalation), `npm run proof:v1:coordinator-dayof` after known Vite/build temp-file sandbox escalation, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P2 dashboard maintainability risk with no runtime behavior change, but live RSVP/public proof blockers and broader dashboard splitting remain.
+- 2026-05-04 10:25 PM PT - No-deploy guest photo sharing split continuation:
+  - Resolved in this batch: extracted Guest Photo Sharing row types, hub defaults, bucket-link storage helpers, tag formatting, AI analysis label helpers, and event-moment tag generation into `src/pages/dashboard/guestPhotoSharingUtils.ts`; added focused utility tests; lowered the file-size guard baseline for `GuestPhotoSharing.tsx` from 3609 to 3404 lines.
+  - Proof added/updated: `src/pages/dashboard/guestPhotoSharingUtils.test.ts` covers tag labels, event album tag derivation, customer-safe AI labels, defensive local storage reads/writes, and unavailable-storage behavior.
+  - Validation passed: `npm run typecheck`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm test -- --run src/pages/dashboard/guestPhotoSharingUtils.test.ts src/pages/dashboard/guestPhotoDateTime.test.ts src/pages/dashboard/guestPhotoUploadTime.test.ts src/pages/dashboard/guestPhotoEventDate.test.ts src/lib/aiPhotoOps.test.ts src/lib/aiPhotoPlacement.test.ts` (20/20 after known Vite temp-file sandbox escalation), `npm run build` after known Vite temp-file sandbox escalation, `npm run proof:v1:ai-rollout`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P2 photo dashboard maintainability risk and keeps local AI/photo rollout proof green, but production/live proof remains approval-gated.
+- 2026-05-04 10:31 PM PT - No-deploy name-change planner split continuation:
+  - Resolved in this batch: extracted Name Change planner UI types, local storage keys, status priority ordering, status-label helpers, chip/tone helpers, action-feed labels, and account-update template copy helpers into `src/pages/dashboard/planning/nameChangePlannerUi.ts`; added focused UI helper tests; lowered the file-size guard baseline for `NameChangePlannerTab.tsx` from 2754 to 2526 lines.
+  - Proof added/updated: `src/pages/dashboard/planning/nameChangePlannerUi.test.ts` covers owner-facing status labels, document/activity labels, planner chip/tone mappings, action-feed copy, and target status vault priority ordering.
+  - Validation passed: `npm run typecheck`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm test -- --run src/pages/dashboard/planning/nameChangePlannerUi.test.ts src/pages/dashboard/planning/nameChangeExecutionTime.test.ts src/pages/dashboard/planning/NameChangePlannerTab.test.tsx src/pages/dashboard/nameChangeOverviewCard.test.ts src/pages/dashboard/nameChangeOverviewInsights.test.ts` (49/49 after known Vite temp-file sandbox escalation), `npm run build` after known Vite temp-file sandbox escalation, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P2 planning maintainability risk with no feature removal, but live proof blockers and remaining oversized dashboard pages remain.
+- 2026-05-04 10:34 PM PT - No-deploy settings helper split continuation:
+  - Resolved in this batch: extracted Settings RSVP question factory, language labels, translation status date labels, customer-safe settings error helper, site-missing copy, and planner permission label helper into `src/pages/dashboard/settings/settingsDashboardUtils.ts`; added focused helper tests; lowered the file-size guard baseline for `Settings.tsx` from 2399 to 2378 lines.
+  - Proof added/updated: `src/pages/dashboard/settings/settingsDashboardUtils.test.ts` covers blank RSVP question shape, language/translation labels, customer-safe error fallback behavior, and planner permission labels. The test initially caught a label expectation mismatch (`Guests` vs `Guest list`) and was corrected to the product’s actual label.
+  - Validation passed: `npm run typecheck`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm test -- --run src/pages/dashboard/settings/settingsDashboardUtils.test.ts src/pages/dashboard/settingsDate.test.ts src/lib/settingsErrorSafety.test.ts` (9/9 after known Vite temp-file sandbox escalation), `npm run build` after known Vite temp-file sandbox escalation, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P2 settings maintainability risk without changing privacy/settings behavior, but live proof blockers and broader dashboard extraction remain.
+- 2026-05-04 10:41 PM PT - No-deploy messages helper split continuation:
+  - Resolved in this batch: extracted Messages dashboard delivery status helpers, saved composer template storage/normalization, composer template registry, channel reachability helpers, schedule formatting, audience/count helpers, campaign labels, customer-safe delivery reason copy, and recipient review copy into `src/pages/dashboard/messages/messageDashboardUtils.ts`; added focused helper tests; lowered the file-size guard baseline for `Messages.tsx` from 3936 to 3678 lines.
+  - Proof added/updated: `src/pages/dashboard/messages/messageDashboardUtils.test.ts` covers delivery status classes, delivery row scoping, saved template normalization/storage limits, schedule/channel reachability, audience/count/template labels, safe delivery copy, and composer template registry coverage. Initial assertions caught two contract mismatches and were corrected to the current product behavior.
+  - Validation passed: `npm run typecheck`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm test -- --run src/pages/dashboard/messages/messageDashboardUtils.test.ts src/pages/dashboard/messageScheduleTime.test.ts src/pages/dashboard/messageHistoryTime.test.ts src/pages/dashboard/messageEventDate.test.ts src/pages/dashboard/messageTemplateVariables.test.ts src/lib/messageAudienceSegments.test.ts src/lib/messageDeliveryState.test.ts src/lib/guestMessageLanguagePreview.test.ts` (26/26 after known Vite temp-file sandbox escalation), `npm run smoke:messages`, `npm run build` after known Vite temp-file sandbox escalation, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P2 messaging maintainability risk and keeps the permission smoke green, but live messaging authorization proof after deploy remains open.
+- 2026-05-04 10:43 PM PT - No-deploy guests helper split continuation:
+  - Resolved in this batch: extracted Guests dashboard customer-safe error helpers, guest import read-error allowlist, RSVP question factory, and title-case helper into `src/pages/dashboard/guests/guestDashboardUtils.ts`; added focused helper tests; lowered the file-size guard baseline for `Guests.tsx` from 5250 to 5223 lines.
+  - Proof added/updated: `src/pages/dashboard/guests/guestDashboardUtils.test.ts` covers safe fallback behavior, allowed import validation copy, blank RSVP question shape, and title-case behavior.
+  - Validation passed: `npm run typecheck`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestDisplayUtils.test.ts src/pages/dashboard/guestOpsTime.test.ts src/lib/guestDashboardErrorSafety.test.ts` (12/12 after known Vite temp-file sandbox escalation), `npm run smoke:csvmapper`, `npm run build` after known Vite temp-file sandbox escalation, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P2 guest dashboard maintainability risk and keeps CSV mapper/import smoke green, but live RSVP/public proof blockers remain.
+- 2026-05-04 10:49 PM PT - No-deploy seating demo-storage split continuation:
+  - Resolved in this batch: extracted Seating demo itinerary storage, demo seating state storage, and seating layout version storage helpers into `src/pages/dashboard/seating/seatingDemoStorage.ts`; added focused storage tests; lowered the file-size guard baseline for `Seating.tsx` from 2334 to 2271 lines.
+  - Proof added/updated: `src/pages/dashboard/seating/seatingDemoStorage.test.ts` covers bundled demo itinerary fallback, invalid storage recovery, incomplete itinerary row filtering, per-event seating state isolation, and the 40-version storage cap.
+  - Validation passed: `npm run typecheck`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm test -- --run src/pages/dashboard/seating/seatingDemoStorage.test.ts src/pages/dashboard/seating/seatingDashboardUtils.test.ts src/pages/dashboard/seating/seatingService.test.ts` (14/14 after known Vite temp-file sandbox escalation), `npm run build` after known Vite temp-file sandbox escalation, `npm run proof:v1:board:md`, `npm test -- --run src/lib/proofBoardFreshness.test.ts` (1/1 after known Vite temp-file sandbox escalation), and `git diff --check`.
+  - Launch status: unchanged. This reduces local P2 seating dashboard maintainability risk without changing seating behavior, but live RSVP/public proof blockers remain.
+- 2026-05-04 10:53 PM PT - No-deploy messages demo-storage split continuation:
+  - Resolved in this batch: extracted Messages demo message seed, demo message localStorage read/write, and RSVP continuity storage/event constants into `src/pages/dashboard/messages/messageDemoStorage.ts`; added focused storage tests; lowered the file-size guard baseline for `Messages.tsx` from 3678 to 3601 lines.
+  - Proof added/updated: `src/pages/dashboard/messages/messageDemoStorage.test.ts` covers deterministic demo seed timing, invalid/empty storage fallback, and stored demo history read/write.
+  - Validation passed: `npm run typecheck`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm test -- --run src/pages/dashboard/messages/messageDemoStorage.test.ts src/pages/dashboard/messages/messageDashboardUtils.test.ts src/pages/dashboard/messageScheduleTime.test.ts src/pages/dashboard/messageHistoryTime.test.ts src/pages/dashboard/messageEventDate.test.ts src/pages/dashboard/messageTemplateVariables.test.ts src/lib/messageAudienceSegments.test.ts src/lib/messageDeliveryState.test.ts src/lib/guestMessageLanguagePreview.test.ts` (29/29 after known Vite temp-file sandbox escalation), `npm run smoke:messages`, `npm run build` after known Vite temp-file sandbox escalation, `npm run proof:v1:board:md`, `npm test -- --run src/lib/proofBoardFreshness.test.ts` (1/1 after known Vite temp-file sandbox escalation), and `git diff --check`.
+  - Launch status: unchanged. This reduces local P2 messaging maintainability risk and keeps the message permission smoke green, but live messaging/public proof blockers remain.
+- 2026-05-04 10:58 PM PT - No-deploy guests local-state storage split continuation:
+  - Resolved in this batch: extracted Guests campaign preset, follow-up task, saved segment, and campaign log localStorage helpers into `src/pages/dashboard/guests/guestDashboardStorage.ts`; added focused storage tests; lowered the file-size guard baseline for `Guests.tsx` from 5223 to 5192 lines.
+  - Proof added/updated: `src/pages/dashboard/guests/guestDashboardStorage.test.ts` covers valid preset persistence, invalid preset rejection, invalid array-storage fallback, and 12-item caps for follow-up tasks, saved segments, and campaign logs.
+  - Validation passed: `npm run typecheck`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm test -- --run src/pages/dashboard/guests/guestDashboardStorage.test.ts src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestDisplayUtils.test.ts src/pages/dashboard/guestOpsTime.test.ts src/lib/guestDashboardErrorSafety.test.ts` (15/15 after known Vite temp-file sandbox escalation), `npm run smoke:csvmapper`, `npm run build` after known Vite temp-file sandbox escalation, `npm run proof:v1:board:md`, `npm test -- --run src/lib/proofBoardFreshness.test.ts` (1/1 after known Vite temp-file sandbox escalation), and `git diff --check`.
+  - Launch status: unchanged. This reduces local P2 guest dashboard maintainability and stale browser-state risk without changing guest import/export behavior, but live RSVP/public proof blockers remain.
+- 2026-05-04 11:03 PM PT - No-deploy settings RSVP demo-storage split continuation:
+  - Resolved in this batch: extracted Settings demo RSVP settings storage into `src/pages/dashboard/settings/settingsDemoStorage.ts`; centralized RSVP question and meal-option normalization in `settingsDashboardUtils.ts`; added focused storage/normalization tests; lowered the file-size guard baseline for `Settings.tsx` from 2378 to 2339 lines.
+  - Proof added/updated: `src/pages/dashboard/settings/settingsDemoStorage.test.ts` covers normalized demo RSVP storage reads, invalid storage fallback, and demo writes. `settingsDashboardUtils.test.ts` now covers reusable RSVP question and meal-option normalization used by both demo and live settings hydration.
+  - Validation passed: `npm run typecheck`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm test -- --run src/pages/dashboard/settings/settingsDemoStorage.test.ts src/pages/dashboard/settings/settingsDashboardUtils.test.ts src/pages/dashboard/settingsDate.test.ts src/lib/settingsErrorSafety.test.ts` (13/13 after known Vite temp-file sandbox escalation), `npm run build` after known Vite temp-file sandbox escalation, `npm run proof:v1:board:md`, `npm test -- --run src/lib/proofBoardFreshness.test.ts` (1/1 after known Vite temp-file sandbox escalation), and `git diff --check`.
+  - Launch status: unchanged. This reduces local P2 settings maintainability and duplicated parser risk without changing privacy/settings behavior, but live public/settings proof remains deploy-gated.
+- 2026-05-04 11:06 PM PT - No-deploy name-change planner preference split continuation:
+  - Resolved in this batch: moved Name Change planner admin-toggle and collapsed-section localStorage helpers into `src/pages/dashboard/planning/nameChangePlannerUi.ts`; added defensive preference tests; lowered the file-size guard baseline for `NameChangePlannerTab.tsx` from 2526 to 2499 lines.
+  - Proof added/updated: `src/pages/dashboard/planning/nameChangePlannerUi.test.ts` now covers admin preference persistence, collapsed-section persistence, invalid/non-boolean collapsed-section filtering, and invalid JSON fallback.
+  - Validation passed: `npm run typecheck`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm test -- --run src/pages/dashboard/planning/nameChangePlannerUi.test.ts src/pages/dashboard/planning/nameChangeExecutionTime.test.ts src/pages/dashboard/planning/NameChangePlannerTab.test.tsx src/pages/dashboard/nameChangeOverviewCard.test.ts src/pages/dashboard/nameChangeOverviewInsights.test.ts` (50/50 after known Vite temp-file sandbox escalation), `npm run build` after known Vite temp-file sandbox escalation, `npm run proof:v1:board:md`, `npm test -- --run src/lib/proofBoardFreshness.test.ts` (1/1 after known Vite temp-file sandbox escalation), and `git diff --check`.
+  - Launch status: unchanged. This reduces local P2 planner maintainability and stale preference risk without changing the name-change planner feature surface, but broader dashboard extraction and live proof blockers remain.
+- 2026-05-04 11:13 PM PT - No-deploy coordinator storage adapter split continuation:
+  - Resolved in this batch: extracted Coordinator Mode timeline, alert log, Q&A, session, draft, active-work, guest-work, timeline-work, command, and alert-intent storage into `src/pages/dashboard/coordinator/coordinatorStorage.ts`; added focused storage tests; lowered the file-size guard baseline for `CoordinatorMode.tsx` from 2813 to 2794 lines.
+  - Proof added/updated: `src/pages/dashboard/coordinator/coordinatorStorage.test.ts` covers legacy key stability, normalized timeline/Q&A storage, invalid JSON fallback, session/draft/command/alert-intent round trips, and active work id cleanup. The adapter now drops unusable cached Q&A rows with blank ids/questions before they can rehydrate coordinator state.
+  - Validation passed: `npm run typecheck`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm test -- --run src/pages/dashboard/coordinator/coordinatorStorage.test.ts src/pages/dashboard/coordinatorEventTime.test.ts src/lib/coordinatorModePersistence.test.ts src/lib/coordinatorCommandDeck.test.ts` (10/10 after known Vite temp-file sandbox escalation and one stale-Q&A assertion caught/fixed), `npm run proof:v1:coordinator-dayof` (5/5 after known Vite/build temp-file sandbox escalation), `npm run build` after known Vite temp-file sandbox escalation, `npm run proof:v1:board:md`, `npm test -- --run src/lib/proofBoardFreshness.test.ts` (1/1 after known Vite temp-file sandbox escalation), and `git diff --check`.
+  - Launch status: unchanged. This reduces local P2 coordinator maintainability and stale local cache risk while keeping coordinator proof green, but live public/RSVP proof blockers remain.
+- 2026-05-04 11:16 PM PT - No-deploy messages storage utility split continuation:
+  - Resolved in this batch: moved saved composer-template storage migration and photo album link parsing/counting out of `Messages.tsx` into `src/pages/dashboard/messages/messageDashboardUtils.ts`; lowered the file-size guard baseline for `Messages.tsx` from 3601 to 3572 lines.
+  - Proof added/updated: `src/pages/dashboard/messages/messageDashboardUtils.test.ts` now covers saved template migration with invalid row filtering, defensive photo album link parsing, preferred photo link fallback behavior, and malformed array-storage rejection.
+  - Validation passed: `npm test -- --run src/pages/dashboard/messages/messageDashboardUtils.test.ts src/pages/dashboard/messages/messageDemoStorage.test.ts src/pages/dashboard/messageTemplateVariables.test.ts src/lib/guestMessageLanguagePreview.test.ts` (16/16 after known Vite temp-file sandbox escalation), `npm run typecheck`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run smoke:messages`, `npm run build` after known Vite temp-file sandbox escalation, `npm run proof:v1:board:md`, `npm test -- --run src/lib/proofBoardFreshness.test.ts` (1/1 after known Vite temp-file sandbox escalation), and `git diff --check`.
+  - Launch status: unchanged. This reduces local P2 messaging maintainability and stale browser-state risk while keeping message permission smoke green, but live messaging/public proof remains deploy-gated.
+- 2026-05-05 7:01 AM PT - No-deploy guests demo RSVP storage split continuation:
+  - Resolved in this batch: moved demo RSVP custom-question and meal-option localStorage reads/writes out of `Guests.tsx` into `src/pages/dashboard/guests/guestDashboardStorage.ts`; lowered the file-size guard baseline for `Guests.tsx` from 5192 to 5186 lines.
+  - Proof added/updated: `src/pages/dashboard/guests/guestDashboardStorage.test.ts` now covers normalized demo RSVP config reads, invalid question filtering, non-string meal option filtering, demo config writes, and invalid JSON fallback to safe defaults.
+  - Validation passed: `npm test -- --run src/pages/dashboard/guests/guestDashboardStorage.test.ts src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestDisplayUtils.test.ts src/pages/dashboard/guestOpsTime.test.ts src/lib/guestDashboardErrorSafety.test.ts` (17/17 after known Vite temp-file sandbox escalation), `npm run typecheck`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run smoke:csvmapper`, `npm run build` after known Vite temp-file sandbox escalation, `npm run proof:v1:board:md`, `npm test -- --run src/lib/proofBoardFreshness.test.ts` (1/1), and `git diff --check`.
+  - Launch status: unchanged. This reduces local P2 guest dashboard maintainability and stale demo RSVP config risk while keeping CSV mapper/import smoke green, but live RSVP/public proof blockers remain.
+- 2026-05-05 7:42 AM PT - No-deploy guest-facing RSVP demo storage split continuation:
+  - Resolved in this batch: moved guest-facing demo RSVP meal config, custom questions, and stored response parsing/writing out of `RSVP.tsx` into `src/pages/rsvpDemoStorage.ts`; lowered the file-size guard baseline for `RSVP.tsx` from 1993 to 1962 lines.
+  - Proof added/updated: `src/pages/rsvpDemoStorage.test.ts` covers defensive demo meal config reads, malformed question filtering, invalid storage fallback, and demo RSVP response persistence.
+  - Validation passed: `npm test -- --run src/pages/rsvpDemoStorage.test.ts src/pages/RSVP.test.tsx src/pages/rsvpDeadline.test.ts` (117/117), `npm run typecheck`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run build`, `npm run proof:v1:board:md`, `npm test -- --run src/lib/proofBoardFreshness.test.ts` (1/1), and `git diff --check`.
+  - Validation still blocked live: `npm run smoke:rsvp` failed in sandbox with DNS `ENOTFOUND`, then after network escalation reached Supabase and failed with the existing deployed 503 responses for all RSVP paths.
+  - Launch status: unchanged. This reduces local RSVP page maintainability and stale demo-storage risk while preserving guest-facing RSVP tests, but live RSVP proof remains blocked by deployed function behavior.
+- 2026-05-05 7:45 AM PT - No-deploy name-change snapshot parser hardening continuation:
+  - Resolved in this batch: moved Name Change planner document snapshot draft parsing into `parseDocumentSnapshotDraft` in `src/pages/dashboard/planning/nameChangePlannerUi.ts`; invalid JSON and array-shaped drafts now stay local until corrected instead of being committed to document metadata.
+  - Proof added/updated: `src/pages/dashboard/planning/nameChangePlannerUi.test.ts` now covers blank snapshot clearing, valid object parsing, malformed JSON rejection, and array rejection.
+  - Guardrail tightened: lowered `NameChangePlannerTab.tsx` file-size baseline from 2499 to 2493 lines.
+  - Validation passed: `npm test -- --run src/pages/dashboard/planning/nameChangePlannerUi.test.ts src/pages/dashboard/planning/nameChangeExecutionTime.test.ts src/pages/dashboard/planning/NameChangePlannerTab.test.tsx src/pages/dashboard/nameChangeOverviewCard.test.ts src/pages/dashboard/nameChangeOverviewInsights.test.ts` (51/51), `npm run typecheck`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run build`, `npm run proof:v1:board:md`, `npm test -- --run src/lib/proofBoardFreshness.test.ts` (1/1), and `git diff --check`.
+  - Launch status: unchanged. This reduces local planner metadata corruption risk while preserving the advanced snapshot editor, but broader dashboard extraction and live proof blockers remain.
+- 2026-05-05 7:51 AM PT - No-deploy guest photo export helper split continuation:
+  - Resolved in this batch: moved bucket upload, guestbook, prospect, and curation CSV builders out of `GuestPhotoSharing.tsx` into `src/pages/dashboard/guestPhotoSharingUtils.ts`; lowered the file-size guard baseline for `GuestPhotoSharing.tsx` from 3404 to 3340 lines.
+  - Proof added/updated: `src/pages/dashboard/guestPhotoSharingUtils.test.ts` now covers CSV escaping, bucket export filenames, guestbook/prospect export rows, curation export labels, low-confidence review reasons, and GPS flag export behavior.
+  - Validation passed: `npm test -- --run src/pages/dashboard/guestPhotoSharingUtils.test.ts src/pages/dashboard/guestPhotoDateTime.test.ts src/pages/dashboard/guestPhotoUploadTime.test.ts src/pages/dashboard/guestPhotoEventDate.test.ts src/lib/aiPhotoOps.test.ts src/lib/aiPhotoPlacement.test.ts` (22/22 after one filename cleanup assertion caught/fixed), `npm run typecheck`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run proof:v1:ai-rollout`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local photo dashboard/export maintainability risk while keeping AI/photo rollout proof green, but production/live proof remains approval-gated.
+- 2026-05-05 8:00 AM PT - No-deploy guest photo recap export split continuation:
+  - Resolved in this batch: moved memory-chapter and curated-recap JSON payload builders out of `GuestPhotoSharing.tsx` into `src/pages/dashboard/guestPhotoSharingUtils.ts`; lowered the file-size guard baseline for `GuestPhotoSharing.tsx` from 3340 to 3299 lines.
+  - Proof added/updated: `src/pages/dashboard/guestPhotoSharingUtils.test.ts` now pins the memory chapter export shape and curated recap summary/highlight/duplicate/slideshow export shape with deterministic timestamps.
+  - Validation passed: `npm test -- --run src/pages/dashboard/guestPhotoSharingUtils.test.ts` (9/9), `npm run typecheck`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run proof:v1:ai-rollout`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local photo dashboard/recap export maintainability risk while keeping AI/photo rollout proof green, but production/live proof remains approval-gated.
+- 2026-05-05 8:04 AM PT - No-deploy guest photo share-link export split continuation:
+  - Resolved in this batch: moved photo share message, active share-message list, known-link list, share-pack CSV, and album-link CSV builders out of `GuestPhotoSharing.tsx` into `src/pages/dashboard/guestPhotoSharingUtils.ts`; lowered the file-size guard baseline for `GuestPhotoSharing.tsx` from 3299 to 3236 lines.
+  - Proof added/updated: `src/pages/dashboard/guestPhotoSharingUtils.test.ts` now covers active-only sharing messages, known-link extraction, CSV escaping for quoted album names/messages, backup folder URL export, and empty-export fallbacks.
+  - Validation passed: `npm test -- --run src/pages/dashboard/guestPhotoSharingUtils.test.ts` (10/10), `npm run typecheck`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run proof:v1:ai-rollout`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local photo dashboard/share-link export maintainability risk while preserving existing download/copy behavior; production/live proof remains approval-gated.
+- 2026-05-05 8:09 AM PT - No-deploy seating table-summary export hardening:
+  - Resolved in this batch: moved table-summary CSV construction out of `Seating.tsx` into `src/pages/dashboard/seating/seatingDashboardUtils.ts`; lowered the file-size guard baseline for `Seating.tsx` from 2271 to 2259 lines.
+  - Security hardening: the new focused test caught that risky meal labels inside the joined meal-count cell were not neutralized when the cell began with a safe meal label. The helper now neutralizes each meal label before joining the table-summary export.
+  - Proof added/updated: `src/pages/dashboard/seating/seatingDashboardUtils.test.ts` now covers table-summary CSV escaping, quoted table names, and embedded spreadsheet-formula meal labels.
+  - Validation passed: `npm test -- --run src/pages/dashboard/seating/seatingDashboardUtils.test.ts src/pages/dashboard/seating/seatingService.test.ts` (10/10 after the formula-label assertion caught/fixed the issue), `npm run typecheck`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local seating export maintainability and spreadsheet-injection risk without changing seating export features; live RSVP/public proof blockers remain.
+- 2026-05-05 8:15 AM PT - No-deploy guest export builder split continuation:
+  - Resolved in this batch: moved main guest export, thank-you due, checked-in, address collection, household labels, and event-attendance CSV builders out of `Guests.tsx` into `src/pages/dashboard/guests/guestDashboardUtils.ts`; lowered the file-size guard baseline for `Guests.tsx` from 5186 to 5060 lines.
+  - Security hardening: focused tests now pin spreadsheet-safe formula neutralization for guest names and meal choices, invite-token URL encoding in owner-only exports, grouped household labels, address export fields, event invitation scoping, and custom-answer export rows.
+  - Proof added/updated: `src/pages/dashboard/guests/guestDashboardUtils.test.ts` now covers six guest export contracts, including event attendance and household label behavior.
+  - Validation passed: `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestDisplayUtils.test.ts src/pages/dashboard/guestOpsTime.test.ts src/lib/guestDashboardErrorSafety.test.ts` (16/16), `npm run typecheck`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run smoke:csvmapper`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local guest export maintainability and spreadsheet-injection regression risk without removing export features; live RSVP/public proof blockers remain.
+- 2026-05-05 8:19 AM PT - No-deploy guest queue scoring split continuation:
+  - Resolved in this batch: moved guest issue counting, priority scoring, name sorting, and checked-in display ordering out of `Guests.tsx` into `src/pages/dashboard/guests/guestDashboardUtils.ts`; lowered the file-size guard baseline for `Guests.tsx` from 5060 to 5015 lines.
+  - Proof added/updated: `src/pages/dashboard/guests/guestDashboardUtils.test.ts` now covers unresolved RSVP issue counts, priority scoring near the wedding date, deterministic last-name sorting, priority sorting, and check-in mode ordering.
+  - Validation passed: `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestDisplayUtils.test.ts src/pages/dashboard/guestOpsTime.test.ts src/lib/guestDashboardErrorSafety.test.ts` (18/18), `npm run typecheck`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local guest dashboard maintainability risk and pins follow-up queue ordering without changing guest operations behavior; live RSVP/public proof blockers remain.
+- 2026-05-05 8:27 AM PT - No-deploy guest RSVP operations summary split continuation:
+  - Resolved in this batch: moved guest contact coverage, RSVP operations counters, recommended action selection, RSVP completeness, campaign readiness, and operations queue construction out of `Guests.tsx` into `src/pages/dashboard/guests/guestDashboardUtils.ts`; lowered the file-size guard baseline for `Guests.tsx` from 5015 to 4932 lines.
+  - Proof added/updated: `src/pages/dashboard/guests/guestDashboardUtils.test.ts` now covers contact coverage, pending/no-contact RSVP counters, missing meal and plus-one counters, ceremony/reception decline parsing, recommended-action priority, bounded readiness/completeness math, and stable bounded operations queue construction.
+  - Validation passed: `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestDisplayUtils.test.ts src/pages/dashboard/guestOpsTime.test.ts src/lib/guestDashboardErrorSafety.test.ts` (22/22 after one expected weighted-readiness assertion was corrected), `npm run typecheck`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local guest dashboard maintainability risk and pins owner-facing RSVP follow-up math without changing guest operations behavior; live RSVP/public proof blockers remain.
+- 2026-05-05 8:34 AM PT - No-deploy guest household and RSVP insight rollup split continuation:
+  - Resolved in this batch: moved household grouping, meal-choice rollups, custom-answer rollups, song-request extraction, and filtered meal summary counts out of `Guests.tsx` into `src/pages/dashboard/guests/guestDashboardUtils.ts`; lowered the file-size guard baseline for `Guests.tsx` from 4932 to 4860 lines.
+  - Proof added/updated: `src/pages/dashboard/guests/guestDashboardUtils.test.ts` now covers deterministic household sorting/grouping, meal rollup fallbacks, custom-answer aggregation, song request extraction, and dietary-note/meal summary counts.
+  - Validation passed: `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestDisplayUtils.test.ts src/pages/dashboard/guestOpsTime.test.ts src/lib/guestDashboardErrorSafety.test.ts` (24/24), `npm run typecheck` (after one fixture type annotation fix), `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local guest dashboard maintainability risk and pins household/RSVP insight behavior without changing dashboard UI, exports, or guest operations; live RSVP/public proof blockers remain.
+- 2026-05-05 11:18 AM PT - No-deploy public-site RSVP widget access gate hardening:
+  - Resolved in this batch: public RSVP section submissions no longer insert directly into `site_rsvps` from browser code. `src/sections/components/RsvpSection.tsx` now uses the existing `public-site-access` gate state and submits through the new `public-site-rsvp-submit` Edge Function. The builder-backed multi-event RSVP variant in `src/sections/variants/rsvp/multiEvent.tsx` now uses the same gated function instead of resolving a site id and inserting directly.
+  - Security hardening: `supabase/functions/public-site-rsvp-submit/index.ts` reuses `canReadPublicSubresource`, validates password/invite access server-side, rate-limits public widget submits through `rsvp_rate_limit`, and writes `site_rsvps` with service-role only after the same public access gate is satisfied.
+  - Defense in depth: `supabase/migrations/20260505102000_site_rsvps_public_gate_rls.sql` adds `guest_email` for the multi-event template path and narrows direct anon/authenticated `site_rsvps` inserts to published `privacy_mode = 'public'` sites, so password/invite pages cannot be bypassed with only a known site id.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now guards the new function, method gate, shared public gate usage, no direct public RSVP table insert, no direct browser wedding-site id lookup in the RSVP section or multi-event variant, and the RLS public-only policy. `src/sections/components/RsvpSection.test.tsx` now proves the public RSVP widget sends slug, invite token, password session, guest name, count, and notes through `public-site-rsvp-submit`. `src/sections/variants/rsvp/multiEvent.test.tsx` now proves the multi-event path preserves name, email, access state, status, count, and notes through the same function.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/sections/components/RsvpSection.test.tsx src/sections/variants/rsvp/multiEvent.test.tsx src/lib/publicSiteAccess.test.ts` (37/37 after one Vitest mock-hoist harness fix in the first focused run), `npm run typecheck`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This closes a local public-widget bypass risk without removing the public RSVP widget, but production status still requires applying the migration, deploying the new function, and rerunning live public/RSVP proof. No deploy was run.
+- 2026-05-05 11:23 AM PT - No-deploy bulk messaging service-role projection hardening:
+  - Resolved in this batch: `supabase/functions/send-bulk-message/index.ts` no longer loads message delivery rows through `select("*, wedding_sites(...)")`; it now uses an explicit `MESSAGE_DELIVERY_SELECT` projection limited to the fields needed for authorization, audience selection, send content, and status updates.
+  - Security hardening: the email-send cap load branch no longer logs the raw database error object; it logs a fixed reason code while returning the existing customer-safe error.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now guards the explicit projection, blocks reintroducing the broad `select("*, wedding_sites` pattern, and blocks the raw `sentErr` log branch.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (24/24), `npm run typecheck`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local service-role overfetching and raw diagnostic leakage in bulk messaging while preserving the email/SMS-deferred messaging behavior; live messaging authorization proof remains required. No deploy was run.
+- 2026-05-05 11:26 AM PT - No-deploy Edge Function raw diagnostic cleanup:
+  - Resolved in this batch: removed raw error-object logging from focused Edge Function branches in `submit-contact-request`, `setup-bootstrap`, `photo-upload-moderate`, and `vault-resolve-entry-link`.
+  - Security hardening: these branches now log stable reason codes instead of database/storage error objects, while keeping the existing customer-safe fallback messages and behavior.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now guards the fixed reason-code logs and blocks reintroducing the raw `guestErr`, `siteErr`, `uploadsErr`, and `signedErr` log paths.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (24/24), `npm run typecheck`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This narrows local backend diagnostic leakage risk; live function deployment/proof remains required. No deploy was run.
+- 2026-05-05 11:28 AM PT - No-deploy photo album lookup diagnostic cleanup:
+  - Resolved in this batch: `supabase/functions/photo-album-manage/index.ts` no longer logs the raw `albumErr` object on album lookup failures.
+  - Security hardening: the lookup branch now logs the fixed `ALBUM_LOOKUP_FAILED` reason code and keeps the existing customer-safe album-load fallback message.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now requires the fixed lookup reason code and blocks reintroducing `PHOTO_ALBUM_MANAGE_LOOKUP_FAILED", albumErr`; the generic hardened Edge Function diagnostic regex now catches `albumErr` raw logs.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (24/24), `npm run typecheck`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This further narrows local photo-management diagnostic leakage risk; live function deployment/proof remains required. No deploy was run.
+- 2026-05-05 11:31 AM PT - No-deploy RSVP guest payload minimization:
+  - Resolved in this batch: `supabase/functions/validate-rsvp-token/index.ts` no longer includes `wedding_site_id` in the sanitized guest object returned to RSVP browser flows.
+  - Security hardening: the RSVP page did not use the site id, so the internal site identifier was removed from the public guest-safe contract without removing invite-link RSVP, manual session lookup, household RSVP, event RSVP, or submit behavior.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now extracts the `sanitizeGuest` body and blocks reintroducing `wedding_site_id: guest.wedding_site_id`; `src/pages/rsvpTypes.ts` and the demo mapping were updated to match the minimized browser contract.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/pages/RSVP.test.tsx` (134/134), `npm run typecheck`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This narrows the local RSVP browser payload; live RSVP function deployment/proof remains required. No deploy was run.
+- 2026-05-05 11:32 AM PT - No-deploy service worker cache safety hardening:
+  - Resolved in this batch: `public/sw.js` now refuses to cache any request carrying an `Authorization` header and no longer falls back to cached `/` when a static fetch fails.
+  - Security hardening: service worker runtime caching remains limited to same-origin static assets, while authenticated/API/dynamic JSON/data requests and stale HTML fallback paths stay outside the cache response path.
+  - Proof added/updated: `src/lib/serviceWorkerSafety.test.ts` now guards the authorization-header exclusion, query-string exclusion, no HTML root fallback, and same-origin Supabase/auth/function/storage exclusions.
+  - Validation passed: `npm test -- --run src/lib/serviceWorkerSafety.test.ts` (1/1), `npm run typecheck`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This closes a local browser-cache safety gap; live browser cache proof remains postdeploy/QA-gated. No deploy was run.
+- 2026-05-05 11:35 AM PT - No-deploy public RSVP widget diagnostic guard hardening:
+  - Resolved in this batch: `supabase/functions/public-site-rsvp-submit/index.ts` now uses explicit fixed reason codes for insert and unexpected failure branches.
+  - Security hardening: the new public RSVP widget function is now included in the hardened Edge Function diagnostic sweep, so raw caught-error logs and weak diagnostic regressions are blocked alongside the other launch-sensitive functions.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now requires `PUBLIC_SITE_RSVP_INSERT_FAILED` and `UNEXPECTED_PUBLIC_SITE_RSVP_FAILURE` reason codes and includes `public-site-rsvp-submit` in the raw-log diagnostic guard list.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (24/24), `npm run typecheck`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This improves local diagnostic proof for the new widget submit function; production still needs function deploy/live proof. No deploy was run.
+- 2026-05-05 11:37 AM PT - No-deploy RSVP rate-limit token marker hardening:
+  - Resolved in this batch: `supabase/functions/submit-rsvp/index.ts` and `supabase/functions/validate-rsvp-token/index.ts` no longer write raw invite-token prefixes into `rsvp_rate_limit.guest_token`.
+  - Security hardening: rate-limit rows now keep hashed subject markers for invite-token lookup/submit paths, preserving durable throttling while avoiding raw secret fragments in diagnostic/rate-limit storage.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now blocks `guest_token: inviteToken.slice(0, 16)` and `guest_token: (subject ?? scope).slice(0, 16)`, and requires the hashed subject marker paths.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/pages/RSVP.test.tsx` (134/134), `npm run typecheck`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This narrows local RSVP secret-retention risk; live RSVP function deployment/proof remains required. No deploy was run.
+- 2026-05-05 11:39 AM PT - No-deploy registry preview rate-limit identifier hardening:
+  - Resolved in this batch: `supabase/functions/registry-preview/index.ts` no longer writes a raw `userId` prefix into `rsvp_rate_limit.guest_token` for registry preview throttling.
+  - Security hardening: registry preview now stores a hashed user subject marker, preserving per-user/IP throttling without retaining direct user-id fragments in the shared rate-limit table.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now blocks `guest_token: userId.slice(0, 16)` and requires the `safeSubjectMarker` path for registry preview.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (24/24), `npm run typecheck`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This narrows local registry preview identifier-retention risk; live registry preview proof remains deploy/QA-gated. No deploy was run.
+- 2026-05-05 11:41 AM PT - No-deploy public gate rate-limit identifier hardening:
+  - Resolved in this batch: `supabase/functions/public-site-access/index.ts` and `supabase/functions/public-site-rsvp-submit/index.ts` no longer write raw site slug prefixes into `rsvp_rate_limit.guest_token`.
+  - Security hardening: public password attempts and public RSVP widget submits now store hashed subject markers in the shared rate-limit table, preserving throttling without readable site identifiers.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now blocks `guest_token: slug.slice(0, 16)` in both public gate functions and requires the hashed `safeSubjectMarker` paths.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/publicSiteAccess.test.ts src/sections/components/RsvpSection.test.tsx src/sections/variants/rsvp/multiEvent.test.tsx` (37/37), `npm run typecheck`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This narrows local public-gate identifier-retention risk; live public access/widget proof remains deploy-gated. No deploy was run.
+- 2026-05-05 11:45 AM PT - No-deploy guest photo upload backend error hardening:
+  - Resolved in this batch: `supabase/functions/photo-upload/index.ts` no longer throws the raw Supabase insert error message after `photo_uploads` row creation fails.
+  - Security hardening: the row-insert failure now uses the fixed `PHOTO_UPLOAD_ROW_INSERT_FAILED` sentinel while preserving the existing guest-safe upload failure message and upload loop behavior.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now requires the sentinel and blocks reintroducing `if (error) throw new Error(error.message);` in the guest photo upload function.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (24/24), `npm run typecheck`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This narrows local backend diagnostic leakage risk in guest photo uploads; live function deployment/proof remains required. No deploy was run.
+- 2026-05-05 11:46 AM PT - No-deploy shared public rate-limit error hardening:
+  - Resolved in this batch: `supabase/functions/_shared/rateLimit.ts` no longer throws raw Supabase error messages when public submission rate-limit count or record writes fail.
+  - Security hardening: the shared helper now uses fixed `PUBLIC_SUBMISSION_RATE_LIMIT_COUNT_FAILED` and `PUBLIC_SUBMISSION_RATE_LIMIT_RECORD_FAILED` sentinels, preserving rate-limit behavior without propagating backend text through callers.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now covers the shared helper and blocks reintroducing `throw new Error(error.message)` there.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (25/25), `npm run typecheck`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This narrows local shared public-submission diagnostic leakage risk; live function deployment/proof remains required. No deploy was run.
+- 2026-05-05 11:48 AM PT - No-deploy SMS RSVP inbound diagnostic hardening:
+  - Resolved in this batch: `supabase/functions/sms-rsvp-inbound/index.ts` no longer stores raw RSVP update error text or unexpected caught error text in `sms_inbound_rsvp_events.process_error`.
+  - Security hardening: failed update and unexpected failure paths now store fixed `SMS_RSVP_UPDATE_FAILED` and `SMS_RSVP_INBOUND_UNEXPECTED_FAILURE` codes while preserving the existing TwiML guest responses.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now requires those fixed codes and blocks the old `updateErr?.message`, `err.message`, and `process_error: message` patterns.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (26/26), `npm run typecheck`, `npm run lint -- --quiet`, `npm run build`, `git diff --check`, `npm run proof:v1:board:md`, and `npm test -- --run src/lib/proofBoardFreshness.test.ts` (1/1).
+  - Launch status: unchanged. SMS/Telnyx remains outside launch scope, but this narrows local diagnostic leakage risk without removing the inbound RSVP flow. No deploy was run.
+- 2026-05-05 11:51 AM PT - No-deploy planning data-boundary proof maintenance:
+  - Resolved in this batch: `src/lib/dashboardDataBoundary.test.ts` was updated for the current planning vendor repository shape, where `loadVendors` uses a shared query helper with `PLANNING_VENDOR_SELECT` and a `PLANNING_VENDOR_LEGACY_SELECT` fallback for environments before vendor-rating columns exist.
+  - Security hardening: the guard now proves the explicit primary projection and explicit legacy fallback instead of failing on an outdated `.select(PLANNING_VENDOR_SELECT)` call-shape assumption.
+  - Proof added/updated: `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/lib/settingsErrorSafety.test.ts` now passes and continues blocking `select('*')` regressions on planning/dashboard-sensitive paths.
+  - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/lib/settingsErrorSafety.test.ts` (15/15), `npm run typecheck`, `npm run lint -- --quiet`, and `git diff --check`.
+  - Launch status: unchanged. This keeps the data-boundary proof lane credible without changing product behavior. No deploy was run.
+- 2026-05-05 11:53 AM PT - No-deploy shared public submission subject hashing:
+  - Resolved in this batch: `supabase/functions/_shared/rateLimit.ts` now hashes public submission rate-limit subjects before count and insert operations.
+  - Security hardening: public submission events no longer retain readable subject values such as guest contact lookup names, guest/contact identifiers, vendor inquiry identifiers, or vault config identifiers, while preserving per-subject throttling.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now requires the shared `subjectMarker` path, the hashed `safeSubject` count/insert path, and blocks the old raw-subject count/insert patterns.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (26/26), `npm run typecheck`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This narrows local public-submission PII/identifier retention risk; live function deployment/proof remains required. No deploy was run.
+- 2026-05-05 11:56 AM PT - No-deploy public guestbook/photo IP retention hardening:
+  - Resolved in this batch: `supabase/functions/guestbook-submit/index.ts` and `supabase/functions/photo-upload/index.ts` no longer count or store raw requester IPs for public guestbook and photo upload rate-limit rows.
+  - Security hardening: guestbook uses a site-scoped requester IP marker, photo upload uses an album-scoped requester IP marker, and photo upload now hashes the site-slug fallback marker before storing it in `photo_upload_attempts.token_hash`.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now requires the guestbook/photo hashed marker paths and blocks the old raw `requester_ip` and raw `site:${siteSlug}` attempt marker patterns.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (26/26), `npm run typecheck`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This narrows local public guestbook/photo identifier retention risk while preserving rate limits and upload/guestbook behavior. No deploy was run.
+- 2026-05-05 11:59 AM PT - No-deploy shared public submission requester-IP hashing:
+  - Resolved in this batch: `supabase/functions/_shared/rateLimit.ts` now hashes requester IPs before public submission rate-limit count and insert operations.
+  - Security hardening: shared public submission events no longer retain readable requester IP values while preserving per-IP throttling for vendor inquiry/preview, guest contact, prospect/contact, and vault submission flows that use the shared helper.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now requires the shared `requesterIpMarker` path, the hashed `safeRequesterIp` count/insert path, and blocks the old raw requester-IP count/insert patterns.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (26/26), `npm run typecheck`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This narrows local public-submission requester-IP retention risk while preserving rate-limit behavior. No deploy was run.
+- 2026-05-05 12:01 PM PT - No-deploy shared public rate-limit marker contract cleanup:
+  - Resolved in this batch: `supabase/functions/_shared/rateLimit.ts` now returns `requesterIpMarker` instead of `requesterIp` from the shared public submission rate-limit helper.
+  - Security hardening: the return contract now describes the value accurately as a hashed marker, reducing the chance that a future caller treats it as a raw requester IP.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now requires `requesterIpMarker: safeRequesterIp` and blocks reintroducing `requesterIp: safeRequesterIp`.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (26/26), `npm run typecheck`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This is a no-feature-loss contract cleanup for the newly hardened public rate-limit helper. No deploy was run.
+- 2026-05-05 12:03 PM PT - No-deploy shared public submission referrer sanitization:
+  - Resolved in this batch: `supabase/functions/_shared/rateLimit.ts` now sanitizes stored referrers for shared public submission events.
+  - Security hardening: the helper strips username, password, query string, and hash fragment from `Referer` before writing `public_submission_events.referrer`, reducing the risk of retaining invite tokens, password/session artifacts, or other URL secrets.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now requires the `safeReferrer` path, query/hash stripping, and blocks reintroducing the raw `referer` header slice.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (26/26), `npm run typecheck`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This narrows local public-submission URL-secret retention risk while preserving diagnostic referrer origin/path context. No deploy was run.
+- 2026-05-05 12:05 PM PT - No-deploy public guest telemetry/prospect referrer sanitization:
+  - Resolved in this batch: `supabase/functions/guest-hub-track/index.ts` and `supabase/functions/guest-prospect-submit/index.ts` now sanitize stored referrers before writing guest telemetry/prospect rows.
+  - Security hardening: these functions strip username, password, query string, and hash fragment from `Referer`, reducing risk of retaining invite tokens, access artifacts, or other URL secrets in `guest_hub_events` or prospect metadata.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now requires the `safeReferrer` path in both functions and blocks reintroducing the raw `referer` header slice.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (26/26), `npm run typecheck`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This narrows local public guest telemetry/prospect URL-secret retention risk while preserving tracking and opt-in behavior. No deploy was run.
+- 2026-05-05 12:09 PM PT - No-deploy public guest hub tracking rate-limit hardening:
+  - Resolved in this batch: `supabase/functions/guest-hub-track/index.ts` now uses the shared public submission rate-limit helper before inserting `guest_hub_events`.
+  - Security hardening: guest hub telemetry is now durable-throttled by site/scope, hashed requester marker, and hashed event subject marker instead of being an unbounded public write path.
+  - No feature loss: throttled or rate-limit-unavailable tracking still returns the existing soft `{ ok: true, tracked: false }` response so guest-facing pages do not show telemetry errors.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now requires the `guest_hub_track` rate-limit scope and the soft throttled response path.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (26/26), `npm run typecheck`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This narrows local public telemetry abuse risk; live function deployment/proof remains required. No deploy was run.
+- 2026-05-05 12:11 PM PT - No-deploy registry preview memory rate-limit key hardening:
+  - Resolved in this batch: `supabase/functions/registry-preview/index.ts` now hashes the in-memory burst-limit key instead of retaining the raw requester IP as the `rateLimitMap` key.
+  - Security hardening: registry preview already hashed durable rate-limit identifiers; this closes the remaining process-memory raw-IP retention path while preserving the same per-IP burst throttling.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now requires the `registry-preview-memory` hash marker path and blocks raw `rateLimitMap.get(ip)` / `rateLimitMap.set(ip, ...)` regressions.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (26/26), `npm run typecheck`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This narrows local registry preview identifier-retention risk; live function deployment/proof remains required. No deploy was run.
+- 2026-05-05 12:14 PM PT - No-deploy guest hub telemetry public-access gate hardening:
+  - Resolved in this batch: `supabase/functions/guest-hub-track/index.ts` now checks the shared public access gate before inserting telemetry, using `privacy_mode`, `guest_access_token`, invite token, and password session just like public subresources.
+  - Security hardening: password/invite/hidden event hubs no longer create a telemetry write side channel for inaccessible published slugs.
+  - No feature loss: `src/pages/EventHub.tsx` and `src/pages/EventRecap.tsx` now package existing invite-token/password-session access artifacts into telemetry calls, so valid guest access can still be tracked.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now requires `canReadPublicSubresource`, the explicit gated site projection, and stored invite-token gating for `guest-hub-track`.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (26/26), `npm test -- --run src/pages/EventHub.test.tsx src/pages/EventRecap.test.tsx` (13/13), `npm run typecheck`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This narrows local public telemetry access-bypass risk; live function/frontend deployment proof remains required. No deploy was run.
+- 2026-05-05 12:16 PM PT - No-deploy guest hub access-artifact characterization:
+  - Resolved in this batch: `src/pages/EventHub.tsx` and `src/pages/EventRecap.tsx` now expose their guest hub telemetry access-payload builders for focused tests.
+  - No feature loss proof: `src/pages/EventHub.test.tsx` and `src/pages/EventRecap.test.tsx` now prove current URL invite tokens take precedence, stored invite tokens are preserved for follow-up clicks, and password sessions are packaged for gated telemetry.
+  - Security hardening: this locks the frontend side of the shared public access gate handoff so future changes cannot silently drop invite/password context and force gated telemetry to fail closed for valid guests.
+  - Validation passed: `npm test -- --run src/pages/EventHub.test.tsx src/pages/EventRecap.test.tsx` (17/17), `npm run typecheck`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This improves local no-feature-loss proof around the newly gated guest hub telemetry path. No deploy was run.
+- 2026-05-05 12:19 PM PT - No-deploy guest recap config public-access gate hardening:
+  - Resolved in this batch: `supabase/functions/guest-recap-config/index.ts` now uses the shared public access gate before returning recap/photo data, instead of relying on `is_published` alone.
+  - Security hardening: password-protected, invite-only, hidden, or otherwise inaccessible sites can no longer expose recap summaries, couple details, upload metadata, captions, guest names, or signed image URLs through the recap config endpoint.
+  - No feature loss: `src/pages/EventRecap.tsx` now sends existing invite/password access artifacts through dedicated request headers for valid gated recap views without putting them in the query string.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now requires `guest-recap-config` to use `canReadPublicSubresource`, explicit privacy/token projection, and the access headers.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/pages/EventRecap.test.tsx` (36/36), `npm run typecheck`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This narrows local public recap subresource access-bypass risk; live function/frontend deployment proof remains required. No deploy was run.
+- 2026-05-05 12:21 PM PT - No-deploy guest hub config public-access gate hardening:
+  - Resolved in this batch: `supabase/functions/guest-hub-config/index.ts` now uses the shared public access gate before returning guest hub settings and couple summary data, instead of relying on `is_published` alone.
+  - Security hardening: password-protected, invite-only, hidden, or otherwise inaccessible sites can no longer expose guest hub feature toggles, custom message, language default, couple names, or wedding date through the hub config endpoint.
+  - No feature loss: `src/pages/EventHub.tsx` now sends existing invite/password access artifacts through dedicated request headers for valid gated hub views without putting them in the query string.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now requires `guest-hub-config` to use `canReadPublicSubresource`, explicit privacy/token projection, and the access headers; `src/pages/EventHub.test.tsx` proves the header packaging.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/pages/EventHub.test.tsx` (37/37), `npm run typecheck`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This narrows local public guest hub subresource access-bypass risk; live function/frontend deployment proof remains required. No deploy was run.
+- 2026-05-05 12:24 PM PT - No-deploy guest prospect opt-in public-access gate hardening:
+  - Resolved in this batch: `supabase/functions/guest-prospect-submit/index.ts` now verifies shared public site access before writing prospect opt-ins and hub events.
+  - Security hardening: direct slug-only requests can no longer create opt-in/contact rows for password-protected, invite-only, hidden, or inaccessible sites.
+  - No feature loss: Event Hub and Recap opt-ins now send existing invite/password access artifacts; Photo Upload follow-up opt-ins can still proceed with a valid active album upload token.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now requires `guest-prospect-submit` to use `canReadPublicSubresource`, explicit privacy/token projection, upload-token hash validation, and active upload-window checks.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/pages/EventHub.test.tsx src/pages/EventRecap.test.tsx` (47/47), `npm run typecheck`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This narrows local public prospect opt-in access-bypass risk while preserving guest hub, recap, and photo upload opt-in behavior. No deploy was run.
+- 2026-05-05 12:26 PM PT - No-deploy guestbook submit public-access gate hardening:
+  - Resolved in this batch: `supabase/functions/guestbook-submit/index.ts` now verifies shared public site access before inserting guestbook entries.
+  - Security hardening: direct slug-only requests can no longer write guestbook entries for password-protected, invite-only, hidden, or inaccessible sites.
+  - No feature loss: `src/pages/GuestbookSubmit.tsx` now packages existing URL/stored invite tokens and password sessions into guestbook submissions for valid gated guestbook links.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now requires `guestbook-submit` to use `canReadPublicSubresource`, explicit privacy/token projection, and stored invite-token gating; `src/pages/GuestbookSubmit.test.ts` proves the frontend access payload.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/pages/GuestbookSubmit.test.ts` (31/31), `npm run typecheck`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This narrows local public guestbook write access-bypass risk while preserving gated guestbook submissions. No deploy was run.
+- 2026-05-05 12:34 PM PT - No-deploy vault/photo public contribution gate hardening:
+  - Resolved in this batch: `supabase/functions/vault-entry-submit/index.ts`, `supabase/functions/vault-upload-google-drive/index.ts`, and the site-slug path in `supabase/functions/photo-upload/index.ts` now require shared public access gate approval before service-role writes, storage uploads, or provider upload work.
+  - Security hardening: direct slug/site-id-only requests can no longer submit vault memories, vault attachments, Google Drive vault uploads, or site-slug photo uploads for password-protected, invite-only, hidden, or inaccessible sites by relying on `is_published` alone.
+  - No feature loss: `src/pages/VaultContribute.tsx` now resolves the site through `public-site-access` and packages invite/password artifacts into vault submissions; `src/pages/PhotoUpload.tsx` packages invite/password artifacts for site-slug uploads; existing active album-token photo upload links remain token-scoped and supported.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now requires vault/photo public contribution functions to use `canReadPublicSubresource` and explicit privacy/token projections; `src/pages/VaultContribute.test.ts` and `src/pages/PhotoUpload.test.ts` prove frontend access payload packaging.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/pages/PhotoUpload.test.ts src/pages/VaultContribute.test.ts` (44/44), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This narrows local vault/photo contribution access-bypass risk while preserving valid gated guest flows. Live function/frontend deployment proof remains required. No deploy was run.
+- 2026-05-05 12:38 PM PT - No-deploy guest contact lookup public-access gate hardening:
+  - Resolved in this batch: `supabase/functions/guest-contact-lookup/index.ts` now requires shared public access gate approval before full-name lookup can issue a short-lived contact update session.
+  - Security hardening: direct site-ref-only requests can no longer use the guest contact update page as a full-name enumeration side channel for password-protected, invite-only, hidden, unpublished, or otherwise inaccessible sites.
+  - No feature loss: public sites still allow the existing full-name contact lookup; `src/pages/GuestContactUpdate.tsx` now packages existing invite/password artifacts so valid gated guests can still search and update contact details.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now requires guest-contact lookup to use `canReadPublicSubresource` and explicit privacy/token projection; `src/pages/GuestContactUpdate.test.ts` proves frontend access payload packaging.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/pages/GuestContactUpdate.test.ts` (30/30), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This narrows local guest-contact lookup access-bypass risk while preserving valid public and gated contact-update flows. Live function/frontend deployment proof remains required. No deploy was run.
+- 2026-05-05 12:41 PM PT - No-deploy client error log ingestion hardening:
+  - Resolved in this batch: `supabase/functions/log-client-error/index.ts` now rate-limits public diagnostic ingestion, sanitizes nested metadata, strips route query/hash fragments, and no longer trusts client-supplied `userId` or `weddingSiteId` without an auth bearer token.
+  - Security hardening: browser-controlled diagnostic payloads can no longer directly assign logs to arbitrary users/sites or persist obvious token/secret/password/auth/API-key/cookie metadata.
+  - No feature loss: dashboard client-error logging remains available; authenticated logs can still associate with the bearer-token user and owned site.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now requires the client-error rate-limit scope, route/metadata sanitizers, and no client-supplied identity trust.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (26/26), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This narrows local diagnostic-ingestion abuse and data-retention risk. Live function deployment/proof remains required. No deploy was run.
+- 2026-05-05 12:45 PM PT - No-deploy site translation AI rate-limit hardening:
+  - Resolved in this batch: `supabase/functions/translate-site-content/index.ts` now uses the shared durable public submission rate limiter after authenticated owner/site validation and before any OpenAI provider call.
+  - Security hardening: the owner-only AI translation path now has per-user/site/language and requester throttling, reducing provider-spend abuse risk without exposing provider details or changing the translation response contract.
+  - No feature loss: site translation remains owner-gated, preserves the same supported languages and saved translation payload shape, and keeps provider failures customer-safe.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now requires the `translate_site_content` rate-limit scope, owner gate, auth gate, OpenAI server-side key usage, and safe translation error copies.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (26/26), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This narrows local provider-backed AI abuse risk. Live function deployment/proof remains required. No deploy was run.
+- 2026-05-05 12:49 PM PT - No-deploy AI provider and vendor inquiry email hardening:
+  - Resolved in this batch: `supabase/functions/photo-analyze-batch/index.ts` now rate-limits authenticated photo AI analysis after owner/collaborator permission checks and before any OpenAI/Gemini provider analysis work.
+  - Resolved in this batch: `supabase/functions/onboarding-ai-orchestrate/index.ts` now rate-limits model-backed onboarding orchestration when server credentials are available and falls back to the deterministic onboarding decision instead of making an unbounded provider call.
+  - Resolved in this batch: `supabase/functions/vendor-profile-inquiry-submit/index.ts` now imports the shared Edge Function email safety helper for HTML escaping and subject sanitization instead of maintaining a local duplicate.
+  - Security hardening: provider-backed AI entry points now have durable abuse/spend controls, and the newest vendor inquiry email path is aligned with centralized email escaping/sanitization proof.
+  - No feature loss: photo analysis permissions and result shape are unchanged; onboarding still returns useful deterministic setup output when throttled; vendor inquiry submission, persistence, reply-to, and packaged wedding context remain intact.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now requires `photo_analyze_batch`, `onboarding_ai_orchestrate`, deterministic fallback-on-throttle, and shared email-safety imports for vendor inquiry emails.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (26/26), `npm test -- --run src/pages/VendorProfile.test.tsx src/pages/VendorProfileCreate.test.tsx` (6/6), `npm run smoke:messages`, `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This narrows local provider-abuse and email-template drift risk. Live function deployment/proof remains required. No deploy was run.
+- 2026-05-05 12:55 PM PT - No-deploy media export/moderation and vendor preview SSRF hardening:
+  - Resolved in this batch: `supabase/functions/photo-export-manifest/index.ts` now neutralizes spreadsheet-formula prefixes in exported manifest text fields and protocol-cleans manifest URLs before returning them.
+  - Resolved in this batch: `supabase/functions/photo-upload-moderate/index.ts` now deduplicates requested upload IDs and refuses mixed valid/missing moderation batches instead of reporting success for IDs that were not found.
+  - Resolved in this batch: `supabase/functions/vendor-profile-preview/index.ts` now applies registry-style public fetch hardening: metadata/internal hostname blocking, private IPv4/IPv6 and DNS A/AAAA validation, manual redirect revalidation, timeout, HTML content-type checks, and response-size limits.
+  - Security hardening: media exports are safer for spreadsheet handling, photo moderation is stricter about exact targets, and vendor preview scraping is less useful as an SSRF/internal-network probe.
+  - No feature loss: authorized photo manifest exports still include the same rows and signed URLs; valid photo moderation batches still work; vendor profile preview still falls back to manual/source-derived data when a website cannot be fetched safely.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now requires formula neutralization, manifest URL cleaning, exact photo moderation target checks, and vendor preview DNS/redirect/size/timeout SSRF controls.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/pages/VendorProfile.test.tsx src/pages/VendorProfileCreate.test.tsx` (32/32), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, `npm run guard:file-size`, `npm run guard:assets`, and `git diff --check`.
+  - Launch status: unchanged. This narrows local media export/moderation and vendor preview public-fetch risk. Live function deployment/proof remains required. No deploy was run.
+- 2026-05-05 1:01 PM PT - No-deploy RSVP submit payload and service-role inventory hardening:
+  - Resolved in this batch: `supabase/functions/submit-rsvp/index.ts` no longer selects the raw `invite_token` after token lookup and now clamps guest-controlled meal, plus-one, and notes fields before RSVP/email queue writes.
+  - Resolved in this batch: `supabase/functions/public-site-rsvp-submit/index.ts` now validates optional guest email shape before writing site RSVP rows.
+  - Resolved in this batch: `docs/service-role-authorization-disposition-2026-05-05.md` now includes `public-site-rsvp-submit`, keeping the service-role inventory complete as the function surface evolves.
+  - Security hardening: RSVP submit paths expose less raw token data internally, bound guest-provided text more tightly, and reject malformed public-site RSVP email values before persistence.
+  - No feature loss: invite-link RSVP submit, site RSVP widget submit, stored access artifacts, and email queue behavior are preserved.
+  - Proof added/updated: `src/lib/launchEdgeFunctions.test.ts` now requires bounded RSVP submit fields, removal of raw invite-token selection in `submit-rsvp`, public-site RSVP email validation, and the complete service-role disposition inventory.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/sections/components/RsvpSection.test.tsx src/sections/variants/rsvp/multiEvent.test.tsx` (36/36), `npm run test:security` after the known Vite temp-file permission rerun (195/195), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This narrows local RSVP payload/data-boundary risk. Live RSVP function deployment/proof remains required, and the existing live RSVP 503 blocker is still not cleared. No deploy was run.
+- 2026-05-05 1:08 PM PT - No-deploy Guests RSVP state utility split continuation:
+  - Resolved in this batch: moved CSV mapper column labeling, guest fallback-state map building, household-state map building, exception-state map building, and segment-label resolution out of `src/pages/dashboard/Guests.tsx` into `src/pages/dashboard/guests/guestDashboardUtils.ts`.
+  - Maintainability hardening: lowered the file-size guard baseline for `Guests.tsx` from 4860 to 4799 lines, keeping the page on the steady shrinking path instead of loosening the guard.
+  - No feature loss: the guest dashboard still uses the same RSVP fallback, household, exception, CSV mapper, and segment label behavior; the extraction is pure utility movement with focused proof.
+  - Proof added/updated: `src/pages/dashboard/guests/guestDashboardUtils.test.ts` now covers CSV column labels beyond `Z`, owner-facing RSVP fallback/household/exception state maps, and static/event segment labels.
+  - Validation passed: `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestDisplayUtils.test.ts src/pages/dashboard/guestOpsTime.test.ts src/lib/guestDashboardErrorSafety.test.ts` (27/27), `npm run typecheck -- --pretty false`, `npm run guard:file-size`, `npm run lint -- --quiet`, `npm run build`, `npm run smoke:csvmapper`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P2 guest dashboard maintainability risk without changing guest import/export, RSVP, or dashboard behavior. Live RSVP/public proof blockers remain. No deploy was run.
+- 2026-05-05 1:12 PM PT - No-deploy Messages summary utility split continuation:
+  - Resolved in this batch: moved campaign-status summary, delivery-stat summary, and channel-breakdown calculations out of `src/pages/dashboard/Messages.tsx` into `src/pages/dashboard/messages/messageDashboardUtils.ts`.
+  - Maintainability hardening: lowered the file-size guard baseline for `Messages.tsx` from 3572 to 3531 lines while preserving the existing message dashboard rendering and permission gates.
+  - No feature loss: message history counts, delivery metrics, and channel breakdowns still use the same source messages and delivery status semantics; the extraction is pure utility movement with focused proof.
+  - Proof added/updated: `src/pages/dashboard/messages/messageDashboardUtils.test.ts` now covers campaign status counts, delivery rates, active/scheduled totals, and email/SMS channel targeted counts.
+  - Validation passed: `npm test -- --run src/pages/dashboard/messages/messageDashboardUtils.test.ts src/pages/dashboard/messages/messageDemoStorage.test.ts src/pages/dashboard/messageTemplateVariables.test.ts src/lib/guestMessageLanguagePreview.test.ts` (17/17), `npm run typecheck -- --pretty false`, `npm run guard:file-size`, `npm run smoke:messages`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P2 messaging maintainability risk without changing messaging behavior. Live messaging/public proof blockers remain. No deploy was run.
+- 2026-05-05 1:18 PM PT - No-deploy Messages history analytics split continuation:
+  - Resolved in this batch: moved history status counts, delivery health, campaign thread rollups, active campaign thread selection, active campaign message sorting, and provider telemetry rollups out of `src/pages/dashboard/Messages.tsx` into `src/pages/dashboard/messages/messageDashboardUtils.ts`.
+  - Maintainability hardening: lowered the file-size guard baseline for `Messages.tsx` again, from 3531 to 3427 lines, without weakening the message permission smoke guard.
+  - No feature loss: the extracted helpers preserve the existing skipped-count fallback plus delivery-row counting behavior, scheduled overdue detection, campaign-thread sorting, and customer-safe delivery error grouping.
+  - Proof added/updated: `src/pages/dashboard/messages/messageDashboardUtils.test.ts` now covers campaign threads, active campaign message ordering, delivery health percentages, overdue scheduled counts, and provider telemetry grouping with customer-safe provider wording.
+  - Validation passed: `npm test -- --run src/pages/dashboard/messages/messageDashboardUtils.test.ts src/pages/dashboard/messages/messageDemoStorage.test.ts src/pages/dashboard/messageTemplateVariables.test.ts src/lib/guestMessageLanguagePreview.test.ts` (18/18), `npm run typecheck -- --pretty false`, `npm run guard:file-size`, `npm run smoke:messages`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This further reduces local P2 messaging maintainability risk without changing message send/schedule/history behavior. Live messaging/public proof blockers remain. No deploy was run.
+- 2026-05-05 1:22 PM PT - No-deploy Guests follow-up payload utility split continuation:
+  - Resolved in this batch: moved RSVP follow-up summary, exception checklist, missing-meal checklist, no-contact checklist, filtered-email list, saved-segment draft, single follow-up task draft, and generated follow-up task construction out of `src/pages/dashboard/Guests.tsx` into `src/pages/dashboard/guests/guestDashboardUtils.ts`.
+  - Maintainability hardening: lowered the file-size guard baseline for `Guests.tsx` from 4799 to 4790 lines while keeping the RSVP follow-up/export behavior unchanged.
+  - No feature loss: the extracted helpers preserve existing checklist copy, segment labeling, email collection, follow-up task text, storage caps in page state, and owner copy/download behavior.
+  - Proof added/updated: `src/pages/dashboard/guests/guestDashboardUtils.test.ts` now covers the RSVP follow-up summary, exception checklist rows, missing meal/no-contact checklist rows, filtered email list, saved segment payloads, manual follow-up task payloads, and generated follow-up tasks.
+  - Validation passed: `npm test -- --run src/pages/dashboard/guests/guestDashboardUtils.test.ts src/pages/dashboard/guests/guestDisplayUtils.test.ts src/pages/dashboard/guestOpsTime.test.ts src/lib/guestDashboardErrorSafety.test.ts` (28/28), `npm run typecheck -- --pretty false`, `npm run guard:file-size`, `npm run smoke:csvmapper`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P2 guest dashboard maintainability risk without changing guest RSVP follow-up/export behavior. Live RSVP/public proof blockers remain. No deploy was run.
+- 2026-05-05 1:27 PM PT - No-deploy Settings payload utility split continuation:
+  - Resolved in this batch: moved partner-name splitting, settings slug normalization, privacy update payload construction, and RSVP question/meal cleanup out of `src/pages/dashboard/Settings.tsx` into `src/pages/dashboard/settings/settingsDashboardUtils.ts`.
+  - Maintainability hardening: lowered the file-size guard baseline for `Settings.tsx` from 2339 to 2328 lines while keeping settings save behavior unchanged.
+  - No feature loss: the extracted helpers preserve the existing slug cleanup behavior, password/invite privacy payload rules, RSVP choice validation, and demo/live RSVP settings persistence paths.
+  - Proof added/updated: `src/pages/dashboard/settings/settingsDashboardUtils.test.ts` now covers account/slug normalization, privacy payload omission of irrelevant sensitive fields, and RSVP settings cleanup/validation.
+  - Validation passed: `npm test -- --run src/pages/dashboard/settings/settingsDashboardUtils.test.ts src/pages/dashboard/settings/settingsDemoStorage.test.ts src/lib/settingsErrorSafety.test.ts` (14/14 after correcting the test to match current slug behavior), `npm run typecheck -- --pretty false`, `npm run guard:file-size`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P2 settings maintainability risk without changing privacy, notification, RSVP, billing, or template settings behavior. Live RSVP/public proof blockers remain. No deploy was run.
+- 2026-05-05 1:32 PM PT - No-deploy Name Change planner document-intake utility split continuation:
+  - Resolved in this batch: moved name-change document option metadata, extraction field labels/placeholders, contract document matching, extracted-field lookup, document creation, and document update helpers out of `src/pages/dashboard/planning/NameChangePlannerTab.tsx` into `src/pages/dashboard/planning/nameChangePlannerUi.ts`.
+  - Maintainability hardening: lowered the file-size guard baseline for `NameChangePlannerTab.tsx` from 2493 to 2414 lines while keeping the planner tab UI and document intake behavior unchanged.
+  - No feature loss: the extracted helpers preserve court-order alias matching, duplicate-document prevention, linked-field-first lookup, and document update semantics used by the planner workflow.
+  - Proof added/updated: `src/pages/dashboard/planning/nameChangePlannerUi.test.ts` now covers document option metadata, extraction labels/placeholders, contract matching, document ensure/update behavior, and linked-vs-fallback extracted field lookup.
+  - Validation passed: `npm test -- --run src/pages/dashboard/planning/nameChangePlannerUi.test.ts src/pages/dashboard/nameChangeOverviewInsights.test.ts src/pages/dashboard/nameChangeOverviewCard.test.ts` (15/15), `npm run typecheck -- --pretty false` after restoring the still-needed local normalized document-id import, `npm run guard:file-size`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P2 planning maintainability risk without changing name-change planner behavior. Live RSVP/public proof blockers remain. No deploy was run.
+- 2026-05-05 1:42 PM PT - No-deploy Guest Photo Sharing and Coordinator utility split continuation:
+  - Resolved in this batch: moved photo dashboard counts, memory chapter derivation, highlight/review queues, duplicate grouping, coordinator guest stats, coordinator guest sorting, event audience options, alert audience counts, and alert-log filtering out of oversized dashboard pages into tested helper modules.
+  - Maintainability hardening: lowered the file-size guard baseline for `GuestPhotoSharing.tsx` from 3236 to 3188 lines and `CoordinatorMode.tsx` from 2794 to 2773 lines.
+  - No feature loss: guest photo recap/curation semantics, duplicate ranking, coordinator queue ordering, alert audience counts, and alert log filters keep the same behavior through pure helper extraction.
+  - Proof added/updated: `src/pages/dashboard/guestPhotoSharingUtils.test.ts` now covers dashboard counts and memory/curation collections; `src/pages/dashboard/coordinator/coordinatorDashboardUtils.test.ts` now covers coordinator stats, queue sort order, event audience counts, and alert-log filters.
+  - Validation passed: `npm test -- --run src/pages/dashboard/guestPhotoSharingUtils.test.ts src/lib/photoAnalysisCustomerCopy.test.ts src/lib/memoryFlowReadiness.test.ts` (18/18), `npm test -- --run src/pages/dashboard/coordinator/coordinatorDashboardUtils.test.ts src/pages/dashboard/coordinator/coordinatorStorage.test.ts src/lib/coordinatorCheckInQueue.test.ts src/lib/coordinatorAlertLogView.test.ts` (12/12), `npm run typecheck -- --pretty false` after tightening test fixture types, `npm run guard:file-size`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P2 photo/coordinator maintainability risk without changing guest photo, recap, check-in, Q&A, timeline, or alert behavior. Live RSVP/public proof blockers remain. No deploy was run.
+- 2026-05-05 1:48 PM PT - No-deploy Seating export and check-in utility split continuation:
+  - Resolved in this batch: moved seating assigned/arrived/unassigned derivations, seat-picker filtering, check-in candidate filtering, table guest lookup, demo auto-table generation, demo auto-seat assignment generation, print report HTML, and seating-layout SVG construction out of `src/pages/dashboard/Seating.tsx` into `src/pages/dashboard/seating/seatingDashboardUtils.ts`.
+  - Maintainability hardening: lowered the file-size guard baseline for `Seating.tsx` from 2259 to 2169 lines.
+  - No feature loss: drag/drop seating, direct seat selection, demo auto-table/auto-seat behavior, table print/PDF export, SVG layout export, check-in filtering, and table rendering now use the same extracted derivations with the same output semantics.
+  - Proof added/updated: `src/pages/dashboard/seating/seatingDashboardUtils.test.ts` now covers assigned/arrived/unassigned sets, table guest lookup, seat-picker scoping, check-in candidate filtering, demo auto tables, demo auto-seat assignments, escaped print HTML, and escaped SVG export output.
+  - Validation passed: `npm test -- --run src/pages/dashboard/seating/seatingDashboardUtils.test.ts src/pages/dashboard/seating/seatingService.test.ts src/pages/dashboard/seating/seatingDemoStorage.test.ts` (21/21), `npm run typecheck -- --pretty false`, `npm run guard:file-size`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P2 seating maintainability risk without changing seating, catering handoff, check-in, auto-seat, auto-table, or export behavior. Live RSVP/public proof blockers remain. No deploy was run.
+- 2026-05-05 1:57 PM PT - No-deploy Messages history and reachability utility split continuation:
+  - Resolved in this batch: moved message history filtering, audience reachability counts, audience breakdown rollups, and itinerary-segment performance rollups out of `src/pages/dashboard/Messages.tsx` into `src/pages/dashboard/messages/messageDashboardUtils.ts`.
+  - Maintainability hardening: lowered the file-size guard baseline for `Messages.tsx` from 3427 to 3386 lines.
+  - No feature loss: status/channel/audience/delivery/campaign/search filtering, recipient reachability, audience summary cards, and event segment performance preserve current semantics; the characterization test intentionally preserves the existing generic `Itinerary segment` audience-breakdown label.
+  - Proof added/updated: `src/pages/dashboard/messages/messageDashboardUtils.test.ts` now covers history filters, audience reachability, audience breakdown, and event segment performance.
+  - Validation passed: `npm test -- --run src/pages/dashboard/messages/messageDashboardUtils.test.ts src/pages/dashboard/messages/messageDemoStorage.test.ts src/pages/dashboard/messageTemplateVariables.test.ts src/lib/guestMessageLanguagePreview.test.ts` (20/20 after correcting one fixture to match the current audience-label behavior), `npm run typecheck -- --pretty false` after narrowing one test fixture to the helper contract, `npm run guard:file-size`, `npm run smoke:messages`, `npm run lint -- --quiet`, `npm run build`, and `git diff --check`.
+  - Launch status: unchanged. This reduces local P2 messaging maintainability risk without changing compose, send, schedule, retry, permission, or history behavior. Live messaging/public proof blockers remain. No deploy was run.
 - Do not start broad refactors from this file alone.
 - Execute this backlog top-down by risk, beginning with the P0 public data, gating, RSVP, AI key, service worker, email escaping, SSRF, and settings contract issues.
 - Update proof logs and launch docs only after concrete verification passes.

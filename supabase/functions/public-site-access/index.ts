@@ -1,19 +1,13 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { signSessionToken, verifySessionToken } from "../_shared/signedSession.ts";
+import { signSessionToken } from "../_shared/signedSession.ts";
+import { normalizePublicPrivacyMode, resolvePublicAccessStatus } from "../_shared/publicAccessGate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
-
-type PublicSiteGateStatus =
-  | "unavailable"
-  | "coming_soon"
-  | "password_required"
-  | "invite_required"
-  | "open";
 
 interface ResolvePayload {
   action: "resolve";
@@ -29,12 +23,6 @@ interface PasswordUnlockPayload {
 }
 
 type Payload = ResolvePayload | PasswordUnlockPayload;
-
-interface PasswordSessionPayload {
-  scope: "public_site_password";
-  slug: string;
-  exp: number;
-}
 
 const PUBLIC_SITE_PASSWORD_RATE_LIMIT_WINDOW_MINUTES = 15;
 const PUBLIC_SITE_PASSWORD_RATE_LIMIT_MAX_ATTEMPTS = 8;
@@ -148,16 +136,6 @@ function getIsPublishedFromSiteRow(row: Record<string, unknown>): boolean {
   );
 }
 
-function isPrivatePublishedSite(input: {
-  isPublished: boolean;
-  privacyMode: string;
-}): boolean {
-  return input.isPublished && (
-    input.privacyMode === "password_protected" ||
-    input.privacyMode === "invite_only"
-  );
-}
-
 function json(data: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -181,22 +159,6 @@ async function issuePasswordSessionToken(slug: string, secret: string): Promise<
       exp: Date.now() + 1000 * 60 * 60 * 12,
     },
     secret,
-  );
-}
-
-async function hasValidPasswordSession(
-  slug: string,
-  sessionToken: string | null | undefined,
-  secret: string,
-): Promise<boolean> {
-  if (!sessionToken) return false;
-  const payload = await verifySessionToken<PasswordSessionPayload>(sessionToken, secret);
-  return Boolean(
-    payload &&
-    payload.scope === "public_site_password" &&
-    payload.slug === slug &&
-    Number.isFinite(payload.exp) &&
-    payload.exp > Date.now(),
   );
 }
 
@@ -224,9 +186,10 @@ async function enforcePasswordAttemptRateLimit(
     return true;
   }
 
+  const safeSubjectMarker = `h:${await hashRateLimitKey(`public-site-access:${slug}:${Deno.env.get("SUPABASE_URL") ?? ""}`)}`;
   await adminClient
     .from("rsvp_rate_limit")
-    .insert({ ip_hash: ipHash, guest_token: slug.slice(0, 16), attempts: 1 });
+    .insert({ ip_hash: ipHash, guest_token: safeSubjectMarker, attempts: 1 });
   return true;
 }
 
@@ -286,15 +249,25 @@ Deno.serve(async (req: Request) => {
     if (!row) return json({ status: "unavailable", site: null }, 200);
 
     const isPublished = getIsPublishedFromSiteRow(row);
-    const privacyMode = typeof row.privacy_mode === "string" ? row.privacy_mode : "public";
+    const privacyMode = normalizePublicPrivacyMode(row.privacy_mode);
 
-    if (!isPublished && !isPrivatePublishedSite({ isPublished, privacyMode })) {
+    if (!isPublished) {
       return json({ status: "coming_soon", site: null }, 200);
     }
 
+    if (!privacyMode) {
+      return json({ status: "unavailable", site: null }, 200);
+    }
+
     if (payload.action === "password_unlock") {
-      if (privacyMode !== "password_protected") {
+      if (privacyMode === "public") {
         return json({ status: "open", site: buildSafePublicSite(row) }, 200);
+      }
+      if (privacyMode === "invite_only") {
+        return json({ status: "invite_required", site: null }, 200);
+      }
+      if (privacyMode === "hidden") {
+        return json({ status: "coming_soon", site: null }, 200);
       }
 
       const password = typeof payload.password === "string" ? payload.password : "";
@@ -322,19 +295,18 @@ Deno.serve(async (req: Request) => {
       }, 200);
     }
 
-    if (privacyMode === "password_protected") {
-      const sessionOk = await hasValidPasswordSession(slug, payload.passwordSession ?? null, sessionSecret);
-      if (!sessionOk) {
-        return json({ status: "password_required", site: null }, 200);
-      }
-    }
+    const accessStatus = await resolvePublicAccessStatus({
+      isPublished,
+      privacyMode,
+      siteSlug: slug,
+      inviteToken: payload.inviteToken ?? null,
+      passwordSession: payload.passwordSession ?? null,
+      storedInviteToken: typeof row.guest_access_token === "string" ? row.guest_access_token : null,
+      secret: sessionSecret,
+    });
 
-    if (privacyMode === "invite_only") {
-      const inviteToken = typeof payload.inviteToken === "string" ? payload.inviteToken.trim() : "";
-      const storedInviteToken = typeof row.guest_access_token === "string" ? row.guest_access_token.trim() : "";
-      if (!inviteToken || !storedInviteToken || inviteToken !== storedInviteToken) {
-        return json({ status: "invite_required", site: null }, 200);
-      }
+    if (accessStatus !== "open") {
+      return json({ status: accessStatus, site: null }, 200);
     }
 
     return json({ status: "open", site: buildSafePublicSite(row) }, 200);

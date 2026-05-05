@@ -19,6 +19,25 @@ function hasPermissionKey(permissions: unknown, key: string): boolean {
   return Array.isArray(permissions) && permissions.includes(key);
 }
 
+function safeSpreadsheetCell(value: unknown): string {
+  const text = String(value ?? "");
+  return /^[=+\-@\t\r\n]/.test(text) ? `'${text}` : text;
+}
+
+function safeManifestUrl(value: unknown): string {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  try {
+    const parsed = new URL(raw);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return "";
+    parsed.username = "";
+    parsed.password = "";
+    return parsed.toString();
+  } catch {
+    return "";
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
   const url = new URL(req.url);
@@ -87,19 +106,19 @@ Deno.serve(async (req: Request) => {
 
     const albumById = new Map((albums ?? []).map((album) => [album.id, album.name]));
     const rows = await Promise.all((uploads ?? []).map(async (upload) => {
-      let downloadUrl = typeof upload.drive_web_view_link === "string" ? upload.drive_web_view_link : "";
+      let downloadUrl = safeManifestUrl(upload.drive_web_view_link);
       const driveFileId = typeof upload.drive_file_id === "string" ? upload.drive_file_id : "";
       if (driveFileId && !driveFileId.startsWith("http")) {
         const { data: signed } = await admin.storage.from(HOSTED_BUCKET).createSignedUrl(driveFileId, 60 * 60 * 24);
         downloadUrl = signed?.signedUrl ?? downloadUrl;
       }
       return {
-        bucket: albumById.get(upload.photo_album_id) ?? "",
-        filename: upload.original_filename ?? "",
-        guest_name: upload.guest_name ?? "",
-        guest_email: upload.guest_email ?? "",
-        note: upload.note ?? "",
-        mime_type: upload.mime_type ?? "",
+        bucket: safeSpreadsheetCell(albumById.get(upload.photo_album_id)),
+        filename: safeSpreadsheetCell(upload.original_filename),
+        guest_name: safeSpreadsheetCell(upload.guest_name),
+        guest_email: safeSpreadsheetCell(upload.guest_email),
+        note: safeSpreadsheetCell(upload.note),
+        mime_type: safeSpreadsheetCell(upload.mime_type),
         size_bytes: upload.size_bytes ?? "",
         uploaded_at: upload.uploaded_at ?? "",
         download_url: downloadUrl,

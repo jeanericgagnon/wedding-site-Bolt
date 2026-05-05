@@ -2,15 +2,18 @@ import { readFileSync } from 'node:fs';
 
 const packageJson = JSON.parse(readFileSync('package.json', 'utf8'));
 const scripts = packageJson.scripts ?? {};
+const ciHardpass = readFileSync('.github/workflows/ci-hardpass.yml', 'utf8');
 
 const required = {
   'test:unit': 'vitest run src',
+  'test:security': 'vitest run src/lib/launchEdgeFunctions.test.ts src/lib/publicSiteAccess.test.ts src/lib/publicSiteProject.test.ts src/lib/serviceWorkerSafety.test.ts src/lib/aiProviderKeySecurity.test.ts src/lib/aiExposureProofScript.test.ts src/lib/settingsErrorSafety.test.ts src/lib/serviceRoleAuthorizationDisposition.test.ts src/pages/RSVP.test.tsx src/pages/EventRSVP.test.tsx',
   'test:smoke': 'npm run smoke:registry && npm run smoke:rsvp && npm run smoke:csvmapper && npm run smoke:checkin && npm run smoke:messages && npm run smoke:site',
   'test:integration': 'npm run proof:v1:canonical-smoke && npm run proof:v1:guests-rsvp-ops && npm run proof:v1:registry && npm run proof:v1:seating-continuity && npm run proof:v1:comms-center',
   'test:e2e': 'npx playwright test --workers=1 tests/e2e',
-  'test:launch': 'npm run typecheck -- --pretty false && npm run lint -- --quiet && npm run build && npm run proof:v1:board:md',
+  'test:launch': 'npm run typecheck -- --pretty false && npm run lint -- --quiet && npm run test:security && npm run guard:file-size && npm run guard:assets && npm run build && npm run proof:v1:board:md',
   'proof:v1:test-lanes': 'node scripts/v1-proof-test-lanes.mjs',
   'guard:file-size': 'node scripts/check-file-size-guard.mjs',
+  'guard:assets': 'node scripts/check-asset-budget.mjs',
 };
 
 const failures = [];
@@ -31,6 +34,29 @@ if (!scripts.test?.startsWith('vitest run')) {
 
 if (!scripts['proof:v1:board:md']?.includes('--markdown')) {
   failures.push('proof:v1:board:md must keep markdown proof-board generation.');
+}
+
+const requiredCiSnippets = [
+  'run: npm run lint -- --quiet',
+  'run: npm run guard:file-size',
+  'run: npm run guard:assets',
+  'run: npm run test:security',
+  'run: npm test',
+  'run: npm run build',
+  'run: npm run smoke:registry',
+  'run: npm run smoke:csvmapper',
+  'run: npm run smoke:checkin',
+  'run: npm run smoke:messages',
+];
+
+for (const snippet of requiredCiSnippets) {
+  if (!ciHardpass.includes(snippet)) {
+    failures.push(`ci-hardpass.yml must include ${snippet}`);
+  }
+}
+
+if (ciHardpass.includes('npm test &&')) {
+  failures.push('ci-hardpass.yml should keep hardpass checks as named steps instead of chaining npm test with later checks.');
 }
 
 const result = {

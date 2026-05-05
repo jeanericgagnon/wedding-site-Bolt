@@ -7,7 +7,6 @@ import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { formatGuestOpsDate, formatGuestOpsDateTime, formatGuestOpsRelativeTime, getGuestOpsTimestamp } from './guestOpsTime';
 import { formatGuestEventDate } from './guestEventDate';
 import { getDaysUntilGuestWedding } from './guestWeddingDate';
-import { getRsvpFallbackState } from '../../lib/rsvpFallbackState';
 import { getInviteLifecycleState } from '../../lib/inviteLifecycle';
 import { getGuestLifecycleStage } from '../../lib/guestLifecycleStage';
 import { getPlusOneState } from '../../lib/plusOneState';
@@ -29,7 +28,7 @@ import { deleteEventRsvpByInvitationId, deleteEventRsvpsByInvitationIds, getEven
 import { GUEST_IMPORT_MAX_FILE_BYTES, GUEST_IMPORT_MAX_ROWS, buildDefaultCsvFieldMap, buildGuestImportPreview, isCsvNameMappingValid, readGuestImportRows, type CsvFieldMap } from '../../lib/guestImportParser';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, Button, Badge, Input, Select, Textarea } from '../../components/ui';
-import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home, CalendarDays, ChevronRight, Loader2, Copy, ChevronDown, PlusCircle, Pencil, Trash2, ExternalLink, Eye } from 'lucide-react';
+import { Download, UserPlus, CheckCircle2, XCircle, Clock, X, Upload, Users, Mail, AlertCircle, Merge, Scissors, Home, CalendarDays, ChevronRight, Loader2, Copy, ChevronDown, Trash2, ExternalLink, Eye } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/ui/Toast';
@@ -40,238 +39,80 @@ import { sendWeddingInvitation } from '../../lib/emailService';
 import { resolvePublicSiteSlugFromRow } from '../../lib/publicSiteSlug';
 import { copyTextOrDownload } from '../../lib/copyText';
 import { logAppAction } from '../../lib/actionAudit';
-import { customerSafeErrorMessage } from '../../lib/customerSafeError';
-import { toSafeCsv } from '../../lib/csvExport';
-
-function safeGuestsDashboardError(err: unknown, fallback: string): string {
-  return customerSafeErrorMessage(err, fallback);
-}
-
-function safeGuestImportReadError(err: unknown): string {
-  return customerSafeErrorMessage(err, 'Couldn’t read that guest file. Please check the format and try again.', {
-    allow: [
-      /^Guest import files must be 5MB or smaller\.$/i,
-      /^Please save legacy \.xls files as \.xlsx or CSV before importing\.$/i,
-      /^Guest import is limited to [\d,]+ rows at a time\. Split the spreadsheet and import in batches\.$/i,
-      /^Guest import is limited to \d+ columns\. Remove unused columns and try again\.$/i,
-    ],
-  });
-}
-
-interface Guest {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  name: string;
-  email: string | null;
-  phone: string | null;
-  plus_one_allowed: boolean;
-  plus_one_name: string | null;
-  invited_to_ceremony: boolean;
-  invited_to_reception: boolean;
-  invite_token: string | null;
-  rsvp_status: string;
-  rsvp_received_at: string | null;
-  checked_in_at?: string | null;
-  checkin_notes?: string | null;
-  thank_you_sent_at?: string | null;
-  thank_you_notes?: string | null;
-  household_id: string | null;
-}
-
-interface RSVP {
-  attending: boolean;
-  attending_ceremony?: boolean | null;
-  attending_reception?: boolean | null;
-  meal_choice: string | null;
-  plus_one_name: string | null;
-  plus_one_count?: number | null;
-  children_count?: number | null;
-  notes: string | null;
-  custom_answers?: Record<string, string | string[]> | null;
-}
-
-interface GuestWithRSVP extends Guest {
-  rsvp?: RSVP;
-  notes?: string | null;
-  invited_event_ids?: string[] | null;
-}
-
-interface GuestAuditEntry {
-  id: string;
-  guest_id?: string;
-  action: 'insert' | 'update' | 'delete';
-  changed_at: string;
-  changed_by: string | null;
-  old_data: Record<string, unknown> | null;
-  new_data: Record<string, unknown> | null;
-}
-
-interface RsvpConflict {
-  id: string;
-  guest_id: string;
-  conflict_code: string;
-  message: string;
-  severity: 'error' | 'warning' | string;
-  created_at: string;
-  resolved: boolean;
-  resolved_at?: string | null;
-}
-
-interface RsvpConflictStats {
-  openNow: number;
-  opened24h: number;
-  resolved24h: number;
-  unresolvedOver24h: number;
-  unresolvedOver72h: number;
-  topCodes: Array<{ code: string; count: number }>;
-}
-
-function formatAuditValue(value: unknown): string {
-  if (value == null || value === '') return '—';
-  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
-  return String(value);
-}
-
-function summarizeAuditEntry(entry: GuestAuditEntry): string {
-  if (entry.action === 'insert') return 'Guest created';
-  if (entry.action === 'delete') return 'Guest removed';
-
-  const oldData = entry.old_data ?? {};
-  const newData = entry.new_data ?? {};
-
-  const watched: Array<{ key: string; label: string }> = [
-    { key: 'rsvp_status', label: 'RSVP status' },
-    { key: 'first_name', label: 'First name' },
-    { key: 'last_name', label: 'Last name' },
-    { key: 'email', label: 'Email' },
-    { key: 'phone', label: 'Phone' },
-    { key: 'plus_one_allowed', label: 'Plus-one allowed' },
-    { key: 'plus_one_name', label: 'Plus-one name' },
-    { key: 'invited_to_ceremony', label: 'Ceremony invite' },
-    { key: 'invited_to_reception', label: 'Reception invite' },
-    { key: 'household_id', label: 'Household' },
-  ];
-
-  const changes = watched
-    .filter(({ key }) => oldData[key] !== newData[key])
-    .slice(0, 2)
-    .map(({ key, label }) => `${label}: ${formatAuditValue(oldData[key])} → ${formatAuditValue(newData[key])}`);
-
-  if (changes.length === 0) return 'Guest details updated';
-  return changes.join(' · ');
-}
-
-function getAuditActionTone(action: GuestAuditEntry['action']): string {
-  if (action === 'insert') return 'bg-success-light text-success border-success/20';
-  if (action === 'delete') return 'bg-surface-subtle text-text-secondary border-border-subtle';
-  return 'bg-primary-light text-primary border-primary/20';
-}
-
-function getAuditGuestLabel(entry: GuestAuditEntry): string {
-  const preferred = (entry.new_data?.name as string | undefined)
-    || `${entry.new_data?.first_name ?? ''} ${entry.new_data?.last_name ?? ''}`.trim()
-    || (entry.old_data?.name as string | undefined)
-    || `${entry.old_data?.first_name ?? ''} ${entry.old_data?.last_name ?? ''}`.trim();
-  return preferred || 'Guest';
-}
-
-function getAuditActionIcon(action: GuestAuditEntry['action']) {
-  if (action === 'insert') return PlusCircle;
-  if (action === 'delete') return Trash2;
-  return Pencil;
-}
-
-function parseRsvpEventSelections(notes: string | null): { ceremony?: boolean; reception?: boolean } | null {
-  if (!notes) return null;
-  const match = notes.match(/\[Events\s+([^\]]+)\]/i);
-  if (!match) return null;
-
-  const pairs = match[1]
-    .split(',')
-    .map((part) => part.trim())
-    .map((part) => {
-      const [k, v] = part.split(':').map((x) => (x || '').trim().toLowerCase());
-      return [k, v === 'yes'] as const;
-    });
-
-  const map = Object.fromEntries(pairs) as Record<string, boolean>;
-  return {
-    ceremony: map.ceremony,
-    reception: map.reception,
-  };
-}
-
-
-
-function getCustomAnswerEntries(customAnswers: Record<string, string | string[]> | null | undefined): Array<{ key: string; value: string }> {
-  if (!customAnswers || typeof customAnswers !== 'object') return [];
-
-  return Object.entries(customAnswers)
-    .map(([key, value]) => ({
-      key: key.replace(/^q_/, 'question_'),
-      value: Array.isArray(value) ? value.join(', ').trim() : (typeof value === 'string' ? value : String(value ?? '')).trim(),
-    }))
-    .filter((entry) => entry.value.length > 0);
-}
-
-function formatCustomAnswers(customAnswers: Record<string, string | string[]> | null | undefined): string {
-  if (!customAnswers || typeof customAnswers !== 'object') return '';
-  const entries = Object.entries(customAnswers)
-    .map(([key, value]) => [key, typeof value === 'string' ? value.trim() : String(value ?? '').trim()] as const)
-    .filter(([, value]) => value.length > 0);
-
-  if (entries.length === 0) return '';
-
-  return entries
-    .map(([key, value]) => `${key.replace(/^q_/, 'question_')}: ${value}`)
-    .join(' | ');
-}
-
-interface WeddingSiteInfo {
-  id: string;
-  couple_name_1: string;
-  couple_name_2: string;
-  wedding_date: string | null;
-  venue_name: string | null;
-  venue_address: string | null;
-  site_url: string | null;
-  site_slug: string | null;
-}
-
-const RSVP_CAMPAIGN_LOG_KEY = 'dayof_rsvp_campaign_log_v1';
-const RSVP_FOLLOWUP_TASKS_KEY = 'dayof_rsvp_followup_tasks_v1';
-const RSVP_CAMPAIGN_PRESET_KEY = 'dayof_rsvp_campaign_preset_v1';
-const RSVP_SAVED_SEGMENTS_KEY = 'dayof_rsvp_saved_segments_v1';
-
-
-interface RSVPQuestionSetting {
-  id: string;
-  label: string;
-  type: 'short_text' | 'long_text' | 'single_choice' | 'multi_choice';
-  required: boolean;
-  appliesTo: 'all' | 'ceremony' | 'reception';
-  options?: string[];
-}
-
-const makeRsvpQuestion = (): RSVPQuestionSetting => ({
-  id: `q_${Math.random().toString(36).slice(2, 10)}`,
-  label: '',
-  type: 'short_text',
-  required: false,
-  appliesTo: 'all',
-  options: [],
-});
-
-const toTitleCase = (value: string) => value.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase());
-
-interface ItineraryEvent {
-  id: string;
-  event_name: string;
-  event_date: string | null;
-  start_time: string | null;
-  location_name: string | null;
-}
+import {
+  formatCustomAnswers,
+  getAuditActionIcon,
+  getAuditActionTone,
+  getAuditGuestLabel,
+  getCustomAnswerEntries,
+  parseRsvpEventSelections,
+  summarizeAuditEntry,
+} from './guests/guestDisplayUtils';
+import {
+  type Guest,
+  type GuestAuditEntry,
+  type GuestWithRSVP,
+  type ItineraryEvent,
+  type RSVPQuestionSetting,
+  type RsvpConflict,
+  type RsvpConflictStats,
+  type WeddingSiteInfo,
+} from './guests/guestDashboardTypes';
+import {
+  buildCheckedInGuestsCsv,
+  buildEventAttendanceCsv,
+  buildGuestHouseholdGroups,
+  buildGuestOpsQueue,
+  buildGuestAddressCollectionCsv,
+  buildGuestExportCsv,
+  buildFilteredEmailList,
+  buildFollowUpTask,
+  buildGeneratedFollowUpTasks,
+  buildHouseholdLabelsCsv,
+  buildMissingMealChecklistLines,
+  buildNoContactChecklistLines,
+  buildRsvpExceptionChecklistLines,
+  buildRsvpFollowUpSummary,
+  buildSavedSegment,
+  buildThankYouDueCsv,
+  getGuestCustomAnswerRollup,
+  getGuestCampaignReadiness,
+  getGuestContactStats,
+  getGuestIssueCount,
+  getGuestMealChoiceRollup,
+  getGuestMealSummary,
+  getGuestRecommendedAction,
+  getGuestRsvpCompleteness,
+  getGuestRsvpOpsStats,
+  getGuestSongRequestEntries,
+  makeRsvpQuestion,
+  safeGuestImportReadError,
+  safeGuestsDashboardError,
+  sortGuestsForDisplay,
+  toTitleCase,
+  buildGuestExceptionStateMap,
+  buildGuestFallbackStateMap,
+  buildGuestHouseholdStateMap,
+  csvColumnLetter,
+  GUEST_SEGMENT_LABELS,
+  getGuestSegmentLabel,
+} from './guests/guestDashboardUtils';
+import {
+  readStoredCampaignLog,
+  readStoredCampaignPreset,
+  readStoredDemoRsvpConfig,
+  readStoredFollowUpTasks,
+  readStoredSavedSegments,
+  writeStoredCampaignLog,
+  writeStoredCampaignPreset,
+  writeStoredDemoRsvpConfig,
+  writeStoredFollowUpTasks,
+  writeStoredSavedSegments,
+  type RsvpCampaignLogEntry,
+  type RsvpCampaignPreset,
+  type RsvpFollowUpTask,
+  type RsvpSavedSegment,
+} from './guests/guestDashboardStorage';
 
 export const DashboardGuests: React.FC = () => {
   const navigate = useNavigate();
@@ -316,12 +157,12 @@ export const DashboardGuests: React.FC = () => {
   const [editingGuest, setEditingGuest] = useState<GuestWithRSVP | null>(null);
   const [sendingInviteId, setSendingInviteId] = useState<string | null>(null);
   const [bulkSending, setBulkSending] = useState(false);
-  const [campaignLog, setCampaignLog] = useState<Array<{ id: number; segment: string; count: number; sentAt: string }>>([]);
+  const [campaignLog, setCampaignLog] = useState<RsvpCampaignLogEntry[]>([]);
   const [showRecipientPreview, setShowRecipientPreview] = useState(false);
-  const [campaignPreset, setCampaignPreset] = useState<'pending' | 'missing-meal' | 'plusone-missing' | 'ceremony-no' | 'reception-no' | 'pending-no-email'>('pending');
-  const [followUpTasks, setFollowUpTasks] = useState<Array<{ id: number; text: string; createdAt: string }>>([]);
+  const [campaignPreset, setCampaignPreset] = useState<RsvpCampaignPreset>('pending');
+  const [followUpTasks, setFollowUpTasks] = useState<RsvpFollowUpTask[]>([]);
   const [sortByPriority, setSortByPriority] = useState(false);
-  const [savedSegments, setSavedSegments] = useState<Array<{ id: number; label: string; filter: string; createdAt: string }>>([]);
+  const [savedSegments, setSavedSegments] = useState<RsvpSavedSegment[]>([]);
   const [guestsTab, setGuestsTab] = useState<'ops' | 'rsvp-config'>('ops');
   const [guestsRole, setGuestsRole] = useState<PlannerAccessRole>('owner');
   const [guestsPermissions, setGuestsPermissions] = useState<PlannerPermissionKey[] | null>(null);
@@ -387,32 +228,13 @@ export const DashboardGuests: React.FC = () => {
 
 
   useEffect(() => {
-    try {
-      const rawPreset = localStorage.getItem(RSVP_CAMPAIGN_PRESET_KEY);
-      if (rawPreset) {
-        const preset = rawPreset as typeof campaignPreset;
-        setCampaignPreset(preset);
-        setFilterStatus(preset);
-      }
-    } catch {
-      // noop
+    const preset = readStoredCampaignPreset();
+    if (preset) {
+      setCampaignPreset(preset);
+      setFilterStatus(preset);
     }
-
-    try {
-      const rawTasks = localStorage.getItem(RSVP_FOLLOWUP_TASKS_KEY);
-      const parsed = rawTasks ? JSON.parse(rawTasks) : [];
-      if (Array.isArray(parsed)) setFollowUpTasks(parsed.slice(0, 12));
-    } catch {
-      // noop
-    }
-
-    try {
-      const rawSeg = localStorage.getItem(RSVP_SAVED_SEGMENTS_KEY);
-      const parsed = rawSeg ? JSON.parse(rawSeg) : [];
-      if (Array.isArray(parsed)) setSavedSegments(parsed.slice(0, 12));
-    } catch {
-      // noop
-    }
+    setFollowUpTasks(readStoredFollowUpTasks());
+    setSavedSegments(readStoredSavedSegments());
 
     try {
       const rawRole = readPlannerAccessRole('guests', weddingSiteId ?? 'global');
@@ -423,27 +245,15 @@ export const DashboardGuests: React.FC = () => {
   }, [weddingSiteId]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(RSVP_CAMPAIGN_PRESET_KEY, campaignPreset);
-    } catch {
-      // noop
-    }
+    writeStoredCampaignPreset(campaignPreset);
   }, [campaignPreset]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(RSVP_FOLLOWUP_TASKS_KEY, JSON.stringify(followUpTasks.slice(0, 12)));
-    } catch {
-      // noop
-    }
+    writeStoredFollowUpTasks(followUpTasks);
   }, [followUpTasks]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(RSVP_SAVED_SEGMENTS_KEY, JSON.stringify(savedSegments.slice(0, 12)));
-    } catch {
-      // noop
-    }
+    writeStoredSavedSegments(savedSegments);
   }, [savedSegments]);
 
   useEffect(() => {
@@ -456,21 +266,11 @@ export const DashboardGuests: React.FC = () => {
 
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(RSVP_CAMPAIGN_LOG_KEY);
-      const parsed = raw ? JSON.parse(raw) : [];
-      if (Array.isArray(parsed)) setCampaignLog(parsed.slice(0, 12));
-    } catch {
-      // noop
-    }
+    setCampaignLog(readStoredCampaignLog());
   }, []);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(RSVP_CAMPAIGN_LOG_KEY, JSON.stringify(campaignLog.slice(0, 12)));
-    } catch {
-      // noop
-    }
+    writeStoredCampaignLog(campaignLog);
   }, [campaignLog]);
 
   const [viewMode, setViewMode] = useState<'list' | 'households'>('households');
@@ -496,16 +296,6 @@ export const DashboardGuests: React.FC = () => {
   const [showInsights, setShowInsights] = useState(false);
   const cleanGuestsView = !showInsights;
   const csvNameMappingValid = isCsvNameMappingValid(csvFieldMap);
-  const csvColumnLetter = (index: number) => {
-    let n = index + 1;
-    let out = '';
-    while (n > 0) {
-      const rem = (n - 1) % 26;
-      out = String.fromCharCode(65 + rem) + out;
-      n = Math.floor((n - 1) / 26);
-    }
-    return out;
-  };
 
   const [itineraryDrawerGuest, setItineraryDrawerGuest] = useState<GuestWithRSVP | null>(null);
   const [itineraryEvents, setItineraryEvents] = useState<ItineraryEvent[]>([]);
@@ -543,17 +333,10 @@ export const DashboardGuests: React.FC = () => {
 
     if (isDemoMode) {
       setWeddingSiteId(demoWeddingSite.id);
-      try {
-        const rawQ = localStorage.getItem('dayof_demo_rsvp_custom_questions_v1');
-        const parsedQ = rawQ ? JSON.parse(rawQ) : [];
-        if (Array.isArray(parsedQ)) setRsvpQuestions(parsedQ as RSVPQuestionSetting[]);
-        const rawM = localStorage.getItem('dayof_demo_rsvp_meal_config_v1');
-        const parsedM = rawM ? JSON.parse(rawM) : null;
-        if (parsedM && typeof parsedM === 'object') {
-          setRsvpMealEnabled(typeof parsedM.enabled === 'boolean' ? parsedM.enabled : true);
-          setRsvpMealOptions(Array.isArray(parsedM.options) ? parsedM.options.filter((x: unknown): x is string => typeof x === 'string' && x.trim().length > 0) : ['Chicken','Beef','Fish','Vegetarian','Vegan']);
-        }
-      } catch {}
+      const demoRsvpConfig = readStoredDemoRsvpConfig();
+      setRsvpQuestions(demoRsvpConfig.questions);
+      setRsvpMealEnabled(demoRsvpConfig.mealEnabled);
+      setRsvpMealOptions(demoRsvpConfig.mealOptions);
       rsvpConfigLoadedRef.current = true;
       return;
     }
@@ -926,8 +709,7 @@ export const DashboardGuests: React.FC = () => {
       }
 
       if (isDemoMode || !weddingSiteId) {
-        localStorage.setItem('dayof_demo_rsvp_custom_questions_v1', JSON.stringify(cleanedQuestions));
-        localStorage.setItem('dayof_demo_rsvp_meal_config_v1', JSON.stringify({ enabled: rsvpMealEnabled, options: mealOptions }));
+        writeStoredDemoRsvpConfig({ questions: cleanedQuestions, mealEnabled: rsvpMealEnabled, mealOptions });
         setRsvpQuestions(cleanedQuestions);
       toast('RSVP settings saved (demo).', 'success');
         setRsvpAutoSaveState('saved');
@@ -1462,17 +1244,13 @@ export const DashboardGuests: React.FC = () => {
 
 
   const handleCopyOpsSummary = async () => {
-    const summary = [
-      `RSVP Follow-up Summary (${new Date().toLocaleString()})`,
-      `Segment: ${segmentLabelMap[filterStatus] || filterStatus}`,
-      `Eligible reminders: ${reminderCandidates.length}`,
-      `No response: ${rsvpOps.noResponse}`,
-      `Missing meal: ${rsvpOps.missingMeal}`,
-      `Plus-one missing: ${rsvpOps.plusOneMissingName}`,
-      `Pending no email: ${rsvpOps.pendingNoEmail}`,
-      `Missing contact info: ${contactStats.withNoContact}`,
-    ].join('\n');
-
+    const summary = buildRsvpFollowUpSummary({
+      generatedAt: new Date(),
+      segmentLabel: segmentLabelMap[filterStatus] || filterStatus,
+      eligibleReminderCount: reminderCandidates.length,
+      rsvpOps,
+      contactStats,
+    });
     const result = await copyTextOrDownload(summary, 'dayof-rsvp-follow-up-summary.txt');
     if (result === 'copied') {
       toast('Copied RSVP follow-up summary', 'success');
@@ -1482,12 +1260,7 @@ export const DashboardGuests: React.FC = () => {
   };
 
   const handleCopyExceptionChecklist = async () => {
-    const lines = filteredGuests.flatMap((guest) => {
-      const states = exceptionStateByGuest.get(guest.id) || [];
-      if (!states.length) return [];
-      const name = guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name;
-      return [`- ${name}: resolve ${states.join(', ')}`];
-    });
+    const lines = buildRsvpExceptionChecklistLines({ guests: filteredGuests, exceptionStateByGuest });
     if (lines.length === 0) {
       toast('No RSVP exceptions in this segment.', 'error');
       return;
@@ -1502,37 +1275,37 @@ export const DashboardGuests: React.FC = () => {
   };
 
   const handleCopyMissingMealChecklist = async () => {
-    const guestsNeedingMeals = filteredGuests.filter((guest) => isAttendingRsvpStatus(guest.rsvp_status) && !guest.rsvp?.meal_choice);
-    if (guestsNeedingMeals.length === 0) {
+    const lines = buildMissingMealChecklistLines(filteredGuests);
+    if (lines.length === 0) {
       toast('No missing meal choices in this segment.', 'error');
       return;
     }
-    const payload = guestsNeedingMeals.map((guest) => `- ${guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name}: confirm meal choice`).join('\n');
+    const payload = lines.join('\n');
     const result = await copyTextOrDownload(payload, 'dayof-meal-follow-up-checklist.txt');
     if (result === 'copied') {
-      toast(`Copied meal follow-up checklist for ${guestsNeedingMeals.length} guest${guestsNeedingMeals.length === 1 ? '' : 's'}`, 'success');
+      toast(`Copied meal follow-up checklist for ${lines.length} guest${lines.length === 1 ? '' : 's'}`, 'success');
     } else {
       toast('Clipboard was blocked, so the meal checklist downloaded.', 'success');
     }
   };
 
   const handleCopyNoContactChecklist = async () => {
-    const noContactGuests = filteredGuests.filter((guest) => !guest.email && !guest.phone);
-    if (noContactGuests.length === 0) {
+    const lines = buildNoContactChecklistLines(filteredGuests);
+    if (lines.length === 0) {
       toast('Everyone in this group has a contact path.', 'error');
       return;
     }
-    const payload = noContactGuests.map((guest) => `- ${guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name}: get phone or email, then resend invite`).join('\n');
+    const payload = lines.join('\n');
     const result = await copyTextOrDownload(payload, 'dayof-missing-contact-list.txt');
     if (result === 'copied') {
-      toast(`Copied missing-contact list for ${noContactGuests.length} guest${noContactGuests.length === 1 ? '' : 's'}`, 'success');
+      toast(`Copied missing-contact list for ${lines.length} guest${lines.length === 1 ? '' : 's'}`, 'success');
     } else {
       toast('Clipboard was blocked, so the missing-contact list downloaded.', 'success');
     }
   };
 
   const handleCopyFilteredEmails = async () => {
-    const emails = reminderCandidates.map(g => g.email).filter(Boolean) as string[];
+    const emails = buildFilteredEmailList(reminderCandidates);
     if (emails.length === 0) {
       toast('No emails available in this filtered segment.', 'error');
       return;
@@ -1555,39 +1328,31 @@ export const DashboardGuests: React.FC = () => {
 
 
   const saveCurrentSegment = () => {
-    const label = `${segmentLabelMap[filterStatus] || filterStatus} (${filteredGuests.length})`;
-    const seg = { id: Date.now(), label, filter: filterStatus, createdAt: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) };
+    const seg = buildSavedSegment({
+      now: new Date(),
+      filterStatus,
+      segmentLabel: segmentLabelMap[filterStatus] || filterStatus,
+      guestCount: filteredGuests.length,
+    });
     setSavedSegments((prev) => [seg, ...prev.filter((x) => x.filter !== filterStatus)].slice(0, 12));
     toast('Segment saved', 'success');
   };
 
   const addFollowUpTask = (text: string) => {
-    const task = { id: Date.now(), text, createdAt: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) };
+    const task = buildFollowUpTask({ now: new Date(), text });
     setFollowUpTasks((prev) => [task, ...prev].slice(0, 6));
     toast('Follow-up task captured', 'success');
   };
 
 
   const generateChecklistTasks = () => {
-    const tasks: string[] = [];
-    if (rsvpOps.noResponse > 0) tasks.push(`Follow up ${rsvpOps.noResponse} pending RSVP(s)`);
-    if (rsvpOps.missingMeal > 0) tasks.push(`Collect ${rsvpOps.missingMeal} missing meal choice(s)`);
-    if (rsvpOps.plusOneMissingName > 0) tasks.push(`Collect ${rsvpOps.plusOneMissingName} plus-one name(s)`);
-    if (rsvpOps.pendingNoEmail > 0) tasks.push(`Add contact details for ${rsvpOps.pendingNoEmail} pending guest(s)`);
-    if (contactStats.withNoContact > 0) tasks.push(`Add contact info for ${contactStats.withNoContact} guest(s)`);
+    const tasks = buildGeneratedFollowUpTasks({ now: new Date(), rsvpOps, contactStats });
 
     if (tasks.length === 0) {
       toast('No blockers right now. Great shape!', 'success');
       return;
     }
-
-    const stamped = tasks.map((text, i) => ({
-      id: Date.now() + i,
-      text,
-      createdAt: new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
-    }));
-
-    setFollowUpTasks((prev) => [...stamped, ...prev].slice(0, 12));
+    setFollowUpTasks((prev) => [...tasks, ...prev].slice(0, 12));
     toast(`Created ${tasks.length} follow-up task${tasks.length === 1 ? '' : 's'}`, 'success');
   };
 
@@ -2005,34 +1770,7 @@ const handleSendBulkInvitations = async () => {
     }
   }
 
-  const households = useMemo(() => {
-    const byName = (a: GuestWithRSVP, b: GuestWithRSVP) => {
-      const aLast = (a.last_name || '').toLowerCase();
-      const bLast = (b.last_name || '').toLowerCase();
-      if (aLast !== bLast) return aLast.localeCompare(bLast);
-      const aFirst = (a.first_name || '').toLowerCase();
-      const bFirst = (b.first_name || '').toLowerCase();
-      if (aFirst !== bFirst) return aFirst.localeCompare(bFirst);
-      return (a.name || '').toLowerCase().localeCompare((b.name || '').toLowerCase());
-    };
-
-    const map = new Map<string, GuestWithRSVP[]>();
-    const ungrouped: GuestWithRSVP[] = [];
-    guests.forEach(g => {
-      if (g.household_id) {
-        const existing = map.get(g.household_id) ?? [];
-        map.set(g.household_id, [...existing, g]);
-      } else {
-        ungrouped.push(g);
-      }
-    });
-
-    const grouped = [...map.entries()]
-      .map(([id, members]) => [id, [...members].sort(byName)] as [string, GuestWithRSVP[]])
-      .sort((a, b) => byName(a[1][0], b[1][0]));
-
-    return { grouped, ungrouped: [...ungrouped].sort(byName) };
-  }, [guests]);
+  const households = useMemo(() => buildGuestHouseholdGroups(guests), [guests]);
 
   const openAssistedRsvpModal = (guest: GuestWithRSVP) => {
     setAssistedRsvpGuest(guest);
@@ -2191,23 +1929,7 @@ const handleSendBulkInvitations = async () => {
   };
 
   const exportCSV = (rowsSource: GuestWithRSVP[] = guests, suffix = 'guests') => {
-    const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Status', 'Plus One', 'Meal Choice', 'RSVP Date', 'RSVP Link', 'Custom Answers'];
-    const rows = rowsSource.map(guest => [
-      guest.first_name || '',
-      guest.last_name || '',
-      guest.email || '',
-      guest.phone || '',
-      guest.rsvp_status,
-      guest.plus_one_allowed ? 'Yes' : 'No',
-      guest.rsvp?.meal_choice || '',
-      guest.rsvp_received_at ? formatGuestOpsDate(guest.rsvp_received_at, undefined, '') : '',
-      guest.invite_token ? `${window.location.origin}/rsvp?token=${encodeURIComponent(guest.invite_token)}` : '',
-      formatCustomAnswers(guest.rsvp?.custom_answers || null),
-    ]);
-
-    const csvContent = toSafeCsv([headers, ...rows]);
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const blob = new Blob([buildGuestExportCsv({ guests: rowsSource, origin: window.location.origin })], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -2244,17 +1966,7 @@ const handleSendBulkInvitations = async () => {
 
   const exportThankYouDueCSV = () => {
     const due = guests.filter((g) => dueThankYouGuestIds.has(g.id));
-    const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'RSVP Status', 'Thank You Sent At'];
-    const rows = due.map((guest) => [
-      guest.first_name || '',
-      guest.last_name || '',
-      guest.email || '',
-      guest.phone || '',
-      guest.rsvp_status,
-      (guest as GuestWithRSVP & { thank_you_sent_at?: string | null }).thank_you_sent_at || '',
-    ]);
-    const csvContent = toSafeCsv([headers, ...rows]);
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const blob = new Blob([buildThankYouDueCsv(due)], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -2264,17 +1976,8 @@ const handleSendBulkInvitations = async () => {
   };
 
   const exportCheckedInCSV = () => {
-    const checkedIn = guests.filter((g) => !!(g as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at);
-    const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Checked In At'];
-    const rows = checkedIn.map((guest) => [
-      guest.first_name || '',
-      guest.last_name || '',
-      guest.email || '',
-      guest.phone || '',
-      (guest as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at || '',
-    ]);
-    const csvContent = toSafeCsv([headers, ...rows]);
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const checkedIn = guests.filter((g) => !!g.checked_in_at);
+    const blob = new Blob([buildCheckedInGuestsCsv(checkedIn)], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -2322,33 +2025,7 @@ const handleSendBulkInvitations = async () => {
   };
 
   const exportAddressCollectionCSV = () => {
-    const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Address Line 1', 'Address Line 2', 'City', 'State/Province', 'ZIP/Postal', 'Country'];
-    const rows = guests.map((guest) => {
-      const row = guest as GuestWithRSVP & {
-        mailing_address_line1?: string | null;
-        mailing_address_line2?: string | null;
-        mailing_city?: string | null;
-        mailing_state?: string | null;
-        mailing_postal_code?: string | null;
-        mailing_country?: string | null;
-      };
-      return [
-        guest.first_name || '',
-        guest.last_name || '',
-        guest.email || '',
-        guest.phone || '',
-        row.mailing_address_line1 || '',
-        row.mailing_address_line2 || '',
-        row.mailing_city || '',
-        row.mailing_state || '',
-        row.mailing_postal_code || '',
-        row.mailing_country || '',
-      ];
-    });
-
-    const csvContent = toSafeCsv([headers, ...rows]);
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const blob = new Blob([buildGuestAddressCollectionCsv(guests)], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -2358,53 +2035,7 @@ const handleSendBulkInvitations = async () => {
   };
 
   const exportHouseholdLabelsCSV = () => {
-    const headers = ['Household ID', 'Recipient Names', 'Primary Email', 'Primary Phone', 'Address Line 1', 'Address Line 2', 'City', 'State/Province', 'ZIP/Postal', 'Country', 'Guest Count', 'RSVP Links'];
-    const grouped = new Map<string, GuestWithRSVP[]>();
-    guests.forEach((guest) => {
-      const key = guest.household_id || `guest:${guest.id}`;
-      grouped.set(key, [...(grouped.get(key) ?? []), guest]);
-    });
-
-    const rows = Array.from(grouped.entries()).map(([householdId, members]) => {
-      const sortedMembers = [...members].sort((a, b) => (a.last_name || a.name || '').localeCompare(b.last_name || b.name || ''));
-      const primary = sortedMembers.find((guest) => {
-        const row = guest as GuestWithRSVP & { mailing_address_line1?: string | null };
-        return Boolean(row.mailing_address_line1 || guest.email || guest.phone);
-      }) ?? sortedMembers[0];
-      const primaryAddress = primary as GuestWithRSVP & {
-        mailing_address_line1?: string | null;
-        mailing_address_line2?: string | null;
-        mailing_city?: string | null;
-        mailing_state?: string | null;
-        mailing_postal_code?: string | null;
-        mailing_country?: string | null;
-      };
-      const recipientNames = sortedMembers
-        .map((guest) => [guest.first_name, guest.last_name].filter(Boolean).join(' ').trim() || guest.name)
-        .filter(Boolean)
-        .join(' and ');
-      return [
-        householdId.startsWith('guest:') ? '' : householdId,
-        recipientNames,
-        primary?.email || '',
-        primary?.phone || '',
-        primaryAddress?.mailing_address_line1 || '',
-        primaryAddress?.mailing_address_line2 || '',
-        primaryAddress?.mailing_city || '',
-        primaryAddress?.mailing_state || '',
-        primaryAddress?.mailing_postal_code || '',
-        primaryAddress?.mailing_country || '',
-        String(sortedMembers.length),
-        sortedMembers
-          .map((guest) => guest.invite_token ? `${window.location.origin}/rsvp?token=${encodeURIComponent(guest.invite_token)}` : '')
-          .filter(Boolean)
-          .join('; '),
-      ];
-    });
-
-    const csvContent = toSafeCsv([headers, ...rows]);
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const blob = new Blob([buildHouseholdLabelsCsv({ guests, origin: window.location.origin })], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -2794,65 +2425,18 @@ const handleSendBulkInvitations = async () => {
   const daysToWedding = getDaysUntilGuestWedding(weddingSiteInfo?.wedding_date);
 
 
-  const issueCountForGuest = (guest: GuestWithRSVP) => {
-    let issues = 0;
-    const ev = parseRsvpEventSelections(guest.rsvp?.notes ?? null);
-    if (isPendingRsvpStatus(guest.rsvp_status)) issues += 1;
-    if (guest.rsvp?.attending && !guest.rsvp?.meal_choice) issues += 1;
-    if (guest.plus_one_allowed && guest.rsvp?.attending && !guest.rsvp?.plus_one_name) issues += 1;
-    if (isPendingRsvpStatus(guest.rsvp_status) && !guest.email && !guest.phone) issues += 1;
-    if (ev?.ceremony === false || ev?.reception === false) issues += 1;
-    return issues;
-  };
-
-  const priorityScore = (guest: GuestWithRSVP) => {
-    let score = 0;
-    const ev = parseRsvpEventSelections(guest.rsvp?.notes ?? null);
-    if (isPendingRsvpStatus(guest.rsvp_status)) score += 100;
-    if (guest.rsvp?.attending && !guest.rsvp?.meal_choice) score += 60;
-    if (guest.plus_one_allowed && guest.rsvp?.attending && !guest.rsvp?.plus_one_name) score += 40;
-    if (ev?.ceremony === false || ev?.reception === false) score += 15;
-    if (isPendingRsvpStatus(guest.rsvp_status) && !guest.email) score += 20;
-    if (daysToWedding !== null && daysToWedding <= 30) score += 15;
-    return score;
-  };
-
-  const compareGuestsByLastName = (a: GuestWithRSVP, b: GuestWithRSVP) => {
-    const aLast = (a.last_name || '').trim().toLowerCase();
-    const bLast = (b.last_name || '').trim().toLowerCase();
-    if (aLast !== bLast) return aLast.localeCompare(bLast);
-
-    const aFirst = (a.first_name || '').trim().toLowerCase();
-    const bFirst = (b.first_name || '').trim().toLowerCase();
-    if (aFirst !== bFirst) return aFirst.localeCompare(bFirst);
-
-    const aName = (a.name || '').trim().toLowerCase();
-    const bName = (b.name || '').trim().toLowerCase();
-    return aName.localeCompare(bName);
-  };
-
-  const displayedGuestsBase = sortByPriority
-    ? [...filteredGuests].sort((a, b) => {
-      const scoreDelta = priorityScore(b) - priorityScore(a);
-      if (scoreDelta !== 0) return scoreDelta;
-      return compareGuestsByLastName(a, b);
-    })
-    : [...filteredGuests].sort(compareGuestsByLastName);
-
-  const displayedGuests = checkInMode
-    ? [...displayedGuestsBase].sort((a, b) => {
-      const aChecked = !!(a as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at;
-      const bChecked = !!(b as GuestWithRSVP & { checked_in_at?: string | null }).checked_in_at;
-      if (aChecked !== bChecked) return aChecked ? 1 : -1;
-      return compareGuestsByLastName(a, b);
-    })
-    : displayedGuestsBase;
+  const displayedGuests = sortGuestsForDisplay({
+    guests: filteredGuests,
+    sortByPriority,
+    checkInMode,
+    daysToWedding,
+  });
 
 
-  const nextUnresolvedGuest = displayedGuests.find((g) => issueCountForGuest(g) > 0);
+  const nextUnresolvedGuest = displayedGuests.find((g) => getGuestIssueCount(g) > 0);
 
   const selectUnresolvedGuests = () => {
-    const ids = displayedGuests.filter((g) => issueCountForGuest(g) > 0).map((g) => g.id);
+    const ids = displayedGuests.filter((g) => getGuestIssueCount(g) > 0).map((g) => g.id);
     setSelectedGuestIds(new Set(ids));
     toast(ids.length > 0 ? `Selected ${ids.length} unresolved guest${ids.length === 1 ? '' : 's'}` : 'No unresolved guests in current view', ids.length > 0 ? 'success' : 'error');
   };
@@ -2924,36 +2508,7 @@ const handleSendBulkInvitations = async () => {
   });
 
   const exportEventAttendanceCSV = () => {
-    const headers = ['Event', 'Guest Name', 'Email', 'Phone', 'Invited', 'Event RSVP', 'Overall RSVP', 'Meal Choice', 'Custom Answers'];
-    const rows = effectiveItineraryEvents.flatMap((event) => {
-      const invitedGuests = guests.filter((guest) => {
-        if (event.id === 'legacy-ceremony') return guest.invited_to_ceremony;
-        if (event.id === 'legacy-reception') return guest.invited_to_reception;
-        return eventInviteGuestMap.get(event.id)?.has(guest.id) ?? false;
-      });
-      return invitedGuests.map((guest) => {
-        const eventSelections = parseRsvpEventSelections(guest.rsvp?.notes ?? null);
-        const eventRsvp =
-          event.id === 'legacy-ceremony'
-            ? eventSelections?.ceremony
-            : event.id === 'legacy-reception'
-              ? eventSelections?.reception
-              : null;
-        return [
-          event.event_name,
-          [guest.first_name, guest.last_name].filter(Boolean).join(' ').trim() || guest.name,
-          guest.email || '',
-          guest.phone || '',
-          'Yes',
-          eventRsvp === true ? 'Yes' : eventRsvp === false ? 'No' : 'Not captured',
-          guest.rsvp_status,
-          guest.rsvp?.meal_choice || '',
-          formatCustomAnswers(guest.rsvp?.custom_answers || null),
-        ];
-      });
-    });
-
-    const csvContent = toSafeCsv([headers, ...rows]);
+    const csvContent = buildEventAttendanceCsv({ guests, events: effectiveItineraryEvents, eventInviteGuestMap });
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -2963,230 +2518,35 @@ const handleSendBulkInvitations = async () => {
     URL.revokeObjectURL(url);
   };
 
-  const mealChoiceRollup = Array.from(
-    guests.reduce((map, guest) => {
-      const key = (guest.rsvp?.meal_choice || 'No meal selected').trim();
-      map.set(key, (map.get(key) || 0) + 1);
-      return map;
-    }, new Map<string, number>())
-  ).sort((a, b) => b[1] - a[1]);
-
-  const customAnswerRollup = Array.from(
-    guests.reduce((map, guest) => {
-      const answers = guest.rsvp?.custom_answers || {};
-      Object.entries(answers).forEach(([question, value]) => {
-        const values = Array.isArray(value) ? value : [value];
-        values
-          .map((entry) => String(entry ?? '').trim())
-          .filter(Boolean)
-          .forEach((entry) => {
-            const key = `${question}::${entry}`;
-            map.set(key, (map.get(key) || 0) + 1);
-          });
-      });
-      return map;
-    }, new Map<string, number>())
-  )
-    .map(([key, count]) => {
-      const [question, answer] = key.split('::');
-      return { question, answer, count };
-    })
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 8);
-
-  const songRequestEntries = guests
-    .flatMap((guest) => {
-      const answers = guest.rsvp?.custom_answers || {};
-      return Object.entries(answers)
-        .filter(([question]) => /song|playlist|dance/i.test(question))
-        .flatMap(([question, value]) => {
-          const values = Array.isArray(value) ? value : [value];
-          return values
-            .map((entry) => String(entry ?? '').trim())
-            .filter(Boolean)
-            .map((entry) => ({
-              guestName: guest.first_name && guest.last_name ? `${guest.first_name} ${guest.last_name}` : guest.name,
-              question,
-              answer: entry,
-            }));
-        });
-    })
-    .slice(0, 12);
+  const mealChoiceRollup = getGuestMealChoiceRollup(guests);
+  const customAnswerRollup = getGuestCustomAnswerRollup(guests);
+  const songRequestEntries = getGuestSongRequestEntries(guests);
 
 
-  const contactStats = {
-    withEmail: guests.filter(g => !!g.email).length,
-    withPhone: guests.filter(g => !!g.phone).length,
-    withNoContact: guests.filter(g => !g.email && !g.phone).length,
-    contactCoverage: guests.length > 0
-      ? Math.round((guests.filter(g => !!g.email || !!g.phone).length / guests.length) * 100)
-      : 0,
-  };
+  const contactStats = getGuestContactStats(guests);
 
-  const fallbackByGuest = new Map(filteredGuests.map((guest) => [guest.id, getRsvpFallbackState({
-    rsvpStatus: guest.rsvp_status,
-    hasEmail: Boolean(guest.email),
-    hasPhone: Boolean(guest.phone),
-    manualHandled: typeof guest.notes === 'string' && guest.notes.toLowerCase().includes('[manual rsvp]'),
-  })]));
+  const fallbackByGuest = buildGuestFallbackStateMap(filteredGuests);
 
 
-  const householdStateByGuest = new Map(filteredGuests.map((guest) => {
-    const householdMembers = guest.household_id ? filteredGuests.filter((member) => member.household_id === guest.household_id) : [];
-    const mixedResponses = householdMembers.length > 1 && new Set(householdMembers.map((member) => member.rsvp_status)).size > 1;
-    const unnamedPlusOne = Boolean(guest.plus_one_allowed && guest.rsvp?.attending && !guest.rsvp?.plus_one_name);
-    const state = mixedResponses
-      ? 'Mixed household responses'
-      : unnamedPlusOne
-        ? 'Plus-one unresolved'
-        : householdMembers.length > 1
-          ? 'Grouped household'
-          : 'Standalone guest';
-    return [guest.id, state] as const;
-  }));
+  const householdStateByGuest = buildGuestHouseholdStateMap(filteredGuests);
 
 
-  const mealSummary = {
-    withMealChoice: filteredGuests.filter((guest) => Boolean(guest.rsvp?.meal_choice)).length,
-    missingMealChoice: filteredGuests.filter((guest) => isAttendingRsvpStatus(guest.rsvp_status) && !guest.rsvp?.meal_choice).length,
-    withDietaryNote: filteredGuests.filter((guest) => Boolean(extractDietaryNote(guest.rsvp?.custom_answers as Record<string, unknown> | null | undefined, guest.notes))).length,
-  };
+  const mealSummary = getGuestMealSummary(filteredGuests);
 
 
-  const exceptionStateByGuest = new Map(filteredGuests.map((guest) => {
-    const householdStatuses = guest.household_id ? filteredGuests.filter((member) => member.household_id === guest.household_id).map((member) => member.rsvp_status) : [];
-    const states = getRsvpExceptionStates({
-      householdStatuses,
-      plusOneAllowed: guest.plus_one_allowed,
-      plusOneName: guest.rsvp?.plus_one_name,
-      attending: guest.rsvp?.attending,
-      mealChoice: guest.rsvp?.meal_choice,
-      manualHandled: typeof guest.notes === 'string' && guest.notes.toLowerCase().includes('[manual rsvp]'),
-    });
-    return [guest.id, states] as const;
-  }));
+  const exceptionStateByGuest = buildGuestExceptionStateMap(filteredGuests);
 
-  const rsvpOps = {
-    missingMeal: guests.filter(g => g.rsvp?.attending && !g.rsvp?.meal_choice).length,
-    plusOneMissingName: guests.filter(g => g.plus_one_allowed && g.rsvp?.attending && !g.rsvp?.plus_one_name).length,
-    ceremonyNo: guests.filter(g => parseRsvpEventSelections(g.rsvp?.notes ?? null)?.ceremony === false).length,
-    receptionNo: guests.filter(g => parseRsvpEventSelections(g.rsvp?.notes ?? null)?.reception === false).length,
-    noResponse: guests.filter(g => isPendingRsvpStatus(g.rsvp_status)).length,
-    pendingNoEmail: guests.filter(g => isPendingRsvpStatus(g.rsvp_status) && !g.email).length,
-  };
+  const rsvpOps = getGuestRsvpOpsStats(guests);
+  const recommendedAction = getGuestRecommendedAction(rsvpOps);
+  const rsvpCompleteness = getGuestRsvpCompleteness(rsvpOps);
+  const campaignReadiness = getGuestCampaignReadiness({ totalGuests: guests.length, contactStats, rsvpOps });
+  const opsQueue = buildGuestOpsQueue(guests);
 
 
-  const recommendedAction = (() => {
-    if (rsvpOps.pendingNoEmail > 0) {
-      return {
-        filter: 'pending-no-email' as const,
-        title: 'Collect missing email addresses',
-        detail: `${rsvpOps.pendingNoEmail} pending guests can’t receive reminders yet.`,
-      };
-    }
-    if (rsvpOps.noResponse > 0) {
-      return {
-        filter: 'pending' as const,
-        title: 'Send reminder to pending guests',
-        detail: `${rsvpOps.noResponse} guests still haven’t responded.`,
-      };
-    }
-    if (rsvpOps.missingMeal > 0) {
-      return {
-        filter: 'missing-meal' as const,
-        title: 'Collect missing meal choices',
-        detail: `${rsvpOps.missingMeal} attending guests are missing meal picks.`,
-      };
-    }
-    if (rsvpOps.plusOneMissingName > 0) {
-      return {
-        filter: 'plusone-missing' as const,
-        title: 'Collect plus-one names',
-        detail: `${rsvpOps.plusOneMissingName} RSVPs allow plus-ones but names are missing.`,
-      };
-    }
-    return null;
-  })();
-
-  const rsvpCompleteness = Math.max(0, 100 - Math.min(100, (
-    (rsvpOps.noResponse * 0.55) +
-    (rsvpOps.missingMeal * 0.25) +
-    (rsvpOps.plusOneMissingName * 0.2)
-  )));
-
-
-  const campaignReadiness = Math.max(
-    0,
-    Math.min(
-      100,
-      Math.round(
-        (guests.length === 0
-          ? 100
-          : ((guests.length - contactStats.withNoContact) / guests.length) * 100) * 0.5 +
-        (100 - Math.min(100, rsvpOps.pendingNoEmail * 12)) * 0.25 +
-        (100 - Math.min(100, rsvpOps.noResponse * 4)) * 0.25
-      )
-    )
-  );
-
-
-  const opsQueue = guests.flatMap((g) => {
-    const items: Array<{ guestId: string; guestName: string; issue: string; filter: typeof filterStatus }> = [];
-    const guestName = (g.first_name || g.last_name) ? `${g.first_name ?? ''} ${g.last_name ?? ''}`.trim() : g.name;
-    const eventSelections = parseRsvpEventSelections(g.rsvp?.notes ?? null);
-
-    if (isPendingRsvpStatus(g.rsvp_status)) {
-      items.push({ guestId: g.id, guestName, issue: 'No RSVP response yet', filter: 'pending' });
-    }
-    if (g.rsvp?.attending && !g.rsvp?.meal_choice) {
-      items.push({ guestId: g.id, guestName, issue: 'Missing meal choice', filter: 'missing-meal' });
-    }
-    if (g.plus_one_allowed && g.rsvp?.attending && !g.rsvp?.plus_one_name) {
-      items.push({ guestId: g.id, guestName, issue: 'Missing plus-one name', filter: 'plusone-missing' });
-    }
-    if (eventSelections?.ceremony === false) {
-      items.push({ guestId: g.id, guestName, issue: 'Ceremony declined', filter: 'ceremony-no' });
-    }
-    if (eventSelections?.reception === false) {
-      items.push({ guestId: g.id, guestName, issue: 'Reception declined', filter: 'reception-no' });
-    }
-
-    return items;
-  }).slice(0, 8);
-
-
-  const segmentLabelMap: Record<string, string> = {
-    all: 'All Guests',
-    confirmed: 'Confirmed',
-    declined: 'Declined',
-    pending: 'Pending',
-    'checked-in': 'Checked In',
-    'thank-you-due': 'Thank You Due',
-    'due-reminder': 'Due Reminder',
-    'missing-address': 'Missing Address',
-    'ceremony-no': 'Ceremony: No',
-    'reception-no': 'Reception: No',
-    'missing-meal': 'Missing Meal',
-    'plusone-missing': 'Plus-one Missing Name',
-    'pending-no-email': 'Pending, No Email',
-    'manual-follow-up': 'Personal follow-up',
-    'manual-handled': 'Handled personally',
-    'no-contact': 'Missing contact info',
-  };
+  const segmentLabelMap = GUEST_SEGMENT_LABELS;
 
   const labelForFilter = (filter: string) => {
-    if (segmentLabelMap[filter]) return segmentLabelMap[filter];
-    if (filter.startsWith('event-invited:')) {
-      const eventId = filter.replace('event-invited:', '');
-      const name = effectiveItineraryEvents.find((e) => e.id === eventId)?.event_name ?? 'Event';
-      return `${name}: Invited`;
-    }
-    if (filter.startsWith('event-not-invited:')) {
-      const eventId = filter.replace('event-not-invited:', '');
-      const name = effectiveItineraryEvents.find((e) => e.id === eventId)?.event_name ?? 'Event';
-      return `${name}: Not invited`;
-    }
-    return filter;
+    return getGuestSegmentLabel(filter, effectiveItineraryEvents);
   };
 
   const getStatusBadge = (status: string) => {
@@ -4566,7 +3926,7 @@ const handleSendBulkInvitations = async () => {
                                 );
                               })()}
                               {(() => {
-                                const issues = issueCountForGuest(guest);
+                                const issues = getGuestIssueCount(guest);
                                 if (issues <= 0) return null;
                                 return (
                                   <span className={`text-[10px] px-2 py-0.5 rounded-lg border ${issues >= 3 ? 'bg-surface-subtle text-text-secondary border-border-subtle' : 'bg-primary/5 text-primary border-primary/20'}`}>

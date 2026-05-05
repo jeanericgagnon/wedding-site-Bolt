@@ -80,28 +80,21 @@ const RsvpMultiEvent: React.FC<SectionComponentProps<RsvpMultiEventData>> = ({ d
     setErrorMsg('');
 
     try {
-      let siteId: string | null = null;
-
-      if (siteSlug) {
-        const { data: siteData } = await supabase
-          .from('wedding_sites')
-          .select('id')
-          .eq('site_slug', siteSlug)
-          .maybeSingle();
-        siteId = siteData?.id ?? null;
-      }
-
-      const rsvpData = {
-        site_id: siteId,
-        guest_name: name,
-        guest_email: email || null,
-        attending: attending === 'yes',
-        guest_count: attending === 'yes' ? guestCount : 0,
-        dietary_notes: dietary || null,
-        submitted_at: new Date().toISOString(),
-      };
-
-      const { error } = await supabase.from('site_rsvps').insert(rsvpData);
+      const slug = siteSlug ?? '';
+      const inviteToken = slug ? sessionStorage.getItem(`dayof_invite_token_${slug}`) : null;
+      const passwordSession = slug ? sessionStorage.getItem(`dayof_pw_session_${slug}`) : null;
+      const { error } = await supabase.functions.invoke('public-site-rsvp-submit', {
+        body: {
+          slug,
+          inviteToken,
+          passwordSession,
+          guestName: name,
+          guestEmail: email || null,
+          rsvpStatus: attending === 'yes' ? 'attending' : 'declined',
+          guestCount: attending === 'yes' ? guestCount : 1,
+          dietaryNotes: dietary || null,
+        },
+      });
       if (error) throw error;
 
       setStatus('success');

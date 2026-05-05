@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { enforcePublicSubmissionRateLimit } from "../_shared/rateLimit.ts";
 import { corsHeaders, fail, json, sha256Hex, sleep } from "../_shared/photoUtils.ts";
 
 const HOSTED_BUCKET = "photo-uploads";
@@ -894,6 +895,18 @@ Deno.serve(async (req: Request) => {
       hasAccess = role === "owner" || role === "coordinator" || permissions.includes("photos") || permissions.includes("media");
     }
     if (!hasAccess) return fail("FORBIDDEN", "You do not have photo analysis access for this site.", 403);
+
+    const rateLimit = await enforcePublicSubmissionRateLimit({
+      admin,
+      request: req,
+      scope: "photo_analyze_batch",
+      subject: `${userData.user.id}:${siteId}:${requestedProvider}:${analysisMode}`,
+      siteId,
+      maxIp: 40,
+      maxSubject: 10,
+      windowMinutes: 60,
+    });
+    if (!rateLimit.ok) return fail("RATE_LIMITED", "Too many photo analysis requests. Please try again shortly.", rateLimit.status);
 
     const { data: bucketsData, error: bucketError } = await admin
       .from("photo_albums")

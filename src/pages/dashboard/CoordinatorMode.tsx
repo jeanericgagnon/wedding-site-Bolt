@@ -6,7 +6,6 @@ import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
 import { PLANNER_ROLE_OPTIONS, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole, type PlannerPermissionKey } from '../../lib/plannerAccess';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
-import { isAttendingRsvpStatus, isPendingRsvpStatus } from '../../lib/rsvpStatus';
 import { useToast } from '../../components/ui/Toast';
 import { filterCoordinatorCheckInQueue, type CoordinatorCheckInFilter } from '../../lib/coordinatorCheckInQueue';
 import { getNextCoordinatorCheckInFocusId } from '../../lib/coordinatorCheckInAdvance';
@@ -22,11 +21,6 @@ import { resolveCoordinatorPrimaryActionTarget } from '../../lib/coordinatorPrim
 import { resolveCoordinatorQueueFocus } from '../../lib/coordinatorQueueFocus';
 import { resolveCoordinatorPanelFocus, type CoordinatorPanelFocus } from '../../lib/coordinatorPanelFocus';
 import { resolveCoordinatorEscalationTimelineTarget } from '../../lib/coordinatorEscalationAction';
-import { normalizeCoordinatorModeSessionState } from '../../lib/coordinatorModeSessionState';
-import { normalizeCoordinatorDraftState } from '../../lib/coordinatorDraftState';
-import { normalizeCoordinatorActiveWorkState } from '../../lib/coordinatorActiveWorkState';
-import { normalizeCoordinatorGuestWorkState } from '../../lib/coordinatorGuestWorkState';
-import { normalizeCoordinatorCommandState } from '../../lib/coordinatorCommandState';
 import { getCoordinatorCommandModeLabel } from '../../lib/coordinatorCommandModeLabel';
 import { getCoordinatorCommandModeGuidance } from '../../lib/coordinatorCommandModeGuidance';
 import { resolveCoordinatorReturnToBoardState } from '../../lib/coordinatorReturnToBoard';
@@ -75,10 +69,8 @@ import { resolveCoordinatorSummaryDisplayCue } from '../../lib/coordinatorSummar
 import { resolveCoordinatorOverrideDisplayCue } from '../../lib/coordinatorOverrideDisplayCue';
 import { shouldExpireCoordinatorCue } from '../../lib/coordinatorCueExpiry';
 import { shouldExpireCoordinatorOverrideCue } from '../../lib/coordinatorOverrideCueExpiry';
-import { normalizeCoordinatorTimelineWorkState } from '../../lib/coordinatorTimelineWorkState';
 import { canManageCoordinatorCheckIn, canManageCoordinatorQna, canManageCoordinatorTimeline, canScheduleCoordinatorAlerts, canSendImmediateCoordinatorAlerts } from '../../lib/coordinatorRoleAccess';
 import type { GuestLiteForCoordinator } from '../../lib/coordinatorTypes';
-import { normalizeCoordinatorAlertLog, normalizeCoordinatorQnaItems, normalizeCoordinatorTimelineState } from '../../lib/coordinatorModePersistence';
 import { setCoordinatorEventTimelineState } from '../../lib/coordinatorTimelineState';
 import { getCoordinatorLiveEventId, getCoordinatorUpNextEventId } from '../../lib/coordinatorTimelineFocus';
 import { getCoordinatorPrimaryTimelineAction } from '../../lib/coordinatorTimelineActions';
@@ -88,7 +80,7 @@ import { resetCoordinatorAlertFormAfterSend } from '../../lib/coordinatorAlertRe
 import { buildCoordinatorAlertSuggestions } from '../../lib/coordinatorAlertSuggestions';
 import { buildCoordinatorAlertSummary } from '../../lib/coordinatorAlertSummary';
 import { getCoordinatorAlertLaneLabel } from '../../lib/coordinatorAlertLane';
-import { normalizeCoordinatorAlertIntentState, resolveCoordinatorPreferredAlertSuggestion } from '../../lib/coordinatorAlertIntent';
+import { resolveCoordinatorPreferredAlertSuggestion } from '../../lib/coordinatorAlertIntent';
 import { getCoordinatorQnaCounts, updateCoordinatorQnaItem } from '../../lib/coordinatorQnaFlow';
 import { getFirstOpenCoordinatorQnaId, getNextCoordinatorQnaFocusId } from '../../lib/coordinatorQnaFocus';
 import { filterCoordinatorQnaItems, getCoordinatorQnaDraftStateLabel, type CoordinatorQnaFilter } from '../../lib/coordinatorQnaTriage';
@@ -118,33 +110,36 @@ import { buildCoordinatorPrimaryActionBoard } from '../../lib/coordinatorPrimary
 import { buildCoordinatorExecutionBoard } from '../../lib/coordinatorExecutionBoard';
 import { buildCoordinatorAlertLogView } from '../../lib/coordinatorAlertLogView';
 import { buildCoordinatorNavigationBoard } from '../../lib/coordinatorNavigationBoard';
-
-
-type AudienceOption = { value: string; label: string; count: number };
-
-type EventLite = {
-  id: string;
-  event_name: string;
-  start_time: string | null;
-};
-
-type TimelineState = 'up-next' | 'live' | 'done';
-
-type AlertLog = {
-  id: string;
-  subject: string;
-  audience: string;
-  channel: 'email' | 'sms';
-  queuedAt: string;
-  sendAt?: string | null;
-};
-
-type QnaItem = {
-  id: string;
-  question: string;
-  status: 'new' | 'answered';
-  answer?: string | null;
-};
+import type { AlertLog, AudienceOption, EventLite, QnaItem, TimelineState } from './coordinator/coordinatorDashboardTypes';
+import {
+  buildCoordinatorEventAudienceOptions,
+  buildCoordinatorGuestStats,
+  filterCoordinatorAlertLog,
+  getCoordinatorAlertAudienceCount,
+  sortCoordinatorGuests,
+} from './coordinator/coordinatorDashboardUtils';
+import {
+  readStoredCoordinatorActiveWorkState,
+  readStoredCoordinatorAlertIntentState,
+  readStoredCoordinatorAlertLog,
+  readStoredCoordinatorCommandState,
+  readStoredCoordinatorDraftState,
+  readStoredCoordinatorGuestWorkState,
+  readStoredCoordinatorQnaItems,
+  readStoredCoordinatorSessionState,
+  readStoredCoordinatorTimelineState,
+  readStoredCoordinatorTimelineWorkState,
+  writeStoredCoordinatorActiveWorkState,
+  writeStoredCoordinatorAlertIntentState,
+  writeStoredCoordinatorAlertLog,
+  writeStoredCoordinatorCommandState,
+  writeStoredCoordinatorDraftState,
+  writeStoredCoordinatorGuestWorkState,
+  writeStoredCoordinatorQnaItems,
+  writeStoredCoordinatorSessionState,
+  writeStoredCoordinatorTimelineState,
+  writeStoredCoordinatorTimelineWorkState,
+} from './coordinator/coordinatorStorage';
 
 
 export const DashboardCoordinatorMode: React.FC = () => {
@@ -260,12 +255,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
         setGuests((guestsData as GuestLiteForCoordinator[]) || []);
         setEvents((eventsData as EventLite[]) || []);
         setEventGuestIds(inviteMap);
-        const rawCachedQna = typeof window !== 'undefined' && resolvedSiteId
-          ? localStorage.getItem(`dayof.qna.${resolvedSiteId}`)
-          : null;
-        const cachedQna = rawCachedQna
-          ? normalizeCoordinatorQnaItems(JSON.parse(rawCachedQna)) as QnaItem[]
-          : [];
+        const cachedQna = readStoredCoordinatorQnaItems(resolvedSiteId);
         if (qnaData && qnaData.length > 0) {
           setQnaItems((qnaData as Array<{ id: string; question: string; status: 'new' | 'answered'; answer?: string | null }>));
         } else if (cachedQna.length > 0) {
@@ -283,13 +273,13 @@ export const DashboardCoordinatorMode: React.FC = () => {
   useEffect(() => {
     if (!siteId) return;
     try {
-      const rawTimeline = localStorage.getItem(`dayof.timeline.${siteId}`);
-      if (rawTimeline) setTimelineState(normalizeCoordinatorTimelineState(JSON.parse(rawTimeline)) as Record<string, TimelineState>);
-      const rawAlerts = localStorage.getItem(`dayof.alertlog.${siteId}`);
-      if (rawAlerts) setAlertLog(normalizeCoordinatorAlertLog(JSON.parse(rawAlerts)) as AlertLog[]);
-      const rawQna = localStorage.getItem(`dayof.qna.${siteId}`);
-      if (rawQna) {
-        setQnaItems(normalizeCoordinatorQnaItems(JSON.parse(rawQna)) as QnaItem[]);
+      const storedTimelineState = readStoredCoordinatorTimelineState(siteId);
+      if (Object.keys(storedTimelineState).length > 0) setTimelineState(storedTimelineState);
+      const storedAlertLog = readStoredCoordinatorAlertLog(siteId);
+      if (storedAlertLog.length > 0) setAlertLog(storedAlertLog);
+      const storedQnaItems = readStoredCoordinatorQnaItems(siteId);
+      if (storedQnaItems.length > 0) {
+        setQnaItems(storedQnaItems);
       } else if (isDemoMode) {
         setQnaItems([
           { id: 'q1', question: 'What time should we arrive?', status: 'new' },
@@ -300,8 +290,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
       if (activeSiteRole === 'owner' && storedRole) setCoordinatorRole(storedRole);
       if (activeSiteRole !== 'owner') setCoordinatorRole(activeSiteRole);
 
-      const rawSessionState = localStorage.getItem(`dayof.coordinator.session.${siteId}`);
-      const sessionState = normalizeCoordinatorModeSessionState(rawSessionState ? JSON.parse(rawSessionState) : null);
+      const sessionState = readStoredCoordinatorSessionState(siteId);
       setCheckInFilter(sessionState.checkInFilter);
       setCheckInQuery(sessionState.checkInQuery);
       setCheckInReviewOnly(sessionState.checkInReviewOnly);
@@ -309,47 +298,41 @@ export const DashboardCoordinatorMode: React.FC = () => {
       setAlertChannelFilter(sessionState.alertChannelFilter);
       setAlertTimingFilter(sessionState.alertTimingFilter);
 
-      const rawDraftState = localStorage.getItem(`dayof.coordinator.draft.${siteId}`);
-      const draftState = normalizeCoordinatorDraftState(rawDraftState ? JSON.parse(rawDraftState) : null);
+      const draftState = readStoredCoordinatorDraftState(siteId);
       setAlertForm((prev) => ({ ...prev, ...draftState.alertForm }));
       setQnaDraftAnswers(draftState.qnaDraftAnswers);
       setQnaInput(draftState.qnaInput);
 
-      const rawActiveWorkState = localStorage.getItem(`dayof.coordinator.active.${siteId}`);
-      const activeWorkState = normalizeCoordinatorActiveWorkState(rawActiveWorkState ? JSON.parse(rawActiveWorkState) : null);
+      const activeWorkState = readStoredCoordinatorActiveWorkState(siteId);
       setActiveQnaId(activeWorkState.activeQnaId);
 
-      const rawGuestWorkState = localStorage.getItem(`dayof.coordinator.guest.${siteId}`);
-      const guestWorkState = normalizeCoordinatorGuestWorkState(rawGuestWorkState ? JSON.parse(rawGuestWorkState) : null);
+      const guestWorkState = readStoredCoordinatorGuestWorkState(siteId);
       setActiveGuestId(guestWorkState.activeGuestId);
 
-      const rawTimelineWorkState = localStorage.getItem(`dayof.coordinator.timelinework.${siteId}`);
-      const timelineWorkState = normalizeCoordinatorTimelineWorkState(rawTimelineWorkState ? JSON.parse(rawTimelineWorkState) : null);
+      const timelineWorkState = readStoredCoordinatorTimelineWorkState(siteId);
       setActiveTimelineEventId(timelineWorkState.activeTimelineEventId);
 
-      const rawCommandState = localStorage.getItem(`dayof.coordinator.command.${siteId}`);
-      const savedCommandState = normalizeCoordinatorCommandState(rawCommandState ? JSON.parse(rawCommandState) : null);
+      const savedCommandState = readStoredCoordinatorCommandState(siteId);
       setCommandSource(savedCommandState.source);
 
-      const rawAlertIntentState = localStorage.getItem(`dayof.coordinator.alertintent.${siteId}`);
-      const alertIntentState = normalizeCoordinatorAlertIntentState(rawAlertIntentState ? JSON.parse(rawAlertIntentState) : null);
+      const alertIntentState = readStoredCoordinatorAlertIntentState(siteId);
       setLastAlertSuggestionKey(alertIntentState.lastSuggestionKey);
     } catch {}
   }, [siteId, activeSiteRole]);
 
   useEffect(() => {
     if (!siteId) return;
-    try { localStorage.setItem(`dayof.timeline.${siteId}`, JSON.stringify(timelineState)); } catch {}
+    writeStoredCoordinatorTimelineState(siteId, timelineState);
   }, [siteId, timelineState]);
 
   useEffect(() => {
     if (!siteId) return;
-    try { localStorage.setItem(`dayof.alertlog.${siteId}`, JSON.stringify(alertLog)); } catch {}
+    writeStoredCoordinatorAlertLog(siteId, alertLog);
   }, [siteId, alertLog]);
 
   useEffect(() => {
     if (!siteId) return;
-    try { localStorage.setItem(`dayof.qna.${siteId}`, JSON.stringify(qnaItems)); } catch {}
+    writeStoredCoordinatorQnaItems(siteId, qnaItems);
   }, [siteId, qnaItems]);
 
   useEffect(() => {
@@ -364,54 +347,38 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
   useEffect(() => {
     if (!siteId) return;
-    try {
-      localStorage.setItem(`dayof.coordinator.session.${siteId}`, JSON.stringify({
-        checkInFilter,
-        checkInQuery,
-        checkInReviewOnly,
-        panelFocus,
-        alertChannelFilter,
-        alertTimingFilter,
-      }));
-    } catch {}
+    writeStoredCoordinatorSessionState(siteId, {
+      checkInFilter,
+      checkInQuery,
+      checkInReviewOnly,
+      panelFocus,
+      alertChannelFilter,
+      alertTimingFilter,
+    });
   }, [siteId, checkInFilter, checkInQuery, checkInReviewOnly, panelFocus, alertChannelFilter, alertTimingFilter]);
 
   useEffect(() => {
     if (!siteId) return;
-    try {
-      localStorage.setItem(`dayof.coordinator.draft.${siteId}`, JSON.stringify({
-        alertForm,
-        qnaDraftAnswers,
-        qnaInput,
-      }));
-    } catch {}
+    writeStoredCoordinatorDraftState(siteId, {
+      alertForm,
+      qnaDraftAnswers,
+      qnaInput,
+    });
   }, [siteId, alertForm, qnaDraftAnswers, qnaInput]);
 
   useEffect(() => {
     if (!siteId) return;
-    try {
-      localStorage.setItem(`dayof.coordinator.active.${siteId}`, JSON.stringify({
-        activeQnaId,
-      }));
-    } catch {}
+    writeStoredCoordinatorActiveWorkState(siteId, { activeQnaId });
   }, [siteId, activeQnaId]);
 
   useEffect(() => {
     if (!siteId) return;
-    try {
-      localStorage.setItem(`dayof.coordinator.guest.${siteId}`, JSON.stringify({
-        activeGuestId,
-      }));
-    } catch {}
+    writeStoredCoordinatorGuestWorkState(siteId, { activeGuestId });
   }, [siteId, activeGuestId]);
 
   useEffect(() => {
     if (!siteId) return;
-    try {
-      localStorage.setItem(`dayof.coordinator.timelinework.${siteId}`, JSON.stringify({
-        activeTimelineEventId,
-      }));
-    } catch {}
+    writeStoredCoordinatorTimelineWorkState(siteId, { activeTimelineEventId });
   }, [siteId, activeTimelineEventId]);
 
   useEffect(() => {
@@ -422,32 +389,20 @@ export const DashboardCoordinatorMode: React.FC = () => {
 
   useEffect(() => {
     if (!siteId) return;
-    try {
-      localStorage.setItem(`dayof.coordinator.command.${siteId}`, JSON.stringify({
-        source: commandSource,
-        panelFocus,
-        checkInFilter,
-        checkInReviewOnly,
-      }));
-    } catch {}
+    writeStoredCoordinatorCommandState(siteId, {
+      source: commandSource,
+      panelFocus,
+      checkInFilter,
+      checkInReviewOnly,
+    });
   }, [siteId, commandSource, panelFocus, checkInFilter, checkInReviewOnly]);
 
   useEffect(() => {
     if (!siteId) return;
-    try {
-      localStorage.setItem(`dayof.coordinator.alertintent.${siteId}`, JSON.stringify({
-        lastSuggestionKey: lastAlertSuggestionKey,
-      }));
-    } catch {}
+    writeStoredCoordinatorAlertIntentState(siteId, { lastSuggestionKey: lastAlertSuggestionKey });
   }, [siteId, lastAlertSuggestionKey]);
 
-  const stats = useMemo(() => {
-    const total = guests.length;
-    const confirmed = guests.filter((g) => isAttendingRsvpStatus(g.rsvp_status)).length;
-    const pending = guests.filter((g) => isPendingRsvpStatus(g.rsvp_status)).length;
-    const checkedIn = guests.filter((g) => !!g.checked_in_at).length;
-    return { total, confirmed, pending, checkedIn };
-  }, [guests]);
+  const stats = useMemo(() => buildCoordinatorGuestStats(guests), [guests]);
 
   const toggleCheckIn = async (guest: GuestLiteForCoordinator) => {
     if (!canCheckIn) {
@@ -495,31 +450,15 @@ export const DashboardCoordinatorMode: React.FC = () => {
     }
   };
 
-  const sortedGuests = [...guests].sort((a, b) => {
-    const aChecked = !!a.checked_in_at;
-    const bChecked = !!b.checked_in_at;
-    if (aChecked !== bChecked) return aChecked ? 1 : -1;
-    const al = (a.last_name || '').toLowerCase();
-    const bl = (b.last_name || '').toLowerCase();
-    if (al !== bl) return al.localeCompare(bl);
-    return (a.name || '').toLowerCase().localeCompare((b.name || '').toLowerCase());
-  });
-
-  const eventAudienceOptions: AudienceOption[] = events.map((e) => ({
-    value: `event:${e.id}`,
-    label: `${e.event_name}${e.start_time ? ` — ${formatCoordinatorEventDateTime(e.start_time)}` : ''}`,
-    count: eventGuestIds[e.id]?.size ?? 0,
-  }));
-
-  const alertAudienceCount = (() => {
-    if (alertForm.audience.startsWith('event:')) {
-      const eventId = alertForm.audience.replace('event:', '');
-      return eventGuestIds[eventId]?.size ?? 0;
-    }
-    if (alertForm.audience === 'checked-in') return guests.filter((g) => !!g.checked_in_at).length;
-    if (alertForm.audience === 'pending') return guests.filter((g) => isPendingRsvpStatus(g.rsvp_status)).length;
-    return guests.length;
-  })();
+  const sortedGuests = useMemo(() => sortCoordinatorGuests(guests), [guests]);
+  const eventAudienceOptions: AudienceOption[] = useMemo(
+    () => buildCoordinatorEventAudienceOptions(events, eventGuestIds),
+    [events, eventGuestIds],
+  );
+  const alertAudienceCount = useMemo(
+    () => getCoordinatorAlertAudienceCount({ audience: alertForm.audience, guests, eventGuestIds }),
+    [alertForm.audience, guests, eventGuestIds],
+  );
 
   const canCheckIn = canManageCoordinatorCheckIn(coordinatorRole, coordinatorPermissions);
   const canEditTimeline = canManageCoordinatorTimeline(coordinatorRole, coordinatorPermissions);
@@ -988,12 +927,7 @@ export const DashboardCoordinatorMode: React.FC = () => {
   }, [commandSource, correctionCues.length, panelFocus]);
 
   const filteredAlertLog = useMemo(
-    () => alertLog.filter((a) => {
-      if (alertChannelFilter !== 'all' && a.channel !== alertChannelFilter) return false;
-      if (alertTimingFilter === 'scheduled' && !a.sendAt) return false;
-      if (alertTimingFilter === 'now' && !!a.sendAt) return false;
-      return true;
-    }),
+    () => filterCoordinatorAlertLog({ alertLog, channelFilter: alertChannelFilter, timingFilter: alertTimingFilter }),
     [alertLog, alertChannelFilter, alertTimingFilter],
   );
   const filteredAlertLogView = useMemo(() => buildCoordinatorAlertLogView(filteredAlertLog), [filteredAlertLog]);

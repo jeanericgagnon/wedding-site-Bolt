@@ -1,0 +1,137 @@
+import { customerSafeErrorMessage } from '../../../lib/customerSafeError';
+import { PLANNER_PERMISSION_GROUPS, type PlannerPermissionKey } from '../../../lib/plannerAccess';
+import type { SettingsSiteUpdates } from './settingsSiteData';
+import { SITE_LANGUAGE_OPTIONS, type RSVPQuestionSetting } from './settingsDashboardTypes';
+
+export const SETTINGS_SITE_MISSING_COPY = 'Couldn’t find your wedding site right now. Refresh and try again.';
+export type SettingsPrivacyMode = 'public' | 'password_protected' | 'invite_only';
+
+export const makeQuestion = (): RSVPQuestionSetting => ({
+  id: `q_${Math.random().toString(36).slice(2, 10)}`,
+  label: '',
+  type: 'short_text',
+  required: false,
+  appliesTo: 'all',
+  options: [],
+});
+
+export const getSiteLanguageLabel = (language: string) =>
+  SITE_LANGUAGE_OPTIONS.find((option) => option.value === language)?.label ?? language.toUpperCase();
+
+export const formatTranslationStatusDate = (value: string | null) => {
+  if (!value) return 'Not generated yet';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return 'Generated recently';
+  return `Updated ${parsed.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;
+};
+
+export const safeSettingsError = (err: unknown, fallback: string) => {
+  return customerSafeErrorMessage(err, fallback);
+};
+
+export const plannerPermissionLabel = (key: PlannerPermissionKey) =>
+  PLANNER_PERMISSION_GROUPS.find((permission) => permission.key === key)?.label ?? 'Planner access';
+
+export function normalizeRsvpQuestions(value: unknown): RSVPQuestionSetting[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((question) => question as Partial<RSVPQuestionSetting>)
+    .filter((question) => typeof question?.id === 'string' && typeof question?.label === 'string')
+    .map((question) => ({
+      id: question.id as string,
+      label: (question.label as string) || '',
+      type: (question.type as RSVPQuestionSetting['type']) || 'short_text',
+      required: !!question.required,
+      appliesTo: (question.appliesTo as RSVPQuestionSetting['appliesTo']) || 'all',
+      options: Array.isArray(question.options) ? question.options.filter((option): option is string => typeof option === 'string') : [],
+    }));
+}
+
+export function normalizeMealOptions(value: unknown, fallback = ['Chicken', 'Beef', 'Fish', 'Vegetarian', 'Vegan']): string[] {
+  return Array.isArray(value) ? value.filter((option): option is string => typeof option === 'string' && option.trim().length > 0) : fallback;
+}
+
+export function splitCoupleNames(coupleNames: string) {
+  const parts = coupleNames.split('&').map((part) => part.trim()).filter(Boolean);
+  return {
+    name1: parts[0] ?? coupleNames.trim(),
+    name2: parts[1] ?? '',
+  };
+}
+
+export function normalizeSettingsSlug(rawSlug: string) {
+  const raw = rawSlug.trim().toLowerCase();
+  const fromUrl = raw.includes('/') ? raw.split('/').filter(Boolean).pop() || '' : raw;
+  return fromUrl.replace(/[^a-z0-9-]/g, '').replace(/--+/g, '-').replace(/^-|-$/g, '');
+}
+
+export function buildPrivacySettingsUpdates(input: {
+  privacyMode: SettingsPrivacyMode;
+  hideFromSearch: boolean;
+  defaultLanguage: string;
+  sitePasswordHash?: string | null;
+  guestAccessToken?: string | null;
+}): SettingsSiteUpdates {
+  const updates: SettingsSiteUpdates = {
+    privacy_mode: input.privacyMode,
+    hide_from_search: input.hideFromSearch,
+    default_language: input.defaultLanguage,
+  };
+
+  if (input.privacyMode === 'password_protected' && input.sitePasswordHash) {
+    updates.site_password_hash = input.sitePasswordHash;
+  }
+
+  if (input.privacyMode === 'invite_only' && input.guestAccessToken) {
+    updates.guest_access_token = input.guestAccessToken;
+  }
+
+  return updates;
+}
+
+export function cleanRsvpSettings(input: {
+  questions: RSVPQuestionSetting[];
+  mealEnabled: boolean;
+  mealOptions: string[];
+}): {
+  cleanedQuestions: RSVPQuestionSetting[];
+  cleanedMealOptions: string[];
+  validationError: string | null;
+} {
+  const cleanedQuestions = input.questions
+    .map((question) => ({
+      ...question,
+      label: question.label.trim(),
+      options: (question.type === 'single_choice' || question.type === 'multi_choice')
+        ? (question.options ?? []).map((option) => option.trim()).filter(Boolean)
+        : [],
+    }))
+    .filter((question) => question.label.length > 0);
+
+  const missingOptions = cleanedQuestions.find(
+    (question) => (question.type === 'single_choice' || question.type === 'multi_choice') && (question.options?.length ?? 0) < 2,
+  );
+
+  if (missingOptions) {
+    return {
+      cleanedQuestions,
+      cleanedMealOptions: [],
+      validationError: `Choice question "${missingOptions.label}" needs at least 2 options.`,
+    };
+  }
+
+  const cleanedMealOptions = input.mealOptions.map((option) => option.trim()).filter(Boolean);
+  if (input.mealEnabled && cleanedMealOptions.length < 2) {
+    return {
+      cleanedQuestions,
+      cleanedMealOptions,
+      validationError: 'Meal choices need at least 2 options when enabled.',
+    };
+  }
+
+  return {
+    cleanedQuestions,
+    cleanedMealOptions,
+    validationError: null,
+  };
+}

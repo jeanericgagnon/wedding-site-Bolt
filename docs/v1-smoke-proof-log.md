@@ -6712,3 +6712,26 @@ A slice does **not** count as passed because:
   - `git diff --check`: PASS.
 - Launch status did not change. This reduces local demo/bypass production risk, but production status still depends on approved deploy/function deploy and live proof.
 - No deploy was run.
+
+## 2026-05-05 2:15 PM PT Approved Production Deploy And Postdeploy Repair
+- Ran the approved production deploy. Vercel deployment `dpl_3q71A1vTz9gc9k5tY1yvRrdVAvsm` is live at `https://dayof.love`.
+- The first guarded deploy successfully deployed frontend but failed postdeploy proof because `public-site-rsvp-submit` was missing live, `validate-rsvp-token` returned a boot/runtime 503, public-quality still caught stale proof-site identity/date content, and the check-in smoke guard expected an obsolete inline sorting pattern.
+- Applied Supabase migrations `20260505100000_vendor_rating_and_inquiry_context.sql` and `20260505102000_site_rsvps_public_gate_rls.sql` to project `atuzuobpprjstfmdnwso`.
+- Deployed public/guest functions `public-site-rsvp-submit`, `public-site-access`, `public-registry-items`, `public-itinerary-by-slug`, and `validate-rsvp-token`.
+- Fixed `validate-rsvp-token` boot failure by removing a redeclared `rsvpSession` binding, then redeployed the function with `--use-api --no-verify-jwt`.
+- Updated strict RSVP smoke to prove the current invite-token lookup plus short-lived `rsvpSession` submit model instead of posting durable invite tokens.
+- Updated check-in smoke to verify the extracted `sortGuestsForDisplay` unchecked-first behavior and its test coverage.
+- Verification passed:
+  - `supabase db push --linked --yes`: PASS.
+  - `supabase functions deploy public-site-rsvp-submit --project-ref atuzuobpprjstfmdnwso --no-verify-jwt`: PASS.
+  - `supabase functions deploy validate-rsvp-token --project-ref atuzuobpprjstfmdnwso --use-api --no-verify-jwt`: PASS after boot fix.
+  - `supabase functions deploy public-site-access --project-ref atuzuobpprjstfmdnwso --no-verify-jwt`: PASS.
+  - `supabase functions deploy public-registry-items --project-ref atuzuobpprjstfmdnwso --no-verify-jwt`: PASS.
+  - `supabase functions deploy public-itinerary-by-slug --project-ref atuzuobpprjstfmdnwso --no-verify-jwt`: PASS.
+  - `npm run smoke:checkin`: PASS.
+  - `npm run smoke:rsvp:strict`: PASS.
+  - `npm run proof:v1:prereqs`: PASS, live edge runtime warnings 0.
+  - `npm run proof:v1:guests-rsvp-ops`: PASS, 3/3.
+  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run test:e2e:public-quality`: PASS, 4/4.
+  - `npm run proof:v1:postdeploy`: PASS, 8/8.
+- Launch status changed: the approved production deploy is live and the current non-SMS postdeploy proof is green. Remaining caveats are secure service-role integrity proof, live model-backed AI proof after server key configuration, deferred SMS/Telnyx, remaining P1/P2 hardening, and GitHub branch synchronization.

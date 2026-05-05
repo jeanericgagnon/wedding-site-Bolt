@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { escapeHtml, safeEmailHref, sanitizeEmailSubject } from "../_shared/emailSafety.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,44 +17,6 @@ const json = (data: unknown, status = 200) =>
 const BATCH_SIZE = 20;
 const MAX_ATTEMPTS = 3;
 const SAFE_DELIVERY_ERROR = "Email delivery did not complete. Please try again.";
-
-function escapeHtml(value: unknown): string {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
-function safeEmailUrl(value: unknown): string {
-  const raw = String(value ?? "").trim();
-  if (!raw) return "https://dayof.love";
-  try {
-    const parsed = new URL(raw);
-    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return "https://dayof.love";
-    return parsed.toString();
-  } catch {
-    return "https://dayof.love";
-  }
-}
-
-function safeEmailHref(value: unknown): string {
-  return escapeHtml(safeEmailUrl(value));
-}
-
-function sanitizeEmailSubject(value: unknown): string {
-  const normalized = String(value ?? "")
-    .split("")
-    .map((char) => {
-      const code = char.charCodeAt(0);
-      return code < 32 || code === 127 ? " " : char;
-    })
-    .join("")
-    .replace(/\s+/g, " ")
-    .trim();
-  return (normalized || "DayOf update").slice(0, 180);
-}
 
 function buildEmailHtml(type: string, payload: Record<string, unknown>): { subject: string; html: string } | null {
   const p = payload as Record<string, string | boolean | null>;

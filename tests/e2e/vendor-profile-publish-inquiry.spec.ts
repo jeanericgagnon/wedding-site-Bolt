@@ -108,18 +108,18 @@ test('owner publishes vendor profile variant and public inquiry is readable', as
     await page.getByPlaceholder('Vendor name').fill(vendorName);
     await page.getByPlaceholder('Website URL (optional)').fill(`https://dayof.love/?vendorProfileQa=${runId}`);
     await page.getByPlaceholder('Contact email for inquiry CTA (optional)').fill(`qa-vendor-${runId}@example.com`);
-    await page.locator('select').selectOption('editorial');
+    await page.locator('select').selectOption('photography');
     await page.getByRole('button', { name: 'Generate vendor profile' }).click();
     await expect(page.getByRole('heading', { name: 'Vendor page details' })).toBeVisible({ timeout: 30_000 });
 
-    await page.getByRole('button', { name: /Portfolio forward/i }).click();
+    await page.getByRole('button', { name: /Floral lookbook/i }).click();
     await page.getByPlaceholder('vendor-page-slug').fill(slugBase);
     await page.getByRole('button', { name: 'Publish vendor page' }).click();
     await expect(page.getByText(`/vendor/${slugBase}`)).toBeVisible({ timeout: 30_000 });
 
     const profile = await expect.poll(getPublishedProfile, { timeout: 20_000 }).not.toBeNull().then(getPublishedProfile);
     expect(profile).toMatchObject({ slug: slugBase, vendor_name: vendorName });
-    expect(profile.source_payload?.template_id).toBe('portfolio');
+    expect(profile.source_payload?.template_id).toBe('floral');
 
     await page.goto(`/vendor/${slugBase}?vendorInquiryQa=${runId}`, { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: vendorName })).toBeVisible();

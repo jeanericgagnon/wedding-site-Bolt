@@ -10,6 +10,22 @@ import { readStoredGuestLanguage, resolveGuestLanguagePreference, writeStoredGue
 const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim();
 const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim();
 
+export const buildEventRecapGuestHubAccessPayload = (slug: string) => {
+  const searchParams = new URLSearchParams(window.location.search);
+  return {
+    inviteToken: searchParams.get('token') ?? sessionStorage.getItem(`dayof_invite_token_${slug}`),
+    passwordSession: sessionStorage.getItem(`dayof_pw_session_${slug}`),
+  };
+};
+
+export const buildEventRecapAccessHeaders = (slug: string) => {
+  const access = buildEventRecapGuestHubAccessPayload(slug);
+  return {
+    ...(access.inviteToken ? { 'x-dayof-invite-token': access.inviteToken } : {}),
+    ...(access.passwordSession ? { 'x-dayof-password-session': access.passwordSession } : {}),
+  };
+};
+
 type RecapCard = {
   id: string;
   filename: string;
@@ -106,7 +122,7 @@ export const EventRecap: React.FC = () => {
     let cancelled = false;
     setLoading(true);
     fetch(`${supabaseUrl}/functions/v1/guest-recap-config?site=${encodeURIComponent(slug)}`, {
-      headers: { apikey: supabaseAnonKey },
+      headers: { apikey: supabaseAnonKey, ...buildEventRecapAccessHeaders(slug) },
     })
       .then(async (res) => {
         const payload = await res.json().catch(() => ({}));
@@ -132,7 +148,7 @@ export const EventRecap: React.FC = () => {
     fetch(`${supabaseUrl}/functions/v1/guest-hub-track`, {
       method: 'POST',
       headers: { apikey: supabaseAnonKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ siteSlug: slug, eventType: 'view', target: '/event/recap' }),
+      body: JSON.stringify({ siteSlug: slug, eventType: 'view', target: '/event/recap', ...buildEventRecapGuestHubAccessPayload(slug) }),
     }).catch(() => {});
   }, [slug]);
 
@@ -163,6 +179,7 @@ export const EventRecap: React.FC = () => {
           wantsPhotoUpdates: true,
           wantsOwnEventInfo,
           source: 'guest_recap',
+          ...buildEventRecapGuestHubAccessPayload(slug),
         }),
       });
       const payload = await res.json().catch(() => ({}));

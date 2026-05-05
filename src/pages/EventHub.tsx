@@ -43,6 +43,19 @@ const normalizeSiteRef = (value?: string) => (value ?? '').trim().toLowerCase();
 const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim();
 const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim();
 
+export const buildGuestHubAccessPayload = (slug: string, searchParams: URLSearchParams) => ({
+  inviteToken: searchParams.get('token') ?? sessionStorage.getItem(`dayof_invite_token_${slug}`),
+  passwordSession: sessionStorage.getItem(`dayof_pw_session_${slug}`),
+});
+
+export const buildGuestHubAccessHeaders = (slug: string, searchParams: URLSearchParams) => {
+  const access = buildGuestHubAccessPayload(slug, searchParams);
+  return {
+    ...(access.inviteToken ? { 'x-dayof-invite-token': access.inviteToken } : {}),
+    ...(access.passwordSession ? { 'x-dayof-password-session': access.passwordSession } : {}),
+  };
+};
+
 const formatHubWeddingDate = (value: string | null | undefined) => {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
   const date = new Date(`${value}T12:00:00`);
@@ -150,7 +163,7 @@ export const EventHub: React.FC = () => {
       return;
     }
     let cancelled = false;
-    const headers = { apikey: supabaseAnonKey };
+    const headers = { apikey: supabaseAnonKey, ...buildGuestHubAccessHeaders(slug, searchParams) };
     setHubConfigStatus(typeof navigator !== 'undefined' && navigator.onLine === false ? 'offline' : 'loading');
     fetch(`${supabaseUrl}/functions/v1/guest-hub-config?site=${encodeURIComponent(slug)}`, { headers })
       .then((res) => res.ok ? res.json() : null)
@@ -190,7 +203,7 @@ export const EventHub: React.FC = () => {
     fetch(`${supabaseUrl}/functions/v1/guest-hub-track`, {
       method: 'POST',
       headers: { ...headers, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ siteSlug: slug, eventType: 'view', target: '/event' }),
+      body: JSON.stringify({ siteSlug: slug, eventType: 'view', target: '/event', ...buildGuestHubAccessPayload(slug, searchParams) }),
     }).catch(() => {});
     return () => {
       cancelled = true;
@@ -202,7 +215,7 @@ export const EventHub: React.FC = () => {
     fetch(`${supabaseUrl}/functions/v1/guest-hub-track`, {
       method: 'POST',
       headers: { apikey: supabaseAnonKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ siteSlug: slug, eventType: 'click', target }),
+      body: JSON.stringify({ siteSlug: slug, eventType: 'click', target, ...buildGuestHubAccessPayload(slug, new URLSearchParams(window.location.search)) }),
     }).catch(() => {});
   };
 
@@ -229,6 +242,7 @@ export const EventHub: React.FC = () => {
           wantsPhotoUpdates: true,
           wantsOwnEventInfo,
           source: 'guest_hub',
+          ...buildGuestHubAccessPayload(slug, searchParams),
         }),
       });
       const payload = await res.json().catch(() => ({}));

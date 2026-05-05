@@ -1,8 +1,13 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { describe, expect, it } from 'vitest';
-import { friendlyGuestbookError, GuestbookSubmit } from './GuestbookSubmit';
+import { afterEach, describe, expect, it } from 'vitest';
+import { buildGuestbookAccessPayload, friendlyGuestbookError, GuestbookSubmit } from './GuestbookSubmit';
+
+afterEach(() => {
+  sessionStorage.clear();
+  window.history.replaceState({}, '', '/');
+});
 
 describe('friendlyGuestbookError', () => {
   it('hides internal guestbook submit failures from guests', () => {
@@ -45,5 +50,27 @@ describe('friendlyGuestbookError', () => {
 
     expect(screen.getByText('19/2000 characters')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Back to wedding hub' })).toHaveAttribute('href', '/event/ericandkaras');
+  });
+});
+
+describe('buildGuestbookAccessPayload', () => {
+  it('packages invite and password access for gated guestbook submission', () => {
+    window.history.replaceState({}, '', '/guestbook/ericandkaras?token=current-invite');
+    sessionStorage.setItem('dayof_invite_token_ericandkaras', 'stored-invite');
+    sessionStorage.setItem('dayof_pw_session_ericandkaras', 'password-session');
+
+    expect(buildGuestbookAccessPayload('ericandkaras')).toEqual({
+      inviteToken: 'current-invite',
+      passwordSession: 'password-session',
+    });
+  });
+
+  it('falls back to stored invite access for guestbook links opened from a gated hub', () => {
+    sessionStorage.setItem('dayof_invite_token_ericandkaras', 'stored-invite');
+
+    expect(buildGuestbookAccessPayload('ericandkaras')).toEqual({
+      inviteToken: 'stored-invite',
+      passwordSession: null,
+    });
   });
 });

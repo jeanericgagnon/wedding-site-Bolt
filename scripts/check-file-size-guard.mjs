@@ -4,14 +4,14 @@ import { join } from 'node:path';
 const MAX_NEW_PAGE_LINES = 2000;
 
 const baselineLimits = new Map([
-  ['src/pages/RSVP.tsx', 2060],
-  ['src/pages/dashboard/CoordinatorMode.tsx', 2839],
-  ['src/pages/dashboard/GuestPhotoSharing.tsx', 3609],
-  ['src/pages/dashboard/Guests.tsx', 5430],
-  ['src/pages/dashboard/Messages.tsx', 4043],
-  ['src/pages/dashboard/Settings.tsx', 2422],
-  ['src/pages/dashboard/Seating.tsx', 2370],
-  ['src/pages/dashboard/planning/NameChangePlannerTab.tsx', 2754],
+  ['src/pages/RSVP.tsx', 1962],
+  ['src/pages/dashboard/CoordinatorMode.tsx', 2773],
+  ['src/pages/dashboard/GuestPhotoSharing.tsx', 3188],
+  ['src/pages/dashboard/Guests.tsx', 4790],
+  ['src/pages/dashboard/Messages.tsx', 3386],
+  ['src/pages/dashboard/Settings.tsx', 2328],
+  ['src/pages/dashboard/Seating.tsx', 2169],
+  ['src/pages/dashboard/planning/NameChangePlannerTab.tsx', 2414],
 ]);
 
 function walk(dir) {

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Plus, Edit2, Trash2, Phone, Mail, Globe, FileText, ChevronDown, ChevronUp, Copy, Download } from 'lucide-react';
+import { Plus, Edit2, Trash2, Phone, Mail, Globe, FileText, ChevronDown, ChevronUp, Copy, Download, Star } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
@@ -24,6 +24,8 @@ const VENDOR_TYPES = [
   'Baker', 'Planner', 'Stationery', 'Other',
 ];
 
+const VENDOR_RATING_STATUSES = ['Researching', 'Reached out', 'Proposal received', 'Shortlist', 'Booked', 'Passed'];
+
 function fmt(n: number) {
   return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 }
@@ -35,6 +37,27 @@ function vendorProfileCreateUrl(vendor: Partial<PlanningVendor>) {
   if (vendor.email) params.set('contactEmail', vendor.email);
   return `/vendor-profile-v1${params.toString() ? `?${params.toString()}` : ''}`;
 }
+
+function clampVendorRating(value: unknown): number | null {
+  const rating = Number(value);
+  if (!Number.isFinite(rating) || rating <= 0) return null;
+  return Math.max(1, Math.min(5, Math.round(rating)));
+}
+
+const VendorRating: React.FC<{ rating?: number | null }> = ({ rating }) => {
+  const safeRating = clampVendorRating(rating) ?? 0;
+  return (
+    <span className="inline-flex items-center gap-0.5" aria-label={safeRating > 0 ? `${safeRating} out of 5 internal rating` : 'No internal rating yet'}>
+      {[1, 2, 3, 4, 5].map((value) => (
+        <Star
+          key={value}
+          className={`h-3.5 w-3.5 ${value <= safeRating ? 'fill-warning text-warning' : 'text-text-tertiary'}`}
+          aria-hidden="true"
+        />
+      ))}
+    </span>
+  );
+};
 
 function VendorForm({ initial, onSave, onCancel }: {
   initial?: Partial<PlanningVendor>;
@@ -54,6 +77,9 @@ function VendorForm({ initial, onSave, onCancel }: {
     document_label: initial?.document_label ?? '',
     document_url: initial?.document_url ?? '',
     notes: initial?.notes ?? '',
+    internal_rating: initial?.internal_rating ?? 0,
+    rating_status: initial?.rating_status ?? 'Researching',
+    rating_notes: initial?.rating_notes ?? '',
   });
   const [saving, setSaving] = useState(false);
 
@@ -67,6 +93,9 @@ function VendorForm({ initial, onSave, onCancel }: {
       next_payment_due: form.next_payment_due || null,
       document_label: form.document_label || null,
       document_url: form.document_url || null,
+      internal_rating: clampVendorRating(form.internal_rating),
+      rating_status: form.rating_status || null,
+      rating_notes: form.rating_notes || null,
     });
     setSaving(false);
   }
@@ -192,6 +221,37 @@ function VendorForm({ initial, onSave, onCancel }: {
             placeholder="Contract notes, special requirements..."
           />
         </div>
+        <div>
+          <label className="block text-xs font-medium text-text-secondary mb-1">Internal rating</label>
+          <select
+            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            value={form.internal_rating}
+            onChange={e => setForm(f => ({ ...f, internal_rating: Number(e.target.value) }))}
+          >
+            <option value={0}>Not rated</option>
+            {[1, 2, 3, 4, 5].map((rating) => <option key={rating} value={rating}>{rating} / 5</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-text-secondary mb-1">Rating status</label>
+          <select
+            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary"
+            value={form.rating_status}
+            onChange={e => setForm(f => ({ ...f, rating_status: e.target.value }))}
+          >
+            {VENDOR_RATING_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
+          </select>
+        </div>
+        <div className="sm:col-span-2">
+          <label className="block text-xs font-medium text-text-secondary mb-1">Private rating notes</label>
+          <textarea
+            className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+            value={form.rating_notes}
+            onChange={e => setForm(f => ({ ...f, rating_notes: e.target.value }))}
+            rows={2}
+            placeholder="Why they are a fit, concerns, package notes, response quality..."
+          />
+        </div>
       </div>
       <div className="flex gap-2 justify-end">
         <Button type="button" variant="ghost" size="sm" onClick={onCancel}>Cancel</Button>
@@ -268,6 +328,9 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
       `Balance: ${fmt(vendor.balance_due || 0)}`,
       vendor.next_payment_due ? `Next due: ${formatVendorDate(vendor.next_payment_due)}` : null,
       vendor.document_url ? `Document: ${vendor.document_url}` : 'Document: missing',
+      vendor.internal_rating ? `Internal rating: ${vendor.internal_rating}/5` : 'Internal rating: not rated',
+      vendor.rating_status ? `Status: ${vendor.rating_status}` : null,
+      vendor.rating_notes ? `Private rating notes: ${vendor.rating_notes}` : null,
     ].filter(Boolean).join('\n')).join('\n\n');
     const result = await copyTextOrDownload(text || 'No vendors yet.', 'dayof-vendor-brief.txt');
     toast(result === 'copied' ? 'Vendor brief copied.' : 'Clipboard was blocked, so the vendor brief downloaded.', 'success');
@@ -275,7 +338,7 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
 
   function exportVendors() {
     const csvRows = [
-      ['Name', 'Type', 'Contact', 'Email', 'Phone', 'Website', 'Contract total', 'Paid', 'Balance', 'Next due', 'Document label', 'Document URL'],
+      ['Name', 'Type', 'Contact', 'Email', 'Phone', 'Website', 'Internal rating', 'Rating status', 'Rating notes', 'Contract total', 'Paid', 'Balance', 'Next due', 'Document label', 'Document URL'],
       ...vendors.map((vendor) => [
         vendor.name,
         vendor.vendor_type,
@@ -283,6 +346,9 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
         vendor.email,
         vendor.phone,
         vendor.website,
+        vendor.internal_rating ? String(vendor.internal_rating) : '',
+        vendor.rating_status ?? '',
+        vendor.rating_notes ?? '',
         String(vendor.contract_total || 0),
         String(vendor.amount_paid || 0),
         String(vendor.balance_due || 0),
@@ -415,8 +481,13 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="text-sm font-semibold text-text-primary">{vendor.name}</p>
                           <Badge variant="neutral">{vendor.vendor_type}</Badge>
+                          {vendor.rating_status && <Badge variant="secondary">{vendor.rating_status}</Badge>}
                           {isDueSoon && <Badge variant="warning">Payment due soon</Badge>}
                           {!vendor.document_url && <Badge variant="warning">Doc missing</Badge>}
+                        </div>
+                        <div className="mt-1 flex items-center gap-2">
+                          <VendorRating rating={vendor.internal_rating} />
+                          <span className="text-[11px] text-text-tertiary">Internal only</span>
                         </div>
                         {vendor.contact_name && (
                           <p className="text-xs text-text-tertiary mt-0.5">{vendor.contact_name}</p>
@@ -511,6 +582,15 @@ export const VendorsTab: React.FC<Props> = ({ vendors, onAdd, onUpdate, onDelete
                         </div>
                         {vendor.notes && (
                           <p className="text-xs text-text-tertiary">{vendor.notes}</p>
+                        )}
+                        {(vendor.internal_rating || vendor.rating_notes) && (
+                          <div className="rounded-lg border border-border/35 bg-white px-2.5 py-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="text-[11px] font-medium text-text-tertiary">Internal rating</p>
+                              <VendorRating rating={vendor.internal_rating} />
+                            </div>
+                            {vendor.rating_notes && <p className="mt-1 text-xs text-text-secondary">{vendor.rating_notes}</p>}
+                          </div>
                         )}
                       </div>
                     )}

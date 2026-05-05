@@ -4,6 +4,10 @@ import { resolve } from 'node:path';
 
 const file = resolve(process.cwd(), 'src/pages/dashboard/Guests.tsx');
 const src = readFileSync(file, 'utf8');
+const utilsFile = resolve(process.cwd(), 'src/pages/dashboard/guests/guestDashboardUtils.ts');
+const utilsSrc = readFileSync(utilsFile, 'utf8');
+const utilsTestFile = resolve(process.cwd(), 'src/pages/dashboard/guests/guestDashboardUtils.test.ts');
+const utilsTestSrc = readFileSync(utilsTestFile, 'utf8');
 
 const checks = [
   { name: 'check-in mode toggle exists', ok: src.includes('Check-in mode') },
@@ -12,7 +16,15 @@ const checks = [
   { name: 'clear all check-ins action exists', ok: src.includes('handleClearAllCheckIns') && src.includes('Clear all check-ins') },
   { name: 'export checked-in action exists', ok: src.includes('exportCheckedInCSV') && src.includes('Export checked-in guests') },
   { name: 'undo last check-in exists', ok: src.includes('handleUndoLastCheckIn') && src.includes('Last check-in:') },
-  { name: 'unchecked-first sorting in check-in mode exists', ok: src.includes('displayedGuests = checkInMode') && src.includes('aChecked ? 1 : -1') },
+  {
+    name: 'unchecked-first sorting in check-in mode exists',
+    ok:
+      src.includes('sortGuestsForDisplay') &&
+      src.includes('checkInMode') &&
+      utilsSrc.includes('aChecked ? 1 : -1') &&
+      utilsTestSrc.includes('checkInMode: true') &&
+      utilsTestSrc.includes("['a', 'p', 'z']"),
+  },
 ];
 
 const failures = checks.filter(c => !c.ok);

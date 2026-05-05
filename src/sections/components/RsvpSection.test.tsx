@@ -1,12 +1,20 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { RsvpInline, RsvpSection } from './RsvpSection';
 import type { SectionInstance } from '../../types/layoutConfig';
 import type { WeddingDataV1 } from '../../types/weddingData';
 
+const { invokeMock } = vi.hoisted(() => ({
+  invokeMock: vi.fn(),
+}));
+
 vi.mock('../../lib/supabase', () => ({
-  supabase: {},
+  supabase: {
+    functions: {
+      invoke: invokeMock,
+    },
+  },
 }));
 
 function createWeddingData(): WeddingDataV1 {
@@ -38,6 +46,12 @@ function makeInstance(settings: SectionInstance['settings']): SectionInstance {
 }
 
 describe('RsvpSection', () => {
+  beforeEach(() => {
+    invokeMock.mockReset();
+    window.history.pushState({}, '', '/site/alex-jordan');
+    sessionStorage.clear();
+  });
+
   it('shows default RSVP titles when showTitle is unset in both variants', () => {
     const data = createWeddingData();
 
@@ -123,5 +137,38 @@ describe('RsvpSection', () => {
 
     expect(screen.queryByText('Invalid Date')).not.toBeInTheDocument();
     expect(screen.queryByText(/Kindly respond by/)).not.toBeInTheDocument();
+  });
+
+  it('submits through the gated public-site RSVP function instead of direct table insert', async () => {
+    invokeMock
+      .mockResolvedValueOnce({ data: { status: 'open', site: { id: 'site-123' } }, error: null })
+      .mockResolvedValueOnce({ data: { ok: true }, error: null });
+    sessionStorage.setItem('dayof_invite_token_alex-jordan', 'invite-123');
+    sessionStorage.setItem('dayof_pw_session_alex-jordan', 'pw-session-123');
+
+    const data = createWeddingData();
+    render(<RsvpSection data={data} instance={makeInstance({})} />);
+
+    fireEvent.change(screen.getByLabelText('Your name'), { target: { value: 'Taylor Guest' } });
+    fireEvent.change(screen.getByLabelText('Number of guests'), { target: { value: '2' } });
+    fireEvent.change(screen.getByLabelText(/Dietary notes/), { target: { value: 'Vegetarian' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send RSVP' }));
+
+    await waitFor(() => {
+      expect(invokeMock).toHaveBeenCalledWith('public-site-rsvp-submit', expect.objectContaining({
+        body: expect.objectContaining({
+          slug: 'alex-jordan',
+          inviteToken: 'invite-123',
+          passwordSession: 'pw-session-123',
+          guestName: 'Taylor Guest',
+          rsvpStatus: 'attending',
+          guestCount: 2,
+          dietaryNotes: 'Vegetarian',
+        }),
+      }));
+    });
+
+    expect(invokeMock).not.toHaveBeenCalledWith('site_rsvps', expect.anything());
+    expect(await screen.findByText('Your reply has been saved.')).toBeInTheDocument();
   });
 });

@@ -184,7 +184,7 @@ Deno.serve(async (req: Request) => {
       guest_id: guest.id,
       wedding_site_id: weddingSiteId,
       process_result: updateErr ? "failed" : "updated",
-      process_error: updateErr?.message,
+      process_error: updateErr ? "SMS_RSVP_UPDATE_FAILED" : null,
     });
 
     if (updateErr) {
@@ -199,14 +199,13 @@ Deno.serve(async (req: Request) => {
       : `Thanks ${firstName}. We saved your RSVP as pending.`;
 
     return twiml(confirmationText);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Internal server error";
+  } catch {
     await admin.from("sms_inbound_rsvp_events").insert({
       from_number: "unknown",
       raw_body: "",
       normalized_body: "",
       process_result: "failed",
-      process_error: message,
+      process_error: "SMS_RSVP_INBOUND_UNEXPECTED_FAILURE",
     }).catch(() => {});
     return twiml("Sorry, something went wrong processing your RSVP reply.");
   }

@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,6 +12,11 @@ function json(body: Record<string, unknown>, status = 200) {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
+
+async function sha256Hex(value: string): Promise<string> {
+  const buffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(buffer)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 Deno.serve(async (req: Request) => {
@@ -36,6 +42,8 @@ Deno.serve(async (req: Request) => {
     const guestEmailRaw = String(body.guestEmail ?? "").trim().toLowerCase();
     const guestEmail = guestEmailRaw ? guestEmailRaw.slice(0, 254) : null;
     const message = String(body.message ?? "").trim();
+    const inviteToken = typeof body.inviteToken === "string" ? body.inviteToken.trim() : null;
+    const passwordSession = typeof body.passwordSession === "string" ? body.passwordSession.trim() : null;
     const honeypot = String(body.website ?? "").trim();
 
     if (honeypot) return json({ error: "Request rejected" }, 400);
@@ -46,12 +54,26 @@ Deno.serve(async (req: Request) => {
 
     const { data: site, error: siteError } = await admin
       .from("wedding_sites")
-      .select("id,is_published")
+      .select("id,site_slug,is_published,privacy_mode,guest_access_token")
       .eq("site_slug", siteSlug)
       .maybeSingle();
 
     if (siteError) return json({ error: "Guestbook is temporarily unavailable. Please try again." }, 500);
-    if (!site || !site.is_published) return json({ error: "Site not available" }, 404);
+    if (
+      !site ||
+      !(await canReadPublicSubresource({
+        isPublished: site.is_published === true,
+        privacyMode: site.privacy_mode,
+        siteSlug: site.site_slug,
+        inviteToken,
+        passwordSession,
+        storedInviteToken: site.guest_access_token,
+        secret: serviceRole,
+      }))
+    ) {
+      return json({ error: "Site not available" }, 404);
+    }
+    const requesterIpMarker = requesterIp ? `h:${await sha256Hex(`guestbook:${site.id}:${requesterIp}`)}` : null;
 
     const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
     const { count: siteRecentCount } = await admin
@@ -61,12 +83,12 @@ Deno.serve(async (req: Request) => {
       .gte("created_at", tenMinutesAgo);
     if ((siteRecentCount ?? 0) > 80) return json({ error: "Guestbook is busy. Please try again shortly." }, 429);
 
-    if (requesterIp) {
+    if (requesterIpMarker) {
       const { count: ipRecentCount } = await admin
         .from("guestbook_entries")
         .select("id", { count: "exact", head: true })
         .eq("wedding_site_id", site.id)
-        .eq("requester_ip", requesterIp)
+        .eq("requester_ip", requesterIpMarker)
         .gte("created_at", tenMinutesAgo);
       if ((ipRecentCount ?? 0) > 12) return json({ error: "Too many notes from this network. Please try again shortly." }, 429);
     }
@@ -88,7 +110,7 @@ Deno.serve(async (req: Request) => {
         guest_name: guestName,
         guest_email: guestEmail,
         message,
-        requester_ip: requesterIp,
+        requester_ip: requesterIpMarker,
         user_agent: userAgent,
       })
       .select("id,created_at")

@@ -4,6 +4,7 @@ const STATIC_ASSET_PATTERN = /\.(?:js|css|png|jpg|jpeg|gif|webp|svg|ico|woff2?|t
 
 function isSafeStaticRequest(requestUrl, request) {
   if (request.method !== 'GET') return false;
+  if (request.headers.has('Authorization')) return false;
   if (requestUrl.origin !== self.location.origin) return false;
   if (requestUrl.pathname.startsWith('/functions/v1/')) return false;
   if (requestUrl.pathname.startsWith('/auth/v1/')) return false;
@@ -40,6 +41,6 @@ self.addEventListener('fetch', (event) => {
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy)).catch(() => {});
         return response;
       })
-    )).catch(() => caches.match(event.request).then((cached) => cached || caches.match('/')))
+    )).catch(() => caches.match(event.request))
   );
 });

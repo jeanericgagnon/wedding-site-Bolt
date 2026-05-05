@@ -1,9 +1,26 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { rsvpDefaultDefinition } from './multiEvent';
 
+const { invokeMock } = vi.hoisted(() => ({
+  invokeMock: vi.fn(),
+}));
+
+vi.mock('../../../lib/supabase', () => ({
+  supabase: {
+    functions: {
+      invoke: invokeMock,
+    },
+  },
+}));
+
 describe('RSVP multi-event variant', () => {
+  beforeEach(() => {
+    invokeMock.mockReset();
+    sessionStorage.clear();
+  });
+
   it('keeps embedded-form helper copy guest-facing', () => {
     const Component = rsvpDefaultDefinition.Component;
 
@@ -71,5 +88,46 @@ describe('RSVP multi-event variant', () => {
     );
 
     expect(container.querySelector('img')?.getAttribute('src')).toBe('/preview-photos/header-anchor.jpg');
+  });
+
+  it('submits through the gated public-site RSVP function with stored access state', async () => {
+    invokeMock.mockResolvedValueOnce({ data: { ok: true }, error: null });
+    sessionStorage.setItem('dayof_invite_token_alex-jordan-demo', 'invite-123');
+    sessionStorage.setItem('dayof_pw_session_alex-jordan-demo', 'pw-session-123');
+
+    const Component = rsvpDefaultDefinition.Component;
+    render(
+      <Component
+        siteSlug="alex-jordan-demo"
+        data={{
+          ...rsvpDefaultDefinition.defaultData,
+          mode: 'form',
+        }}
+      />,
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('Your full name'), { target: { value: 'Taylor Guest' } });
+    fireEvent.change(screen.getByPlaceholderText('your@email.com'), { target: { value: 'taylor@example.com' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Joyfully accepts' }));
+    fireEvent.change(screen.getByDisplayValue('1 guest'), { target: { value: '2' } });
+    fireEvent.change(screen.getByPlaceholderText('Vegetarian, vegan, gluten-free, allergies...'), { target: { value: 'Vegetarian' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send RSVP' }));
+
+    await waitFor(() => {
+      expect(invokeMock).toHaveBeenCalledWith('public-site-rsvp-submit', expect.objectContaining({
+        body: expect.objectContaining({
+          slug: 'alex-jordan-demo',
+          inviteToken: 'invite-123',
+          passwordSession: 'pw-session-123',
+          guestName: 'Taylor Guest',
+          guestEmail: 'taylor@example.com',
+          rsvpStatus: 'attending',
+          guestCount: 2,
+          dietaryNotes: 'Vegetarian',
+        }),
+      }));
+    });
+
+    expect(await screen.findByText('We got your RSVP!')).toBeInTheDocument();
   });
 });

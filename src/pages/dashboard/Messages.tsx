@@ -12,112 +12,82 @@ import { createSmsCreditsSession } from '../../lib/stripeService';
 import { canComposeDashboardMessages, canEditPlannerSurface, derivePlannerRoleFromPermissions, readPlannerAccessRole, writePlannerAccessRole, type PlannerAccessRole, type PlannerPermissionKey } from '../../lib/plannerAccess';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { GUEST_COMMUNICATION_FLOW } from '../../lib/guestCommunicationFlow';
-import { buildRsvpReminderDraft } from '../../lib/reminderDraftHelper';
-import { buildDayOfUpdateDraft } from '../../lib/dayOfUpdateHelper';
-import { buildEventReminderDraft } from '../../lib/eventReminderHelper';
 import { formatMessageEventOptionLabel } from './messageEventDate';
-import { formatMessageHistoryDate, formatMessageHistoryDateTime, getMessageHistoryTimestamp } from './messageHistoryTime';
+import { formatMessageHistoryDate, formatMessageHistoryDateTime } from './messageHistoryTime';
 import { formatScheduledMessageDateTime, parseScheduleInputToIso, toScheduleInputValue } from './messageScheduleTime';
 import { getMessageTemplateCoupleLabel } from './messageTemplateVariables';
 import { SMS_SEGMENT_SIZE, countSmsSegments, estimateSmsCredits } from '../../lib/smsSegments';
 import { SMS_PROVIDER_PENDING_COPY, isSmsProviderEnabled } from '../../lib/smsProvider';
 import { logAppAction } from '../../lib/actionAudit';
-import { customerSafeErrorMessage } from '../../lib/customerSafeError';
 import { buildMessageAudienceOptions, filterMessageAudienceGuests, getMessageAudienceDetail } from '../../lib/messageAudienceSegments';
 import { buildGuestMessageLanguagePreviews } from '../../lib/guestMessageLanguagePreview';
 import { MESSAGES_DASHBOARD_SELECT } from './messages/messageSelect';
+import {
+  type AudienceOption,
+  type ChannelType,
+  type DeliveryRow,
+  type Guest,
+  type Message,
+  type MessageTemplateKey,
+  type SavedComposerTemplate,
+  type SmsCreditTransaction,
+  type Toast,
+  type WeddingSite,
+} from './messages/messageDashboardTypes';
+import {
+  COMPOSER_TEMPLATES,
+  buildAudienceBreakdown,
+  buildAudienceReachability,
+  buildCampaignStatusSummary,
+  buildCampaignThreads,
+  buildChannelBreakdown,
+  buildDeliveryHealth,
+  buildDeliveryStats,
+  buildHistoryStatusCounts,
+  buildProviderTelemetry,
+  buildSegmentPerformance,
+  canRetryMessageStatus,
+  countStoredPhotoAlbumLinks,
+  describeRecipientReview,
+  filterMessageHistory,
+  formatScheduledDate,
+  getAudienceLabel,
+  getCampaignName,
+  getCampaignThreadKey,
+  getCampaignTypeLabel,
+  getCustomerDeliveryReason,
+  getActiveCampaignMessages,
+  getActiveCampaignThread,
+  getPreferredStoredPhotoAlbumLink,
+  getRecipientCount,
+  getSkippedCount,
+  getTemplateKey,
+  getUnreachedCount,
+  hasReachableEmail,
+  hasReachableSms,
+  isEmailCapConsumingStatus,
+  isPastScheduledTime,
+  isSavedTemplateScheduleUsable,
+  migrateSavedComposerTemplatesStorage,
+  normalizeSavedTemplateName,
+  readSavedComposerTemplates,
+  safeMessagesError,
+  writeSavedComposerTemplates,
+  type MessageHistoryChannelFilter,
+  type MessageHistoryDeliveryFilter,
+  type MessageHistoryStatusFilter,
+} from './messages/messageDashboardUtils';
+import {
+  RSVP_CONTINUITY_EVENT,
+  RSVP_CONTINUITY_STORAGE_KEY,
+  readDemoMessages,
+  writeDemoMessages,
+} from './messages/messageDemoStorage';
 const BULK_SEND_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-bulk-message`;
-const DEMO_MESSAGES_STORAGE_KEY = 'dayof.demo.messages.history';
-const RSVP_CONTINUITY_EVENT = 'dayof:rsvp-updated';
-const RSVP_CONTINUITY_STORAGE_KEY = 'dayof.rsvp.updatedAt';
 
 // Optional table: can be missing in lean deployments.
 // Start unknown, then permanently disable after one confirmed missing-table miss.
 let hasMessageDeliveriesTable: boolean | null = null;
-
-function safeMessagesError(err: unknown, fallback: string): string {
-  return customerSafeErrorMessage(err, fallback);
-}
-
-function buildDemoMessageSeed(): Message[] {
-  const now = Date.now();
-  const iso = (ms: number) => new Date(ms).toISOString();
-  return [
-    {
-      id: 'demo-msg-1',
-      subject: 'Welcome to our wedding week ✨',
-      body: 'Hi everyone! We are so excited to celebrate with you. Please check the itinerary for final timing updates.',
-      sent_at: iso(now - 1000 * 60 * 60 * 24 * 3),
-      scheduled_for: null,
-      status: 'sent',
-      channel: 'email',
-      audience_filter: 'all',
-      recipient_filter: { audience: 'all', recipient_count: 120 },
-      recipient_count: 120,
-      delivered_count: 117,
-      failed_count: 3,
-    },
-    {
-      id: 'demo-msg-2',
-      subject: 'RSVP reminder',
-      body: 'Quick reminder to submit your RSVP by Friday so we can finalize seating and catering. Thank you!',
-      sent_at: iso(now - 1000 * 60 * 60 * 24),
-      scheduled_for: null,
-      status: 'partial',
-      channel: 'email',
-      audience_filter: 'not_responded',
-      recipient_filter: { audience: 'not_responded', recipient_count: 34 },
-      recipient_count: 34,
-      delivered_count: 31,
-      failed_count: 3,
-    },
-    {
-      id: 'demo-msg-3',
-      subject: 'Ceremony starts at 4:30 PM',
-      body: 'Please arrive 15 minutes early. Parking and shuttle details are in the Travel page.',
-      sent_at: null,
-      scheduled_for: iso(now + 1000 * 60 * 60 * 10),
-      status: 'scheduled',
-      channel: 'email',
-      audience_filter: 'all',
-      recipient_filter: { audience: 'all', recipient_count: 120 },
-      recipient_count: 120,
-      delivered_count: 0,
-      failed_count: 0,
-    },
-    {
-      id: 'demo-msg-4',
-      subject: 'Vendor update draft',
-      body: 'Draft for internal coordination: timeline lock by Wednesday noon.',
-      sent_at: null,
-      scheduled_for: null,
-      status: 'draft',
-      channel: 'email',
-      audience_filter: 'all',
-      recipient_filter: { audience: 'all', recipient_count: 0 },
-      recipient_count: 0,
-      delivered_count: 0,
-      failed_count: 0,
-    },
-  ];
-}
-
-function readDemoMessages(): Message[] {
-  try {
-    const raw = localStorage.getItem(DEMO_MESSAGES_STORAGE_KEY);
-    if (!raw) return buildDemoMessageSeed();
-    const parsed = JSON.parse(raw) as Message[];
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : buildDemoMessageSeed();
-  } catch {
-    return buildDemoMessageSeed();
-  }
-}
-
-function writeDemoMessages(items: Message[]) {
-  try {
-    localStorage.setItem(DEMO_MESSAGES_STORAGE_KEY, JSON.stringify(items));
-  } catch {}
-}
 
 async function triggerBulkSend(messageId: string): Promise<{ delivered: number; failed: number; skipped?: number; total: number; status: string }> {
   const { data: { session } } = await supabase.auth.getSession();
@@ -153,326 +123,6 @@ async function triggerScheduledDispatch(limit = 10): Promise<{ processed: number
     throw new Error(body?.error ?? `Scheduled send run failed (${res.status})`);
   }
   return res.json();
-}
-
-interface Message {
-  id: string;
-  subject: string;
-  body: string;
-  sent_at: string | null;
-  scheduled_for: string | null;
-  status: string;
-  channel: string;
-  recipient_filter: Record<string, unknown> | null;
-  audience_filter?: string | null;
-  recipient_count?: number | null;
-  delivered_count?: number | null;
-  failed_count?: number | null;
-}
-
-interface Guest {
-  id: string;
-  email: string | null;
-  phone?: string | null;
-  sms_consent?: boolean | null;
-  rsvp_status: string;
-  invitation_sent_at?: string | null;
-  reminder_last_sent_at?: string | null;
-  mailing_address_line1?: string | null;
-  mailing_city?: string | null;
-  mailing_state?: string | null;
-  mailing_postal_code?: string | null;
-  meal_choice?: string | null;
-  first_name: string | null;
-  last_name: string | null;
-  name: string;
-}
-
-interface WeddingSite {
-  id: string;
-  site_slug?: string | null;
-  couple_first_name: string | null;
-  couple_second_name: string | null;
-  couple_email: string | null;
-  venue_name?: string | null;
-  wedding_date?: string | null;
-  sms_credits_balance?: number;
-}
-
-interface SmsCreditTransaction {
-  id: string;
-  credits_delta: number;
-  reason: string;
-  created_at: string;
-  expires_at?: string | null;
-  remaining_credits?: number | null;
-}
-
-interface AudienceOption {
-  value: string;
-  label: string;
-  count: number;
-  detail?: string;
-}
-
-interface Toast {
-  id: number;
-  message: string;
-  type: 'success' | 'error' | 'info';
-}
-
-interface DeliveryRow {
-  id: string;
-  message_id: string;
-  status: 'pending' | 'sent' | 'failed' | 'skipped';
-  provider_message_id: string | null;
-  error_message: string | null;
-  attempted_at: string | null;
-  delivered_at: string | null;
-  recipient_email: string;
-  recipient_name?: string | null;
-}
-
-type ChannelType = 'email' | 'sms';
-
-const DELIVERY_ACTIVE_STATUSES = ['queued', 'sending', 'sent', 'partial', 'failed'] as const;
-const DELIVERY_COMPLETED_STATUSES = ['sent', 'partial', 'failed'] as const;
-const EMAIL_CAP_CONSUMING_STATUSES = ['queued', 'sent', 'partial'] as const;
-
-function isDeliveryActiveStatus(status: string | null | undefined): boolean {
-  return DELIVERY_ACTIVE_STATUSES.includes((status ?? '') as (typeof DELIVERY_ACTIVE_STATUSES)[number]);
-}
-
-function isDeliveryCompletedStatus(status: string | null | undefined): boolean {
-  return DELIVERY_COMPLETED_STATUSES.includes((status ?? '') as (typeof DELIVERY_COMPLETED_STATUSES)[number]);
-}
-
-function isEmailCapConsumingStatus(status: string | null | undefined): boolean {
-  return EMAIL_CAP_CONSUMING_STATUSES.includes((status ?? '') as (typeof EMAIL_CAP_CONSUMING_STATUSES)[number]);
-}
-
-function canRetryMessageStatus(status: string | null | undefined): boolean {
-  return status === 'failed';
-}
-
-function getDeliveryScopedRows(messages: Message[], deliveries: DeliveryRow[], predicate: (message: Message) => boolean): DeliveryRow[] {
-  const allowedMessageIds = new Set(messages.filter(predicate).map((message) => message.id));
-  return deliveries.filter((delivery) => allowedMessageIds.has(delivery.message_id));
-}
-
-type MessageTemplateKey =
-  | 'blank'
-  | 'save-the-date'
-  | 'rsvp-reminder'
-  | 'event-reminder'
-  | 'day-of-update'
-  | 'photo-request'
-  | 'thank-you';
-
-interface ComposerTemplate {
-  key: MessageTemplateKey;
-  label: string;
-  detail: string;
-  campaignType?: string;
-  defaultChannel: ChannelType;
-  build: (input: {
-    audienceLabel: string | null;
-    venue: string | null;
-    weddingDate: string | null;
-    applyTemplateVariables: (text: string) => string;
-  }) => { subject: string; body: string };
-}
-
-interface SavedComposerTemplate {
-  id: string;
-  name: string;
-  subject: string;
-  body: string;
-  channel: ChannelType;
-  audience: string;
-  campaignName: string;
-  scheduleType?: 'now' | 'later';
-  scheduleDate?: string;
-  scheduleTime?: string;
-  createdAt: string;
-  updatedAt?: string;
-}
-
-function isSavedTemplateScheduleUsable(template: SavedComposerTemplate): boolean {
-  return template.scheduleType === 'later'
-    && !!template.scheduleDate
-    && !!template.scheduleTime
-    && !isPastScheduledTime(`${template.scheduleDate}T${template.scheduleTime}:00`);
-}
-
-const SAVED_COMPOSER_TEMPLATES_STORAGE_KEY = 'dayof.savedComposerTemplates.v1';
-
-function readSavedComposerTemplates(): SavedComposerTemplate[] {
-  try {
-    const raw = localStorage.getItem(SAVED_COMPOSER_TEMPLATES_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-
-    return normalizeSavedComposerTemplates(parsed.filter(isValidSavedComposerTemplate));
-  } catch {
-    return [];
-  }
-}
-
-function normalizeSavedComposerTemplates(items: SavedComposerTemplate[]): SavedComposerTemplate[] {
-  return items.map((item) => {
-    const createdAt = typeof item?.createdAt === 'string' ? item.createdAt : new Date().toISOString();
-    const updatedAt = typeof item?.updatedAt === 'string' ? item.updatedAt : createdAt;
-    const scheduleType = item?.scheduleType === 'later' ? 'later' : 'now';
-    const scheduleDate = typeof item?.scheduleDate === 'string' ? item.scheduleDate : '';
-    const scheduleTime = typeof item?.scheduleTime === 'string' ? item.scheduleTime : '';
-    return {
-      ...item,
-      scheduleType,
-      scheduleDate,
-      scheduleTime,
-      createdAt,
-      updatedAt,
-    } as SavedComposerTemplate;
-  });
-}
-
-function isValidSavedComposerTemplate(item: unknown): item is SavedComposerTemplate {
-  if (!item || typeof item !== 'object') return false;
-  const candidate = item as Record<string, unknown>;
-  return typeof candidate.id === 'string'
-    && typeof candidate.name === 'string'
-    && typeof candidate.subject === 'string'
-    && typeof candidate.body === 'string'
-    && (candidate.channel === 'email' || candidate.channel === 'sms')
-    && typeof candidate.audience === 'string'
-    && typeof candidate.campaignName === 'string';
-}
-
-function writeSavedComposerTemplates(items: SavedComposerTemplate[]) {
-  try {
-    localStorage.setItem(SAVED_COMPOSER_TEMPLATES_STORAGE_KEY, JSON.stringify(items.slice(0, 12)));
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function normalizeSavedTemplateName(name: string): string {
-  return name.trim().toLowerCase();
-}
-
-const COMPOSER_TEMPLATES: ComposerTemplate[] = [
-  {
-    key: 'blank',
-    label: 'Blank message',
-    detail: 'Start from scratch.',
-    defaultChannel: 'email',
-    build: () => ({ subject: '', body: '' }),
-  },
-  {
-    key: 'save-the-date',
-    label: 'Save the date',
-    detail: 'Early heads-up with a clean scheduled campaign shape.',
-    campaignType: 'save-the-date',
-    defaultChannel: 'email',
-    build: ({ applyTemplateVariables }) => ({
-      subject: applyTemplateVariables('Save the Date!'),
-      body: applyTemplateVariables('We are thrilled to invite you to our wedding! Please mark your calendars for [DATE] at [VENUE]. Formal invitation to follow.'),
-    }),
-  },
-  {
-    key: 'rsvp-reminder',
-    label: 'RSVP reminder',
-    detail: 'Nudge anyone who still has not replied.',
-    campaignType: 'rsvp-reminder',
-    defaultChannel: 'email',
-    build: ({ audienceLabel, applyTemplateVariables }) => {
-      const draft = buildRsvpReminderDraft({ audienceLabel });
-      return {
-        subject: applyTemplateVariables(draft.subject),
-        body: applyTemplateVariables(draft.body),
-      };
-    },
-  },
-  {
-    key: 'event-reminder',
-    label: 'Event reminder',
-    detail: 'Useful reminder for a specific event or group.',
-    campaignType: 'event-reminder',
-    defaultChannel: 'email',
-    build: ({ audienceLabel, venue, applyTemplateVariables }) => {
-      const draft = buildEventReminderDraft({
-        audienceLabel,
-        eventLabel: audienceLabel && audienceLabel !== 'All Guests' ? audienceLabel : 'the celebration',
-        venue,
-      });
-      return {
-        subject: applyTemplateVariables(draft.subject),
-        body: applyTemplateVariables(draft.body),
-      };
-    },
-  },
-  {
-    key: 'day-of-update',
-    label: 'Day-of update',
-    detail: 'Quick note for guests when plans shift.',
-    campaignType: 'day-of-update',
-    defaultChannel: 'sms',
-    build: ({ audienceLabel, venue, weddingDate, applyTemplateVariables }) => {
-      const draft = buildDayOfUpdateDraft({ venue, weddingDate, audienceLabel });
-      return {
-        subject: applyTemplateVariables(draft.subject),
-        body: applyTemplateVariables(draft.body),
-      };
-    },
-  },
-  {
-    key: 'photo-request',
-    label: 'Photo request',
-    detail: 'Ask guests to upload photos after the event.',
-    campaignType: 'photo-request',
-    defaultChannel: 'email',
-    build: ({ applyTemplateVariables }) => ({
-      subject: applyTemplateVariables('Share your photos with us 📸'),
-      body: applyTemplateVariables('We made a photo upload link so everyone can share their favorite moments from the event. Upload here: [PHOTO LINK]'),
-    }),
-  },
-  {
-    key: 'thank-you',
-    label: 'Thank you',
-    detail: 'Close the loop after the celebration.',
-    campaignType: 'thank-you',
-    defaultChannel: 'email',
-    build: ({ applyTemplateVariables }) => ({
-      subject: applyTemplateVariables('Thank You!'),
-      body: applyTemplateVariables('Thank you so much for celebrating our special day with us! Your presence meant the world to us. We are grateful for your love and support.'),
-    }),
-  },
-];
-
-
-function isPastScheduledTime(scheduledFor: string | null): boolean {
-  if (!scheduledFor) return false;
-  return new Date(scheduledFor) < new Date();
-}
-
-function hasReachableEmail(email: string | null | undefined): boolean {
-  return !!email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-function hasReachableSms(guest: Pick<Guest, 'phone' | 'sms_consent'>): boolean {
-  return !!guest.phone?.trim() && guest.sms_consent === true;
-}
-
-function formatScheduledDate(scheduledFor: string): string {
-  const d = new Date(scheduledFor);
-  const local = d.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
-  const utcOffset = -d.getTimezoneOffset() / 60;
-  const sign = utcOffset >= 0 ? '+' : '-';
-  const absOffset = Math.abs(utcOffset);
-  return `${local} (UTC${sign}${absOffset})`;
 }
 
 const ToastList: React.FC<{ toasts: Toast[] }> = ({ toasts }) => (
@@ -513,85 +163,6 @@ function getStatusBadge(message: Message) {
     default:
       return null;
   }
-}
-
-function getAudienceLabel(message: Message): string {
-  const audience = message.audience_filter ?? (message.recipient_filter?.audience as string) ?? 'all';
-  if (typeof audience === 'string' && audience.startsWith('event:')) {
-    return (message.recipient_filter?.audience_label as string) ?? 'Itinerary segment';
-  }
-  switch (audience) {
-    case 'attending': return 'Attending guests';
-    case 'not_responded': return 'Not yet responded';
-    case 'declined': return 'Declined guests';
-    case 'missing_address': return 'Missing address';
-    case 'missing_meal': return 'Missing meal';
-    default: return 'All guests';
-  }
-}
-
-function getRecipientCount(message: Message): number {
-  return message.recipient_count ?? (message.recipient_filter?.recipient_count as number) ?? 0;
-}
-
-function getSkippedCount(message: Message, deliveries: DeliveryRow[]): number {
-  const fromDeliveries = deliveries.filter((delivery) => delivery.message_id === message.id && delivery.status === 'skipped').length;
-  if (fromDeliveries > 0) return fromDeliveries;
-  const fallback = message.recipient_filter?.skipped_count;
-  return typeof fallback === 'number' ? fallback : 0;
-}
-
-function getUnreachedCount(message: Message, deliveries?: DeliveryRow[]): number {
-  const total = getRecipientCount(message);
-  const delivered = Number(message.delivered_count ?? 0);
-  const failed = Number(message.failed_count ?? 0);
-  const skipped = deliveries ? getSkippedCount(message, deliveries) : 0;
-  const reachable = message.recipient_filter?.reachable_count;
-
-  if (typeof reachable === 'number' && (!deliveries || deliveries.length === 0)) {
-    return Math.max(reachable - delivered - failed, 0);
-  }
-
-  return Math.max(total - delivered - failed - skipped, 0);
-}
-
-function getCampaignThreadKey(message: Message): string {
-  return getCampaignName(message) ?? message.subject ?? message.id;
-}
-
-function getCampaignTypeLabel(message: Message): string | null {
-  const raw = message.recipient_filter?.campaignType as string | undefined;
-  if (!raw) return null;
-  if (raw === 'save-the-date') return 'Save-the-date';
-  return raw;
-}
-
-function getCampaignName(message: Message): string | null {
-  const raw = message.recipient_filter?.campaignName;
-  return typeof raw === 'string' && raw.trim().length > 0 ? raw.trim() : null;
-}
-
-function getTemplateKey(message: Message): MessageTemplateKey {
-  const raw = message.recipient_filter?.templateKey;
-  if (typeof raw !== 'string') return 'blank';
-  return (COMPOSER_TEMPLATES.some((tpl) => tpl.key === raw) ? raw : 'blank') as MessageTemplateKey;
-}
-
-function getCustomerDeliveryReason(message: string | null | undefined, fallback: string) {
-  const cleaned = (message || fallback)
-    .replace(/\b(provider|twilio|telnyx|sendgrid|resend)\b/gi, 'delivery service')
-    .replace(/\bapi\b/gi, 'delivery service')
-    .replace(/\s+/g, ' ')
-    .trim();
-  return customerSafeErrorMessage(cleaned, fallback, {
-    allow: [
-      /\b(delivery|message|email|phone|contact|recipient|address|number|missing|invalid|blocked|bounced|unsubscribed|review|retry|attention|details)\b/i,
-    ],
-  });
-}
-
-function describeRecipientReview(count: number): string {
-  return `${count} ${count === 1 ? 'recipient needs' : 'recipients need'} contact details`;
 }
 
 interface MessageDetailModalProps {
@@ -1002,10 +573,10 @@ export const DashboardMessages: React.FC = () => {
   const [messagesRole, setMessagesRole] = useState<PlannerAccessRole>('owner');
   const [activeSiteRole, setActiveSiteRole] = useState<PlannerAccessRole>('owner');
   const [messagesPermissions, setMessagesPermissions] = useState<PlannerPermissionKey[] | null>(null);
-  const [historyStatusFilter, setHistoryStatusFilter] = useState<'all' | 'active' | 'sent' | 'scheduled' | 'draft' | 'failed' | 'partial'>('all');
-  const [historyChannelFilter, setHistoryChannelFilter] = useState<'all' | 'email' | 'sms'>('all');
+  const [historyStatusFilter, setHistoryStatusFilter] = useState<MessageHistoryStatusFilter>('all');
+  const [historyChannelFilter, setHistoryChannelFilter] = useState<MessageHistoryChannelFilter>('all');
   const [historyAudienceFilter, setHistoryAudienceFilter] = useState<string>('all');
-  const [historyDeliveryFilter, setHistoryDeliveryFilter] = useState<'all' | 'delivered' | 'failed' | 'skipped' | 'unreached'>('all');
+  const [historyDeliveryFilter, setHistoryDeliveryFilter] = useState<MessageHistoryDeliveryFilter>('all');
   const [historyCampaignFilter, setHistoryCampaignFilter] = useState<string>('');
   const [historySearch, setHistorySearch] = useState('');
   const [showSendingDetails, setShowSendingDetails] = useState(() => new URLSearchParams(window.location.search).get('details') === '1');
@@ -1025,20 +596,7 @@ export const DashboardMessages: React.FC = () => {
   useEffect(() => {
     const loaded = readSavedComposerTemplates();
     setSavedTemplates(loaded);
-
-    try {
-      const raw = localStorage.getItem(SAVED_COMPOSER_TEMPLATES_STORAGE_KEY);
-      const parsed = raw ? JSON.parse(raw) : null;
-      if (Array.isArray(parsed)) {
-        const validTemplates = parsed.filter(isValidSavedComposerTemplate);
-        const normalized = normalizeSavedComposerTemplates(validTemplates);
-        if (JSON.stringify(parsed) !== JSON.stringify(normalized)) {
-          writeSavedComposerTemplates(normalized);
-        }
-      }
-    } catch {
-      // ignore normalization persistence issues
-    }
+    migrateSavedComposerTemplatesStorage();
   }, []);
 
   useEffect(() => {
@@ -1512,15 +1070,7 @@ export const DashboardMessages: React.FC = () => {
     };
   };
 
-  const knownPhotoLinksCount = useMemo(() => {
-    try {
-      const raw = localStorage.getItem('dayof.photoAlbumLinks');
-      if (!raw) return 0;
-      return Object.values(JSON.parse(raw) as Record<string, string>).filter(Boolean).length;
-    } catch {
-      return 0;
-    }
-  }, []);
+  const knownPhotoLinksCount = useMemo(() => countStoredPhotoAlbumLinks(), []);
 
   const applyTemplateVariables = (text: string) => {
     const couple = getMessageTemplateCoupleLabel(weddingSite?.couple_first_name, weddingSite?.couple_second_name);
@@ -1528,15 +1078,7 @@ export const DashboardMessages: React.FC = () => {
 
     const siteParam = weddingSite?.site_slug ? `?site=${encodeURIComponent(weddingSite.site_slug)}` : '';
     let photoLink = `${window.location.origin}/photos/upload${siteParam}`;
-    try {
-      const raw = localStorage.getItem('dayof.photoAlbumLinks');
-      if (raw) {
-        const links = Object.values(JSON.parse(raw) as Record<string, string>).filter(Boolean);
-        if (links.length > 0) photoLink = links[0] as string;
-      }
-    } catch {
-      // ignore and fallback
-    }
+    photoLink = getPreferredStoredPhotoAlbumLink() ?? photoLink;
 
     return text
       .replace(/\[COUPLE\]/g, couple)
@@ -2197,21 +1739,7 @@ export const DashboardMessages: React.FC = () => {
     }
   }
 
-  const campaignStatusSummary = useMemo(() => {
-    const buckets = {
-      draft: 0,
-      scheduled: 0,
-      sent: 0,
-      partial: 0,
-      failed: 0,
-    };
-    messages.forEach((message) => {
-      if (message.status in buckets) {
-        buckets[message.status as keyof typeof buckets] += 1;
-      }
-    });
-    return buckets;
-  }, [messages, viewingMessage]);
+  const campaignStatusSummary = useMemo(() => buildCampaignStatusSummary(messages), [messages]);
 
   async function handleRunDueScheduledMessages() {
     if (!canComposeDashboardMessages(messagesRole, messagesPermissions)) {
@@ -2521,66 +2049,25 @@ export const DashboardMessages: React.FC = () => {
   const emailCapacityEnough = recipientsWithEmail <= remainingEmailRecipients;
 
   const audienceReachability = useMemo(() => {
-    const allRecipients = getRecipients(formData.audience);
-    const withEmail = allRecipients.filter((guest) => hasReachableEmail(guest.email)).length;
-    const withPhone = allRecipients.filter((guest) => hasReachableSms(guest)).length;
-    return {
-      total: allRecipients.length,
-      missingEmail: Math.max(allRecipients.length - withEmail, 0),
-      missingPhone: Math.max(allRecipients.length - withPhone, 0),
-    };
+    return buildAudienceReachability(getRecipients(formData.audience));
   }, [formData.audience, guests, eventGuestIds]);
 
-  const deliveryStats = useMemo(() => {
-    const sentish = messages.filter((m) => isDeliveryCompletedStatus(m.status));
-    const delivered = sentish.reduce((sum, m) => sum + (m.delivered_count ?? 0), 0);
-    const failed = sentish.reduce((sum, m) => sum + (m.failed_count ?? 0), 0);
-    const targeted = sentish.reduce((sum, m) => sum + getRecipientCount(m), 0);
-    const rate = targeted > 0 ? Math.round((delivered / targeted) * 100) : 0;
-    return {
-      delivered,
-      failed,
-      targeted,
-      rate,
-      scheduled: messages.filter((m) => m.status === 'scheduled').length,
-      active: messages.filter((m) => m.status === 'queued' || m.status === 'sending').length,
-    };
-  }, [messages]);
+  const deliveryStats = useMemo(() => buildDeliveryStats(messages), [messages]);
 
   const canCompose = canComposeDashboardMessages(messagesRole, messagesPermissions);
 
-  const filteredHistory = useMemo(() => messages.filter((m) => {
-    if (historyStatusFilter === 'active') {
-      if (!(m.status === 'queued' || m.status === 'sending')) return false;
-    } else if (historyStatusFilter !== 'all' && m.status !== historyStatusFilter) return false;
-    if (historyChannelFilter !== 'all' && m.channel !== historyChannelFilter) return false;
-    const aud = m.audience_filter ?? (m.recipient_filter?.audience as string) ?? 'all';
-    if (historyAudienceFilter !== 'all' && aud !== historyAudienceFilter) return false;
-    if (historyCampaignFilter && getCampaignThreadKey(m) !== historyCampaignFilter) return false;
-    const skippedCount = getSkippedCount(m, deliveries);
-    const failedCount = Number(m.failed_count ?? 0);
-    const deliveredCount = Number(m.delivered_count ?? 0);
-    const unreachedCount = getUnreachedCount(m, deliveries);
-    if (historyDeliveryFilter === 'delivered' && deliveredCount <= 0) return false;
-    if (historyDeliveryFilter === 'failed' && failedCount <= 0) return false;
-    if (historyDeliveryFilter === 'skipped' && skippedCount <= 0) return false;
-    if (historyDeliveryFilter === 'unreached' && unreachedCount <= 0) return false;
-    const query = historySearch.trim().toLowerCase();
-    if (query) {
-      const haystack = [m.subject, m.body, aud, m.channel, m.status, getCampaignName(m), getCampaignTypeLabel(m)].filter(Boolean).join(' ').toLowerCase();
-      if (!haystack.includes(query)) return false;
-    }
-    return true;
+  const filteredHistory = useMemo(() => filterMessageHistory({
+    messages,
+    deliveries,
+    statusFilter: historyStatusFilter,
+    channelFilter: historyChannelFilter,
+    audienceFilter: historyAudienceFilter,
+    deliveryFilter: historyDeliveryFilter,
+    campaignFilter: historyCampaignFilter,
+    search: historySearch,
   }), [messages, deliveries, historyStatusFilter, historyChannelFilter, historyAudienceFilter, historyCampaignFilter, historyDeliveryFilter, historySearch]);
 
-  const audienceBreakdown = useMemo(() => {
-    const map = new Map<string, number>();
-    messages.forEach((m) => {
-      const key = getAudienceLabel(m);
-      map.set(key, (map.get(key) ?? 0) + getRecipientCount(m));
-    });
-    return Array.from(map.entries()).sort((a, b) => b[1] - a[1]).slice(0, 4);
-  }, [messages]);
+  const audienceBreakdown = useMemo(() => buildAudienceBreakdown(messages), [messages]);
 
   const retryCandidates = useMemo(
     () => messages.filter((m) => m.status === 'failed').slice(0, 5),
@@ -2592,167 +2079,23 @@ export const DashboardMessages: React.FC = () => {
     [messages],
   );
 
-  const segmentPerformance = useMemo(() => {
-    const eventLabelById = new Map<string, string>();
-    itineraryAudienceOptions.forEach((opt) => {
-      const id = opt.value.replace('event:', '');
-      eventLabelById.set(id, opt.label);
-    });
+  const segmentPerformance = useMemo(() => buildSegmentPerformance(messages, itineraryAudienceOptions), [messages, itineraryAudienceOptions]);
 
-    const map = new Map<string, { sent: number; failed: number; targeted: number }>();
-    messages.forEach((m) => {
-      const audience = m.audience_filter ?? '';
-      if (!audience.startsWith('event:')) return;
-      const eventId = audience.replace('event:', '');
-      const key = eventLabelById.get(eventId) ?? eventId;
-      const prev = map.get(key) ?? { sent: 0, failed: 0, targeted: 0 };
-      if (m.status === 'sent' || m.status === 'partial') prev.sent += 1;
-      if (m.status === 'failed') prev.failed += 1;
-      prev.targeted += getRecipientCount(m);
-      map.set(key, prev);
-    });
+  const historyStatusCounts = useMemo(() => buildHistoryStatusCounts(messages), [messages]);
 
-    return Array.from(map.entries()).sort((a, b) => b[1].targeted - a[1].targeted).slice(0, 4);
-  }, [messages, itineraryAudienceOptions]);
+  const channelBreakdown = useMemo(() => buildChannelBreakdown(messages), [messages]);
 
-  const historyStatusCounts = useMemo(() => ({
-    sent: messages.filter((m) => m.status === 'sent').length,
-    active: messages.filter((m) => m.status === 'queued' || m.status === 'sending').length,
-    scheduled: messages.filter((m) => m.status === 'scheduled').length,
-    partial: messages.filter((m) => m.status === 'partial').length,
-    failed: messages.filter((m) => m.status === 'failed').length,
-    draft: messages.filter((m) => m.status === 'draft').length,
-  }), [messages]);
+  const deliveryHealth = useMemo(() => buildDeliveryHealth(messages, deliveries), [messages, deliveries]);
 
-  const channelBreakdown = useMemo(() => {
-    const init = {
-      email: { sent: 0, scheduled: 0, failed: 0, partial: 0, targeted: 0 },
-      sms: { sent: 0, scheduled: 0, failed: 0, partial: 0, targeted: 0 },
-    };
-    messages.forEach((m) => {
-      const ch = m.channel === 'sms' ? 'sms' : 'email';
-      if (m.status === 'sent') init[ch].sent += 1;
-      if (m.status === 'scheduled') init[ch].scheduled += 1;
-      if (m.status === 'failed') init[ch].failed += 1;
-      if (m.status === 'partial') init[ch].partial += 1;
-      if (isDeliveryActiveStatus(m.status)) {
-        init[ch].targeted += getRecipientCount(m);
-      }
-    });
-    return init;
-  }, [messages]);
+  const campaignThreads = useMemo(() => buildCampaignThreads(messages, deliveries), [messages, deliveries]);
 
-  const deliveryHealth = useMemo(() => {
-    const deliveryActiveMessages = messages.filter((m) => isDeliveryActiveStatus(m.status));
-    const deliveryActiveRows = getDeliveryScopedRows(messages, deliveries, (message) => isDeliveryActiveStatus(message.status));
-    const delivered = deliveryActiveMessages.reduce((sum, m) => sum + (m.delivered_count ?? 0), 0);
-    const failed = deliveryActiveMessages.reduce((sum, m) => sum + (m.failed_count ?? 0), 0);
-    const targeted = deliveryActiveMessages.reduce((sum, m) => sum + getRecipientCount(m), 0);
-    const skipped = deliveryActiveRows.filter((d) => d.status === 'skipped').length;
-    const successRate = targeted > 0 ? Math.round((delivered / targeted) * 100) : 0;
-    const failRate = targeted > 0 ? Math.round((failed / targeted) * 100) : 0;
-    const skippedRate = targeted > 0 ? Math.round((skipped / targeted) * 100) : 0;
-    const overdueScheduled = messages.filter((m) => m.status === 'scheduled' && isPastScheduledTime(m.scheduled_for)).length;
-    const retryBacklog = messages.filter((m) => m.status === 'failed').length;
-    const reviewBacklog = messages.filter((m) => m.status === 'partial').length;
-    return { successRate, failRate, skipped, skippedRate, overdueScheduled, retryBacklog, reviewBacklog };
-  }, [messages, deliveries]);
+  const activeCampaignThread = useMemo(() => getActiveCampaignThread({ campaignThreads, historyCampaignFilter, historySearch }), [campaignThreads, historyCampaignFilter, historySearch]);
 
-  const campaignThreads = useMemo(() => {
-    const map = new Map<string, {
-      key: string;
-      name: string;
-      count: number;
-      delivered: number;
-      failed: number;
-      skipped: number;
-      unreached: number;
-      latestStatus: string;
-      latestAt: number;
-    }>();
-
-    messages.forEach((message) => {
-      const key = getCampaignThreadKey(message);
-      const latestAt = Math.max(
-        getMessageHistoryTimestamp(message.sent_at),
-        getMessageHistoryTimestamp(message.scheduled_for),
-      );
-      const prev = map.get(key) ?? {
-        key,
-        name: key,
-        count: 0,
-        delivered: 0,
-        failed: 0,
-        skipped: 0,
-        unreached: 0,
-        latestStatus: message.status,
-        latestAt,
-      };
-
-      prev.count += 1;
-      prev.delivered += Number(message.delivered_count ?? 0);
-      prev.failed += Number(message.failed_count ?? 0);
-      prev.skipped += getSkippedCount(message, deliveries);
-      prev.unreached += getUnreachedCount(message, deliveries);
-      if (latestAt >= prev.latestAt) {
-        prev.latestAt = latestAt;
-        prev.latestStatus = message.status;
-      }
-      map.set(key, prev);
-    });
-
-    return Array.from(map.values())
-      .sort((a, b) => b.latestAt - a.latestAt)
-      .slice(0, 5);
-  }, [messages, deliveries]);
-
-  const activeCampaignThread = useMemo(() => {
-    if (historyCampaignFilter) {
-      return campaignThreads.find((thread) => thread.name === historyCampaignFilter) ?? null;
-    }
-    const query = historySearch.trim().toLowerCase();
-    if (!query) return null;
-    return campaignThreads.find((thread) => thread.name.toLowerCase() === query) ?? null;
-  }, [campaignThreads, historyCampaignFilter, historySearch]);
-
-  const activeCampaignMessages = useMemo(() => {
-    if (!activeCampaignThread) return [] as Message[];
-    return messages
-      .filter((message) => getCampaignThreadKey(message) === activeCampaignThread.name)
-      .sort((a, b) => {
-        const aTime = Math.max(
-          getMessageHistoryTimestamp(a.sent_at),
-          getMessageHistoryTimestamp(a.scheduled_for),
-        );
-        const bTime = Math.max(
-          getMessageHistoryTimestamp(b.sent_at),
-          getMessageHistoryTimestamp(b.scheduled_for),
-        );
-        return bTime - aTime;
-      });
-  }, [messages, activeCampaignThread]);
+  const activeCampaignMessages = useMemo(() => getActiveCampaignMessages(messages, activeCampaignThread), [messages, activeCampaignThread]);
 
   const activeCampaignLatestMessage = activeCampaignMessages[0] ?? null;
 
-  const providerTelemetry = useMemo(() => {
-    const completedDeliveryRows = getDeliveryScopedRows(messages, deliveries, (message) => isDeliveryCompletedStatus(message.status));
-    const attempted = completedDeliveryRows.filter((d) => d.status === 'sent' || d.status === 'failed');
-    const sent = completedDeliveryRows.filter((d) => d.status === 'sent').length;
-    const failed = completedDeliveryRows.filter((d) => d.status === 'failed').length;
-    const skipped = completedDeliveryRows.filter((d) => d.status === 'skipped').length;
-    const errorTop = Array.from(
-      completedDeliveryRows
-        .filter((d) => d.status === 'failed' && d.error_message)
-        .reduce((map, d) => {
-          const key = getCustomerDeliveryReason(d.error_message, 'Unknown delivery issue').slice(0, 60);
-          map.set(key, (map.get(key) ?? 0) + 1);
-          return map;
-        }, new Map<string, number>())
-        .entries(),
-    ).sort((a, b) => b[1] - a[1]).slice(0, 3);
-    const sentRate = attempted.length > 0 ? Math.round((sent / attempted.length) * 100) : 0;
-    return { attempted: attempted.length, sent, failed, skipped, sentRate, errorTop };
-  }, [messages, deliveries]);
+  const providerTelemetry = useMemo(() => buildProviderTelemetry(messages, deliveries), [messages, deliveries]);
 
   if (loading) {
     return (

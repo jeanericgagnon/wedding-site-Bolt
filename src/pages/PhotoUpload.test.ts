@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { mapUploadError, PhotoUpload, safePhotoUploadMessage } from './PhotoUpload';
+import { buildPhotoUploadAccessPayload, mapUploadError, PhotoUpload, safePhotoUploadMessage } from './PhotoUpload';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -40,6 +40,17 @@ vi.mock('../components/ui/LanguageSwitcher', () => ({
 }));
 
 describe('photo upload guest error copy', () => {
+  it('packages invite and password artifacts for gated site photo uploads', () => {
+    sessionStorage.setItem('dayof_invite_token_ericandkaras', 'stored-invite');
+    sessionStorage.setItem('dayof_pw_session_ericandkaras', 'password-session');
+    window.history.replaceState({}, '', '/photos/upload?site=ericandkaras&token=current-invite');
+
+    expect(buildPhotoUploadAccessPayload('ericandkaras')).toEqual({
+      inviteToken: 'current-invite',
+      passwordSession: 'password-session',
+    });
+  });
+
   it('maps known upload error codes to guest-safe messages', () => {
     expect(mapUploadError('INVALID_TOKEN')).toBe('This upload link is invalid. Ask the couple for a fresh link.');
     expect(mapUploadError('DRIVE_RECONNECT_REQUIRED')).toBe('Uploads are available here. Please refresh and try again.');

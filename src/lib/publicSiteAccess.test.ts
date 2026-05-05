@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { sanitizePublicSiteSafeRow } from './publicSiteAccess';
 
 describe('public site access client contract', () => {
@@ -60,5 +61,19 @@ describe('public site access client contract', () => {
     expect(sanitizePublicSiteSafeRow(null)).toBeNull();
     expect(sanitizePublicSiteSafeRow([])).toBeNull();
     expect(sanitizePublicSiteSafeRow({ site_slug: 'missing-id' })).toBeNull();
+  });
+
+  it('keeps public-site gate artifacts in session storage only', () => {
+    const siteView = readFileSync('src/pages/SiteView.tsx', 'utf8');
+
+    expect(siteView).toContain('sessionStorage.getItem(INVITE_TOKEN_KEY)');
+    expect(siteView).toContain('sessionStorage.setItem(INVITE_TOKEN_KEY, urlToken)');
+    expect(siteView).toContain('sessionStorage.removeItem(INVITE_TOKEN_KEY)');
+    expect(siteView).toContain('sessionStorage.getItem(PASSWORD_SESSION_KEY)');
+    expect(siteView).toContain('sessionStorage.setItem(PASSWORD_SESSION_KEY, result.passwordSession)');
+    expect(siteView).not.toContain('localStorage.getItem(INVITE_TOKEN_KEY)');
+    expect(siteView).not.toContain('localStorage.setItem(INVITE_TOKEN_KEY');
+    expect(siteView).not.toContain('localStorage.getItem(PASSWORD_SESSION_KEY)');
+    expect(siteView).not.toContain('localStorage.setItem(PASSWORD_SESSION_KEY');
   });
 });

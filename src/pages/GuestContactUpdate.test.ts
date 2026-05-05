@@ -2,9 +2,20 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
-import { friendlyGuestContactError, GuestContactUpdate } from './GuestContactUpdate';
+import { buildGuestContactAccessPayload, friendlyGuestContactError, GuestContactUpdate } from './GuestContactUpdate';
 
 describe('friendlyGuestContactError', () => {
+  it('packages invite and password artifacts for gated guest-contact lookup', () => {
+    sessionStorage.setItem('dayof_invite_token_ericandkaras', 'stored-invite');
+    sessionStorage.setItem('dayof_pw_session_ericandkaras', 'password-session');
+    window.history.replaceState({}, '', '/guest-contact/ericandkaras?token=current-invite');
+
+    expect(buildGuestContactAccessPayload('ericandkaras')).toEqual({
+      inviteToken: 'current-invite',
+      passwordSession: 'password-session',
+    });
+  });
+
   it('hides internal guest contact lookup and submit failures from guests', () => {
     expect(friendlyGuestContactError(new Error('database policy denied token'), 'Please try again.')).toBe('Please try again.');
     expect(friendlyGuestContactError(new Error('request failed at functions/v1/guest-contact-submit'), 'Please try again.')).toBe('Please try again.');

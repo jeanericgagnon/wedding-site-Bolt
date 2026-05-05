@@ -184,6 +184,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
         { id: 'planning', label: 'Planner', icon: ClipboardList, path: '/dashboard/planning' },
         { id: 'messages', label: 'Messaging', icon: Mail, path: '/dashboard/messages' },
         { id: 'registry', label: 'Registry', icon: Gift, path: '/dashboard/registry' },
+        { id: 'vendor-templates', label: 'Vendor pages', icon: Palette, path: '/vendor-templates' },
         { id: 'seating', label: 'Seating', icon: Armchair, path: '/dashboard/seating' },
         { id: 'coordinator', label: 'Day-of view', icon: Radio, path: '/dashboard/coordinator' },
         { id: 'vault', label: 'Vaults', icon: Image, path: '/dashboard/vault' },
@@ -201,6 +202,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, curr
     if (itemId === 'messages') return hasPlannerPermission(role, activeSitePermissions, 'messages');
     if (itemId === 'planning') return hasPlannerPermission(role, activeSitePermissions, 'planning')
       || hasPlannerPermission(role, activeSitePermissions, 'budget')
+      || hasPlannerPermission(role, activeSitePermissions, 'vendors');
+    if (itemId === 'vendor-templates') return hasPlannerPermission(role, activeSitePermissions, 'planning')
       || hasPlannerPermission(role, activeSitePermissions, 'vendors');
     if (itemId === 'itinerary') return hasPlannerPermission(role, activeSitePermissions, 'timeline');
     if (itemId === 'seating') return hasPlannerPermission(role, activeSitePermissions, 'seating');

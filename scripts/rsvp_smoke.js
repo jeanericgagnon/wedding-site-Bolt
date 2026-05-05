@@ -86,7 +86,8 @@ async function lookupByToken(inviteToken) {
   const guest = lookup.data.guest;
   return {
     id: guest.id,
-    invite_token: guest.invite_token,
+    invite_token: inviteToken,
+    rsvpSession: lookup.data.rsvpSession,
     plus_one_allowed: !!guest.plus_one_allowed,
     invited_to_ceremony: !!guest.invited_to_ceremony,
     invited_to_reception: !!guest.invited_to_reception,
@@ -128,13 +129,33 @@ const baselineGuest = guests.find((x) => x.invited_to_ceremony === true && x.inv
 const noCeremonyGuest = guests.find((x) => x.invited_to_ceremony === false && x.id !== baselineGuest.id);
 const noReceptionGuest = guests.find((x) => x.invited_to_reception === false && x.id !== baselineGuest.id);
 
+async function withRsvpSession(guest) {
+  if (guest.rsvpSession) return guest;
+  if (!guest.invite_token) return null;
+  return lookupByToken(guest.invite_token);
+}
+
+const baselineSessionGuest = await withRsvpSession(baselineGuest);
+const noCeremonySessionGuest = noCeremonyGuest ? await withRsvpSession(noCeremonyGuest) : null;
+const noReceptionSessionGuest = noReceptionGuest ? await withRsvpSession(noReceptionGuest) : null;
+
+if (!baselineSessionGuest?.rsvpSession) {
+  console.log(JSON.stringify({
+    ok: false,
+    step: 'rsvp_session_missing',
+    message: 'Could not mint a short-lived RSVP session from the baseline invite token.',
+    selectedGuest: baselineGuest ? { id: baselineGuest.id, name: baselineGuest.name } : null,
+  }, null, 2));
+  process.exit(1);
+}
+
 const cases = [
   {
     name: 'valid_submit_baseline',
     payload: {
       action: 'submit',
-      guestId: baselineGuest.id,
-      inviteToken: baselineGuest.invite_token,
+      guestId: baselineSessionGuest.id,
+      rsvpSession: baselineSessionGuest.rsvpSession,
       attending: false,
       attendCeremony: false,
       attendReception: false,
@@ -149,11 +170,11 @@ const cases = [
     name: 'invalid_token_blocked',
     payload: {
       action: 'submit',
-      guestId: baselineGuest.id,
-      inviteToken: 'bad-token',
+      guestId: baselineSessionGuest.id,
+      rsvpSession: 'bad-session',
       attending: true,
-      attendCeremony: !!baselineGuest.invited_to_ceremony,
-      attendReception: !!baselineGuest.invited_to_reception,
+      attendCeremony: !!baselineSessionGuest.invited_to_ceremony,
+      attendReception: !!baselineSessionGuest.invited_to_reception,
       plusOneCount: 0,
       childrenCount: 0,
     },
@@ -162,13 +183,13 @@ const cases = [
     name: 'plus_one_limit_blocked',
     payload: {
       action: 'submit',
-      guestId: baselineGuest.id,
-      inviteToken: baselineGuest.invite_token,
+      guestId: baselineSessionGuest.id,
+      rsvpSession: baselineSessionGuest.rsvpSession,
       attending: true,
-      attendCeremony: !!baselineGuest.invited_to_ceremony,
-      attendReception: !!baselineGuest.invited_to_reception,
+      attendCeremony: !!baselineSessionGuest.invited_to_ceremony,
+      attendReception: !!baselineSessionGuest.invited_to_reception,
       plusOneName: 'Extra Guest',
-      plusOneCount: baselineGuest.plus_one_allowed ? 2 : 1,
+      plusOneCount: baselineSessionGuest.plus_one_allowed ? 2 : 1,
       childrenCount: 0,
     },
   },
@@ -176,27 +197,27 @@ const cases = [
     name: 'children_limit_blocked',
     payload: {
       action: 'submit',
-      guestId: baselineGuest.id,
-      inviteToken: baselineGuest.invite_token,
+      guestId: baselineSessionGuest.id,
+      rsvpSession: baselineSessionGuest.rsvpSession,
       attending: true,
-      attendCeremony: !!baselineGuest.invited_to_ceremony,
-      attendReception: !!baselineGuest.invited_to_reception,
+      attendCeremony: !!baselineSessionGuest.invited_to_ceremony,
+      attendReception: !!baselineSessionGuest.invited_to_reception,
       plusOneCount: 0,
       childrenCount: 1,
     },
   },
 ];
 
-if (noCeremonyGuest) {
+if (noCeremonySessionGuest?.rsvpSession) {
   cases.push({
     name: 'scope_violation_ceremony_blocked',
     payload: {
       action: 'submit',
-      guestId: noCeremonyGuest.id,
-      inviteToken: noCeremonyGuest.invite_token,
+      guestId: noCeremonySessionGuest.id,
+      rsvpSession: noCeremonySessionGuest.rsvpSession,
       attending: true,
       attendCeremony: true,
-      attendReception: !!noCeremonyGuest.invited_to_reception,
+      attendReception: !!noCeremonySessionGuest.invited_to_reception,
       plusOneCount: 0,
       childrenCount: 0,
     },
@@ -205,15 +226,15 @@ if (noCeremonyGuest) {
   cases.push({ name: 'scope_violation_ceremony_blocked', skipped: 'no ceremony-excluded guest available' });
 }
 
-if (noReceptionGuest) {
+if (noReceptionSessionGuest?.rsvpSession) {
   cases.push({
     name: 'scope_violation_reception_blocked',
     payload: {
       action: 'submit',
-      guestId: noReceptionGuest.id,
-      inviteToken: noReceptionGuest.invite_token,
+      guestId: noReceptionSessionGuest.id,
+      rsvpSession: noReceptionSessionGuest.rsvpSession,
       attending: true,
-      attendCeremony: !!noReceptionGuest.invited_to_ceremony,
+      attendCeremony: !!noReceptionSessionGuest.invited_to_ceremony,
       attendReception: true,
       plusOneCount: 0,
       childrenCount: 0,
@@ -240,7 +261,7 @@ for (const c of cases) {
 
 const expectedStatus = {
   valid_submit_baseline: 200,
-  invalid_token_blocked: 403,
+  invalid_token_blocked: 404,
   plus_one_limit_blocked: 400,
   children_limit_blocked: 400,
   scope_violation_ceremony_blocked: 400,

@@ -53,7 +53,9 @@ describe('guestImportParser', () => {
     expect(source).not.toContain('from "xlsx"');
 
     await expect(readGuestImportRows(new File(['First Name\nAlex'], 'legacy.xls'))).rejects.toThrow('legacy .xls');
+    await expect(readGuestImportRows(new File(['First Name\nAlex'], 'guests.html', { type: 'text/html' }))).rejects.toThrow('CSV or .xlsx');
     await expect(readGuestImportRows(new File([wideHeaders], 'wide.csv', { type: 'text/csv' }))).rejects.toThrow('80 columns');
+    await expect(readGuestImportRows(new File([`First Name\n${wideHeaders}`], 'wide-row.csv', { type: 'text/csv' }))).rejects.toThrow('80 columns');
   });
 
   it('auto-maps household, plus-one, children, RSVP, and event spreadsheet columns', () => {

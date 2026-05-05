@@ -125,7 +125,7 @@ Deno.serve(async (req: Request) => {
         .from('vault-attachments')
         .createSignedUrl(path, 60 * 5);
       if (signedErr) {
-        console.error("VAULT_RESOLVE_ENTRY_SIGNED_URL_FAILED", signedErr);
+        console.error("VAULT_RESOLVE_ENTRY_SIGNED_URL_FAILED", { reason: "SIGNED_URL_FAILED" });
         return json({ error: "Could not open this vault attachment. Please try again." }, 400);
       }
       return json({ url: signed?.signedUrl ?? null });

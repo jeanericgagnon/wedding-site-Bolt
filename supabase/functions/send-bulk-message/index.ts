@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { escapeHtml, sanitizeEmailSubject } from "../_shared/emailSafety.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,15 +16,18 @@ interface SendBulkPayload {
 
 type SiteMessagingRole = "owner" | "planner" | "coordinator" | "viewer";
 const SMS_SEGMENT_SIZE = 160;
-
-function escapeHtml(value: unknown): string {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
+const MESSAGE_DELIVERY_SELECT = [
+  "id",
+  "wedding_site_id",
+  "subject",
+  "body",
+  "status",
+  "scheduled_for",
+  "audience_filter",
+  "recipient_filter",
+  "channel",
+  "wedding_sites(id,couple_name_1,couple_name_2,site_slug,user_id)",
+].join(",");
 
 function safeSendBulkError(code: string): string {
   switch (code) {
@@ -56,19 +60,6 @@ function countSmsSegments(body: string): number {
   const length = body.trim().length;
   if (length <= 0) return 0;
   return Math.ceil(length / SMS_SEGMENT_SIZE);
-}
-
-function sanitizeEmailSubject(value: unknown): string {
-  const normalized = String(value ?? "")
-    .split("")
-    .map((char) => {
-      const code = char.charCodeAt(0);
-      return code < 32 || code === 127 ? " " : char;
-    })
-    .join("")
-    .replace(/\s+/g, " ")
-    .trim();
-  return (normalized || "DayOf update").slice(0, 180);
 }
 
 async function sendViaTwilio(opts: {
@@ -255,7 +246,7 @@ async function deliverMessage(opts: {
 
   const { data: message, error: msgErr } = await adminClient
     .from("messages")
-    .select("*, wedding_sites(id, couple_name_1, couple_name_2, site_slug, user_id)")
+    .select(MESSAGE_DELIVERY_SELECT)
     .eq("id", messageId)
     .maybeSingle();
 
@@ -356,7 +347,7 @@ async function deliverMessage(opts: {
       .eq("channel", "email");
 
     if (sentErr) {
-      console.error("SEND_BULK_MESSAGE_EMAIL_CAP_LOAD_FAILED", sentErr);
+      console.error("SEND_BULK_MESSAGE_EMAIL_CAP_LOAD_FAILED", { reason: "EMAIL_CAP_LOAD_FAILED" });
       return { ok: false, status: 500, body: { error: safeSendBulkError("AUDIENCE_LOAD_FAILED") } };
     }
 

@@ -79,7 +79,7 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
 
     if (albumErr) {
-      console.error("PHOTO_ALBUM_MANAGE_LOOKUP_FAILED", albumErr);
+      console.error("PHOTO_ALBUM_MANAGE_LOOKUP_FAILED", { reason: "ALBUM_LOOKUP_FAILED" });
       return json({ error: safePhotoAlbumManageError("LOOKUP_FAILED") }, 404);
     }
     if (!album) return json({ error: "Album not found" }, 404);

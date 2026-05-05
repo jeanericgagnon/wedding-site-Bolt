@@ -24,7 +24,8 @@ async function insertWithDriftFallback<T extends Record<string, unknown>>(
 }
 
 const PLANNING_TASK_SELECT = 'id, wedding_site_id, title, description, category, due_date, status, priority, owner_name, linked_event_id, linked_vendor_id, sort_order, created_at, updated_at' as const;
-const PLANNING_VENDOR_SELECT = 'id, wedding_site_id, vendor_type, name, contact_name, email, phone, website, contract_total, amount_paid, balance_due, next_payment_due, document_url, document_label, notes, created_at, updated_at' as const;
+const PLANNING_VENDOR_SELECT = 'id, wedding_site_id, vendor_type, name, contact_name, email, phone, website, contract_total, amount_paid, balance_due, next_payment_due, document_url, document_label, notes, internal_rating, rating_status, rating_notes, created_at, updated_at' as const;
+const PLANNING_VENDOR_LEGACY_SELECT = 'id, wedding_site_id, vendor_type, name, contact_name, email, phone, website, contract_total, amount_paid, balance_due, next_payment_due, document_url, document_label, notes, created_at, updated_at' as const;
 const PLANNING_BUDGET_ITEM_SELECT = 'id, wedding_site_id, category, item_name, estimated_amount, actual_amount, paid_amount, due_date, vendor_id, notes, created_at, updated_at' as const;
 
 async function updateWithDriftFallback<T extends Record<string, unknown>>(
@@ -82,6 +83,9 @@ export interface PlanningVendor {
   document_url?: string | null;
   document_label?: string | null;
   notes: string;
+  internal_rating?: number | null;
+  rating_status?: string | null;
+  rating_notes?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -159,20 +163,33 @@ export async function deleteTask(id: string): Promise<void> {
 }
 
 export async function loadVendors(weddingSiteId: string): Promise<PlanningVendor[]> {
-  const { data, error } = await supabase
+  const query = (select: string) => supabase
     .from('planning_vendors')
-    .select(PLANNING_VENDOR_SELECT)
+    .select(select)
     .eq('wedding_site_id', weddingSiteId)
     .order('name', { ascending: true });
-  if (error) throw error;
-  return (data ?? []) as PlanningVendor[];
+
+  const { data, error } = await query(PLANNING_VENDOR_SELECT);
+  if (!error) return ((data ?? []) as unknown) as PlanningVendor[];
+
+  const missingRatingFields = ['internal_rating', 'rating_status', 'rating_notes'].some((field) => error.message?.includes(field));
+  if (!missingRatingFields) throw error;
+
+  const fallback = await query(PLANNING_VENDOR_LEGACY_SELECT);
+  if (fallback.error) throw fallback.error;
+  return (((fallback.data ?? []) as unknown) as Array<Record<string, unknown>>).map((vendor) => ({
+    ...vendor,
+    internal_rating: null,
+    rating_status: null,
+    rating_notes: null,
+  })) as PlanningVendor[];
 }
 
 export async function createVendor(weddingSiteId: string, vendor: Partial<PlanningVendor>): Promise<PlanningVendor> {
   const data = await insertWithDriftFallback(
     'planning_vendors',
     { ...vendor, wedding_site_id: weddingSiteId },
-    ['vendor_type', 'email', 'contract_total', 'balance_due', 'next_payment_due', 'document_url', 'document_label', 'notes', 'phone'],
+    ['internal_rating', 'rating_status', 'rating_notes', 'vendor_type', 'email', 'contract_total', 'balance_due', 'next_payment_due', 'document_url', 'document_label', 'notes', 'phone'],
     PLANNING_VENDOR_SELECT,
   );
   return data as unknown as PlanningVendor;
@@ -183,7 +200,7 @@ export async function updateVendor(id: string, updates: Partial<PlanningVendor>)
     'planning_vendors',
     id,
     { ...updates, updated_at: new Date().toISOString() },
-    ['vendor_type', 'email', 'contract_total', 'balance_due', 'next_payment_due', 'document_url', 'document_label', 'notes', 'phone']
+    ['internal_rating', 'rating_status', 'rating_notes', 'vendor_type', 'email', 'contract_total', 'balance_due', 'next_payment_due', 'document_url', 'document_label', 'notes', 'phone']
   );
 }
 

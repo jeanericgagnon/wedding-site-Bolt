@@ -22,6 +22,34 @@ export function getRequesterIp(req: Request) {
   return forwardedFor.split(",")[0]?.trim() || req.headers.get("cf-connecting-ip") || null;
 }
 
+async function sha256Hex(value: string): Promise<string> {
+  const buffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(buffer)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function subjectMarker(scope: string, subject: string, siteId: string | null, siteSlug: string | null): Promise<string> {
+  return `h:${await sha256Hex(`${scope}:${siteId ?? siteSlug ?? "global"}:${subject}`)}`;
+}
+
+async function requesterIpMarker(scope: string, ip: string, siteId: string | null, siteSlug: string | null): Promise<string> {
+  return `h:${await sha256Hex(`${scope}:${siteId ?? siteSlug ?? "global"}:${ip}`)}`;
+}
+
+function safeReferrer(value: string | null): string | null {
+  const trimmed = (value || "").trim();
+  if (!trimmed) return null;
+  try {
+    const parsed = new URL(trimmed);
+    parsed.username = "";
+    parsed.password = "";
+    parsed.search = "";
+    parsed.hash = "";
+    return parsed.toString().slice(0, 500);
+  } catch {
+    return null;
+  }
+}
+
 async function countRecent(
   admin: SupabaseAdmin,
   filters: Record<string, string | null>,
@@ -41,7 +69,7 @@ async function countRecent(
   }
 
   const { count, error } = await query.gte("created_at", sinceIso);
-  if (error) throw new Error(error.message);
+  if (error) throw new Error("PUBLIC_SUBMISSION_RATE_LIMIT_COUNT_FAILED");
   return count ?? 0;
 }
 
@@ -58,33 +86,35 @@ export async function enforcePublicSubmissionRateLimit({
 }: RateLimitOptions) {
   const ip = getRequesterIp(request);
   const userAgent = (request.headers.get("user-agent") || "").slice(0, 500) || null;
-  const referrer = (request.headers.get("referer") || "").slice(0, 500) || null;
+  const referrer = safeReferrer(request.headers.get("referer"));
   const sinceIso = new Date(Date.now() - windowMinutes * 60 * 1000).toISOString();
+  const safeSubject = subject ? await subjectMarker(scope, subject, siteId, siteSlug) : null;
+  const safeRequesterIp = ip ? await requesterIpMarker(scope, ip, siteId, siteSlug) : null;
 
-  if (ip) {
-    const ipCount = await countRecent(admin, { scope, requester_ip: ip }, sinceIso);
+  if (safeRequesterIp) {
+    const ipCount = await countRecent(admin, { scope, requester_ip: safeRequesterIp }, sinceIso);
     if (ipCount >= maxIp) {
-      return { ok: false as const, status: 429, message: "Too many requests. Please try again shortly.", requesterIp: ip };
+      return { ok: false as const, status: 429, message: "Too many requests. Please try again shortly.", requesterIpMarker: safeRequesterIp };
     }
   }
 
-  if (subject) {
-    const subjectCount = await countRecent(admin, { scope, subject }, sinceIso);
+  if (safeSubject) {
+    const subjectCount = await countRecent(admin, { scope, subject: safeSubject }, sinceIso);
     if (subjectCount >= maxSubject) {
-      return { ok: false as const, status: 429, message: "Too many requests for this link. Please try again shortly.", requesterIp: ip };
+      return { ok: false as const, status: 429, message: "Too many requests for this link. Please try again shortly.", requesterIpMarker: safeRequesterIp };
     }
   }
 
   const { error } = await admin.from("public_submission_events").insert({
     scope,
-    subject,
+    subject: safeSubject,
     wedding_site_id: siteId,
     site_slug: siteSlug,
-    requester_ip: ip,
+    requester_ip: safeRequesterIp,
     user_agent: userAgent,
     referrer,
   });
-  if (error) throw new Error(error.message);
+  if (error) throw new Error("PUBLIC_SUBMISSION_RATE_LIMIT_RECORD_FAILED");
 
-  return { ok: true as const, requesterIp: ip };
+  return { ok: true as const, requesterIpMarker: safeRequesterIp };
 }

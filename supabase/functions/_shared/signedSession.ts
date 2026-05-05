@@ -25,7 +25,7 @@ async function importHmacKey(secret: string): Promise<CryptoKey> {
   );
 }
 
-export async function signSessionToken<TPayload extends Record<string, unknown>>(
+export async function signSessionToken<TPayload extends object>(
   payload: TPayload,
   secret: string,
 ): Promise<string> {
@@ -36,7 +36,7 @@ export async function signSessionToken<TPayload extends Record<string, unknown>>
   return `${payloadBase64}.${toBase64Url(new Uint8Array(signature))}`;
 }
 
-export async function verifySessionToken<TPayload extends Record<string, unknown>>(
+export async function verifySessionToken<TPayload extends object>(
   token: string,
   secret: string,
 ): Promise<TPayload | null> {

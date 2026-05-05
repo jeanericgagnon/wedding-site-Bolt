@@ -15,6 +15,14 @@ export const friendlyGuestContactError = (err: unknown, fallback: string) => {
   });
 };
 
+export const buildGuestContactAccessPayload = (siteRef: string) => {
+  const searchParams = new URLSearchParams(window.location.search);
+  return {
+    inviteToken: searchParams.get('token') ?? sessionStorage.getItem(`dayof_invite_token_${siteRef}`),
+    passwordSession: sessionStorage.getItem(`dayof_pw_session_${siteRef}`),
+  };
+};
+
 async function callPublicFn(name: string, body: unknown) {
   const base = ((import.meta as any).env?.VITE_SUPABASE_URL as string | undefined)?.trim();
   const anonKey = ((import.meta as any).env?.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim();
@@ -76,7 +84,11 @@ export const GuestContactUpdate: React.FC = () => {
     setSelectedContactSession('');
     setSelectedHouseholdSize(1);
     try {
-      const data = await callPublicFn('guest-contact-lookup', { site_ref: siteRef, query: query.trim() });
+      const data = await callPublicFn('guest-contact-lookup', {
+        site_ref: siteRef,
+        query: query.trim(),
+        ...buildGuestContactAccessPayload(siteRef),
+      });
       const rows = ((data as any)?.matches ?? []) as Match[];
       setMatches(rows);
       if (rows.length > 0) {

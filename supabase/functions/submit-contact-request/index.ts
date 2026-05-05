@@ -80,7 +80,7 @@ Deno.serve(async (req: Request) => {
       .eq("wedding_site_id", requestRow.wedding_site_id);
 
     if (guestErr) {
-      console.error("SUBMIT_CONTACT_REQUEST_UPDATE_FAILED", guestErr);
+      console.error("SUBMIT_CONTACT_REQUEST_UPDATE_FAILED", { reason: "GUEST_UPDATE_FAILED" });
       return json({ error: "Could not save this contact update. Please try again." }, 500);
     }
 

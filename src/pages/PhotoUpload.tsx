@@ -48,6 +48,16 @@ export const safePhotoUploadMessage = (message?: string): string => {
   return message && safeMessages.includes(message) ? message : 'Couldn’t upload that file. Please try again.';
 };
 
+export const buildPhotoUploadAccessPayload = (slug: string) => ({
+  inviteToken: paramsValue('token') ?? sessionStorage.getItem(`dayof_invite_token_${slug}`),
+  passwordSession: sessionStorage.getItem(`dayof_pw_session_${slug}`),
+});
+
+function paramsValue(key: string): string | null {
+  const value = new URLSearchParams(window.location.search).get(key);
+  return value?.trim() || null;
+}
+
 export const PhotoUpload: React.FC = () => {
   const { t, i18n } = useTranslation();
   const params = useMemo(() => new URLSearchParams(window.location.search), []);
@@ -112,6 +122,11 @@ export const PhotoUpload: React.FC = () => {
       const form = new FormData();
       if (token.trim()) form.append('token', token.trim());
       if (siteSlug) form.append('siteSlug', siteSlug);
+      if (siteSlug) {
+        const access = buildPhotoUploadAccessPayload(siteSlug);
+        if (access.inviteToken) form.append('inviteToken', access.inviteToken);
+        if (access.passwordSession) form.append('passwordSession', access.passwordSession);
+      }
       if (guestName.trim()) form.append('guestName', guestName.trim());
       if (guestEmail.trim()) form.append('guestEmail', guestEmail.trim());
       if (note.trim()) form.append('note', note.trim());
@@ -155,6 +170,7 @@ export const PhotoUpload: React.FC = () => {
             wantsPhotoUpdates: true,
             wantsOwnEventInfo,
             source: 'guest_upload',
+            uploadToken: token.trim() || null,
           }),
         }).catch(() => {});
       }

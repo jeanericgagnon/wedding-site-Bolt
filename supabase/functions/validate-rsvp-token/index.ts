@@ -152,7 +152,6 @@ function sanitizeGuest(guest: {
   plus_one_allowed: boolean | null;
   invited_to_ceremony: boolean | null;
   invited_to_reception: boolean | null;
-  wedding_site_id: string;
   children_allowed?: boolean | null;
   max_children?: number | null;
   max_additional_guests?: number | null;
@@ -165,7 +164,6 @@ function sanitizeGuest(guest: {
     plus_one_allowed: guest.plus_one_allowed === true,
     invited_to_ceremony: guest.invited_to_ceremony === true,
     invited_to_reception: guest.invited_to_reception === true,
-    wedding_site_id: guest.wedding_site_id,
     children_allowed: guest.children_allowed ?? false,
     max_children: guest.max_children ?? 0,
     max_additional_guests: guest.max_additional_guests ?? 0,
@@ -289,9 +287,13 @@ Deno.serve(async (req: Request) => {
         return true;
       }
 
+      const safeSubjectMarker = subject
+        ? `h:${(await sha256Hex(`${scope}:${subject}:${supabaseUrl}`)).slice(0, 32)}`
+        : scope;
+
       await adminClient
         .from("rsvp_rate_limit")
-        .insert({ ip_hash: ipHash, guest_token: (subject ?? scope).slice(0, 16), attempts: 1 });
+        .insert({ ip_hash: ipHash, guest_token: safeSubjectMarker, attempts: 1 });
       return true;
     };
 
@@ -449,7 +451,7 @@ Deno.serve(async (req: Request) => {
         return (data || []) as Array<{ id: string; first_name: string | null; last_name: string | null; name: string; invited_to_ceremony: boolean; invited_to_reception: boolean }>;
       };
 
-      const [existingRsvpResult, config, householdGuests, rsvpSession] = await Promise.all([
+      const [existingRsvpResult, config, householdGuests, nextRsvpSession] = await Promise.all([
         adminClient.from("rsvps").select("id, attending, attending_ceremony, attending_reception, meal_choice, plus_one_name, plus_one_count, children_count, notes, custom_answers").eq("guest_id", guest.id).maybeSingle(),
         fetchRsvpConfig(guest.wedding_site_id),
         fetchHouseholdGuests(guest.wedding_site_id, guest.household_id, guest.id),
@@ -465,7 +467,7 @@ Deno.serve(async (req: Request) => {
         rsvpMealConfig: config.rsvpMealConfig,
         musicPlaylistUrl: config.musicPlaylistUrl,
         householdGuests: householdGuests.map(sanitizeHouseholdGuest),
-        rsvpSession,
+        rsvpSession: nextRsvpSession,
       });
     }
 

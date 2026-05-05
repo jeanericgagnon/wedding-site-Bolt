@@ -68,7 +68,8 @@ describe('dashboard data boundary guards', () => {
     expect(source).toContain('const PLANNING_VENDOR_SELECT = ');
     expect(source).toContain('const PLANNING_BUDGET_ITEM_SELECT = ');
     expect(source).toContain('.select(PLANNING_TASK_SELECT)');
-    expect(source).toContain('.select(PLANNING_VENDOR_SELECT)');
+    expect(source).toContain('const { data, error } = await query(PLANNING_VENDOR_SELECT)');
+    expect(source).toContain('const fallback = await query(PLANNING_VENDOR_LEGACY_SELECT)');
     expect(source).toContain('.select(PLANNING_BUDGET_ITEM_SELECT)');
     expect(source).not.toContain(".from('planning_tasks')\n    .select('*')");
     expect(source).not.toContain(".from('planning_vendors')\n    .select('*')");

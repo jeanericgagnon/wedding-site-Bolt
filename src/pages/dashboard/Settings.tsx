@@ -23,7 +23,6 @@ import { copyTextOrDownload } from '../../lib/copyText';
 import { logAppAction } from '../../lib/actionAudit';
 import { demoWeddingSite } from '../../lib/demoData';
 import { getSafePublicWebUrl } from '../../sections/publicLinks';
-import { customerSafeErrorMessage } from '../../lib/customerSafeError';
 import {
   buildWeddingIdentityExportKit,
   buildWeddingIdentityManifestText,
@@ -38,67 +37,29 @@ import {
   updateSettingsSite,
   type SettingsSiteUpdates,
 } from './settings/settingsSiteData';
-
-
-interface RSVPQuestionSetting {
-  id: string;
-  label: string;
-  type: 'short_text' | 'long_text' | 'single_choice' | 'multi_choice';
-  required: boolean;
-  appliesTo: 'all' | 'ceremony' | 'reception';
-  options?: string[];
-}
-
-const makeQuestion = (): RSVPQuestionSetting => ({
-  id: `q_${Math.random().toString(36).slice(2, 10)}`,
-  label: '',
-  type: 'short_text',
-  required: false,
-  appliesTo: 'all',
-  options: [],
-});
-
-const LOCAL_RSVP_QUESTIONS_KEY = 'dayof_demo_rsvp_custom_questions_v1';
-const LOCAL_RSVP_MEAL_KEY = 'dayof_demo_rsvp_meal_config_v1';
-const SITE_LANGUAGE_OPTIONS = [
-  { value: 'en', label: 'English' },
-  { value: 'es', label: 'Español' },
-  { value: 'fr', label: 'Français' },
-  { value: 'it', label: 'Italiano' },
-  { value: 'de', label: 'Deutsch' },
-  { value: 'pt', label: 'Português' },
-] as const;
-
-type SiteLanguageCode = typeof SITE_LANGUAGE_OPTIONS[number]['value'];
-type TranslationLanguageCode = Exclude<SiteLanguageCode, 'en'>;
-type TranslationStatusRow = {
-  language: TranslationLanguageCode;
-  status: 'ready' | 'failed';
-  translated_at: string | null;
-};
-const TRANSLATION_LANGUAGE_OPTIONS = SITE_LANGUAGE_OPTIONS.filter((option) => option.value !== 'en') as ReadonlyArray<{
-  value: TranslationLanguageCode;
-  label: string;
-}>;
-
-const getSiteLanguageLabel = (language: string) =>
-  SITE_LANGUAGE_OPTIONS.find((option) => option.value === language)?.label ?? language.toUpperCase();
-
-const formatTranslationStatusDate = (value: string | null) => {
-  if (!value) return 'Not generated yet';
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return 'Generated recently';
-  return `Updated ${parsed.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;
-};
-
-const SETTINGS_SITE_MISSING_COPY = 'Couldn’t find your wedding site right now. Refresh and try again.';
-
-const safeSettingsError = (err: unknown, fallback: string) => {
-  return customerSafeErrorMessage(err, fallback);
-};
-
-const plannerPermissionLabel = (key: PlannerPermissionKey) =>
-  PLANNER_PERMISSION_GROUPS.find((permission) => permission.key === key)?.label ?? 'Planner access';
+import {
+  SITE_LANGUAGE_OPTIONS,
+  TRANSLATION_LANGUAGE_OPTIONS,
+  type RSVPQuestionSetting,
+  type SiteLanguageCode,
+  type TranslationLanguageCode,
+  type TranslationStatusRow,
+} from './settings/settingsDashboardTypes';
+import {
+  SETTINGS_SITE_MISSING_COPY,
+  buildPrivacySettingsUpdates,
+  cleanRsvpSettings,
+  formatTranslationStatusDate,
+  getSiteLanguageLabel,
+  makeQuestion,
+  normalizeMealOptions,
+  normalizeRsvpQuestions,
+  normalizeSettingsSlug,
+  plannerPermissionLabel,
+  safeSettingsError,
+  splitCoupleNames,
+} from './settings/settingsDashboardUtils';
+import { readDemoRsvpSettings, writeDemoRsvpSettings } from './settings/settingsDemoStorage';
 
 const useDraftHydrationGuard = (clearStatus: () => void) => {
   const dirtyRef = useRef(false);
@@ -323,36 +284,11 @@ export const DashboardSettings: React.FC = () => {
     }
 
     if (isDemoMode) {
-      try {
-        const raw = localStorage.getItem(LOCAL_RSVP_QUESTIONS_KEY);
-        const parsed = raw ? JSON.parse(raw) : [];
-        if (Array.isArray(parsed)) {
-          const normalized = parsed
-            .map((q) => q as Partial<RSVPQuestionSetting>)
-            .filter((q) => typeof q?.id === 'string' && typeof q?.label === 'string')
-            .map((q) => ({
-              id: q.id as string,
-              label: (q.label as string) || '',
-              type: (q.type as RSVPQuestionSetting['type']) || 'short_text',
-              required: !!q.required,
-              appliesTo: (q.appliesTo as RSVPQuestionSetting['appliesTo']) || 'all',
-              options: Array.isArray(q.options) ? q.options.filter((x) => typeof x === 'string') as string[] : [],
-            }));
-          if (rsvpDraftGuard.shouldHydrate()) {
-            setRsvpQuestions(normalized);
-          }
-        }
-
-        const rawMeal = localStorage.getItem(LOCAL_RSVP_MEAL_KEY);
-        const parsedMeal = rawMeal ? JSON.parse(rawMeal) : null;
-        if (parsedMeal && typeof parsedMeal === 'object') {
-          if (rsvpDraftGuard.shouldHydrate()) {
-            setRsvpMealEnabled(typeof parsedMeal.enabled === 'boolean' ? parsedMeal.enabled : true);
-            setRsvpMealOptions(Array.isArray(parsedMeal.options) ? parsedMeal.options.filter((x: unknown): x is string => typeof x === 'string' && x.trim().length > 0) : ['Chicken','Beef','Fish','Vegetarian','Vegan']);
-          }
-        }
-      } catch {
-        // ignore local parse issues
+      const demoRsvpSettings = readDemoRsvpSettings();
+      if (rsvpDraftGuard.shouldHydrate()) {
+        if (demoRsvpSettings.questions) setRsvpQuestions(demoRsvpSettings.questions);
+        if (typeof demoRsvpSettings.mealEnabled === 'boolean') setRsvpMealEnabled(demoRsvpSettings.mealEnabled);
+        if (demoRsvpSettings.mealOptions) setRsvpMealOptions(demoRsvpSettings.mealOptions);
       }
 
       setSettingsRole('owner');
@@ -442,27 +378,13 @@ export const DashboardSettings: React.FC = () => {
           setNotifUpdates(prefs.updates ?? false);
         }
 
-        const loadedQuestions = Array.isArray((data as { rsvp_custom_questions?: unknown }).rsvp_custom_questions)
-          ? ((data as { rsvp_custom_questions?: unknown[] }).rsvp_custom_questions || [])
-          : [];
-
-        const normalized = loadedQuestions
-          .map((q) => q as Partial<RSVPQuestionSetting>)
-          .filter((q) => typeof q?.id === 'string' && typeof q?.label === 'string')
-          .map((q) => ({
-            id: q.id as string,
-            label: (q.label as string) || '',
-            type: (q.type as RSVPQuestionSetting['type']) || 'short_text',
-            required: !!q.required,
-            appliesTo: (q.appliesTo as RSVPQuestionSetting['appliesTo']) || 'all',
-            options: Array.isArray(q.options) ? q.options.filter((x) => typeof x === 'string') as string[] : [],
-          }));
+        const normalized = normalizeRsvpQuestions((data as { rsvp_custom_questions?: unknown }).rsvp_custom_questions);
         if (rsvpDraftGuard.shouldHydrate()) {
           setRsvpQuestions(normalized);
 
           const mealCfg = (data as { rsvp_meal_config?: unknown }).rsvp_meal_config as { enabled?: boolean; options?: unknown[] } | undefined;
           setRsvpMealEnabled(mealCfg?.enabled ?? true);
-          setRsvpMealOptions(Array.isArray(mealCfg?.options) ? mealCfg!.options.filter((x): x is string => typeof x === 'string' && x.trim().length > 0) : ['Chicken','Beef','Fish','Vegetarian','Vegan']);
+          setRsvpMealOptions(normalizeMealOptions(mealCfg?.options));
         }
 
         if ((data.id as string | undefined)) {
@@ -488,9 +410,7 @@ export const DashboardSettings: React.FC = () => {
     setAccountError(null);
     setAccountSuccess(null);
     try {
-      const parts = coupleNames.split('&').map(s => s.trim()).filter(Boolean);
-      const name1 = parts[0] ?? coupleNames.trim();
-      const name2 = parts[1] ?? '';
+      const { name1, name2 } = splitCoupleNames(coupleNames);
       const { error } = await supabase
         .from('wedding_sites')
         .update({ couple_name_1: name1, couple_name_2: name2 })
@@ -708,9 +628,7 @@ export const DashboardSettings: React.FC = () => {
     setSlugError(null);
     setSlugSuccess(null);
     try {
-      const raw = siteSlug.trim().toLowerCase();
-      const fromUrl = raw.includes('/') ? raw.split('/').filter(Boolean).pop() || '' : raw;
-      const cleaned = fromUrl.replace(/[^a-z0-9-]/g, '').replace(/--+/g, '-').replace(/^-|-$/g, '');
+      const cleaned = normalizeSettingsSlug(siteSlug);
       if (!cleaned) { setSlugError('URL cannot be empty.'); setSlugSaving(false); return; }
 
       let targetSiteId = weddingSiteId;
@@ -769,20 +687,21 @@ export const DashboardSettings: React.FC = () => {
         return;
       }
 
-      const updates: SettingsSiteUpdates = {
-        privacy_mode: privacyMode,
-        hide_from_search: hideFromSearch,
-        default_language: defaultLanguage,
-      };
-
-      if (privacyMode === 'password_protected' && sitePassword) {
-        updates.site_password_hash = await hashSettingsSitePassword(sitePassword);
-      }
+      const sitePasswordHash = privacyMode === 'password_protected' && sitePassword
+        ? await hashSettingsSitePassword(sitePassword)
+        : null;
 
       if (privacyMode === 'invite_only' && !guestAccessToken) {
         nextGuestAccessToken = await generateSettingsSecureToken();
-        updates.guest_access_token = nextGuestAccessToken;
       }
+
+      const updates: SettingsSiteUpdates = buildPrivacySettingsUpdates({
+        privacyMode,
+        hideFromSearch,
+        defaultLanguage,
+        sitePasswordHash,
+        guestAccessToken: nextGuestAccessToken,
+      });
 
       await updateSettingsSite(targetSiteId, updates);
       if (nextGuestAccessToken) setGuestAccessToken(nextGuestAccessToken);
@@ -961,25 +880,13 @@ export const DashboardSettings: React.FC = () => {
     setRsvpQuestionsError(null);
 
     try {
-      const cleaned = rsvpQuestions
-        .map((q) => ({
-          ...q,
-          label: q.label.trim(),
-          options: (q.type === 'single_choice' || q.type === 'multi_choice')
-            ? (q.options ?? []).map((o) => o.trim()).filter(Boolean)
-            : [],
-        }))
-        .filter((q) => q.label.length > 0);
-
-      const missingOptions = cleaned.find((q) => (q.type === 'single_choice' || q.type === 'multi_choice') && (q.options?.length ?? 0) < 2);
-      if (missingOptions) {
-        setRsvpQuestionsError(`Choice question "${missingOptions.label}" needs at least 2 options.`);
-        return;
-      }
-
-      const mealOptions = rsvpMealOptions.map((o) => o.trim()).filter(Boolean);
-      if (rsvpMealEnabled && mealOptions.length < 2) {
-        setRsvpQuestionsError('Meal choices need at least 2 options when enabled.');
+      const { cleanedQuestions, cleanedMealOptions, validationError } = cleanRsvpSettings({
+        questions: rsvpQuestions,
+        mealEnabled: rsvpMealEnabled,
+        mealOptions: rsvpMealOptions,
+      });
+      if (validationError) {
+        setRsvpQuestionsError(validationError);
         return;
       }
 
@@ -992,9 +899,8 @@ export const DashboardSettings: React.FC = () => {
 
       if (!targetSiteId) {
         if (isDemoMode) {
-          localStorage.setItem(LOCAL_RSVP_QUESTIONS_KEY, JSON.stringify(cleaned));
-          localStorage.setItem(LOCAL_RSVP_MEAL_KEY, JSON.stringify({ enabled: rsvpMealEnabled, options: mealOptions }));
-          setRsvpQuestions(cleaned);
+          writeDemoRsvpSettings({ questions: cleanedQuestions, mealEnabled: rsvpMealEnabled, mealOptions: cleanedMealOptions });
+          setRsvpQuestions(cleanedQuestions);
           setRsvpQuestionsSuccess('RSVP settings saved (demo).');
           return;
         }
@@ -1004,16 +910,16 @@ export const DashboardSettings: React.FC = () => {
       }
 
       await updateSettingsSite(targetSiteId, {
-        rsvp_custom_questions: cleaned,
-        rsvp_meal_config: { enabled: rsvpMealEnabled, options: mealOptions },
+        rsvp_custom_questions: cleanedQuestions,
+        rsvp_meal_config: { enabled: rsvpMealEnabled, options: cleanedMealOptions },
       });
-      setRsvpQuestions(cleaned);
-      setRsvpMealOptions(mealOptions);
+      setRsvpQuestions(cleanedQuestions);
+      setRsvpMealOptions(cleanedMealOptions);
       rsvpDraftGuard.markSaved();
       logSettingsAction('rsvp_settings_saved', 'RSVP custom questions and meal settings were updated.', {
-        customQuestionCount: cleaned.length,
+        customQuestionCount: cleanedQuestions.length,
         mealEnabled: rsvpMealEnabled,
-        mealOptionCount: mealOptions.length,
+        mealOptionCount: cleanedMealOptions.length,
       }, targetSiteId, 'RSVP settings', targetSiteId);
       setRsvpQuestionsSuccess('RSVP settings saved.');
     } catch (err) {

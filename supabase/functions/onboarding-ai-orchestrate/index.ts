@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { enforcePublicSubmissionRateLimit } from "../_shared/rateLimit.ts";
 import { corsHeaders, fail, json } from "../_shared/photoUtils.ts";
 
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
@@ -495,9 +496,34 @@ Deno.serve(async (req: Request) => {
     let decision = fallback;
     let usage: ReturnType<typeof extractUsage> | null = null;
     let provider = "deterministic";
+    const siteId = trimString(body.siteId, 80);
+    const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
 
     if (apiKey) {
       try {
+        if (serviceRole && supabaseUrl) {
+          const admin = createClient(supabaseUrl, serviceRole);
+          const rateLimit = await enforcePublicSubmissionRateLimit({
+            admin,
+            request: req,
+            scope: "onboarding_ai_orchestrate",
+            subject: `${siteId || "anonymous_setup"}:${loopCount}:${answers.guestCountBand || ""}`,
+            siteId: siteId || null,
+            maxIp: 30,
+            maxSubject: 8,
+            windowMinutes: 60,
+          });
+          if (!rateLimit.ok) {
+            return json({
+              success: true,
+              ...{ ...fallback, fallbackUsed: true },
+              loopCount,
+              maxLoopCount: MAX_LOOP_COUNT,
+            });
+          }
+        }
+
         const response = await fetch(OPENAI_RESPONSES_URL, {
           method: "POST",
           headers: {
@@ -634,9 +660,6 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    const siteId = trimString(body.siteId, 80);
-    const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
     if (siteId && serviceRole && supabaseUrl && usage && provider === "openai") {
       const admin = createClient(supabaseUrl, serviceRole);
       await admin.from("internal_ai_usage_events").insert({

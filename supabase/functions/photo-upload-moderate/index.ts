@@ -22,7 +22,9 @@ Deno.serve(async (req: Request) => {
     if (!authHeader?.startsWith("Bearer ")) return fail("UNAUTHORIZED", "Unauthorized", 401);
 
     const body = await req.json().catch(() => ({}));
-    const uploadIds = Array.isArray(body.uploadIds) ? body.uploadIds.filter((x) => typeof x === "string") : [];
+    const uploadIds = Array.isArray(body.uploadIds)
+      ? Array.from(new Set(body.uploadIds.filter((x) => typeof x === "string").map((x) => x.trim()).filter(Boolean)))
+      : [];
     const patch = (body.patch && typeof body.patch === "object") ? body.patch as Record<string, unknown> : {};
 
     if (uploadIds.length === 0) return fail("VALIDATION_ERROR", "uploadIds required", 400);
@@ -49,8 +51,11 @@ Deno.serve(async (req: Request) => {
       .in("id", uploadIds);
 
     if (uploadsErr || !uploads || uploads.length === 0) {
-      if (uploadsErr) console.error("PHOTO_UPLOAD_MODERATE_LOAD_FAILED", uploadsErr);
+      if (uploadsErr) console.error("PHOTO_UPLOAD_MODERATE_LOAD_FAILED", { reason: "UPLOAD_LOAD_FAILED" });
       return fail("DB_ERROR", uploadsErr ? safePhotoModerationError("LOAD") : "No uploads found", 400);
+    }
+    if (uploads.length !== uploadIds.length) {
+      return fail("VALIDATION_ERROR", "One or more selected photos could not be found.", 400);
     }
 
     const siteIds = [...new Set(uploads.map((u) => u.wedding_site_id))];

@@ -7,6 +7,41 @@ function readFunction(name: string) {
 }
 
 describe('launch edge function guards', () => {
+  it('keeps shared public submission rate limiting free of raw backend errors', () => {
+    const source = readFileSync(join(process.cwd(), 'supabase', 'functions', '_shared', 'rateLimit.ts'), 'utf8');
+
+    expect(source).toContain('PUBLIC_SUBMISSION_RATE_LIMIT_COUNT_FAILED');
+    expect(source).toContain('PUBLIC_SUBMISSION_RATE_LIMIT_RECORD_FAILED');
+    expect(source).toContain('async function subjectMarker');
+    expect(source).toContain('async function requesterIpMarker');
+    expect(source).toContain('function safeReferrer');
+    expect(source).toContain('parsed.search = ""');
+    expect(source).toContain('parsed.hash = ""');
+    expect(source).toContain('const referrer = safeReferrer(request.headers.get("referer"))');
+    expect(source).toContain('const safeSubject = subject ? await subjectMarker(scope, subject, siteId, siteSlug) : null');
+    expect(source).toContain('const safeRequesterIp = ip ? await requesterIpMarker(scope, ip, siteId, siteSlug) : null');
+    expect(source).toContain('subject: safeSubject');
+    expect(source).toContain('requester_ip: safeRequesterIp');
+    expect(source).toContain('requesterIpMarker: safeRequesterIp');
+    expect(source).not.toContain('subject }, sinceIso');
+    expect(source).not.toContain('subject,\\n    wedding_site_id');
+    expect(source).not.toContain('requester_ip: ip');
+    expect(source).not.toContain('requesterIp: safeRequesterIp');
+    expect(source).not.toContain('{ scope, requester_ip: ip }');
+    expect(source).not.toContain('(request.headers.get("referer") || "").slice(0, 500)');
+    expect(source).not.toContain('throw new Error(error.message)');
+  });
+
+  it('keeps SMS RSVP inbound diagnostics fixed-code only', () => {
+    const source = readFunction('sms-rsvp-inbound');
+
+    expect(source).toContain('SMS_RSVP_UPDATE_FAILED');
+    expect(source).toContain('SMS_RSVP_INBOUND_UNEXPECTED_FAILURE');
+    expect(source).not.toContain('process_error: updateErr?.message');
+    expect(source).not.toContain('const message = err instanceof Error ? err.message');
+    expect(source).not.toContain('process_error: message');
+  });
+
   it('keeps photo export manifests owner/collaborator gated with fresh hosted links', () => {
     const source = readFunction('photo-export-manifest');
 
@@ -20,6 +55,10 @@ describe('launch edge function guards', () => {
     expect(source).toContain('hasPermissionKey(collaborator?.permissions, "photos")');
     expect(source).toContain('includeHidden');
     expect(source).toContain('query.eq("is_hidden", false)');
+    expect(source).toContain('function safeSpreadsheetCell');
+    expect(source).toContain('/^[=+\\-@\\t\\r\\n]/.test(text)');
+    expect(source).toContain('function safeManifestUrl');
+    expect(source).toContain('parsed.username = ""');
     expect(source).toContain('createSignedUrl(driveFileId, 60 * 60 * 24)');
     expect(source).toContain('expiresInSeconds: 60 * 60 * 24');
     expect(source).toContain('Could not export photo manifest. Please try again.');
@@ -46,6 +85,17 @@ describe('launch edge function guards', () => {
     expect(source).toContain('scope: "vendor_profile_inquiry_submit"');
     expect(source).toContain('maxSubject: 3');
     expect(source).toContain('vendor_profile_inquiries');
+    expect(source).toContain('wedding_date');
+    expect(source).toContain('venue_name');
+    expect(source).toContain('venue_location');
+    expect(source).toContain('couple_names');
+    expect(source).toContain('site_slug');
+    expect(source).toContain('inquiry_context');
+    expect(source).toContain('Packaged wedding context');
+    expect(source).toContain('RESEND_API_KEY');
+    expect(source).toContain('reply_to: input.email');
+    expect(source).toContain('import { escapeHtml, sanitizeEmailSubject }');
+    expect(source).toContain('New wedding inquiry from');
     expect(source).toContain('Could not send inquiry. Please try again.');
     expect(source).not.toContain('profileError) throw profileError');
     expect(source).not.toContain('if (error) throw error');
@@ -61,6 +111,14 @@ describe('launch edge function guards', () => {
     expect(source).toContain('req.method !== "POST"');
     expect(source).toContain('function isBlockedHostname');
     expect(source).toContain('function isPrivateIpv4');
+    expect(source).toContain('function isPrivateIpv6');
+    expect(source).toContain('METADATA_HOSTS');
+    expect(source).toContain('Deno.resolveDns');
+    expect(source).toContain('MAX_VENDOR_PREVIEW_REDIRECTS');
+    expect(source).toContain('MAX_VENDOR_PREVIEW_BYTES');
+    expect(source).toContain('VENDOR_PREVIEW_FETCH_TIMEOUT_MS');
+    expect(source).toContain('redirect: \'manual\'');
+    expect(source).toContain('fetchVendorPreviewHtml(normalizedWebsite)');
     expect(source).toContain('parsed.protocol !==');
     expect(source).toContain('parsed.username || parsed.password');
     expect(source).toContain('allowedHost && !allowedHost.test');
@@ -88,7 +146,19 @@ describe('launch edge function guards', () => {
     expect(source).toContain('Deno.resolveDns');
     expect(source).toContain('Deno.resolveDns(parsed.hostname, "AAAA")');
     expect(source).toContain('function isPrivateIpv6');
+    expect(source).toContain('a === 100 && b >= 64 && b <= 127');
+    expect(source).toContain('a === 198 && (b === 18 || b === 19)');
+    expect(source).toContain('a === 203 && b === 0');
+    expect(source).toContain('a >= 224');
     expect(source).toContain('enforceDurableRegistryPreviewRateLimit');
+    expect(source).toContain('const ipMarker = `h:${await hashRateLimitKey(`registry-preview-memory:${ip}:${Deno.env.get("SUPABASE_URL") ?? ""}`)}`');
+    expect(source).toContain('rateLimitMap.get(ipMarker)');
+    expect(source).toContain('rateLimitMap.set(ipMarker');
+    expect(source).toContain('registry-preview-user:${userId}');
+    expect(source).toContain('guest_token: safeSubjectMarker');
+    expect(source).not.toContain('rateLimitMap.get(ip)');
+    expect(source).not.toContain('rateLimitMap.set(ip,');
+    expect(source).not.toContain('guest_token: userId.slice(0, 16)');
     expect(source).toContain('const REGISTRY_URL_CACHE_SELECT = [');
     expect(source).toContain('.select(REGISTRY_URL_CACHE_SELECT)');
     expect(source).not.toContain('.from("registry_url_cache")\n      .select("*")');
@@ -104,6 +174,10 @@ describe('launch edge function guards', () => {
     expect(source).not.toContain('console.error("registry-preview error:", msg)');
     expect(urlNormalizer).toContain('function isBlockedHostname');
     expect(urlNormalizer).toContain('function isPrivateIpv4');
+    expect(urlNormalizer).toContain('a === 100 && b >= 64 && b <= 127');
+    expect(urlNormalizer).toContain('a === 198 && (b === 18 || b === 19)');
+    expect(urlNormalizer).toContain('a === 203 && b === 0');
+    expect(urlNormalizer).toContain('a >= 224');
     expect(urlNormalizer).toContain("parsed.protocol !== 'http:' && parsed.protocol !== 'https:'");
     expect(urlNormalizer).toContain('parsed.username || parsed.password');
     expect(urlNormalizer).toContain('metadata.google.internal');
@@ -114,19 +188,29 @@ describe('launch edge function guards', () => {
     const direct = readFunction('send-wedding-email');
     const queue = readFunction('process-email-queue');
     const bulk = readFunction('send-bulk-message');
+    const sharedEmailSafety = readFileSync(join(process.cwd(), 'supabase', 'functions', '_shared', 'emailSafety.ts'), 'utf8');
     const emailService = readFileSync(join(process.cwd(), 'src', 'lib', 'emailService.ts'), 'utf8');
 
+    expect(sharedEmailSafety).toContain('export function escapeHtml');
+    expect(sharedEmailSafety).toContain('export function safeEmailUrl');
+    expect(sharedEmailSafety).toContain('export function safeEmailHref');
+    expect(sharedEmailSafety).toContain('export function sanitizeEmailSubject');
+    expect(sharedEmailSafety).toContain('.replace(/&/g, "&amp;")');
+    expect(sharedEmailSafety).toContain('.replace(/</g, "&lt;")');
+    expect(sharedEmailSafety).toContain('.replace(/>/g, "&gt;")');
+    expect(sharedEmailSafety).toContain('.replace(/"/g, "&quot;")');
+    expect(sharedEmailSafety).toContain('.replace(/\'/g, "&#39;")');
+    expect(sharedEmailSafety).toContain('parsed.protocol !== "https:" && parsed.protocol !== "http:"');
+    expect(sharedEmailSafety).toContain('code < 32 || code === 127');
+    expect(sharedEmailSafety).toContain('.slice(0, 180)');
+
     for (const source of [direct, queue, bulk]) {
-      expect(source).toContain('function escapeHtml');
-      expect(source).toContain('.replace(/&/g, "&amp;")');
-      expect(source).toContain('.replace(/</g, "&lt;")');
-      expect(source).toContain('.replace(/>/g, "&gt;")');
-      expect(source).toContain('.replace(/"/g, "&quot;")');
-      expect(source).toContain('.replace(/\'/g, "&#39;")');
+      expect(source).toContain('../_shared/emailSafety.ts');
+      expect(source).not.toContain('function escapeHtml');
+      expect(source).not.toContain('function sanitizeEmailSubject');
     }
 
-    expect(direct).toContain('function safeEmailUrl');
-    expect(direct).toContain('function sanitizeEmailSubject');
+    expect(direct).toContain('import { escapeHtml, safeEmailUrl, sanitizeEmailSubject }');
     expect(direct).toContain('req.method !== "POST"');
     expect(direct).toContain('METHOD_NOT_ALLOWED');
     expect(direct).toContain('subject: sanitizeEmailSubject(subject)');
@@ -148,8 +232,7 @@ describe('launch edge function guards', () => {
     expect(direct).not.toContain('const guestName = data.guestName as string;');
     expect(direct).not.toContain('const notes = data.notes as string | null;');
 
-    expect(queue).toContain('function safeEmailHref');
-    expect(queue).toContain('function sanitizeEmailSubject');
+    expect(queue).toContain('import { escapeHtml, safeEmailHref, sanitizeEmailSubject }');
     expect(queue).toContain('req.method !== "POST"');
     expect(queue).toContain('METHOD_NOT_ALLOWED');
     expect(queue).toContain('subject: sanitizeEmailSubject(built.subject)');
@@ -169,10 +252,13 @@ describe('launch edge function guards', () => {
     expect(emailService).toContain('if (!opts.weddingSiteId) throw new Error');
     expect(emailService).toContain('weddingSiteId: opts.weddingSiteId');
 
-    expect(bulk).toContain('function sanitizeEmailSubject');
+    expect(bulk).toContain('import { escapeHtml, sanitizeEmailSubject }');
     expect(bulk).toContain('req.method !== "POST"');
     expect(bulk).toContain('METHOD_NOT_ALLOWED');
     expect(bulk).toContain('subject: sanitizeEmailSubject(opts.subject)');
+    expect(bulk).toContain('const MESSAGE_DELIVERY_SELECT = [');
+    expect(bulk).toContain('.select(MESSAGE_DELIVERY_SELECT)');
+    expect(bulk).not.toContain('.select("*, wedding_sites');
   });
 
   it('keeps site translation model route owner-gated and free of raw infrastructure errors', () => {
@@ -182,6 +268,9 @@ describe('launch edge function guards', () => {
     expect(source).toContain('Authorization');
     expect(source).toContain('auth.getUser');
     expect(source).toContain('site.user_id !== userData.user.id');
+    expect(source).toContain('import { enforcePublicSubmissionRateLimit }');
+    expect(source).toContain('scope: "translate_site_content"');
+    expect(source).toContain('maxSubject: 8');
     expect(source).toContain('Deno.env.get("OPENAI_API_KEY")');
     expect(source).toContain('safeTranslateSiteContentError("LOAD_FAILED")');
     expect(source).toContain('safeTranslateSiteContentError("SAVE_FAILED")');
@@ -195,6 +284,9 @@ describe('launch edge function guards', () => {
   it('keeps onboarding AI unexpected failures out of raw diagnostic logs', () => {
     const source = readFunction('onboarding-ai-orchestrate');
 
+    expect(source).toContain('import { enforcePublicSubmissionRateLimit }');
+    expect(source).toContain('scope: "onboarding_ai_orchestrate"');
+    expect(source).toContain('fallbackUsed: true');
     expect(source).toContain('ONBOARDING_AI_ORCHESTRATE_UNEXPECTED_FAILED');
     expect(source).toContain('reason: "UNEXPECTED_ONBOARDING_AI_FAILURE"');
     expect(source).not.toContain('message: err instanceof Error ? err.message');
@@ -235,12 +327,14 @@ describe('launch edge function guards', () => {
     expect(source).toContain('safePhotoAlbumManageError("INTERNAL_ERROR")');
     expect(source).toContain('/photos/upload?t=');
     expect(source).toContain('reason: "ALBUM_ACTIVE_UPDATE_FAILED"');
+    expect(source).toContain('reason: "ALBUM_LOOKUP_FAILED"');
     expect(source).toContain('reason: "ALBUM_WINDOW_UPDATE_FAILED"');
     expect(source).toContain('reason: "ALBUM_PARENT_UPDATE_FAILED"');
     expect(source).toContain('reason: "ALBUM_LINK_REGENERATION_FAILED"');
     expect(source).toContain('reason: "UNEXPECTED_PHOTO_ALBUM_MANAGE_FAILURE"');
     expect(source).not.toContain('collaboratorError.message');
     expect(source).not.toContain('parentError.message');
+    expect(source).not.toContain('PHOTO_ALBUM_MANAGE_LOOKUP_FAILED", albumErr');
     expect(source).not.toContain('error: error.message');
     expect(source).not.toContain('err instanceof Error ? err.message');
     expect(source).not.toMatch(/console\.error\("PHOTO_ALBUM_MANAGE_[^"]+",\s*(err|error)\)/);
@@ -281,6 +375,9 @@ describe('launch edge function guards', () => {
   it('keeps photo AI analysis readbacks explicit after service-role upsert', () => {
     const source = readFunction('photo-analyze-batch');
 
+    expect(source).toContain('import { enforcePublicSubmissionRateLimit }');
+    expect(source).toContain('scope: "photo_analyze_batch"');
+    expect(source).toContain('subject: `${userData.user.id}:${siteId}:${requestedProvider}:${analysisMode}`');
     expect(source).toContain('const PHOTO_UPLOAD_AI_ANALYSIS_SELECT = [');
     expect(source).toContain('.select(PHOTO_UPLOAD_AI_ANALYSIS_SELECT)');
     expect(source).toContain('reason: "USAGE_EVENT_INSERT_FAILED"');
@@ -321,13 +418,22 @@ describe('launch edge function guards', () => {
     expect(rsvp).toContain('action === "lookup_guest"');
     expect(rsvp).toContain('rsvpSession');
     expect(rsvp).toContain('validateRsvpSession');
+    expect(rsvp).toContain('if (!guestId?.trim() || !rsvpSession?.trim())');
     expect(rsvp).toContain('enforceRateLimit("rsvp_lookup"');
     expect(rsvp).toContain('enforceRateLimit("rsvp_lookup_guest"');
+    expect(rsvp).toContain('const safeSubjectMarker = subject');
+    expect(rsvp).toContain('sha256Hex(`${scope}:${subject}:${supabaseUrl}`)');
+    expect(rsvp).not.toContain('guest_token: (subject ?? scope).slice(0, 16)');
     expect(rsvp).toContain('Please use the private RSVP link or code from your invitation.');
+    const sanitizeGuestBody = rsvp.match(/function sanitizeGuest[\s\S]*?function sanitizeHouseholdGuest/)?.[0] ?? '';
+    expect(sanitizeGuestBody).not.toContain('wedding_site_id: guest.wedding_site_id');
     expect(rsvp).not.toContain('invite_token, wedding_site_id, household_id, children_allowed');
     expect(rsvp).not.toContain('name.ilike.%');
     expect(rsvp).not.toContain('byName.map');
     expect(rsvp).not.toContain('const message = err instanceof Error ? err.message');
+
+    const rsvpPage = readFileSync(join(process.cwd(), 'src', 'pages', 'RSVP.tsx'), 'utf8');
+    expect(rsvpPage).toContain("action: 'lookup_guest', guestId: picked.id, rsvpSession: rsvpSessionToken");
 
     expect(email).toContain('SEND_WEDDING_EMAIL_UNEXPECTED_FAILED');
     expect(email).toContain('Could not send this email. Please try again.');
@@ -355,12 +461,21 @@ describe('launch edge function guards', () => {
     expect(publicSiteAccess).toContain('buildSafePublicSite');
     expect(publicSiteAccess).toContain('allow_search_indexing');
     expect(publicSiteAccess).toContain('enforcePasswordAttemptRateLimit');
+    expect(publicSiteAccess).toContain('public-site-access:${slug}');
+    expect(publicSiteAccess).toContain('guest_token: safeSubjectMarker');
+    expect(publicSiteAccess).not.toContain('guest_token: slug.slice(0, 16)');
     expect(publicSiteAccess).toContain('Too many password attempts.');
+    expect(publicSiteAccess).toContain('normalizePublicPrivacyMode');
+    expect(publicSiteAccess).toContain('resolvePublicAccessStatus');
+    expect(publicSiteAccess).toContain('if (!privacyMode)');
+    expect(publicSiteAccess).toContain('status: "invite_required", site: null');
+    expect(publicSiteAccess).toContain('status: "coming_soon", site: null');
     expect(publicSiteAccess).toContain('"privacy_mode"');
     expect(publicSiteAccess).toContain('"hide_from_search"');
     expect(publicSiteAccess).not.toContain('site: row');
     expect(publicSiteAccess).not.toContain('site: buildSafePublicSite(row), guest_access_token');
     expect(publicSiteAccess).not.toContain('ilike("site_url"');
+    expect(publicSiteAccess).not.toContain('row.privacy_mode : "public"');
     const safeColumns = publicSiteAccess.match(/const SAFE_PUBLIC_SITE_COLUMNS = \[([\s\S]*?)\];/)?.[1] ?? '';
     expect(safeColumns).not.toContain('privacy_mode');
     expect(safeColumns).not.toContain('hide_from_search');
@@ -369,17 +484,23 @@ describe('launch edge function guards', () => {
   it('keeps public registry and itinerary subresources behind the public access gate', () => {
     const registry = readFunction('public-registry-items');
     const itinerary = readFunction('public-itinerary-by-slug');
+    const sharedGate = readFileSync(join(process.cwd(), 'supabase', 'functions', '_shared', 'publicAccessGate.ts'), 'utf8');
 
     for (const source of [registry, itinerary]) {
-      expect(source).toContain('verifySessionToken');
       expect(source).toContain('canReadPublicSubresource');
       expect(source).toContain('privacy_mode');
       expect(source).toContain('guest_access_token');
-      expect(source).toContain('password_protected');
-      expect(source).toContain('invite_only');
-      expect(source).toContain('is_published !== true');
+      expect(source).toContain('isPublished: site.is_published === true');
+      expect(source).not.toContain('privacy_mode ?? "public"');
     }
 
+    expect(sharedGate).toContain('normalizePublicPrivacyMode');
+    expect(sharedGate).toContain('return null;');
+    expect(sharedGate).toContain('if (!privacyMode) return "unavailable"');
+    expect(sharedGate).toContain('if (privacyMode === "hidden") return "coming_soon"');
+    expect(sharedGate).toContain('privacyMode === "password_protected"');
+    expect(sharedGate).toContain('privacyMode === "invite_only"');
+    expect(sharedGate).toContain('return await resolvePublicAccessStatus(input) === "open"');
     expect(registry).not.toContain('.select("*")');
     expect(registry).toContain('return json({ items: [] }, 200)');
     expect(itinerary).toContain('JSON.stringify({ events: [] })');
@@ -436,11 +557,50 @@ describe('launch edge function guards', () => {
 
     const guestHubTrack = readFunction('guest-hub-track');
     expect(guestHubTrack).toContain('return json({ ok: true, tracked: false })');
+    expect(guestHubTrack).toContain('import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts"');
+    expect(guestHubTrack).toContain('.select("id,site_slug,is_published,privacy_mode,guest_access_token")');
+    expect(guestHubTrack).toContain('canReadPublicSubresource');
+    expect(guestHubTrack).toContain('storedInviteToken: site.guest_access_token');
+    expect(guestHubTrack).toContain('import { enforcePublicSubmissionRateLimit } from "../_shared/rateLimit.ts"');
+    expect(guestHubTrack).toContain('scope: "guest_hub_track"');
+    expect(guestHubTrack).toContain('if (!rateLimit.ok) return json({ ok: true, tracked: false })');
+    expect(guestHubTrack).toContain('function safeReferrer');
+    expect(guestHubTrack).toContain('parsed.search = ""');
+    expect(guestHubTrack).toContain('const referrer = safeReferrer(req.headers.get("referer"))');
+    expect(guestHubTrack).not.toContain('(req.headers.get("referer") || "").slice(0, 500)');
     expect(guestHubTrack).not.toContain('Supabase not configured');
+
+    const guestHubConfig = readFunction('guest-hub-config');
+    expect(guestHubConfig).toContain('import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts"');
+    expect(guestHubConfig).toContain('x-dayof-invite-token');
+    expect(guestHubConfig).toContain('x-dayof-password-session');
+    expect(guestHubConfig).toContain('.select("id,is_published,site_slug,privacy_mode,guest_access_token,couple_name_1,couple_name_2,wedding_date")');
+    expect(guestHubConfig).toContain('canReadPublicSubresource');
+    expect(guestHubConfig).toContain('storedInviteToken: site.guest_access_token');
+    expect(guestHubConfig).not.toContain('if (!site || !site.is_published)');
+
+    const guestRecapConfig = readFunction('guest-recap-config');
+    expect(guestRecapConfig).toContain('import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts"');
+    expect(guestRecapConfig).toContain('x-dayof-invite-token');
+    expect(guestRecapConfig).toContain('x-dayof-password-session');
+    expect(guestRecapConfig).toContain('.select("id,site_slug,is_published,privacy_mode,guest_access_token,couple_name_1,couple_name_2,wedding_date")');
+    expect(guestRecapConfig).toContain('canReadPublicSubresource');
+    expect(guestRecapConfig).toContain('storedInviteToken: site.guest_access_token');
+    expect(guestRecapConfig).not.toContain('if (!site || !site.is_published)');
 
     const logClientError = readFunction('log-client-error');
     expect(logClientError).toContain('LOG_CLIENT_ERROR_UNEXPECTED_FAILED');
     expect(logClientError).toContain('Could not save error report.');
+    expect(logClientError).toContain('import { enforcePublicSubmissionRateLimit } from "../_shared/rateLimit.ts"');
+    expect(logClientError).toContain('scope: "log_client_error"');
+    expect(logClientError).toContain('function sanitizeRoute');
+    expect(logClientError).toContain('function sanitizeMetadataValue');
+    expect(logClientError).toContain('token|secret|password|authorization|apikey|service_role|service-role|cookie');
+    expect(logClientError).toContain('let inferredUserId: string | null = null');
+    expect(logClientError).toContain('let inferredSiteId: string | null = null');
+    expect(logClientError).toContain('.eq("user_id", inferredUserId)');
+    expect(logClientError).not.toContain('let inferredUserId: string | null = payload.userId');
+    expect(logClientError).not.toContain('let inferredSiteId: string | null = payload.weddingSiteId');
     expect(logClientError).toContain('reason: "CLIENT_ERROR_INSERT_FAILED"');
     expect(logClientError).toContain('reason: "UNEXPECTED_CLIENT_ERROR_LOG_FAILURE"');
     expect(logClientError).not.toContain('const msg = err instanceof Error ? err.message');
@@ -464,8 +624,15 @@ describe('launch edge function guards', () => {
     expect(vaultResolve).toContain('safeVaultAttachmentUrl(rawUrl)');
     expect(vaultResolve).toContain('safeVaultAttachmentUrl(entry.external_file_url ?? entry.attachment_url)');
     expect(vaultResolve).toContain('safeVaultAttachmentUrl(url)');
+    expect(vaultResolve).toContain('VAULT_RESOLVE_ENTRY_SIGNED_URL_FAILED", { reason: "SIGNED_URL_FAILED" }');
+    expect(vaultResolve).not.toContain('VAULT_RESOLVE_ENTRY_SIGNED_URL_FAILED", signedErr');
 
     const vaultUpload = readFunction('vault-upload-google-drive');
+    expect(vaultUpload).toContain('import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts"');
+    expect(vaultUpload).toContain('.select("id,is_published,site_slug,privacy_mode,guest_access_token,vault_storage_provider');
+    expect(vaultUpload).toContain('const hasAccess = site');
+    expect(vaultUpload).toContain('storedInviteToken: typeof site.guest_access_token === "string" ? site.guest_access_token : null');
+    expect(vaultUpload).not.toContain('if (!site || !site.is_published)');
     expect(vaultUpload).toContain('VAULT_UPLOAD_GOOGLE_DRIVE_UPLOAD_FAILED", { status: uploadRes.status }');
     expect(vaultUpload).toContain('enforcePublicSubmissionRateLimit');
     expect(vaultUpload).toContain('scope: "vault_google_drive_upload"');
@@ -476,6 +643,16 @@ describe('launch edge function guards', () => {
     expect(vaultUpload).toContain('value !== "image/svg+xml"');
     expect(vaultUpload).toContain('File is too large for vault uploads.');
     expect(vaultResolve).toContain('VAULT_RESOLVE_ENTRY_GOOGLE_DRIVE_FAILED", { status: fileRes.status }');
+
+    expect(readFunction('submit-contact-request')).toContain('SUBMIT_CONTACT_REQUEST_UPDATE_FAILED", { reason: "GUEST_UPDATE_FAILED" }');
+    expect(readFunction('submit-contact-request')).not.toContain('SUBMIT_CONTACT_REQUEST_UPDATE_FAILED", guestErr');
+    expect(readFunction('setup-bootstrap')).toContain('SETUP_BOOTSTRAP_LOAD_FAILED", { reason: "SITE_LOAD_FAILED" }');
+    expect(readFunction('setup-bootstrap')).not.toContain('SETUP_BOOTSTRAP_LOAD_FAILED", siteErr');
+    expect(readFunction('photo-upload-moderate')).toContain('PHOTO_UPLOAD_MODERATE_LOAD_FAILED", { reason: "UPLOAD_LOAD_FAILED" }');
+    expect(readFunction('photo-upload-moderate')).not.toContain('PHOTO_UPLOAD_MODERATE_LOAD_FAILED", uploadsErr');
+    expect(readFunction('photo-upload-moderate')).toContain('Array.from(new Set');
+    expect(readFunction('photo-upload-moderate')).toContain('uploads.length !== uploadIds.length');
+    expect(readFunction('photo-upload-moderate')).toContain('One or more selected photos could not be found.');
   });
 
   it('keeps public guest contact updates session-scoped instead of browser-id scoped', () => {
@@ -484,6 +661,10 @@ describe('launch edge function guards', () => {
     const contactPage = readFileSync(join(process.cwd(), 'src', 'pages', 'GuestContactUpdate.tsx'), 'utf8');
 
     expect(lookup).toContain('req.method !== "POST"');
+    expect(lookup).toContain('import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts"');
+    expect(lookup).toContain('.select("id,site_slug,is_published,privacy_mode,guest_access_token")');
+    expect(lookup).toContain('const hasAccess = await canReadPublicSubresource');
+    expect(lookup).toContain('storedInviteToken: typeof site.guest_access_token === "string" ? site.guest_access_token : null');
     expect(lookup).toContain('enforcePublicSubmissionRateLimit');
     expect(lookup).toContain('scope: "guest_contact_lookup"');
     expect(lookup).toContain('signSessionToken<ContactSessionPayload>');
@@ -505,6 +686,8 @@ describe('launch edge function guards', () => {
     expect(submit).not.toContain('.eq("id", guestId)');
 
     expect(contactPage).toContain('contact_session: string');
+    expect(contactPage).toContain('buildGuestContactAccessPayload');
+    expect(contactPage).toContain('...buildGuestContactAccessPayload(siteRef)');
     expect(contactPage).toContain("contact_session: selectedContactSession");
     expect(contactPage).not.toContain('guest_id: selectedGuestId');
   });
@@ -520,6 +703,7 @@ describe('launch edge function guards', () => {
       'photo-upload-moderate',
       'public-itinerary-by-slug',
       'public-registry-items',
+      'public-site-rsvp-submit',
       'setup-bootstrap',
       'stripe-create-checkout',
       'stripe-create-sms-credits',
@@ -546,6 +730,41 @@ describe('launch edge function guards', () => {
       expect(source, name).not.toContain('"Access-Control-Allow-Methods": "GET, POST');
       expect(source, name).not.toContain('"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS"');
     }
+  });
+
+  it('keeps the public-site RSVP widget behind the same public access gate', () => {
+    const submit = readFunction('public-site-rsvp-submit');
+    const rsvpSection = readFileSync(join(process.cwd(), 'src', 'sections', 'components', 'RsvpSection.tsx'), 'utf8');
+    const rsvpMultiEvent = readFileSync(join(process.cwd(), 'src', 'sections', 'variants', 'rsvp', 'multiEvent.tsx'), 'utf8');
+    const rlsMigration = readFileSync(join(process.cwd(), 'supabase', 'migrations', '20260505102000_site_rsvps_public_gate_rls.sql'), 'utf8');
+
+    expect(submit).toContain('canReadPublicSubresource');
+    expect(submit).toContain('.select("id,site_slug,is_published,privacy_mode,guest_access_token")');
+    expect(submit).toContain('enforceSubmitRateLimit');
+    expect(submit).toContain('function isSafeEmail');
+    expect(submit).toContain('Enter a valid email address or leave it blank.');
+    expect(submit).toContain('guest_email: guestEmail');
+    expect(submit).toContain('PUBLIC_SITE_RSVP_INSERT_FAILED');
+    expect(submit).toContain('reason: "PUBLIC_SITE_RSVP_INSERT_FAILED"');
+    expect(submit).toContain('reason: "UNEXPECTED_PUBLIC_SITE_RSVP_FAILURE"');
+    expect(submit).toContain('public-site-rsvp:${slug}');
+    expect(submit).toContain('guest_token: safeSubjectMarker');
+    expect(submit).not.toContain('guest_token: slug.slice(0, 16)');
+    expect(submit).not.toContain('site: row');
+    expect(submit).not.toContain('.select("*")');
+
+    expect(rsvpSection).toContain("supabase.functions.invoke('public-site-rsvp-submit'");
+    expect(rsvpSection).toContain("supabase.functions.invoke('public-site-access'");
+    expect(rsvpSection).not.toContain("supabase.from('wedding_sites').select('id')");
+    expect(rsvpSection).not.toContain("supabase.from('site_rsvps').insert");
+    expect(rsvpMultiEvent).toContain("supabase.functions.invoke('public-site-rsvp-submit'");
+    expect(rsvpMultiEvent).not.toContain("supabase.from('wedding_sites')");
+    expect(rsvpMultiEvent).not.toContain("supabase.from('site_rsvps').insert");
+
+    expect(rlsMigration).toContain('ADD COLUMN IF NOT EXISTS guest_email text');
+    expect(rlsMigration).toContain("ws.privacy_mode = 'public'");
+    expect(rlsMigration).toContain('Public can submit site RSVPs for open public sites');
+    expect(rlsMigration).not.toContain('WHERE is_published = true');
   });
 
   it('keeps Stripe billing diagnostics fixed and free of raw provider/database errors', () => {
@@ -583,6 +802,7 @@ describe('launch edge function guards', () => {
       'guest-recap-config',
       'queue-guest-followups',
       'public-site-access',
+      'public-site-rsvp-submit',
       'log-client-error',
       'generate-token',
       'vault-resolve-entry-link',
@@ -594,7 +814,7 @@ describe('launch edge function guards', () => {
 
     for (const name of diagnosticHardenedFunctions) {
       const source = readFunction(name);
-      expect(source, name).not.toMatch(/console\.error\("[^"]+",\s*(err|error|updateErr|saveError|sendErr|clearDeliveriesResult\.error|insertDeliveriesResult\.error|finalStatusUpdate\.error|updateError|lotsError|dueMessagesError|queueError|siteError|parentError|collaboratorError|txError|balError)\)/);
+      expect(source, name).not.toMatch(/console\.error\("[^"]+",\s*(err|error|albumErr|updateErr|saveError|sendErr|clearDeliveriesResult\.error|insertDeliveriesResult\.error|finalStatusUpdate\.error|updateError|lotsError|dueMessagesError|queueError|siteError|parentError|collaboratorError|txError|balError)\)/);
     }
 
     expect(readFunction('setup-bootstrap')).toContain('reason: "UNEXPECTED_SETUP_BOOTSTRAP_FAILURE"');
@@ -606,6 +826,7 @@ describe('launch edge function guards', () => {
     expect(readFunction('process-email-queue')).toContain('reason: "UNEXPECTED_EMAIL_QUEUE_FAILURE"');
     expect(readFunction('send-wedding-email')).toContain('reason: "UNEXPECTED_SEND_EMAIL_FAILURE"');
     expect(readFunction('photo-album-create')).toContain('reason: "PARENT_ALBUM_LOAD_FAILED"');
+    expect(readFunction('photo-album-manage')).toContain('reason: "ALBUM_LOOKUP_FAILED"');
     expect(readFunction('photo-album-manage')).toContain('reason: "COLLABORATOR_LOAD_FAILED"');
     expect(readFunction('photo-album-manage')).toContain('reason: "PARENT_ALBUM_LOAD_FAILED"');
     expect(readFunction('photo-upload-moderate')).toContain('reason: "COLLABORATOR_LOAD_FAILED"');
@@ -613,10 +834,17 @@ describe('launch edge function guards', () => {
     expect(readFunction('guest-contact-submit')).toContain('reason: "UNEXPECTED_GUEST_CONTACT_SUBMIT_FAILURE"');
     expect(readFunction('submit-contact-request')).toContain('reason: "UNEXPECTED_CONTACT_REQUEST_SUBMIT_FAILURE"');
     expect(readFunction('submit-rsvp')).toContain('reason: "UNEXPECTED_RSVP_SUBMIT_FAILURE"');
+    expect(readFunction('submit-rsvp')).toContain('hashRateLimitSubject');
+    expect(readFunction('submit-rsvp')).toContain('function cleanText');
+    expect(readFunction('submit-rsvp')).toContain('const notes = cleanText(body.notes, 1000)');
+    expect(readFunction('submit-rsvp')).toContain('guest_token: await hashRateLimitSubject(inviteToken.trim())');
+    expect(readFunction('submit-rsvp')).not.toContain('guest_token: inviteToken.slice(0, 16)');
+    expect(readFunction('submit-rsvp')).not.toContain('id, invite_token, wedding_site_id');
     expect(readFunction('validate-rsvp-token')).toContain('reason: "UNEXPECTED_RSVP_TOKEN_VALIDATION_FAILURE"');
     expect(readFunction('guest-recap-config')).toContain('reason: "UNEXPECTED_GUEST_RECAP_CONFIG_FAILURE"');
     expect(readFunction('queue-guest-followups')).toContain('reason: "UNEXPECTED_QUEUE_GUEST_FOLLOWUPS_FAILURE"');
     expect(readFunction('public-site-access')).toContain('reason: "UNEXPECTED_PUBLIC_SITE_ACCESS_FAILURE"');
+    expect(readFunction('public-site-rsvp-submit')).toContain('reason: "UNEXPECTED_PUBLIC_SITE_RSVP_FAILURE"');
     expect(readFunction('log-client-error')).toContain('reason: "UNEXPECTED_CLIENT_ERROR_LOG_FAILURE"');
     expect(readFunction('generate-token')).toContain('reason: "UNEXPECTED_TOKEN_GENERATION_FAILURE"');
     expect(readFunction('vault-resolve-entry-link')).toContain('reason: "UNEXPECTED_VAULT_RESOLVE_FAILURE"');
@@ -629,7 +857,7 @@ describe('launch edge function guards', () => {
   it('keeps bulk message email HTML escaped and delivery/provider failures non-technical', () => {
     const source = readFunction('send-bulk-message');
 
-    expect(source).toContain('function escapeHtml');
+    expect(source).toContain('import { escapeHtml, sanitizeEmailSubject }');
     expect(source).toContain('const safeSubject = escapeHtml(subject)');
     expect(source).toContain('const safeCoupleName1 = escapeHtml(coupleName1)');
     expect(source).toContain('const safeCoupleName2 = escapeHtml(coupleName2)');
@@ -648,6 +876,7 @@ describe('launch edge function guards', () => {
     expect(source).not.toContain('Resend ${res.status}: ${body}');
     expect(source).not.toContain('err instanceof Error ? err.message : "Network error"');
     expect(source).not.toContain('error: sentErr.message');
+    expect(source).not.toContain('SEND_BULK_MESSAGE_EMAIL_CAP_LOAD_FAILED", sentErr');
     expect(source).not.toContain('error: lotsError.message');
     expect(source).not.toContain('error: clearDeliveriesResult.error.message');
     expect(source).not.toContain('error: insertDeliveriesResult.error.message');
@@ -666,11 +895,23 @@ describe('launch edge function guards', () => {
     expect(source).toContain('req.method !== "POST"');
     expect(source).toContain('METHOD_NOT_ALLOWED');
     expect(source).toContain('Hosted upload failed.');
+    expect(source).toContain('PHOTO_UPLOAD_ROW_INSERT_FAILED');
+    expect(source).toContain('import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts"');
+    expect(source).toContain('.select("id,site_slug,is_published,privacy_mode,guest_access_token")');
+    expect(source).toContain('const hasAccess = siteBySlug');
+    expect(source).toContain('storedInviteToken: typeof siteBySlug.guest_access_token === "string" ? siteBySlug.guest_access_token : null');
+    expect(source).toContain('const requesterIpMarker = requesterIp ? `h:${await sha256Hex(`photo-upload:${album.id}:${requesterIp}`)}` : null');
+    expect(source).toContain('const attemptTokenMarker = tokenHash ?? `site:${await sha256Hex(`photo-upload-site:${siteSlug}`)}`');
+    expect(source).toContain('.eq("requester_ip", requesterIpMarker)');
+    expect(source).toContain('requester_ip: requesterIpMarker');
+    expect(source).not.toContain('.eq("requester_ip", requesterIp)');
+    expect(source).not.toContain('requester_ip: requesterIp,');
+    expect(source).not.toContain('token_hash: tokenHash ?? `site:${siteSlug}`');
     expect(source).toContain('We couldn\'t upload this file. Please try again.');
     expect(source).toContain('We couldn\'t finish this upload. Please try again.');
     expect(source).not.toContain('return fail("INTERNAL_ERROR", err instanceof Error ? err.message');
     expect(source).not.toContain('error: error instanceof Error ? error.message');
-    expect(source).not.toContain('if (error) throw new Error(error.message);\n\n  const { data: signed }');
+    expect(source).not.toContain('if (error) throw new Error(error.message);');
     expect(prereqs).toContain('requiredFunctionSourceChecks');
     expect(prereqs).toContain('photo-upload-guest-safe-readiness-and-errors');
     expect(prereqs).toContain('requiredFunctionSourceChecksFailing');
@@ -696,8 +937,39 @@ describe('launch edge function guards', () => {
     }
 
     expect(readFunction('vault-entry-submit')).toContain('Could not upload this vault attachment. Please try again.');
-    expect(readFunction('guestbook-submit')).toContain('Guestbook is temporarily unavailable. Please try again.');
-    expect(readFunction('guest-prospect-submit')).toContain('eventError');
+    const vaultSubmit = readFunction('vault-entry-submit');
+    expect(vaultSubmit).toContain('import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts"');
+    expect(vaultSubmit).toContain('.select("id,site_slug,is_published,privacy_mode,guest_access_token,wedding_date")');
+    expect(vaultSubmit).toContain('const hasAccess = await canReadPublicSubresource');
+    expect(vaultSubmit).toContain('storedInviteToken: typeof site.guest_access_token === "string" ? site.guest_access_token : null');
+    expect(vaultSubmit).not.toContain('.select("id, is_published, wedding_date")');
+    expect(vaultSubmit).not.toContain('if (!site?.is_published)');
+    const guestbook = readFunction('guestbook-submit');
+    expect(guestbook).toContain('Guestbook is temporarily unavailable. Please try again.');
+    expect(guestbook).toContain('import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts"');
+    expect(guestbook).toContain('.select("id,site_slug,is_published,privacy_mode,guest_access_token")');
+    expect(guestbook).toContain('canReadPublicSubresource');
+    expect(guestbook).toContain('storedInviteToken: site.guest_access_token');
+    expect(guestbook).not.toContain('if (!site || !site.is_published)');
+    expect(guestbook).toContain('const requesterIpMarker = requesterIp ? `h:${await sha256Hex(`guestbook:${site.id}:${requesterIp}`)}` : null');
+    expect(guestbook).toContain('.eq("requester_ip", requesterIpMarker)');
+    expect(guestbook).toContain('requester_ip: requesterIpMarker');
+    expect(guestbook).not.toContain('.eq("requester_ip", requesterIp)');
+    expect(guestbook).not.toContain('requester_ip: requesterIp,');
+    const guestProspect = readFunction('guest-prospect-submit');
+    expect(guestProspect).toContain('eventError');
+    expect(guestProspect).toContain('import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts"');
+    expect(guestProspect).toContain('.select("id,site_slug,is_published,privacy_mode,guest_access_token")');
+    expect(guestProspect).toContain('const hasPublicAccess = await canReadPublicSubresource');
+    expect(guestProspect).toContain('const uploadToken = typeof body.uploadToken === "string" ? body.uploadToken.trim() : null');
+    expect(guestProspect).toContain('.eq("upload_token_hash", await sha256Hex(uploadToken))');
+    expect(guestProspect).toContain('albumUploadWindowIsOpen(album)');
+    expect(guestProspect).toContain('if (!hasPublicAccess && !hasUploadAccess) return json({ error: "Site not available" }, 404)');
+    expect(guestProspect).not.toContain('if (!site || !site.is_published)');
+    expect(guestProspect).toContain('function safeReferrer');
+    expect(guestProspect).toContain('parsed.search = ""');
+    expect(guestProspect).toContain('const referrer = safeReferrer(req.headers.get("referer"))');
+    expect(guestProspect).not.toContain('(req.headers.get("referer") || "").slice(0, 500)');
     expect(prereqs).toContain('photo-export-manifest-safe-readiness-and-errors');
     expect(prereqs).toContain('guestbook-submit-safe-readiness-and-errors');
     expect(prereqs).toContain('guest-prospect-submit-safe-readiness-and-errors');

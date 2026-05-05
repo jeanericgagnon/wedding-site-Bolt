@@ -12,6 +12,14 @@ export const friendlyGuestbookError = (err: unknown) => {
   });
 };
 
+export const buildGuestbookAccessPayload = (slug: string) => {
+  const searchParams = new URLSearchParams(window.location.search);
+  return {
+    inviteToken: searchParams.get('token') ?? sessionStorage.getItem(`dayof_invite_token_${slug}`),
+    passwordSession: sessionStorage.getItem(`dayof_pw_session_${slug}`),
+  };
+};
+
 export const GuestbookSubmit: React.FC = () => {
   const { siteRef } = useParams();
   const siteSlug = useMemo(() => (siteRef ?? '').trim().toLowerCase(), [siteRef]);
@@ -46,7 +54,7 @@ export const GuestbookSubmit: React.FC = () => {
           apikey: supabaseAnonKey,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ siteSlug, guestName, guestEmail, message, website }),
+        body: JSON.stringify({ siteSlug, guestName, guestEmail, message, website, ...buildGuestbookAccessPayload(siteSlug) }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'Couldn’t send your note right now. Please try again in a moment.');

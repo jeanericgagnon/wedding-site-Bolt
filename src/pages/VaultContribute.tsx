@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { DEMO_MODE } from '../config/env';
 import { buildCoupleDisplayName } from '../lib/coupleDisplayName';
 import { customerSafeErrorMessage } from '../lib/customerSafeError';
+import { fetchPublicSiteAccess } from '../lib/publicSiteAccess';
 
 interface SiteInfo {
   id: string;
@@ -27,6 +28,14 @@ const DEMO_VAULT_STORAGE_KEY = 'dayof_demo_vault_state_v1';
 const MAX_UPLOAD_MB_BY_TYPE: Record<'photo' | 'video' | 'voice', number> = { photo: 8, video: 35, voice: 12 };
 const VAULT_SUBMITTED_KEY_PREFIX = 'vault_submitted_years_';
 const DEMO_WEDDING_DATE = '2026-02-23';
+
+export const buildVaultAccessPayload = (slug: string) => {
+  const searchParams = new URLSearchParams(window.location.search);
+  return {
+    inviteToken: searchParams.get('token') ?? sessionStorage.getItem(`dayof_invite_token_${slug}`),
+    passwordSession: sessionStorage.getItem(`dayof_pw_session_${slug}`),
+  };
+};
 
 export function safeVaultUploadError(err: unknown): string {
   return customerSafeErrorMessage(err, 'Couldn’t add that file right now. Please try again.', {
@@ -284,13 +293,29 @@ export const VaultContribute: React.FC = () => {
   }, [siteSlug, year]);
 
   async function loadData() {
-    const { data: siteData, error: siteError } = await supabase
-      .from('wedding_sites')
-      .select('id, couple_name_1, couple_name_2, wedding_date, is_published, vault_storage_provider, vault_google_drive_connected')
-      .eq('site_slug', siteSlug)
-      .maybeSingle();
+    let siteData: SiteInfo | null = null;
+    let siteError: unknown = null;
 
-    if (siteError || !siteData || (!(siteData as Record<string, unknown>).is_published && !(DEMO_MODE && siteSlug === 'alex-jordan-demo'))) {
+    try {
+      if (siteSlug) {
+        const access = await fetchPublicSiteAccess({
+          slug: siteSlug,
+          ...buildVaultAccessPayload(siteSlug),
+        });
+        siteData = access.status === 'open' && access.site
+          ? {
+              id: access.site.id,
+              couple_name_1: access.site.couple_name_1,
+              couple_name_2: access.site.couple_name_2,
+              wedding_date: access.site.wedding_date,
+            }
+          : null;
+      }
+    } catch (err) {
+      siteError = err;
+    }
+
+    if (siteError || !siteData || (DEMO_MODE && siteSlug === 'alex-jordan-demo')) {
       if (DEMO_MODE && siteSlug === 'alex-jordan-demo') {
         setSite({ id: 'demo-site-id', couple_name_1: 'Alex', couple_name_2: 'Jordan', wedding_date: DEMO_WEDDING_DATE });
 
@@ -332,13 +357,13 @@ export const VaultContribute: React.FC = () => {
       return;
     }
 
-    setSite(siteData as SiteInfo);
+    setSite(siteData);
 
     if (hasYearParam && vaultYear) {
       const { data: configData, error: configError } = await supabase
         .from('vault_configs')
         .select('id, label, duration_years, is_enabled')
-        .eq('wedding_site_id', (siteData as SiteInfo).id)
+        .eq('wedding_site_id', siteData.id)
         .eq('duration_years', vaultYear)
         .eq('is_enabled', true)
         .maybeSingle();
@@ -358,7 +383,7 @@ export const VaultContribute: React.FC = () => {
     const { data: configList, error: listError } = await supabase
       .from('vault_configs')
       .select('id, label, duration_years, is_enabled')
-      .eq('wedding_site_id', (siteData as SiteInfo).id)
+      .eq('wedding_site_id', siteData.id)
       .eq('is_enabled', true)
       .order('duration_years', { ascending: true });
 
@@ -520,6 +545,7 @@ export const VaultContribute: React.FC = () => {
               fileName: file.name,
               mimeType: file.type || 'application/octet-stream',
               base64,
+              ...buildVaultAccessPayload(siteSlug ?? ''),
             },
           });
 
@@ -563,6 +589,7 @@ export const VaultContribute: React.FC = () => {
               mimeType: file.type || 'application/octet-stream',
               base64,
               qaOpen,
+              ...buildVaultAccessPayload(siteSlug ?? ''),
             },
           });
 
@@ -634,7 +661,7 @@ export const VaultContribute: React.FC = () => {
     }));
 
     const { error } = await supabase.functions.invoke('vault-entry-submit', {
-      body: { rows, qaOpen },
+      body: { rows, qaOpen, ...buildVaultAccessPayload(siteSlug ?? '') },
     });
 
     setSubmitting(false);

@@ -26,8 +26,19 @@ function formatDeadline(iso: string | undefined): string | null {
 async function getSiteId(): Promise<string | null> {
   const slug = window.location.pathname.split('/site/')[1];
   if (!slug) return null;
-  const { data } = await supabase.from('wedding_sites').select('id').eq('site_slug', slug).maybeSingle();
-  return data?.id ?? null;
+  const inviteToken = new URLSearchParams(window.location.search).get('token') ?? sessionStorage.getItem(`dayof_invite_token_${slug}`);
+  const passwordSession = sessionStorage.getItem(`dayof_pw_session_${slug}`);
+  const { data, error } = await supabase.functions.invoke('public-site-access', {
+    body: {
+      action: 'resolve',
+      slug,
+      inviteToken,
+      passwordSession,
+    },
+  });
+
+  if (error || data?.status !== 'open' || typeof data?.site?.id !== 'string') return null;
+  return data.site.id;
 }
 
 interface FormState {
@@ -64,14 +75,21 @@ function RsvpForm({ onSuccess, dark }: { onSuccess: (attending: boolean) => void
         setSubmitting(false);
         return;
       }
-      const { error: insertError } = await supabase.from('site_rsvps').insert({
-        wedding_site_id: siteId,
-        guest_name: form.guestName,
-        rsvp_status: form.attending,
-        guest_count: form.attending === 'attending' ? form.guestCount : 1,
-        dietary_notes: form.dietaryNotes || null,
+      const slug = window.location.pathname.split('/site/')[1] ?? '';
+      const inviteToken = new URLSearchParams(window.location.search).get('token') ?? sessionStorage.getItem(`dayof_invite_token_${slug}`);
+      const passwordSession = sessionStorage.getItem(`dayof_pw_session_${slug}`);
+      const { error: submitError } = await supabase.functions.invoke('public-site-rsvp-submit', {
+        body: {
+          slug,
+          inviteToken,
+          passwordSession,
+          guestName: form.guestName,
+          rsvpStatus: form.attending,
+          guestCount: form.attending === 'attending' ? form.guestCount : 1,
+          dietaryNotes: form.dietaryNotes || null,
+        },
       });
-      if (insertError) {
+      if (submitError) {
         setError('Something went wrong. Please try again.');
         setSubmitting(false);
         return;

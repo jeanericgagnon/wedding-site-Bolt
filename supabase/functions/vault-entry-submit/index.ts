@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts";
 import { enforcePublicSubmissionRateLimit } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
@@ -33,6 +34,40 @@ const safePathSegment = (value: string) =>
     .replace(/[^a-z0-9._-]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 96) || "upload";
+
+function accessValue(body: Record<string, unknown>, key: "inviteToken" | "passwordSession"): string | null {
+  const raw = body[key];
+  return typeof raw === "string" && raw.trim() ? raw.trim() : null;
+}
+
+async function requireVaultPublicAccess(input: {
+  body: Record<string, unknown>;
+  admin: ReturnType<typeof createClient>;
+  siteId: string;
+  errorMessage: string;
+}) {
+  const { data: site, error: siteError } = await input.admin
+    .from("wedding_sites")
+    .select("id,site_slug,is_published,privacy_mode,guest_access_token,wedding_date")
+    .eq("id", input.siteId)
+    .maybeSingle();
+
+  if (siteError) return { ok: false as const, response: json({ error: input.errorMessage }, 500) };
+  if (!site?.id) return { ok: false as const, response: json({ error: "Vault site is not available" }, 403) };
+
+  const hasAccess = await canReadPublicSubresource({
+    isPublished: site.is_published === true,
+    privacyMode: site.privacy_mode,
+    siteSlug: site.site_slug,
+    inviteToken: accessValue(input.body, "inviteToken"),
+    passwordSession: accessValue(input.body, "passwordSession"),
+    storedInviteToken: typeof site.guest_access_token === "string" ? site.guest_access_token : null,
+    secret: Deno.env.get("PUBLIC_SITE_SESSION_SECRET") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  });
+
+  if (!hasAccess) return { ok: false as const, response: json({ error: "Vault site is not available" }, 403) };
+  return { ok: true as const, site };
+}
 
 function normalizeWeddingDate(value: unknown): string | null {
   const raw = typeof value === "string" ? value.trim() : "";
@@ -101,15 +136,14 @@ Deno.serve(async (req: Request) => {
         return json({ error: `File is too large for ${mediaType} vault uploads` }, 400);
       }
 
-      const { data: site, error: siteError } = await admin
-        .from("wedding_sites")
-        .select("id, is_published, wedding_date")
-        .eq("id", siteId)
-        .maybeSingle();
-
-      if (siteError) return json({ error: "Could not save this vault memory. Please try again." }, 500);
-      if (!site?.is_published) return json({ error: "Vault site is not available" }, 403);
-      const windowStatus = vaultWindowStatus(site.wedding_date, qaOpen);
+      const access = await requireVaultPublicAccess({
+        body,
+        admin,
+        siteId,
+        errorMessage: "Could not save this vault memory. Please try again.",
+      });
+      if (!access.ok) return access.response;
+      const windowStatus = vaultWindowStatus(access.site.wedding_date, qaOpen);
       if (!windowStatus.canSubmit) return json({ error: windowStatus.message ?? "Vault uploads are closed" }, 403);
 
       const { data: config, error: configError } = await admin
@@ -176,15 +210,14 @@ Deno.serve(async (req: Request) => {
     const configId = String(rows[0]?.vault_config_id ?? "").trim();
     if (!siteId || !configId) return json({ error: "Missing vault site/config" }, 400);
 
-    const { data: site, error: siteError } = await admin
-      .from("wedding_sites")
-      .select("id, is_published, wedding_date")
-      .eq("id", siteId)
-      .maybeSingle();
-
-    if (siteError) return json({ error: "Could not save this vault memory. Please try again." }, 500);
-    if (!site?.is_published) return json({ error: "Vault site is not available" }, 403);
-    const windowStatus = vaultWindowStatus(site.wedding_date, qaOpen);
+    const access = await requireVaultPublicAccess({
+      body,
+      admin,
+      siteId,
+      errorMessage: "Could not save this vault memory. Please try again.",
+    });
+    if (!access.ok) return access.response;
+    const windowStatus = vaultWindowStatus(access.site.wedding_date, qaOpen);
     if (!windowStatus.canSubmit) return json({ error: windowStatus.message ?? "Vault uploads are closed" }, 403);
 
     const { data: config, error: configError } = await admin

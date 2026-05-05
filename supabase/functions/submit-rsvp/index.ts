@@ -24,6 +24,16 @@ async function hashIp(ip: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
 }
 
+async function hashRateLimitSubject(subject: string): Promise<string> {
+  return `h:${await hashIp(`subject:${subject}`)}`;
+}
+
+function cleanText(value: unknown, maxLength: number): string | null {
+  if (typeof value !== "string" && typeof value !== "number") return null;
+  const cleaned = String(value).replace(/\s+/g, " ").trim().slice(0, maxLength);
+  return cleaned || null;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -50,13 +60,13 @@ Deno.serve(async (req: Request) => {
       return json({ success: true });
     }
 
-    const { inviteToken, attending, mealChoice, plusOneName, notes } = body as {
+    const { inviteToken, attending } = body as {
       inviteToken?: string;
       attending?: boolean;
-      mealChoice?: string | null;
-      plusOneName?: string | null;
-      notes?: string | null;
     };
+    const mealChoice = cleanText(body.mealChoice, 120);
+    const plusOneName = cleanText(body.plusOneName, 160);
+    const notes = cleanText(body.notes, 1000);
 
     if (!inviteToken || typeof inviteToken !== "string" || inviteToken.trim().length < 20) {
       return json({ error: "A valid invitation token is required to submit your RSVP." }, 400);
@@ -93,7 +103,7 @@ Deno.serve(async (req: Request) => {
     } else {
       await adminClient.from("rsvp_rate_limit").insert({
         ip_hash: ipHash,
-        guest_token: inviteToken.slice(0, 16),
+        guest_token: await hashRateLimitSubject(inviteToken.trim()),
         attempts: 1,
       });
     }
@@ -101,16 +111,12 @@ Deno.serve(async (req: Request) => {
     // Look up guest by token
     const { data: guest, error: guestErr } = await adminClient
       .from("guests")
-      .select("id, invite_token, wedding_site_id, email, first_name, last_name, name, rsvp_status, token_expires_at, invited_to_ceremony, invited_to_reception, plus_one_allowed")
+      .select("id, wedding_site_id, email, first_name, last_name, name, rsvp_status, token_expires_at, invited_to_ceremony, invited_to_reception, plus_one_allowed")
       .eq("invite_token", inviteToken.trim())
       .maybeSingle();
 
     if (guestErr || !guest) {
       return json({ error: "Invalid invitation token. Please use the link from your invitation email." }, 404);
-    }
-
-    if (!guest.invite_token || guest.invite_token !== inviteToken.trim()) {
-      return json({ error: "Invalid invitation token." }, 403);
     }
 
     if (guest.token_expires_at && new Date(guest.token_expires_at) < new Date()) {

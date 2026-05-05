@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { canReadPublicSubresource } from "../_shared/publicAccessGate.ts";
 import { enforcePublicSubmissionRateLimit } from "../_shared/rateLimit.ts";
 
 const corsHeaders = {
@@ -12,6 +13,35 @@ function json(body: Record<string, unknown>, status = 200) {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
+
+function safeReferrer(value: string | null): string | null {
+  const trimmed = (value || "").trim();
+  if (!trimmed) return null;
+  try {
+    const parsed = new URL(trimmed);
+    parsed.username = "";
+    parsed.password = "";
+    parsed.search = "";
+    parsed.hash = "";
+    return parsed.toString().slice(0, 500);
+  } catch {
+    return null;
+  }
+}
+
+async function sha256Hex(value: string): Promise<string> {
+  const buffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(buffer)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function albumUploadWindowIsOpen(album: Record<string, unknown>) {
+  const now = Date.now();
+  const opensAt = typeof album.opens_at === "string" ? new Date(album.opens_at).getTime() : null;
+  const closesAt = typeof album.closes_at === "string" ? new Date(album.closes_at).getTime() : null;
+  return album.is_active === true &&
+    (!opensAt || Number.isNaN(opensAt) || opensAt <= now) &&
+    (!closesAt || Number.isNaN(closesAt) || closesAt >= now);
 }
 
 Deno.serve(async (req: Request) => {
@@ -34,6 +64,9 @@ Deno.serve(async (req: Request) => {
     const phone = String(body.phone ?? "").trim() || null;
     const guestName = String(body.guestName ?? "").trim() || null;
     const source = String(body.source ?? "guest_recap").trim().slice(0, 80) || "guest_recap";
+    const inviteToken = typeof body.inviteToken === "string" ? body.inviteToken.trim() : null;
+    const passwordSession = typeof body.passwordSession === "string" ? body.passwordSession.trim() : null;
+    const uploadToken = typeof body.uploadToken === "string" ? body.uploadToken.trim() : null;
     const wantsOwnEventInfo = body.wantsOwnEventInfo === true;
     const wantsPhotoUpdates = body.wantsPhotoUpdates !== false;
 
@@ -42,11 +75,33 @@ Deno.serve(async (req: Request) => {
 
     const { data: site, error: siteError } = await admin
       .from("wedding_sites")
-      .select("id,is_published")
+      .select("id,site_slug,is_published,privacy_mode,guest_access_token")
       .eq("site_slug", siteSlug)
       .maybeSingle();
     if (siteError) return json({ error: "We could not save this update. Please try again." }, 500);
-    if (!site || !site.is_published) return json({ error: "Site not available" }, 404);
+    if (!site) return json({ error: "Site not available" }, 404);
+
+    const hasPublicAccess = await canReadPublicSubresource({
+      isPublished: site.is_published === true,
+      privacyMode: site.privacy_mode,
+      siteSlug: site.site_slug,
+      inviteToken,
+      passwordSession,
+      storedInviteToken: site.guest_access_token,
+      secret: serviceRole,
+    });
+
+    let hasUploadAccess = false;
+    if (!hasPublicAccess && uploadToken) {
+      const { data: album } = await admin
+        .from("photo_albums")
+        .select("id,wedding_site_id,is_active,opens_at,closes_at")
+        .eq("upload_token_hash", await sha256Hex(uploadToken))
+        .maybeSingle();
+      hasUploadAccess = Boolean(album && album.wedding_site_id === site.id && albumUploadWindowIsOpen(album));
+    }
+
+    if (!hasPublicAccess && !hasUploadAccess) return json({ error: "Site not available" }, 404);
 
     const rateLimit = await enforcePublicSubmissionRateLimit({
       admin,
@@ -62,7 +117,7 @@ Deno.serve(async (req: Request) => {
     if (!rateLimit.ok) return json({ error: rateLimit.message }, rateLimit.status);
 
     const userAgent = (req.headers.get("user-agent") || "").slice(0, 500) || null;
-    const referrer = (req.headers.get("referer") || "").slice(0, 500) || null;
+    const referrer = safeReferrer(req.headers.get("referer"));
     const { error } = await admin.from("guest_prospect_optins").insert({
       wedding_site_id: site.id,
       site_slug: siteSlug,

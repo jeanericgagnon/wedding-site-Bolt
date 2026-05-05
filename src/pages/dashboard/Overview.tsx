@@ -12,7 +12,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { DashboardStateBlock } from '../../components/dashboard/DashboardStateBlock';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Badge } from '../../components/ui';
-import { Eye, Users, ExternalLink, Edit, EyeOff, Radio } from 'lucide-react';
+import { Eye, Users, ExternalLink, Edit, EyeOff, Palette, Radio } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { resolveActiveSiteForUser } from '../../lib/activeSite';
 import { buildDraftSitePatchFromProfile, getWeddingProfileRefineTargets, getWeddingProfileSummary, isWeddingProfile } from '../../lib/weddingProfile';
@@ -874,6 +874,25 @@ export const DashboardOverview: React.FC = () => {
             </aside>
           </div>
         </section>
+        <Card variant="bordered" padding="lg" className="border-border-subtle bg-white">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-4">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Palette className="h-5 w-5" aria-hidden="true" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-text-tertiary">Vendor pages</p>
+                <h2 className="mt-1 text-lg font-semibold text-text-primary">Review premium vendor templates</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">
+                  Compare category-specific pages for photographers, florists, venues, catering, beauty, music, planners, and travel vendors.
+                </p>
+              </div>
+            </div>
+            <Button variant="outline" size="md" onClick={() => navigate('/vendor-templates')}>
+              Open vendor templates
+            </Button>
+          </div>
+        </Card>
         <div className="card-clean px-5 py-4 md:px-6 md:py-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
