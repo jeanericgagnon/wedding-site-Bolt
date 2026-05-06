@@ -2205,6 +2205,13 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - No feature loss: safe album upload links still produce QR URLs and the existing open/copy dashboard controls remain intact.
   - Validation passed: `npm test -- --run src/lib/dashboardLinkSafety.test.ts src/lib/guestHubQrAssets.test.ts src/components/ui/ShareQrPanel.test.tsx` (12/12), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
   - Launch status: unchanged. This is local frontend/helper hardening and no deploy was run.
+- 2026-05-06 2:40 PM PT - No-deploy shared public link sanitizer tightening:
+  - Resolved in this batch: shared public web/image URL sanitization now rejects reserved `.invalid` and `.example` hostnames in addition to existing local/internal/test/private/metadata hosts.
+  - Public image hardening: generic public image URLs no longer allow `data:image/svg+xml` payloads; raster data images and local app asset paths remain supported.
+  - Downstream proof: public link, QR asset, and vendor profile tests prove the tightened helper still preserves safe public website/image/social flows while dropping unsafe inputs.
+  - No feature loss: safe public HTTP(S) links, local static image paths, raster data-image placeholders, vendor profile links, and QR sharing remain intact.
+  - Validation passed: `npm test -- --run src/sections/publicLinks.test.ts src/lib/guestHubQrAssets.test.ts src/lib/vendorProfiles.test.ts src/pages/VendorProfileCreate.test.tsx src/pages/VendorProfile.test.tsx` (24/24), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
+  - Launch status: unchanged. This is local shared-sanitizer hardening and no deploy was run.
 - Do not start broad refactors from this file alone.
 - Execute this backlog top-down by risk, beginning with the P0 public data, gating, RSVP, AI key, service worker, email escaping, SSRF, and settings contract issues.
 - Update proof logs and launch docs only after concrete verification passes.

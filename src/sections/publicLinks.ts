@@ -1,5 +1,5 @@
 const SAFE_WEB_PROTOCOLS = new Set(['http:', 'https:']);
-const SAFE_DATA_IMAGE_PATTERN = /^data:image\/(?:png|jpe?g|gif|webp|svg\+xml);/i;
+const SAFE_DATA_IMAGE_PATTERN = /^data:image\/(?:png|jpe?g|gif|webp);/i;
 const SAFE_EMAIL_PATTERN = /^[^\s@<>"'()]+@[^\s@<>"'()]+\.[^\s@<>"'()]+$/;
 const SAFE_INSTAGRAM_HANDLE_PATTERN = /^[a-zA-Z0-9._]{1,30}$/;
 const SAFE_INSTAGRAM_HASHTAG_PATTERN = /^[a-zA-Z0-9_]{1,80}$/;
@@ -34,6 +34,7 @@ function isSafePublicHost(parsed: URL): boolean {
   if (hostname === 'metadata' || hostname === 'metadata.google.internal' || hostname === '169.254.169.254') return false;
   if (hostname === 'localhost' || hostname.endsWith('.localhost')) return false;
   if (hostname.endsWith('.local') || hostname.endsWith('.internal') || hostname.endsWith('.test')) return false;
+  if (hostname.endsWith('.invalid') || hostname.endsWith('.example')) return false;
   if (hostname.includes(':')) return false;
   return !isPrivateIpv4(hostname);
 }

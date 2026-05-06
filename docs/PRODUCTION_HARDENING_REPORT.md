@@ -3963,3 +3963,22 @@ Commands run:
 
 Status:
 - PARTIAL. This closes a local photo-dashboard QR generation trust gap. No deploy was run.
+
+### 2026-05-06 2:40 PM PT - Shared Public Link Sanitizer Tightening
+
+What changed:
+- `getSafePublicWebUrl(...)` and `getSafePublicImageUrl(...)` now reject reserved `.invalid` and `.example` hostnames.
+- `getSafePublicImageUrl(...)` no longer allows generic `data:image/svg+xml` payloads; raster data-image placeholders and local static image paths remain supported.
+- Public link tests now cover the reserved-host and SVG data-image rejection cases, with QR and vendor profile callers re-proven against the tighter helper.
+
+Commands run:
+- `npm test -- --run src/sections/publicLinks.test.ts src/lib/guestHubQrAssets.test.ts src/lib/vendorProfiles.test.ts src/pages/VendorProfileCreate.test.tsx src/pages/VendorProfile.test.tsx`: PASS, 24/24.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run guard:assets`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+
+Status:
+- PARTIAL. This closes a local shared public-link sanitizer gap. No deploy was run.
