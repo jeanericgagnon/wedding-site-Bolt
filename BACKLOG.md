@@ -2242,6 +2242,12 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - No feature loss: ordinary public email addresses still pass, vendor inquiry persistence and optional notification email behavior remain unchanged.
   - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/emailSafety.test.ts src/lib/vendorProfiles.test.ts` (40/40), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
   - Launch status: unchanged. This is local Edge Function hardening and no deploy was run.
+- 2026-05-06 3:02 PM PT - No-deploy shared email CTA URL host hardening:
+  - Resolved in this batch: shared Edge Function email CTA URL sanitization now rejects credentialed, private IPv4, localhost, metadata, IPv6-looking, internal, `.local`, `.test`, `.invalid`, and `.example` hosts before producing email `href` values.
+  - Email safety hardening: the same shared helper protects Edge Function email HTML CTAs across callers, reducing SSRF/phishing-style link drift in transactional email content.
+  - No feature loss: safe public `http` and `https` links still pass, fallback URL behavior is preserved, and existing HTML escaping/subject sanitization remain unchanged.
+  - Validation passed: `npm test -- --run src/lib/emailSafety.test.ts src/lib/launchEdgeFunctions.test.ts` (32/32), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, `npm run build`, and `npm run proof:v1:board:md`.
+  - Launch status: unchanged. This is local Edge Function helper hardening and no deploy was run.
 - Do not start broad refactors from this file alone.
 - Execute this backlog top-down by risk, beginning with the P0 public data, gating, RSVP, AI key, service worker, email escaping, SSRF, and settings contract issues.
 - Update proof logs and launch docs only after concrete verification passes.

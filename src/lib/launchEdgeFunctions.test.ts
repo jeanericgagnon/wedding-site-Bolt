@@ -238,12 +238,19 @@ describe('launch edge function guards', () => {
     expect(sharedEmailSafety).toContain('export function safeEmailUrl');
     expect(sharedEmailSafety).toContain('export function safeEmailHref');
     expect(sharedEmailSafety).toContain('export function sanitizeEmailSubject');
+    expect(sharedEmailSafety).toContain('function isSafeEmailHost');
+    expect(sharedEmailSafety).toContain('function isPrivateIpv4');
     expect(sharedEmailSafety).toContain('.replace(/&/g, "&amp;")');
     expect(sharedEmailSafety).toContain('.replace(/</g, "&lt;")');
     expect(sharedEmailSafety).toContain('.replace(/>/g, "&gt;")');
     expect(sharedEmailSafety).toContain('.replace(/"/g, "&quot;")');
     expect(sharedEmailSafety).toContain('.replace(/\'/g, "&#39;")');
     expect(sharedEmailSafety).toContain('parsed.protocol !== "https:" && parsed.protocol !== "http:"');
+    expect(sharedEmailSafety).toContain('parsed.username || parsed.password');
+    expect(sharedEmailSafety).toContain('metadata.google.internal');
+    expect(sharedEmailSafety).toContain('hostname.endsWith(".invalid")');
+    expect(sharedEmailSafety).toContain('hostname.endsWith(".example")');
+    expect(sharedEmailSafety).toContain('return !isPrivateIpv4(hostname)');
     expect(sharedEmailSafety).toContain('code < 32 || code === 127');
     expect(sharedEmailSafety).toContain('.slice(0, 180)');
 

@@ -18,6 +18,12 @@ describe('shared Edge Function email safety helpers', () => {
     expect(safeEmailUrl('http://example.com/path')).toBe('http://example.com/path');
     expect(safeEmailUrl('javascript:alert(1)', 'https://dayof.love')).toBe('https://dayof.love');
     expect(safeEmailUrl('data:text/html,<script>alert(1)</script>', null)).toBeNull();
+    expect(safeEmailUrl('https://user:pass@dayof.love/rsvp', 'https://dayof.love')).toBe('https://dayof.love');
+    expect(safeEmailUrl('http://169.254.169.254/latest/meta-data', null)).toBeNull();
+    expect(safeEmailUrl('https://metadata.google.internal/computeMetadata/v1/', 'https://dayof.love')).toBe('https://dayof.love');
+    expect(safeEmailUrl('http://localhost:54321/rsvp', 'https://dayof.love')).toBe('https://dayof.love');
+    expect(safeEmailUrl('https://proof.invalid/rsvp', 'https://dayof.love')).toBe('https://dayof.love');
+    expect(safeEmailUrl('https://preview.example/rsvp', 'https://dayof.love')).toBe('https://dayof.love');
     expect(safeEmailUrl('not a url', 'https://dayof.love/fallback')).toBe('https://dayof.love/fallback');
   });
 

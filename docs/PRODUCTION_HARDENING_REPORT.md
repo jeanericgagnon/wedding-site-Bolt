@@ -4071,3 +4071,23 @@ Commands run:
 
 Status:
 - PARTIAL. This narrows local public vendor-inquiry email safety risk. No deploy was run.
+
+### 2026-05-06 3:02 PM PT - Shared Email CTA URL Host Hardening
+
+What changed:
+- `supabase/functions/_shared/emailSafety.ts` now rejects credentialed, private IPv4, localhost, metadata, IPv6-looking, internal, `.local`, `.test`, `.invalid`, and `.example` hosts before returning sanitized email CTA URLs.
+- `src/lib/emailSafety.test.ts` now proves unsafe CTA URL inputs fall back or return null while safe public HTTP(S) links remain allowed.
+- `src/lib/launchEdgeFunctions.test.ts` now guards that the shared helper keeps the explicit host-safety checks.
+
+Commands run:
+- `npm test -- --run src/lib/emailSafety.test.ts src/lib/launchEdgeFunctions.test.ts`: PASS, 32/32.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run guard:assets`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- `npm run proof:v1:board:md`: PASS.
+
+Status:
+- PARTIAL. This narrows local transactional-email CTA URL trust risk. No deploy was run, so production needs an approved function deploy before this shared Edge helper hardening is live.
