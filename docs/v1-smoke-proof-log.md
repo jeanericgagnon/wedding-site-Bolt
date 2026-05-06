@@ -8867,6 +8867,25 @@ A slice does **not** count as passed because:
   - `npm run proof:v1:collaborator-runtime`: BLOCKED because disposable proof credentials are not configured (`V1_OWNER_EMAIL`, `V1_OWNER_PASSWORD`, `V1_COLLABORATOR_EMAIL`, `V1_COLLABORATOR_PASSWORD`).
 - Launch status did not change. Authenticated role-by-role mutation proof and secure service-role/RLS proof remain open, and no deploy was run.
 
+## 2026-05-06 2:53 PM PT No-Deploy Preview Reserved-Host SSRF Hardening
+
+- Continued from the P1 SSRF/public-source preview lane. No deploy, migration, or Supabase function deploy was run.
+- Fixed/proved:
+  - Registry preview source URL normalization now rejects reserved `.invalid` and `.example` hosts.
+  - Registry preview image-resource normalization rejects the same reserved hosts, including nested `images.weserv.nl` proxy targets.
+  - Vendor profile preview source/image normalization now uses the same reserved-host block.
+  - Safe public product/vendor URLs and safe public image proxy URLs remain allowed.
+- Proof passed:
+  - `npm test -- --run src/lib/registryPreviewUrlNormalizer.test.ts src/lib/launchEdgeFunctions.test.ts`: PASS, 66/66.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run guard:assets`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+  - `npm run proof:v1:ai-product-readiness`: PASS, 23/23.
+- Launch status did not change. This is local Edge Function hardening and no deploy was run; production needs an approved function deploy before this is live.
+
 ## 2026-05-05 6:26 PM PT No-Deploy Messages Live Data Service Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

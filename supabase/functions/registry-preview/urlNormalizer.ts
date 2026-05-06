@@ -68,6 +68,8 @@ function isBlockedHostname(hostname: string): boolean {
     normalized.endsWith('.localhost') ||
     normalized.endsWith('.local') ||
     normalized.endsWith('.internal') ||
+    normalized.endsWith('.invalid') ||
+    normalized.endsWith('.example') ||
     normalized.endsWith('.test') ||
     normalized === 'metadata' ||
     normalized === 'metadata.google.internal'

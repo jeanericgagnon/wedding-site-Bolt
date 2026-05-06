@@ -72,7 +72,13 @@ function isBlockedHostname(hostname: string): boolean {
   if (!normalized) return true;
   if (METADATA_HOSTS.has(normalized)) return true;
   if (normalized === 'localhost' || normalized.endsWith('.localhost')) return true;
-  if (normalized.endsWith('.local') || normalized.endsWith('.internal') || normalized.endsWith('.test')) return true;
+  if (
+    normalized.endsWith('.local') ||
+    normalized.endsWith('.internal') ||
+    normalized.endsWith('.invalid') ||
+    normalized.endsWith('.example') ||
+    normalized.endsWith('.test')
+  ) return true;
   if (normalized.includes(':')) return true;
   if (isPrivateIpv4(normalized)) return true;
   return false;

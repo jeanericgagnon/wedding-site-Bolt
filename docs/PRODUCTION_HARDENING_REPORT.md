@@ -4032,3 +4032,23 @@ Commands run:
 
 Status:
 - PARTIAL. Fresh live unauthenticated denial proof is green, but authenticated role-by-role mutation proof and secure service-role/RLS proof remain blocked on a credentialed secure proof environment. No deploy was run.
+
+### 2026-05-06 2:53 PM PT - Preview Reserved-Host SSRF Hardening
+
+What changed:
+- Registry preview URL normalization now rejects reserved `.invalid` and `.example` hostnames.
+- Registry preview display-image normalization now also rejects those reserved hostnames, including nested `images.weserv.nl` proxy targets.
+- Vendor profile preview source and image URL normalization now rejects the same reserved hostnames.
+
+Commands run:
+- `npm test -- --run src/lib/registryPreviewUrlNormalizer.test.ts src/lib/launchEdgeFunctions.test.ts`: PASS, 66/66.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run guard:assets`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- `npm run proof:v1:ai-product-readiness`: PASS, 23/23.
+
+Status:
+- PARTIAL. This narrows local SSRF/public-source preview risk. No deploy was run, so production still needs an approved function deploy before this Edge Function hardening is live.

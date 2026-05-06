@@ -133,6 +133,8 @@ describe('launch edge function guards', () => {
     expect(source).toContain('function isPrivateIpv6');
     expect(source).toContain('function normalizeVendorImageUrl');
     expect(source).toContain('METADATA_HOSTS');
+    expect(source).toContain("normalized.endsWith('.invalid')");
+    expect(source).toContain("normalized.endsWith('.example')");
     expect(source).toContain('Deno.resolveDns');
     expect(source).toContain('MAX_VENDOR_PREVIEW_REDIRECTS');
     expect(source).toContain('MAX_VENDOR_PREVIEW_BYTES');
@@ -188,6 +190,8 @@ describe('launch edge function guards', () => {
     expect(source).toContain('.select(REGISTRY_URL_CACHE_SELECT)');
     expect(source).not.toContain('.from("registry_url_cache")\n      .select("*")');
     expect(source).toContain('metadata.google.internal');
+    expect(source).toContain('normalized.endsWith(".invalid")');
+    expect(source).toContain('normalized.endsWith(".example")');
     expect(source).toContain('content-length');
     expect(source).toContain('URL does not point to an HTML page');
     expect(source).toContain('Enter a public product URL.');
@@ -215,6 +219,8 @@ describe('launch edge function guards', () => {
     expect(urlNormalizer).toContain("parsed.protocol !== 'http:' && parsed.protocol !== 'https:'");
     expect(urlNormalizer).toContain('parsed.username || parsed.password');
     expect(urlNormalizer).toContain('metadata.google.internal');
+    expect(urlNormalizer).toContain("normalized.endsWith('.invalid')");
+    expect(urlNormalizer).toContain("normalized.endsWith('.example')");
     expect(urlNormalizer).toContain('Enter a public product URL.');
   });
 

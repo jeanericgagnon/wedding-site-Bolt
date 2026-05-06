@@ -111,6 +111,8 @@ function isBlockedPreviewHostname(hostname: string): boolean {
     || normalized.endsWith(".localhost")
     || normalized.endsWith(".local")
     || normalized.endsWith(".internal")
+    || normalized.endsWith(".invalid")
+    || normalized.endsWith(".example")
     || normalized.endsWith(".test")
   ) return true;
   if (normalized.includes(":")) return true;

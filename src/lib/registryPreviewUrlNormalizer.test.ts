@@ -11,6 +11,8 @@ describe('registry preview URL normalizer SSRF guard', () => {
     ['localhost subdomain', 'https://shop.localhost/product'],
     ['local mDNS', 'https://printer.local/product'],
     ['internal host', 'https://registry.internal/product'],
+    ['invalid reserved host', 'https://proof.invalid/product'],
+    ['example reserved host', 'https://registry.example/product'],
     ['test host', 'https://example.test/product'],
     ['metadata host', 'http://metadata.google.internal/computeMetadata/v1/'],
     ['AWS metadata IP', 'http://169.254.169.254/latest/meta-data/'],
@@ -67,6 +69,8 @@ describe('registry preview URL normalizer SSRF guard', () => {
 
   it.each([
     ['metadata IP image', 'http://169.254.169.254/latest/meta-data/'],
+    ['invalid reserved image host', 'https://cdn.invalid/product.jpg'],
+    ['example reserved image host', 'https://cdn.example/product.jpg'],
     ['credentialed image', 'https://user:pass@cdn.example.com/product.jpg'],
     ['non-web image scheme', 'file:///etc/passwd'],
     ['private image behind proxy', 'https://images.weserv.nl/?url=169.254.169.254/latest/meta-data/&w=1200'],
