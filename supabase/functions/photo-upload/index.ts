@@ -469,7 +469,7 @@ Deno.serve(async (req: Request) => {
       return fail("INVALID_SITE", "Invalid site link.", 400);
     }
     if (honeypot) return fail("BOT_DETECTED", "Request rejected", 400);
-    if (guestEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)) {
+    if (guestEmail && !/^[^\s@<>"'()]+@[^\s@<>"'()]+\.[^\s@<>"'()]+$/.test(guestEmail)) {
       return fail("INVALID_EMAIL", "Invalid email address.", 400);
     }
     if (files.length === 0) return fail("FILES_REQUIRED", "At least one file is required", 400);

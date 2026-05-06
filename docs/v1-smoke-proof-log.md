@@ -41,6 +41,23 @@ _Launch call right now:_ Not production-ready under the stricter P0/P1 standard.
   - `npm run build`: PASS with known non-blocking Browserslist caniuse-lite and empty `vendor-react` chunk warnings.
 - Launch status did not change. This is local Edge Function hardening; secure service-role/RLS proof, authenticated live collaborator mutation proof, and external OpenAI key rotation remain open.
 
+## 2026-05-06 3:21 PM PT Local Photo Upload Guest Email Validation Hardening
+
+- Continued the no-deploy production-hardening backlog on public guest upload contact safety. No deploy, migration, or Supabase function deploy was run.
+- Fixed/proved:
+  - `photo-upload` guest email validation now rejects angle brackets, quotes, and parentheses.
+  - The prior loose non-space/non-`@` email regex is guarded against returning.
+  - Ordinary guest uploads and frontend photo upload behavior remain unchanged.
+- Proof passed:
+  - `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/pages/PhotoUpload.test.ts`: PASS, 34/34 after fixing an over-escaped source assertion.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run guard:assets`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known non-blocking Browserslist caniuse-lite and empty `vendor-react` chunk warnings.
+- Launch status did not change. This is local Edge Function hardening; secure service-role/RLS proof, authenticated live collaborator mutation proof, and external OpenAI key rotation remain open.
+
 ## 2026-05-06 8:55 AM PT Local P2 Settings/Coordinator Oversized-Page Continuation
 
 - Continued the no-deploy production-hardening backlog with focused oversized-page extraction. No deploy, migration, or Supabase function deploy was run.

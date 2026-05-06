@@ -2278,6 +2278,12 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - No feature loss: supported photo/video uploads, album token/slug access, hosted storage upload, Drive backup fallback, metadata capture, and partial-failure reporting remain intact.
   - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/pages/PhotoUpload.test.ts` (34/34), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
   - Launch status: unchanged. This is local Edge Function hardening and no deploy was run.
+- 2026-05-06 3:21 PM PT - No-deploy photo upload guest email validation hardening:
+  - Resolved in this batch: public `photo-upload` guest email validation now rejects angle brackets, quotes, and parentheses before persisting upload contact email or forwarding photo-update interest.
+  - Email/contact boundary hardening: the upload endpoint now follows the stricter public-email shape already used by vendor inquiry submissions instead of accepting any non-space/non-`@` characters.
+  - No feature loss: ordinary guest email addresses, anonymous uploads, token/slug access, hosted storage upload, Drive backup fallback, metadata capture, and partial-failure reporting remain intact.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/pages/PhotoUpload.test.ts` (34/34), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
+  - Launch status: unchanged. This is local Edge Function hardening and no deploy was run.
 - Do not start broad refactors from this file alone.
 - Execute this backlog top-down by risk, beginning with the P0 public data, gating, RSVP, AI key, service worker, email escaping, SSRF, and settings contract issues.
 - Update proof logs and launch docs only after concrete verification passes.

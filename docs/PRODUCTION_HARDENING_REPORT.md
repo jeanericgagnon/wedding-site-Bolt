@@ -4189,3 +4189,22 @@ Commands run:
 
 Status:
 - PARTIAL. This narrows local guest-facing upload validation echo risk. No deploy was run.
+
+### 2026-05-06 3:21 PM PT - Photo Upload Guest Email Validation Hardening
+
+What changed:
+- `photo-upload` now rejects angle brackets, quotes, and parentheses in guest email values before storing the upload contact email.
+- The public upload endpoint now matches the stricter public-email boundary used by vendor inquiry submissions.
+- `src/lib/launchEdgeFunctions.test.ts` guards the stricter regex and rejects the prior loose non-space/non-`@` pattern.
+
+Commands run:
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/pages/PhotoUpload.test.ts`: FAIL once because the new source assertion over-escaped the single quote, then PASS, 34/34 after fixing the assertion.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run guard:assets`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+
+Status:
+- PARTIAL. This narrows local public upload contact-email validation risk. No deploy was run.
