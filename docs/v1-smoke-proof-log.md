@@ -8499,6 +8499,23 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
 - Launch status did not change. This is local-only hardening and no deploy was run.
 
+## 2026-05-06 1:18 PM PT Approved Deploy And Postdeploy Proof
+
+- User approved commit and deploy.
+- Deployed:
+  - Commit `4d211c1d` (`Harden launch gates and split dashboard modules`).
+  - Supabase Edge Functions on project `atuzuobpprjstfmdnwso`: `validate-rsvp-token`, `send-wedding-email`, `send-bulk-message`, `queue-guest-followups`, `photo-album-create`, `photo-album-manage`, `photo-analyze-batch`, `photo-export-manifest`, and `photo-upload-moderate`.
+  - Vercel production deployment `dpl_H2GEvD7Zo6Ka3a8xFtEKcvQqzArz`, aliased to `https://dayof.love`.
+- Proof repair:
+  - Installed missing local Playwright Chromium after the first guarded deploy postdeploy run failed on missing browser binaries.
+  - Updated `scripts/smoke_csv_mapper_guard.js` and `scripts/smoke_checkin_guard.js` so they inspect the extracted Guests components/hooks instead of only `Guests.tsx`.
+- Proof passed:
+  - `npm run smoke:csvmapper`: PASS.
+  - `npm run smoke:checkin`: PASS.
+  - `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:postdeploy`: PASS, 8/8.
+  - Postdeploy lanes passed: canonical smoke, prereqs, AI rollout, AI exposure static, runtime wording truth, public quality, guests/RSVP ops, and anon-limited data integrity.
+- Launch status: production is updated and current postdeploy proof is green. Overall readiness remains `PARTIAL` until secure service-role/RLS live proof, live email/messaging authorization proof, and external OpenAI key rotation are closed.
+
 ## 2026-05-05 6:26 PM PT No-Deploy Messages Live Data Service Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

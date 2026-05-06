@@ -3613,3 +3613,30 @@ Commands run:
 
 Status:
 - PARTIAL. This reduces the name-change engine maintenance surface while preserving generated account-update template subjects, audience/status/action lines, readiness labels, copied-state labels, checklist/proof normalization, and planner card copy behavior. No deploy was run.
+
+### 2026-05-06 1:18 PM PT - Approved Deploy And Postdeploy Proof
+
+What changed:
+- Committed the accumulated hardening checkpoint as `4d211c1d` (`Harden launch gates and split dashboard modules`).
+- Deployed updated Supabase Edge Functions on project `atuzuobpprjstfmdnwso`: `validate-rsvp-token`, `send-wedding-email`, `send-bulk-message`, `queue-guest-followups`, `photo-album-create`, `photo-album-manage`, `photo-analyze-batch`, `photo-export-manifest`, and `photo-upload-moderate`.
+- Deployed Vercel production deployment `dpl_H2GEvD7Zo6Ka3a8xFtEKcvQqzArz`, aliased to `https://dayof.love`.
+- Installed missing local Playwright Chromium and refreshed stale CSV/check-in smoke guards so postdeploy proof follows the extracted Guests components/hooks.
+
+Commands run:
+- `supabase functions deploy validate-rsvp-token --project-ref atuzuobpprjstfmdnwso --no-verify-jwt`: PASS.
+- `supabase functions deploy send-wedding-email --project-ref atuzuobpprjstfmdnwso`: PASS.
+- `supabase functions deploy send-bulk-message --project-ref atuzuobpprjstfmdnwso`: PASS.
+- `supabase functions deploy queue-guest-followups --project-ref atuzuobpprjstfmdnwso`: PASS.
+- `supabase functions deploy photo-album-create --project-ref atuzuobpprjstfmdnwso`: PASS.
+- `supabase functions deploy photo-album-manage --project-ref atuzuobpprjstfmdnwso`: PASS.
+- `supabase functions deploy photo-analyze-batch --project-ref atuzuobpprjstfmdnwso`: PASS.
+- `supabase functions deploy photo-export-manifest --project-ref atuzuobpprjstfmdnwso`: PASS.
+- `supabase functions deploy photo-upload-moderate --project-ref atuzuobpprjstfmdnwso`: PASS.
+- `FORCE_DEPLOY=1 npm run deploy:prod`: PASS for deploy; first built-in postdeploy proof failed because local Playwright Chromium was missing and two stale static smoke guards still inspected the pre-extraction Guests file.
+- `npx playwright install chromium`: PASS.
+- `npm run smoke:csvmapper`: PASS.
+- `npm run smoke:checkin`: PASS.
+- `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:postdeploy`: PASS, 8/8.
+
+Status:
+- PARTIAL. Production is updated and current postdeploy proof is green. Remaining launch-clear blockers are still the secure service-role/RLS live proof, live email/messaging authorization proof, and external OpenAI key rotation before broad public traffic.

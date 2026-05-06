@@ -2,8 +2,18 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const file = resolve(process.cwd(), 'src/pages/dashboard/Guests.tsx');
-const src = readFileSync(file, 'utf8');
+function readSource(path) {
+  return readFileSync(resolve(process.cwd(), path), 'utf8');
+}
+
+const src = [
+  'src/pages/dashboard/Guests.tsx',
+  'src/pages/dashboard/guests/GuestOpsToolbar.tsx',
+  'src/pages/dashboard/guests/GuestListStatusControls.tsx',
+  'src/pages/dashboard/guests/GuestListPanel.tsx',
+  'src/pages/dashboard/guests/useGuestDashboardCheckIns.ts',
+  'src/pages/dashboard/guests/useGuestDashboardExports.ts',
+].map(readSource).join('\n');
 const utilsFile = resolve(process.cwd(), 'src/pages/dashboard/guests/guestDashboardUtils.ts');
 const utilsSrc = readFileSync(utilsFile, 'utf8');
 const utilsTestFile = resolve(process.cwd(), 'src/pages/dashboard/guests/guestDashboardUtils.test.ts');

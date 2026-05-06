@@ -2089,6 +2089,13 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - No feature loss: generated account-update template subjects, audience/status/action lines, readiness labels, copied-state labels, checklist/proof normalization, and planner card copy behavior remain intact.
   - Validation passed: `npm test -- --run src/lib/nameChange/engine.test.ts src/lib/nameChange/actionFeed.test.ts src/pages/dashboard/planning/NameChangePlannerTab.test.tsx src/pages/dashboard/planning/nameChangePlannerUi.test.ts` (153/153), `npm run typecheck -- --pretty false`, `npm run guard:file-size`, `npm run lint -- --quiet`, `git diff --check`, and `npm run build`.
   - Launch status: unchanged. This is local-only hardening and no deploy was run.
+- 2026-05-06 1:18 PM PT - Approved deploy and postdeploy proof:
+  - DONE: committed the accumulated hardening checkpoint as `4d211c1d` (`Harden launch gates and split dashboard modules`).
+  - DONE: deployed updated Supabase Edge Functions on project `atuzuobpprjstfmdnwso`: `validate-rsvp-token`, `send-wedding-email`, `send-bulk-message`, `queue-guest-followups`, `photo-album-create`, `photo-album-manage`, `photo-analyze-batch`, `photo-export-manifest`, and `photo-upload-moderate`.
+  - DONE: Vercel production deploy completed and is aliased to `https://dayof.love`; deployment id `dpl_H2GEvD7Zo6Ka3a8xFtEKcvQqzArz`, deployment URL `https://wedding-site-bolt-gfi6ia4yp-eric-gagnons-projects.vercel.app`.
+  - Proof repair: installed the missing local Playwright Chromium runtime and refreshed the CSV/check-in smoke guards to follow extracted Guests components/hooks.
+  - Validation passed after deploy: `PLAYWRIGHT_BASE_URL=https://dayof.love npm run proof:v1:postdeploy` passed 8/8, including canonical smoke, prereqs, AI rollout, AI exposure static, runtime wording truth, public quality, guests/RSVP ops, and anon-limited data integrity.
+  - Launch status: production is updated and current postdeploy proof is green. Overall readiness remains `PARTIAL` until the still-gated service-role/RLS live proof, live email/messaging authorization proof, and external OpenAI key rotation are closed.
 - Do not start broad refactors from this file alone.
 - Execute this backlog top-down by risk, beginning with the P0 public data, gating, RSVP, AI key, service worker, email escaping, SSRF, and settings contract issues.
 - Update proof logs and launch docs only after concrete verification passes.
