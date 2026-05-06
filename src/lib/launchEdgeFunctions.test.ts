@@ -123,6 +123,27 @@ describe('launch edge function guards', () => {
     expect(source).not.toContain('Supabase not configured');
   });
 
+  it('keeps Stripe checkout redirect URLs production-safe', () => {
+    const checkoutFunctions = [
+      readFunction('stripe-create-checkout'),
+      readFunction('stripe-create-sms-credits'),
+      readFunction('stripe-create-subscription'),
+    ];
+
+    for (const source of checkoutFunctions) {
+      expect(source).toContain('function isAllowedCheckoutRedirect');
+      expect(source).toContain('parsed.protocol !== "https:" && parsed.protocol !== "http:"');
+      expect(source).toContain('parsed.username || parsed.password');
+      expect(source).toContain('const hostname = parsed.hostname.toLowerCase().replace(/\\.$/, "")');
+      expect(source).toContain('const appUrl = new URL(Deno.env.get("APP_PUBLIC_URL") || "https://dayof.love")');
+      expect(source).toContain('const appHost = appUrl.hostname.toLowerCase().replace(/\\.$/, "")');
+      expect(source).toContain('hostname === "dayof.love" || hostname.endsWith(".dayof.love")');
+      expect(source).toContain('(hostname === "localhost" || hostname === "127.0.0.1") && (appHost === "localhost" || appHost === "127.0.0.1")');
+      expect(source).toContain('Checkout return URL is not allowed.');
+      expect(source).not.toContain('if (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1") return true;');
+    }
+  });
+
   it('keeps vendor profile preview public-source fetching bounded and customer-safe', () => {
     const source = readFunction('vendor-profile-preview');
 
@@ -495,9 +516,11 @@ describe('launch edge function guards', () => {
 
       expect(source, name).toContain('function isAllowedCheckoutRedirect');
       expect(source, name).toContain('APP_PUBLIC_URL');
-      expect(source, name).toContain('parsed.hostname === "dayof.love"');
-      expect(source, name).toContain('parsed.hostname === "localhost"');
+      expect(source, name).toContain('parsed.username || parsed.password');
+      expect(source, name).toContain('hostname === "dayof.love" || hostname.endsWith(".dayof.love")');
+      expect(source, name).toContain('(hostname === "localhost" || hostname === "127.0.0.1") && (appHost === "localhost" || appHost === "127.0.0.1")');
       expect(source, name).toContain('Checkout return URL is not allowed.');
+      expect(source, name).not.toContain('if (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1") return true;');
       expect(source, name).not.toContain('const message = err instanceof Error ? err.message');
       expect(source, name).not.toContain('error: message');
     }

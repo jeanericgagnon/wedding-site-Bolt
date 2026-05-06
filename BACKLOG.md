@@ -2248,6 +2248,12 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - No feature loss: safe public `http` and `https` links still pass, fallback URL behavior is preserved, and existing HTML escaping/subject sanitization remain unchanged.
   - Validation passed: `npm test -- --run src/lib/emailSafety.test.ts src/lib/launchEdgeFunctions.test.ts` (32/32), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, `npm run build`, and `npm run proof:v1:board:md`.
   - Launch status: unchanged. This is local Edge Function helper hardening and no deploy was run.
+- 2026-05-06 3:06 PM PT - No-deploy Stripe checkout return URL hardening:
+  - Resolved in this batch: Stripe one-time checkout, subscription checkout, and SMS-credit checkout return URL allowlists no longer accept localhost/127.0.0.1 unless `APP_PUBLIC_URL` is itself configured to a local origin.
+  - Payment redirect hardening: checkout return URLs now reject embedded username/password credentials and normalize hostnames before comparing against `APP_PUBLIC_URL`, `dayof.love`, and local-dev-only origins.
+  - No feature loss: production `dayof.love` return URLs, configured app-origin returns, and local development checkout loops remain supported.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (29/29), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, `npm run build`, and `npm run proof:v1:board:md`.
+  - Launch status: unchanged. This is local Edge Function hardening and no deploy was run.
 - Do not start broad refactors from this file alone.
 - Execute this backlog top-down by risk, beginning with the P0 public data, gating, RSVP, AI key, service worker, email escaping, SSRF, and settings contract issues.
 - Update proof logs and launch docs only after concrete verification passes.

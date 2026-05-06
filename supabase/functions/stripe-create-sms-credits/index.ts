@@ -25,10 +25,14 @@ function isAllowedCheckoutRedirect(url: string): boolean {
   try {
     const parsed = new URL(url);
     if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return false;
-    const appOrigin = new URL(Deno.env.get("APP_PUBLIC_URL") || "https://dayof.love").origin;
+    if (parsed.username || parsed.password) return false;
+    const hostname = parsed.hostname.toLowerCase().replace(/\.$/, "");
+    const appUrl = new URL(Deno.env.get("APP_PUBLIC_URL") || "https://dayof.love");
+    const appOrigin = appUrl.origin;
+    const appHost = appUrl.hostname.toLowerCase().replace(/\.$/, "");
     if (parsed.origin === appOrigin) return true;
-    if (parsed.hostname === "dayof.love" || parsed.hostname.endsWith(".dayof.love")) return true;
-    if (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1") return true;
+    if (hostname === "dayof.love" || hostname.endsWith(".dayof.love")) return true;
+    if ((hostname === "localhost" || hostname === "127.0.0.1") && (appHost === "localhost" || appHost === "127.0.0.1")) return true;
     return false;
   } catch {
     return false;

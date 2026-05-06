@@ -4091,3 +4091,23 @@ Commands run:
 
 Status:
 - PARTIAL. This narrows local transactional-email CTA URL trust risk. No deploy was run, so production needs an approved function deploy before this shared Edge helper hardening is live.
+
+### 2026-05-06 3:06 PM PT - Stripe Checkout Return URL Hardening
+
+What changed:
+- `stripe-create-checkout`, `stripe-create-subscription`, and `stripe-create-sms-credits` now allow localhost/127.0.0.1 return URLs only when `APP_PUBLIC_URL` is configured to a local origin.
+- Checkout return URL validation now rejects embedded username/password credentials and normalizes hostnames before comparing against `APP_PUBLIC_URL`, `dayof.love`, and local-dev-only origins.
+- `src/lib/launchEdgeFunctions.test.ts` now guards the local-only localhost rule across all three Stripe checkout functions.
+
+Commands run:
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts`: PASS, 29/29 after updating the older redirect guard that expected unconditional localhost.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run guard:assets`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- `npm run proof:v1:board:md`: PASS.
+
+Status:
+- PARTIAL. This narrows local payment redirect trust risk. No deploy was run, so production needs an approved function deploy before this Stripe checkout hardening is live.

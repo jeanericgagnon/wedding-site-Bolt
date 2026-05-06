@@ -8923,6 +8923,25 @@ A slice does **not** count as passed because:
   - `npm run proof:v1:board:md`: PASS.
 - Launch status did not change. This is local Edge Function helper hardening and no deploy was run; production needs an approved function deploy before this shared helper hardening is live.
 
+## 2026-05-06 3:06 PM PT No-Deploy Stripe Checkout Return URL Hardening
+
+- Continued from the payment/redirect trust hardening lane. No deploy, migration, or Supabase function deploy was run.
+- Fixed/proved:
+  - Stripe one-time checkout, subscription checkout, and SMS-credit checkout no longer accept localhost or 127.0.0.1 return URLs in production configuration.
+  - Localhost return URLs remain available only when `APP_PUBLIC_URL` is also a local origin.
+  - Checkout return URLs now reject embedded username/password credentials and normalize hostnames before allowlist comparison.
+  - Production `dayof.love` and configured app-origin return URLs remain supported.
+- Proof passed:
+  - `npm test -- --run src/lib/launchEdgeFunctions.test.ts`: PASS, 29/29 after updating the older redirect guard that expected unconditional localhost.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run guard:assets`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+  - `npm run proof:v1:board:md`: PASS.
+- Launch status did not change. This is local Edge Function hardening and no deploy was run; production needs an approved function deploy before this Stripe checkout hardening is live.
+
 ## 2026-05-05 6:26 PM PT No-Deploy Messages Live Data Service Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:
