@@ -28,6 +28,8 @@ const GUEST_PHOTO_AI_ANALYSIS_SELECT = 'id,upload_id,wedding_site_id,photo_album
 const GUEST_PHOTO_METADATA_SELECT = 'upload_id,taken_at,width,height,has_exif,has_gps,file_sha256,perceptual_hash,location_label,event_match_id,event_match_confidence,event_match_reason';
 const GUEST_PHOTO_BUCKET_CORRECTION_SELECT = 'id,upload_id,action,previous_bucket_id,suggested_bucket_id,chosen_bucket_id,confidence,reason,created_at';
 const GUEST_PHOTO_HUB_SETTINGS_SELECT = 'rsvp_enabled,photos_enabled,guestbook_enabled,registry_enabled,schedule_enabled,travel_enabled,recap_status,recap_published_at,recap_closed_at,custom_message,language_default';
+const MAX_GUEST_PHOTO_EVENTS = 200;
+const MAX_GUEST_PHOTO_ALBUMS = 500;
 
 type GuestPhotoSharingSiteRow = {
   id: string;
@@ -85,12 +87,14 @@ export async function loadGuestPhotoSharingSpace(userId: string): Promise<GuestP
       .select(GUEST_PHOTO_ITINERARY_EVENT_SELECT)
       .eq('wedding_site_id', site.id)
       .order('event_date', { ascending: true })
-      .order('start_time', { ascending: true }),
+      .order('start_time', { ascending: true })
+      .limit(MAX_GUEST_PHOTO_EVENTS),
     supabase
       .from('photo_albums')
       .select(GUEST_PHOTO_ALBUM_SELECT)
       .eq('wedding_site_id', site.id)
-      .order('created_at', { ascending: false }),
+      .order('created_at', { ascending: false })
+      .limit(MAX_GUEST_PHOTO_ALBUMS),
     supabase
       .from('photo_uploads')
       .select(GUEST_PHOTO_UPLOAD_SELECT)

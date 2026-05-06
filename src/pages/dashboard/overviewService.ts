@@ -8,6 +8,7 @@ export const OVERVIEW_DRAFT_SOURCE_SELECT = 'onboarding_answers, site_json, wedd
 export const OVERVIEW_BUILDER_SITE_JSON_SELECT = 'site_json';
 export const OVERVIEW_INTERACTIVE_SUGGESTION_SELECT = 'id, suggestion_text, created_at';
 export const OVERVIEW_INTERACTIVE_VOTE_SELECT = 'id, widget_kind, widget_id, option_id, created_at';
+const MAX_OVERVIEW_GUESTS = 2000;
 
 export interface OverviewSiteRow {
   id: string;
@@ -172,7 +173,8 @@ export async function loadOverviewGuests(siteId: string | null | undefined): Pro
     .from('guests')
     .select(OVERVIEW_GUEST_SELECT)
     .eq('wedding_site_id', siteId)
-    .order('rsvp_received_at', { ascending: false });
+    .order('rsvp_received_at', { ascending: false })
+    .limit(MAX_OVERVIEW_GUESTS);
 
   if (error) throw error;
   return (data ?? []) as OverviewGuestRow[];

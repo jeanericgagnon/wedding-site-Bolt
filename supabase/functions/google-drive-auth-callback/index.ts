@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { verifySessionToken } from "../_shared/signedSession.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,6 +13,13 @@ const json = (data: unknown, status = 200) =>
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+
+type GoogleDriveOAuthState = {
+  scope: "google_drive_oauth";
+  siteId: string;
+  userId: string;
+  ts: number;
+};
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 200, headers: corsHeaders });
@@ -42,8 +50,17 @@ Deno.serve(async (req: Request) => {
 
     if (!code || !stateRaw) return json({ error: "code and state are required" }, 400);
 
-    const state = JSON.parse(atob(stateRaw)) as { siteId: string; userId: string; ts: number };
-    if (!state?.siteId || !state?.userId || typeof state.ts !== "number") {
+    const state = await verifySessionToken<GoogleDriveOAuthState>(
+      stateRaw,
+      Deno.env.get("GOOGLE_DRIVE_STATE_SECRET") || serviceRole,
+    );
+    if (
+      !state ||
+      state.scope !== "google_drive_oauth" ||
+      !state.siteId ||
+      !state.userId ||
+      typeof state.ts !== "number"
+    ) {
       return json({ error: "Invalid state" }, 400);
     }
 

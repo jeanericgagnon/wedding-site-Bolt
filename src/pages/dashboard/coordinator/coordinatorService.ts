@@ -9,6 +9,9 @@ const COORDINATOR_EVENT_SELECT = 'id, event_name, start_time' as const;
 const COORDINATOR_EVENT_INVITATION_SELECT = 'event_id, guest_id' as const;
 const COORDINATOR_QNA_SELECT = 'id, question, answer, status, created_at' as const;
 const COORDINATOR_QNA_INSERT_SELECT = 'id, question, answer, status' as const;
+const MAX_COORDINATOR_GUESTS = 2000;
+const MAX_COORDINATOR_EVENTS = 200;
+const MAX_COORDINATOR_EVENT_INVITATIONS = 10000;
 
 export interface CoordinatorBootstrapData {
   siteId: string | null;
@@ -63,12 +66,14 @@ export async function loadCoordinatorBootstrapData(userId: string): Promise<Coor
     supabase
       .from('guests')
       .select(COORDINATOR_GUEST_SELECT)
-      .eq('wedding_site_id', siteId),
+      .eq('wedding_site_id', siteId)
+      .limit(MAX_COORDINATOR_GUESTS),
     supabase
       .from('itinerary_events')
       .select(COORDINATOR_EVENT_SELECT)
       .eq('wedding_site_id', siteId)
-      .order('start_time', { ascending: true }),
+      .order('start_time', { ascending: true })
+      .limit(MAX_COORDINATOR_EVENTS),
   ]);
   if (guestsError) throw guestsError;
   if (eventsError) throw eventsError;
@@ -80,7 +85,8 @@ export async function loadCoordinatorBootstrapData(userId: string): Promise<Coor
     const { data, error } = await supabase
       .from('event_invitations')
       .select(COORDINATOR_EVENT_INVITATION_SELECT)
-      .in('event_id', eventIds);
+      .in('event_id', eventIds)
+      .limit(MAX_COORDINATOR_EVENT_INVITATIONS);
     if (error) throw error;
     inviteRows = (data ?? []) as Array<{ event_id: string; guest_id: string }>;
   }

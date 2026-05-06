@@ -71,6 +71,38 @@ function trimString(value: unknown, max = 800) {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
 }
 
+async function resolveVerifiedUsageSiteId(
+  req: Request,
+  admin: ReturnType<typeof createClient>,
+  requestedSiteId: string,
+): Promise<string | null> {
+  if (!requestedSiteId) return null;
+
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+  if (!token) return null;
+
+  const { data: userData, error: userError } = await admin.auth.getUser(token);
+  const userId = userData.user?.id;
+  if (userError || !userId) return null;
+
+  const { data: site } = await admin
+    .from("wedding_sites")
+    .select("id,user_id")
+    .eq("id", requestedSiteId)
+    .maybeSingle();
+  if ((site as { user_id?: string | null } | null)?.user_id === userId) return requestedSiteId;
+
+  const { data: collaborator } = await admin
+    .from("wedding_site_collaborators")
+    .select("wedding_site_id")
+    .eq("wedding_site_id", requestedSiteId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  return collaborator ? requestedSiteId : null;
+}
+
 function humanizeCopy(value: string, fallback = "") {
   const text = (value || fallback || "").trim();
   return text
@@ -499,17 +531,18 @@ Deno.serve(async (req: Request) => {
     const siteId = trimString(body.siteId, 80);
     const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const admin = serviceRole && supabaseUrl ? createClient(supabaseUrl, serviceRole) : null;
+    const verifiedUsageSiteId = admin ? await resolveVerifiedUsageSiteId(req, admin, siteId) : null;
 
     if (apiKey) {
       try {
-        if (serviceRole && supabaseUrl) {
-          const admin = createClient(supabaseUrl, serviceRole);
+        if (admin) {
           const rateLimit = await enforcePublicSubmissionRateLimit({
             admin,
             request: req,
             scope: "onboarding_ai_orchestrate",
             subject: `${siteId || "anonymous_setup"}:${loopCount}:${answers.guestCountBand || ""}`,
-            siteId: siteId || null,
+            siteId: verifiedUsageSiteId,
             maxIp: 30,
             maxSubject: 8,
             windowMinutes: 60,
@@ -660,10 +693,9 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    if (siteId && serviceRole && supabaseUrl && usage && provider === "openai") {
-      const admin = createClient(supabaseUrl, serviceRole);
+    if (verifiedUsageSiteId && admin && usage && provider === "openai") {
       await admin.from("internal_ai_usage_events").insert({
-        wedding_site_id: siteId,
+        wedding_site_id: verifiedUsageSiteId,
         feature: "onboarding_concierge",
         provider,
         model,

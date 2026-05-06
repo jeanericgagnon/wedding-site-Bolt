@@ -49,6 +49,9 @@ jobs:
       - name: Security regression tests
         run: npm run test:security
 
+      - name: Public access coverage proof
+        run: npm run proof:v1:public-access-coverage
+
       - name: Unit and regression tests
         run: npm test
 

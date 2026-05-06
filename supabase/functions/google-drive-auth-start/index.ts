@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { signSessionToken } from "../_shared/signedSession.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -54,7 +55,12 @@ Deno.serve(async (req: Request) => {
 
     if (!site || site.user_id !== user.id) return json({ error: "Forbidden" }, 403);
 
-    const state = btoa(JSON.stringify({ siteId, userId: user.id, ts: Date.now() }));
+    const state = await signSessionToken({
+      scope: "google_drive_oauth",
+      siteId,
+      userId: user.id,
+      ts: Date.now(),
+    }, Deno.env.get("GOOGLE_DRIVE_STATE_SECRET") || serviceRole);
     const scope = encodeURIComponent("https://www.googleapis.com/auth/drive.file");
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(googleClientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&access_type=offline&prompt=consent&scope=${scope}&state=${encodeURIComponent(state)}`;
 

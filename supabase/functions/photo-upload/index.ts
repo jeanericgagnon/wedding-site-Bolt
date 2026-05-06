@@ -590,11 +590,11 @@ Deno.serve(async (req: Request) => {
 
     const { data: site } = await admin
       .from("wedding_sites")
-      .select("id, is_published, vault_google_drive_connected, vault_google_drive_access_token, vault_google_drive_refresh_token, vault_google_drive_token_expires_at")
+      .select("id, vault_google_drive_connected, vault_google_drive_access_token, vault_google_drive_refresh_token, vault_google_drive_token_expires_at")
       .eq("id", album.wedding_site_id as string)
       .maybeSingle();
 
-    if (!site || (!tokenHash && !site.is_published)) return fail("SITE_UNAVAILABLE", "Site not available for uploads.", 403);
+    if (!site) return fail("SITE_UNAVAILABLE", "Site not available for uploads.", 403);
     const driveBackup = await resolveDriveBackup(admin, site, album.wedding_site_id as string);
     const { data: itineraryData } = await admin
       .from("itinerary_events")

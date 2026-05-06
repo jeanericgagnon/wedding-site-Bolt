@@ -14,6 +14,8 @@ const SEATING_LOOKUP_EVENT_SELECT = 'id' as const;
 const SEATING_LOOKUP_ASSIGNMENT_SELECT = 'guest_id, table_id, seat_index, checked_in_at, is_valid' as const;
 const SEATING_LOOKUP_TABLE_SELECT = 'id, table_name' as const;
 const SEATING_LOOKUP_GUEST_SELECT = 'id, first_name, last_name, name, email, rsvp_status' as const;
+const MAX_SEATING_ITINERARY_EVENTS = 200;
+const MAX_SEATING_LOOKUP_ASSIGNMENTS = 2000;
 
 export interface ItineraryEvent {
   id: string;
@@ -185,7 +187,8 @@ export async function loadItineraryEvents(weddingSiteId: string): Promise<Itiner
     .select('id, event_name, event_date, start_time, location_name')
     .eq('wedding_site_id', weddingSiteId)
     .order('event_date', { ascending: true })
-    .order('start_time', { ascending: true });
+    .order('start_time', { ascending: true })
+    .limit(MAX_SEATING_ITINERARY_EVENTS);
   if (error) throw error;
   return (data ?? []) as ItineraryEvent[];
 }
@@ -244,7 +247,8 @@ export async function loadSeatingLookupRowsForUser(userId: string): Promise<Seat
     .select(SEATING_LOOKUP_ASSIGNMENT_SELECT)
     .eq('seating_event_id', eventId)
     .eq('is_valid', true)
-    .order('updated_at', { ascending: false });
+    .order('updated_at', { ascending: false })
+    .limit(MAX_SEATING_LOOKUP_ASSIGNMENTS);
   if (assignmentsError) throw assignmentsError;
 
   const assignmentRows = (assignments || []) as SeatingLookupAssignment[];

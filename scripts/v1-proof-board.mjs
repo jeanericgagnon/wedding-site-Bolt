@@ -161,6 +161,7 @@ const proofBoard = {
         'npm run typecheck -- --pretty false',
         'npm run lint -- --quiet',
         'npm run build',
+        'npm run proof:v1:service-role-authorization',
         'npm run proof:v1:ai-product-readiness',
         'npm run proof:v1:ai-secure-model',
         'npm run proof:v1:ai-clearance',
@@ -180,6 +181,7 @@ const proofBoard = {
         secureModelProofCleared
           ? 'Keep `V1_AI_SECURE_MODEL_LIVE=1 npm run proof:v1:ai-secure-model` green after any future AI Edge Function, model, or secret change'
           : 'Run secure-env model-backed proof for quick-start/onboarding, photo vision, and site translation without printing secret values',
+        'Keep live service-role/media unauthenticated denial proof green for deployed photo album, moderation, export, and analysis functions',
         'Keep generated copy, legacy onboarding extraction, photo organizer, and planner suggestions in deterministic launch scope unless server routes are added',
         'Exercise provider failure, invalid output, and fallback paths on desktop and mobile',
         aiPhotoMigrationCleared
@@ -276,6 +278,7 @@ const proofBoard = {
       exitBar: 'All AI-assisted surfaces have secure server-side model calls or deterministic-only behavior, live success/failure/fallback proof, safe customer output, and no provider/key/spend/token/raw-error leakage.',
       automatedProof: [
         'npm test -- --run src/lib/aiProviderKeySecurity.test.ts src/lib/launchWordingGuard.test.ts src/lib/photoAnalysisCustomerCopy.test.ts',
+        'npm run proof:v1:service-role-authorization',
         'npm run proof:v1:ai-product-readiness',
         'npm run proof:v1:ai-secure-model',
         'npm run proof:v1:ai-clearance',
@@ -288,6 +291,7 @@ const proofBoard = {
       ],
       manualProof: [
         'Audit quick-start/onboarding AI, generated site copy, clarifying questions, photo organizer, photo vision, planner suggestions, and vendor/profile generation',
+        'Keep live service-role/media unauthenticated denial proof green for deployed photo album, moderation, export, and analysis functions',
         'Keep browser-visible provider keys blocked and move any required model-backed production lane behind server-side routes',
         'Run secure-env live model proof for current server model-capable routes: quick-start/onboarding, photo vision, and site translation, without exposing secret values',
         'Treat generated copy, legacy onboarding extraction, photo organizer, and planner suggestions as deterministic launch lanes unless server routes are added',
@@ -308,9 +312,11 @@ const proofBoard = {
       exitBar: 'Home -> auth/demo -> onboarding/builder -> site -> RSVP feels coherent, and privacy/access/publish behavior matches the copy.',
       automatedProof: [
         'npm run proof:v1:canonical-smoke',
+        'npm run proof:v1:public-access-coverage',
       ],
       manualProof: [
         `Production runtime wording truth captured at ${latestRuntimeWordingEvidence}`,
+        'Keep public subresource access-gate coverage proof green as new guest/public functions are added',
         'Production public route smoke passed 35/35 on https://dayof.love',
         'Production authenticated write/read proof passed 19/19 on https://dayof.love',
         'Production quick-start owner setup proof passed against https://dayof.love using approved test account',
@@ -387,10 +393,13 @@ const proofBoard = {
       exitBar: 'Draft -> schedule/send -> history state reads trustworthy enough that core wedding messaging can stay inside DayOf.',
       automatedProof: [
         'npm run proof:v1:comms-center',
+        'npm run proof:v1:email-messaging-authorization',
         'tests/e2e/settings-notifications-config.spec.ts',
       ],
       manualProof: [
         'Keep message composer, scheduling, review, templates, and history proof green as messaging surfaces evolve',
+        'Keep unauthenticated live denial proof green for deployed email/messaging send and queue functions',
+        'Use disposable owner/planner/coordinator/viewer proof accounts for the remaining authenticated live mutation proof',
         'Run message composer/history proof on the current deploy when authenticated cleanup approval is available',
       ],
       evidenceTarget: 'docs/v1-smoke-proof-log.md',

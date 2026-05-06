@@ -3640,3 +3640,210 @@ Commands run:
 
 Status:
 - PARTIAL. Production is updated and current postdeploy proof is green. Remaining launch-clear blockers are still the secure service-role/RLS live proof, live email/messaging authorization proof, and external OpenAI key rotation before broad public traffic.
+
+### 2026-05-06 1:25 PM PT - Live Email/Messaging Unauthenticated Denial Proof
+
+What changed:
+- Added `scripts/v1-proof-email-messaging-authorization.mjs`.
+- Wired it as `npm run proof:v1:email-messaging-authorization`.
+- Added static launch proof coverage in `src/lib/launchEdgeFunctions.test.ts` so the proof script keeps covering `process-email-queue`, `queue-guest-followups`, `send-bulk-message`, and `send-wedding-email`.
+- Added the live denial proof to the comms-center proof-board slice and guarded that board contract in `src/lib/proofBoardFreshness.test.ts`.
+
+Commands run:
+- `npm run proof:v1:email-messaging-authorization`: first sandbox run failed only on blocked network fetches.
+- `npm run proof:v1:email-messaging-authorization`: PASS after approved network access. Deployed `process-email-queue`, `queue-guest-followups`, and `send-bulk-message` returned `401` with no bearer token; deployed `send-wedding-email` returned `401` at the authorization boundary for direct RSVP email relay input.
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/plannerAccess.test.ts`: PASS, 39/39.
+- `npm test -- --run src/lib/proofBoardFreshness.test.ts src/lib/launchEdgeFunctions.test.ts src/lib/plannerAccess.test.ts`: PASS, 40/40.
+- `npm run smoke:messages`: PASS.
+- `npm run proof:v1:board:md`: PASS, with `npm run proof:v1:email-messaging-authorization` listed under comms-center automated proof.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS. Known warnings remain: Browserslist caniuse-lite is outdated and Vite generated an empty `vendor-react` chunk.
+
+Status:
+- PARTIAL. This closes the unauthenticated live denial slice for deployed email/messaging send and queue functions, with no deploy run in this batch. Authenticated owner/planner/coordinator/viewer live mutation proof, secure service-role/RLS proof, and external OpenAI key rotation remain required.
+
+### 2026-05-06 1:32 PM PT - Live Photo/Media Service-Role Unauthenticated Denial Proof
+
+What changed:
+- Added `scripts/v1-proof-service-role-authorization.mjs`.
+- Wired it as `npm run proof:v1:service-role-authorization`.
+- Added static launch proof coverage in `src/lib/launchEdgeFunctions.test.ts` so the proof script keeps covering `photo-album-create`, `photo-album-manage`, `photo-upload-moderate`, `photo-export-manifest`, and `photo-analyze-batch`.
+- Added the live service-role/media denial proof to the proof board AI/photo proof commands and guarded that board contract in `src/lib/proofBoardFreshness.test.ts`.
+
+Commands run:
+- `npm run proof:v1:service-role-authorization`: first sandbox run failed only on blocked network fetches.
+- `npm run proof:v1:service-role-authorization`: PASS after approved network access. Deployed `photo-album-create`, `photo-album-manage`, `photo-upload-moderate`, `photo-export-manifest`, and `photo-analyze-batch` returned `401` without an authorization bearer.
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/proofBoardFreshness.test.ts src/lib/plannerAccess.test.ts`: PASS, 40/40.
+- `npm run proof:v1:board:md`: PASS, with `npm run proof:v1:service-role-authorization` listed in AI/photo proof commands and automated proof.
+
+Status:
+- PARTIAL. This closes the unauthenticated live denial slice for deployed photo/media service-role functions, with no deploy run in this batch. Authenticated owner/planner/coordinator/viewer live mutation proof and secure service-role/RLS cross-table/storage proof remain required.
+
+### 2026-05-06 1:37 PM PT - Public Subresource Access-Gate Coverage Proof
+
+What changed:
+- Added `scripts/v1-proof-public-access-coverage.mjs`.
+- Wired it as `npm run proof:v1:public-access-coverage`.
+- Removed the stale `photo-upload` slug-path post-gate `!tokenHash && !site.is_published` shortcut so password/invite-mode slug uploads stay governed by `canReadPublicSubresource`.
+- Narrowed the later `photo-upload` site read to Drive backup fields only.
+- Added static launch proof coverage in `src/lib/launchEdgeFunctions.test.ts`.
+- Added the public-access coverage proof to the proof board public-site trust slice and guarded that board contract in `src/lib/proofBoardFreshness.test.ts`.
+
+Commands run:
+- `npm run proof:v1:public-access-coverage`: FAIL before the fix, catching `photo-upload` as the only stale published-only shortcut.
+- `npm run proof:v1:public-access-coverage`: PASS after the fix across all detected public subresource functions.
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/proofBoardFreshness.test.ts src/lib/publicSiteAccess.test.ts`: PASS, 32/32.
+- `npm run proof:v1:board:md`: PASS, with `npm run proof:v1:public-access-coverage` listed under public-site trust automated proof.
+
+Status:
+- PARTIAL. This closes a local public-access drift bug and adds a reusable gate for future public subresource functions. No deploy was run, so production needs an approved deploy before the `photo-upload` slug-mode fix is live.
+
+### 2026-05-06 1:41 PM PT - Public Access Proof Hardpass Wiring
+
+What changed:
+- Wired `npm run proof:v1:public-access-coverage` into `npm run test:launch` immediately after `test:security`.
+- Added a named CI hardpass step for `npm run proof:v1:public-access-coverage`.
+- Updated `scripts/v1-proof-test-lanes.mjs` so the release-lane contract fails if the public access coverage command, launch-lane placement, or CI step is removed.
+- The public subresource access proof now graduates from a one-off proof command into the launch and CI hardpass paths.
+
+Commands run:
+- `npm run proof:v1:public-access-coverage`: PASS.
+- `npm run proof:v1:test-lanes`: PASS, 10/10 script contracts plus CI hardpass checks.
+- `npm run test:launch`: PASS. This ran typecheck, quiet lint, `test:security` (226/226), public-access coverage proof, file-size guard, asset guard, production build, performance-budget proof, and proof-board markdown generation.
+
+Status:
+- PARTIAL. This is local-only release-lane hardening and no deploy was run.
+
+### 2026-05-06 1:45 PM PT - Public Asset Directory Budget Guard
+
+What changed:
+- Updated `scripts/check-asset-budget.mjs` to report top-level public asset directory totals.
+- Added explicit directory budgets for `template-previews-gif`, `preview-photos`, `variant-previews`, `photos`, and `template-previews`.
+- Added a 500 KiB ceiling for any new unbudgeted top-level public directory.
+
+Commands run:
+- `npm run guard:assets`: PASS, 209433 KiB total public assets.
+- Directory budget proof: `public/template-previews-gif` 140502 KiB under 141000 KiB, `public/preview-photos` 41847 KiB under 42000 KiB, `public/variant-previews` 11911 KiB under 12000 KiB, `public/photos` 10551 KiB under 11000 KiB, and `public/template-previews` 4327 KiB under 4500 KiB.
+
+Status:
+- PARTIAL. This prevents quiet growth in the heaviest public asset buckets while the larger CDN/object-storage or optimized-thumbnail strategy remains open. No deploy was run.
+
+### 2026-05-06 1:48 PM PT - Dashboard High-Cardinality Query Caps
+
+What changed:
+- Added explicit high-water caps to guest dashboard guest/event/invitation reads.
+- Added explicit high-water caps to message dashboard history, recipient, event, and event-invitation reads.
+- Added explicit high-water caps to guest-photo event and album reads.
+- Updated `src/lib/dashboardDataBoundary.test.ts` to guard the cap constants and `.limit(...)` calls for those high-cardinality service reads.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/guestPhotoSharingService.test.ts src/pages/dashboard/settings/settingsSiteData.test.ts src/pages/dashboard/messages/messageDashboardUtils.test.ts`: PASS, 34/34.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run guard:assets`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+
+Status:
+- PARTIAL. This bounds worst-case dashboard service loads while true beyond-cap pagination remains tracked separately. No deploy was run.
+
+### 2026-05-06 1:52 PM PT - Dashboard High-Cardinality Query Caps Continuation
+
+What changed:
+- Added explicit high-water caps to RSVP board guest, event, and event-invitation reads.
+- Added explicit high-water caps to coordinator guest, event, and event-invitation reads.
+- Added explicit high-water caps to overview guest reads, registry item reads, seating itinerary/lookup assignment reads, and itinerary guest-picker invitation reads.
+- Updated `src/lib/dashboardDataBoundary.test.ts` to guard this second wave of cap constants and `.limit(...)` calls.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts src/pages/dashboard/seating/seatingDashboardUtils.test.ts src/pages/dashboard/messages/messageDashboardUtils.test.ts src/pages/dashboard/registry/registryTypes.test.ts`: PASS, 49/49.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run guard:assets`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+
+Status:
+- PARTIAL. This further bounds worst-case dashboard service loads while true beyond-cap pagination remains tracked separately. No deploy was run.
+
+### 2026-05-06 1:58 PM PT - Onboarding AI Service-Role Usage Trust Fix
+
+What changed:
+- `supabase/functions/onboarding-ai-orchestrate/index.ts` no longer trusts the browser-supplied `siteId` for service-role usage attribution or rate-limit site context.
+- Added `resolveVerifiedUsageSiteId(...)`, which reads the bearer token with `admin.auth.getUser(token)`, confirms site ownership through `wedding_sites.user_id`, and otherwise requires a matching `wedding_site_collaborators` row.
+- Rate-limit context and `internal_ai_usage_events.wedding_site_id` inserts now use `verifiedUsageSiteId`.
+- Anonymous onboarding still works and remains IP/subject rate-limited; unverified site ids are simply not attached to internal usage rows.
+
+Commands run:
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/aiProviderKeySecurity.test.ts`: PASS, 36/36.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `git diff --check`: PASS.
+- `npm run guard:assets`: PASS.
+- `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+
+Status:
+- PARTIAL. This closes a local service-role trust gap in onboarding AI usage logging. No deploy was run, so production needs an approved deploy before this Edge Function fix is live.
+
+### 2026-05-06 2:01 PM PT - Service-Role Disposition Category Hardening
+
+What changed:
+- Updated `docs/service-role-authorization-disposition-2026-05-05.md` so public/optional-auth rate-limited helpers are no longer grouped with owner/collaborator service-role functions.
+- `log-client-error`, `onboarding-ai-orchestrate`, and `vendor-profile-preview` are now recorded as public or optional-auth rate-limited helpers with their required trust boundary.
+- `src/lib/serviceRoleAuthorizationDisposition.test.ts` now parses the disposition categories and requires every service-role Edge Function to appear in exactly one category.
+
+Commands run:
+- `npm test -- --run src/lib/serviceRoleAuthorizationDisposition.test.ts src/lib/launchEdgeFunctions.test.ts`: PASS, 30/30.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run guard:assets`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+
+Status:
+- PARTIAL. This tightens local service-role proof/disposition accuracy. No deploy was run; secure service-role/RLS live proof remains open.
+
+### 2026-05-06 2:02 PM PT - Full Local Launch-Lane Checkpoint
+
+Commands run:
+- `npm run test:launch`: PASS.
+
+Coverage:
+- Typecheck.
+- Quiet lint.
+- `test:security`: PASS, 227/227.
+- Public subresource access-gate coverage proof.
+- File-size guard.
+- Asset directory budget guard.
+- Production build.
+- Performance-budget proof.
+- Proof-board markdown generation.
+
+Status:
+- PARTIAL. The post-disposition hardpass lane is green locally, with proof board regenerated at 2026-05-06 2:02 PM PT. No deploy was run.
+
+### 2026-05-06 2:05 PM PT - Google Drive OAuth State Signing Hardening
+
+What changed:
+- `supabase/functions/google-drive-auth-start/index.ts` now signs Google Drive OAuth state with the shared HMAC session-token helper.
+- `supabase/functions/google-drive-auth-callback/index.ts` now verifies that signed state before service-role Drive token exchange/write work.
+- The callback now requires `scope: "google_drive_oauth"`, `siteId`, `userId`, and timestamp from the verified state token and no longer trusts `JSON.parse(atob(stateRaw))`.
+
+Commands run:
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/serviceRoleAuthorizationDisposition.test.ts`: PASS, 30/30.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run guard:assets`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+
+Status:
+- PARTIAL. This closes a local Google Drive service-role callback trust gap. No deploy was run, so production needs an approved function deploy before the callback fix is live.

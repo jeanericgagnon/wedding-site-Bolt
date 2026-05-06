@@ -4,6 +4,9 @@ import { supabase } from '../../lib/supabase';
 export const RSVP_BOARD_GUEST_SELECT = 'id, rsvp_status, invited_to_ceremony, invited_to_reception, checked_in_at, email, phone, notes, invitation_sent_at, reminder_last_sent_at';
 export const RSVP_BOARD_EVENT_SELECT = 'id';
 export const RSVP_BOARD_EVENT_INVITATION_SELECT = 'event_id, guest_id';
+const MAX_RSVP_BOARD_GUESTS = 2000;
+const MAX_RSVP_BOARD_EVENTS = 200;
+const MAX_RSVP_BOARD_EVENT_INVITATIONS = 10000;
 
 export type RsvpBoardGuestRow = {
   id: string;
@@ -28,7 +31,8 @@ export async function loadRsvpBoardRows(weddingSiteId: string): Promise<RsvpBoar
   const { data, error } = await supabase
     .from('guests')
     .select(RSVP_BOARD_GUEST_SELECT)
-    .eq('wedding_site_id', weddingSiteId);
+    .eq('wedding_site_id', weddingSiteId)
+    .limit(MAX_RSVP_BOARD_GUESTS);
   if (error) throw error;
 
   const invitedEventIdsByGuest = await loadRsvpBoardEventInvites(weddingSiteId);
@@ -42,7 +46,8 @@ async function loadRsvpBoardEventInvites(weddingSiteId: string): Promise<Map<str
   const { data: events, error: eventsError } = await supabase
     .from('itinerary_events')
     .select(RSVP_BOARD_EVENT_SELECT)
-    .eq('wedding_site_id', weddingSiteId);
+    .eq('wedding_site_id', weddingSiteId)
+    .limit(MAX_RSVP_BOARD_EVENTS);
 
   if (eventsError) return new Map<string, string[]>();
 
@@ -52,7 +57,8 @@ async function loadRsvpBoardEventInvites(weddingSiteId: string): Promise<Map<str
   const { data: invites, error: invitesError } = await supabase
     .from('event_invitations')
     .select(RSVP_BOARD_EVENT_INVITATION_SELECT)
-    .in('event_id', eventIds);
+    .in('event_id', eventIds)
+    .limit(MAX_RSVP_BOARD_EVENT_INVITATIONS);
 
   if (invitesError) return new Map<string, string[]>();
 

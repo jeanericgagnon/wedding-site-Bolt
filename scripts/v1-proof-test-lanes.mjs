@@ -10,8 +10,9 @@ const required = {
   'test:smoke': 'npm run smoke:registry && npm run smoke:rsvp && npm run smoke:csvmapper && npm run smoke:checkin && npm run smoke:messages && npm run smoke:site',
   'test:integration': 'npm run proof:v1:canonical-smoke && npm run proof:v1:guests-rsvp-ops && npm run proof:v1:registry && npm run proof:v1:seating-continuity && npm run proof:v1:comms-center',
   'test:e2e': 'npx playwright test --workers=1 tests/e2e',
-  'test:launch': 'npm run typecheck -- --pretty false && npm run lint -- --quiet && npm run test:security && npm run guard:file-size && npm run guard:assets && npm run build && npm run proof:v1:performance-budget && npm run proof:v1:board:md',
+  'test:launch': 'npm run typecheck -- --pretty false && npm run lint -- --quiet && npm run test:security && npm run proof:v1:public-access-coverage && npm run guard:file-size && npm run guard:assets && npm run build && npm run proof:v1:performance-budget && npm run proof:v1:board:md',
   'proof:v1:test-lanes': 'node scripts/v1-proof-test-lanes.mjs',
+  'proof:v1:public-access-coverage': 'node scripts/v1-proof-public-access-coverage.mjs',
   'guard:file-size': 'node scripts/check-file-size-guard.mjs',
   'guard:assets': 'node scripts/check-asset-budget.mjs',
 };
@@ -41,6 +42,7 @@ const requiredCiSnippets = [
   'run: npm run guard:file-size',
   'run: npm run guard:assets',
   'run: npm run test:security',
+  'run: npm run proof:v1:public-access-coverage',
   'run: npm test',
   'run: npm run build',
   'run: npm run proof:v1:performance-budget',

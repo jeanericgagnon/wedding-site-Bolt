@@ -10,6 +10,7 @@ const REGISTRY_PURCHASE_ERROR_COPY = 'Couldn’t update that gift right now. Ple
 
 const REGISTRY_ITEM_SELECT = 'id, wedding_site_id, item_type, item_name, price_label, price_amount, store_name, merchant, item_url, canonical_url, image_url, description, notes, quantity_needed, quantity_purchased, purchaser_name, purchase_status, hide_when_purchased, sort_order, priority, availability, metadata_last_checked_at, metadata_fetch_status, metadata_confidence_score, metadata_source_method, metadata_retailer, previous_price_amount, price_last_changed_at, next_refresh_at, last_auto_refreshed_at, refresh_fail_count, fund_goal_amount, fund_received_amount, fund_venmo_url, fund_paypal_url, fund_zelle_handle, fund_custom_url, fund_custom_label, created_at, updated_at' as const;
 export const REGISTRY_DASHBOARD_SITE_SELECT = 'id, wedding_date, registry_refresh_enabled_until, registry_monthly_refresh_cap, registry_monthly_refresh_count, registry_monthly_refresh_month, registry_auto_refresh_enabled, registry_refresh_include_purchased, registry_refresh_policy_updated_at, registry_refresh_policy_updated_by' as const;
+const MAX_REGISTRY_ITEMS = 500;
 
 export interface RegistryDashboardSiteRow {
   id: string;
@@ -51,7 +52,8 @@ export async function fetchRegistryItems(weddingSiteId: string): Promise<Registr
     .select(REGISTRY_ITEM_SELECT)
     .eq('wedding_site_id', weddingSiteId)
     .order('sort_order', { ascending: true })
-    .order('created_at', { ascending: true });
+    .order('created_at', { ascending: true })
+    .limit(MAX_REGISTRY_ITEMS);
 
   if (error) throw new Error(REGISTRY_LOAD_ERROR_COPY);
   return ((data ?? []) as RegistryItem[]).map(normalizeRegistryItem);

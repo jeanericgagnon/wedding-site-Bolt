@@ -209,6 +209,8 @@ describe('launch edge function guards', () => {
     const bulk = readFunction('send-bulk-message');
     const sharedEmailSafety = readFileSync(join(process.cwd(), 'supabase', 'functions', '_shared', 'emailSafety.ts'), 'utf8');
     const emailService = readFileSync(join(process.cwd(), 'src', 'lib', 'emailService.ts'), 'utf8');
+    const packageJson = readFileSync(join(process.cwd(), 'package.json'), 'utf8');
+    const authorizationProof = readFileSync(join(process.cwd(), 'scripts', 'v1-proof-email-messaging-authorization.mjs'), 'utf8');
 
     expect(sharedEmailSafety).toContain('export function escapeHtml');
     expect(sharedEmailSafety).toContain('export function safeEmailUrl');
@@ -265,6 +267,7 @@ describe('launch edge function guards', () => {
     expect(queue).toContain('const SAFE_DELIVERY_ERROR = "Email delivery did not complete. Please try again."');
     expect(queue).toContain('PROCESS_EMAIL_QUEUE_PROVIDER_FAILED');
     expect(queue).toContain('error: SAFE_DELIVERY_ERROR');
+    expect(queue).toContain('token !== serviceRoleKey');
     expect(queue).not.toContain('Email service not configured');
     expect(queue).not.toContain('Notes: ${p.notes}');
     expect(queue).not.toContain('Hi ${p.guestName || "there"}');
@@ -287,6 +290,14 @@ describe('launch edge function guards', () => {
     expect(bulk).not.toContain('role === "planner" || role === "coordinator" || role === "viewer"');
     expect(bulk).not.toContain('.filter((row: { permissions?: unknown }) => hasPermissionKey(row.permissions, "messages"))');
     expect(bulk).not.toContain('.select("*, wedding_sites');
+
+    expect(packageJson).toContain('"proof:v1:email-messaging-authorization": "node scripts/v1-proof-email-messaging-authorization.mjs"');
+    expect(authorizationProof).toContain("functionName: 'process-email-queue'");
+    expect(authorizationProof).toContain("functionName: 'queue-guest-followups'");
+    expect(authorizationProof).toContain("functionName: 'send-bulk-message'");
+    expect(authorizationProof).toContain("functionName: 'send-wedding-email'");
+    expect(authorizationProof).toContain("mode: 'unauthenticated_live_denial'");
+    expect(authorizationProof).toContain('postWithoutAuthorization');
   });
 
   it('keeps site translation model route owner-gated and free of raw infrastructure errors', () => {
@@ -314,6 +325,14 @@ describe('launch edge function guards', () => {
 
     expect(source).toContain('import { enforcePublicSubmissionRateLimit }');
     expect(source).toContain('scope: "onboarding_ai_orchestrate"');
+    expect(source).toContain('resolveVerifiedUsageSiteId(');
+    expect(source).toContain('const verifiedUsageSiteId = admin ? await resolveVerifiedUsageSiteId(req, admin, siteId) : null');
+    expect(source).toContain('admin.auth.getUser(token)');
+    expect(source).toContain('.from("wedding_site_collaborators")');
+    expect(source).toContain('siteId: verifiedUsageSiteId');
+    expect(source).toContain('if (verifiedUsageSiteId && admin && usage && provider === "openai")');
+    expect(source).toContain('wedding_site_id: verifiedUsageSiteId');
+    expect(source).not.toContain('wedding_site_id: siteId');
     expect(source).toContain('fallbackUsed: true');
     expect(source).toContain('ONBOARDING_AI_ORCHESTRATE_UNEXPECTED_FAILED');
     expect(source).toContain('reason: "UNEXPECTED_ONBOARDING_AI_FAILURE"');
@@ -373,6 +392,8 @@ describe('launch edge function guards', () => {
   it('keeps photo album creation and moderation free of raw backend failures', () => {
     const create = readFunction('photo-album-create');
     const moderate = readFunction('photo-upload-moderate');
+    const packageJson = readFileSync(join(process.cwd(), 'package.json'), 'utf8');
+    const serviceRoleAuthorizationProof = readFileSync(join(process.cwd(), 'scripts', 'v1-proof-service-role-authorization.mjs'), 'utf8');
 
     expect(create).toContain('safePhotoAlbumCreateError("CONFIG")');
     expect(create).toContain('safePhotoAlbumCreateError("PARENT")');
@@ -410,6 +431,15 @@ describe('launch edge function guards', () => {
     expect(moderate).not.toContain('updateErr.message');
     expect(moderate).not.toContain('err instanceof Error ? err.message');
     expect(moderate).not.toMatch(/console\.error\("PHOTO_UPLOAD_MODERATE_[^"]+",\s*(err|updateErr)\)/);
+
+    expect(packageJson).toContain('"proof:v1:service-role-authorization": "node scripts/v1-proof-service-role-authorization.mjs"');
+    expect(serviceRoleAuthorizationProof).toContain("functionName: 'photo-album-create'");
+    expect(serviceRoleAuthorizationProof).toContain("functionName: 'photo-album-manage'");
+    expect(serviceRoleAuthorizationProof).toContain("functionName: 'photo-upload-moderate'");
+    expect(serviceRoleAuthorizationProof).toContain("functionName: 'photo-export-manifest'");
+    expect(serviceRoleAuthorizationProof).toContain("functionName: 'photo-analyze-batch'");
+    expect(serviceRoleAuthorizationProof).toContain("mode: 'service_role_media_unauthenticated_live_denial'");
+    expect(serviceRoleAuthorizationProof).toContain('postWithoutAuthorization');
   });
 
   it('keeps photo AI analysis readbacks explicit after service-role upsert', () => {
@@ -454,6 +484,7 @@ describe('launch edge function guards', () => {
     const rsvp = readFunction('validate-rsvp-token');
     const email = readFunction('send-wedding-email');
     const googleDrive = readFunction('google-drive-auth-callback');
+    const googleDriveStart = readFunction('google-drive-auth-start');
     const publicSiteAccess = readFunction('public-site-access');
 
     expect(rsvp).toContain('VALIDATE_RSVP_TOKEN_UNEXPECTED_FAILED');
@@ -489,6 +520,13 @@ describe('launch edge function guards', () => {
     expect(googleDrive).toContain('GOOGLE_DRIVE_AUTH_TOKEN_EXCHANGE_FAILED');
     expect(googleDrive).toContain('GOOGLE_DRIVE_AUTH_TOKEN_EXCHANGE_FAILED", { status: tokenRes.status }');
     expect(googleDrive).toContain('GOOGLE_DRIVE_AUTH_PROVIDER_DECLINED');
+    expect(googleDrive).toContain('import { verifySessionToken } from "../_shared/signedSession.ts"');
+    expect(googleDrive).toContain('type GoogleDriveOAuthState = ');
+    expect(googleDrive).toContain('scope: "google_drive_oauth"');
+    expect(googleDrive).toContain('verifySessionToken<GoogleDriveOAuthState>');
+    expect(googleDrive).toContain('Deno.env.get("GOOGLE_DRIVE_STATE_SECRET") || serviceRole');
+    expect(googleDrive).toContain('state.scope !== "google_drive_oauth"');
+    expect(googleDrive).not.toContain('JSON.parse(atob(stateRaw))');
     expect(googleDrive).toContain('Could not connect Google Drive. Please try again.');
     expect(googleDrive).toContain('Google Drive connection is not ready yet.');
     expect(googleDrive).not.toContain('details: tokenJson');
@@ -496,6 +534,12 @@ describe('launch edge function guards', () => {
     expect(googleDrive).not.toContain('Google OAuth error: ${oauthErr}');
     expect(googleDrive).not.toContain('Google Drive OAuth is not configured on server env.');
     expect(googleDrive).not.toContain('err instanceof Error ? err.message');
+
+    expect(googleDriveStart).toContain('import { signSessionToken } from "../_shared/signedSession.ts"');
+    expect(googleDriveStart).toContain('const state = await signSessionToken');
+    expect(googleDriveStart).toContain('scope: "google_drive_oauth"');
+    expect(googleDriveStart).toContain('Deno.env.get("GOOGLE_DRIVE_STATE_SECRET") || serviceRole');
+    expect(googleDriveStart).not.toContain('btoa(JSON.stringify({ siteId');
 
     expect(publicSiteAccess).toContain('PUBLIC_SITE_ACCESS_FAILED');
     expect(publicSiteAccess).toContain('reason: "UNEXPECTED_PUBLIC_SITE_ACCESS_FAILURE"');
@@ -522,6 +566,14 @@ describe('launch edge function guards', () => {
     const safeColumns = publicSiteAccess.match(/const SAFE_PUBLIC_SITE_COLUMNS = \[([\s\S]*?)\];/)?.[1] ?? '';
     expect(safeColumns).not.toContain('privacy_mode');
     expect(safeColumns).not.toContain('hide_from_search');
+
+    const packageJson = readFileSync(join(process.cwd(), 'package.json'), 'utf8');
+    const publicAccessCoverageProof = readFileSync(join(process.cwd(), 'scripts', 'v1-proof-public-access-coverage.mjs'), 'utf8');
+    expect(packageJson).toContain('"proof:v1:public-access-coverage": "node scripts/v1-proof-public-access-coverage.mjs"');
+    expect(publicAccessCoverageProof).toContain("mode: 'public_subresource_access_gate_static_coverage'");
+    expect(publicAccessCoverageProof).toContain('allowedResolverFunctions');
+    expect(publicAccessCoverageProof).toContain('canReadPublicSubresource({');
+    expect(publicAccessCoverageProof).toContain('storedInviteToken');
   });
 
   it('keeps RSVP lookup token-only and non-enumerating', () => {
@@ -966,6 +1018,9 @@ describe('launch edge function guards', () => {
     expect(source).toContain('storedInviteToken: typeof siteBySlug.guest_access_token === "string" ? siteBySlug.guest_access_token : null');
     expect(source).toContain('const requesterIpMarker = requesterIp ? `h:${await sha256Hex(`photo-upload:${album.id}:${requesterIp}`)}` : null');
     expect(source).toContain('const attemptTokenMarker = tokenHash ?? `site:${await sha256Hex(`photo-upload-site:${siteSlug}`)}`');
+    expect(source).toContain('.select("id, vault_google_drive_connected, vault_google_drive_access_token, vault_google_drive_refresh_token, vault_google_drive_token_expires_at")');
+    expect(source).toContain('if (!site) return fail("SITE_UNAVAILABLE", "Site not available for uploads.", 403);');
+    expect(source).not.toContain('(!tokenHash && !site.is_published)');
     expect(source).toContain('.eq("requester_ip", requesterIpMarker)');
     expect(source).toContain('requester_ip: requesterIpMarker');
     expect(source).not.toContain('.eq("requester_ip", requesterIp)');

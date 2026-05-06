@@ -12,11 +12,13 @@ type ProofBoardOutput = {
   ruthlessNextThree?: Array<{
     id?: string;
     status?: string;
+    commands?: string[];
     manualProof?: string[];
   }>;
   slices?: Array<{
     id?: string;
     localWordingEvidence?: string;
+    automatedProof?: string[];
     manualProof?: string[];
   }>;
 };
@@ -63,6 +65,7 @@ describe('proof board freshness', () => {
     const sitewideBugTesting = board.ruthlessNextThree?.find((item) => item.id === 'sitewide-bug-testing');
     const aiProductAudit = board.ruthlessNextThree?.find((item) => item.id === 'ai-product-audit');
     const publicSiteTrust = board.slices?.find((slice) => slice.id === 'public-site-trust');
+    const commsCenter = board.slices?.find((slice) => slice.id === 'comms-center');
 
     expect(board.summary?.secondaryTrustGap).toContain(expectedDeploy);
     expect(board.activeUngatedLaunchBlockers).toEqual([
@@ -74,7 +77,14 @@ describe('proof board freshness', () => {
     expect(board.blockedOrApprovalGatedLaunchItems?.join('\n')).not.toContain('secure service-role storage');
     expect(sitewideBugTesting?.status).toBe('LATEST_LIVE_SITEWIDE_PASS_GREEN_KEEP_REGRESSION_TESTING');
     expect(aiProductAudit?.status).toBe('AI_PRODUCT_AUDIT_LIVE_GREEN_SECURE_MODEL_PROOF_GREEN');
+    expect(aiProductAudit?.commands?.join('\n')).toContain('npm run proof:v1:service-role-authorization');
     expect(aiProductAudit?.manualProof?.join('\n')).toContain('AI/photo sensitive-column migration');
+    expect(aiProductAudit?.manualProof?.join('\n')).toContain('service-role/media unauthenticated denial proof');
+    expect(commsCenter?.automatedProof?.join('\n')).toContain('npm run proof:v1:email-messaging-authorization');
+    expect(commsCenter?.manualProof?.join('\n')).toContain('unauthenticated live denial proof');
+    expect(commsCenter?.manualProof?.join('\n')).toContain('disposable owner/planner/coordinator/viewer proof accounts');
+    expect(publicSiteTrust?.automatedProof?.join('\n')).toContain('npm run proof:v1:public-access-coverage');
+    expect(publicSiteTrust?.manualProof?.join('\n')).toContain('public subresource access-gate coverage proof');
     expect(publicSiteTrust?.localWordingEvidence).toBe(expectedEvidence);
     expect(publicSiteTrust?.manualProof?.join('\n')).toContain(expectedEvidence);
   });

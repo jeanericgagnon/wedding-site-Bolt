@@ -90,6 +90,9 @@ export const GUEST_ASSISTED_RSVP_SELECT = 'id, notes';
 const EVENT_INVITATION_ROLLBACK_SELECT = 'id, event_id';
 const GUEST_ID_SELECT = 'id';
 const IMPORTED_GUEST_SELECT = 'id, first_name, last_name, name, email';
+const MAX_GUEST_DASHBOARD_GUESTS = 2000;
+const MAX_GUEST_ITINERARY_EVENTS = 200;
+const MAX_GUEST_EVENT_INVITATIONS = 10000;
 
 export interface CreateGuestInput {
   weddingSiteId: string;
@@ -271,7 +274,8 @@ export async function loadGuestDashboardRows(weddingSiteId: string): Promise<Gue
     .from('guests')
     .select(GUEST_DASHBOARD_GUEST_SELECT)
     .eq('wedding_site_id', weddingSiteId)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(MAX_GUEST_DASHBOARD_GUESTS);
 
   if (guestsError) throw guestsError;
 
@@ -315,7 +319,8 @@ export async function loadGuestItineraryFilters(weddingSiteId: string): Promise<
       .from('itinerary_events')
       .select(GUEST_DASHBOARD_ITINERARY_EVENT_SELECT)
       .eq('wedding_site_id', weddingSiteId)
-      .order('event_date', { ascending: true }),
+      .order('event_date', { ascending: true })
+      .limit(MAX_GUEST_ITINERARY_EVENTS),
     supabase
       .from('wedding_sites')
       .select(GUEST_DASHBOARD_WEDDING_DATA_SELECT)
@@ -334,6 +339,7 @@ export async function loadGuestItineraryFilters(weddingSiteId: string): Promise<
       .from('event_invitations')
       .select(GUEST_DASHBOARD_EVENT_INVITATION_SELECT)
       .in('event_id', eventIds)
+      .limit(MAX_GUEST_EVENT_INVITATIONS)
     : { data: [], error: null };
 
   if (invitesRes.error) throw invitesRes.error;
@@ -370,11 +376,13 @@ export async function loadGuestDrawerDetails(weddingSiteId: string, guestId: str
       .from('itinerary_events')
       .select(GUEST_DASHBOARD_ITINERARY_EVENT_SELECT)
       .eq('wedding_site_id', weddingSiteId)
-      .order('event_date', { ascending: true }),
+      .order('event_date', { ascending: true })
+      .limit(MAX_GUEST_ITINERARY_EVENTS),
     supabase
       .from('event_invitations')
       .select(GUEST_DRAWER_EVENT_INVITATION_SELECT)
-      .eq('guest_id', guestId),
+      .eq('guest_id', guestId)
+      .limit(MAX_GUEST_ITINERARY_EVENTS),
     supabase
       .from('guest_audit_logs')
       .select(GUEST_DRAWER_AUDIT_SELECT)

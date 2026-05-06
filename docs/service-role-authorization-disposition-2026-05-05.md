@@ -13,8 +13,6 @@ Every Edge Function that reads `SUPABASE_SERVICE_ROLE_KEY` is intentionally clas
 - `google-drive-auth-callback`
 - `google-drive-auth-start`
 - `google-drive-health`
-- `log-client-error`
-- `onboarding-ai-orchestrate`
 - `photo-album-create`
 - `photo-album-manage`
 - `photo-analyze-batch`
@@ -31,8 +29,6 @@ Every Edge Function that reads `SUPABASE_SERVICE_ROLE_KEY` is intentionally clas
 - `stripe-verify-checkout-session`
 - `translate-site-content`
 - `vault-resolve-entry-link`
-- `vault-upload-google-drive`
-- `vendor-profile-preview`
 
 ## Public Token / Public Submission Scoped
 
@@ -52,7 +48,14 @@ Every Edge Function that reads `SUPABASE_SERVICE_ROLE_KEY` is intentionally clas
 - `submit-rsvp`
 - `validate-rsvp-token`
 - `vault-entry-submit`
+- `vault-upload-google-drive`
 - `vendor-profile-inquiry-submit`
+
+## Public Or Optional-Auth Rate-Limited Helpers
+
+- `log-client-error` - public telemetry submission scoped by rate limiting, sanitization, and derived user/site context; it must not trust browser-supplied user or site IDs.
+- `onboarding-ai-orchestrate` - public onboarding helper with optional authenticated usage attribution; rate-limit site context and `internal_ai_usage_events.wedding_site_id` must use only a verified owner/collaborator site ID.
+- `vendor-profile-preview` - public vendor preview helper scoped by URL normalization, public-target fetch checks, and durable rate limiting.
 
 ## Internal / Scheduler / Provider Scoped
 
@@ -63,6 +66,8 @@ Every Edge Function that reads `SUPABASE_SERVICE_ROLE_KEY` is intentionally clas
 ## Fixed In This Pass
 
 - `process-email-queue` now rejects non-service-role callers before creating the service-role client.
+- `onboarding-ai-orchestrate` now verifies owner/collaborator access before attaching a requested site ID to rate-limit context or internal usage rows.
+- `google-drive-auth-start` now signs OAuth state with HMAC, and `google-drive-auth-callback` verifies that signed state before service-role token writes.
 - `public-site-access` now selects and enforces private gate fields server-side, rate-limits password unlock, and keeps private fields out of public payloads.
 - `public-itinerary-by-slug` and `public-registry-items` now enforce public/password/invite access before returning subresource data.
 - `validate-rsvp-token` no longer issues sessions from broad name lookup or guest ID alone.

@@ -43,6 +43,8 @@ export const ITINERARY_SCHEDULE_SECTION_SELECT = 'id,data' as const;
 export const EVENT_INVITATION_ID_SELECT = 'id' as const;
 export const EVENT_INVITATION_GUEST_SELECT = 'guest_id' as const;
 export const EVENT_RSVP_ATTENDING_SELECT = 'attending' as const;
+const MAX_EVENT_GUEST_PICKER_GUESTS = 2000;
+const MAX_EVENT_GUEST_PICKER_INVITATIONS = 10000;
 
 export function toScheduleSectionEvents(events: ItineraryEvent[]) {
   return [...events]
@@ -381,13 +383,15 @@ export async function loadEventGuestPicker(
     .from('guests')
     .select(EVENT_GUEST_PICKER_SELECT)
     .eq('wedding_site_id', siteId)
-    .order('name');
+    .order('name')
+    .limit(MAX_EVENT_GUEST_PICKER_GUESTS);
   if (guestsError) throw guestsError;
 
   const { data: invitations, error: invitationsError } = await supabase
     .from('event_invitations')
     .select(EVENT_INVITATION_GUEST_SELECT)
-    .eq('event_id', eventId);
+    .eq('event_id', eventId)
+    .limit(MAX_EVENT_GUEST_PICKER_INVITATIONS);
   if (invitationsError) throw invitationsError;
 
   return {
@@ -431,7 +435,8 @@ export async function listEventInvitationIds(eventId: string): Promise<string[]>
   const { data, error } = await supabase
     .from('event_invitations')
     .select(EVENT_INVITATION_ID_SELECT)
-    .eq('event_id', eventId);
+    .eq('event_id', eventId)
+    .limit(MAX_EVENT_GUEST_PICKER_INVITATIONS);
 
   if (error) throw error;
   return (data ?? []).map((row: { id: string }) => row.id);

@@ -19,6 +19,10 @@ export const MESSAGE_EVENT_SELECT = 'id, event_name, event_date';
 export const MESSAGE_EVENT_INVITATION_SELECT = 'event_id, guest_id';
 export const SMS_EXPIRING_CREDIT_SELECT = 'remaining_credits, expires_at';
 export const SMS_TRANSACTION_SELECT = 'id, credits_delta, reason, created_at, expires_at, remaining_credits';
+const MAX_DASHBOARD_MESSAGES = 500;
+const MAX_MESSAGE_GUESTS = 2000;
+const MAX_MESSAGE_AUDIENCE_EVENTS = 200;
+const MAX_MESSAGE_EVENT_INVITATIONS = 10000;
 
 export interface MessageInsertPayload {
   wedding_site_id: string;
@@ -64,7 +68,8 @@ export async function loadDashboardMessages(weddingSiteId: string): Promise<Mess
     .from('messages')
     .select(MESSAGES_DASHBOARD_SELECT)
     .eq('wedding_site_id', weddingSiteId)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(MAX_DASHBOARD_MESSAGES);
   if (error) throw error;
   return (data ?? []) as unknown as Message[];
 }
@@ -73,7 +78,8 @@ export async function loadMessageGuests(weddingSiteId: string): Promise<Guest[]>
   const { data, error } = await supabase
     .from('guests')
     .select(MESSAGE_GUEST_SELECT)
-    .eq('wedding_site_id', weddingSiteId);
+    .eq('wedding_site_id', weddingSiteId)
+    .limit(MAX_MESSAGE_GUESTS);
   if (error) throw error;
   return (data ?? []) as Guest[];
 }
@@ -106,7 +112,8 @@ export async function loadMessageItineraryAudience(weddingSiteId: string): Promi
     .from('itinerary_events')
     .select(MESSAGE_EVENT_SELECT)
     .eq('wedding_site_id', weddingSiteId)
-    .order('event_date', { ascending: true });
+    .order('event_date', { ascending: true })
+    .limit(MAX_MESSAGE_AUDIENCE_EVENTS);
   if (eventsError) throw eventsError;
 
   if (!events || events.length === 0) {
@@ -117,7 +124,8 @@ export async function loadMessageItineraryAudience(weddingSiteId: string): Promi
   const { data: invites, error: invitesError } = await supabase
     .from('event_invitations')
     .select(MESSAGE_EVENT_INVITATION_SELECT)
-    .in('event_id', eventIds);
+    .in('event_id', eventIds)
+    .limit(MAX_MESSAGE_EVENT_INVITATIONS);
   if (invitesError) throw invitesError;
 
   const guestIdsByEvent: Record<string, Set<string>> = {};
