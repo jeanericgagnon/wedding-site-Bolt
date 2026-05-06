@@ -20,6 +20,10 @@ describe('public link helpers', () => {
     expect(getSafePublicWebUrl('#')).toBe('');
     expect(getSafePublicWebUrl('javascript:alert(1)')).toBe('');
     expect(getSafePublicWebUrl('ftp://example.com/stay')).toBe('');
+    expect(getSafePublicWebUrl('https://user:pass@example.com/stay')).toBe('');
+    expect(getSafePublicWebUrl('http://localhost/stay')).toBe('');
+    expect(getSafePublicWebUrl('http://169.254.169.254/latest/meta-data')).toBe('');
+    expect(getSafePublicWebUrl('https://example.test/stay')).toBe('');
     expect(getSafePublicWebUrl('not a url')).toBe('');
   });
 
@@ -72,6 +76,8 @@ describe('public link helpers', () => {
     expect(getSafePublicImageUrl('//example.com/photo.jpg')).toBe('');
     expect(getSafePublicImageUrl('/\\evil.jpg')).toBe('');
     expect(getSafePublicImageUrl('ftp://example.com/photo.jpg')).toBe('');
+    expect(getSafePublicImageUrl('https://user:pass@example.com/photo.jpg')).toBe('');
+    expect(getSafePublicImageUrl('http://169.254.169.254/photo.jpg')).toBe('');
     expect(getSafePublicImageUrl('not a url')).toBe('');
   });
 

@@ -3911,11 +3911,11 @@ What changed:
 - `src/lib/vendorProfiles.ts` no longer creates fallback hero images through `image.thum.io` when `vendor-profile-preview` is unavailable.
 - Fallback draft URL normalization now rejects non-HTTP(S), credentialed, private/local/internal/test/metadata-hosted, IPv6-looking, and malformed website URLs; Instagram fallback values now use the shared public Instagram sanitizer.
 - `createVendorProfile(...)` now sanitizes hero/gallery images, website URL, Instagram URL, and contact email again before insert.
-- `getSafePublicInstagramUrl(...)` now rejects credentialed Instagram URLs.
-- Added `src/lib/vendorProfiles.test.ts` and expanded `src/sections/publicLinks.test.ts` for fallback, insert, and public Instagram link safety.
+- `getSafePublicInstagramUrl(...)` now rejects credentialed Instagram URLs, and shared public web/image helpers now reject credentialed, localhost, metadata, private IPv4, internal, `.local`, and `.test` hosts.
+- Added `src/lib/vendorProfiles.test.ts` and expanded `src/sections/publicLinks.test.ts` for fallback, insert, public web/image, and public Instagram link safety.
 
 Commands run:
-- `npm test -- --run src/lib/vendorProfiles.test.ts src/sections/publicLinks.test.ts src/pages/VendorProfileCreate.test.tsx src/pages/VendorProfile.test.tsx`: PASS, 21/21.
+- `npm test -- --run src/sections/publicLinks.test.ts src/lib/vendorProfiles.test.ts src/pages/VendorProfileCreate.test.tsx src/pages/VendorProfile.test.tsx src/lib/dashboardLinkSafety.test.ts`: PASS, 25/25.
 - `npm run typecheck -- --pretty false`: PASS.
 - `npm run lint -- --quiet`: PASS.
 - `npm run guard:file-size`: PASS.
@@ -3924,4 +3924,4 @@ Commands run:
 - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
 
 Status:
-- PARTIAL. This closes a local frontend fallback and service-layer insert trust gap for vendor profile creation. No deploy was run.
+- PARTIAL. This closes local public-link, vendor fallback, and service-layer insert trust gaps. No deploy was run.
