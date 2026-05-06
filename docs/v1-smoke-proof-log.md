@@ -8756,10 +8756,12 @@ A slice does **not** count as passed because:
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:
   - `src/lib/vendorProfiles.ts` no longer synthesizes `image.thum.io` screenshot hero images when the vendor preview Edge Function is unavailable.
-  - Fallback draft URL normalization now rejects non-HTTP(S), credentialed, private/local/internal/test/metadata-hosted, IPv6-looking, and malformed website/social URLs before they become draft state.
-  - `src/lib/vendorProfiles.test.ts` proves fallback drafts keep hero/gallery images empty, avoid `image.thum.io`, preserve safe public website/Instagram URLs, and drop unsafe website/social inputs.
+  - Fallback draft URL normalization now rejects non-HTTP(S), credentialed, private/local/internal/test/metadata-hosted, IPv6-looking, and malformed website URLs before they become draft state; Instagram fallback values use the shared public Instagram sanitizer.
+  - `createVendorProfile(...)` now sanitizes hero/gallery images, website URL, Instagram URL, and contact email again before insert.
+  - `getSafePublicInstagramUrl(...)` now rejects credentialed Instagram URLs.
+  - `src/lib/vendorProfiles.test.ts` proves fallback drafts keep hero/gallery images empty, avoid `image.thum.io`, preserve safe public website/Instagram URLs, drop unsafe website/social inputs, and sanitize unsafe direct create payloads before insert.
 - Proof passed:
-  - `npm test -- --run src/lib/vendorProfiles.test.ts src/pages/VendorProfileCreate.test.tsx src/pages/VendorProfile.test.tsx`: PASS, 11/11.
+  - `npm test -- --run src/lib/vendorProfiles.test.ts src/sections/publicLinks.test.ts src/pages/VendorProfileCreate.test.tsx src/pages/VendorProfile.test.tsx`: PASS, 21/21.
   - `npm run typecheck -- --pretty false`: PASS.
   - `npm run lint -- --quiet`: PASS.
   - `npm run guard:file-size`: PASS.

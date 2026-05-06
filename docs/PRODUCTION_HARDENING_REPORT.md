@@ -3909,11 +3909,13 @@ Status:
 
 What changed:
 - `src/lib/vendorProfiles.ts` no longer creates fallback hero images through `image.thum.io` when `vendor-profile-preview` is unavailable.
-- Fallback draft URL normalization now rejects non-HTTP(S), credentialed, private/local/internal/test/metadata-hosted, IPv6-looking, and malformed website/social URLs.
-- Added `src/lib/vendorProfiles.test.ts` for fallback draft image/link safety.
+- Fallback draft URL normalization now rejects non-HTTP(S), credentialed, private/local/internal/test/metadata-hosted, IPv6-looking, and malformed website URLs; Instagram fallback values now use the shared public Instagram sanitizer.
+- `createVendorProfile(...)` now sanitizes hero/gallery images, website URL, Instagram URL, and contact email again before insert.
+- `getSafePublicInstagramUrl(...)` now rejects credentialed Instagram URLs.
+- Added `src/lib/vendorProfiles.test.ts` and expanded `src/sections/publicLinks.test.ts` for fallback, insert, and public Instagram link safety.
 
 Commands run:
-- `npm test -- --run src/lib/vendorProfiles.test.ts src/pages/VendorProfileCreate.test.tsx src/pages/VendorProfile.test.tsx`: PASS, 11/11.
+- `npm test -- --run src/lib/vendorProfiles.test.ts src/sections/publicLinks.test.ts src/pages/VendorProfileCreate.test.tsx src/pages/VendorProfile.test.tsx`: PASS, 21/21.
 - `npm run typecheck -- --pretty false`: PASS.
 - `npm run lint -- --quiet`: PASS.
 - `npm run guard:file-size`: PASS.
@@ -3922,4 +3924,4 @@ Commands run:
 - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
 
 Status:
-- PARTIAL. This closes a local frontend fallback image trust gap for vendor profile creation. No deploy was run.
+- PARTIAL. This closes a local frontend fallback and service-layer insert trust gap for vendor profile creation. No deploy was run.

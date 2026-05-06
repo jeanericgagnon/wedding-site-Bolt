@@ -2,6 +2,11 @@ import { supabase } from './supabase';
 import { DEMO_MODE } from '../config/env';
 import { resolveActiveSiteForUser } from './activeSite';
 import { demoWeddingSite } from './demoData';
+import {
+  getSafePublicEmailHref,
+  getSafePublicImageUrl,
+  getSafePublicInstagramUrl,
+} from '../sections/publicLinks';
 
 export interface VendorProfile {
   id: string;
@@ -613,7 +618,7 @@ function titleCaseWords(input: string): string {
 function buildFallbackVendorProfileDraft(input: { vendorName: string; instagramUrl?: string; websiteUrl?: string }): VendorProfileDraft {
   const vendorName = titleCaseWords(input.vendorName.trim());
   const websiteUrl = normalizeUrl(input.websiteUrl);
-  const instagramUrl = normalizeUrl(input.instagramUrl);
+  const instagramUrl = getSafePublicInstagramUrl(input.instagramUrl) || null;
   const websiteLabel = websiteUrl ? new URL(websiteUrl).hostname.replace(/^www\./, '') : null;
 
   return {
@@ -634,6 +639,21 @@ function buildFallbackVendorProfileDraft(input: { vendorName: string; instagramU
   };
 }
 
+function sanitizeVendorProfileDraftForStorage(draft: VendorProfileDraft): VendorProfileDraft {
+  const websiteUrl = normalizeUrl(draft.website_url ?? undefined);
+  const instagramUrl = getSafePublicInstagramUrl(draft.instagram_url) || null;
+  const contactEmail = getSafePublicEmailHref(draft.contact_email) ? draft.contact_email : null;
+
+  return {
+    ...draft,
+    hero_image_url: getSafePublicImageUrl(draft.hero_image_url) || null,
+    image_urls: draft.image_urls.map((image) => getSafePublicImageUrl(image)).filter(Boolean),
+    instagram_url: instagramUrl,
+    website_url: websiteUrl,
+    contact_email: contactEmail,
+  };
+}
+
 export async function generateVendorProfileDraft(input: { vendorName: string; instagramUrl?: string; websiteUrl?: string }) {
   try {
     const { data, error } = await supabase.functions.invoke('vendor-profile-preview', {
@@ -650,6 +670,7 @@ export async function generateVendorProfileDraft(input: { vendorName: string; in
 }
 
 export async function createVendorProfile(draft: VendorProfileDraft): Promise<VendorProfile> {
+  const safeDraft = sanitizeVendorProfileDraftForStorage(draft);
   const baseSlug = normalizeSlugPart(draft.slug || draft.vendor_name) || `vendor-${Date.now()}`;
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -657,7 +678,7 @@ export async function createVendorProfile(draft: VendorProfileDraft): Promise<Ve
     const nextSlug = attempt === 0 ? baseSlug : `${baseSlug}-${attempt + 1}`.slice(0, 72);
     const { data, error } = await supabase
       .from('vendor_profiles')
-      .insert({ ...draft, slug: nextSlug, created_by: user?.id ?? null })
+      .insert({ ...safeDraft, slug: nextSlug, created_by: user?.id ?? null })
       .select(VENDOR_PROFILE_SELECT)
       .single();
 

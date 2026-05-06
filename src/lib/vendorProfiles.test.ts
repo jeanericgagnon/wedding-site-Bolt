@@ -1,16 +1,24 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const invoke = vi.fn();
+const getUser = vi.fn();
+const from = vi.fn();
 
 vi.mock('./supabase', () => ({
   supabase: {
     functions: { invoke },
-    auth: { getUser: vi.fn() },
-    from: vi.fn(),
+    auth: { getUser },
+    from,
   },
 }));
 
 describe('vendor profile draft fallback safety', () => {
+  beforeEach(() => {
+    invoke.mockReset();
+    getUser.mockReset();
+    from.mockReset();
+  });
+
   it('does not synthesize third-party screenshot images when preview generation falls back', async () => {
     invoke.mockRejectedValueOnce(new Error('preview unavailable'));
     const { generateVendorProfileDraft } = await import('./vendorProfiles');
@@ -18,7 +26,7 @@ describe('vendor profile draft fallback safety', () => {
     const draft = await generateVendorProfileDraft({
       vendorName: '  acme photo  ',
       websiteUrl: 'example.com/profile#team',
-      instagramUrl: 'instagram.com/acmephoto',
+      instagramUrl: '@acmephoto',
     });
 
     expect(draft).toMatchObject({
@@ -49,5 +57,51 @@ describe('vendor profile draft fallback safety', () => {
     expect(draft.website_url).toBeNull();
     expect(draft.instagram_url).toBeNull();
     expect(draft.hero_image_url).toBeNull();
+  });
+
+  it('sanitizes generated drafts again before inserting vendor profiles', async () => {
+    getUser.mockResolvedValueOnce({ data: { user: { id: 'user-1' } } });
+    const single = vi.fn(async () => ({
+      data: {
+        id: 'vendor-1',
+        slug: 'acme-photo',
+        vendor_name: 'Acme Photo',
+        descriptor: null,
+        about: 'About',
+        hero_image_url: null,
+        image_urls: ['https://cdn.example.com/gallery.jpg'],
+        instagram_url: null,
+        website_url: null,
+        contact_email: null,
+        source_payload: {},
+      },
+      error: null,
+    }));
+    const select = vi.fn(() => ({ single }));
+    const insert = vi.fn(() => ({ select }));
+    from.mockReturnValueOnce({ insert });
+
+    const { createVendorProfile } = await import('./vendorProfiles');
+    await createVendorProfile({
+      slug: 'acme-photo',
+      vendor_name: 'Acme Photo',
+      descriptor: null,
+      about: 'About',
+      hero_image_url: 'https://image.thum.io/get/width/1200/noanimate/https://example.com',
+      image_urls: ['javascript:alert(1)', 'https://cdn.example.com/gallery.jpg'],
+      instagram_url: 'https://evil.example.com/acmephoto',
+      website_url: 'http://169.254.169.254/latest/meta-data',
+      contact_email: '<script>@example.com',
+      source_payload: {},
+    });
+
+    expect(insert).toHaveBeenCalledWith(expect.objectContaining({
+      hero_image_url: null,
+      image_urls: ['https://cdn.example.com/gallery.jpg'],
+      instagram_url: null,
+      website_url: null,
+      contact_email: null,
+      created_by: 'user-1',
+    }));
   });
 });

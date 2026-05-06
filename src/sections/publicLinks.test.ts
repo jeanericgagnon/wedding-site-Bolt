@@ -90,6 +90,7 @@ describe('public link helpers', () => {
   it('builds safe public Instagram URLs', () => {
     expect(getSafePublicInstagramUrl('@dayof.love')).toBe('https://instagram.com/dayof.love');
     expect(getSafePublicInstagramUrl('https://www.instagram.com/dayof.love/')).toBe('https://instagram.com/dayof.love');
+    expect(getSafePublicInstagramUrl('https://user:pass@instagram.com/dayof.love')).toBe('');
     expect(getSafePublicInstagramUrl('https://example.com/dayof.love')).toBe('');
     expect(getSafePublicInstagramUrl('../bad')).toBe('');
   });

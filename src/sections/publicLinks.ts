@@ -113,6 +113,7 @@ export function getSafePublicInstagramUrl(value?: string | null): string {
   try {
     const parsed = new URL(trimmed);
     const hostname = parsed.hostname.toLowerCase();
+    if (parsed.username || parsed.password) return '';
     if (parsed.protocol !== 'https:' || (hostname !== 'instagram.com' && hostname !== 'www.instagram.com')) return '';
     const handle = parsed.pathname.split('/').filter(Boolean)[0] ?? '';
     return SAFE_INSTAGRAM_HANDLE_PATTERN.test(handle) ? `https://instagram.com/${handle}` : '';
