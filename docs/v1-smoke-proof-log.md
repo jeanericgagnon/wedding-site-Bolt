@@ -8751,6 +8751,23 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
 - Launch status did not change. This is local Edge Function hardening and no deploy was run; production needs an approved function deploy before this vendor preview image fix is live.
 
+## 2026-05-06 2:22 PM PT No-Deploy Vendor Fallback Draft Image Hardening
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/lib/vendorProfiles.ts` no longer synthesizes `image.thum.io` screenshot hero images when the vendor preview Edge Function is unavailable.
+  - Fallback draft URL normalization now rejects non-HTTP(S), credentialed, private/local/internal/test/metadata-hosted, IPv6-looking, and malformed website/social URLs before they become draft state.
+  - `src/lib/vendorProfiles.test.ts` proves fallback drafts keep hero/gallery images empty, avoid `image.thum.io`, preserve safe public website/Instagram URLs, and drop unsafe website/social inputs.
+- Proof passed:
+  - `npm test -- --run src/lib/vendorProfiles.test.ts src/pages/VendorProfileCreate.test.tsx src/pages/VendorProfile.test.tsx`: PASS, 11/11.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run guard:assets`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local frontend fallback hardening and no deploy was run.
+
 ## 2026-05-05 6:26 PM PT No-Deploy Messages Live Data Service Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

@@ -3904,3 +3904,22 @@ Commands run:
 
 Status:
 - PARTIAL. This closes a local vendor-profile preview image metadata trust gap. No deploy was run, so production needs an approved function deploy before this Edge Function fix is live.
+
+### 2026-05-06 2:22 PM PT - Vendor Fallback Draft Image Hardening
+
+What changed:
+- `src/lib/vendorProfiles.ts` no longer creates fallback hero images through `image.thum.io` when `vendor-profile-preview` is unavailable.
+- Fallback draft URL normalization now rejects non-HTTP(S), credentialed, private/local/internal/test/metadata-hosted, IPv6-looking, and malformed website/social URLs.
+- Added `src/lib/vendorProfiles.test.ts` for fallback draft image/link safety.
+
+Commands run:
+- `npm test -- --run src/lib/vendorProfiles.test.ts src/pages/VendorProfileCreate.test.tsx src/pages/VendorProfile.test.tsx`: PASS, 11/11.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run guard:assets`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+
+Status:
+- PARTIAL. This closes a local frontend fallback image trust gap for vendor profile creation. No deploy was run.

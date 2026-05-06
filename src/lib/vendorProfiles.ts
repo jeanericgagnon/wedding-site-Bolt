@@ -532,11 +532,47 @@ export function getSampleVendorProfileBySlug(slug: string): VendorProfile | null
   return SAMPLE_VENDOR_PROFILES[slug] ?? null;
 }
 
+function isPrivateIpv4(hostname: string): boolean {
+  const parts = hostname.split('.').map((part) => Number(part));
+  if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) return false;
+  const [a, b] = parts;
+  return (
+    a === 0 ||
+    a === 10 ||
+    a === 127 ||
+    (a === 100 && b >= 64 && b <= 127) ||
+    (a === 169 && b === 254) ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 0) ||
+    (a === 192 && b === 2) ||
+    (a === 192 && b === 168) ||
+    (a === 198 && (b === 18 || b === 19)) ||
+    (a === 198 && b === 51) ||
+    (a === 203 && b === 0) ||
+    a >= 224
+  );
+}
+
+function isBlockedPublicHostname(hostname: string): boolean {
+  const normalized = hostname.toLowerCase().replace(/^\[|\]$/g, '').replace(/\.$/, '');
+  if (!normalized) return true;
+  if (normalized === 'metadata' || normalized === 'metadata.google.internal' || normalized === '169.254.169.254') return true;
+  if (normalized === 'localhost' || normalized.endsWith('.localhost')) return true;
+  if (normalized.endsWith('.local') || normalized.endsWith('.internal') || normalized.endsWith('.test')) return true;
+  if (normalized.includes(':')) return true;
+  return isPrivateIpv4(normalized);
+}
+
 function normalizeUrl(value: string | undefined): string | null {
   if (!value?.trim()) return null;
   const raw = value.trim();
   try {
-    return new URL(raw.startsWith('http') ? raw : `https://${raw}`).toString();
+    const parsed = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+    if (parsed.username || parsed.password) return null;
+    if (isBlockedPublicHostname(parsed.hostname)) return null;
+    parsed.hash = '';
+    return parsed.toString();
   } catch {
     return null;
   }
@@ -585,7 +621,7 @@ function buildFallbackVendorProfileDraft(input: { vendorName: string; instagramU
     vendor_name: vendorName,
     descriptor: websiteLabel ? `${websiteLabel} wedding vendor profile` : 'Wedding vendor profile',
     about: `${vendorName} is ready for a clean public vendor page with core links, a direct inquiry path, and room for polished images as the profile is refined.`,
-    hero_image_url: websiteUrl ? `https://image.thum.io/get/width/1200/noanimate/${websiteUrl}` : null,
+    hero_image_url: null,
     image_urls: [],
     instagram_url: instagramUrl,
     website_url: websiteUrl,

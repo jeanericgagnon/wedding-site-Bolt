@@ -2182,6 +2182,13 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - No feature loss: safe absolute and relative public vendor images still work; screenshot, social, and logo fallbacks remain unchanged.
   - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (28/28), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
   - Launch status: unchanged. This is local Edge Function hardening and no deploy was run; production needs an approved function deploy before this vendor preview image fix is live.
+- 2026-05-06 2:22 PM PT - No-deploy vendor fallback draft image hardening:
+  - Resolved in this batch: frontend vendor-profile draft fallback no longer synthesizes third-party `image.thum.io` screenshot hero images when the Edge preview helper is unavailable.
+  - Trust hardening: fallback draft URL normalization now rejects non-HTTP(S), credentialed, private/local/internal/test/metadata-hosted, IPv6-looking, and malformed website/social URLs before they become draft state.
+  - Proof hardening: added `src/lib/vendorProfiles.test.ts` to prove fallback drafts keep hero/gallery images empty, avoid `image.thum.io`, preserve safe public website/Instagram URLs, and drop unsafe website/social inputs.
+  - No feature loss: successful Edge-generated vendor previews still return images; fallback drafts still create a clean manual vendor profile shell with safe links.
+  - Validation passed: `npm test -- --run src/lib/vendorProfiles.test.ts src/pages/VendorProfileCreate.test.tsx src/pages/VendorProfile.test.tsx` (11/11), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
+  - Launch status: unchanged. This is local frontend fallback hardening and no deploy was run.
 - Do not start broad refactors from this file alone.
 - Execute this backlog top-down by risk, beginning with the P0 public data, gating, RSVP, AI key, service worker, email escaping, SSRF, and settings contract issues.
 - Update proof logs and launch docs only after concrete verification passes.
