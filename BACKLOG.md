@@ -2266,6 +2266,12 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - No feature loss: one-time checkout, subscription checkout, SMS-credit checkout, checkout verification, session refresh retry, and session-expired handling remain intact.
   - Validation passed: `npm test -- --run src/lib/superNiceLaunchBacklogSafety.test.ts src/lib/launchEdgeFunctions.test.ts` (42/42), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, `npm run build`, and `npm run proof:v1:board:md`.
   - Launch status: unchanged. This is local frontend hardening and no deploy was run.
+- 2026-05-06 3:15 PM PT - No-deploy photo AI storage fallback diagnostic hardening:
+  - Resolved in this batch: `photo-analyze-batch` no longer constructs fallback errors from raw Supabase Storage signed-URL or download error messages before metadata fallback handling.
+  - Diagnostic/privacy hardening: signed URL creation failures now use `PHOTO_ANALYSIS_SIGNED_URL_FAILED`, and Gemini image download failures now use `PHOTO_ANALYSIS_IMAGE_DOWNLOAD_FAILED`; the existing customer-safe photo AI copy and metadata fallback behavior remain intact.
+  - No feature loss: OpenAI/Gemini analysis, metadata organization fallback, internal usage logging, service-role authorization checks, and customer-safe photo review copy remain supported.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/photoAnalysisCustomerCopy.test.ts` (32/32), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
+  - Launch status: unchanged. This is local Edge Function hardening and no deploy was run.
 - Do not start broad refactors from this file alone.
 - Execute this backlog top-down by risk, beginning with the P0 public data, gating, RSVP, AI key, service worker, email escaping, SSRF, and settings contract issues.
 - Update proof logs and launch docs only after concrete verification passes.

@@ -1002,11 +1002,11 @@ Deno.serve(async (req: Request) => {
           const { data: signed, error: signedError } = await admin.storage
             .from(HOSTED_BUCKET)
             .createSignedUrl(upload.drive_file_id, 60 * 15);
-          if (signedError || !signed?.signedUrl) throw new Error(signedError?.message ?? "Could not create signed image URL.");
+          if (signedError || !signed?.signedUrl) throw new Error("PHOTO_ANALYSIS_SIGNED_URL_FAILED");
 
           if (requestedProvider === "gemini") {
             const { data: fileData, error: downloadError } = await admin.storage.from(HOSTED_BUCKET).download(upload.drive_file_id);
-            if (downloadError || !fileData) throw new Error(downloadError?.message ?? "Could not download image for Gemini.");
+            if (downloadError || !fileData) throw new Error("PHOTO_ANALYSIS_IMAGE_DOWNLOAD_FAILED");
             result = await analyzeWithGemini(upload, buckets, new Uint8Array(await fileData.arrayBuffer()), metadata, corrections, expectedMoments);
           } else {
             result = await analyzeWithOpenAi(upload, buckets, signed.signedUrl, metadata, corrections, expectedMoments);

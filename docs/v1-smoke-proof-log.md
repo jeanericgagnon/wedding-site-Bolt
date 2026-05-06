@@ -7,6 +7,23 @@ _Latest verified deploy:_ `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`
 _Public v1 claim status:_ The latest deployed production proof is green for deploy `dpl_9Vf3qeqKwVyQ4Ru8iRRGYqjQUZDP`, but the stricter production-hardening review reopened local P0 proof requirements before calling the product ready for real private wedding data.
 _Launch call right now:_ Not production-ready under the stricter P0/P1 standard. Active strict P0 items are live deploy/function proof for the local access-control changes, live RLS/service-role proof after static disposition, and live messaging authorization proof after local queue lockdown. Remaining broad-public caveats also include external OpenAI key rotation, live SMS/Telnyx, and native app/social share expansion.
 
+## 2026-05-06 3:15 PM PT Local Photo AI Storage Fallback Diagnostic Hardening
+
+- Continued the no-deploy production-hardening backlog on P1/P2 security and privacy hardening after pausing file-splitting-only batches. No deploy, migration, or Supabase function deploy was run.
+- Fixed/proved:
+  - `photo-analyze-batch` now uses fixed sentinel errors for Supabase Storage signed-URL creation and Gemini image download failures before the existing metadata fallback path.
+  - Raw `signedError?.message` and `downloadError?.message` values are no longer used to construct fallback `Error` objects in the photo AI analysis loop.
+  - Customer-safe photo AI review copy, metadata fallback organization, OpenAI/Gemini analysis, usage logging, and service-role authorization behavior remain intact.
+- Proof passed:
+  - `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/photoAnalysisCustomerCopy.test.ts`: PASS, 32/32.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run guard:assets`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known non-blocking Browserslist caniuse-lite and empty `vendor-react` chunk warnings.
+- Launch status did not change. This is local Edge Function hardening; secure service-role/RLS proof, authenticated live collaborator mutation proof, and external OpenAI key rotation remain open.
+
 ## 2026-05-06 8:55 AM PT Local P2 Settings/Coordinator Oversized-Page Continuation
 
 - Continued the no-deploy production-hardening backlog with focused oversized-page extraction. No deploy, migration, or Supabase function deploy was run.

@@ -4151,3 +4151,22 @@ Commands run:
 
 Status:
 - PARTIAL. This narrows local payment failure copy leakage risk. No deploy was run.
+
+### 2026-05-06 3:15 PM PT - Photo AI Storage Fallback Diagnostic Hardening
+
+What changed:
+- `photo-analyze-batch` now throws fixed sentinel errors for Supabase Storage signed-URL and Gemini image download failures instead of propagating raw storage messages into the analysis fallback path.
+- Existing metadata organization fallback and `safePhotoAiErrorMessage(...)` customer copy remain intact.
+- `src/lib/launchEdgeFunctions.test.ts` now guards the sentinel strings and rejects the prior raw `signedError?.message` / `downloadError?.message` fallback pattern.
+
+Commands run:
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/photoAnalysisCustomerCopy.test.ts`: PASS, 32/32.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run guard:assets`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+
+Status:
+- PARTIAL. This narrows local photo AI diagnostic leakage risk. No deploy was run.

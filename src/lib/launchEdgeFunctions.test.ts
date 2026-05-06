@@ -503,11 +503,15 @@ describe('launch edge function guards', () => {
     expect(source).not.toContain('role === "owner" || role === "coordinator" || permissions.includes("photos") || permissions.includes("media")');
     expect(source).toContain('const PHOTO_UPLOAD_AI_ANALYSIS_SELECT = [');
     expect(source).toContain('.select(PHOTO_UPLOAD_AI_ANALYSIS_SELECT)');
+    expect(source).toContain('PHOTO_ANALYSIS_SIGNED_URL_FAILED');
+    expect(source).toContain('PHOTO_ANALYSIS_IMAGE_DOWNLOAD_FAILED');
     expect(source).toContain('reason: "USAGE_EVENT_INSERT_FAILED"');
     expect(source).toContain('reason: "UNEXPECTED_PHOTO_ANALYSIS_FAILURE"');
     expect(source).not.toContain('.from("photo_upload_ai_analysis")\n        .upsert(row, { onConflict: "upload_id" })\n        .select("*")');
     expect(source).not.toContain('message: usageError.message');
     expect(source).not.toContain('message: err instanceof Error ? err.message');
+    expect(source).not.toContain('throw new Error(signedError?.message');
+    expect(source).not.toContain('throw new Error(downloadError?.message');
   });
 
   it('keeps checkout redirects bounded and payment failures customer-safe', () => {
