@@ -1,6 +1,11 @@
 import { supabase } from './supabase';
 import { resolveActiveSiteForUser } from './activeSite';
 
+const CHECKOUT_ERROR_COPY = 'Could not start checkout. Please try again.';
+const SUBSCRIPTION_CHECKOUT_ERROR_COPY = 'Could not start subscription checkout. Please try again.';
+const SMS_CREDITS_CHECKOUT_ERROR_COPY = 'Could not start SMS credits checkout. Please try again.';
+const VERIFY_CHECKOUT_ERROR_COPY = 'Could not confirm payment yet. Please try again.';
+
 async function getFunctionErrorMessage(error: any, fallback: string): Promise<string> {
   const base = error?.message || '';
   const ctx = error?.context;
@@ -16,7 +21,7 @@ async function getFunctionErrorMessage(error: any, fallback: string): Promise<st
         } catch {
           // not json
         }
-        return text;
+        return fallback;
       }
     } catch {
       // ignore context parsing errors
@@ -93,7 +98,7 @@ export async function createCheckoutSession(
 
   if (!out.res.ok) {
     if (out.res.status === 401) throw new SessionExpiredError();
-    throw new Error(out.json.error || out.raw || `Server error (${out.res.status})`);
+    throw new Error(out.json.error || CHECKOUT_ERROR_COPY);
   }
 
   if (out.json.error) throw new Error(out.json.error);
@@ -140,7 +145,7 @@ export async function createSubscriptionSession(
   }
 
   if (error) {
-    const message = await getFunctionErrorMessage(error, 'Could not start subscription checkout. Please try again.');
+    const message = await getFunctionErrorMessage(error, SUBSCRIPTION_CHECKOUT_ERROR_COPY);
     if (/401|unauthorized|jwt|token|expired/i.test(message)) {
       throw new SessionExpiredError();
     }
@@ -212,7 +217,7 @@ export async function verifyCheckoutSession(sessionId: string): Promise<{ paid: 
 
   if (!res.ok) {
     if (res.status === 401) throw new SessionExpiredError();
-    throw new Error(json.error || raw || `Server error (${res.status})`);
+    throw new Error(json.error || VERIFY_CHECKOUT_ERROR_COPY);
   }
 
   return { paid: !!json.paid, error: json.error };
@@ -299,7 +304,7 @@ export async function createSmsCreditsSession(
   }
 
   if (error) {
-    const message = await getFunctionErrorMessage(error, 'Could not start SMS credits checkout. Please try again.');
+    const message = await getFunctionErrorMessage(error, SMS_CREDITS_CHECKOUT_ERROR_COPY);
     if (/401|unauthorized|jwt|token|expired/i.test(message)) {
       throw new SessionExpiredError();
     }

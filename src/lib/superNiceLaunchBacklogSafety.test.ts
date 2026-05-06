@@ -134,6 +134,13 @@ describe('super nice launch backlog safety guards', () => {
     expect(registryService).toContain('REGISTRY_DELETE_ERROR_COPY');
     expect(registryService).toContain('REGISTRY_PURCHASE_ERROR_COPY');
     expect(stripeService).not.toContain('throw new Error(error.message)');
+    expect(stripeService).not.toContain('throw new Error(out.json.error || out.raw');
+    expect(stripeService).not.toContain('throw new Error(json.error || raw');
+    expect(stripeService).toContain("const CHECKOUT_ERROR_COPY = 'Could not start checkout. Please try again.';");
+    expect(stripeService).toContain("const VERIFY_CHECKOUT_ERROR_COPY = 'Could not confirm payment yet. Please try again.';");
+    expect(stripeService).toContain('return fallback;');
+    expect(stripeService).toContain('throw new Error(out.json.error || CHECKOUT_ERROR_COPY)');
+    expect(stripeService).toContain('throw new Error(json.error || VERIFY_CHECKOUT_ERROR_COPY)');
     expect(stripeService).toContain("throw new Error('Couldn’t load billing right now.')");
     expect(stripeService).toContain("throw new Error('Couldn’t check payment status right now.')");
     expect(stripeService).toContain("throw new Error('Couldn’t find your wedding site right now.')");

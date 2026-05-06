@@ -8961,6 +8961,25 @@ A slice does **not** count as passed because:
   - `npm run proof:v1:board:md`: PASS.
 - Launch status did not change. This is local Edge Function hardening and no deploy was run; production needs an approved function deploy before this client-error redaction hardening is live.
 
+## 2026-05-06 3:12 PM PT No-Deploy Frontend Stripe Error Copy Hardening
+
+- Continued from payment trust and customer-safe-error hardening. No deploy, migration, or Supabase function deploy was run.
+- Fixed/proved:
+  - Frontend Stripe checkout creation no longer falls back to raw non-JSON response bodies when the Edge Function returns an unexpected failure shape.
+  - Frontend checkout verification no longer falls back to raw non-JSON response bodies.
+  - JSON `{ error }` responses still pass through, preserving the existing customer-safe Edge Function messages.
+  - One-time checkout, subscription checkout, SMS-credit checkout, checkout verification, session refresh retry, and session-expired handling remain supported.
+- Proof passed:
+  - `npm test -- --run src/lib/superNiceLaunchBacklogSafety.test.ts src/lib/launchEdgeFunctions.test.ts`: PASS, 42/42.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run guard:assets`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+  - `npm run proof:v1:board:md`: PASS.
+- Launch status did not change. This is local frontend hardening and no deploy was run.
+
 ## 2026-05-05 6:26 PM PT No-Deploy Messages Live Data Service Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

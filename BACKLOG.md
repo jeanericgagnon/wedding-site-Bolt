@@ -2260,6 +2260,12 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - No feature loss: client error reports still keep safe source, severity, route path, message shape, stack shape, fingerprinting, rate limiting, and authenticated user/site inference.
   - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (29/29), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, `npm run build`, and `npm run proof:v1:board:md`.
   - Launch status: unchanged. This is local Edge Function hardening and no deploy was run.
+- 2026-05-06 3:12 PM PT - No-deploy frontend Stripe error copy hardening:
+  - Resolved in this batch: frontend Stripe checkout and checkout-verification helpers no longer surface raw non-JSON Edge Function response bodies to users.
+  - Payment UX hardening: JSON `{ error }` responses still pass through so existing customer-safe Edge Function messages remain useful, while HTML/text/network-shaped fallback bodies collapse to fixed retry copy.
+  - No feature loss: one-time checkout, subscription checkout, SMS-credit checkout, checkout verification, session refresh retry, and session-expired handling remain intact.
+  - Validation passed: `npm test -- --run src/lib/superNiceLaunchBacklogSafety.test.ts src/lib/launchEdgeFunctions.test.ts` (42/42), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, `npm run build`, and `npm run proof:v1:board:md`.
+  - Launch status: unchanged. This is local frontend hardening and no deploy was run.
 - Do not start broad refactors from this file alone.
 - Execute this backlog top-down by risk, beginning with the P0 public data, gating, RSVP, AI key, service worker, email escaping, SSRF, and settings contract issues.
 - Update proof logs and launch docs only after concrete verification passes.

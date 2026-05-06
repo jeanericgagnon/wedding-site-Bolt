@@ -4131,3 +4131,23 @@ Commands run:
 
 Status:
 - PARTIAL. This narrows local client-diagnostic secret-retention risk. No deploy was run, so production needs an approved function deploy before this client-error redaction hardening is live.
+
+### 2026-05-06 3:12 PM PT - Frontend Stripe Error Copy Hardening
+
+What changed:
+- `src/lib/stripeService.ts` no longer falls back to raw non-JSON response bodies for checkout creation or checkout verification failures.
+- JSON `{ error }` responses still pass through, preserving existing customer-safe Edge Function messages; non-JSON/HTML/text fallback bodies now collapse to fixed retry copy.
+- `src/lib/superNiceLaunchBacklogSafety.test.ts` now guards the no-raw-response fallback contract.
+
+Commands run:
+- `npm test -- --run src/lib/superNiceLaunchBacklogSafety.test.ts src/lib/launchEdgeFunctions.test.ts`: PASS, 42/42.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run guard:assets`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- `npm run proof:v1:board:md`: PASS.
+
+Status:
+- PARTIAL. This narrows local payment failure copy leakage risk. No deploy was run.
