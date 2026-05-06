@@ -2212,6 +2212,12 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - No feature loss: safe public HTTP(S) links, local static image paths, raster data-image placeholders, vendor profile links, and QR sharing remain intact.
   - Validation passed: `npm test -- --run src/sections/publicLinks.test.ts src/lib/guestHubQrAssets.test.ts src/lib/vendorProfiles.test.ts src/pages/VendorProfileCreate.test.tsx src/pages/VendorProfile.test.tsx` (24/24), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
   - Launch status: unchanged. This is local shared-sanitizer hardening and no deploy was run.
+- 2026-05-06 2:42 PM PT - No-deploy global select-star guard hardening:
+  - Resolved in this batch: `src/lib/dashboardDataBoundary.test.ts` now scans runtime app code and Supabase Edge Function code for `.select('*')`, not only page/builder/section runtime boundaries.
+  - Data-boundary hardening: the guard currently proves no runtime `src` or `supabase/functions` code uses broad select-star reads, reducing future sensitive-field exposure drift.
+  - No feature loss: this is proof-only hardening; runtime behavior is unchanged.
+  - Validation passed: `npm test -- --run src/lib/dashboardDataBoundary.test.ts` (20/20), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
+  - Launch status: unchanged. This is local proof-lane hardening and no deploy was run.
 - Do not start broad refactors from this file alone.
 - Execute this backlog top-down by risk, beginning with the P0 public data, gating, RSVP, AI key, service worker, email escaping, SSRF, and settings contract issues.
 - Update proof logs and launch docs only after concrete verification passes.

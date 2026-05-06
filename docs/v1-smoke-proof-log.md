@@ -8822,6 +8822,23 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
 - Launch status did not change. This is local shared-sanitizer hardening and no deploy was run.
 
+## 2026-05-06 2:42 PM PT No-Deploy Global Select-Star Guard Hardening
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `src/lib/dashboardDataBoundary.test.ts` now scans all runtime app source under `src` plus Supabase Edge Function code under `supabase/functions` for `.select('*')`.
+  - The proof now covers shared services, libraries, and Edge Functions in addition to the existing page/builder/section runtime boundary.
+  - Current runtime app and Edge Function source is clean for broad select-star reads.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run guard:assets`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local proof-lane hardening and no deploy was run.
+
 ## 2026-05-05 6:26 PM PT No-Deploy Messages Live Data Service Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

@@ -77,6 +77,21 @@ describe('dashboard data boundary guards', () => {
     expect(offenders).toEqual([]);
   });
 
+  it('keeps runtime app and Edge Function code from using select star', () => {
+    const roots = [
+      join(process.cwd(), 'src'),
+      join(process.cwd(), 'supabase/functions'),
+    ];
+    const files = roots.flatMap(collectRuntimeSourceFiles);
+    const offenders = files.flatMap((file) => {
+      const source = readFileSync(file, 'utf8');
+      const hasSelectStar = /\.select\(\s*['"`]\*['"`]/.test(source);
+      return hasSelectStar ? [file.replace(`${process.cwd()}/`, '')] : [];
+    });
+
+    expect(offenders).toEqual([]);
+  });
+
   it('does not load message dashboard rows with select star', () => {
     const source = readFileSync(join(process.cwd(), 'src/pages/dashboard/Messages.tsx'), 'utf8');
     const selectSource = readFileSync(join(process.cwd(), 'src/pages/dashboard/messages/messageSelect.ts'), 'utf8');

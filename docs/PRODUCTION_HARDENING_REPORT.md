@@ -3982,3 +3982,21 @@ Commands run:
 
 Status:
 - PARTIAL. This closes a local shared public-link sanitizer gap. No deploy was run.
+
+### 2026-05-06 2:42 PM PT - Global Select-Star Guard Hardening
+
+What changed:
+- `src/lib/dashboardDataBoundary.test.ts` now scans all runtime app source under `src` plus Supabase Edge Function code under `supabase/functions` for `.select('*')`.
+- The previous boundary guard covered pages, builder code, and public sections; this expands the regression proof to shared services, libraries, and Edge Function source.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardDataBoundary.test.ts`: PASS, 20/20.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run guard:assets`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+
+Status:
+- PARTIAL. This broadens local sensitive-field exposure regression proof. No deploy was run.
