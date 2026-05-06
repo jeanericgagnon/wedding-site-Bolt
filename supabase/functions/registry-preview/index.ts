@@ -373,17 +373,36 @@ function deriveUltimateImageFallback(hostname: string, title: string): string {
   return `https://ui-avatars.com/api/?name=${label}&size=512&background=f3f4f6&color=374151&bold=true`;
 }
 
-function toDisplayableImageUrl(url: string | undefined): string | undefined {
-  if (!url) return undefined;
-  if (url.includes('images.weserv.nl')) return url;
-  if (url.includes('ui-avatars.com')) return url;
+function isPublicPreviewResourceUrl(url: string, depth = 0): boolean {
   try {
     const parsed = new URL(url);
-    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return undefined;
-    return `https://images.weserv.nl/?url=${encodeURIComponent(url.replace(/^https?:\/\//, ''))}&w=1200&fit=inside`;
+    const publicTarget = (parsed.protocol === 'http:' || parsed.protocol === 'https:')
+      && !parsed.username
+      && !parsed.password
+      && !isBlockedPreviewHostname(parsed.hostname);
+    if (!publicTarget) return false;
+
+    if (parsed.hostname.toLowerCase() === 'images.weserv.nl') {
+      const proxiedTarget = parsed.searchParams.get('url');
+      if (!proxiedTarget) return true;
+      if (depth >= 2) return false;
+      const normalizedTarget = /^https?:\/\//i.test(proxiedTarget)
+        ? proxiedTarget
+        : `https://${proxiedTarget.replace(/^\/+/, '')}`;
+      return isPublicPreviewResourceUrl(normalizedTarget, depth + 1);
+    }
+
+    return true;
   } catch {
-    return undefined;
+    return false;
   }
+}
+
+function toDisplayableImageUrl(url: string | undefined): string | undefined {
+  if (!url) return undefined;
+  if (url.includes('ui-avatars.com')) return url;
+  if (!isPublicPreviewResourceUrl(url)) return undefined;
+  return `https://images.weserv.nl/?url=${encodeURIComponent(url.replace(/^https?:\/\//, ''))}&w=1200&fit=inside`;
 }
 
 const MIN_PRICE_CONFIDENCE_SCORE = 2;

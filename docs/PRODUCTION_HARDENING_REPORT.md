@@ -3847,3 +3847,22 @@ Commands run:
 
 Status:
 - PARTIAL. This closes a local Google Drive service-role callback trust gap. No deploy was run, so production needs an approved function deploy before the callback fix is live.
+
+### 2026-05-06 2:09 PM PT - Registry Preview Display-Image SSRF Hardening
+
+What changed:
+- `supabase/functions/registry-preview/index.ts` now validates product image URLs before passing them to the display-image proxy.
+- Added `isPublicPreviewResourceUrl(...)` and reused the existing preview hostname blocklist so private/local/metadata/credentialed image URLs are dropped, including blocked nested targets inside existing `images.weserv.nl` proxy URLs.
+- Existing public product images, generated avatar fallbacks, and logo fallbacks remain available.
+
+Commands run:
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/registryPreviewUrlNormalizer.test.ts`: PASS, 53/53.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run guard:assets`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+
+Status:
+- PARTIAL. This closes a local registry-preview image proxy SSRF gap. No deploy was run, so production needs an approved function deploy before the registry preview fix is live.

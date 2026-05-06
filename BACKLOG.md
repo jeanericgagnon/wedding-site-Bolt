@@ -73,7 +73,7 @@ Current readiness verdict for this intake:
 9. `PARTIAL` - Complete SSRF hardening.
    Problem: registry preview must block IPv6/private ranges, validate DNS strictly, and rate-limit strongly.
    Acceptance: hostile private/metadata/internal/redirect/oversize/timeout targets are rejected with safe errors.
-   Current evidence: local IPv6/private AAAA, reserved/special IPv4 range blocking, redirect revalidation, size/type/timeout controls, and durable rate-limit hardening exist. `src/lib/registryPreviewUrlNormalizer.test.ts` now adds a local hostile URL matrix for localhost, `.local`, `.internal`, `.test`, metadata hosts, loopback/private/reserved IPv4 ranges including encoded decimal/hex/short forms, IPv6 loopback, IPv4-mapped IPv6, credentialed URLs, and non-HTTP schemes; `test:security` runs that proof. Full live hostile-target runtime matrix remains required.
+   Current evidence: local IPv6/private AAAA, reserved/special IPv4 range blocking, redirect revalidation, size/type/timeout controls, and durable rate-limit hardening exist. `src/lib/registryPreviewUrlNormalizer.test.ts` now adds a local hostile URL matrix for localhost, `.local`, `.internal`, `.test`, metadata hosts, loopback/private/reserved IPv4 ranges including encoded decimal/hex/short forms, IPv6 loopback, IPv4-mapped IPv6, credentialed URLs, and non-HTTP schemes; `test:security` runs that proof. Registry preview display-image proxying now drops private/local/metadata/credentialed image URLs before wrapping them through the image proxy. Full live hostile-target runtime matrix remains required.
 
 10. `PARTIAL` - Email safety.
     Problem: email HTML must be escaped, URLs validated, and subjects sanitized.
@@ -2162,6 +2162,12 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - No feature loss: the owner-started Drive connection flow still returns an OAuth URL and callback still writes Drive tokens for the same verified site/user pair.
   - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/serviceRoleAuthorizationDisposition.test.ts` (30/30), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
   - Launch status: unchanged. This is local Edge Function hardening and no deploy was run; production needs an approved function deploy before this callback fix is live.
+- 2026-05-06 2:09 PM PT - No-deploy registry preview display-image SSRF hardening:
+  - Resolved in this batch: `supabase/functions/registry-preview/index.ts` now validates extracted product image URLs before wrapping them through the display-image proxy.
+  - SSRF hardening: `toDisplayableImageUrl` now rejects non-HTTP(S), credentialed, private IPv4, IPv6, localhost, `.local`, `.internal`, `.test`, and metadata-host image URLs via `isPublicPreviewResourceUrl` and the existing preview hostname blocklist; existing `images.weserv.nl` URLs are no longer blindly accepted when their nested `url` target is blocked.
+  - No feature loss: public product images, existing weserv proxy URLs, generated avatar fallbacks, Clearbit/logo fallbacks, and product metadata fallback behavior remain intact.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/registryPreviewUrlNormalizer.test.ts` (53/53), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
+  - Launch status: unchanged. This is local Edge Function hardening and no deploy was run; production needs an approved function deploy before the registry preview fix is live.
 - Do not start broad refactors from this file alone.
 - Execute this backlog top-down by risk, beginning with the P0 public data, gating, RSVP, AI key, service worker, email escaping, SSRF, and settings contract issues.
 - Update proof logs and launch docs only after concrete verification passes.

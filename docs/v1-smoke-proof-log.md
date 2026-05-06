@@ -8698,6 +8698,23 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
 - Launch status did not change. This is local Edge Function hardening and no deploy was run; production needs an approved function deploy before this callback fix is live.
 
+## 2026-05-06 2:09 PM PT No-Deploy Registry Preview Display-Image SSRF Hardening
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `supabase/functions/registry-preview/index.ts` now validates extracted product image URLs before wrapping them through the display-image proxy.
+  - `toDisplayableImageUrl` now rejects non-HTTP(S), credentialed, private IPv4, IPv6, localhost, `.local`, `.internal`, `.test`, and metadata-host image URLs through `isPublicPreviewResourceUrl`, including blocked nested targets inside existing `images.weserv.nl` proxy URLs.
+  - Public product images, existing weserv proxy URLs, generated avatar fallbacks, Clearbit/logo fallbacks, and product metadata fallback behavior remain intact.
+- Proof passed:
+  - `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/registryPreviewUrlNormalizer.test.ts`: PASS, 53/53.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run guard:assets`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local Edge Function hardening and no deploy was run; production needs an approved function deploy before this registry preview fix is live.
+
 ## 2026-05-05 6:26 PM PT No-Deploy Messages Live Data Service Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

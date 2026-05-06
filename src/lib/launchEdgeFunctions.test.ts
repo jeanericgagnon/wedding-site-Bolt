@@ -165,6 +165,17 @@ describe('launch edge function guards', () => {
     expect(source).toContain('Deno.resolveDns');
     expect(source).toContain('Deno.resolveDns(parsed.hostname, "AAAA")');
     expect(source).toContain('function isPrivateIpv6');
+    expect(source).toContain('function isPublicPreviewResourceUrl(url: string, depth = 0)');
+    expect(source).toContain("parsed.protocol === 'http:' || parsed.protocol === 'https:'");
+    expect(source).toContain('!parsed.username');
+    expect(source).toContain('!parsed.password');
+    expect(source).toContain('!isBlockedPreviewHostname(parsed.hostname)');
+    expect(source).toContain("parsed.hostname.toLowerCase() === 'images.weserv.nl'");
+    expect(source).toContain("const proxiedTarget = parsed.searchParams.get('url')");
+    expect(source).toContain('if (depth >= 2) return false');
+    expect(source).toContain('return isPublicPreviewResourceUrl(normalizedTarget, depth + 1)');
+    expect(source).not.toContain("if (url.includes('images.weserv.nl')) return url");
+    expect(source).toContain('if (!isPublicPreviewResourceUrl(url)) return undefined');
     expect(source).toContain('a === 100 && b >= 64 && b <= 127');
     expect(source).toContain('a === 198 && (b === 18 || b === 19)');
     expect(source).toContain('a === 203 && b === 0');
