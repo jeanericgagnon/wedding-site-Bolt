@@ -3885,3 +3885,22 @@ Commands run:
 
 Status:
 - PARTIAL. This strengthens the local executable proof for the registry-preview image proxy SSRF fix. No deploy was run, so production still needs an approved function deploy before the registry preview fix is live.
+
+### 2026-05-06 2:19 PM PT - Vendor Preview Image URL Sanitization
+
+What changed:
+- `supabase/functions/vendor-profile-preview/index.ts` now runs fetched `og:image` / `twitter:image` values through `normalizeVendorImageUrl(...)`.
+- The helper resolves relative image URLs against the already-normalized public website and drops non-HTTP(S), credentialed, private/local/internal/test/metadata-hosted, or malformed image targets.
+- `src/lib/launchEdgeFunctions.test.ts` now guards the helper, relative-URL resolution, and sanitized `websiteImage` assignment.
+
+Commands run:
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts`: PASS, 28/28.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run guard:assets`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+
+Status:
+- PARTIAL. This closes a local vendor-profile preview image metadata trust gap. No deploy was run, so production needs an approved function deploy before this Edge Function fix is live.

@@ -131,6 +131,7 @@ describe('launch edge function guards', () => {
     expect(source).toContain('function isBlockedHostname');
     expect(source).toContain('function isPrivateIpv4');
     expect(source).toContain('function isPrivateIpv6');
+    expect(source).toContain('function normalizeVendorImageUrl');
     expect(source).toContain('METADATA_HOSTS');
     expect(source).toContain('Deno.resolveDns');
     expect(source).toContain('MAX_VENDOR_PREVIEW_REDIRECTS');
@@ -141,6 +142,8 @@ describe('launch edge function guards', () => {
     expect(source).toContain('parsed.protocol !==');
     expect(source).toContain('parsed.username || parsed.password');
     expect(source).toContain('allowedHost && !allowedHost.test');
+    expect(source).toContain('new URL(url.trim(), baseUrl ?? undefined)');
+    expect(source).toContain('websiteImage = normalizeVendorImageUrl');
     expect(source).toContain('Enter a public website URL.');
     expect(source).toContain('Enter a public Instagram URL.');
     expect(source).toContain('Could not prepare vendor preview. Please try again.');

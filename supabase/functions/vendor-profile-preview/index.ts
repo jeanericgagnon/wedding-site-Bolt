@@ -154,6 +154,20 @@ function normalizeUrl(url: string | null | undefined, allowedHost?: RegExp): str
   }
 }
 
+function normalizeVendorImageUrl(url: string | null | undefined, baseUrl: string | null): string | null {
+  if (!url?.trim()) return null;
+  try {
+    const parsed = new URL(url.trim(), baseUrl ?? undefined);
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return null;
+    if (parsed.username || parsed.password) return null;
+    if (isBlockedHostname(parsed.hostname)) return null;
+    parsed.hash = '';
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
+
 function extractInstagramHandle(url: string | null): string | null {
   if (!url) return null;
   try {
@@ -386,7 +400,10 @@ Deno.serve(async (req) => {
         const html = await fetchVendorPreviewHtml(normalizedWebsite);
         websiteTitle = extractMeta(html, 'og:title') || extractTitle(html);
         websiteDescription = extractMeta(html, 'og:description') || extractMeta(html, 'description');
-        websiteImage = extractMeta(html, 'og:image') || extractMeta(html, 'twitter:image');
+        websiteImage = normalizeVendorImageUrl(
+          extractMeta(html, 'og:image') || extractMeta(html, 'twitter:image'),
+          normalizedWebsite,
+        );
         websiteInstagramUrl = extractInstagramUrlFromHtml(html);
         websitePinterestUrl = extractSocialUrlFromHtml(html, 'pinterest');
         websiteTiktokUrl = extractSocialUrlFromHtml(html, 'tiktok');

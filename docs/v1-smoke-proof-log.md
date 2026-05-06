@@ -8733,6 +8733,24 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
 - Launch status did not change. This is local Edge Function proof hardening and no deploy was run; production still needs an approved function deploy before this registry preview fix is live.
 
+## 2026-05-06 2:19 PM PT No-Deploy Vendor Preview Image URL Sanitization
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `supabase/functions/vendor-profile-preview/index.ts` now sanitizes fetched `og:image` / `twitter:image` metadata through `normalizeVendorImageUrl(...)`.
+  - The helper resolves relative image URLs against the normalized public website and rejects non-HTTP(S), credentialed, private/local/internal/test/metadata-hosted, or malformed image targets before generated vendor profile payloads can use them.
+  - Screenshot, social, and logo fallbacks are unchanged.
+  - `src/lib/launchEdgeFunctions.test.ts` guards the helper and sanitized assignment.
+- Proof passed:
+  - `npm test -- --run src/lib/launchEdgeFunctions.test.ts`: PASS, 28/28.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run guard:assets`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local Edge Function hardening and no deploy was run; production needs an approved function deploy before this vendor preview image fix is live.
+
 ## 2026-05-05 6:26 PM PT No-Deploy Messages Live Data Service Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

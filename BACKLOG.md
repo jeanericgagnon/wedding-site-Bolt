@@ -2175,6 +2175,13 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - No feature loss: runtime registry preview image behavior remains the same; this is an extraction plus stronger executable proof around the previous fix.
   - Validation passed: `npm test -- --run src/lib/registryPreviewUrlNormalizer.test.ts src/lib/launchEdgeFunctions.test.ts` (62/62), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
   - Launch status: unchanged. This is local Edge Function proof hardening and no deploy was run; production still needs an approved function deploy before the registry preview fix is live.
+- 2026-05-06 2:19 PM PT - No-deploy vendor preview image URL sanitization:
+  - Resolved in this batch: `supabase/functions/vendor-profile-preview/index.ts` now sanitizes fetched `og:image` / `twitter:image` values through `normalizeVendorImageUrl(...)` before including them in generated vendor profile hero/gallery payloads.
+  - SSRF/trust hardening: fetched image metadata is resolved against the public source website and dropped if it is non-HTTP(S), credentialed, private/local/internal/test/metadata-hosted, or malformed.
+  - Source-contract hardening: `src/lib/launchEdgeFunctions.test.ts` now guards the helper, relative-URL resolution, and `websiteImage = normalizeVendorImageUrl(...)` assignment.
+  - No feature loss: safe absolute and relative public vendor images still work; screenshot, social, and logo fallbacks remain unchanged.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (28/28), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
+  - Launch status: unchanged. This is local Edge Function hardening and no deploy was run; production needs an approved function deploy before this vendor preview image fix is live.
 - Do not start broad refactors from this file alone.
 - Execute this backlog top-down by risk, beginning with the P0 public data, gating, RSVP, AI key, service worker, email escaping, SSRF, and settings contract issues.
 - Update proof logs and launch docs only after concrete verification passes.
