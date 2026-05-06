@@ -8942,6 +8942,25 @@ A slice does **not** count as passed because:
   - `npm run proof:v1:board:md`: PASS.
 - Launch status did not change. This is local Edge Function hardening and no deploy was run; production needs an approved function deploy before this Stripe checkout hardening is live.
 
+## 2026-05-06 3:09 PM PT No-Deploy Client Error Log Secret Redaction Hardening
+
+- Continued from the diagnostic/privacy hardening lane. No deploy, migration, or Supabase function deploy was run.
+- Fixed/proved:
+  - `log-client-error` now redacts bearer tokens in client-controlled diagnostic strings.
+  - URL query/hash secrets such as `token`, `invite_token`, `secureToken`, `access_token`, `apikey`, `api_key`, `password`, and `authorization` are redacted from message, stack, and nested metadata string values.
+  - Existing email redaction, route query/hash stripping, public rate limiting, sensitive metadata-key redaction, and auth-derived user/site inference remain intact.
+  - Safe diagnostic shape remains preserved for source, severity, route path, message, stack, fingerprinting, and fixed-code server errors.
+- Proof passed:
+  - `npm test -- --run src/lib/launchEdgeFunctions.test.ts`: PASS, 29/29.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run guard:assets`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+  - `npm run proof:v1:board:md`: PASS.
+- Launch status did not change. This is local Edge Function hardening and no deploy was run; production needs an approved function deploy before this client-error redaction hardening is live.
+
 ## 2026-05-05 6:26 PM PT No-Deploy Messages Live Data Service Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

@@ -4111,3 +4111,23 @@ Commands run:
 
 Status:
 - PARTIAL. This narrows local payment redirect trust risk. No deploy was run, so production needs an approved function deploy before this Stripe checkout hardening is live.
+
+### 2026-05-06 3:09 PM PT - Client Error Log Secret Redaction Hardening
+
+What changed:
+- `supabase/functions/log-client-error/index.ts` now redacts bearer tokens, URL query/hash secrets, `secureToken`, `access_token`, `api_key`, and existing token/password/auth fields from diagnostic message, stack, and nested metadata string values.
+- Existing route query/hash stripping, public rate limiting, sensitive metadata-key redaction, and authenticated user/site inference are preserved.
+- `src/lib/launchEdgeFunctions.test.ts` now guards the expanded redaction contract.
+
+Commands run:
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts`: PASS, 29/29.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run guard:assets`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- `npm run proof:v1:board:md`: PASS.
+
+Status:
+- PARTIAL. This narrows local client-diagnostic secret-retention risk. No deploy was run, so production needs an approved function deploy before this client-error redaction hardening is live.

@@ -28,7 +28,9 @@ function redact(text: string | null): string | null {
   if (!text) return null;
   return text
     .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[redacted-email]")
-    .replace(/(token|invite_token|authorization|apikey|password)\s*[:=]\s*[^\s,;]+/gi, "$1=[redacted]");
+    .replace(/\bBearer\s+[A-Za-z0-9._~+/=-]+/gi, "Bearer [redacted]")
+    .replace(/([?&#](?:token|invite_token|secureToken|access_token|apikey|api_key|password|authorization)=)[^&#\s]+/gi, "$1[redacted]")
+    .replace(/(token|invite_token|secureToken|access_token|authorization|apikey|api_key|password)\s*[:=]\s*[^\s,;]+/gi, "$1=[redacted]");
 }
 
 function sanitizeRoute(value: string | null): string | null {

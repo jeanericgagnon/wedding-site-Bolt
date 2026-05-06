@@ -762,6 +762,11 @@ describe('launch edge function guards', () => {
     expect(logClientError).toContain('function sanitizeRoute');
     expect(logClientError).toContain('function sanitizeMetadataValue');
     expect(logClientError).toContain('token|secret|password|authorization|apikey|service_role|service-role|cookie');
+    expect(logClientError).toContain('\\bBearer\\s+[A-Za-z0-9._~+/=-]+');
+    expect(logClientError).toContain('Bearer [redacted]');
+    expect(logClientError).toContain('[?&#](?:token|invite_token|secureToken|access_token|apikey|api_key|password|authorization)=');
+    expect(logClientError).toContain('$1[redacted]');
+    expect(logClientError).toContain('secureToken|access_token|authorization|apikey|api_key|password');
     expect(logClientError).toContain('let inferredUserId: string | null = null');
     expect(logClientError).toContain('let inferredSiteId: string | null = null');
     expect(logClientError).toContain('.eq("user_id", inferredUserId)');

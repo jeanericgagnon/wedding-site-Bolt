@@ -2254,6 +2254,12 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - No feature loss: production `dayof.love` return URLs, configured app-origin returns, and local development checkout loops remain supported.
   - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (29/29), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, `npm run build`, and `npm run proof:v1:board:md`.
   - Launch status: unchanged. This is local Edge Function hardening and no deploy was run.
+- 2026-05-06 3:09 PM PT - No-deploy client error log secret redaction hardening:
+  - Resolved in this batch: `log-client-error` now redacts bearer tokens, URL query/hash secrets, `secureToken`, `access_token`, `api_key`, and existing token/password/auth fields from client-controlled diagnostic message, stack, and metadata strings.
+  - Diagnostic privacy hardening: route query/hash stripping and sensitive metadata-key redaction already existed; this closes the remaining string-value path where copied URLs or authorization snippets could be retained in `app_error_logs`.
+  - No feature loss: client error reports still keep safe source, severity, route path, message shape, stack shape, fingerprinting, rate limiting, and authenticated user/site inference.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts` (29/29), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, `npm run build`, and `npm run proof:v1:board:md`.
+  - Launch status: unchanged. This is local Edge Function hardening and no deploy was run.
 - Do not start broad refactors from this file alone.
 - Execute this backlog top-down by risk, beginning with the P0 public data, gating, RSVP, AI key, service worker, email escaping, SSRF, and settings contract issues.
 - Update proof logs and launch docs only after concrete verification passes.
