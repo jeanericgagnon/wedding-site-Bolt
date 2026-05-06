@@ -8715,6 +8715,24 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
 - Launch status did not change. This is local Edge Function hardening and no deploy was run; production needs an approved function deploy before this registry preview fix is live.
 
+## 2026-05-06 2:16 PM PT No-Deploy Registry Preview Image-Resource Proof Extraction
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Exported `isPublicPreviewResourceUrl(...)` from `supabase/functions/registry-preview/urlNormalizer.ts`.
+  - `supabase/functions/registry-preview/index.ts` now imports that shared helper for display-image proxy validation.
+  - `src/lib/registryPreviewUrlNormalizer.test.ts` now directly proves allowed public image URLs and existing public `images.weserv.nl` proxy URLs, plus rejection for metadata IP images, credentialed images, non-web schemes, blocked nested proxy targets, and over-nested proxy recursion.
+  - `src/lib/launchEdgeFunctions.test.ts` now guards the shared helper import and helper body location.
+- Proof passed:
+  - `npm test -- --run src/lib/registryPreviewUrlNormalizer.test.ts src/lib/launchEdgeFunctions.test.ts`: PASS, 62/62.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run guard:assets`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local Edge Function proof hardening and no deploy was run; production still needs an approved function deploy before this registry preview fix is live.
+
 ## 2026-05-05 6:26 PM PT No-Deploy Messages Live Data Service Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

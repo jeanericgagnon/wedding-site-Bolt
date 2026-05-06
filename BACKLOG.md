@@ -2168,6 +2168,13 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - No feature loss: public product images, existing weserv proxy URLs, generated avatar fallbacks, Clearbit/logo fallbacks, and product metadata fallback behavior remain intact.
   - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/lib/registryPreviewUrlNormalizer.test.ts` (53/53), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
   - Launch status: unchanged. This is local Edge Function hardening and no deploy was run; production needs an approved function deploy before the registry preview fix is live.
+- 2026-05-06 2:16 PM PT - No-deploy registry preview image-resource proof extraction:
+  - Resolved in this batch: moved the display-image SSRF helper into `supabase/functions/registry-preview/urlNormalizer.ts` as exported `isPublicPreviewResourceUrl(...)` so the nested image proxy guard is covered by direct unit tests instead of source-contract checks alone.
+  - SSRF proof hardening: `src/lib/registryPreviewUrlNormalizer.test.ts` now proves public product images and valid existing `images.weserv.nl` URLs are allowed while metadata IPs, credentialed URLs, non-web schemes, blocked nested proxy targets, and over-nested proxy recursion are rejected.
+  - Source-contract hardening: `src/lib/launchEdgeFunctions.test.ts` now requires `registry-preview/index.ts` to import the shared helper and requires the helper body to remain in `urlNormalizer.ts`.
+  - No feature loss: runtime registry preview image behavior remains the same; this is an extraction plus stronger executable proof around the previous fix.
+  - Validation passed: `npm test -- --run src/lib/registryPreviewUrlNormalizer.test.ts src/lib/launchEdgeFunctions.test.ts` (62/62), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
+  - Launch status: unchanged. This is local Edge Function proof hardening and no deploy was run; production still needs an approved function deploy before the registry preview fix is live.
 - Do not start broad refactors from this file alone.
 - Execute this backlog top-down by risk, beginning with the P0 public data, gating, RSVP, AI key, service worker, email escaping, SSRF, and settings contract issues.
 - Update proof logs and launch docs only after concrete verification passes.

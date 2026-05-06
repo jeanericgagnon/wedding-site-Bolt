@@ -3866,3 +3866,22 @@ Commands run:
 
 Status:
 - PARTIAL. This closes a local registry-preview image proxy SSRF gap. No deploy was run, so production needs an approved function deploy before the registry preview fix is live.
+
+### 2026-05-06 2:16 PM PT - Registry Preview Image-Resource Proof Extraction
+
+What changed:
+- Moved the registry display-image SSRF helper into `supabase/functions/registry-preview/urlNormalizer.ts` as exported `isPublicPreviewResourceUrl(...)`.
+- `supabase/functions/registry-preview/index.ts` now imports the shared helper instead of keeping a private copy.
+- Added direct unit coverage for public image URLs, existing `images.weserv.nl` proxy URLs, metadata/private image targets, credentialed URLs, non-web schemes, blocked nested proxy targets, and over-nested proxy recursion.
+
+Commands run:
+- `npm test -- --run src/lib/registryPreviewUrlNormalizer.test.ts src/lib/launchEdgeFunctions.test.ts`: PASS, 62/62.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run guard:assets`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+
+Status:
+- PARTIAL. This strengthens the local executable proof for the registry-preview image proxy SSRF fix. No deploy was run, so production still needs an approved function deploy before the registry preview fix is live.

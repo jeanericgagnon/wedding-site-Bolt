@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { isSameProduct, normalizeUrl } from '../../supabase/functions/registry-preview/urlNormalizer';
+import {
+  isPublicPreviewResourceUrl,
+  isSameProduct,
+  normalizeUrl,
+} from '../../supabase/functions/registry-preview/urlNormalizer';
 
 describe('registry preview URL normalizer SSRF guard', () => {
   it.each([
@@ -51,5 +55,27 @@ describe('registry preview URL normalizer SSRF guard', () => {
         'https://amazon.com/dp/B07XYZ1234?utm_campaign=tracking',
       ),
     ).toBe(true);
+  });
+
+  it.each([
+    ['plain public image', 'https://cdn.example.com/product.jpg'],
+    ['existing public image proxy', 'https://images.weserv.nl/?url=cdn.example.com/product.jpg&w=1200'],
+    ['existing public image proxy with scheme', 'https://images.weserv.nl/?url=https%3A%2F%2Fcdn.example.com%2Fproduct.jpg&w=1200'],
+  ])('allows %s resource URLs', (_label, url) => {
+    expect(isPublicPreviewResourceUrl(url)).toBe(true);
+  });
+
+  it.each([
+    ['metadata IP image', 'http://169.254.169.254/latest/meta-data/'],
+    ['credentialed image', 'https://user:pass@cdn.example.com/product.jpg'],
+    ['non-web image scheme', 'file:///etc/passwd'],
+    ['private image behind proxy', 'https://images.weserv.nl/?url=169.254.169.254/latest/meta-data/&w=1200'],
+    ['credentialed image behind proxy', 'https://images.weserv.nl/?url=https%3A%2F%2Fuser%3Apass%40cdn.example.com%2Fproduct.jpg&w=1200'],
+    [
+      'over-nested image proxy',
+      'https://images.weserv.nl/?url=images.weserv.nl%2F%3Furl%3Dimages.weserv.nl%252F%253Furl%253Dcdn.example.com%252Fproduct.jpg',
+    ],
+  ])('blocks %s resource URLs', (_label, url) => {
+    expect(isPublicPreviewResourceUrl(url)).toBe(false);
   });
 });
