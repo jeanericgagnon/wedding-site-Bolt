@@ -6,9 +6,8 @@ import { Button } from '../../components/ui/Button';
 import { supabase } from '../../lib/supabase';
 import { invokeFunctionOrThrow } from '../../lib/invokeFunctionOrThrow';
 import { getArchiveModeDescriptor } from '../../lib/archiveMode';
-import { createEmptyPhotoBuckets } from '../../lib/aiPhotoBuckets';
+import { createEmptyPhotoBuckets, PhotoBucketKind } from '../../lib/aiPhotoBuckets';
 import { mediaRepository } from '../../builder/services/mediaRepository';
-import { PhotoBucketKind } from '../../lib/aiPhotoBuckets';
 import { buildPhotoPlacementPlan } from '../../lib/aiPhotoPlacement';
 import { buildQuickStartOverviewPath, readQuickStartDashboardContinuation } from '../../lib/quickStartContinuation';
 import { parseDatetimeLocalToIso, toDatetimeLocalOrEmpty } from './guestPhotoDateTime';
@@ -21,6 +20,7 @@ import { logAppAction } from '../../lib/actionAudit';
 import { useAuth } from '../../contexts/AuthContext';
 import { demoEvents, demoWeddingSite } from '../../lib/demoData';
 import { getSafePublicWebUrl } from '../../sections/publicLinks';
+import { buildQrImageUrl, isSafePublicQrAssetUrl } from '../../lib/guestHubQrAssets';
 import {
   loadGuestPhotoSharingSpace,
   movePhotoUploadToBucket,
@@ -1588,7 +1588,7 @@ export const GuestPhotoSharing: React.FC = () => {
     }
   };
 
-  const getBucketQrUrl = (uploadUrl: string) => `https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent(uploadUrl)}`;
+  const getBucketQrUrl = (uploadUrl: string) => (isSafePublicQrAssetUrl(uploadUrl) ? buildQrImageUrl(uploadUrl) : '');
   const openSafePublicUrl = (url: string | null | undefined) => {
     const safeUrl = getSafePublicWebUrl(url);
     if (safeUrl) window.open(safeUrl, '_blank', 'noopener,noreferrer');

@@ -44,7 +44,11 @@ describe('dashboard stored link safety', () => {
     const bucketCard = readSource('src/pages/dashboard/guestPhotos/GuestPhotoBucketCard.tsx');
 
     expect(photos).toContain('getSafePublicWebUrl');
+    expect(photos).toContain('buildQrImageUrl');
+    expect(photos).toContain('isSafePublicQrAssetUrl');
     expect(photos).toContain('const openSafePublicUrl = (url: string | null | undefined)');
+    expect(photos).toContain("const getBucketQrUrl = (uploadUrl: string) => (isSafePublicQrAssetUrl(uploadUrl) ? buildQrImageUrl(uploadUrl) : '')");
+    expect(photos).not.toContain('api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent(uploadUrl)}');
     expect(photos).toContain("window.open(safeUrl, '_blank', 'noopener,noreferrer')");
     expect(photos).toContain("const openAppUrl = (url: string) => window.open(url, '_blank', 'noopener,noreferrer')");
     expect(bucketCard).toContain('getSafePublicWebUrl(bucket.drive_folder_url)');

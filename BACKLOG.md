@@ -2198,6 +2198,13 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - No feature loss: safe public event/hub URLs still render the same QR image, copy affordance, open action, and download link.
   - Validation passed: `npm test -- --run src/lib/guestHubQrAssets.test.ts src/components/ui/ShareQrPanel.test.tsx src/sections/publicLinks.test.ts` (17/17), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
   - Launch status: unchanged. This is local frontend/helper hardening and no deploy was run.
+- 2026-05-06 2:36 PM PT - No-deploy photo dashboard QR generation hardening:
+  - Resolved in this batch: `GuestPhotoSharing.tsx` no longer assembles QR-server URLs inline for album upload links.
+  - Public-link hardening: photo-dashboard album QR generation now requires `isSafePublicQrAssetUrl(...)` before calling the shared `buildQrImageUrl(...)`, so unsafe upload/share targets cannot be encoded into a QR image URL.
+  - Proof hardening: `src/lib/dashboardLinkSafety.test.ts` now guards the photo dashboard against regressing to inline QR URL construction.
+  - No feature loss: safe album upload links still produce QR URLs and the existing open/copy dashboard controls remain intact.
+  - Validation passed: `npm test -- --run src/lib/dashboardLinkSafety.test.ts src/lib/guestHubQrAssets.test.ts src/components/ui/ShareQrPanel.test.tsx` (12/12), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
+  - Launch status: unchanged. This is local frontend/helper hardening and no deploy was run.
 - Do not start broad refactors from this file alone.
 - Execute this backlog top-down by risk, beginning with the P0 public data, gating, RSVP, AI key, service worker, email escaping, SSRF, and settings contract issues.
 - Update proof logs and launch docs only after concrete verification passes.

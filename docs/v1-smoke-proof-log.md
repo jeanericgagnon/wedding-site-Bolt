@@ -8787,6 +8787,24 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
 - Launch status did not change. This is local frontend/helper hardening and no deploy was run.
 
+## 2026-05-06 2:36 PM PT No-Deploy Photo Dashboard QR Generation Hardening
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - `GuestPhotoSharing.tsx` no longer assembles QR-server URLs inline for album upload links.
+  - Album upload QR generation now requires `isSafePublicQrAssetUrl(...)` before calling the shared `buildQrImageUrl(...)`, so unsafe upload/share targets cannot be encoded into a QR image URL.
+  - `src/lib/dashboardLinkSafety.test.ts` now guards this photo dashboard QR safety contract.
+  - The strict `GuestPhotoSharing.tsx` file-size baseline stayed at 1979 lines.
+- Proof passed:
+  - `npm test -- --run src/lib/dashboardLinkSafety.test.ts src/lib/guestHubQrAssets.test.ts src/components/ui/ShareQrPanel.test.tsx`: PASS, 12/12.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run guard:assets`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local frontend/helper hardening and no deploy was run.
+
 ## 2026-05-05 6:26 PM PT No-Deploy Messages Live Data Service Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:

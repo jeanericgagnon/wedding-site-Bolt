@@ -3944,3 +3944,22 @@ Commands run:
 
 Status:
 - PARTIAL. This closes a local QR/share public-link trust gap. No deploy was run.
+
+### 2026-05-06 2:36 PM PT - Photo Dashboard QR Generation Hardening
+
+What changed:
+- `GuestPhotoSharing.tsx` now uses `isSafePublicQrAssetUrl(...)` and the shared `buildQrImageUrl(...)` for album upload QR links instead of assembling QR-server URLs inline.
+- `src/lib/dashboardLinkSafety.test.ts` now guards that the photo dashboard keeps using the shared QR safety helper before QR generation.
+- Kept the strict `GuestPhotoSharing.tsx` file-size baseline unchanged at 1979 lines by removing an existing duplicate import line.
+
+Commands run:
+- `npm test -- --run src/lib/dashboardLinkSafety.test.ts src/lib/guestHubQrAssets.test.ts src/components/ui/ShareQrPanel.test.tsx`: PASS, 12/12.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run guard:assets`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+
+Status:
+- PARTIAL. This closes a local photo-dashboard QR generation trust gap. No deploy was run.
