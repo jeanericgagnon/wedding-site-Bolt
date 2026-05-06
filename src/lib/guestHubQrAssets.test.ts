@@ -19,6 +19,9 @@ describe('guestHubQrAssets', () => {
   it('blocks token-like urls from printable public assets', () => {
     expect(isSafePublicQrAssetUrl('https://dayof.love/event/maya-and-leo?token=secret')).toBe(false);
     expect(isSafePublicQrAssetUrl('https://dayof.love/event/maya-and-leo?invite_token=secret')).toBe(false);
+    expect(isSafePublicQrAssetUrl('http://169.254.169.254/latest/meta-data')).toBe(false);
+    expect(isSafePublicQrAssetUrl('https://user:pass@dayof.love/event/maya-and-leo')).toBe(false);
+    expect(isSafePublicQrAssetUrl('https://example.test/event/maya-and-leo')).toBe(false);
     expect(isSafePublicQrAssetUrl('javascript:alert(1)')).toBe(false);
     expect(buildGuestHubQrAssets({
       hubUrl: 'https://dayof.love/event/maya-and-leo?secureToken=secret',

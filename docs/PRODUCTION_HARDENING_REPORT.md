@@ -3925,3 +3925,22 @@ Commands run:
 
 Status:
 - PARTIAL. This closes local public-link, vendor fallback, and service-layer insert trust gaps. No deploy was run.
+
+### 2026-05-06 2:32 PM PT - Share QR URL Hardening
+
+What changed:
+- `isSafePublicQrAssetUrl(...)` now reuses `getSafePublicWebUrl(...)` before applying token-like query/hash checks.
+- `ShareQrPanel` now computes a sanitized public share URL and renders nothing for unsafe inputs, so copy/open/download actions cannot pass private, credentialed, tokenized, local, metadata, or non-web URLs to the QR image endpoint.
+- Added component coverage for safe QR rendering and unsafe QR suppression.
+
+Commands run:
+- `npm test -- --run src/lib/guestHubQrAssets.test.ts src/components/ui/ShareQrPanel.test.tsx src/sections/publicLinks.test.ts`: PASS, 17/17.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run guard:assets`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+
+Status:
+- PARTIAL. This closes a local QR/share public-link trust gap. No deploy was run.

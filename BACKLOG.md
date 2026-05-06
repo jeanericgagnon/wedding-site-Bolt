@@ -2191,6 +2191,13 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - No feature loss: successful Edge-generated vendor previews still return images; fallback drafts still create a clean manual vendor profile shell with safe links.
   - Validation passed: `npm test -- --run src/sections/publicLinks.test.ts src/lib/vendorProfiles.test.ts src/pages/VendorProfileCreate.test.tsx src/pages/VendorProfile.test.tsx src/lib/dashboardLinkSafety.test.ts` (25/25), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
   - Launch status: unchanged. This is local frontend fallback hardening and no deploy was run.
+- 2026-05-06 2:32 PM PT - No-deploy share QR URL hardening:
+  - Resolved in this batch: printable guest-hub QR asset URLs now reuse the shared public web URL sanitizer before token-like query/hash checks.
+  - Public-link hardening: unsafe QR/share links with credentials, private or metadata hosts, `.test` hosts, token-like params, or non-web schemes are rejected before QR generation.
+  - UI boundary hardening: `ShareQrPanel` now refuses to render, copy, open, or download a QR for unsafe share URLs instead of passing hostile input to the third-party QR image endpoint.
+  - No feature loss: safe public event/hub URLs still render the same QR image, copy affordance, open action, and download link.
+  - Validation passed: `npm test -- --run src/lib/guestHubQrAssets.test.ts src/components/ui/ShareQrPanel.test.tsx src/sections/publicLinks.test.ts` (17/17), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
+  - Launch status: unchanged. This is local frontend/helper hardening and no deploy was run.
 - Do not start broad refactors from this file alone.
 - Execute this backlog top-down by risk, beginning with the P0 public data, gating, RSVP, AI key, service worker, email escaping, SSRF, and settings contract issues.
 - Update proof logs and launch docs only after concrete verification passes.

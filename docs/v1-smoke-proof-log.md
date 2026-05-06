@@ -8770,6 +8770,23 @@ A slice does **not** count as passed because:
   - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
 - Launch status did not change. This is local frontend fallback hardening and no deploy was run.
 
+## 2026-05-06 2:32 PM PT No-Deploy Share QR URL Hardening
+
+- Continued from `BACKLOG.md` in a no-deploy batch.
+- Fixed/proved:
+  - Guest-hub QR asset safety now reuses the shared public web URL sanitizer before token-like query/hash checks.
+  - `ShareQrPanel` now renders nothing for unsafe share URLs, preventing copy/open/download/QR-image requests for tokenized, credentialed, private, metadata, test-host, or non-web URLs.
+  - Safe public event and hub URLs still render the same QR image, displayed share link, copy button, open action, and download link.
+- Proof passed:
+  - `npm test -- --run src/lib/guestHubQrAssets.test.ts src/components/ui/ShareQrPanel.test.tsx src/sections/publicLinks.test.ts`: PASS, 17/17.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run guard:assets`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+- Launch status did not change. This is local frontend/helper hardening and no deploy was run.
+
 ## 2026-05-05 6:26 PM PT No-Deploy Messages Live Data Service Extraction
 - Continued from `BACKLOG.md` in a no-deploy batch.
 - Fixed/proved:
