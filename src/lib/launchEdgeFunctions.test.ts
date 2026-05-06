@@ -919,6 +919,7 @@ describe('launch edge function guards', () => {
     expect(submit).toContain('.select("id,site_slug,is_published,privacy_mode,guest_access_token")');
     expect(submit).toContain('enforceSubmitRateLimit');
     expect(submit).toContain('function isSafeEmail');
+    expect(submit).toContain('return !value || /^[^\\s@<>"\'()]+@[^\\s@<>"\'()]+\\.[^\\s@<>"\'()]+$/.test(value);');
     expect(submit).toContain('Enter a valid email address or leave it blank.');
     expect(submit).toContain('guest_email: guestEmail');
     expect(submit).toContain('PUBLIC_SITE_RSVP_INSERT_FAILED');
@@ -929,6 +930,7 @@ describe('launch edge function guards', () => {
     expect(submit).not.toContain('guest_token: slug.slice(0, 16)');
     expect(submit).not.toContain('site: row');
     expect(submit).not.toContain('.select("*")');
+    expect(submit).not.toContain('/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/');
 
     expect(rsvpSection).toContain("supabase.functions.invoke('public-site-rsvp-submit'");
     expect(rsvpSection).toContain("supabase.functions.invoke('public-site-access'");
@@ -1136,7 +1138,9 @@ describe('launch edge function guards', () => {
     expect(guestbook).toContain('.select("id,site_slug,is_published,privacy_mode,guest_access_token")');
     expect(guestbook).toContain('canReadPublicSubresource');
     expect(guestbook).toContain('storedInviteToken: site.guest_access_token');
+    expect(guestbook).toContain('if (guestEmail && !/^[^\\s@<>"\'()]+@[^\\s@<>"\'()]+\\.[^\\s@<>"\'()]+$/.test(guestEmail))');
     expect(guestbook).not.toContain('if (!site || !site.is_published)');
+    expect(guestbook).not.toContain('/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/');
     expect(guestbook).toContain('const requesterIpMarker = requesterIp ? `h:${await sha256Hex(`guestbook:${site.id}:${requesterIp}`)}` : null');
     expect(guestbook).toContain('.eq("requester_ip", requesterIpMarker)');
     expect(guestbook).toContain('requester_ip: requesterIpMarker');

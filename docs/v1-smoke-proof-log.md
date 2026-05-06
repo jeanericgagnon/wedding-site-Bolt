@@ -58,6 +58,23 @@ _Launch call right now:_ Not production-ready under the stricter P0/P1 standard.
   - `npm run build`: PASS with known non-blocking Browserslist caniuse-lite and empty `vendor-react` chunk warnings.
 - Launch status did not change. This is local Edge Function hardening; secure service-role/RLS proof, authenticated live collaborator mutation proof, and external OpenAI key rotation remain open.
 
+## 2026-05-06 3:23 PM PT Local Public RSVP And Guestbook Email Validation Hardening
+
+- Continued the no-deploy production-hardening backlog on public guest contact-input safety. No deploy, migration, or Supabase function deploy was run.
+- Fixed/proved:
+  - Public RSVP widget submissions now reject angle brackets, quotes, and parentheses in optional guest emails.
+  - Guestbook submissions now reject the same unsafe email characters before rate-limit checks or persistence.
+  - Blank optional emails and ordinary guest emails remain supported for both flows.
+- Proof passed:
+  - `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/sections/components/RsvpSection.test.tsx src/sections/variants/rsvp/multiEvent.test.tsx src/pages/GuestbookSubmit.test.ts`: PASS, 44/44.
+  - `npm run typecheck -- --pretty false`: PASS.
+  - `npm run lint -- --quiet`: PASS.
+  - `npm run guard:file-size`: PASS.
+  - `npm run guard:assets`: PASS.
+  - `git diff --check`: PASS.
+  - `npm run build`: PASS with known non-blocking Browserslist caniuse-lite and empty `vendor-react` chunk warnings.
+- Launch status did not change. This is local Edge Function hardening; secure service-role/RLS proof, authenticated live collaborator mutation proof, and external OpenAI key rotation remain open.
+
 ## 2026-05-06 8:55 AM PT Local P2 Settings/Coordinator Oversized-Page Continuation
 
 - Continued the no-deploy production-hardening backlog with focused oversized-page extraction. No deploy, migration, or Supabase function deploy was run.

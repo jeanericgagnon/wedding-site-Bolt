@@ -24,7 +24,7 @@ function cleanText(value: unknown, maxLength: number): string {
 }
 
 function isSafeEmail(value: string | null): boolean {
-  return !value || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  return !value || /^[^\s@<>"'()]+@[^\s@<>"'()]+\.[^\s@<>"'()]+$/.test(value);
 }
 
 async function hashRateLimitKey(value: string): Promise<string> {

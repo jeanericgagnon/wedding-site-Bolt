@@ -4208,3 +4208,22 @@ Commands run:
 
 Status:
 - PARTIAL. This narrows local public upload contact-email validation risk. No deploy was run.
+
+### 2026-05-06 3:23 PM PT - Public RSVP And Guestbook Email Validation Hardening
+
+What changed:
+- `public-site-rsvp-submit` now rejects angle brackets, quotes, and parentheses in optional guest email values.
+- `guestbook-submit` now applies the same stricter public guest email boundary before rate-limit checks or entry persistence.
+- `src/lib/launchEdgeFunctions.test.ts` now guards both stricter regexes and rejects the prior loose non-space/non-`@` pattern.
+
+Commands run:
+- `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/sections/components/RsvpSection.test.tsx src/sections/variants/rsvp/multiEvent.test.tsx src/pages/GuestbookSubmit.test.ts`: PASS, 44/44.
+- `npm run typecheck -- --pretty false`: PASS.
+- `npm run lint -- --quiet`: PASS.
+- `npm run guard:file-size`: PASS.
+- `npm run guard:assets`: PASS.
+- `git diff --check`: PASS.
+- `npm run build`: PASS with known Browserslist `caniuse-lite` and empty `vendor-react` warnings.
+
+Status:
+- PARTIAL. This narrows local public RSVP/guestbook contact-email validation risk. No deploy was run.

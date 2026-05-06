@@ -2284,6 +2284,12 @@ Write a short architecture note after the highest-risk hardening lanes are imple
   - No feature loss: ordinary guest email addresses, anonymous uploads, token/slug access, hosted storage upload, Drive backup fallback, metadata capture, and partial-failure reporting remain intact.
   - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/pages/PhotoUpload.test.ts` (34/34), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
   - Launch status: unchanged. This is local Edge Function hardening and no deploy was run.
+- 2026-05-06 3:23 PM PT - No-deploy public RSVP and guestbook email validation hardening:
+  - Resolved in this batch: `public-site-rsvp-submit` and `guestbook-submit` now reject angle brackets, quotes, and parentheses in guest email values.
+  - Email/contact boundary hardening: public RSVP widget submissions and guestbook submissions now use the same stricter guest email shape as photo upload and vendor inquiry instead of the older non-space/non-`@` pattern.
+  - No feature loss: blank optional emails, ordinary guest email addresses, public access gating, RSVP insert behavior, guestbook rate limiting, and guestbook entry persistence remain intact.
+  - Validation passed: `npm test -- --run src/lib/launchEdgeFunctions.test.ts src/sections/components/RsvpSection.test.tsx src/sections/variants/rsvp/multiEvent.test.tsx src/pages/GuestbookSubmit.test.ts` (44/44), `npm run typecheck -- --pretty false`, `npm run lint -- --quiet`, `npm run guard:file-size`, `npm run guard:assets`, `git diff --check`, and `npm run build`.
+  - Launch status: unchanged. This is local Edge Function hardening and no deploy was run.
 - Do not start broad refactors from this file alone.
 - Execute this backlog top-down by risk, beginning with the P0 public data, gating, RSVP, AI key, service worker, email escaping, SSRF, and settings contract issues.
 - Update proof logs and launch docs only after concrete verification passes.
